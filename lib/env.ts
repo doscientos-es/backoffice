@@ -1,0 +1,37 @@
+import { z } from "zod";
+
+const PublicSchema = z.object({
+  NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(20),
+  NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
+  NEXT_PUBLIC_APP_NAME: z.string().default("doscientos backoffice"),
+});
+
+const ServerSchema = PublicSchema.extend({
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(20),
+  RESEND_API_KEY: z.string().optional().default(""),
+  RESEND_WEBHOOK_SECRET: z.string().optional().default(""),
+  RESEND_FROM_DOMAIN: z.string().default("doscientos.es"),
+  OPENAI_API_KEY: z.string().optional().default(""),
+  VERIFACTU_ENV: z.enum(["mock", "test", "prod"]).default("mock"),
+  VERIFACTU_NIF_EMISOR: z.string().optional().default(""),
+  VERIFACTU_EMISOR_NAME: z.string().default("DOSCIENTOS DESARROLLO TECNOLOGICO, S.L."),
+  VERIFACTU_CERT_P12_BASE64: z.string().optional().default(""),
+  VERIFACTU_CERT_PASSWORD: z.string().optional().default(""),
+  VERIFACTU_CERT_EXPIRES_AT: z.string().optional().default(""),
+  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+});
+
+export const publicEnv = PublicSchema.parse({
+  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+  NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME,
+});
+
+let cachedServerEnv: z.infer<typeof ServerSchema> | null = null;
+export function serverEnv() {
+  if (cachedServerEnv) return cachedServerEnv;
+  cachedServerEnv = ServerSchema.parse(process.env);
+  return cachedServerEnv;
+}
