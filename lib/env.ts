@@ -12,7 +12,7 @@ const ServerSchema = PublicSchema.extend({
   RESEND_API_KEY: z.string().optional().default(""),
   RESEND_WEBHOOK_SECRET: z.string().optional().default(""),
   RESEND_FROM_DOMAIN: z.string().default("doscientos.es"),
-  OPENAI_API_KEY: z.string().optional().default(""),
+  OPENAI_API_KEY: z.string().optional().default(""), // vacío = IA desactivada
   VERIFACTU_ENV: z.enum(["mock", "test", "prod"]).default("mock"),
   VERIFACTU_NIF_EMISOR: z.string().optional().default(""),
   VERIFACTU_EMISOR_NAME: z.string().default("DOSCIENTOS DESARROLLO TECNOLOGICO, S.L."),
@@ -34,4 +34,9 @@ export function serverEnv() {
   if (cachedServerEnv) return cachedServerEnv;
   cachedServerEnv = ServerSchema.parse(process.env);
   return cachedServerEnv;
+}
+
+/** true solo si OPENAI_API_KEY está configurada — usa esto para feature-gate toda la lógica de IA */
+export function isAIEnabled(): boolean {
+  return Boolean(process.env.OPENAI_API_KEY?.trim());
 }
