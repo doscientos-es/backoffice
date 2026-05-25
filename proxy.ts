@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 const PUBLIC_PATHS = ["/login", "/auth/callback", "/api/email/webhook"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Public portal: /p/[type]/[token] is always public
