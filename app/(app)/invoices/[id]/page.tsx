@@ -10,6 +10,7 @@ import { formatDate, formatEUR } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { SendAeatButton } from "./send-aeat-button";
 
 export const dynamic = "force-dynamic";
 
@@ -90,6 +91,18 @@ export default async function InvoiceDetailPage({
             <Badge variant={VERIFACTU_VARIANT[invoice.verifactu_status as keyof typeof VERIFACTU_VARIANT]}>
               Verifactu: {invoice.verifactu_status as string}
             </Badge>
+            {invoice.status !== "draft" &&
+              invoice.verifactu_status !== "accepted" &&
+              invoice.verifactu_status !== "excluded" ? (
+              <SendAeatButton
+                invoiceId={invoice.id as string}
+                label={
+                  invoice.verifactu_status === "rejected"
+                    ? "Reintentar envío"
+                    : "Enviar a AEAT"
+                }
+              />
+            ) : null}
           </div>
         }
       />
