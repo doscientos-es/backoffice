@@ -1,5 +1,7 @@
 import { ListPage } from "@/components/layout/list-page";
+import { Button } from "@/components/ui/button";
 import { createServerClient } from "@/lib/supabase/server";
+import Link from "next/link";
 
 export const metadata = { title: "Clientes · doscientos" };
 
@@ -17,6 +19,16 @@ export default async function ClientsPage() {
       title="Clientes"
       empty="Aún no hay clientes."
       error={error?.message}
+      actions={
+        <Button asChild size="sm">
+          <Link href="/clients/new">Nuevo</Link>
+        </Button>
+      }
+      emptyAction={
+        <Button asChild size="sm">
+          <Link href="/clients/new">Crear primer cliente</Link>
+        </Button>
+      }
       rows={
         data?.map((c) => ({
           id: c.id as string,

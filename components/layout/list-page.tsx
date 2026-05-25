@@ -1,36 +1,58 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/layout/page-header";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Empty,
+  EmptyContent,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/ui/empty-state";
 import Link from "next/link";
+import type { ReactNode } from "react";
+
+export type ListCell = ReactNode | string | number | null | undefined;
 
 export type ListRow = {
   id: string;
   href?: string;
-  cells: (string | number | null | undefined)[];
+  cells: ListCell[];
 };
 
 export type ListPageProps = {
   title: string;
+  description?: string;
   headers: string[];
   rows: ListRow[];
   empty: string;
+  emptyAction?: ReactNode;
   error?: string;
+  actions?: ReactNode;
 };
 
-export function ListPage({ title, headers, rows, empty, error }: ListPageProps) {
+export function ListPage({
+  title,
+  description,
+  headers,
+  rows,
+  empty,
+  emptyAction,
+  error,
+  actions,
+}: ListPageProps) {
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-      </div>
+      <PageHeader title={title} description={description} actions={actions} />
 
       <Card>
-        <CardHeader>
-          <CardTitle>Últimos 50</CardTitle>
-        </CardHeader>
-        <CardContent className="px-0">
+        <CardContent className="px-0 pt-0">
           {error ? (
-            <p className="px-5 text-sm text-[color:var(--danger)]">{error}</p>
+            <p className="px-5 py-6 text-sm text-[color:var(--danger)]">{error}</p>
           ) : rows.length === 0 ? (
-            <p className="px-5 text-sm text-[color:var(--text-muted)]">{empty}</p>
+            <Empty className="border-0 py-10">
+              <EmptyHeader>
+                <EmptyTitle>{empty}</EmptyTitle>
+              </EmptyHeader>
+              {emptyAction ? <EmptyContent>{emptyAction}</EmptyContent> : null}
+            </Empty>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -51,11 +73,12 @@ export function ListPage({ title, headers, rows, empty, error }: ListPageProps) 
                     >
                       {row.cells.map((c, i) => {
                         const cellKey = `${row.id}:${headers[i] ?? i}`;
+                        const value = c ?? "—";
                         return (
-                          <td key={cellKey} className="px-5 py-2.5">
+                          <td key={cellKey} className="px-5 py-2.5 align-middle">
                             {i === 0 && row.href ? (
                               <Link href={row.href} className="font-medium hover:underline">
-                                {c ?? "—"}
+                                {value}
                               </Link>
                             ) : (
                               <span
@@ -63,7 +86,7 @@ export function ListPage({ title, headers, rows, empty, error }: ListPageProps) 
                                   i === 0 ? "font-medium" : "text-[color:var(--text-secondary)]"
                                 }
                               >
-                                {c ?? "—"}
+                                {value}
                               </span>
                             )}
                           </td>
