@@ -11,17 +11,20 @@ import {
 } from "@/components/ui/dialog";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
-import { FileText, Mail, MailPlus, Phone } from "lucide-react";
+import { CalendarClock, FileText, Mail, MailPlus, Phone } from "lucide-react";
 import { type ReactNode, useState } from "react";
+import { createReminder } from "../../reminders/actions";
 import { logLeadCall, logLeadEmail, logLeadNote } from "../actions";
 import { EmailComposer } from "./email-composer";
 
 type Props = {
   leadId: string;
+  leadName: string;
   leadEmail: string | null;
   leadPhone: string | null;
   sendEnabled: boolean;
@@ -31,6 +34,7 @@ type Props = {
 
 export function LeadQuickActions({
   leadId,
+  leadName,
   leadEmail,
   leadPhone,
   sendEnabled,
@@ -38,8 +42,8 @@ export function LeadQuickActions({
   aiEnabled,
 }: Props) {
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-      <CallDialog leadId={leadId} leadPhone={leadPhone} />
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+      <CallDialog leadId={leadId} leadName={leadName} leadPhone={leadPhone} />
       <SendEmailDialog
         leadId={leadId}
         leadEmail={leadEmail}
@@ -47,7 +51,8 @@ export function LeadQuickActions({
         sendDisabledReason={sendDisabledReason}
         aiEnabled={aiEnabled}
       />
-      <LogEmailDialog leadId={leadId} leadEmail={leadEmail} />
+      <LogEmailDialog leadId={leadId} leadName={leadName} leadEmail={leadEmail} />
+      <ScheduleDialog leadId={leadId} leadName={leadName} />
       <NoteDialog leadId={leadId} />
     </div>
   );
@@ -93,14 +98,94 @@ function ActionDialog({
   );
 }
 
+// ── Shared follow-up utilities ────────────────────────────────────────────────
+
+/** datetime-local needs `YYYY-MM-DDTHH:mm` in the user's local TZ. */
+function toLocalInputValue(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+const SCHEDULE_PRESETS: { label: string; minutes: number }[] = [
+  { label: "En 1 h", minutes: 60 },
+  { label: "Mañana", minutes: 60 * 24 },
+  { label: "En 3 días", minutes: 60 * 24 * 3 },
+  { label: "En 1 semana", minutes: 60 * 24 * 7 },
+];
+
+function FollowUpSection({
+  enabled,
+  onEnabledChange,
+  remindAt,
+  onRemindAtChange,
+}: {
+  enabled: boolean;
+  onEnabledChange: (v: boolean) => void;
+  remindAt: string;
+  onRemindAtChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border border-border bg-muted/40 p-3">
+      <label className="flex cursor-pointer items-center gap-2">
+        <Checkbox checked={enabled} onCheckedChange={(v) => onEnabledChange(v === true)} />
+        <span className="text-sm font-medium">Programar seguimiento</span>
+      </label>
+      {enabled && (
+        <div className="flex flex-col gap-1.5 pt-1">
+          <Label className="text-xs text-muted-foreground">Recordar el</Label>
+          <Input
+            type="datetime-local"
+            value={remindAt}
+            onChange={(e) => onRemindAtChange(e.target.value)}
+            required
+          />
+          <div className="flex flex-wrap gap-1.5 pt-0.5">
+            {SCHEDULE_PRESETS.map((p) => (
+              <Button
+                key={p.label}
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => {
+                  const d = new Date(Date.now() + p.minutes * 60_000);
+                  d.setSeconds(0, 0);
+                  onRemindAtChange(toLocalInputValue(d));
+                }}
+              >
+                {p.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ---------------- CALL ----------------
 
-function CallDialog({ leadId, leadPhone }: { leadId: string; leadPhone: string | null }) {
+function CallDialog({
+  leadId,
+  leadName,
+  leadPhone,
+}: {
+  leadId: string;
+  leadName: string;
+  leadPhone: string | null;
+}) {
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const [transcript, setTranscript] = useState("");
   const [duration, setDuration] = useState("");
   const [outcome, setOutcome] = useState("connected");
+  const [followUpEnabled, setFollowUpEnabled] = useState(false);
+  const [followUpAt, setFollowUpAt] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(9, 0, 0, 0);
+    return toLocalInputValue(d);
+  });
   const feedback = useFormFeedback();
 
   async function onSubmit(e: React.FormEvent) {
@@ -114,6 +199,13 @@ function CallDialog({ leadId, leadPhone }: { leadId: string; leadPhone: string |
       outcome,
     });
     if (!res.ok) return feedback.setError(res.error);
+    if (followUpEnabled && followUpAt) {
+      await createReminder({
+        leadId,
+        title: `Llamar a ${leadName}`,
+        remindAt: new Date(followUpAt).toISOString(),
+      });
+    }
     feedback.setSuccess("Llamada registrada");
     setNotes("");
     setTranscript("");
@@ -383,3 +475,123 @@ function NoteDialog({ leadId }: { leadId: string }) {
     </ActionDialog>
   );
 }
+
+// ---------------- SCHEDULE (reminder) ----------------
+
+const SCHEDULE_PRESETS: { label: string; minutes: number }[] = [
+  { label: "En 1 h", minutes: 60 },
+  { label: "Mañana", minutes: 60 * 24 },
+  { label: "En 3 días", minutes: 60 * 24 * 3 },
+  { label: "En 1 semana", minutes: 60 * 24 * 7 },
+];
+
+/** datetime-local needs `YYYY-MM-DDTHH:mm` in the user's local TZ. */
+function toLocalInputValue(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function ScheduleDialog({ leadId, leadName }: { leadId: string; leadName: string }) {
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState(`Llamar a ${leadName}`);
+  const [remindAt, setRemindAt] = useState(() => {
+    const d = new Date();
+    d.setHours(d.getHours() + 1, 0, 0, 0);
+    return toLocalInputValue(d);
+  });
+  const [notes, setNotes] = useState("");
+  const feedback = useFormFeedback();
+
+  function applyPreset(minutes: number) {
+    const d = new Date(Date.now() + minutes * 60_000);
+    d.setSeconds(0, 0);
+    setRemindAt(toLocalInputValue(d));
+  }
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    feedback.setPending();
+    const res = await createReminder({
+      leadId,
+      title: title.trim(),
+      remindAt: new Date(remindAt).toISOString(),
+      notes: notes || undefined,
+    });
+    if (!res.ok) return feedback.setError(res.error);
+    feedback.setSuccess("Aviso programado");
+    setNotes("");
+    setTimeout(() => setOpen(false), 400);
+  }
+
+  return (
+    <ActionDialog
+      trigger={<ActionTrigger icon={<CalendarClock className="size-4" />} label="Agendar" />}
+      title="Agendar seguimiento"
+      description="Crea un aviso para esta lead (llamada, email, recordatorio…)."
+      open={open}
+      onOpenChange={setOpen}
+      wide
+    >
+      <form onSubmit={onSubmit} className="flex flex-col gap-3">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="schedule-title" className="text-xs font-medium">
+            Título <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="schedule-title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+            maxLength={200}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="schedule-when" className="text-xs font-medium">
+            Fecha y hora <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="schedule-when"
+            type="datetime-local"
+            value={remindAt}
+            onChange={(e) => setRemindAt(e.target.value)}
+            required
+          />
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {SCHEDULE_PRESETS.map((p) => (
+              <Button
+                key={p.label}
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => applyPreset(p.minutes)}
+              >
+                {p.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="schedule-notes" className="text-xs font-medium">
+            Notas <span className="text-muted-foreground">(opcional)</span>
+          </Label>
+          <Textarea
+            id="schedule-notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={3}
+            maxLength={4000}
+            placeholder="Contexto, qué tratar, próximos pasos…"
+          />
+        </div>
+        <div className="flex items-center justify-end gap-3">
+          <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
+          <SubmitButton loading={feedback.pending} pendingLabel="Guardando…">
+            Agendar
+          </SubmitButton>
+        </div>
+      </form>
+    </ActionDialog>
+  );
+}
+

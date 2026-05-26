@@ -5,22 +5,36 @@ import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Select } from "@/components/ui/select";
 import type { MemberRole } from "@/lib/auth";
 import { useRouter } from "next/navigation";
-import { deactivateMember, reactivateMember, updateMemberRole } from "./actions";
+import {
+  deactivateMember,
+  deleteMember,
+  reactivateMember,
+  updateMemberRole,
+} from "./actions";
 
 interface Props {
   memberId: string;
+  memberEmail: string;
   role: MemberRole;
   isSelf: boolean;
   isDeactivated: boolean;
   actorRole: MemberRole;
 }
 
-export function MemberRowActions({ memberId, role, isSelf, isDeactivated, actorRole }: Props) {
+export function MemberRowActions({
+  memberId,
+  memberEmail,
+  role,
+  isSelf,
+  isDeactivated,
+  actorRole,
+}: Props) {
   const feedback = useFormFeedback();
   const router = useRouter();
   const canEditOwner = actorRole === "owner";
   const targetIsOwner = role === "owner";
   const disabledRoleSelect = isSelf || isDeactivated || (targetIsOwner && !canEditOwner);
+  const canDelete = actorRole === "owner" && isDeactivated && !isSelf;
 
   async function onRoleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const next = e.target.value as MemberRole;
@@ -49,6 +63,21 @@ export function MemberRowActions({ memberId, role, isSelf, isDeactivated, actorR
     router.refresh();
   }
 
+  async function onDelete() {
+    const confirmed = window.confirm(
+      `Eliminar permanentemente a ${memberEmail}?\n\nEsta acción no se puede deshacer. El email quedará libre para futuras invitaciones.`,
+    );
+    if (!confirmed) return;
+    feedback.setPending();
+    const res = await deleteMember({ memberId });
+    if (!res.ok) {
+      feedback.setError(res.error);
+      return;
+    }
+    feedback.setSuccess("Eliminado");
+    router.refresh();
+  }
+
   return (
     <div className="flex items-center justify-end gap-2">
       <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
@@ -67,12 +96,23 @@ export function MemberRowActions({ memberId, role, isSelf, isDeactivated, actorR
       <Button
         type="button"
         size="sm"
-        variant={isDeactivated ? "outline" : "outline"}
+        variant="outline"
         disabled={isSelf || feedback.pending || (targetIsOwner && !canEditOwner)}
         onClick={onToggleActive}
       >
         {isDeactivated ? "Reactivar" : "Desactivar"}
       </Button>
+      {canDelete ? (
+        <Button
+          type="button"
+          size="sm"
+          variant="destructive"
+          disabled={feedback.pending}
+          onClick={onDelete}
+        >
+          Eliminar
+        </Button>
+      ) : null}
     </div>
   );
 }

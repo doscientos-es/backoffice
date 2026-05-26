@@ -1,37 +1,19 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type {
+  AvisosData,
+  OverdueInvoiceRow,
+  ReminderRow,
+  VerifactuPendingRow,
+} from "@/lib/dashboard/types";
 import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
 import { AlertTriangle, BellRing, FileWarning, ShieldAlert } from "lucide-react";
 import Link from "next/link";
+import { ReminderCompleteButton } from "./_components/reminder-complete-button";
 
-export type ReminderRow = {
-  id: string;
-  title: string;
-  remind_at: string;
-};
+export type { AvisosData, OverdueInvoiceRow, ReminderRow, VerifactuPendingRow };
 
-export type VerifactuPendingRow = {
-  id: string;
-  full_number: string | null;
-  verifactu_status: "pending" | "error" | "rejected";
-  verifactu_error: string | null;
-  client_name: string | null;
-};
-
-export type OverdueInvoiceRow = {
-  id: string;
-  full_number: string | null;
-  due_date: string | null;
-  total: number;
-  client_name: string | null;
-};
-
-export type AvisosPanelProps = {
-  reminders: ReminderRow[];
-  verifactuPending: VerifactuPendingRow[];
-  overdueInvoices: OverdueInvoiceRow[];
-  certExpiresAt: string | null;
-};
+export type AvisosPanelProps = AvisosData;
 
 const VERIFACTU_VARIANT = {
   pending: "warning",
@@ -106,8 +88,18 @@ export function AvisosPanel({
                 const overdue = new Date(r.remind_at) < new Date();
                 return (
                   <li key={r.id} className="flex items-center justify-between gap-2">
-                    <span className="truncate text-sm">{r.title}</span>
-                    <Badge variant={overdue ? "danger" : "info"}>{relativeTime(r.remind_at)}</Badge>
+                    <Link
+                      href={`/reminders/${r.id}`}
+                      className="truncate text-sm hover:underline"
+                    >
+                      {r.title}
+                    </Link>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <Badge variant={overdue ? "danger" : "info"}>
+                        {relativeTime(r.remind_at)}
+                      </Badge>
+                      <ReminderCompleteButton id={r.id} />
+                    </div>
                   </li>
                 );
               })}

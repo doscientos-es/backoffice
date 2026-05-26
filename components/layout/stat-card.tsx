@@ -1,6 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
+import type { Trend } from "@/lib/dashboard/types";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 import Link from "next/link";
 
 export type StatTone = "default" | "success" | "danger" | "info" | "warning";
@@ -12,6 +14,7 @@ export type StatCardProps = {
   icon?: LucideIcon;
   hint?: string;
   href?: string;
+  trend?: Trend | null;
 };
 
 const TONE_VALUE: Record<StatTone, string> = {
@@ -30,9 +33,30 @@ const TONE_ICON: Record<StatTone, string> = {
   warning: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
 };
 
-export function StatCard({ label, value, tone = "default", icon: Icon, hint, href }: StatCardProps) {
+const TREND_STYLE = {
+  up: "text-emerald-600 dark:text-emerald-400",
+  down: "text-red-600 dark:text-red-400",
+  flat: "text-muted-foreground",
+} as const;
+
+const TREND_ICON = {
+  up: ArrowUpRight,
+  down: ArrowDownRight,
+  flat: Minus,
+} as const;
+
+export function StatCard({
+  label,
+  value,
+  tone = "default",
+  icon: Icon,
+  hint,
+  href,
+  trend,
+}: StatCardProps) {
   const displayValue =
     typeof value === "number" ? new Intl.NumberFormat("es-ES").format(value) : value;
+  const TrendIcon = trend ? TREND_ICON[trend.direction] : null;
 
   const card = (
     <Card
@@ -54,7 +78,21 @@ export function StatCard({ label, value, tone = "default", icon: Icon, hint, hre
           >
             {displayValue}
           </div>
-          {hint ? (
+          {trend && TrendIcon ? (
+            <div
+              className={cn(
+                "mt-1 flex items-center gap-1 text-xs font-medium tabular-nums",
+                TREND_STYLE[trend.direction],
+              )}
+            >
+              <TrendIcon className="size-3" aria-hidden />
+              <span>
+                {trend.delta > 0 ? "+" : ""}
+                {trend.delta.toFixed(1)}%
+              </span>
+              {hint ? <span className="text-muted-foreground">· {hint}</span> : null}
+            </div>
+          ) : hint ? (
             <div className="mt-1 text-xs text-muted-foreground">{hint}</div>
           ) : null}
         </div>

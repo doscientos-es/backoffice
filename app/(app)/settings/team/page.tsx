@@ -150,6 +150,7 @@ export default async function TeamSettingsPage() {
                         <td className="px-5 py-2.5 align-middle">
                           <MemberRowActions
                             memberId={m.id}
+                            memberEmail={m.email}
                             role={m.role}
                             isSelf={isSelf}
                             isDeactivated={isDeactivated}

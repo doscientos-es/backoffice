@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatEUR } from "@/lib/utils";
 import { Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
 
 export type LineItem = {
   description: string;
@@ -19,15 +18,18 @@ function n2(x: number): number {
   return Math.round(x * 100) / 100;
 }
 
-export function LineItemsEditor() {
-  const [items, setItems] = useState<LineItem[]>([{ ...EMPTY }]);
+export type LineItemsEditorProps = {
+  items: LineItem[];
+  onChange: (items: LineItem[]) => void;
+};
 
+export function LineItemsEditor({ items, onChange }: LineItemsEditorProps) {
   const update = (i: number, patch: Partial<LineItem>) => {
-    setItems((prev) => prev.map((it, idx) => (idx === i ? { ...it, ...patch } : it)));
+    onChange(items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)));
   };
-  const add = () => setItems((prev) => [...prev, { ...EMPTY }]);
+  const add = () => onChange([...items, { ...EMPTY }]);
   const remove = (i: number) =>
-    setItems((prev) => (prev.length === 1 ? prev : prev.filter((_, idx) => idx !== i)));
+    onChange(items.length === 1 ? items : items.filter((_, idx) => idx !== i));
 
   let subtotal = 0;
   let taxAmount = 0;
@@ -42,8 +44,6 @@ export function LineItemsEditor() {
 
   return (
     <div className="flex flex-col gap-3">
-      <input type="hidden" name="items" value={JSON.stringify(items)} />
-
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="text-left text-xs uppercase tracking-wide text-muted-foreground">

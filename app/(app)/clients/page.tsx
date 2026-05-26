@@ -1,7 +1,7 @@
-import { ListPage } from "@/components/layout/list-page";
 import { Button } from "@/components/ui/button";
 import { createServerClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import { ClientsList } from "./clients-list";
 
 export const metadata = { title: "Clientes · doscientos" };
 export const dynamic = "force-dynamic";
@@ -26,7 +26,7 @@ export default async function ClientsPage({
   const supabase = await createServerClient();
   let query = supabase
     .from("clients")
-    .select("id, name, nif, email", { count: "exact" })
+    .select("id, name, nif, email, phone, contact_person, updated_at", { count: "exact" })
     .is("deleted_at", null);
 
   if (q.length > 0) {
@@ -39,7 +39,7 @@ export default async function ClientsPage({
     .range(from, to);
 
   return (
-    <ListPage
+    <ClientsList
       title="Clientes"
       empty={q ? "Sin coincidencias para tu búsqueda." : "Aún no hay clientes."}
       error={error?.message}
@@ -60,6 +60,15 @@ export default async function ClientsPage({
         data?.map((c) => ({
           id: c.id as string,
           href: `/clients/${c.id}`,
+          data: {
+            id: c.id,
+            name: c.name,
+            email: c.email,
+            phone: c.phone,
+            nif: c.nif,
+            contact_person: c.contact_person,
+            updated_at: c.updated_at,
+          },
           cells: [
             c.name as string,
             (c.nif as string | null) ?? "—",

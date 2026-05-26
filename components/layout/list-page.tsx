@@ -1,3 +1,5 @@
+"use client";
+
 import {
   type FilterConfig,
   ListControls,
@@ -17,6 +19,8 @@ export type ListRow = {
   id: string;
   href?: string;
   cells: ListCell[];
+  // Allow passing raw data for quick view
+  data?: any;
 };
 
 export type ListPageProps = {
@@ -36,6 +40,8 @@ export type ListPageProps = {
   filters?: FilterConfig[];
   /** Paginación basada en URL (?page=). */
   pagination?: ListControlsProps["pagination"];
+  /** Opcional: callback para abrir vista rápida al hacer clic en la fila */
+  onRowClick?: (row: ListRow) => void;
 };
 
 export function ListPage({
@@ -52,6 +58,7 @@ export function ListPage({
   searchPlaceholder,
   filters,
   pagination,
+  onRowClick,
 }: ListPageProps) {
   const alignAt = (i: number): ListAlign => align?.[i] ?? "left";
   const hasControls = !!searchKey || (filters && filters.length > 0) || !!pagination;
@@ -99,7 +106,14 @@ export function ListPage({
                 </thead>
                 <tbody className="divide-y divide-border/60">
                   {rows.map((row) => (
-                    <tr key={row.id} className="group transition-colors hover:bg-muted/30">
+                    <tr
+                      key={row.id}
+                      onClick={() => onRowClick?.(row)}
+                      className={cn(
+                        "group transition-colors hover:bg-muted/30",
+                        onRowClick && "cursor-pointer",
+                      )}
+                    >
                       {row.cells.map((c, i) => {
                         const cellKey = `${row.id}:${headers[i] ?? i}`;
                         const isEmpty = c == null || c === "—";
@@ -122,6 +136,7 @@ export function ListPage({
                             {isFirst && row.href ? (
                               <Link
                                 href={row.href}
+                                onClick={(e) => e.stopPropagation()}
                                 className="transition-colors group-hover:text-primary"
                               >
                                 {value}

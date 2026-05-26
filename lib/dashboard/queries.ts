@@ -1,0 +1,237 @@
+import { serverEnv } from "@/lib/env";
+import { createServerClient } from "@/lib/supabase/server";
+import { shortMonthEs, toIsoDate } from "@/lib/utils/date";
+import type {
+  AvisosData,
+  DashboardKpis,
+  DateRange,
+  OverdueInvoiceRow,
+  ReminderRow,
+  RevenuePoint,
+  VerifactuPendingRow,
+} from "./types";
+
+const AVISOS_LIMIT = 5;
+
+type ClientNameJoin = { clients: { name: string } | null };
+
+export async function getDashboardKpis(range: DateRange): Promise<DashboardKpis> {
+  const supabase = await createServerClient();
+  const now = new Date();
+  const monthStart = toIsoDate(new Date(now.getFullYear(), now.getMonth(), 1));
+  const prevMonthStart = toIsoDate(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+  const prevMonthEnd = toIsoDate(new Date(now.getFullYear(), now.getMonth(), 0));
+  const today = toIsoDate(now);
+
+  const [
+    leadsNew,
+    leadsNewPrev,
+    leadsAll,
+    leadsAllPrev,
+    leadsWon,
+    leadsWonPrev,
+    proposalsOpen,
+    proposalsOpenPrev,
+    pipelineRes,
+    overdueCount,
+    monthRevenueRes,
+    prevMonthRevenueRes,
+  ] = await Promise.all([
+    countLeads({ from: range.current.from, to: range.current.to, status: "new" }),
+    countLeads({ from: range.previous.from, to: range.previous.to, status: "new" }),
+    countLeads({ from: range.current.from, to: range.current.to }),
+    countLeads({ from: range.previous.from, to: range.previous.to }),
+    countLeads({ from: range.current.from, to: range.current.to, status: "won" }),
+    countLeads({ from: range.previous.from, to: range.previous.to, status: "won" }),
+    countOpenProposals(range.current),
+    countOpenProposals(range.previous),
+    supabase
+      .from("proposals")
+      .select("total")
+      .in("status", ["sent", "viewed"])
+      .is("deleted_at", null),
+    supabase
+      .from("invoices")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "sent")
+      .lt("due_date", today)
+      .is("deleted_at", null),
+    supabase
+      .from("invoices")
+      .select("total")
+      .gte("issue_date", monthStart)
+      .neq("status", "draft")
+      .is("deleted_at", null),
+    supabase
+      .from("invoices")
+      .select("total")
+      .gte("issue_date", prevMonthStart)
+      .lte("issue_date", prevMonthEnd)
+      .neq("status", "draft")
+      .is("deleted_at", null),
+  ]);
+
+  const pipelineValue = (pipelineRes.data ?? []).reduce((a, r) => a + Number(r.total ?? 0), 0);
+  const monthRevenue = (monthRevenueRes.data ?? []).reduce((a, r) => a + Number(r.total ?? 0), 0);
+  const monthRevenuePrev = (prevMonthRevenueRes.data ?? []).reduce(
+    (a, r) => a + Number(r.total ?? 0),
+    0,
+  );
+
+  return {
+    leadsNew,
+    leadsNewPrev,
+    proposalsOpen,
+    proposalsOpenPrev,
+    overdueCount: overdueCount.count ?? 0,
+    monthRevenue,
+    monthRevenuePrev,
+    pipelineValue,
+    conversionRate: leadsAll > 0 ? leadsWon / leadsAll : 0,
+    conversionRatePrev: leadsAllPrev > 0 ? leadsWonPrev / leadsAllPrev : 0,
+  };
+}
+
+async function countLeads(args: {
+  from: Date;
+  to: Date;
+  status?: "new" | "won";
+}): Promise<number> {
+  const supabase = await createServerClient();
+  let q = supabase
+    .from("leads")
+    .select("id", { count: "exact", head: true })
+    .gte("created_at", args.from.toISOString())
+    .lte("created_at", args.to.toISOString())
+    .is("deleted_at", null);
+  if (args.status) q = q.eq("status", args.status);
+  const { count } = await q;
+  return count ?? 0;
+}
+
+async function countOpenProposals(window: { from: Date; to: Date }): Promise<number> {
+  const supabase = await createServerClient();
+  const { count } = await supabase
+    .from("proposals")
+    .select("id", { count: "exact", head: true })
+    .in("status", ["sent", "viewed"])
+    .gte("created_at", window.from.toISOString())
+    .lte("created_at", window.to.toISOString())
+    .is("deleted_at", null);
+  return count ?? 0;
+}
+
+export async function getAvisos(): Promise<AvisosData> {
+  const supabase = await createServerClient();
+  const env = serverEnv();
+  const now = new Date();
+  const in7Days = new Date(now.getTime() + 7 * 86_400_000);
+  const in30Days = new Date(now.getTime() + 30 * 86_400_000);
+  const today = toIsoDate(now);
+
+  const [remindersRes, verifactuRes, overdueRes] = await Promise.all([
+    supabase
+      .from("reminders")
+      .select("id, title, remind_at")
+      .is("completed_at", null)
+      .lte("remind_at", in7Days.toISOString())
+      .order("remind_at", { ascending: true })
+      .limit(AVISOS_LIMIT),
+    supabase
+      .from("invoices")
+      .select("id, full_number, verifactu_status, verifactu_error, clients(name)")
+      .in("verifactu_status", ["pending", "error", "rejected"])
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(AVISOS_LIMIT),
+    supabase
+      .from("invoices")
+      .select("id, full_number, due_date, total, clients(name)")
+      .eq("status", "sent")
+      .lt("due_date", today)
+      .is("deleted_at", null)
+      .order("due_date", { ascending: true })
+      .limit(AVISOS_LIMIT),
+  ]);
+
+  const reminders: ReminderRow[] = (remindersRes.data ?? []).map((r) => ({
+    id: r.id as string,
+    title: r.title as string,
+    remind_at: r.remind_at as string,
+  }));
+
+  const verifactuPending: VerifactuPendingRow[] = (verifactuRes.data ?? []).map((v) => {
+    const join = v as unknown as ClientNameJoin;
+    return {
+      id: v.id as string,
+      full_number: (v.full_number as string | null) ?? null,
+      verifactu_status: v.verifactu_status as VerifactuPendingRow["verifactu_status"],
+      verifactu_error: (v.verifactu_error as string | null) ?? null,
+      client_name: join.clients?.name ?? null,
+    };
+  });
+
+  const overdueInvoices: OverdueInvoiceRow[] = (overdueRes.data ?? []).map((inv) => {
+    const join = inv as unknown as ClientNameJoin;
+    return {
+      id: inv.id as string,
+      full_number: (inv.full_number as string | null) ?? null,
+      due_date: (inv.due_date as string | null) ?? null,
+      total: Number(inv.total ?? 0),
+      client_name: join.clients?.name ?? null,
+    };
+  });
+
+  const certExpiresAt =
+    env.VERIFACTU_CERT_EXPIRES_AT && new Date(env.VERIFACTU_CERT_EXPIRES_AT) <= in30Days
+      ? env.VERIFACTU_CERT_EXPIRES_AT
+      : null;
+
+  return { reminders, verifactuPending, overdueInvoices, certExpiresAt };
+}
+
+export async function getRevenueSeries(months = 6): Promise<RevenuePoint[]> {
+  const supabase = await createServerClient();
+  const now = new Date();
+  const startCurrent = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
+  const startPrevious = new Date(now.getFullYear() - 1, now.getMonth() - (months - 1), 1);
+  const endPrevious = new Date(now.getFullYear() - 1, now.getMonth() + 1, 0);
+
+  const [currentRes, previousRes] = await Promise.all([
+    supabase
+      .from("invoices")
+      .select("issue_date, total")
+      .gte("issue_date", toIsoDate(startCurrent))
+      .neq("status", "draft")
+      .is("deleted_at", null),
+    supabase
+      .from("invoices")
+      .select("issue_date, total")
+      .gte("issue_date", toIsoDate(startPrevious))
+      .lte("issue_date", toIsoDate(endPrevious))
+      .neq("status", "draft")
+      .is("deleted_at", null),
+  ]);
+
+  const byMonth = new Map<string, { current: number; previous: number }>();
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    byMonth.set(`${d.getMonth()}`, { current: 0, previous: 0 });
+  }
+  for (const row of currentRes.data ?? []) {
+    const d = new Date(row.issue_date as string);
+    const slot = byMonth.get(`${d.getMonth()}`);
+    if (slot) slot.current += Number(row.total ?? 0);
+  }
+  for (const row of previousRes.data ?? []) {
+    const d = new Date(row.issue_date as string);
+    const slot = byMonth.get(`${d.getMonth()}`);
+    if (slot) slot.previous += Number(row.total ?? 0);
+  }
+
+  return Array.from(byMonth.entries()).map(([key, { current, previous }]) => ({
+    month: shortMonthEs(Number(key)),
+    current: Math.round(current * 100) / 100,
+    previous: Math.round(previous * 100) / 100,
+  }));
+}

@@ -146,3 +146,47 @@ export async function reactivateMember(input: unknown): Promise<ActionResult> {
   revalidatePath("/settings/team");
   return { ok: true };
 }
+
+/**
+ * Hard-delete a team member. Owner-only and only allowed on already
+ * deactivated members — irreversible. Deletes the auth.users row which
+ * cascades to team_members and frees the email for future invitations.
+ * Most FKs to team_members use `on delete set null` so historical
+ * references survive; `task_comments.author_id` is `on delete restrict`
+ * and will block deletion with a clean error message.
+ */
+export async function deleteMember(input: unknown): Promise<ActionResult> {
+  const actor = await requireRole(["owner"]);
+  const parsed = MemberIdInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Datos no válidos" };
+  if (parsed.data.memberId === actor.id) {
+    return { ok: false, error: "No puedes eliminarte a ti mismo." };
+  }
+
+  const admin = createAdminClient();
+  const { data: target, error: lookupError } = await admin
+    .from("team_members")
+    .select("deleted_at")
+    .eq("id", parsed.data.memberId)
+    .maybeSingle();
+  if (lookupError) return { ok: false, error: lookupError.message };
+  if (!target) return { ok: false, error: "Miembro no encontrado." };
+  if (!target.deleted_at) {
+    return { ok: false, error: "Desactiva el miembro antes de eliminarlo." };
+  }
+
+  const { error: authError } = await admin.auth.admin.deleteUser(parsed.data.memberId);
+  if (authError) {
+    const msg = authError.message.toLowerCase();
+    if (msg.includes("foreign key") || msg.includes("violates")) {
+      return {
+        ok: false,
+        error: "No se puede eliminar: el miembro tiene comentarios u otros registros vinculados.",
+      };
+    }
+    return { ok: false, error: authError.message };
+  }
+
+  revalidatePath("/settings/team");
+  return { ok: true };
+}

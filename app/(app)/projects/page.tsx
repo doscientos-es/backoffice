@@ -1,7 +1,7 @@
-import { ListPage } from "@/components/layout/list-page";
 import { Button } from "@/components/ui/button";
 import { createServerClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import { ProjectsList } from "./projects-list";
 
 export const metadata = { title: "Proyectos · doscientos" };
 export const dynamic = "force-dynamic";
@@ -35,7 +35,9 @@ export default async function ProjectsPage({
   const supabase = await createServerClient();
   let query = supabase
     .from("projects")
-    .select("id, name, status, client_id, clients(name)", { count: "exact" })
+    .select("id, name, status, description, updated_at, client_id, clients(name)", {
+      count: "exact",
+    })
     .is("deleted_at", null);
 
   if (q.length > 0) query = query.ilike("name", `%${escapeIlike(q)}%`);
@@ -46,7 +48,7 @@ export default async function ProjectsPage({
     .range(from, to);
 
   return (
-    <ListPage
+    <ProjectsList
       title="Proyectos"
       empty={q || status ? "Sin coincidencias." : "Aún no hay proyectos."}
       error={error?.message}
@@ -69,6 +71,15 @@ export default async function ProjectsPage({
         data?.map((p) => ({
           id: p.id as string,
           href: `/projects/${p.id}`,
+          data: {
+            id: p.id,
+            name: p.name,
+            client_name:
+              (p as unknown as { clients: { name: string } | null }).clients?.name ?? "—",
+            status: p.status,
+            description: p.description,
+            updated_at: p.updated_at,
+          },
           cells: [
             p.name as string,
             (p as unknown as { clients: { name: string } | null }).clients?.name ?? "—",

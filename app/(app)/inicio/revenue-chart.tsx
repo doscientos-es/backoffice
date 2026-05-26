@@ -1,11 +1,23 @@
 "use client";
 
+import type { RevenuePoint } from "@/lib/dashboard/types";
 import { formatEUR } from "@/lib/utils";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
-export type RevenuePoint = {
-  month: string; // "ene", "feb"...
-  revenue: number;
+export type { RevenuePoint };
+
+const SERIES_LABEL: Record<string, string> = {
+  current: "Año actual",
+  previous: "Año anterior",
 };
 
 export function RevenueChart({ data }: { data: RevenuePoint[] }) {
@@ -37,9 +49,31 @@ export function RevenueChart({ data }: { data: RevenuePoint[] }) {
               borderRadius: 8,
               fontSize: 12,
             }}
-            formatter={(value: number) => [formatEUR(value), "Ingresos"]}
+            formatter={(value: number, name) => [
+              formatEUR(value),
+              SERIES_LABEL[String(name)] ?? String(name),
+            ]}
           />
-          <Bar dataKey="revenue" fill="var(--primary)" radius={[4, 4, 0, 0]} maxBarSize={40} />
+          <Legend
+            verticalAlign="top"
+            height={24}
+            iconSize={8}
+            wrapperStyle={{ fontSize: 11, color: "var(--muted-foreground)" }}
+            formatter={(value) => SERIES_LABEL[String(value)] ?? String(value)}
+          />
+          <Bar
+            dataKey="previous"
+            fill="var(--muted-foreground)"
+            fillOpacity={0.35}
+            radius={[4, 4, 0, 0]}
+            maxBarSize={20}
+          />
+          <Bar
+            dataKey="current"
+            fill="var(--primary)"
+            radius={[4, 4, 0, 0]}
+            maxBarSize={20}
+          />
         </BarChart>
       </ResponsiveContainer>
     </div>

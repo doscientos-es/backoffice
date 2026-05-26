@@ -138,6 +138,77 @@ export async function createProposal(formData: FormData): Promise<void> {
   redirect(`/proposals/${proposal.id}`);
 }
 
+/**
+ * JSON version of createProposal for use with autosave or client-side calls.
+ * Returns the created proposal ID on success.
+ */
+export async function createProposalAction(input: unknown): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  const user = await requireUser();
+
+  const parsed = CreateInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+  }
+  const data = parsed.data;
+
+  let subtotal = 0;
+  let taxAmount = 0;
+  for (const item of data.items) {
+    const lineSubtotal = item.quantity * item.unit_price;
+    subtotal += lineSubtotal;
+    taxAmount += lineSubtotal * (item.vat_rate / 100);
+  }
+  subtotal = n2(subtotal);
+  taxAmount = n2(taxAmount);
+  const total = n2(subtotal + taxAmount);
+
+  const supabase = await createServerClient();
+  const number = await nextProposalNumber(supabase);
+
+  const { data: proposal, error } = await supabase
+    .from("proposals")
+    .insert({
+      client_id: data.client_id,
+      project_id: data.project_id ?? null,
+      number,
+      title: data.title,
+      status: "draft",
+      currency: "EUR",
+      subtotal,
+      tax_amount: taxAmount,
+      total,
+      valid_until: data.valid_until ?? null,
+      notes: data.notes ?? null,
+      created_by: user.id,
+    })
+    .select("id")
+    .single();
+
+  if (error || !proposal) {
+    log.error({ err: error }, "create_proposal_failed");
+    return { ok: false, error: error?.message ?? "No se pudo crear la propuesta" };
+  }
+
+  const { error: itemsError } = await supabase.from("proposal_items").insert(
+    data.items.map((it, idx) => ({
+      proposal_id: proposal.id,
+      position: idx,
+      description: it.description,
+      quantity: it.quantity,
+      unit_price: it.unit_price,
+      vat_rate: it.vat_rate,
+    })),
+  );
+  if (itemsError) {
+    log.error({ err: itemsError, proposalId: proposal.id }, "create_proposal_items_failed");
+    return { ok: false, error: itemsError.message };
+  }
+
+  revalidatePath("/proposals");
+  return { ok: true, id: proposal.id as string };
+}
+
+
 // ---------------- UPDATE (collaborative inline edits + autosave) ----------------
 
 const UpdateInput = z.object({
