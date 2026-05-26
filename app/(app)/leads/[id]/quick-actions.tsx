@@ -14,10 +14,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarClock } from "lucide-react";
+import { CalendarClock, FileText } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { createReminder } from "../../reminders/actions";
 import { QCallDialog, QEmailDialog, QNoteDialog } from "../lead-quick-action-dialogs";
+import { logLeadNote } from "../actions";
 
 type Props = {
   leadId: string;
@@ -29,7 +30,7 @@ type Props = {
 export function LeadQuickActions({ leadId, leadName, leadEmail, leadPhone }: Props) {
   return (
     <div className="flex flex-col gap-2">
-      <QCallDialog leadId={leadId} leadPhone={leadPhone} />
+      <QCallDialog leadId={leadId} leadPhone={leadPhone} leadName={leadName} />
       <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
       <QNoteDialog leadId={leadId} />
       <ScheduleDialog leadId={leadId} leadName={leadName} />
