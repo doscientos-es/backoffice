@@ -14,6 +14,22 @@ function unauthorized() {
 }
 
 /**
+ * GET /api/webhooks/lead-intake
+ * Simple health check to verify endpoint is live.
+ */
+export async function GET() {
+  return NextResponse.json(
+    {
+      status: "active",
+      message: "Lead intake webhook is live. Use POST to submit leads.",
+      docs: "https://github.com/PolGubau/doscientos/blob/main/internal/backoffice/app/api/webhooks/lead-intake/route.ts",
+    },
+    { status: 405 }
+  );
+}
+
+
+/**
  * POST /api/webhooks/lead-intake
  *
  * Generic endpoint for CRM integrations that can send a custom webhook.
