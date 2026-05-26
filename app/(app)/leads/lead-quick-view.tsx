@@ -262,16 +262,24 @@ function QEmailDialog({ leadId, leadEmail }: { leadId: string; leadEmail: string
   const [open, setOpen] = useState(false);
   const [direction, setDirection] = useState<"incoming" | "outgoing">("outgoing");
   const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
   const feedback = useFormFeedback();
   const router = useRouter();
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     feedback.setPending();
-    const res = await logLeadEmail({ leadId, direction, subject, counterparty: leadEmail ?? undefined });
+    const res = await logLeadEmail({
+      leadId,
+      direction,
+      subject,
+      bodyHtml: body.trim() || undefined,
+      counterparty: leadEmail ?? undefined,
+    });
     if (!res.ok) return feedback.setError(res.error);
     feedback.setSuccess("Registrado");
     setSubject("");
+    setBody("");
     router.refresh();
     setTimeout(() => setOpen(false), 400);
   }
@@ -300,6 +308,19 @@ function QEmailDialog({ leadId, leadEmail }: { leadId: string; leadEmail: string
           <div className="flex flex-col gap-1.5">
             <Label htmlFor={`qv-email-subj-${leadId}`} className="text-xs font-medium">Asunto <span className="text-destructive">*</span></Label>
             <Input id={`qv-email-subj-${leadId}`} required maxLength={300} value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Asunto del email" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor={`qv-email-body-${leadId}`} className="text-xs font-medium">
+              Cuerpo <span className="text-muted-foreground/60">(opcional, mejora el resumen IA)</span>
+            </Label>
+            <Textarea
+              id={`qv-email-body-${leadId}`}
+              rows={5}
+              maxLength={50000}
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder="Pega o resume el contenido del email…"
+            />
           </div>
           <div className="flex items-center justify-end gap-3">
             <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
