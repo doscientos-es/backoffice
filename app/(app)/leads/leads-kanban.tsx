@@ -20,7 +20,7 @@ import { AlertTriangle, Plus } from "lucide-react";
 import Link from "next/link";
 import { useOptimistic, useState, useTransition } from "react";
 import { updateLeadStatus } from "./actions";
-import { type FastLead, LeadFastActions } from "./lead-fast-actions";
+import type { FastLead } from "./lead-fast-actions";
 
 export type KanbanLead = FastLead & {
   company: string | null;
@@ -58,8 +58,11 @@ type Action = { id: string; status: LeadStatus };
 
 export function LeadsKanban({
   leads,
-  aiEnabled,
-}: { leads: KanbanLead[]; aiEnabled: boolean }) {
+}: {
+  leads: KanbanLead[];
+  /** @deprecated AI flag no longer used at card level; kept for caller compat */
+  aiEnabled?: boolean;
+}) {
   const [, startTransition] = useTransition();
   const [optimistic, applyOptimistic] = useOptimistic(leads, (state, { id, status }: Action) =>
     state.map((l) => (l.id === id ? { ...l, status } : l)),
@@ -115,7 +118,7 @@ export function LeadsKanban({
       <div className="flex justify-end pb-1 min-h-5">
         <FormFeedback state={feedback.state} pendingLabel="Actualizando…" />
       </div>
-      <div className="flex gap-3 overflow-x-auto pb-2">
+      <div className="flex gap-3 overflow-x-auto w-full pb-2">
         {COLUMNS.map((col) => (
           <Column
             key={col.id}
@@ -124,12 +127,11 @@ export function LeadsKanban({
             tone={col.tone}
             dot={col.dot}
             leads={grouped[col.id]}
-            aiEnabled={aiEnabled}
             onOpenQuickView={setQuickViewId}
           />
         ))}
       </div>
-      <DragOverlay>{active ? <Card lead={active} aiEnabled={aiEnabled} isOverlay /> : null}</DragOverlay>
+      <DragOverlay>{active ? <Card lead={active} isOverlay /> : null}</DragOverlay>
       <LostReasonDialog
         lead={pendingLost}
         onCancel={() => setPendingLost(null)}
@@ -153,7 +155,6 @@ function Column({
   tone,
   dot,
   leads,
-  aiEnabled,
   onOpenQuickView,
 }: {
   status: LeadStatus;
@@ -161,7 +162,6 @@ function Column({
   tone: string;
   dot: string;
   leads: KanbanLead[];
-  aiEnabled: boolean;
   onOpenQuickView: (id: string) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
@@ -193,7 +193,7 @@ function Column({
           <p className="px-2 py-6 text-center text-xs text-muted-foreground">Sin leads</p>
         ) : (
           leads.map((l) => (
-            <Card key={l.id} lead={l} aiEnabled={aiEnabled} onOpenQuickView={onOpenQuickView} />
+            <Card key={l.id} lead={l} onOpenQuickView={onOpenQuickView} />
           ))
         )}
         {status === "new" && <AddLeadCard />}
@@ -226,12 +226,10 @@ function LeadInitials({ name }: { name: string }) {
 
 function Card({
   lead,
-  aiEnabled,
   isOverlay = false,
   onOpenQuickView,
 }: {
   lead: KanbanLead;
-  aiEnabled: boolean;
   isOverlay?: boolean;
   onOpenQuickView?: (id: string) => void;
 }) {
@@ -292,24 +290,12 @@ function Card({
           )}
         </div>
       )}
-      <div className="flex items-center justify-between gap-2 pl-8">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <p className="text-[11px] text-muted-foreground tabular-nums">
-            {relativeTime(lead.created_at)}
-          </p>
-          {lead.estimated_value != null && lead.estimated_value > 0 && (
-            <Badge variant="neutral" className="tabular-nums text-[10px] h-4 px-1.5">
-              {formatEUR(lead.estimated_value)}
-            </Badge>
-          )}
-        </div>
-        {!isOverlay && (
-          <div
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <LeadFastActions lead={lead} aiEnabled={aiEnabled} />
-          </div>
+      <div className="flex items-center justify-between gap-2 pl-8 text-[11px] tabular-nums text-muted-foreground">
+        <span className="whitespace-nowrap">{relativeTime(lead.created_at)}</span>
+        {lead.estimated_value != null && lead.estimated_value > 0 && (
+          <Badge variant="neutral" className="tabular-nums text-[10px] h-4 px-1.5">
+            {formatEUR(lead.estimated_value)}
+          </Badge>
         )}
       </div>
     </div>
