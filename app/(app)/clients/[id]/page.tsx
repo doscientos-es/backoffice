@@ -1,6 +1,7 @@
-import { BackLink } from "@/components/layout/back-link";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
@@ -8,7 +9,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatEUR } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { updateClient } from "../actions";
@@ -29,20 +30,39 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
 
   if (!client) notFound();
 
-  const { data: projects } = await supabase
-    .from("projects")
-    .select("id, name, status")
-    .eq("client_id", id)
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false })
-    .limit(20);
+  const [{ data: projects }, { data: proposals }, { data: invoices }] = await Promise.all([
+    supabase
+      .from("projects")
+      .select("id, name, status")
+      .eq("client_id", id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("proposals")
+      .select("id, number, title, status, total")
+      .eq("client_id", id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(10),
+    supabase
+      .from("invoices")
+      .select("id, full_number, status, total, issue_date")
+      .eq("client_id", id)
+      .is("deleted_at", null)
+      .order("issue_date", { ascending: false })
+      .limit(10),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title={client.name as string}
         description={(client.nif as string | null) ?? undefined}
-        back={<BackLink href="/clients" label="Volver a clientes" />}
+        breadcrumbs={[
+          { label: "Clientes", href: "/clients" },
+          { label: client.name as string },
+        ]}
       />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
@@ -171,31 +191,112 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         </Card>
       </div>
 
-      {/* Projects */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Proyectos</CardTitle>
-        </CardHeader>
-        <CardContent className="px-0">
-          {!projects || projects.length === 0 ? (
-            <p className="px-6 py-2 text-sm text-muted-foreground">Sin proyectos asociados.</p>
-          ) : (
-            <ul className="divide-y divide-border">
-              {projects.map((p) => (
-                <li
-                  key={p.id as string}
-                  className="flex items-center justify-between px-6 py-2.5 text-sm"
-                >
-                  <Link href={`/projects/${p.id}`} className="font-medium hover:underline">
-                    {p.name as string}
-                  </Link>
-                  <span className="text-xs text-muted-foreground">{p.status as string}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Projects */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Proyectos</CardTitle>
+            <Button asChild size="sm">
+              <Link href={`/projects/new?client_id=${id}`}>Nuevo</Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="px-0">
+            {!projects || projects.length === 0 ? (
+              <p className="px-6 py-2 text-sm text-muted-foreground">Sin proyectos.</p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {projects.map((p) => (
+                  <li
+                    key={p.id as string}
+                    className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm"
+                  >
+                    <Link
+                      href={`/projects/${p.id}`}
+                      className="truncate font-medium hover:underline"
+                    >
+                      {p.name as string}
+                    </Link>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {p.status as string}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Proposals */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Propuestas</CardTitle>
+            <Button asChild size="sm">
+              <Link href={`/proposals/new?client_id=${id}`}>Nueva</Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="px-0">
+            {!proposals || proposals.length === 0 ? (
+              <p className="px-6 py-2 text-sm text-muted-foreground">Sin propuestas.</p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {proposals.map((p) => (
+                  <li
+                    key={p.id as string}
+                    className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm"
+                  >
+                    <Link
+                      href={`/proposals/${p.id}`}
+                      className="truncate font-medium hover:underline"
+                    >
+                      {p.number as string}
+                    </Link>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Badge variant="neutral">{p.status as string}</Badge>
+                      <span className="tabular-nums text-xs text-muted-foreground">
+                        {formatEUR(Number(p.total ?? 0))}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Invoices */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Facturas</CardTitle>
+          </CardHeader>
+          <CardContent className="px-0">
+            {!invoices || invoices.length === 0 ? (
+              <p className="px-6 py-2 text-sm text-muted-foreground">Sin facturas.</p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {invoices.map((inv) => (
+                  <li
+                    key={inv.id as string}
+                    className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm"
+                  >
+                    <Link
+                      href={`/invoices/${inv.id}`}
+                      className="truncate font-medium hover:underline"
+                    >
+                      {inv.full_number as string}
+                    </Link>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Badge variant="neutral">{inv.status as string}</Badge>
+                      <span className="tabular-nums text-xs text-muted-foreground">
+                        {formatEUR(Number(inv.total ?? 0))}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

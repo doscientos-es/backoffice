@@ -4,21 +4,56 @@ import { createServerClient } from "@/lib/supabase/server";
 import Link from "next/link";
 
 export const metadata = { title: "Proyectos · doscientos" };
+export const dynamic = "force-dynamic";
 
-export default async function ProjectsPage() {
+const PAGE_SIZE = 25;
+
+const STATUS_OPTIONS = [
+  { value: "planned", label: "Planificado" },
+  { value: "active", label: "Activo" },
+  { value: "on_hold", label: "En pausa" },
+  { value: "completed", label: "Completado" },
+  { value: "cancelled", label: "Cancelado" },
+];
+
+function escapeIlike(value: string): string {
+  return value.replace(/[%_\\]/g, (m) => `\\${m}`);
+}
+
+export default async function ProjectsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; status?: string; page?: string }>;
+}) {
+  const sp = await searchParams;
+  const q = (sp.q ?? "").trim();
+  const status = (sp.status ?? "").trim();
+  const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
+  const from = (page - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
+
   const supabase = await createServerClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("projects")
-    .select("id, name, status, client_id, clients(name)")
-    .is("deleted_at", null)
+    .select("id, name, status, client_id, clients(name)", { count: "exact" })
+    .is("deleted_at", null);
+
+  if (q.length > 0) query = query.ilike("name", `%${escapeIlike(q)}%`);
+  if (status) query = query.eq("status", status);
+
+  const { data, error, count } = await query
     .order("created_at", { ascending: false })
-    .limit(50);
+    .range(from, to);
 
   return (
     <ListPage
       title="Proyectos"
-      empty="Aún no hay proyectos."
+      empty={q || status ? "Sin coincidencias." : "Aún no hay proyectos."}
       error={error?.message}
+      searchKey="q"
+      searchPlaceholder="Buscar por nombre…"
+      filters={[{ key: "status", label: "Estado", options: STATUS_OPTIONS }]}
+      pagination={{ page, pageSize: PAGE_SIZE, total: count ?? 0 }}
       actions={
         <Button asChild size="sm">
           <Link href="/projects/new">Nuevo</Link>

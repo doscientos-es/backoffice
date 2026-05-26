@@ -1,4 +1,3 @@
-import { BackLink } from "@/components/layout/back-link";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -101,7 +100,13 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
       <PageHeader
         title={lead.name as string}
         description={(lead.company as string | null) ?? undefined}
-        back={<BackLink href="/leads" label="Volver a leads" />}
+        breadcrumbs={[
+          { label: "Leads", href: "/leads" },
+          { label: lead.name as string },
+          ...(linkedClient?.id
+            ? [{ label: "Cliente", href: `/clients/${linkedClient.id}` }]
+            : []),
+        ]}
         actions={
           <>
             {canConvert ? (

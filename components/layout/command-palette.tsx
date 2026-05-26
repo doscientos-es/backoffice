@@ -1,5 +1,6 @@
 "use client";
 
+import type { SearchResultItem } from "@/app/api/search/route";
 import {
   CommandDialog,
   CommandEmpty,
@@ -9,7 +10,6 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import type { SearchResultItem } from "@/app/api/search/route";
 import {
   CheckSquare,
   FileSignature,

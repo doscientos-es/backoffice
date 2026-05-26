@@ -1,3 +1,8 @@
+import {
+  type FilterConfig,
+  ListControls,
+  type ListControlsProps,
+} from "@/components/layout/list-controls";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
@@ -24,6 +29,13 @@ export type ListPageProps = {
   emptyAction?: ReactNode;
   error?: string;
   actions?: ReactNode;
+  /** Habilita input de búsqueda persistido en URL bajo searchKey (default "q"). */
+  searchKey?: string;
+  searchPlaceholder?: string;
+  /** Filtros tipo select persistidos en URL. */
+  filters?: FilterConfig[];
+  /** Paginación basada en URL (?page=). */
+  pagination?: ListControlsProps["pagination"];
 };
 
 export function ListPage({
@@ -36,8 +48,13 @@ export function ListPage({
   emptyAction,
   error,
   actions,
+  searchKey,
+  searchPlaceholder,
+  filters,
+  pagination,
 }: ListPageProps) {
   const alignAt = (i: number): ListAlign => align?.[i] ?? "left";
+  const hasControls = !!searchKey || (filters && filters.length > 0) || !!pagination;
 
   return (
     <div className="flex flex-col gap-6">
@@ -45,6 +62,14 @@ export function ListPage({
 
       <Card>
         <CardContent className="px-0 pt-0">
+          {hasControls ? (
+            <ListControls
+              searchKey={searchKey}
+              searchPlaceholder={searchPlaceholder}
+              filters={filters}
+              pagination={pagination}
+            />
+          ) : null}
           {error ? (
             <p className="px-5 py-6 text-sm text-destructive">{error}</p>
           ) : rows.length === 0 ? (

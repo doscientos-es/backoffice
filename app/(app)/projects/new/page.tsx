@@ -14,6 +14,7 @@ import Link from "next/link";
 import { createProject } from "../actions";
 
 export const metadata: Metadata = { title: "Nuevo proyecto · doscientos" };
+export const dynamic = "force-dynamic";
 
 const STATUS_OPTIONS = [
   { value: "planning", label: "Planificación" },
@@ -23,8 +24,13 @@ const STATUS_OPTIONS = [
   { value: "cancelled", label: "Cancelado" },
 ];
 
-export default async function NewProjectPage() {
+export default async function NewProjectPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ client_id?: string }>;
+}) {
   await requireUser();
+  const { client_id } = await searchParams;
   const supabase = await createServerClient();
   const { data: clients } = await supabase
     .from("clients")
@@ -48,7 +54,12 @@ export default async function NewProjectPage() {
                 required
                 hint="Cliente al que pertenece el proyecto."
               >
-                <Select id="client_id" name="client_id" required defaultValue="">
+                <Select
+                  id="client_id"
+                  name="client_id"
+                  required
+                  defaultValue={client_id ?? ""}
+                >
                   <option value="" disabled>
                     — Selecciona cliente —
                   </option>

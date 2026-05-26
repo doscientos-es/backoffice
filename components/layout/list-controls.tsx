@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export type FilterOption = { value: string; label: string };
 
@@ -48,32 +48,44 @@ export function ListControls({
   const pathname = usePathname();
   const params = useSearchParams();
 
-  const initialQ = params.get(searchKey) ?? "";
-  const [q, setQ] = useState(initialQ);
+  const urlQ = params.get(searchKey) ?? "";
+  const [q, setQ] = useState(urlQ);
 
-  useEffect(() => {
-    setQ(params.get(searchKey) ?? "");
-  }, [params, searchKey]);
+  // Keep the latest router-related callbacks in a ref so the debounce effect
+  // can depend only on `q` without re-creating the timeout on every render.
+  const commitRef = useRef<(value: string) => void>(() => {});
+  commitRef.current = (value: string) => {
+    const next = updateParams(params, { [searchKey]: value, page: null });
+    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+  };
 
+  // Sync local input when the URL changes externally (back/forward, links).
   useEffect(() => {
-    if (q === initialQ) return;
-    const handle = setTimeout(() => {
-      const next = updateParams(params, { [searchKey]: q, page: null });
-      router.replace(`${pathname}?${next.toString()}`, { scroll: false });
-    }, 250);
+    setQ(urlQ);
+  }, [urlQ]);
+
+  // Debounce input → URL.
+  useEffect(() => {
+    if (q === urlQ) return;
+    const handle = setTimeout(() => commitRef.current(q), 250);
     return () => clearTimeout(handle);
-    // biome-ignore lint/correctness/useExhaustiveDependencies: triggered solely by q
-  }, [q]);
+  }, [q, urlQ]);
 
-  const setFilter = (key: string, value: string) => {
-    const next = updateParams(params, { [key]: value || null, page: null });
-    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
-  };
+  const setFilter = useCallback(
+    (key: string, value: string) => {
+      const next = updateParams(params, { [key]: value || null, page: null });
+      router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+    },
+    [params, pathname, router],
+  );
 
-  const setPage = (page: number) => {
-    const next = updateParams(params, { page: page <= 1 ? null : String(page) });
-    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
-  };
+  const setPage = useCallback(
+    (page: number) => {
+      const next = updateParams(params, { page: page <= 1 ? null : String(page) });
+      router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+    },
+    [params, pathname, router],
+  );
 
   const hasControls = searchKey || filters.length > 0;
   const hasPagination =
@@ -121,9 +133,7 @@ export function ListControls({
       {pagination ? (
         <div className="flex items-center gap-2">
           <span className="text-xs tabular-nums text-muted-foreground">
-            {pagination.total === 0
-              ? "Sin resultados"
-              : `${from}–${to} de ${pagination.total}`}
+            {pagination.total === 0 ? "Sin resultados" : `${from}–${to} de ${pagination.total}`}
           </span>
           <Button
             type="button"

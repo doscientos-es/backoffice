@@ -1,4 +1,3 @@
-import { BackLink } from "@/components/layout/back-link";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +10,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatEUR } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { updateProject } from "../actions";
@@ -56,20 +55,40 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     .is("deleted_at", null)
     .order("name");
 
-  const { data: tasks } = await supabase
-    .from("tasks")
-    .select("id, title, status")
-    .eq("project_id", id)
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false })
-    .limit(20);
+  const [{ data: tasks }, { data: proposals }, { data: invoices }] = await Promise.all([
+    supabase
+      .from("tasks")
+      .select("id, title, status")
+      .eq("project_id", id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("proposals")
+      .select("id, number, title, status, total")
+      .eq("project_id", id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(10),
+    supabase
+      .from("invoices")
+      .select("id, full_number, status, total, issue_date")
+      .eq("project_id", id)
+      .is("deleted_at", null)
+      .order("issue_date", { ascending: false })
+      .limit(10),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title={project.name as string}
         description={client?.name}
-        back={<BackLink href="/projects" label="Volver a proyectos" />}
+        breadcrumbs={[
+          { label: "Proyectos", href: "/projects" },
+          ...(client ? [{ label: client.name, href: `/clients/${client.id}` }] : []),
+          { label: project.name as string },
+        ]}
         actions={
           <Badge variant={STATUS_VARIANT[project.status as keyof typeof STATUS_VARIANT]}>
             {project.status as string}
@@ -245,6 +264,83 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           )}
         </CardContent>
       </Card>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Proposals */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Propuestas</CardTitle>
+            {client ? (
+              <Button asChild size="sm">
+                <Link href={`/proposals/new?client_id=${client.id}&project_id=${id}`}>
+                  Nueva
+                </Link>
+              </Button>
+            ) : null}
+          </CardHeader>
+          <CardContent className="px-0">
+            {!proposals || proposals.length === 0 ? (
+              <p className="px-6 py-2 text-sm text-muted-foreground">Sin propuestas.</p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {proposals.map((p) => (
+                  <li
+                    key={p.id as string}
+                    className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm"
+                  >
+                    <Link
+                      href={`/proposals/${p.id}`}
+                      className="truncate font-medium hover:underline"
+                    >
+                      {p.number as string}
+                    </Link>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Badge variant="neutral">{p.status as string}</Badge>
+                      <span className="tabular-nums text-xs text-muted-foreground">
+                        {formatEUR(Number(p.total ?? 0))}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Invoices */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Facturas</CardTitle>
+          </CardHeader>
+          <CardContent className="px-0">
+            {!invoices || invoices.length === 0 ? (
+              <p className="px-6 py-2 text-sm text-muted-foreground">Sin facturas.</p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {invoices.map((inv) => (
+                  <li
+                    key={inv.id as string}
+                    className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm"
+                  >
+                    <Link
+                      href={`/invoices/${inv.id}`}
+                      className="truncate font-medium hover:underline"
+                    >
+                      {inv.full_number as string}
+                    </Link>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Badge variant="neutral">{inv.status as string}</Badge>
+                      <span className="tabular-nums text-xs text-muted-foreground">
+                        {formatEUR(Number(inv.total ?? 0))}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -1,4 +1,3 @@
-import { BackLink } from "@/components/layout/back-link";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -81,7 +80,12 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
       <PageHeader
         title={`Factura ${invoice.full_number as string}`}
         description={client?.name}
-        back={<BackLink href="/invoices" label="Volver a facturas" />}
+        breadcrumbs={[
+          { label: "Facturas", href: "/invoices" },
+          ...(client ? [{ label: client.name, href: `/clients/${client.id}` }] : []),
+          ...(project ? [{ label: project.name, href: `/projects/${project.id}` }] : []),
+          { label: invoice.full_number as string },
+        ]}
         actions={
           <div className="flex items-center gap-2">
             <Badge variant={STATUS_VARIANT[invoice.status as keyof typeof STATUS_VARIANT]}>
