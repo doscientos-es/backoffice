@@ -34,15 +34,27 @@ export function InviteForm({ actorRole }: Props) {
     <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="grid gap-4 sm:grid-cols-[1fr_1fr_180px]">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="invite_name" className="text-xs font-medium">Nombre</Label>
+          <Label htmlFor="invite_name" className="text-xs font-medium">
+            Nombre
+          </Label>
           <Input id="invite_name" name="name" required placeholder="Nombre completo" />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="invite_email" className="text-xs font-medium">Email</Label>
-          <Input id="invite_email" name="email" type="email" required placeholder="nombre@empresa.com" />
+          <Label htmlFor="invite_email" className="text-xs font-medium">
+            Email
+          </Label>
+          <Input
+            id="invite_email"
+            name="email"
+            type="email"
+            required
+            placeholder="nombre@empresa.com"
+          />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="invite_role" className="text-xs font-medium">Rol</Label>
+          <Label htmlFor="invite_role" className="text-xs font-medium">
+            Rol
+          </Label>
           <Select id="invite_role" name="role" defaultValue="member">
             {actorRole === "owner" ? <option value="owner">Propietario</option> : null}
             <option value="admin">Administrador</option>

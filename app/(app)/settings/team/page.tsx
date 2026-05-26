@@ -3,11 +3,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Empty,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty-state";
+import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
 import { type MemberRole, requireRole } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
@@ -129,10 +125,14 @@ export default async function TeamSettingsPage() {
                               <div className="truncate font-medium">
                                 {m.name}
                                 {isSelf ? (
-                                  <span className="ml-2 text-xs text-[color:var(--text-muted)]">(tú)</span>
+                                  <span className="ml-2 text-xs text-[color:var(--text-muted)]">
+                                    (tú)
+                                  </span>
                                 ) : null}
                               </div>
-                              <div className="truncate text-xs text-[color:var(--text-muted)]">{m.email}</div>
+                              <div className="truncate text-xs text-[color:var(--text-muted)]">
+                                {m.email}
+                              </div>
                             </div>
                           </div>
                         </td>

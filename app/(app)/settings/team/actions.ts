@@ -54,19 +54,17 @@ export async function inviteTeamMember(formData: FormData): Promise<ActionResult
     return { ok: false, error: inviteError?.message ?? "No se pudo enviar la invitación." };
   }
 
-  const { error: upsertError } = await admin
-    .from("team_members")
-    .upsert(
-      {
-        id: invited.user.id,
-        email: parsed.data.email,
-        name: parsed.data.name,
-        role: parsed.data.role,
-        deleted_at: null,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "id" },
-    );
+  const { error: upsertError } = await admin.from("team_members").upsert(
+    {
+      id: invited.user.id,
+      email: parsed.data.email,
+      name: parsed.data.name,
+      role: parsed.data.role,
+      deleted_at: null,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "id" },
+  );
   if (upsertError) return { ok: false, error: upsertError.message };
 
   revalidatePath("/settings/team");
