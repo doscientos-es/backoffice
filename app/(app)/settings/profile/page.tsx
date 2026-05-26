@@ -12,7 +12,7 @@ export default async function ProfileSettingsPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Perfil"
-        description="Alias de remitente, firma HTML y tu cuenta de GitHub."
+        description="Datos personales, alias de remitente y firma auto-generada."
       />
       <Card>
         <CardContent className="pt-6">
@@ -21,8 +21,10 @@ export default async function ProfileSettingsPage() {
             email={user.email}
             emailAlias={user.emailAlias ?? null}
             emailSendEnabled={user.emailSendEnabled}
-            signatureHtml={user.signatureHtml ?? null}
             githubHandle={user.githubHandle ?? null}
+            jobTitle={user.jobTitle ?? null}
+            phone={user.phone ?? null}
+            contactEmail={user.contactEmail ?? null}
           />
         </CardContent>
       </Card>

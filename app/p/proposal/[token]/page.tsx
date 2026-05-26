@@ -1,9 +1,14 @@
 import { LogoMark } from "@/components/branding";
 import { Badge } from "@/components/ui/badge";
+import { getCurrentUser } from "@/lib/auth";
+import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { ProposalActions } from "./proposal-actions";
+
+const log = scopedLogger("portal.proposal");
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -59,13 +64,37 @@ export default async function PortalProposalPage({
     .eq("proposal_id", proposal.id as string)
     .order("position");
 
-  // First-view tracking: bump status from 'sent' to 'viewed' once.
-  if (proposal.status === "sent") {
+  // Detect whether the current visitor is a logged-in team member so we can
+  // tag the view appropriately and avoid bumping the proposal to 'viewed'
+  // when we are previewing it ourselves.
+  const auth = await getCurrentUser();
+  const isTeam = auth.ok;
+
+  // Bump status from 'sent' to 'viewed' only on the first external (client)
+  // view. Team previews never transition the status.
+  if (!isTeam && proposal.status === "sent") {
     await admin
       .from("proposals")
       .update({ status: "viewed", viewed_at: new Date().toISOString() })
       .eq("id", proposal.id as string)
       .eq("status", "sent");
+  }
+
+  // Best-effort view tracking. Never throws to the visitor.
+  try {
+    const h = await headers();
+    const forwarded = h.get("x-forwarded-for");
+    const ip = forwarded ? forwarded.split(",")[0]?.trim() : (h.get("x-real-ip") ?? null);
+    const userAgent = h.get("user-agent");
+    await admin.from("proposal_views").insert({
+      proposal_id: proposal.id as string,
+      viewer_type: isTeam ? "team" : "client",
+      team_member_id: isTeam ? auth.user.id : null,
+      ip,
+      user_agent: userAgent,
+    });
+  } catch (err) {
+    log.warn({ err, proposalId: proposal.id }, "proposal_view_insert_failed");
   }
 
   const client = (proposal as unknown as { clients: { name: string } | null }).clients;

@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
 import { type MemberRole, requireRole } from "@/lib/auth";
-import { createServerClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate } from "@/lib/utils";
 import { InviteForm } from "./invite-form";
 import { MemberRowActions } from "./member-row-actions";
@@ -48,7 +48,7 @@ type MemberRow = {
 
 export default async function TeamSettingsPage() {
   const actor = await requireRole(["owner", "admin"]);
-  const supabase = await createServerClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("team_members")

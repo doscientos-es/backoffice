@@ -242,3 +242,97 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
   revalidatePath(`/proposals/${id}`);
   return { ok: true };
 }
+
+// ---------------- SEND PREVIEW LINK (client portal) ----------------
+
+const SendPreviewInput = z.object({
+  id: z.string().uuid(),
+  to: z.string().email().optional(),
+  message: z.string().max(1000).optional(),
+});
+
+type SendPreviewResult =
+  | { ok: true; portalUrl: string; mocked: boolean }
+  | { ok: false; error: string };
+
+/**
+ * Sends the public portal URL of a proposal to the client via Resend and
+ * transitions the proposal from `draft` → `sent` (setting `sent_at`).
+ * Idempotent for already-sent proposals.
+ */
+export async function sendPreviewLink(input: unknown): Promise<SendPreviewResult> {
+  const user = await requireUser();
+
+  const parsed = SendPreviewInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+  }
+  const { id, to: overrideTo, message } = parsed.data;
+
+  const supabase = await createServerClient();
+  const { data: proposal, error: readError } = await supabase
+    .from("proposals")
+    .select(
+      "id, number, title, total, status, portal_token, valid_until, sent_at, clients(name, email)",
+    )
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (readError || !proposal) return { ok: false, error: "Propuesta no encontrada" };
+
+  const client = (proposal as unknown as { clients: { name: string; email: string | null } | null })
+    .clients;
+  const recipient = overrideTo ?? client?.email ?? null;
+  if (!recipient) return { ok: false, error: "El cliente no tiene email registrado" };
+
+  const portalToken = proposal.portal_token as string | null;
+  if (!portalToken) return { ok: false, error: "La propuesta no tiene token de portal" };
+
+  const portalUrl = `${publicEnv.NEXT_PUBLIC_APP_URL}/p/proposal/${portalToken}`;
+  const html = await renderEmail(
+    ProposalEmail({
+      clientName: client?.name ?? "Hola",
+      proposalTitle: proposal.title as string,
+      proposalNumber: proposal.number as string,
+      total: formatEUR(proposal.total as number),
+      validUntil: proposal.valid_until ? formatDate(proposal.valid_until as string) : undefined,
+      portalUrl,
+      appUrl: publicEnv.NEXT_PUBLIC_APP_URL,
+      message,
+    }),
+  );
+
+  let mocked = false;
+  try {
+    const result = await sendEmail({
+      fromName: user.name,
+      fromAlias: user.emailAlias ?? "propuestas",
+      to: recipient,
+      replyTo: user.contactEmail ?? user.email,
+      subject: `Propuesta ${proposal.number as string} · ${proposal.title as string}`,
+      html,
+      tags: { proposal_id: id, kind: "proposal_preview" },
+    });
+    mocked = result.mocked;
+  } catch (err) {
+    log.error({ err, proposalId: id }, "send_preview_link_failed");
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo enviar el email" };
+  }
+
+  const patch: Record<string, unknown> = {};
+  if (proposal.status === "draft") {
+    patch.status = "sent";
+    patch.sent_at = new Date().toISOString();
+  } else if (!proposal.sent_at) {
+    patch.sent_at = new Date().toISOString();
+  }
+  if (Object.keys(patch).length > 0) {
+    const { error: updateError } = await supabase.from("proposals").update(patch).eq("id", id);
+    if (updateError) {
+      log.error({ err: updateError, id }, "send_preview_link_update_failed");
+    }
+  }
+
+  revalidatePath(`/proposals/${id}`);
+  return { ok: true, portalUrl, mocked };
+}

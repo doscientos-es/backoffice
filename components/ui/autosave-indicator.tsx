@@ -41,8 +41,10 @@ export function AutosaveIndicator({ status, savedAt, error, className }: Autosav
       )}
     >
       {isSaving ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : null}
-      {!isSaving && !isError ? <Check className="size-3.5 text-success" aria-hidden /> : null}
-      {isError ? <AlertCircle className="size-3.5 text-destructive" aria-hidden /> : null}
+      {!isSaving && !isError ? (
+        <Check className="size-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden />
+      ) : null}
+      {isError ? <AlertCircle className="size-3.5" aria-hidden /> : null}
       <span className="truncate">
         {isSaving ? "Guardando…" : null}
         {isError ? (error ?? "Error al guardar") : null}
