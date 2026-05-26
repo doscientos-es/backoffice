@@ -22,6 +22,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           {children}
         </main>
       </div>
+      <CommandPalette />
     </div>
   );
 }
