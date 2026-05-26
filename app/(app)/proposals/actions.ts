@@ -1,8 +1,13 @@
 "use server";
 
+import { ProposalEmail } from "@/components/email";
 import { requireUser } from "@/lib/auth";
+import { sendEmail } from "@/lib/email/resend";
+import { renderEmail } from "@/lib/email/render";
+import { publicEnv } from "@/lib/env";
 import { scopedLogger } from "@/lib/logger";
 import { createServerClient } from "@/lib/supabase/server";
+import { formatDate, formatEUR } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -131,4 +136,109 @@ export async function createProposal(formData: FormData): Promise<void> {
 
   revalidatePath("/proposals");
   redirect(`/proposals/${proposal.id}`);
+}
+
+// ---------------- UPDATE (collaborative inline edits + autosave) ----------------
+
+const UpdateInput = z.object({
+  id: z.string().uuid(),
+  title: z.string().min(1).max(200).optional(),
+  valid_until: z
+    .string()
+    .optional()
+    .or(z.literal("").transform(() => null))
+    .nullable(),
+  notes: z
+    .string()
+    .max(4000)
+    .optional()
+    .or(z.literal("").transform(() => null))
+    .nullable(),
+  items: z.array(LineItem).min(1).optional(),
+});
+
+type UpdateResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * Patches a proposal in place. Used by the inline editor + autosave loop.
+ * Accepts a partial payload; when `items` is present the line items are
+ * replaced atomically (delete + insert) and totals recomputed server-side.
+ *
+ * Locked once the proposal is `accepted` or `rejected`.
+ */
+export async function updateProposal(input: unknown): Promise<UpdateResult> {
+  await requireUser();
+
+  const parsed = UpdateInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+  }
+  const { id, items, ...rest } = parsed.data;
+
+  const supabase = await createServerClient();
+
+  const { data: current, error: readError } = await supabase
+    .from("proposals")
+    .select("status")
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (readError || !current) return { ok: false, error: "Propuesta no encontrada" };
+  if (current.status === "accepted" || current.status === "rejected") {
+    return { ok: false, error: "La propuesta ya ha sido respondida y no se puede editar" };
+  }
+
+  const patch: Record<string, unknown> = {};
+  if (rest.title !== undefined) patch.title = rest.title;
+  if (rest.valid_until !== undefined) patch.valid_until = rest.valid_until;
+  if (rest.notes !== undefined) patch.notes = rest.notes;
+
+  if (items) {
+    let subtotal = 0;
+    let taxAmount = 0;
+    for (const item of items) {
+      const lineSubtotal = item.quantity * item.unit_price;
+      subtotal += lineSubtotal;
+      taxAmount += lineSubtotal * (item.vat_rate / 100);
+    }
+    patch.subtotal = n2(subtotal);
+    patch.tax_amount = n2(taxAmount);
+    patch.total = n2(n2(subtotal) + n2(taxAmount));
+  }
+
+  if (Object.keys(patch).length > 0) {
+    const { error: updateError } = await supabase.from("proposals").update(patch).eq("id", id);
+    if (updateError) {
+      log.error({ err: updateError, id }, "update_proposal_failed");
+      return { ok: false, error: updateError.message };
+    }
+  }
+
+  if (items) {
+    const { error: deleteError } = await supabase
+      .from("proposal_items")
+      .delete()
+      .eq("proposal_id", id);
+    if (deleteError) {
+      log.error({ err: deleteError, id }, "update_proposal_items_delete_failed");
+      return { ok: false, error: deleteError.message };
+    }
+    const { error: insertError } = await supabase.from("proposal_items").insert(
+      items.map((it, idx) => ({
+        proposal_id: id,
+        position: idx,
+        description: it.description,
+        quantity: it.quantity,
+        unit_price: it.unit_price,
+        vat_rate: it.vat_rate,
+      })),
+    );
+    if (insertError) {
+      log.error({ err: insertError, id }, "update_proposal_items_insert_failed");
+      return { ok: false, error: insertError.message };
+    }
+  }
+
+  revalidatePath(`/proposals/${id}`);
+  return { ok: true };
 }

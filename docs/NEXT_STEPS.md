@@ -63,16 +63,15 @@ Copia `.env.example` a `.env.local` y rellena. Las mismas variables deben estar 
 
 ---
 
-## 4. Supabase — Auth y MFA
+## 4. Supabase — Auth
 
 1. https://supabase.com/dashboard/project/hnzyllbksqvamqfubhri
 2. **Authentication → Providers → Email**: activa, desactiva sign-up público (solo invitaciones), confirm email **ON**.
 3. **Authentication → URL Configuration**:
    - Site URL: `https://app.doscientos.es`
    - Redirect URLs: `https://app.doscientos.es/auth/callback`, `http://localhost:3000/auth/callback`.
-4. **Authentication → Multi-factor**: activa TOTP.
-5. **Authentication → Users → Invite user**: invítate a ti mismo con rol owner (luego desde la app `/settings/team` se asigna en `team_members`).
-6. Tras el primer login, ejecuta en SQL Editor para crear el `team_member`:
+4. **Authentication → Users → Invite user**: invítate a ti mismo con rol owner (luego desde la app `/settings/team` se asigna en `team_members`).
+5. Tras el primer login, ejecuta en SQL Editor para crear el `team_member`:
 
    ```sql
    insert into team_members (id, email, name, role, email_send_enabled, email_alias)
@@ -95,7 +94,7 @@ Copia `.env.example` a `.env.local` y rellena. Las mismas variables deben estar 
 ## 6. Verificación final
 
 - `https://app.doscientos.es` carga la pantalla de login.
-- Login con email + TOTP funciona.
+- Login con email funciona.
 - Sidebar muestra todas las rutas.
 - Health check Supabase: el `inicio` no muestra errores en consola.
 - Webhook Resend: enviar email de prueba desde `/leads/[id]` → ver evento `delivered` en `lead_interactions`.

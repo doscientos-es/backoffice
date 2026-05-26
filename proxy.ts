@@ -62,18 +62,6 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // MFA: require AAL2 for all internal routes once the user has enrolled TOTP
-  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-  if (
-    aal?.nextLevel === "aal2" &&
-    aal.currentLevel !== "aal2" &&
-    !pathname.startsWith("/auth/mfa")
-  ) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/auth/mfa";
-    return NextResponse.redirect(url);
-  }
-
   return response;
 }
 

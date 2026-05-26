@@ -62,9 +62,6 @@ importers:
       fast-xml-parser:
         specifier: ^4.5.1
         version: 4.5.6
-      input-otp:
-        specifier: ^1.4.2
-        version: 1.4.2(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       lru-cache:
         specifier: ^11.0.2
         version: 11.5.0
@@ -3196,12 +3193,6 @@ packages:
 
   inherits@2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
-
-  input-otp@1.4.2:
-    resolution: {integrity: sha512-l3jWwYNvrEa6NTCt7BECfCm48GvwuZzkoeG3gBL2w4CHeOXW3eKFmf9UNYkNfYc3mxMrthMnxjIE07MT0zLBQA==}
-    peerDependencies:
-      react: ^16.8 || ^17.0 || ^18.0 || ^19.0.0 || ^19.0.0-rc
-      react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0.0 || ^19.0.0-rc
 
   internmap@2.0.3:
     resolution: {integrity: sha512-5Hh7Y1wQbvY5ooGgPbDaL5iYLAPzMTUrjMulskHLH6wnv/A+1q5rgEaiuqEjB+oxGXIVZs1FF+R/KPN3ZSQYYg==}
@@ -7474,11 +7465,6 @@ snapshots:
       resolve-from: 4.0.0
 
   inherits@2.0.4: {}
-
-  input-otp@1.4.2(react-dom@19.2.6(react@19.2.6))(react@19.2.6):
-    dependencies:
-      react: 19.2.6
-      react-dom: 19.2.6(react@19.2.6)
 
   internmap@2.0.3: {}
 

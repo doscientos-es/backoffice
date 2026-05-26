@@ -257,13 +257,12 @@ ai_suggested_next_step  text
 ai_temperature          text      -- 'hot' | 'warm' | 'cold'
 ai_confidence           numeric(3,2)
 ai_updated_at           timestamptz
--- Soft delete (GDPR)
+-- Soft delete
 deleted_at              timestamptz  -- NULL = activo; non-NULL = borrado logico
 ```
 
 Soft delete: todas las queries deben incluir `WHERE deleted_at IS NULL`.
 Endpoint `DELETE /api/crm/leads/[id]` hace UPDATE deleted_at=now() en lugar de DELETE real.
-Endpoint `POST /api/gdpr/leads/[id]/erase` anonimiza: name='ANONIMIZADO', email='anonimizado@gdpr.local', phone=null, ip=null, company=null, message=null.
 
 ### 5.2 clients
 
@@ -286,7 +285,7 @@ country     text DEFAULT 'ES'
 notes        text
 status       text DEFAULT 'active' -- 'active' | 'inactive' | 'archived'
 portal_token uuid UNIQUE DEFAULT gen_random_uuid() -- token para portal general del cliente (fase 2)
-deleted_at   timestamptz  -- soft delete GDPR
+deleted_at   timestamptz  -- soft delete
 ```
 
 ### 5.3 projects
@@ -580,7 +579,6 @@ is_active     bool DEFAULT true
 email_send_enabled bool DEFAULT true -- permite al usuario enviar emails desde el CRM
 github_handle text UNIQUE           -- handle de GitHub para sincronización bidireccional
 deleted_at    timestamptz           -- soft delete: NULL = activo
-mfa_enabled   bool DEFAULT false    -- refleja si el usuario tiene TOTP activo en Supabase Auth
 ```
 
 Restricción: solo puede haber 1 `owner`. El owner no puede degradarse a sí mismo
@@ -1074,27 +1072,6 @@ CREATE POLICY "admin_write_team" ON team_members FOR ALL TO authenticated
   USING (current_member_role() IN ('owner','admin'))
   WITH CHECK (current_member_role() IN ('owner','admin'));
 ```
-
-### 6.1.1 2FA para owner y admin
-
-Supabase Auth soporta TOTP nativo (`auth.mfa_factors`).
-El `proxy.ts` de Next.js 16 (sustituye al antiguo `middleware.ts`) verifica `auth.aal()` (Assurance Level):
-
-```typescript
-// proxy.ts (Next 16+, antes middleware.ts)
-const { data: { user } } = await supabase.auth.getUser()
-const role = await getCurrentRole(user.id) // query a team_members
-
-if (['owner', 'admin'].includes(role)) {
-  const { data: { aal } } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
-  if (aal?.currentLevel !== 'aal2') {
-    return NextResponse.redirect(new URL('/login/mfa', request.url))
-  }
-}
-```
-
-Configuración en settings: `/settings/security` con QR de TOTP y botón de activación.
-Los `member` y `viewer` tienen 2FA opcional.
 
 ### 6.2 Acceso del portal publico
 
@@ -1877,7 +1854,6 @@ viviría en un job se resuelve con dos patrones:
 
 **Phase 2** (requiere Vercel Pro o pg_cron de Supabase):
 - Notificaciones por email del digest (si el equipo deja de entrar a diario al dashboard).
-- Hard-delete GDPR de filas con `deleted_at < now() - 2 years` (sec. 25.3).
 - Generación automática de facturas recurrentes cuando aparezca la primera suscripción.
 
 ### 17.2 Verifactu: envío manual desde la UI
@@ -2414,37 +2390,11 @@ Supabase hace backups diarios automáticos; no se necesita verificación adicion
 
 ---
 
-## 26. GDPR y soft delete
-
-### 25.1 Principios
+## 26. Soft delete
 
 - `leads`, `clients`, `team_members` y `tasks` tienen `deleted_at timestamptz`.
 - Todas las queries de aplicación añaden `WHERE deleted_at IS NULL` (via helper `activeQuery()`).
 - Las facturas y `invoice_events` **nunca** se borran (obligación fiscal 6 años, RD 1619/2012 art.19).
-- Los time_entries de facturas emitidas tampoco se borran (trazabilidad).
-
-### 25.2 Endpoints GDPR
-
-```
-POST /api/gdpr/leads/[id]/erase
-  → Anonimiza: name, email, phone, ip, message, company → valores neutros
-  → Mantiene: status, source, created_at (datos estadísticos sin PII)
-  → Solo accessible por role='owner' o role='admin'
-
-POST /api/gdpr/clients/[id]/erase
-  → Requiere que no haya facturas pendientes de pago
-  → Anonimiza PII del cliente
-  → Facturas quedan con datos anonimizados pero invoice_number intacto (legal)
-
-GET /api/gdpr/clients/[id]/export
-  → ZIP con: datos del cliente en JSON + PDFs de todas sus facturas
-  → Solo accessible por role='owner' o role='admin'
-```
-
-### 25.3 Retention policy
-
-El borrado físico de filas con `deleted_at < now() - interval '2 years'` se implementará
-en Phase 2 con un pg_cron de Supabase cuando haya datos reales con esa antigüedad.
 
 ---
 
@@ -2486,7 +2436,6 @@ Límites específicos por ruta:
 | `/api/crm/*` | 100 req/min por usuario |
 | `/api/portal/*` | 30 req/min por IP |
 | `/api/github/webhook` | Sin límite (fuente de confianza, valida por firma) |
-| `/api/gdpr/*` | 5 req/min por usuario (operaciones pesadas) |
 
 ---
 
@@ -2629,7 +2578,7 @@ Aplicar a: eliminar lead, eliminar cliente, eliminar proyecto, eliminar task,
 eliminar documento, eliminar reminder, eliminar line_item.
 
 `<ConfirmDialog>` solo para acciones IRREVERSIBLES: emitir factura (sale de draft),
-enviar factura a AEAT, crear rectificativa, borrado físico GDPR.
+enviar factura a AEAT, crear rectificativa.
 
 ### 29.7 Atajos de teclado
 
@@ -2663,7 +2612,6 @@ No solo busca entidades; también ejecuta **acciones**:
 > Crear nueva factura para [cliente]
 > Ir a /settings
 > Cambiar a modo claro
-> Activar 2FA
 > Exportar leads a CSV
 > [resultados de búsqueda en entidades...]
 ```
@@ -2972,7 +2920,7 @@ funcionalidad que puede desplegarse y usarse en producción de forma independien
 ### Step 1 — Infraestructura, auth y pipelines
 - Repo Next.js 16.2 App Router (Turbopack default), Tailwind 4 con tokens del design system (sec. 3), shadcn/ui, Pino (stdout)
 - Supabase: proyecto, tablas team_members + settings, RLS con `current_member_role()`
-- Supabase Auth: email/password, 2FA TOTP para owner/admin (sec. 6.1.1)
+- Supabase Auth: email/password (sec. 6.1)
 - `proxy.ts` (Next 16): protección de rutas, rate limiting (lru-cache en memoria), validación de rol
 - Vercel: deploy, env vars, dominio app.doscientos.es
 - `lib/logger.ts` (Pino → stdout), `lib/templates/render.ts` (sec. 29), `lib/format.ts` (sec. 30.17)
@@ -3022,7 +2970,6 @@ funcionalidad que puede desplegarse y usarse en producción de forma independien
 - QR PNG en Supabase Storage bucket `invoices-qr` (público) + QR en portal e impresión
 - Flujo UI: factura rectificativa (botón, modal, serie R-YYYY-NNN)
 - Toggle VERIFACTU_ENV test/prod en settings de la app
-- Endpoints GDPR: `/api/gdpr/*/erase`, `/api/gdpr/*/export` (sec. 25.2)
 
 ### Step 6 — IA y dashboard
 - API route `summarize-lead` (GPT-4o-mini): resumen + temperatura hot/warm/cold
