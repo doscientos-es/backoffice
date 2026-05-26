@@ -4,6 +4,7 @@ import { Logo } from "@/components/branding";
 import { NotificationsBell } from "@/components/layout/notifications-bell";
 import { UserMenu } from "@/components/layout/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import type { CurrentUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import {
@@ -79,14 +80,16 @@ export function Sidebar({ user }: { user: CurrentUser; verifactuMode: string }) 
       </nav>
 
       <footer className="flex flex-col border-t border-border p-2 gap-2">
-        <div className="flex items-center justify-end gap-1">
-          <span className="px-2 text-xs text-muted-foreground -mr-1">
-            v{version}
-          </span>
-          <NotificationsBell memberId={user.id} />
-          <ThemeToggle />
-        </div>
-        <UserMenu user={user} />
+        <ErrorBoundary>
+          <div className="flex items-center justify-end gap-1">
+            <span className="px-2 text-xs text-muted-foreground -mr-1">
+              v{version}
+            </span>
+            <NotificationsBell memberId={user.id} />
+            <ThemeToggle />
+          </div>
+          <UserMenu user={user} />
+        </ErrorBoundary>
       </footer>
     </aside>
   );

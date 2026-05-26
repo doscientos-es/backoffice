@@ -11,6 +11,7 @@ import {
   DrawerContent,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import type { CurrentUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import {
@@ -121,13 +122,15 @@ export function MobileNav({
 
             {/* Footer Actions */}
             <div className="flex flex-col gap-2 border-t border-border p-2 mt-auto">
-              <div className="flex items-center justify-between px-2">
-                <div className="flex items-center gap-1">
-                  <NotificationsBell memberId={user.id} />
+              <ErrorBoundary>
+                <div className="flex items-center justify-between px-2">
+                  <div className="flex items-center gap-1">
+                    <NotificationsBell memberId={user.id} />
+                  </div>
+                  <ThemeToggle />
                 </div>
-                <ThemeToggle />
-              </div>
-              <UserMenu user={user} />
+                <UserMenu user={user} />
+              </ErrorBoundary>
               <div className="flex items-center justify-between px-2 pb-1">
                 <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
                   v0.1 · MVP

@@ -1,10 +1,11 @@
 "use client";
 
 // Compartido entre el drawer de la lista de leads y la ficha del lead.
-// Mantiene una sola fuente de verdad para las 3 fast actions básicas
-// (llamada, email, nota). Todas refrescan el router tras éxito.
+// Única fuente de verdad para las 3 fast actions (llamada, email, nota)
+// con opción de agendar follow-up. Todas refrescan el router tras éxito.
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -22,22 +23,101 @@ import { Textarea } from "@/components/ui/textarea";
 import { Mail, NotebookPen, Phone } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { createReminder } from "../reminders/actions";
 import { logLeadCall, logLeadEmail, logLeadNote } from "./actions";
 
-export function QCallDialog({ leadId, leadPhone }: { leadId: string; leadPhone: string | null }) {
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function toLocalInputValue(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function defaultFollowUp(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(9, 0, 0, 0);
+  return toLocalInputValue(d);
+}
+
+function FollowUpSection({
+  idPrefix,
+  enabled,
+  onEnabledChange,
+  remindAt,
+  onRemindAtChange,
+}: {
+  idPrefix: string;
+  enabled: boolean;
+  onEnabledChange: (v: boolean) => void;
+  remindAt: string;
+  onRemindAtChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2 rounded-md border border-border/60 bg-muted/30 p-2.5">
+      <label htmlFor={`${idPrefix}-followup`} className="flex items-center gap-2 text-xs font-medium">
+        <Checkbox
+          id={`${idPrefix}-followup`}
+          checked={enabled}
+          onCheckedChange={(v) => onEnabledChange(v === true)}
+        />
+        Crear aviso de seguimiento
+      </label>
+      {enabled && (
+        <Input
+          id={`${idPrefix}-followup-at`}
+          type="datetime-local"
+          value={remindAt}
+          onChange={(e) => onRemindAtChange(e.target.value)}
+          className="h-8 text-xs"
+        />
+      )}
+    </div>
+  );
+}
+
+export function QCallDialog({
+  leadId,
+  leadName,
+  leadPhone,
+}: {
+  leadId: string;
+  leadName: string;
+  leadPhone: string | null;
+}) {
   const [open, setOpen] = useState(false);
-  const [notes, setNotes] = useState("");
   const [outcome, setOutcome] = useState("connected");
+  const [duration, setDuration] = useState("");
+  const [notes, setNotes] = useState("");
+  const [transcript, setTranscript] = useState("");
+  const [followUpEnabled, setFollowUpEnabled] = useState(false);
+  const [followUpAt, setFollowUpAt] = useState(defaultFollowUp);
   const feedback = useFormFeedback();
   const router = useRouter();
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     feedback.setPending();
-    const res = await logLeadCall({ leadId, notes: notes || undefined, outcome });
+    const res = await logLeadCall({
+      leadId,
+      notes: notes || undefined,
+      transcript: transcript || undefined,
+      durationMinutes: duration ? Number(duration) : undefined,
+      outcome,
+    });
     if (!res.ok) return feedback.setError(res.error);
-    feedback.setSuccess("Registrado");
+    if (followUpEnabled && followUpAt) {
+      await createReminder({
+        leadId,
+        title: `Llamar a ${leadName}`,
+        remindAt: new Date(followUpAt).toISOString(),
+      });
+    }
+    feedback.setSuccess("Llamada registrada");
     setNotes("");
+    setTranscript("");
+    setDuration("");
+    setFollowUpEnabled(false);
     router.refresh();
     setTimeout(() => setOpen(false), 400);
   }
@@ -50,26 +130,62 @@ export function QCallDialog({ leadId, leadPhone }: { leadId: string; leadPhone: 
           Registrar llamada
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Registrar llamada</DialogTitle>
           {leadPhone && <DialogDescription>{leadPhone}</DialogDescription>}
         </DialogHeader>
         <form onSubmit={onSubmit} className="flex flex-col gap-3">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor={`qa-call-outcome-${leadId}`} className="text-xs font-medium">Resultado</Label>
-            <Select id={`qa-call-outcome-${leadId}`} value={outcome} onChange={(e) => setOutcome(e.target.value)}>
-              <option value="connected">Contactado</option>
-              <option value="voicemail">Buzón de voz</option>
-              <option value="no_answer">Sin respuesta</option>
-              <option value="busy">Comunicando</option>
-              <option value="wrong_number">Número erróneo</option>
-            </Select>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor={`qa-call-outcome-${leadId}`} className="text-xs font-medium">Resultado</Label>
+              <Select id={`qa-call-outcome-${leadId}`} value={outcome} onChange={(e) => setOutcome(e.target.value)}>
+                <option value="connected">Contactado</option>
+                <option value="voicemail">Buzón de voz</option>
+                <option value="no_answer">Sin respuesta</option>
+                <option value="busy">Comunicando</option>
+                <option value="wrong_number">Número erróneo</option>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor={`qa-call-duration-${leadId}`} className="text-xs font-medium">Duración (min)</Label>
+              <Input
+                id={`qa-call-duration-${leadId}`}
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={600}
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                placeholder="0"
+              />
+            </div>
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor={`qa-call-notes-${leadId}`} className="text-xs font-medium">Notas <span className="text-destructive">*</span></Label>
             <Textarea id={`qa-call-notes-${leadId}`} rows={3} required value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Puntos clave, próximos pasos…" />
           </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor={`qa-call-transcript-${leadId}`} className="text-xs font-medium">
+              Transcripción <span className="text-muted-foreground/60">(opcional)</span>
+            </Label>
+            <Textarea
+              id={`qa-call-transcript-${leadId}`}
+              rows={3}
+              maxLength={50000}
+              value={transcript}
+              onChange={(e) => setTranscript(e.target.value)}
+              placeholder="Pega aquí la transcripción si la tienes…"
+              className="font-mono text-xs"
+            />
+          </div>
+          <FollowUpSection
+            idPrefix={`qa-call-${leadId}`}
+            enabled={followUpEnabled}
+            onEnabledChange={setFollowUpEnabled}
+            remindAt={followUpAt}
+            onRemindAtChange={setFollowUpAt}
+          />
           <div className="flex items-center justify-end gap-3">
             <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
             <SubmitButton loading={feedback.pending}>Registrar</SubmitButton>
