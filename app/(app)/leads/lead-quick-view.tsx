@@ -10,8 +10,9 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { formatEUR, relativeTime } from "@/lib/utils";
-import { ArrowUpRight, Building2, Mail, Wallet, X } from "lucide-react";
+import { ArrowUpRight, Building2, Mail, Phone, Wallet, X } from "lucide-react";
 import Link from "next/link";
 import { type ReactNode } from "react";
 import { LeadEditDialog } from "./[id]/lead-edit-dialog";
@@ -56,7 +57,11 @@ export function LeadQuickView({
   return (
     <Drawer open={!!lead} onOpenChange={(v) => !v && onCloseAction()} direction="right">
       <DrawerContent className="sm:max-w-sm">
-        {lead ? <Body lead={lead} canEdit={canEdit} /> : null}
+        {lead ? (
+          <ErrorBoundary>
+            <Body lead={lead} canEdit={canEdit} />
+          </ErrorBoundary>
+        ) : null}
       </DrawerContent>
     </Drawer>
   );
