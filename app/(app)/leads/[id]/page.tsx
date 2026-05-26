@@ -4,10 +4,12 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
+import { isAIEnabled } from "@/lib/ai";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, relativeTime } from "@/lib/utils";
 import { notFound } from "next/navigation";
 import { EmailComposer } from "./email-composer";
+import { LeadAiPanel } from "./lead-ai-panel";
 import { LeadStatusSelect } from "./status-select";
 
 export const dynamic = "force-dynamic";
@@ -43,7 +45,9 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
 
   const { data: lead } = await supabase
     .from("leads")
-    .select("id, name, email, phone, company, source, status, notes, created_at, updated_at")
+    .select(
+      "id, name, email, phone, company, source, status, notes, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_temperature, ai_confidence, ai_updated_at",
+    )
     .eq("id", id)
     .is("deleted_at", null)
     .maybeSingle();
@@ -57,6 +61,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
     .order("created_at", { ascending: false })
     .limit(50);
 
+  const aiEnabled = isAIEnabled();
   const composerDisabled = !user.emailSendEnabled || !user.emailAlias;
   const composerReason = !user.emailAlias
     ? "Configura un alias de email en Ajustes para enviar correos."
@@ -113,10 +118,32 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
               defaultTo={(lead.email as string | null) ?? ""}
               disabled={composerDisabled || !lead.email}
               disabledReason={!lead.email ? "Este lead no tiene email." : composerReason}
+              aiEnabled={aiEnabled}
             />
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            Análisis IA
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <LeadAiPanel
+            leadId={lead.id as string}
+            aiEnabled={aiEnabled}
+            initialData={{
+              ai_summary: (lead.ai_summary as string | null) ?? null,
+              ai_suggested_next_step: (lead.ai_suggested_next_step as string | null) ?? null,
+              ai_temperature: (lead.ai_temperature as "hot" | "warm" | "cold" | null) ?? null,
+              ai_confidence: (lead.ai_confidence as number | null) ?? null,
+              ai_updated_at: (lead.ai_updated_at as string | null) ?? null,
+            }}
+          />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

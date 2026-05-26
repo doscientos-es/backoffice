@@ -46,7 +46,7 @@ export default async function NewLeadPage() {
                   autoComplete="name"
                 />
               </FormRow>
-              <FormRow label="Empresa" htmlFor="company">
+              <FormRow label="doscientos" htmlFor="company">
                 <Input
                   id="company"
                   name="company"
@@ -62,7 +62,7 @@ export default async function NewLeadPage() {
                   type="email"
                   inputMode="email"
                   maxLength={160}
-                  placeholder="nombre@empresa.com"
+                  placeholder="nombre@doscientos.es"
                   autoComplete="email"
                 />
               </FormRow>

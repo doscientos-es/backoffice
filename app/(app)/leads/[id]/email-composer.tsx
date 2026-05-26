@@ -1,10 +1,12 @@
 "use client";
 
+import { AiNotice } from "@/components/ui/ai-notice";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
+import { Sparkles } from "lucide-react";
 import { useState } from "react";
 import { sendEmailToLead } from "../actions";
 
@@ -13,13 +15,40 @@ export type EmailComposerProps = {
   defaultTo: string;
   disabled?: boolean;
   disabledReason?: string;
+  aiEnabled?: boolean;
 };
 
-export function EmailComposer({ leadId, defaultTo, disabled, disabledReason }: EmailComposerProps) {
+export function EmailComposer({
+  leadId,
+  defaultTo,
+  disabled,
+  disabledReason,
+  aiEnabled,
+}: EmailComposerProps) {
   const [to, setTo] = useState(defaultTo);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const [drafting, setDrafting] = useState(false);
   const feedback = useFormFeedback();
+
+  async function handleDraftWithAI() {
+    setDrafting(true);
+    try {
+      const res = await fetch("/api/crm/ai/draft-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lead_id: leadId, kind: "follow_up" }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Error al generar el borrador.");
+      setSubject(json.subject ?? "");
+      setBody(json.body ?? "");
+    } catch (err) {
+      feedback.setError(err instanceof Error ? err.message : "Error al generar el borrador.");
+    } finally {
+      setDrafting(false);
+    }
+  }
 
   if (disabled) {
     return (
@@ -54,6 +83,23 @@ export function EmailComposer({ leadId, defaultTo, disabled, disabledReason }: E
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-3">
+      {aiEnabled ? (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={handleDraftWithAI}
+            disabled={drafting}
+            className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground disabled:opacity-50"
+          >
+            <Sparkles className="h-3 w-3" />
+            {drafting ? "Generando…" : "Generar borrador con IA"}
+          </button>
+        </div>
+      ) : (
+        <div className="flex justify-end">
+          <AiNotice inline />
+        </div>
+      )}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="to" className="text-xs font-medium">
           Para <span className="text-destructive">*</span>
