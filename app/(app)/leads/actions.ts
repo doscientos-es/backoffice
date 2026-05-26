@@ -1,6 +1,6 @@
 "use server";
 
-import { requireUser } from "@/lib/auth";
+import { requireRole, requireUser } from "@/lib/auth";
 import { sendEmail } from "@/lib/email/resend";
 import { appendSignature, renderTemplate } from "@/lib/email/templates";
 import { createServerClient } from "@/lib/supabase/server";
@@ -57,6 +57,58 @@ export async function createLead(formData: FormData): Promise<void> {
 
   revalidatePath("/leads");
   redirect(`/leads/${data.id}`);
+}
+
+// ---------------- UPDATE ----------------
+
+const UpdateInput = CreateInput.extend({
+  id: z.string().uuid(),
+  estimated_value: z
+    .string()
+    .transform((v) => (v === "" ? null : Number(v)))
+    .pipe(z.number().min(0).max(99_999_999.99).nullable())
+    .optional(),
+});
+
+type ActionResult = { ok: true } | { ok: false; error: string };
+
+export type UpdateLeadInput = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  company: string;
+  source: string;
+  notes: string;
+  estimated_value: string;
+};
+
+export async function updateLead(input: UpdateLeadInput): Promise<ActionResult> {
+  await requireRole(["owner", "admin", "member"]);
+  const parsed = UpdateInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+  }
+
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("leads")
+    .update({
+      name: parsed.data.name,
+      email: parsed.data.email ?? null,
+      phone: parsed.data.phone || null,
+      company: parsed.data.company || null,
+      source: parsed.data.source || null,
+      notes: parsed.data.notes || null,
+      estimated_value: parsed.data.estimated_value ?? null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", parsed.data.id);
+
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(`/leads/${parsed.data.id}`);
+  revalidatePath("/leads");
+  return { ok: true };
 }
 
 // ---------------- CONVERT TO CLIENT ----------------

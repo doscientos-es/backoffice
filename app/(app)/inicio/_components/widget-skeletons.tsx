@@ -1,12 +1,12 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const KPI_SKELETON_KEYS = ["kpi-a", "kpi-b", "kpi-c", "kpi-d"] as const;
+const KPI_SKELETON_KEYS = ["kpi-a", "kpi-b", "kpi-c", "kpi-d", "kpi-e", "kpi-f"] as const;
 const AVISOS_SKELETON_KEYS = ["aviso-a", "aviso-b", "aviso-c", "aviso-d"] as const;
 
 export function KpiGridSkeleton() {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
       {KPI_SKELETON_KEYS.map((key) => (
         <Card key={key}>
           <CardContent className="flex items-start justify-between gap-3 pt-5">

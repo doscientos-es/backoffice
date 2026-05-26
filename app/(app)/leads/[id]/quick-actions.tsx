@@ -42,7 +42,7 @@ export function LeadQuickActions({
   aiEnabled,
 }: Props) {
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+    <div className="flex flex-col gap-2">
       <CallDialog leadId={leadId} leadName={leadName} leadPhone={leadPhone} />
       <SendEmailDialog
         leadId={leadId}
@@ -60,9 +60,9 @@ export function LeadQuickActions({
 
 function ActionTrigger({ icon, label }: { icon: ReactNode; label: string }) {
   return (
-    <Button variant="outline" size="sm" className="h-auto flex-col gap-1 py-3">
-      {icon}
-      <span className="text-xs font-medium">{label}</span>
+    <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+      <span className="text-muted-foreground">{icon}</span>
+      <span className="text-sm font-medium">{label}</span>
     </Button>
   );
 }

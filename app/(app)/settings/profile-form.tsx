@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { AlertCircle, CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Field,
   FieldContent,
@@ -10,6 +12,8 @@ import {
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { useGithubHandle } from "@/lib/hooks/use-github-handle";
+import { cn } from "@/lib/utils";
 import { updateProfile } from "./actions";
 
 interface Props {
@@ -61,6 +65,8 @@ export function ProfileForm({
     contactEmail: contactEmail ?? "",
     phone: phone ?? "",
   });
+  const [handle, setHandle] = useState(githubHandle ?? "");
+  const handleState = useGithubHandle(handle);
 
   const signaturePreview = buildSignaturePreview({
     name,
@@ -184,16 +190,42 @@ export function ProfileForm({
         <FieldLabel htmlFor="github_handle" className="text-xs font-medium">
           GitHub handle
         </FieldLabel>
-        <Input
-          id="github_handle"
-          name="github_handle"
-          defaultValue={githubHandle ?? ""}
-          placeholder="tu-usuario"
-          maxLength={39}
-          autoComplete="off"
-        />
-        <FieldDescription>
-          Se usa para sincronizar tareas con issues y PRs de GitHub.
+        <div className="flex items-center gap-3">
+          <Avatar size="default" className="shrink-0">
+            {handleState.status === "valid" && handleState.avatarUrl ? (
+              <AvatarImage src={handleState.avatarUrl} alt={handleState.displayName ?? handle} />
+            ) : null}
+            <AvatarFallback>
+              {handle.trim().slice(0, 1).toUpperCase() || "·"}
+            </AvatarFallback>
+          </Avatar>
+          <div className="relative flex-1">
+            <Input
+              id="github_handle"
+              name="github_handle"
+              value={handle}
+              onChange={(e) => setHandle(e.target.value)}
+              placeholder="tu-usuario"
+              maxLength={39}
+              autoComplete="off"
+              spellCheck={false}
+              autoCapitalize="off"
+              aria-invalid={
+                handleState.status === "invalid" || handleState.status === "not_found"
+              }
+              aria-describedby="github_handle_status"
+              className="pr-9"
+            />
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center"
+            >
+              <GithubHandleIcon status={handleState.status} />
+            </span>
+          </div>
+        </div>
+        <FieldDescription id="github_handle_status">
+          <GithubHandleMessage state={handleState} />
         </FieldDescription>
       </Field>
 
@@ -220,4 +252,61 @@ export function ProfileForm({
       </div>
     </form>
   );
+}
+
+
+function GithubHandleIcon({
+  status,
+}: {
+  status: ReturnType<typeof useGithubHandle>["status"];
+}) {
+  const iconClass = "size-4";
+  if (status === "checking")
+    return <Loader2 className={cn(iconClass, "animate-spin text-muted-foreground")} aria-hidden />;
+  if (status === "valid")
+    return <CheckCircle2 className={cn(iconClass, "text-success")} aria-hidden />;
+  if (status === "not_found" || status === "invalid")
+    return <XCircle className={cn(iconClass, "text-destructive")} aria-hidden />;
+  if (status === "rate_limited" || status === "error")
+    return <AlertCircle className={cn(iconClass, "text-muted-foreground")} aria-hidden />;
+  return null;
+}
+
+function GithubHandleMessage({
+  state,
+}: {
+  state: ReturnType<typeof useGithubHandle>;
+}) {
+  switch (state.status) {
+    case "empty":
+      return <>Se usa para sincronizar tareas con issues y PRs de GitHub.</>;
+    case "checking":
+      return <span className="text-muted-foreground">Comprobando en GitHub…</span>;
+    case "valid":
+      return (
+        <span className="text-success">
+          {state.displayName ? `Conectado a ${state.displayName}.` : "Handle verificado."}
+        </span>
+      );
+    case "invalid":
+      return (
+        <span className="text-destructive">
+          Formato no válido. Solo letras, números y guiones (sin empezar/terminar en guión).
+        </span>
+      );
+    case "not_found":
+      return <span className="text-destructive">Ese usuario no existe en GitHub.</span>;
+    case "rate_limited":
+      return (
+        <span className="text-muted-foreground">
+          Demasiadas comprobaciones. Inténtalo en unos minutos.
+        </span>
+      );
+    case "error":
+      return (
+        <span className="text-muted-foreground">
+          No se ha podido verificar ahora mismo.
+        </span>
+      );
+  }
 }

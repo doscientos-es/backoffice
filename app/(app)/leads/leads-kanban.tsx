@@ -16,7 +16,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Plus } from "lucide-react";
 import Link from "next/link";
 import { useOptimistic, useState, useTransition } from "react";
 import { updateLeadStatus } from "./actions";
@@ -196,8 +196,21 @@ function Column({
             <Card key={l.id} lead={l} aiEnabled={aiEnabled} onOpenQuickView={onOpenQuickView} />
           ))
         )}
+        {status === "new" && <AddLeadCard />}
       </div>
     </div>
+  );
+}
+
+function AddLeadCard() {
+  return (
+    <Link
+      href="/leads/new"
+      className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+    >
+      <Plus className="size-3.5 shrink-0" />
+      Añadir lead
+    </Link>
   );
 }
 

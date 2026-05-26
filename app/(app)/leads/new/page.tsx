@@ -46,7 +46,7 @@ export default async function NewLeadPage() {
                   autoComplete="name"
                 />
               </FormRow>
-              <FormRow label="doscientos" htmlFor="company">
+              <FormRow label="Empresa" htmlFor="company">
                 <Input
                   id="company"
                   name="company"
