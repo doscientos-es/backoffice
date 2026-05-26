@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/auth";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
   return (
-  <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-background">
       <Sidebar />
       <div className="flex flex-1 flex-col">
         <Topbar user={user} />

@@ -2,8 +2,8 @@ import { BackLink } from "@/components/layout/back-link";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth";
@@ -135,7 +135,11 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                   />
                 </FormRow>
               </div>
-              <FormRow label="Dirección" htmlFor="e_addr" hint="Se usará en las facturas emitidas a este cliente.">
+              <FormRow
+                label="Dirección"
+                htmlFor="e_addr"
+                hint="Se usará en las facturas emitidas a este cliente."
+              >
                 <Textarea
                   id="e_addr"
                   name="billing_address"
@@ -145,7 +149,11 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                   placeholder={"Calle, número\nCP Ciudad, País"}
                 />
               </FormRow>
-              <FormRow label="Notas" htmlFor="e_notes" hint="Información interna, no visible para el cliente.">
+              <FormRow
+                label="Notas"
+                htmlFor="e_notes"
+                hint="Información interna, no visible para el cliente."
+              >
                 <Textarea
                   id="e_notes"
                   name="notes"
@@ -188,31 +196,6 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           )}
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-function F({
-  label,
-  id,
-  required,
-  hint,
-  children,
-}: {
-  label: string;
-  id: string;
-  required?: boolean;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id} className="text-xs font-medium">
-        {label}
-        {required ? <span className="ml-0.5 text-destructive">*</span> : null}
-      </Label>
-      {children}
-      {hint ? <p className="text-[11px] text-muted-foreground">{hint}</p> : null}
     </div>
   );
 }

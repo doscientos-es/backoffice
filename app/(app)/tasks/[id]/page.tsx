@@ -4,8 +4,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth";
@@ -14,6 +14,7 @@ import { formatDate } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { updateTask } from "../actions";
+import { TaskTimerButton } from "./task-timer-button";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +43,7 @@ const STATUS_VARIANT = {
 
 export default async function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await requireUser();
+  const user = await requireUser();
   const supabase = await createServerClient();
 
   const { data: task } = await supabase
@@ -66,10 +67,10 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
     supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
     project?.id
       ? supabase
-          .from("milestones")
-          .select("id, name")
-          .eq("project_id", project.id)
-          .order("due_date", { ascending: true, nullsFirst: false })
+        .from("milestones")
+        .select("id, name")
+        .eq("project_id", project.id)
+        .order("due_date", { ascending: true, nullsFirst: false })
       : Promise.resolve({ data: [] as { id: string; name: string }[] }),
   ]);
 
@@ -83,9 +84,14 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
         description={project?.name ?? lead?.name ?? undefined}
         back={<BackLink href={backHref} label={backLabel} />}
         actions={
-          <Badge variant={STATUS_VARIANT[task.status as keyof typeof STATUS_VARIANT]}>
-            {task.status as string}
-          </Badge>
+          <div className="flex items-center gap-2">
+            {project?.id && (
+              <TaskTimerButton taskId={id} projectId={project.id} memberId={user.id} />
+            )}
+            <Badge variant={STATUS_VARIANT[task.status as keyof typeof STATUS_VARIANT]}>
+              {task.status as string}
+            </Badge>
+          </div>
         }
       />
 
@@ -259,13 +265,4 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
   );
 }
 
-function F({ label, id, children }: { label: string; id: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id} className="text-xs font-medium">
-        {label}
-      </Label>
-      {children}
-    </div>
-  );
-}
+

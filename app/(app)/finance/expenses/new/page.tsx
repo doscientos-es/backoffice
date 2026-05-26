@@ -2,8 +2,8 @@ import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth";
@@ -162,28 +162,6 @@ export default async function NewExpensePage() {
           </form>
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-function F({
-  label,
-  id,
-  required,
-  children,
-}: {
-  label: string;
-  id: string;
-  required?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id} className="text-xs font-medium">
-        {label}
-        {required ? <span className="ml-0.5 text-destructive">*</span> : null}
-      </Label>
-      {children}
     </div>
   );
 }

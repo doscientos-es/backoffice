@@ -1,3 +1,4 @@
+import { TimerWidget } from "@/components/layout/timer-widget";
 import { UserMenu } from "@/components/layout/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,7 @@ export function Topbar({ user }: { user: CurrentUser }) {
         </Badge>
       </div>
       <div className="flex items-center gap-2">
+        <TimerWidget memberId={user.id} />
         <ThemeToggle />
         <UserMenu user={user} />
       </div>

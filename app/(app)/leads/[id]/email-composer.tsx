@@ -97,8 +97,8 @@ export function EmailComposer({ leadId, defaultTo, disabled, disabledReason }: E
           aria-describedby="body-hint"
         />
         <p id="body-hint" className="text-[11px] text-muted-foreground">
-          Variables disponibles: <code>{"{{nombre}}"}</code>,{" "}
-          <code>{"{{empresa}}"}</code>, <code>{"{{email}}"}</code>. Tu firma se añade al final.
+          Variables disponibles: <code>{"{{nombre}}"}</code>, <code>{"{{empresa}}"}</code>,{" "}
+          <code>{"{{email}}"}</code>. Tu firma se añade al final.
         </p>
       </div>
       <div className="flex items-center justify-end gap-3">

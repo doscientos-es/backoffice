@@ -22,9 +22,7 @@ type TaskRow = {
   team_members: { id: string; name: string } | null;
 };
 
-export default async function ProjectKanbanPage({
-  params,
-}: { params: Promise<{ id: string }> }) {
+export default async function ProjectKanbanPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   await requireUser();
   const supabase = await createServerClient();

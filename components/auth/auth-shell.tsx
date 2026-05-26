@@ -21,17 +21,11 @@ export function AuthShell({ title, description, footer, children }: AuthShellPro
           <Logo size="lg" />
         </Link>
         <div className="mb-6 text-center">
-          <h1 className="text-xl font-semibold tracking-tight text-primary">
-            {title}
-          </h1>
-          {description ? (
-            <p className="mt-1.5 text-sm text-muted">{description}</p>
-          ) : null}
+          <h1 className="text-xl font-semibold tracking-tight text-primary">{title}</h1>
+          {description ? <p className="mt-1.5 text-sm text-muted">{description}</p> : null}
         </div>
         {children}
-        {footer ? (
-          <p className="mt-6 text-center text-xs text-muted">{footer}</p>
-        ) : null}
+        {footer ? <p className="mt-6 text-center text-xs text-muted">{footer}</p> : null}
       </div>
     </main>
   );

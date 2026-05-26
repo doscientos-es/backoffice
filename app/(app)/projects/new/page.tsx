@@ -2,8 +2,8 @@ import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
@@ -98,7 +98,11 @@ export default async function NewProjectPage() {
                 <Input id="ends_at" name="ends_at" type="date" />
               </FormRow>
             </div>
-            <FormRow label="Descripción" htmlFor="description" hint="Resumen del alcance del proyecto.">
+            <FormRow
+              label="Descripción"
+              htmlFor="description"
+              hint="Resumen del alcance del proyecto."
+            >
               <Textarea
                 id="description"
                 name="description"
@@ -116,31 +120,6 @@ export default async function NewProjectPage() {
           </form>
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-function F({
-  label,
-  id,
-  required,
-  hint,
-  children,
-}: {
-  label: string;
-  id: string;
-  required?: boolean;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id} className="text-xs font-medium">
-        {label}
-        {required ? <span className="ml-0.5 text-destructive">*</span> : null}
-      </Label>
-      {children}
-      {hint ? <p className="text-[11px] text-muted-foreground">{hint}</p> : null}
     </div>
   );
 }

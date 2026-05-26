@@ -52,7 +52,9 @@ export function CompanyForm({
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="company_nif" className="text-xs font-medium">NIF</Label>
+          <Label htmlFor="company_nif" className="text-xs font-medium">
+            NIF
+          </Label>
           <Input
             id="company_nif"
             name="company_nif"
@@ -94,7 +96,9 @@ export function CompanyForm({
           />
         </div>
         <div className="flex flex-col gap-1.5 sm:col-span-2">
-          <Label htmlFor="iban" className="text-xs font-medium">IBAN</Label>
+          <Label htmlFor="iban" className="text-xs font-medium">
+            IBAN
+          </Label>
           <Input
             id="iban"
             name="iban"

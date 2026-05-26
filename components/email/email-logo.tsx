@@ -19,12 +19,7 @@ export function EmailLogo({ appUrl, size = 22 }: EmailLogoProps) {
     <Section style={{ paddingBottom: 0 }}>
       <Row>
         <td align="center">
-          <table
-            role="presentation"
-            cellPadding={0}
-            cellSpacing={0}
-            style={{ margin: "0 auto" }}
-          >
+          <table role="presentation" cellPadding={0} cellSpacing={0} style={{ margin: "0 auto" }}>
             <tbody>
               <tr>
                 <td style={{ verticalAlign: "middle", paddingRight: 8 }}>

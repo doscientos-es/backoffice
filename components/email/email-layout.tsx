@@ -1,18 +1,8 @@
-import {
-  Body,
-  Container,
-  Head,
-  Hr,
-  Html,
-  Preview,
-  Section,
-  Text,
-} from "@react-email/components";
+import { Body, Container, Head, Hr, Html, Preview, Section, Text } from "@react-email/components";
 import type { ReactNode } from "react";
 import { EmailLogo } from "./email-logo";
 
-const FONT_STACK =
-  "'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+const FONT_STACK = "'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 const BRAND = "#2A4227";
 
 export type EmailLayoutProps = {

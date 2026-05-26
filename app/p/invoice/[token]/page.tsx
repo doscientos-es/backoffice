@@ -215,8 +215,8 @@ export default async function PortalInvoicePage({
 
       {/* Fiscal info + QR */}
       {(invoice.idfact as string | null) ||
-        (invoice.verifactu_csv as string | null) ||
-        qrDataUrl ? (
+      (invoice.verifactu_csv as string | null) ||
+      qrDataUrl ? (
         <div className="border-t border-zinc-100 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-900/50 px-8 py-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex flex-col gap-1.5">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-0.5">

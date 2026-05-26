@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordStrength } from "@/components/ui/password-strength";
 import { getBrowserClient } from "@/lib/supabase/browser";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -154,46 +155,5 @@ export function UpdatePasswordForm() {
         </form>
       </CardContent>
     </Card>
-  );
-}
-
-function passwordScore(value: string): number {
-  if (!value) return 0;
-  let score = 0;
-  if (value.length >= 8) score++;
-  if (value.length >= 12) score++;
-  if (/[A-Z]/.test(value) && /[a-z]/.test(value)) score++;
-  if (/[0-9]/.test(value)) score++;
-  if (/[^A-Za-z0-9]/.test(value)) score++;
-  return Math.min(score, 4);
-}
-
-function PasswordStrength({ value }: { value: string }) {
-  if (!value) return null;
-  const score = passwordScore(value);
-  const labels = ["Muy débil", "Débil", "Aceptable", "Buena", "Fuerte"];
-  const colors = [
-    "bg-destructive/60",
-    "bg-destructive",
-    "bg-amber-500",
-    "bg-emerald-500",
-    "bg-emerald-600",
-  ];
-  return (
-    <div className="mt-1 flex items-center gap-2" aria-live="polite">
-      <div className="flex h-1 flex-1 gap-1">
-        {[0, 1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className={`flex-1 rounded-full transition-colors ${
-              i < score ? colors[score] : "bg-input"
-            }`}
-          />
-        ))}
-      </div>
-      <span className="w-16 text-right text-[11px] text-muted-foreground tabular-nums">
-        {labels[score]}
-      </span>
-    </div>
   );
 }

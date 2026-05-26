@@ -4,8 +4,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
@@ -175,7 +175,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                   />
                 </FormRow>
               </div>
-              <FormRow label="Repositorio GitHub" htmlFor="e_github" hint="URL completa del repositorio.">
+              <FormRow
+                label="Repositorio GitHub"
+                htmlFor="e_github"
+                hint="URL completa del repositorio."
+              >
                 <Input
                   id="e_github"
                   name="github_repo"
@@ -225,10 +229,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                   key={t.id as string}
                   className="flex items-center justify-between px-6 py-2.5 text-sm"
                 >
-                  <Link
-                    href={`/tasks/${t.id as string}`}
-                    className="font-medium hover:underline"
-                  >
+                  <Link href={`/tasks/${t.id as string}`} className="font-medium hover:underline">
                     {t.title as string}
                   </Link>
                   <span className="text-xs text-muted-foreground">{t.status as string}</span>
@@ -238,31 +239,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           )}
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-function F({
-  label,
-  id,
-  required,
-  hint,
-  children,
-}: {
-  label: string;
-  id: string;
-  required?: boolean;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id} className="text-xs font-medium">
-        {label}
-        {required ? <span className="ml-0.5 text-destructive">*</span> : null}
-      </Label>
-      {children}
-      {hint ? <p className="text-[11px] text-muted-foreground">{hint}</p> : null}
     </div>
   );
 }

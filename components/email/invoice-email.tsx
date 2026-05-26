@@ -2,8 +2,7 @@ import { Button, Hr, Section, Text } from "@react-email/components";
 import { EmailLayout } from "./email-layout";
 
 const BRAND = "#2A4227";
-const FONT_STACK =
-  "'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+const FONT_STACK = "'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
 export type InvoiceEmailProps = {
   /** Recipient client name, e.g. "Acme S.L." */

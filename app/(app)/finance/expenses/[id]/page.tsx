@@ -4,8 +4,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth";
@@ -315,17 +315,6 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
           </CardContent>
         </Card>
       ) : null}
-    </div>
-  );
-}
-
-function F({ label, id, children }: { label: string; id: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id} className="text-xs font-medium">
-        {label}
-      </Label>
-      {children}
     </div>
   );
 }

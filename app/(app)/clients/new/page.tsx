@@ -2,8 +2,8 @@ import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth";
@@ -26,7 +26,12 @@ export default async function NewClientPage() {
         <CardContent className="pt-6">
           <form action={createClient} className="flex flex-col gap-5">
             <div className="grid gap-5 sm:grid-cols-2">
-              <FormRow label="Nombre" htmlFor="name" required hint="Razón social o nombre comercial.">
+              <FormRow
+                label="Nombre"
+                htmlFor="name"
+                required
+                hint="Razón social o nombre comercial."
+              >
                 <Input
                   id="name"
                   name="name"
@@ -91,7 +96,11 @@ export default async function NewClientPage() {
                 placeholder={"Calle, número\nCP Ciudad, País"}
               />
             </FormRow>
-            <FormRow label="Notas" htmlFor="notes" hint="Información interna, no visible para el cliente.">
+            <FormRow
+              label="Notas"
+              htmlFor="notes"
+              hint="Información interna, no visible para el cliente."
+            >
               <Textarea
                 id="notes"
                 name="notes"
@@ -109,31 +118,6 @@ export default async function NewClientPage() {
           </form>
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-function F({
-  label,
-  id,
-  required,
-  hint,
-  children,
-}: {
-  label: string;
-  id: string;
-  required?: boolean;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id} className="text-xs font-medium">
-        {label}
-        {required ? <span className="ml-0.5 text-destructive">*</span> : null}
-      </Label>
-      {children}
-      {hint ? <p className="text-[11px] text-muted-foreground">{hint}</p> : null}
     </div>
   );
 }
