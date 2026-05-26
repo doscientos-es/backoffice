@@ -1,6 +1,6 @@
 "use client";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { CurrentUser, MemberRole } from "@/lib/auth";
 import { getBrowserClient } from "@/lib/supabase/browser";
+import { memberAvatarUrl } from "@/lib/utils";
 import { AlertCircle, LogOut, Settings, ShieldCheck, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -47,6 +48,7 @@ export function UserMenu({ user }: { user: CurrentUser }) {
   const router = useRouter();
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const canManageTeam = user.role === "owner" || user.role === "admin";
+  const avatarSrc = memberAvatarUrl(user, 64);
 
   async function signOut(e: Event) {
     e.preventDefault();
@@ -71,6 +73,7 @@ export function UserMenu({ user }: { user: CurrentUser }) {
           aria-label="Menú de usuario"
         >
           <Avatar size="sm">
+            {avatarSrc ? <AvatarImage src={avatarSrc} alt={user.name} /> : null}
             <AvatarFallback>{initials(user.name)}</AvatarFallback>
           </Avatar>
           <span className="hidden text-xs font-medium text-primary md:inline">

@@ -35,7 +35,7 @@ const STATUS_LABEL: Record<string, string> = {
 function Initials({ name }: { name: string }) {
   const parts = (name ?? "").trim().split(/\s+/);
   const letters = parts.length >= 2
-    ? parts[0][0] + parts[1][0]
+    ? (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")
     : (parts[0]?.[0] ?? "?");
   return (
     <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold uppercase text-primary">

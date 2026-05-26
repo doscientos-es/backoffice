@@ -270,3 +270,125 @@ export async function sendEmailToLead(input: unknown): Promise<SendEmailToLeadRe
   revalidatePath(`/leads/${data.leadId}`);
   return { ok: true, emailId: resendId, mocked };
 }
+
+// ---------------- LOG INTERACTIONS (call / email / note) ----------------
+//
+// Acciones ligeras para que el usuario registre cualquier interacción
+// con un lead desde la ficha. Todas escriben en lead_interactions y
+// devuelven la misma forma `{ ok }` para que el cliente no tenga que
+// distinguir entre tipos. La grabación efectiva de envío de email vive
+// en `sendEmailToLead`; estas funciones son sólo de registro manual.
+
+export type LogInteractionResult = { ok: true } | { ok: false; error: string };
+
+const CALL_OUTCOMES = ["connected", "voicemail", "no_answer", "busy", "wrong_number"] as const;
+export type CallOutcome = (typeof CALL_OUTCOMES)[number];
+
+const CALL_OUTCOME_LABEL: Record<CallOutcome, string> = {
+  connected: "Contactado",
+  voicemail: "Buzón de voz",
+  no_answer: "Sin respuesta",
+  busy: "Comunicando",
+  wrong_number: "Número erróneo",
+};
+
+const LogCallInput = z
+  .object({
+    leadId: z.string().uuid(),
+    notes: z.string().max(8000).optional(),
+    transcript: z.string().max(50000).optional(),
+    durationMinutes: z.coerce.number().int().min(0).max(600).optional(),
+    outcome: z.enum(CALL_OUTCOMES).optional(),
+  })
+  .refine((v) => (v.notes?.trim().length ?? 0) > 0 || (v.transcript?.trim().length ?? 0) > 0, {
+    message: "Añade unas notas o la transcripción de la llamada",
+    path: ["notes"],
+  });
+
+export async function logLeadCall(input: unknown): Promise<LogInteractionResult> {
+  const user = await requireUser();
+  const parsed = LogCallInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+  }
+  const { leadId, notes, transcript, durationMinutes, outcome } = parsed.data;
+
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("lead_interactions").insert({
+    lead_id: leadId,
+    type: "call",
+    subject: outcome ? `Llamada · ${CALL_OUTCOME_LABEL[outcome]}` : "Llamada",
+    body: notes?.trim() || null,
+    performed_by: user.id,
+    payload: {
+      transcript: transcript?.trim() || null,
+      duration_minutes: durationMinutes ?? null,
+      outcome: outcome ?? null,
+    },
+  });
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/leads/${leadId}`);
+  return { ok: true };
+}
+
+const LogEmailInput = z.object({
+  leadId: z.string().uuid(),
+  direction: z.enum(["incoming", "outgoing"]),
+  subject: z.string().min(1, "El asunto es obligatorio").max(300),
+  bodyHtml: z.string().max(50000).optional(),
+  counterparty: z
+    .string()
+    .email("Email no válido")
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+});
+
+export async function logLeadEmail(input: unknown): Promise<LogInteractionResult> {
+  const user = await requireUser();
+  const parsed = LogEmailInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+  }
+  const { leadId, direction, subject, bodyHtml, counterparty } = parsed.data;
+
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("lead_interactions").insert({
+    lead_id: leadId,
+    type: direction === "incoming" ? "email_received" : "email_sent",
+    subject,
+    body: bodyHtml?.trim() || null,
+    performed_by: user.id,
+    payload: { manual: true, direction, counterparty: counterparty ?? null },
+  });
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/leads/${leadId}`);
+  return { ok: true };
+}
+
+const LogNoteInput = z.object({
+  leadId: z.string().uuid(),
+  content: z.string().min(1, "La nota no puede estar vacía").max(8000),
+});
+
+export async function logLeadNote(input: unknown): Promise<LogInteractionResult> {
+  const user = await requireUser();
+  const parsed = LogNoteInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+  }
+  const { leadId, content } = parsed.data;
+
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("lead_interactions").insert({
+    lead_id: leadId,
+    type: "note",
+    body: content.trim(),
+    performed_by: user.id,
+  });
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/leads/${leadId}`);
+  return { ok: true };
+}

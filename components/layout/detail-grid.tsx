@@ -18,7 +18,7 @@ export function DetailRow({
 }) {
   return (
     <>
-      <dt className="text-muted">{label}</dt>
+      <dt className="text-muted-foreground">{label}</dt>
       <dd className="min-w-0 text-primary">{children ?? "—"}</dd>
     </>
   );

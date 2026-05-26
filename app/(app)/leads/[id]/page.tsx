@@ -11,8 +11,8 @@ import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, relativeTime } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { EmailComposer } from "./email-composer";
 import { LeadAiPanel } from "./lead-ai-panel";
+import { LeadQuickActions } from "./quick-actions";
 import { LeadStatusSelect } from "./status-select";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +30,7 @@ const STATUS_VARIANT = {
 
 const INTERACTION_LABEL: Record<string, string> = {
   email_sent: "Email enviado",
+  email_received: "Email recibido",
   email_delivered: "Email entregado",
   email_opened: "Email abierto",
   email_clicked: "Email con clic",
@@ -42,6 +43,17 @@ const INTERACTION_LABEL: Record<string, string> = {
   portal_accept: "Propuesta aceptada",
   portal_reject: "Propuesta rechazada",
 };
+
+/**
+ * Recorta el cuerpo de la interacción para mostrarlo en el timeline.
+ * Acepta HTML (emails) y texto plano (notas, transcripciones).
+ */
+function excerpt(body: string | null, max = 160): string | null {
+  if (!body) return null;
+  const text = body.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  if (!text) return null;
+  return text.length > max ? `${text.slice(0, max)}…` : text;
+}
 
 export default async function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -62,7 +74,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
 
   const { data: interactions } = await supabase
     .from("lead_interactions")
-    .select("id, type, subject, created_at, payload")
+    .select("id, type, subject, body, created_at, payload")
     .eq("lead_id", id)
     .order("created_at", { ascending: false })
     .limit(50);
@@ -138,14 +150,15 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
 
         <Card>
           <CardHeader>
-            <CardTitle>Enviar email</CardTitle>
+            <CardTitle>Acciones</CardTitle>
           </CardHeader>
           <CardContent>
-            <EmailComposer
+            <LeadQuickActions
               leadId={lead.id as string}
-              defaultTo={(lead.email as string | null) ?? ""}
-              disabled={composerDisabled || !lead.email}
-              disabledReason={!lead.email ? "Este lead no tiene email." : composerReason}
+              leadEmail={(lead.email as string | null) ?? null}
+              leadPhone={(lead.phone as string | null) ?? null}
+              sendEnabled={!composerDisabled}
+              sendDisabledReason={composerReason}
               aiEnabled={aiEnabled}
             />
           </CardContent>
@@ -184,23 +197,31 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             </p>
           ) : (
             <ol className="divide-y divide-border">
-              {interactions.map((i) => (
-                <li key={i.id as string} className="flex items-start gap-3 px-6 py-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">
-                      {INTERACTION_LABEL[i.type as string] ?? (i.type as string)}
-                    </p>
-                    {i.subject ? (
-                      <p className="truncate text-xs text-muted-foreground">
-                        {i.subject as string}
+              {interactions.map((i) => {
+                const type = i.type as string;
+                const subject = i.subject as string | null;
+                const snippet = excerpt(i.body as string | null);
+                return (
+                  <li key={i.id as string} className="flex items-start gap-3 px-6 py-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium">
+                        {INTERACTION_LABEL[type] ?? type}
                       </p>
-                    ) : null}
-                  </div>
-                  <span className="shrink-0 text-xs text-muted-foreground">
-                    {relativeTime(i.created_at as string)}
-                  </span>
-                </li>
-              ))}
+                      {subject ? (
+                        <p className="truncate text-xs text-muted-foreground">{subject}</p>
+                      ) : null}
+                      {snippet ? (
+                        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground/90">
+                          {snippet}
+                        </p>
+                      ) : null}
+                    </div>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {relativeTime(i.created_at as string)}
+                    </span>
+                  </li>
+                );
+              })}
             </ol>
           )}
         </CardContent>

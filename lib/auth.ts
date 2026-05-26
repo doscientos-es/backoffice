@@ -17,6 +17,9 @@ export type CurrentUser = {
   emailSendEnabled: boolean;
   githubHandle: string | null;
   onboardedAt: string | null;
+  jobTitle: string | null;
+  phone: string | null;
+  contactEmail: string | null;
 };
 
 export type AuthFailureReason =
@@ -42,7 +45,7 @@ export async function getCurrentUser(): Promise<AuthResult> {
   const { data: member, error } = await supabase
     .from("team_members")
     .select(
-      "id, name, email, role, avatar_url, email_alias, signature_html, email_send_enabled, github_handle, onboarded_at, deleted_at",
+      "id, name, email, role, avatar_url, email_alias, signature_html, email_send_enabled, github_handle, onboarded_at, deleted_at, job_title, phone, contact_email",
     )
     .eq("id", user.id)
     .maybeSingle();
@@ -72,6 +75,9 @@ export async function getCurrentUser(): Promise<AuthResult> {
       emailSendEnabled: (member.email_send_enabled as boolean | null) ?? false,
       githubHandle: (member.github_handle as string | null) ?? null,
       onboardedAt: (member.onboarded_at as string | null) ?? null,
+      jobTitle: (member.job_title as string | null) ?? null,
+      phone: (member.phone as string | null) ?? null,
+      contactEmail: (member.contact_email as string | null) ?? null,
     },
   };
 }

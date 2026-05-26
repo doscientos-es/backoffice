@@ -45,3 +45,23 @@ export function truncate(s: string | null | undefined, max: number): string {
   if (!s) return "";
   return s.length <= max ? s : `${s.slice(0, max - 1)}…`;
 }
+
+const GITHUB_HANDLE_RE = /^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,38})$/;
+
+/**
+ * Resolves the best avatar URL for a team member:
+ * 1. Explicit `avatarUrl` if set
+ * 2. GitHub avatar derived from a valid `githubHandle`
+ * 3. `null` so the caller can render a fallback (initials)
+ */
+export function memberAvatarUrl(
+  member: { avatarUrl?: string | null; githubHandle?: string | null },
+  size = 64,
+): string | null {
+  if (member.avatarUrl) return member.avatarUrl;
+  const handle = member.githubHandle?.trim();
+  if (handle && GITHUB_HANDLE_RE.test(handle)) {
+    return `https://github.com/${handle}.png?size=${size}`;
+  }
+  return null;
+}

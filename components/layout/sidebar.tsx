@@ -79,7 +79,7 @@ export function Sidebar({ user }: { user: CurrentUser; verifactuMode: string }) 
       </nav>
 
       <footer className="flex flex-col gap-2 border-t border-border p-2">
-        <div className="flex items-end justify-between px-2">
+        <div className="flex items-center justify-end px-2 gap-2">
           <span className="px-2 text-xs text-muted-foreground">
             {version}
           </span>

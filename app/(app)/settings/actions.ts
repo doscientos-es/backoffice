@@ -11,7 +11,6 @@ const ProfileInput = z.object({
     .email("Alias no válido")
     .optional()
     .or(z.literal("").transform(() => undefined)),
-  signature_html: z.string().max(8000).optional(),
   email_send_enabled: z.enum(["on", "off"]).transform((v) => v === "on"),
   github_handle: z
     .string()
@@ -19,7 +18,40 @@ const ProfileInput = z.object({
     .regex(/^[a-zA-Z0-9-]*$/, "Handle de GitHub inválido")
     .optional()
     .or(z.literal("").transform(() => undefined)),
+  job_title: z.string().max(160).optional().or(z.literal("").transform(() => undefined)),
+  phone: z.string().max(30).optional().or(z.literal("").transform(() => undefined)),
+  contact_email: z
+    .string()
+    .email("Email de contacto no válido")
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
 });
+
+function buildSignatureHtml(opts: {
+  name: string;
+  jobTitle?: string;
+  contactEmail?: string;
+  phone?: string;
+}): string {
+  const lines: string[] = [];
+  lines.push(`<strong>${opts.name}</strong>`);
+  if (opts.jobTitle) lines.push(opts.jobTitle);
+  lines.push("");
+  lines.push("<strong>doscientos.es</strong>");
+  lines.push(
+    "<span style=\"color:#666\">Construimos productos digitales escalables para empresas que quieren crecer con tecnología.</span>",
+  );
+  lines.push("");
+  if (opts.contactEmail)
+    lines.push(
+      `📩 <a href="mailto:${opts.contactEmail}" style="color:inherit">${opts.contactEmail}</a>`,
+    );
+  lines.push(
+    '🌐 <a href="https://doscientos.es" style="color:inherit">https://doscientos.es</a>',
+  );
+  if (opts.phone) lines.push(`📱 ${opts.phone}`);
+  return `<p style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#333;margin:0">${lines.join("<br/>")}</p>`;
+}
 
 export async function updateProfile(
   formData: FormData,
@@ -27,29 +59,41 @@ export async function updateProfile(
   const user = await requireUser();
   const raw = {
     email_alias: formData.get("email_alias")?.toString() ?? "",
-    signature_html: formData.get("signature_html")?.toString() ?? "",
     email_send_enabled: formData.get("email_send_enabled")?.toString() === "on" ? "on" : "off",
     github_handle: formData.get("github_handle")?.toString() ?? "",
+    job_title: formData.get("job_title")?.toString() ?? "",
+    phone: formData.get("phone")?.toString() ?? "",
+    contact_email: formData.get("contact_email")?.toString() ?? "",
   };
   const parsed = ProfileInput.safeParse(raw);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
   }
 
+  const signatureHtml = buildSignatureHtml({
+    name: user.name,
+    jobTitle: parsed.data.job_title,
+    contactEmail: parsed.data.contact_email ?? parsed.data.email_alias,
+    phone: parsed.data.phone,
+  });
+
   const supabase = await createServerClient();
   const { error } = await supabase
     .from("team_members")
     .update({
       email_alias: parsed.data.email_alias ?? null,
-      signature_html: parsed.data.signature_html || null,
+      signature_html: signatureHtml,
       email_send_enabled: parsed.data.email_send_enabled,
       github_handle: parsed.data.github_handle ?? null,
+      job_title: parsed.data.job_title ?? null,
+      phone: parsed.data.phone ?? null,
+      contact_email: parsed.data.contact_email ?? null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", user.id);
 
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/settings");
+  revalidatePath("/settings/profile");
   return { ok: true };
 }
 
@@ -107,6 +151,6 @@ export async function updateCompanySettings(
     .eq("id", 1);
 
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/settings");
+  revalidatePath("/settings/company");
   return { ok: true };
 }

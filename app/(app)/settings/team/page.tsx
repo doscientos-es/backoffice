@@ -1,4 +1,3 @@
-import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -64,7 +63,6 @@ export default async function TeamSettingsPage() {
       <PageHeader
         title="Equipo"
         description="Gestiona los miembros de tu organización, sus roles y el acceso al backoffice."
-        back={<BackLink href="/settings" label="Ajustes" />}
       />
 
       <Card>
