@@ -1,10 +1,12 @@
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
 export type ListCell = ReactNode | string | number | null | undefined;
+export type ListAlign = "left" | "right";
 
 export type ListRow = {
   id: string;
@@ -16,6 +18,7 @@ export type ListPageProps = {
   title: string;
   description?: string;
   headers: string[];
+  align?: ListAlign[];
   rows: ListRow[];
   empty: string;
   emptyAction?: ReactNode;
@@ -27,12 +30,15 @@ export function ListPage({
   title,
   description,
   headers,
+  align,
   rows,
   empty,
   emptyAction,
   error,
   actions,
 }: ListPageProps) {
+  const alignAt = (i: number): ListAlign => align?.[i] ?? "left";
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title={title} description={description} actions={actions} />
@@ -40,7 +46,7 @@ export function ListPage({
       <Card>
         <CardContent className="px-0 pt-0">
           {error ? (
-            <p className="px-5 py-6 text-sm text-[color:var(--danger)]">{error}</p>
+            <p className="px-5 py-6 text-sm text-destructive">{error}</p>
           ) : rows.length === 0 ? (
             <Empty className="border-0 py-10">
               <EmptyHeader>
@@ -51,38 +57,52 @@ export function ListPage({
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-surface text-left text-xs uppercase tracking-wide text-[color:var(--text-muted)]">
-                  <tr>
-                    {headers.map((h) => (
-                      <th key={h} className="px-5 py-2 font-medium">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30 text-xs text-muted-foreground">
+                    {headers.map((h, i) => (
+                      <th
+                        key={h}
+                        className={cn(
+                          "px-5 py-3 font-medium tracking-wide",
+                          alignAt(i) === "right" ? "text-right" : "text-left",
+                        )}
+                      >
                         {h}
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-border/60">
                   {rows.map((row) => (
-                    <tr
-                      key={row.id}
-                      className="border-t border-[color:var(--border)] hover:bg-[color:var(--surface-hover)]"
-                    >
+                    <tr key={row.id} className="group transition-colors hover:bg-muted/30">
                       {row.cells.map((c, i) => {
                         const cellKey = `${row.id}:${headers[i] ?? i}`;
-                        const value = c ?? "—";
+                        const isEmpty = c == null || c === "—";
+                        const value = isEmpty ? (
+                          <span className="text-muted-foreground/40">—</span>
+                        ) : (
+                          c
+                        );
+                        const isFirst = i === 0;
+                        const right = alignAt(i) === "right";
                         return (
-                          <td key={cellKey} className="px-5 py-2.5 align-middle">
-                            {i === 0 && row.href ? (
-                              <Link href={row.href} className="font-medium hover:underline">
+                          <td
+                            key={cellKey}
+                            className={cn(
+                              "px-5 py-3 align-middle",
+                              isFirst ? "font-medium text-foreground" : "text-muted-foreground",
+                              right && "text-right tabular-nums",
+                            )}
+                          >
+                            {isFirst && row.href ? (
+                              <Link
+                                href={row.href}
+                                className="transition-colors group-hover:text-primary"
+                              >
                                 {value}
                               </Link>
                             ) : (
-                              <span
-                                className={
-                                  i === 0 ? "font-medium" : "text-[color:var(--text-secondary)]"
-                                }
-                              >
-                                {value}
-                              </span>
+                              value
                             )}
                           </td>
                         );

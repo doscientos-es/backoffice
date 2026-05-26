@@ -63,15 +63,6 @@ export async function GET(
     .is("deleted_at", null)
     .order("due_date", { ascending: true });
 
-  // Fetch completed time entries for this member
-  const { data: timeEntries } = await supabase
-    .from("time_entries")
-    .select("id, description, started_at, ended_at, projects(name), task:task_id(title)")
-    .eq("member_id", memberId)
-    .not("ended_at", "is", null)
-    .order("started_at", { ascending: false })
-    .limit(200);
-
   const events: string[] = [];
 
   // Task due dates → all-day events
@@ -91,22 +82,6 @@ export async function GET(
       endStr,
       (task.description as string | null) ?? undefined,
       true,
-    ));
-  }
-
-  // Time entries → timed events
-  for (const entry of timeEntries ?? []) {
-    const startedAt = entry.started_at as string;
-    const endedAt = entry.ended_at as string;
-    const project = (entry as unknown as { projects: { name: string } | null }).projects;
-    const task = (entry as unknown as { task: { title: string } | null }).task;
-    const label = task?.title ?? (entry.description as string | null) ?? "Tiempo de trabajo";
-    const summary = project ? `[${project.name}] ${label}` : label;
-    events.push(buildEvent(
-      `time-${entry.id as string}@doscientos`,
-      summary,
-      icsDate(startedAt),
-      icsDate(endedAt),
     ));
   }
 

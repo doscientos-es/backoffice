@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
-import { CheckCircle2, Flag } from "lucide-react";
+import { Flag } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -48,10 +48,6 @@ export default async function MilestonesPage({
 
   if (!project) notFound();
 
-  const paymentDue = milestones?.filter(
-    (m) => m.is_payment_milestone && (m.completion_percentage as number) === 100 && m.status === "completed",
-  ) ?? [];
-
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -64,27 +60,6 @@ export default async function MilestonesPage({
           </Button>
         }
       />
-
-      {/* Payment milestone ready-to-invoice banners */}
-      {paymentDue.map((m) => (
-        <div
-          key={m.id as string}
-          className="flex items-center justify-between gap-3 rounded-xl border border-success/30 bg-success/10 px-4 py-3"
-        >
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
-            <span className="text-sm font-medium">
-              Hito de pago completado: <strong>{m.name as string}</strong>
-            </span>
-          </div>
-          <Link
-            href={`/projects/${id}/milestones/${m.id}/import-hours`}
-            className="shrink-0 rounded-md bg-success px-3 py-1.5 text-xs font-medium text-success-foreground hover:bg-success/90 transition-colors"
-          >
-            Importar horas a factura
-          </Link>
-        </div>
-      ))}
 
       {/* Milestone list */}
       {!milestones || milestones.length === 0 ? (

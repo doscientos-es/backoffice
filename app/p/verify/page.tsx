@@ -13,7 +13,7 @@ export default async function VerifyPage({ searchParams }: { searchParams: Searc
           <CardTitle>Verificación de factura</CardTitle>
         </CardHeader>
         <CardContent className="text-sm">
-          <p className="mb-4 text-[color:var(--text-muted)]">
+          <p className="mb-4 text-muted">
             Modo MOCK Verifactu (entorno interno). Estos datos provienen del QR de la factura.
           </p>
           <Row label="NIF emisor" value={p.nif} />
@@ -28,9 +28,9 @@ export default async function VerifyPage({ searchParams }: { searchParams: Searc
 
 function Row({ label, value }: { label: string; value: string | undefined }) {
   return (
-    <div className="grid grid-cols-[140px_1fr] items-center gap-2 py-1.5 border-b last:border-b-0 border-[color:var(--border)]">
-      <span className="text-[color:var(--text-muted)]">{label}</span>
-      <span className="font-medium text-[color:var(--text-primary)]" data-tabular>
+    <div className="grid grid-cols-[140px_1fr] items-center gap-2 py-1.5 border-b last:border-b-0 border-border">
+      <span className="text-muted">{label}</span>
+      <span className="font-medium text-primary" data-tabular>
         {value ?? "—"}
       </span>
     </div>

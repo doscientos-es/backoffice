@@ -2,7 +2,6 @@
 
 import { Logo } from "@/components/branding";
 import { NotificationsBell } from "@/components/layout/notifications-bell";
-import { TimerWidget } from "@/components/layout/timer-widget";
 import { UserMenu } from "@/components/layout/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
@@ -124,7 +123,6 @@ export function MobileNav({
             <div className="flex flex-col gap-2 border-t border-border p-2 mt-auto">
               <div className="flex items-center justify-between px-2">
                 <div className="flex items-center gap-1">
-                  <TimerWidget memberId={user.id} />
                   <NotificationsBell memberId={user.id} />
                 </div>
                 <ThemeToggle />

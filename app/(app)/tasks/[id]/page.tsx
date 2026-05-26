@@ -15,7 +15,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { updateTask } from "../actions";
 import { type CommentItem, TaskComments } from "./task-comments";
-import { TaskTimerButton } from "./task-timer-button";
 
 export const dynamic = "force-dynamic";
 
@@ -90,14 +89,9 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
         description={project?.name ?? lead?.name ?? undefined}
         back={<BackLink href={backHref} label={backLabel} />}
         actions={
-          <div className="flex items-center gap-2">
-            {project?.id && (
-              <TaskTimerButton taskId={id} projectId={project.id} memberId={user.id} />
-            )}
-            <Badge variant={STATUS_VARIANT[task.status as keyof typeof STATUS_VARIANT]}>
-              {task.status as string}
-            </Badge>
-          </div>
+          <Badge variant={STATUS_VARIANT[task.status as keyof typeof STATUS_VARIANT]}>
+            {task.status as string}
+          </Badge>
         }
       />
 
@@ -137,10 +131,6 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
               <DetailRow label="Completada">
                 {formatDate(task.completed_at as string | null)}
               </DetailRow>
-              <DetailRow label="Estimadas">
-                {task.estimated_hours ? `${task.estimated_hours} h` : "—"}
-              </DetailRow>
-              <DetailRow label="Facturable">{task.is_billable ? "Sí" : "No"}</DetailRow>
               {task.github_issue_url ? (
                 <DetailRow label="GitHub">
                   <a
@@ -238,26 +228,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
                     defaultValue={(task.due_date as string | null) ?? ""}
                   />
                 </FormRow>
-                <FormRow label="Estimadas (h)" htmlFor="e_est">
-                  <Input
-                    id="e_est"
-                    name="estimated_hours"
-                    type="number"
-                    step="0.25"
-                    min="0"
-                    defaultValue={(task.estimated_hours as number | null)?.toString() ?? ""}
-                  />
-                </FormRow>
               </div>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  name="is_billable"
-                  defaultChecked={task.is_billable as boolean}
-                  className="size-4 rounded border-border"
-                />
-                Facturable
-              </label>
               <div className="flex justify-end border-t border-border pt-3">
                 <Button type="submit" size="sm">
                   Guardar

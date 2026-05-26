@@ -35,22 +35,11 @@ const CreateInput = z
     status: z.enum(STATUS).default("todo"),
     priority: z.enum(PRIORITY).default("medium"),
     due_date: optionalDate,
-    estimated_hours: z
-      .string()
-      .optional()
-      .or(z.literal("").transform(() => undefined)),
-    is_billable: z.boolean().default(true),
   })
   .refine((d) => d.project_id || d.lead_id, {
     message: "La tarea debe pertenecer a un proyecto o lead",
     path: ["project_id"],
   });
-
-function readBool(formData: FormData, name: string, fallback: boolean): boolean {
-  const v = formData.get(name);
-  if (v === null) return fallback;
-  return v === "on" || v === "true" || v === "1";
-}
 
 export async function createTask(formData: FormData): Promise<void> {
   const user = await requireUser();
@@ -64,8 +53,6 @@ export async function createTask(formData: FormData): Promise<void> {
     status: formData.get("status")?.toString() ?? "todo",
     priority: formData.get("priority")?.toString() ?? "medium",
     due_date: formData.get("due_date")?.toString() ?? "",
-    estimated_hours: formData.get("estimated_hours")?.toString() ?? "",
-    is_billable: readBool(formData, "is_billable", true),
   };
   const parsed = CreateInput.safeParse(raw);
   if (!parsed.success) throw new Error(parsed.error.errors[0]?.message ?? "Datos no válidos");
@@ -87,11 +74,6 @@ export async function createTask(formData: FormData): Promise<void> {
     kanbanOrder = rankAfter((last?.kanban_order as string | null) ?? null);
   }
 
-  const estHours =
-    parsed.data.estimated_hours && parsed.data.estimated_hours.trim() !== ""
-      ? Number.parseFloat(parsed.data.estimated_hours)
-      : null;
-
   const { data, error } = await supabase
     .from("tasks")
     .insert({
@@ -104,8 +86,6 @@ export async function createTask(formData: FormData): Promise<void> {
       status: parsed.data.status,
       priority: parsed.data.priority,
       due_date: parsed.data.due_date ?? null,
-      estimated_hours: Number.isFinite(estHours) ? estHours : null,
-      is_billable: parsed.data.is_billable,
       kanban_order: kanbanOrder,
       created_by: user.id,
     })
@@ -132,11 +112,6 @@ const UpdateInput = z.object({
   status: z.enum(STATUS),
   priority: z.enum(PRIORITY),
   due_date: optionalDate,
-  estimated_hours: z
-    .string()
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-  is_billable: z.boolean().default(true),
 });
 
 export async function updateTask(formData: FormData): Promise<void> {
@@ -150,17 +125,11 @@ export async function updateTask(formData: FormData): Promise<void> {
     status: formData.get("status")?.toString() ?? "todo",
     priority: formData.get("priority")?.toString() ?? "medium",
     due_date: formData.get("due_date")?.toString() ?? "",
-    estimated_hours: formData.get("estimated_hours")?.toString() ?? "",
-    is_billable: readBool(formData, "is_billable", true),
   };
   const parsed = UpdateInput.safeParse(raw);
   if (!parsed.success) throw new Error(parsed.error.errors[0]?.message ?? "Datos no válidos");
 
   const supabase = await createServerClient();
-  const estHours =
-    parsed.data.estimated_hours && parsed.data.estimated_hours.trim() !== ""
-      ? Number.parseFloat(parsed.data.estimated_hours)
-      : null;
 
   const updates: Record<string, unknown> = {
     title: parsed.data.title,
@@ -170,8 +139,6 @@ export async function updateTask(formData: FormData): Promise<void> {
     status: parsed.data.status,
     priority: parsed.data.priority,
     due_date: parsed.data.due_date ?? null,
-    estimated_hours: Number.isFinite(estHours) ? estHours : null,
-    is_billable: parsed.data.is_billable,
   };
   if (parsed.data.status === "done") updates.completed_at = new Date().toISOString();
   if (parsed.data.status === "in_progress") updates.started_at = new Date().toISOString();

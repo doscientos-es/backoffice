@@ -12,33 +12,45 @@ const state: {
   updateResult: UpdateResult;
   lastPatch: Record<string, unknown> | null;
   lastUpdateId: string | null;
+  fetchConsumed: boolean;
 } = {
   fetchResult: { data: null, error: null },
   updateResult: { error: null },
   lastPatch: null,
   lastUpdateId: null,
+  fetchConsumed: false,
 };
 
+// Mock builder that tolerates arbitrary chains used by side-effect helpers
+// (ensureProjectForProposal, promoteLeadFromClient). The primary
+// transitionProposal flow is exercised through `state.fetchResult` and
+// `state.updateResult`; secondary lookups resolve to empty so side-effects
+// short-circuit without polluting the assertions.
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
-    from: (_table: string) => ({
-      select: () => ({
-        eq: () => ({
-          is: () => ({
-            maybeSingle: async () => state.fetchResult,
-          }),
-        }),
-      }),
-      update: (patch: Record<string, unknown>) => {
-        state.lastPatch = patch;
-        return {
-          eq: async (_col: string, id: string) => {
-            state.lastUpdateId = id;
-            return state.updateResult;
-          },
-        };
-      },
-    }),
+    from: (_table: string) => {
+      const empty = { data: null, error: null };
+      const chain: Record<string, unknown> = {
+        select: () => chain,
+        eq: () => chain,
+        is: () => chain,
+        order: () => chain,
+        limit: () => chain,
+        maybeSingle: async () => (state.fetchConsumed ? empty : ((state.fetchConsumed = true), state.fetchResult)),
+        single: async () => empty,
+        insert: () => chain,
+        update: (patch: Record<string, unknown>) => {
+          state.lastPatch = patch;
+          return {
+            eq: async (_col: string, id: string) => {
+              state.lastUpdateId = id;
+              return state.updateResult;
+            },
+          };
+        },
+      };
+      return chain;
+    },
   }),
 }));
 
@@ -50,6 +62,7 @@ describe("portal proposal actions", () => {
     state.updateResult = { error: null };
     state.lastPatch = null;
     state.lastUpdateId = null;
+    state.fetchConsumed = false;
     revalidatePath.mockClear();
   });
 

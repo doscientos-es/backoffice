@@ -3,7 +3,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 const log = scopedLogger("crm.conversion");
 
-type AnyClient = SupabaseClient<never, never, never>;
+// Accepts both the SSR (RLS) and the admin Supabase clients. The generics are
+// intentionally loose because callers instantiate them with different schemas.
+// biome-ignore lint/suspicious/noExplicitAny: structural compatibility across client variants
+type AnyClient = SupabaseClient<any, any, any>;
 
 /**
  * Promotes the lead linked to a client (via `clients.lead_id`) to `won`.

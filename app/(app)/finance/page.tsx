@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/layout/page-header";
+import { StatCard } from "@/components/layout/stat-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
@@ -10,6 +11,7 @@ import {
 } from "@/lib/finance";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
+import { Percent, Receipt, TrendingDown, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { FinanceChart } from "./finance-chart";
 
@@ -109,17 +111,29 @@ export default async function FinancePage() {
       />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Ingresos este mes" value={formatEUR(revenueMonth)} tone="success" />
-        <Stat label="Gastos este mes" value={formatEUR(expenseMonth)} tone="danger" />
-        <Stat
+        <StatCard
+          label="Ingresos este mes"
+          value={formatEUR(revenueMonth)}
+          tone="success"
+          icon={TrendingUp}
+        />
+        <StatCard
+          label="Gastos este mes"
+          value={formatEUR(expenseMonth)}
+          tone="danger"
+          icon={TrendingDown}
+        />
+        <StatCard
           label="Beneficio neto"
           value={formatEUR(netMonth)}
           tone={netMonth >= 0 ? "success" : "danger"}
+          icon={Receipt}
         />
-        <Stat
+        <StatCard
           label="Margen"
           value={margin == null ? "—" : `${margin.toFixed(1)}%`}
           tone={margin != null && margin >= 0 ? "info" : "danger"}
+          icon={Percent}
         />
       </div>
 
@@ -234,27 +248,4 @@ export default async function FinancePage() {
   );
 }
 
-function Stat({
-  label,
-  value,
-  tone,
-}: { label: string; value: number | string; tone?: "danger" | "info" | "success" }) {
-  const toneClass =
-    tone === "danger"
-      ? "text-red-600 dark:text-red-400"
-      : tone === "success"
-        ? "text-emerald-700 dark:text-emerald-400"
-        : tone === "info"
-          ? "text-sky-700 dark:text-sky-400"
-          : "text-foreground";
-  return (
-    <Card>
-      <CardContent className="pt-5">
-        <div className="text-xs text-muted-foreground">{label}</div>
-        <div className={`text-2xl font-semibold tracking-tight tabular-nums ${toneClass}`}>
-          {value}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+

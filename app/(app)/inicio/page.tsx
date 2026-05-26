@@ -1,8 +1,10 @@
+import { StatCard } from "@/components/layout/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
 import { serverEnv } from "@/lib/env";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatEUR } from "@/lib/utils";
+import { AlertTriangle, FileSignature, Inbox, Wallet } from "lucide-react";
 import {
   AvisosPanel,
   type OverdueInvoiceRow,
@@ -157,14 +159,25 @@ export default async function InicioPage() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Leads nuevos" value={leadsNew ?? 0} />
-        <Stat label="Propuestas abiertas" value={proposalsOpen ?? 0} />
-        <Stat
+        <StatCard label="Leads nuevos" value={leadsNew ?? 0} tone="info" icon={Inbox} />
+        <StatCard
+          label="Propuestas abiertas"
+          value={proposalsOpen ?? 0}
+          tone="info"
+          icon={FileSignature}
+        />
+        <StatCard
           label="Facturas vencidas"
           value={overdueInvoices.length}
-          tone={overdueInvoices.length > 0 ? "danger" : undefined}
+          tone={overdueInvoices.length > 0 ? "danger" : "default"}
+          icon={AlertTriangle}
         />
-        <Stat label="Ingresos este mes" value={formatEUR(monthRevenue)} tone="success" />
+        <StatCard
+          label="Ingresos este mes"
+          value={formatEUR(monthRevenue)}
+          tone="success"
+          icon={Wallet}
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
@@ -187,27 +200,4 @@ export default async function InicioPage() {
   );
 }
 
-function Stat({
-  label,
-  value,
-  tone,
-}: { label: string; value: number | string; tone?: "danger" | "info" | "success" }) {
-  const toneClass =
-    tone === "danger"
-      ? "text-red-600 dark:text-red-400"
-      : tone === "success"
-        ? "text-emerald-700 dark:text-emerald-400"
-        : tone === "info"
-          ? "text-sky-700 dark:text-sky-400"
-          : "text-foreground";
-  return (
-    <Card>
-      <CardContent className="pt-5">
-        <div className="text-xs text-muted-foreground">{label}</div>
-        <div className={`text-2xl font-semibold tracking-tight tabular-nums ${toneClass}`}>
-          {typeof value === "number" ? new Intl.NumberFormat("es-ES").format(value) : value}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+

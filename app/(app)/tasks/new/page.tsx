@@ -137,27 +137,7 @@ export default async function NewTaskPage({
               <FormRow label="Vencimiento" htmlFor="due_date">
                 <Input id="due_date" name="due_date" type="date" />
               </FormRow>
-
-              <FormRow label="Estimadas (h)" htmlFor="estimated_hours">
-                <Input
-                  id="estimated_hours"
-                  name="estimated_hours"
-                  type="number"
-                  step="0.25"
-                  min="0"
-                />
-              </FormRow>
             </div>
-
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                name="is_billable"
-                defaultChecked
-                className="size-4 rounded border-border"
-              />
-              Facturable
-            </label>
 
             <div className="flex items-center justify-end gap-2 border-t border-border pt-5">
               <Button type="submit" size="sm">
