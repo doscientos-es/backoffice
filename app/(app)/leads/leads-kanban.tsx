@@ -1,17 +1,10 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { Textarea } from "@/components/ui/textarea";
-import { cn, relativeTime } from "@/lib/utils";
+import { LostReasonDialog } from "./lost-reason-dialog";
+import { LeadQuickView } from "./lead-quick-view";
+import { cn, formatEUR, relativeTime } from "@/lib/utils";
 import {
   DndContext,
   type DragEndEvent,
@@ -23,28 +16,34 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
+import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useOptimistic, useState, useTransition } from "react";
 import { updateLeadStatus } from "./actions";
 import { type FastLead, LeadFastActions } from "./lead-fast-actions";
 
-const LOST_REASON_PRESETS = [
-  "Precio",
-  "Timing / Calendario",
-  "Eligió competencia",
-  "No es buen fit",
-  "Sin respuesta",
-  "Sin presupuesto",
-  "Duplicado",
-] as const;
-
 export type KanbanLead = FastLead & {
   company: string | null;
   status: LeadStatus;
   created_at: string;
+  updated_at: string;
+  estimated_value: number | null;
 };
 
 type LeadStatus = "new" | "qualifying" | "quoted" | "won" | "lost" | "archived";
+
+const STALE_DAYS = 3;
+const STALE_MS = STALE_DAYS * 24 * 60 * 60 * 1000;
+const TERMINAL_STATUSES: ReadonlySet<LeadStatus> = new Set(["won", "lost", "archived"]);
+
+function isStale(lead: KanbanLead): boolean {
+  if (TERMINAL_STATUSES.has(lead.status)) return false;
+  return Date.now() - new Date(lead.updated_at).getTime() > STALE_MS;
+}
+
+function sumEstimated(leads: KanbanLead[]): number {
+  return leads.reduce((acc, l) => acc + (l.estimated_value ?? 0), 0);
+}
 
 const COLUMNS: { id: LeadStatus; label: string; tone: string; dot: string }[] = [
   { id: "new", label: "Nuevo", tone: "text-sky-700 dark:text-sky-300", dot: "bg-sky-500" },
@@ -67,6 +66,7 @@ export function LeadsKanban({
   );
   const [activeId, setActiveId] = useState<string | null>(null);
   const [pendingLost, setPendingLost] = useState<{ id: string; name: string } | null>(null);
+  const [quickViewId, setQuickViewId] = useState<string | null>(null);
   const feedback = useFormFeedback();
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
@@ -125,6 +125,7 @@ export function LeadsKanban({
             dot={col.dot}
             leads={grouped[col.id]}
             aiEnabled={aiEnabled}
+            onOpenQuickView={setQuickViewId}
           />
         ))}
       </div>
@@ -138,102 +139,11 @@ export function LeadsKanban({
           setPendingLost(null);
         }}
       />
+      <LeadQuickView
+        lead={quickViewId ? (optimistic.find((l) => l.id === quickViewId) ?? null) : null}
+        onClose={() => setQuickViewId(null)}
+      />
     </DndContext>
-  );
-}
-
-function LostReasonDialog({
-  lead,
-  onCancel,
-  onConfirm,
-}: {
-  lead: { id: string; name: string } | null;
-  onCancel: () => void;
-  onConfirm: (reason: string) => void;
-}) {
-  const [selected, setSelected] = useState<string | null>(null);
-  const [custom, setCustom] = useState("");
-
-  const reason = (selected ?? custom).trim();
-  const open = !!lead;
-
-  const reset = () => {
-    setSelected(null);
-    setCustom("");
-  };
-
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        if (!v) {
-          reset();
-          onCancel();
-        }
-      }}
-    >
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Marcar como perdido</DialogTitle>
-          <DialogDescription>
-            {lead ? `¿Por qué se ha perdido ${lead.name}?` : "Indica un motivo"}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="flex flex-wrap gap-1.5">
-          {LOST_REASON_PRESETS.map((r) => (
-            <button
-              key={r}
-              type="button"
-              onClick={() => {
-                setSelected(r);
-                setCustom("");
-              }}
-              className={cn(
-                "rounded-full border px-2.5 py-1 text-xs transition-colors",
-                selected === r
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground",
-              )}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
-        <Textarea
-          value={custom}
-          onChange={(e) => {
-            setCustom(e.target.value);
-            if (e.target.value) setSelected(null);
-          }}
-          placeholder="O escribe un motivo personalizado…"
-          rows={3}
-          maxLength={500}
-        />
-        <div className="flex justify-end gap-2 pt-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              reset();
-              onCancel();
-            }}
-          >
-            Cancelar
-          </Button>
-          <Button
-            size="sm"
-            disabled={!reason}
-            onClick={() => {
-              if (!reason) return;
-              onConfirm(reason);
-              reset();
-            }}
-          >
-            Marcar perdido
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
   );
 }
 
@@ -244,6 +154,7 @@ function Column({
   dot,
   leads,
   aiEnabled,
+  onOpenQuickView,
 }: {
   status: LeadStatus;
   label: string;
@@ -251,8 +162,10 @@ function Column({
   dot: string;
   leads: KanbanLead[];
   aiEnabled: boolean;
+  onOpenQuickView: (id: string) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
+  const total = sumEstimated(leads);
   return (
     <div
       ref={setNodeRef}
@@ -261,20 +174,27 @@ function Column({
         isOver && "ring-2 ring-primary/40 bg-primary/5",
       )}
     >
-      <header className="flex items-center justify-between px-3 py-2.5 border-b border-border">
-        <div className="flex items-center gap-2">
-          <span className={cn("size-2 rounded-full shrink-0", dot)} />
-          <span className={cn("text-xs font-semibold tracking-wide", tone)}>{label}</span>
+      <header className="flex flex-col gap-1 px-3 py-2.5 border-b border-border">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className={cn("size-2 rounded-full shrink-0", dot)} />
+            <span className={cn("text-xs font-semibold tracking-wide", tone)}>{label}</span>
+          </div>
+          <Badge variant="neutral" className="tabular-nums text-[11px] h-5">
+            {leads.length}
+          </Badge>
         </div>
-        <Badge variant="neutral" className="tabular-nums text-[11px] h-5">
-          {leads.length}
-        </Badge>
+        {total > 0 && (
+          <p className="pl-4 text-[11px] tabular-nums text-muted-foreground">{formatEUR(total)}</p>
+        )}
       </header>
       <div className="flex flex-col gap-1.5 p-2 min-h-24">
         {leads.length === 0 ? (
           <p className="px-2 py-6 text-center text-xs text-muted-foreground">Sin leads</p>
         ) : (
-          leads.map((l) => <Card key={l.id} lead={l} aiEnabled={aiEnabled} />)
+          leads.map((l) => (
+            <Card key={l.id} lead={l} aiEnabled={aiEnabled} onOpenQuickView={onOpenQuickView} />
+          ))
         )}
       </div>
     </div>

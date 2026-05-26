@@ -207,6 +207,32 @@ export async function updateLeadStatus(
   return { ok: true };
 }
 
+// ---------------- UPDATE ESTIMATED VALUE ----------------
+
+const EstimatedValueInput = z.object({
+  leadId: z.string().uuid(),
+  value: z.number().min(0).max(99_999_999.99).nullable(),
+});
+
+export async function updateLeadEstimatedValue(
+  input: unknown,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireUser();
+  const parsed = EstimatedValueInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Valor no válido" };
+  }
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("leads")
+    .update({ estimated_value: parsed.data.value })
+    .eq("id", parsed.data.leadId);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(`/leads/${parsed.data.leadId}`);
+  revalidatePath("/leads");
+  return { ok: true };
+}
+
 // ---------------- EMAIL ----------------
 
 const Input = z.object({

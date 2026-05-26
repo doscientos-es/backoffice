@@ -63,7 +63,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   const { data: lead, error: leadErr } = await supabase
     .from("leads")
     .select(
-      "id, name, email, phone, company, source, status, notes, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_temperature, ai_confidence, ai_updated_at",
+      "id, name, email, phone, company, source, status, notes, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_temperature, ai_confidence, ai_updated_at, lost_reason, lost_at",
     )
     .eq("id", id)
     .is("deleted_at", null)
@@ -113,7 +113,11 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                 <Link href={`/clients/${linkedClient.id}`}>Ver cliente</Link>
               </Button>
             ) : null}
-            <LeadStatusSelect leadId={lead.id as string} status={lead.status as string} />
+            <LeadStatusSelect
+              leadId={lead.id as string}
+              status={lead.status as string}
+              leadName={lead.name as string}
+            />
           </>
         }
       />
@@ -126,9 +130,16 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           <CardContent>
             <DetailGrid>
               <DetailRow label="Estado">
-                <Badge variant={STATUS_VARIANT[lead.status as keyof typeof STATUS_VARIANT]}>
-                  {lead.status as string}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant={STATUS_VARIANT[lead.status as keyof typeof STATUS_VARIANT]}>
+                    {lead.status as string}
+                  </Badge>
+                  {lead.status === "lost" && lead.lost_reason && (
+                    <Badge variant="outline" className="text-muted-foreground border-dashed">
+                      {lead.lost_reason as string}
+                    </Badge>
+                  )}
+                </div>
               </DetailRow>
               <DetailRow label="Email">{(lead.email as string | null) ?? "—"}</DetailRow>
               <DetailRow label="Teléfono">{(lead.phone as string | null) ?? "—"}</DetailRow>

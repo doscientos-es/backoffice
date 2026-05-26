@@ -59,7 +59,7 @@ export default async function LeadsPage({
   const { data: leads, error } = await supabase
     .from("leads")
     .select(
-      "id, name, company, email, phone, status, created_at, ai_summary, ai_updated_at",
+      "id, name, company, email, phone, status, created_at, updated_at, estimated_value, ai_summary, ai_updated_at",
     )
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
@@ -100,6 +100,8 @@ export default async function LeadsPage({
     phone: (l.phone as string | null) ?? null,
     status: l.status as KanbanLead["status"],
     created_at: l.created_at as string,
+    updated_at: (l.updated_at as string | null) ?? (l.created_at as string),
+    estimated_value: l.estimated_value == null ? null : Number(l.estimated_value),
     ai_summary: (l.ai_summary as string | null) ?? null,
     ai_updated_at: (l.ai_updated_at as string | null) ?? null,
     recent_interactions: interactionsByLead.get(l.id as string) ?? [],
