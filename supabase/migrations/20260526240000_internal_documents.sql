@@ -3,9 +3,14 @@
 -- Separate from client/project attachments (public.documents).
 -- ============================================================
 
-create type if not exists public.internal_doc_category as enum (
-  'legal', 'hr', 'finance', 'templates', 'policies', 'meetings', 'other'
-);
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'internal_doc_category') then
+    create type public.internal_doc_category as enum (
+      'legal', 'hr', 'finance', 'templates', 'policies', 'meetings', 'other'
+    );
+  end if;
+end$$;
 
 create table if not exists public.internal_documents (
   id               uuid primary key default gen_random_uuid(),

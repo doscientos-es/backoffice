@@ -8,6 +8,7 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import type { CurrentUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import {
+  Archive,
   Bell,
   CheckSquare,
   FileSignature,
@@ -35,6 +36,7 @@ const NAV = [
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
   { href: "/reminders", label: "Avisos", icon: Bell },
   { href: "/documents", label: "Documentos", icon: FileText },
+  { href: "/internal-docs", label: "Docs internos", icon: Archive },
   { href: "/settings", label: "Ajustes", icon: Settings },
 ] as const;
 
