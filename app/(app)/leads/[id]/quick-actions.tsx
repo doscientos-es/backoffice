@@ -11,49 +11,28 @@ import {
 } from "@/components/ui/dialog";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarClock, FileText, Mail, MailPlus, Phone } from "lucide-react";
+import { CalendarClock } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { createReminder } from "../../reminders/actions";
-import { logLeadCall, logLeadEmail, logLeadNote } from "../actions";
-import { EmailComposer } from "./email-composer";
+import { QCallDialog, QEmailDialog, QNoteDialog } from "../lead-quick-action-dialogs";
 
 type Props = {
   leadId: string;
   leadName: string;
   leadEmail: string | null;
   leadPhone: string | null;
-  sendEnabled: boolean;
-  sendDisabledReason?: string;
-  aiEnabled: boolean;
 };
 
-export function LeadQuickActions({
-  leadId,
-  leadName,
-  leadEmail,
-  leadPhone,
-  sendEnabled,
-  sendDisabledReason,
-  aiEnabled,
-}: Props) {
+export function LeadQuickActions({ leadId, leadName, leadEmail, leadPhone }: Props) {
   return (
     <div className="flex flex-col gap-2">
-      <CallDialog leadId={leadId} leadName={leadName} leadPhone={leadPhone} />
-      <SendEmailDialog
-        leadId={leadId}
-        leadEmail={leadEmail}
-        sendEnabled={sendEnabled}
-        sendDisabledReason={sendDisabledReason}
-        aiEnabled={aiEnabled}
-      />
-      <LogEmailDialog leadId={leadId} leadName={leadName} leadEmail={leadEmail} />
+      <QCallDialog leadId={leadId} leadPhone={leadPhone} />
+      <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
+      <QNoteDialog leadId={leadId} />
       <ScheduleDialog leadId={leadId} leadName={leadName} />
-      <NoteDialog leadId={leadId} />
     </div>
   );
 }
