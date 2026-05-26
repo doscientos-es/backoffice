@@ -1,3 +1,4 @@
+import { Logo } from "@/components/branding";
 import Link from "next/link";
 
 export const metadata = {
@@ -10,13 +11,8 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
     <div className="flex min-h-screen flex-col bg-zinc-100 dark:bg-zinc-950">
       <header className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
         <div className="mx-auto flex h-14 w-full max-w-3xl items-center justify-between px-6">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="inline-flex size-6 items-center justify-center rounded bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-[10px] font-black tracking-tighter select-none">
-              dc
-            </span>
-            <span className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
-              doscientos
-            </span>
+          <Link href="/" aria-label="doscientos">
+            <Logo size="md" />
           </Link>
           <span className="text-xs text-zinc-400 dark:text-zinc-500">Documento privado</span>
         </div>

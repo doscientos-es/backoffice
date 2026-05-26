@@ -29,6 +29,7 @@ export default async function SettingsPage() {
             emailAlias={user.emailAlias ?? null}
             emailSendEnabled={user.emailSendEnabled}
             signatureHtml={user.signatureHtml ?? null}
+            githubHandle={user.githubHandle ?? null}
           />
         </CardContent>
       </Card>

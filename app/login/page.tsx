@@ -1,5 +1,5 @@
-import { Suspense } from "react";
 import { AuthShell } from "@/components/auth/auth-shell";
+import { Suspense } from "react";
 import { LoginForm } from "./login-form";
 
 export const metadata = { title: "Entrar · doscientos backoffice" };

@@ -30,7 +30,9 @@ export function ProposalActions({ token }: { token: string }) {
   if (showReject) {
     return (
       <Card>
-        <CardHeader><CardTitle>Rechazar propuesta</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Rechazar propuesta</CardTitle>
+        </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="reason">Motivo (opcional)</Label>
@@ -46,7 +48,11 @@ export function ProposalActions({ token }: { token: string }) {
           </div>
           <div className="flex items-center justify-end gap-3">
             <FormFeedback state={feedback.state} pendingLabel="Enviando…" />
-            <Button variant="ghost" onClick={() => setShowReject(false)} disabled={feedback.pending}>
+            <Button
+              variant="ghost"
+              onClick={() => setShowReject(false)}
+              disabled={feedback.pending}
+            >
               Cancelar
             </Button>
             <Button variant="destructive" onClick={onReject} disabled={feedback.pending}>
@@ -60,7 +66,9 @@ export function ProposalActions({ token }: { token: string }) {
 
   return (
     <Card>
-      <CardHeader><CardTitle>Tu respuesta</CardTitle></CardHeader>
+      <CardHeader>
+        <CardTitle>Tu respuesta</CardTitle>
+      </CardHeader>
       <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-[color:var(--text-muted)]">
           Acepta o rechaza esta propuesta. Esta acción es definitiva.

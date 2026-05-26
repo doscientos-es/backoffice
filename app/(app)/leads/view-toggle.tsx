@@ -19,7 +19,10 @@ export function LeadsViewToggle({ view }: { view: "board" | "list" }) {
 }
 
 function Tab({
-  href, active, icon, children,
+  href,
+  active,
+  icon,
+  children,
 }: { href: string; active: boolean; icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <Button

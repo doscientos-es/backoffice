@@ -43,10 +43,7 @@ export function FormField({
 function FormLabel({ className, children, ...props }: LabelHTMLAttributes<HTMLLabelElement>) {
   return (
     <label
-      className={cn(
-        "text-xs font-medium text-[color:var(--text-secondary)]",
-        className,
-      )}
+      className={cn("text-xs font-medium text-[color:var(--text-secondary)]", className)}
       {...props}
     >
       {children}

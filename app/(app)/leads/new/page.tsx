@@ -5,11 +5,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth";
+import type { Metadata } from "next";
+import Link from "next/link";
 import { createLead } from "../actions";
 
-export const metadata = { title: "Nuevo lead · doscientos" };
+export const metadata: Metadata = { title: "Nuevo lead · doscientos" };
 
 const SOURCES = ["Web", "Referencia", "LinkedIn", "Email", "Evento", "Otro"];
 
@@ -27,38 +30,84 @@ export default async function NewLeadPage() {
         <CardContent className="pt-6">
           <form action={createLead} className="flex flex-col gap-5">
             <div className="grid gap-5 sm:grid-cols-2">
-              <Field label="Nombre" htmlFor="name" required>
-                <Input id="name" name="name" required maxLength={160} autoFocus />
-              </Field>
-              <Field label="Empresa" htmlFor="company">
-                <Input id="company" name="company" maxLength={160} />
-              </Field>
-              <Field label="Email" htmlFor="email">
-                <Input id="email" name="email" type="email" maxLength={160} />
-              </Field>
-              <Field label="Teléfono" htmlFor="phone">
-                <Input id="phone" name="phone" type="tel" maxLength={40} />
-              </Field>
-              <Field label="Origen" htmlFor="source">
+              <FormRow
+                label="Nombre"
+                htmlFor="name"
+                required
+                hint="Persona o contacto principal del lead."
+              >
+                <Input
+                  id="name"
+                  name="name"
+                  required
+                  maxLength={160}
+                  autoFocus
+                  placeholder="Nombre y apellidos"
+                  autoComplete="name"
+                />
+              </FormRow>
+              <FormRow label="Empresa" htmlFor="company">
+                <Input
+                  id="company"
+                  name="company"
+                  maxLength={160}
+                  placeholder="Acme S.L."
+                  autoComplete="organization"
+                />
+              </FormRow>
+              <FormRow label="Email" htmlFor="email">
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  inputMode="email"
+                  maxLength={160}
+                  placeholder="nombre@empresa.com"
+                  autoComplete="email"
+                />
+              </FormRow>
+              <FormRow label="Teléfono" htmlFor="phone">
+                <Input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  inputMode="tel"
+                  maxLength={40}
+                  placeholder="+34 600 000 000"
+                  autoComplete="tel"
+                />
+              </FormRow>
+              <FormRow label="Origen" htmlFor="source" hint="Cómo nos ha llegado este lead.">
                 <Select id="source" name="source" defaultValue="">
-                  <option value="">—</option>
+                  <option value="">— Sin especificar —</option>
                   {SOURCES.map((s) => (
                     <option key={s} value={s}>
                       {s}
                     </option>
                   ))}
                 </Select>
-              </Field>
+              </FormRow>
             </div>
 
-            <Field label="Notas" htmlFor="notes">
-              <Textarea id="notes" name="notes" rows={4} maxLength={4000} />
-            </Field>
+            <FormRow
+              label="Notas"
+              htmlFor="notes"
+              hint="Contexto inicial, necesidades, próximos pasos…"
+            >
+              <Textarea
+                id="notes"
+                name="notes"
+                rows={4}
+                maxLength={4000}
+                placeholder="Reunión inicial el 14/03 — interesados en módulo de facturación…"
+              />
+            </FormRow>
 
             <div className="flex items-center justify-end gap-2 border-t border-border pt-5">
-              <Button type="submit" size="sm">
-                Crear lead
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/leads">Cancelar</Link>
               </Button>
+              <SubmitButton pendingLabel="Creando…">Crear lead</SubmitButton>
             </div>
           </form>
         </CardContent>
@@ -71,8 +120,15 @@ function Field({
   label,
   htmlFor,
   required,
+  hint,
   children,
-}: { label: string; htmlFor: string; required?: boolean; children: React.ReactNode }) {
+}: {
+  label: string;
+  htmlFor: string;
+  required?: boolean;
+  hint?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex flex-col gap-1.5">
       <Label htmlFor={htmlFor} className="text-xs font-medium">
@@ -80,6 +136,7 @@ function Field({
         {required ? <span className="ml-0.5 text-destructive">*</span> : null}
       </Label>
       {children}
+      {hint ? <p className="text-[11px] text-muted-foreground">{hint}</p> : null}
     </div>
   );
 }

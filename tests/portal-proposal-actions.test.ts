@@ -69,9 +69,7 @@ describe("portal proposal actions", () => {
   });
 
   it("blocks transitions from already-responded states", async () => {
-    const { acceptProposal, rejectProposal } = await import(
-      "@/app/p/proposal/[token]/actions"
-    );
+    const { acceptProposal, rejectProposal } = await import("@/app/p/proposal/[token]/actions");
 
     state.fetchResult = { data: { id: "p1", status: "accepted" }, error: null };
     expect(await acceptProposal(VALID_TOKEN)).toEqual({

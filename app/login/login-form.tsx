@@ -42,28 +42,35 @@ export function LoginForm() {
       <CardContent className="pt-5">
         <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="text-xs font-medium">
+              Email <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="email"
               type="email"
+              inputMode="email"
               autoComplete="email"
               autoFocus
               required
+              placeholder="tu@empresa.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               aria-invalid={error ? true : undefined}
+              aria-describedby={error ? "login-error" : undefined}
               disabled={loading}
             />
           </div>
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password" className="text-xs font-medium">
+                Contraseña <span className="text-destructive">*</span>
+              </Label>
               <Link
                 href="/login/forgot-password"
                 className="text-xs text-[color:var(--text-muted)] hover:text-[color:var(--text-primary)] hover:underline underline-offset-2"
                 tabIndex={loading ? -1 : 0}
               >
-                ¿Olvidaste la contraseña?
+                ¿La olvidaste?
               </Link>
             </div>
             <div className="relative">
@@ -72,9 +79,11 @@ export function LoginForm() {
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
                 required
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 aria-invalid={error ? true : undefined}
+                aria-describedby={error ? "login-error" : undefined}
                 disabled={loading}
                 className="pr-9"
               />
@@ -83,6 +92,7 @@ export function LoginForm() {
                 onClick={() => setShowPassword((v) => !v)}
                 tabIndex={-1}
                 aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                aria-pressed={showPassword}
                 className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-[color:var(--text-muted)] hover:text-[color:var(--text-primary)] disabled:pointer-events-none"
                 disabled={loading}
               >
@@ -96,6 +106,7 @@ export function LoginForm() {
           </div>
           {error ? (
             <p
+              id="login-error"
               role="alert"
               className={cn(
                 "rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs",

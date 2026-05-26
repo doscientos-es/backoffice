@@ -9,16 +9,36 @@ import { z } from "zod";
 // ---------- CREATE ----------
 const CreateClientInput = z.object({
   name: z.string().min(1, "El nombre es obligatorio").max(160),
-  nif: z.string().max(20).optional().or(z.literal("").transform(() => undefined)),
+  nif: z
+    .string()
+    .max(20)
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
   email: z
     .string()
     .email("Email no válido")
     .optional()
     .or(z.literal("").transform(() => undefined)),
-  phone: z.string().max(40).optional().or(z.literal("").transform(() => undefined)),
-  billing_address: z.string().max(400).optional().or(z.literal("").transform(() => undefined)),
-  contact_person: z.string().max(160).optional().or(z.literal("").transform(() => undefined)),
-  notes: z.string().max(4000).optional().or(z.literal("").transform(() => undefined)),
+  phone: z
+    .string()
+    .max(40)
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  billing_address: z
+    .string()
+    .max(400)
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  contact_person: z
+    .string()
+    .max(160)
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  notes: z
+    .string()
+    .max(4000)
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
 });
 
 export async function createClient(formData: FormData): Promise<void> {

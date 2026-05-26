@@ -13,6 +13,12 @@ const ProfileInput = z.object({
     .or(z.literal("").transform(() => undefined)),
   signature_html: z.string().max(8000).optional(),
   email_send_enabled: z.enum(["on", "off"]).transform((v) => v === "on"),
+  github_handle: z
+    .string()
+    .max(39)
+    .regex(/^[a-zA-Z0-9-]*$/, "Handle de GitHub inválido")
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
 });
 
 export async function updateProfile(
@@ -23,6 +29,7 @@ export async function updateProfile(
     email_alias: formData.get("email_alias")?.toString() ?? "",
     signature_html: formData.get("signature_html")?.toString() ?? "",
     email_send_enabled: formData.get("email_send_enabled")?.toString() === "on" ? "on" : "off",
+    github_handle: formData.get("github_handle")?.toString() ?? "",
   };
   const parsed = ProfileInput.safeParse(raw);
   if (!parsed.success) {
@@ -36,6 +43,7 @@ export async function updateProfile(
       email_alias: parsed.data.email_alias ?? null,
       signature_html: parsed.data.signature_html || null,
       email_send_enabled: parsed.data.email_send_enabled,
+      github_handle: parsed.data.github_handle ?? null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", user.id);
@@ -48,9 +56,21 @@ export async function updateProfile(
 // ---------- Company settings ----------
 const CompanyInput = z.object({
   company_name: z.string().min(1).max(160),
-  company_nif: z.string().max(20).optional().or(z.literal("").transform(() => undefined)),
-  company_address: z.string().max(400).optional().or(z.literal("").transform(() => undefined)),
-  iban: z.string().max(40).optional().or(z.literal("").transform(() => undefined)),
+  company_nif: z
+    .string()
+    .max(20)
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  company_address: z
+    .string()
+    .max(400)
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  iban: z
+    .string()
+    .max(40)
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
   default_vat_rate: z.coerce.number().min(0).max(100),
   invoice_series: z.string().min(1).max(10),
 });

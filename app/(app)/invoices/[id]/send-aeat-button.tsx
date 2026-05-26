@@ -18,9 +18,7 @@ export function SendAeatButton({
     feedback.setPending();
     const result = await sendToAeat(fd);
     if (result.ok) {
-      feedback.setSuccess(
-        result.csv ? `Aceptada · CSV ${result.csv}` : "Factura procesada",
-      );
+      feedback.setSuccess(result.csv ? `Aceptada · CSV ${result.csv}` : "Factura procesada");
     } else {
       feedback.setError(result.error);
     }

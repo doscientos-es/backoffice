@@ -1,11 +1,6 @@
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Empty,
-  EmptyContent,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty-state";
+import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -56,7 +51,7 @@ export function ListPage({
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-[color:var(--surface)] text-left text-xs uppercase tracking-wide text-[color:var(--text-muted)]">
+                <thead className="bg-surface text-left text-xs uppercase tracking-wide text-[color:var(--text-muted)]">
                   <tr>
                     {headers.map((h) => (
                       <th key={h} className="px-5 py-2 font-medium">

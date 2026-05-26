@@ -29,9 +29,7 @@ const STATUS_LABEL: Record<string, string> = {
   expired: "Expirada",
 };
 
-export default async function ProposalDetailPage({
-  params,
-}: { params: Promise<{ id: string }> }) {
+export default async function ProposalDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   await requireUser();
   const supabase = await createServerClient();
@@ -52,7 +50,8 @@ export default async function ProposalDetailPage({
     .order("position");
 
   const client = (proposal as unknown as { clients: { id: string; name: string } | null }).clients;
-  const project = (proposal as unknown as { projects: { id: string; name: string } | null }).projects;
+  const project = (proposal as unknown as { projects: { id: string; name: string } | null })
+    .projects;
 
   return (
     <div className="flex flex-col gap-6">
@@ -70,7 +69,9 @@ export default async function ProposalDetailPage({
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         {/* Items */}
         <Card>
-          <CardHeader><CardTitle>Líneas</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Líneas</CardTitle>
+          </CardHeader>
           <CardContent className="px-0">
             {!items || items.length === 0 ? (
               <p className="px-6 py-4 text-sm text-muted-foreground">Sin líneas.</p>
@@ -90,25 +91,51 @@ export default async function ProposalDetailPage({
                     {items.map((item) => (
                       <tr key={item.id as string} className="border-t border-border">
                         <td className="px-5 py-2.5">{item.description as string}</td>
-                        <td className="px-5 py-2.5 text-right tabular-nums">{item.quantity as number}</td>
-                        <td className="px-5 py-2.5 text-right tabular-nums">{formatEUR(item.unit_price as number)}</td>
-                        <td className="px-5 py-2.5 text-right tabular-nums">{item.vat_rate as number}%</td>
-                        <td className="px-5 py-2.5 text-right tabular-nums font-medium">{formatEUR(item.subtotal as number)}</td>
+                        <td className="px-5 py-2.5 text-right tabular-nums">
+                          {item.quantity as number}
+                        </td>
+                        <td className="px-5 py-2.5 text-right tabular-nums">
+                          {formatEUR(item.unit_price as number)}
+                        </td>
+                        <td className="px-5 py-2.5 text-right tabular-nums">
+                          {item.vat_rate as number}%
+                        </td>
+                        <td className="px-5 py-2.5 text-right tabular-nums font-medium">
+                          {formatEUR(item.subtotal as number)}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                   <tfoot className="border-t-2 border-border">
                     <tr>
-                      <td colSpan={4} className="px-5 py-2.5 text-right text-xs text-muted-foreground">Subtotal</td>
-                      <td className="px-5 py-2.5 text-right tabular-nums">{formatEUR(proposal.subtotal as number)}</td>
+                      <td
+                        colSpan={4}
+                        className="px-5 py-2.5 text-right text-xs text-muted-foreground"
+                      >
+                        Subtotal
+                      </td>
+                      <td className="px-5 py-2.5 text-right tabular-nums">
+                        {formatEUR(proposal.subtotal as number)}
+                      </td>
                     </tr>
                     <tr>
-                      <td colSpan={4} className="px-5 py-2.5 text-right text-xs text-muted-foreground">IVA</td>
-                      <td className="px-5 py-2.5 text-right tabular-nums">{formatEUR(proposal.tax_amount as number)}</td>
+                      <td
+                        colSpan={4}
+                        className="px-5 py-2.5 text-right text-xs text-muted-foreground"
+                      >
+                        IVA
+                      </td>
+                      <td className="px-5 py-2.5 text-right tabular-nums">
+                        {formatEUR(proposal.tax_amount as number)}
+                      </td>
                     </tr>
                     <tr className="font-semibold">
-                      <td colSpan={4} className="px-5 py-2.5 text-right">Total</td>
-                      <td className="px-5 py-2.5 text-right tabular-nums">{formatEUR(proposal.total as number)}</td>
+                      <td colSpan={4} className="px-5 py-2.5 text-right">
+                        Total
+                      </td>
+                      <td className="px-5 py-2.5 text-right tabular-nums">
+                        {formatEUR(proposal.total as number)}
+                      </td>
                     </tr>
                   </tfoot>
                 </table>
@@ -119,7 +146,9 @@ export default async function ProposalDetailPage({
 
         {/* Metadata */}
         <Card>
-          <CardHeader><CardTitle>Información</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Información</CardTitle>
+          </CardHeader>
           <CardContent>
             <DetailGrid>
               <DetailRow label="Estado">
@@ -129,23 +158,25 @@ export default async function ProposalDetailPage({
               </DetailRow>
               <DetailRow label="Cliente">
                 {client ? (
-                  <Link href={`/clients/${client.id}`} className="hover:underline">{client.name}</Link>
-                ) : "—"}
+                  <Link href={`/clients/${client.id}`} className="hover:underline">
+                    {client.name}
+                  </Link>
+                ) : (
+                  "—"
+                )}
               </DetailRow>
               {project ? (
                 <DetailRow label="Proyecto">
-                  <Link href={`/projects/${project.id}`} className="hover:underline">{project.name}</Link>
+                  <Link href={`/projects/${project.id}`} className="hover:underline">
+                    {project.name}
+                  </Link>
                 </DetailRow>
               ) : null}
               <DetailRow label="Válida hasta">
                 {formatDate(proposal.valid_until as string | null)}
               </DetailRow>
-              <DetailRow label="Enviada">
-                {formatDate(proposal.sent_at as string | null)}
-              </DetailRow>
-              <DetailRow label="Vista">
-                {formatDate(proposal.viewed_at as string | null)}
-              </DetailRow>
+              <DetailRow label="Enviada">{formatDate(proposal.sent_at as string | null)}</DetailRow>
+              <DetailRow label="Vista">{formatDate(proposal.viewed_at as string | null)}</DetailRow>
               <DetailRow label="Respondida">
                 {formatDate(proposal.responded_at as string | null)}
               </DetailRow>
@@ -169,7 +200,9 @@ export default async function ProposalDetailPage({
 
             {(proposal.notes as string | null) ? (
               <div className="mt-4 border-t border-border pt-3">
-                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Notas</p>
+                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Notas
+                </p>
                 <p className="whitespace-pre-wrap text-sm">{proposal.notes as string}</p>
               </div>
             ) : null}

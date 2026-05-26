@@ -46,7 +46,10 @@ const VERIFACTU_LABEL = {
 } as const;
 
 export function AvisosPanel({
-  reminders, verifactuPending, overdueInvoices, certExpiresAt,
+  reminders,
+  verifactuPending,
+  overdueInvoices,
+  certExpiresAt,
 }: AvisosPanelProps) {
   const empty =
     reminders.length === 0 &&
@@ -63,9 +66,7 @@ export function AvisosPanel({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Sin avisos pendientes. Todo en orden.
-          </p>
+          <p className="text-sm text-muted-foreground">Sin avisos pendientes. Todo en orden.</p>
         </CardContent>
       </Card>
     );
@@ -86,7 +87,10 @@ export function AvisosPanel({
               <p className="text-sm font-medium">Certificado Verifactu por caducar</p>
               <p className="text-xs text-muted-foreground">
                 Caduca el {formatDate(certExpiresAt)} ({relativeTime(certExpiresAt)}).{" "}
-                <Link href="/settings" className="underline">Renovar</Link>.
+                <Link href="/settings" className="underline">
+                  Renovar
+                </Link>
+                .
               </p>
             </div>
           </div>
@@ -103,9 +107,7 @@ export function AvisosPanel({
                 return (
                   <li key={r.id} className="flex items-center justify-between gap-2">
                     <span className="truncate text-sm">{r.title}</span>
-                    <Badge variant={overdue ? "danger" : "info"}>
-                      {relativeTime(r.remind_at)}
-                    </Badge>
+                    <Badge variant={overdue ? "danger" : "info"}>{relativeTime(r.remind_at)}</Badge>
                   </li>
                 );
               })}
@@ -123,7 +125,9 @@ export function AvisosPanel({
                 <li key={v.id} className="flex items-center justify-between gap-2">
                   <Link href={`/invoices/${v.id}`} className="truncate text-sm hover:underline">
                     {v.full_number ?? v.id.slice(0, 8)}
-                    {v.client_name ? <span className="text-muted-foreground"> · {v.client_name}</span> : null}
+                    {v.client_name ? (
+                      <span className="text-muted-foreground"> · {v.client_name}</span>
+                    ) : null}
                   </Link>
                   <Badge variant={VERIFACTU_VARIANT[v.verifactu_status]}>
                     {VERIFACTU_LABEL[v.verifactu_status]}
@@ -144,10 +148,13 @@ export function AvisosPanel({
                 <li key={inv.id} className="flex items-center justify-between gap-2">
                   <Link href={`/invoices/${inv.id}`} className="truncate text-sm hover:underline">
                     {inv.full_number ?? inv.id.slice(0, 8)}
-                    {inv.client_name ? <span className="text-muted-foreground"> · {inv.client_name}</span> : null}
+                    {inv.client_name ? (
+                      <span className="text-muted-foreground"> · {inv.client_name}</span>
+                    ) : null}
                   </Link>
                   <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                    {formatEUR(inv.total)} · venció {relativeTime(inv.due_date ?? new Date().toISOString())}
+                    {formatEUR(inv.total)} · venció{" "}
+                    {relativeTime(inv.due_date ?? new Date().toISOString())}
                   </span>
                 </li>
               ))}
@@ -160,13 +167,17 @@ export function AvisosPanel({
 }
 
 function Section({
-  icon, title, children,
+  icon,
+  title,
+  children,
 }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
     <div>
       <div className="mb-2 flex items-center gap-2">
         {icon}
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {title}
+        </h3>
       </div>
       {children}
     </div>

@@ -1,4 +1,4 @@
-import { type LeadIntake } from "@/lib/integrations/lead-intake";
+import type { LeadIntake } from "@/lib/integrations/lead-intake";
 
 /**
  * Shape of the JSON body that Recurrev (GoHighLevel) sends via "Webhook personalizado".
@@ -71,11 +71,7 @@ export function mapRecurrevToIntake(
   const resolvedName = fullName ?? (joinedName || "Lead sin nombre");
 
   // Stable ID for idempotency (contact.id from GHL)
-  const externalId = pick(
-    payload.external_id,
-    payload.contact_id,
-    payload.id,
-  );
+  const externalId = pick(payload.external_id, payload.contact_id, payload.id);
 
   return {
     name: resolvedName,
@@ -89,7 +85,9 @@ export function mapRecurrevToIntake(
     utm: {
       source: pick(payload.utm_source, payload.utmSource) ?? "facebook",
       medium: pick(payload.utm_medium, payload.utmMedium) ?? "paid_social",
-      campaign: pick(payload.utm_campaign, payload.utmCampaign, payload.campaign_id, payload.campaignId) ?? null,
+      campaign:
+        pick(payload.utm_campaign, payload.utmCampaign, payload.campaign_id, payload.campaignId) ??
+        null,
       content: pick(payload.utm_content, payload.utmContent, payload.ad_id, payload.adId) ?? null,
       term: pick(payload.utm_term, payload.utmTerm, payload.adset_id, payload.adGroupId) ?? null,
     },

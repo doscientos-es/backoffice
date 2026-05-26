@@ -66,7 +66,9 @@ const StatusInput = z.object({
   status: z.enum(["new", "qualifying", "quoted", "won", "lost", "archived"]),
 });
 
-export async function updateLeadStatus(input: unknown): Promise<{ ok: true } | { ok: false; error: string }> {
+export async function updateLeadStatus(
+  input: unknown,
+): Promise<{ ok: true } | { ok: false; error: string }> {
   await requireUser();
   const parsed = StatusInput.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Estado no válido" };

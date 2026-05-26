@@ -47,7 +47,9 @@ describe("verifactu/client", () => {
   it("buildVerifactuXml chains via RegistroAnterior when previousHash is set", async () => {
     const { buildVerifactuXml } = await import("@/lib/verifactu/client");
     const xml = buildVerifactuXml({ ...baseInput, previousHash: "abc123" }, "newhash");
-    expect(xml).toContain("<sum:RegistroAnterior><sum:Huella>abc123</sum:Huella></sum:RegistroAnterior>");
+    expect(xml).toContain(
+      "<sum:RegistroAnterior><sum:Huella>abc123</sum:Huella></sum:RegistroAnterior>",
+    );
     expect(xml).not.toContain("PrimerRegistro");
   });
 

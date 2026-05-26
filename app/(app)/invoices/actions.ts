@@ -4,8 +4,8 @@ import { requireRole } from "@/lib/auth";
 import { serverEnv } from "@/lib/env";
 import { scopedLogger } from "@/lib/logger";
 import { createServerClient } from "@/lib/supabase/server";
-import { buildQrUrl } from "@/lib/verifactu/qr";
 import { submitToVerifactu } from "@/lib/verifactu/client";
+import { buildQrUrl } from "@/lib/verifactu/qr";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 

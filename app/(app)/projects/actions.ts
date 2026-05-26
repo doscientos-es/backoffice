@@ -9,11 +9,25 @@ import { z } from "zod";
 const ProjectInput = z.object({
   client_id: z.string().uuid("Cliente inválido"),
   name: z.string().min(1, "El nombre es obligatorio").max(160),
-  description: z.string().max(4000).optional().or(z.literal("").transform(() => undefined)),
+  description: z
+    .string()
+    .max(4000)
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
   status: z.enum(["planning", "active", "on_hold", "done", "cancelled"]).default("planning"),
-  github_repo: z.string().url("URL inválida").optional().or(z.literal("").transform(() => undefined)),
-  starts_at: z.string().optional().or(z.literal("").transform(() => undefined)),
-  ends_at: z.string().optional().or(z.literal("").transform(() => undefined)),
+  github_repo: z
+    .string()
+    .url("URL inválida")
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  starts_at: z
+    .string()
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  ends_at: z
+    .string()
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
 });
 
 export async function createProject(formData: FormData): Promise<void> {

@@ -19,8 +19,16 @@ export default async function ProjectsPage() {
       title="Proyectos"
       empty="Aún no hay proyectos."
       error={error?.message}
-      actions={<Button asChild size="sm"><Link href="/projects/new">Nuevo</Link></Button>}
-      emptyAction={<Button asChild size="sm"><Link href="/projects/new">Crear primer proyecto</Link></Button>}
+      actions={
+        <Button asChild size="sm">
+          <Link href="/projects/new">Nuevo</Link>
+        </Button>
+      }
+      emptyAction={
+        <Button asChild size="sm">
+          <Link href="/projects/new">Crear primer proyecto</Link>
+        </Button>
+      }
       headers={["Nombre", "Cliente", "Estado"]}
       rows={
         data?.map((p) => ({

@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { serverEnv } from "@/lib/env";
-import { scopedLogger } from "@/lib/logger";
 import type { LeadIntake } from "@/lib/integrations/lead-intake";
+import { scopedLogger } from "@/lib/logger";
 
 const log = scopedLogger("meta-leads");
 
@@ -105,10 +105,7 @@ const FIELD_ALIASES = {
   company: ["company_name", "empresa", "company", "organizacion"],
 } as const;
 
-function findField(
-  fields: MetaLeadField[],
-  candidates: ReadonlyArray<string>,
-): string | null {
+function findField(fields: MetaLeadField[], candidates: ReadonlyArray<string>): string | null {
   const normalized = fields.map((f) => ({
     key: f.name.toLowerCase().trim(),
     value: f.values?.[0] ?? null,

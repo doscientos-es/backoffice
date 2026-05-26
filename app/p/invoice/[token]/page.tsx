@@ -1,3 +1,4 @@
+import { LogoMark } from "@/components/branding";
 import { Badge } from "@/components/ui/badge";
 import { publicEnv, serverEnv } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -61,7 +62,12 @@ export default async function PortalInvoicePage({
 
   let qrDataUrl: string | null = null;
   const env = serverEnv();
-  if (env.VERIFACTU_NIF_EMISOR && invoice.full_number && invoice.issue_date && invoice.total != null) {
+  if (
+    env.VERIFACTU_NIF_EMISOR &&
+    invoice.full_number &&
+    invoice.issue_date &&
+    invoice.total != null
+  ) {
     const qrUrl = buildQrUrl(
       {
         nif: env.VERIFACTU_NIF_EMISOR,
@@ -80,10 +86,14 @@ export default async function PortalInvoicePage({
       <div className="border-b border-zinc-200 dark:border-zinc-800 px-8 py-7 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2 mb-1">
-            <span className="inline-flex size-5 items-center justify-center rounded bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-[9px] font-black tracking-tighter select-none">dc</span>
-            <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">doscientos</span>
+            <LogoMark size={20} className="text-[#2A4227] dark:text-[#9CC196]" />
+            <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+              doscientos
+            </span>
           </div>
-          <p className="text-xs text-zinc-400 dark:text-zinc-500">{invoice.invoice_type as string}</p>
+          <p className="text-xs text-zinc-400 dark:text-zinc-500">
+            {invoice.invoice_type as string}
+          </p>
         </div>
         <div className="flex flex-col items-start sm:items-end gap-1.5">
           <div className="flex items-center gap-2">
@@ -93,18 +103,38 @@ export default async function PortalInvoicePage({
             <Badge variant={STATUS_VARIANT[status]}>{STATUS_LABEL[status] ?? status}</Badge>
           </div>
           <div className="flex flex-col items-start sm:items-end gap-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-            {invoice.issue_date ? <span>Emitida: <strong className="text-zinc-700 dark:text-zinc-300">{formatDate(invoice.issue_date as string)}</strong></span> : null}
-            {invoice.due_date ? <span>Vencimiento: <strong className="text-zinc-700 dark:text-zinc-300">{formatDate(invoice.due_date as string)}</strong></span> : null}
+            {invoice.issue_date ? (
+              <span>
+                Emitida:{" "}
+                <strong className="text-zinc-700 dark:text-zinc-300">
+                  {formatDate(invoice.issue_date as string)}
+                </strong>
+              </span>
+            ) : null}
+            {invoice.due_date ? (
+              <span>
+                Vencimiento:{" "}
+                <strong className="text-zinc-700 dark:text-zinc-300">
+                  {formatDate(invoice.due_date as string)}
+                </strong>
+              </span>
+            ) : null}
           </div>
         </div>
       </div>
 
       {/* Recipient */}
       <div className="px-8 py-5 border-b border-zinc-100 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-900/50">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-1">Facturado a</p>
-        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{client?.name ?? "—"}</p>
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-1">
+          Facturado a
+        </p>
+        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+          {client?.name ?? "—"}
+        </p>
         {(invoice.client_nif as string | null) ? (
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">NIF: {invoice.client_nif as string}</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            NIF: {invoice.client_nif as string}
+          </p>
         ) : null}
       </div>
 
@@ -113,25 +143,54 @@ export default async function PortalInvoicePage({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-zinc-200 dark:border-zinc-800">
-              <th className="px-8 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">Descripción</th>
-              <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">Cant.</th>
-              <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">Precio</th>
-              <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">IVA</th>
-              <th className="px-8 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">Subtotal</th>
+              <th className="px-8 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+                Descripción
+              </th>
+              <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+                Cant.
+              </th>
+              <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+                Precio
+              </th>
+              <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+                IVA
+              </th>
+              <th className="px-8 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+                Subtotal
+              </th>
             </tr>
           </thead>
           <tbody>
             {safeItems.length === 0 ? (
-              <tr><td colSpan={5} className="px-8 py-6 text-sm text-zinc-400 dark:text-zinc-600">Sin líneas.</td></tr>
-            ) : safeItems.map((item, i) => (
-              <tr key={item.id} className={i > 0 ? "border-t border-zinc-100 dark:border-zinc-800/60" : ""}>
-                <td className="px-8 py-3.5 text-zinc-800 dark:text-zinc-200">{item.description}</td>
-                <td className="px-4 py-3.5 text-right tabular-nums text-zinc-600 dark:text-zinc-400">{item.quantity}</td>
-                <td className="px-4 py-3.5 text-right tabular-nums text-zinc-600 dark:text-zinc-400">{formatEUR(item.unit_price)}</td>
-                <td className="px-4 py-3.5 text-right tabular-nums text-zinc-600 dark:text-zinc-400">{item.vat_rate}%</td>
-                <td className="px-8 py-3.5 text-right tabular-nums font-medium text-zinc-900 dark:text-zinc-100">{formatEUR(item.subtotal)}</td>
+              <tr>
+                <td colSpan={5} className="px-8 py-6 text-sm text-zinc-400 dark:text-zinc-600">
+                  Sin líneas.
+                </td>
               </tr>
-            ))}
+            ) : (
+              safeItems.map((item, i) => (
+                <tr
+                  key={item.id}
+                  className={i > 0 ? "border-t border-zinc-100 dark:border-zinc-800/60" : ""}
+                >
+                  <td className="px-8 py-3.5 text-zinc-800 dark:text-zinc-200">
+                    {item.description}
+                  </td>
+                  <td className="px-4 py-3.5 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
+                    {item.quantity}
+                  </td>
+                  <td className="px-4 py-3.5 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
+                    {formatEUR(item.unit_price)}
+                  </td>
+                  <td className="px-4 py-3.5 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
+                    {item.vat_rate}%
+                  </td>
+                  <td className="px-8 py-3.5 text-right tabular-nums font-medium text-zinc-900 dark:text-zinc-100">
+                    {formatEUR(item.subtotal)}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -155,24 +214,41 @@ export default async function PortalInvoicePage({
       </div>
 
       {/* Fiscal info + QR */}
-      {((invoice.idfact as string | null) || (invoice.verifactu_csv as string | null) || qrDataUrl) ? (
+      {(invoice.idfact as string | null) ||
+        (invoice.verifactu_csv as string | null) ||
+        qrDataUrl ? (
         <div className="border-t border-zinc-100 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-900/50 px-8 py-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex flex-col gap-1.5">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-0.5">Datos fiscales</p>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-0.5">
+              Datos fiscales
+            </p>
             {(invoice.idfact as string | null) ? (
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                IDFACT: <span className="font-mono text-zinc-700 dark:text-zinc-300 break-all">{invoice.idfact as string}</span>
+                IDFACT:{" "}
+                <span className="font-mono text-zinc-700 dark:text-zinc-300 break-all">
+                  {invoice.idfact as string}
+                </span>
               </p>
             ) : null}
             {(invoice.verifactu_csv as string | null) ? (
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                CSV AEAT: <span className="font-mono text-zinc-700 dark:text-zinc-300 break-all">{invoice.verifactu_csv as string}</span>
+                CSV AEAT:{" "}
+                <span className="font-mono text-zinc-700 dark:text-zinc-300 break-all">
+                  {invoice.verifactu_csv as string}
+                </span>
               </p>
             ) : null}
           </div>
           {qrDataUrl ? (
             <div className="flex flex-col items-center gap-1.5">
-              <Image src={qrDataUrl} alt="QR Verifactu" width={88} height={88} unoptimized className="rounded" />
+              <Image
+                src={qrDataUrl}
+                alt="QR Verifactu"
+                width={88}
+                height={88}
+                unoptimized
+                className="rounded"
+              />
               <p className="text-[10px] text-zinc-400 dark:text-zinc-600">Verificar en AEAT</p>
             </div>
           ) : null}

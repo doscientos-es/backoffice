@@ -1,10 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { SubmitButton } from "@/components/ui/submit-button";
 import type { MemberRole } from "@/lib/auth";
 import { useRef } from "react";
 import { inviteTeamMember } from "./actions";
@@ -35,25 +35,34 @@ export function InviteForm({ actorRole }: Props) {
       <div className="grid gap-4 sm:grid-cols-[1fr_1fr_180px]">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="invite_name" className="text-xs font-medium">
-            Nombre
+            Nombre <span className="text-destructive">*</span>
           </Label>
-          <Input id="invite_name" name="name" required placeholder="Nombre completo" />
+          <Input
+            id="invite_name"
+            name="name"
+            required
+            placeholder="Nombre y apellidos"
+            autoComplete="name"
+            maxLength={120}
+          />
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="invite_email" className="text-xs font-medium">
-            Email
+            Email <span className="text-destructive">*</span>
           </Label>
           <Input
             id="invite_email"
             name="email"
             type="email"
+            inputMode="email"
             required
             placeholder="nombre@empresa.com"
+            autoComplete="email"
           />
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="invite_role" className="text-xs font-medium">
-            Rol
+            Rol <span className="text-destructive">*</span>
           </Label>
           <Select id="invite_role" name="role" defaultValue="member">
             {actorRole === "owner" ? <option value="owner">Propietario</option> : null}
@@ -63,15 +72,18 @@ export function InviteForm({ actorRole }: Props) {
           </Select>
         </div>
       </div>
+      <p className="text-[11px] text-muted-foreground">
+        Se enviará un email con un enlace de invitación. Caduca a las 72&nbsp;horas.
+      </p>
       <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
         <FormFeedback
           state={feedback.state}
           pendingLabel="Enviando…"
           successLabel="Invitación enviada"
         />
-        <Button type="submit" size="sm" disabled={feedback.pending}>
-          {feedback.pending ? "Enviando…" : "Enviar invitación"}
-        </Button>
+        <SubmitButton pendingLabel="Enviando…" loading={feedback.pending}>
+          Enviar invitación
+        </SubmitButton>
       </div>
     </form>
   );

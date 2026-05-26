@@ -127,12 +127,16 @@ export function LineItemsEditor() {
               <td />
             </tr>
             <tr>
-              <td colSpan={4} className="pt-1 text-right text-xs text-muted-foreground">IVA</td>
+              <td colSpan={4} className="pt-1 text-right text-xs text-muted-foreground">
+                IVA
+              </td>
               <td className="pt-1 pl-2 text-right tabular-nums">{formatEUR(taxAmount)}</td>
               <td />
             </tr>
             <tr className="font-semibold">
-              <td colSpan={4} className="pt-1 text-right">Total</td>
+              <td colSpan={4} className="pt-1 text-right">
+                Total
+              </td>
               <td className="pt-1 pl-2 text-right tabular-nums">{formatEUR(total)}</td>
               <td />
             </tr>

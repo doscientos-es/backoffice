@@ -1,10 +1,10 @@
 import { createHmac } from "node:crypto";
-import { describe, expect, it } from "vitest";
 import {
-  mapMetaLeadgenToIntake,
   type MetaLeadgenResponse,
+  mapMetaLeadgenToIntake,
   verifyMetaSignature,
 } from "@/lib/integrations/meta-leads";
+import { describe, expect, it } from "vitest";
 
 const APP_SECRET = "test_app_secret_value";
 

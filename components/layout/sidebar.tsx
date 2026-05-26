@@ -1,5 +1,6 @@
 "use client";
 
+import { Logo } from "@/components/branding";
 import { cn } from "@/lib/utils";
 import {
   Bell,
@@ -12,6 +13,7 @@ import {
   Receipt,
   Settings,
   Users,
+  Wallet,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -23,6 +25,7 @@ const NAV = [
   { href: "/projects", label: "Proyectos", icon: FolderKanban },
   { href: "/proposals", label: "Propuestas", icon: FileSignature },
   { href: "/invoices", label: "Facturas", icon: Receipt },
+  { href: "/finance", label: "Finanzas", icon: Wallet },
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
   { href: "/reminders", label: "Avisos", icon: Bell },
   { href: "/documents", label: "Documentos", icon: FileText },
@@ -32,14 +35,10 @@ const NAV = [
 export function Sidebar() {
   const pathname = usePathname();
   return (
-    <aside className="hidden w-56 shrink-0 border-r border-[color:var(--border)] bg-[color:var(--surface)] md:flex md:flex-col">
+    <aside className="hidden w-56 shrink-0 border-r border-[color:var(--border)] bg-surface md:flex md:flex-col">
       <div className="px-4 py-5">
-        <Link
-          href="/inicio"
-          className="flex items-center gap-2 text-sm font-semibold tracking-tight"
-        >
-          <span className="inline-block h-5 w-5 rounded-md bg-[color:var(--accent)]" aria-hidden />
-          doscientos
+        <Link href="/inicio" aria-label="doscientos · Inicio">
+          <Logo size="md" />
         </Link>
       </div>
       <nav className="flex flex-1 flex-col gap-0.5 px-2">

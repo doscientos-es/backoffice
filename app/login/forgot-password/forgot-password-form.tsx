@@ -9,6 +9,13 @@ import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
+function friendlyError(raw: string): string {
+  const m = raw.toLowerCase();
+  if (m.includes("rate limit")) return "Demasiados intentos. Inténtalo en unos minutos.";
+  if (m.includes("invalid")) return "Email no válido.";
+  return raw;
+}
+
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -26,7 +33,7 @@ export function ForgotPasswordForm() {
     });
     setLoading(false);
     if (authError) {
-      setError(authError.message);
+      setError(friendlyError(authError.message));
       return;
     }
     setSent(true);
@@ -64,21 +71,30 @@ export function ForgotPasswordForm() {
       <CardContent className="pt-5">
         <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="text-xs font-medium">
+              Email <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="email"
               type="email"
+              inputMode="email"
               autoComplete="email"
               autoFocus
               required
+              placeholder="tu@empresa.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               aria-invalid={error ? true : undefined}
+              aria-describedby={error ? "forgot-error" : "forgot-hint"}
               disabled={loading}
             />
+            <p id="forgot-hint" className="text-xs text-muted-foreground">
+              Te enviaremos un enlace para restablecer la contraseña.
+            </p>
           </div>
           {error ? (
             <p
+              id="forgot-error"
               role="alert"
               className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive"
             >

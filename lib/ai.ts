@@ -13,9 +13,7 @@ let _client: OpenAI | null = null;
  */
 export function getOpenAI(): OpenAI {
   if (!isAIEnabled()) {
-    throw new Error(
-      "OpenAI no está configurado. Añade OPENAI_API_KEY a las variables de entorno.",
-    );
+    throw new Error("OpenAI no está configurado. Añade OPENAI_API_KEY a las variables de entorno.");
   }
   if (!_client) {
     _client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });

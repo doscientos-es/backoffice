@@ -36,18 +36,14 @@ const INTERACTION_LABEL: Record<string, string> = {
   portal_reject: "Propuesta rechazada",
 };
 
-export default async function LeadDetailPage({
-  params,
-}: { params: Promise<{ id: string }> }) {
+export default async function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const user = await requireUser();
   const supabase = await createServerClient();
 
   const { data: lead } = await supabase
     .from("leads")
-    .select(
-      "id, name, email, phone, company, source, status, notes, created_at, updated_at",
-    )
+    .select("id, name, email, phone, company, source, status, notes, created_at, updated_at")
     .eq("id", id)
     .is("deleted_at", null)
     .maybeSingle();
@@ -74,9 +70,7 @@ export default async function LeadDetailPage({
         title={lead.name as string}
         description={(lead.company as string | null) ?? undefined}
         back={<BackLink href="/leads" label="Volver a leads" />}
-        actions={
-          <LeadStatusSelect leadId={lead.id as string} status={lead.status as string} />
-        }
+        actions={<LeadStatusSelect leadId={lead.id as string} status={lead.status as string} />}
       />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
@@ -95,9 +89,7 @@ export default async function LeadDetailPage({
               <DetailRow label="Teléfono">{(lead.phone as string | null) ?? "—"}</DetailRow>
               <DetailRow label="Empresa">{(lead.company as string | null) ?? "—"}</DetailRow>
               <DetailRow label="Origen">{(lead.source as string | null) ?? "—"}</DetailRow>
-              <DetailRow label="Creado">
-                {formatDate(lead.created_at as string)}
-              </DetailRow>
+              <DetailRow label="Creado">{formatDate(lead.created_at as string)}</DetailRow>
             </DetailGrid>
 
             {lead.notes ? (
@@ -120,9 +112,7 @@ export default async function LeadDetailPage({
               leadId={lead.id as string}
               defaultTo={(lead.email as string | null) ?? ""}
               disabled={composerDisabled || !lead.email}
-              disabledReason={
-                !lead.email ? "Este lead no tiene email." : composerReason
-              }
+              disabledReason={!lead.email ? "Este lead no tiene email." : composerReason}
             />
           </CardContent>
         </Card>

@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
-import { buildQrDataUrl, buildQrUrl } from "@/lib/verifactu/qr";
 import { formatDate, formatEUR } from "@/lib/utils";
+import { buildQrDataUrl, buildQrUrl } from "@/lib/verifactu/qr";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -30,9 +30,7 @@ const VERIFACTU_VARIANT = {
   excluded: "neutral",
 } as const;
 
-export default async function InvoiceDetailPage({
-  params,
-}: { params: Promise<{ id: string }> }) {
+export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   await requireUser();
   const supabase = await createServerClient();
@@ -53,7 +51,8 @@ export default async function InvoiceDetailPage({
     .order("position");
 
   const client = (invoice as unknown as { clients: { id: string; name: string } | null }).clients;
-  const project = (invoice as unknown as { projects: { id: string; name: string } | null }).projects;
+  const project = (invoice as unknown as { projects: { id: string; name: string } | null })
+    .projects;
 
   // Build QR if issued and has required data
   let qrDataUrl: string | null = null;
@@ -88,18 +87,20 @@ export default async function InvoiceDetailPage({
             <Badge variant={STATUS_VARIANT[invoice.status as keyof typeof STATUS_VARIANT]}>
               {invoice.status as string}
             </Badge>
-            <Badge variant={VERIFACTU_VARIANT[invoice.verifactu_status as keyof typeof VERIFACTU_VARIANT]}>
+            <Badge
+              variant={
+                VERIFACTU_VARIANT[invoice.verifactu_status as keyof typeof VERIFACTU_VARIANT]
+              }
+            >
               Verifactu: {invoice.verifactu_status as string}
             </Badge>
             {invoice.status !== "draft" &&
-              invoice.verifactu_status !== "accepted" &&
-              invoice.verifactu_status !== "excluded" ? (
+            invoice.verifactu_status !== "accepted" &&
+            invoice.verifactu_status !== "excluded" ? (
               <SendAeatButton
                 invoiceId={invoice.id as string}
                 label={
-                  invoice.verifactu_status === "rejected"
-                    ? "Reintentar envío"
-                    : "Enviar a AEAT"
+                  invoice.verifactu_status === "rejected" ? "Reintentar envío" : "Enviar a AEAT"
                 }
               />
             ) : null}
@@ -110,7 +111,9 @@ export default async function InvoiceDetailPage({
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         {/* Line items */}
         <Card>
-          <CardHeader><CardTitle>Líneas</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Líneas</CardTitle>
+          </CardHeader>
           <CardContent className="px-0">
             {!items || items.length === 0 ? (
               <p className="px-6 py-4 text-sm text-muted-foreground">Sin líneas.</p>
@@ -130,25 +133,51 @@ export default async function InvoiceDetailPage({
                     {items.map((item) => (
                       <tr key={item.id as string} className="border-t border-border">
                         <td className="px-5 py-2.5">{item.description as string}</td>
-                        <td className="px-5 py-2.5 text-right tabular-nums">{item.quantity as number}</td>
-                        <td className="px-5 py-2.5 text-right tabular-nums">{formatEUR(item.unit_price as number)}</td>
-                        <td className="px-5 py-2.5 text-right tabular-nums">{item.vat_rate as number}%</td>
-                        <td className="px-5 py-2.5 text-right tabular-nums font-medium">{formatEUR(item.subtotal as number)}</td>
+                        <td className="px-5 py-2.5 text-right tabular-nums">
+                          {item.quantity as number}
+                        </td>
+                        <td className="px-5 py-2.5 text-right tabular-nums">
+                          {formatEUR(item.unit_price as number)}
+                        </td>
+                        <td className="px-5 py-2.5 text-right tabular-nums">
+                          {item.vat_rate as number}%
+                        </td>
+                        <td className="px-5 py-2.5 text-right tabular-nums font-medium">
+                          {formatEUR(item.subtotal as number)}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                   <tfoot className="border-t-2 border-border">
                     <tr>
-                      <td colSpan={4} className="px-5 py-2.5 text-right text-xs text-muted-foreground">Subtotal</td>
-                      <td className="px-5 py-2.5 text-right tabular-nums">{formatEUR(invoice.subtotal as number)}</td>
+                      <td
+                        colSpan={4}
+                        className="px-5 py-2.5 text-right text-xs text-muted-foreground"
+                      >
+                        Subtotal
+                      </td>
+                      <td className="px-5 py-2.5 text-right tabular-nums">
+                        {formatEUR(invoice.subtotal as number)}
+                      </td>
                     </tr>
                     <tr>
-                      <td colSpan={4} className="px-5 py-2.5 text-right text-xs text-muted-foreground">IVA</td>
-                      <td className="px-5 py-2.5 text-right tabular-nums">{formatEUR(invoice.tax_amount as number)}</td>
+                      <td
+                        colSpan={4}
+                        className="px-5 py-2.5 text-right text-xs text-muted-foreground"
+                      >
+                        IVA
+                      </td>
+                      <td className="px-5 py-2.5 text-right tabular-nums">
+                        {formatEUR(invoice.tax_amount as number)}
+                      </td>
                     </tr>
                     <tr className="font-semibold">
-                      <td colSpan={4} className="px-5 py-2.5 text-right">Total</td>
-                      <td className="px-5 py-2.5 text-right tabular-nums">{formatEUR(invoice.total as number)}</td>
+                      <td colSpan={4} className="px-5 py-2.5 text-right">
+                        Total
+                      </td>
+                      <td className="px-5 py-2.5 text-right tabular-nums">
+                        {formatEUR(invoice.total as number)}
+                      </td>
                     </tr>
                   </tfoot>
                 </table>
@@ -160,7 +189,9 @@ export default async function InvoiceDetailPage({
         {/* Sidebar */}
         <div className="flex flex-col gap-6">
           <Card>
-            <CardHeader><CardTitle>Información fiscal</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle>Información fiscal</CardTitle>
+            </CardHeader>
             <CardContent>
               <DetailGrid>
                 <DetailRow label="Nº factura">{invoice.full_number as string}</DetailRow>
@@ -172,22 +203,32 @@ export default async function InvoiceDetailPage({
                 <DetailRow label="Tipo">{invoice.invoice_type as string}</DetailRow>
                 <DetailRow label="Cliente">
                   {client ? (
-                    <Link href={`/clients/${client.id}`} className="hover:underline">{client.name}</Link>
-                  ) : "—"}
+                    <Link href={`/clients/${client.id}`} className="hover:underline">
+                      {client.name}
+                    </Link>
+                  ) : (
+                    "—"
+                  )}
                 </DetailRow>
                 {project ? (
                   <DetailRow label="Proyecto">
-                    <Link href={`/projects/${project.id}`} className="hover:underline">{project.name}</Link>
+                    <Link href={`/projects/${project.id}`} className="hover:underline">
+                      {project.name}
+                    </Link>
                   </DetailRow>
                 ) : null}
                 <DetailRow label="Emisión">{formatDate(invoice.issue_date as string)}</DetailRow>
-                <DetailRow label="Vencimiento">{formatDate(invoice.due_date as string | null)}</DetailRow>
+                <DetailRow label="Vencimiento">
+                  {formatDate(invoice.due_date as string | null)}
+                </DetailRow>
                 {(invoice.client_nif as string | null) ? (
                   <DetailRow label="NIF cliente">{invoice.client_nif as string}</DetailRow>
                 ) : null}
                 {(invoice.verifactu_csv as string | null) ? (
                   <DetailRow label="CSV AEAT">
-                    <span className="break-all font-mono text-xs">{invoice.verifactu_csv as string}</span>
+                    <span className="break-all font-mono text-xs">
+                      {invoice.verifactu_csv as string}
+                    </span>
                   </DetailRow>
                 ) : null}
               </DetailGrid>
@@ -197,7 +238,9 @@ export default async function InvoiceDetailPage({
           {/* QR Verifactu */}
           {qrDataUrl ? (
             <Card>
-              <CardHeader><CardTitle>QR Verifactu</CardTitle></CardHeader>
+              <CardHeader>
+                <CardTitle>QR Verifactu</CardTitle>
+              </CardHeader>
               <CardContent className="flex flex-col items-center gap-3">
                 <Image src={qrDataUrl} alt="QR Verifactu" width={200} height={200} unoptimized />
                 <p className="text-center text-xs text-muted-foreground">

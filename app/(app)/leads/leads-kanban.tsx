@@ -70,7 +70,12 @@ export function LeadsKanban({ leads }: { leads: KanbanLead[] }) {
   };
 
   const grouped: Record<LeadStatus, KanbanLead[]> = {
-    new: [], qualifying: [], quoted: [], won: [], lost: [], archived: [],
+    new: [],
+    qualifying: [],
+    quoted: [],
+    won: [],
+    lost: [],
+    archived: [],
   };
   for (const l of optimistic) grouped[l.status]?.push(l);
 
@@ -83,7 +88,13 @@ export function LeadsKanban({ leads }: { leads: KanbanLead[] }) {
       </div>
       <div className="flex gap-3 overflow-x-auto pb-2">
         {COLUMNS.map((col) => (
-          <Column key={col.id} status={col.id} label={col.label} tone={col.tone} leads={grouped[col.id]} />
+          <Column
+            key={col.id}
+            status={col.id}
+            label={col.label}
+            tone={col.tone}
+            leads={grouped[col.id]}
+          />
         ))}
       </div>
       <DragOverlay>{active ? <Card lead={active} isOverlay /> : null}</DragOverlay>
@@ -92,7 +103,10 @@ export function LeadsKanban({ leads }: { leads: KanbanLead[] }) {
 }
 
 function Column({
-  status, label, tone, leads,
+  status,
+  label,
+  tone,
+  leads,
 }: { status: LeadStatus; label: string; tone: string; leads: KanbanLead[] }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   return (
@@ -105,7 +119,9 @@ function Column({
     >
       <header className="flex items-center justify-between px-3 py-2 border-b border-border">
         <span className={cn("text-xs font-semibold uppercase tracking-wide", tone)}>{label}</span>
-        <Badge variant="neutral" className="tabular-nums">{leads.length}</Badge>
+        <Badge variant="neutral" className="tabular-nums">
+          {leads.length}
+        </Badge>
       </header>
       <div className="flex flex-col gap-2 p-2 min-h-24">
         {leads.length === 0 ? (
@@ -142,9 +158,7 @@ function Card({ lead, isOverlay = false }: { lead: KanbanLead; isOverlay?: boole
       {lead.company ? (
         <p className="truncate text-xs text-muted-foreground">{lead.company}</p>
       ) : null}
-      {lead.email ? (
-        <p className="truncate text-xs text-muted-foreground">{lead.email}</p>
-      ) : null}
+      {lead.email ? <p className="truncate text-xs text-muted-foreground">{lead.email}</p> : null}
     </div>
   );
 }

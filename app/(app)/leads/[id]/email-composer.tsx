@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { sendEmailToLead } from "../actions";
@@ -56,19 +56,22 @@ export function EmailComposer({ leadId, defaultTo, disabled, disabledReason }: E
     <form onSubmit={onSubmit} className="flex flex-col gap-3">
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="to" className="text-xs font-medium">
-          Para
+          Para <span className="text-destructive">*</span>
         </Label>
         <Input
           id="to"
           type="email"
+          inputMode="email"
           value={to}
           onChange={(e) => setTo(e.target.value)}
           required
+          placeholder="destinatario@empresa.com"
+          autoComplete="email"
         />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="subject" className="text-xs font-medium">
-          Asunto
+          Asunto <span className="text-destructive">*</span>
         </Label>
         <Input
           id="subject"
@@ -76,11 +79,12 @@ export function EmailComposer({ leadId, defaultTo, disabled, disabledReason }: E
           onChange={(e) => setSubject(e.target.value)}
           placeholder="Hola {{nombre}}, …"
           required
+          maxLength={200}
         />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="body" className="text-xs font-medium">
-          Mensaje (HTML)
+          Mensaje (HTML) <span className="text-destructive">*</span>
         </Label>
         <Textarea
           id="body"
@@ -89,17 +93,23 @@ export function EmailComposer({ leadId, defaultTo, disabled, disabledReason }: E
           rows={8}
           placeholder="<p>Hola {{nombre}},</p><p>…</p>"
           required
+          className="font-mono text-xs"
+          aria-describedby="body-hint"
         />
-        <p className="text-xs text-muted-foreground">
-          Variables: <code>{"{{nombre}}"}</code>, <code>{"{{empresa}}"}</code>,{" "}
-          <code>{"{{email}}"}</code>. Tu firma se añade al final.
+        <p id="body-hint" className="text-[11px] text-muted-foreground">
+          Variables disponibles: <code>{"{{nombre}}"}</code>,{" "}
+          <code>{"{{empresa}}"}</code>, <code>{"{{email}}"}</code>. Tu firma se añade al final.
         </p>
       </div>
       <div className="flex items-center justify-end gap-3">
-        <FormFeedback state={feedback.state} pendingLabel="Enviando…" successLabel="Email enviado" />
-        <Button type="submit" size="sm" disabled={feedback.pending}>
-          {feedback.pending ? "Enviando…" : "Enviar email"}
-        </Button>
+        <FormFeedback
+          state={feedback.state}
+          pendingLabel="Enviando…"
+          successLabel="Email enviado"
+        />
+        <SubmitButton pendingLabel="Enviando…" loading={feedback.pending}>
+          Enviar email
+        </SubmitButton>
       </div>
     </form>
   );

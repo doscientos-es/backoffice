@@ -1,10 +1,10 @@
 import { BackLink } from "@/components/layout/back-link";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
@@ -15,9 +15,7 @@ import { updateClient } from "../actions";
 
 export const dynamic = "force-dynamic";
 
-export default async function ClientDetailPage({
-  params,
-}: { params: Promise<{ id: string }> }) {
+export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   await requireUser();
   const supabase = await createServerClient();
@@ -50,17 +48,23 @@ export default async function ClientDetailPage({
       <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
         {/* Detail card */}
         <Card>
-          <CardHeader><CardTitle>Datos</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Datos</CardTitle>
+          </CardHeader>
           <CardContent>
             <DetailGrid>
               <DetailRow label="Email">{(client.email as string | null) ?? "—"}</DetailRow>
               <DetailRow label="Teléfono">{(client.phone as string | null) ?? "—"}</DetailRow>
-              <DetailRow label="Contacto">{(client.contact_person as string | null) ?? "—"}</DetailRow>
+              <DetailRow label="Contacto">
+                {(client.contact_person as string | null) ?? "—"}
+              </DetailRow>
               <DetailRow label="Creado">{formatDate(client.created_at as string)}</DetailRow>
             </DetailGrid>
             {client.billing_address ? (
               <div className="mt-4 border-t border-border pt-3">
-                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Dirección</p>
+                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Dirección
+                </p>
                 <p className="whitespace-pre-wrap text-sm">{client.billing_address as string}</p>
               </div>
             ) : null}
@@ -69,35 +73,90 @@ export default async function ClientDetailPage({
 
         {/* Edit card */}
         <Card>
-          <CardHeader><CardTitle>Editar</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Editar</CardTitle>
+          </CardHeader>
           <CardContent>
             <form action={updateClient} className="flex flex-col gap-4">
               <input type="hidden" name="id" value={id} />
-              <F label="Nombre" id="e_name">
-                <Input id="e_name" name="name" defaultValue={client.name as string} required />
-              </F>
+              <FormRow label="Nombre" htmlFor="e_name" required>
+                <Input
+                  id="e_name"
+                  name="name"
+                  defaultValue={client.name as string}
+                  required
+                  maxLength={160}
+                  placeholder="Acme S.L."
+                  autoComplete="organization"
+                />
+              </FormRow>
               <div className="grid gap-4 sm:grid-cols-2">
-                <F label="NIF" id="e_nif">
-                  <Input id="e_nif" name="nif" defaultValue={(client.nif as string | null) ?? ""} />
-                </F>
-                <F label="Email" id="e_email">
-                  <Input id="e_email" name="email" type="email" defaultValue={(client.email as string | null) ?? ""} />
-                </F>
-                <F label="Teléfono" id="e_phone">
-                  <Input id="e_phone" name="phone" defaultValue={(client.phone as string | null) ?? ""} />
-                </F>
-                <F label="Contacto" id="e_contact">
-                  <Input id="e_contact" name="contact_person" defaultValue={(client.contact_person as string | null) ?? ""} />
-                </F>
+                <FormRow label="NIF" htmlFor="e_nif">
+                  <Input
+                    id="e_nif"
+                    name="nif"
+                    defaultValue={(client.nif as string | null) ?? ""}
+                    maxLength={20}
+                    placeholder="B12345678"
+                  />
+                </FormRow>
+                <FormRow label="Email" htmlFor="e_email">
+                  <Input
+                    id="e_email"
+                    name="email"
+                    type="email"
+                    inputMode="email"
+                    defaultValue={(client.email as string | null) ?? ""}
+                    maxLength={160}
+                    placeholder="facturacion@acme.com"
+                    autoComplete="email"
+                  />
+                </FormRow>
+                <FormRow label="Teléfono" htmlFor="e_phone">
+                  <Input
+                    id="e_phone"
+                    name="phone"
+                    type="tel"
+                    inputMode="tel"
+                    defaultValue={(client.phone as string | null) ?? ""}
+                    maxLength={40}
+                    placeholder="+34 600 000 000"
+                    autoComplete="tel"
+                  />
+                </FormRow>
+                <FormRow label="Contacto" htmlFor="e_contact">
+                  <Input
+                    id="e_contact"
+                    name="contact_person"
+                    defaultValue={(client.contact_person as string | null) ?? ""}
+                    maxLength={160}
+                    placeholder="Nombre y apellidos"
+                    autoComplete="name"
+                  />
+                </FormRow>
               </div>
-              <F label="Dirección" id="e_addr">
-                <Textarea id="e_addr" name="billing_address" rows={2} defaultValue={(client.billing_address as string | null) ?? ""} />
-              </F>
-              <F label="Notas" id="e_notes">
-                <Textarea id="e_notes" name="notes" rows={2} defaultValue={(client.notes as string | null) ?? ""} />
-              </F>
+              <FormRow label="Dirección" htmlFor="e_addr" hint="Se usará en las facturas emitidas a este cliente.">
+                <Textarea
+                  id="e_addr"
+                  name="billing_address"
+                  rows={2}
+                  maxLength={400}
+                  defaultValue={(client.billing_address as string | null) ?? ""}
+                  placeholder={"Calle, número\nCP Ciudad, País"}
+                />
+              </FormRow>
+              <FormRow label="Notas" htmlFor="e_notes" hint="Información interna, no visible para el cliente.">
+                <Textarea
+                  id="e_notes"
+                  name="notes"
+                  rows={2}
+                  maxLength={4000}
+                  defaultValue={(client.notes as string | null) ?? ""}
+                  placeholder="Condiciones de pago, observaciones…"
+                />
+              </FormRow>
               <div className="flex justify-end border-t border-border pt-3">
-                <Button type="submit" size="sm">Guardar</Button>
+                <SubmitButton pendingLabel="Guardando…">Guardar cambios</SubmitButton>
               </div>
             </form>
           </CardContent>
@@ -115,7 +174,10 @@ export default async function ClientDetailPage({
           ) : (
             <ul className="divide-y divide-border">
               {projects.map((p) => (
-                <li key={p.id as string} className="flex items-center justify-between px-6 py-2.5 text-sm">
+                <li
+                  key={p.id as string}
+                  className="flex items-center justify-between px-6 py-2.5 text-sm"
+                >
                   <Link href={`/projects/${p.id}`} className="font-medium hover:underline">
                     {p.name as string}
                   </Link>
@@ -130,11 +192,27 @@ export default async function ClientDetailPage({
   );
 }
 
-function F({ label, id, children }: { label: string; id: string; children: React.ReactNode }) {
+function F({
+  label,
+  id,
+  required,
+  hint,
+  children,
+}: {
+  label: string;
+  id: string;
+  required?: boolean;
+  hint?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id} className="text-xs font-medium">{label}</Label>
+      <Label htmlFor={id} className="text-xs font-medium">
+        {label}
+        {required ? <span className="ml-0.5 text-destructive">*</span> : null}
+      </Label>
       {children}
+      {hint ? <p className="text-[11px] text-muted-foreground">{hint}</p> : null}
     </div>
   );
 }

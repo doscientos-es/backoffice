@@ -11,6 +11,7 @@ export type CurrentUser = {
   emailAlias: string | null;
   signatureHtml: string | null;
   emailSendEnabled: boolean;
+  githubHandle: string | null;
 };
 
 /**
@@ -26,7 +27,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
 
   const { data: member } = await supabase
     .from("team_members")
-    .select("id, name, email, role, email_alias, signature_html, email_send_enabled")
+    .select("id, name, email, role, email_alias, signature_html, email_send_enabled, github_handle")
     .eq("id", user.id)
     .is("deleted_at", null)
     .maybeSingle();
@@ -40,6 +41,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     emailAlias: (member.email_alias as string | null) ?? null,
     signatureHtml: (member.signature_html as string | null) ?? null,
     emailSendEnabled: (member.email_send_enabled as boolean | null) ?? false,
+    githubHandle: (member.github_handle as string | null) ?? null,
   };
 }
 

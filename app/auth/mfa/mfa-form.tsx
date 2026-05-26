@@ -3,7 +3,12 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { Input } from "@/components/ui/input";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSeparator,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
 import { getBrowserClient } from "@/lib/supabase/browser";
 import { useRouter } from "next/navigation";
@@ -54,17 +59,34 @@ export function MfaForm() {
     <Card>
       <CardContent className="pt-5">
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="code">Código TOTP</Label>
-            <Input
+          <div className="flex flex-col items-center gap-2">
+            <Label htmlFor="code" className="self-start text-xs font-medium">
+              Código de verificación <span className="text-destructive">*</span>
+            </Label>
+            <InputOTP
               id="code"
-              inputMode="numeric"
-              autoComplete="one-time-code"
               maxLength={6}
-              required
               value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-            />
+              onChange={(v) => setCode(v.replace(/\D/g, ""))}
+              autoFocus
+              containerClassName="justify-center"
+            >
+              <InputOTPGroup>
+                <InputOTPSlot index={0} />
+                <InputOTPSlot index={1} />
+                <InputOTPSlot index={2} />
+              </InputOTPGroup>
+              <InputOTPSeparator />
+              <InputOTPGroup>
+                <InputOTPSlot index={3} />
+                <InputOTPSlot index={4} />
+                <InputOTPSlot index={5} />
+              </InputOTPGroup>
+            </InputOTP>
+            <p className="self-start text-[11px] text-muted-foreground">
+              Abre tu app autenticadora (Google Authenticator, 1Password, Authy…) e introduce el
+              código de 6 dígitos.
+            </p>
           </div>
           <div className="flex items-center justify-between gap-3">
             <FormFeedback state={feedback.state} pendingLabel="Verificando…" />

@@ -4,7 +4,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-const TokenSchema = z.string().min(32).max(128).regex(/^[a-f0-9]+$/i);
+const TokenSchema = z
+  .string()
+  .min(32)
+  .max(128)
+  .regex(/^[a-f0-9]+$/i);
 const RejectionSchema = z.string().max(500).optional();
 
 type ActionResult = { ok: true } | { ok: false; error: string };
@@ -40,10 +44,7 @@ async function transitionProposal(
     patch.signature_data = { rejection_reason: rejectionReason };
   }
 
-  const { error: updateError } = await admin
-    .from("proposals")
-    .update(patch)
-    .eq("id", proposal.id);
+  const { error: updateError } = await admin.from("proposals").update(patch).eq("id", proposal.id);
 
   if (updateError) return { ok: false, error: "No se pudo actualizar la propuesta" };
 
@@ -55,10 +56,11 @@ export async function acceptProposal(token: string): Promise<ActionResult> {
   return transitionProposal(token, "accepted");
 }
 
-export async function rejectProposal(
-  token: string,
-  reason?: string,
-): Promise<ActionResult> {
+export async function rejectProposal(token: string, reason?: string): Promise<ActionResult> {
   const parsedReason = RejectionSchema.safeParse(reason);
-  return transitionProposal(token, "rejected", parsedReason.success ? parsedReason.data : undefined);
+  return transitionProposal(
+    token,
+    "rejected",
+    parsedReason.success ? parsedReason.data : undefined,
+  );
 }

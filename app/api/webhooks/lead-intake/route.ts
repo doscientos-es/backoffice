@@ -1,8 +1,8 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { ingestLead } from "@/lib/integrations/lead-intake";
-import { mapRecurrevToIntake, type RecurrevWebhookPayload } from "@/lib/integrations/recurrev";
+import { type RecurrevWebhookPayload, mapRecurrevToIntake } from "@/lib/integrations/recurrev";
 import { scopedLogger } from "@/lib/logger";
+import { type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -18,16 +18,11 @@ function unauthorized() {
  * Simple health check to verify endpoint is live.
  */
 export async function GET() {
-  return NextResponse.json(
-    {
-      status: "active",
-      message: "Lead intake webhook is live. Use POST to submit leads.",
-      docs: "https://github.com/PolGubau/doscientos/blob/main/internal/backoffice/app/api/webhooks/lead-intake/route.ts",
-    },
-    { status: 405 }
-  );
+  return NextResponse.json({
+    status: "active",
+    message: "Lead intake webhook is live. Use POST to submit leads.",
+  });
 }
-
 
 /**
  * POST /api/webhooks/lead-intake
@@ -47,9 +42,7 @@ export async function POST(request: NextRequest) {
 
   // Verify Bearer token
   const authHeader = request.headers.get("authorization") ?? "";
-  const token = authHeader.startsWith("Bearer ")
-    ? authHeader.slice(7).trim()
-    : authHeader.trim();
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : authHeader.trim();
 
   if (!token || token !== env.LEAD_INTAKE_TOKEN) {
     log.warn({ tokenProvided: Boolean(token) }, "invalid token");

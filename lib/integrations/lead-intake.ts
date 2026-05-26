@@ -1,5 +1,5 @@
-import { createAdminClient } from "@/lib/supabase/admin";
 import { scopedLogger } from "@/lib/logger";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
  * Normalized payload accepted by ingestLead().
@@ -88,19 +88,11 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
     raw_payload: (input.rawPayload ?? null) as Record<string, unknown> | null,
   };
 
-  const { data, error } = await supabase
-    .from("leads")
-    .insert(row)
-    .select("id")
-    .single();
+  const { data, error } = await supabase.from("leads").insert(row).select("id").single();
 
   if (error || !data) {
     // Race condition: another concurrent webhook delivery beat us. Re-fetch.
-    if (
-      error?.code === "23505" &&
-      input.externalId &&
-      input.externalSource
-    ) {
+    if (error?.code === "23505" && input.externalId && input.externalSource) {
       const { data: dup } = await supabase
         .from("leads")
         .select("id")

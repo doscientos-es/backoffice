@@ -4,7 +4,7 @@ export const metadata = { title: "2FA · doscientos" };
 
 export default function MfaPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[color:var(--background)] px-4">
+    <main className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-semibold tracking-tight">Verificación 2FA</h1>

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
@@ -33,9 +34,7 @@ const STATUS_OPTIONS = [
   { value: "cancelled", label: "Cancelado" },
 ];
 
-export default async function ProjectDetailPage({
-  params,
-}: { params: Promise<{ id: string }> }) {
+export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   await requireUser();
   const supabase = await createServerClient();
@@ -80,21 +79,33 @@ export default async function ProjectDetailPage({
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
         <Card>
-          <CardHeader><CardTitle>Detalles</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Detalles</CardTitle>
+          </CardHeader>
           <CardContent>
             <DetailGrid>
               <DetailRow label="Cliente">
                 {client ? (
-                  <Link href={`/clients/${client.id}`} className="hover:underline">{client.name}</Link>
-                ) : "—"}
+                  <Link href={`/clients/${client.id}`} className="hover:underline">
+                    {client.name}
+                  </Link>
+                ) : (
+                  "—"
+                )}
               </DetailRow>
               <DetailRow label="Estado">{project.status as string}</DetailRow>
               <DetailRow label="Inicio">{formatDate(project.starts_at as string | null)}</DetailRow>
-              <DetailRow label="Fin previsto">{formatDate(project.ends_at as string | null)}</DetailRow>
+              <DetailRow label="Fin previsto">
+                {formatDate(project.ends_at as string | null)}
+              </DetailRow>
               {project.github_repo ? (
                 <DetailRow label="Repositorio">
-                  <a href={project.github_repo as string} target="_blank" rel="noreferrer"
-                    className="text-primary hover:underline truncate">
+                  <a
+                    href={project.github_repo as string}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary hover:underline truncate"
+                  >
                     {project.github_repo as string}
                   </a>
                 </DetailRow>
@@ -102,7 +113,9 @@ export default async function ProjectDetailPage({
             </DetailGrid>
             {project.description ? (
               <div className="mt-4 border-t border-border pt-3">
-                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Descripción</p>
+                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Descripción
+                </p>
                 <p className="whitespace-pre-wrap text-sm">{project.description as string}</p>
               </div>
             ) : null}
@@ -110,47 +123,80 @@ export default async function ProjectDetailPage({
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Editar</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Editar</CardTitle>
+          </CardHeader>
           <CardContent>
             <form action={updateProject} className="flex flex-col gap-4">
               <input type="hidden" name="id" value={id} />
-              <F label="Cliente" id="e_client">
-                <Select id="e_client" name="client_id" defaultValue={client?.id ?? ""}>
+              <FormRow label="Cliente" htmlFor="e_client" required>
+                <Select id="e_client" name="client_id" defaultValue={client?.id ?? ""} required>
                   {clients?.map((c) => (
-                    <option key={c.id as string} value={c.id as string}>{c.name as string}</option>
+                    <option key={c.id as string} value={c.id as string}>
+                      {c.name as string}
+                    </option>
                   ))}
                 </Select>
-              </F>
-              <F label="Nombre" id="e_name">
-                <Input id="e_name" name="name" defaultValue={project.name as string} required />
-              </F>
-              <F label="Estado" id="e_status">
+              </FormRow>
+              <FormRow label="Nombre" htmlFor="e_name" required>
+                <Input
+                  id="e_name"
+                  name="name"
+                  defaultValue={project.name as string}
+                  required
+                  maxLength={160}
+                  placeholder="Rediseño web 2026"
+                />
+              </FormRow>
+              <FormRow label="Estado" htmlFor="e_status">
                 <Select id="e_status" name="status" defaultValue={project.status as string}>
                   {STATUS_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
                   ))}
                 </Select>
-              </F>
+              </FormRow>
               <div className="grid gap-4 sm:grid-cols-2">
-                <F label="Inicio" id="e_starts">
-                  <Input id="e_starts" name="starts_at" type="date"
-                    defaultValue={(project.starts_at as string | null) ?? ""} />
-                </F>
-                <F label="Fin" id="e_ends">
-                  <Input id="e_ends" name="ends_at" type="date"
-                    defaultValue={(project.ends_at as string | null) ?? ""} />
-                </F>
+                <FormRow label="Inicio" htmlFor="e_starts">
+                  <Input
+                    id="e_starts"
+                    name="starts_at"
+                    type="date"
+                    defaultValue={(project.starts_at as string | null) ?? ""}
+                  />
+                </FormRow>
+                <FormRow label="Fin previsto" htmlFor="e_ends">
+                  <Input
+                    id="e_ends"
+                    name="ends_at"
+                    type="date"
+                    defaultValue={(project.ends_at as string | null) ?? ""}
+                  />
+                </FormRow>
               </div>
-              <F label="GitHub" id="e_github">
-                <Input id="e_github" name="github_repo" type="url"
-                  defaultValue={(project.github_repo as string | null) ?? ""} />
-              </F>
-              <F label="Descripción" id="e_desc">
-                <Textarea id="e_desc" name="description" rows={3}
-                  defaultValue={(project.description as string | null) ?? ""} />
-              </F>
+              <FormRow label="Repositorio GitHub" htmlFor="e_github" hint="URL completa del repositorio.">
+                <Input
+                  id="e_github"
+                  name="github_repo"
+                  type="url"
+                  inputMode="url"
+                  defaultValue={(project.github_repo as string | null) ?? ""}
+                  placeholder="https://github.com/org/repo"
+                />
+              </FormRow>
+              <FormRow label="Descripción" htmlFor="e_desc">
+                <Textarea
+                  id="e_desc"
+                  name="description"
+                  rows={3}
+                  maxLength={4000}
+                  defaultValue={(project.description as string | null) ?? ""}
+                  placeholder="Objetivos, entregables, criterios de aceptación…"
+                />
+              </FormRow>
               <div className="flex justify-end border-t border-border pt-3">
-                <Button type="submit" size="sm">Guardar</Button>
+                <SubmitButton pendingLabel="Guardando…">Guardar cambios</SubmitButton>
               </div>
             </form>
           </CardContent>
@@ -158,15 +204,33 @@ export default async function ProjectDetailPage({
       </div>
 
       <Card>
-        <CardHeader><CardTitle>Tareas</CardTitle></CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Tareas</CardTitle>
+          <div className="flex items-center gap-2">
+            <Button asChild size="sm" variant="outline">
+              <Link href={`/projects/${id}/tasks`}>Ver Kanban</Link>
+            </Button>
+            <Button asChild size="sm">
+              <Link href={`/tasks/new?project_id=${id}`}>Nueva tarea</Link>
+            </Button>
+          </div>
+        </CardHeader>
         <CardContent className="px-0">
           {!tasks || tasks.length === 0 ? (
             <p className="px-6 py-2 text-sm text-muted-foreground">Sin tareas.</p>
           ) : (
             <ul className="divide-y divide-border">
               {tasks.map((t) => (
-                <li key={t.id as string} className="flex items-center justify-between px-6 py-2.5 text-sm">
-                  <span className="font-medium">{t.title as string}</span>
+                <li
+                  key={t.id as string}
+                  className="flex items-center justify-between px-6 py-2.5 text-sm"
+                >
+                  <Link
+                    href={`/tasks/${t.id as string}`}
+                    className="font-medium hover:underline"
+                  >
+                    {t.title as string}
+                  </Link>
                   <span className="text-xs text-muted-foreground">{t.status as string}</span>
                 </li>
               ))}
@@ -178,11 +242,27 @@ export default async function ProjectDetailPage({
   );
 }
 
-function F({ label, id, children }: { label: string; id: string; children: React.ReactNode }) {
+function F({
+  label,
+  id,
+  required,
+  hint,
+  children,
+}: {
+  label: string;
+  id: string;
+  required?: boolean;
+  hint?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id} className="text-xs font-medium">{label}</Label>
+      <Label htmlFor={id} className="text-xs font-medium">
+        {label}
+        {required ? <span className="ml-0.5 text-destructive">*</span> : null}
+      </Label>
       {children}
+      {hint ? <p className="text-[11px] text-muted-foreground">{hint}</p> : null}
     </div>
   );
 }

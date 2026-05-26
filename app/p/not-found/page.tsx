@@ -10,8 +10,8 @@ export default function PortalNotFound() {
       </CardHeader>
       <CardContent className="text-sm text-[color:var(--text-muted)]">
         <p>
-          El enlace ha caducado o no es válido. Contacta con quien te lo envió para
-          recibir uno nuevo.
+          El enlace ha caducado o no es válido. Contacta con quien te lo envió para recibir uno
+          nuevo.
         </p>
       </CardContent>
     </Card>

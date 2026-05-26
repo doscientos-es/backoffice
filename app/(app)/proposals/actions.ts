@@ -18,7 +18,11 @@ const LineItem = z.object({
 
 const CreateInput = z.object({
   client_id: z.string().uuid("Cliente inválido"),
-  project_id: z.string().uuid().optional().or(z.literal("").transform(() => undefined)),
+  project_id: z
+    .string()
+    .uuid()
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
   title: z.string().min(1, "Título obligatorio").max(200),
   valid_until: z
     .string()

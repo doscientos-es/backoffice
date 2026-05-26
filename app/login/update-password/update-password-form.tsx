@@ -76,7 +76,9 @@ export function UpdatePasswordForm() {
       <CardContent className="pt-5">
         <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="password">Nueva contraseña</Label>
+            <Label htmlFor="password" className="text-xs font-medium">
+              Nueva contraseña <span className="text-destructive">*</span>
+            </Label>
             <div className="relative">
               <Input
                 id="password"
@@ -85,9 +87,11 @@ export function UpdatePasswordForm() {
                 autoFocus
                 required
                 minLength={MIN_LENGTH}
+                placeholder="Mínimo 8 caracteres"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 aria-invalid={error ? true : undefined}
+                aria-describedby="password-hint"
                 disabled={loading}
                 className="pr-9"
               />
@@ -96,29 +100,39 @@ export function UpdatePasswordForm() {
                 onClick={() => setShow((v) => !v)}
                 tabIndex={-1}
                 aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"}
+                aria-pressed={show}
                 className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-[color:var(--text-muted)] hover:text-[color:var(--text-primary)]"
                 disabled={loading}
               >
                 {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-            <p className="text-[10px] text-[color:var(--text-muted)]">
-              Mínimo {MIN_LENGTH} caracteres.
+            <PasswordStrength value={password} />
+            <p id="password-hint" className="text-[11px] text-muted-foreground">
+              Mínimo {MIN_LENGTH} caracteres. Usa mayúsculas, números y símbolos.
             </p>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="confirm">Confirmar contraseña</Label>
+            <Label htmlFor="confirm" className="text-xs font-medium">
+              Confirmar contraseña <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="confirm"
               type={show ? "text" : "password"}
               autoComplete="new-password"
               required
               minLength={MIN_LENGTH}
+              placeholder="Repite la contraseña"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
-              aria-invalid={error ? true : undefined}
+              aria-invalid={
+                error || (confirm.length > 0 && confirm !== password) ? true : undefined
+              }
               disabled={loading}
             />
+            {confirm.length > 0 && confirm !== password ? (
+              <p className="text-[11px] text-destructive">Las contraseñas no coinciden.</p>
+            ) : null}
           </div>
           {error ? (
             <p
@@ -128,10 +142,7 @@ export function UpdatePasswordForm() {
               {error}
             </p>
           ) : null}
-          <Button
-            type="submit"
-            disabled={loading || hasSession === null || !password || !confirm}
-          >
+          <Button type="submit" disabled={loading || hasSession === null || !password || !confirm}>
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Guardando…
@@ -143,5 +154,46 @@ export function UpdatePasswordForm() {
         </form>
       </CardContent>
     </Card>
+  );
+}
+
+function passwordScore(value: string): number {
+  if (!value) return 0;
+  let score = 0;
+  if (value.length >= 8) score++;
+  if (value.length >= 12) score++;
+  if (/[A-Z]/.test(value) && /[a-z]/.test(value)) score++;
+  if (/[0-9]/.test(value)) score++;
+  if (/[^A-Za-z0-9]/.test(value)) score++;
+  return Math.min(score, 4);
+}
+
+function PasswordStrength({ value }: { value: string }) {
+  if (!value) return null;
+  const score = passwordScore(value);
+  const labels = ["Muy débil", "Débil", "Aceptable", "Buena", "Fuerte"];
+  const colors = [
+    "bg-destructive/60",
+    "bg-destructive",
+    "bg-amber-500",
+    "bg-emerald-500",
+    "bg-emerald-600",
+  ];
+  return (
+    <div className="mt-1 flex items-center gap-2" aria-live="polite">
+      <div className="flex h-1 flex-1 gap-1">
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className={`flex-1 rounded-full transition-colors ${
+              i < score ? colors[score] : "bg-input"
+            }`}
+          />
+        ))}
+      </div>
+      <span className="w-16 text-right text-[11px] text-muted-foreground tabular-nums">
+        {labels[score]}
+      </span>
+    </div>
   );
 }

@@ -98,7 +98,7 @@ export default async function TeamSettingsPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-[color:var(--surface)] text-left text-xs uppercase tracking-wide text-[color:var(--text-muted)]">
+                <thead className="bg-surface text-left text-xs uppercase tracking-wide text-[color:var(--text-muted)]">
                   <tr>
                     <th className="px-5 py-2 font-medium">Miembro</th>
                     <th className="px-5 py-2 font-medium">Rol</th>

@@ -79,7 +79,9 @@ export function FormFeedback({
   const isError = state.status === "error";
 
   if (state.status === "idle") {
-    return <span className={cn("inline-flex h-5 items-center gap-1.5 text-xs", className)} aria-hidden />;
+    return (
+      <span className={cn("inline-flex h-5 items-center gap-1.5 text-xs", className)} aria-hidden />
+    );
   }
 
   return (

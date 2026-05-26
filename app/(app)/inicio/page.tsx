@@ -9,12 +9,25 @@ import {
   type ReminderRow,
   type VerifactuPendingRow,
 } from "./avisos-panel";
-import { type RevenuePoint, RevenueChart } from "./revenue-chart";
+import { RevenueChart, type RevenuePoint } from "./revenue-chart";
 
 export const metadata = { title: "Inicio · doscientos" };
 export const dynamic = "force-dynamic";
 
-const MONTHS_ES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+const MONTHS_ES = [
+  "ene",
+  "feb",
+  "mar",
+  "abr",
+  "may",
+  "jun",
+  "jul",
+  "ago",
+  "sep",
+  "oct",
+  "nov",
+  "dic",
+];
 
 export default async function InicioPage() {
   const user = await requireUser();
@@ -94,7 +107,8 @@ export default async function InicioPage() {
     verifactu_status: v.verifactu_status as "pending" | "error" | "rejected",
     verifactu_error: (v.verifactu_error as string | null) ?? null,
     client_name:
-      ((v as unknown as { clients: { name: string } | null }).clients?.name as string | null) ?? null,
+      ((v as unknown as { clients: { name: string } | null }).clients?.name as string | null) ??
+      null,
   }));
 
   const overdueInvoices: OverdueInvoiceRow[] = (overdueData ?? []).map((inv) => ({
@@ -103,7 +117,8 @@ export default async function InicioPage() {
     due_date: (inv.due_date as string | null) ?? null,
     total: Number(inv.total ?? 0),
     client_name:
-      ((inv as unknown as { clients: { name: string } | null }).clients?.name as string | null) ?? null,
+      ((inv as unknown as { clients: { name: string } | null }).clients?.name as string | null) ??
+      null,
   }));
 
   const revenueByMonth = new Map<string, number>();
@@ -173,13 +188,18 @@ export default async function InicioPage() {
 }
 
 function Stat({
-  label, value, tone,
+  label,
+  value,
+  tone,
 }: { label: string; value: number | string; tone?: "danger" | "info" | "success" }) {
   const toneClass =
-    tone === "danger" ? "text-red-600 dark:text-red-400" :
-    tone === "success" ? "text-emerald-700 dark:text-emerald-400" :
-    tone === "info" ? "text-sky-700 dark:text-sky-400" :
-    "text-foreground";
+    tone === "danger"
+      ? "text-red-600 dark:text-red-400"
+      : tone === "success"
+        ? "text-emerald-700 dark:text-emerald-400"
+        : tone === "info"
+          ? "text-sky-700 dark:text-sky-400"
+          : "text-foreground";
   return (
     <Card>
       <CardContent className="pt-5">

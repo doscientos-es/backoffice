@@ -7,7 +7,7 @@ type SearchParams = Promise<{ nif?: string; numserie?: string; fecha?: string; i
 export default async function VerifyPage({ searchParams }: { searchParams: SearchParams }) {
   const p = await searchParams;
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[color:var(--background)] px-4">
+    <main className="flex min-h-screen items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Verificación de factura</CardTitle>
