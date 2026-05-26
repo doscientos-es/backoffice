@@ -207,6 +207,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         </Card>
       </div>
 
+      <div className="flex justify-end">
+        <Button asChild size="sm" variant="outline">
+          <Link href={`/projects/${id}/milestones`}>Ver hitos</Link>
+        </Button>
+      </div>
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Tareas</CardTitle>

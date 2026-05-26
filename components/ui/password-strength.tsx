@@ -43,7 +43,7 @@ export function PasswordStrength({ value, className }: PasswordStrengthProps) {
             key={i}
             className={cn(
               "flex-1 rounded-full transition-colors",
-              i < score ? COLORS[score] : "bg-input",
+              i < score ? COLORS[score] : "bg-border",
             )}
           />
         ))}

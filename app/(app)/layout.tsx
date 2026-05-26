@@ -9,7 +9,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <Sidebar />
       <div className="flex flex-1 flex-col">
         <Topbar user={user} />
-        <main className="flex-1 overflow-y-auto px-6 py-6">
+        <main className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">
           <div className="mx-auto max-w-7xl">{children}</div>
         </main>
       </div>

@@ -5,6 +5,16 @@
 import OpenAI from "openai";
 import { isAIEnabled } from "./env";
 
+/**
+ * Modelos recomendados para cada tarea.
+ * Usamos gpt-4o-mini por defecto para ahorrar tokens según decisión del equipo.
+ */
+export const AI_MODELS = {
+  default: "gpt-4o-mini",
+  summarizer: "gpt-4o-mini",
+  drafter: "gpt-4o-mini", // Cambiado de gpt-4o a gpt-4o-mini
+} as const;
+
 let _client: OpenAI | null = null;
 
 /**

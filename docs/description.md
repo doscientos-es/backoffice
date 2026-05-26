@@ -2315,7 +2315,7 @@ Resultado guardado en leads.ai_summary, ai_suggested_next_step, ai_temperature, 
 
 Input: lead info + ultimas 5 interacciones + tipo de email deseado.
 Output: { subject: string, body: string }
-Modelo: gpt-4o.
+Modelo: gpt-4o-mini (ahorro de tokens frente a gpt-4o).
 El equipo SIEMPRE revisa y edita antes de enviar. Nunca envio automatico.
 
 ### 22.3 Configuracion

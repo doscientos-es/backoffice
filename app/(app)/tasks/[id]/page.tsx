@@ -14,6 +14,7 @@ import { formatDate } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { updateTask } from "../actions";
+import { type CommentItem, TaskComments } from "./task-comments";
 import { TaskTimerButton } from "./task-timer-button";
 
 export const dynamic = "force-dynamic";
@@ -63,7 +64,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
     .team_members;
   const creator = (task as unknown as { creator: { id: string; name: string } | null }).creator;
 
-  const [{ data: members }, { data: milestones }] = await Promise.all([
+  const [{ data: members }, { data: milestones }, { data: commentsData }] = await Promise.all([
     supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
     project?.id
       ? supabase
@@ -72,6 +73,11 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
         .eq("project_id", project.id)
         .order("due_date", { ascending: true, nullsFirst: false })
       : Promise.resolve({ data: [] as { id: string; name: string }[] }),
+    supabase
+      .from("task_comments")
+      .select("id, body, created_at, author:author_id(id, name)")
+      .eq("task_id", id)
+      .order("created_at", { ascending: true }),
   ]);
 
   const backHref = project ? `/projects/${project.id}/tasks` : "/tasks";
@@ -248,7 +254,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
                   type="checkbox"
                   name="is_billable"
                   defaultChecked={task.is_billable as boolean}
-                  className="size-4 rounded border-input"
+                  className="size-4 rounded border-border"
                 />
                 Facturable
               </label>
@@ -260,6 +266,19 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
             </form>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Comments section */}
+      <div className="mt-2">
+        <div className="rounded-xl border border-border bg-card p-4">
+          <h2 className="mb-3 text-sm font-semibold">Comentarios</h2>
+          <TaskComments
+            taskId={id}
+            memberId={user.id}
+            memberRole={user.role}
+            initialComments={(commentsData as unknown as CommentItem[]) ?? []}
+          />
+        </div>
       </div>
     </div>
   );

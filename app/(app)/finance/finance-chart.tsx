@@ -45,7 +45,7 @@ export function FinanceChart({ data }: { data: MonthlyPoint[] }) {
           <Tooltip
             cursor={{ fill: "color-mix(in oklab, var(--muted) 60%, transparent)" }}
             contentStyle={{
-              background: "var(--popover)",
+              background: "var(--background)",
               border: "1px solid var(--border)",
               borderRadius: 8,
               fontSize: 12,
