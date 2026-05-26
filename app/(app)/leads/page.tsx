@@ -3,13 +3,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
+import { isAIEnabled } from "@/lib/ai";
 import { createServerClient } from "@/lib/supabase/server";
 import { relativeTime } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import Link from "next/link";
+import { type FastInteraction, LeadFastActions } from "./lead-fast-actions";
 import { type KanbanLead, LeadsKanban } from "./leads-kanban";
 import { LeadsViewToggle } from "./view-toggle";
 import { Metadata } from "next";
+
+const RECENT_INTERACTIONS_PER_LEAD = 3;
 
 export const metadata: Metadata = { title: "Leads · doscientos" };
 export const dynamic = "force-dynamic";
@@ -51,12 +55,55 @@ export default async function LeadsPage({
   const view: "board" | "list" = viewParam === "list" ? "list" : "board";
 
   const supabase = await createServerClient();
+  const aiEnabled = isAIEnabled();
   const { data: leads, error } = await supabase
     .from("leads")
-    .select("id, name, company, email, status, created_at")
+    .select(
+      "id, name, company, email, phone, status, created_at, ai_summary, ai_updated_at",
+    )
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .limit(500);
+
+  // Última actividad por lead para alimentar el hover-card de memoria.
+  // Hacemos una sola consulta y agrupamos en memoria para evitar N+1.
+  const leadIds = (leads ?? []).map((l) => l.id as string);
+  const interactionsByLead = new Map<string, FastInteraction[]>();
+  if (leadIds.length > 0) {
+    const { data: interactions } = await supabase
+      .from("lead_interactions")
+      .select("id, lead_id, type, subject, body, created_at")
+      .in("lead_id", leadIds)
+      .order("created_at", { ascending: false })
+      .limit(leadIds.length * RECENT_INTERACTIONS_PER_LEAD);
+    for (const i of interactions ?? []) {
+      const leadId = i.lead_id as string;
+      const list = interactionsByLead.get(leadId) ?? [];
+      if (list.length < RECENT_INTERACTIONS_PER_LEAD) {
+        list.push({
+          id: i.id as string,
+          type: i.type as string,
+          subject: (i.subject as string | null) ?? null,
+          body: (i.body as string | null) ?? null,
+          created_at: i.created_at as string,
+        });
+        interactionsByLead.set(leadId, list);
+      }
+    }
+  }
+
+  const enrichedLeads: KanbanLead[] = (leads ?? []).map((l) => ({
+    id: l.id as string,
+    name: l.name as string,
+    company: (l.company as string | null) ?? null,
+    email: (l.email as string | null) ?? null,
+    phone: (l.phone as string | null) ?? null,
+    status: l.status as KanbanLead["status"],
+    created_at: l.created_at as string,
+    ai_summary: (l.ai_summary as string | null) ?? null,
+    ai_updated_at: (l.ai_updated_at as string | null) ?? null,
+    recent_interactions: interactionsByLead.get(l.id as string) ?? [],
+  }));
 
   const actions = (
     <div className="flex items-center gap-2">
@@ -103,7 +150,7 @@ export default async function LeadsPage({
           </CardContent>
         </Card>
       ) : view === "board" ? (
-        <LeadsKanban leads={leads as KanbanLead[]} />
+        <LeadsKanban leads={enrichedLeads} aiEnabled={aiEnabled} />
       ) : (
         <Card>
           <CardContent className="px-0 pt-0">
@@ -116,12 +163,13 @@ export default async function LeadsPage({
                     <th className="px-5 py-3 font-medium tracking-wide">Email</th>
                     <th className="px-5 py-3 font-medium tracking-wide">Estado</th>
                     <th className="px-5 py-3 font-medium tracking-wide">Creado</th>
+                    <th className="px-5 py-3 font-medium tracking-wide text-right">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60">
-                  {leads.map((l) => (
+                  {enrichedLeads.map((l) => (
                     <tr
-                      key={l.id as string}
+                      key={l.id}
                       className="group transition-colors hover:bg-muted/30"
                     >
                       <td className="px-5 py-3">
@@ -129,24 +177,22 @@ export default async function LeadsPage({
                           href={`/leads/${l.id}`}
                           className="flex items-center gap-2.5"
                         >
-                          <Initials name={l.name as string} />
+                          <Initials name={l.name} />
                           <span className="font-medium group-hover:text-primary transition-colors truncate max-w-40">
-                            {l.name as string}
+                            {l.name}
                           </span>
                         </Link>
                       </td>
                       <td className="px-5 py-3 text-muted-foreground">
-                        {(l.company as string | null) ?? (
-                          <span className="text-muted-foreground/40">—</span>
-                        )}
+                        {l.company ?? <span className="text-muted-foreground/40">—</span>}
                       </td>
                       <td className="px-5 py-3 text-muted-foreground">
-                        {(l.email as string | null) ? (
+                        {l.email ? (
                           <a
                             href={`mailto:${l.email}`}
                             className="hover:text-foreground transition-colors"
                           >
-                            {l.email as string}
+                            {l.email}
                           </a>
                         ) : (
                           <span className="text-muted-foreground/40">—</span>
@@ -154,11 +200,16 @@ export default async function LeadsPage({
                       </td>
                       <td className="px-5 py-3">
                         <Badge variant={STATUS_VARIANT[l.status as keyof typeof STATUS_VARIANT]}>
-                          {STATUS_LABEL[l.status as string] ?? (l.status as string)}
+                          {STATUS_LABEL[l.status] ?? l.status}
                         </Badge>
                       </td>
                       <td className="px-5 py-3 text-muted-foreground tabular-nums">
-                        {relativeTime(l.created_at as string)}
+                        {relativeTime(l.created_at)}
+                      </td>
+                      <td className="px-3 py-2">
+                        <div className="flex justify-end">
+                          <LeadFastActions lead={l} aiEnabled={aiEnabled} />
+                        </div>
                       </td>
                     </tr>
                   ))}

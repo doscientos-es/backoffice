@@ -1,7 +1,16 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { Textarea } from "@/components/ui/textarea";
 import { cn, relativeTime } from "@/lib/utils";
 import {
   DndContext,
@@ -17,12 +26,20 @@ import {
 import Link from "next/link";
 import { useOptimistic, useState, useTransition } from "react";
 import { updateLeadStatus } from "./actions";
+import { type FastLead, LeadFastActions } from "./lead-fast-actions";
 
-export type KanbanLead = {
-  id: string;
-  name: string;
+const LOST_REASON_PRESETS = [
+  "Precio",
+  "Timing / Calendario",
+  "Eligió competencia",
+  "No es buen fit",
+  "Sin respuesta",
+  "Sin presupuesto",
+  "Duplicado",
+] as const;
+
+export type KanbanLead = FastLead & {
   company: string | null;
-  email: string | null;
   status: LeadStatus;
   created_at: string;
 };
@@ -40,17 +57,31 @@ const COLUMNS: { id: LeadStatus; label: string; tone: string; dot: string }[] = 
 
 type Action = { id: string; status: LeadStatus };
 
-export function LeadsKanban({ leads }: { leads: KanbanLead[] }) {
+export function LeadsKanban({
+  leads,
+  aiEnabled,
+}: { leads: KanbanLead[]; aiEnabled: boolean }) {
   const [, startTransition] = useTransition();
   const [optimistic, applyOptimistic] = useOptimistic(leads, (state, { id, status }: Action) =>
     state.map((l) => (l.id === id ? { ...l, status } : l)),
   );
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [pendingLost, setPendingLost] = useState<{ id: string; name: string } | null>(null);
   const feedback = useFormFeedback();
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
   const onDragStart = (e: DragStartEvent) => setActiveId(String(e.active.id));
+
+  const commitMove = (id: string, to: LeadStatus, lostReason?: string) => {
+    startTransition(async () => {
+      applyOptimistic({ id, status: to });
+      feedback.setPending();
+      const res = await updateLeadStatus({ leadId: id, status: to, lostReason });
+      if (!res.ok) feedback.setError(res.error);
+      else feedback.setSuccess("Estado actualizado");
+    });
+  };
 
   const onDragEnd = (e: DragEndEvent) => {
     setActiveId(null);
@@ -60,13 +91,11 @@ export function LeadsKanban({ leads }: { leads: KanbanLead[] }) {
     const current = optimistic.find((l) => l.id === id);
     if (!current || current.status === to) return;
 
-    startTransition(async () => {
-      applyOptimistic({ id, status: to });
-      feedback.setPending();
-      const res = await updateLeadStatus({ leadId: id, status: to });
-      if (!res.ok) feedback.setError(res.error);
-      else feedback.setSuccess("Estado actualizado");
-    });
+    if (to === "lost") {
+      setPendingLost({ id, name: current.name });
+      return;
+    }
+    commitMove(id, to);
   };
 
   const grouped: Record<LeadStatus, KanbanLead[]> = {
@@ -95,11 +124,116 @@ export function LeadsKanban({ leads }: { leads: KanbanLead[] }) {
             tone={col.tone}
             dot={col.dot}
             leads={grouped[col.id]}
+            aiEnabled={aiEnabled}
           />
         ))}
       </div>
-      <DragOverlay>{active ? <Card lead={active} isOverlay /> : null}</DragOverlay>
+      <DragOverlay>{active ? <Card lead={active} aiEnabled={aiEnabled} isOverlay /> : null}</DragOverlay>
+      <LostReasonDialog
+        lead={pendingLost}
+        onCancel={() => setPendingLost(null)}
+        onConfirm={(reason) => {
+          if (!pendingLost) return;
+          commitMove(pendingLost.id, "lost", reason);
+          setPendingLost(null);
+        }}
+      />
     </DndContext>
+  );
+}
+
+function LostReasonDialog({
+  lead,
+  onCancel,
+  onConfirm,
+}: {
+  lead: { id: string; name: string } | null;
+  onCancel: () => void;
+  onConfirm: (reason: string) => void;
+}) {
+  const [selected, setSelected] = useState<string | null>(null);
+  const [custom, setCustom] = useState("");
+
+  const reason = (selected ?? custom).trim();
+  const open = !!lead;
+
+  const reset = () => {
+    setSelected(null);
+    setCustom("");
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) {
+          reset();
+          onCancel();
+        }
+      }}
+    >
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Marcar como perdido</DialogTitle>
+          <DialogDescription>
+            {lead ? `¿Por qué se ha perdido ${lead.name}?` : "Indica un motivo"}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-wrap gap-1.5">
+          {LOST_REASON_PRESETS.map((r) => (
+            <button
+              key={r}
+              type="button"
+              onClick={() => {
+                setSelected(r);
+                setCustom("");
+              }}
+              className={cn(
+                "rounded-full border px-2.5 py-1 text-xs transition-colors",
+                selected === r
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground",
+              )}
+            >
+              {r}
+            </button>
+          ))}
+        </div>
+        <Textarea
+          value={custom}
+          onChange={(e) => {
+            setCustom(e.target.value);
+            if (e.target.value) setSelected(null);
+          }}
+          placeholder="O escribe un motivo personalizado…"
+          rows={3}
+          maxLength={500}
+        />
+        <div className="flex justify-end gap-2 pt-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              reset();
+              onCancel();
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            size="sm"
+            disabled={!reason}
+            onClick={() => {
+              if (!reason) return;
+              onConfirm(reason);
+              reset();
+            }}
+          >
+            Marcar perdido
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -109,7 +243,15 @@ function Column({
   tone,
   dot,
   leads,
-}: { status: LeadStatus; label: string; tone: string; dot: string; leads: KanbanLead[] }) {
+  aiEnabled,
+}: {
+  status: LeadStatus;
+  label: string;
+  tone: string;
+  dot: string;
+  leads: KanbanLead[];
+  aiEnabled: boolean;
+}) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   return (
     <div
@@ -132,7 +274,7 @@ function Column({
         {leads.length === 0 ? (
           <p className="px-2 py-6 text-center text-xs text-muted-foreground">Sin leads</p>
         ) : (
-          leads.map((l) => <Card key={l.id} lead={l} />)
+          leads.map((l) => <Card key={l.id} lead={l} aiEnabled={aiEnabled} />)
         )}
       </div>
     </div>
@@ -149,7 +291,11 @@ function LeadInitials({ name }: { name: string }) {
   );
 }
 
-function Card({ lead, isOverlay = false }: { lead: KanbanLead; isOverlay?: boolean }) {
+function Card({
+  lead,
+  aiEnabled,
+  isOverlay = false,
+}: { lead: KanbanLead; aiEnabled: boolean; isOverlay?: boolean }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: lead.id });
   return (
     <div
@@ -183,9 +329,19 @@ function Card({ lead, isOverlay = false }: { lead: KanbanLead; isOverlay?: boole
           )}
         </div>
       )}
-      <p className="pl-8 text-[11px] text-muted-foreground tabular-nums">
-        {relativeTime(lead.created_at)}
-      </p>
+      <div className="flex items-center justify-between pl-8">
+        <p className="text-[11px] text-muted-foreground tabular-nums">
+          {relativeTime(lead.created_at)}
+        </p>
+        {!isOverlay && (
+          <div
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <LeadFastActions lead={lead} aiEnabled={aiEnabled} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

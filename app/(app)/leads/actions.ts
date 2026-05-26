@@ -165,21 +165,41 @@ export async function convertLeadToClientForm(formData: FormData): Promise<void>
 
 // ---------------- UPDATE STATUS ----------------
 
-const StatusInput = z.object({
-  leadId: z.string().uuid(),
-  status: z.enum(["new", "qualifying", "quoted", "won", "lost", "archived"]),
-});
+const StatusInput = z
+  .object({
+    leadId: z.string().uuid(),
+    status: z.enum(["new", "qualifying", "quoted", "won", "lost", "archived"]),
+    lostReason: z.string().trim().min(1).max(500).optional(),
+  })
+  .refine((v) => v.status === "lost" || !v.lostReason, {
+    message: "El motivo de pérdida solo aplica al estado 'lost'",
+    path: ["lostReason"],
+  })
+  .refine((v) => v.status !== "lost" || !!v.lostReason, {
+    message: "Indica un motivo de pérdida",
+    path: ["lostReason"],
+  });
 
 export async function updateLeadStatus(
   input: unknown,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   await requireUser();
   const parsed = StatusInput.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Estado no válido" };
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Estado no válido" };
+  }
   const supabase = await createServerClient();
+  const updates: Record<string, unknown> = { status: parsed.data.status };
+  if (parsed.data.status === "lost") {
+    updates.lost_reason = parsed.data.lostReason;
+    updates.lost_at = new Date().toISOString();
+  } else {
+    updates.lost_reason = null;
+    updates.lost_at = null;
+  }
   const { error } = await supabase
     .from("leads")
-    .update({ status: parsed.data.status })
+    .update(updates)
     .eq("id", parsed.data.leadId);
   if (error) return { ok: false, error: error.message };
   revalidatePath(`/leads/${parsed.data.leadId}`);
