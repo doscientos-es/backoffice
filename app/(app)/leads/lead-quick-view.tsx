@@ -24,12 +24,13 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
-import { relativeTime } from "@/lib/utils";
-import { ArrowUpRight, Building2, Mail, NotebookPen, Phone, X } from "lucide-react";
+import { formatEUR, relativeTime } from "@/lib/utils";
+import { ArrowUpRight, Building2, Mail, NotebookPen, Phone, Wallet, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type ReactNode, useEffect, useState } from "react";
-import { logLeadCall, logLeadEmail, logLeadNote, updateLeadEstimatedValue } from "./actions";
+import { type ReactNode, useState } from "react";
+import { logLeadCall, logLeadEmail, logLeadNote } from "./actions";
+import { LeadEditDialog } from "./[id]/lead-edit-dialog";
 import type { KanbanLead } from "./leads-kanban";
 
 const STATUS_LABEL: Record<KanbanLead["status"], string> = {
@@ -58,15 +59,26 @@ const INTERACTION_LABEL: Record<string, string> = {
   note: "Nota",
 };
 
-export function LeadQuickView({ lead, onClose }: { lead: KanbanLead | null; onClose: () => void }) {
+export function LeadQuickView({
+  lead,
+  canEdit = false,
+  onCloseAction,
+}: {
+  lead: KanbanLead | null;
+  canEdit?: boolean;
+  onCloseAction: () => void;
+}) {
   return (
-    <Drawer open={!!lead} onOpenChange={(v) => !v && onClose()} direction="right">
-      <DrawerContent className="sm:max-w-sm">{lead ? <Body lead={lead} /> : null}</DrawerContent>
+    <Drawer open={!!lead} onOpenChange={(v) => !v && onCloseAction()} direction="right">
+      <DrawerContent className="sm:max-w-sm">
+        {lead ? <Body lead={lead} canEdit={canEdit} /> : null}
+      </DrawerContent>
     </Drawer>
   );
 }
 
-function Body({ lead }: { lead: KanbanLead }) {
+function Body({ lead, canEdit }: { lead: KanbanLead; canEdit: boolean }) {
+  const hasEstimated = lead.estimated_value != null && lead.estimated_value > 0;
   return (
     <div className="grid h-full grid-rows-[auto_1fr_auto_auto]">
       <DrawerHeader className="flex flex-row items-start justify-between gap-2 border-b border-border">
@@ -87,8 +99,12 @@ function Body({ lead }: { lead: KanbanLead }) {
           {lead.company && <Row icon={<Building2 className="size-3.5" />}>{lead.company}</Row>}
           {lead.email && <Row icon={<Mail className="size-3.5" />} href={`mailto:${lead.email}`}>{lead.email}</Row>}
           {lead.phone && <Row icon={<Phone className="size-3.5" />} href={`tel:${lead.phone}`}>{lead.phone}</Row>}
+          {hasEstimated && (
+            <Row icon={<Wallet className="size-3.5" />}>
+              <span className="tabular-nums">{formatEUR(lead.estimated_value as number)}</span>
+            </Row>
+          )}
         </section>
-        <ValueEditor leadId={lead.id} initial={lead.estimated_value} />
         {lead.ai_summary && (
           <section className="flex flex-col gap-1.5">
             <Heading>Resumen IA</Heading>
@@ -102,8 +118,22 @@ function Body({ lead }: { lead: KanbanLead }) {
         <QuickActions leadId={lead.id} leadPhone={lead.phone} leadEmail={lead.email} />
       </div>
 
-      <footer className="border-t border-border p-3">
-        <Button asChild className="w-full" size="sm" variant="outline">
+      <footer className="flex items-center gap-2 border-t border-border p-3">
+        {canEdit && (
+          <LeadEditDialog
+            lead={{
+              id: lead.id,
+              name: lead.name,
+              company: lead.company,
+              email: lead.email,
+              phone: lead.phone,
+              source: lead.source,
+              notes: lead.notes,
+              estimated_value: lead.estimated_value,
+            }}
+          />
+        )}
+        <Button asChild className="flex-1" size="sm" variant="outline">
           <Link href={`/leads/${lead.id}`}>Ver detalle completo<ArrowUpRight className="size-3.5" /></Link>
         </Button>
       </footer>
@@ -121,39 +151,6 @@ function Row({ icon, href, children }: { icon: ReactNode; href?: string; childre
     <a href={href} className="flex items-center gap-2 hover:text-primary">{inner}</a>
   ) : (
     <div className="flex items-center gap-2">{inner}</div>
-  );
-}
-
-function ValueEditor({ leadId, initial }: { leadId: string; initial: number | null }) {
-  const [value, setValue] = useState(initial != null ? String(initial) : "");
-  const feedback = useFormFeedback();
-  useEffect(() => {
-    setValue(initial != null ? String(initial) : "");
-  }, [initial, leadId]);
-
-  const commit = async () => {
-    const trimmed = value.trim();
-    const num = trimmed === "" ? null : Number.parseFloat(trimmed);
-    if (num != null && !Number.isFinite(num)) return feedback.setError("Valor no válido");
-    if (num === initial || (num == null && initial == null)) return;
-    feedback.setPending();
-    const res = await updateLeadEstimatedValue({ leadId, value: num });
-    if (!res.ok) feedback.setError(res.error);
-    else feedback.setSuccess("Guardado");
-  };
-
-  return (
-    <section className="flex flex-col gap-1.5">
-      <Label htmlFor={`qv-value-${leadId}`} className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-        Valor estimado (€)
-      </Label>
-      <div className="flex items-center gap-2">
-        <Input id={`qv-value-${leadId}`} type="number" inputMode="decimal" min={0} step="0.01"
-          value={value} onChange={(e) => setValue(e.target.value)} onBlur={commit}
-          placeholder="0,00" className="tabular-nums" />
-        <FormFeedback state={feedback.state} pendingLabel="…" />
-      </div>
-    </section>
   );
 }
 

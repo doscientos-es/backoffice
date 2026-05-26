@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
 import { isAIEnabled } from "@/lib/ai";
+import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import { relativeTime } from "@/lib/utils";
 import { Plus } from "lucide-react";
@@ -54,12 +55,14 @@ export default async function LeadsPage({
   const { view: viewParam } = await searchParams;
   const view: "board" | "list" = viewParam === "list" ? "list" : "board";
 
+  const user = await requireUser();
   const supabase = await createServerClient();
   const aiEnabled = isAIEnabled();
+  const canEdit = user.role !== "viewer";
   const { data: leads, error } = await supabase
     .from("leads")
     .select(
-      "id, name, company, email, phone, status, created_at, updated_at, estimated_value, ai_summary, ai_updated_at",
+      "id, name, company, email, phone, source, notes, status, created_at, updated_at, estimated_value, ai_summary, ai_updated_at",
     )
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
@@ -98,6 +101,8 @@ export default async function LeadsPage({
     company: (l.company as string | null) ?? null,
     email: (l.email as string | null) ?? null,
     phone: (l.phone as string | null) ?? null,
+    source: (l.source as string | null) ?? null,
+    notes: (l.notes as string | null) ?? null,
     status: l.status as KanbanLead["status"],
     created_at: l.created_at as string,
     updated_at: (l.updated_at as string | null) ?? (l.created_at as string),
@@ -152,7 +157,7 @@ export default async function LeadsPage({
           </CardContent>
         </Card>
       ) : view === "board" ? (
-        <LeadsKanban leads={enrichedLeads} aiEnabled={aiEnabled} />
+        <LeadsKanban leads={enrichedLeads} canEdit={canEdit} />
       ) : (
         <Card>
           <CardContent className="px-0 pt-0">

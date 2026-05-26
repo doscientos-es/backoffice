@@ -16,7 +16,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { AlertTriangle, Plus } from "lucide-react";
+import { AlertTriangle, PanelRightOpen, Plus } from "lucide-react";
 import Link from "next/link";
 import { useOptimistic, useState, useTransition } from "react";
 import { updateLeadStatus } from "./actions";
@@ -24,6 +24,8 @@ import type { FastLead } from "./lead-fast-actions";
 
 export type KanbanLead = FastLead & {
   company: string | null;
+  source: string | null;
+  notes: string | null;
   status: LeadStatus;
   created_at: string;
   updated_at: string;
@@ -58,10 +60,10 @@ type Action = { id: string; status: LeadStatus };
 
 export function LeadsKanban({
   leads,
+  canEdit = false,
 }: {
   leads: KanbanLead[];
-  /** @deprecated AI flag no longer used at card level; kept for caller compat */
-  aiEnabled?: boolean;
+  canEdit?: boolean;
 }) {
   const [, startTransition] = useTransition();
   const [optimistic, applyOptimistic] = useOptimistic(leads, (state, { id, status }: Action) =>
@@ -143,7 +145,8 @@ export function LeadsKanban({
       />
       <LeadQuickView
         lead={quickViewId ? (optimistic.find((l) => l.id === quickViewId) ?? null) : null}
-        onClose={() => setQuickViewId(null)}
+        canEdit={canEdit}
+        onCloseAction={() => setQuickViewId(null)}
       />
     </DndContext>
   );
@@ -253,6 +256,8 @@ function Card({
       }
       role={onOpenQuickView ? "button" : undefined}
       tabIndex={onOpenQuickView ? 0 : undefined}
+      aria-label={onOpenQuickView ? `Abrir panel rápido de ${lead.name}` : undefined}
+      title={onOpenQuickView ? "Abrir panel rápido" : undefined}
       className={cn(
         "group flex cursor-grab flex-col gap-2 rounded-lg bg-background p-3 text-left ring-1 ring-border transition-all hover:shadow-sm hover:ring-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
         isDragging && "opacity-30",
@@ -262,14 +267,7 @@ function Card({
     >
       <div className="flex items-start gap-2">
         <LeadInitials name={lead.name} />
-        <Link
-          href={`/leads/${lead.id}`}
-          className="flex-1 truncate text-sm font-medium leading-tight hover:text-primary transition-colors"
-          onClick={(e) => e.stopPropagation()}
-          draggable={false}
-        >
-          {lead.name}
-        </Link>
+        <span className="flex-1 truncate text-sm font-medium leading-tight">{lead.name}</span>
         {stale && !isOverlay && (
           <span
             title={`Sin cambios desde hace ${relativeTime(lead.updated_at)}`}
@@ -278,6 +276,12 @@ function Card({
           >
             <AlertTriangle className="size-2.5" aria-hidden />
           </span>
+        )}
+        {!isOverlay && onOpenQuickView && (
+          <PanelRightOpen
+            aria-hidden
+            className="size-3.5 shrink-0 text-muted-foreground/40 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+          />
         )}
       </div>
       {(lead.company || lead.email) && (
