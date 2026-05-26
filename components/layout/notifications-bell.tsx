@@ -3,14 +3,27 @@
 import { markNotificationsRead } from "@/app/(app)/tasks/comment-actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty-state";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty-state";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { getBrowserClient } from "@/lib/supabase/browser";
 import { cn, relativeTime } from "@/lib/utils";
 import { AtSign, Bell, BellOff, CheckCheck, MessageSquare, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type ComponentType, useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import {
+  type ComponentType,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
 
 type Notif = {
   id: string;
@@ -78,7 +91,9 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
     const supabase = getBrowserClient();
     const { data } = await supabase
       .from("notifications")
-      .select("id, body, link, event_type, created_at, read_at, actor:team_members!actor_id(name, avatar_url)")
+      .select(
+        "id, body, link, event_type, created_at, read_at, actor:team_members!actor_id(name, avatar_url)",
+      )
       .eq("recipient_id", memberId)
       .order("created_at", { ascending: false })
       .limit(20);
@@ -92,7 +107,12 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
       .channel(`notifs-${memberId}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "notifications", filter: `recipient_id=eq.${memberId}` },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `recipient_id=eq.${memberId}`,
+        },
         () => fetchNotifs(),
       )
       .subscribe();
@@ -168,9 +188,7 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
                 <BellOff />
               </EmptyMedia>
               <EmptyTitle>Sin notificaciones</EmptyTitle>
-              <EmptyDescription>
-                Aquí verás menciones y comentarios en tus tareas.
-              </EmptyDescription>
+              <EmptyDescription>Aquí verás menciones y comentarios en tus tareas.</EmptyDescription>
             </EmptyHeader>
           </Empty>
         ) : (
