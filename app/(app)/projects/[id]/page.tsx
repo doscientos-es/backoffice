@@ -272,9 +272,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <CardTitle>Propuestas</CardTitle>
             {client ? (
               <Button asChild size="sm">
-                <Link href={`/proposals/new?client_id=${client.id}&project_id=${id}`}>
-                  Nueva
-                </Link>
+                <Link href={`/proposals/new?client_id=${client.id}&project_id=${id}`}>Nueva</Link>
               </Button>
             ) : null}
           </CardHeader>

@@ -54,12 +54,7 @@ export default async function NewProjectPage({
                 required
                 hint="Cliente al que pertenece el proyecto."
               >
-                <Select
-                  id="client_id"
-                  name="client_id"
-                  required
-                  defaultValue={client_id ?? ""}
-                >
+                <Select id="client_id" name="client_id" required defaultValue={client_id ?? ""}>
                   <option value="" disabled>
                     — Selecciona cliente —
                   </option>

@@ -59,10 +59,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
       <PageHeader
         title={client.name as string}
         description={(client.nif as string | null) ?? undefined}
-        breadcrumbs={[
-          { label: "Clientes", href: "/clients" },
-          { label: client.name as string },
-        ]}
+        breadcrumbs={[{ label: "Clientes", href: "/clients" }, { label: client.name as string }]}
       />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">

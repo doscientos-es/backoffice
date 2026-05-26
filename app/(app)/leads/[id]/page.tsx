@@ -3,8 +3,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { requireUser } from "@/lib/auth";
 import { isAIEnabled } from "@/lib/ai";
+import { requireUser } from "@/lib/auth";
 import { scopedLogger } from "@/lib/logger";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
@@ -49,7 +49,10 @@ const INTERACTION_LABEL: Record<string, string> = {
  */
 function excerpt(body: string | null, max = 160): string | null {
   if (!body) return null;
-  const text = body.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const text = body
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   if (!text) return null;
   return text.length > max ? `${text.slice(0, max)}…` : text;
 }
@@ -87,7 +90,10 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
 
   const aiEnabled = isAIEnabled();
   const canConvert =
-    !linkedClient?.id && lead.status !== "won" && lead.status !== "lost" && lead.status !== "archived";
+    !linkedClient?.id &&
+    lead.status !== "won" &&
+    lead.status !== "lost" &&
+    lead.status !== "archived";
   const composerDisabled = !user.emailSendEnabled || !user.emailAlias;
   const composerReason = !user.emailAlias
     ? "Configura un alias de email en Ajustes para enviar correos."
@@ -103,9 +109,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         breadcrumbs={[
           { label: "Leads", href: "/leads" },
           { label: lead.name as string },
-          ...(linkedClient?.id
-            ? [{ label: "Cliente", href: `/clients/${linkedClient.id}` }]
-            : []),
+          ...(linkedClient?.id ? [{ label: "Cliente", href: `/clients/${linkedClient.id}` }] : []),
         ]}
         actions={
           <>
@@ -186,9 +190,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            Análisis IA
-          </CardTitle>
+          <CardTitle className="flex items-center gap-2">Análisis IA</CardTitle>
         </CardHeader>
         <CardContent>
           <LeadAiPanel
@@ -223,9 +225,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                 return (
                   <li key={i.id as string} className="flex items-start gap-3 px-6 py-3">
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium">
-                        {INTERACTION_LABEL[type] ?? type}
-                      </p>
+                      <p className="text-sm font-medium">{INTERACTION_LABEL[type] ?? type}</p>
                       {subject ? (
                         <p className="truncate text-xs text-muted-foreground">{subject}</p>
                       ) : null}

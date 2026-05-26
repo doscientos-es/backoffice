@@ -9,15 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Briefcase,
-  FileText,
-  ListChecks,
-  Plus,
-  Receipt,
-  User,
-  Users,
-} from "lucide-react";
+import { Briefcase, FileText, ListChecks, Plus, User, Users } from "lucide-react";
 import Link from "next/link";
 
 type QuickAction = {
@@ -32,7 +24,6 @@ const ACTIONS: QuickAction[] = [
   { href: "/projects/new", label: "Nuevo proyecto", icon: Briefcase },
   { href: "/tasks/new", label: "Nueva tarea", icon: ListChecks },
   { href: "/proposals/new", label: "Nueva propuesta", icon: FileText },
-  { href: "/reminders/new", label: "Nuevo recordatorio", icon: Receipt },
 ];
 
 export function QuickCreateButton() {
@@ -49,12 +40,7 @@ export function QuickCreateButton() {
               <Plus className="h-5 w-5" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            side="top"
-            sideOffset={8}
-            className="min-w-56"
-          >
+          <DropdownMenuContent align="end" side="top" sideOffset={8} className="min-w-56">
             <DropdownMenuLabel>Crear nuevo</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {ACTIONS.map((action) => (
