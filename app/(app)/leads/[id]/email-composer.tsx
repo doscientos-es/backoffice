@@ -1,11 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useState, useTransition } from "react";
-import { toast } from "sonner";
+import { useState } from "react";
 import { sendEmailToLead } from "../actions";
 
 export type EmailComposerProps = {
@@ -19,7 +19,7 @@ export function EmailComposer({ leadId, defaultTo, disabled, disabledReason }: E
   const [to, setTo] = useState(defaultTo);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
-  const [pending, startTransition] = useTransition();
+  const feedback = useFormFeedback();
 
   if (disabled) {
     return (
@@ -29,28 +29,27 @@ export function EmailComposer({ leadId, defaultTo, disabled, disabledReason }: E
     );
   }
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!to || !subject || !body) {
-      toast.error("Completa destinatario, asunto y cuerpo.");
+      feedback.setError("Completa destinatario, asunto y cuerpo.");
       return;
     }
-    startTransition(async () => {
-      const res = await sendEmailToLead({
-        leadId,
-        to,
-        subject,
-        bodyHtml: body,
-        includeSignature: true,
-      });
-      if (res.ok) {
-        toast.success(res.mocked ? "Email simulado (modo dev)" : "Email enviado");
-        setSubject("");
-        setBody("");
-      } else {
-        toast.error(res.error);
-      }
+    feedback.setPending();
+    const res = await sendEmailToLead({
+      leadId,
+      to,
+      subject,
+      bodyHtml: body,
+      includeSignature: true,
     });
+    if (res.ok) {
+      feedback.setSuccess(res.mocked ? "Email simulado (modo dev)" : "Email enviado");
+      setSubject("");
+      setBody("");
+    } else {
+      feedback.setError(res.error);
+    }
   }
 
   return (
@@ -96,9 +95,10 @@ export function EmailComposer({ leadId, defaultTo, disabled, disabledReason }: E
           <code>{"{{email}}"}</code>. Tu firma se añade al final.
         </p>
       </div>
-      <div className="flex justify-end">
-        <Button type="submit" size="sm" disabled={pending}>
-          {pending ? "Enviando…" : "Enviar email"}
+      <div className="flex items-center justify-end gap-3">
+        <FormFeedback state={feedback.state} pendingLabel="Enviando…" successLabel="Email enviado" />
+        <Button type="submit" size="sm" disabled={feedback.pending}>
+          {feedback.pending ? "Enviando…" : "Enviar email"}
         </Button>
       </div>
     </form>

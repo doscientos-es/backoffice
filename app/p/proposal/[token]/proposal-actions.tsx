@@ -2,31 +2,29 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useState, useTransition } from "react";
-import { toast } from "sonner";
+import { useState } from "react";
 import { acceptProposal, rejectProposal } from "./actions";
 
 export function ProposalActions({ token }: { token: string }) {
-  const [pending, startTransition] = useTransition();
+  const feedback = useFormFeedback({ successResetMs: 0 });
   const [showReject, setShowReject] = useState(false);
   const [reason, setReason] = useState("");
 
-  const onAccept = () => {
-    startTransition(async () => {
-      const res = await acceptProposal(token);
-      if (res.ok) toast.success("Propuesta aceptada. Gracias.");
-      else toast.error(res.error);
-    });
+  const onAccept = async () => {
+    feedback.setPending();
+    const res = await acceptProposal(token);
+    if (res.ok) feedback.setSuccess("Propuesta aceptada. Gracias.");
+    else feedback.setError(res.error);
   };
 
-  const onReject = () => {
-    startTransition(async () => {
-      const res = await rejectProposal(token, reason.trim() || undefined);
-      if (res.ok) toast.success("Respuesta registrada.");
-      else toast.error(res.error);
-    });
+  const onReject = async () => {
+    feedback.setPending();
+    const res = await rejectProposal(token, reason.trim() || undefined);
+    if (res.ok) feedback.setSuccess("Respuesta registrada.");
+    else feedback.setError(res.error);
   };
 
   if (showReject) {
@@ -43,15 +41,16 @@ export function ProposalActions({ token }: { token: string }) {
               placeholder="Cuéntanos qué podemos mejorar"
               rows={4}
               maxLength={500}
-              disabled={pending}
+              disabled={feedback.pending}
             />
           </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setShowReject(false)} disabled={pending}>
+          <div className="flex items-center justify-end gap-3">
+            <FormFeedback state={feedback.state} pendingLabel="Enviando…" />
+            <Button variant="ghost" onClick={() => setShowReject(false)} disabled={feedback.pending}>
               Cancelar
             </Button>
-            <Button variant="destructive" onClick={onReject} disabled={pending}>
-              {pending ? "Enviando…" : "Confirmar rechazo"}
+            <Button variant="destructive" onClick={onReject} disabled={feedback.pending}>
+              {feedback.pending ? "Enviando…" : "Confirmar rechazo"}
             </Button>
           </div>
         </CardContent>
@@ -66,12 +65,13 @@ export function ProposalActions({ token }: { token: string }) {
         <p className="text-sm text-[color:var(--text-muted)]">
           Acepta o rechaza esta propuesta. Esta acción es definitiva.
         </p>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setShowReject(true)} disabled={pending}>
+        <div className="flex items-center gap-3">
+          <FormFeedback state={feedback.state} pendingLabel="Procesando…" />
+          <Button variant="outline" onClick={() => setShowReject(true)} disabled={feedback.pending}>
             Rechazar
           </Button>
-          <Button onClick={onAccept} disabled={pending}>
-            {pending ? "Procesando…" : "Aceptar propuesta"}
+          <Button onClick={onAccept} disabled={feedback.pending}>
+            {feedback.pending ? "Procesando…" : "Aceptar propuesta"}
           </Button>
         </div>
       </CardContent>

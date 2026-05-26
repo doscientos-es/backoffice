@@ -1,8 +1,7 @@
 "use client";
 
+import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Select } from "@/components/ui/select";
-import { useTransition } from "react";
-import { toast } from "sonner";
 import { updateLeadStatus } from "../actions";
 
 const OPTIONS = [
@@ -15,26 +14,28 @@ const OPTIONS = [
 ] as const;
 
 export function LeadStatusSelect({ leadId, status }: { leadId: string; status: string }) {
-  const [pending, startTransition] = useTransition();
+  const feedback = useFormFeedback();
   return (
-    <Select
-      defaultValue={status}
-      disabled={pending}
-      className="h-8 w-40"
-      onChange={(e) => {
-        const next = e.target.value;
-        startTransition(async () => {
+    <div className="flex items-center gap-2">
+      <Select
+        defaultValue={status}
+        disabled={feedback.pending}
+        className="h-8 w-40"
+        onChange={async (e) => {
+          const next = e.target.value;
+          feedback.setPending();
           const res = await updateLeadStatus({ leadId, status: next });
-          if (!res.ok) toast.error(res.error);
-          else toast.success("Estado actualizado");
-        });
-      }}
-    >
-      {OPTIONS.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </Select>
+          if (!res.ok) feedback.setError(res.error);
+          else feedback.setSuccess("Estado actualizado");
+        }}
+      >
+        {OPTIONS.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </Select>
+      <FormFeedback state={feedback.state} pendingLabel="Actualizando…" />
+    </div>
   );
 }

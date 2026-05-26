@@ -19,6 +19,13 @@ const ServerSchema = PublicSchema.extend({
   VERIFACTU_CERT_P12_BASE64: z.string().optional().default(""),
   VERIFACTU_CERT_PASSWORD: z.string().optional().default(""),
   VERIFACTU_CERT_EXPIRES_AT: z.string().optional().default(""),
+  // Generic lead-intake webhook (Recurrev / GHL / landing forms)
+  LEAD_INTAKE_TOKEN: z.string().optional().default(""),
+  // Meta Lead Ads webhook (developers.facebook.com)
+  META_APP_SECRET: z.string().optional().default(""),
+  META_VERIFY_TOKEN: z.string().optional().default(""),
+  META_PAGE_ACCESS_TOKEN: z.string().optional().default(""),
+  META_GRAPH_API_VERSION: z.string().default("v23.0"),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
 });
 

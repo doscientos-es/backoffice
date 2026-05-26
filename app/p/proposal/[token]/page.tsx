@@ -1,5 +1,4 @@
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { notFound } from "next/navigation";
@@ -71,81 +70,98 @@ export default async function PortalProposalPage({
   const safeItems = (items ?? []) as unknown as ProposalItem[];
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight text-[color:var(--text-primary)]">
-            {proposal.title as string}
-          </h1>
-          <Badge variant={STATUS_VARIANT[status]}>{STATUS_LABEL[status] ?? status}</Badge>
-        </div>
-        <p className="text-sm text-[color:var(--text-muted)]">
-          {proposal.number as string} · {client?.name ?? "—"}
-          {proposal.valid_until ? ` · Válida hasta ${formatDate(proposal.valid_until as string)}` : ""}
-        </p>
-      </div>
-
-      <Card>
-        <CardHeader><CardTitle>Detalle</CardTitle></CardHeader>
-        <CardContent className="px-0">
-          {safeItems.length === 0 ? (
-            <p className="px-6 py-4 text-sm text-muted-foreground">Sin líneas.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <tr>
-                    <th className="px-5 py-2 font-medium">Descripción</th>
-                    <th className="px-5 py-2 font-medium text-right">Cant.</th>
-                    <th className="px-5 py-2 font-medium text-right">Precio</th>
-                    <th className="px-5 py-2 font-medium text-right">IVA</th>
-                    <th className="px-5 py-2 font-medium text-right">Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {safeItems.map((item) => (
-                    <tr key={item.id} className="border-t border-border">
-                      <td className="px-5 py-2.5">{item.description}</td>
-                      <td className="px-5 py-2.5 text-right tabular-nums">{item.quantity}</td>
-                      <td className="px-5 py-2.5 text-right tabular-nums">{formatEUR(item.unit_price)}</td>
-                      <td className="px-5 py-2.5 text-right tabular-nums">{item.vat_rate}%</td>
-                      <td className="px-5 py-2.5 text-right tabular-nums font-medium">
-                        {formatEUR(item.subtotal)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot className="border-t-2 border-border">
-                  <tr>
-                    <td colSpan={4} className="px-5 py-2.5 text-right text-xs text-muted-foreground">Subtotal</td>
-                    <td className="px-5 py-2.5 text-right tabular-nums">{formatEUR(proposal.subtotal as number)}</td>
-                  </tr>
-                  <tr>
-                    <td colSpan={4} className="px-5 py-2.5 text-right text-xs text-muted-foreground">IVA</td>
-                    <td className="px-5 py-2.5 text-right tabular-nums">{formatEUR(proposal.tax_amount as number)}</td>
-                  </tr>
-                  <tr className="font-semibold">
-                    <td colSpan={4} className="px-5 py-2.5 text-right">Total</td>
-                    <td className="px-5 py-2.5 text-right tabular-nums">{formatEUR(proposal.total as number)}</td>
-                  </tr>
-                </tfoot>
-              </table>
+    <div className="flex flex-col gap-4">
+      <article className="rounded-xl bg-white dark:bg-zinc-900 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-800 overflow-hidden">
+        {/* Document header */}
+        <div className="border-b border-zinc-200 dark:border-zinc-800 px-8 py-7 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="inline-flex size-5 items-center justify-center rounded bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-[9px] font-black tracking-tighter select-none">dc</span>
+              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">doscientos</span>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <p className="text-[11px] text-zinc-400 dark:text-zinc-500">Presupuesto · {proposal.number as string}</p>
+          </div>
+          <div className="flex flex-col items-start sm:items-end gap-1.5">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+                {proposal.title as string}
+              </h1>
+              <Badge variant={STATUS_VARIANT[status]}>{STATUS_LABEL[status] ?? status}</Badge>
+            </div>
+            {proposal.valid_until ? (
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                Válida hasta: <strong className="text-zinc-700 dark:text-zinc-300">{formatDate(proposal.valid_until as string)}</strong>
+              </p>
+            ) : null}
+          </div>
+        </div>
 
-      {(proposal.notes as string | null) ? (
-        <Card>
-          <CardHeader><CardTitle>Notas</CardTitle></CardHeader>
-          <CardContent>
-            <p className="whitespace-pre-wrap text-sm">{proposal.notes as string}</p>
-          </CardContent>
-        </Card>
-      ) : null}
+        {/* Recipient */}
+        <div className="px-8 py-5 border-b border-zinc-100 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-900/50">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-1">Dirigido a</p>
+          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{client?.name ?? "—"}</p>
+        </div>
 
+        {/* Line items */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-zinc-200 dark:border-zinc-800">
+                <th className="px-8 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">Descripción</th>
+                <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">Cant.</th>
+                <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">Precio</th>
+                <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">IVA</th>
+                <th className="px-8 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {safeItems.length === 0 ? (
+                <tr><td colSpan={5} className="px-8 py-6 text-sm text-zinc-400 dark:text-zinc-600">Sin líneas.</td></tr>
+              ) : safeItems.map((item, i) => (
+                <tr key={item.id} className={i > 0 ? "border-t border-zinc-100 dark:border-zinc-800/60" : ""}>
+                  <td className="px-8 py-3.5 text-zinc-800 dark:text-zinc-200">{item.description}</td>
+                  <td className="px-4 py-3.5 text-right tabular-nums text-zinc-600 dark:text-zinc-400">{item.quantity}</td>
+                  <td className="px-4 py-3.5 text-right tabular-nums text-zinc-600 dark:text-zinc-400">{formatEUR(item.unit_price)}</td>
+                  <td className="px-4 py-3.5 text-right tabular-nums text-zinc-600 dark:text-zinc-400">{item.vat_rate}%</td>
+                  <td className="px-8 py-3.5 text-right tabular-nums font-medium text-zinc-900 dark:text-zinc-100">{formatEUR(item.subtotal)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Totals */}
+        <div className="border-t border-zinc-200 dark:border-zinc-800 px-8 py-5 flex justify-end">
+          <div className="flex flex-col gap-1.5 w-56">
+            <div className="flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
+              <span>Subtotal</span>
+              <span className="tabular-nums">{formatEUR(proposal.subtotal as number)}</span>
+            </div>
+            <div className="flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
+              <span>IVA</span>
+              <span className="tabular-nums">{formatEUR(proposal.tax_amount as number)}</span>
+            </div>
+            <div className="flex justify-between text-sm font-bold text-zinc-900 dark:text-zinc-100 border-t border-zinc-200 dark:border-zinc-700 pt-2 mt-1">
+              <span>Total</span>
+              <span className="tabular-nums">{formatEUR(proposal.total as number)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Notes */}
+        {(proposal.notes as string | null) ? (
+          <div className="border-t border-zinc-100 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-900/50 px-8 py-5">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-2">Notas</p>
+            <p className="whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+              {proposal.notes as string}
+            </p>
+          </div>
+        ) : null}
+      </article>
+
+      {/* Response area */}
       {responded ? (
-        <p className="text-center text-sm text-[color:var(--text-muted)]">
+        <p className="text-center text-xs text-zinc-400 dark:text-zinc-600 py-2">
           Respondida el {formatDate(proposal.responded_at as string | null)}.
         </p>
       ) : (

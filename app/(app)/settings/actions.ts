@@ -15,7 +15,9 @@ const ProfileInput = z.object({
   email_send_enabled: z.enum(["on", "off"]).transform((v) => v === "on"),
 });
 
-export async function updateProfile(formData: FormData): Promise<void> {
+export async function updateProfile(
+  formData: FormData,
+): Promise<{ ok: true } | { ok: false; error: string }> {
   const user = await requireUser();
   const raw = {
     email_alias: formData.get("email_alias")?.toString() ?? "",
@@ -24,7 +26,7 @@ export async function updateProfile(formData: FormData): Promise<void> {
   };
   const parsed = ProfileInput.safeParse(raw);
   if (!parsed.success) {
-    throw new Error(parsed.error.errors[0]?.message ?? "Datos no válidos");
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
   }
 
   const supabase = await createServerClient();
@@ -38,8 +40,9 @@ export async function updateProfile(formData: FormData): Promise<void> {
     })
     .eq("id", user.id);
 
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, error: error.message };
   revalidatePath("/settings");
+  return { ok: true };
 }
 
 // ---------- Company settings ----------
@@ -52,7 +55,9 @@ const CompanyInput = z.object({
   invoice_series: z.string().min(1).max(10),
 });
 
-export async function updateCompanySettings(formData: FormData): Promise<void> {
+export async function updateCompanySettings(
+  formData: FormData,
+): Promise<{ ok: true } | { ok: false; error: string }> {
   await requireUser();
   const raw = {
     company_name: formData.get("company_name")?.toString() ?? "",
@@ -64,20 +69,24 @@ export async function updateCompanySettings(formData: FormData): Promise<void> {
   };
   const parsed = CompanyInput.safeParse(raw);
   if (!parsed.success) {
-    throw new Error(parsed.error.errors[0]?.message ?? "Datos no válidos");
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
   }
 
   const supabase = await createServerClient();
-  const { error } = await supabase.from("settings").update({
-    company_name: parsed.data.company_name,
-    company_nif: parsed.data.company_nif ?? null,
-    company_address: parsed.data.company_address ?? null,
-    iban: parsed.data.iban ?? null,
-    default_vat_rate: parsed.data.default_vat_rate,
-    invoice_series: parsed.data.invoice_series,
-    updated_at: new Date().toISOString(),
-  }).eq("id", 1);
+  const { error } = await supabase
+    .from("settings")
+    .update({
+      company_name: parsed.data.company_name,
+      company_nif: parsed.data.company_nif ?? null,
+      company_address: parsed.data.company_address ?? null,
+      iban: parsed.data.iban ?? null,
+      default_vat_rate: parsed.data.default_vat_rate,
+      invoice_series: parsed.data.invoice_series,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", 1);
 
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, error: error.message };
   revalidatePath("/settings");
+  return { ok: true };
 }

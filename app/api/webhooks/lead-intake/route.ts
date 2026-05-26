@@ -1,0 +1,69 @@
+import { type NextRequest, NextResponse } from "next/server";
+import { serverEnv } from "@/lib/env";
+import { ingestLead } from "@/lib/integrations/lead-intake";
+import { mapRecurrevToIntake, type RecurrevWebhookPayload } from "@/lib/integrations/recurrev";
+import { scopedLogger } from "@/lib/logger";
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
+const log = scopedLogger("lead-intake-webhook");
+
+function unauthorized() {
+  return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+}
+
+/**
+ * POST /api/webhooks/lead-intake
+ *
+ * Generic endpoint for CRM integrations that can send a custom webhook.
+ * Currently used by Recurrev (GoHighLevel) via "Webhook personalizado" action.
+ *
+ * Auth: Authorization: Bearer <LEAD_INTAKE_TOKEN>
+ */
+export async function POST(request: NextRequest) {
+  const env = serverEnv();
+
+  if (!env.LEAD_INTAKE_TOKEN) {
+    log.warn("LEAD_INTAKE_TOKEN not configured");
+    return NextResponse.json({ error: "webhook not configured" }, { status: 503 });
+  }
+
+  // Verify Bearer token
+  const authHeader = request.headers.get("authorization") ?? "";
+  const token = authHeader.startsWith("Bearer ")
+    ? authHeader.slice(7).trim()
+    : authHeader.trim();
+
+  if (!token || token !== env.LEAD_INTAKE_TOKEN) {
+    log.warn({ tokenProvided: Boolean(token) }, "invalid token");
+    return unauthorized();
+  }
+
+  let payload: RecurrevWebhookPayload;
+  try {
+    payload = (await request.json()) as RecurrevWebhookPayload;
+  } catch {
+    return NextResponse.json({ error: "invalid json" }, { status: 400 });
+  }
+
+  const clientIp =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    request.headers.get("x-real-ip") ??
+    undefined;
+
+  const intake = mapRecurrevToIntake(payload, clientIp);
+  const result = await ingestLead(intake);
+
+  if (!result.ok) {
+    log.error({ error: result.error }, "ingestLead failed");
+    // Still 200 so the CRM doesn't retry and flood us
+    return NextResponse.json({ ok: false, error: result.error, partial: true });
+  }
+
+  return NextResponse.json({
+    ok: true,
+    leadId: result.leadId,
+    duplicate: result.duplicate,
+  });
+}

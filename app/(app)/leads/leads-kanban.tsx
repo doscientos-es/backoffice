@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { cn } from "@/lib/utils";
 import {
   DndContext,
@@ -15,7 +16,6 @@ import {
 } from "@dnd-kit/core";
 import Link from "next/link";
 import { useOptimistic, useState, useTransition } from "react";
-import { toast } from "sonner";
 import { updateLeadStatus } from "./actions";
 
 export type KanbanLead = {
@@ -46,6 +46,7 @@ export function LeadsKanban({ leads }: { leads: KanbanLead[] }) {
     state.map((l) => (l.id === id ? { ...l, status } : l)),
   );
   const [activeId, setActiveId] = useState<string | null>(null);
+  const feedback = useFormFeedback();
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
@@ -61,8 +62,10 @@ export function LeadsKanban({ leads }: { leads: KanbanLead[] }) {
 
     startTransition(async () => {
       applyOptimistic({ id, status: to });
+      feedback.setPending();
       const res = await updateLeadStatus({ leadId: id, status: to });
-      if (!res.ok) toast.error(res.error);
+      if (!res.ok) feedback.setError(res.error);
+      else feedback.setSuccess("Estado actualizado");
     });
   };
 
@@ -75,6 +78,9 @@ export function LeadsKanban({ leads }: { leads: KanbanLead[] }) {
 
   return (
     <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
+      <div className="flex justify-end pb-1 min-h-5">
+        <FormFeedback state={feedback.state} pendingLabel="Actualizando…" />
+      </div>
       <div className="flex gap-3 overflow-x-auto pb-2">
         {COLUMNS.map((col) => (
           <Column key={col.id} status={col.id} label={col.label} tone={col.tone} leads={grouped[col.id]} />
