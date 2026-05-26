@@ -3,14 +3,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   Drawer,
   DrawerClose,
   DrawerContent,
@@ -18,19 +10,12 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
-import { SubmitButton } from "@/components/ui/submit-button";
-import { Textarea } from "@/components/ui/textarea";
 import { formatEUR, relativeTime } from "@/lib/utils";
-import { ArrowUpRight, Building2, Mail, NotebookPen, Phone, Wallet, X } from "lucide-react";
+import { ArrowUpRight, Building2, Mail, Wallet, X } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { type ReactNode, useState } from "react";
-import { logLeadCall, logLeadEmail, logLeadNote } from "./actions";
+import { type ReactNode } from "react";
 import { LeadEditDialog } from "./[id]/lead-edit-dialog";
+import { QCallDialog, QEmailDialog, QNoteDialog } from "./lead-quick-action-dialogs";
 import type { KanbanLead } from "./leads-kanban";
 
 const STATUS_LABEL: Record<KanbanLead["status"], string> = {
@@ -202,63 +187,7 @@ function QuickActions({
   );
 }
 
-function QCallDialog({ leadId, leadPhone }: { leadId: string; leadPhone: string | null }) {
-  const [open, setOpen] = useState(false);
-  const [notes, setNotes] = useState("");
-  const [outcome, setOutcome] = useState("connected");
-  const feedback = useFormFeedback();
-  const router = useRouter();
-
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    feedback.setPending();
-    const res = await logLeadCall({ leadId, notes: notes || undefined, outcome });
-    if (!res.ok) return feedback.setError(res.error);
-    feedback.setSuccess("Registrado");
-    setNotes("");
-    router.refresh();
-    setTimeout(() => setOpen(false), 400);
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-          <Phone className="size-3.5 text-muted-foreground" />
-          Registrar llamada
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Registrar llamada</DialogTitle>
-          {leadPhone && <DialogDescription>{leadPhone}</DialogDescription>}
-        </DialogHeader>
-        <form onSubmit={onSubmit} className="flex flex-col gap-3">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor={`qv-call-outcome-${leadId}`} className="text-xs font-medium">Resultado</Label>
-            <Select id={`qv-call-outcome-${leadId}`} value={outcome} onChange={(e) => setOutcome(e.target.value)}>
-              <option value="connected">Contactado</option>
-              <option value="voicemail">Buzón de voz</option>
-              <option value="no_answer">Sin respuesta</option>
-              <option value="busy">Comunicando</option>
-              <option value="wrong_number">Número erróneo</option>
-            </Select>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor={`qv-call-notes-${leadId}`} className="text-xs font-medium">Notas <span className="text-destructive">*</span></Label>
-            <Textarea id={`qv-call-notes-${leadId}`} rows={3} required value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Puntos clave, próximos pasos…" />
-          </div>
-          <div className="flex items-center justify-end gap-3">
-            <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
-            <SubmitButton loading={feedback.pending}>Registrar</SubmitButton>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function QEmailDialog({ leadId, leadEmail }: { leadId: string; leadEmail: string | null }) {
+function QEmailDialog_LEGACY({ leadId, leadEmail }: { leadId: string; leadEmail: string | null }) {
   const [open, setOpen] = useState(false);
   const [direction, setDirection] = useState<"incoming" | "outgoing">("outgoing");
   const [subject, setSubject] = useState("");
