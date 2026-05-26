@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-// ── mock next/navigation before importing the page ───────────────────────────
+// ── hoist the spy so it is available inside the vi.mock factory ──────────────
 
-const mockRedirect = vi.fn();
+const { mockRedirect } = vi.hoisted(() => ({ mockRedirect: vi.fn() }));
 
 vi.mock("next/navigation", () => ({
   redirect: mockRedirect,
