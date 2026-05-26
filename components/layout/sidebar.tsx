@@ -1,6 +1,12 @@
 "use client";
 
 import { Logo } from "@/components/branding";
+import { NotificationsBell } from "@/components/layout/notifications-bell";
+import { TimerWidget } from "@/components/layout/timer-widget";
+import { UserMenu } from "@/components/layout/user-menu";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Badge } from "@/components/ui/badge";
+import type { CurrentUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import {
   Bell,
@@ -32,7 +38,7 @@ const NAV = [
   { href: "/settings", label: "Ajustes", icon: Settings },
 ] as const;
 
-export function Sidebar() {
+export function Sidebar({ user, verifactuMode }: { user: CurrentUser; verifactuMode: string }) {
   const pathname = usePathname();
   return (
     <aside className="hidden w-56 shrink-0 border-r border-border bg-card md:flex md:flex-col">
@@ -72,8 +78,29 @@ export function Sidebar() {
           );
         })}
       </nav>
-      <div className="border-t border-border px-4 py-3 text-[10px] uppercase tracking-wider text-muted-foreground/80">
-        v0.1 · MVP
+
+      <div className="flex flex-col gap-2 border-t border-border p-2">
+        <div className="flex items-center justify-between px-2">
+          <div className="flex items-center gap-1">
+            <TimerWidget memberId={user.id} />
+            <NotificationsBell memberId={user.id} />
+          </div>
+          <ThemeToggle />
+        </div>
+        <UserMenu user={user} />
+        <div className="flex items-center justify-between px-2 pb-1">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground/40">
+            v0.1 · MVP
+          </div>
+          <Badge
+            variant={
+              verifactuMode === "PROD" ? "success" : verifactuMode === "TEST" ? "warning" : "neutral"
+            }
+            className="h-4 px-1 text-[9px] font-bold uppercase"
+          >
+            {verifactuMode}
+          </Badge>
+        </div>
       </div>
     </aside>
   );

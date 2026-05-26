@@ -107,31 +107,45 @@ function Column({
   status,
   label,
   tone,
+  dot,
   leads,
-}: { status: LeadStatus; label: string; tone: string; leads: KanbanLead[] }) {
+}: { status: LeadStatus; label: string; tone: string; dot: string; leads: KanbanLead[] }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   return (
     <div
       ref={setNodeRef}
       className={cn(
         "flex w-72 shrink-0 flex-col rounded-xl bg-card ring-1 ring-foreground/10 transition-colors",
-        isOver && "ring-2 ring-primary/40",
+        isOver && "ring-2 ring-primary/40 bg-primary/5",
       )}
     >
-      <header className="flex items-center justify-between px-3 py-2 border-b border-border">
-        <span className={cn("text-xs font-semibold uppercase tracking-wide", tone)}>{label}</span>
-        <Badge variant="neutral" className="tabular-nums">
+      <header className="flex items-center justify-between px-3 py-2.5 border-b border-border">
+        <div className="flex items-center gap-2">
+          <span className={cn("size-2 rounded-full shrink-0", dot)} />
+          <span className={cn("text-xs font-semibold tracking-wide", tone)}>{label}</span>
+        </div>
+        <Badge variant="neutral" className="tabular-nums text-[11px] h-5">
           {leads.length}
         </Badge>
       </header>
-      <div className="flex flex-col gap-2 p-2 min-h-24">
+      <div className="flex flex-col gap-1.5 p-2 min-h-24">
         {leads.length === 0 ? (
-          <p className="px-2 py-4 text-center text-xs text-muted-foreground">Sin leads.</p>
+          <p className="px-2 py-6 text-center text-xs text-muted-foreground/60">Sin leads</p>
         ) : (
           leads.map((l) => <Card key={l.id} lead={l} />)
         )}
       </div>
     </div>
+  );
+}
+
+function LeadInitials({ name }: { name: string }) {
+  const parts = name.trim().split(/\s+/);
+  const letters = parts.length >= 2 ? parts[0][0] + parts[1][0] : (parts[0]?.[0] ?? "?");
+  return (
+    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold uppercase text-primary">
+      {letters}
+    </span>
   );
 }
 
@@ -143,23 +157,35 @@ function Card({ lead, isOverlay = false }: { lead: KanbanLead; isOverlay?: boole
       {...attributes}
       {...listeners}
       className={cn(
-        "group flex cursor-grab flex-col gap-1 rounded-lg bg-background p-2.5 text-left ring-1 ring-border transition-shadow hover:ring-foreground/20",
+        "group flex cursor-grab flex-col gap-2 rounded-lg bg-background p-3 text-left ring-1 ring-border transition-all hover:shadow-sm hover:ring-foreground/20",
         isDragging && "opacity-30",
         isOverlay && "cursor-grabbing shadow-lg ring-foreground/30",
       )}
     >
-      <Link
-        href={`/leads/${lead.id}`}
-        className="truncate text-sm font-medium hover:underline"
-        onClick={(e) => e.stopPropagation()}
-        draggable={false}
-      >
-        {lead.name}
-      </Link>
-      {lead.company ? (
-        <p className="truncate text-xs text-muted-foreground">{lead.company}</p>
-      ) : null}
-      {lead.email ? <p className="truncate text-xs text-muted-foreground">{lead.email}</p> : null}
+      <div className="flex items-start gap-2">
+        <LeadInitials name={lead.name} />
+        <Link
+          href={`/leads/${lead.id}`}
+          className="flex-1 truncate text-sm font-medium leading-tight hover:text-primary transition-colors"
+          onClick={(e) => e.stopPropagation()}
+          draggable={false}
+        >
+          {lead.name}
+        </Link>
+      </div>
+      {(lead.company || lead.email) && (
+        <div className="flex flex-col gap-0.5 pl-8">
+          {lead.company && (
+            <p className="truncate text-xs text-muted-foreground">{lead.company}</p>
+          )}
+          {lead.email && (
+            <p className="truncate text-xs text-muted-foreground/70">{lead.email}</p>
+          )}
+        </div>
+      )}
+      <p className="pl-8 text-[11px] text-muted-foreground/50 tabular-nums">
+        {relativeTime(lead.created_at)}
+      </p>
     </div>
   );
 }

@@ -2,11 +2,13 @@ import { BackLink } from "@/components/layout/back-link";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
 import { isAIEnabled } from "@/lib/ai";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, relativeTime } from "@/lib/utils";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EmailComposer } from "./email-composer";
 import { LeadAiPanel } from "./lead-ai-panel";
@@ -61,7 +63,16 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
     .order("created_at", { ascending: false })
     .limit(50);
 
+  const { data: linkedClient } = await supabase
+    .from("clients")
+    .select("id")
+    .eq("lead_id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+
   const aiEnabled = isAIEnabled();
+  const canConvert =
+    !linkedClient?.id && lead.status !== "won" && lead.status !== "lost" && lead.status !== "archived";
   const composerDisabled = !user.emailSendEnabled || !user.emailAlias;
   const composerReason = !user.emailAlias
     ? "Configura un alias de email en Ajustes para enviar correos."
@@ -75,7 +86,20 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         title={lead.name as string}
         description={(lead.company as string | null) ?? undefined}
         back={<BackLink href="/leads" label="Volver a leads" />}
-        actions={<LeadStatusSelect leadId={lead.id as string} status={lead.status as string} />}
+        actions={
+          <>
+            {canConvert ? (
+              <Button asChild size="sm">
+                <Link href={`/leads/${lead.id}/convert`}>Convertir a cliente</Link>
+              </Button>
+            ) : linkedClient?.id ? (
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/clients/${linkedClient.id}`}>Ver cliente</Link>
+              </Button>
+            ) : null}
+            <LeadStatusSelect leadId={lead.id as string} status={lead.status as string} />
+          </>
+        }
       />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">

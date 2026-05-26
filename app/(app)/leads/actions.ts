@@ -59,6 +59,110 @@ export async function createLead(formData: FormData): Promise<void> {
   redirect(`/leads/${data.id}`);
 }
 
+// ---------------- CONVERT TO CLIENT ----------------
+
+const ConvertInput = z.object({
+  leadId: z.string().uuid(),
+  name: z.string().min(1, "El nombre es obligatorio").max(160),
+  nif: z.string().min(1, "El NIF es obligatorio").max(20),
+  billing_address: z.string().min(1, "La dirección es obligatoria").max(400),
+  email: z
+    .string()
+    .email("Email no válido")
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  phone: z.string().max(40).optional(),
+  contact_person: z.string().max(160).optional(),
+  notes: z.string().max(4000).optional(),
+});
+
+export type ConvertLeadResult =
+  | { ok: true; clientId: string }
+  | { ok: false; error: string };
+
+/**
+ * Converts a lead into a billable client. Creates the `clients` row with
+ * fiscal data, links it via `clients.lead_id`, and marks the lead as `won`.
+ * Idempotent: if the lead already has a linked client, returns it.
+ */
+export async function convertLeadToClient(input: unknown): Promise<ConvertLeadResult> {
+  await requireUser();
+  const parsed = ConvertInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+  }
+  const data = parsed.data;
+
+  const supabase = await createServerClient();
+
+  // Idempotency: if a client is already linked to this lead, return it.
+  const { data: existing } = await supabase
+    .from("clients")
+    .select("id")
+    .eq("lead_id", data.leadId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (existing?.id) {
+    return { ok: true, clientId: existing.id as string };
+  }
+
+  const { data: client, error } = await supabase
+    .from("clients")
+    .insert({
+      lead_id: data.leadId,
+      name: data.name,
+      nif: data.nif,
+      billing_address: data.billing_address,
+      email: data.email ?? null,
+      phone: data.phone || null,
+      contact_person: data.contact_person || null,
+      notes: data.notes || null,
+    })
+    .select("id")
+    .single();
+
+  if (error || !client) {
+    return { ok: false, error: error?.message ?? "No se pudo crear el cliente" };
+  }
+
+  await supabase
+    .from("leads")
+    .update({ status: "won", updated_at: new Date().toISOString() })
+    .eq("id", data.leadId);
+
+  await supabase.from("lead_interactions").insert({
+    lead_id: data.leadId,
+    client_id: client.id as string,
+    type: "note",
+    subject: "Convertido a cliente",
+  });
+
+  revalidatePath(`/leads/${data.leadId}`);
+  revalidatePath("/leads");
+  revalidatePath("/clients");
+  return { ok: true, clientId: client.id as string };
+}
+
+/**
+ * Thin FormData wrapper around `convertLeadToClient` for use with
+ * `<form action={...}>`. Throws on validation/DB error so Next.js
+ * surfaces it; on success, redirects to the new client.
+ */
+export async function convertLeadToClientForm(formData: FormData): Promise<void> {
+  const result = await convertLeadToClient({
+    leadId: formData.get("leadId")?.toString() ?? "",
+    name: formData.get("name")?.toString() ?? "",
+    nif: formData.get("nif")?.toString() ?? "",
+    billing_address: formData.get("billing_address")?.toString() ?? "",
+    email: formData.get("email")?.toString() ?? "",
+    phone: formData.get("phone")?.toString() ?? "",
+    contact_person: formData.get("contact_person")?.toString() ?? "",
+    notes: formData.get("notes")?.toString() ?? "",
+  });
+  if (!result.ok) throw new Error(result.error);
+  redirect(`/clients/${result.clientId}`);
+}
+
 // ---------------- UPDATE STATUS ----------------
 
 const StatusInput = z.object({

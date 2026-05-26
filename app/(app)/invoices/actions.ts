@@ -1,6 +1,7 @@
 "use server";
 
 import { requireRole } from "@/lib/auth";
+import { promoteLeadFromClient } from "@/lib/crm/conversion";
 import { serverEnv } from "@/lib/env";
 import { scopedLogger } from "@/lib/logger";
 import { createServerClient } from "@/lib/supabase/server";
@@ -40,7 +41,7 @@ export async function sendToAeat(formData: FormData): Promise<ActionResult> {
   const { data: invoice, error: readError } = await supabase
     .from("invoices")
     .select(
-      "id, status, verifactu_status, full_number, invoice_type, issue_date, tax_amount, total, previous_hash, chain_sequence",
+      "id, client_id, status, verifactu_status, full_number, invoice_type, issue_date, tax_amount, total, previous_hash, chain_sequence",
     )
     .eq("id", id)
     .is("deleted_at", null)
@@ -125,5 +126,12 @@ export async function sendToAeat(formData: FormData): Promise<ActionResult> {
   if (result.status !== "accepted") {
     return { ok: false, error: result.errorMessage ?? "AEAT rechazó la factura" };
   }
+
+  // Safety net: once the invoice is fiscally accepted, the originating lead
+  // is definitively won. Best-effort; never blocks the response.
+  if (invoice.client_id) {
+    await promoteLeadFromClient(supabase, invoice.client_id as string);
+  }
+
   return { ok: true, csv: result.csv };
 }

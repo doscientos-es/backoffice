@@ -1,8 +1,12 @@
 "use server";
 
+import { ensureProjectForProposal, promoteLeadFromClient } from "@/lib/crm/conversion";
+import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+
+const log = scopedLogger("portal.proposal");
 
 const TokenSchema = z
   .string()
@@ -47,6 +51,31 @@ async function transitionProposal(
   const { error: updateError } = await admin.from("proposals").update(patch).eq("id", proposal.id);
 
   if (updateError) return { ok: false, error: "No se pudo actualizar la propuesta" };
+
+  if (to === "accepted") {
+    // Side-effects: ensure a project exists for this proposal and mark the
+    // originating lead as `won`. Errors are best-effort and never roll back
+    // the acceptance — the customer's response is the source of truth.
+    try {
+      const { projectId } = await ensureProjectForProposal(admin, proposal.id as string);
+
+      const { data: full } = await admin
+        .from("proposals")
+        .select("client_id")
+        .eq("id", proposal.id)
+        .maybeSingle();
+      if (full?.client_id) {
+        await promoteLeadFromClient(admin, full.client_id as string);
+      }
+
+      log.info(
+        { proposalId: proposal.id, projectId },
+        "proposal_accepted_side_effects_done",
+      );
+    } catch (err) {
+      log.warn({ err, proposalId: proposal.id }, "proposal_accepted_side_effects_failed");
+    }
+  }
 
   revalidatePath(`/p/proposal/${parsed.data}`);
   return { ok: true };
