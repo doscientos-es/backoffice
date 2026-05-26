@@ -130,7 +130,7 @@ function Column({
       </header>
       <div className="flex flex-col gap-1.5 p-2 min-h-24">
         {leads.length === 0 ? (
-          <p className="px-2 py-6 text-center text-xs text-muted-foreground/60">Sin leads</p>
+          <p className="px-2 py-6 text-center text-xs text-muted-foreground">Sin leads</p>
         ) : (
           leads.map((l) => <Card key={l.id} lead={l} />)
         )}
@@ -179,11 +179,11 @@ function Card({ lead, isOverlay = false }: { lead: KanbanLead; isOverlay?: boole
             <p className="truncate text-xs text-muted-foreground">{lead.company}</p>
           )}
           {lead.email && (
-            <p className="truncate text-xs text-muted-foreground/70">{lead.email}</p>
+            <p className="truncate text-xs text-muted-foreground">{lead.email}</p>
           )}
         </div>
       )}
-      <p className="pl-8 text-[11px] text-muted-foreground/50 tabular-nums">
+      <p className="pl-8 text-[11px] text-muted-foreground tabular-nums">
         {relativeTime(lead.created_at)}
       </p>
     </div>

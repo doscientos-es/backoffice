@@ -79,11 +79,11 @@ export function Sidebar({ user }: { user: CurrentUser; verifactuMode: string }) 
       </nav>
 
       <footer className="flex flex-col gap-2 border-t border-border p-2">
-        <div className="flex items-center justify-between px-2">
-          <div className="flex items-end gap-1">
+        <div className="flex items-end justify-between px-2">
+          <span className="px-2 text-xs text-muted-foreground">
             {version}
-            <NotificationsBell memberId={user.id} />
-          </div>
+          </span>
+          <NotificationsBell memberId={user.id} />
           <ThemeToggle />
         </div>
         <UserMenu user={user} />

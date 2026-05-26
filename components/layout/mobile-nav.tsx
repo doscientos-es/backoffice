@@ -129,7 +129,7 @@ export function MobileNav({
               </div>
               <UserMenu user={user} />
               <div className="flex items-center justify-between px-2 pb-1">
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground/40">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
                   v0.1 · MVP
                 </div>
                 <Badge

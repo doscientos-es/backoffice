@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
+import Link from "next/link";
 
 export type StatTone = "default" | "success" | "danger" | "info" | "warning";
 
@@ -10,6 +11,7 @@ export type StatCardProps = {
   tone?: StatTone;
   icon?: LucideIcon;
   hint?: string;
+  href?: string;
 };
 
 const TONE_VALUE: Record<StatTone, string> = {
@@ -28,15 +30,20 @@ const TONE_ICON: Record<StatTone, string> = {
   warning: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
 };
 
-export function StatCard({ label, value, tone = "default", icon: Icon, hint }: StatCardProps) {
+export function StatCard({ label, value, tone = "default", icon: Icon, hint, href }: StatCardProps) {
   const displayValue =
     typeof value === "number" ? new Intl.NumberFormat("es-ES").format(value) : value;
 
-  return (
-    <Card className="transition-colors hover:bg-muted/30">
+  const card = (
+    <Card
+      className={cn(
+        "transition-colors hover:bg-muted/80",
+        href && "cursor-pointer hover:ring-foreground/10",
+      )}
+    >
       <CardContent className="flex items-start justify-between gap-3 pt-5">
         <div className="min-w-0 flex-1">
-          <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground/80">
+          <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {label}
           </div>
           <div
@@ -48,7 +55,7 @@ export function StatCard({ label, value, tone = "default", icon: Icon, hint }: S
             {displayValue}
           </div>
           {hint ? (
-            <div className="mt-1 text-xs text-muted-foreground/60">{hint}</div>
+            <div className="mt-1 text-xs text-muted-foreground">{hint}</div>
           ) : null}
         </div>
         {Icon ? (
@@ -64,4 +71,14 @@ export function StatCard({ label, value, tone = "default", icon: Icon, hint }: S
       </CardContent>
     </Card>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className="block">
+        {card}
+      </Link>
+    );
+  }
+
+  return card;
 }

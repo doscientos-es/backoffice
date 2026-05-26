@@ -159,24 +159,27 @@ export default async function InicioPage() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Leads nuevos" value={leadsNew ?? 0} tone="info" icon={Inbox} />
+        <StatCard label="Leads nuevos" value={leadsNew ?? 0} tone="info" icon={Inbox} href="/leads" />
         <StatCard
           label="Propuestas abiertas"
           value={proposalsOpen ?? 0}
           tone="info"
           icon={FileSignature}
+          href="/proposals"
         />
         <StatCard
           label="Facturas vencidas"
           value={overdueInvoices.length}
           tone={overdueInvoices.length > 0 ? "danger" : "default"}
           icon={AlertTriangle}
+          href="/invoices"
         />
         <StatCard
           label="Ingresos este mes"
           value={formatEUR(monthRevenue)}
           tone="success"
           icon={Wallet}
+          href="/finance"
         />
       </div>
 

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
 import { isAIEnabled } from "@/lib/ai";
+import { scopedLogger } from "@/lib/logger";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, relativeTime } from "@/lib/utils";
 import Link from "next/link";
@@ -15,6 +16,8 @@ import { LeadAiPanel } from "./lead-ai-panel";
 import { LeadStatusSelect } from "./status-select";
 
 export const dynamic = "force-dynamic";
+
+const log = scopedLogger("leads.detail");
 
 const STATUS_VARIANT = {
   new: "info",
@@ -45,7 +48,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   const user = await requireUser();
   const supabase = await createServerClient();
 
-  const { data: lead } = await supabase
+  const { data: lead, error: leadErr } = await supabase
     .from("leads")
     .select(
       "id, name, email, phone, company, source, status, notes, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_temperature, ai_confidence, ai_updated_at",
@@ -54,6 +57,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
     .is("deleted_at", null)
     .maybeSingle();
 
+  if (leadErr) log.error({ leadId: id, err: leadErr.message }, "lead_query_failed");
   if (!lead) notFound();
 
   const { data: interactions } = await supabase
