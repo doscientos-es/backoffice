@@ -88,10 +88,7 @@ export function AvisosPanel({
                 const overdue = new Date(r.remind_at) < new Date();
                 return (
                   <li key={r.id} className="flex items-center justify-between gap-2">
-                    <Link
-                      href={`/reminders/${r.id}`}
-                      className="truncate text-sm hover:underline"
-                    >
+                    <Link href={`/reminders/${r.id}`} className="truncate text-sm hover:underline">
                       {r.title}
                     </Link>
                     <div className="flex shrink-0 items-center gap-1.5">

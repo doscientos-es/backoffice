@@ -1,9 +1,9 @@
 "use client";
 
+import type { DashboardRange } from "@/lib/dashboard/types";
 import { cn } from "@/lib/utils";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
-import type { DashboardRange } from "@/lib/dashboard/types";
 
 const OPTIONS: { value: DashboardRange; label: string }[] = [
   { value: "7d", label: "7d" },

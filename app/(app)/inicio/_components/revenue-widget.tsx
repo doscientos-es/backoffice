@@ -1,7 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getRevenueSeries } from "@/lib/dashboard/queries";
-import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
+import { getRevenueSeries } from "@/lib/dashboard/queries";
 import Link from "next/link";
 import { RevenueChart } from "../revenue-chart";
 

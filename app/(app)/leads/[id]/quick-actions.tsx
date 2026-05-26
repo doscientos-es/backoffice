@@ -281,6 +281,12 @@ function CallDialog({
             className="font-mono text-xs"
           />
         </div>
+        <FollowUpSection
+          enabled={followUpEnabled}
+          onEnabledChange={setFollowUpEnabled}
+          remindAt={followUpAt}
+          onRemindAtChange={setFollowUpAt}
+        />
         <div className="flex items-center justify-end gap-3">
           <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
           <SubmitButton loading={feedback.pending} pendingLabel="Guardando…">
@@ -332,12 +338,27 @@ function SendEmailDialog({
 
 // ---------------- LOG EMAIL (manual, no send) ----------------
 
-function LogEmailDialog({ leadId, leadEmail }: { leadId: string; leadEmail: string | null }) {
+function LogEmailDialog({
+  leadId,
+  leadName,
+  leadEmail,
+}: {
+  leadId: string;
+  leadName: string;
+  leadEmail: string | null;
+}) {
   const [open, setOpen] = useState(false);
   const [direction, setDirection] = useState<"incoming" | "outgoing">("incoming");
   const [subject, setSubject] = useState("");
   const [bodyHtml, setBodyHtml] = useState("");
   const [counterparty, setCounterparty] = useState(leadEmail ?? "");
+  const [followUpEnabled, setFollowUpEnabled] = useState(false);
+  const [followUpAt, setFollowUpAt] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(9, 0, 0, 0);
+    return toLocalInputValue(d);
+  });
   const feedback = useFormFeedback();
 
   async function onSubmit(e: React.FormEvent) {
@@ -351,6 +372,13 @@ function LogEmailDialog({ leadId, leadEmail }: { leadId: string; leadEmail: stri
       counterparty: counterparty || undefined,
     });
     if (!res.ok) return feedback.setError(res.error);
+    if (followUpEnabled && followUpAt) {
+      await createReminder({
+        leadId,
+        title: `Seguimiento email: ${leadName}`,
+        remindAt: new Date(followUpAt).toISOString(),
+      });
+    }
     feedback.setSuccess("Email registrado");
     setSubject("");
     setBodyHtml("");
@@ -420,6 +448,12 @@ function LogEmailDialog({ leadId, leadEmail }: { leadId: string; leadEmail: stri
             className="font-mono text-xs"
           />
         </div>
+        <FollowUpSection
+          enabled={followUpEnabled}
+          onEnabledChange={setFollowUpEnabled}
+          remindAt={followUpAt}
+          onRemindAtChange={setFollowUpAt}
+        />
         <div className="flex items-center justify-end gap-3">
           <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
           <SubmitButton loading={feedback.pending} pendingLabel="Guardando…">
@@ -477,19 +511,6 @@ function NoteDialog({ leadId }: { leadId: string }) {
 }
 
 // ---------------- SCHEDULE (reminder) ----------------
-
-const SCHEDULE_PRESETS: { label: string; minutes: number }[] = [
-  { label: "En 1 h", minutes: 60 },
-  { label: "Mañana", minutes: 60 * 24 },
-  { label: "En 3 días", minutes: 60 * 24 * 3 },
-  { label: "En 1 semana", minutes: 60 * 24 * 7 },
-];
-
-/** datetime-local needs `YYYY-MM-DDTHH:mm` in the user's local TZ. */
-function toLocalInputValue(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
 
 function ScheduleDialog({ leadId, leadName }: { leadId: string; leadName: string }) {
   const [open, setOpen] = useState(false);

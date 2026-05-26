@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
-import { Suspense } from "react";
 import { requireUser } from "@/lib/auth";
 import { getGreeting, parseDashboardRange } from "@/lib/utils/date";
+import type { Metadata } from "next";
+import { Suspense } from "react";
 import { AvisosWidget } from "./_components/avisos-widget";
 import { KpiGrid } from "./_components/kpi-grid";
 import { RangeSelector } from "./_components/range-selector";
@@ -53,5 +53,3 @@ export default async function InicioPage({ searchParams }: PageProps) {
     </div>
   );
 }
-
-

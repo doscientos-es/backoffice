@@ -68,12 +68,7 @@ export function RevenueChart({ data }: { data: RevenuePoint[] }) {
             radius={[4, 4, 0, 0]}
             maxBarSize={20}
           />
-          <Bar
-            dataKey="current"
-            fill="var(--primary)"
-            radius={[4, 4, 0, 0]}
-            maxBarSize={20}
-          />
+          <Bar dataKey="current" fill="var(--primary)" radius={[4, 4, 0, 0]} maxBarSize={20} />
         </BarChart>
       </ResponsiveContainer>
     </div>

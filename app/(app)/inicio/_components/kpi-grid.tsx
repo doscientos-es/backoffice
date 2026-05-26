@@ -1,16 +1,9 @@
 import { StatCard } from "@/components/layout/stat-card";
 import { getDashboardKpis } from "@/lib/dashboard/queries";
 import type { DashboardRange } from "@/lib/dashboard/types";
-import { computeTrend, describeRange, resolveDateRange } from "@/lib/utils/date";
 import { formatEUR } from "@/lib/utils";
-import {
-  AlertTriangle,
-  FileSignature,
-  Inbox,
-  LineChart,
-  Target,
-  Wallet,
-} from "lucide-react";
+import { computeTrend, describeRange, resolveDateRange } from "@/lib/utils/date";
+import { AlertTriangle, FileSignature, Inbox, LineChart, Target, Wallet } from "lucide-react";
 
 export async function KpiGrid({ range }: { range: DashboardRange }) {
   const dateRange = resolveDateRange(range);
