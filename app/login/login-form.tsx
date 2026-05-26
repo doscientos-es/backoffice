@@ -81,7 +81,7 @@ export function LoginForm() {
                 </FieldLabel>
                 <Link
                   href="/login/forgot-password"
-                  className="text-xs text-[color:var(--text-muted)] hover:text-[color:var(--text-primary)] hover:underline underline-offset-2"
+                  className="text-xs text-[color:var(--text-muted)] hover:text-primary hover:underline underline-offset-2"
                   tabIndex={loading ? -1 : 0}
                 >
                   ¿La olvidaste?
@@ -107,7 +107,7 @@ export function LoginForm() {
                   tabIndex={-1}
                   aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                   aria-pressed={showPassword}
-                  className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-[color:var(--text-muted)] hover:text-[color:var(--text-primary)] disabled:pointer-events-none"
+                  className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-[color:var(--text-muted)] hover:text-primary disabled:pointer-events-none"
                   disabled={loading}
                 >
                   {showPassword ? (

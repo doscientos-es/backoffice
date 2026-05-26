@@ -57,11 +57,11 @@ export function UpdatePasswordForm() {
     return (
       <Card>
         <CardContent className="pt-5">
-          <p className="text-sm text-[color:var(--text-muted)]">
+          <p className="text-sm text-muted">
             El enlace ha caducado o no es válido.{" "}
             <a
               href="/login/forgot-password"
-              className="font-medium text-[color:var(--text-primary)] hover:underline underline-offset-2"
+              className="font-medium text-primary hover:underline underline-offset-2"
             >
               Solicita uno nuevo
             </a>
@@ -103,7 +103,7 @@ export function UpdatePasswordForm() {
                   tabIndex={-1}
                   aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"}
                   aria-pressed={show}
-                  className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-[color:var(--text-muted)] hover:text-[color:var(--text-primary)]"
+                  className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted hover:text-primary"
                   disabled={loading}
                 >
                   {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

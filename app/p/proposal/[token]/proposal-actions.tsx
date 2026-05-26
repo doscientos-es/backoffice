@@ -70,7 +70,7 @@ export function ProposalActions({ token }: { token: string }) {
         <CardTitle>Tu respuesta</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-[color:var(--text-muted)]">
+        <p className="text-sm text-muted">
           Acepta o rechaza esta propuesta. Esta acción es definitiva.
         </p>
         <div className="flex items-center gap-3">

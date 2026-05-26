@@ -46,17 +46,17 @@ export function ForgotPasswordForm() {
           <div className="flex flex-col items-center gap-3 text-center">
             <CheckCircle2 className="h-8 w-8 text-[color:var(--success)]" aria-hidden />
             <div>
-              <p className="text-sm font-medium text-[color:var(--text-primary)]">
+              <p className="text-sm font-medium text-primary">
                 Revisa tu bandeja de entrada
               </p>
-              <p className="mt-1 text-xs text-[color:var(--text-muted)]">
+              <p className="mt-1 text-xs text-muted">
                 Si <strong>{email}</strong> está registrado, te hemos enviado un enlace para
                 restablecer tu contraseña.
               </p>
             </div>
             <Link
               href="/login"
-              className="mt-2 inline-flex items-center gap-1 text-xs text-[color:var(--text-muted)] hover:text-[color:var(--text-primary)] hover:underline underline-offset-2"
+              className="mt-2 inline-flex items-center gap-1 text-xs text-muted hover:text-primary hover:underline underline-offset-2"
             >
               <ArrowLeft className="h-3 w-3" aria-hidden /> Volver al login
             </Link>
@@ -112,7 +112,7 @@ export function ForgotPasswordForm() {
           </Button>
           <Link
             href="/login"
-            className="inline-flex items-center justify-center gap-1 text-xs text-[color:var(--text-muted)] hover:text-[color:var(--text-primary)] hover:underline underline-offset-2"
+            className="inline-flex items-center justify-center gap-1 text-xs text-muted hover:text-primary hover:underline underline-offset-2"
             tabIndex={loading ? -1 : 0}
           >
             <ArrowLeft className="h-3 w-3" aria-hidden /> Volver al login

@@ -8,7 +8,7 @@ export default function PortalNotFound() {
       <CardHeader>
         <CardTitle>Documento no disponible</CardTitle>
       </CardHeader>
-      <CardContent className="text-sm text-[color:var(--text-muted)]">
+      <CardContent className="text-sm text-muted">
         <p>
           El enlace ha caducado o no es válido. Contacta con quien te lo envió para recibir uno
           nuevo.

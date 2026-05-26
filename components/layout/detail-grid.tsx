@@ -18,8 +18,8 @@ export function DetailRow({
 }) {
   return (
     <>
-      <dt className="text-[color:var(--text-muted)]">{label}</dt>
-      <dd className="min-w-0 text-[color:var(--text-primary)]">{children ?? "—"}</dd>
+      <dt className="text-muted">{label}</dt>
+      <dd className="min-w-0 text-primary">{children ?? "—"}</dd>
     </>
   );
 }

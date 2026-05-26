@@ -8,7 +8,7 @@ export default function MfaPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-semibold tracking-tight">Verificación 2FA</h1>
-          <p className="mt-1 text-sm text-[color:var(--text-muted)]">
+          <p className="mt-1 text-sm text-muted">
             Introduce el código de tu app autenticadora.
           </p>
         </div>
