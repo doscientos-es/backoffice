@@ -215,17 +215,38 @@ function Card({
   lead,
   aiEnabled,
   isOverlay = false,
-}: { lead: KanbanLead; aiEnabled: boolean; isOverlay?: boolean }) {
+  onOpenQuickView,
+}: {
+  lead: KanbanLead;
+  aiEnabled: boolean;
+  isOverlay?: boolean;
+  onOpenQuickView?: (id: string) => void;
+}) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: lead.id });
+  const stale = isStale(lead);
   return (
     <div
       ref={setNodeRef}
       {...attributes}
       {...listeners}
+      onClick={onOpenQuickView ? () => onOpenQuickView(lead.id) : undefined}
+      onKeyDown={
+        onOpenQuickView
+          ? (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onOpenQuickView(lead.id);
+            }
+          }
+          : undefined
+      }
+      role={onOpenQuickView ? "button" : undefined}
+      tabIndex={onOpenQuickView ? 0 : undefined}
       className={cn(
-        "group flex cursor-grab flex-col gap-2 rounded-lg bg-background p-3 text-left ring-1 ring-border transition-all hover:shadow-sm hover:ring-foreground/20",
+        "group flex cursor-grab flex-col gap-2 rounded-lg bg-background p-3 text-left ring-1 ring-border transition-all hover:shadow-sm hover:ring-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
         isDragging && "opacity-30",
         isOverlay && "cursor-grabbing shadow-lg ring-foreground/30",
+        stale && !isOverlay && "ring-amber-400/60 dark:ring-amber-500/40",
       )}
     >
       <div className="flex items-start gap-2">
@@ -238,6 +259,15 @@ function Card({
         >
           {lead.name}
         </Link>
+        {stale && !isOverlay && (
+          <span
+            title={`Sin cambios desde hace ${relativeTime(lead.updated_at)}`}
+            aria-label="Lead estancado"
+            className="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"
+          >
+            <AlertTriangle className="size-2.5" aria-hidden />
+          </span>
+        )}
       </div>
       {(lead.company || lead.email) && (
         <div className="flex flex-col gap-0.5 pl-8">
@@ -249,10 +279,17 @@ function Card({
           )}
         </div>
       )}
-      <div className="flex items-center justify-between pl-8">
-        <p className="text-[11px] text-muted-foreground tabular-nums">
-          {relativeTime(lead.created_at)}
-        </p>
+      <div className="flex items-center justify-between gap-2 pl-8">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <p className="text-[11px] text-muted-foreground tabular-nums">
+            {relativeTime(lead.created_at)}
+          </p>
+          {lead.estimated_value != null && lead.estimated_value > 0 && (
+            <Badge variant="neutral" className="tabular-nums text-[10px] h-4 px-1.5">
+              {formatEUR(lead.estimated_value)}
+            </Badge>
+          )}
+        </div>
         {!isOverlay && (
           <div
             onPointerDown={(e) => e.stopPropagation()}

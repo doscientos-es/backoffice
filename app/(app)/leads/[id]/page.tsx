@@ -8,7 +8,7 @@ import { requireUser } from "@/lib/auth";
 import { isAIEnabled } from "@/lib/ai";
 import { scopedLogger } from "@/lib/logger";
 import { createServerClient } from "@/lib/supabase/server";
-import { formatDate, relativeTime } from "@/lib/utils";
+import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LeadAiPanel } from "./lead-ai-panel";
@@ -63,7 +63,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   const { data: lead, error: leadErr } = await supabase
     .from("leads")
     .select(
-      "id, name, email, phone, company, source, status, notes, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_temperature, ai_confidence, ai_updated_at, lost_reason, lost_at",
+      "id, name, email, phone, company, source, status, notes, estimated_value, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_temperature, ai_confidence, ai_updated_at, lost_reason, lost_at",
     )
     .eq("id", id)
     .is("deleted_at", null)
@@ -145,6 +145,9 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
               <DetailRow label="Teléfono">{(lead.phone as string | null) ?? "—"}</DetailRow>
               <DetailRow label="Empresa">{(lead.company as string | null) ?? "—"}</DetailRow>
               <DetailRow label="Origen">{(lead.source as string | null) ?? "—"}</DetailRow>
+              <DetailRow label="Valor estimado">
+                {lead.estimated_value != null ? formatEUR(Number(lead.estimated_value)) : "—"}
+              </DetailRow>
               <DetailRow label="Creado">{formatDate(lead.created_at as string)}</DetailRow>
             </DetailGrid>
 
