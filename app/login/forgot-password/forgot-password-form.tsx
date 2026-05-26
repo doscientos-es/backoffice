@@ -2,8 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { getBrowserClient } from "@/lib/supabase/browser";
 import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -70,10 +70,10 @@ export function ForgotPasswordForm() {
     <Card>
       <CardContent className="pt-5">
         <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="email" className="text-xs font-medium">
+          <Field>
+            <FieldLabel htmlFor="email" className="text-xs font-medium">
               Email <span className="text-destructive">*</span>
-            </Label>
+            </FieldLabel>
             <Input
               id="email"
               type="email"
@@ -81,17 +81,17 @@ export function ForgotPasswordForm() {
               autoComplete="email"
               autoFocus
               required
-              placeholder="tu@empresa.com"
+              placeholder="tu@doscientos.es"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               aria-invalid={error ? true : undefined}
               aria-describedby={error ? "forgot-error" : "forgot-hint"}
               disabled={loading}
             />
-            <p id="forgot-hint" className="text-xs text-muted-foreground">
+            <FieldDescription id="forgot-hint">
               Te enviaremos un enlace para restablecer la contraseña.
-            </p>
-          </div>
+            </FieldDescription>
+          </Field>
           {error ? (
             <p
               id="forgot-error"

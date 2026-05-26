@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { cn } from "@/lib/utils";
+import { cn, relativeTime } from "@/lib/utils";
 import {
   DndContext,
   type DragEndEvent,
@@ -29,13 +29,13 @@ export type KanbanLead = {
 
 type LeadStatus = "new" | "qualifying" | "quoted" | "won" | "lost" | "archived";
 
-const COLUMNS: { id: LeadStatus; label: string; tone: string }[] = [
-  { id: "new", label: "Nuevo", tone: "text-sky-700 dark:text-sky-300" },
-  { id: "qualifying", label: "En cualificación", tone: "text-amber-700 dark:text-amber-300" },
-  { id: "quoted", label: "Presupuestado", tone: "text-amber-700 dark:text-amber-300" },
-  { id: "won", label: "Ganado", tone: "text-emerald-700 dark:text-emerald-300" },
-  { id: "lost", label: "Perdido", tone: "text-red-700 dark:text-red-300" },
-  { id: "archived", label: "Archivado", tone: "text-muted-foreground" },
+const COLUMNS: { id: LeadStatus; label: string; tone: string; dot: string }[] = [
+  { id: "new", label: "Nuevo", tone: "text-sky-700 dark:text-sky-300", dot: "bg-sky-500" },
+  { id: "qualifying", label: "Cualificando", tone: "text-amber-700 dark:text-amber-300", dot: "bg-amber-500" },
+  { id: "quoted", label: "Presupuestado", tone: "text-amber-700 dark:text-amber-300", dot: "bg-amber-400" },
+  { id: "won", label: "Ganado", tone: "text-emerald-700 dark:text-emerald-300", dot: "bg-emerald-500" },
+  { id: "lost", label: "Perdido", tone: "text-red-700 dark:text-red-300", dot: "bg-red-500" },
+  { id: "archived", label: "Archivado", tone: "text-muted-foreground", dot: "bg-muted-foreground/40" },
 ];
 
 type Action = { id: string; status: LeadStatus };
@@ -93,6 +93,7 @@ export function LeadsKanban({ leads }: { leads: KanbanLead[] }) {
             status={col.id}
             label={col.label}
             tone={col.tone}
+            dot={col.dot}
             leads={grouped[col.id]}
           />
         ))}

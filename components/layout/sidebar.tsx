@@ -35,33 +35,44 @@ const NAV = [
 export function Sidebar() {
   const pathname = usePathname();
   return (
-    <aside className="hidden w-56 shrink-0 border-r border-[color:var(--border)] bg-surface md:flex md:flex-col">
+    <aside className="hidden w-56 shrink-0 border-r border-border bg-card md:flex md:flex-col">
       <div className="px-4 py-5">
-        <Link href="/inicio" aria-label="doscientos · Inicio">
+        <Link
+          href="/inicio"
+          aria-label="doscientos · Inicio"
+          className="inline-flex rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+        >
           <Logo size="md" />
         </Link>
       </div>
-      <nav className="flex flex-1 flex-col gap-0.5 px-2">
+      <nav className="flex flex-1 flex-col gap-0.5 px-2" aria-label="Navegación principal">
         {NAV.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`);
           return (
             <Link
               key={href}
               href={href}
+              aria-current={active ? "page" : undefined}
               className={cn(
-                "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors",
+                "group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
+                "before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-r-full before:bg-primary before:transition-opacity",
                 active
-                  ? "bg-[color:var(--surface-hover)] text-[color:var(--text-primary)] font-medium"
-                  : "text-[color:var(--text-secondary)] hover:bg-[color:var(--surface-hover)] hover:text-[color:var(--text-primary)]",
+                  ? "bg-secondary text-foreground font-medium before:opacity-100"
+                  : "text-muted-foreground before:opacity-0 hover:bg-secondary/60 hover:text-foreground",
               )}
             >
-              <Icon className="h-4 w-4 shrink-0" />
-              <span>{label}</span>
+              <Icon
+                className={cn(
+                  "h-4 w-4 shrink-0 transition-colors",
+                  active ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
+                )}
+              />
+              <span className="truncate">{label}</span>
             </Link>
           );
         })}
       </nav>
-      <div className="px-4 py-3 text-[10px] uppercase tracking-wider text-[color:var(--text-muted)]">
+      <div className="border-t border-border px-4 py-3 text-[10px] uppercase tracking-wider text-muted-foreground/80">
         v0.1 · MVP
       </div>
     </aside>

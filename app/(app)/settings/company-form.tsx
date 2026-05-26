@@ -1,8 +1,8 @@
 "use client";
 
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { updateCompanySettings } from "./actions";
@@ -38,10 +38,10 @@ export function CompanyForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       <div className="grid gap-5 sm:grid-cols-2">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="company_name" className="text-xs font-medium">
+        <Field>
+          <FieldLabel htmlFor="company_name" className="text-xs font-medium">
             Razón social <span className="text-destructive">*</span>
-          </Label>
+          </FieldLabel>
           <Input
             id="company_name"
             name="company_name"
@@ -50,11 +50,11 @@ export function CompanyForm({
             placeholder="Mi Empresa S.L."
             autoComplete="organization"
           />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="company_nif" className="text-xs font-medium">
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="company_nif" className="text-xs font-medium">
             NIF
-          </Label>
+          </FieldLabel>
           <Input
             id="company_nif"
             name="company_nif"
@@ -62,11 +62,11 @@ export function CompanyForm({
             placeholder="B12345678"
             maxLength={20}
           />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="invoice_series" className="text-xs font-medium">
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="invoice_series" className="text-xs font-medium">
             Serie factura
-          </Label>
+          </FieldLabel>
           <Input
             id="invoice_series"
             name="invoice_series"
@@ -75,14 +75,14 @@ export function CompanyForm({
             placeholder="A"
             aria-describedby="invoice-series-hint"
           />
-          <p id="invoice-series-hint" className="text-[11px] text-muted-foreground">
+          <FieldDescription id="invoice-series-hint">
             Prefijo del número de factura (ej. A, 2026, FAC).
-          </p>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="default_vat_rate" className="text-xs font-medium">
+          </FieldDescription>
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="default_vat_rate" className="text-xs font-medium">
             IVA por defecto (%)
-          </Label>
+          </FieldLabel>
           <Input
             id="default_vat_rate"
             name="default_vat_rate"
@@ -94,11 +94,11 @@ export function CompanyForm({
             defaultValue={defaultVatRate}
             placeholder="21"
           />
-        </div>
-        <div className="flex flex-col gap-1.5 sm:col-span-2">
-          <Label htmlFor="iban" className="text-xs font-medium">
+        </Field>
+        <Field className="sm:col-span-2">
+          <FieldLabel htmlFor="iban" className="text-xs font-medium">
             IBAN
-          </Label>
+          </FieldLabel>
           <Input
             id="iban"
             name="iban"
@@ -106,15 +106,15 @@ export function CompanyForm({
             placeholder="ES00 0000 0000 0000 0000 0000"
             className="font-mono"
           />
-          <p className="text-[11px] text-muted-foreground">
+          <FieldDescription>
             Se incluye en las facturas para pagos por transferencia.
-          </p>
-        </div>
+          </FieldDescription>
+        </Field>
       </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="company_address" className="text-xs font-medium">
+      <Field>
+        <FieldLabel htmlFor="company_address" className="text-xs font-medium">
           Dirección fiscal
-        </Label>
+        </FieldLabel>
         <Textarea
           id="company_address"
           name="company_address"
@@ -122,7 +122,7 @@ export function CompanyForm({
           defaultValue={companyAddress}
           placeholder={"Calle, número\nCP Ciudad, País"}
         />
-      </div>
+      </Field>
       <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
         <FormFeedback state={feedback.state} successLabel="Empresa guardada" />
         <SubmitButton pendingLabel="Guardando…" loading={feedback.pending}>

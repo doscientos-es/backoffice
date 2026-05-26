@@ -1,8 +1,8 @@
 "use client";
 
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import type { MemberRole } from "@/lib/auth";
@@ -33,10 +33,10 @@ export function InviteForm({ actorRole }: Props) {
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="grid gap-4 sm:grid-cols-[1fr_1fr_180px]">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="invite_name" className="text-xs font-medium">
+        <Field>
+          <FieldLabel htmlFor="invite_name" className="text-xs font-medium">
             Nombre <span className="text-destructive">*</span>
-          </Label>
+          </FieldLabel>
           <Input
             id="invite_name"
             name="name"
@@ -45,36 +45,36 @@ export function InviteForm({ actorRole }: Props) {
             autoComplete="name"
             maxLength={120}
           />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="invite_email" className="text-xs font-medium">
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="invite_email" className="text-xs font-medium">
             Email <span className="text-destructive">*</span>
-          </Label>
+          </FieldLabel>
           <Input
             id="invite_email"
             name="email"
             type="email"
             inputMode="email"
             required
-            placeholder="nombre@empresa.com"
+            placeholder="nombre@doscientos.es"
             autoComplete="email"
           />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="invite_role" className="text-xs font-medium">
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="invite_role" className="text-xs font-medium">
             Rol <span className="text-destructive">*</span>
-          </Label>
+          </FieldLabel>
           <Select id="invite_role" name="role" defaultValue="member">
             {actorRole === "owner" ? <option value="owner">Propietario</option> : null}
             <option value="admin">Administrador</option>
             <option value="member">Miembro</option>
             <option value="viewer">Solo lectura</option>
           </Select>
-        </div>
+        </Field>
       </div>
-      <p className="text-[11px] text-muted-foreground">
+      <FieldDescription>
         Se enviará un email con un enlace de invitación. Caduca a las 72&nbsp;horas.
-      </p>
+      </FieldDescription>
       <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
         <FormFeedback
           state={feedback.state}

@@ -2,8 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { PasswordStrength } from "@/components/ui/password-strength";
 import { getBrowserClient } from "@/lib/supabase/browser";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
@@ -76,65 +76,67 @@ export function UpdatePasswordForm() {
     <Card>
       <CardContent className="pt-5">
         <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="password" className="text-xs font-medium">
-              Nueva contraseña <span className="text-destructive">*</span>
-            </Label>
-            <div className="relative">
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="password" className="text-xs font-medium">
+                Nueva contraseña <span className="text-destructive">*</span>
+              </FieldLabel>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={show ? "text" : "password"}
+                  autoComplete="new-password"
+                  autoFocus
+                  required
+                  minLength={MIN_LENGTH}
+                  placeholder="Mínimo 8 caracteres"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  aria-invalid={error ? true : undefined}
+                  aria-describedby="password-hint"
+                  disabled={loading}
+                  className="pr-9"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShow((v) => !v)}
+                  tabIndex={-1}
+                  aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  aria-pressed={show}
+                  className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-[color:var(--text-muted)] hover:text-[color:var(--text-primary)]"
+                  disabled={loading}
+                >
+                  {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              <PasswordStrength value={password} />
+              <FieldDescription id="password-hint">
+                Mínimo {MIN_LENGTH} caracteres. Usa mayúsculas, números y símbolos.
+              </FieldDescription>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="confirm" className="text-xs font-medium">
+                Confirmar contraseña <span className="text-destructive">*</span>
+              </FieldLabel>
               <Input
-                id="password"
+                id="confirm"
                 type={show ? "text" : "password"}
                 autoComplete="new-password"
-                autoFocus
                 required
                 minLength={MIN_LENGTH}
-                placeholder="Mínimo 8 caracteres"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                aria-invalid={error ? true : undefined}
-                aria-describedby="password-hint"
+                placeholder="Repite la contraseña"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                aria-invalid={
+                  error || (confirm.length > 0 && confirm !== password) ? true : undefined
+                }
                 disabled={loading}
-                className="pr-9"
               />
-              <button
-                type="button"
-                onClick={() => setShow((v) => !v)}
-                tabIndex={-1}
-                aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"}
-                aria-pressed={show}
-                className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-[color:var(--text-muted)] hover:text-[color:var(--text-primary)]"
-                disabled={loading}
-              >
-                {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-            <PasswordStrength value={password} />
-            <p id="password-hint" className="text-[11px] text-muted-foreground">
-              Mínimo {MIN_LENGTH} caracteres. Usa mayúsculas, números y símbolos.
-            </p>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="confirm" className="text-xs font-medium">
-              Confirmar contraseña <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="confirm"
-              type={show ? "text" : "password"}
-              autoComplete="new-password"
-              required
-              minLength={MIN_LENGTH}
-              placeholder="Repite la contraseña"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              aria-invalid={
-                error || (confirm.length > 0 && confirm !== password) ? true : undefined
-              }
-              disabled={loading}
-            />
-            {confirm.length > 0 && confirm !== password ? (
-              <p className="text-[11px] text-destructive">Las contraseñas no coinciden.</p>
-            ) : null}
-          </div>
+              {confirm.length > 0 && confirm !== password ? (
+                <FieldError>Las contraseñas no coinciden.</FieldError>
+              ) : null}
+            </Field>
+          </FieldGroup>
           {error ? (
             <p
               role="alert"

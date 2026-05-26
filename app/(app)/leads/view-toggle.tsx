@@ -1,40 +1,35 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { LayoutGrid, List } from "lucide-react";
 import Link from "next/link";
 
 export function LeadsViewToggle({ view }: { view: "board" | "list" }) {
   return (
-    <div className="inline-flex rounded-md ring-1 ring-border bg-card p-0.5">
-      <Tab href="/leads" active={view === "board"} icon={<LayoutGrid className="size-3.5" />}>
-        Tablero
-      </Tab>
-      <Tab href="/leads?view=list" active={view === "list"} icon={<List className="size-3.5" />}>
-        Lista
-      </Tab>
-    </div>
-  );
-}
-
-function Tab({
-  href,
-  active,
-  icon,
-  children,
-}: { href: string; active: boolean; icon: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <Button
-      asChild
-      size="sm"
-      variant={active ? "secondary" : "ghost"}
-      className={cn("h-7 gap-1.5 px-2.5 text-xs", !active && "text-muted-foreground")}
-    >
-      <Link href={href}>
-        {icon}
-        {children}
-      </Link>
-    </Button>
+    <ButtonGroup className="border border-border rounded-lg bg-muted/30">
+      <Button
+        asChild
+        size="sm"
+        variant={view === "board" ? "secondary" : "ghost"}
+        className={view !== "board" ? "text-muted-foreground hover:text-foreground" : ""}
+      >
+        <Link href="/leads">
+          <LayoutGrid className="size-3.5" />
+          Tablero
+        </Link>
+      </Button>
+      <Button
+        asChild
+        size="sm"
+        variant={view === "list" ? "secondary" : "ghost"}
+        className={view !== "list" ? "text-muted-foreground hover:text-foreground" : ""}
+      >
+        <Link href="/leads?view=list">
+          <List className="size-3.5" />
+          Lista
+        </Link>
+      </Button>
+    </ButtonGroup>
   );
 }

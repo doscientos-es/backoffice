@@ -51,22 +51,22 @@ export function MobileNav() {
         <DrawerTrigger asChild>
           <button
             aria-label="Abrir menú"
-            className="flex h-8 w-8 items-center justify-center rounded-md text-[color:var(--text-secondary)] hover:bg-[color:var(--surface-hover)] hover:text-[color:var(--text-primary)] transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
           >
             <Menu className="h-5 w-5" />
           </button>
         </DrawerTrigger>
-        <DrawerContent className="bg-surface w-64! max-w-[80vw]!">
+        <DrawerContent className="bg-card w-64! max-w-[80vw]!">
           <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-4 border-b border-[color:var(--border)]">
+            <div className="flex items-center justify-between px-4 py-4 border-b border-border">
               <Link href="/inicio" onClick={() => setOpen(false)} aria-label="doscientos · Inicio">
                 <Logo size="md" />
               </Link>
               <DrawerClose asChild>
                 <button
                   aria-label="Cerrar menú"
-                  className="flex h-7 w-7 items-center justify-center rounded-md text-[color:var(--text-muted)] hover:bg-[color:var(--surface-hover)] hover:text-[color:var(--text-primary)] transition-colors"
+                  className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -74,7 +74,10 @@ export function MobileNav() {
             </div>
 
             {/* Nav links */}
-            <nav className="flex flex-1 flex-col gap-0.5 px-2 py-3 overflow-y-auto">
+            <nav
+              className="flex flex-1 flex-col gap-0.5 px-2 py-3 overflow-y-auto"
+              aria-label="Navegación principal"
+            >
               {NAV.map(({ href, label, icon: Icon }) => {
                 const active = pathname === href || pathname.startsWith(`${href}/`);
                 return (
@@ -82,22 +85,31 @@ export function MobileNav() {
                     key={href}
                     href={href}
                     onClick={() => setOpen(false)}
+                    aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
+                      "group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
+                      "before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-r-full before:bg-primary before:transition-opacity",
                       active
-                        ? "bg-[color:var(--surface-hover)] text-[color:var(--text-primary)] font-medium"
-                        : "text-[color:var(--text-secondary)] hover:bg-[color:var(--surface-hover)] hover:text-[color:var(--text-primary)]",
+                        ? "bg-secondary text-foreground font-medium before:opacity-100"
+                        : "text-muted-foreground before:opacity-0 hover:bg-secondary/60 hover:text-foreground",
                     )}
                   >
-                    <Icon className="h-4 w-4 shrink-0" />
-                    <span>{label}</span>
+                    <Icon
+                      className={cn(
+                        "h-4 w-4 shrink-0 transition-colors",
+                        active
+                          ? "text-primary"
+                          : "text-muted-foreground group-hover:text-foreground",
+                      )}
+                    />
+                    <span className="truncate">{label}</span>
                   </Link>
                 );
               })}
             </nav>
 
             {/* Footer */}
-            <div className="px-4 py-3 text-[10px] uppercase tracking-wider text-[color:var(--text-muted)]">
+            <div className="border-t border-border px-4 py-3 text-[10px] uppercase tracking-wider text-muted-foreground/80">
               v0.1 · MVP
             </div>
           </div>

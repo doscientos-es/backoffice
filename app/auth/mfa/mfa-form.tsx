@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import {
   InputOTP,
@@ -9,7 +10,6 @@ import {
   InputOTPSeparator,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import { Label } from "@/components/ui/label";
 import { getBrowserClient } from "@/lib/supabase/browser";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -59,10 +59,10 @@ export function MfaForm() {
     <Card>
       <CardContent className="pt-5">
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col items-center gap-2">
-            <Label htmlFor="code" className="self-start text-xs font-medium">
+          <Field className="items-center">
+            <FieldLabel htmlFor="code" className="self-start text-xs font-medium">
               Código de verificación <span className="text-destructive">*</span>
-            </Label>
+            </FieldLabel>
             <InputOTP
               id="code"
               maxLength={6}
@@ -83,11 +83,11 @@ export function MfaForm() {
                 <InputOTPSlot index={5} />
               </InputOTPGroup>
             </InputOTP>
-            <p className="self-start text-[11px] text-muted-foreground">
+            <FieldDescription className="self-start">
               Abre tu app autenticadora (Google Authenticator, 1Password, Authy…) e introduce el
               código de 6 dígitos.
-            </p>
-          </div>
+            </FieldDescription>
+          </Field>
           <div className="flex items-center justify-between gap-3">
             <FormFeedback state={feedback.state} pendingLabel="Verificando…" />
             <Button type="submit" disabled={feedback.pending || code.length !== 6}>

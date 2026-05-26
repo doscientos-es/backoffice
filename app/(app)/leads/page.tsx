@@ -9,8 +9,9 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 import { type KanbanLead, LeadsKanban } from "./leads-kanban";
 import { LeadsViewToggle } from "./view-toggle";
+import { Metadata } from "next";
 
-export const metadata = { title: "Leads · doscientos" };
+export const metadata: Metadata = { title: "Leads · doscientos" };
 export const dynamic = "force-dynamic";
 
 const STATUS_VARIANT = {
@@ -21,6 +22,27 @@ const STATUS_VARIANT = {
   lost: "danger",
   archived: "neutral",
 } as const;
+
+const STATUS_LABEL: Record<string, string> = {
+  new: "Nuevo",
+  qualifying: "Cualificando",
+  quoted: "Presupuestado",
+  won: "Ganado",
+  lost: "Perdido",
+  archived: "Archivado",
+};
+
+function Initials({ name }: { name: string }) {
+  const parts = (name ?? "").trim().split(/\s+/);
+  const letters = parts.length >= 2
+    ? parts[0][0] + parts[1][0]
+    : (parts[0]?.[0] ?? "?");
+  return (
+    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold uppercase text-primary">
+      {letters}
+    </span>
+  );
+}
 
 export default async function LeadsPage({
   searchParams,
@@ -87,35 +109,55 @@ export default async function LeadsPage({
           <CardContent className="px-0 pt-0">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <tr>
-                    <th className="px-5 py-2 font-medium">Nombre</th>
-                    <th className="px-5 py-2 font-medium">Empresa</th>
-                    <th className="px-5 py-2 font-medium">Email</th>
-                    <th className="px-5 py-2 font-medium">Estado</th>
-                    <th className="px-5 py-2 font-medium">Creado</th>
+                <thead>
+                  <tr className="border-b border-border bg-muted/30 text-left text-xs text-muted-foreground">
+                    <th className="px-5 py-3 font-medium tracking-wide">Nombre</th>
+                    <th className="px-5 py-3 font-medium tracking-wide">Empresa</th>
+                    <th className="px-5 py-3 font-medium tracking-wide">Email</th>
+                    <th className="px-5 py-3 font-medium tracking-wide">Estado</th>
+                    <th className="px-5 py-3 font-medium tracking-wide">Creado</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-border/60">
                   {leads.map((l) => (
-                    <tr key={l.id as string} className="border-t border-border hover:bg-muted/40">
-                      <td className="px-5 py-2.5 font-medium">
-                        <Link href={`/leads/${l.id}`} className="hover:underline">
-                          {l.name as string}
+                    <tr
+                      key={l.id as string}
+                      className="group transition-colors hover:bg-muted/30"
+                    >
+                      <td className="px-5 py-3">
+                        <Link
+                          href={`/leads/${l.id}`}
+                          className="flex items-center gap-2.5"
+                        >
+                          <Initials name={l.name as string} />
+                          <span className="font-medium group-hover:text-primary transition-colors truncate max-w-40">
+                            {l.name as string}
+                          </span>
                         </Link>
                       </td>
-                      <td className="px-5 py-2.5 text-muted-foreground">
-                        {(l.company as string | null) ?? "—"}
+                      <td className="px-5 py-3 text-muted-foreground">
+                        {(l.company as string | null) ?? (
+                          <span className="text-muted-foreground/40">—</span>
+                        )}
                       </td>
-                      <td className="px-5 py-2.5 text-muted-foreground">
-                        {(l.email as string | null) ?? "—"}
+                      <td className="px-5 py-3 text-muted-foreground">
+                        {(l.email as string | null) ? (
+                          <a
+                            href={`mailto:${l.email}`}
+                            className="hover:text-foreground transition-colors"
+                          >
+                            {l.email as string}
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground/40">—</span>
+                        )}
                       </td>
-                      <td className="px-5 py-2.5">
+                      <td className="px-5 py-3">
                         <Badge variant={STATUS_VARIANT[l.status as keyof typeof STATUS_VARIANT]}>
-                          {l.status as string}
+                          {STATUS_LABEL[l.status as string] ?? (l.status as string)}
                         </Badge>
                       </td>
-                      <td className="px-5 py-2.5 text-muted-foreground">
+                      <td className="px-5 py-3 text-muted-foreground tabular-nums">
                         {relativeTime(l.created_at as string)}
                       </td>
                     </tr>
