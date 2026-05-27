@@ -1,9 +1,10 @@
 import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
+import { MILESTONE_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 import { Flag } from "lucide-react";
@@ -11,22 +12,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
-
-const STATUS_VARIANT: Record<string, "neutral" | "info" | "warning" | "success" | "danger"> = {
-  pending: "neutral",
-  completed: "success",
-  invoiced: "info",
-  paid: "success",
-  cancelled: "danger",
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  pending: "Pendiente",
-  completed: "Completado",
-  invoiced: "Facturado",
-  paid: "Pagado",
-  cancelled: "Cancelado",
-};
 
 export default async function MilestonesPage({
   params,
@@ -87,9 +72,10 @@ export default async function MilestonesPage({
                     )}
                     <CardTitle className="text-base truncate">{m.name as string}</CardTitle>
                   </div>
-                  <Badge variant={STATUS_VARIANT[(m.status as string | null) ?? "pending"]}>
-                    {STATUS_LABEL[(m.status as string | null) ?? "pending"] ?? m.status}
-                  </Badge>
+                  <StatusBadge
+                    meta={MILESTONE_STATUS}
+                    value={(m.status as string | null) ?? "pending"}
+                  />
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3">
                   {(m.description as string | null) && (

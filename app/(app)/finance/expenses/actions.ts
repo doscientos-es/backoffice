@@ -94,13 +94,37 @@ export async function createExpense(formData: FormData): Promise<void> {
   redirect(`/finance/expenses/${data.id}`);
 }
 
-export async function updateExpense(formData: FormData): Promise<void> {
-  await requireUser();
-  const id = formData.get("id")?.toString() ?? "";
-  if (!z.string().uuid().safeParse(id).success) throw new Error("ID inválido");
+export type UpdateExpenseInput = {
+  id: string;
+  vendor: string;
+  description: string;
+  category: string;
+  status: string;
+  recurrence: string;
+  expense_date: string;
+  due_date: string;
+  paid_at: string;
+  currency: string;
+  subtotal: string;
+  tax_rate: string;
+  vendor_nif: string;
+  invoice_reference: string;
+  project_id: string;
+  notes: string;
+};
 
-  const parsed = ExpenseInput.safeParse(readRaw(formData));
-  if (!parsed.success) throw new Error(parsed.error.errors[0]?.message ?? "Datos no válidos");
+export async function updateExpense(
+  input: UpdateExpenseInput,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireUser();
+  if (!z.string().uuid().safeParse(input.id).success) {
+    return { ok: false, error: "ID inválido" };
+  }
+
+  const parsed = ExpenseInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+  }
 
   const { subtotal, taxAmount, total } = computeExpenseTotals(
     parsed.data.subtotal,
@@ -130,12 +154,13 @@ export async function updateExpense(formData: FormData): Promise<void> {
       notes: parsed.data.notes ?? null,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", id);
+    .eq("id", input.id);
 
-  if (error) throw new Error(error.message);
-  revalidatePath(`/finance/expenses/${id}`);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(`/finance/expenses/${input.id}`);
   revalidatePath("/finance/expenses");
   revalidatePath("/finance");
+  return { ok: true };
 }
 
 export async function deleteExpense(formData: FormData): Promise<void> {

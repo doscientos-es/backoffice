@@ -1,9 +1,10 @@
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
+import { INVOICE_STATUS, PROJECT_STATUS, PROPOSAL_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import Link from "next/link";
@@ -13,14 +14,6 @@ import type { GitHubSyncMode } from "../github-sync-section";
 import { ProjectEditDialog } from "./project-edit-dialog";
 
 export const dynamic = "force-dynamic";
-
-const STATUS_VARIANT = {
-  planning: "neutral",
-  active: "success",
-  on_hold: "warning",
-  done: "info",
-  cancelled: "danger",
-} as const;
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -82,9 +75,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <GitHubModeBadge
               mode={(project.github_sync_mode as GitHubSyncMode | null) ?? "none"}
             />
-            <Badge variant={STATUS_VARIANT[project.status as keyof typeof STATUS_VARIANT]}>
-              {project.status as string}
-            </Badge>
+            <StatusBadge meta={PROJECT_STATUS} value={project.status as string} />
             {canEdit ? (
               <ProjectEditDialog
                 project={{
@@ -220,7 +211,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                       {p.number as string}
                     </Link>
                     <div className="flex shrink-0 items-center gap-2">
-                      <Badge variant="neutral">{p.status as string}</Badge>
+                      <StatusBadge meta={PROPOSAL_STATUS} value={p.status as string} />
                       <span className="tabular-nums text-xs text-muted-foreground">
                         {formatEUR(Number(p.total ?? 0))}
                       </span>
@@ -254,7 +245,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                       {inv.full_number as string}
                     </Link>
                     <div className="flex shrink-0 items-center gap-2">
-                      <Badge variant="neutral">{inv.status as string}</Badge>
+                      <StatusBadge meta={INVOICE_STATUS} value={inv.status as string} />
                       <span className="tabular-nums text-xs text-muted-foreground">
                         {formatEUR(Number(inv.total ?? 0))}
                       </span>

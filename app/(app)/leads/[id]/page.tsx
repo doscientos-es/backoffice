@@ -3,9 +3,11 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { isAIEnabled } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { scopedLogger } from "@/lib/logger";
+import { LEAD_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
 import Link from "next/link";
@@ -18,16 +20,6 @@ import { LeadStatusSelect } from "./status-select";
 export const dynamic = "force-dynamic";
 
 const log = scopedLogger("leads.detail");
-
-const STATUS_VARIANT = {
-  new: "info",
-  qualifying: "warning",
-  quoted: "warning",
-  won: "success",
-  lost: "danger",
-  not_interested: "neutral",
-  archived: "neutral",
-} as const;
 
 const INTERACTION_LABEL: Record<string, string> = {
   email_sent: "Email enviado",
@@ -152,9 +144,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
               <DetailGrid>
                 <DetailRow label="Estado">
                   <div className="flex items-center gap-2">
-                    <Badge variant={STATUS_VARIANT[lead.status as keyof typeof STATUS_VARIANT]}>
-                      {lead.status as string}
-                    </Badge>
+                    <StatusBadge meta={LEAD_STATUS} value={lead.status as string} />
                     {lead.status === "lost" && lead.lost_reason && (
                       <Badge variant="outline" className="text-muted-foreground border-dashed">
                         {lead.lost_reason as string}

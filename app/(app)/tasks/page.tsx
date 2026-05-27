@@ -1,7 +1,13 @@
 import { ListPage } from "@/components/layout/list-page";
 import { PageHeader } from "@/components/layout/page-header";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/ui/status-badge";
+import {
+  TASK_PRIORITY,
+  TASK_STATUS,
+  type TaskPriority,
+  type TaskStatus,
+} from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 import { Plus } from "lucide-react";
@@ -14,54 +20,20 @@ export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 25;
 
-const STATUS_OPTIONS = [
-  { value: "todo", label: "Por hacer" },
-  { value: "in_progress", label: "En curso" },
-  { value: "in_review", label: "Revisión" },
-  { value: "done", label: "Terminada" },
-  { value: "cancelled", label: "Cancelada" },
-];
+const STATUS_OPTIONS = (Object.keys(TASK_STATUS) as TaskStatus[]).map((value) => ({
+  value,
+  label: TASK_STATUS[value].label,
+}));
 
-const PRIORITY_OPTIONS = [
-  { value: "urgent", label: "Urgente" },
-  { value: "high", label: "Alta" },
-  { value: "medium", label: "Media" },
-  { value: "low", label: "Baja" },
-];
+const PRIORITY_ORDER: TaskPriority[] = ["urgent", "high", "medium", "low"];
+const PRIORITY_OPTIONS = PRIORITY_ORDER.map((value) => ({
+  value,
+  label: TASK_PRIORITY[value].label,
+}));
 
 function escapeIlike(value: string): string {
   return value.replace(/[%_\\]/g, (m) => `\\${m}`);
 }
-
-const STATUS_VARIANT = {
-  todo: "neutral",
-  in_progress: "info",
-  in_review: "warning",
-  done: "success",
-  cancelled: "danger",
-} as const;
-
-const STATUS_LABEL: Record<string, string> = {
-  todo: "Por hacer",
-  in_progress: "En curso",
-  in_review: "Revisión",
-  done: "Terminada",
-  cancelled: "Cancelada",
-};
-
-const PRIORITY_VARIANT = {
-  low: "neutral",
-  medium: "info",
-  high: "warning",
-  urgent: "danger",
-} as const;
-
-const PRIORITY_LABEL: Record<string, string> = {
-  low: "Baja",
-  medium: "Media",
-  high: "Alta",
-  urgent: "Urgente",
-};
 
 type TaskRow = {
   id: string;
@@ -188,15 +160,8 @@ export default async function TasksPage({
         "—"
       ),
       t.milestones?.name ?? "—",
-      <Badge key={`s-${t.id}`} variant={STATUS_VARIANT[t.status as keyof typeof STATUS_VARIANT]}>
-        {STATUS_LABEL[t.status] ?? t.status}
-      </Badge>,
-      <Badge
-        key={`pr-${t.id}`}
-        variant={PRIORITY_VARIANT[t.priority as keyof typeof PRIORITY_VARIANT]}
-      >
-        {PRIORITY_LABEL[t.priority] ?? t.priority}
-      </Badge>,
+      <StatusBadge key={`s-${t.id}`} meta={TASK_STATUS} value={t.status} />,
+      <StatusBadge key={`pr-${t.id}`} meta={TASK_PRIORITY} value={t.priority} />,
       t.team_members?.name ?? "—",
       formatDate(t.due_date),
     ],

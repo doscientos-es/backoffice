@@ -4,10 +4,6 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FormRow } from "@/components/ui/form-row";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
@@ -16,25 +12,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { GitHubModeBadge } from "../../projects/github-mode-badge";
 import type { GitHubSyncMode } from "../../projects/github-sync-section";
-import { syncTaskToGithub, updateTask } from "../actions";
+import { syncTaskToGithub } from "../actions";
 import { type CommentItem, TaskComments } from "./task-comments";
+import { TaskEditDialog } from "./task-edit-dialog";
 
 export const dynamic = "force-dynamic";
-
-const STATUS_OPTIONS = [
-  { value: "todo", label: "Por hacer" },
-  { value: "in_progress", label: "En curso" },
-  { value: "in_review", label: "Revisión" },
-  { value: "done", label: "Terminada" },
-  { value: "cancelled", label: "Cancelada" },
-];
-
-const PRIORITY_OPTIONS = [
-  { value: "low", label: "Baja" },
-  { value: "medium", label: "Media" },
-  { value: "high", label: "Alta" },
-  { value: "urgent", label: "Urgente" },
-];
 
 const STATUS_VARIANT = {
   todo: "neutral",
@@ -93,6 +75,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
 
   const backHref = project ? `/projects/${project.id}/tasks` : "/tasks";
   const backLabel = project ? `Volver a ${project.name}` : "Volver a tareas";
+  const canEdit = user.role !== "viewer";
 
   return (
     <div className="flex flex-col gap-6">
@@ -101,13 +84,31 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
         description={project?.name ?? lead?.name ?? undefined}
         back={<BackLink href={backHref} label={backLabel} />}
         actions={
-          <Badge variant={STATUS_VARIANT[task.status as keyof typeof STATUS_VARIANT]}>
-            {task.status as string}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant={STATUS_VARIANT[task.status as keyof typeof STATUS_VARIANT]}>
+              {task.status as string}
+            </Badge>
+            {canEdit ? (
+              <TaskEditDialog
+                task={{
+                  id: id,
+                  title: task.title as string,
+                  description: (task.description as string | null) ?? null,
+                  status: task.status as string,
+                  priority: task.priority as string,
+                  milestone_id: (task.milestone_id as string | null) ?? null,
+                  assignee_id: (assignee?.id as string | undefined) ?? null,
+                  due_date: (task.due_date as string | null) ?? null,
+                }}
+                members={(members ?? []) as Array<{ id: string; name: string }>}
+                milestones={(milestones ?? []) as Array<{ id: string; name: string }>}
+              />
+            ) : null}
+          </div>
         }
       />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
+      <div className="grid gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Detalles</CardTitle>
@@ -185,89 +186,6 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
                 />
               </div>
             ) : null}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Editar</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form action={updateTask} className="flex flex-col gap-4">
-              <input type="hidden" name="id" value={id} />
-              <FormRow label="Título" htmlFor="e_title">
-                <Input id="e_title" name="title" defaultValue={task.title as string} required />
-              </FormRow>
-              <FormRow label="Descripción" htmlFor="e_desc">
-                <Textarea
-                  id="e_desc"
-                  name="description"
-                  rows={3}
-                  defaultValue={(task.description as string | null) ?? ""}
-                />
-              </FormRow>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <FormRow label="Estado" htmlFor="e_status">
-                  <Select id="e_status" name="status" defaultValue={task.status as string}>
-                    {STATUS_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </Select>
-                </FormRow>
-                <FormRow label="Prioridad" htmlFor="e_priority">
-                  <Select id="e_priority" name="priority" defaultValue={task.priority as string}>
-                    {PRIORITY_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </Select>
-                </FormRow>
-                <FormRow label="Asignada" htmlFor="e_assignee">
-                  <Select
-                    id="e_assignee"
-                    name="assignee_id"
-                    defaultValue={(assignee?.id as string | undefined) ?? ""}
-                  >
-                    <option value="">—</option>
-                    {members?.map((m) => (
-                      <option key={m.id as string} value={m.id as string}>
-                        {m.name as string}
-                      </option>
-                    ))}
-                  </Select>
-                </FormRow>
-                <FormRow label="Hito" htmlFor="e_milestone">
-                  <Select
-                    id="e_milestone"
-                    name="milestone_id"
-                    defaultValue={(task.milestone_id as string | null) ?? ""}
-                  >
-                    <option value="">—</option>
-                    {milestones?.map((m) => (
-                      <option key={m.id as string} value={m.id as string}>
-                        {m.name as string}
-                      </option>
-                    ))}
-                  </Select>
-                </FormRow>
-                <FormRow label="Vencimiento" htmlFor="e_due">
-                  <Input
-                    id="e_due"
-                    name="due_date"
-                    type="date"
-                    defaultValue={(task.due_date as string | null) ?? ""}
-                  />
-                </FormRow>
-              </div>
-              <div className="flex justify-end border-t border-border pt-3">
-                <Button type="submit" size="sm">
-                  Guardar
-                </Button>
-              </div>
-            </form>
           </CardContent>
         </Card>
       </div>

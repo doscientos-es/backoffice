@@ -1,10 +1,10 @@
 import { ListPage } from "@/components/layout/list-page";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
 import {
   EXPENSE_CATEGORIES,
   EXPENSE_CATEGORY_LABELS,
+  EXPENSE_STATUSES,
   EXPENSE_STATUS_LABELS,
   type ExpenseCategory,
   type ExpenseStatus,
@@ -16,19 +16,41 @@ import Link from "next/link";
 export const metadata = { title: "Gastos · doscientos" };
 export const dynamic = "force-dynamic";
 
+const PAGE_SIZE = 25;
+
 const STATUS_VARIANT: Record<ExpenseStatus, "info" | "success" | "neutral"> = {
   pending: "info",
   paid: "success",
   cancelled: "neutral",
 };
 
-type SearchParams = Promise<{ year?: string; category?: string }>;
+const CATEGORY_FILTER_OPTIONS = EXPENSE_CATEGORIES.map((c) => ({
+  value: c,
+  label: EXPENSE_CATEGORY_LABELS[c],
+}));
+
+const STATUS_FILTER_OPTIONS = EXPENSE_STATUSES.map((s) => ({
+  value: s,
+  label: EXPENSE_STATUS_LABELS[s],
+}));
+
+function escapeIlike(value: string): string {
+  return value.replace(/[%_\\]/g, (m) => `\\${m}`);
+}
+
+type SearchParams = Promise<{
+  year?: string;
+  category?: string;
+  status?: string;
+  q?: string;
+  page?: string;
+}>;
 
 export default async function ExpensesPage({ searchParams }: { searchParams: SearchParams }) {
-  const { year, category } = await searchParams;
+  const sp = await searchParams;
   const supabase = await createServerClient();
 
-  // Available years (newest first); fall back to current year when empty.
+  // Available years (newest first) for the year filter; fall back to current year when empty.
   const { data: yearRows } = await supabase
     .from("expenses")
     .select("expense_date")
@@ -45,96 +67,98 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Sea
   );
   if (years.length === 0) years.push(String(new Date().getFullYear()));
 
-  const selectedYear = years.includes(year ?? "") ? (year as string) : years[0];
-  const selectedCategory = (EXPENSE_CATEGORIES as readonly string[]).includes(category ?? "")
-    ? (category as ExpenseCategory)
+  const year = years.includes(sp.year ?? "") ? (sp.year as string) : null;
+  const category = (EXPENSE_CATEGORIES as readonly string[]).includes(sp.category ?? "")
+    ? (sp.category as ExpenseCategory)
     : null;
+  const status = (EXPENSE_STATUSES as readonly string[]).includes(sp.status ?? "")
+    ? (sp.status as ExpenseStatus)
+    : null;
+  const q = (sp.q ?? "").trim();
+  const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
+  const from = (page - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
 
-  let query = supabase
+  // Page query (paginated rows with total count) and aggregate query (sum) must
+  // apply the same filter set so the displayed total matches the visible rows.
+  let pageQuery = supabase
     .from("expenses")
-    .select("id, vendor, category, status, total, expense_date, recurrence")
-    .is("deleted_at", null)
-    .gte("expense_date", `${selectedYear}-01-01`)
-    .lte("expense_date", `${selectedYear}-12-31`)
-    .order("expense_date", { ascending: false })
-    .limit(200);
-  if (selectedCategory) query = query.eq("category", selectedCategory);
+    .select("id, vendor, category, status, total, expense_date, recurrence", { count: "exact" })
+    .is("deleted_at", null);
+  let totalsQuery = supabase.from("expenses").select("total").is("deleted_at", null);
 
-  const { data, error } = await query;
+  if (year) {
+    pageQuery = pageQuery.gte("expense_date", `${year}-01-01`).lte("expense_date", `${year}-12-31`);
+    totalsQuery = totalsQuery
+      .gte("expense_date", `${year}-01-01`)
+      .lte("expense_date", `${year}-12-31`);
+  }
+  if (category) {
+    pageQuery = pageQuery.eq("category", category);
+    totalsQuery = totalsQuery.eq("category", category);
+  }
+  if (status) {
+    pageQuery = pageQuery.eq("status", status);
+    totalsQuery = totalsQuery.eq("status", status);
+  }
+  if (q.length > 0) {
+    const pattern = `%${escapeIlike(q)}%`;
+    pageQuery = pageQuery.ilike("vendor", pattern);
+    totalsQuery = totalsQuery.ilike("vendor", pattern);
+  }
 
-  const total = (data ?? []).reduce((a, r) => a + Number(r.total ?? 0), 0);
+  const [{ data, error, count }, { data: totalsRows }] = await Promise.all([
+    pageQuery.order("expense_date", { ascending: false }).range(from, to),
+    totalsQuery,
+  ]);
+
+  const total = (totalsRows ?? []).reduce((a, r) => a + Number((r as { total: number }).total ?? 0), 0);
+  const totalLabel = year ? `Total ${year}` : "Total filtrado";
 
   return (
-    <div className="flex flex-col gap-4">
-      <ListPage
-        title="Gastos"
-        description={`Total ${selectedYear}: ${formatEUR(total)}`}
-        actions={
-          <div className="flex items-center gap-2">
-            <form className="flex items-center gap-2">
-              <Select
-                name="year"
-                defaultValue={selectedYear}
-                aria-label="Año"
-                className="h-8 text-xs"
-              >
-                {years.map((y) => (
-                  <option key={y} value={y}>
-                    {y}
-                  </option>
-                ))}
-              </Select>
-              <Select
-                name="category"
-                defaultValue={selectedCategory ?? ""}
-                aria-label="Categoría"
-                className="h-8 text-xs"
-              >
-                <option value="">Todas las categorías</option>
-                {EXPENSE_CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {EXPENSE_CATEGORY_LABELS[c]}
-                  </option>
-                ))}
-              </Select>
-              <Button type="submit" variant="outline" size="sm">
-                Filtrar
-              </Button>
-            </form>
-            <Button asChild size="sm">
-              <Link href="/finance/expenses/new">Nuevo gasto</Link>
-            </Button>
-          </div>
-        }
-        empty="No hay gastos para este filtro."
-        emptyAction={
-          <Button asChild size="sm">
-            <Link href="/finance/expenses/new">Registrar el primero</Link>
-          </Button>
-        }
-        error={error?.message}
-        headers={["Fecha", "Proveedor", "Categoría", "Estado", "Total"]}
-        rows={
-          data?.map((e) => ({
-            id: e.id as string,
-            href: `/finance/expenses/${e.id}`,
-            cells: [
-              formatDate(e.expense_date as string),
-              e.vendor as string,
-              EXPENSE_CATEGORY_LABELS[e.category as ExpenseCategory] ?? (e.category as string),
-              <Badge
-                key={`${e.id}-status`}
-                variant={STATUS_VARIANT[e.status as ExpenseStatus] ?? "neutral"}
-              >
-                {EXPENSE_STATUS_LABELS[e.status as ExpenseStatus] ?? (e.status as string)}
-              </Badge>,
-              <span key={`${e.id}-total`} className="tabular-nums">
-                {formatEUR(Number(e.total ?? 0))}
-              </span>,
-            ],
-          })) ?? []
-        }
-      />
-    </div>
+    <ListPage
+      title="Gastos"
+      description={`${totalLabel}: ${formatEUR(total)}`}
+      actions={
+        <Button asChild size="sm">
+          <Link href="/finance/expenses/new">Nuevo gasto</Link>
+        </Button>
+      }
+      empty={year || category || status || q ? "Sin coincidencias." : "Aún no hay gastos."}
+      emptyAction={
+        <Button asChild size="sm">
+          <Link href="/finance/expenses/new">Registrar el primero</Link>
+        </Button>
+      }
+      error={error?.message}
+      searchKey="q"
+      searchPlaceholder="Buscar por proveedor…"
+      filters={[
+        { key: "year", label: "Año", options: years.map((y) => ({ value: y, label: y })) },
+        { key: "category", label: "Categoría", options: CATEGORY_FILTER_OPTIONS },
+        { key: "status", label: "Estado", options: STATUS_FILTER_OPTIONS },
+      ]}
+      pagination={{ page, pageSize: PAGE_SIZE, total: count ?? 0 }}
+      headers={["Fecha", "Proveedor", "Categoría", "Estado", "Total"]}
+      align={["left", "left", "left", "left", "right"]}
+      rows={
+        data?.map((e) => ({
+          id: e.id as string,
+          href: `/finance/expenses/${e.id}`,
+          cells: [
+            formatDate(e.expense_date as string),
+            e.vendor as string,
+            EXPENSE_CATEGORY_LABELS[e.category as ExpenseCategory] ?? (e.category as string),
+            <Badge
+              key={`${e.id}-status`}
+              variant={STATUS_VARIANT[e.status as ExpenseStatus] ?? "neutral"}
+            >
+              {EXPENSE_STATUS_LABELS[e.status as ExpenseStatus] ?? (e.status as string)}
+            </Badge>,
+            formatEUR(Number(e.total ?? 0)),
+          ],
+        })) ?? []
+      }
+    />
   );
 }

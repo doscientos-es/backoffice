@@ -121,20 +121,25 @@ const UpdateInput = z.object({
   due_date: optionalDate,
 });
 
-export async function updateTask(formData: FormData): Promise<void> {
+export type UpdateTaskInput = {
+  id: string;
+  title: string;
+  description: string;
+  milestone_id: string;
+  assignee_id: string;
+  status: string;
+  priority: string;
+  due_date: string;
+};
+
+export async function updateTask(
+  input: UpdateTaskInput,
+): Promise<{ ok: true } | { ok: false; error: string }> {
   await requireUser();
-  const raw = {
-    id: formData.get("id")?.toString() ?? "",
-    title: formData.get("title")?.toString() ?? "",
-    description: formData.get("description")?.toString() ?? "",
-    milestone_id: formData.get("milestone_id")?.toString() ?? "",
-    assignee_id: formData.get("assignee_id")?.toString() ?? "",
-    status: formData.get("status")?.toString() ?? "todo",
-    priority: formData.get("priority")?.toString() ?? "medium",
-    due_date: formData.get("due_date")?.toString() ?? "",
-  };
-  const parsed = UpdateInput.safeParse(raw);
-  if (!parsed.success) throw new Error(parsed.error.errors[0]?.message ?? "Datos no válidos");
+  const parsed = UpdateInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+  }
 
   const supabase = await createServerClient();
 
@@ -151,10 +156,11 @@ export async function updateTask(formData: FormData): Promise<void> {
   if (parsed.data.status === "in_progress") updates.started_at = new Date().toISOString();
 
   const { error } = await supabase.from("tasks").update(updates).eq("id", parsed.data.id);
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, error: error.message };
 
   revalidatePath("/tasks");
   revalidatePath(`/tasks/${parsed.data.id}`);
+  return { ok: true };
 }
 
 // ---------------- QUICK STATUS UPDATE (used by Kanban / list) ----------------

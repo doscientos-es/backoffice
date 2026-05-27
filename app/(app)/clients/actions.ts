@@ -80,20 +80,25 @@ const UpdateClientInput = CreateClientInput.extend({
   id: z.string().uuid(),
 });
 
-export async function updateClient(formData: FormData): Promise<void> {
+type ActionResult = { ok: true } | { ok: false; error: string };
+
+export type UpdateClientInputType = {
+  id: string;
+  name: string;
+  nif: string;
+  email: string;
+  phone: string;
+  billing_address: string;
+  contact_person: string;
+  notes: string;
+};
+
+export async function updateClient(input: UpdateClientInputType): Promise<ActionResult> {
   await requireUser();
-  const raw = {
-    id: formData.get("id")?.toString() ?? "",
-    name: formData.get("name")?.toString() ?? "",
-    nif: formData.get("nif")?.toString() ?? "",
-    email: formData.get("email")?.toString() ?? "",
-    phone: formData.get("phone")?.toString() ?? "",
-    billing_address: formData.get("billing_address")?.toString() ?? "",
-    contact_person: formData.get("contact_person")?.toString() ?? "",
-    notes: formData.get("notes")?.toString() ?? "",
-  };
-  const parsed = UpdateClientInput.safeParse(raw);
-  if (!parsed.success) throw new Error(parsed.error.errors[0]?.message ?? "Datos no válidos");
+  const parsed = UpdateClientInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+  }
 
   const supabase = await createServerClient();
   const { error } = await supabase
@@ -110,7 +115,8 @@ export async function updateClient(formData: FormData): Promise<void> {
     })
     .eq("id", parsed.data.id);
 
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, error: error.message };
   revalidatePath(`/clients/${parsed.data.id}`);
   revalidatePath("/clients");
+  return { ok: true };
 }

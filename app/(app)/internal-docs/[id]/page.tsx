@@ -90,51 +90,74 @@ export default async function InternalDocDetailPage({
       />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,28rem)_1fr] items-start">
-        <Card>
-          <CardHeader>
-            <CardTitle>Detalles</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DetailGrid>
-              <DetailRow label="Categoría">
-                {CATEGORY_LABELS[(doc.category as string) ?? "other"]}
-              </DetailRow>
-              <DetailRow label="Visibilidad">
-                {isAdminsOnly ? (
-                  <Badge variant="warning">Solo admins</Badge>
-                ) : (
-                  <Badge variant="neutral">Todo el equipo</Badge>
+        {/* Left column: metadata + danger zone */}
+        <div className="flex flex-col gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Detalles</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DetailGrid>
+                <DetailRow label="Categoría">
+                  {CATEGORY_LABELS[(doc.category as string) ?? "other"]}
+                </DetailRow>
+                <DetailRow label="Visibilidad">
+                  {isAdminsOnly ? (
+                    <Badge variant="warning">Solo admins</Badge>
+                  ) : (
+                    <Badge variant="neutral">Todo el equipo</Badge>
+                  )}
+                </DetailRow>
+                <DetailRow label="Tipo">
+                  {(doc.mime_type as string | null) ?? "—"}
+                </DetailRow>
+                <DetailRow label="Tamaño">
+                  {doc.size_bytes ? `${Math.ceil(Number(doc.size_bytes) / 1024)} KB` : "—"}
+                </DetailRow>
+                <DetailRow label="Versión">v{doc.version as number}</DetailRow>
+                {doc.effective_date && (
+                  <DetailRow label="Vigencia desde">
+                    {formatDate(doc.effective_date as string)}
+                  </DetailRow>
                 )}
-              </DetailRow>
-              <DetailRow label="Tipo">
-                {(doc.mime_type as string | null) ?? "—"}
-              </DetailRow>
-              <DetailRow label="Tamaño">
-                {doc.size_bytes ? `${Math.ceil(Number(doc.size_bytes) / 1024)} KB` : "—"}
-              </DetailRow>
-              <DetailRow label="Versión">v{doc.version as number}</DetailRow>
-              {doc.effective_date && (
-                <DetailRow label="Vigencia desde">
-                  {formatDate(doc.effective_date as string)}
-                </DetailRow>
-              )}
-              {doc.expires_at && (
-                <DetailRow label="Expira">
-                  {formatDate(doc.expires_at as string)}
-                </DetailRow>
-              )}
-              <DetailRow label="Subido por">{uploaderName}</DetailRow>
-              <DetailRow label="Fecha">{formatDate(doc.created_at as string)}</DetailRow>
-            </DetailGrid>
+                {doc.expires_at && (
+                  <DetailRow label="Expira">
+                    {formatDate(doc.expires_at as string)}
+                  </DetailRow>
+                )}
+                <DetailRow label="Subido por">{uploaderName}</DetailRow>
+                <DetailRow label="Fecha">{formatDate(doc.created_at as string)}</DetailRow>
+              </DetailGrid>
 
-            {doc.description && (
-              <p className="mt-4 text-sm text-muted-foreground whitespace-pre-wrap">
-                {doc.description as string}
-              </p>
-            )}
-          </CardContent>
-        </Card>
+              {doc.description && (
+                <p className="mt-4 text-sm text-muted-foreground whitespace-pre-wrap">
+                  {doc.description as string}
+                </p>
+              )}
+            </CardContent>
+          </Card>
 
+          {isAdmin && (
+            <Card className="border-destructive/30">
+              <CardHeader>
+                <CardTitle className="text-destructive">Zona de peligro</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form action={deleteInternalDoc} className="flex items-center gap-4">
+                  <input type="hidden" name="id" value={id} />
+                  <p className="flex-1 text-sm text-muted-foreground">
+                    Eliminar este documento de forma permanente. Esta acción no se puede deshacer.
+                  </p>
+                  <SubmitButton variant="destructive" size="sm" pendingLabel="Eliminando…">
+                    Eliminar
+                  </SubmitButton>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Right column: preview */}
         <Card>
           <CardHeader>
             <CardTitle>Preview</CardTitle>
@@ -148,25 +171,6 @@ export default async function InternalDocDetailPage({
           </CardContent>
         </Card>
       </div>
-
-      {isAdmin && (
-        <Card className="max-w-2xl border-destructive/30">
-          <CardHeader>
-            <CardTitle className="text-destructive">Zona de peligro</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form action={deleteInternalDoc} className="flex items-center gap-4">
-              <input type="hidden" name="id" value={id} />
-              <p className="flex-1 text-sm text-muted-foreground">
-                Eliminar este documento de forma permanente. Esta acción no se puede deshacer.
-              </p>
-              <SubmitButton variant="destructive" size="sm" pendingLabel="Eliminando…">
-                Eliminar
-              </SubmitButton>
-            </form>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

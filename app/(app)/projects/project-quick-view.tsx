@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -10,6 +9,8 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { PROJECT_STATUS, type ProjectStatus } from "@/lib/status";
 import { relativeTime } from "@/lib/utils";
 import { ArrowUpRight, Building2, Calendar, ExternalLink, Layout, X } from "lucide-react";
 import Link from "next/link";
@@ -21,27 +22,11 @@ export type QuickProject = {
   id: string;
   name: string;
   client_name: string;
-  status: "planning" | "active" | "on_hold" | "done" | "cancelled";
+  status: ProjectStatus;
   description: string | null;
   updated_at: string;
   github_sync_mode?: GitHubSyncMode | null;
   github_repo?: string | null;
-};
-
-const STATUS_LABEL: Record<QuickProject["status"], string> = {
-  planning: "Planificación",
-  active: "Activo",
-  on_hold: "En pausa",
-  done: "Finalizado",
-  cancelled: "Cancelado",
-};
-
-const STATUS_VARIANT: Record<QuickProject["status"], any> = {
-  planning: "info",
-  active: "success",
-  on_hold: "warning",
-  done: "neutral",
-  cancelled: "danger",
 };
 
 export function ProjectQuickView({
@@ -64,9 +49,7 @@ function Body({ project }: { project: QuickProject }) {
         <div className="flex flex-col gap-1">
           <DrawerTitle>{project.name}</DrawerTitle>
           <DrawerDescription className="flex flex-wrap items-center gap-1.5">
-            <Badge variant={STATUS_VARIANT[project.status]}>
-              {STATUS_LABEL[project.status]}
-            </Badge>
+            <StatusBadge meta={PROJECT_STATUS} value={project.status} />
             <GitHubModeBadge mode={project.github_sync_mode ?? "none"} />
             <span className="text-[11px] tabular-nums">
               {relativeTime(project.updated_at)}

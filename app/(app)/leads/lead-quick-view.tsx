@@ -11,6 +11,8 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { LEAD_STATUS } from "@/lib/status";
 import { formatEUR, relativeTime } from "@/lib/utils";
 import { ArrowUpRight, Building2, Mail, Phone, Wallet, X } from "lucide-react";
 import Link from "next/link";
@@ -18,26 +20,6 @@ import { type ReactNode } from "react";
 import { LeadEditDialog } from "./[id]/lead-edit-dialog";
 import { QCallDialog, QEmailDialog, QNoteDialog } from "./lead-quick-action-dialogs";
 import type { KanbanLead } from "./leads-kanban";
-
-const STATUS_LABEL: Record<KanbanLead["status"], string> = {
-  new: "Nuevo",
-  qualifying: "Cualificando",
-  quoted: "Presupuestado",
-  won: "Ganado",
-  lost: "Perdido",
-  not_interested: "No interesa",
-  archived: "Archivado",
-};
-
-const STATUS_VARIANT = {
-  new: "info",
-  qualifying: "warning",
-  quoted: "warning",
-  won: "success",
-  lost: "danger",
-  not_interested: "neutral",
-  archived: "neutral",
-} as const;
 
 const INTERACTION_LABEL: Record<string, string> = {
   email_sent: "Email enviado",
@@ -77,7 +59,7 @@ function Body({ lead, canEdit }: { lead: KanbanLead; canEdit: boolean }) {
         <div className="flex flex-col gap-1">
           <DrawerTitle>{lead.name}</DrawerTitle>
           <DrawerDescription className="flex items-center gap-1.5">
-            <Badge variant={STATUS_VARIANT[lead.status]}>{STATUS_LABEL[lead.status]}</Badge>
+            <StatusBadge meta={LEAD_STATUS} value={lead.status} />
             <span className="text-[11px] tabular-nums">{relativeTime(lead.updated_at)}</span>
           </DrawerDescription>
         </div>
