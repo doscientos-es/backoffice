@@ -10,12 +10,12 @@ import { LEAD_STATUS, type LeadStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { relativeTime } from "@/lib/utils";
 import { ArrowRight, Plus } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { type FastInteraction, LeadFastActions } from "./lead-fast-actions";
 import { LEAD_SOURCES } from "./lead-form-fields";
 import { type KanbanLead, LeadsKanban } from "./leads-kanban";
 import { LeadsViewToggle } from "./view-toggle";
-import { Metadata } from "next";
 
 const RECENT_INTERACTIONS_PER_LEAD = 3;
 const LIST_PAGE_SIZE = 25;
@@ -37,9 +37,8 @@ function escapeIlike(value: string): string {
 
 function Initials({ name }: { name: string }) {
   const parts = (name ?? "").trim().split(/\s+/);
-  const letters = parts.length >= 2
-    ? (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")
-    : (parts[0]?.[0] ?? "?");
+  const letters =
+    parts.length >= 2 ? (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "") : (parts[0]?.[0] ?? "?");
   return (
     <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold uppercase text-primary">
       {letters}
@@ -61,8 +60,12 @@ export default async function LeadsPage({
   const sp = await searchParams;
   const view: "board" | "list" = sp.view === "list" ? "list" : "board";
   const q = (sp.q ?? "").trim();
-  const status = (LEAD_STATUS as Record<string, unknown>)[sp.status ?? ""] ? (sp.status as LeadStatus) : null;
-  const source = (LEAD_SOURCES as readonly string[]).includes(sp.source ?? "") ? (sp.source as string) : null;
+  const status = (LEAD_STATUS as Record<string, unknown>)[sp.status ?? ""]
+    ? (sp.status as LeadStatus)
+    : null;
+  const source = (LEAD_SOURCES as readonly string[]).includes(sp.source ?? "")
+    ? (sp.source as string)
+    : null;
   const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
 
   const user = await requireUser();
@@ -92,7 +95,11 @@ export default async function LeadsPage({
   const from = (page - 1) * LIST_PAGE_SIZE;
   const to = from + LIST_PAGE_SIZE - 1;
 
-  const { data: leads, error, count } = await (view === "list"
+  const {
+    data: leads,
+    error,
+    count,
+  } = await (view === "list"
     ? leadsQuery.order("created_at", { ascending: false }).range(from, to)
     : leadsQuery.order("created_at", { ascending: false }).limit(BOARD_LIMIT));
 

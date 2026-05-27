@@ -1,9 +1,17 @@
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
+import {
+  INVOICE_STATUS,
+  type InvoiceStatus,
+  PROJECT_STATUS,
+  type ProjectStatus,
+  PROPOSAL_STATUS,
+  type ProposalStatus,
+} from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import Link from "next/link";
@@ -131,9 +139,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                     >
                       {p.name as string}
                     </Link>
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      {p.status as string}
-                    </span>
+                    <StatusBadge meta={PROJECT_STATUS} value={p.status as ProjectStatus} />
                   </li>
                 ))}
               </ul>
@@ -166,7 +172,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                       {p.number as string}
                     </Link>
                     <div className="flex shrink-0 items-center gap-2">
-                      <Badge variant="neutral">{p.status as string}</Badge>
+                      <StatusBadge meta={PROPOSAL_STATUS} value={p.status as ProposalStatus} />
                       <span className="tabular-nums text-xs text-muted-foreground">
                         {formatEUR(Number(p.total ?? 0))}
                       </span>
@@ -200,7 +206,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                       {inv.full_number as string}
                     </Link>
                     <div className="flex shrink-0 items-center gap-2">
-                      <Badge variant="neutral">{inv.status as string}</Badge>
+                      <StatusBadge meta={INVOICE_STATUS} value={inv.status as InvoiceStatus} />
                       <span className="tabular-nums text-xs text-muted-foreground">
                         {formatEUR(Number(inv.total ?? 0))}
                       </span>

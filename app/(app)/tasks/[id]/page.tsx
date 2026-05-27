@@ -1,10 +1,11 @@
 import { BackLink } from "@/components/layout/back-link";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
+import { TASK_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 import { ArrowUpRight, ExternalLink } from "lucide-react";
@@ -17,14 +18,6 @@ import { type CommentItem, TaskComments } from "./task-comments";
 import { TaskEditDialog } from "./task-edit-dialog";
 
 export const dynamic = "force-dynamic";
-
-const STATUS_VARIANT = {
-  todo: "neutral",
-  in_progress: "info",
-  in_review: "warning",
-  done: "success",
-  cancelled: "danger",
-} as const;
 
 export default async function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -85,9 +78,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
         back={<BackLink href={backHref} label={backLabel} />}
         actions={
           <div className="flex items-center gap-2">
-            <Badge variant={STATUS_VARIANT[task.status as keyof typeof STATUS_VARIANT]}>
-              {task.status as string}
-            </Badge>
+            <StatusBadge meta={TASK_STATUS} value={task.status as string} />
             {canEdit ? (
               <TaskEditDialog
                 task={{

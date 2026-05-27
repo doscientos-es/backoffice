@@ -1,11 +1,13 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatusBadge } from "@/components/ui/status-badge";
 import type {
   AvisosData,
   OverdueInvoiceRow,
   ReminderRow,
   VerifactuPendingRow,
 } from "@/lib/dashboard/types";
+import { VERIFACTU_ALERT_STATUS } from "@/lib/status";
 import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
 import { AlertTriangle, BellRing, FileWarning, ShieldAlert } from "lucide-react";
 import Link from "next/link";
@@ -14,18 +16,6 @@ import { ReminderCompleteButton } from "./_components/reminder-complete-button";
 export type { AvisosData, OverdueInvoiceRow, ReminderRow, VerifactuPendingRow };
 
 export type AvisosPanelProps = AvisosData;
-
-const VERIFACTU_VARIANT = {
-  pending: "warning",
-  error: "danger",
-  rejected: "danger",
-} as const;
-
-const VERIFACTU_LABEL = {
-  pending: "Pendiente",
-  error: "Error",
-  rejected: "Rechazada",
-} as const;
 
 export function AvisosPanel({
   reminders,
@@ -118,9 +108,7 @@ export function AvisosPanel({
                       <span className="text-muted-foreground"> · {v.client_name}</span>
                     ) : null}
                   </Link>
-                  <Badge variant={VERIFACTU_VARIANT[v.verifactu_status]}>
-                    {VERIFACTU_LABEL[v.verifactu_status]}
-                  </Badge>
+                  <StatusBadge meta={VERIFACTU_ALERT_STATUS} value={v.verifactu_status} />
                 </li>
               ))}
             </ul>

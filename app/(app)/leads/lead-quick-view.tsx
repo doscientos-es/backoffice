@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -16,7 +15,7 @@ import { LEAD_STATUS } from "@/lib/status";
 import { formatEUR, relativeTime } from "@/lib/utils";
 import { ArrowUpRight, Building2, Mail, Phone, Wallet, X } from "lucide-react";
 import Link from "next/link";
-import { type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { LeadEditDialog } from "./[id]/lead-edit-dialog";
 import { QCallDialog, QEmailDialog, QNoteDialog } from "./lead-quick-action-dialogs";
 import type { KanbanLead } from "./leads-kanban";
@@ -64,15 +63,25 @@ function Body({ lead, canEdit }: { lead: KanbanLead; canEdit: boolean }) {
           </DrawerDescription>
         </div>
         <DrawerClose asChild>
-          <Button variant="ghost" size="icon-sm" aria-label="Cerrar"><X className="size-4" /></Button>
+          <Button variant="ghost" size="icon-sm" aria-label="Cerrar">
+            <X className="size-4" />
+          </Button>
         </DrawerClose>
       </DrawerHeader>
 
       <div className="flex flex-col gap-4 overflow-y-auto h-full flex-1 p-4">
         <section className="flex flex-col gap-1.5 text-xs">
           {lead.company && <Row icon={<Building2 className="size-3.5" />}>{lead.company}</Row>}
-          {lead.email && <Row icon={<Mail className="size-3.5" />} href={`mailto:${lead.email}`}>{lead.email}</Row>}
-          {lead.phone && <Row icon={<Phone className="size-3.5" />} href={`tel:${lead.phone}`}>{lead.phone}</Row>}
+          {lead.email && (
+            <Row icon={<Mail className="size-3.5" />} href={`mailto:${lead.email}`}>
+              {lead.email}
+            </Row>
+          )}
+          {lead.phone && (
+            <Row icon={<Phone className="size-3.5" />} href={`tel:${lead.phone}`}>
+              {lead.phone}
+            </Row>
+          )}
           {hasEstimated && (
             <Row icon={<Wallet className="size-3.5" />}>
               <span className="tabular-nums">{formatEUR(lead.estimated_value as number)}</span>
@@ -113,7 +122,10 @@ function Body({ lead, canEdit }: { lead: KanbanLead; canEdit: boolean }) {
           />
         )}
         <Button asChild className="flex-1" size="sm" variant="outline">
-          <Link href={`/leads/${lead.id}`}>Ver detalle completo<ArrowUpRight className="size-3.5" /></Link>
+          <Link href={`/leads/${lead.id}`}>
+            Ver detalle completo
+            <ArrowUpRight className="size-3.5" />
+          </Link>
         </Button>
       </footer>
     </div>
@@ -121,13 +133,24 @@ function Body({ lead, canEdit }: { lead: KanbanLead; canEdit: boolean }) {
 }
 
 function Heading({ children }: { children: ReactNode }) {
-  return <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{children}</p>;
+  return (
+    <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+      {children}
+    </p>
+  );
 }
 
 function Row({ icon, href, children }: { icon: ReactNode; href?: string; children: ReactNode }) {
-  const inner = (<><span className="text-muted-foreground">{icon}</span><span className="truncate">{children}</span></>);
+  const inner = (
+    <>
+      <span className="text-muted-foreground">{icon}</span>
+      <span className="truncate">{children}</span>
+    </>
+  );
   return href ? (
-    <a href={href} className="flex items-center gap-2 hover:text-primary">{inner}</a>
+    <a href={href} className="flex items-center gap-2 hover:text-primary">
+      {inner}
+    </a>
   ) : (
     <div className="flex items-center gap-2">{inner}</div>
   );
@@ -144,10 +167,16 @@ function Interactions({ interactions }: { interactions: KanbanLead["recent_inter
           {interactions.slice(0, 3).map((i) => (
             <li key={i.id} className="flex flex-col gap-0.5 rounded-md bg-muted/30 p-2">
               <div className="flex items-center justify-between text-[11px]">
-                <span className="font-medium text-foreground">{INTERACTION_LABEL[i.type] ?? i.type}</span>
-                <span className="text-muted-foreground tabular-nums">{relativeTime(i.created_at)}</span>
+                <span className="font-medium text-foreground">
+                  {INTERACTION_LABEL[i.type] ?? i.type}
+                </span>
+                <span className="text-muted-foreground tabular-nums">
+                  {relativeTime(i.created_at)}
+                </span>
               </div>
-              {i.subject && <p className="line-clamp-2 text-[11px] text-muted-foreground">{i.subject}</p>}
+              {i.subject && (
+                <p className="line-clamp-2 text-[11px] text-muted-foreground">{i.subject}</p>
+              )}
             </li>
           ))}
         </ul>
@@ -182,5 +211,3 @@ function QuickActions({
     </div>
   );
 }
-
-

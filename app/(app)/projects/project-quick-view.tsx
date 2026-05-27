@@ -12,7 +12,7 @@ import {
 import { StatusBadge } from "@/components/ui/status-badge";
 import { PROJECT_STATUS, type ProjectStatus } from "@/lib/status";
 import { relativeTime } from "@/lib/utils";
-import { ArrowUpRight, Building2, Calendar, ExternalLink, Layout, X } from "lucide-react";
+import { ArrowUpRight, Building2, ExternalLink, X } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { GitHubModeBadge } from "./github-mode-badge";
@@ -51,9 +51,7 @@ function Body({ project }: { project: QuickProject }) {
           <DrawerDescription className="flex flex-wrap items-center gap-1.5">
             <StatusBadge meta={PROJECT_STATUS} value={project.status} />
             <GitHubModeBadge mode={project.github_sync_mode ?? "none"} />
-            <span className="text-[11px] tabular-nums">
-              {relativeTime(project.updated_at)}
-            </span>
+            <span className="text-[11px] tabular-nums">{relativeTime(project.updated_at)}</span>
           </DrawerDescription>
         </div>
         <DrawerClose asChild>

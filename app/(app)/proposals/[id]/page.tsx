@@ -1,6 +1,7 @@
 import { BackLink } from "@/components/layout/back-link";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
@@ -11,8 +12,8 @@ import { formatDate } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { GenerateInvoiceButton } from "./generate-invoice-button";
-import { ProposalEditor, type EditableItem } from "./proposal-editor";
-import { ProposalSpecs, type ProposalSpec } from "./proposal-specs";
+import { type EditableItem, ProposalEditor } from "./proposal-editor";
+import { type ProposalSpec, ProposalSpecs } from "./proposal-specs";
 import { SendPreviewButton } from "./send-preview-button";
 
 export const dynamic = "force-dynamic";
@@ -149,9 +150,7 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
               </div>
             ) : null}
             {locked ? (
-              <p className="text-xs text-muted-foreground">
-                La propuesta ya ha sido respondida.
-              </p>
+              <p className="text-xs text-muted-foreground">La propuesta ya ha sido respondida.</p>
             ) : (
               <SendPreviewButton
                 id={id}
@@ -207,10 +206,7 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
           ) : (
             <ul className="divide-y divide-border text-sm">
               {viewRows.map((v) => (
-                <li
-                  key={v.id}
-                  className="flex items-center justify-between gap-3 px-6 py-2.5"
-                >
+                <li key={v.id} className="flex items-center justify-between gap-3 px-6 py-2.5">
                   <div className="flex items-center gap-2">
                     <Badge variant={v.viewer_type === "client" ? "info" : "neutral"}>
                       {v.viewer_type === "client" ? "Cliente" : "Equipo"}

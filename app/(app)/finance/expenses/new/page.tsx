@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
+import type { Metadata } from "next";
 import { createExpense } from "../actions";
 import { ExpenseFormFields } from "../expense-form-fields";
 
-export const metadata = { title: "Nuevo gasto · doscientos" };
+export const metadata: Metadata = { title: "Nuevo gasto · doscientos" };
 export const dynamic = "force-dynamic";
 
 export default async function NewExpensePage() {
@@ -19,11 +20,14 @@ export default async function NewExpensePage() {
     .is("deleted_at", null)
     .order("name");
 
-  const projects = ((projectsRaw ?? []) as Array<{
+  const projects = ((projectsRaw ?? []) as unknown as Array<{
     id: string;
     name: string;
-    clients: { name: string } | null;
-  }>).map((p) => ({ id: p.id, name: p.name, clientName: p.clients?.name ?? null }));
+    clients: { name: string } | { name: string }[] | null;
+  }>).map((p) => {
+    const client = Array.isArray(p.clients) ? p.clients[0] ?? null : p.clients;
+    return { id: p.id, name: p.name, clientName: client?.name ?? null };
+  });
 
   return (
     <div className="flex flex-col gap-6">

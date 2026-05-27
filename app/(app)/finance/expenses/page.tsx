@@ -1,6 +1,6 @@
 import { ListPage } from "@/components/layout/list-page";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/ui/status-badge";
 import {
   EXPENSE_CATEGORIES,
   EXPENSE_CATEGORY_LABELS,
@@ -9,6 +9,7 @@ import {
   type ExpenseCategory,
   type ExpenseStatus,
 } from "@/lib/finance";
+import { EXPENSE_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import Link from "next/link";
@@ -17,12 +18,6 @@ export const metadata = { title: "Gastos · doscientos" };
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 25;
-
-const STATUS_VARIANT: Record<ExpenseStatus, "info" | "success" | "neutral"> = {
-  pending: "info",
-  paid: "success",
-  cancelled: "neutral",
-};
 
 const CATEGORY_FILTER_OPTIONS = EXPENSE_CATEGORIES.map((c) => ({
   value: c,
@@ -149,12 +144,11 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Sea
             formatDate(e.expense_date as string),
             e.vendor as string,
             EXPENSE_CATEGORY_LABELS[e.category as ExpenseCategory] ?? (e.category as string),
-            <Badge
+            <StatusBadge
               key={`${e.id}-status`}
-              variant={STATUS_VARIANT[e.status as ExpenseStatus] ?? "neutral"}
-            >
-              {EXPENSE_STATUS_LABELS[e.status as ExpenseStatus] ?? (e.status as string)}
-            </Badge>,
+              meta={EXPENSE_STATUS}
+              value={e.status as ExpenseStatus}
+            />,
             formatEUR(Number(e.total ?? 0)),
           ],
         })) ?? []

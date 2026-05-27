@@ -2,6 +2,8 @@
 
 import { Badge } from "@/components/ui/badge";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { type TaskPriority as SharedTaskPriority, TASK_PRIORITY } from "@/lib/status";
 import { cn, formatDate, relativeTime } from "@/lib/utils";
 import {
   DndContext,
@@ -20,7 +22,7 @@ import { useOptimistic, useState, useTransition } from "react";
 import { updateTaskStatus } from "./actions";
 
 type TaskStatus = "todo" | "in_progress" | "in_review" | "done" | "cancelled";
-type TaskPriority = "low" | "medium" | "high" | "urgent";
+type TaskPriority = SharedTaskPriority;
 
 export type KanbanTask = {
   id: string;
@@ -59,19 +61,6 @@ const COLUMNS: { id: TaskStatus; label: string; tone: string; dot: string }[] = 
     dot: "bg-red-500",
   },
 ];
-
-const PRIORITY_VARIANT: Record<TaskPriority, "neutral" | "info" | "warning" | "danger"> = {
-  low: "neutral",
-  medium: "info",
-  high: "warning",
-  urgent: "danger",
-};
-const PRIORITY_LABEL: Record<TaskPriority, string> = {
-  low: "Baja",
-  medium: "Media",
-  high: "Alta",
-  urgent: "Urgente",
-};
 
 type Action = { id: string; status: TaskStatus };
 
@@ -204,12 +193,11 @@ function TaskCard({ task, isOverlay = false }: { task: KanbanTask; isOverlay?: b
         >
           {task.title}
         </Link>
-        <Badge
-          variant={PRIORITY_VARIANT[task.priority]}
+        <StatusBadge
+          meta={TASK_PRIORITY}
+          value={task.priority}
           className="text-[10px] h-4 px-1.5 shrink-0"
-        >
-          {PRIORITY_LABEL[task.priority]}
-        </Badge>
+        />
       </div>
 
       {task.project ? (

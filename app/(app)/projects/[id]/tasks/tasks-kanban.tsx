@@ -2,6 +2,8 @@
 
 import { Badge } from "@/components/ui/badge";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { TASK_PRIORITY, type TaskPriority } from "@/lib/status";
 import { cn } from "@/lib/utils";
 import {
   DndContext,
@@ -25,7 +27,7 @@ export type KanbanTask = {
   id: string;
   title: string;
   status: TaskStatus;
-  priority: "low" | "medium" | "high" | "urgent";
+  priority: TaskPriority;
   due_date: string | null;
   assignee: { id: string; name: string } | null;
   kanban_order: string;
@@ -38,13 +40,6 @@ const COLUMNS: { id: TaskStatus; label: string; tone: string }[] = [
   { id: "done", label: "Terminada", tone: "text-emerald-700 dark:text-emerald-300" },
   { id: "cancelled", label: "Cancelada", tone: "text-red-700 dark:text-red-300" },
 ];
-
-const PRIORITY_VARIANT = {
-  low: "neutral",
-  medium: "info",
-  high: "warning",
-  urgent: "danger",
-} as const;
 
 type Move = {
   taskId: string;
@@ -228,9 +223,7 @@ function TaskCard({ task, isOverlay = false }: { task: KanbanTask; isOverlay?: b
         >
           {task.title}
         </Link>
-        <Badge variant={PRIORITY_VARIANT[task.priority]} className="shrink-0">
-          {task.priority}
-        </Badge>
+        <StatusBadge meta={TASK_PRIORITY} value={task.priority} className="shrink-0" />
       </div>
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span className="truncate">{task.assignee?.name ?? "Sin asignar"}</span>

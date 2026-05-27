@@ -61,12 +61,16 @@ export default async function ProposalsPage({
   return (
     <ListPage
       title="Propuestas"
-      empty="Aún no hay propuestas."
+      empty={q || status ? "Sin coincidencias." : "Aún no hay propuestas."}
       error={error?.message}
       actions={newAction}
       emptyAction={newAction}
       addHref="/proposals/new"
       addLabel="Nueva propuesta"
+      searchKey="q"
+      searchPlaceholder="Buscar por número o título…"
+      filters={[{ key: "status", label: "Estado", options: STATUS_FILTER_OPTIONS }]}
+      pagination={{ page, pageSize: PAGE_SIZE, total: count ?? 0 }}
       headers={["Número", "Título", "Estado", "Importe", "Válida hasta"]}
       align={["left", "left", "left", "right", "left"]}
       rows={
