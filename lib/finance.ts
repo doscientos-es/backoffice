@@ -54,6 +54,85 @@ export const EXPENSE_RECURRENCE_LABELS: Record<ExpenseRecurrence, string> = {
   yearly: "Anual",
 };
 
+/**
+ * Round a monetary value to 2 decimals. Single source of truth used by every
+ * totals computation in the app — invoices, proposals, expenses.
+ */
+export function roundCurrency(x: number): number {
+  return Math.round(x * 100) / 100;
+}
+
+/** Shape of an editable line item (proposal / invoice). */
+export type LineItem = {
+  description: string;
+  quantity: number;
+  unit_price: number;
+  vat_rate: number;
+};
+
+/** Sensible default line used when adding rows in editors. */
+export const EMPTY_LINE_ITEM: LineItem = {
+  description: "",
+  quantity: 1,
+  unit_price: 0,
+  vat_rate: 21,
+};
+
+/** Per-line subtotal (quantity × unit price), rounded to 2 decimals. */
+export function computeLineSubtotal(item: Pick<LineItem, "quantity" | "unit_price">): number {
+  const q = Number(item.quantity) || 0;
+  const up = Number(item.unit_price) || 0;
+  return roundCurrency(q * up);
+}
+
+/**
+ * Aggregate subtotal, tax_amount and total from a list of line items.
+ * Pure and side-effect free; safe for client and server use.
+ */
+export function computeLineTotals(
+  items: ReadonlyArray<Pick<LineItem, "quantity" | "unit_price" | "vat_rate">>,
+): { subtotal: number; taxAmount: number; total: number } {
+  let subtotal = 0;
+  let taxAmount = 0;
+  for (const it of items) {
+    const q = Number(it.quantity) || 0;
+    const up = Number(it.unit_price) || 0;
+    const vat = Number(it.vat_rate) || 0;
+    const line = q * up;
+    subtotal += line;
+    taxAmount += line * (vat / 100);
+  }
+  const s = roundCurrency(subtotal);
+  const t = roundCurrency(taxAmount);
+  return { subtotal: s, taxAmount: t, total: roundCurrency(s + t) };
+}
+
+/** Row in a VAT breakdown table (one entry per distinct rate). */
+export type VatBreakdownRow = { rate: number; base: number; tax: number };
+
+/**
+ * Group line items by VAT rate and return the desglose por tipo expected by
+ * Spanish invoices. Tolerant of `null` / `string` inputs coming from Supabase.
+ */
+export function buildVatBreakdown(
+  items: ReadonlyArray<{
+    vat_rate: number | string | null | undefined;
+    subtotal: number | string | null | undefined;
+  }>,
+): VatBreakdownRow[] {
+  const grouped = items.reduce<Record<string, VatBreakdownRow>>((acc, it) => {
+    const rate = Number(it.vat_rate) || 0;
+    const base = Number(it.subtotal) || 0;
+    const tax = base * (rate / 100);
+    const key = rate.toFixed(2);
+    acc[key] ??= { rate, base: 0, tax: 0 };
+    acc[key].base += base;
+    acc[key].tax += tax;
+    return acc;
+  }, {});
+  return Object.values(grouped).sort((a, b) => a.rate - b.rate);
+}
+
 /** Compute tax_amount and total from subtotal and tax_rate (%). */
 export function computeExpenseTotals(
   subtotal: number,
@@ -65,12 +144,12 @@ export function computeExpenseTotals(
 } {
   const safeSubtotal = Number.isFinite(subtotal) ? subtotal : 0;
   const safeRate = Number.isFinite(taxRate) ? taxRate : 0;
-  const taxAmount = Math.round(safeSubtotal * safeRate) / 100;
-  const total = Math.round((safeSubtotal + taxAmount) * 100) / 100;
+  const safeBase = roundCurrency(safeSubtotal);
+  const taxAmount = roundCurrency((safeSubtotal * safeRate) / 100);
   return {
-    subtotal: Math.round(safeSubtotal * 100) / 100,
-    taxAmount: Math.round(taxAmount * 100) / 100,
-    total,
+    subtotal: safeBase,
+    taxAmount,
+    total: roundCurrency(safeBase + taxAmount),
   };
 }
 
@@ -139,9 +218,9 @@ export function buildMonthlySeries(
 
   return Array.from(months.values()).map((p) => ({
     month: p.month,
-    revenue: Math.round(p.revenue * 100) / 100,
-    expense: Math.round(p.expense * 100) / 100,
-    net: Math.round((p.revenue - p.expense) * 100) / 100,
+    revenue: roundCurrency(p.revenue),
+    expense: roundCurrency(p.expense),
+    net: roundCurrency(p.revenue - p.expense),
   }));
 }
 

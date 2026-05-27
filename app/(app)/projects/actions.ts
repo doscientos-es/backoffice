@@ -123,20 +123,40 @@ export async function createProject(formData: FormData): Promise<void> {
   redirect(`/projects/${data.id}`);
 }
 
-export async function updateProject(formData: FormData): Promise<void> {
+type ActionResult = { ok: true } | { ok: false; error: string };
+
+export type UpdateProjectInput = {
+  id: string;
+  client_id: string;
+  name: string;
+  description: string;
+  status: string;
+  starts_at: string;
+  ends_at: string;
+  github_sync_mode: string;
+  github_auto_sync: boolean;
+  github_repo: string;
+  github_installation_id: string;
+};
+
+export async function updateProject(input: UpdateProjectInput): Promise<ActionResult> {
   await requireUser();
-  const id = formData.get("id")?.toString() ?? "";
-  if (!z.string().uuid().safeParse(id).success) throw new Error("ID inválido");
-  const parsed = ProjectInput.safeParse(readForm(formData));
-  if (!parsed.success) throw new Error(parsed.error.errors[0]?.message ?? "Datos no válidos");
+  if (!z.string().uuid().safeParse(input.id).success) {
+    return { ok: false, error: "ID inválido" };
+  }
+  const parsed = ProjectInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+  }
 
   const supabase = await createServerClient();
   const { error } = await supabase
     .from("projects")
     .update({ ...buildDbPayload(parsed.data), updated_at: new Date().toISOString() })
-    .eq("id", id);
+    .eq("id", input.id);
 
-  if (error) throw new Error(error.message);
-  revalidatePath(`/projects/${id}`);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(`/projects/${input.id}`);
   revalidatePath("/projects");
+  return { ok: true };
 }

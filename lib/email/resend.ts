@@ -26,7 +26,11 @@ export async function sendEmail(
 ): Promise<{ id: string | null; mocked: boolean }> {
   const resend = getResend();
   const env = serverEnv();
-  const from = `${input.fromName} <${input.fromAlias}@${env.RESEND_FROM_DOMAIN}>`;
+  const safeName = input.fromName.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const address = input.fromAlias.includes("@")
+    ? input.fromAlias
+    : `${input.fromAlias}@${env.RESEND_FROM_DOMAIN}`;
+  const from = `"${safeName}" <${address}>`;
   if (!resend) {
     return { id: null, mocked: true };
   }

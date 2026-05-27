@@ -1,6 +1,7 @@
 import { LogoMark } from "@/components/branding";
 import { Badge } from "@/components/ui/badge";
 import { publicEnv, serverEnv } from "@/lib/env";
+import { buildVatBreakdown } from "@/lib/finance";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { buildQrDataUrl, buildQrUrl } from "@/lib/verifactu/qr";
@@ -63,18 +64,7 @@ export default async function PortalInvoicePage({
   const safeItems = (items ?? []) as unknown as InvoiceItem[];
 
   // Group line items by VAT rate so we can show a proper desglose por tipo.
-  const vatBreakdown = Object.values(
-    safeItems.reduce<Record<string, { rate: number; base: number; tax: number }>>((acc, it) => {
-      const rate = Number(it.vat_rate) || 0;
-      const base = Number(it.subtotal) || 0;
-      const tax = base * (rate / 100);
-      const key = rate.toFixed(2);
-      acc[key] ??= { rate, base: 0, tax: 0 };
-      acc[key].base += base;
-      acc[key].tax += tax;
-      return acc;
-    }, {}),
-  ).sort((a, b) => a.rate - b.rate);
+  const vatBreakdown = buildVatBreakdown(safeItems);
 
   let qrDataUrl: string | null = null;
   const env = serverEnv();
@@ -268,8 +258,8 @@ export default async function PortalInvoicePage({
 
       {/* Fiscal info + QR */}
       {(invoice.idfact as string | null) ||
-        (invoice.verifactu_csv as string | null) ||
-        qrDataUrl ? (
+      (invoice.verifactu_csv as string | null) ||
+      qrDataUrl ? (
         <div className="border-t border-zinc-100 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-900/50 px-8 py-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex flex-col gap-1.5">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-0.5">
@@ -312,8 +302,8 @@ export default async function PortalInvoicePage({
       <div className="border-t border-zinc-200 dark:border-zinc-800 px-8 py-4">
         <p className="text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">
           Factura verificable en la sede electrónica de la AEAT mediante el código QR. Sistema de
-          emisión conforme al Reglamento Verifactu (RD 1007/2023). Conserve esta factura conforme
-          a la normativa fiscal aplicable.
+          emisión conforme al Reglamento Verifactu (RD 1007/2023). Conserve esta factura conforme a
+          la normativa fiscal aplicable.
         </p>
       </div>
     </article>

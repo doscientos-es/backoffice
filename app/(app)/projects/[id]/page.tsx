@@ -3,20 +3,14 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FormRow } from "@/components/ui/form-row";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { SubmitButton } from "@/components/ui/submit-button";
-import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { updateProject } from "../actions";
 import { GitHubModeBadge } from "../github-mode-badge";
 import type { GitHubSyncMode } from "../github-sync-section";
-import { GitHubSyncSection } from "../github-sync-section";
+import { ProjectEditDialog } from "./project-edit-dialog";
 
 export const dynamic = "force-dynamic";
 
@@ -28,17 +22,9 @@ const STATUS_VARIANT = {
   cancelled: "danger",
 } as const;
 
-const STATUS_OPTIONS = [
-  { value: "planning", label: "Planificación" },
-  { value: "active", label: "Activo" },
-  { value: "on_hold", label: "En pausa" },
-  { value: "done", label: "Terminado" },
-  { value: "cancelled", label: "Cancelado" },
-];
-
 export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await requireUser();
+  const user = await requireUser();
   const supabase = await createServerClient();
 
   const { data: project } = await supabase
@@ -52,11 +38,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
   const client = (project as unknown as { clients: { id: string; name: string } | null }).clients;
 
-  const { data: clients } = await supabase
-    .from("clients")
-    .select("id, name")
-    .is("deleted_at", null)
-    .order("name");
+  const canEdit = user.role !== "viewer";
+  const { data: clients } = canEdit
+    ? await supabase.from("clients").select("id, name").is("deleted_at", null).order("name")
+    : { data: null as Array<{ id: string; name: string }> | null };
 
   const [{ data: tasks }, { data: proposals }, { data: invoices }] = await Promise.all([
     supabase
@@ -100,132 +85,73 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <Badge variant={STATUS_VARIANT[project.status as keyof typeof STATUS_VARIANT]}>
               {project.status as string}
             </Badge>
+            {canEdit ? (
+              <ProjectEditDialog
+                project={{
+                  id: project.id as string,
+                  client_id: (client?.id as string | undefined) ?? "",
+                  name: project.name as string,
+                  status: project.status as string,
+                  starts_at: (project.starts_at as string | null) ?? null,
+                  ends_at: (project.ends_at as string | null) ?? null,
+                  description: (project.description as string | null) ?? null,
+                  github_sync_mode:
+                    (project.github_sync_mode as GitHubSyncMode | null) ?? "none",
+                  github_repo: (project.github_repo as string | null) ?? null,
+                  github_installation_id:
+                    (project.github_installation_id as number | null) ?? null,
+                  github_auto_sync: (project.github_auto_sync as boolean | null) ?? true,
+                }}
+                clients={clients ?? []}
+              />
+            ) : null}
           </div>
         }
       />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-        <Card>
-          <CardHeader>
-            <CardTitle>Detalles</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DetailGrid>
-              <DetailRow label="Cliente">
-                {client ? (
-                  <Link href={`/clients/${client.id}`} className="hover:underline">
-                    {client.name}
-                  </Link>
-                ) : (
-                  "—"
-                )}
+      <Card>
+        <CardHeader>
+          <CardTitle>Detalles</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DetailGrid>
+            <DetailRow label="Cliente">
+              {client ? (
+                <Link href={`/clients/${client.id}`} className="hover:underline">
+                  {client.name}
+                </Link>
+              ) : (
+                "—"
+              )}
+            </DetailRow>
+            <DetailRow label="Estado">{project.status as string}</DetailRow>
+            <DetailRow label="Inicio">{formatDate(project.starts_at as string | null)}</DetailRow>
+            <DetailRow label="Fin previsto">
+              {formatDate(project.ends_at as string | null)}
+            </DetailRow>
+            {project.github_repo ? (
+              <DetailRow label="Repositorio">
+                <a
+                  href={project.github_repo as string}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary hover:underline truncate"
+                >
+                  {project.github_repo as string}
+                </a>
               </DetailRow>
-              <DetailRow label="Estado">{project.status as string}</DetailRow>
-              <DetailRow label="Inicio">{formatDate(project.starts_at as string | null)}</DetailRow>
-              <DetailRow label="Fin previsto">
-                {formatDate(project.ends_at as string | null)}
-              </DetailRow>
-              {project.github_repo ? (
-                <DetailRow label="Repositorio">
-                  <a
-                    href={project.github_repo as string}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-primary hover:underline truncate"
-                  >
-                    {project.github_repo as string}
-                  </a>
-                </DetailRow>
-              ) : null}
-            </DetailGrid>
-            {project.description ? (
-              <div className="mt-4 border-t border-border pt-3">
-                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Descripción
-                </p>
-                <p className="whitespace-pre-wrap text-sm">{project.description as string}</p>
-              </div>
             ) : null}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Editar</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form action={updateProject} className="flex flex-col gap-4">
-              <input type="hidden" name="id" value={id} />
-              <FormRow label="Cliente" htmlFor="e_client" required>
-                <Select id="e_client" name="client_id" defaultValue={client?.id ?? ""} required>
-                  {clients?.map((c) => (
-                    <option key={c.id as string} value={c.id as string}>
-                      {c.name as string}
-                    </option>
-                  ))}
-                </Select>
-              </FormRow>
-              <FormRow label="Nombre" htmlFor="e_name" required>
-                <Input
-                  id="e_name"
-                  name="name"
-                  defaultValue={project.name as string}
-                  required
-                  maxLength={160}
-                  placeholder="Rediseño web 2026"
-                />
-              </FormRow>
-              <FormRow label="Estado" htmlFor="e_status">
-                <Select id="e_status" name="status" defaultValue={project.status as string}>
-                  {STATUS_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </Select>
-              </FormRow>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <FormRow label="Inicio" htmlFor="e_starts">
-                  <Input
-                    id="e_starts"
-                    name="starts_at"
-                    type="date"
-                    defaultValue={(project.starts_at as string | null) ?? ""}
-                  />
-                </FormRow>
-                <FormRow label="Fin previsto" htmlFor="e_ends">
-                  <Input
-                    id="e_ends"
-                    name="ends_at"
-                    type="date"
-                    defaultValue={(project.ends_at as string | null) ?? ""}
-                  />
-                </FormRow>
-              </div>
-              <FormRow label="Descripción" htmlFor="e_desc">
-                <Textarea
-                  id="e_desc"
-                  name="description"
-                  rows={3}
-                  maxLength={4000}
-                  defaultValue={(project.description as string | null) ?? ""}
-                  placeholder="Objetivos, entregables, criterios de aceptación…"
-                />
-              </FormRow>
-              <GitHubSyncSection
-                idPrefix="edit"
-                defaultMode={(project.github_sync_mode as GitHubSyncMode | null) ?? "none"}
-                defaultRepoUrl={(project.github_repo as string | null) ?? null}
-                defaultInstallationId={(project.github_installation_id as number | null) ?? null}
-                defaultAutoSync={(project.github_auto_sync as boolean | null) ?? true}
-              />
-              <div className="flex justify-end border-t border-border pt-3">
-                <SubmitButton pendingLabel="Guardando…">Guardar cambios</SubmitButton>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
+          </DetailGrid>
+          {project.description ? (
+            <div className="mt-4 border-t border-border pt-3">
+              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Descripción
+              </p>
+              <p className="whitespace-pre-wrap text-sm">{project.description as string}</p>
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
 
       <div className="flex justify-end">
         <Button asChild size="sm" variant="outline">

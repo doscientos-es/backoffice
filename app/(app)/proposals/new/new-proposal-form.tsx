@@ -1,16 +1,17 @@
 "use client";
 
+import { LineItemsTable } from "@/components/finance/line-items-table";
 import { AutosaveIndicator } from "@/components/ui/autosave-indicator";
 import { Card, CardContent } from "@/components/ui/card";
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { EMPTY_LINE_ITEM, type LineItem } from "@/lib/finance";
 import { useAutosave } from "@/lib/hooks/use-autosave";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { createProposalAction, updateProposal } from "../actions";
-import { LineItemsEditor, type LineItem } from "./line-items-editor";
 
 type Props = {
   clients: Array<{ id: string; name: string }>;
@@ -28,9 +29,7 @@ export function NewProposalForm({ clients, projects, initialClientId, initialPro
   const [title, setTitle] = useState("");
   const [validUntil, setValidUntil] = useState("");
   const [notes, setNotes] = useState("");
-  const [items, setItems] = useState<LineItem[]>([
-    { description: "", quantity: 1, unit_price: 0, vat_rate: 21 },
-  ]);
+  const [items, setItems] = useState<LineItem[]>([{ ...EMPTY_LINE_ITEM }]);
 
   const payload = useMemo(
     () => ({
@@ -135,11 +134,7 @@ export function NewProposalForm({ clients, projects, initialClientId, initialPro
                 placeholder="Propuesta de servicios"
               />
             </FormRow>
-            <FormRow
-              label="Válida hasta"
-              htmlFor="valid_until"
-              hint="Fecha límite de aceptación."
-            >
+            <FormRow label="Válida hasta" htmlFor="valid_until" hint="Fecha límite de aceptación.">
               <Input
                 id="valid_until"
                 type="date"
@@ -154,7 +149,7 @@ export function NewProposalForm({ clients, projects, initialClientId, initialPro
       <Card>
         <CardContent className="pt-6">
           <h2 className="mb-4 text-sm font-semibold">Líneas</h2>
-          <LineItemsEditor items={items} onChange={setItems} />
+          <LineItemsTable items={items} onChange={setItems} />
         </CardContent>
       </Card>
 

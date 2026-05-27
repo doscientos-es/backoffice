@@ -1,8 +1,9 @@
 "use server";
 
-import { requireRole } from "@/lib/auth";
+import { requireRole, requireUser } from "@/lib/auth";
 import { promoteLeadFromClient } from "@/lib/crm/conversion";
 import { serverEnv } from "@/lib/env";
+import { computeLineTotals } from "@/lib/finance";
 import { scopedLogger } from "@/lib/logger";
 import { createServerClient } from "@/lib/supabase/server";
 import { submitToVerifactu } from "@/lib/verifactu/client";
@@ -13,8 +14,82 @@ import { z } from "zod";
 const log = scopedLogger("invoices.actions");
 
 const SendInput = z.object({ id: z.string().uuid() });
+const FromProposalInput = z.object({ proposalId: z.string().uuid() });
+
+const LineItem = z.object({
+  description: z.string().min(1, "Descripción obligatoria").max(500),
+  quantity: z.coerce.number().positive("Cantidad > 0"),
+  unit_price: z.coerce.number().nonnegative("Precio ≥ 0"),
+  vat_rate: z.coerce.number().min(0).max(100).default(21),
+});
+
+const UpdateInput = z.object({
+  id: z.string().uuid(),
+  issue_date: z.string().optional(),
+  due_date: z.string().optional(),
+  notes: z.string().max(4000).optional().nullable(),
+  items: z.array(LineItem).min(1).optional(),
+});
+
+export type UpdateInvoiceInput = z.input<typeof UpdateInput>;
+
+const StatusInput = z.object({
+  id: z.string().uuid(),
+  status: z.enum(["draft", "issued", "paid", "overdue", "cancelled"]),
+});
 
 type ActionResult = { ok: true; csv: string | null } | { ok: false; error: string };
+type FromProposalResult = { ok: true; id: string } | { ok: false; error: string };
+
+/**
+ * Updates the status of an invoice. If moving to 'paid', we set 'paid_at'.
+ * If moving to 'issued' from 'draft', we set 'issued_at'.
+ */
+export async function updateInvoiceStatus(
+  input: unknown,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireRole(["owner", "admin"]);
+  const parsed = StatusInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Datos no válidos" };
+  const { id, status } = parsed.data;
+
+  const supabase = await createServerClient();
+  const updates: any = { status, updated_at: new Date().toISOString() };
+
+  if (status === "paid") {
+    updates.paid_at = new Date().toISOString();
+  }
+  if (status === "issued") {
+    updates.issued_at = new Date().toISOString();
+  }
+
+  const { error } = await supabase.from("invoices").update(updates).eq("id", id);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/invoices/${id}`);
+  revalidatePath("/invoices");
+  revalidatePath("/inicio");
+  return { ok: true };
+}
+
+export async function deleteInvoice(
+  formData: FormData,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireRole(["owner", "admin"]);
+  const id = formData.get("id")?.toString() ?? "";
+  if (!z.string().uuid().safeParse(id).success) return { ok: false, error: "ID inválido" };
+
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("invoices")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/invoices");
+  return { ok: true };
+}
 
 /**
  * Sends an invoice to Verifactu (AEAT). Computes the SHA-256 hash chain entry
@@ -134,4 +209,194 @@ export async function sendToAeat(formData: FormData): Promise<ActionResult> {
   }
 
   return { ok: true, csv: result.csv };
+}
+
+/**
+ * Create a draft invoice cloning the line items, totals and client/project
+ * references from an accepted proposal. The new invoice keeps `proposal_id`
+ * pointing to the source so the relationship survives for reporting and
+ * partial billing scenarios (multiple invoices per proposal are allowed —
+ * e.g. monthly billing of an hourly engagement).
+ */
+export async function createInvoiceFromProposal(input: unknown): Promise<FromProposalResult> {
+  const user = await requireUser();
+  const parsed = FromProposalInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "ID inválido" };
+  const { proposalId } = parsed.data;
+
+  const supabase = await createServerClient();
+
+  const { data: proposal, error: readError } = await supabase
+    .from("proposals")
+    .select("id, client_id, project_id, status, title, notes")
+    .eq("id", proposalId)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (readError || !proposal) return { ok: false, error: "Propuesta no encontrada" };
+  if (proposal.status !== "accepted") {
+    return { ok: false, error: "Solo se puede facturar una propuesta aceptada" };
+  }
+
+  const { data: items, error: itemsReadError } = await supabase
+    .from("proposal_items")
+    .select("position, description, quantity, unit_price, vat_rate")
+    .eq("proposal_id", proposalId)
+    .order("position");
+
+  if (itemsReadError) return { ok: false, error: itemsReadError.message };
+  if (!items || items.length === 0) {
+    return { ok: false, error: "La propuesta no tiene líneas para facturar" };
+  }
+
+  const { data: client } = await supabase
+    .from("clients")
+    .select("name, nif, billing_address")
+    .eq("id", proposal.client_id as string)
+    .maybeSingle();
+
+  const { data: settings } = await supabase
+    .from("settings")
+    .select("invoice_series")
+    .eq("id", 1)
+    .maybeSingle();
+  const series = ((settings?.invoice_series as string | null) ?? "A").trim() || "A";
+
+  const { data: lastInSeries } = await supabase
+    .from("invoices")
+    .select("number")
+    .eq("series", series)
+    .order("number", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const nextNumber = ((lastInSeries?.number as number | null) ?? 0) + 1;
+
+  const { subtotal, taxAmount, total } = computeLineTotals(
+    items.map((it) => ({
+      quantity: Number(it.quantity ?? 0),
+      unit_price: Number(it.unit_price ?? 0),
+      vat_rate: Number(it.vat_rate ?? 0),
+    })),
+  );
+
+  const { data: invoice, error: insertError } = await supabase
+    .from("invoices")
+    .insert({
+      client_id: proposal.client_id,
+      project_id: proposal.project_id ?? null,
+      proposal_id: proposal.id,
+      series,
+      number: nextNumber,
+      status: "draft",
+      currency: "EUR",
+      subtotal,
+      tax_amount: taxAmount,
+      total,
+      client_nif: (client?.nif as string | null) ?? null,
+      client_name: (client?.name as string | null) ?? null,
+      client_address: (client?.billing_address as string | null) ?? null,
+      notes: (proposal.notes as string | null) ?? null,
+      created_by: user.id,
+    })
+    .select("id")
+    .single();
+
+  if (insertError || !invoice) {
+    log.error({ err: insertError, proposalId }, "create_invoice_from_proposal_failed");
+    return { ok: false, error: insertError?.message ?? "No se pudo crear la factura" };
+  }
+
+  const { error: itemsInsertError } = await supabase.from("invoice_items").insert(
+    items.map((it, idx) => ({
+      invoice_id: invoice.id,
+      position: idx,
+      description: it.description,
+      quantity: it.quantity,
+      unit_price: it.unit_price,
+      vat_rate: it.vat_rate,
+    })),
+  );
+
+  if (itemsInsertError) {
+    log.error(
+      { err: itemsInsertError, invoiceId: invoice.id, proposalId },
+      "create_invoice_from_proposal_items_failed",
+    );
+    return { ok: false, error: itemsInsertError.message };
+  }
+
+  revalidatePath("/invoices");
+  revalidatePath(`/proposals/${proposalId}`);
+  return { ok: true, id: invoice.id as string };
+}
+
+/**
+ * Patches an invoice in place. Accepts a partial payload; when `items` is
+ * present the line items are replaced atomically (delete + insert) and
+ * totals recomputed server-side.
+ *
+ * Locked once the invoice is `issued` or beyond (Verifactu compliance).
+ */
+export async function updateInvoice(
+  input: UpdateInvoiceInput,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireRole(["owner", "admin"]);
+  const parsed = UpdateInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+  }
+  const data = parsed.data;
+
+  const supabase = await createServerClient();
+
+  // Verify status is draft.
+  const { data: current } = await supabase
+    .from("invoices")
+    .select("status")
+    .eq("id", data.id)
+    .single();
+
+  if (!current) return { ok: false, error: "Factura no encontrada" };
+  if (current.status !== "draft") {
+    return { ok: false, error: "No se puede editar una factura ya emitida" };
+  }
+
+  const updates: any = { updated_at: new Date().toISOString() };
+  if (data.issue_date) updates.issue_date = data.issue_date;
+  if (data.due_date) updates.due_date = data.due_date;
+  if (data.notes !== undefined) updates.notes = data.notes;
+
+  if (data.items) {
+    const totals = computeLineTotals(data.items);
+    updates.subtotal = totals.subtotal;
+    updates.tax_amount = totals.taxAmount;
+    updates.total = totals.total;
+  }
+
+  const { error: updateError } = await supabase.from("invoices").update(updates).eq("id", data.id);
+  if (updateError) return { ok: false, error: updateError.message };
+
+  if (data.items) {
+    // Replace items.
+    const { error: deleteError } = await supabase
+      .from("invoice_items")
+      .delete()
+      .eq("invoice_id", data.id);
+    if (deleteError) return { ok: false, error: deleteError.message };
+
+    const { error: itemsError } = await supabase.from("invoice_items").insert(
+      data.items.map((it, idx) => ({
+        invoice_id: data.id,
+        position: idx,
+        description: it.description,
+        quantity: it.quantity,
+        unit_price: it.unit_price,
+        vat_rate: it.vat_rate,
+      })),
+    );
+    if (itemsError) return { ok: false, error: itemsError.message };
+  }
+
+  revalidatePath(`/invoices/${data.id}`);
+  return { ok: true };
 }

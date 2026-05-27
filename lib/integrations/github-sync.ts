@@ -20,7 +20,7 @@ export type GitHubSyncMode = "none" | "link_only" | "bidirectional";
  */
 export function parseGithubRepoUrl(url: string): { owner: string; name: string } | null {
   const match = url.match(/^https:\/\/github\.com\/([^/]+)\/([^/.?#]+)(?:\.git)?(?:[/?#].*)?$/i);
-  if (!match) return null;
+  if (!match || !match[1] || !match[2]) return null;
   return { owner: match[1], name: match[2] };
 }
 

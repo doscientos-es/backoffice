@@ -9,6 +9,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { GenerateInvoiceButton } from "./generate-invoice-button";
 import { ProposalEditor, type EditableItem } from "./proposal-editor";
 import { ProposalSpecs, type ProposalSpec } from "./proposal-specs";
 import { SendPreviewButton } from "./send-preview-button";
@@ -104,9 +105,12 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
         description={client?.name}
         back={<BackLink href="/proposals" label="Volver a propuestas" />}
         actions={
-          <Badge variant={STATUS_VARIANT[proposal.status as keyof typeof STATUS_VARIANT]}>
-            {STATUS_LABEL[proposal.status as string] ?? (proposal.status as string)}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant={STATUS_VARIANT[proposal.status as keyof typeof STATUS_VARIANT]}>
+              {STATUS_LABEL[proposal.status as string] ?? (proposal.status as string)}
+            </Badge>
+            {status === "accepted" ? <GenerateInvoiceButton proposalId={id} /> : null}
+          </div>
         }
       />
 

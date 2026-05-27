@@ -2,9 +2,10 @@
 
 import { ProposalEmail } from "@/components/email";
 import { requireUser } from "@/lib/auth";
-import { sendEmail } from "@/lib/email/resend";
 import { renderEmail } from "@/lib/email/render";
+import { sendEmail } from "@/lib/email/resend";
 import { publicEnv } from "@/lib/env";
+import { computeLineTotals } from "@/lib/finance";
 import { scopedLogger } from "@/lib/logger";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
@@ -36,10 +37,6 @@ const CreateInput = z.object({
   notes: z.string().max(4000).optional(),
   items: z.array(LineItem).min(1, "Añade al menos una línea"),
 });
-
-function n2(x: number): number {
-  return Math.round(x * 100) / 100;
-}
 
 async function nextProposalNumber(
   supabase: Awaited<ReturnType<typeof createServerClient>>,
@@ -81,16 +78,7 @@ export async function createProposal(formData: FormData): Promise<void> {
   }
   const data = parsed.data;
 
-  let subtotal = 0;
-  let taxAmount = 0;
-  for (const item of data.items) {
-    const lineSubtotal = item.quantity * item.unit_price;
-    subtotal += lineSubtotal;
-    taxAmount += lineSubtotal * (item.vat_rate / 100);
-  }
-  subtotal = n2(subtotal);
-  taxAmount = n2(taxAmount);
-  const total = n2(subtotal + taxAmount);
+  const { subtotal, taxAmount, total } = computeLineTotals(data.items);
 
   const supabase = await createServerClient();
   const number = await nextProposalNumber(supabase);
@@ -142,7 +130,9 @@ export async function createProposal(formData: FormData): Promise<void> {
  * JSON version of createProposal for use with autosave or client-side calls.
  * Returns the created proposal ID on success.
  */
-export async function createProposalAction(input: unknown): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+export async function createProposalAction(
+  input: unknown,
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const user = await requireUser();
 
   const parsed = CreateInput.safeParse(input);
@@ -151,16 +141,7 @@ export async function createProposalAction(input: unknown): Promise<{ ok: true; 
   }
   const data = parsed.data;
 
-  let subtotal = 0;
-  let taxAmount = 0;
-  for (const item of data.items) {
-    const lineSubtotal = item.quantity * item.unit_price;
-    subtotal += lineSubtotal;
-    taxAmount += lineSubtotal * (item.vat_rate / 100);
-  }
-  subtotal = n2(subtotal);
-  taxAmount = n2(taxAmount);
-  const total = n2(subtotal + taxAmount);
+  const { subtotal, taxAmount, total } = computeLineTotals(data.items);
 
   const supabase = await createServerClient();
   const number = await nextProposalNumber(supabase);
@@ -207,7 +188,6 @@ export async function createProposalAction(input: unknown): Promise<{ ok: true; 
   revalidatePath("/proposals");
   return { ok: true, id: proposal.id as string };
 }
-
 
 // ---------------- UPDATE (collaborative inline edits + autosave) ----------------
 
@@ -279,16 +259,10 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
   if (rest.terms !== undefined) patch.terms = rest.terms;
 
   if (items) {
-    let subtotal = 0;
-    let taxAmount = 0;
-    for (const item of items) {
-      const lineSubtotal = item.quantity * item.unit_price;
-      subtotal += lineSubtotal;
-      taxAmount += lineSubtotal * (item.vat_rate / 100);
-    }
-    patch.subtotal = n2(subtotal);
-    patch.tax_amount = n2(taxAmount);
-    patch.total = n2(n2(subtotal) + n2(taxAmount));
+    const totals = computeLineTotals(items);
+    patch.subtotal = totals.subtotal;
+    patch.tax_amount = totals.taxAmount;
+    patch.total = totals.total;
   }
 
   if (Object.keys(patch).length > 0) {

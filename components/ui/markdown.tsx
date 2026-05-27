@@ -86,7 +86,7 @@ function tokenize(src: string): Block[] {
     }
     const h = /^(#{1,4})\s+(.*)$/.exec(line);
     if (h) {
-      blocks.push({ kind: "heading", level: h[1].length as 1 | 2 | 3 | 4, text: h[2] });
+      blocks.push({ kind: "heading", level: (h[1] ?? "").length as 1 | 2 | 3 | 4, text: h[2] ?? "" });
       i++;
       continue;
     }

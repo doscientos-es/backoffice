@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { useFormDirty } from "@/lib/hooks/use-form-dirty";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { updateLead } from "../actions";
@@ -30,6 +31,7 @@ type Lead = {
 export function LeadEditDialog({ lead }: { lead: Lead }) {
   const [open, setOpen] = useState(false);
   const feedback = useFormFeedback();
+  const { formRef, isDirty, reset } = useFormDirty<HTMLFormElement>();
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -47,11 +49,18 @@ export function LeadEditDialog({ lead }: { lead: Lead }) {
     });
     if (!res.ok) return feedback.setError(res.error);
     feedback.setSuccess("Guardado");
+    reset();
     setTimeout(() => setOpen(false), 400);
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        setOpen(v);
+        if (!v) feedback.reset();
+      }}
+    >
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Pencil className="size-4" aria-hidden />
@@ -63,7 +72,7 @@ export function LeadEditDialog({ lead }: { lead: Lead }) {
           <DialogTitle>Editar lead</DialogTitle>
           <DialogDescription>Actualiza los datos del lead.</DialogDescription>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="flex flex-col gap-5">
+        <form ref={formRef} onSubmit={onSubmit} className="flex flex-col gap-5">
           <LeadFormFields
             idPrefix={`edit-${lead.id}`}
             includeEstimatedValue
@@ -79,7 +88,11 @@ export function LeadEditDialog({ lead }: { lead: Lead }) {
           />
           <div className="flex items-center justify-end gap-3 border-t border-border pt-3">
             <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
-            <SubmitButton loading={feedback.pending} pendingLabel="Guardando…">
+            <SubmitButton
+              loading={feedback.pending}
+              disabled={!isDirty}
+              pendingLabel="Guardando…"
+            >
               Guardar cambios
             </SubmitButton>
           </div>

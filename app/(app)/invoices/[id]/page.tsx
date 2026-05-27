@@ -3,13 +3,14 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
+import { buildVatBreakdown } from "@/lib/finance";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { buildQrDataUrl, buildQrUrl } from "@/lib/verifactu/qr";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { SendAeatButton } from "./send-aeat-button";
+import { InvoiceActions } from "./invoice-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -56,20 +57,9 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
     .projects;
 
   // Group line items by VAT rate so we can show a proper desglose por tipo.
-  type LineRow = { quantity: number; unit_price: number; vat_rate: number; subtotal: number };
-  const safeLines = (items ?? []) as unknown as Array<LineRow & { id: string; description: string }>;
-  const vatBreakdown = Object.values(
-    safeLines.reduce<Record<string, { rate: number; base: number; tax: number }>>((acc, it) => {
-      const rate = Number(it.vat_rate) || 0;
-      const base = Number(it.subtotal) || 0;
-      const tax = base * (rate / 100);
-      const key = rate.toFixed(2);
-      acc[key] ??= { rate, base: 0, tax: 0 };
-      acc[key].base += base;
-      acc[key].tax += tax;
-      return acc;
-    }, {}),
-  ).sort((a, b) => a.rate - b.rate);
+  const vatBreakdown = buildVatBreakdown(
+    (items ?? []) as Array<{ vat_rate: number | string | null; subtotal: number | string | null }>,
+  );
 
   // Build QR if issued and has required data
   let qrDataUrl: string | null = null;
@@ -105,27 +95,27 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           { label: invoice.full_number as string },
         ]}
         actions={
-          <div className="flex items-center gap-2">
-            <Badge variant={STATUS_VARIANT[invoice.status as keyof typeof STATUS_VARIANT]}>
-              {invoice.status as string}
-            </Badge>
-            <Badge
-              variant={
-                VERIFACTU_VARIANT[invoice.verifactu_status as keyof typeof VERIFACTU_VARIANT]
-              }
-            >
-              Verifactu: {invoice.verifactu_status as string}
-            </Badge>
-            {invoice.status !== "draft" &&
-              invoice.verifactu_status !== "accepted" &&
-              invoice.verifactu_status !== "excluded" ? (
-              <SendAeatButton
-                invoiceId={invoice.id as string}
-                label={
-                  invoice.verifactu_status === "rejected" ? "Reintentar envío" : "Enviar a AEAT"
+          <div className="flex items-center gap-3">
+            <div className="flex flex-col items-end gap-1 mr-2">
+              <Badge variant={STATUS_VARIANT[invoice.status as keyof typeof STATUS_VARIANT]}>
+                {invoice.status as string}
+              </Badge>
+              <Badge
+                variant={
+                  VERIFACTU_VARIANT[invoice.verifactu_status as keyof typeof VERIFACTU_VARIANT]
                 }
-              />
-            ) : null}
+                className="text-[10px] py-0 h-4"
+              >
+                Verifactu: {invoice.verifactu_status as string}
+              </Badge>
+            </div>
+            <InvoiceActions
+              invoice={{
+                id: invoice.id as string,
+                status: invoice.status as string,
+                verifactu_status: invoice.verifactu_status as string,
+              }}
+            />
           </div>
         }
       />
@@ -310,8 +300,8 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
       {/* Legal footer (RD 1007/2023 — Verifactu) */}
       <p className="text-[11px] leading-relaxed text-muted-foreground border-t border-border pt-4">
         Factura verificable en la sede electrónica de la AEAT mediante el código QR. Sistema de
-        emisión conforme al Reglamento Verifactu (RD 1007/2023). Conserve esta factura conforme a
-        la normativa fiscal aplicable.
+        emisión conforme al Reglamento Verifactu (RD 1007/2023). Conserve esta factura conforme a la
+        normativa fiscal aplicable.
       </p>
     </div>
   );
