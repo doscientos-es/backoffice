@@ -217,18 +217,23 @@ export async function convertLeadToClientForm(formData: FormData): Promise<void>
 
 // ---------------- UPDATE STATUS ----------------
 
+const CLOSURE_STATUSES = ["lost", "not_interested"] as const;
+type ClosureStatus = (typeof CLOSURE_STATUSES)[number];
+const isClosureStatus = (s: string): s is ClosureStatus =>
+  (CLOSURE_STATUSES as readonly string[]).includes(s);
+
 const StatusInput = z
   .object({
     leadId: z.string().uuid(),
     status: z.enum(["new", "qualifying", "quoted", "won", "lost", "not_interested", "archived"]),
     lostReason: z.string().trim().min(1).max(500).optional(),
   })
-  .refine((v) => v.status === "lost" || !v.lostReason, {
-    message: "El motivo de pérdida solo aplica al estado 'lost'",
+  .refine((v) => isClosureStatus(v.status) || !v.lostReason, {
+    message: "El motivo solo aplica a estados de cierre",
     path: ["lostReason"],
   })
-  .refine((v) => v.status !== "lost" || !!v.lostReason, {
-    message: "Indica un motivo de pérdida",
+  .refine((v) => !isClosureStatus(v.status) || !!v.lostReason, {
+    message: "Indica un motivo de cierre",
     path: ["lostReason"],
   });
 
@@ -242,7 +247,7 @@ export async function updateLeadStatus(
   }
   const supabase = await createServerClient();
   const updates: Record<string, unknown> = { status: parsed.data.status };
-  if (parsed.data.status === "lost") {
+  if (isClosureStatus(parsed.data.status)) {
     updates.lost_reason = parsed.data.lostReason;
     updates.lost_at = new Date().toISOString();
   } else {

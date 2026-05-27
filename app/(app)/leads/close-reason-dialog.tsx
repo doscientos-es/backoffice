@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,22 +12,55 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
-const LOST_REASON_PRESETS = [
-  "Precio",
-  "Timing / Calendario",
-  "Eligió competencia",
-  "No es buen fit",
-  "Sin respuesta",
-  "Sin presupuesto",
-  "Duplicado",
-] as const;
+export type CloseReasonVariant = "lost" | "not_interested";
 
-export function LostReasonDialog({
+const VARIANT_COPY: Record<
+  CloseReasonVariant,
+  {
+    title: string;
+    description: (name: string) => string;
+    confirm: string;
+    presets: readonly string[];
+  }
+> = {
+  lost: {
+    title: "Marcar como perdido",
+    description: (name) => `¿Por qué se ha perdido ${name}?`,
+    confirm: "Marcar perdido",
+    presets: [
+      "Precio",
+      "Timing / Calendario",
+      "Eligió competencia",
+      "No es buen fit",
+      "Sin respuesta",
+      "Sin presupuesto",
+      "Duplicado",
+    ],
+  },
+  not_interested: {
+    title: "Marcar como no interesa",
+    description: (name) => `¿Por qué no interesa ${name}?`,
+    confirm: "Marcar no interesa",
+    presets: [
+      "No responde",
+      "Oferta inviable",
+      "Sin presupuesto",
+      "No es buen fit",
+      "Mal timing",
+      "Sin interés real",
+      "Duplicado",
+    ],
+  },
+};
+
+export function CloseReasonDialog({
   lead,
+  variant = "lost",
   onCancel,
   onConfirm,
 }: {
   lead: { id: string; name: string } | null;
+  variant?: CloseReasonVariant;
   onCancel: () => void;
   onConfirm: (reason: string) => void;
 }) {
@@ -37,6 +69,7 @@ export function LostReasonDialog({
 
   const reason = (selected ?? custom).trim();
   const open = !!lead;
+  const copy = VARIANT_COPY[variant];
 
   const reset = () => {
     setSelected(null);
@@ -55,13 +88,13 @@ export function LostReasonDialog({
     >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Marcar como perdido</DialogTitle>
+          <DialogTitle>{copy.title}</DialogTitle>
           <DialogDescription>
-            {lead ? `¿Por qué se ha perdido ${lead.name}?` : "Indica un motivo"}
+            {lead ? copy.description(lead.name) : "Indica un motivo"}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-wrap gap-1.5">
-          {LOST_REASON_PRESETS.map((r) => (
+          {copy.presets.map((r) => (
             <button
               key={r}
               type="button"
@@ -110,7 +143,7 @@ export function LostReasonDialog({
               reset();
             }}
           >
-            Marcar perdido
+            {copy.confirm}
           </Button>
         </div>
       </DialogContent>

@@ -4,7 +4,7 @@ import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Select } from "@/components/ui/select";
 import { useState } from "react";
 import { updateLeadStatus } from "../actions";
-import { LostReasonDialog } from "../lost-reason-dialog";
+import { CloseReasonDialog, type CloseReasonVariant } from "../close-reason-dialog";
 
 const OPTIONS = [
   { value: "new", label: "Nuevo" },
@@ -16,6 +16,11 @@ const OPTIONS = [
   { value: "archived", label: "Archivado" },
 ] as const;
 
+const CLOSURE_VARIANTS: Record<string, CloseReasonVariant> = {
+  lost: "lost",
+  not_interested: "not_interested",
+};
+
 export function LeadStatusSelect({
   leadId,
   status,
@@ -26,7 +31,7 @@ export function LeadStatusSelect({
   leadName: string;
 }) {
   const feedback = useFormFeedback();
-  const [pendingLost, setPendingLost] = useState<boolean>(false);
+  const [pendingClosure, setPendingClosure] = useState<CloseReasonVariant | null>(null);
 
   const commit = async (to: string, lostReason?: string) => {
     feedback.setPending();
@@ -43,8 +48,9 @@ export function LeadStatusSelect({
         className="h-8 w-40"
         onChange={async (e) => {
           const next = e.target.value;
-          if (next === "lost") {
-            setPendingLost(true);
+          const variant = CLOSURE_VARIANTS[next];
+          if (variant) {
+            setPendingClosure(variant);
             return;
           }
           commit(next);
@@ -58,17 +64,15 @@ export function LeadStatusSelect({
       </Select>
       <FormFeedback state={feedback.state} pendingLabel="Actualizando…" />
 
-      <LostReasonDialog
-        lead={pendingLost ? { id: leadId, name: leadName } : null}
-        onCancel={() => {
-          setPendingLost(false);
-          // Reset select value to previous status if possible, but Select is defaultValue
-          // For now, it stays at 'lost' but we didn't commit.
-          // Re-rendering or refreshing would fix it.
-        }}
+      <CloseReasonDialog
+        lead={pendingClosure ? { id: leadId, name: leadName } : null}
+        variant={pendingClosure ?? "lost"}
+        onCancel={() => setPendingClosure(null)}
         onConfirm={(reason) => {
-          setPendingLost(false);
-          commit("lost", reason);
+          if (!pendingClosure) return;
+          const next = pendingClosure;
+          setPendingClosure(null);
+          commit(next, reason);
         }}
       />
     </div>

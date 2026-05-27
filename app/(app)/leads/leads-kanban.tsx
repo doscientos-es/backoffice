@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { LostReasonDialog } from "./lost-reason-dialog";
+import { CloseReasonDialog, type CloseReasonVariant } from "./close-reason-dialog";
 import { LeadQuickView } from "./lead-quick-view";
 import { cn, formatEUR, relativeTime } from "@/lib/utils";
 import {
@@ -94,7 +94,9 @@ export function LeadsKanban({
     state.map((l) => (l.id === id ? { ...l, status } : l)),
   );
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [pendingLost, setPendingLost] = useState<{ id: string; name: string } | null>(null);
+  const [pendingClosure, setPendingClosure] = useState<
+    { id: string; name: string; variant: CloseReasonVariant } | null
+  >(null);
   const [quickViewId, setQuickViewId] = useState<string | null>(null);
   const feedback = useFormFeedback();
 
@@ -120,8 +122,8 @@ export function LeadsKanban({
     const current = optimistic.find((l) => l.id === id);
     if (!current || current.status === to) return;
 
-    if (to === "lost") {
-      setPendingLost({ id, name: current.name });
+    if (to === "lost" || to === "not_interested") {
+      setPendingClosure({ id, name: current.name, variant: to });
       return;
     }
     commitMove(id, to);
@@ -162,13 +164,15 @@ export function LeadsKanban({
         ))}
       </div>
       <DragOverlay>{active ? <Card lead={active} isOverlay /> : null}</DragOverlay>
-      <LostReasonDialog
-        lead={pendingLost}
-        onCancel={() => setPendingLost(null)}
+      <CloseReasonDialog
+        lead={pendingClosure ? { id: pendingClosure.id, name: pendingClosure.name } : null}
+        variant={pendingClosure?.variant ?? "lost"}
+        onCancel={() => setPendingClosure(null)}
         onConfirm={(reason) => {
-          if (!pendingLost) return;
-          commitMove(pendingLost.id, "lost", reason);
-          setPendingLost(null);
+          if (!pendingClosure) return;
+          const { id, variant } = pendingClosure;
+          setPendingClosure(null);
+          commitMove(id, variant, reason);
         }}
       />
       <LeadQuickView
@@ -200,65 +204,89 @@ function Column({
   isDragging?: boolean;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
+  const [pinned, setPinned] = useState(false);
   const total = sumEstimated(leads);
-  // Las columnas `compact` se renderizan estrechas hasta que el usuario
-  // pasa por encima (o las cruza con un drag). `isOver` fuerza la expansión;
-  // `isDragging` añade una pista visual sutil para señalar el drop-zone.
-  const isCollapsed = compact && !isOver;
+  // Estado lógico de colapso: solo aplica a columnas `compact` cuando el
+  // usuario no las ha fijado (`pinned`) y no hay drag encima (`isOver`).
+  // El comportamiento responsive se delega a Tailwind con prefijos `md:`,
+  // de modo que en < md la columna siempre se renderiza expandida.
+  const collapsed = compact && !isOver && !pinned;
   const dropHint = compact && isDragging && !isOver;
+  const togglePin = compact ? () => setPinned((p) => !p) : undefined;
   return (
     <div
       ref={setNodeRef}
       role="region"
       aria-label={`${label} · ${leads.length} lead${leads.length === 1 ? "" : "s"}`}
-      title={isCollapsed ? `${label} (${leads.length})` : undefined}
+      title={
+        collapsed
+          ? `${label} (${leads.length}) · click para fijar`
+          : pinned
+            ? "Click en la cabecera para colapsar"
+            : undefined
+      }
       className={cn(
-        "group/col relative flex h-full shrink-0 flex-col overflow-hidden rounded-xl ring-1 ring-foreground/10",
+        "group/col relative flex h-full w-72 shrink-0 flex-col overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10",
         "transition-[width,background-color,box-shadow] duration-200 ease-out motion-reduce:transition-none",
-        isCollapsed ? "w-11 cursor-pointer bg-muted/30 hover:w-72 hover:bg-card" : "w-72 bg-card",
-        isOver && "ring-2 ring-primary/50 bg-primary/5",
-        dropHint && "ring-dashed ring-primary/30 bg-primary/[0.03]",
+        collapsed && "md:w-11 md:cursor-pointer md:bg-muted/30 md:hover:w-72 md:hover:bg-card",
+        isOver && "bg-primary/5 ring-2 ring-primary/50",
+        dropHint && !isOver && "ring-dashed ring-primary/30",
       )}
     >
       <header
+        onClick={togglePin}
+        onKeyDown={(e) => {
+          if (!togglePin) return;
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            togglePin();
+          }
+        }}
+        role={togglePin ? "button" : undefined}
+        tabIndex={togglePin ? 0 : undefined}
+        aria-pressed={togglePin ? pinned : undefined}
         className={cn(
-          "flex shrink-0 border-b border-border",
-          isCollapsed
-            ? "flex-col items-center gap-2 px-1.5 py-2.5 group-hover/col:flex-row group-hover/col:items-center group-hover/col:justify-between group-hover/col:gap-1 group-hover/col:px-3"
-            : "flex-col gap-1 px-3 py-2.5",
+          "flex shrink-0 flex-col gap-1 border-b border-border px-3 py-2.5 outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+          compact && "select-none",
+          collapsed &&
+          "md:items-center md:gap-2 md:px-1.5 md:group-hover/col:flex-row md:group-hover/col:items-center md:group-hover/col:justify-between md:group-hover/col:gap-1 md:group-hover/col:px-3",
         )}
       >
         <div
           className={cn(
-            "flex items-center gap-2 min-w-0",
-            isCollapsed && "flex-col group-hover/col:flex-row",
+            "flex min-w-0 items-center gap-2",
+            collapsed && "md:flex-col md:group-hover/col:flex-row",
           )}
         >
-          <span className={cn("size-2 rounded-full shrink-0", dot)} aria-hidden />
+          <span className={cn("size-2 shrink-0 rounded-full", dot)} aria-hidden />
           <span
             className={cn(
-              "text-xs font-semibold tracking-wide truncate",
+              "truncate text-xs font-semibold tracking-wide",
               tone,
-              isCollapsed &&
-              "[writing-mode:vertical-rl] rotate-180 group-hover/col:[writing-mode:horizontal-tb] group-hover/col:rotate-0",
+              collapsed &&
+              "md:rotate-180 md:[writing-mode:vertical-rl] md:group-hover/col:rotate-0 md:group-hover/col:[writing-mode:horizontal-tb]",
             )}
           >
             {label}
           </span>
         </div>
-        <div className={cn("flex items-center", isCollapsed ? "" : "w-full justify-between")}>
-          {!isCollapsed && total > 0 && (
-            <p className="pl-4 text-[11px] tabular-nums text-muted-foreground">
+        <div
+          className={cn(
+            "flex w-full items-center justify-between gap-2",
+            collapsed && "md:w-auto md:justify-center md:group-hover/col:w-full md:group-hover/col:justify-between",
+          )}
+        >
+          {total > 0 && (
+            <p
+              className={cn(
+                "pl-4 text-[11px] tabular-nums text-muted-foreground",
+                collapsed && "md:hidden md:group-hover/col:block",
+              )}
+            >
               {formatEUR(total)}
             </p>
           )}
-          <Badge
-            variant="neutral"
-            className={cn(
-              "h-5 tabular-nums text-[11px]",
-              isCollapsed && "ml-auto group-hover/col:ml-0",
-            )}
-          >
+          <Badge variant="neutral" className="ml-auto h-5 text-[11px] tabular-nums">
             {leads.length}
           </Badge>
         </div>
@@ -266,7 +294,7 @@ function Column({
       <div
         className={cn(
           "flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-2",
-          isCollapsed && "hidden group-hover/col:flex",
+          collapsed && "md:hidden md:group-hover/col:flex",
         )}
       >
         {leads.length === 0 ? (
