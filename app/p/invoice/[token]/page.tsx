@@ -1,7 +1,8 @@
 import { LogoMark } from "@/components/branding";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { publicEnv, serverEnv } from "@/lib/env";
 import { buildVatBreakdown } from "@/lib/finance";
+import { INVOICE_STATUS } from "@/lib/status";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { buildQrDataUrl, buildQrUrl } from "@/lib/verifactu/qr";
@@ -10,22 +11,6 @@ import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Factura · doscientos", robots: { index: false, follow: false } };
-
-const STATUS_VARIANT = {
-  draft: "neutral",
-  issued: "info",
-  paid: "success",
-  overdue: "danger",
-  cancelled: "danger",
-} as const;
-
-const STATUS_LABEL: Record<string, string> = {
-  draft: "Borrador",
-  issued: "Emitida",
-  paid: "Pagada",
-  overdue: "Vencida",
-  cancelled: "Anulada",
-};
 
 type InvoiceItem = {
   id: string;
@@ -60,7 +45,6 @@ export default async function PortalInvoicePage({
   const { data: settings } = await admin.from("settings").select("*").eq("id", 1).maybeSingle();
 
   const client = (invoice as unknown as { clients: { name: string } | null }).clients;
-  const status = invoice.status as keyof typeof STATUS_VARIANT;
   const safeItems = (items ?? []) as unknown as InvoiceItem[];
 
   // Group line items by VAT rate so we can show a proper desglose por tipo.
@@ -106,7 +90,7 @@ export default async function PortalInvoicePage({
             <h1 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
               {invoice.full_number as string}
             </h1>
-            <Badge variant={STATUS_VARIANT[status]}>{STATUS_LABEL[status] ?? status}</Badge>
+            <StatusBadge meta={INVOICE_STATUS} value={invoice.status as string} />
           </div>
           <div className="flex flex-col items-start sm:items-end gap-0.5 text-xs text-zinc-500 dark:text-zinc-400">
             {invoice.issue_date ? (
@@ -258,8 +242,8 @@ export default async function PortalInvoicePage({
 
       {/* Fiscal info + QR */}
       {(invoice.idfact as string | null) ||
-      (invoice.verifactu_csv as string | null) ||
-      qrDataUrl ? (
+        (invoice.verifactu_csv as string | null) ||
+        qrDataUrl ? (
         <div className="border-t border-zinc-100 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-900/50 px-8 py-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex flex-col gap-1.5">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-0.5">

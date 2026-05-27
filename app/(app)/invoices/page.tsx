@@ -1,6 +1,7 @@
 import { ListPage } from "@/components/layout/list-page";
 import { StatCard } from "@/components/layout/stat-card";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { INVOICE_STATUS, VERIFACTU_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { AlertTriangle, CheckCircle2, Clock, ShieldAlert } from "lucide-react";
@@ -29,38 +30,6 @@ const VERIFACTU_FILTER_OPTIONS = [
 function escapeIlike(value: string): string {
   return value.replace(/[%_\\]/g, (m) => `\\${m}`);
 }
-
-const STATUS_VARIANT = {
-  draft: "neutral",
-  issued: "info",
-  paid: "success",
-  overdue: "danger",
-  cancelled: "danger",
-} as const;
-
-const STATUS_LABEL: Record<string, string> = {
-  draft: "Borrador",
-  issued: "Emitida",
-  paid: "Pagada",
-  overdue: "Vencida",
-  cancelled: "Anulada",
-};
-
-const VERIFACTU_VARIANT = {
-  pending: "warning",
-  submitted: "info",
-  accepted: "success",
-  rejected: "danger",
-  excluded: "neutral",
-} as const;
-
-const VERIFACTU_LABEL: Record<string, string> = {
-  pending: "Pendiente",
-  submitted: "Enviada",
-  accepted: "Aceptada",
-  rejected: "Rechazada",
-  excluded: "Excluida",
-};
 
 export default async function InvoicesPage({
   searchParams,
@@ -184,27 +153,23 @@ export default async function InvoicesPage({
         headers={["Nº", "IDFACT", "Estado", "Verifactu", "Importe", "Emisión", "Vencimiento"]}
         align={["left", "left", "left", "left", "right", "left", "left"]}
         rows={
-          data?.map((i) => {
-            const s = i.status as keyof typeof STATUS_VARIANT;
-            const v = i.verifactu_status as keyof typeof VERIFACTU_VARIANT;
-            return {
-              id: i.id as string,
-              href: `/invoices/${i.id}`,
-              cells: [
-                i.full_number as string,
-                (i.idfact as string | null) ?? null,
-                <Badge key="status" variant={STATUS_VARIANT[s]}>
-                  {STATUS_LABEL[s] ?? s}
-                </Badge>,
-                <Badge key="verifactu" variant={VERIFACTU_VARIANT[v]}>
-                  {VERIFACTU_LABEL[v] ?? v}
-                </Badge>,
-                formatEUR(i.total as number),
-                formatDate(i.issue_date as string),
-                formatDate(i.due_date as string | null),
-              ],
-            };
-          }) ?? []
+          data?.map((i) => ({
+            id: i.id as string,
+            href: `/invoices/${i.id}`,
+            cells: [
+              i.full_number as string,
+              (i.idfact as string | null) ?? null,
+              <StatusBadge key="status" meta={INVOICE_STATUS} value={i.status as string} />,
+              <StatusBadge
+                key="verifactu"
+                meta={VERIFACTU_STATUS}
+                value={i.verifactu_status as string}
+              />,
+              formatEUR(i.total as number),
+              formatDate(i.issue_date as string),
+              formatDate(i.due_date as string | null),
+            ],
+          })) ?? []
         }
       />
     </div>

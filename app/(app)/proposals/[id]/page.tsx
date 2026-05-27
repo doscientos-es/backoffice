@@ -1,10 +1,11 @@
 import { BackLink } from "@/components/layout/back-link";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
 import { isAIEnabled } from "@/lib/env";
+import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
@@ -15,24 +16,6 @@ import { ProposalSpecs, type ProposalSpec } from "./proposal-specs";
 import { SendPreviewButton } from "./send-preview-button";
 
 export const dynamic = "force-dynamic";
-
-const STATUS_VARIANT = {
-  draft: "neutral",
-  sent: "info",
-  viewed: "warning",
-  accepted: "success",
-  rejected: "danger",
-  expired: "danger",
-} as const;
-
-const STATUS_LABEL: Record<string, string> = {
-  draft: "Borrador",
-  sent: "Enviada",
-  viewed: "Vista",
-  accepted: "Aceptada",
-  rejected: "Rechazada",
-  expired: "Expirada",
-};
 
 export default async function ProposalDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -81,7 +64,7 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
     (clientFull as unknown as { clients: { email: string | null } | null } | null)?.clients
       ?.email ?? null;
 
-  const status = proposal.status as keyof typeof STATUS_VARIANT;
+  const status = proposal.status as ProposalStatus;
   const locked = status === "accepted" || status === "rejected";
 
   const editableItems: EditableItem[] = ((items ?? []) as unknown as EditableItem[]).map((it) => ({
@@ -106,9 +89,7 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
         back={<BackLink href="/proposals" label="Volver a propuestas" />}
         actions={
           <div className="flex items-center gap-2">
-            <Badge variant={STATUS_VARIANT[proposal.status as keyof typeof STATUS_VARIANT]}>
-              {STATUS_LABEL[proposal.status as string] ?? (proposal.status as string)}
-            </Badge>
+            <StatusBadge meta={PROPOSAL_STATUS} value={status} />
             {status === "accepted" ? <GenerateInvoiceButton proposalId={id} /> : null}
           </div>
         }
@@ -188,9 +169,7 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
           <CardContent>
             <DetailGrid>
               <DetailRow label="Estado">
-                <Badge variant={STATUS_VARIANT[status]}>
-                  {STATUS_LABEL[status] ?? status}
-                </Badge>
+                <StatusBadge meta={PROPOSAL_STATUS} value={status} />
               </DetailRow>
               <DetailRow label="Cliente">
                 {client ? (

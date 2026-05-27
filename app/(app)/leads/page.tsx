@@ -7,7 +7,7 @@ import { isAIEnabled } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import { relativeTime } from "@/lib/utils";
-import { Plus } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
 import Link from "next/link";
 import { type FastInteraction, LeadFastActions } from "./lead-fast-actions";
 import { type KanbanLead, LeadsKanban } from "./leads-kanban";
@@ -179,17 +179,18 @@ export default async function LeadsPage({
                   {enrichedLeads.map((l) => (
                     <tr
                       key={l.id}
-                      className="group transition-colors hover:bg-muted/30"
+                      className="group transition-colors hover:bg-muted/40"
                     >
                       <td className="px-5 py-3">
                         <Link
                           href={`/leads/${l.id}`}
-                          className="flex items-center gap-2.5"
+                          className="inline-flex items-center gap-2.5"
                         >
                           <Initials name={l.name} />
-                          <span className="font-medium group-hover:text-primary transition-colors truncate max-w-40">
+                          <span className="font-medium group-hover:text-primary transition-colors truncate max-w-40 underline-offset-2 group-hover:underline">
                             {l.name}
                           </span>
+                          <ArrowRight className="size-3.5 shrink-0 opacity-0 -translate-x-1 transition-all group-hover:opacity-60 group-hover:translate-x-0" />
                         </Link>
                       </td>
                       <td className="px-5 py-3 text-muted-foreground">
@@ -222,6 +223,17 @@ export default async function LeadsPage({
                       </td>
                     </tr>
                   ))}
+                  <tr>
+                    <td colSpan={6} className="px-2 py-1.5">
+                      <Link
+                        href="/leads/new"
+                        className="flex w-full items-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+                      >
+                        <Plus className="size-3.5 shrink-0" />
+                        Añadir lead
+                      </Link>
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>

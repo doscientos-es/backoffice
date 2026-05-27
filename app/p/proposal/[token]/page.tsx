@@ -1,8 +1,9 @@
 import { LogoMark } from "@/components/branding";
-import { Badge } from "@/components/ui/badge";
 import { Markdown } from "@/components/ui/markdown";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { getCurrentUser } from "@/lib/auth";
 import { scopedLogger } from "@/lib/logger";
+import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { FileText } from "lucide-react";
@@ -16,24 +17,6 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Propuesta · doscientos",
   robots: { index: false, follow: false },
-};
-
-const STATUS_VARIANT = {
-  draft: "neutral",
-  sent: "info",
-  viewed: "warning",
-  accepted: "success",
-  rejected: "danger",
-  expired: "danger",
-} as const;
-
-const STATUS_LABEL: Record<string, string> = {
-  draft: "Borrador",
-  sent: "Pendiente",
-  viewed: "Vista",
-  accepted: "Aceptada",
-  rejected: "Rechazada",
-  expired: "Expirada",
 };
 
 type ProposalItem = {
@@ -108,7 +91,7 @@ export default async function PortalProposalPage({
   }
 
   const client = (proposal as unknown as { clients: { name: string } | null }).clients;
-  const status = proposal.status as keyof typeof STATUS_VARIANT;
+  const status = proposal.status as ProposalStatus;
   const responded = status === "accepted" || status === "rejected";
   const safeItems = (items ?? []) as unknown as ProposalItem[];
   const safeSpecs = (specs ?? []) as unknown as Array<{
@@ -140,7 +123,7 @@ export default async function PortalProposalPage({
               <h1 className="text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
                 {proposal.title as string}
               </h1>
-              <Badge variant={STATUS_VARIANT[status]}>{STATUS_LABEL[status] ?? status}</Badge>
+              <StatusBadge meta={PROPOSAL_STATUS} value={status} />
             </div>
             {proposal.valid_until ? (
               <p className="text-xs text-zinc-500 dark:text-zinc-400">

@@ -84,6 +84,8 @@ export default async function InternalDocsPage({
           <Link href="/internal-docs/new">Subir primer documento</Link>
         </Button>
       }
+      addHref="/internal-docs/new"
+      addLabel="Subir documento"
       headers={["Nombre", "Categoría", "Tamaño", "Visibilidad", "Subido"]}
       rows={
         data?.map((d) => ({

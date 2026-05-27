@@ -234,6 +234,8 @@ export default async function TasksPage({
           </Link>
         </Button>
       }
+      addHref="/tasks/new"
+      addLabel="Nueva tarea"
       headers={["Título", "Proyecto", "Hito", "Estado", "Prioridad", "Asignada", "Vence"]}
       rows={rows}
     />

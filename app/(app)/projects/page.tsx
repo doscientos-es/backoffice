@@ -60,6 +60,8 @@ export default async function ProjectsPage({
       searchPlaceholder="Buscar por nombre…"
       filters={[{ key: "status", label: "Estado", options: STATUS_OPTIONS }]}
       pagination={{ page, pageSize: PAGE_SIZE, total: count ?? 0 }}
+      addHref="/projects/new"
+      addLabel="Nuevo proyecto"
       actions={
         <Button asChild size="sm">
           <Link href="/projects/new">Nuevo</Link>

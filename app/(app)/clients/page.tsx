@@ -46,6 +46,8 @@ export default async function ClientsPage({
       searchKey="q"
       searchPlaceholder="Buscar por nombre, NIF o email…"
       pagination={{ page, pageSize: PAGE_SIZE, total: count ?? 0 }}
+      addHref="/clients/new"
+      addLabel="Nuevo cliente"
       actions={
         <Button asChild size="sm">
           <Link href="/clients/new">Nuevo</Link>

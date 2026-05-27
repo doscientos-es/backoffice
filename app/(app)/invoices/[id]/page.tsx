@@ -1,9 +1,10 @@
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
 import { buildVatBreakdown } from "@/lib/finance";
+import { INVOICE_STATUS, VERIFACTU_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { buildQrDataUrl, buildQrUrl } from "@/lib/verifactu/qr";
@@ -13,22 +14,6 @@ import { notFound } from "next/navigation";
 import { InvoiceActions } from "./invoice-actions";
 
 export const dynamic = "force-dynamic";
-
-const STATUS_VARIANT = {
-  draft: "neutral",
-  issued: "info",
-  paid: "success",
-  overdue: "danger",
-  cancelled: "danger",
-} as const;
-
-const VERIFACTU_VARIANT = {
-  pending: "warning",
-  submitted: "info",
-  accepted: "success",
-  rejected: "danger",
-  excluded: "neutral",
-} as const;
 
 export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -97,17 +82,13 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         actions={
           <div className="flex items-center gap-3">
             <div className="flex flex-col items-end gap-1 mr-2">
-              <Badge variant={STATUS_VARIANT[invoice.status as keyof typeof STATUS_VARIANT]}>
-                {invoice.status as string}
-              </Badge>
-              <Badge
-                variant={
-                  VERIFACTU_VARIANT[invoice.verifactu_status as keyof typeof VERIFACTU_VARIANT]
-                }
+              <StatusBadge meta={INVOICE_STATUS} value={invoice.status as string} />
+              <StatusBadge
+                meta={VERIFACTU_STATUS}
+                value={invoice.verifactu_status as string}
                 className="text-[10px] py-0 h-4"
-              >
-                Verifactu: {invoice.verifactu_status as string}
-              </Badge>
+                labelPrefix="Verifactu: "
+              />
             </div>
             <InvoiceActions
               invoice={{

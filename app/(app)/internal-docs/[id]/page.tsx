@@ -3,14 +3,19 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DocPreview } from "@/components/ui/doc-preview";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { requireUser } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 import { Download } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { deleteInternalDoc } from "../actions";
+
+/** Preview TTL: 10 min — long enough to browse the document comfortably. */
+const PREVIEW_TTL = 600;
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +44,7 @@ export default async function InternalDocDetailPage({
   const { data: doc } = await supabase
     .from("internal_documents")
     .select(
-      "id, name, description, category, mime_type, size_bytes, version, visibility, effective_date, expires_at, created_at, uploaded_by, deleted_at, team_members:uploaded_by(name)",
+      "id, name, description, category, mime_type, size_bytes, storage_path, version, visibility, effective_date, expires_at, created_at, uploaded_by, deleted_at, team_members:uploaded_by(name)",
     )
     .eq("id", id)
     .is("deleted_at", null)
@@ -55,6 +60,16 @@ export default async function InternalDocDetailPage({
 
   const uploaderName =
     (doc as unknown as { team_members: { name: string } | null }).team_members?.name ?? "—";
+
+  const storagePath = doc.storage_path as string | null;
+  let previewUrl: string | null = null;
+  if (storagePath) {
+    const admin = createAdminClient();
+    const { data: signed } = await admin.storage
+      .from("internal-docs")
+      .createSignedUrl(storagePath, PREVIEW_TTL);
+    previewUrl = signed?.signedUrl ?? null;
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -74,50 +89,65 @@ export default async function InternalDocDetailPage({
         }
       />
 
-      <Card className="max-w-2xl">
-        <CardHeader>
-          <CardTitle>Detalles</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <DetailGrid>
-            <DetailRow label="Categoría">
-              {CATEGORY_LABELS[(doc.category as string) ?? "other"]}
-            </DetailRow>
-            <DetailRow label="Visibilidad">
-              {isAdminsOnly ? (
-                <Badge variant="warning">Solo admins</Badge>
-              ) : (
-                <Badge variant="neutral">Todo el equipo</Badge>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,_28rem)_1fr] items-start">
+        <Card>
+          <CardHeader>
+            <CardTitle>Detalles</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DetailGrid>
+              <DetailRow label="Categoría">
+                {CATEGORY_LABELS[(doc.category as string) ?? "other"]}
+              </DetailRow>
+              <DetailRow label="Visibilidad">
+                {isAdminsOnly ? (
+                  <Badge variant="warning">Solo admins</Badge>
+                ) : (
+                  <Badge variant="neutral">Todo el equipo</Badge>
+                )}
+              </DetailRow>
+              <DetailRow label="Tipo">
+                {(doc.mime_type as string | null) ?? "—"}
+              </DetailRow>
+              <DetailRow label="Tamaño">
+                {doc.size_bytes ? `${Math.ceil(Number(doc.size_bytes) / 1024)} KB` : "—"}
+              </DetailRow>
+              <DetailRow label="Versión">v{doc.version as number}</DetailRow>
+              {doc.effective_date && (
+                <DetailRow label="Vigencia desde">
+                  {formatDate(doc.effective_date as string)}
+                </DetailRow>
               )}
-            </DetailRow>
-            <DetailRow label="Tipo">
-              {(doc.mime_type as string | null) ?? "—"}
-            </DetailRow>
-            <DetailRow label="Tamaño">
-              {doc.size_bytes ? `${Math.ceil(Number(doc.size_bytes) / 1024)} KB` : "—"}
-            </DetailRow>
-            <DetailRow label="Versión">v{doc.version as number}</DetailRow>
-            {doc.effective_date && (
-              <DetailRow label="Vigencia desde">
-                {formatDate(doc.effective_date as string)}
-              </DetailRow>
-            )}
-            {doc.expires_at && (
-              <DetailRow label="Expira">
-                {formatDate(doc.expires_at as string)}
-              </DetailRow>
-            )}
-            <DetailRow label="Subido por">{uploaderName}</DetailRow>
-            <DetailRow label="Fecha">{formatDate(doc.created_at as string)}</DetailRow>
-          </DetailGrid>
+              {doc.expires_at && (
+                <DetailRow label="Expira">
+                  {formatDate(doc.expires_at as string)}
+                </DetailRow>
+              )}
+              <DetailRow label="Subido por">{uploaderName}</DetailRow>
+              <DetailRow label="Fecha">{formatDate(doc.created_at as string)}</DetailRow>
+            </DetailGrid>
 
-          {doc.description && (
-            <p className="mt-4 text-sm text-muted-foreground whitespace-pre-wrap">
-              {doc.description as string}
-            </p>
-          )}
-        </CardContent>
-      </Card>
+            {doc.description && (
+              <p className="mt-4 text-sm text-muted-foreground whitespace-pre-wrap">
+                {doc.description as string}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Preview</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0 overflow-hidden rounded-b-lg">
+            <DocPreview
+              url={previewUrl}
+              mimeType={doc.mime_type as string | null}
+              name={doc.name as string}
+            />
+          </CardContent>
+        </Card>
+      </div>
 
       {isAdmin && (
         <Card className="max-w-2xl border-destructive/30">
