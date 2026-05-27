@@ -64,6 +64,7 @@ export function roundCurrency(x: number): number {
 
 /** Shape of an editable line item (proposal / invoice). */
 export type LineItem = {
+  id: string;
   description: string;
   quantity: number;
   unit_price: number;
@@ -71,7 +72,7 @@ export type LineItem = {
 };
 
 /** Sensible default line used when adding rows in editors. */
-export const EMPTY_LINE_ITEM: LineItem = {
+export const EMPTY_LINE_ITEM: Omit<LineItem, "id"> = {
   description: "",
   quantity: 1,
   unit_price: 0,

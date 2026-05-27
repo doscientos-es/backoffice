@@ -32,8 +32,8 @@ export function StatusBadge<T extends string>({
 }: StatusBadgeProps<T>) {
   const entry = value
     ? (meta as Record<string, { label: string; variant: ComponentProps<typeof Badge>["variant"] }>)[
-    value
-    ]
+        value
+      ]
     : undefined;
   const label = entry?.label ?? fallbackLabel ?? value ?? "—";
   return (

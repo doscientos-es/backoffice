@@ -10,8 +10,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { Input } from "@/components/ui/input";
 import { FormRow } from "@/components/ui/form-row";
+import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { CalendarClock } from "lucide-react";
@@ -91,10 +91,6 @@ const SCHEDULE_PRESETS: { label: string; minutes: number }[] = [
   { label: "En 3 días", minutes: 60 * 24 * 3 },
   { label: "En 1 semana", minutes: 60 * 24 * 7 },
 ];
-
-
-
-
 
 // ---------------- SCHEDULE (reminder) ----------------
 
@@ -192,4 +188,3 @@ function ScheduleDialog({ leadId, leadName }: { leadId: string; leadName: string
     </ActionDialog>
   );
 }
-

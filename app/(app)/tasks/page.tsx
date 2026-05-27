@@ -2,12 +2,7 @@ import { ListPage } from "@/components/layout/list-page";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
-import {
-  TASK_PRIORITY,
-  TASK_STATUS,
-  type TaskPriority,
-  type TaskStatus,
-} from "@/lib/status";
+import { TASK_PRIORITY, TASK_STATUS, type TaskPriority, type TaskStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 import { Plus } from "lucide-react";

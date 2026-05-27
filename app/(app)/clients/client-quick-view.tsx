@@ -11,7 +11,7 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { relativeTime } from "@/lib/utils";
-import { ArrowUpRight, Building2, Mail, Phone, User, X } from "lucide-react";
+import { ArrowUpRight, Mail, Phone, User, X } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -100,11 +100,7 @@ function Heading({ children }: { children: ReactNode }) {
   );
 }
 
-function Row({
-  icon,
-  href,
-  children,
-}: { icon: ReactNode; href?: string; children: ReactNode }) {
+function Row({ icon, href, children }: { icon: ReactNode; href?: string; children: ReactNode }) {
   const inner = (
     <>
       <span className="text-muted-foreground">{icon}</span>

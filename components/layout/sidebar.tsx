@@ -16,6 +16,7 @@ import {
   FolderKanban,
   Home,
   Inbox,
+  Megaphone,
   Receipt,
   Settings,
   Users,
@@ -28,6 +29,7 @@ import { version } from "../../package.json";
 const NAV = [
   { href: "/inicio", label: "Inicio", icon: Home },
   { href: "/leads", label: "Leads", icon: Inbox },
+  { href: "/marketing", label: "Marketing", icon: Megaphone },
   { href: "/clients", label: "Clientes", icon: Users },
   { href: "/projects", label: "Proyectos", icon: FolderKanban },
   { href: "/proposals", label: "Propuestas", icon: FileSignature },

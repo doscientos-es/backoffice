@@ -72,9 +72,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         ]}
         actions={
           <div className="flex items-center gap-2">
-            <GitHubModeBadge
-              mode={(project.github_sync_mode as GitHubSyncMode | null) ?? "none"}
-            />
+            <GitHubModeBadge mode={(project.github_sync_mode as GitHubSyncMode | null) ?? "none"} />
             <StatusBadge meta={PROJECT_STATUS} value={project.status as string} />
             {canEdit ? (
               <ProjectEditDialog
@@ -86,11 +84,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                   starts_at: (project.starts_at as string | null) ?? null,
                   ends_at: (project.ends_at as string | null) ?? null,
                   description: (project.description as string | null) ?? null,
-                  github_sync_mode:
-                    (project.github_sync_mode as GitHubSyncMode | null) ?? "none",
+                  github_sync_mode: (project.github_sync_mode as GitHubSyncMode | null) ?? "none",
                   github_repo: (project.github_repo as string | null) ?? null,
-                  github_installation_id:
-                    (project.github_installation_id as number | null) ?? null,
+                  github_installation_id: (project.github_installation_id as number | null) ?? null,
                   github_auto_sync: (project.github_auto_sync as boolean | null) ?? true,
                 }}
                 clients={clients ?? []}

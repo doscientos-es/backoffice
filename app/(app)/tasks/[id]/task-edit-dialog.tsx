@@ -99,11 +99,7 @@ export function TaskEditDialog({ task, members, milestones }: Props) {
           />
           <div className="flex items-center justify-end gap-3 border-t border-border pt-3">
             <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
-            <SubmitButton
-              loading={feedback.pending}
-              disabled={!isDirty}
-              pendingLabel="Guardando…"
-            >
+            <SubmitButton loading={feedback.pending} disabled={!isDirty} pendingLabel="Guardando…">
               Guardar cambios
             </SubmitButton>
           </div>

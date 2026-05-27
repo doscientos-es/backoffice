@@ -70,12 +70,27 @@ export default async function NewMilestonePage({
               </FormRow>
             </div>
             <FormRow label="Importe (€)" htmlFor="amount">
-              <Input id="amount" name="amount" type="number" step="0.01" min="0" placeholder="0.00" />
+              <Input
+                id="amount"
+                name="amount"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+              />
             </FormRow>
             <FormRow label="Color" htmlFor="color">
               <div className="flex items-center gap-2">
-                <input id="color" name="color" type="color" defaultValue="#6366f1" className="h-8 w-14 cursor-pointer rounded border border-border" />
-                <span className="text-xs text-muted-foreground">Color del hito en el calendario</span>
+                <input
+                  id="color"
+                  name="color"
+                  type="color"
+                  defaultValue="#6366f1"
+                  className="h-8 w-14 cursor-pointer rounded border border-border"
+                />
+                <span className="text-xs text-muted-foreground">
+                  Color del hito en el calendario
+                </span>
               </div>
             </FormRow>
             <FormRow label="Tipo" htmlFor="is_payment_milestone">

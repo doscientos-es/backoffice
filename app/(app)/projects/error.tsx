@@ -24,7 +24,9 @@ export default function ProjectsError({
         {error.digest && <p className="text-xs text-muted-foreground">ID: {error.digest}</p>}
       </div>
       <div className="flex gap-2">
-        <Button onClick={reset} size="sm">Reintentar</Button>
+        <Button onClick={reset} size="sm">
+          Reintentar
+        </Button>
         <Button variant="outline" size="sm" asChild>
           <Link href="/inicio">Ir al inicio</Link>
         </Button>

@@ -70,54 +70,57 @@ export function useAutosave<T>({
     };
   }, []);
 
-  const flush = useCallback(async (snapshot: string, payload: T) => {
-    if (inFlightRef.current) {
-      // A save is already running; remember the latest snapshot and retry once it finishes.
-      pendingSnapshotRef.current = snapshot;
-      return;
-    }
-    inFlightRef.current = true;
-    setState((s) => ({ ...s, status: "saving", error: null }));
-
-    if (storageKey && typeof window !== "undefined") {
-      try {
-        window.localStorage.setItem(storageKey, snapshot);
-      } catch {
-        // Quota exceeded or storage disabled — ignore, autosave still works in memory.
+  const flush = useCallback(
+    async (snapshot: string, payload: T) => {
+      if (inFlightRef.current) {
+        // A save is already running; remember the latest snapshot and retry once it finishes.
+        pendingSnapshotRef.current = snapshot;
+        return;
       }
-    }
+      inFlightRef.current = true;
+      setState((s) => ({ ...s, status: "saving", error: null }));
 
-    let errorMessage: string | null = null;
-    try {
-      const result = await onSaveRef.current(payload);
-      if (result && "error" in result && result.error) errorMessage = result.error;
-    } catch (err) {
-      errorMessage = err instanceof Error ? err.message : "Error guardando";
-    }
+      if (storageKey && typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem(storageKey, snapshot);
+        } catch {
+          // Quota exceeded or storage disabled — ignore, autosave still works in memory.
+        }
+      }
 
-    inFlightRef.current = false;
-    if (!mountedRef.current) return;
-
-    if (errorMessage) {
-      setState({ status: "error", savedAt: null, error: errorMessage });
-      return;
-    }
-
-    lastSavedSnapshotRef.current = snapshot;
-    setState({ status: "saved", savedAt: Date.now(), error: null });
-    if (storageKey && typeof window !== "undefined") {
+      let errorMessage: string | null = null;
       try {
-        window.localStorage.removeItem(storageKey);
-      } catch {}
-    }
+        const result = await onSaveRef.current(payload);
+        if (result && "error" in result && result.error) errorMessage = result.error;
+      } catch (err) {
+        errorMessage = err instanceof Error ? err.message : "Error guardando";
+      }
 
-    // If new edits arrived while we were saving, schedule another flush.
-    const next = pendingSnapshotRef.current;
-    pendingSnapshotRef.current = null;
-    if (next && next !== lastSavedSnapshotRef.current) {
-      void flush(next, payload);
-    }
-  }, [storageKey]);
+      inFlightRef.current = false;
+      if (!mountedRef.current) return;
+
+      if (errorMessage) {
+        setState({ status: "error", savedAt: null, error: errorMessage });
+        return;
+      }
+
+      lastSavedSnapshotRef.current = snapshot;
+      setState({ status: "saved", savedAt: Date.now(), error: null });
+      if (storageKey && typeof window !== "undefined") {
+        try {
+          window.localStorage.removeItem(storageKey);
+        } catch {}
+      }
+
+      // If new edits arrived while we were saving, schedule another flush.
+      const next = pendingSnapshotRef.current;
+      pendingSnapshotRef.current = null;
+      if (next && next !== lastSavedSnapshotRef.current) {
+        void flush(next, payload);
+      }
+    },
+    [storageKey],
+  );
 
   useEffect(() => {
     if (!enabled) return;

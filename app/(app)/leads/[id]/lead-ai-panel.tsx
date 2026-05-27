@@ -116,12 +116,7 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData }: Props) {
       {error && <p className="text-xs text-destructive">{error}</p>}
 
       <div className="flex justify-end">
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={handleSummarize}
-          disabled={loading}
-        >
+        <Button size="sm" variant="outline" onClick={handleSummarize} disabled={loading}>
           <Sparkles className="h-3.5 w-3.5" />
           {loading ? "Analizando…" : hasSummary ? "Actualizar análisis" : "Generar análisis"}
         </Button>

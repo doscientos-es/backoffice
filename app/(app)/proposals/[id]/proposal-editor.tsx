@@ -2,6 +2,7 @@
 
 import { LineItemsTable } from "@/components/finance/line-items-table";
 import { AutosaveIndicator } from "@/components/ui/autosave-indicator";
+import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { EMPTY_LINE_ITEM, type LineItem } from "@/lib/finance";
@@ -44,7 +45,9 @@ export function ProposalEditor({
   const [intro, setIntro] = useState(initialIntro ?? "");
   const [terms, setTerms] = useState(initialTerms ?? "");
   const [items, setItems] = useState<EditableItem[]>(
-    initialItems.length > 0 ? initialItems : [{ ...EMPTY_LINE_ITEM }],
+    initialItems.length > 0
+      ? initialItems.map((it) => ({ ...it, id: it.id || crypto.randomUUID() }))
+      : [{ ...EMPTY_LINE_ITEM, id: crypto.randomUUID() } as EditableItem],
   );
 
   const payload = useMemo(
@@ -94,36 +97,37 @@ export function ProposalEditor({
         </div>
 
         <aside className="flex flex-col gap-3">
-          <label className="flex flex-col gap-1.5 text-xs font-medium">
-            Válida hasta
+          <FormRow label="Válida hasta" htmlFor="valid-until">
             <Input
+              id="valid-until"
               type="date"
               value={validUntil ?? ""}
               onChange={(e) => setValidUntil(e.target.value)}
               disabled={locked}
             />
-          </label>
-          <label className="flex flex-col gap-1.5 text-xs font-medium">
-            Notas
+          </FormRow>
+          <FormRow label="Notas" htmlFor="notes">
             <Textarea
+              id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               disabled={locked}
               rows={6}
               placeholder="Notas internas o para el cliente…"
             />
-          </label>
+          </FormRow>
         </aside>
       </div>
 
       {/* Markdown blocks rendered above/below the items in the portal & email */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <label className="flex flex-col gap-1.5 text-xs font-medium">
-          Introducción
-          <span className="font-normal text-muted-foreground">
-            Markdown que se muestra <em>antes</em> de la tabla de líneas en el portal del cliente.
-          </span>
+        <FormRow
+          label="Introducción"
+          htmlFor="intro"
+          hint="Markdown que se muestra antes de la tabla de líneas en el portal del cliente."
+        >
           <Textarea
+            id="intro"
             value={intro}
             onChange={(e) => setIntro(e.target.value)}
             disabled={locked}
@@ -131,13 +135,14 @@ export function ProposalEditor({
             className="font-mono text-xs"
             placeholder={"## Contexto\n\nBreve resumen del proyecto, objetivos y enfoque."}
           />
-        </label>
-        <label className="flex flex-col gap-1.5 text-xs font-medium">
-          Condiciones
-          <span className="font-normal text-muted-foreground">
-            Markdown que se muestra <em>después</em> del total. Forma de pago, validez, etc.
-          </span>
+        </FormRow>
+        <FormRow
+          label="Condiciones"
+          htmlFor="terms"
+          hint="Markdown que se muestra después del total. Forma de pago, validez, etc."
+        >
           <Textarea
+            id="terms"
             value={terms}
             onChange={(e) => setTerms(e.target.value)}
             disabled={locked}
@@ -147,7 +152,7 @@ export function ProposalEditor({
               "## Condiciones\n\n- 50% al inicio, 50% a la entrega.\n- Vigencia: 30 días."
             }
           />
-        </label>
+        </FormRow>
       </div>
     </div>
   );

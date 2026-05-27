@@ -1,9 +1,9 @@
 "use client";
 
+import type { AutosaveStatus } from "@/lib/hooks/use-autosave";
 import { cn } from "@/lib/utils";
 import { AlertCircle, Check, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { AutosaveStatus } from "@/lib/hooks/use-autosave";
 
 type AutosaveIndicatorProps = {
   status: AutosaveStatus;

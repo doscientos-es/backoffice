@@ -26,10 +26,10 @@ export default async function NewTaskPage({
       supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
       presetProject
         ? supabase
-          .from("milestones")
-          .select("id, name")
-          .eq("project_id", presetProject)
-          .order("due_date", { ascending: true, nullsFirst: false })
+            .from("milestones")
+            .select("id, name")
+            .eq("project_id", presetProject)
+            .order("due_date", { ascending: true, nullsFirst: false })
         : Promise.resolve({ data: [] as { id: string; name: string }[] }),
     ]);
 

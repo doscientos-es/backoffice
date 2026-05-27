@@ -2,8 +2,6 @@
 
 import { Badge } from "@/components/ui/badge";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { CloseReasonDialog, type CloseReasonVariant } from "./close-reason-dialog";
-import { LeadQuickView } from "./lead-quick-view";
 import { cn, formatEUR, relativeTime } from "@/lib/utils";
 import {
   DndContext,
@@ -20,7 +18,9 @@ import { AlertTriangle, PanelRightOpen, Plus } from "lucide-react";
 import Link from "next/link";
 import { useOptimistic, useState, useTransition } from "react";
 import { updateLeadStatus } from "./actions";
+import { CloseReasonDialog, type CloseReasonVariant } from "./close-reason-dialog";
 import type { FastLead } from "./lead-fast-actions";
+import { LeadQuickView } from "./lead-quick-view";
 
 export type KanbanLead = FastLead & {
   company: string | null;
@@ -32,14 +32,7 @@ export type KanbanLead = FastLead & {
   estimated_value: number | null;
 };
 
-type LeadStatus =
-  | "new"
-  | "qualifying"
-  | "quoted"
-  | "won"
-  | "lost"
-  | "not_interested"
-  | "archived";
+type LeadStatus = "new" | "qualifying" | "quoted" | "won" | "lost" | "not_interested" | "archived";
 
 const STALE_DAYS = 3;
 const STALE_MS = STALE_DAYS * 24 * 60 * 60 * 1000;
@@ -72,12 +65,45 @@ type ColumnDef = {
 
 const COLUMNS: ColumnDef[] = [
   { id: "new", label: "Nuevo", tone: "text-sky-700 dark:text-sky-300", dot: "bg-sky-500" },
-  { id: "qualifying", label: "Cualificando", tone: "text-amber-700 dark:text-amber-300", dot: "bg-amber-500" },
-  { id: "quoted", label: "Presupuestado", tone: "text-amber-700 dark:text-amber-300", dot: "bg-amber-400" },
-  { id: "won", label: "Ganado", tone: "text-emerald-700 dark:text-emerald-300", dot: "bg-emerald-500" },
-  { id: "lost", label: "Perdido", tone: "text-red-700 dark:text-red-300", dot: "bg-red-500", compact: true },
-  { id: "not_interested", label: "No interesa", tone: "text-zinc-700 dark:text-zinc-300", dot: "bg-zinc-400", compact: true },
-  { id: "archived", label: "Archivado", tone: "text-muted-foreground", dot: "bg-muted-foreground/40", compact: true },
+  {
+    id: "qualifying",
+    label: "Cualificando",
+    tone: "text-amber-700 dark:text-amber-300",
+    dot: "bg-amber-500",
+  },
+  {
+    id: "quoted",
+    label: "Presupuestado",
+    tone: "text-amber-700 dark:text-amber-300",
+    dot: "bg-amber-400",
+  },
+  {
+    id: "won",
+    label: "Ganado",
+    tone: "text-emerald-700 dark:text-emerald-300",
+    dot: "bg-emerald-500",
+  },
+  {
+    id: "lost",
+    label: "Perdido",
+    tone: "text-red-700 dark:text-red-300",
+    dot: "bg-red-500",
+    compact: true,
+  },
+  {
+    id: "not_interested",
+    label: "No interesa",
+    tone: "text-zinc-700 dark:text-zinc-300",
+    dot: "bg-zinc-400",
+    compact: true,
+  },
+  {
+    id: "archived",
+    label: "Archivado",
+    tone: "text-muted-foreground",
+    dot: "bg-muted-foreground/40",
+    compact: true,
+  },
 ];
 
 type Action = { id: string; status: LeadStatus };
@@ -94,9 +120,11 @@ export function LeadsKanban({
     state.map((l) => (l.id === id ? { ...l, status } : l)),
   );
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [pendingClosure, setPendingClosure] = useState<
-    { id: string; name: string; variant: CloseReasonVariant } | null
-  >(null);
+  const [pendingClosure, setPendingClosure] = useState<{
+    id: string;
+    name: string;
+    variant: CloseReasonVariant;
+  } | null>(null);
   const [quickViewId, setQuickViewId] = useState<string | null>(null);
   const feedback = useFormFeedback();
 
@@ -249,7 +277,7 @@ function Column({
           "flex shrink-0 flex-col gap-1 border-b border-border px-3 py-2.5 outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
           compact && "select-none",
           collapsed &&
-          "md:items-center md:gap-2 md:px-1.5 md:group-hover/col:flex-row md:group-hover/col:items-center md:group-hover/col:justify-between md:group-hover/col:gap-1 md:group-hover/col:px-3",
+            "md:items-center md:gap-2 md:px-1.5 md:group-hover/col:flex-row md:group-hover/col:items-center md:group-hover/col:justify-between md:group-hover/col:gap-1 md:group-hover/col:px-3",
         )}
       >
         <div
@@ -264,7 +292,7 @@ function Column({
               "truncate text-xs font-semibold tracking-wide",
               tone,
               collapsed &&
-              "md:rotate-180 md:[writing-mode:vertical-rl] md:group-hover/col:rotate-0 md:group-hover/col:[writing-mode:horizontal-tb]",
+                "md:rotate-180 md:[writing-mode:vertical-rl] md:group-hover/col:rotate-0 md:group-hover/col:[writing-mode:horizontal-tb]",
             )}
           >
             {label}
@@ -273,7 +301,8 @@ function Column({
         <div
           className={cn(
             "flex w-full items-center justify-between gap-2",
-            collapsed && "md:w-auto md:justify-center md:group-hover/col:w-full md:group-hover/col:justify-between",
+            collapsed &&
+              "md:w-auto md:justify-center md:group-hover/col:w-full md:group-hover/col:justify-between",
           )}
         >
           {total > 0 && (
@@ -324,7 +353,8 @@ function AddLeadCard() {
 
 function LeadInitials({ name }: { name: string }) {
   const parts = name.trim().split(/\s+/);
-  const letters = parts.length >= 2 ? (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "") : (parts[0]?.[0] ?? "?");
+  const letters =
+    parts.length >= 2 ? (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "") : (parts[0]?.[0] ?? "?");
   return (
     <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold uppercase text-primary">
       {letters}
@@ -352,11 +382,11 @@ function Card({
       onKeyDown={
         onOpenQuickView
           ? (e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              onOpenQuickView(lead.id);
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onOpenQuickView(lead.id);
+              }
             }
-          }
           : undefined
       }
       role={onOpenQuickView ? "button" : undefined}
@@ -391,12 +421,8 @@ function Card({
       </div>
       {(lead.company || lead.email) && (
         <div className="flex flex-col gap-0.5 pl-8">
-          {lead.company && (
-            <p className="truncate text-xs text-muted-foreground">{lead.company}</p>
-          )}
-          {lead.email && (
-            <p className="truncate text-xs text-muted-foreground">{lead.email}</p>
-          )}
+          {lead.company && <p className="truncate text-xs text-muted-foreground">{lead.company}</p>}
+          {lead.email && <p className="truncate text-xs text-muted-foreground">{lead.email}</p>}
         </div>
       )}
       <div className="flex items-center justify-between gap-2 pl-8 text-[11px] tabular-nums text-muted-foreground">

@@ -144,9 +144,7 @@ export async function markNotificationsRead(
   input: unknown,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const user = await requireUser();
-  const parsed = z
-    .object({ ids: z.array(z.string().uuid()).optional() })
-    .safeParse(input ?? {});
+  const parsed = z.object({ ids: z.array(z.string().uuid()).optional() }).safeParse(input ?? {});
   if (!parsed.success) return { ok: false, error: "IDs inválidos" };
 
   const supabase = await createServerClient();

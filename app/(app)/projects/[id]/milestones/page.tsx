@@ -26,7 +26,9 @@ export default async function MilestonesPage({
     supabase.from("projects").select("id, name").eq("id", id).is("deleted_at", null).maybeSingle(),
     supabase
       .from("milestones")
-      .select("id, name, description, percentage, amount, start_date, due_date, completed_at, completion_percentage, color, is_payment_milestone, status, invoice_id")
+      .select(
+        "id, name, description, percentage, amount, start_date, due_date, completed_at, completion_percentage, color, is_payment_milestone, status, invoice_id",
+      )
       .eq("project_id", id)
       .order("due_date", { ascending: true, nullsFirst: false }),
   ]);
@@ -96,7 +98,10 @@ export default async function MilestonesPage({
                       <span>
                         Importe:{" "}
                         <strong className="text-foreground">
-                          {Number(m.amount).toLocaleString("es-ES", { style: "currency", currency: "EUR" })}
+                          {Number(m.amount).toLocaleString("es-ES", {
+                            style: "currency",
+                            currency: "EUR",
+                          })}
                         </strong>
                       </span>
                     )}
@@ -107,7 +112,9 @@ export default async function MilestonesPage({
                       <span>Vence: {formatDate(m.due_date as string)}</span>
                     )}
                     {(m.completed_at as string | null) && (
-                      <span className="text-success">✓ Completado {formatDate(m.completed_at as string)}</span>
+                      <span className="text-success">
+                        ✓ Completado {formatDate(m.completed_at as string)}
+                      </span>
                     )}
                   </div>
                 </CardContent>

@@ -55,7 +55,10 @@ function FollowUpSection({
 }) {
   return (
     <div className="flex flex-col gap-2 rounded-md border border-border/60 bg-muted/30 p-2.5">
-      <label htmlFor={`${idPrefix}-followup`} className="flex items-center gap-2 text-xs font-medium">
+      <label
+        htmlFor={`${idPrefix}-followup`}
+        className="flex items-center gap-2 text-xs font-medium"
+      >
         <Checkbox
           id={`${idPrefix}-followup`}
           checked={enabled}
@@ -138,8 +141,14 @@ export function QCallDialog({
         <form onSubmit={onSubmit} className="flex flex-col gap-3">
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={`qa-call-outcome-${leadId}`} className="text-xs font-medium">Resultado</Label>
-              <Select id={`qa-call-outcome-${leadId}`} value={outcome} onChange={(e) => setOutcome(e.target.value)}>
+              <Label htmlFor={`qa-call-outcome-${leadId}`} className="text-xs font-medium">
+                Resultado
+              </Label>
+              <Select
+                id={`qa-call-outcome-${leadId}`}
+                value={outcome}
+                onChange={(e) => setOutcome(e.target.value)}
+              >
                 <option value="connected">Contactado</option>
                 <option value="voicemail">Buzón de voz</option>
                 <option value="no_answer">Sin respuesta</option>
@@ -148,7 +157,9 @@ export function QCallDialog({
               </Select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={`qa-call-duration-${leadId}`} className="text-xs font-medium">Duración (min)</Label>
+              <Label htmlFor={`qa-call-duration-${leadId}`} className="text-xs font-medium">
+                Duración (min)
+              </Label>
               <Input
                 id={`qa-call-duration-${leadId}`}
                 type="number"
@@ -162,8 +173,17 @@ export function QCallDialog({
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor={`qa-call-notes-${leadId}`} className="text-xs font-medium">Notas <span className="text-destructive">*</span></Label>
-            <Textarea id={`qa-call-notes-${leadId}`} rows={3} required value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Puntos clave, próximos pasos…" />
+            <Label htmlFor={`qa-call-notes-${leadId}`} className="text-xs font-medium">
+              Notas <span className="text-destructive">*</span>
+            </Label>
+            <Textarea
+              id={`qa-call-notes-${leadId}`}
+              rows={3}
+              required
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Puntos clave, próximos pasos…"
+            />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor={`qa-call-transcript-${leadId}`} className="text-xs font-medium">
@@ -237,21 +257,44 @@ export function QEmailDialog({ leadId, leadEmail }: { leadId: string; leadEmail:
         </DialogHeader>
         <form onSubmit={onSubmit} className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor={`qa-email-dir-${leadId}`} className="text-xs font-medium">Dirección</Label>
-            <Select id={`qa-email-dir-${leadId}`} value={direction} onChange={(e) => setDirection(e.target.value as "incoming" | "outgoing")}>
+            <Label htmlFor={`qa-email-dir-${leadId}`} className="text-xs font-medium">
+              Dirección
+            </Label>
+            <Select
+              id={`qa-email-dir-${leadId}`}
+              value={direction}
+              onChange={(e) => setDirection(e.target.value as "incoming" | "outgoing")}
+            >
               <option value="outgoing">Enviado</option>
               <option value="incoming">Recibido</option>
             </Select>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor={`qa-email-subj-${leadId}`} className="text-xs font-medium">Asunto <span className="text-destructive">*</span></Label>
-            <Input id={`qa-email-subj-${leadId}`} required maxLength={300} value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Asunto del email" />
+            <Label htmlFor={`qa-email-subj-${leadId}`} className="text-xs font-medium">
+              Asunto <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id={`qa-email-subj-${leadId}`}
+              required
+              maxLength={300}
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="Asunto del email"
+            />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor={`qa-email-body-${leadId}`} className="text-xs font-medium">
-              Cuerpo <span className="text-muted-foreground/60">(opcional, mejora el resumen IA)</span>
+              Cuerpo{" "}
+              <span className="text-muted-foreground/60">(opcional, mejora el resumen IA)</span>
             </Label>
-            <Textarea id={`qa-email-body-${leadId}`} rows={5} maxLength={50000} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Pega o resume el contenido del email…" />
+            <Textarea
+              id={`qa-email-body-${leadId}`}
+              rows={5}
+              maxLength={50000}
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder="Pega o resume el contenido del email…"
+            />
           </div>
           <div className="flex items-center justify-end gap-3">
             <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
@@ -262,7 +305,6 @@ export function QEmailDialog({ leadId, leadEmail }: { leadId: string; leadEmail:
     </Dialog>
   );
 }
-
 
 export function QNoteDialog({ leadId }: { leadId: string }) {
   const [open, setOpen] = useState(false);
@@ -294,7 +336,13 @@ export function QNoteDialog({ leadId }: { leadId: string }) {
           <DialogTitle>Añadir nota</DialogTitle>
         </DialogHeader>
         <form onSubmit={onSubmit} className="flex flex-col gap-3">
-          <Textarea rows={4} required value={content} onChange={(e) => setContent(e.target.value)} placeholder="Observaciones, contexto, próximos pasos…" />
+          <Textarea
+            rows={4}
+            required
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="Observaciones, contexto, próximos pasos…"
+          />
           <div className="flex items-center justify-end gap-3">
             <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
             <SubmitButton loading={feedback.pending}>Guardar nota</SubmitButton>

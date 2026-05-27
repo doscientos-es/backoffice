@@ -63,9 +63,7 @@ function DefaultFallback({ error, reset }: { error: Error; reset: () => void }) 
       </div>
       <div className="flex flex-col gap-1">
         <p className="text-sm font-medium">Algo ha salido mal</p>
-        <p className="text-xs text-muted-foreground">
-          No se ha podido cargar este contenido.
-        </p>
+        <p className="text-xs text-muted-foreground">No se ha podido cargar este contenido.</p>
         {process.env.NODE_ENV === "development" && (
           <p className="mt-1 max-w-xs truncate text-[11px] text-muted-foreground/60">
             {error.message}

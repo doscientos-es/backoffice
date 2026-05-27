@@ -86,16 +86,8 @@ export function ProjectFormFields({
             placeholder="Rediseño web 2026"
           />
         </FormRow>
-        <FormRow
-          label="Estado"
-          htmlFor={`${idPrefix}-status`}
-          hint="Puedes cambiarlo más tarde."
-        >
-          <Select
-            id={`${idPrefix}-status`}
-            name="status"
-            defaultValue={d.status ?? "planning"}
-          >
+        <FormRow label="Estado" htmlFor={`${idPrefix}-status`} hint="Puedes cambiarlo más tarde.">
+          <Select id={`${idPrefix}-status`} name="status" defaultValue={d.status ?? "planning"}>
             {PROJECT_STATUS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}

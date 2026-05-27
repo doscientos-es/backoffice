@@ -8,8 +8,8 @@ import {
   INVOICE_STATUS,
   type InvoiceStatus,
   PROJECT_STATUS,
-  type ProjectStatus,
   PROPOSAL_STATUS,
+  type ProjectStatus,
   type ProposalStatus,
 } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";

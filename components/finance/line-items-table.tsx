@@ -27,7 +27,7 @@ export function LineItemsTable({ items, onChange, locked = false }: LineItemsTab
 
   const update = (i: number, patch: Partial<LineItem>) =>
     onChange(items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)));
-  const add = () => onChange([...items, { ...EMPTY_LINE_ITEM }]);
+  const add = () => onChange([...items, { ...EMPTY_LINE_ITEM, id: crypto.randomUUID() }]);
   const remove = (i: number) =>
     onChange(items.length === 1 ? items : items.filter((_, idx) => idx !== i));
 
@@ -46,7 +46,7 @@ export function LineItemsTable({ items, onChange, locked = false }: LineItemsTab
         </thead>
         <tbody>
           {items.map((it, i) => (
-            <tr key={i} className="border-t border-border">
+            <tr key={it.id} className="border-t border-border">
               <td className="px-2 py-1.5">
                 <Input
                   value={it.description}

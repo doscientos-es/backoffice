@@ -40,22 +40,20 @@ function parseInline(line: string): InlineToken[] {
 
 function renderInline(line: string): ReactNode[] {
   return parseInline(line).map((t, i) => {
+    const key = `${t.kind}-${i}`;
     switch (t.kind) {
       case "bold":
-        return <strong key={i}>{t.value}</strong>;
+        return <strong key={key}>{t.value}</strong>;
       case "italic":
-        return <em key={i}>{t.value}</em>;
+        return <em key={key}>{t.value}</em>;
       case "code":
         return (
-          <code
-            key={i}
-            className="rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]"
-          >
+          <code key={key} className="rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]">
             {t.value}
           </code>
         );
       default:
-        return <span key={i}>{t.value}</span>;
+        return <span key={key}>{t.value}</span>;
     }
   });
 }
@@ -86,7 +84,11 @@ function tokenize(src: string): Block[] {
     }
     const h = /^(#{1,4})\s+(.*)$/.exec(line);
     if (h) {
-      blocks.push({ kind: "heading", level: (h[1] ?? "").length as 1 | 2 | 3 | 4, text: h[2] ?? "" });
+      blocks.push({
+        kind: "heading",
+        level: (h[1] ?? "").length as 1 | 2 | 3 | 4,
+        text: h[2] ?? "",
+      });
       i++;
       continue;
     }
@@ -119,7 +121,11 @@ function tokenize(src: string): Block[] {
     }
     const para: string[] = [line];
     i++;
-    while (i < lines.length && (lines[i] ?? "").trim() !== "" && !/^(#{1,4}\s|[-*]\s|\d+\.\s|>\s|---+$)/.test(lines[i] ?? "")) {
+    while (
+      i < lines.length &&
+      (lines[i] ?? "").trim() !== "" &&
+      !/^(#{1,4}\s|[-*]\s|\d+\.\s|>\s|---+$)/.test(lines[i] ?? "")
+    ) {
       para.push(lines[i] ?? "");
       i++;
     }
@@ -140,16 +146,51 @@ export function Markdown({ source, className }: { source: string; className?: st
       {blocks.map((b, i) => {
         switch (b.kind) {
           case "heading": {
-            const sz = b.level === 1 ? "text-2xl" : b.level === 2 ? "text-xl" : b.level === 3 ? "text-base" : "text-sm";
-            const Tag = (`h${b.level}`) as "h1" | "h2" | "h3" | "h4";
-            return <Tag key={i} className={cn("font-semibold tracking-tight", sz, b.level <= 2 && "mt-2")}>{renderInline(b.text)}</Tag>;
+            const sz =
+              b.level === 1
+                ? "text-2xl"
+                : b.level === 2
+                  ? "text-xl"
+                  : b.level === 3
+                    ? "text-base"
+                    : "text-sm";
+            const Tag = `h${b.level}` as "h1" | "h2" | "h3" | "h4";
+            return (
+              <Tag
+                key={i}
+                className={cn("font-semibold tracking-tight", sz, b.level <= 2 && "mt-2")}
+              >
+                {renderInline(b.text)}
+              </Tag>
+            );
           }
           case "ul":
-            return <ul key={i} className="ml-5 list-disc space-y-1">{b.items.map((it, j) => <li key={j}>{renderInline(it)}</li>)}</ul>;
+            return (
+              <ul key={i} className="ml-5 list-disc space-y-1">
+                {b.items.map((it, j) => (
+                  <li key={j}>{renderInline(it)}</li>
+                ))}
+              </ul>
+            );
           case "ol":
-            return <ol key={i} className="ml-5 list-decimal space-y-1">{b.items.map((it, j) => <li key={j}>{renderInline(it)}</li>)}</ol>;
+            return (
+              <ol key={i} className="ml-5 list-decimal space-y-1">
+                {b.items.map((it, j) => (
+                  <li key={j}>{renderInline(it)}</li>
+                ))}
+              </ol>
+            );
           case "quote":
-            return <blockquote key={i} className="border-l-2 border-border pl-3 italic text-muted-foreground">{b.lines.map((l, j) => <p key={j}>{renderInline(l)}</p>)}</blockquote>;
+            return (
+              <blockquote
+                key={i}
+                className="border-l-2 border-border pl-3 italic text-muted-foreground"
+              >
+                {b.lines.map((l, j) => (
+                  <p key={j}>{renderInline(l)}</p>
+                ))}
+              </blockquote>
+            );
           case "hr":
             return <hr key={i} className="border-border" />;
           default:

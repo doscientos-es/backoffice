@@ -21,25 +21,25 @@ const OPTIONS: Array<{
   description: string;
   icon: ReactNode;
 }> = [
-    {
-      value: "none",
-      title: "Sin GitHub",
-      description: "El proyecto vive sólo en el backoffice.",
-      icon: <Github className="size-4" />,
-    },
-    {
-      value: "link_only",
-      title: "Solo enlace",
-      description: "Repo externo: enlazamos pero nunca escribimos en GitHub.",
-      icon: <Link2 className="size-4" />,
-    },
-    {
-      value: "bidirectional",
-      title: "Sincronización completa",
-      description: "Tareas e hitos crean y reciben issues/milestones automáticamente.",
-      icon: <RefreshCw className="size-4" />,
-    },
-  ];
+  {
+    value: "none",
+    title: "Sin GitHub",
+    description: "El proyecto vive sólo en el backoffice.",
+    icon: <Github className="size-4" />,
+  },
+  {
+    value: "link_only",
+    title: "Solo enlace",
+    description: "Repo externo: enlazamos pero nunca escribimos en GitHub.",
+    icon: <Link2 className="size-4" />,
+  },
+  {
+    value: "bidirectional",
+    title: "Sincronización completa",
+    description: "Tareas e hitos crean y reciben issues/milestones automáticamente.",
+    icon: <RefreshCw className="size-4" />,
+  },
+];
 
 export function GitHubSyncSection({
   idPrefix,
@@ -87,7 +87,9 @@ export function GitHubSyncSection({
                 {opt.icon}
                 {opt.title}
               </span>
-              <span className="text-[11px] leading-snug text-muted-foreground">{opt.description}</span>
+              <span className="text-[11px] leading-snug text-muted-foreground">
+                {opt.description}
+              </span>
             </label>
           );
         })}
@@ -204,7 +206,10 @@ function Field({
 }: { label: string; htmlFor: string; required?: boolean; hint?: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={htmlFor} className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+      <label
+        htmlFor={htmlFor}
+        className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+      >
         {label}
         {required ? <span className="ml-0.5 text-destructive">*</span> : null}
       </label>

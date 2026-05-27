@@ -71,7 +71,9 @@ export function TaskComments({ taskId, memberId, memberRole, initialComments }: 
         () => fetchComments(),
       )
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    return () => {
+      supabase.removeChannel(ch);
+    };
   }, [taskId, fetchComments]);
 
   function handleSubmit(e: React.FormEvent) {
@@ -102,7 +104,10 @@ export function TaskComments({ taskId, memberId, memberRole, initialComments }: 
       ) : (
         <ul className="flex flex-col gap-2">
           {optimistic.map((c) => (
-            <li key={c.id} className="flex flex-col gap-0.5 rounded-lg bg-muted/40 px-3 py-2 text-sm">
+            <li
+              key={c.id}
+              className="flex flex-col gap-0.5 rounded-lg bg-muted/40 px-3 py-2 text-sm"
+            >
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-medium">{c.author?.name ?? "—"}</span>
                 <div className="flex items-center gap-2">

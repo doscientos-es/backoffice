@@ -54,10 +54,10 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
     supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
     project?.id
       ? supabase
-        .from("milestones")
-        .select("id, name")
-        .eq("project_id", project.id)
-        .order("due_date", { ascending: true, nullsFirst: false })
+          .from("milestones")
+          .select("id, name")
+          .eq("project_id", project.id)
+          .order("due_date", { ascending: true, nullsFirst: false })
       : Promise.resolve({ data: [] as { id: string; name: string }[] }),
     supabase
       .from("task_comments")
@@ -235,8 +235,8 @@ function TaskGithubActions({
     return (
       <div className="flex flex-col gap-2">
         <p className="text-[11px] text-muted-foreground">
-          Este proyecto es externo. Abriremos un nuevo issue en GitHub.com con la tarea
-          precargada para que lo crees tú.
+          Este proyecto es externo. Abriremos un nuevo issue en GitHub.com con la tarea precargada
+          para que lo crees tú.
         </p>
         <Button asChild size="sm" variant="outline" className="w-fit">
           <a href={href} target="_blank" rel="noreferrer">
@@ -263,8 +263,8 @@ function TaskGithubActions({
     <form action={syncTaskToGithub} className="flex flex-col gap-2">
       <input type="hidden" name="taskId" value={taskId} />
       <p className="text-[11px] text-muted-foreground">
-        Aún no se ha creado el issue. La sincronización automática puede tardar; puedes
-        forzarla manualmente.
+        Aún no se ha creado el issue. La sincronización automática puede tardar; puedes forzarla
+        manualmente.
       </p>
       <Button type="submit" size="sm" variant="outline" className="w-fit">
         Sincronizar con GitHub
@@ -272,5 +272,3 @@ function TaskGithubActions({
     </form>
   );
 }
-
-

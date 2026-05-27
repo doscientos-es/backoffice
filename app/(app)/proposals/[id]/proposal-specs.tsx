@@ -79,7 +79,8 @@ export function ProposalSpecs({ proposalId, specs, aiEnabled, locked }: Props) {
 
       {specs.length === 0 ? (
         <p className="rounded-md border border-dashed border-border bg-muted/30 px-4 py-6 text-center text-xs text-muted-foreground">
-          Aún no hay documentación técnica. Genera una con IA para tener una base que editar antes de enviar la propuesta.
+          Aún no hay documentación técnica. Genera una con IA para tener una base que editar antes
+          de enviar la propuesta.
         </p>
       ) : (
         <ul className="flex flex-col gap-3">
@@ -112,7 +113,10 @@ function SpecRow({ spec, locked }: { spec: ProposalSpec; locked: boolean }) {
 
   async function handleToggle() {
     feedback.setPending();
-    const res = await toggleSpecVisibility({ id: spec.id, is_client_visible: !spec.is_client_visible });
+    const res = await toggleSpecVisibility({
+      id: spec.id,
+      is_client_visible: !spec.is_client_visible,
+    });
     if (res.ok) {
       feedback.setSuccess(spec.is_client_visible ? "Ocultada" : "Visible para cliente");
       startTransition(() => router.refresh());
@@ -132,7 +136,11 @@ function SpecRow({ spec, locked }: { spec: ProposalSpec; locked: boolean }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           {editing ? (
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} className="h-8 text-sm font-medium" />
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="h-8 text-sm font-medium"
+            />
           ) : (
             <p className="truncate text-sm font-medium">{spec.title}</p>
           )}
@@ -141,7 +149,12 @@ function SpecRow({ spec, locked }: { spec: ProposalSpec; locked: boolean }) {
               {spec.is_client_visible ? "Visible cliente" : "Privada"}
             </Badge>
             {spec.is_client_visible && spec.portal_token ? (
-              <a href={`/p/spec/${spec.portal_token}`} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+              <a
+                href={`/p/spec/${spec.portal_token}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary hover:underline"
+              >
                 Ver enlace público
               </a>
             ) : null}
@@ -149,19 +162,41 @@ function SpecRow({ spec, locked }: { spec: ProposalSpec; locked: boolean }) {
         </div>
         <div className="flex items-center gap-2">
           <FormFeedback state={feedback.state} />
-          <Button size="icon-sm" variant="ghost" onClick={handleToggle} disabled={locked} aria-label="Visibilidad">
-            {spec.is_client_visible ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            onClick={handleToggle}
+            disabled={locked}
+            aria-label="Visibilidad"
+          >
+            {spec.is_client_visible ? (
+              <EyeOff className="size-3.5" />
+            ) : (
+              <Eye className="size-3.5" />
+            )}
           </Button>
           {editing ? (
             <Button size="sm" variant="default" onClick={handleSave} disabled={locked}>
               <Save className="size-3.5" /> Guardar
             </Button>
           ) : (
-            <Button size="icon-sm" variant="ghost" onClick={() => setEditing(true)} disabled={locked} aria-label="Editar">
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              onClick={() => setEditing(true)}
+              disabled={locked}
+              aria-label="Editar"
+            >
               <Pencil className="size-3.5" />
             </Button>
           )}
-          <Button size="icon-sm" variant="ghost" onClick={handleDelete} disabled={locked} aria-label="Eliminar">
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            onClick={handleDelete}
+            disabled={locked}
+            aria-label="Eliminar"
+          >
             <Trash2 className="size-3.5 text-destructive" />
           </Button>
         </div>

@@ -9,14 +9,8 @@ export function ClientsList(props: ListPageProps) {
 
   return (
     <>
-      <ListPage
-        {...props}
-        onRowClick={(row) => setSelectedClient(row.data as QuickClient)}
-      />
-      <ClientQuickView
-        client={selectedClient}
-        onClose={() => setSelectedClient(null)}
-      />
+      <ListPage {...props} onRowClick={(row) => setSelectedClient(row.data as QuickClient)} />
+      <ClientQuickView client={selectedClient} onClose={() => setSelectedClient(null)} />
     </>
   );
 }

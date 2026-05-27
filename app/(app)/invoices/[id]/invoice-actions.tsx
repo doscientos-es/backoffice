@@ -9,15 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import {
-  CheckCircle2,
-  ChevronDown,
-  FileEdit,
-  MoreHorizontal,
-  Send,
-  Trash2,
-  XCircle
-} from "lucide-react";
+import { CheckCircle2, FileEdit, MoreHorizontal, Send, Trash2, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -43,8 +35,11 @@ export function InvoiceActions({ invoice }: Props) {
       const res = await updateInvoiceStatus({ id: invoice.id, status });
       if (res.ok) {
         feedback.setSuccess(
-          status === "issued" ? "Factura emitida" :
-            status === "paid" ? "Factura pagada" : "Factura anulada"
+          status === "issued"
+            ? "Factura emitida"
+            : status === "paid"
+              ? "Factura pagada"
+              : "Factura anulada",
         );
       } else {
         feedback.setError(res.error);
@@ -92,11 +87,7 @@ export function InvoiceActions({ invoice }: Props) {
       )}
 
       {canIssue && (
-        <Button
-          size="sm"
-          disabled={pending}
-          onClick={() => handleStatusUpdate("issued")}
-        >
+        <Button size="sm" disabled={pending} onClick={() => handleStatusUpdate("issued")}>
           <Send className="mr-2 h-4 w-4" />
           Emitir factura
         </Button>
@@ -117,13 +108,11 @@ export function InvoiceActions({ invoice }: Props) {
 
       {/* AEAT Button if already issued */}
       {!isDraft &&
-        invoice.verifactu_status !== "accepted" &&
-        invoice.verifactu_status !== "excluded" ? (
+      invoice.verifactu_status !== "accepted" &&
+      invoice.verifactu_status !== "excluded" ? (
         <SendAeatButton
           invoiceId={invoice.id}
-          label={
-            invoice.verifactu_status === "rejected" ? "Reintentar AEAT" : "Enviar a AEAT"
-          }
+          label={invoice.verifactu_status === "rejected" ? "Reintentar AEAT" : "Enviar a AEAT"}
         />
       ) : null}
 

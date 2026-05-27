@@ -10,11 +10,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -66,7 +62,10 @@ const INTERACTION_LABEL: Record<string, string> = {
 
 function excerpt(body: string | null, max = 120): string | null {
   if (!body) return null;
-  const text = body.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const text = body
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   if (!text) return null;
   return text.length > max ? `${text.slice(0, max)}…` : text;
 }
@@ -87,10 +86,7 @@ export function LeadFastActions({ lead, aiEnabled }: Props) {
   );
 }
 
-function IconTrigger({
-  label,
-  children,
-}: { label: string; children: ReactNode }) {
+function IconTrigger({ label, children }: { label: string; children: ReactNode }) {
   return (
     <Button
       type="button"
@@ -136,10 +132,7 @@ function FastDialog({
 
 // ---------------- CALL ----------------
 
-function CallDialog({
-  leadId,
-  leadPhone,
-}: { leadId: string; leadPhone: string | null }) {
+function CallDialog({ leadId, leadPhone }: { leadId: string; leadPhone: string | null }) {
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const [duration, setDuration] = useState("");
@@ -234,13 +227,9 @@ function CallDialog({
   );
 }
 
-
 // ---------------- EMAIL (manual log) ----------------
 
-function EmailDialog({
-  leadId,
-  leadEmail,
-}: { leadId: string; leadEmail: string | null }) {
+function EmailDialog({ leadId, leadEmail }: { leadId: string; leadEmail: string | null }) {
   const [open, setOpen] = useState(false);
   const [direction, setDirection] = useState<"incoming" | "outgoing">("outgoing");
   const [subject, setSubject] = useState("");
@@ -344,13 +333,9 @@ function EmailDialog({
   );
 }
 
-
 // ---------------- MEMORY (hover card) ----------------
 
-function MemoryHoverCard({
-  lead,
-  aiEnabled,
-}: { lead: FastLead; aiEnabled: boolean }) {
+function MemoryHoverCard({ lead, aiEnabled }: { lead: FastLead; aiEnabled: boolean }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -399,9 +384,7 @@ function MemoryHoverCard({
               Descripción del lead
             </div>
             {hasSummary ? (
-              <p className="text-xs leading-relaxed text-muted-foreground">
-                {lead.ai_summary}
-              </p>
+              <p className="text-xs leading-relaxed text-muted-foreground">{lead.ai_summary}</p>
             ) : (
               <p className="text-xs leading-relaxed text-muted-foreground/80">
                 Aún no hay descripción generada para este lead.
@@ -417,11 +400,7 @@ function MemoryHoverCard({
                   disabled={loading}
                 >
                   <Sparkles className="size-3" />
-                  {loading
-                    ? "Analizando…"
-                    : hasSummary
-                      ? "Actualizar"
-                      : "Generar con IA"}
+                  {loading ? "Analizando…" : hasSummary ? "Actualizar" : "Generar con IA"}
                 </Button>
               ) : (
                 <Button
@@ -435,21 +414,17 @@ function MemoryHoverCard({
                   Generar con IA · No disponible
                 </Button>
               )}
-              {error ? (
-                <span className="text-[10px] text-destructive">{error}</span>
-              ) : null}
+              {error ? <span className="text-[10px] text-destructive">{error}</span> : null}
             </div>
             {!aiEnabled ? (
               <p className="mt-1.5 text-[10px] leading-snug text-muted-foreground/70">
-                Sin clave de API configurada. La IA usará emails, llamadas y
-                notas para resumir lo que pide el lead.
+                Sin clave de API configurada. La IA usará emails, llamadas y notas para resumir lo
+                que pide el lead.
               </p>
             ) : null}
           </div>
           <div className="px-3 py-2.5">
-            <div className="mb-1.5 text-xs font-semibold text-foreground">
-              Últimas acciones
-            </div>
+            <div className="mb-1.5 text-xs font-semibold text-foreground">Últimas acciones</div>
             {hasInteractions ? (
               <ul className="flex flex-col gap-1.5">
                 {lead.recent_interactions.slice(0, 3).map((i) => {
@@ -465,9 +440,7 @@ function MemoryHoverCard({
                         </span>
                       </div>
                       {snippet ? (
-                        <p className="line-clamp-2 text-[11px] text-muted-foreground">
-                          {snippet}
-                        </p>
+                        <p className="line-clamp-2 text-[11px] text-muted-foreground">{snippet}</p>
                       ) : null}
                     </li>
                   );

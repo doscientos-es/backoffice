@@ -21,10 +21,13 @@ const ServerSchema = PublicSchema.extend({
   VERIFACTU_CERT_EXPIRES_AT: z.string().optional().default(""),
   // Generic lead-intake webhook (Recurrev / GHL / landing forms)
   LEAD_INTAKE_TOKEN: z.string().optional().default(""),
-  // Meta Lead Ads webhook (developers.facebook.com)
+  // Meta Marketing API (developers.facebook.com)
+  META_APP_ID: z.string().optional().default(""),
   META_APP_SECRET: z.string().optional().default(""),
   META_VERIFY_TOKEN: z.string().optional().default(""),
-  META_PAGE_ACCESS_TOKEN: z.string().optional().default(""),
+  META_PAGE_ACCESS_TOKEN: z.string().optional().default(""), // Used for leads webhooks
+  META_USER_ACCESS_TOKEN: z.string().optional().default(""), // Used for Marketing API (ads/insights)
+  META_AD_ACCOUNT_ID: z.string().optional().default(""), // Format: act_xxxxxxxx
   META_GRAPH_API_VERSION: z.string().default("v23.0"),
   // GitHub App integration (bidirectional sync)
   GITHUB_APP_ID: z.string().optional().default(""),

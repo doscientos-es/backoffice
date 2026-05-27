@@ -9,14 +9,8 @@ export function ProjectsList(props: ListPageProps) {
 
   return (
     <>
-      <ListPage
-        {...props}
-        onRowClick={(row) => setSelectedProject(row.data as QuickProject)}
-      />
-      <ProjectQuickView
-        project={selectedProject}
-        onClose={() => setSelectedProject(null)}
-      />
+      <ListPage {...props} onRowClick={(row) => setSelectedProject(row.data as QuickProject)} />
+      <ProjectQuickView project={selectedProject} onClose={() => setSelectedProject(null)} />
     </>
   );
 }

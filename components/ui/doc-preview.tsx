@@ -29,11 +29,7 @@ export function DocPreview({ url, mimeType, name }: Props) {
     return (
       <div className="flex justify-center p-6 bg-muted/30 rounded-sm">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={url}
-          alt={name}
-          className="max-w-full rounded object-contain max-h-[75vh]"
-        />
+        <img src={url} alt={name} className="max-w-full rounded object-contain max-h-[75vh]" />
       </div>
     );
   }
@@ -57,9 +53,7 @@ function Fallback({
           ? "No se pudo generar la URL de preview."
           : "Preview no disponible para este tipo de archivo."}
       </p>
-      {mimeType && (
-        <p className="text-xs opacity-50 font-mono">{mimeType}</p>
-      )}
+      {mimeType && <p className="text-xs opacity-50 font-mono">{mimeType}</p>}
       <p className="text-xs opacity-50">Usa el botón Descargar para abrir el archivo.</p>
     </div>
   );

@@ -13,7 +13,7 @@ export default function ClientsLoading() {
             <Skeleton key={w} className="h-4 rounded" style={{ width: w }} />
           ))}
         </div>
-        {[...Array(7)].map((_, i) => (
+        {[0, 1, 2, 3, 4, 5, 6].map((i) => (
           <div key={i} className="flex gap-4 border-b px-4 py-3 last:border-0">
             {[140, 120, 100, 80].map((w) => (
               <Skeleton key={w} className="h-4 rounded" style={{ width: w }} />

@@ -128,9 +128,7 @@ const ConvertInput = z.object({
   notes: z.string().max(4000).optional(),
 });
 
-export type ConvertLeadResult =
-  | { ok: true; clientId: string }
-  | { ok: false; error: string };
+export type ConvertLeadResult = { ok: true; clientId: string } | { ok: false; error: string };
 
 /**
  * Converts a lead into a billable client. Creates the `clients` row with
@@ -254,10 +252,7 @@ export async function updateLeadStatus(
     updates.lost_reason = null;
     updates.lost_at = null;
   }
-  const { error } = await supabase
-    .from("leads")
-    .update(updates)
-    .eq("id", parsed.data.leadId);
+  const { error } = await supabase.from("leads").update(updates).eq("id", parsed.data.leadId);
   if (error) return { ok: false, error: error.message };
   revalidatePath(`/leads/${parsed.data.leadId}`);
   revalidatePath("/leads");

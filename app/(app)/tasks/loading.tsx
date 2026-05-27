@@ -8,7 +8,7 @@ export default function TasksLoading() {
         <Skeleton className="h-8 w-24 rounded-md" />
       </div>
       <div className="flex flex-col gap-2">
-        {Array.from({ length: 8 }).map((_, i) => (
+        {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
           <div key={i} className="flex items-center gap-3 rounded-lg border px-4 py-3">
             <Skeleton className="size-4 rounded" />
             <Skeleton className="h-4 flex-1 rounded" />

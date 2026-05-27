@@ -4,6 +4,7 @@ import { LineItemsTable } from "@/components/finance/line-items-table";
 import { AutosaveIndicator } from "@/components/ui/autosave-indicator";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { EMPTY_LINE_ITEM, type LineItem } from "@/lib/finance";
@@ -41,7 +42,9 @@ export function InvoiceEditor({
   const [dueDate, setDueDate] = useState(initialDueDate);
   const [notes, setNotes] = useState(initialNotes ?? "");
   const [items, setItems] = useState<EditableItem[]>(
-    initialItems.length > 0 ? initialItems : [{ ...EMPTY_LINE_ITEM }],
+    initialItems.length > 0
+      ? initialItems.map((it) => ({ ...it, id: it.id || crypto.randomUUID() }))
+      : [{ ...EMPTY_LINE_ITEM, id: crypto.randomUUID() } as EditableItem],
   );
 
   const payload = useMemo(
@@ -89,34 +92,34 @@ export function InvoiceEditor({
             <CardTitle>Detalles</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            <label className="flex flex-col gap-1.5 text-xs font-medium">
-              Fecha de emisión
+            <FormRow label="Fecha de emisión" htmlFor="issue-date">
               <Input
+                id="issue-date"
                 type="date"
                 value={issueDate}
                 onChange={(e) => setIssueDate(e.target.value)}
                 disabled={locked}
               />
-            </label>
-            <label className="flex flex-col gap-1.5 text-xs font-medium">
-              Fecha de vencimiento
+            </FormRow>
+            <FormRow label="Fecha de vencimiento" htmlFor="due-date">
               <Input
+                id="due-date"
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
                 disabled={locked}
               />
-            </label>
-            <label className="flex flex-col gap-1.5 text-xs font-medium">
-              Notas
+            </FormRow>
+            <FormRow label="Notas" htmlFor="notes">
               <Textarea
+                id="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 disabled={locked}
                 rows={6}
                 placeholder="Notas internas o para el cliente…"
               />
-            </label>
+            </FormRow>
           </CardContent>
         </Card>
       </div>

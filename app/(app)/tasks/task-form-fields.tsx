@@ -146,11 +146,7 @@ export function TaskFormFields({
           </Select>
         </FormRow>
         <FormRow label="Prioridad" htmlFor={`${idPrefix}-priority`}>
-          <Select
-            id={`${idPrefix}-priority`}
-            name="priority"
-            defaultValue={d.priority ?? "medium"}
-          >
+          <Select id={`${idPrefix}-priority`} name="priority" defaultValue={d.priority ?? "medium"}>
             {TASK_PRIORITY_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}

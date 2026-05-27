@@ -5,7 +5,7 @@ export default function FinanceLoading() {
     <div className="flex flex-col gap-6">
       <Skeleton className="h-7 w-28" />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 3 }).map((_, i) => (
+        {[0, 1, 2].map((i) => (
           <Skeleton key={i} className="h-28 w-full rounded-lg" />
         ))}
       </div>

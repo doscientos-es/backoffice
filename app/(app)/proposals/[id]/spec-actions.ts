@@ -24,9 +24,7 @@ const CreateInput = z.object({
  * `documents.name` is mirrored from `title` for backwards compatibility with
  * the existing documents list view.
  */
-export async function createSpec(
-  input: unknown,
-): Promise<Result<{ id: string }>> {
+export async function createSpec(input: unknown): Promise<Result<{ id: string }>> {
   const user = await requireUser();
   const parsed = CreateInput.safeParse(input);
   if (!parsed.success) {
