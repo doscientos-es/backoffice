@@ -49,9 +49,27 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
     .eq("invoice_id", id)
     .order("position");
 
+  const { data: settings } = await supabase.from("settings").select("*").eq("id", 1).single();
+
   const client = (invoice as unknown as { clients: { id: string; name: string } | null }).clients;
   const project = (invoice as unknown as { projects: { id: string; name: string } | null })
     .projects;
+
+  // Group line items by VAT rate so we can show a proper desglose por tipo.
+  type LineRow = { quantity: number; unit_price: number; vat_rate: number; subtotal: number };
+  const safeLines = (items ?? []) as unknown as Array<LineRow & { id: string; description: string }>;
+  const vatBreakdown = Object.values(
+    safeLines.reduce<Record<string, { rate: number; base: number; tax: number }>>((acc, it) => {
+      const rate = Number(it.vat_rate) || 0;
+      const base = Number(it.subtotal) || 0;
+      const tax = base * (rate / 100);
+      const key = rate.toFixed(2);
+      acc[key] ??= { rate, base: 0, tax: 0 };
+      acc[key].base += base;
+      acc[key].tax += tax;
+      return acc;
+    }, {}),
+  ).sort((a, b) => a.rate - b.rate);
 
   // Build QR if issued and has required data
   let qrDataUrl: string | null = null;
@@ -99,8 +117,8 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
               Verifactu: {invoice.verifactu_status as string}
             </Badge>
             {invoice.status !== "draft" &&
-            invoice.verifactu_status !== "accepted" &&
-            invoice.verifactu_status !== "excluded" ? (
+              invoice.verifactu_status !== "accepted" &&
+              invoice.verifactu_status !== "excluded" ? (
               <SendAeatButton
                 invoiceId={invoice.id as string}
                 label={
@@ -158,23 +176,25 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                         colSpan={4}
                         className="px-5 py-2.5 text-right text-xs text-muted-foreground"
                       >
-                        Subtotal
+                        Base imponible
                       </td>
                       <td className="px-5 py-2.5 text-right tabular-nums">
                         {formatEUR(invoice.subtotal as number)}
                       </td>
                     </tr>
-                    <tr>
-                      <td
-                        colSpan={4}
-                        className="px-5 py-2.5 text-right text-xs text-muted-foreground"
-                      >
-                        IVA
-                      </td>
-                      <td className="px-5 py-2.5 text-right tabular-nums">
-                        {formatEUR(invoice.tax_amount as number)}
-                      </td>
-                    </tr>
+                    {vatBreakdown.map((row) => (
+                      <tr key={row.rate}>
+                        <td
+                          colSpan={4}
+                          className="px-5 py-2.5 text-right text-xs text-muted-foreground"
+                        >
+                          IVA {row.rate}% sobre {formatEUR(row.base)}
+                        </td>
+                        <td className="px-5 py-2.5 text-right tabular-nums">
+                          {formatEUR(row.tax)}
+                        </td>
+                      </tr>
+                    ))}
                     <tr className="font-semibold">
                       <td colSpan={4} className="px-5 py-2.5 text-right">
                         Total
@@ -192,6 +212,37 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
 
         {/* Sidebar */}
         <div className="flex flex-col gap-6">
+          {/* Issuer (datos del emisor) */}
+          {settings ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Emisor</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <DetailGrid>
+                  <DetailRow label="Razón social">
+                    {(settings.company_name as string | null) ?? "—"}
+                  </DetailRow>
+                  {(settings.company_nif as string | null) ? (
+                    <DetailRow label="NIF">{settings.company_nif as string}</DetailRow>
+                  ) : null}
+                  {(settings.company_address as string | null) ? (
+                    <DetailRow label="Domicilio">
+                      <span className="whitespace-pre-wrap">
+                        {settings.company_address as string}
+                      </span>
+                    </DetailRow>
+                  ) : null}
+                  {(settings.iban as string | null) ? (
+                    <DetailRow label="IBAN">
+                      <span className="font-mono text-xs">{settings.iban as string}</span>
+                    </DetailRow>
+                  ) : null}
+                </DetailGrid>
+              </CardContent>
+            </Card>
+          ) : null}
+
           <Card>
             <CardHeader>
               <CardTitle>Información fiscal</CardTitle>
@@ -255,6 +306,13 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           ) : null}
         </div>
       </div>
+
+      {/* Legal footer (RD 1007/2023 — Verifactu) */}
+      <p className="text-[11px] leading-relaxed text-muted-foreground border-t border-border pt-4">
+        Factura verificable en la sede electrónica de la AEAT mediante el código QR. Sistema de
+        emisión conforme al Reglamento Verifactu (RD 1007/2023). Conserve esta factura conforme a
+        la normativa fiscal aplicable.
+      </p>
     </div>
   );
 }

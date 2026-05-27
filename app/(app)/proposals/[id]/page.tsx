@@ -4,11 +4,13 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
+import { isAIEnabled } from "@/lib/env";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProposalEditor, type EditableItem } from "./proposal-editor";
+import { ProposalSpecs, type ProposalSpec } from "./proposal-specs";
 import { SendPreviewButton } from "./send-preview-button";
 
 export const dynamic = "force-dynamic";
@@ -58,6 +60,13 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
     .order("viewed_at", { ascending: false })
     .limit(10);
 
+  const { data: specs } = await supabase
+    .from("documents")
+    .select("id, title, body_markdown, is_client_visible, portal_token, updated_at")
+    .eq("proposal_id", id)
+    .eq("kind", "technical_spec")
+    .order("created_at", { ascending: true });
+
   const { data: clientFull } = await supabase
     .from("proposals")
     .select("clients(email)")
@@ -106,9 +115,32 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
         initialTitle={proposal.title as string}
         initialValidUntil={(proposal.valid_until as string | null) ?? null}
         initialNotes={(proposal.notes as string | null) ?? null}
+        initialIntro={(proposal.intro as string | null) ?? null}
+        initialTerms={(proposal.terms as string | null) ?? null}
         initialItems={editableItems}
         locked={locked}
       />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Documentación técnica</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ProposalSpecs
+            proposalId={id}
+            specs={((specs ?? []) as unknown as ProposalSpec[]).map((s) => ({
+              id: s.id,
+              title: s.title,
+              body_markdown: s.body_markdown,
+              is_client_visible: s.is_client_visible,
+              portal_token: s.portal_token,
+              updated_at: s.updated_at,
+            }))}
+            aiEnabled={isAIEnabled()}
+            locked={locked}
+          />
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <Card>

@@ -4,6 +4,13 @@ import { EmailLayout } from "./email-layout";
 const BRAND = "#2A4227";
 const FONT = "'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
+export type ProposalEmailSpec = {
+  /** Display title of the technical-spec document. */
+  title: string;
+  /** Absolute URL to /p/spec/[token]. */
+  url: string;
+};
+
 export type ProposalEmailProps = {
   /** Recipient client name, e.g. "Acme S.L." */
   clientName: string;
@@ -21,6 +28,8 @@ export type ProposalEmailProps = {
   appUrl: string;
   /** Optional custom message from the sender */
   message?: string;
+  /** Optional client-visible technical specs to surface as secondary CTAs. */
+  specs?: ProposalEmailSpec[];
 };
 
 /**
@@ -39,7 +48,9 @@ export function ProposalEmail({
   portalUrl,
   appUrl,
   message,
+  specs,
 }: ProposalEmailProps) {
+  const hasSpecs = Array.isArray(specs) && specs.length > 0;
   return (
     <EmailLayout
       preview={`Propuesta ${proposalNumber} · ${proposalTitle} · ${total}`}
@@ -98,6 +109,40 @@ export function ProposalEmail({
       >
         Ver propuesta
       </Button>
+
+      {hasSpecs ? (
+        <>
+          <Hr style={{ borderColor: "#e4e4e7", margin: "28px 0 16px" }} />
+          <Text style={{ ...labelStyle, marginBottom: 8 }}>Documentación técnica</Text>
+          <Text style={{ ...bodyStyle, marginBottom: 12 }}>
+            Adjuntamos también la documentación técnica de este proyecto:
+          </Text>
+          {specs!.map((spec) => (
+            <Button
+              key={spec.url}
+              href={spec.url}
+              style={{
+                display: "block",
+                width: "100%",
+                backgroundColor: "#ffffff",
+                color: BRAND,
+                fontFamily: FONT,
+                fontSize: 13,
+                fontWeight: 600,
+                textAlign: "center",
+                textDecoration: "none",
+                border: `1px solid ${BRAND}`,
+                borderRadius: 8,
+                padding: "12px 0",
+                boxSizing: "border-box",
+                marginBottom: 8,
+              }}
+            >
+              {spec.title}
+            </Button>
+          ))}
+        </>
+      ) : null}
 
       <Hr style={{ borderColor: "#e4e4e7", margin: "28px 0 16px" }} />
       <Text style={{ ...bodyStyle, color: "#a1a1aa", fontSize: 12 }}>

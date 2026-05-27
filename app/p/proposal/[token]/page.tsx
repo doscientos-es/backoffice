@@ -1,9 +1,11 @@
 import { LogoMark } from "@/components/branding";
 import { Badge } from "@/components/ui/badge";
+import { Markdown } from "@/components/ui/markdown";
 import { getCurrentUser } from "@/lib/auth";
 import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
+import { FileText } from "lucide-react";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { ProposalActions } from "./proposal-actions";
@@ -64,6 +66,14 @@ export default async function PortalProposalPage({
     .eq("proposal_id", proposal.id as string)
     .order("position");
 
+  const { data: specs } = await admin
+    .from("documents")
+    .select("id, title, portal_token")
+    .eq("proposal_id", proposal.id as string)
+    .eq("kind", "technical_spec")
+    .eq("is_client_visible", true)
+    .not("portal_token", "is", null);
+
   // Detect whether the current visitor is a logged-in team member so we can
   // tag the view appropriately and avoid bumping the proposal to 'viewed'
   // when we are previewing it ourselves.
@@ -101,6 +111,13 @@ export default async function PortalProposalPage({
   const status = proposal.status as keyof typeof STATUS_VARIANT;
   const responded = status === "accepted" || status === "rejected";
   const safeItems = (items ?? []) as unknown as ProposalItem[];
+  const safeSpecs = (specs ?? []) as unknown as Array<{
+    id: string;
+    title: string;
+    portal_token: string;
+  }>;
+  const intro = (proposal.intro as string | null) ?? null;
+  const terms = (proposal.terms as string | null) ?? null;
 
   return (
     <div className="flex flex-col gap-4">
@@ -145,6 +162,13 @@ export default async function PortalProposalPage({
             {client?.name ?? "—"}
           </p>
         </div>
+
+        {/* Intro (markdown) */}
+        {intro ? (
+          <div className="border-b border-zinc-100 dark:border-zinc-800/60 px-8 py-6">
+            <Markdown source={intro} />
+          </div>
+        ) : null}
 
         {/* Line items */}
         <div className="overflow-x-auto">
@@ -221,6 +245,13 @@ export default async function PortalProposalPage({
           </div>
         </div>
 
+        {/* Terms (markdown) */}
+        {terms ? (
+          <div className="border-t border-zinc-100 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-900/50 px-8 py-6">
+            <Markdown source={terms} />
+          </div>
+        ) : null}
+
         {/* Notes */}
         {(proposal.notes as string | null) ? (
           <div className="border-t border-zinc-100 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-900/50 px-8 py-5">
@@ -230,6 +261,29 @@ export default async function PortalProposalPage({
             <p className="whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
               {proposal.notes as string}
             </p>
+          </div>
+        ) : null}
+
+        {/* Technical specs */}
+        {safeSpecs.length > 0 ? (
+          <div className="border-t border-zinc-200 dark:border-zinc-800 px-8 py-6">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-3">
+              Documentación técnica
+            </p>
+            <ul className="flex flex-col gap-2">
+              {safeSpecs.map((spec) => (
+                <li key={spec.id}>
+                  <a
+                    href={`/p/spec/${spec.portal_token}`}
+                    className="flex items-center gap-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100 hover:border-[#2A4227] hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+                  >
+                    <FileText className="size-4 text-zinc-400 dark:text-zinc-600 shrink-0" />
+                    <span className="flex-1 truncate font-medium">{spec.title}</span>
+                    <span className="text-xs text-zinc-400 dark:text-zinc-600">Abrir →</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
         ) : null}
       </article>

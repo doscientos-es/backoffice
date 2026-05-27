@@ -21,6 +21,8 @@ export type ProposalEditorProps = {
   initialTitle: string;
   initialValidUntil: string | null;
   initialNotes: string | null;
+  initialIntro: string | null;
+  initialTerms: string | null;
   initialItems: EditableItem[];
   /** When true, fields are read-only (proposal accepted/rejected). */
   locked: boolean;
@@ -42,19 +44,31 @@ export function ProposalEditor({
   initialTitle,
   initialValidUntil,
   initialNotes,
+  initialIntro,
+  initialTerms,
   initialItems,
   locked,
 }: ProposalEditorProps) {
   const [title, setTitle] = useState(initialTitle);
   const [validUntil, setValidUntil] = useState(initialValidUntil ?? "");
   const [notes, setNotes] = useState(initialNotes ?? "");
+  const [intro, setIntro] = useState(initialIntro ?? "");
+  const [terms, setTerms] = useState(initialTerms ?? "");
   const [items, setItems] = useState<EditableItem[]>(
     initialItems.length > 0 ? initialItems : [{ ...EMPTY }],
   );
 
   const payload = useMemo(
-    () => ({ id, title, valid_until: validUntil || null, notes: notes || null, items }),
-    [id, title, validUntil, notes, items],
+    () => ({
+      id,
+      title,
+      valid_until: validUntil || null,
+      notes: notes || null,
+      intro: intro || null,
+      terms: terms || null,
+      items,
+    }),
+    [id, title, validUntil, notes, intro, terms, items],
   );
 
   const autosave = useAutosave({
@@ -137,6 +151,38 @@ export function ProposalEditor({
             />
           </label>
         </aside>
+      </div>
+
+      {/* Markdown blocks rendered above/below the items in the portal & email */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <label className="flex flex-col gap-1.5 text-xs font-medium">
+          Introducción
+          <span className="font-normal text-muted-foreground">
+            Markdown que se muestra <em>antes</em> de la tabla de líneas en el portal del cliente.
+          </span>
+          <Textarea
+            value={intro}
+            onChange={(e) => setIntro(e.target.value)}
+            disabled={locked}
+            rows={6}
+            className="font-mono text-xs"
+            placeholder={"## Contexto\n\nBreve resumen del proyecto, objetivos y enfoque."}
+          />
+        </label>
+        <label className="flex flex-col gap-1.5 text-xs font-medium">
+          Condiciones
+          <span className="font-normal text-muted-foreground">
+            Markdown que se muestra <em>después</em> del total. Forma de pago, validez, etc.
+          </span>
+          <Textarea
+            value={terms}
+            onChange={(e) => setTerms(e.target.value)}
+            disabled={locked}
+            rows={6}
+            className="font-mono text-xs"
+            placeholder={"## Condiciones\n\n- 50% al inicio, 50% a la entrega.\n- Vigencia: 30 días."}
+          />
+        </label>
       </div>
     </div>
   );

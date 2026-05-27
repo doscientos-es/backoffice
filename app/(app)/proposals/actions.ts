@@ -225,6 +225,18 @@ const UpdateInput = z.object({
     .optional()
     .or(z.literal("").transform(() => null))
     .nullable(),
+  intro: z
+    .string()
+    .max(20_000)
+    .optional()
+    .or(z.literal("").transform(() => null))
+    .nullable(),
+  terms: z
+    .string()
+    .max(20_000)
+    .optional()
+    .or(z.literal("").transform(() => null))
+    .nullable(),
   items: z.array(LineItem).min(1).optional(),
 });
 
@@ -263,6 +275,8 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
   if (rest.title !== undefined) patch.title = rest.title;
   if (rest.valid_until !== undefined) patch.valid_until = rest.valid_until;
   if (rest.notes !== undefined) patch.notes = rest.notes;
+  if (rest.intro !== undefined) patch.intro = rest.intro;
+  if (rest.terms !== undefined) patch.terms = rest.terms;
 
   if (items) {
     let subtotal = 0;
@@ -359,6 +373,22 @@ export async function sendPreviewLink(input: unknown): Promise<SendPreviewResult
   const portalToken = proposal.portal_token as string | null;
   if (!portalToken) return { ok: false, error: "La propuesta no tiene token de portal" };
 
+  // Fetch client-visible technical specs so the email can link to them.
+  const { data: specs } = await supabase
+    .from("documents")
+    .select("title, portal_token")
+    .eq("proposal_id", id)
+    .eq("kind", "technical_spec")
+    .eq("is_client_visible", true)
+    .not("portal_token", "is", null);
+
+  const specLinks = ((specs ?? []) as Array<{ title: string; portal_token: string }>)
+    .filter((s) => s.portal_token)
+    .map((s) => ({
+      title: s.title,
+      url: `${publicEnv.NEXT_PUBLIC_APP_URL}/p/spec/${s.portal_token}`,
+    }));
+
   const portalUrl = `${publicEnv.NEXT_PUBLIC_APP_URL}/p/proposal/${portalToken}`;
   const html = await renderEmail(
     ProposalEmail({
@@ -370,6 +400,7 @@ export async function sendPreviewLink(input: unknown): Promise<SendPreviewResult
       portalUrl,
       appUrl: publicEnv.NEXT_PUBLIC_APP_URL,
       message,
+      specs: specLinks,
     }),
   );
 
