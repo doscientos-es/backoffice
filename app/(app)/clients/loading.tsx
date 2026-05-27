@@ -9,14 +9,14 @@ export default function ClientsLoading() {
       </div>
       <div className="rounded-lg border">
         <div className="flex gap-4 border-b px-4 py-3">
-          {[140, 120, 100, 80].map((w, i) => (
-            <Skeleton key={i} className="h-4 rounded" style={{ width: w }} />
+          {[140, 120, 100, 80].map((w) => (
+            <Skeleton key={w} className="h-4 rounded" style={{ width: w }} />
           ))}
         </div>
-        {Array.from({ length: 7 }).map((_, i) => (
+        {[...Array(7)].map((_, i) => (
           <div key={i} className="flex gap-4 border-b px-4 py-3 last:border-0">
-            {[140, 120, 100, 80].map((w, j) => (
-              <Skeleton key={j} className="h-4 rounded" style={{ width: w }} />
+            {[140, 120, 100, 80].map((w) => (
+              <Skeleton key={w} className="h-4 rounded" style={{ width: w }} />
             ))}
           </div>
         ))}

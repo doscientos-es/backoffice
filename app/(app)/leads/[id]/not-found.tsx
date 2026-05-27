@@ -1,4 +1,3 @@
-import { BackLink } from "@/components/layout/back-link";
 import { Button } from "@/components/ui/button";
 import { UserRoundX } from "lucide-react";
 import Link from "next/link";

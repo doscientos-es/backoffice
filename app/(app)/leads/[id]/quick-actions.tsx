@@ -11,14 +11,13 @@ import {
 } from "@/components/ui/dialog";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FormRow } from "@/components/ui/form-row";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarClock, FileText } from "lucide-react";
+import { CalendarClock } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { createReminder } from "../../reminders/actions";
 import { QCallDialog, QEmailDialog, QNoteDialog } from "../lead-quick-action-dialogs";
-import { logLeadNote } from "../actions";
 
 type Props = {
   leadId: string;
@@ -97,51 +96,6 @@ const SCHEDULE_PRESETS: { label: string; minutes: number }[] = [
 
 
 
-// ---------------- NOTE ----------------
-
-function NoteDialog({ leadId }: { leadId: string }) {
-  const [open, setOpen] = useState(false);
-  const [content, setContent] = useState("");
-  const feedback = useFormFeedback();
-
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    feedback.setPending();
-    const res = await logLeadNote({ leadId, content });
-    if (!res.ok) return feedback.setError(res.error);
-    feedback.setSuccess("Nota añadida");
-    setContent("");
-    setTimeout(() => setOpen(false), 400);
-  }
-
-  return (
-    <ActionDialog
-      trigger={<ActionTrigger icon={<FileText className="size-4" />} label="Nota" />}
-      title="Añadir nota"
-      open={open}
-      onOpenChange={setOpen}
-    >
-      <form onSubmit={onSubmit} className="flex flex-col gap-3">
-        <Textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          rows={6}
-          autoFocus
-          required
-          maxLength={8000}
-          placeholder="Escribe tu nota…"
-        />
-        <div className="flex items-center justify-end gap-3">
-          <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
-          <SubmitButton loading={feedback.pending} pendingLabel="Guardando…">
-            Guardar
-          </SubmitButton>
-        </div>
-      </form>
-    </ActionDialog>
-  );
-}
-
 // ---------------- SCHEDULE (reminder) ----------------
 
 function ScheduleDialog({ leadId, leadName }: { leadId: string; leadName: string }) {
@@ -186,10 +140,7 @@ function ScheduleDialog({ leadId, leadName }: { leadId: string; leadName: string
       wide
     >
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="schedule-title" className="text-xs font-medium">
-            Título <span className="text-destructive">*</span>
-          </Label>
+        <FormRow label="Título" htmlFor="schedule-title" required>
           <Input
             id="schedule-title"
             value={title}
@@ -197,11 +148,8 @@ function ScheduleDialog({ leadId, leadName }: { leadId: string; leadName: string
             required
             maxLength={200}
           />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="schedule-when" className="text-xs font-medium">
-            Fecha y hora <span className="text-destructive">*</span>
-          </Label>
+        </FormRow>
+        <FormRow label="Fecha y hora" htmlFor="schedule-when" required>
           <Input
             id="schedule-when"
             type="datetime-local"
@@ -223,11 +171,8 @@ function ScheduleDialog({ leadId, leadName }: { leadId: string; leadName: string
               </Button>
             ))}
           </div>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="schedule-notes" className="text-xs font-medium">
-            Notas <span className="text-muted-foreground">(opcional)</span>
-          </Label>
+        </FormRow>
+        <FormRow label="Notas (opcional)" htmlFor="schedule-notes">
           <Textarea
             id="schedule-notes"
             value={notes}
@@ -236,7 +181,7 @@ function ScheduleDialog({ leadId, leadName }: { leadId: string; leadName: string
             maxLength={4000}
             placeholder="Contexto, qué tratar, próximos pasos…"
           />
-        </div>
+        </FormRow>
         <div className="flex items-center justify-end gap-3">
           <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
           <SubmitButton loading={feedback.pending} pendingLabel="Guardando…">
