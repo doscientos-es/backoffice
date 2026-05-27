@@ -89,7 +89,7 @@ export default async function InternalDocDetailPage({
         }
       />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,_28rem)_1fr] items-start">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,28rem)_1fr] items-start">
         <Card>
           <CardHeader>
             <CardTitle>Detalles</CardTitle>
