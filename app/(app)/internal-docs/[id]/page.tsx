@@ -54,7 +54,7 @@ export default async function InternalDocDetailPage({
   if (isAdminsOnly && !isAdmin) notFound();
 
   const uploaderName =
-    (doc.team_members as { name: string } | null)?.name ?? "—";
+    (doc as unknown as { team_members: { name: string } | null }).team_members?.name ?? "—";
 
   return (
     <div className="flex flex-col gap-6">

@@ -97,13 +97,6 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
     lead.status !== "won" &&
     lead.status !== "lost" &&
     lead.status !== "archived";
-  const composerDisabled = !user.emailSendEnabled || !user.emailAlias;
-  const composerReason = !user.emailAlias
-    ? "Configura un alias de email en Ajustes para enviar correos."
-    : !user.emailSendEnabled
-      ? "Activa el envío de emails en Ajustes."
-      : undefined;
-
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -261,9 +254,6 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                 leadName={lead.name as string}
                 leadEmail={(lead.email as string | null) ?? null}
                 leadPhone={(lead.phone as string | null) ?? null}
-                sendEnabled={!composerDisabled}
-                sendDisabledReason={composerReason}
-                aiEnabled={aiEnabled}
               />
             </CardContent>
           </Card>
