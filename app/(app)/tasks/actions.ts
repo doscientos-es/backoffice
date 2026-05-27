@@ -1,6 +1,7 @@
 "use server";
 
 import { requireUser } from "@/lib/auth";
+import { autoSyncTaskIssue } from "@/lib/integrations/github-sync";
 import { createServerClient } from "@/lib/supabase/server";
 import { rankAfter, rankBetween } from "@/lib/utils/ranking";
 import { revalidatePath } from "next/cache";
@@ -93,6 +94,12 @@ export async function createTask(formData: FormData): Promise<void> {
     .single();
 
   if (error || !data) throw new Error(error?.message ?? "No se pudo crear la tarea");
+
+  // Fire-and-forget GitHub sync — never blocks task creation. The helper
+  // checks `github_sync_mode === 'bidirectional'` and `github_auto_sync` internally.
+  if (data.project_id) {
+    void autoSyncTaskIssue(data.id as string, data.project_id as string);
+  }
 
   revalidatePath("/tasks");
   if (data.project_id) revalidatePath(`/projects/${data.project_id as string}`);
@@ -233,6 +240,30 @@ export async function moveTask(
   revalidatePath("/tasks");
   revalidatePath(`/tasks/${parsed.data.taskId}`);
   return { ok: true, kanbanOrder };
+}
+
+// ---------------- GITHUB MANUAL SYNC ----------------
+
+/**
+ * Manually request GitHub issue creation for a task. Safe to call from a form
+ * — internally uses the same helper as the post-insert auto-sync, so it
+ * respects `github_sync_mode` and existing `github_issue_number`.
+ */
+export async function syncTaskToGithub(formData: FormData): Promise<void> {
+  await requireUser();
+  const taskId = formData.get("taskId")?.toString() ?? "";
+  if (!z.string().uuid().safeParse(taskId).success) throw new Error("ID inválido");
+
+  const supabase = await createServerClient();
+  const { data: task } = await supabase
+    .from("tasks")
+    .select("project_id")
+    .eq("id", taskId)
+    .maybeSingle();
+  if (!task?.project_id) throw new Error("La tarea no tiene proyecto asociado");
+
+  await autoSyncTaskIssue(taskId, task.project_id as string);
+  revalidatePath(`/tasks/${taskId}`);
 }
 
 // ---------------- SOFT DELETE ----------------

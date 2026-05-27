@@ -12,6 +12,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createProject } from "../actions";
+import { GitHubSyncSection } from "../github-sync-section";
 
 export const metadata: Metadata = { title: "Nuevo proyecto · doscientos" };
 export const dynamic = "force-dynamic";
@@ -84,19 +85,6 @@ export default async function NewProjectPage({
                   ))}
                 </Select>
               </FormRow>
-              <FormRow
-                label="Repositorio GitHub"
-                htmlFor="github_repo"
-                hint="Opcional. URL completa del repositorio."
-              >
-                <Input
-                  id="github_repo"
-                  name="github_repo"
-                  type="url"
-                  inputMode="url"
-                  placeholder="https://github.com/org/repo"
-                />
-              </FormRow>
               <FormRow label="Inicio" htmlFor="starts_at">
                 <Input id="starts_at" name="starts_at" type="date" />
               </FormRow>
@@ -117,6 +105,7 @@ export default async function NewProjectPage({
                 placeholder="Objetivos, entregables, criterios de aceptación…"
               />
             </FormRow>
+            <GitHubSyncSection idPrefix="new" />
             <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
               <Button asChild variant="ghost" size="sm">
                 <Link href="/projects">Cancelar</Link>

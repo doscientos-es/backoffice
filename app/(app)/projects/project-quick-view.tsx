@@ -11,9 +11,11 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { relativeTime } from "@/lib/utils";
-import { ArrowUpRight, Building2, Calendar, Layout, X } from "lucide-react";
+import { ArrowUpRight, Building2, Calendar, ExternalLink, Layout, X } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { GitHubModeBadge } from "./github-mode-badge";
+import type { GitHubSyncMode } from "./github-sync-section";
 
 export type QuickProject = {
   id: string;
@@ -22,6 +24,8 @@ export type QuickProject = {
   status: "planning" | "active" | "on_hold" | "done" | "cancelled";
   description: string | null;
   updated_at: string;
+  github_sync_mode?: GitHubSyncMode | null;
+  github_repo?: string | null;
 };
 
 const STATUS_LABEL: Record<QuickProject["status"], string> = {
@@ -59,10 +63,11 @@ function Body({ project }: { project: QuickProject }) {
       <DrawerHeader className="flex flex-row items-start justify-between gap-2 border-b border-border">
         <div className="flex flex-col gap-1">
           <DrawerTitle>{project.name}</DrawerTitle>
-          <DrawerDescription className="flex items-center gap-1.5">
+          <DrawerDescription className="flex flex-wrap items-center gap-1.5">
             <Badge variant={STATUS_VARIANT[project.status]}>
               {STATUS_LABEL[project.status]}
             </Badge>
+            <GitHubModeBadge mode={project.github_sync_mode ?? "none"} />
             <span className="text-[11px] tabular-nums">
               {relativeTime(project.updated_at)}
             </span>
@@ -79,6 +84,18 @@ function Body({ project }: { project: QuickProject }) {
         <section className="flex flex-col gap-2.5 text-xs">
           <Heading>Detalles</Heading>
           <Row icon={<Building2 className="size-3.5" />}>{project.client_name}</Row>
+          {project.github_repo ? (
+            <Row icon={<ExternalLink className="size-3.5" />}>
+              <a
+                href={project.github_repo}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary hover:underline"
+              >
+                {project.github_repo.replace(/^https?:\/\//, "")}
+              </a>
+            </Row>
+          ) : null}
           {project.description && (
             <div className="mt-2 rounded-md bg-muted/30 p-2 italic text-muted-foreground">
               {project.description}

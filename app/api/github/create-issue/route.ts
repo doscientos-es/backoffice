@@ -67,12 +67,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "task has no linked project" }, { status: 422 });
   }
 
-  // Load project GitHub config
+  // Load project GitHub config — only bidirectional projects may push to GitHub.
   const { data: project } = await supabase
     .from("projects")
-    .select("github_repo_owner, github_repo_name, github_installation_id")
+    .select(
+      "github_sync_mode, github_repo_owner, github_repo_name, github_installation_id",
+    )
     .eq("id", task.project_id as string)
     .maybeSingle();
+
+  if (!project || project.github_sync_mode !== "bidirectional") {
+    return NextResponse.json(
+      {
+        error:
+          "project is not in bidirectional GitHub sync mode — el backoffice no puede crear issues en este repositorio",
+      },
+      { status: 409 },
+    );
+  }
 
   if (
     !project?.github_repo_owner ||

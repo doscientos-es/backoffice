@@ -1,6 +1,7 @@
 "use server";
 
 import { requireUser } from "@/lib/auth";
+import { autoSyncMilestone } from "@/lib/integrations/github-sync";
 import { createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -40,6 +41,10 @@ export async function createMilestone(
     .single();
 
   if (error) return { ok: false, error: error.message };
+
+  // Fire-and-forget GitHub sync (only fires for bidirectional projects with auto-sync on).
+  void autoSyncMilestone(data.id as string, parsed.data.projectId);
+
   revalidatePath(`/projects/${parsed.data.projectId}/milestones`);
   return { ok: true, id: data.id as string };
 }

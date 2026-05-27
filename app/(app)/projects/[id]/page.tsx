@@ -14,6 +14,9 @@ import { formatDate, formatEUR } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { updateProject } from "../actions";
+import { GitHubModeBadge } from "../github-mode-badge";
+import type { GitHubSyncMode } from "../github-sync-section";
+import { GitHubSyncSection } from "../github-sync-section";
 
 export const dynamic = "force-dynamic";
 
@@ -90,9 +93,14 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           { label: project.name as string },
         ]}
         actions={
-          <Badge variant={STATUS_VARIANT[project.status as keyof typeof STATUS_VARIANT]}>
-            {project.status as string}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <GitHubModeBadge
+              mode={(project.github_sync_mode as GitHubSyncMode | null) ?? "none"}
+            />
+            <Badge variant={STATUS_VARIANT[project.status as keyof typeof STATUS_VARIANT]}>
+              {project.status as string}
+            </Badge>
+          </div>
         }
       />
 
@@ -194,20 +202,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                   />
                 </FormRow>
               </div>
-              <FormRow
-                label="Repositorio GitHub"
-                htmlFor="e_github"
-                hint="URL completa del repositorio."
-              >
-                <Input
-                  id="e_github"
-                  name="github_repo"
-                  type="url"
-                  inputMode="url"
-                  defaultValue={(project.github_repo as string | null) ?? ""}
-                  placeholder="https://github.com/org/repo"
-                />
-              </FormRow>
               <FormRow label="Descripción" htmlFor="e_desc">
                 <Textarea
                   id="e_desc"
@@ -218,6 +212,13 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                   placeholder="Objetivos, entregables, criterios de aceptación…"
                 />
               </FormRow>
+              <GitHubSyncSection
+                idPrefix="edit"
+                defaultMode={(project.github_sync_mode as GitHubSyncMode | null) ?? "none"}
+                defaultRepoUrl={(project.github_repo as string | null) ?? null}
+                defaultInstallationId={(project.github_installation_id as number | null) ?? null}
+                defaultAutoSync={(project.github_auto_sync as boolean | null) ?? true}
+              />
               <div className="flex justify-end border-t border-border pt-3">
                 <SubmitButton pendingLabel="Guardando…">Guardar cambios</SubmitButton>
               </div>

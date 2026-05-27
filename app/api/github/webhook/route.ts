@@ -158,11 +158,14 @@ async function projectByRepo(
   owner: string,
   name: string,
 ): Promise<string | null> {
+  // Only projects in bidirectional sync mode accept inbound webhook events.
+  // Link-only / none projects ignore GitHub activity entirely.
   const { data } = await supabase
     .from("projects")
     .select("id")
     .eq("github_repo_owner", owner)
     .eq("github_repo_name", name)
+    .eq("github_sync_mode", "bidirectional")
     .maybeSingle();
   return (data?.id as string | null) ?? null;
 }
@@ -342,7 +345,7 @@ async function handleMilestoneEvent(
   if (action === "created") {
     // Check if we already have this milestone (created from CRM — it will have github_milestone_number set).
     const { data: existing } = await supabase
-      .from("project_milestones")
+      .from("milestones")
       .select("id")
       .eq("project_id", projectId)
       .eq("github_milestone_number", milestone.number)
@@ -350,7 +353,7 @@ async function handleMilestoneEvent(
     if (existing) return;
 
     // New milestone created directly in GitHub — mirror it to CRM.
-    await supabase.from("project_milestones").insert({
+    await supabase.from("milestones").insert({
       project_id: projectId,
       name: milestone.title,
       github_milestone_number: milestone.number,
@@ -361,7 +364,7 @@ async function handleMilestoneEvent(
 
   if (action === "closed") {
     await supabase
-      .from("project_milestones")
+      .from("milestones")
       .update({ status: "completed" })
       .eq("project_id", projectId)
       .eq("github_milestone_number", milestone.number);
