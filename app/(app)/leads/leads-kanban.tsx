@@ -202,16 +202,22 @@ function Column({
   const { setNodeRef, isOver } = useDroppable({ id: status });
   const total = sumEstimated(leads);
   // Las columnas `compact` se renderizan estrechas hasta que el usuario
-  // pasa por encima (o las cruza con un drag). `isOver` fuerza la expansión.
+  // pasa por encima (o las cruza con un drag). `isOver` fuerza la expansión;
+  // `isDragging` añade una pista visual sutil para señalar el drop-zone.
   const isCollapsed = compact && !isOver;
+  const dropHint = compact && isDragging && !isOver;
   return (
     <div
       ref={setNodeRef}
+      role="region"
+      aria-label={`${label} · ${leads.length} lead${leads.length === 1 ? "" : "s"}`}
+      title={isCollapsed ? `${label} (${leads.length})` : undefined}
       className={cn(
-        "group/col flex h-full shrink-0 flex-col rounded-xl ring-1 ring-foreground/10 transition-[width] duration-200 ease-out",
-        isCollapsed ? "w-11 hover:w-72 bg-muted/30" : "w-72 bg-card",
-        isOver && "ring-2 ring-primary/40 bg-primary/5",
-        compact && isDragging && !isOver && "ring-dashed",
+        "group/col relative flex h-full shrink-0 flex-col overflow-hidden rounded-xl ring-1 ring-foreground/10",
+        "transition-[width,background-color,box-shadow] duration-200 ease-out motion-reduce:transition-none",
+        isCollapsed ? "w-11 cursor-pointer bg-muted/30 hover:w-72 hover:bg-card" : "w-72 bg-card",
+        isOver && "ring-2 ring-primary/50 bg-primary/5",
+        dropHint && "ring-dashed ring-primary/30 bg-primary/[0.03]",
       )}
     >
       <header
@@ -224,14 +230,14 @@ function Column({
       >
         <div
           className={cn(
-            "flex items-center gap-2",
+            "flex items-center gap-2 min-w-0",
             isCollapsed && "flex-col group-hover/col:flex-row",
           )}
         >
-          <span className={cn("size-2 rounded-full shrink-0", dot)} />
+          <span className={cn("size-2 rounded-full shrink-0", dot)} aria-hidden />
           <span
             className={cn(
-              "text-xs font-semibold tracking-wide",
+              "text-xs font-semibold tracking-wide truncate",
               tone,
               isCollapsed &&
               "[writing-mode:vertical-rl] rotate-180 group-hover/col:[writing-mode:horizontal-tb] group-hover/col:rotate-0",
@@ -240,7 +246,7 @@ function Column({
             {label}
           </span>
         </div>
-        <div className={cn("flex items-center", isCollapsed ? "" : "justify-between w-full")}>
+        <div className={cn("flex items-center", isCollapsed ? "" : "w-full justify-between")}>
           {!isCollapsed && total > 0 && (
             <p className="pl-4 text-[11px] tabular-nums text-muted-foreground">
               {formatEUR(total)}
@@ -249,7 +255,7 @@ function Column({
           <Badge
             variant="neutral"
             className={cn(
-              "tabular-nums text-[11px] h-5",
+              "h-5 tabular-nums text-[11px]",
               isCollapsed && "ml-auto group-hover/col:ml-0",
             )}
           >
@@ -264,7 +270,9 @@ function Column({
         )}
       >
         {leads.length === 0 ? (
-          <p className="px-2 py-6 text-center text-xs text-muted-foreground">Sin leads</p>
+          <p className="px-2 py-6 text-center text-xs text-muted-foreground">
+            {dropHint ? "Soltar aquí" : "Sin leads"}
+          </p>
         ) : (
           leads.map((l) => <Card key={l.id} lead={l} onOpenQuickView={onOpenQuickView} />)
         )}
