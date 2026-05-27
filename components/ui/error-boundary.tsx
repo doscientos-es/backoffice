@@ -33,7 +33,7 @@ export class ErrorBoundary extends Component<Props, State> {
     return { error };
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo) {
+  override componentDidCatch(error: Error, info: ErrorInfo) {
     // En producción aquí podría ir un servicio de logging (Sentry, etc.)
     console.error("[ErrorBoundary]", error, info.componentStack);
   }
@@ -42,7 +42,7 @@ export class ErrorBoundary extends Component<Props, State> {
     this.setState({ error: null });
   };
 
-  render() {
+  override render() {
     const { error } = this.state;
     const { children, fallback } = this.props;
 

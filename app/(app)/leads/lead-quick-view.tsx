@@ -107,7 +107,12 @@ function Body({ lead, canEdit }: { lead: KanbanLead; canEdit: boolean }) {
       </div>
 
       <div className="shrink-0 border-t border-border px-4 py-3">
-        <QuickActions leadId={lead.id} leadPhone={lead.phone} leadEmail={lead.email} />
+        <QuickActions
+          leadId={lead.id}
+          leadName={lead.name}
+          leadPhone={lead.phone}
+          leadEmail={lead.email}
+        />
       </div>
 
       <footer className="flex items-center gap-2 border-t border-border p-3">
@@ -173,10 +178,12 @@ function Interactions({ interactions }: { interactions: KanbanLead["recent_inter
 
 function QuickActions({
   leadId,
+  leadName,
   leadPhone,
   leadEmail,
 }: {
   leadId: string;
+  leadName: string;
   leadPhone: string | null;
   leadEmail: string | null;
 }) {
@@ -186,7 +193,7 @@ function QuickActions({
         Acciones rápidas
       </p>
       <div className="flex flex-col gap-1.5">
-        <QCallDialog leadId={leadId} leadPhone={leadPhone} />
+        <QCallDialog leadId={leadId} leadName={leadName} leadPhone={leadPhone} />
         <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
         <QNoteDialog leadId={leadId} />
       </div>
