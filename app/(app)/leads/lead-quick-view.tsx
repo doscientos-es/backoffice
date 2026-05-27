@@ -25,6 +25,7 @@ const STATUS_LABEL: Record<KanbanLead["status"], string> = {
   quoted: "Presupuestado",
   won: "Ganado",
   lost: "Perdido",
+  not_interested: "No interesa",
   archived: "Archivado",
 };
 
@@ -34,6 +35,7 @@ const STATUS_VARIANT = {
   quoted: "warning",
   won: "success",
   lost: "danger",
+  not_interested: "neutral",
   archived: "neutral",
 } as const;
 

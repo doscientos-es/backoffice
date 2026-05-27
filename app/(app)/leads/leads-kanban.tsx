@@ -32,11 +32,23 @@ export type KanbanLead = FastLead & {
   estimated_value: number | null;
 };
 
-type LeadStatus = "new" | "qualifying" | "quoted" | "won" | "lost" | "archived";
+type LeadStatus =
+  | "new"
+  | "qualifying"
+  | "quoted"
+  | "won"
+  | "lost"
+  | "not_interested"
+  | "archived";
 
 const STALE_DAYS = 3;
 const STALE_MS = STALE_DAYS * 24 * 60 * 60 * 1000;
-const TERMINAL_STATUSES: ReadonlySet<LeadStatus> = new Set(["won", "lost", "archived"]);
+const TERMINAL_STATUSES: ReadonlySet<LeadStatus> = new Set([
+  "won",
+  "lost",
+  "not_interested",
+  "archived",
+]);
 
 function isStale(lead: KanbanLead): boolean {
   if (TERMINAL_STATUSES.has(lead.status)) return false;
@@ -47,13 +59,25 @@ function sumEstimated(leads: KanbanLead[]): number {
   return leads.reduce((acc, l) => acc + (l.estimated_value ?? 0), 0);
 }
 
-const COLUMNS: { id: LeadStatus; label: string; tone: string; dot: string }[] = [
+// `compact` columns rinden estrechas por defecto y se expanden al pasar por
+// encima con un drag (o con el ratón). Útil para estados terminales o de
+// baja prioridad que no merecen ocupar ancho de pipeline activo.
+type ColumnDef = {
+  id: LeadStatus;
+  label: string;
+  tone: string;
+  dot: string;
+  compact?: boolean;
+};
+
+const COLUMNS: ColumnDef[] = [
   { id: "new", label: "Nuevo", tone: "text-sky-700 dark:text-sky-300", dot: "bg-sky-500" },
   { id: "qualifying", label: "Cualificando", tone: "text-amber-700 dark:text-amber-300", dot: "bg-amber-500" },
   { id: "quoted", label: "Presupuestado", tone: "text-amber-700 dark:text-amber-300", dot: "bg-amber-400" },
   { id: "won", label: "Ganado", tone: "text-emerald-700 dark:text-emerald-300", dot: "bg-emerald-500" },
-  { id: "lost", label: "Perdido", tone: "text-red-700 dark:text-red-300", dot: "bg-red-500" },
-  { id: "archived", label: "Archivado", tone: "text-muted-foreground", dot: "bg-muted-foreground/40" },
+  { id: "lost", label: "Perdido", tone: "text-red-700 dark:text-red-300", dot: "bg-red-500", compact: true },
+  { id: "not_interested", label: "No interesa", tone: "text-zinc-700 dark:text-zinc-300", dot: "bg-zinc-400", compact: true },
+  { id: "archived", label: "Archivado", tone: "text-muted-foreground", dot: "bg-muted-foreground/40", compact: true },
 ];
 
 type Action = { id: string; status: LeadStatus };
@@ -109,18 +133,20 @@ export function LeadsKanban({
     quoted: [],
     won: [],
     lost: [],
+    not_interested: [],
     archived: [],
   };
   for (const l of optimistic) grouped[l.status]?.push(l);
 
   const active = activeId ? optimistic.find((l) => l.id === activeId) : null;
+  const isDragging = activeId !== null;
 
   return (
     <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
       <div className="flex justify-end pb-1 min-h-5">
         <FormFeedback state={feedback.state} pendingLabel="Actualizando…" />
       </div>
-      <div className="flex gap-3 overflow-x-auto w-full pb-2">
+      <div className="flex gap-3 overflow-x-auto pb-2 h-[calc(100dvh-11rem)] min-h-[28rem]">
         {COLUMNS.map((col) => (
           <Column
             key={col.id}
@@ -128,6 +154,8 @@ export function LeadsKanban({
             label={col.label}
             tone={col.tone}
             dot={col.dot}
+            compact={col.compact === true}
+            isDragging={isDragging}
             leads={grouped[col.id]}
             onOpenQuickView={setQuickViewId}
           />
@@ -159,6 +187,8 @@ function Column({
   dot,
   leads,
   onOpenQuickView,
+  compact = false,
+  isDragging = false,
 }: {
   status: LeadStatus;
   label: string;
@@ -166,38 +196,77 @@ function Column({
   dot: string;
   leads: KanbanLead[];
   onOpenQuickView: (id: string) => void;
+  compact?: boolean;
+  isDragging?: boolean;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   const total = sumEstimated(leads);
+  // Las columnas `compact` se renderizan estrechas hasta que el usuario
+  // pasa por encima (o las cruza con un drag). `isOver` fuerza la expansión.
+  const isCollapsed = compact && !isOver;
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        "flex w-72 shrink-0 flex-col rounded-xl bg-card ring-1 ring-foreground/10 transition-colors",
+        "group/col flex h-full shrink-0 flex-col rounded-xl ring-1 ring-foreground/10 transition-[width] duration-200 ease-out",
+        isCollapsed ? "w-11 hover:w-72 bg-muted/30" : "w-72 bg-card",
         isOver && "ring-2 ring-primary/40 bg-primary/5",
+        compact && isDragging && !isOver && "ring-dashed",
       )}
     >
-      <header className="flex flex-col gap-1 px-3 py-2.5 border-b border-border">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className={cn("size-2 rounded-full shrink-0", dot)} />
-            <span className={cn("text-xs font-semibold tracking-wide", tone)}>{label}</span>
-          </div>
-          <Badge variant="neutral" className="tabular-nums text-[11px] h-5">
+      <header
+        className={cn(
+          "flex shrink-0 border-b border-border",
+          isCollapsed
+            ? "flex-col items-center gap-2 px-1.5 py-2.5 group-hover/col:flex-row group-hover/col:items-center group-hover/col:justify-between group-hover/col:gap-1 group-hover/col:px-3"
+            : "flex-col gap-1 px-3 py-2.5",
+        )}
+      >
+        <div
+          className={cn(
+            "flex items-center gap-2",
+            isCollapsed && "flex-col group-hover/col:flex-row",
+          )}
+        >
+          <span className={cn("size-2 rounded-full shrink-0", dot)} />
+          <span
+            className={cn(
+              "text-xs font-semibold tracking-wide",
+              tone,
+              isCollapsed &&
+              "[writing-mode:vertical-rl] rotate-180 group-hover/col:[writing-mode:horizontal-tb] group-hover/col:rotate-0",
+            )}
+          >
+            {label}
+          </span>
+        </div>
+        <div className={cn("flex items-center", isCollapsed ? "" : "justify-between w-full")}>
+          {!isCollapsed && total > 0 && (
+            <p className="pl-4 text-[11px] tabular-nums text-muted-foreground">
+              {formatEUR(total)}
+            </p>
+          )}
+          <Badge
+            variant="neutral"
+            className={cn(
+              "tabular-nums text-[11px] h-5",
+              isCollapsed && "ml-auto group-hover/col:ml-0",
+            )}
+          >
             {leads.length}
           </Badge>
         </div>
-        {total > 0 && (
-          <p className="pl-4 text-[11px] tabular-nums text-muted-foreground">{formatEUR(total)}</p>
-        )}
       </header>
-      <div className="flex flex-col gap-1.5 p-2 min-h-24">
+      <div
+        className={cn(
+          "flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-2",
+          isCollapsed && "hidden group-hover/col:flex",
+        )}
+      >
         {leads.length === 0 ? (
           <p className="px-2 py-6 text-center text-xs text-muted-foreground">Sin leads</p>
         ) : (
-          leads.map((l) => (
-            <Card key={l.id} lead={l} onOpenQuickView={onOpenQuickView} />
-          ))
+          leads.map((l) => <Card key={l.id} lead={l} onOpenQuickView={onOpenQuickView} />)
         )}
         {status === "new" && <AddLeadCard />}
       </div>

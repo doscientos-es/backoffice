@@ -25,6 +25,7 @@ const STATUS_VARIANT = {
   quoted: "warning",
   won: "success",
   lost: "danger",
+  not_interested: "neutral",
   archived: "neutral",
 } as const;
 

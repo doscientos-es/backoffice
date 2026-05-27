@@ -220,7 +220,7 @@ export async function convertLeadToClientForm(formData: FormData): Promise<void>
 const StatusInput = z
   .object({
     leadId: z.string().uuid(),
-    status: z.enum(["new", "qualifying", "quoted", "won", "lost", "archived"]),
+    status: z.enum(["new", "qualifying", "quoted", "won", "lost", "not_interested", "archived"]),
     lostReason: z.string().trim().min(1).max(500).optional(),
   })
   .refine((v) => v.status === "lost" || !v.lostReason, {

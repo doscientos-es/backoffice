@@ -12,6 +12,7 @@ const OPTIONS = [
   { value: "quoted", label: "Presupuestado" },
   { value: "won", label: "Ganado" },
   { value: "lost", label: "Perdido" },
+  { value: "not_interested", label: "No interesa" },
   { value: "archived", label: "Archivado" },
 ] as const;
 
