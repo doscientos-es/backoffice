@@ -2,7 +2,13 @@ import { LogoMark } from "@/components/branding";
 import { Markdown } from "@/components/ui/markdown";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getCurrentUser } from "@/lib/auth";
+import {
+  BILLING_CYCLE_LABELS,
+  type BillingCycle,
+  computeProposalTotals,
+} from "@/lib/finance";
 import { scopedLogger } from "@/lib/logger";
+import { parseKeyPoints } from "@/lib/proposals/key-points";
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
@@ -10,6 +16,7 @@ import { FileText } from "lucide-react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { PortalKeyPointsList, PortalNarrativeBlock } from "./narrative";
 import { ProposalActions } from "./proposal-actions";
 
 const log = scopedLogger("portal.proposal");
@@ -27,6 +34,7 @@ type ProposalItem = {
   unit_price: number;
   vat_rate: number;
   subtotal: number;
+  billing_cycle: BillingCycle | null;
 };
 
 export default async function PortalProposalPage({
@@ -46,7 +54,9 @@ export default async function PortalProposalPage({
 
   const { data: items } = await admin
     .from("proposal_items")
-    .select("id, position, description, quantity, unit_price, vat_rate, subtotal")
+    .select(
+      "id, position, description, quantity, unit_price, vat_rate, subtotal, billing_cycle",
+    )
     .eq("proposal_id", proposal.id as string)
     .order("position");
 
@@ -100,8 +110,24 @@ export default async function PortalProposalPage({
     title: string;
     portal_token: string;
   }>;
-  const intro = (proposal.intro as string | null) ?? null;
+  const contextMarkdown = (proposal.context_markdown as string | null) ?? null;
+  const problems = parseKeyPoints(proposal.problems);
+  const solutions = parseKeyPoints(proposal.solutions);
   const terms = (proposal.terms as string | null) ?? null;
+
+  // Recompute totals on the fly so we can show separate buckets for one-time
+  // and recurring lines. The stored `proposals.total` reflects the one-time
+  // portion only — kept in sync by the proposal actions.
+  const totals = computeProposalTotals(
+    safeItems.map((it) => ({
+      quantity: it.quantity,
+      unit_price: it.unit_price,
+      vat_rate: it.vat_rate,
+      billing_cycle: it.billing_cycle ?? "none",
+    })),
+  );
+  const hasRecurring =
+    totals.monthly.total > 0 || totals.quarterly.total > 0 || totals.yearly.total > 0;
 
   return (
     <div className="flex flex-col gap-4">
@@ -147,10 +173,24 @@ export default async function PortalProposalPage({
           </p>
         </div>
 
-        {/* Intro (markdown) */}
-        {intro ? (
-          <div className="border-b border-zinc-100 dark:border-zinc-800/60 px-8 py-6">
-            <Markdown source={intro} />
+        {/* Narrative: Context → Problems → Solutions (always before price) */}
+        {contextMarkdown || problems.length > 0 || solutions.length > 0 ? (
+          <div className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800/60 border-b border-zinc-100 dark:border-zinc-800/60">
+            {contextMarkdown ? (
+              <PortalNarrativeBlock label="Contexto">
+                <Markdown source={contextMarkdown} />
+              </PortalNarrativeBlock>
+            ) : null}
+            {problems.length > 0 ? (
+              <PortalNarrativeBlock label="Problemas detectados">
+                <PortalKeyPointsList items={problems} variant="problems" />
+              </PortalNarrativeBlock>
+            ) : null}
+            {solutions.length > 0 ? (
+              <PortalNarrativeBlock label="Cómo lo abordamos">
+                <PortalKeyPointsList items={solutions} variant="solutions" />
+              </PortalNarrativeBlock>
+            ) : null}
           </div>
         ) : null}
 
@@ -162,6 +202,11 @@ export default async function PortalProposalPage({
                 <th className="px-8 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
                   Descripción
                 </th>
+                {hasRecurring ? (
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+                    Cadencia
+                  </th>
+                ) : null}
                 <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
                   Cant.
                 </th>
@@ -179,33 +224,52 @@ export default async function PortalProposalPage({
             <tbody>
               {safeItems.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-8 py-6 text-sm text-zinc-400 dark:text-zinc-600">
+                  <td
+                    colSpan={hasRecurring ? 6 : 5}
+                    className="px-8 py-6 text-sm text-zinc-400 dark:text-zinc-600"
+                  >
                     Sin líneas.
                   </td>
                 </tr>
               ) : (
-                safeItems.map((item, i) => (
-                  <tr
-                    key={item.id}
-                    className={i > 0 ? "border-t border-zinc-100 dark:border-zinc-800/60" : ""}
-                  >
-                    <td className="px-8 py-3.5 text-zinc-800 dark:text-zinc-200">
-                      {item.description}
-                    </td>
-                    <td className="px-4 py-3.5 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
-                      {item.quantity}
-                    </td>
-                    <td className="px-4 py-3.5 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
-                      {formatEUR(item.unit_price)}
-                    </td>
-                    <td className="px-4 py-3.5 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
-                      {item.vat_rate}%
-                    </td>
-                    <td className="px-8 py-3.5 text-right tabular-nums font-medium text-zinc-900 dark:text-zinc-100">
-                      {formatEUR(item.subtotal)}
-                    </td>
-                  </tr>
-                ))
+                safeItems.map((item, i) => {
+                  const cycle: BillingCycle = item.billing_cycle ?? "none";
+                  return (
+                    <tr
+                      key={item.id}
+                      className={i > 0 ? "border-t border-zinc-100 dark:border-zinc-800/60" : ""}
+                    >
+                      <td className="px-8 py-3.5 text-zinc-800 dark:text-zinc-200">
+                        {item.description}
+                      </td>
+                      {hasRecurring ? (
+                        <td className="px-4 py-3.5 text-left text-xs">
+                          {cycle === "none" ? (
+                            <span className="text-zinc-400 dark:text-zinc-600">
+                              {BILLING_CYCLE_LABELS.none}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full bg-[#2A4227]/10 dark:bg-[#9CC196]/10 px-2 py-0.5 font-medium text-[#2A4227] dark:text-[#9CC196]">
+                              {BILLING_CYCLE_LABELS[cycle]}
+                            </span>
+                          )}
+                        </td>
+                      ) : null}
+                      <td className="px-4 py-3.5 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
+                        {item.quantity}
+                      </td>
+                      <td className="px-4 py-3.5 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
+                        {formatEUR(item.unit_price)}
+                      </td>
+                      <td className="px-4 py-3.5 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
+                        {item.vat_rate}%
+                      </td>
+                      <td className="px-8 py-3.5 text-right tabular-nums font-medium text-zinc-900 dark:text-zinc-100">
+                        {formatEUR(item.subtotal)}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -213,19 +277,58 @@ export default async function PortalProposalPage({
 
         {/* Totals */}
         <div className="border-t border-zinc-200 dark:border-zinc-800 px-8 py-5 flex justify-end">
-          <div className="flex flex-col gap-1.5 w-56">
-            <div className="flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
-              <span>Subtotal</span>
-              <span className="tabular-nums">{formatEUR(proposal.subtotal as number)}</span>
+          <div className="flex flex-col gap-3 w-64">
+            <div className="flex flex-col gap-1.5">
+              {hasRecurring ? (
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+                  Inversión inicial
+                </p>
+              ) : null}
+              <div className="flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
+                <span>Subtotal</span>
+                <span className="tabular-nums">{formatEUR(totals.oneTime.subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
+                <span>IVA</span>
+                <span className="tabular-nums">{formatEUR(totals.oneTime.taxAmount)}</span>
+              </div>
+              <div className="flex justify-between text-sm font-bold text-zinc-900 dark:text-zinc-100 border-t border-zinc-200 dark:border-zinc-700 pt-2 mt-1">
+                <span>Total</span>
+                <span className="tabular-nums">{formatEUR(totals.oneTime.total)}</span>
+              </div>
             </div>
-            <div className="flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
-              <span>IVA</span>
-              <span className="tabular-nums">{formatEUR(proposal.tax_amount as number)}</span>
-            </div>
-            <div className="flex justify-between text-sm font-bold text-zinc-900 dark:text-zinc-100 border-t border-zinc-200 dark:border-zinc-700 pt-2 mt-1">
-              <span>Total</span>
-              <span className="tabular-nums">{formatEUR(proposal.total as number)}</span>
-            </div>
+
+            {hasRecurring ? (
+              <div className="flex flex-col gap-1.5 border-t border-zinc-200 dark:border-zinc-800 pt-3">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+                  Mantenimiento recurrente
+                </p>
+                {totals.monthly.total > 0 ? (
+                  <div className="flex justify-between text-xs text-zinc-600 dark:text-zinc-400">
+                    <span>Mensual</span>
+                    <span className="tabular-nums font-medium">
+                      {formatEUR(totals.monthly.total)}
+                    </span>
+                  </div>
+                ) : null}
+                {totals.quarterly.total > 0 ? (
+                  <div className="flex justify-between text-xs text-zinc-600 dark:text-zinc-400">
+                    <span>Trimestral</span>
+                    <span className="tabular-nums font-medium">
+                      {formatEUR(totals.quarterly.total)}
+                    </span>
+                  </div>
+                ) : null}
+                {totals.yearly.total > 0 ? (
+                  <div className="flex justify-between text-xs text-zinc-600 dark:text-zinc-400">
+                    <span>Anual</span>
+                    <span className="tabular-nums font-medium">
+                      {formatEUR(totals.yearly.total)}
+                    </span>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </div>
 

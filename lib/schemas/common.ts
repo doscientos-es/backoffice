@@ -1,3 +1,4 @@
+import { BILLING_CYCLES } from "@/lib/finance/helpers";
 import { z } from "zod";
 
 /**
@@ -53,5 +54,10 @@ export const lineItemInput = z.object({
   quantity: z.coerce.number().positive("Cantidad > 0"),
   unit_price: z.coerce.number().nonnegative("Precio ≥ 0"),
   vat_rate: z.coerce.number().min(0).max(100).default(21),
+  /**
+   * Billing cadence. Only persisted for proposal items; invoice actions
+   * accept the field for shape parity but ignore it on write.
+   */
+  billing_cycle: z.enum(BILLING_CYCLES).default("none"),
 });
 export type LineItemInputType = z.infer<typeof lineItemInput>;

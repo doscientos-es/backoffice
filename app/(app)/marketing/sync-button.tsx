@@ -1,11 +1,11 @@
 "use client";
 
-import { syncMetaAction } from "./actions";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, RefreshCw, XCircle } from "lucide-react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { CheckCircle, RefreshCw, XCircle } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { syncMetaAction } from "./actions";
 
 type SyncStatus = "idle" | "loading" | "success" | "error";
 
@@ -13,6 +13,7 @@ export function SyncMarketingButton() {
   const [status, setStatus] = useState<SyncStatus>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   async function handleSync() {
     setStatus("loading");
@@ -20,7 +21,7 @@ export function SyncMarketingButton() {
 
     let result: Awaited<ReturnType<typeof syncMetaAction>>;
     try {
-      result = await syncMetaAction();
+      result = await syncMetaAction(searchParams.get("range") ?? undefined);
     } catch (err) {
       setStatus("error");
       setErrorMsg(err instanceof Error ? err.message : "Error inesperado");

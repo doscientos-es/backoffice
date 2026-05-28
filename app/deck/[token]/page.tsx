@@ -1,5 +1,7 @@
 import { getCurrentUser } from "@/lib/auth";
+import type { BillingCycle } from "@/lib/finance";
 import { scopedLogger } from "@/lib/logger";
+import { type KeyPoint, parseKeyPoints } from "@/lib/proposals/key-points";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
@@ -17,6 +19,7 @@ export type DeckProposalItem = {
   unit_price: number;
   vat_rate: number;
   subtotal: number;
+  billing_cycle: BillingCycle | null;
 };
 
 export type DeckTeamMember = {
@@ -30,7 +33,9 @@ export type DeckProposal = {
   id: string;
   number: string;
   title: string;
-  intro: string | null;
+  context_markdown: string | null;
+  problems: KeyPoint[];
+  solutions: KeyPoint[];
   terms: string | null;
   notes: string | null;
   subtotal: number;
@@ -87,7 +92,9 @@ export default async function DeckPage({
   const [{ data: items }, { data: team }] = await Promise.all([
     admin
       .from("proposal_items")
-      .select("id, position, description, quantity, unit_price, vat_rate, subtotal")
+      .select(
+        "id, position, description, quantity, unit_price, vat_rate, subtotal, billing_cycle",
+      )
       .eq("proposal_id", proposal.id as string)
       .order("position"),
     admin
@@ -139,7 +146,9 @@ export default async function DeckPage({
     id: proposal.id as string,
     number: proposal.number as string,
     title: proposal.title as string,
-    intro: (proposal.intro as string | null) ?? null,
+    context_markdown: (proposal.context_markdown as string | null) ?? null,
+    problems: parseKeyPoints(proposal.problems),
+    solutions: parseKeyPoints(proposal.solutions),
     terms: (proposal.terms as string | null) ?? null,
     notes: (proposal.notes as string | null) ?? null,
     subtotal: proposal.subtotal as number,

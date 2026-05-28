@@ -55,6 +55,14 @@ export const EXPENSE_RECURRENCE_LABELS: Record<ExpenseRecurrence, string> = {
 };
 
 /**
+ * Cadence at which a proposal line item is billed. Re-exports the expense
+ * recurrence vocabulary so proposals and expenses speak the same language.
+ */
+export const BILLING_CYCLES = EXPENSE_RECURRENCES;
+export type BillingCycle = ExpenseRecurrence;
+export const BILLING_CYCLE_LABELS = EXPENSE_RECURRENCE_LABELS;
+
+/**
  * Round a monetary value to 2 decimals. Single source of truth used by every
  * totals computation in the app — invoices, proposals, expenses.
  */
@@ -69,6 +77,12 @@ export type LineItem = {
   quantity: number;
   unit_price: number;
   vat_rate: number;
+  /**
+   * Billing cadence. Only meaningful for proposals — invoices ignore it and
+   * always behave as one-time. Defaults to `none` so legacy data keeps its
+   * current behavior.
+   */
+  billing_cycle?: BillingCycle;
 };
 
 /** Sensible default line used when adding rows in editors. */
@@ -77,6 +91,7 @@ export const EMPTY_LINE_ITEM: Omit<LineItem, "id"> = {
   quantity: 1,
   unit_price: 0,
   vat_rate: 21,
+  billing_cycle: "none",
 };
 
 /** Per-line subtotal (quantity × unit price), rounded to 2 decimals. */
@@ -89,6 +104,9 @@ export function computeLineSubtotal(item: Pick<LineItem, "quantity" | "unit_pric
 /**
  * Aggregate subtotal, tax_amount and total from a list of line items.
  * Pure and side-effect free; safe for client and server use.
+ *
+ * Treats every line as one-time. Callers that need recurring buckets must
+ * use {@link computeProposalTotals} instead.
  */
 export function computeLineTotals(
   items: ReadonlyArray<Pick<LineItem, "quantity" | "unit_price" | "vat_rate">>,
@@ -106,6 +124,75 @@ export function computeLineTotals(
   const s = roundCurrency(subtotal);
   const t = roundCurrency(taxAmount);
   return { subtotal: s, taxAmount: t, total: roundCurrency(s + t) };
+}
+
+/** Totals bucketed by cadence. `total` includes VAT. */
+export type ProposalBucket = { subtotal: number; taxAmount: number; total: number };
+
+export type ProposalTotals = {
+  /** Items with billing_cycle === 'none'. This is what gets invoiced first. */
+  oneTime: ProposalBucket;
+  monthly: ProposalBucket;
+  quarterly: ProposalBucket;
+  yearly: ProposalBucket;
+  /** Sum across all cadences — useful as a single headline figure. */
+  grand: ProposalBucket;
+};
+
+const emptyBucket = (): ProposalBucket => ({ subtotal: 0, taxAmount: 0, total: 0 });
+
+/**
+ * Bucket proposal line items by billing cadence. The recurring buckets are
+ * expressed per-period (e.g. `monthly.total` is the monthly charge), not
+ * annualised.
+ */
+export function computeProposalTotals(
+  items: ReadonlyArray<
+    Pick<LineItem, "quantity" | "unit_price" | "vat_rate"> & { billing_cycle?: BillingCycle | null }
+  >,
+): ProposalTotals {
+  const buckets: Record<BillingCycle, ProposalBucket> = {
+    none: emptyBucket(),
+    monthly: emptyBucket(),
+    quarterly: emptyBucket(),
+    yearly: emptyBucket(),
+  };
+
+  for (const it of items) {
+    const q = Number(it.quantity) || 0;
+    const up = Number(it.unit_price) || 0;
+    const vat = Number(it.vat_rate) || 0;
+    const base = q * up;
+    const cycle: BillingCycle =
+      it.billing_cycle && (BILLING_CYCLES as readonly string[]).includes(it.billing_cycle)
+        ? (it.billing_cycle as BillingCycle)
+        : "none";
+    const bucket = buckets[cycle];
+    bucket.subtotal += base;
+    bucket.taxAmount += base * (vat / 100);
+  }
+
+  const finalize = (b: ProposalBucket): ProposalBucket => {
+    const s = roundCurrency(b.subtotal);
+    const t = roundCurrency(b.taxAmount);
+    return { subtotal: s, taxAmount: t, total: roundCurrency(s + t) };
+  };
+
+  const oneTime = finalize(buckets.none);
+  const monthly = finalize(buckets.monthly);
+  const quarterly = finalize(buckets.quarterly);
+  const yearly = finalize(buckets.yearly);
+  const grand: ProposalBucket = {
+    subtotal: roundCurrency(
+      oneTime.subtotal + monthly.subtotal + quarterly.subtotal + yearly.subtotal,
+    ),
+    taxAmount: roundCurrency(
+      oneTime.taxAmount + monthly.taxAmount + quarterly.taxAmount + yearly.taxAmount,
+    ),
+    total: roundCurrency(oneTime.total + monthly.total + quarterly.total + yearly.total),
+  };
+
+  return { oneTime, monthly, quarterly, yearly, grand };
 }
 
 /** Row in a VAT breakdown table (one entry per distinct rate). */

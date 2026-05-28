@@ -134,7 +134,7 @@ export function LoginForm() {
               {displayedError}
             </p>
           ) : null}
-          <Button type="submit" disabled={loading || !email || !password} className="mt-1">
+          <Button type="submit" disabled={loading} className="mt-1">
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Entrando…

@@ -1,11 +1,16 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import {
+  BILLING_CYCLES,
+  BILLING_CYCLE_LABELS,
+  type BillingCycle,
   EMPTY_LINE_ITEM,
   type LineItem,
   computeLineSubtotal,
   computeLineTotals,
+  computeProposalTotals,
 } from "@/lib/finance";
 import { formatEUR } from "@/lib/utils";
 import { Plus, Trash2 } from "lucide-react";
@@ -15,15 +20,39 @@ export type LineItemsTableProps = {
   onChange: (items: LineItem[]) => void;
   /** When true, every input is disabled. Used by invoice/proposal edit views. */
   locked?: boolean;
+  /**
+   * When true, renders the cadence selector per line and a bucketed totals
+   * footer (one-time + recurring). Used by proposals; invoices keep the
+   * one-shot layout.
+   */
+  showBillingCycle?: boolean;
 };
+
+const RECURRING_CYCLES: ReadonlyArray<Exclude<BillingCycle, "none">> = [
+  "monthly",
+  "quarterly",
+  "yearly",
+];
 
 /**
  * Editable line-items table shared by invoice and proposal editors. Owns the
  * desglose UI (Subtotal / IVA / Total) so callers only deal with the items
- * array; totals are derived via `computeLineTotals`.
+ * array; totals are derived via `computeLineTotals` or, when cadence is
+ * enabled, via `computeProposalTotals` (one-time + recurring buckets).
  */
-export function LineItemsTable({ items, onChange, locked = false }: LineItemsTableProps) {
-  const { subtotal, taxAmount, total } = computeLineTotals(items);
+export function LineItemsTable({
+  items,
+  onChange,
+  locked = false,
+  showBillingCycle = false,
+}: LineItemsTableProps) {
+  const flat = computeLineTotals(items);
+  const bucketed = computeProposalTotals(items);
+  const recurringRows = showBillingCycle
+    ? RECURRING_CYCLES.filter((c) => bucketed[c].total > 0)
+    : [];
+  const totalsColSpan = showBillingCycle ? 5 : 4;
+  const footerColSpan = showBillingCycle ? 6 : 5;
 
   const update = (i: number, patch: Partial<LineItem>) =>
     onChange(items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)));
@@ -37,6 +66,9 @@ export function LineItemsTable({ items, onChange, locked = false }: LineItemsTab
         <thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
           <tr>
             <th className="px-3 py-2 font-medium">Descripción</th>
+            {showBillingCycle && (
+              <th className="w-32 px-2 py-2 font-medium">Cadencia</th>
+            )}
             <th className="w-20 px-2 py-2 font-medium text-right">Cant.</th>
             <th className="w-28 px-2 py-2 font-medium text-right">Precio</th>
             <th className="w-20 px-2 py-2 font-medium text-right">IVA %</th>

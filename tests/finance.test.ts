@@ -1,6 +1,7 @@
 import {
   buildMonthlySeries,
   computeExpenseTotals,
+  computeProposalTotals,
   profitMargin,
 } from "@/lib/finance";
 import { describe, expect, it } from "vitest";
@@ -93,5 +94,82 @@ describe("buildMonthlySeries", () => {
       ref,
     );
     expect(series.at(-1)?.revenue).toBe(42);
+  });
+});
+
+describe("computeProposalTotals", () => {
+  it("returns zeroed buckets for an empty list", () => {
+    const r = computeProposalTotals([]);
+    expect(r.oneTime).toEqual({ subtotal: 0, taxAmount: 0, total: 0 });
+    expect(r.monthly).toEqual({ subtotal: 0, taxAmount: 0, total: 0 });
+    expect(r.quarterly).toEqual({ subtotal: 0, taxAmount: 0, total: 0 });
+    expect(r.yearly).toEqual({ subtotal: 0, taxAmount: 0, total: 0 });
+    expect(r.grand).toEqual({ subtotal: 0, taxAmount: 0, total: 0 });
+  });
+
+  it("treats missing billing_cycle as one-time", () => {
+    const r = computeProposalTotals([
+      { quantity: 2, unit_price: 50, vat_rate: 21 },
+    ]);
+    expect(r.oneTime).toEqual({ subtotal: 100, taxAmount: 21, total: 121 });
+    expect(r.monthly.total).toBe(0);
+    expect(r.grand.total).toBe(121);
+  });
+
+  it("buckets each cadence independently and keeps recurring per-period", () => {
+    const r = computeProposalTotals([
+      { quantity: 1, unit_price: 1000, vat_rate: 21, billing_cycle: "none" },
+      { quantity: 1, unit_price: 200, vat_rate: 21, billing_cycle: "monthly" },
+      { quantity: 2, unit_price: 100, vat_rate: 21, billing_cycle: "quarterly" },
+      { quantity: 1, unit_price: 500, vat_rate: 10, billing_cycle: "yearly" },
+    ]);
+    expect(r.oneTime).toEqual({ subtotal: 1000, taxAmount: 210, total: 1210 });
+    expect(r.monthly).toEqual({ subtotal: 200, taxAmount: 42, total: 242 });
+    expect(r.quarterly).toEqual({ subtotal: 200, taxAmount: 42, total: 242 });
+    expect(r.yearly).toEqual({ subtotal: 500, taxAmount: 50, total: 550 });
+    expect(r.grand).toEqual({
+      subtotal: 1900,
+      taxAmount: 344,
+      total: 2244,
+    });
+  });
+
+  it("aggregates multiple lines sharing the same cadence", () => {
+    const r = computeProposalTotals([
+      { quantity: 1, unit_price: 100, vat_rate: 21, billing_cycle: "monthly" },
+      { quantity: 3, unit_price: 50, vat_rate: 21, billing_cycle: "monthly" },
+    ]);
+    expect(r.monthly.subtotal).toBe(250);
+    expect(r.monthly.taxAmount).toBeCloseTo(52.5, 2);
+    expect(r.monthly.total).toBeCloseTo(302.5, 2);
+  });
+
+  it("falls back to one-time on an unknown billing_cycle value", () => {
+    const r = computeProposalTotals([
+      // @ts-expect-error — exercising the runtime guard
+      { quantity: 1, unit_price: 100, vat_rate: 21, billing_cycle: "weekly" },
+    ]);
+    expect(r.oneTime.total).toBe(121);
+    expect(r.monthly.total).toBe(0);
+  });
+
+  it("treats null billing_cycle as one-time", () => {
+    const r = computeProposalTotals([
+      { quantity: 1, unit_price: 80, vat_rate: 10, billing_cycle: null },
+    ]);
+    expect(r.oneTime).toEqual({ subtotal: 80, taxAmount: 8, total: 88 });
+  });
+
+  it("coerces NaN numeric inputs to zero", () => {
+    const r = computeProposalTotals([
+      {
+        quantity: Number.NaN,
+        unit_price: Number.NaN,
+        vat_rate: Number.NaN,
+        billing_cycle: "monthly",
+      },
+    ]);
+    expect(r.monthly).toEqual({ subtotal: 0, taxAmount: 0, total: 0 });
+    expect(r.grand.total).toBe(0);
   });
 });

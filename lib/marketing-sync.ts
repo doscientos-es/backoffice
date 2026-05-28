@@ -1,8 +1,9 @@
 import { scopedLogger } from "@/lib/logger";
-
-const log = scopedLogger("marketing-sync");
 import { createAdminClient } from "@/lib/supabase/admin";
 import * as MetaAPI from "./integrations/meta-marketing";
+import { extractMetaLeads } from "./integrations/meta-marketing";
+
+const log = scopedLogger("marketing-sync");
 
 /**
  * Full sync of Campaigns, Ad Sets and Ads from Meta.
@@ -17,6 +18,10 @@ export async function syncMetaCatalog() {
       MetaAPI.getMetaAds(),
     ]);
 
+    // `updated_at` lacks an UPDATE trigger so we set it explicitly on every
+    // sync. This lets the dashboard derive "last sync" from max(updated_at).
+    const now = new Date().toISOString();
+
     // Upsert Campaigns
     if (campaigns.length > 0) {
       const { error: cErr } = await supabase.from("marketing_campaigns").upsert(
@@ -28,6 +33,7 @@ export async function syncMetaCatalog() {
           buying_type: c.buying_type,
           start_time: c.start_time,
           stop_time: c.stop_time,
+          updated_at: now,
           raw_payload: c,
         })),
       );
@@ -46,6 +52,7 @@ export async function syncMetaCatalog() {
           optimization_goal: as.optimization_goal,
           daily_budget: as.daily_budget ? Number.parseFloat(as.daily_budget) / 100 : null,
           lifetime_budget: as.lifetime_budget ? Number.parseFloat(as.lifetime_budget) / 100 : null,
+          updated_at: now,
           raw_payload: as,
         })),
       );
@@ -62,6 +69,7 @@ export async function syncMetaCatalog() {
           name: a.name,
           status: a.status,
           preview_url: a.creative?.thumbnail_url,
+          updated_at: now,
           raw_payload: a,
         })),
       );
@@ -89,18 +97,25 @@ export async function syncMetaInsights(since: string, until: string) {
     if (insights.length === 0) return { ok: true, synced: 0 };
 
     const { error } = await supabase.from("marketing_insights").upsert(
-      insights.map((i) => ({
-        ad_id: i.ad_id,
-        date_start: i.date_start,
-        date_stop: i.date_stop,
-        impressions: Number.parseInt(i.impressions),
-        reach: Number.parseInt(i.reach),
-        clicks: Number.parseInt(i.clicks),
-        spend: Number.parseFloat(i.spend),
-        ctr: Number.parseFloat(i.ctr),
-        cpc: i.cpc ? Number.parseFloat(i.cpc) : null,
-        cpp: i.cpp ? Number.parseFloat(i.cpp) : null,
-      })),
+      insights.map((i) => {
+        const spend = Number.parseFloat(i.spend) || 0;
+        const { totalLeads, costPerLead } = extractMetaLeads(i.actions, spend);
+        return {
+          ad_id: i.ad_id,
+          date_start: i.date_start,
+          date_stop: i.date_stop,
+          impressions: Number.parseInt(i.impressions) || 0,
+          reach: Number.parseInt(i.reach) || 0,
+          clicks: Number.parseInt(i.clicks) || 0,
+          spend,
+          currency: i.account_currency ?? "EUR",
+          ctr: Number.parseFloat(i.ctr) || null,
+          cpc: i.cpc ? Number.parseFloat(i.cpc) : null,
+          cpp: i.cpp ? Number.parseFloat(i.cpp) : null,
+          total_leads: totalLeads,
+          cost_per_lead: costPerLead || null,
+        };
+      }),
       { onConflict: "ad_id,date_start" },
     );
 
