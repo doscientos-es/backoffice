@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth";
-import { createServerClient } from "@/lib/supabase/server";
+import { listClients } from "@/lib/clients/queries";
+import { CLIENT_LIST_PAGE_SIZE } from "@/lib/clients/types";
 import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -8,12 +9,6 @@ import { ClientsList } from "./clients-list";
 
 export const metadata: Metadata = { title: "Clientes · doscientos" };
 export const dynamic = "force-dynamic";
-
-const PAGE_SIZE = 25;
-
-function escapeIlike(value: string): string {
-  return value.replace(/[%_\\]/g, (m) => `\\${m}`);
-}
 
 export default async function ClientsPage({
   searchParams,
@@ -24,23 +19,8 @@ export default async function ClientsPage({
   const sp = await searchParams;
   const q = (sp.q ?? "").trim();
   const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
-  const from = (page - 1) * PAGE_SIZE;
-  const to = from + PAGE_SIZE - 1;
 
-  const supabase = await createServerClient();
-  let query = supabase
-    .from("clients")
-    .select("id, name, nif, email, phone, contact_person, updated_at", { count: "exact" })
-    .is("deleted_at", null);
-
-  if (q.length > 0) {
-    const p = `%${escapeIlike(q)}%`;
-    query = query.or(`name.ilike.${p},nif.ilike.${p},email.ilike.${p}`);
-  }
-
-  const { data, error, count } = await query
-    .order("created_at", { ascending: false })
-    .range(from, to);
+  const { data, count } = await listClients({ q, page });
 
   return (
     <ClientsList
@@ -49,7 +29,7 @@ export default async function ClientsPage({
       error={error?.message}
       searchKey="q"
       searchPlaceholder="Buscar por nombre, NIF o email…"
-      pagination={{ page, pageSize: PAGE_SIZE, total: count ?? 0 }}
+      pagination={{ page, pageSize: CLIENT_LIST_PAGE_SIZE, total: count }}
       addHref="/clients/new"
       addLabel="Nuevo cliente"
       actions={
