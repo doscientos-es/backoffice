@@ -3,6 +3,13 @@
 import { LineItemsTable } from "@/components/finance/line-items-table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
@@ -13,6 +20,7 @@ import { EMPTY_LINE_ITEM, type LineItem } from "@/lib/finance";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
+import { updateLeadStatus } from "../../leads/actions";
 import { createProposalAction } from "../actions";
 
 type Props = {
@@ -119,103 +127,150 @@ export function NewProposalForm({ clients, leads, initialClientId, initialLeadId
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      <Card>
-        <CardContent className="pt-6">
-          <div className="grid gap-5 sm:grid-cols-2">
-            <FormRow
-              label="Destinatario"
-              htmlFor="recipient"
-              required
-              hint="Cliente existente o lead. Si es lead, le pediremos sus datos fiscales al aceptar."
-            >
-              <Select
-                id="recipient"
-                value={recipientValue}
-                onChange={(e) => onRecipientChange(e.target.value)}
+    <>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="grid gap-5 sm:grid-cols-2">
+              <FormRow
+                label="Destinatario"
+                htmlFor="recipient"
                 required
+                hint="Cliente existente o lead. Si es lead, le pediremos sus datos fiscales al aceptar."
               >
-                <option value="" disabled>
-                  — Selecciona destinatario —
-                </option>
-                {clients.length > 0 ? (
-                  <optgroup label="Clientes">
-                    {clients.map((c) => (
-                      <option key={`client-${c.id}`} value={`client:${c.id}`}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </optgroup>
-                ) : null}
-                {leads.length > 0 ? (
-                  <optgroup label="Leads abiertos">
-                    {leads.map((l) => (
-                      <option key={`lead-${l.id}`} value={`lead:${l.id}`}>
-                        {l.company ? `${l.name} · ${l.company}` : l.name}
-                      </option>
-                    ))}
-                  </optgroup>
-                ) : null}
-              </Select>
-            </FormRow>
-            <FormRow label="Título" htmlFor="title" required>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                maxLength={200}
-                autoFocus
-                placeholder="Propuesta de servicios"
+                <Select
+                  id="recipient"
+                  value={recipientValue}
+                  onChange={(e) => onRecipientChange(e.target.value)}
+                  required
+                >
+                  <option value="" disabled>
+                    — Selecciona destinatario —
+                  </option>
+                  {clients.length > 0 ? (
+                    <optgroup label="Clientes">
+                      {clients.map((c) => (
+                        <option key={`client-${c.id}`} value={`client:${c.id}`}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ) : null}
+                  {leads.length > 0 ? (
+                    <optgroup label="Leads abiertos">
+                      {leads.map((l) => (
+                        <option key={`lead-${l.id}`} value={`lead:${l.id}`}>
+                          {l.company ? `${l.name} · ${l.company}` : l.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ) : null}
+                </Select>
+              </FormRow>
+              <FormRow label="Título" htmlFor="title" required>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                  maxLength={200}
+                  autoFocus
+                  placeholder="Propuesta de servicios"
+                />
+              </FormRow>
+              <FormRow label="Válida hasta" htmlFor="valid_until" hint="Fecha límite de aceptación.">
+                <Input
+                  id="valid_until"
+                  type="date"
+                  value={validUntil}
+                  onChange={(e) => setValidUntil(e.target.value)}
+                />
+              </FormRow>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <h2 className="mb-4 text-sm font-semibold">Líneas</h2>
+            <LineItemsTable items={items} onChange={setItems} showBillingCycle />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <FormRow
+              label="Notas"
+              htmlFor="notes"
+              hint="Condiciones generales, alcance o aclaraciones para el cliente."
+            >
+              <Textarea
+                id="notes"
+                rows={4}
+                maxLength={4000}
+                placeholder="Condiciones, alcance, observaciones…"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
               />
             </FormRow>
-            <FormRow label="Válida hasta" htmlFor="valid_until" hint="Fecha límite de aceptación.">
-              <Input
-                id="valid_until"
-                type="date"
-                value={validUntil}
-                onChange={(e) => setValidUntil(e.target.value)}
-              />
-            </FormRow>
+          </CardContent>
+        </Card>
+
+        <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
+          <FormFeedback state={feedback.state} pendingLabel="Creando…" />
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/proposals">Cancelar</Link>
+          </Button>
+          <SubmitButton loading={pending} disabled={!canSubmit} pendingLabel="Creando…">
+            Crear propuesta
+          </SubmitButton>
+        </div>
+      </form>
+
+      <Dialog
+        open={!!pendingLeadMove}
+        onOpenChange={(v) => {
+          if (!v && pendingLeadMove) {
+            router.push(`/proposals/${pendingLeadMove.proposalId}`);
+            setPendingLeadMove(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>¿Mover lead a Presupuestado?</DialogTitle>
+            <DialogDescription>
+              Has creado una propuesta para <strong>{pendingLeadMove?.leadName}</strong>.{" "}
+              ¿Quieres mover el lead a <strong>Presupuestado</strong> para reflejar el estado actual?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 pt-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (!pendingLeadMove) return;
+                router.push(`/proposals/${pendingLeadMove.proposalId}`);
+                setPendingLeadMove(null);
+              }}
+            >
+              No por ahora
+            </Button>
+            <Button
+              size="sm"
+              onClick={async () => {
+                if (!pendingLeadMove) return;
+                const { leadId, proposalId } = pendingLeadMove;
+                setPendingLeadMove(null);
+                await updateLeadStatus({ leadId, status: "quoted" });
+                router.push(`/proposals/${proposalId}`);
+              }}
+            >
+              Sí, mover
+            </Button>
           </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="pt-6">
-          <h2 className="mb-4 text-sm font-semibold">Líneas</h2>
-          <LineItemsTable items={items} onChange={setItems} showBillingCycle />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="pt-6">
-          <FormRow
-            label="Notas"
-            htmlFor="notes"
-            hint="Condiciones generales, alcance o aclaraciones para el cliente."
-          >
-            <Textarea
-              id="notes"
-              rows={4}
-              maxLength={4000}
-              placeholder="Condiciones, alcance, observaciones…"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-          </FormRow>
-        </CardContent>
-      </Card>
-
-      <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
-        <FormFeedback state={feedback.state} pendingLabel="Creando…" />
-        <Button asChild variant="ghost" size="sm">
-          <Link href="/proposals">Cancelar</Link>
-        </Button>
-        <SubmitButton loading={pending} disabled={!canSubmit} pendingLabel="Creando…">
-          Crear propuesta
-        </SubmitButton>
-      </div>
-    </form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

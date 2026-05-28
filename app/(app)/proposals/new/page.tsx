@@ -38,7 +38,14 @@ export default async function NewProposalPage({
       />
       <NewProposalForm
         clients={(clients ?? []) as Array<{ id: string; name: string }>}
-        leads={(leads ?? []) as Array<{ id: string; name: string; company: string | null }>}
+        leads={
+          (leads ?? []) as Array<{
+            id: string;
+            name: string;
+            company: string | null;
+            status: string;
+          }>
+        }
         initialClientId={client_id}
         initialLeadId={lead_id}
       />
