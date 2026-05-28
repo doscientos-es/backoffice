@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
+import { getClientDetail } from "@/lib/clients/queries";
 import {
   INVOICE_STATUS,
   type InvoiceStatus,
@@ -12,7 +13,6 @@ import {
   type ProjectStatus,
   type ProposalStatus,
 } from "@/lib/status";
-import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -23,40 +23,11 @@ export const dynamic = "force-dynamic";
 export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const user = await requireUser();
-  const supabase = await createServerClient();
 
-  const { data: client } = await supabase
-    .from("clients")
-    .select("*")
-    .eq("id", id)
-    .is("deleted_at", null)
-    .maybeSingle();
+  const result = await getClientDetail(id);
+  if (!result) notFound();
 
-  if (!client) notFound();
-
-  const [{ data: projects }, { data: proposals }, { data: invoices }] = await Promise.all([
-    supabase
-      .from("projects")
-      .select("id, name, status")
-      .eq("client_id", id)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false })
-      .limit(20),
-    supabase
-      .from("proposals")
-      .select("id, number, title, status, total")
-      .eq("client_id", id)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false })
-      .limit(10),
-    supabase
-      .from("invoices")
-      .select("id, full_number, status, total, issue_date")
-      .eq("client_id", id)
-      .is("deleted_at", null)
-      .order("issue_date", { ascending: false })
-      .limit(10),
-  ]);
+  const { client, projects, proposals, invoices } = result;
 
   return (
     <div className="flex flex-col gap-6">

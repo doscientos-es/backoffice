@@ -46,12 +46,12 @@ export function SyncMarketingButton() {
         variant="outline"
         size="sm"
         className={cn(
-          status === "success" && "border-green-500 text-green-600",
-          status === "error" && "border-destructive text-destructive",
+          status === "success" && "border-success/50 text-success",
+          status === "error" && "border-destructive/50 text-destructive",
         )}
       >
         {status === "loading" && <RefreshCw className="mr-2 h-4 w-4 animate-spin" />}
-        {status === "success" && <CheckCircle className="mr-2 h-4 w-4 text-green-500" />}
+        {status === "success" && <CheckCircle className="mr-2 h-4 w-4 text-success" />}
         {status === "error" && <XCircle className="mr-2 h-4 w-4 text-destructive" />}
         {status === "idle" && <RefreshCw className="mr-2 h-4 w-4" />}
         {status === "loading" ? "Sincronizando..." : status === "success" ? "¡Sincronizado!" : "Sincronizar Meta Ads"}

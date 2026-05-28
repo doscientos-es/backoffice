@@ -26,7 +26,7 @@ export default async function ClientsPage({
     <ClientsList
       title="Clientes"
       empty={q ? "Sin coincidencias para tu búsqueda." : "Aún no hay clientes."}
-      error={error?.message}
+      error={undefined}
       searchKey="q"
       searchPlaceholder="Buscar por nombre, NIF o email…"
       pagination={{ page, pageSize: CLIENT_LIST_PAGE_SIZE, total: count }}

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth";
-import { createServerClient } from "@/lib/supabase/server";
+import { listProjects } from "@/lib/projects/queries";
+import { PROJECT_LIST_PAGE_SIZE } from "@/lib/projects/types";
 import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -11,8 +12,6 @@ import { ProjectsList } from "./projects-list";
 export const metadata: Metadata = { title: "Proyectos · doscientos" };
 export const dynamic = "force-dynamic";
 
-const PAGE_SIZE = 25;
-
 const STATUS_OPTIONS = [
   { value: "planned", label: "Planificado" },
   { value: "active", label: "Activo" },
@@ -20,10 +19,6 @@ const STATUS_OPTIONS = [
   { value: "completed", label: "Completado" },
   { value: "cancelled", label: "Cancelado" },
 ];
-
-function escapeIlike(value: string): string {
-  return value.replace(/[%_\\]/g, (m) => `\\${m}`);
-}
 
 export default async function ProjectsPage({
   searchParams,
@@ -35,34 +30,18 @@ export default async function ProjectsPage({
   const q = (sp.q ?? "").trim();
   const status = (sp.status ?? "").trim();
   const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
-  const from = (page - 1) * PAGE_SIZE;
-  const to = from + PAGE_SIZE - 1;
 
-  const supabase = await createServerClient();
-  let query = supabase
-    .from("projects")
-    .select(
-      "id, name, status, description, updated_at, client_id, github_sync_mode, github_repo, clients(name)",
-      { count: "exact" },
-    )
-    .is("deleted_at", null);
-
-  if (q.length > 0) query = query.ilike("name", `%${escapeIlike(q)}%`);
-  if (status) query = query.eq("status", status);
-
-  const { data, error, count } = await query
-    .order("created_at", { ascending: false })
-    .range(from, to);
+  const { data, count } = await listProjects({ q, status, page });
 
   return (
     <ProjectsList
       title="Proyectos"
       empty={q || status ? "Sin coincidencias." : "Aún no hay proyectos."}
-      error={error?.message}
+      error={undefined}
       searchKey="q"
       searchPlaceholder="Buscar por nombre…"
       filters={[{ key: "status", label: "Estado", options: STATUS_OPTIONS }]}
-      pagination={{ page, pageSize: PAGE_SIZE, total: count ?? 0 }}
+      pagination={{ page, pageSize: PROJECT_LIST_PAGE_SIZE, total: count }}
       addHref="/projects/new"
       addLabel="Nuevo proyecto"
       actions={
@@ -83,16 +62,15 @@ export default async function ProjectsPage({
       }
       headers={["Nombre", "Cliente", "Estado", "GitHub"]}
       rows={
-        data?.map((p) => {
+        data.map((p) => {
           const mode = (p.github_sync_mode as GitHubSyncMode | null) ?? "none";
           return {
-            id: p.id as string,
+            id: p.id,
             href: `/projects/${p.id}`,
             data: {
               id: p.id,
               name: p.name,
-              client_name:
-                (p as unknown as { clients: { name: string } | null }).clients?.name ?? "—",
+              client_name: p.client_name ?? "—",
               status: p.status,
               description: p.description,
               updated_at: p.updated_at,
@@ -100,13 +78,13 @@ export default async function ProjectsPage({
               github_repo: p.github_repo,
             },
             cells: [
-              p.name as string,
-              (p as unknown as { clients: { name: string } | null }).clients?.name ?? "—",
+              p.name,
+              p.client_name ?? "—",
               p.status as string,
               <GitHubModeBadge key="gh" mode={mode} />,
             ],
           };
-        }) ?? []
+        })
       }
     />
   );
