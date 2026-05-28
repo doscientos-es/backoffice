@@ -16,29 +16,16 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
+import type { LeadInteraction, LeadListItem } from "@/lib/leads/types";
 import { relativeTime } from "@/lib/utils";
 import { Brain, Mail, Phone, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useState } from "react";
 import { logLeadCall, logLeadEmail } from "./actions";
 
-export type FastInteraction = {
-  id: string;
-  type: string;
-  subject: string | null;
-  body: string | null;
-  created_at: string;
-};
+export type FastInteraction = LeadInteraction;
 
-export type FastLead = {
-  id: string;
-  name: string;
-  email: string | null;
-  phone: string | null;
-  ai_summary: string | null;
-  ai_updated_at: string | null;
-  recent_interactions: FastInteraction[];
-};
+export type FastLead = LeadListItem;
 
 type Props = {
   lead: FastLead;

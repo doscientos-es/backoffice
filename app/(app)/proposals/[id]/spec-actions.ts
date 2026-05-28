@@ -2,20 +2,18 @@
 
 import { requireUser } from "@/lib/auth";
 import { scopedLogger } from "@/lib/logger";
+import {
+  CreateProposalSpecInput,
+  ProposalSpecIdInput,
+  ToggleProposalSpecVisibilityInput,
+  UpdateProposalSpecInput,
+} from "@/lib/schemas/proposal";
 import { createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 
 const log = scopedLogger("proposals.specs");
 
 type Result<T = unknown> = ({ ok: true } & T) | { ok: false; error: string };
-
-const CreateInput = z.object({
-  proposal_id: z.string().uuid(),
-  title: z.string().min(1).max(200),
-  body_markdown: z.string().min(1).max(60_000),
-  is_client_visible: z.boolean().default(false),
-});
 
 /**
  * Creates a proposal_spec linked to a proposal. Returns the new id so the
@@ -23,7 +21,7 @@ const CreateInput = z.object({
  */
 export async function createSpec(input: unknown): Promise<Result<{ id: string }>> {
   const user = await requireUser();
-  const parsed = CreateInput.safeParse(input);
+  const parsed = CreateProposalSpecInput.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
   }
@@ -63,15 +61,9 @@ export async function createSpec(input: unknown): Promise<Result<{ id: string }>
   return { ok: true, id: doc.id as string };
 }
 
-const UpdateInput = z.object({
-  id: z.string().uuid(),
-  title: z.string().min(1).max(200).optional(),
-  body_markdown: z.string().min(1).max(60_000).optional(),
-});
-
 export async function updateSpec(input: unknown): Promise<Result> {
   await requireUser();
-  const parsed = UpdateInput.safeParse(input);
+  const parsed = UpdateProposalSpecInput.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
   }
@@ -99,14 +91,9 @@ export async function updateSpec(input: unknown): Promise<Result> {
   return { ok: true };
 }
 
-const ToggleInput = z.object({
-  id: z.string().uuid(),
-  is_client_visible: z.boolean(),
-});
-
 export async function toggleSpecVisibility(input: unknown): Promise<Result> {
   await requireUser();
-  const parsed = ToggleInput.safeParse(input);
+  const parsed = ToggleProposalSpecVisibilityInput.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: "Datos no válidos" };
   }
@@ -123,11 +110,9 @@ export async function toggleSpecVisibility(input: unknown): Promise<Result> {
   return { ok: true };
 }
 
-const DeleteInput = z.object({ id: z.string().uuid() });
-
 export async function deleteSpec(input: unknown): Promise<Result> {
   await requireUser();
-  const parsed = DeleteInput.safeParse(input);
+  const parsed = ProposalSpecIdInput.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Datos no válidos" };
   const supabase = await createServerClient();
   const { data: doc } = await supabase

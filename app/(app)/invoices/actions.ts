@@ -5,6 +5,13 @@ import { promoteLeadFromClient } from "@/lib/crm/conversion";
 import { serverEnv } from "@/lib/env";
 import { computeLineTotals } from "@/lib/finance";
 import { scopedLogger } from "@/lib/logger";
+import {
+  CreateInvoiceFromProposalInput,
+  SendInvoiceInput,
+  UpdateInvoiceInput as UpdateInvoiceInputSchema,
+  type UpdateInvoiceInputType,
+  UpdateInvoiceStatusInput,
+} from "@/lib/schemas/invoice";
 import { createServerClient } from "@/lib/supabase/server";
 import { submitToVerifactu } from "@/lib/verifactu/client";
 import { buildQrUrl } from "@/lib/verifactu/qr";
@@ -13,30 +20,7 @@ import { z } from "zod";
 
 const log = scopedLogger("invoices.actions");
 
-const SendInput = z.object({ id: z.string().uuid() });
-const FromProposalInput = z.object({ proposalId: z.string().uuid() });
-
-const LineItem = z.object({
-  description: z.string().min(1, "Descripción obligatoria").max(500),
-  quantity: z.coerce.number().positive("Cantidad > 0"),
-  unit_price: z.coerce.number().nonnegative("Precio ≥ 0"),
-  vat_rate: z.coerce.number().min(0).max(100).default(21),
-});
-
-const UpdateInput = z.object({
-  id: z.string().uuid(),
-  issue_date: z.string().optional(),
-  due_date: z.string().optional(),
-  notes: z.string().max(4000).optional().nullable(),
-  items: z.array(LineItem).min(1).optional(),
-});
-
-export type UpdateInvoiceInput = z.input<typeof UpdateInput>;
-
-const StatusInput = z.object({
-  id: z.string().uuid(),
-  status: z.enum(["draft", "issued", "paid", "overdue", "cancelled"]),
-});
+export type UpdateInvoiceInput = UpdateInvoiceInputType;
 
 type ActionResult = { ok: true; csv: string | null } | { ok: false; error: string };
 type FromProposalResult = { ok: true; id: string } | { ok: false; error: string };
@@ -49,7 +33,7 @@ export async function updateInvoiceStatus(
   input: unknown,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   await requireRole(["owner", "admin"]);
-  const parsed = StatusInput.safeParse(input);
+  const parsed = UpdateInvoiceStatusInput.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Datos no válidos" };
   const { id, status } = parsed.data;
 
@@ -103,7 +87,7 @@ export async function sendToAeat(formData: FormData): Promise<ActionResult> {
   await requireRole(["owner", "admin"]);
   const env = serverEnv();
 
-  const parsed = SendInput.safeParse({ id: formData.get("id")?.toString() ?? "" });
+  const parsed = SendInvoiceInput.safeParse({ id: formData.get("id")?.toString() ?? "" });
   if (!parsed.success) return { ok: false, error: "ID inválido" };
   const { id } = parsed.data;
 
@@ -220,7 +204,7 @@ export async function sendToAeat(formData: FormData): Promise<ActionResult> {
  */
 export async function createInvoiceFromProposal(input: unknown): Promise<FromProposalResult> {
   const user = await requireUser();
-  const parsed = FromProposalInput.safeParse(input);
+  const parsed = CreateInvoiceFromProposalInput.safeParse(input);
   if (!parsed.success) return { ok: false, error: "ID inválido" };
   const { proposalId } = parsed.data;
 
@@ -341,7 +325,7 @@ export async function updateInvoice(
   input: UpdateInvoiceInput,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   await requireRole(["owner", "admin"]);
-  const parsed = UpdateInput.safeParse(input);
+  const parsed = UpdateInvoiceInputSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
   }

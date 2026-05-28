@@ -1,3 +1,4 @@
+import { scopedLogger } from "@/lib/logger";
 import type { LeadStatus } from "@/lib/status";
 import { notDeleted } from "@/lib/supabase/filters";
 import { createServerClient } from "@/lib/supabase/server";
@@ -19,6 +20,8 @@ const LIST_COLUMNS =
 
 const DETAIL_COLUMNS =
   "id, name, email, phone, company, source, status, notes, estimated_value, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_temperature, ai_confidence, ai_updated_at, lost_reason, lost_at";
+
+const log = scopedLogger("leads.queries");
 
 function escapeIlike(value: string): string {
   return value.replace(/[%_\\]/g, (m) => `\\${m}`);
@@ -107,17 +110,19 @@ async function loadRecentInteractions(
 export async function getLeadDetail(id: string): Promise<LeadDetailResult | null> {
   const supabase = await createServerClient();
 
-  const [{ data: lead }, { data: interactions }, { data: linkedClient }] = await Promise.all([
-    notDeleted(supabase.from("leads").select(DETAIL_COLUMNS).eq("id", id)).maybeSingle(),
-    supabase
-      .from("lead_interactions")
-      .select("id, type, subject, body, created_at, payload")
-      .eq("lead_id", id)
-      .order("created_at", { ascending: false })
-      .limit(50),
-    notDeleted(supabase.from("clients").select("id").eq("lead_id", id)).maybeSingle(),
-  ]);
+  const [{ data: lead, error: leadErr }, { data: interactions }, { data: linkedClient }] =
+    await Promise.all([
+      notDeleted(supabase.from("leads").select(DETAIL_COLUMNS).eq("id", id)).maybeSingle(),
+      supabase
+        .from("lead_interactions")
+        .select("id, type, subject, body, created_at, payload")
+        .eq("lead_id", id)
+        .order("created_at", { ascending: false })
+        .limit(50),
+      notDeleted(supabase.from("clients").select("id").eq("lead_id", id)).maybeSingle(),
+    ]);
 
+  if (leadErr) log.error({ leadId: id, err: leadErr.message }, "lead_query_failed");
   if (!lead) return null;
 
   const detailInteractions: LeadDetailInteraction[] = (interactions ?? []).map((i) => ({

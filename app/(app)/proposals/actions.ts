@@ -7,36 +7,17 @@ import { sendEmail } from "@/lib/email/resend";
 import { publicEnv } from "@/lib/env";
 import { computeLineTotals } from "@/lib/finance";
 import { scopedLogger } from "@/lib/logger";
+import {
+  CreateProposalInput,
+  SendProposalPreviewInput,
+  UpdateProposalInput,
+} from "@/lib/schemas/proposal";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { z } from "zod";
 
 const log = scopedLogger("proposals");
-
-const LineItem = z.object({
-  description: z.string().min(1, "Descripción obligatoria").max(500),
-  quantity: z.coerce.number().positive("Cantidad > 0"),
-  unit_price: z.coerce.number().nonnegative("Precio ≥ 0"),
-  vat_rate: z.coerce.number().min(0).max(100).default(21),
-});
-
-const CreateInput = z.object({
-  client_id: z.string().uuid("Cliente inválido"),
-  project_id: z
-    .string()
-    .uuid()
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-  title: z.string().min(1, "Título obligatorio").max(200),
-  valid_until: z
-    .string()
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-  notes: z.string().max(4000).optional(),
-  items: z.array(LineItem).min(1, "Añade al menos una línea"),
-});
 
 async function nextProposalNumber(
   supabase: Awaited<ReturnType<typeof createServerClient>>,
@@ -65,7 +46,7 @@ export async function createProposal(formData: FormData): Promise<void> {
     throw new Error("Líneas no válidas");
   }
 
-  const parsed = CreateInput.safeParse({
+  const parsed = CreateProposalInput.safeParse({
     client_id: formData.get("client_id")?.toString() ?? "",
     project_id: formData.get("project_id")?.toString() ?? "",
     title: formData.get("title")?.toString() ?? "",
@@ -135,7 +116,7 @@ export async function createProposalAction(
 ): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const user = await requireUser();
 
-  const parsed = CreateInput.safeParse(input);
+  const parsed = CreateProposalInput.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
   }
@@ -191,35 +172,6 @@ export async function createProposalAction(
 
 // ---------------- UPDATE (collaborative inline edits + autosave) ----------------
 
-const UpdateInput = z.object({
-  id: z.string().uuid(),
-  title: z.string().min(1).max(200).optional(),
-  valid_until: z
-    .string()
-    .optional()
-    .or(z.literal("").transform(() => null))
-    .nullable(),
-  notes: z
-    .string()
-    .max(4000)
-    .optional()
-    .or(z.literal("").transform(() => null))
-    .nullable(),
-  intro: z
-    .string()
-    .max(20_000)
-    .optional()
-    .or(z.literal("").transform(() => null))
-    .nullable(),
-  terms: z
-    .string()
-    .max(20_000)
-    .optional()
-    .or(z.literal("").transform(() => null))
-    .nullable(),
-  items: z.array(LineItem).min(1).optional(),
-});
-
 type UpdateResult = { ok: true } | { ok: false; error: string };
 
 /**
@@ -232,7 +184,7 @@ type UpdateResult = { ok: true } | { ok: false; error: string };
 export async function updateProposal(input: unknown): Promise<UpdateResult> {
   await requireUser();
 
-  const parsed = UpdateInput.safeParse(input);
+  const parsed = UpdateProposalInput.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
   }
@@ -304,12 +256,6 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
 
 // ---------------- SEND PREVIEW LINK (client portal) ----------------
 
-const SendPreviewInput = z.object({
-  id: z.string().uuid(),
-  to: z.string().email().optional(),
-  message: z.string().max(1000).optional(),
-});
-
 type SendPreviewResult =
   | { ok: true; portalUrl: string; mocked: boolean }
   | { ok: false; error: string };
@@ -322,7 +268,7 @@ type SendPreviewResult =
 export async function sendPreviewLink(input: unknown): Promise<SendPreviewResult> {
   const user = await requireUser();
 
-  const parsed = SendPreviewInput.safeParse(input);
+  const parsed = SendProposalPreviewInput.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
   }
