@@ -6,9 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { isAIEnabled } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
-import { scopedLogger } from "@/lib/logger";
+import { getLeadDetail } from "@/lib/leads/queries";
 import { LEAD_STATUS } from "@/lib/status";
-import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -18,8 +17,6 @@ import { LeadQuickActions } from "./quick-actions";
 import { LeadStatusSelect } from "./status-select";
 
 export const dynamic = "force-dynamic";
-
-const log = scopedLogger("leads.detail");
 
 const INTERACTION_LABEL: Record<string, string> = {
   email_sent: "Email enviado",
@@ -54,38 +51,15 @@ function excerpt(body: string | null, max = 160): string | null {
 export default async function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const user = await requireUser();
-  const supabase = await createServerClient();
 
-  const { data: lead, error: leadErr } = await supabase
-    .from("leads")
-    .select(
-      "id, name, email, phone, company, source, status, notes, estimated_value, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_temperature, ai_confidence, ai_updated_at, lost_reason, lost_at",
-    )
-    .eq("id", id)
-    .is("deleted_at", null)
-    .maybeSingle();
-
-  if (leadErr) log.error({ leadId: id, err: leadErr.message }, "lead_query_failed");
-  if (!lead) notFound();
-
-  const { data: interactions } = await supabase
-    .from("lead_interactions")
-    .select("id, type, subject, body, created_at, payload")
-    .eq("lead_id", id)
-    .order("created_at", { ascending: false })
-    .limit(50);
-
-  const { data: linkedClient } = await supabase
-    .from("clients")
-    .select("id")
-    .eq("lead_id", id)
-    .is("deleted_at", null)
-    .maybeSingle();
+  const result = await getLeadDetail(id);
+  if (!result) notFound();
+  const { lead, interactions, linkedClientId } = result;
 
   const aiEnabled = isAIEnabled();
   const canEdit = user.role !== "viewer";
   const canConvert =
-    !linkedClient?.id &&
+    !linkedClientId &&
     lead.status !== "won" &&
     lead.status !== "lost" &&
     lead.status !== "archived";
@@ -97,7 +71,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         breadcrumbs={[
           { label: "Leads", href: "/leads" },
           { label: lead.name as string },
-          ...(linkedClient?.id ? [{ label: "Cliente", href: `/clients/${linkedClient.id}` }] : []),
+          ...(linkedClientId ? [{ label: "Cliente", href: `/clients/${linkedClientId}` }] : []),
         ]}
         actions={
           <>
@@ -120,9 +94,9 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
               <Button asChild size="sm">
                 <Link href={`/leads/${lead.id}/convert`}>Convertir a cliente</Link>
               </Button>
-            ) : linkedClient?.id ? (
+            ) : linkedClientId ? (
               <Button asChild variant="outline" size="sm">
-                <Link href={`/clients/${linkedClient.id}`}>Ver cliente</Link>
+                <Link href={`/clients/${linkedClientId}`}>Ver cliente</Link>
               </Button>
             ) : null}
             <LeadStatusSelect

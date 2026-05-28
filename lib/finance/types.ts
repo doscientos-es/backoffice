@@ -1,4 +1,11 @@
-import type { ExpenseCategory, ExpenseStatus, MonthlyPoint } from "./helpers";
+import type {
+  ExpenseCategory,
+  ExpenseRecurrence,
+  ExpenseStatus,
+  MonthlyPoint,
+} from "./helpers";
+
+export const EXPENSE_LIST_PAGE_SIZE = 25;
 
 export type FinanceOverview = {
   series: MonthlyPoint[];
@@ -26,4 +33,69 @@ export type InvoiceRow = {
   total: number;
   issue_date: string;
   client_name: string | null;
+};
+
+export type ExpenseListItem = {
+  id: string;
+  vendor: string;
+  category: ExpenseCategory;
+  status: ExpenseStatus;
+  total: number;
+  expense_date: string;
+  recurrence: ExpenseRecurrence;
+};
+
+export type ExpenseListParams = {
+  year: string | null;
+  category: ExpenseCategory | null;
+  status: ExpenseStatus | null;
+  q: string;
+  page: number;
+};
+
+export type ExpenseListResult = {
+  expenses: ExpenseListItem[];
+  count: number;
+  total: number;
+  years: string[];
+  error: string | null;
+};
+
+export type ExpenseProjectOption = {
+  id: string;
+  name: string;
+  clientName: string | null;
+};
+
+export type ExpenseDetailProject = {
+  id: string;
+  name: string;
+  clientName: string | null;
+};
+
+export type ExpenseDetail = {
+  id: string;
+  vendor: string;
+  description: string | null;
+  category: ExpenseCategory;
+  status: ExpenseStatus;
+  recurrence: ExpenseRecurrence;
+  expense_date: string;
+  due_date: string | null;
+  paid_at: string | null;
+  currency: string;
+  subtotal: number;
+  tax_rate: number;
+  tax_amount: number;
+  total: number;
+  vendor_nif: string | null;
+  invoice_reference: string | null;
+  project_id: string | null;
+  notes: string | null;
+  project: ExpenseDetailProject | null;
+};
+
+export type ExpenseDetailResult = {
+  expense: ExpenseDetail;
+  projectOptions: ExpenseProjectOption[];
 };

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth";
-import { createServerClient } from "@/lib/supabase/server";
+import { getLeadForConvert } from "@/lib/leads/queries";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -22,25 +22,13 @@ export default async function ConvertLeadPage({
 }) {
   const { id } = await params;
   await requireUser();
-  const supabase = await createServerClient();
 
-  const { data: lead } = await supabase
-    .from("leads")
-    .select("id, name, email, phone, company, notes")
-    .eq("id", id)
-    .is("deleted_at", null)
-    .maybeSingle();
-  if (!lead) notFound();
+  const result = await getLeadForConvert(id);
+  if (!result) notFound();
+  const { lead, existingClientId } = result;
+  if (existingClientId) redirect(`/clients/${existingClientId}`);
 
-  const { data: existing } = await supabase
-    .from("clients")
-    .select("id")
-    .eq("lead_id", id)
-    .is("deleted_at", null)
-    .maybeSingle();
-  if (existing?.id) redirect(`/clients/${existing.id}`);
-
-  const defaultName = (lead.company as string | null) || (lead.name as string);
+  const defaultName = lead.company || lead.name;
 
   return (
     <div className="flex flex-col gap-6">
@@ -94,7 +82,7 @@ export default async function ConvertLeadPage({
                   id="contact_person"
                   name="contact_person"
                   maxLength={160}
-                  defaultValue={(lead.name as string) ?? ""}
+                  defaultValue={lead.name ?? ""}
                 />
               </FormRow>
               <FormRow label="Email" htmlFor="email">
@@ -104,7 +92,7 @@ export default async function ConvertLeadPage({
                   type="email"
                   inputMode="email"
                   maxLength={160}
-                  defaultValue={(lead.email as string | null) ?? ""}
+                  defaultValue={lead.email ?? ""}
                 />
               </FormRow>
               <FormRow label="Teléfono" htmlFor="phone" className="sm:col-span-2">
@@ -114,7 +102,7 @@ export default async function ConvertLeadPage({
                   type="tel"
                   inputMode="tel"
                   maxLength={40}
-                  defaultValue={(lead.phone as string | null) ?? ""}
+                  defaultValue={lead.phone ?? ""}
                 />
               </FormRow>
             </div>
@@ -125,7 +113,7 @@ export default async function ConvertLeadPage({
                 name="notes"
                 rows={3}
                 maxLength={4000}
-                defaultValue={(lead.notes as string | null) ?? ""}
+                defaultValue={lead.notes ?? ""}
               />
             </FormRow>
 

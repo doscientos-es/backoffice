@@ -2,6 +2,8 @@
 
 import { Badge } from "@/components/ui/badge";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import type { LeadListItem } from "@/lib/leads/types";
+import type { LeadStatus } from "@/lib/status";
 import { cn, formatEUR, relativeTime } from "@/lib/utils";
 import {
   DndContext,
@@ -19,20 +21,9 @@ import Link from "next/link";
 import { useOptimistic, useState, useTransition } from "react";
 import { updateLeadStatus } from "./actions";
 import { CloseReasonDialog, type CloseReasonVariant } from "./close-reason-dialog";
-import type { FastLead } from "./lead-fast-actions";
 import { LeadQuickView } from "./lead-quick-view";
 
-export type KanbanLead = FastLead & {
-  company: string | null;
-  source: string | null;
-  notes: string | null;
-  status: LeadStatus;
-  created_at: string;
-  updated_at: string;
-  estimated_value: number | null;
-};
-
-type LeadStatus = "new" | "qualifying" | "quoted" | "won" | "lost" | "not_interested" | "archived";
+export type KanbanLead = LeadListItem;
 
 const STALE_DAYS = 3;
 const STALE_MS = STALE_DAYS * 24 * 60 * 60 * 1000;
