@@ -8,7 +8,7 @@
  */
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createGitHubIssue, createGitHubMilestone } from "./github";
+import { createGitHubIssue } from "./github";
 
 export type GitHubSyncMode = "none" | "link_only" | "bidirectional";
 
@@ -87,43 +87,6 @@ export async function autoSyncTaskIssue(taskId: string, projectId: string): Prom
     return true;
   } catch (err) {
     console.error("[github-sync] autoSyncTaskIssue failed", { taskId, projectId, err });
-    return false;
-  }
-}
-
-/**
- * Auto-create a GitHub milestone. Non-blocking — failures are logged and swallowed.
- */
-export async function autoSyncMilestone(milestoneId: string, projectId: string): Promise<boolean> {
-  try {
-    const project = await loadEligibleProject(projectId);
-    if (!project) return false;
-    const admin = createAdminClient();
-    const { data: milestone } = await admin
-      .from("milestones")
-      .select("id, name, due_date, github_milestone_number")
-      .eq("id", milestoneId)
-      .maybeSingle();
-    if (!milestone || milestone.github_milestone_number) return false;
-
-    const due = milestone.due_date ? `${milestone.due_date as string}T00:00:00Z` : undefined;
-    const result = await createGitHubMilestone({
-      installationId: project.github_installation_id as number,
-      owner: project.github_repo_owner as string,
-      repo: project.github_repo_name as string,
-      title: milestone.name as string,
-      dueOn: due,
-    });
-
-    const now = new Date().toISOString();
-    await admin
-      .from("milestones")
-      .update({ github_milestone_number: result.number })
-      .eq("id", milestoneId);
-    await admin.from("projects").update({ github_synced_at: now }).eq("id", project.id);
-    return true;
-  } catch (err) {
-    console.error("[github-sync] autoSyncMilestone failed", { milestoneId, projectId, err });
     return false;
   }
 }

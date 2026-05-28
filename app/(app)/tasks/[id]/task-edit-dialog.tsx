@@ -24,7 +24,6 @@ type Task = {
   description: string | null;
   status: string;
   priority: string;
-  milestone_id: string | null;
   assignee_id: string | null;
   due_date: string | null;
 };
@@ -32,10 +31,9 @@ type Task = {
 interface Props {
   task: Task;
   members: Array<{ id: string; name: string }>;
-  milestones: Array<{ id: string; name: string }>;
 }
 
-export function TaskEditDialog({ task, members, milestones }: Props) {
+export function TaskEditDialog({ task, members }: Props) {
   const [open, setOpen] = useState(false);
   const feedback = useFormFeedback();
   const { formRef, isDirty, reset } = useFormDirty<HTMLFormElement>();
@@ -48,7 +46,6 @@ export function TaskEditDialog({ task, members, milestones }: Props) {
       id: task.id,
       title: fd.get("title")?.toString() ?? "",
       description: fd.get("description")?.toString() ?? "",
-      milestone_id: fd.get("milestone_id")?.toString() ?? "",
       assignee_id: fd.get("assignee_id")?.toString() ?? "",
       status: (fd.get("status")?.toString() ?? "todo") as TaskStatusType,
       priority: (fd.get("priority")?.toString() ?? "medium") as TaskPriorityType,
@@ -87,11 +84,9 @@ export function TaskEditDialog({ task, members, milestones }: Props) {
           <TaskFormFields
             idPrefix={`edit-${task.id}`}
             members={members}
-            milestones={milestones}
             defaults={{
               title: task.title,
               description: task.description,
-              milestone_id: task.milestone_id,
               assignee_id: task.assignee_id,
               status: task.status,
               priority: task.priority,

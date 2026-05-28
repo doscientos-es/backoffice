@@ -1,14 +1,13 @@
 import { ListPage } from "@/components/layout/list-page";
 import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
 import { TASK_PRIORITY, TASK_STATUS, type TaskPriority, type TaskStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
-import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { TaskCreateDialog } from "./task-create-dialog";
 import { type KanbanTask, TasksKanban } from "./tasks-kanban";
 import { TasksViewToggle } from "./view-toggle";
 
@@ -39,7 +38,6 @@ type TaskRow = {
   priority: string;
   due_date: string | null;
   projects: { id: string; name: string } | null;
-  milestones: { id: string; name: string } | null;
   team_members: { id: string; name: string } | null;
 };
 
@@ -56,13 +54,25 @@ export default async function TasksPage({
 }) {
   await requireUser();
   const sp = await searchParams;
-  const view: "board" | "list" = sp.view === "board" ? "board" : "list";
+  const view: "board" | "list" = sp.view === "list" ? "list" : "board";
   const q = (sp.q ?? "").trim();
   const status = (sp.status ?? "").trim();
   const priority = (sp.priority ?? "").trim();
   const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
 
   const supabase = await createServerClient();
+
+  const [{ data: projects }, { data: leads }, { data: members }] = await Promise.all([
+    supabase.from("projects").select("id, name").is("deleted_at", null).order("name"),
+    supabase.from("leads").select("id, name").is("deleted_at", null).order("created_at", {
+      ascending: false,
+    }),
+    supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
+  ]);
+
+  const projectsList = (projects ?? []) as Array<{ id: string; name: string }>;
+  const leadsList = (leads ?? []) as Array<{ id: string; name: string }>;
+  const membersList = (members ?? []) as Array<{ id: string; name: string }>;
 
   // Board view: fetch up to 200 active tasks without pagination.
   if (view === "board") {
@@ -106,12 +116,7 @@ export default async function TasksPage({
           actions={
             <div className="flex items-center gap-2">
               <TasksViewToggle view={view} />
-              <Button asChild size="sm">
-                <Link href="/tasks/new">
-                  <Plus className="h-4 w-4" />
-                  Nueva tarea
-                </Link>
-              </Button>
+              <TaskCreateDialog projects={projectsList} leads={leadsList} members={membersList} />
             </div>
           }
         />
@@ -131,7 +136,7 @@ export default async function TasksPage({
   let query = supabase
     .from("tasks")
     .select(
-      "id, title, status, due_date, priority, projects(id, name), milestones(id, name), team_members:assignee_id(id, name)",
+      "id, title, status, due_date, priority, projects(id, name), team_members:assignee_id(id, name)",
       { count: "exact" },
     )
     .is("deleted_at", null);
@@ -157,7 +162,6 @@ export default async function TasksPage({
       ) : (
         "—"
       ),
-      t.milestones?.name ?? "—",
       <StatusBadge key={`s-${t.id}`} meta={TASK_STATUS} value={t.status} />,
       <StatusBadge key={`pr-${t.id}`} meta={TASK_PRIORITY} value={t.priority} />,
       t.team_members?.name ?? "—",
@@ -181,25 +185,15 @@ export default async function TasksPage({
       actions={
         <div className="flex items-center gap-2">
           <TasksViewToggle view={view} />
-          <Button asChild size="sm">
-            <Link href="/tasks/new">
-              <Plus className="h-4 w-4" />
-              Nueva tarea
-            </Link>
-          </Button>
+          <TaskCreateDialog projects={projectsList} leads={leadsList} members={membersList} />
         </div>
       }
       emptyAction={
-        <Button asChild size="sm">
-          <Link href="/tasks/new">
-            <Plus className="h-4 w-4" />
-            Crear primera tarea
-          </Link>
-        </Button>
+        <TaskCreateDialog projects={projectsList} leads={leadsList} members={membersList} />
       }
       addHref="/tasks/new"
       addLabel="Nueva tarea"
-      headers={["Título", "Proyecto", "Hito", "Estado", "Prioridad", "Asignada", "Vence"]}
+      headers={["Título", "Proyecto", "Estado", "Prioridad", "Asignada", "Vence"]}
       rows={rows}
     />
   );

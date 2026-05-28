@@ -22,6 +22,8 @@ import { useOptimistic, useState, useTransition } from "react";
 import { updateLeadStatus } from "./actions";
 import { CloseReasonDialog, type CloseReasonVariant } from "./close-reason-dialog";
 import { LeadQuickView } from "./lead-quick-view";
+import { QuotedSuggestionDialog } from "./quoted-suggestion-dialog";
+import { ReopenConfirmDialog } from "./reopen-confirm-dialog";
 
 export type KanbanLead = LeadListItem;
 
@@ -33,6 +35,9 @@ const TERMINAL_STATUSES: ReadonlySet<LeadStatus> = new Set([
   "not_interested",
   "archived",
 ]);
+
+// Active stages a won lead can be reopened into (excludes terminal statuses)
+const REOPEN_INTO: ReadonlySet<LeadStatus> = new Set(["new", "qualifying", "quoted"]);
 
 function isStale(lead: KanbanLead): boolean {
   if (TERMINAL_STATUSES.has(lead.status)) return false;
@@ -116,6 +121,15 @@ export function LeadsKanban({
     name: string;
     variant: CloseReasonVariant;
   } | null>(null);
+  const [pendingReopen, setPendingReopen] = useState<{
+    id: string;
+    name: string;
+    to: LeadStatus;
+  } | null>(null);
+  const [pendingSuggestion, setPendingSuggestion] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [quickViewId, setQuickViewId] = useState<string | null>(null);
   const feedback = useFormFeedback();
 
@@ -145,7 +159,19 @@ export function LeadsKanban({
       setPendingClosure({ id, name: current.name, variant: to });
       return;
     }
+
+    // Reopening a won lead: ask for confirmation before committing
+    if (current.status === "won" && REOPEN_INTO.has(to)) {
+      setPendingReopen({ id, name: current.name, to });
+      return;
+    }
+
     commitMove(id, to);
+
+    // After moving to quoted: suggest creating a proposal
+    if (to === "quoted") {
+      setPendingSuggestion({ id, name: current.name });
+    }
   };
 
   const grouped: Record<LeadStatus, KanbanLead[]> = {
@@ -193,6 +219,20 @@ export function LeadsKanban({
           setPendingClosure(null);
           commitMove(id, variant, reason);
         }}
+      />
+      <ReopenConfirmDialog
+        lead={pendingReopen ? { id: pendingReopen.id, name: pendingReopen.name } : null}
+        onCancel={() => setPendingReopen(null)}
+        onConfirm={() => {
+          if (!pendingReopen) return;
+          const { id, to } = pendingReopen;
+          setPendingReopen(null);
+          commitMove(id, to);
+        }}
+      />
+      <QuotedSuggestionDialog
+        lead={pendingSuggestion}
+        onClose={() => setPendingSuggestion(null)}
       />
       <LeadQuickView
         lead={quickViewId ? (optimistic.find((l) => l.id === quickViewId) ?? null) : null}

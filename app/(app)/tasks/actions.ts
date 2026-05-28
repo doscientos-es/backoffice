@@ -12,12 +12,16 @@ import {
 import { createServerClient } from "@/lib/supabase/server";
 import { rankAfter, rankBetween } from "@/lib/utils/ranking";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 
-export const createTask = defineAction({
+export const createTask = defineAction<
+  typeof CreateTaskInput,
+  { id: string; projectId: string | null }
+>({
   name: "tasks.create",
   schema: CreateTaskInput,
+  revalidate: (payload) =>
+    payload.projectId ? ["/tasks", `/projects/${payload.projectId}`] : ["/tasks"],
   handler: async (input, { user }) => {
     const supabase = await createServerClient();
 
@@ -53,9 +57,7 @@ export const createTask = defineAction({
       void autoSyncTaskIssue(data.id as string, data.project_id as string);
     }
 
-    revalidatePath("/tasks");
-    if (data.project_id) revalidatePath(`/projects/${data.project_id as string}`);
-    redirect(`/tasks/${data.id as string}`);
+    return { id: data.id as string, projectId: (data.project_id as string | null) ?? null };
   },
 });
 
@@ -69,7 +71,6 @@ export const updateTask = defineAction({
     const updates: Record<string, any> = {
       title: input.title,
       description: input.description ?? null,
-      milestone_id: input.milestone_id ?? null,
       assignee_id: input.assignee_id ?? null,
       status: input.status,
       priority: input.priority,

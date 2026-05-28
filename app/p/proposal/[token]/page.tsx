@@ -2,17 +2,13 @@ import { LogoMark } from "@/components/branding";
 import { Markdown } from "@/components/ui/markdown";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getCurrentUser } from "@/lib/auth";
-import {
-  BILLING_CYCLE_LABELS,
-  type BillingCycle,
-  computeProposalTotals,
-} from "@/lib/finance";
+import { BILLING_CYCLE_LABELS, type BillingCycle, computeProposalTotals } from "@/lib/finance";
 import { scopedLogger } from "@/lib/logger";
 import { parseKeyPoints } from "@/lib/proposals/key-points";
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { FileText } from "lucide-react";
+import { FileText, Presentation } from "lucide-react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
@@ -45,7 +41,9 @@ export default async function PortalProposalPage({
 
   const { data: proposal } = await admin
     .from("proposals")
-    .select("*, clients(name)")
+    .select(
+      "*, clients(name, nif, billing_address, email, phone, contact_person), leads(name, email, phone, company)",
+    )
     .eq("portal_token", token)
     .is("deleted_at", null)
     .maybeSingle();
@@ -54,9 +52,7 @@ export default async function PortalProposalPage({
 
   const { data: items } = await admin
     .from("proposal_items")
-    .select(
-      "id, position, description, quantity, unit_price, vat_rate, subtotal, billing_cycle",
-    )
+    .select("id, position, description, quantity, unit_price, vat_rate, subtotal, billing_cycle")
     .eq("proposal_id", proposal.id as string)
     .order("position");
 
@@ -101,9 +97,56 @@ export default async function PortalProposalPage({
     log.warn({ err, proposalId: proposal.id }, "proposal_view_insert_failed");
   }
 
-  const client = (proposal as unknown as { clients: { name: string } | null }).clients;
+  const client = (
+    proposal as unknown as {
+      clients: {
+        name: string;
+        nif: string | null;
+        billing_address: string | null;
+        email: string | null;
+        phone: string | null;
+        contact_person: string | null;
+      } | null;
+    }
+  ).clients;
+  const lead = (
+    proposal as unknown as {
+      leads: {
+        name: string;
+        email: string | null;
+        phone: string | null;
+        company: string | null;
+      } | null;
+    }
+  ).leads;
   const status = proposal.status as ProposalStatus;
   const responded = status === "accepted" || status === "rejected";
+
+  // The lead branch always asks for fiscal data (no `clients` row exists yet).
+  // The client branch only asks when the legal minimum (name + NIF + billing
+  // address) is missing — typically a placeholder client created by the
+  // back-office for prospects that never went through onboarding.
+  const needsFiscal =
+    !client || !client.nif?.trim() || !client.billing_address?.trim() || !client.name?.trim();
+  const fiscalPrefill = client
+    ? {
+        name: client.name ?? "",
+        nif: client.nif ?? "",
+        billing_address: client.billing_address ?? "",
+        contact_person: client.contact_person ?? "",
+        email: client.email ?? "",
+        phone: client.phone ?? "",
+      }
+    : {
+        name: lead?.company ?? lead?.name ?? "",
+        nif: "",
+        billing_address: "",
+        contact_person: lead?.name ?? "",
+        email: lead?.email ?? "",
+        phone: lead?.phone ?? "",
+      };
+  const recipientName = client?.name ?? lead?.company ?? lead?.name ?? "—";
+  const proposalNumber = (proposal.number as string | null) ?? "Borrador";
   const safeItems = (items ?? []) as unknown as ProposalItem[];
   const safeSpecs = (specs ?? []) as unknown as Array<{
     id: string;
@@ -142,7 +185,7 @@ export default async function PortalProposalPage({
               </span>
             </div>
             <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
-              Presupuesto · {proposal.number as string}
+              Presupuesto · {proposalNumber}
             </p>
           </div>
           <div className="flex flex-col items-start sm:items-end gap-1.5">
@@ -168,9 +211,7 @@ export default async function PortalProposalPage({
           <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-1">
             Dirigido a
           </p>
-          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            {client?.name ?? "—"}
-          </p>
+          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{recipientName}</p>
         </div>
 
         {/* Narrative: Context → Problems → Solutions (always before price) */}
@@ -351,28 +392,44 @@ export default async function PortalProposalPage({
           </div>
         ) : null}
 
-        {/* Technical specs */}
-        {safeSpecs.length > 0 ? (
-          <div className="border-t border-zinc-200 dark:border-zinc-800 px-8 py-6">
+        {/* Deck link + Technical specs */}
+        <div className="border-t border-zinc-200 dark:border-zinc-800 px-8 py-6 flex flex-col gap-4">
+          <div>
             <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-3">
-              Documentación técnica
+              Presentación
             </p>
-            <ul className="flex flex-col gap-2">
-              {safeSpecs.map((spec) => (
-                <li key={spec.id}>
-                  <a
-                    href={`/p/spec/${spec.portal_token}`}
-                    className="flex items-center gap-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100 hover:border-[#2A4227] hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
-                  >
-                    <FileText className="size-4 text-zinc-400 dark:text-zinc-600 shrink-0" />
-                    <span className="flex-1 truncate font-medium">{spec.title}</span>
-                    <span className="text-xs text-zinc-400 dark:text-zinc-600">Abrir →</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
+            <a
+              href={`/deck/${token}`}
+              className="flex items-center gap-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100 hover:border-[#2A4227] hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+            >
+              <Presentation className="size-4 text-zinc-400 dark:text-zinc-600 shrink-0" />
+              <span className="flex-1 truncate font-medium">Ver presentación del proyecto</span>
+              <span className="text-xs text-zinc-400 dark:text-zinc-600">Abrir →</span>
+            </a>
           </div>
-        ) : null}
+
+          {safeSpecs.length > 0 ? (
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-3">
+                Documentación técnica
+              </p>
+              <ul className="flex flex-col gap-2">
+                {safeSpecs.map((spec) => (
+                  <li key={spec.id}>
+                    <a
+                      href={`/p/spec/${spec.portal_token}`}
+                      className="flex items-center gap-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100 hover:border-[#2A4227] hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+                    >
+                      <FileText className="size-4 text-zinc-400 dark:text-zinc-600 shrink-0" />
+                      <span className="flex-1 truncate font-medium">{spec.title}</span>
+                      <span className="text-xs text-zinc-400 dark:text-zinc-600">Abrir →</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </div>
       </article>
 
       {/* Response area */}
@@ -381,7 +438,7 @@ export default async function PortalProposalPage({
           Respondida el {formatDate(proposal.responded_at as string | null)}.
         </p>
       ) : (
-        <ProposalActions token={token} />
+        <ProposalActions token={token} needsFiscal={needsFiscal} fiscalPrefill={fiscalPrefill} />
       )}
     </div>
   );

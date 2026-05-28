@@ -9,6 +9,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { TaskCreateDialog } from "../../tasks/task-create-dialog";
 import { GitHubModeBadge } from "../github-mode-badge";
 import type { GitHubSyncMode } from "../github-sync-section";
 import { ProjectEditDialog } from "./project-edit-dialog";
@@ -36,29 +37,31 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     ? await supabase.from("clients").select("id, name").is("deleted_at", null).order("name")
     : { data: null as Array<{ id: string; name: string }> | null };
 
-  const [{ data: tasks }, { data: proposals }, { data: invoices }] = await Promise.all([
-    supabase
-      .from("tasks")
-      .select("id, title, status")
-      .eq("project_id", id)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false })
-      .limit(20),
-    supabase
-      .from("proposals")
-      .select("id, number, title, status, total")
-      .eq("project_id", id)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false })
-      .limit(10),
-    supabase
-      .from("invoices")
-      .select("id, full_number, status, total, issue_date")
-      .eq("project_id", id)
-      .is("deleted_at", null)
-      .order("issue_date", { ascending: false })
-      .limit(10),
-  ]);
+  const [{ data: tasks }, { data: proposals }, { data: invoices }, { data: members }] =
+    await Promise.all([
+      supabase
+        .from("tasks")
+        .select("id, title, status")
+        .eq("project_id", id)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(20),
+      supabase
+        .from("proposals")
+        .select("id, number, title, status, total")
+        .eq("project_id", id)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(10),
+      supabase
+        .from("invoices")
+        .select("id, full_number, status, total, issue_date")
+        .eq("project_id", id)
+        .is("deleted_at", null)
+        .order("issue_date", { ascending: false })
+        .limit(10),
+      supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
+    ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -140,12 +143,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         </CardContent>
       </Card>
 
-      <div className="flex justify-end">
-        <Button asChild size="sm" variant="outline">
-          <Link href={`/projects/${id}/milestones`}>Ver hitos</Link>
-        </Button>
-      </div>
-
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Tareas</CardTitle>
@@ -153,9 +150,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <Button asChild size="sm" variant="outline">
               <Link href={`/projects/${id}/tasks`}>Ver Kanban</Link>
             </Button>
-            <Button asChild size="sm">
-              <Link href={`/tasks/new?project_id=${id}`}>Nueva tarea</Link>
-            </Button>
+            <TaskCreateDialog
+              projectId={id}
+              members={(members ?? []) as Array<{ id: string; name: string }>}
+            />
           </div>
         </CardHeader>
         <CardContent className="px-0">

@@ -6,13 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
 import { isAIEnabled } from "@/lib/env";
-import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { parseKeyPoints, toEditableKeyPoints } from "@/lib/proposals/key-points";
+import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 import { Check, FileText, Presentation } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { DuplicateProposalButton } from "./duplicate-proposal-button";
 import { GenerateInvoiceButton } from "./generate-invoice-button";
 import { type EditableItem, ProposalEditor } from "./proposal-editor";
 import { type ProposalSpec, ProposalSpecs } from "./proposal-specs";
@@ -81,7 +82,7 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
 
   const { data: proposal } = await supabase
     .from("proposals")
-    .select("*, clients(id, name), projects(id, name)")
+    .select("*, clients(id, name), leads(id, name, company), projects(id, name)")
     .eq("id", id)
     .is("deleted_at", null)
     .maybeSingle();
@@ -141,6 +142,9 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
     .maybeSingle();
 
   const client = (proposal as unknown as { clients: { id: string; name: string } | null }).clients;
+  const lead = (
+    proposal as unknown as { leads: { id: string; name: string; company: string | null } | null }
+  ).leads;
   const project = (proposal as unknown as { projects: { id: string; name: string } | null })
     .projects;
   const clientEmail =
@@ -149,6 +153,11 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
 
   const status = proposal.status as ProposalStatus;
   const locked = status === "accepted" || status === "rejected";
+  // Drafts authored against a lead never receive a series number until the
+  // first transition to `sent` (see `sendPreviewLink`). The header falls back
+  // to a human label so the page never renders `null` in the title.
+  const proposalNumber = (proposal.number as string | null) ?? "Borrador";
+  const recipientName = client?.name ?? lead?.name ?? "Sin destinatario";
 
   const editableItems: EditableItem[] = ((items ?? []) as unknown as EditableItem[]).map((it) => ({
     id: it.id,
@@ -173,12 +182,13 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title={`${proposal.number as string} — ${proposal.title as string}`}
-        description={client?.name}
+        title={`${proposalNumber} — ${proposal.title as string}`}
+        description={recipientName}
         back={<BackLink href="/proposals" label="Volver a propuestas" />}
         actions={
           <div className="flex items-center gap-2">
             <StatusBadge meta={PROPOSAL_STATUS} value={status} />
+            <DuplicateProposalButton proposalId={id} />
             {status === "accepted" ? <GenerateInvoiceButton proposalId={id} /> : null}
           </div>
         }
@@ -263,10 +273,14 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
               <DetailRow label="Estado">
                 <StatusBadge meta={PROPOSAL_STATUS} value={status} />
               </DetailRow>
-              <DetailRow label="Cliente">
+              <DetailRow label={client ? "Cliente" : "Lead"}>
                 {client ? (
                   <Link href={`/clients/${client.id}`} className="hover:underline">
                     {client.name}
+                  </Link>
+                ) : lead ? (
+                  <Link href={`/leads/${lead.id}`} className="hover:underline">
+                    {lead.company ? `${lead.name} · ${lead.company}` : lead.name}
                   </Link>
                 ) : (
                   "—"

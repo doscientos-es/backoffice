@@ -1,6 +1,5 @@
 import { ListPage } from "@/components/layout/list-page";
 import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -10,9 +9,10 @@ import { listLeads } from "@/lib/leads/queries";
 import { LEAD_LIST_PAGE_SIZE } from "@/lib/leads/types";
 import { LEAD_STATUS, type LeadStatus } from "@/lib/status";
 import { relativeTime } from "@/lib/utils";
-import { ArrowRight, Plus } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { LeadCreateDialog } from "./lead-create-dialog";
 import { LeadFastActions } from "./lead-fast-actions";
 import { LEAD_SOURCES } from "./lead-form-fields";
 import { LeadsKanban } from "./leads-kanban";
@@ -65,7 +65,11 @@ export default async function LeadsPage({
   const aiEnabled = isAIEnabled();
   const canEdit = user.role !== "viewer";
 
-  const { leads: enrichedLeads, count, error } = await listLeads({
+  const {
+    leads: enrichedLeads,
+    count,
+    error,
+  } = await listLeads({
     view,
     q,
     status,
@@ -76,12 +80,7 @@ export default async function LeadsPage({
   const actions = (
     <div className="flex items-center gap-2">
       <LeadsViewToggle view={view} />
-      <Button asChild size="sm">
-        <Link href="/leads/new">
-          <Plus className="h-4 w-4" />
-          Nuevo lead
-        </Link>
-      </Button>
+      <LeadCreateDialog />
     </div>
   );
 
@@ -94,14 +93,7 @@ export default async function LeadsPage({
         actions={actions}
         error={error ?? undefined}
         empty={hasFilters ? "Sin coincidencias." : "Aún no hay leads."}
-        emptyAction={
-          <Button asChild size="sm">
-            <Link href="/leads/new">
-              <Plus className="h-4 w-4" />
-              Nuevo lead
-            </Link>
-          </Button>
-        }
+        emptyAction={<LeadCreateDialog />}
         searchKey="q"
         searchPlaceholder="Buscar por nombre, empresa o email…"
         filters={[
@@ -172,12 +164,7 @@ export default async function LeadsPage({
                 <EmptyTitle>Aún no hay leads.</EmptyTitle>
               </EmptyHeader>
               <EmptyContent>
-                <Button asChild size="sm">
-                  <Link href="/leads/new">
-                    <Plus className="h-4 w-4" />
-                    Nuevo lead
-                  </Link>
-                </Button>
+                <LeadCreateDialog />
               </EmptyContent>
             </Empty>
           </CardContent>

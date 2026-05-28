@@ -1,13 +1,9 @@
 import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { SubmitButton } from "@/components/ui/submit-button";
 import { requireUser } from "@/lib/auth";
 import type { Metadata } from "next";
-import Link from "next/link";
-import { createLead } from "../actions";
-import { LeadFormFields } from "../lead-form-fields";
+import { LeadNewForm } from "./lead-new-form";
 
 export const metadata: Metadata = { title: "Nuevo lead · doscientos" };
 
@@ -23,16 +19,7 @@ export default async function NewLeadPage() {
 
       <Card>
         <CardContent className="pt-6">
-          <form action={createLead} className="flex flex-col gap-5">
-            <LeadFormFields idPrefix="new" autoFocusName />
-
-            <div className="flex items-center justify-end gap-2 border-t border-border pt-5">
-              <Button asChild variant="ghost" size="sm">
-                <Link href="/leads">Cancelar</Link>
-              </Button>
-              <SubmitButton pendingLabel="Creando…">Crear lead</SubmitButton>
-            </div>
-          </form>
+          <LeadNewForm />
         </CardContent>
       </Card>
     </div>

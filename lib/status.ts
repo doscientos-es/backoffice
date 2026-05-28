@@ -80,19 +80,6 @@ export const PROJECT_STATUS: StatusMeta<ProjectStatus> = {
 };
 
 // ---------------------------------------------------------------------------
-// Milestones
-// ---------------------------------------------------------------------------
-export type MilestoneStatus = "pending" | "completed" | "invoiced" | "paid" | "cancelled";
-
-export const MILESTONE_STATUS: StatusMeta<MilestoneStatus> = {
-  pending: { label: "Pendiente", variant: "neutral" },
-  completed: { label: "Completado", variant: "success" },
-  invoiced: { label: "Facturado", variant: "info" },
-  paid: { label: "Pagado", variant: "success" },
-  cancelled: { label: "Cancelado", variant: "danger" },
-};
-
-// ---------------------------------------------------------------------------
 // Tasks
 // ---------------------------------------------------------------------------
 export type TaskStatus = "todo" | "in_progress" | "in_review" | "done" | "cancelled";

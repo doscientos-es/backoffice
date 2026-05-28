@@ -28,8 +28,12 @@ export function ForgotPasswordForm() {
     setLoading(true);
     const supabase = getBrowserClient();
     const origin = typeof window !== "undefined" ? window.location.origin : "";
+    // Route through /auth/callback so the recovery code is exchanged into a
+    // fresh session (after signing out any pre-existing one) before the user
+    // lands on the update-password form. Otherwise a stale cookie session in
+    // the same browser would be the one whose password gets rewritten.
     const { error: authError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/login/update-password`,
+      redirectTo: `${origin}/auth/callback?next=${encodeURIComponent("/login/update-password")}`,
     });
     setLoading(false);
     if (authError) {

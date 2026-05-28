@@ -9,6 +9,7 @@ import { computeProposalTotals } from "@/lib/finance";
 import { scopedLogger } from "@/lib/logger";
 import {
   CreateProposalInput,
+  DuplicateProposalInput,
   SendProposalPreviewInput,
   UpdateProposalInput,
 } from "@/lib/schemas/proposal";
@@ -19,6 +20,11 @@ import { redirect } from "next/navigation";
 
 const log = scopedLogger("proposals");
 
+/**
+ * Allocates the next sequential proposal number for the current year. Called
+ * only at the first transition to `sent` so drafts don't consume numbers in
+ * the legal series.
+ */
 async function nextProposalNumber(
   supabase: Awaited<ReturnType<typeof createServerClient>>,
 ): Promise<string> {
@@ -35,105 +41,24 @@ async function nextProposalNumber(
   return `${prefix}${String(lastSeq + 1).padStart(4, "0")}`;
 }
 
-export async function createProposal(formData: FormData): Promise<void> {
-  const user = await requireUser();
-
-  const itemsRaw = formData.get("items")?.toString() ?? "[]";
-  let items: unknown;
-  try {
-    items = JSON.parse(itemsRaw);
-  } catch {
-    throw new Error("Líneas no válidas");
-  }
-
-  const parsed = CreateProposalInput.safeParse({
-    client_id: formData.get("client_id")?.toString() ?? "",
-    project_id: formData.get("project_id")?.toString() ?? "",
-    title: formData.get("title")?.toString() ?? "",
-    valid_until: formData.get("valid_until")?.toString() ?? "",
-    notes: formData.get("notes")?.toString() ?? "",
-    items,
-  });
-  if (!parsed.success) {
-    throw new Error(parsed.error.errors[0]?.message ?? "Datos no válidos");
-  }
-  const data = parsed.data;
-
-  const { oneTime } = computeProposalTotals(data.items);
-
-  const supabase = await createServerClient();
-  const number = await nextProposalNumber(supabase);
-
-  const { data: proposal, error } = await supabase
-    .from("proposals")
-    .insert({
-      client_id: data.client_id,
-      project_id: data.project_id ?? null,
-      number,
-      title: data.title,
-      status: "draft",
-      currency: "EUR",
-      subtotal: oneTime.subtotal,
-      tax_amount: oneTime.taxAmount,
-      total: oneTime.total,
-      valid_until: data.valid_until ?? null,
-      notes: data.notes ?? null,
-      created_by: user.id,
-    })
-    .select("id")
-    .single();
-
-  if (error || !proposal) {
-    log.error({ err: error }, "create_proposal_failed");
-    throw new Error(error?.message ?? "No se pudo crear la propuesta");
-  }
-
-  const { error: itemsError } = await supabase.from("proposal_items").insert(
-    data.items.map((it, idx) => ({
-      proposal_id: proposal.id,
-      position: idx,
-      description: it.description,
-      quantity: it.quantity,
-      unit_price: it.unit_price,
-      vat_rate: it.vat_rate,
-      billing_cycle: it.billing_cycle,
-    })),
-  );
-  if (itemsError) {
-    log.error({ err: itemsError, proposalId: proposal.id }, "create_proposal_items_failed");
-    throw new Error(itemsError.message);
-  }
-
-  revalidatePath("/proposals");
-  redirect(`/proposals/${proposal.id}`);
-}
-
 /**
- * JSON version of createProposal for use with autosave or client-side calls.
- * Returns the created proposal ID on success.
+ * Shared insert path used by both the FormData and JSON entry points. The
+ * proposal lands as a draft without a number — numbers are assigned on the
+ * first transition to `sent` via `sendPreviewLink`.
  */
-export async function createProposalAction(
-  input: unknown,
+async function insertDraftProposal(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  userId: string,
+  data: import("@/lib/schemas/proposal").CreateProposalInputType,
 ): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
-  const user = await requireUser();
-
-  const parsed = CreateProposalInput.safeParse(input);
-  if (!parsed.success) {
-    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
-  }
-  const data = parsed.data;
-
   const { oneTime } = computeProposalTotals(data.items);
-
-  const supabase = await createServerClient();
-  const number = await nextProposalNumber(supabase);
 
   const { data: proposal, error } = await supabase
     .from("proposals")
     .insert({
-      client_id: data.client_id,
-      project_id: data.project_id ?? null,
-      number,
+      client_id: data.client_id ?? null,
+      lead_id: data.lead_id ?? null,
+      number: null,
       title: data.title,
       status: "draft",
       currency: "EUR",
@@ -142,7 +67,7 @@ export async function createProposalAction(
       total: oneTime.total,
       valid_until: data.valid_until ?? null,
       notes: data.notes ?? null,
-      created_by: user.id,
+      created_by: userId,
     })
     .select("id")
     .single();
@@ -168,8 +93,143 @@ export async function createProposalAction(
     return { ok: false, error: itemsError.message };
   }
 
-  revalidatePath("/proposals");
   return { ok: true, id: proposal.id as string };
+}
+
+export async function createProposal(formData: FormData): Promise<void> {
+  const user = await requireUser();
+
+  const itemsRaw = formData.get("items")?.toString() ?? "[]";
+  let items: unknown;
+  try {
+    items = JSON.parse(itemsRaw);
+  } catch {
+    throw new Error("Líneas no válidas");
+  }
+
+  const parsed = CreateProposalInput.safeParse({
+    client_id: formData.get("client_id")?.toString() ?? "",
+    lead_id: formData.get("lead_id")?.toString() ?? "",
+    title: formData.get("title")?.toString() ?? "",
+    valid_until: formData.get("valid_until")?.toString() ?? "",
+    notes: formData.get("notes")?.toString() ?? "",
+    items,
+  });
+  if (!parsed.success) {
+    throw new Error(parsed.error.errors[0]?.message ?? "Datos no válidos");
+  }
+
+  const supabase = await createServerClient();
+  const res = await insertDraftProposal(supabase, user.id, parsed.data);
+  if (!res.ok) throw new Error(res.error);
+
+  revalidatePath("/proposals");
+  redirect(`/proposals/${res.id}`);
+}
+
+/**
+ * JSON version of createProposal for use with autosave or client-side calls.
+ * Returns the created proposal ID on success.
+ */
+export async function createProposalAction(
+  input: unknown,
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  const user = await requireUser();
+
+  const parsed = CreateProposalInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+  }
+
+  const supabase = await createServerClient();
+  const res = await insertDraftProposal(supabase, user.id, parsed.data);
+  if (!res.ok) return res;
+
+  revalidatePath("/proposals");
+  return { ok: true, id: res.id };
+}
+
+/**
+ * Clones an existing proposal as a new draft. Resets status, portal token,
+ * number, timestamps and signature data; copies title (prefixed "Copia de"),
+ * target, narrative blocks, terms, notes and line items. Useful for
+ * re-quoting after a rejection or when iterating with the same client.
+ */
+export async function duplicateProposal(
+  input: unknown,
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  const user = await requireUser();
+
+  const parsed = DuplicateProposalInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Identificador no válido" };
+  }
+
+  const supabase = await createServerClient();
+  const { data: source, error: readError } = await supabase
+    .from("proposals")
+    .select(
+      "client_id, lead_id, title, valid_until, notes, context_markdown, problems, solutions, terms, subtotal, tax_amount, total, currency",
+    )
+    .eq("id", parsed.data.id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (readError || !source) return { ok: false, error: "Propuesta no encontrada" };
+
+  const { data: items, error: itemsErr } = await supabase
+    .from("proposal_items")
+    .select("position, description, quantity, unit_price, vat_rate, billing_cycle")
+    .eq("proposal_id", parsed.data.id)
+    .order("position");
+  if (itemsErr) return { ok: false, error: itemsErr.message };
+
+  const { data: created, error: insertError } = await supabase
+    .from("proposals")
+    .insert({
+      client_id: source.client_id,
+      lead_id: source.lead_id,
+      number: null,
+      title: `Copia de ${source.title as string}`,
+      status: "draft",
+      currency: (source.currency as string) ?? "EUR",
+      subtotal: source.subtotal,
+      tax_amount: source.tax_amount,
+      total: source.total,
+      valid_until: null,
+      notes: source.notes,
+      context_markdown: source.context_markdown,
+      problems: source.problems,
+      solutions: source.solutions,
+      terms: source.terms,
+      created_by: user.id,
+    })
+    .select("id")
+    .single();
+  if (insertError || !created) {
+    log.error({ err: insertError, sourceId: parsed.data.id }, "duplicate_proposal_failed");
+    return { ok: false, error: insertError?.message ?? "No se pudo duplicar la propuesta" };
+  }
+
+  if ((items ?? []).length > 0) {
+    const { error: copyErr } = await supabase.from("proposal_items").insert(
+      (items ?? []).map((it, idx) => ({
+        proposal_id: created.id,
+        position: idx,
+        description: it.description,
+        quantity: it.quantity,
+        unit_price: it.unit_price,
+        vat_rate: it.vat_rate,
+        billing_cycle: it.billing_cycle,
+      })),
+    );
+    if (copyErr) {
+      log.error({ err: copyErr, sourceId: parsed.data.id }, "duplicate_proposal_items_failed");
+      return { ok: false, error: copyErr.message };
+    }
+  }
+
+  revalidatePath("/proposals");
+  return { ok: true, id: created.id as string };
 }
 
 // ---------------- UPDATE (collaborative inline edits + autosave) ----------------
@@ -287,20 +347,33 @@ export async function sendPreviewLink(input: unknown): Promise<SendPreviewResult
   const { data: proposal, error: readError } = await supabase
     .from("proposals")
     .select(
-      "id, number, title, total, status, portal_token, valid_until, sent_at, clients(name, email)",
+      "id, number, title, total, status, portal_token, valid_until, sent_at, clients(name, email), leads(name, email)",
     )
     .eq("id", id)
     .is("deleted_at", null)
     .maybeSingle();
   if (readError || !proposal) return { ok: false, error: "Propuesta no encontrada" };
 
+  // Recipient: prefer the explicit override, otherwise fall back to the
+  // client email and finally to the lead email when the proposal targets a
+  // lead that hasn't yet been upgraded to a client.
   const client = (proposal as unknown as { clients: { name: string; email: string | null } | null })
     .clients;
-  const recipient = overrideTo ?? client?.email ?? null;
-  if (!recipient) return { ok: false, error: "El cliente no tiene email registrado" };
+  const lead = (proposal as unknown as { leads: { name: string; email: string | null } | null })
+    .leads;
+  const recipient = overrideTo ?? client?.email ?? lead?.email ?? null;
+  if (!recipient) return { ok: false, error: "El destinatario no tiene email registrado" };
 
   const portalToken = proposal.portal_token as string | null;
   if (!portalToken) return { ok: false, error: "La propuesta no tiene token de portal" };
+
+  // Assign the legal proposal number on the first transition to `sent`. This
+  // keeps drafts out of the official series so cancelled proposals don't
+  // leave gaps in the numbering exposed to the customer.
+  let proposalNumber = proposal.number as string | null;
+  if (!proposalNumber) {
+    proposalNumber = await nextProposalNumber(supabase);
+  }
 
   // Fetch client-visible technical specs so the email can link to them.
   const { data: specs } = await supabase
@@ -318,14 +391,16 @@ export async function sendPreviewLink(input: unknown): Promise<SendPreviewResult
     }));
 
   const portalUrl = `${publicEnv.NEXT_PUBLIC_APP_URL}/p/proposal/${portalToken}`;
+  const deckUrl = `${publicEnv.NEXT_PUBLIC_APP_URL}/deck/${portalToken}`;
   const html = await renderEmail(
     ProposalEmail({
-      clientName: client?.name ?? "Hola",
+      clientName: client?.name ?? lead?.name ?? "Hola",
       proposalTitle: proposal.title as string,
-      proposalNumber: proposal.number as string,
+      proposalNumber,
       total: formatEUR(proposal.total as number),
       validUntil: proposal.valid_until ? formatDate(proposal.valid_until as string) : undefined,
       portalUrl,
+      deckUrl,
       appUrl: publicEnv.NEXT_PUBLIC_APP_URL,
       message,
       specs: specLinks,
@@ -339,7 +414,7 @@ export async function sendPreviewLink(input: unknown): Promise<SendPreviewResult
       fromAlias: user.emailAlias ?? "propuestas",
       to: recipient,
       replyTo: user.contactEmail ?? user.email,
-      subject: `Propuesta ${proposal.number as string} · ${proposal.title as string}`,
+      subject: `Propuesta ${proposalNumber} · ${proposal.title as string}`,
       html,
       tags: { proposal_id: id, kind: "proposal_preview" },
     });
@@ -350,6 +425,7 @@ export async function sendPreviewLink(input: unknown): Promise<SendPreviewResult
   }
 
   const patch: Record<string, unknown> = {};
+  if (!proposal.number) patch.number = proposalNumber;
   if (proposal.status === "draft") {
     patch.status = "sent";
     patch.sent_at = new Date().toISOString();

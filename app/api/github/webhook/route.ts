@@ -8,7 +8,6 @@
  *   issues.opened / closed / reopened / assigned / labeled
  *   issue_comment.created
  *   pull_request.opened / closed (with merged flag)
- *   milestone.created / closed
  */
 
 import { verifyGitHubSignature } from "@/lib/integrations/github";
@@ -62,18 +61,6 @@ interface GitHubPRPayload {
   sender: GitHubUser;
 }
 
-interface GitHubMilestonePayload {
-  action: string;
-  milestone: {
-    number: number;
-    title: string;
-    due_on?: string;
-    description?: string;
-  };
-  repository?: { owner: { login: string }; name: string };
-  sender: GitHubUser;
-}
-
 // ---------------------------------------------------------------------------
 // Main handler
 // ---------------------------------------------------------------------------
@@ -101,10 +88,8 @@ export async function POST(req: NextRequest) {
       await handleIssueEvent(supabase, event, payload as GitHubIssuePayload);
     } else if (event === "pull_request") {
       await handlePREvent(supabase, payload as GitHubPRPayload);
-    } else if (event === "milestone") {
-      await handleMilestoneEvent(supabase, payload as GitHubMilestonePayload);
     }
-    // All other events are ignored (ping, push, etc.)
+    // All other events are ignored (ping, push, milestone, etc.)
   } catch (err) {
     console.error("[github/webhook] processing error", err);
     // Return 200 to avoid GitHub marking the webhook as failing — we log internally.
@@ -323,51 +308,6 @@ async function handlePREvent(
         github_synced_at: synced,
       })
       .eq("id", task.id);
-    return;
-  }
-}
-
-// ---------------------------------------------------------------------------
-// milestone
-// ---------------------------------------------------------------------------
-
-async function handleMilestoneEvent(
-  supabase: ReturnType<typeof createAdminClient>,
-  payload: GitHubMilestonePayload,
-) {
-  const { action, milestone } = payload;
-  const repo = payload.repository;
-  if (!repo) return;
-
-  const projectId = await projectByRepo(supabase, repo.owner.login, repo.name);
-  if (!projectId) return;
-
-  if (action === "created") {
-    // Check if we already have this milestone (created from CRM — it will have github_milestone_number set).
-    const { data: existing } = await supabase
-      .from("milestones")
-      .select("id")
-      .eq("project_id", projectId)
-      .eq("github_milestone_number", milestone.number)
-      .maybeSingle();
-    if (existing) return;
-
-    // New milestone created directly in GitHub — mirror it to CRM.
-    await supabase.from("milestones").insert({
-      project_id: projectId,
-      name: milestone.title,
-      github_milestone_number: milestone.number,
-      due_date: milestone.due_on ? milestone.due_on.split("T")[0] : null,
-    });
-    return;
-  }
-
-  if (action === "closed") {
-    await supabase
-      .from("milestones")
-      .update({ status: "completed" })
-      .eq("project_id", projectId)
-      .eq("github_milestone_number", milestone.number);
     return;
   }
 }

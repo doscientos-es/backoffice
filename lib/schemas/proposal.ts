@@ -1,6 +1,14 @@
 import { KEY_POINTS_LIMITS } from "@/lib/proposals/key-points";
 import { z } from "zod";
-import { emptyToUndef, lineItemInput, uuidIdInput } from "./common";
+import {
+  emptyToUndef,
+  lineItemInput,
+  optionalEmail,
+  optionalText,
+  optionalUuid,
+  requiredText,
+  uuidIdInput,
+} from "./common";
 
 /**
  * Shape of a single problem/solution narrative bullet. The id is generated
@@ -10,16 +18,16 @@ import { emptyToUndef, lineItemInput, uuidIdInput } from "./common";
 export const keyPointInput = z.object({
   id: z.string().min(1).max(64),
   title: z.string().trim().min(1, "Título obligatorio").max(KEY_POINTS_LIMITS.maxTitleLength),
-  description: z
-    .string()
-    .max(KEY_POINTS_LIMITS.maxDescriptionLength)
-    .nullable()
-    .optional(),
+  description: z.string().max(KEY_POINTS_LIMITS.maxDescriptionLength).nullable().optional(),
 });
 export type KeyPointInputType = z.infer<typeof keyPointInput>;
 
 /** Reusable, nullable list of key points capped at the domain limit. */
-const keyPointListField = z.array(keyPointInput).max(KEY_POINTS_LIMITS.maxCount).nullable().optional();
+const keyPointListField = z
+  .array(keyPointInput)
+  .max(KEY_POINTS_LIMITS.maxCount)
+  .nullable()
+  .optional();
 
 /**
  * Zod schemas for the `proposals` domain.
@@ -31,15 +39,34 @@ const keyPointListField = z.array(keyPointInput).max(KEY_POINTS_LIMITS.maxCount)
 
 // ---------------- Proposals ----------------
 
-export const CreateProposalInput = z.object({
-  client_id: z.string().uuid("Cliente inválido"),
-  project_id: z.string().uuid().optional().or(emptyToUndef),
-  title: z.string().min(1, "Título obligatorio").max(200),
-  valid_until: z.string().optional().or(emptyToUndef),
-  notes: z.string().max(4000).optional(),
-  items: z.array(lineItemInput).min(1, "Añade al menos una línea"),
-});
+/**
+ * A proposal must target exactly one of (client_id, lead_id). Project
+ * association is removed: when the proposal is accepted, a project is
+ * auto-generated and linked back. Drafts authored against a lead get
+ * upgraded to a client at acceptance time via the portal fiscal form.
+ */
+export const CreateProposalInput = z
+  .object({
+    client_id: optionalUuid,
+    lead_id: optionalUuid,
+    title: z.string().min(1, "Título obligatorio").max(200),
+    valid_until: z.string().optional().or(emptyToUndef),
+    notes: z.string().max(4000).optional(),
+    items: z.array(lineItemInput).min(1, "Añade al menos una línea"),
+  })
+  .refine((v) => Boolean(v.client_id) !== Boolean(v.lead_id), {
+    message: "Selecciona un cliente o un lead",
+    path: ["client_id"],
+  });
 export type CreateProposalInputType = z.infer<typeof CreateProposalInput>;
+
+/**
+ * Action to clone an existing proposal as a new draft. The clone resets
+ * status, portal token, number, timestamps and signature data, but keeps
+ * the title (prefixed), target, narrative blocks and line items.
+ */
+export const DuplicateProposalInput = uuidIdInput;
+export type DuplicateProposalInputType = z.infer<typeof DuplicateProposalInput>;
 
 /**
  * Patch payload for the inline editor + autosave. All fields optional except
@@ -125,3 +152,24 @@ export const ProposalPortalToken = z
   .regex(/^[a-f0-9]+$/i);
 
 export const ProposalRejectionReason = z.string().max(500).optional();
+
+/**
+ * Fiscal data the lead must provide on the portal before they can accept
+ * a proposal. Mirrors the shape of `ConvertLeadInput` so we can promote
+ * the lead to a client in a single transactional acceptance.
+ */
+export const AcceptProposalFiscalData = z.object({
+  name: requiredText(160, "La razón social es obligatoria"),
+  nif: requiredText(20, "El NIF es obligatorio"),
+  billing_address: requiredText(400, "La dirección de facturación es obligatoria"),
+  contact_person: optionalText(160),
+  email: optionalEmail,
+  phone: optionalText(40),
+});
+export type AcceptProposalFiscalDataType = z.infer<typeof AcceptProposalFiscalData>;
+
+export const AcceptProposalInput = z.object({
+  token: ProposalPortalToken,
+  fiscal: AcceptProposalFiscalData.optional(),
+});
+export type AcceptProposalInputType = z.infer<typeof AcceptProposalInput>;

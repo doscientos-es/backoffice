@@ -8,16 +8,26 @@ import { NewProposalForm } from "./new-proposal-form";
 export const metadata: Metadata = { title: "Nueva propuesta · doscientos" };
 export const dynamic = "force-dynamic";
 
+/**
+ * Lead-first proposal creation: the recipient is either an existing client
+ * or an open lead. Projects are no longer selected up-front; they are
+ * generated automatically when the proposal is accepted.
+ */
 export default async function NewProposalPage({
   searchParams,
-}: { searchParams: Promise<{ client_id?: string; project_id?: string }> }) {
+}: { searchParams: Promise<{ client_id?: string; lead_id?: string }> }) {
   await requireUser();
-  const { client_id, project_id } = await searchParams;
+  const { client_id, lead_id } = await searchParams;
 
   const supabase = await createServerClient();
-  const [{ data: clients }, { data: projects }] = await Promise.all([
+  const [{ data: clients }, { data: leads }] = await Promise.all([
     supabase.from("clients").select("id, name").is("deleted_at", null).order("name"),
-    supabase.from("projects").select("id, name, client_id").is("deleted_at", null).order("name"),
+    supabase
+      .from("leads")
+      .select("id, name, company, status")
+      .is("deleted_at", null)
+      .not("status", "in", "(won,lost,not_interested,archived)")
+      .order("name"),
   ]);
 
   return (
@@ -27,10 +37,10 @@ export default async function NewProposalPage({
         back={<BackLink href="/proposals" label="Volver a propuestas" />}
       />
       <NewProposalForm
-        clients={(clients ?? []) as any}
-        projects={(projects ?? []) as any}
+        clients={(clients ?? []) as Array<{ id: string; name: string }>}
+        leads={(leads ?? []) as Array<{ id: string; name: string; company: string | null }>}
         initialClientId={client_id}
-        initialProjectId={project_id}
+        initialLeadId={lead_id}
       />
     </div>
   );

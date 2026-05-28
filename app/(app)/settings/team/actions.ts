@@ -45,7 +45,9 @@ export async function inviteTeamMember(formData: FormData): Promise<ActionResult
   }
 
   const admin = createAdminClient();
-  const redirectTo = `${publicEnv.NEXT_PUBLIC_APP_URL}/login/update-password`;
+  // Route through /auth/callback so the PKCE code is exchanged into a session
+  // for the invitee, with any pre-existing browser session signed out first.
+  const redirectTo = `${publicEnv.NEXT_PUBLIC_APP_URL}/auth/callback?next=${encodeURIComponent("/login/update-password")}`;
   const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(
     parsed.data.email,
     { data: { name: parsed.data.name }, redirectTo },

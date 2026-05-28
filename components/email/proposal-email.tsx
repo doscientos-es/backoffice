@@ -24,6 +24,8 @@ export type ProposalEmailProps = {
   validUntil?: string;
   /** Absolute URL to the public portal proposal page */
   portalUrl: string;
+  /** Absolute URL to the deck/presentation page. Optional. */
+  deckUrl?: string;
   /** Absolute base URL of the app (for logo resolution) */
   appUrl: string;
   /** Optional custom message from the sender */
@@ -46,6 +48,7 @@ export function ProposalEmail({
   total,
   validUntil,
   portalUrl,
+  deckUrl,
   appUrl,
   message,
   specs,
@@ -109,6 +112,30 @@ export function ProposalEmail({
       >
         Ver propuesta
       </Button>
+
+      {deckUrl ? (
+        <Button
+          href={deckUrl}
+          style={{
+            display: "block",
+            width: "100%",
+            backgroundColor: "#ffffff",
+            color: BRAND,
+            fontFamily: FONT,
+            fontSize: 13,
+            fontWeight: 600,
+            textAlign: "center",
+            textDecoration: "none",
+            border: `1px solid ${BRAND}`,
+            borderRadius: 8,
+            padding: "12px 0",
+            boxSizing: "border-box",
+            marginTop: 8,
+          }}
+        >
+          Ver presentación
+        </Button>
+      ) : null}
 
       {hasSpecs ? (
         <>

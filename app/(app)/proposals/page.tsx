@@ -81,7 +81,7 @@ export default async function ProposalsPage({
           id: p.id as string,
           href: `/proposals/${p.id}`,
           cells: [
-            p.number as string,
+            (p.number as string | null) ?? "Borrador",
             p.title as string,
             <StatusBadge key="status" meta={PROPOSAL_STATUS} value={p.status as string} />,
             formatEUR(p.total as number),

@@ -31,7 +31,6 @@ export type TaskListItem = {
   priority: string;
   due_date: string | null;
   projects: { id: string; name: string } | null;
-  milestones: { id: string; name: string } | null;
   team_members: { id: string; name: string } | null;
 };
 
@@ -68,11 +67,6 @@ export type TaskDetailMember = {
   name: string;
 };
 
-export type TaskDetailMilestone = {
-  id: string;
-  name: string;
-};
-
 export type TaskDetailComment = {
   id: string;
   body: string;
@@ -86,7 +80,6 @@ export type TaskDetail = {
   description: string | null;
   status: string;
   priority: string;
-  milestone_id: string | null;
   due_date: string | null;
   started_at: string | null;
   completed_at: string | null;
@@ -101,6 +94,5 @@ export type TaskDetailResult = {
   assignee: TaskDetailMember | null;
   creator: TaskDetailMember | null;
   members: TaskDetailMember[];
-  milestones: TaskDetailMilestone[];
   comments: TaskDetailComment[];
 } | null;

@@ -21,25 +21,25 @@ const OPTIONS: Array<{
   description: string;
   icon: ReactNode;
 }> = [
-  {
-    value: "none",
-    title: "Sin GitHub",
-    description: "El proyecto vive sólo en el backoffice.",
-    icon: <Github className="size-4" />,
-  },
-  {
-    value: "link_only",
-    title: "Solo enlace",
-    description: "Repo externo: enlazamos pero nunca escribimos en GitHub.",
-    icon: <Link2 className="size-4" />,
-  },
-  {
-    value: "bidirectional",
-    title: "Sincronización completa",
-    description: "Tareas e hitos crean y reciben issues/milestones automáticamente.",
-    icon: <RefreshCw className="size-4" />,
-  },
-];
+    {
+      value: "none",
+      title: "Sin GitHub",
+      description: "El proyecto vive sólo en el backoffice.",
+      icon: <Github className="size-4" />,
+    },
+    {
+      value: "link_only",
+      title: "Solo enlace",
+      description: "Repo externo: enlazamos pero nunca escribimos en GitHub.",
+      icon: <Link2 className="size-4" />,
+    },
+    {
+      value: "bidirectional",
+      title: "Sincronización completa",
+      description: "Las tareas crean y reciben issues automáticamente.",
+      icon: <RefreshCw className="size-4" />,
+    },
+  ];
 
 export function GitHubSyncSection({
   idPrefix,
@@ -137,9 +137,9 @@ export function GitHubSyncSection({
             className="size-4 rounded border-border text-primary focus:ring-1 focus:ring-primary"
           />
           <span className="flex-1">
-            <span className="font-medium">Auto-crear issues y milestones</span>
+            <span className="font-medium">Auto-crear issues</span>
             <span className="ml-1 text-muted-foreground">
-              al añadir tareas o hitos desde el backoffice.
+              al añadir tareas desde el backoffice.
             </span>
           </span>
         </label>
@@ -182,12 +182,6 @@ const HELP_ROWS: Array<{ action: string; none: string; link: string; full: strin
     none: "—",
     link: "Botón para abrir issue prellenado en GitHub.com",
     full: "Crea issue automáticamente",
-  },
-  {
-    action: "Crear hito",
-    none: "—",
-    link: "No se toca GitHub",
-    full: "Crea milestone automáticamente",
   },
   {
     action: "Recibir webhook",

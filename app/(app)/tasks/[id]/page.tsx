@@ -27,7 +27,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
   const { data: task } = await supabase
     .from("tasks")
     .select(
-      "*, projects(id, name, github_sync_mode, github_repo, github_repo_owner, github_repo_name), leads(id, name), milestones(id, name), team_members:assignee_id(id, name), creator:created_by(id, name)",
+      "*, projects(id, name, github_sync_mode, github_repo, github_repo_owner, github_repo_name), leads(id, name), team_members:assignee_id(id, name), creator:created_by(id, name)",
     )
     .eq("id", id)
     .is("deleted_at", null)
@@ -50,15 +50,8 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
     .team_members;
   const creator = (task as unknown as { creator: { id: string; name: string } | null }).creator;
 
-  const [{ data: members }, { data: milestones }, { data: commentsData }] = await Promise.all([
+  const [{ data: members }, { data: commentsData }] = await Promise.all([
     supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
-    project?.id
-      ? supabase
-          .from("milestones")
-          .select("id, name")
-          .eq("project_id", project.id)
-          .order("due_date", { ascending: true, nullsFirst: false })
-      : Promise.resolve({ data: [] as { id: string; name: string }[] }),
     supabase
       .from("task_comments")
       .select("id, body, created_at, author:author_id(id, name)")
@@ -87,12 +80,10 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
                   description: (task.description as string | null) ?? null,
                   status: task.status as string,
                   priority: task.priority as string,
-                  milestone_id: (task.milestone_id as string | null) ?? null,
                   assignee_id: (assignee?.id as string | undefined) ?? null,
                   due_date: (task.due_date as string | null) ?? null,
                 }}
                 members={(members ?? []) as Array<{ id: string; name: string }>}
-                milestones={(milestones ?? []) as Array<{ id: string; name: string }>}
               />
             ) : null}
           </div>
@@ -123,10 +114,6 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
                 ) : (
                   "—"
                 )}
-              </DetailRow>
-              <DetailRow label="Hito">
-                {(task as unknown as { milestones: { name: string } | null }).milestones?.name ??
-                  "—"}
               </DetailRow>
               <DetailRow label="Asignada">{assignee?.name ?? "—"}</DetailRow>
               <DetailRow label="Creada por">{creator?.name ?? "—"}</DetailRow>

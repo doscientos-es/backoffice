@@ -127,11 +127,6 @@ export interface GitHubPRResult {
   merged: boolean;
 }
 
-export interface GitHubMilestoneResult {
-  number: number;
-  html_url: string;
-}
-
 export interface CreateIssueParams {
   installationId: number;
   owner: string;
@@ -140,7 +135,6 @@ export interface CreateIssueParams {
   body?: string;
   labels?: string[];
   assignees?: string[];
-  milestoneNumber?: number;
 }
 
 export async function createGitHubIssue(params: CreateIssueParams): Promise<GitHubIssueResult> {
@@ -150,7 +144,6 @@ export async function createGitHubIssue(params: CreateIssueParams): Promise<GitH
     body: params.body ?? "",
     labels: params.labels ?? [],
     assignees: params.assignees ?? [],
-    ...(params.milestoneNumber ? { milestone: params.milestoneNumber } : {}),
   });
 }
 
@@ -162,29 +155,4 @@ export async function getGitHubIssue(
 ): Promise<GitHubIssueResult> {
   const token = await getInstallationToken(installationId);
   return ghFetch<GitHubIssueResult>(token, "GET", `/repos/${owner}/${repo}/issues/${issueNumber}`);
-}
-
-export interface CreateMilestoneParams {
-  installationId: number;
-  owner: string;
-  repo: string;
-  title: string;
-  dueOn?: string; // ISO date string
-  description?: string;
-}
-
-export async function createGitHubMilestone(
-  params: CreateMilestoneParams,
-): Promise<GitHubMilestoneResult> {
-  const token = await getInstallationToken(params.installationId);
-  return ghFetch<GitHubMilestoneResult>(
-    token,
-    "POST",
-    `/repos/${params.owner}/${params.repo}/milestones`,
-    {
-      title: params.title,
-      ...(params.dueOn ? { due_on: params.dueOn } : {}),
-      ...(params.description ? { description: params.description } : {}),
-    },
-  );
 }

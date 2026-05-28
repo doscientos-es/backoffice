@@ -1,0 +1,116 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+type InviteOpts = { data: { name?: string }; redirectTo: string };
+
+const { state } = vi.hoisted(() => ({
+  state: {
+    actorRole: "owner" as "owner" | "admin" | "member" | "viewer",
+    inviteCalls: [] as Array<{ email: string; opts: InviteOpts }>,
+    inviteResult: {
+      data: { user: { id: "11111111-1111-1111-1111-111111111111" } },
+      error: null as null | { message: string },
+    },
+    upsertCalls: [] as Array<{ row: Record<string, unknown>; opts: unknown }>,
+    upsertResult: { error: null as null | { message: string } },
+  },
+}));
+
+vi.mock("@/lib/auth", () => ({
+  requireRole: vi.fn(async () => ({
+    id: "00000000-0000-0000-0000-000000000000",
+    role: state.actorRole,
+  })),
+}));
+
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: () => ({
+    auth: {
+      admin: {
+        inviteUserByEmail: async (email: string, opts: InviteOpts) => {
+          state.inviteCalls.push({ email, opts });
+          return state.inviteResult;
+        },
+      },
+    },
+    from: () => ({
+      upsert: async (row: Record<string, unknown>, opts: unknown) => {
+        state.upsertCalls.push({ row, opts });
+        return state.upsertResult;
+      },
+    }),
+  }),
+}));
+
+vi.mock("@/lib/supabase/server", () => ({
+  createServerClient: vi.fn(),
+}));
+
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+
+import { inviteTeamMember } from "@/app/(app)/settings/team/actions";
+
+function form(email: string, name = "Test User", role = "member") {
+  const fd = new FormData();
+  fd.set("name", name);
+  fd.set("email", email);
+  fd.set("role", role);
+  return fd;
+}
+
+describe("inviteTeamMember", () => {
+  beforeEach(() => {
+    state.actorRole = "owner";
+    state.inviteCalls = [];
+    state.upsertCalls = [];
+    state.inviteResult = {
+      data: { user: { id: "11111111-1111-1111-1111-111111111111" } },
+      error: null,
+    };
+    state.upsertResult = { error: null };
+  });
+
+  it("routes redirectTo through /auth/callback with the update-password next", async () => {
+    const res = await inviteTeamMember(form("nuevo@doscientos.es"));
+    expect(res).toEqual({ ok: true });
+    expect(state.inviteCalls).toHaveLength(1);
+    const opts = state.inviteCalls[0]?.opts;
+    expect(opts?.redirectTo).toMatch(
+      /\/auth\/callback\?next=%2Flogin%2Fupdate-password$/,
+    );
+    // It must NOT skip the callback by pointing directly at update-password.
+    expect(opts?.redirectTo).not.toMatch(/\/login\/update-password($|\?)/);
+  });
+
+  it("lowercases and trims the email before inviting and upserting", async () => {
+    await inviteTeamMember(form("  Nuevo@DosCientos.ES "));
+    expect(state.inviteCalls[0]?.email).toBe("nuevo@doscientos.es");
+    expect(state.upsertCalls[0]?.row.email).toBe("nuevo@doscientos.es");
+  });
+
+  it("forwards the invitee name as user metadata", async () => {
+    await inviteTeamMember(form("a@b.com", "Ada Lovelace"));
+    expect(state.inviteCalls[0]?.opts.data).toEqual({ name: "Ada Lovelace" });
+  });
+
+  it("upserts the team_members row with the invited auth user id", async () => {
+    await inviteTeamMember(form("a@b.com", "Ada", "admin"));
+    const row = state.upsertCalls[0]?.row;
+    expect(row?.id).toBe("11111111-1111-1111-1111-111111111111");
+    expect(row?.role).toBe("admin");
+    expect(row?.deleted_at).toBeNull();
+  });
+
+  it("rejects when an admin tries to assign the owner role", async () => {
+    state.actorRole = "admin";
+    const res = await inviteTeamMember(form("a@b.com", "Ada", "owner"));
+    expect(res).toEqual({ ok: false, error: "No tienes permisos para asignar ese rol." });
+    expect(state.inviteCalls).toHaveLength(0);
+  });
+
+  it("propagates Supabase invite errors", async () => {
+    state.inviteResult = { data: { user: null as unknown as { id: string } }, error: { message: "rate limited" } };
+    const res = await inviteTeamMember(form("a@b.com"));
+    expect(res).toEqual({ ok: false, error: "rate limited" });
+    expect(state.upsertCalls).toHaveLength(0);
+  });
+});

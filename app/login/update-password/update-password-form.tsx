@@ -20,12 +20,17 @@ export function UpdatePasswordForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSession, setHasSession] = useState<boolean | null>(null);
+  const [sessionEmail, setSessionEmail] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = getBrowserClient();
-    supabase.auth.getSession().then(({ data }) => setHasSession(!!data.session));
+    supabase.auth.getSession().then(({ data }) => {
+      setHasSession(!!data.session);
+      setSessionEmail(data.session?.user.email ?? null);
+    });
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       setHasSession(!!session);
+      setSessionEmail(session?.user.email ?? null);
     });
     return () => sub.subscription.unsubscribe();
   }, []);
@@ -77,6 +82,13 @@ export function UpdatePasswordForm() {
   return (
     <Card>
       <CardContent className="pt-5">
+        {sessionEmail ? (
+          <p className="mb-4 text-xs text-muted">
+            Vas a cambiar la contraseña de{" "}
+            <span className="font-medium text-primary">{sessionEmail}</span>. Si no es tu cuenta,
+            cierra esta pestaña y solicita un nuevo enlace.
+          </p>
+        ) : null}
         <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
           <FieldGroup>
             <Field>

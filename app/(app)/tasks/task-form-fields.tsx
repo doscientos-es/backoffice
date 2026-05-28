@@ -23,7 +23,6 @@ export type TaskFormDefaults = {
   description?: string | null;
   project_id?: string | null;
   lead_id?: string | null;
-  milestone_id?: string | null;
   assignee_id?: string | null;
   status?: string | null;
   priority?: string | null;
@@ -39,7 +38,6 @@ interface Props {
   includeParentSelectors?: boolean;
   projects?: Array<{ id: string; name: string }>;
   leads?: Array<{ id: string; name: string }>;
-  milestones?: Array<{ id: string; name: string }>;
   members?: Array<{ id: string; name: string }>;
 }
 
@@ -54,7 +52,6 @@ export function TaskFormFields({
   includeParentSelectors = false,
   projects = [],
   leads = [],
-  milestones = [],
   members = [],
 }: Props) {
   const d = defaults ?? {};
@@ -108,20 +105,6 @@ export function TaskFormFields({
             </FormRow>
           </>
         ) : null}
-        <FormRow label="Hito" htmlFor={`${idPrefix}-milestone_id`}>
-          <Select
-            id={`${idPrefix}-milestone_id`}
-            name="milestone_id"
-            defaultValue={d.milestone_id ?? ""}
-          >
-            <option value="">—</option>
-            {milestones.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name}
-              </option>
-            ))}
-          </Select>
-        </FormRow>
         <FormRow label="Asignada a" htmlFor={`${idPrefix}-assignee_id`}>
           <Select
             id={`${idPrefix}-assignee_id`}

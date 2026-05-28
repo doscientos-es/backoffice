@@ -1,128 +1,161 @@
 "use client";
 
 import { LineItemsTable } from "@/components/finance/line-items-table";
-import { AutosaveIndicator } from "@/components/ui/autosave-indicator";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { EMPTY_LINE_ITEM, type LineItem } from "@/lib/finance";
-import { useAutosave } from "@/lib/hooks/use-autosave";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-import { createProposalAction, updateProposal } from "../actions";
+import { useMemo, useState, useTransition } from "react";
+import { createProposalAction } from "../actions";
 
 type Props = {
   clients: Array<{ id: string; name: string }>;
-  projects: Array<{ id: string; name: string; client_id: string | null }>;
+  leads: Array<{ id: string; name: string; company: string | null; status: string }>;
   initialClientId?: string;
-  initialProjectId?: string;
+  initialLeadId?: string;
 };
 
-export function NewProposalForm({ clients, projects, initialClientId, initialProjectId }: Props) {
-  const router = useRouter();
-  const [proposalId, setProposalId] = useState<string | null>(null);
+/** Statuses where the lead hasn't been quoted yet */
+const BEFORE_QUOTED = new Set(["new", "qualifying"]);
 
-  const [clientId, setClientId] = useState(initialClientId ?? "");
-  const [projectId, setProjectId] = useState(initialProjectId ?? "");
+type Recipient = { kind: "client"; id: string } | { kind: "lead"; id: string } | null;
+
+/**
+ * Explicit create flow for proposals. The detail page (`/proposals/[id]`)
+ * owns the autosave-driven collaborative editor; here the user fills a draft
+ * and confirms with a single click — on success we navigate to the detail
+ * view where further edits are autosaved.
+ *
+ * The recipient is either an existing client OR an open lead: the proposal
+ * never targets a project (projects are auto-generated on acceptance).
+ */
+export function NewProposalForm({ clients, leads, initialClientId, initialLeadId }: Props) {
+  const router = useRouter();
+  const feedback = useFormFeedback({ successResetMs: 4000 });
+  const [pending, startTransition] = useTransition();
+
+  const [recipient, setRecipient] = useState<Recipient>(() => {
+    if (initialClientId) return { kind: "client", id: initialClientId };
+    if (initialLeadId) return { kind: "lead", id: initialLeadId };
+    return null;
+  });
+  const recipientValue = recipient ? `${recipient.kind}:${recipient.id}` : "";
   const [title, setTitle] = useState("");
   const [validUntil, setValidUntil] = useState("");
   const [notes, setNotes] = useState("");
-  const [items, setItems] = useState<LineItem[]>([
-    { ...EMPTY_LINE_ITEM, id: crypto.randomUUID() },
-  ]);
+  const [items, setItems] = useState<LineItem[]>([{ ...EMPTY_LINE_ITEM, id: crypto.randomUUID() }]);
+  const [pendingLeadMove, setPendingLeadMove] = useState<{
+    leadId: string;
+    leadName: string;
+    proposalId: string;
+  } | null>(null);
 
-  const payload = useMemo(
-    () => ({
-      client_id: clientId,
-      project_id: projectId || null,
-      title,
-      valid_until: validUntil || null,
-      notes: notes || null,
-      items,
-    }),
-    [clientId, projectId, title, validUntil, notes, items],
-  );
+  const canSubmit = useMemo(() => {
+    if (!recipient || title.trim().length < 1) return false;
+    if (items.length === 0) return false;
+    return items.every((it) => it.description.trim().length > 0 && Number(it.quantity) > 0);
+  }, [recipient, title, items]);
 
-  // Autosave logic
-  const { status, savedAt, error } = useAutosave({
-    data: payload,
-    // Only enable once we have at least a title and a client
-    enabled: Boolean(clientId && title.length > 2),
-    onSave: async (data) => {
-      if (!proposalId) {
-        // First save -> Create
-        const res = await createProposalAction(data);
-        if (res.ok) {
-          setProposalId(res.id);
-          // Update URL without full reload if possible, or just stay here.
-          // For consistency with collaborative editing, we should probably stay
-          // or redirect to the full editor.
-          // User said "autosave in forms", if we redirect it might be annoying.
-          // But usually New -> Edit is the flow.
-          // Let's use router.replace to update URL to /proposals/[id]
-          window.history.replaceState(null, "", `/proposals/${res.id}`);
-        } else {
-          return { error: res.error };
-        }
-      } else {
-        // Subsequent saves -> Update
-        const res = await updateProposal({ id: proposalId, ...data });
-        if (!res.ok) return { error: res.error };
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!canSubmit || pending || !recipient) {
+      feedback.setError("Completa destinatario, título y al menos una línea con descripción");
+      return;
+    }
+    feedback.setPending();
+    startTransition(async () => {
+      const res = await createProposalAction({
+        client_id: recipient.kind === "client" ? recipient.id : undefined,
+        lead_id: recipient.kind === "lead" ? recipient.id : undefined,
+        title: title.trim(),
+        valid_until: validUntil || undefined,
+        notes: notes || undefined,
+        items: items.map((it) => ({
+          description: it.description,
+          quantity: it.quantity,
+          unit_price: it.unit_price,
+          vat_rate: it.vat_rate,
+          billing_cycle: it.billing_cycle ?? "none",
+        })),
+      });
+      if (!res.ok) {
+        feedback.setError(res.error);
+        return;
       }
-    },
-  });
+      feedback.setSuccess("Propuesta creada");
+
+      // Suggest moving the lead to "quoted" if it's still in an earlier stage
+      const selectedLead =
+        recipient.kind === "lead" ? leads.find((l) => l.id === recipient.id) : null;
+      if (selectedLead && BEFORE_QUOTED.has(selectedLead.status)) {
+        setPendingLeadMove({
+          leadId: selectedLead.id,
+          leadName: selectedLead.name,
+          proposalId: res.id,
+        });
+        return;
+      }
+
+      router.push(`/proposals/${res.id}`);
+    });
+  }
+
+  function onRecipientChange(value: string) {
+    if (!value) {
+      setRecipient(null);
+      return;
+    }
+    const [kind, id] = value.split(":", 2);
+    if ((kind === "client" || kind === "lead") && id) {
+      setRecipient({ kind, id });
+    }
+  }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex justify-end">
-        <AutosaveIndicator status={status} savedAt={savedAt} error={error} />
-      </div>
-
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <Card>
         <CardContent className="pt-6">
           <div className="grid gap-5 sm:grid-cols-2">
             <FormRow
-              label="Cliente"
-              htmlFor="client_id"
+              label="Destinatario"
+              htmlFor="recipient"
               required
-              hint="Destinatario de la propuesta."
+              hint="Cliente existente o lead. Si es lead, le pediremos sus datos fiscales al aceptar."
             >
               <Select
-                id="client_id"
-                value={clientId}
-                onChange={(e) => setClientId(e.target.value)}
+                id="recipient"
+                value={recipientValue}
+                onChange={(e) => onRecipientChange(e.target.value)}
                 required
               >
                 <option value="" disabled>
-                  — Selecciona cliente —
+                  — Selecciona destinatario —
                 </option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </Select>
-            </FormRow>
-            <FormRow
-              label="Proyecto"
-              htmlFor="project_id"
-              hint="Opcional. Asocia la propuesta a un proyecto existente."
-            >
-              <Select
-                id="project_id"
-                value={projectId}
-                onChange={(e) => setProjectId(e.target.value)}
-              >
-                <option value="">— Sin proyecto —</option>
-                {projects
-                  .filter((p) => !clientId || p.client_id === clientId)
-                  .map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
+                {clients.length > 0 ? (
+                  <optgroup label="Clientes">
+                    {clients.map((c) => (
+                      <option key={`client-${c.id}`} value={`client:${c.id}`}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                ) : null}
+                {leads.length > 0 ? (
+                  <optgroup label="Leads abiertos">
+                    {leads.map((l) => (
+                      <option key={`lead-${l.id}`} value={`lead:${l.id}`}>
+                        {l.company ? `${l.name} · ${l.company}` : l.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                ) : null}
               </Select>
             </FormRow>
             <FormRow label="Título" htmlFor="title" required>
@@ -173,6 +206,16 @@ export function NewProposalForm({ clients, projects, initialClientId, initialPro
           </FormRow>
         </CardContent>
       </Card>
-    </div>
+
+      <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
+        <FormFeedback state={feedback.state} pendingLabel="Creando…" />
+        <Button asChild variant="ghost" size="sm">
+          <Link href="/proposals">Cancelar</Link>
+        </Button>
+        <SubmitButton loading={pending} disabled={!canSubmit} pendingLabel="Creando…">
+          Crear propuesta
+        </SubmitButton>
+      </div>
+    </form>
   );
 }

@@ -23,6 +23,7 @@ import { z } from "zod";
 export const createLead = defineAction({
   name: "leads.create",
   schema: CreateLeadInput,
+  revalidate: () => ["/leads"],
   handler: async (input, { user }) => {
     const supabase = await createServerClient();
     const { data, error } = await supabase
@@ -39,8 +40,7 @@ export const createLead = defineAction({
       throw new Error(error?.message ?? "No se pudo crear el lead");
     }
 
-    revalidatePath("/leads");
-    redirect(`/leads/${data.id}`);
+    return { id: data.id as string };
   },
 });
 

@@ -1,12 +1,10 @@
+import { TaskCreateDialog } from "@/app/(app)/tasks/task-create-dialog";
 import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
-import { Plus } from "lucide-react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { type KanbanTask, TasksKanban } from "./tasks-kanban";
 
@@ -36,14 +34,19 @@ export default async function ProjectKanbanPage({ params }: { params: Promise<{ 
 
   if (!project) notFound();
 
-  const { data: tasks, error } = await supabase
-    .from("tasks")
-    .select(
-      "id, title, status, priority, due_date, kanban_order, team_members:assignee_id(id, name)",
-    )
-    .eq("project_id", id)
-    .is("deleted_at", null)
-    .order("kanban_order", { ascending: true });
+  const [{ data: tasks, error }, { data: members }] = await Promise.all([
+    supabase
+      .from("tasks")
+      .select(
+        "id, title, status, priority, due_date, kanban_order, team_members:assignee_id(id, name)",
+      )
+      .eq("project_id", id)
+      .is("deleted_at", null)
+      .order("kanban_order", { ascending: true }),
+    supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
+  ]);
+
+  const memberList = (members ?? []) as Array<{ id: string; name: string }>;
 
   const kanbanTasks: KanbanTask[] = ((tasks as unknown as TaskRow[]) ?? []).map((t) => ({
     id: t.id,
@@ -61,14 +64,7 @@ export default async function ProjectKanbanPage({ params }: { params: Promise<{ 
         title={`${project.name as string} · Kanban`}
         description="Arrastra tareas entre columnas para cambiar su estado."
         back={<BackLink href={`/projects/${id}`} label="Volver al proyecto" />}
-        actions={
-          <Button asChild size="sm">
-            <Link href={`/tasks/new?project_id=${id}`}>
-              <Plus className="h-4 w-4" />
-              Nueva tarea
-            </Link>
-          </Button>
-        }
+        actions={<TaskCreateDialog projectId={id} members={memberList} />}
       />
 
       {error ? (
@@ -85,12 +81,7 @@ export default async function ProjectKanbanPage({ params }: { params: Promise<{ 
                 <EmptyTitle>Aún no hay tareas en este proyecto.</EmptyTitle>
               </EmptyHeader>
               <EmptyContent>
-                <Button asChild size="sm">
-                  <Link href={`/tasks/new?project_id=${id}`}>
-                    <Plus className="h-4 w-4" />
-                    Crear primera tarea
-                  </Link>
-                </Button>
+                <TaskCreateDialog projectId={id} members={memberList} />
               </EmptyContent>
             </Empty>
           </CardContent>

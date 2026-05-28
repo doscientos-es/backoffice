@@ -152,7 +152,7 @@ export async function sendToAeat(formData: FormData): Promise<ActionResult> {
       issueDate,
       total: Number(invoice.total ?? 0),
     },
-    process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+    env.NEXT_PUBLIC_APP_URL,
   );
 
   const { error: updateError } = await supabase
@@ -236,9 +236,7 @@ export async function createInvoiceFromProposal(input: unknown): Promise<FromPro
   // First invoice from a proposal only bills the one-time (non-recurring) lines.
   // Recurring lines (mantenimiento, etc.) require dedicated periodic invoicing
   // and would otherwise inflate the first invoice with future obligations.
-  const items = allItems.filter(
-    (it) => ((it.billing_cycle as string | null) ?? "none") === "none",
-  );
+  const items = allItems.filter((it) => ((it.billing_cycle as string | null) ?? "none") === "none");
   if (items.length === 0) {
     return {
       ok: false,

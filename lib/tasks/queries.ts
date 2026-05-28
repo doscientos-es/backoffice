@@ -69,7 +69,7 @@ export async function listTasksList(params: TaskListParams): Promise<TaskListRes
     supabase
       .from("tasks")
       .select(
-        "id, title, status, due_date, priority, projects(id, name), milestones(id, name), team_members:assignee_id(id, name)",
+        "id, title, status, due_date, priority, projects(id, name), team_members:assignee_id(id, name)",
         { count: "exact" },
       ),
   );
@@ -98,7 +98,7 @@ export async function getTaskDetail(id: string): Promise<TaskDetailResult> {
     supabase
       .from("tasks")
       .select(
-        "*, projects(id, name, github_sync_mode, github_repo, github_repo_owner, github_repo_name), leads(id, name), milestones(id, name), team_members:assignee_id(id, name), creator:created_by(id, name)",
+        "*, projects(id, name, github_sync_mode, github_repo, github_repo_owner, github_repo_name), leads(id, name), team_members:assignee_id(id, name), creator:created_by(id, name)",
       )
       .eq("id", id),
   ).maybeSingle();
@@ -106,16 +106,8 @@ export async function getTaskDetail(id: string): Promise<TaskDetailResult> {
   if (error) log.error({ taskId: id, err: error.message }, "get_task_detail_failed");
   if (!task) return null;
 
-  const [{ data: members }, { data: milestones }, { data: commentsData }] = await Promise.all([
+  const [{ data: members }, { data: commentsData }] = await Promise.all([
     notDeleted(supabase.from("team_members").select("id, name")).order("name"),
-    (() => {
-      const project = (task as unknown as { projects: { id: string } | null }).projects;
-      return project?.id
-        ? notDeleted(
-            supabase.from("milestones").select("id, name").eq("project_id", project.id),
-          ).order("due_date", { ascending: true, nullsFirst: false })
-        : Promise.resolve({ data: [] as Array<{ id: string; name: string }> });
-    })(),
     supabase
       .from("task_comments")
       .select("id, body, created_at, author:author_id(id, name)")
@@ -125,7 +117,15 @@ export async function getTaskDetail(id: string): Promise<TaskDetailResult> {
 
   type AnyRecord = Record<string, unknown>;
   const raw = task as unknown as AnyRecord;
-  const project = (raw.projects as { id: string; name: string; github_sync_mode: string | null; github_repo: string | null; github_repo_owner: string | null; github_repo_name: string | null } | null) ?? null;
+  const project =
+    (raw.projects as {
+      id: string;
+      name: string;
+      github_sync_mode: string | null;
+      github_repo: string | null;
+      github_repo_owner: string | null;
+      github_repo_name: string | null;
+    } | null) ?? null;
   const lead = (raw.leads as { id: string; name: string } | null) ?? null;
   const assignee = (raw.team_members as { id: string; name: string } | null) ?? null;
   const creator = (raw.creator as { id: string; name: string } | null) ?? null;
@@ -137,7 +137,6 @@ export async function getTaskDetail(id: string): Promise<TaskDetailResult> {
       description: (task.description as string | null) ?? null,
       status: task.status as string,
       priority: task.priority as string,
-      milestone_id: (task.milestone_id as string | null) ?? null,
       due_date: (task.due_date as string | null) ?? null,
       started_at: (task.started_at as string | null) ?? null,
       completed_at: (task.completed_at as string | null) ?? null,
@@ -149,7 +148,12 @@ export async function getTaskDetail(id: string): Promise<TaskDetailResult> {
     assignee,
     creator,
     members: (members ?? []) as Array<{ id: string; name: string }>,
-    milestones: (milestones ?? []) as Array<{ id: string; name: string }>,
-    comments: (commentsData as unknown as Array<{ id: string; body: string; created_at: string; author: { id: string; name: string } | null }>) ?? [],
+    comments:
+      (commentsData as unknown as Array<{
+        id: string;
+        body: string;
+        created_at: string;
+        author: { id: string; name: string } | null;
+      }>) ?? [],
   };
 }
