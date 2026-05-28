@@ -44,11 +44,13 @@ export function UpdatePasswordForm() {
     setLoading(true);
     const supabase = getBrowserClient();
     const { error: authError } = await supabase.auth.updateUser({ password });
-    setLoading(false);
     if (authError) {
+      setLoading(false);
       setError(authError.message);
       return;
     }
+    // Keep loading=true while we navigate so the button stays in its
+    // "Guardando…" state instead of flashing back to "Actualizar contraseña".
     router.replace("/inicio");
     router.refresh();
   }

@@ -9,6 +9,7 @@ import { RevenueWidget } from "./_components/revenue-widget";
 import {
   AvisosWidgetSkeleton,
   KpiGridSkeleton,
+  RangeSelectorSkeleton,
   RevenueWidgetSkeleton,
 } from "./_components/widget-skeletons";
 
@@ -36,7 +37,9 @@ export default async function InicioPage({ searchParams }: PageProps) {
             Aquí tienes lo que requiere tu atención.
           </p>
         </div>
-        <RangeSelector current={range} />
+        <Suspense fallback={<RangeSelectorSkeleton />}>
+          <RangeSelector current={range} />
+        </Suspense>
       </div>
 
       <Suspense key={range} fallback={<KpiGridSkeleton />}>

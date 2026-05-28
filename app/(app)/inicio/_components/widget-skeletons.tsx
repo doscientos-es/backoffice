@@ -42,6 +42,16 @@ export function AvisosWidgetSkeleton() {
   );
 }
 
+export function RangeSelectorSkeleton() {
+  return (
+    <div className="inline-flex h-8 items-center gap-1 rounded-lg border bg-card p-0.5">
+      {[28, 32, 32, 36].map((w) => (
+        <Skeleton key={w} className="rounded-md" style={{ height: 24, width: w }} />
+      ))}
+    </div>
+  );
+}
+
 export function RevenueWidgetSkeleton() {
   return (
     <Card>
