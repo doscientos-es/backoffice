@@ -1,4 +1,6 @@
-import { log } from "@/lib/log";
+import { scopedLogger } from "@/lib/logger";
+
+const log = scopedLogger("marketing-sync");
 import { createAdminClient } from "@/lib/supabase/admin";
 import * as MetaAPI from "./integrations/meta-marketing";
 

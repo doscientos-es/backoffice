@@ -7,6 +7,7 @@ import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { FileText } from "lucide-react";
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { ProposalActions } from "./proposal-actions";
@@ -14,7 +15,7 @@ import { ProposalActions } from "./proposal-actions";
 const log = scopedLogger("portal.proposal");
 
 export const dynamic = "force-dynamic";
-export const metadata = {
+export const metadata: Metadata = {
   title: "Propuesta · doscientos",
   robots: { index: false, follow: false },
 };
@@ -50,10 +51,9 @@ export default async function PortalProposalPage({
     .order("position");
 
   const { data: specs } = await admin
-    .from("documents")
+    .from("proposal_specs")
     .select("id, title, portal_token")
     .eq("proposal_id", proposal.id as string)
-    .eq("kind", "technical_spec")
     .eq("is_client_visible", true)
     .not("portal_token", "is", null);
 
@@ -79,10 +79,11 @@ export default async function PortalProposalPage({
     const forwarded = h.get("x-forwarded-for");
     const ip = forwarded ? forwarded.split(",")[0]?.trim() : (h.get("x-real-ip") ?? null);
     const userAgent = h.get("user-agent");
-    await admin.from("proposal_views").insert({
+    await admin.from("proposal_view_events").insert({
       proposal_id: proposal.id as string,
       viewer_type: isTeam ? "team" : "client",
       team_member_id: isTeam ? auth.user.id : null,
+      surface: "portal",
       ip,
       user_agent: userAgent,
     });

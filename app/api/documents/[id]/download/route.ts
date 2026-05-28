@@ -22,16 +22,17 @@ export async function GET(
 
   const supabase = await createServerClient();
   const { data: doc, error } = await supabase
-    .from("documents")
-    .select("id, storage_path, name, kind, deleted_at")
+    .from("attachments")
+    .select("id, storage_path, name")
     .eq("id", id)
+    .is("deleted_at", null)
     .maybeSingle();
 
   if (error || !doc) {
     return NextResponse.json({ error: "Documento no encontrado" }, { status: 404 });
   }
 
-  if ((doc.kind as string) !== "file" || !doc.storage_path) {
+  if (!doc.storage_path) {
     return NextResponse.json({ error: "Este documento no tiene archivo adjunto" }, { status: 400 });
   }
 

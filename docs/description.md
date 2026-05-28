@@ -48,7 +48,7 @@ Produccion:
 - @tiptap/react@^3, @tiptap/starter-kit@^3, @tiptap/extension-placeholder@^3
 - date-fns@^4, date-fns-tz@^3
 - zustand@^5
-- sonner@^2
+- sileo
 - tailwindcss@^4, clsx@^2, tailwind-merge@^3, class-variance-authority@^0.7
 - lucide-react@^0.4
 - recharts@^2
@@ -1674,7 +1674,7 @@ API Routes (/api/*) para:
 
 - Server Actions: devuelven { error: string } | { data: T }, nunca hacen throw al cliente
 - API Routes: responden con status HTTP correcto y { error: string } en el body
-- UI: usar sonner (toast) para mostrar errores y exitos al usuario
+- UI: usar sileo (toast) para mostrar errores y exitos al usuario
 - Portal publico: cualquier error redirige a /p/not-found (sin info sensible)
 - Logs: pino estructurado a stdout (visible en Vercel Logs / runtime logs del host)
 

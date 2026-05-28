@@ -349,10 +349,9 @@ export async function sendPreviewLink(input: unknown): Promise<SendPreviewResult
 
   // Fetch client-visible technical specs so the email can link to them.
   const { data: specs } = await supabase
-    .from("documents")
+    .from("proposal_specs")
     .select("title, portal_token")
     .eq("proposal_id", id)
-    .eq("kind", "technical_spec")
     .eq("is_client_visible", true)
     .not("portal_token", "is", null);
 

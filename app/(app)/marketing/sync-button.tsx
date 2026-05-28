@@ -1,43 +1,65 @@
 "use client";
 
-import { syncMetaCatalog, syncMetaInsights } from "@/lib/marketing-sync";
+import { syncMetaAction } from "./actions";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { CheckCircle, RefreshCw, XCircle } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
+
+type SyncStatus = "idle" | "loading" | "success" | "error";
 
 export function SyncMarketingButton() {
-  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<SyncStatus>("idle");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const router = useRouter();
 
   async function handleSync() {
-    setLoading(true);
+    setStatus("loading");
+    setErrorMsg(null);
+
+    let result: Awaited<ReturnType<typeof syncMetaAction>>;
     try {
-      // Sync catalog first
-      const catalogResult = await syncMetaCatalog();
-      if (!catalogResult.ok) throw new Error(catalogResult.error);
-
-      // Sync insights for last 30 days
-      const today = new Date().toISOString().split("T")[0];
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
-      
-      const insightsResult = await syncMetaInsights(thirtyDaysAgo, today);
-      if (!insightsResult.ok) throw new Error(insightsResult.error);
-
-      toast.success("Sincronización completada con éxito");
-      router.refresh();
+      result = await syncMetaAction();
     } catch (err) {
-      toast.error("Error al sincronizar: " + (err instanceof Error ? err.message : String(err)));
-    } finally {
-      setLoading(false);
+      setStatus("error");
+      setErrorMsg(err instanceof Error ? err.message : "Error inesperado");
+      return;
     }
+
+    if (!result.ok) {
+      setStatus("error");
+      setErrorMsg(result.error ?? "Error desconocido");
+      return;
+    }
+
+    setStatus("success");
+    router.refresh();
+    setTimeout(() => setStatus("idle"), 3000);
   }
 
   return (
-    <Button onClick={handleSync} disabled={loading} variant="outline" size="sm">
-      <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-      Sincronizar Meta Ads
-    </Button>
+    <div className="flex flex-col items-end gap-1">
+      <Button
+        onClick={handleSync}
+        disabled={status === "loading"}
+        variant="outline"
+        size="sm"
+        className={cn(
+          status === "success" && "border-green-500 text-green-600",
+          status === "error" && "border-destructive text-destructive",
+        )}
+      >
+        {status === "loading" && <RefreshCw className="mr-2 h-4 w-4 animate-spin" />}
+        {status === "success" && <CheckCircle className="mr-2 h-4 w-4 text-green-500" />}
+        {status === "error" && <XCircle className="mr-2 h-4 w-4 text-destructive" />}
+        {status === "idle" && <RefreshCw className="mr-2 h-4 w-4" />}
+        {status === "loading" ? "Sincronizando..." : status === "success" ? "¡Sincronizado!" : "Sincronizar Meta Ads"}
+      </Button>
+
+      {status === "error" && errorMsg && (
+        <p className="text-xs text-destructive max-w-xs text-right">{errorMsg}</p>
+      )}
+    </div>
   );
 }

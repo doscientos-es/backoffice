@@ -3,7 +3,7 @@ import { formatEUR } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Megaphone, TrendingUp, Users, Wallet } from "lucide-react";
+import { TrendingUp, Users, Wallet } from "lucide-react";
 import { SyncMarketingButton } from "./sync-button";
 
 export default async function MarketingPage() {
@@ -57,7 +57,7 @@ export default async function MarketingPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Centro de Control de Marketing</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Marketing y Ads</h1>
         <SyncMarketingButton />
       </div>
 
@@ -110,7 +110,7 @@ export default async function MarketingPage() {
             <TableBody>
               {processedAds.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
                     No se han sincronizado anuncios activos todavía.
                   </TableCell>
                 </TableRow>

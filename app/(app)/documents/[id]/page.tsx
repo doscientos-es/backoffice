@@ -18,7 +18,7 @@ const PREVIEW_TTL = 600;
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createServerClient();
-  const { data } = await supabase.from("documents").select("name").eq("id", id).maybeSingle();
+  const { data } = await supabase.from("attachments").select("name").eq("id", id).maybeSingle();
   return { title: data?.name ? `${data.name as string} · doscientos` : "Documento · doscientos" };
 }
 
@@ -31,19 +31,19 @@ export default async function DocumentDetailPage({
   const supabase = await createServerClient();
 
   const { data: doc } = await supabase
-    .from("documents")
-    .select("id, name, mime_type, size_bytes, kind, storage_path, created_at, client_id, project_id")
+    .from("attachments")
+    .select("id, name, mime_type, size_bytes, storage_path, created_at")
     .eq("id", id)
+    .is("deleted_at", null)
     .maybeSingle();
 
   if (!doc) notFound();
 
-  const isFile = (doc.kind as string | null) === "file" || (doc.kind as string | null) === null;
   const storagePath = doc.storage_path as string | null;
 
   // Generate preview URL server-side so it's ready when the page renders.
   let previewUrl: string | null = null;
-  if (isFile && storagePath) {
+  if (storagePath) {
     const admin = createAdminClient();
     const { data: signed } = await admin.storage
       .from("documents")
@@ -60,18 +60,16 @@ export default async function DocumentDetailPage({
           { label: doc.name as string },
         ]}
         actions={
-          isFile ? (
-            <Button asChild size="sm">
-              <Link
-                href={`/api/documents/${id}/download`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Download className="size-3.5" />
-                Descargar
-              </Link>
-            </Button>
-          ) : undefined
+          <Button asChild size="sm">
+            <Link
+              href={`/api/documents/${id}/download`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Download className="size-3.5" />
+              Descargar
+            </Link>
+          </Button>
         }
       />
 
@@ -92,20 +90,18 @@ export default async function DocumentDetailPage({
         </CardContent>
       </Card>
 
-      {isFile && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Preview</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0 overflow-hidden rounded-b-lg">
-            <DocPreview
-              url={previewUrl}
-              mimeType={doc.mime_type as string | null}
-              name={doc.name as string}
-            />
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle>Preview</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0 overflow-hidden rounded-b-lg">
+          <DocPreview
+            url={previewUrl}
+            mimeType={doc.mime_type as string | null}
+            name={doc.name as string}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }

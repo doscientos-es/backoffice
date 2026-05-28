@@ -25,12 +25,11 @@ export default async function PortalSpecPage({
   const admin = createAdminClient();
 
   const { data: doc } = await admin
-    .from("documents")
+    .from("proposal_specs")
     .select(
       "id, title, body_markdown, is_client_visible, updated_at, proposal_id, proposals(number, title, portal_token)",
     )
     .eq("portal_token", token)
-    .eq("kind", "technical_spec")
     .eq("is_client_visible", true)
     .maybeSingle();
 

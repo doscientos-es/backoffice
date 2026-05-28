@@ -18,11 +18,8 @@ const CreateInput = z.object({
 });
 
 /**
- * Creates a `technical_spec` document linked to a proposal. Returns the new
- * document id so the caller can navigate to it / open the editor.
- *
- * `documents.name` is mirrored from `title` for backwards compatibility with
- * the existing documents list view.
+ * Creates a proposal_spec linked to a proposal. Returns the new id so the
+ * caller can navigate to it / open the editor.
  */
 export async function createSpec(input: unknown): Promise<Result<{ id: string }>> {
   const user = await requireUser();
@@ -34,7 +31,7 @@ export async function createSpec(input: unknown): Promise<Result<{ id: string }>
 
   const supabase = await createServerClient();
 
-  // Confirm the parent proposal exists and pick up project_id for indexing.
+  // Confirm the parent proposal exists and pick up project_id / client_id.
   const { data: proposal } = await supabase
     .from("proposals")
     .select("id, project_id, client_id")
@@ -44,17 +41,15 @@ export async function createSpec(input: unknown): Promise<Result<{ id: string }>
   if (!proposal) return { ok: false, error: "Propuesta no encontrada" };
 
   const { data: doc, error } = await supabase
-    .from("documents")
+    .from("proposal_specs")
     .insert({
-      kind: "technical_spec",
-      name: data.title,
       title: data.title,
       body_markdown: data.body_markdown,
       proposal_id: data.proposal_id,
       project_id: (proposal as { project_id: string | null }).project_id,
       client_id: (proposal as { client_id: string }).client_id,
       is_client_visible: data.is_client_visible,
-      uploaded_by: user.id,
+      created_by: user.id,
     })
     .select("id")
     .single();
@@ -83,19 +78,15 @@ export async function updateSpec(input: unknown): Promise<Result> {
   const { id, ...rest } = parsed.data;
 
   const patch: Record<string, unknown> = {};
-  if (rest.title !== undefined) {
-    patch.title = rest.title;
-    patch.name = rest.title;
-  }
+  if (rest.title !== undefined) patch.title = rest.title;
   if (rest.body_markdown !== undefined) patch.body_markdown = rest.body_markdown;
   if (Object.keys(patch).length === 0) return { ok: true };
 
   const supabase = await createServerClient();
   const { data: doc, error } = await supabase
-    .from("documents")
+    .from("proposal_specs")
     .update(patch)
     .eq("id", id)
-    .eq("kind", "technical_spec")
     .select("proposal_id")
     .single();
 
@@ -121,10 +112,9 @@ export async function toggleSpecVisibility(input: unknown): Promise<Result> {
   }
   const supabase = await createServerClient();
   const { data: doc, error } = await supabase
-    .from("documents")
+    .from("proposal_specs")
     .update({ is_client_visible: parsed.data.is_client_visible })
     .eq("id", parsed.data.id)
-    .eq("kind", "technical_spec")
     .select("proposal_id")
     .single();
   if (error || !doc) return { ok: false, error: error?.message ?? "No se pudo actualizar" };
@@ -141,16 +131,14 @@ export async function deleteSpec(input: unknown): Promise<Result> {
   if (!parsed.success) return { ok: false, error: "Datos no válidos" };
   const supabase = await createServerClient();
   const { data: doc } = await supabase
-    .from("documents")
+    .from("proposal_specs")
     .select("proposal_id")
     .eq("id", parsed.data.id)
-    .eq("kind", "technical_spec")
     .maybeSingle();
   const { error } = await supabase
-    .from("documents")
+    .from("proposal_specs")
     .delete()
-    .eq("id", parsed.data.id)
-    .eq("kind", "technical_spec");
+    .eq("id", parsed.data.id);
   if (error) return { ok: false, error: error.message };
   const proposalId = (doc as { proposal_id: string | null } | null)?.proposal_id;
   if (proposalId) revalidatePath(`/proposals/${proposalId}`);

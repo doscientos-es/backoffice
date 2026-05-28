@@ -125,17 +125,15 @@ Genera la especificación técnica completa siguiendo la estructura indicada.`;
   const user = await requireUser();
 
   const { data: doc, error: insertErr } = await supabase
-    .from("documents")
+    .from("proposal_specs")
     .insert({
-      kind: "technical_spec",
-      name: title,
       title,
       body_markdown: markdown,
       proposal_id: id,
       project_id: (proposal as { project_id: string | null }).project_id,
       client_id: (proposal as { client_id: string }).client_id,
       is_client_visible: false,
-      uploaded_by: user.id,
+      created_by: user.id,
     })
     .select("id, portal_token")
     .single();

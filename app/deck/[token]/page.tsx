@@ -1,0 +1,158 @@
+import { getCurrentUser } from "@/lib/auth";
+import { scopedLogger } from "@/lib/logger";
+import { createAdminClient } from "@/lib/supabase/admin";
+import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
+import { DeckViewer } from "./deck-viewer-client";
+
+const log = scopedLogger("deck.page");
+
+export const dynamic = "force-dynamic";
+
+export type DeckProposalItem = {
+  id: string;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  vat_rate: number;
+  subtotal: number;
+};
+
+export type DeckTeamMember = {
+  id: string;
+  name: string;
+  job_title: string | null;
+  avatar_url: string | null;
+};
+
+export type DeckProposal = {
+  id: string;
+  number: string;
+  title: string;
+  intro: string | null;
+  terms: string | null;
+  notes: string | null;
+  subtotal: number;
+  tax_amount: number;
+  total: number;
+  valid_until: string | null;
+  created_at: string | null;
+  client_name: string | null;
+  client_email: string | null;
+};
+
+export async function generateMetadata({
+  params,
+}: { params: Promise<{ token: string }> }): Promise<Metadata> {
+  const { token } = await params;
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("proposals")
+    .select("number, title, status, clients(name)")
+    .eq("portal_token", token)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (!data || data.status === "draft") {
+    return { title: "Propuesta · doscientos", robots: { index: false, follow: false } };
+  }
+  const clientName =
+    (data as unknown as { clients: { name: string } | null }).clients?.name ?? null;
+  const suffix = clientName ? ` para ${clientName}` : "";
+  return {
+    title: `Propuesta ${data.number as string}${suffix} · doscientos`,
+    description: (data.title as string) ?? undefined,
+    robots: { index: false, follow: false },
+  };
+}
+
+export default async function DeckPage({
+  params,
+}: {
+  params: Promise<{ token: string }>;
+}) {
+  const { token } = await params;
+  const admin = createAdminClient();
+
+  const { data: proposal } = await admin
+    .from("proposals")
+    .select("*, clients(name, email)")
+    .eq("portal_token", token)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (!proposal || proposal.status === "draft") notFound();
+
+  const [{ data: items }, { data: team }] = await Promise.all([
+    admin
+      .from("proposal_items")
+      .select("id, position, description, quantity, unit_price, vat_rate, subtotal")
+      .eq("proposal_id", proposal.id as string)
+      .order("position"),
+    admin
+      .from("team_members")
+      .select("id, name, job_title, avatar_url")
+      .is("deleted_at", null)
+      .order("created_at", { ascending: true })
+      .limit(6),
+  ]);
+
+  // Detect whether the current visitor is a logged-in team member so we can
+  // tag the view appropriately and avoid bumping the proposal to 'viewed'
+  // when we are previewing it ourselves. Mirrors the portal proposal page.
+  const auth = await getCurrentUser();
+  const isTeam = auth.ok;
+
+  // Bump status from 'sent' to 'viewed' on the first external (client) open
+  // of the deck. Team previews never transition the status.
+  if (!isTeam && proposal.status === "sent") {
+    await admin
+      .from("proposals")
+      .update({ status: "viewed", viewed_at: new Date().toISOString() })
+      .eq("id", proposal.id as string)
+      .eq("status", "sent");
+  }
+
+  // Best-effort page-level view tracking. Never throws to the visitor.
+  try {
+    const h = await headers();
+    const forwarded = h.get("x-forwarded-for");
+    const ip = forwarded ? forwarded.split(",")[0]?.trim() : (h.get("x-real-ip") ?? null);
+    const userAgent = h.get("user-agent");
+    await admin.from("proposal_view_events").insert({
+      proposal_id: proposal.id as string,
+      viewer_type: isTeam ? "team" : "client",
+      team_member_id: isTeam ? auth.user.id : null,
+      surface: "deck",
+      ip,
+      user_agent: userAgent,
+    });
+  } catch (err) {
+    log.warn({ err, proposalId: proposal.id }, "deck_view_insert_failed");
+  }
+
+  const client = (proposal as unknown as { clients: { name: string; email: string | null } | null })
+    .clients;
+
+  const deckProposal: DeckProposal = {
+    id: proposal.id as string,
+    number: proposal.number as string,
+    title: proposal.title as string,
+    intro: (proposal.intro as string | null) ?? null,
+    terms: (proposal.terms as string | null) ?? null,
+    notes: (proposal.notes as string | null) ?? null,
+    subtotal: proposal.subtotal as number,
+    tax_amount: proposal.tax_amount as number,
+    total: proposal.total as number,
+    valid_until: (proposal.valid_until as string | null) ?? null,
+    created_at: (proposal.created_at as string | null) ?? null,
+    client_name: client?.name ?? null,
+    client_email: client?.email ?? null,
+  };
+
+  const deckItems = (items ?? []) as unknown as DeckProposalItem[];
+  const deckTeam = (team ?? []) as unknown as DeckTeamMember[];
+
+  return <DeckViewer proposal={deckProposal} items={deckItems} team={deckTeam} token={token} />;
+}

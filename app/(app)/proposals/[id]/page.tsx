@@ -9,12 +9,67 @@ import { isAIEnabled } from "@/lib/env";
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
+import { Check, FileText, Presentation } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { GenerateInvoiceButton } from "./generate-invoice-button";
 import { type EditableItem, ProposalEditor } from "./proposal-editor";
 import { type ProposalSpec, ProposalSpecs } from "./proposal-specs";
 import { SendPreviewButton } from "./send-preview-button";
+
+type Surface = "portal" | "deck";
+
+function formatViewedAt(value: string): string {
+  return new Date(value).toLocaleString("es-ES", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function ShareLinkRow({
+  href,
+  icon,
+  label,
+  description,
+  lastViewedAt,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  description: string;
+  lastViewedAt: string | null;
+}) {
+  return (
+    <Link
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="group flex items-center justify-between gap-3 rounded-md border border-border bg-background p-3 transition-colors hover:bg-accent hover:text-accent-foreground"
+    >
+      <div className="flex min-w-0 items-center gap-2.5">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground group-hover:bg-background">
+          {icon}
+        </span>
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span className="text-sm font-medium">{label}</span>
+          <span className="truncate text-[11px] text-muted-foreground">{description}</span>
+        </div>
+      </div>
+      {lastViewedAt ? (
+        <div className="flex shrink-0 items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
+          <Check className="size-3.5" aria-hidden />
+          <time dateTime={lastViewedAt} className="text-[11px] tabular-nums">
+            Vista el {formatViewedAt(lastViewedAt)}
+          </time>
+        </div>
+      ) : (
+        <span className="shrink-0 text-[11px] text-muted-foreground">Sin abrir</span>
+      )}
+    </Link>
+  );
+}
 
 export const dynamic = "force-dynamic";
 
@@ -38,18 +93,44 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
     .eq("proposal_id", id)
     .order("position");
 
+  // Page-level opens (one row per visit). Slide-level rows are excluded.
   const { data: views } = await supabase
-    .from("proposal_views")
-    .select("id, viewer_type, viewed_at, team_members(name)")
+    .from("proposal_view_events")
+    .select("id, viewer_type, viewed_at, surface, team_members(name)")
     .eq("proposal_id", id)
+    .is("session_id", null)
     .order("viewed_at", { ascending: false })
     .limit(10);
 
+  // Latest CLIENT open per surface — drives the check + date on each share row.
+  // Team previews never set this; they show up in the history list below.
+  const [{ data: lastPortalView }, { data: lastDeckView }] = await Promise.all([
+    supabase
+      .from("proposal_view_events")
+      .select("viewed_at")
+      .eq("proposal_id", id)
+      .eq("viewer_type", "client")
+      .eq("surface", "portal")
+      .is("session_id", null)
+      .order("viewed_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("proposal_view_events")
+      .select("viewed_at")
+      .eq("proposal_id", id)
+      .eq("viewer_type", "client")
+      .eq("surface", "deck")
+      .is("session_id", null)
+      .order("viewed_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
   const { data: specs } = await supabase
-    .from("documents")
+    .from("proposal_specs")
     .select("id, title, body_markdown, is_client_visible, portal_token, updated_at")
     .eq("proposal_id", id)
-    .eq("kind", "technical_spec")
     .order("created_at", { ascending: true });
 
   const { data: clientFull } = await supabase
@@ -69,6 +150,7 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
   const locked = status === "accepted" || status === "rejected";
 
   const editableItems: EditableItem[] = ((items ?? []) as unknown as EditableItem[]).map((it) => ({
+    id: it.id,
     description: it.description,
     quantity: Number(it.quantity) || 0,
     unit_price: Number(it.unit_price) || 0,
@@ -79,8 +161,13 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
     id: string;
     viewer_type: "team" | "client";
     viewed_at: string;
+    surface: Surface;
     team_members: { name: string } | null;
   }>;
+
+  const token = proposal.portal_token as string | null;
+  const portalViewedAt = (lastPortalView?.viewed_at as string | null) ?? null;
+  const deckViewedAt = (lastDeckView?.viewed_at as string | null) ?? null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -134,19 +221,22 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
             <CardTitle>Compartir con el cliente</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
-            {(proposal.portal_token as string | null) ? (
-              <div className="flex flex-col gap-1">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Enlace portal
-                </p>
-                <a
-                  href={`/p/proposal/${proposal.portal_token as string}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="break-all text-xs text-primary hover:underline"
-                >
-                  /p/proposal/{proposal.portal_token as string}
-                </a>
+            {token ? (
+              <div className="flex flex-col gap-2">
+                <ShareLinkRow
+                  href={`/p/proposal/${token}`}
+                  icon={<FileText className="size-4" aria-hidden />}
+                  label="Propuesta"
+                  description={`/p/proposal/${token}`}
+                  lastViewedAt={portalViewedAt}
+                />
+                <ShareLinkRow
+                  href={`/deck/${token}`}
+                  icon={<Presentation className="size-4" aria-hidden />}
+                  label="Presentación"
+                  description={`/deck/${token}`}
+                  lastViewedAt={deckViewedAt}
+                />
               </div>
             ) : null}
             {locked ? (
@@ -210,6 +300,17 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
                   <div className="flex items-center gap-2">
                     <Badge variant={v.viewer_type === "client" ? "info" : "neutral"}>
                       {v.viewer_type === "client" ? "Cliente" : "Equipo"}
+                    </Badge>
+                    <Badge variant="outline">
+                      {v.surface === "deck" ? (
+                        <>
+                          <Presentation aria-hidden /> Presentación
+                        </>
+                      ) : (
+                        <>
+                          <FileText aria-hidden /> Propuesta
+                        </>
+                      )}
                     </Badge>
                     <span className="text-muted-foreground">
                       {v.viewer_type === "team"
