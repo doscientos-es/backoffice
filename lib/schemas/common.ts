@@ -39,3 +39,19 @@ export function formDataToObject(formData: FormData): Record<string, string> {
   }
   return out;
 }
+
+/** Reusable `{ id: uuid }` payload shape, used by many delete/toggle actions. */
+export const uuidIdInput = z.object({ id: z.string().uuid() });
+
+/**
+ * Validation schema for an editable finance line item (proposals + invoices).
+ * Lives here because both domains share the exact same shape and error
+ * messages; centralising it avoids drift between proposal and invoice forms.
+ */
+export const lineItemInput = z.object({
+  description: z.string().min(1, "Descripción obligatoria").max(500),
+  quantity: z.coerce.number().positive("Cantidad > 0"),
+  unit_price: z.coerce.number().nonnegative("Precio ≥ 0"),
+  vat_rate: z.coerce.number().min(0).max(100).default(21),
+});
+export type LineItemInputType = z.infer<typeof lineItemInput>;
