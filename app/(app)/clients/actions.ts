@@ -1,45 +1,16 @@
 "use server";
 
+import { defineAction } from "@/lib/actions/define-action";
 import { requireUser } from "@/lib/auth";
+import { CreateClientInput, UpdateClientInput } from "@/lib/schemas/client";
 import { createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { z } from "zod";
 
 // ---------- CREATE ----------
-const CreateClientInput = z.object({
-  name: z.string().min(1, "El nombre es obligatorio").max(160),
-  nif: z
-    .string()
-    .max(20)
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-  email: z
-    .string()
-    .email("Email no válido")
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-  phone: z
-    .string()
-    .max(40)
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-  billing_address: z
-    .string()
-    .max(400)
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-  contact_person: z
-    .string()
-    .max(160)
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-  notes: z
-    .string()
-    .max(4000)
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-});
+// Kept as a redirect-based form action: `<form action={createClient}>`.
+// Errors throw and surface via the closest error boundary, matching the
+// pre-existing behaviour. Schema is centralised in lib/schemas/client.
 
 export async function createClient(formData: FormData): Promise<void> {
   await requireUser();
@@ -76,12 +47,9 @@ export async function createClient(formData: FormData): Promise<void> {
 }
 
 // ---------- UPDATE ----------
-const UpdateClientInput = CreateClientInput.extend({
-  id: z.string().uuid(),
-});
-
-type ActionResult = { ok: true } | { ok: false; error: string };
-
+// Public, backward-compatible input shape for callers (form values are
+// all-strings). The schema in lib/schemas/client validates + coerces "" to
+// undefined for optional fields before the handler runs.
 export type UpdateClientInputType = {
   id: string;
   name: string;
@@ -93,30 +61,25 @@ export type UpdateClientInputType = {
   notes: string;
 };
 
-export async function updateClient(input: UpdateClientInputType): Promise<ActionResult> {
-  await requireUser();
-  const parsed = UpdateClientInput.safeParse(input);
-  if (!parsed.success) {
-    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
-  }
-
-  const supabase = await createServerClient();
-  const { error } = await supabase
-    .from("clients")
-    .update({
-      name: parsed.data.name,
-      nif: parsed.data.nif ?? null,
-      email: parsed.data.email ?? null,
-      phone: parsed.data.phone ?? null,
-      billing_address: parsed.data.billing_address ?? null,
-      contact_person: parsed.data.contact_person ?? null,
-      notes: parsed.data.notes ?? null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", parsed.data.id);
-
-  if (error) return { ok: false, error: error.message };
-  revalidatePath(`/clients/${parsed.data.id}`);
-  revalidatePath("/clients");
-  return { ok: true };
-}
+export const updateClient = defineAction({
+  name: "clients.update",
+  schema: UpdateClientInput,
+  revalidate: (_payload, input) => [`/clients/${input.id}`, "/clients"],
+  handler: async (input) => {
+    const supabase = await createServerClient();
+    const { error } = await supabase
+      .from("clients")
+      .update({
+        name: input.name,
+        nif: input.nif ?? null,
+        email: input.email ?? null,
+        phone: input.phone ?? null,
+        billing_address: input.billing_address ?? null,
+        contact_person: input.contact_person ?? null,
+        notes: input.notes ?? null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", input.id);
+    if (error) throw new Error(error.message);
+  },
+});

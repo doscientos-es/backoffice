@@ -24,7 +24,7 @@ const CreateInput = z.object({
 });
 
 export async function createLead(formData: FormData): Promise<void> {
-  await requireUser();
+  const user = await requireUser();
   const raw = {
     name: formData.get("name")?.toString() ?? "",
     email: formData.get("email")?.toString() ?? "",
@@ -48,6 +48,8 @@ export async function createLead(formData: FormData): Promise<void> {
       company: parsed.data.company || null,
       source: parsed.data.source || null,
       notes: parsed.data.notes || null,
+      created_by: user.id,
+      updated_by: user.id,
     })
     .select("id")
     .single();
@@ -84,7 +86,7 @@ export type UpdateLeadInput = {
 };
 
 export async function updateLead(input: UpdateLeadInput): Promise<ActionResult> {
-  await requireRole(["owner", "admin", "member"]);
+  const user = await requireRole(["owner", "admin", "member"]);
   const parsed = UpdateInput.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
@@ -102,6 +104,7 @@ export async function updateLead(input: UpdateLeadInput): Promise<ActionResult> 
       notes: parsed.data.notes || null,
       estimated_value: parsed.data.estimated_value ?? null,
       updated_at: new Date().toISOString(),
+      updated_by: user.id,
     })
     .eq("id", parsed.data.id);
 
@@ -136,7 +139,7 @@ export type ConvertLeadResult = { ok: true; clientId: string } | { ok: false; er
  * Idempotent: if the lead already has a linked client, returns it.
  */
 export async function convertLeadToClient(input: unknown): Promise<ConvertLeadResult> {
-  await requireUser();
+  const user = await requireUser();
   const parsed = ConvertInput.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
@@ -177,7 +180,7 @@ export async function convertLeadToClient(input: unknown): Promise<ConvertLeadRe
 
   await supabase
     .from("leads")
-    .update({ status: "won", updated_at: new Date().toISOString() })
+    .update({ status: "won", updated_at: new Date().toISOString(), updated_by: user.id })
     .eq("id", data.leadId);
 
   await supabase.from("lead_interactions").insert({
@@ -185,6 +188,7 @@ export async function convertLeadToClient(input: unknown): Promise<ConvertLeadRe
     client_id: client.id as string,
     type: "note",
     subject: "Convertido a cliente",
+    performed_by: user.id,
   });
 
   revalidatePath(`/leads/${data.leadId}`);
@@ -238,13 +242,24 @@ const StatusInput = z
 export async function updateLeadStatus(
   input: unknown,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  await requireUser();
+  const user = await requireUser();
   const parsed = StatusInput.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.errors[0]?.message ?? "Estado no válido" };
   }
   const supabase = await createServerClient();
-  const updates: Record<string, unknown> = { status: parsed.data.status };
+
+  // Read current status before updating so we can log `from → to`.
+  const { data: current } = await supabase
+    .from("leads")
+    .select("status")
+    .eq("id", parsed.data.leadId)
+    .single();
+
+  const updates: Record<string, unknown> = {
+    status: parsed.data.status,
+    updated_by: user.id,
+  };
   if (isClosureStatus(parsed.data.status)) {
     updates.lost_reason = parsed.data.lostReason;
     updates.lost_at = new Date().toISOString();
@@ -254,6 +269,20 @@ export async function updateLeadStatus(
   }
   const { error } = await supabase.from("leads").update(updates).eq("id", parsed.data.leadId);
   if (error) return { ok: false, error: error.message };
+
+  // Log the transition in the interactions timeline.
+  await supabase.from("lead_interactions").insert({
+    lead_id: parsed.data.leadId,
+    type: "status_change",
+    subject: `Estado: ${current?.status ?? "?"} → ${parsed.data.status}`,
+    performed_by: user.id,
+    payload: {
+      from: current?.status ?? null,
+      to: parsed.data.status,
+      lost_reason: parsed.data.lostReason ?? null,
+    },
+  });
+
   revalidatePath(`/leads/${parsed.data.leadId}`);
   revalidatePath("/leads");
   return { ok: true };
@@ -269,7 +298,7 @@ const EstimatedValueInput = z.object({
 export async function updateLeadEstimatedValue(
   input: unknown,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  await requireUser();
+  const user = await requireUser();
   const parsed = EstimatedValueInput.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.errors[0]?.message ?? "Valor no válido" };
@@ -277,7 +306,7 @@ export async function updateLeadEstimatedValue(
   const supabase = await createServerClient();
   const { error } = await supabase
     .from("leads")
-    .update({ estimated_value: parsed.data.value })
+    .update({ estimated_value: parsed.data.value, updated_by: user.id })
     .eq("id", parsed.data.leadId);
   if (error) return { ok: false, error: error.message };
   revalidatePath(`/leads/${parsed.data.leadId}`);
