@@ -1,4 +1,3 @@
-import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
@@ -55,12 +54,18 @@ export default async function ClientsPage({
       addLabel="Nuevo cliente"
       actions={
         <Button asChild size="sm">
-          <Link href="/clients/new">Nuevo</Link>
+          <Link href="/clients/new">
+            <Plus className="mr-2 h-4 w-4" />
+            Nuevo
+          </Link>
         </Button>
       }
       emptyAction={
         <Button asChild size="sm">
-          <Link href="/clients/new">Crear primer cliente</Link>
+          <Link href="/clients/new">
+            <Plus className="mr-2 h-4 w-4" />
+            Crear primer cliente
+          </Link>
         </Button>
       }
       rows={

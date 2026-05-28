@@ -48,4 +48,13 @@ export const UpdateTaskStatusInput = z.object({
   status: TaskStatus,
 });
 
-export type UpdateTaskStatusInputType = z.infer<typeof UpdateTaskStatusInput>;
+export const MoveTaskInput = z.object({
+  taskId: z.string().uuid(),
+  status: TaskStatus,
+  /** Task id immediately above the dropped position (null = top). */
+  beforeId: z.string().uuid().nullable().optional(),
+  /** Task id immediately below the dropped position (null = bottom). */
+  afterId: z.string().uuid().nullable().optional(),
+});
+
+export type MoveTaskInputType = z.infer<typeof MoveTaskInput>;

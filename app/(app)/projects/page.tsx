@@ -67,12 +67,18 @@ export default async function ProjectsPage({
       addLabel="Nuevo proyecto"
       actions={
         <Button asChild size="sm">
-          <Link href="/projects/new">Nuevo</Link>
+          <Link href="/projects/new">
+            <Plus className="mr-2 h-4 w-4" />
+            Nuevo
+          </Link>
         </Button>
       }
       emptyAction={
         <Button asChild size="sm">
-          <Link href="/projects/new">Crear primer proyecto</Link>
+          <Link href="/projects/new">
+            <Plus className="mr-2 h-4 w-4" />
+            Crear primer proyecto
+          </Link>
         </Button>
       }
       headers={["Nombre", "Cliente", "Estado", "GitHub"]}
