@@ -73,7 +73,7 @@ export function LineItemsTable({
             <th className="w-28 px-2 py-2 font-medium text-right">Precio</th>
             <th className="w-20 px-2 py-2 font-medium text-right">IVA %</th>
             <th className="w-28 px-2 py-2 font-medium text-right">Subtotal</th>
-            <th className="w-9 px-1 py-2" aria-label="acciones" />
+            <th className="w-9 px-1 py-2" aria-label="acciones"/>
           </tr>
         </thead>
         <tbody>
