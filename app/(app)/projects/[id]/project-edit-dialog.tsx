@@ -12,6 +12,7 @@ import {
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { useFormDirty } from "@/lib/hooks/use-form-dirty";
+import type { GithubSyncModeType, ProjectStatusType } from "@/lib/schemas/project";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { updateProject } from "../actions";
@@ -46,18 +47,19 @@ export function ProjectEditDialog({ project, clients }: Props) {
     e.preventDefault();
     feedback.setPending();
     const fd = new FormData(e.currentTarget);
+    const installIdRaw = fd.get("github_installation_id")?.toString() ?? "";
     const res = await updateProject({
       id: project.id,
       client_id: fd.get("client_id")?.toString() ?? "",
       name: fd.get("name")?.toString() ?? "",
       description: fd.get("description")?.toString() ?? "",
-      status: fd.get("status")?.toString() ?? "planning",
+      status: (fd.get("status")?.toString() ?? "planning") as ProjectStatusType,
       starts_at: fd.get("starts_at")?.toString() ?? "",
       ends_at: fd.get("ends_at")?.toString() ?? "",
-      github_sync_mode: fd.get("github_sync_mode")?.toString() ?? "none",
+      github_sync_mode: (fd.get("github_sync_mode")?.toString() ?? "none") as GithubSyncModeType,
       github_auto_sync: !!fd.get("github_auto_sync"),
       github_repo: fd.get("github_repo")?.toString() ?? "",
-      github_installation_id: fd.get("github_installation_id")?.toString() ?? "",
+      github_installation_id: installIdRaw === "" ? "" : Number(installIdRaw),
     });
     if (!res.ok) return feedback.setError(res.error);
     feedback.setSuccess("Guardado");

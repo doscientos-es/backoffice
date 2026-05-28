@@ -1,13 +1,11 @@
 "use server";
 
 import { requireRole } from "@/lib/auth";
+import { InternalDocIdInput } from "@/lib/schemas/internal-doc";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { z } from "zod";
-
-const IdInput = z.object({ id: z.string().uuid() });
 
 /**
  * Soft-delete an internal document and remove the file from Storage.
@@ -16,7 +14,9 @@ const IdInput = z.object({ id: z.string().uuid() });
 export async function deleteInternalDoc(formData: FormData): Promise<void> {
   await requireRole(["owner", "admin"]);
 
-  const parsed = IdInput.safeParse({ id: formData.get("id")?.toString() });
+  const parsed = InternalDocIdInput.safeParse({
+    id: formData.get("id")?.toString(),
+  });
   if (!parsed.success) throw new Error("ID inválido");
   const { id } = parsed.data;
 

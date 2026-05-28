@@ -1,14 +1,16 @@
 import { requireUser } from "@/lib/auth";
+import {
+  INTERNAL_DOC_CATEGORIES,
+  INTERNAL_DOC_MAX_SIZE_BYTES,
+  INTERNAL_DOC_VISIBILITIES,
+  type InternalDocCategory,
+  type InternalDocVisibility,
+} from "@/lib/schemas/internal-doc";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
 import { type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
-
-const MAX_SIZE = 50 * 1024 * 1024; // 50 MB
-
-const ALLOWED_CATEGORIES = ["legal", "hr", "finance", "templates", "policies", "meetings", "other"];
-const ALLOWED_VISIBILITIES = ["all_team", "admins_only"];
 
 function sanitizeFilename(name: string): string {
   return name.replace(/[^a-zA-Z0-9._\-]/g, "_").slice(0, 200);
@@ -38,22 +40,24 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (!(file instanceof File) || file.size === 0) {
     return NextResponse.json({ error: "Archivo requerido" }, { status: 400 });
   }
-  if (file.size > MAX_SIZE) {
+  if (file.size > INTERNAL_DOC_MAX_SIZE_BYTES) {
     return NextResponse.json({ error: "El archivo supera el límite de 50 MB" }, { status: 413 });
   }
 
   const name = (formData.get("name") as string | null)?.trim();
   if (!name) return NextResponse.json({ error: "Nombre requerido" }, { status: 400 });
 
-  const category = (formData.get("category") as string | null) ?? "other";
-  if (!ALLOWED_CATEGORIES.includes(category)) {
+  const rawCategory = (formData.get("category") as string | null) ?? "other";
+  if (!(INTERNAL_DOC_CATEGORIES as readonly string[]).includes(rawCategory)) {
     return NextResponse.json({ error: "Categoría inválida" }, { status: 400 });
   }
+  const category = rawCategory as InternalDocCategory;
 
-  const visibility = (formData.get("visibility") as string | null) ?? "all_team";
-  if (!ALLOWED_VISIBILITIES.includes(visibility)) {
+  const rawVisibility = (formData.get("visibility") as string | null) ?? "all_team";
+  if (!(INTERNAL_DOC_VISIBILITIES as readonly string[]).includes(rawVisibility)) {
     return NextResponse.json({ error: "Visibilidad inválida" }, { status: 400 });
   }
+  const visibility = rawVisibility as InternalDocVisibility;
 
   const description = (formData.get("description") as string | null)?.trim() || null;
   const effective_date = (formData.get("effective_date") as string | null) || null;

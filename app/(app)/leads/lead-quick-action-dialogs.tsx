@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
+import type { CallOutcome } from "@/lib/schemas/lead";
 import { Mail, NotebookPen, Phone } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -89,7 +90,7 @@ export function QCallDialog({
   leadPhone: string | null;
 }) {
   const [open, setOpen] = useState(false);
-  const [outcome, setOutcome] = useState("connected");
+  const [outcome, setOutcome] = useState<CallOutcome>("connected");
   const [duration, setDuration] = useState("");
   const [notes, setNotes] = useState("");
   const [transcript, setTranscript] = useState("");
@@ -147,7 +148,7 @@ export function QCallDialog({
               <Select
                 id={`qa-call-outcome-${leadId}`}
                 value={outcome}
-                onChange={(e) => setOutcome(e.target.value)}
+                onChange={(e) => setOutcome(e.target.value as CallOutcome)}
               >
                 <option value="connected">Contactado</option>
                 <option value="voicemail">Buzón de voz</option>

@@ -2,18 +2,14 @@
 
 import { ensureProjectForProposal, promoteLeadFromClient } from "@/lib/crm/conversion";
 import { scopedLogger } from "@/lib/logger";
+import {
+  ProposalPortalToken,
+  ProposalRejectionReason,
+} from "@/lib/schemas/proposal";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 
 const log = scopedLogger("portal.proposal");
-
-const TokenSchema = z
-  .string()
-  .min(32)
-  .max(128)
-  .regex(/^[a-f0-9]+$/i);
-const RejectionSchema = z.string().max(500).optional();
 
 type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -22,7 +18,7 @@ async function transitionProposal(
   to: "accepted" | "rejected",
   rejectionReason?: string,
 ): Promise<ActionResult> {
-  const parsed = TokenSchema.safeParse(token);
+  const parsed = ProposalPortalToken.safeParse(token);
   if (!parsed.success) return { ok: false, error: "Token inválido" };
 
   const admin = createAdminClient();
@@ -86,7 +82,7 @@ export async function acceptProposal(token: string): Promise<ActionResult> {
 }
 
 export async function rejectProposal(token: string, reason?: string): Promise<ActionResult> {
-  const parsedReason = RejectionSchema.safeParse(reason);
+  const parsedReason = ProposalRejectionReason.safeParse(reason);
   return transitionProposal(
     token,
     "rejected",

@@ -1,9 +1,11 @@
 "use server";
 
 import { defineAction } from "@/lib/actions/define-action";
+import { requireUser } from "@/lib/auth";
 import { autoSyncTaskIssue } from "@/lib/integrations/github-sync";
 import {
   CreateTaskInput,
+  MoveTaskInput,
   UpdateTaskInput,
   UpdateTaskStatusInput,
 } from "@/lib/schemas/task";
@@ -98,20 +100,11 @@ export const updateTaskStatus = defineAction({
 
 // ---------------- MOVE TASK (Kanban reorder) ----------------
 
-const MoveInput = z.object({
-  taskId: z.string().uuid(),
-  status: z.enum(STATUS),
-  /** Task id immediately above the dropped position (null = top). */
-  beforeId: z.string().uuid().nullable().optional(),
-  /** Task id immediately below the dropped position (null = bottom). */
-  afterId: z.string().uuid().nullable().optional(),
-});
-
 export async function moveTask(
   input: unknown,
 ): Promise<{ ok: true; kanbanOrder: string } | { ok: false; error: string }> {
   await requireUser();
-  const parsed = MoveInput.safeParse(input);
+  const parsed = MoveTaskInput.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Movimiento no válido" };
 
   const supabase = await createServerClient();

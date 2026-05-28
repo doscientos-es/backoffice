@@ -12,6 +12,7 @@ import {
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { useFormDirty } from "@/lib/hooks/use-form-dirty";
+import type { TaskPriorityType, TaskStatusType } from "@/lib/schemas/task";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { updateTask } from "../actions";
@@ -49,8 +50,8 @@ export function TaskEditDialog({ task, members, milestones }: Props) {
       description: fd.get("description")?.toString() ?? "",
       milestone_id: fd.get("milestone_id")?.toString() ?? "",
       assignee_id: fd.get("assignee_id")?.toString() ?? "",
-      status: fd.get("status")?.toString() ?? "todo",
-      priority: fd.get("priority")?.toString() ?? "medium",
+      status: (fd.get("status")?.toString() ?? "todo") as TaskStatusType,
+      priority: (fd.get("priority")?.toString() ?? "medium") as TaskPriorityType,
       due_date: fd.get("due_date")?.toString() ?? "",
     });
     if (!res.ok) return feedback.setError(res.error);

@@ -37,6 +37,8 @@ export function LeadEditDialog({ lead }: { lead: Lead }) {
     e.preventDefault();
     feedback.setPending();
     const fd = new FormData(e.currentTarget);
+    const estimatedRaw = fd.get("estimated_value")?.toString() ?? "";
+    const estimated = estimatedRaw === "" ? null : Number(estimatedRaw);
     const res = await updateLead({
       id: lead.id,
       name: fd.get("name")?.toString() ?? "",
@@ -45,7 +47,7 @@ export function LeadEditDialog({ lead }: { lead: Lead }) {
       company: fd.get("company")?.toString() ?? "",
       source: fd.get("source")?.toString() ?? "",
       notes: fd.get("notes")?.toString() ?? "",
-      estimated_value: fd.get("estimated_value")?.toString() ?? "",
+      estimated_value: estimated,
     });
     if (!res.ok) return feedback.setError(res.error);
     feedback.setSuccess("Guardado");

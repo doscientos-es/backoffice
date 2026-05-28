@@ -2,6 +2,7 @@
 
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Select } from "@/components/ui/select";
+import type { LeadStatusType } from "@/lib/schemas/lead";
 import { useState } from "react";
 import { updateLeadStatus } from "../actions";
 import { CloseReasonDialog, type CloseReasonVariant } from "../close-reason-dialog";
@@ -33,7 +34,7 @@ export function LeadStatusSelect({
   const feedback = useFormFeedback();
   const [pendingClosure, setPendingClosure] = useState<CloseReasonVariant | null>(null);
 
-  const commit = async (to: string, lostReason?: string) => {
+  const commit = async (to: LeadStatusType, lostReason?: string) => {
     feedback.setPending();
     const res = await updateLeadStatus({ leadId, status: to, lostReason });
     if (!res.ok) feedback.setError(res.error);
@@ -47,7 +48,7 @@ export function LeadStatusSelect({
         disabled={feedback.pending}
         className="h-8 w-40"
         onChange={async (e) => {
-          const next = e.target.value;
+          const next = e.target.value as LeadStatusType;
           const variant = CLOSURE_VARIANTS[next];
           if (variant) {
             setPendingClosure(variant);

@@ -1,36 +1,17 @@
 "use server";
 
 import { requireRole, requireUser } from "@/lib/auth";
+import { computeExpenseTotals } from "@/lib/finance";
 import {
-  EXPENSE_CATEGORIES,
-  EXPENSE_RECURRENCES,
-  EXPENSE_STATUSES,
-  computeExpenseTotals,
-} from "@/lib/finance";
+  ExpenseInput,
+  type UpdateExpenseInput as UpdateExpenseInputType,
+} from "@/lib/schemas/expense";
 import { createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-const emptyToUndef = z.literal("").transform(() => undefined);
-
-const ExpenseInput = z.object({
-  vendor: z.string().min(1, "El proveedor es obligatorio").max(160),
-  description: z.string().max(400).optional().or(emptyToUndef),
-  category: z.enum(EXPENSE_CATEGORIES).default("other"),
-  status: z.enum(EXPENSE_STATUSES).default("paid"),
-  recurrence: z.enum(EXPENSE_RECURRENCES).default("none"),
-  expense_date: z.string().min(1, "La fecha es obligatoria"),
-  due_date: z.string().optional().or(emptyToUndef),
-  paid_at: z.string().optional().or(emptyToUndef),
-  currency: z.string().min(3).max(3).default("EUR"),
-  subtotal: z.coerce.number().min(0, "El importe debe ser ≥ 0"),
-  tax_rate: z.coerce.number().min(0).max(100).default(21),
-  vendor_nif: z.string().max(20).optional().or(emptyToUndef),
-  invoice_reference: z.string().max(80).optional().or(emptyToUndef),
-  project_id: z.string().uuid().optional().or(emptyToUndef),
-  notes: z.string().max(4000).optional().or(emptyToUndef),
-});
+export type UpdateExpenseInput = UpdateExpenseInputType;
 
 function readRaw(formData: FormData) {
   return {
@@ -93,25 +74,6 @@ export async function createExpense(formData: FormData): Promise<void> {
   revalidatePath("/finance/expenses");
   redirect(`/finance/expenses/${data.id}`);
 }
-
-export type UpdateExpenseInput = {
-  id: string;
-  vendor: string;
-  description: string;
-  category: string;
-  status: string;
-  recurrence: string;
-  expense_date: string;
-  due_date: string;
-  paid_at: string;
-  currency: string;
-  subtotal: string;
-  tax_rate: string;
-  vendor_nif: string;
-  invoice_reference: string;
-  project_id: string;
-  notes: string;
-};
 
 export async function updateExpense(
   input: UpdateExpenseInput,

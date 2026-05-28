@@ -17,6 +17,7 @@ import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import type { LeadInteraction, LeadListItem } from "@/lib/leads/types";
+import type { CallOutcome } from "@/lib/schemas/lead";
 import { relativeTime } from "@/lib/utils";
 import { Brain, Mail, Phone, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -123,7 +124,7 @@ function CallDialog({ leadId, leadPhone }: { leadId: string; leadPhone: string |
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const [duration, setDuration] = useState("");
-  const [outcome, setOutcome] = useState("connected");
+  const [outcome, setOutcome] = useState<CallOutcome>("connected");
   const feedback = useFormFeedback();
   const router = useRouter();
 
@@ -165,7 +166,7 @@ function CallDialog({ leadId, leadPhone }: { leadId: string; leadPhone: string |
             <Select
               id={`fast-call-outcome-${leadId}`}
               value={outcome}
-              onChange={(e) => setOutcome(e.target.value)}
+              onChange={(e) => setOutcome(e.target.value as CallOutcome)}
             >
               <option value="connected">Contactado</option>
               <option value="voicemail">Buzón de voz</option>

@@ -1,31 +1,15 @@
 "use server";
 
 import { requireUser } from "@/lib/auth";
+import {
+  CreateReminderInput,
+  ReminderIdInput,
+} from "@/lib/schemas/reminder";
 import { createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
-
-const IdInput = z.object({ id: z.string().uuid() });
 
 type ActionResult = { ok: true } | { ok: false; error: string };
 type CreateReminderResult = { ok: true; id: string } | { ok: false; error: string };
-
-const CreateReminderInput = z
-  .object({
-    title: z.string().trim().min(1, "El título es obligatorio").max(200),
-    remindAt: z
-      .string()
-      .min(1, "Indica fecha y hora")
-      .refine((v) => !Number.isNaN(Date.parse(v)), { message: "Fecha no válida" }),
-    notes: z.string().trim().max(4000).optional(),
-    leadId: z.string().uuid().optional(),
-    clientId: z.string().uuid().optional(),
-    projectId: z.string().uuid().optional(),
-  })
-  .refine((v) => !!(v.leadId || v.clientId || v.projectId), {
-    message: "Vincula el aviso a un lead, cliente o proyecto",
-    path: ["leadId"],
-  });
 
 /**
  * Creates a reminder linked to a lead, client or project. Used from the
@@ -71,7 +55,7 @@ export async function createReminder(input: unknown): Promise<CreateReminderResu
  */
 export async function completeReminder(input: unknown): Promise<ActionResult> {
   await requireUser();
-  const parsed = IdInput.safeParse(input);
+  const parsed = ReminderIdInput.safeParse(input);
   if (!parsed.success) return { ok: false, error: "ID inválido" };
 
   const supabase = await createServerClient();
@@ -93,7 +77,7 @@ export async function completeReminder(input: unknown): Promise<ActionResult> {
  */
 export async function uncompleteReminder(input: unknown): Promise<ActionResult> {
   await requireUser();
-  const parsed = IdInput.safeParse(input);
+  const parsed = ReminderIdInput.safeParse(input);
   if (!parsed.success) return { ok: false, error: "ID inválido" };
 
   const supabase = await createServerClient();
