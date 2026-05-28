@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { renderEmail } from "@/lib/email/render";
 import { sendEmail } from "@/lib/email/resend";
 import { publicEnv } from "@/lib/env";
-import { computeLineTotals } from "@/lib/finance";
+import { computeProposalTotals } from "@/lib/finance";
 import { scopedLogger } from "@/lib/logger";
 import {
   CreateProposalInput,
@@ -59,7 +59,7 @@ export async function createProposal(formData: FormData): Promise<void> {
   }
   const data = parsed.data;
 
-  const { subtotal, taxAmount, total } = computeLineTotals(data.items);
+  const { oneTime } = computeProposalTotals(data.items);
 
   const supabase = await createServerClient();
   const number = await nextProposalNumber(supabase);
@@ -73,9 +73,9 @@ export async function createProposal(formData: FormData): Promise<void> {
       title: data.title,
       status: "draft",
       currency: "EUR",
-      subtotal,
-      tax_amount: taxAmount,
-      total,
+      subtotal: oneTime.subtotal,
+      tax_amount: oneTime.taxAmount,
+      total: oneTime.total,
       valid_until: data.valid_until ?? null,
       notes: data.notes ?? null,
       created_by: user.id,
@@ -96,6 +96,7 @@ export async function createProposal(formData: FormData): Promise<void> {
       quantity: it.quantity,
       unit_price: it.unit_price,
       vat_rate: it.vat_rate,
+      billing_cycle: it.billing_cycle,
     })),
   );
   if (itemsError) {
@@ -122,7 +123,7 @@ export async function createProposalAction(
   }
   const data = parsed.data;
 
-  const { subtotal, taxAmount, total } = computeLineTotals(data.items);
+  const { oneTime } = computeProposalTotals(data.items);
 
   const supabase = await createServerClient();
   const number = await nextProposalNumber(supabase);
@@ -136,9 +137,9 @@ export async function createProposalAction(
       title: data.title,
       status: "draft",
       currency: "EUR",
-      subtotal,
-      tax_amount: taxAmount,
-      total,
+      subtotal: oneTime.subtotal,
+      tax_amount: oneTime.taxAmount,
+      total: oneTime.total,
       valid_until: data.valid_until ?? null,
       notes: data.notes ?? null,
       created_by: user.id,
@@ -159,6 +160,7 @@ export async function createProposalAction(
       quantity: it.quantity,
       unit_price: it.unit_price,
       vat_rate: it.vat_rate,
+      billing_cycle: it.billing_cycle,
     })),
   );
   if (itemsError) {
@@ -207,14 +209,20 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
   if (rest.title !== undefined) patch.title = rest.title;
   if (rest.valid_until !== undefined) patch.valid_until = rest.valid_until;
   if (rest.notes !== undefined) patch.notes = rest.notes;
-  if (rest.intro !== undefined) patch.intro = rest.intro;
+  if (rest.context_markdown !== undefined) patch.context_markdown = rest.context_markdown;
+  if (rest.problems !== undefined) {
+    patch.problems = rest.problems && rest.problems.length > 0 ? rest.problems : null;
+  }
+  if (rest.solutions !== undefined) {
+    patch.solutions = rest.solutions && rest.solutions.length > 0 ? rest.solutions : null;
+  }
   if (rest.terms !== undefined) patch.terms = rest.terms;
 
   if (items) {
-    const totals = computeLineTotals(items);
-    patch.subtotal = totals.subtotal;
-    patch.tax_amount = totals.taxAmount;
-    patch.total = totals.total;
+    const { oneTime } = computeProposalTotals(items);
+    patch.subtotal = oneTime.subtotal;
+    patch.tax_amount = oneTime.taxAmount;
+    patch.total = oneTime.total;
   }
 
   if (Object.keys(patch).length > 0) {
@@ -242,6 +250,7 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
         quantity: it.quantity,
         unit_price: it.unit_price,
         vat_rate: it.vat_rate,
+        billing_cycle: it.billing_cycle,
       })),
     );
     if (insertError) {

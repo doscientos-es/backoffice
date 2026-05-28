@@ -9,9 +9,11 @@ import { useTransition } from "react";
 type Props = {
   sort: MarketingSort;
   showPaused: boolean;
+  /** When true, hides the "incluir pausados" checkbox (campaign view doesn't use it). */
+  hidePaused?: boolean;
 };
 
-export function OptionsToolbar({ sort, showPaused }: Props) {
+export function OptionsToolbar({ sort, showPaused, hidePaused = false }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -49,15 +51,17 @@ export function OptionsToolbar({ sort, showPaused }: Props) {
         </Select>
       </label>
 
-      <label className="flex cursor-pointer items-center gap-2 text-muted-foreground select-none">
-        <input
-          type="checkbox"
-          checked={showPaused}
-          onChange={(e) => updateParam("paused", e.target.checked ? "1" : null)}
-          className="size-4 rounded border-[color:var(--border-strong)] accent-foreground"
-        />
-        <span className="font-medium">Incluir pausados</span>
-      </label>
+      {!hidePaused && (
+        <label className="flex cursor-pointer items-center gap-2 text-muted-foreground select-none">
+          <input
+            type="checkbox"
+            checked={showPaused}
+            onChange={(e) => updateParam("paused", e.target.checked ? "1" : null)}
+            className="size-4 rounded border-[color:var(--border-strong)] accent-foreground"
+          />
+          <span className="font-medium">Incluir pausados</span>
+        </label>
+      )}
     </div>
   );
 }

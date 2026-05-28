@@ -222,15 +222,28 @@ export async function createInvoiceFromProposal(input: unknown): Promise<FromPro
     return { ok: false, error: "Solo se puede facturar una propuesta aceptada" };
   }
 
-  const { data: items, error: itemsReadError } = await supabase
+  const { data: allItems, error: itemsReadError } = await supabase
     .from("proposal_items")
-    .select("position, description, quantity, unit_price, vat_rate")
+    .select("position, description, quantity, unit_price, vat_rate, billing_cycle")
     .eq("proposal_id", proposalId)
     .order("position");
 
   if (itemsReadError) return { ok: false, error: itemsReadError.message };
-  if (!items || items.length === 0) {
+  if (!allItems || allItems.length === 0) {
     return { ok: false, error: "La propuesta no tiene líneas para facturar" };
+  }
+
+  // First invoice from a proposal only bills the one-time (non-recurring) lines.
+  // Recurring lines (mantenimiento, etc.) require dedicated periodic invoicing
+  // and would otherwise inflate the first invoice with future obligations.
+  const items = allItems.filter(
+    (it) => ((it.billing_cycle as string | null) ?? "none") === "none",
+  );
+  if (items.length === 0) {
+    return {
+      ok: false,
+      error: "Esta propuesta solo contiene líneas recurrentes; crea la factura manualmente",
+    };
   }
 
   const { data: client } = await supabase

@@ -89,6 +89,24 @@ export function LineItemsTable({
                   aria-label={`Descripción línea ${i + 1}`}
                 />
               </td>
+              {showBillingCycle && (
+                <td className="px-1 py-1.5">
+                  <Select
+                    value={it.billing_cycle ?? "none"}
+                    onChange={(e) =>
+                      update(i, { billing_cycle: e.target.value as BillingCycle })
+                    }
+                    disabled={locked}
+                    aria-label={`Cadencia línea ${i + 1}`}
+                  >
+                    {BILLING_CYCLES.map((c) => (
+                      <option key={c} value={c}>
+                        {BILLING_CYCLE_LABELS[c]}
+                      </option>
+                    ))}
+                  </Select>
+                </td>
+              )}
               <td className="px-1 py-1.5">
                 <Input
                   type="number"
@@ -148,7 +166,7 @@ export function LineItemsTable({
         </tbody>
         <tfoot className="border-t-2 border-border">
           <tr>
-            <td colSpan={5} className="px-3 py-2">
+            <td colSpan={footerColSpan - 1} className="px-3 py-2">
               <button
                 type="button"
                 onClick={add}
@@ -160,27 +178,79 @@ export function LineItemsTable({
             </td>
             <td className="px-1 py-2" />
           </tr>
-          <tr>
-            <td colSpan={4} className="px-3 py-1.5 text-right text-xs text-muted-foreground">
-              Subtotal
-            </td>
-            <td className="px-2 py-1.5 text-right tabular-nums">{formatEUR(subtotal)}</td>
-            <td />
-          </tr>
-          <tr>
-            <td colSpan={4} className="px-3 py-1.5 text-right text-xs text-muted-foreground">
-              IVA
-            </td>
-            <td className="px-2 py-1.5 text-right tabular-nums">{formatEUR(taxAmount)}</td>
-            <td />
-          </tr>
-          <tr className="font-semibold">
-            <td colSpan={4} className="px-3 py-2 text-right">
-              Total
-            </td>
-            <td className="px-2 py-2 text-right tabular-nums">{formatEUR(total)}</td>
-            <td />
-          </tr>
+          {showBillingCycle && recurringRows.length > 0 ? (
+            <>
+              <tr>
+                <td
+                  colSpan={totalsColSpan}
+                  className="px-3 py-1.5 text-right text-xs text-muted-foreground"
+                >
+                  Inversión inicial (único)
+                </td>
+                <td className="px-2 py-1.5 text-right tabular-nums">
+                  {formatEUR(bucketed.oneTime.subtotal)}
+                </td>
+                <td />
+              </tr>
+              <tr className="font-medium">
+                <td colSpan={totalsColSpan} className="px-3 py-1.5 text-right text-xs">
+                  Total único (IVA incl.)
+                </td>
+                <td className="px-2 py-1.5 text-right tabular-nums">
+                  {formatEUR(bucketed.oneTime.total)}
+                </td>
+                <td />
+              </tr>
+              {recurringRows.map((cycle) => (
+                <tr key={cycle}>
+                  <td
+                    colSpan={totalsColSpan}
+                    className="px-3 py-1.5 text-right text-xs text-muted-foreground"
+                  >
+                    {BILLING_CYCLE_LABELS[cycle]} (IVA incl.)
+                  </td>
+                  <td className="px-2 py-1.5 text-right tabular-nums">
+                    {formatEUR(bucketed[cycle].total)}
+                  </td>
+                  <td />
+                </tr>
+              ))}
+            </>
+          ) : (
+            <>
+              <tr>
+                <td
+                  colSpan={totalsColSpan}
+                  className="px-3 py-1.5 text-right text-xs text-muted-foreground"
+                >
+                  Subtotal
+                </td>
+                <td className="px-2 py-1.5 text-right tabular-nums">
+                  {formatEUR(flat.subtotal)}
+                </td>
+                <td />
+              </tr>
+              <tr>
+                <td
+                  colSpan={totalsColSpan}
+                  className="px-3 py-1.5 text-right text-xs text-muted-foreground"
+                >
+                  IVA
+                </td>
+                <td className="px-2 py-1.5 text-right tabular-nums">
+                  {formatEUR(flat.taxAmount)}
+                </td>
+                <td />
+              </tr>
+              <tr className="font-semibold">
+                <td colSpan={totalsColSpan} className="px-3 py-2 text-right">
+                  Total
+                </td>
+                <td className="px-2 py-2 text-right tabular-nums">{formatEUR(flat.total)}</td>
+                <td />
+              </tr>
+            </>
+          )}
         </tfoot>
       </table>
     </div>

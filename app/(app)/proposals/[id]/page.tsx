@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
 import { isAIEnabled } from "@/lib/env";
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
+import { parseKeyPoints, toEditableKeyPoints } from "@/lib/proposals/key-points";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 import { Check, FileText, Presentation } from "lucide-react";
@@ -188,7 +189,9 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
         initialTitle={proposal.title as string}
         initialValidUntil={(proposal.valid_until as string | null) ?? null}
         initialNotes={(proposal.notes as string | null) ?? null}
-        initialIntro={(proposal.intro as string | null) ?? null}
+        initialContextMarkdown={(proposal.context_markdown as string | null) ?? null}
+        initialProblems={toEditableKeyPoints(parseKeyPoints(proposal.problems))}
+        initialSolutions={toEditableKeyPoints(parseKeyPoints(proposal.solutions))}
         initialTerms={(proposal.terms as string | null) ?? null}
         initialItems={editableItems}
         locked={locked}

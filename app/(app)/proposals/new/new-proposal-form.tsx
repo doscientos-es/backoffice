@@ -151,7 +151,7 @@ export function NewProposalForm({ clients, projects, initialClientId, initialPro
       <Card>
         <CardContent className="pt-6">
           <h2 className="mb-4 text-sm font-semibold">Líneas</h2>
-          <LineItemsTable items={items} onChange={setItems} />
+          <LineItemsTable items={items} onChange={setItems} showBillingCycle />
         </CardContent>
       </Card>
 

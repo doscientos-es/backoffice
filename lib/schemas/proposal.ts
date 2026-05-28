@@ -1,5 +1,25 @@
+import { KEY_POINTS_LIMITS } from "@/lib/proposals/key-points";
 import { z } from "zod";
 import { emptyToUndef, lineItemInput, uuidIdInput } from "./common";
+
+/**
+ * Shape of a single problem/solution narrative bullet. The id is generated
+ * client-side and persisted as-is so the deck/portal can use it as a React
+ * key without re-deriving it on every render.
+ */
+export const keyPointInput = z.object({
+  id: z.string().min(1).max(64),
+  title: z.string().trim().min(1, "Título obligatorio").max(KEY_POINTS_LIMITS.maxTitleLength),
+  description: z
+    .string()
+    .max(KEY_POINTS_LIMITS.maxDescriptionLength)
+    .nullable()
+    .optional(),
+});
+export type KeyPointInputType = z.infer<typeof keyPointInput>;
+
+/** Reusable, nullable list of key points capped at the domain limit. */
+const keyPointListField = z.array(keyPointInput).max(KEY_POINTS_LIMITS.maxCount).nullable().optional();
 
 /**
  * Zod schemas for the `proposals` domain.
@@ -40,12 +60,14 @@ export const UpdateProposalInput = z.object({
     .optional()
     .or(z.literal("").transform(() => null))
     .nullable(),
-  intro: z
+  context_markdown: z
     .string()
     .max(20_000)
     .optional()
     .or(z.literal("").transform(() => null))
     .nullable(),
+  problems: keyPointListField,
+  solutions: keyPointListField,
   terms: z
     .string()
     .max(20_000)
