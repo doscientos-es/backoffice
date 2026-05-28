@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getBrowserClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
@@ -41,11 +42,13 @@ export function LoginForm() {
     setLoading(true);
     const supabase = getBrowserClient();
     const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
     if (authError) {
+      setLoading(false);
       setFormError(friendlyError(authError.message));
       return;
     }
+    // Keep loading=true while we navigate so the button stays in its
+    // "Entrando…" state instead of flashing back to "Entrar".
     router.replace(next);
     router.refresh();
   }
@@ -152,6 +155,33 @@ function friendlyError(raw: string): string {
   if (m.includes("email not confirmed")) return "Tu email aún no está confirmado.";
   if (m.includes("rate limit")) return "Demasiados intentos. Inténtalo en unos minutos.";
   return raw;
+}
+
+/**
+ * Mirrors the shape of `<LoginForm>` so the Suspense fallback (and any future
+ * `loading.tsx`) doesn't cause layout shift while the client form hydrates.
+ */
+export function LoginFormSkeleton() {
+  return (
+    <Card aria-hidden>
+      <CardContent className="pt-5">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-3 w-12" />
+            <Skeleton className="h-9 w-full" />
+          </div>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+            <Skeleton className="h-9 w-full" />
+          </div>
+          <Skeleton className="mt-1 h-9 w-full" />
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 function authFailureMessage(reason: string): string {

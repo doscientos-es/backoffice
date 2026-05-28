@@ -1,9 +1,9 @@
 import { AuthShell } from "@/components/auth/auth-shell";
+import type { Metadata } from "next";
 import { Suspense } from "react";
-import { LoginForm } from "./login-form";
-import { Metadata } from "next";
+import { LoginForm, LoginFormSkeleton } from "./login-form";
 
-export const metadata:Metadata = { title: "Entrar · doscientos backoffice" };
+export const metadata: Metadata = { title: "Entrar · doscientos backoffice" };
 
 export default function LoginPage() {
   return (
@@ -12,7 +12,7 @@ export default function LoginPage() {
       description="Accede al backoffice de doscientos."
       footer={<>Backoffice interno · Acceso restringido al equipo.</>}
     >
-      <Suspense fallback={null}>
+      <Suspense fallback={<LoginFormSkeleton />}>
         <LoginForm />
       </Suspense>
     </AuthShell>
