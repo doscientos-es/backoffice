@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { buildSlides } from "./deck-slides";
 import { DECK_STYLES } from "./deck-styles";
 import type { DeckProposal, DeckProposalItem, DeckTeamMember } from "./page";
@@ -49,7 +49,10 @@ export function DeckViewer({
   token: string;
 }) {
   const watermark = proposal.client_email ?? proposal.client_name ?? undefined;
-  const slides = buildSlides(proposal, items, token, team, watermark);
+  const slides = useMemo(
+    () => buildSlides(proposal, items, token, team, watermark),
+    [proposal, items, token, team, watermark],
+  );
   const total = slides.length;
   const router = useRouter();
 
@@ -108,8 +111,7 @@ export function DeckViewer({
       }).catch(() => { });
     }, 800);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current, token, total]);
+  }, [current, token, total, slides]);
 
   // Auto-hide controls
   const resetHideTimer = useCallback(() => {
@@ -227,10 +229,12 @@ export function DeckViewer({
         <div className="deck-progress-bar" style={{ width: `${progress}%` }} />
       </div>
       <div className="deck-viewport" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-        <div className="deck-stage">
-          <div key={current} className="deck-slide-wrapper">
-            {slides[current]?.element}
-          </div>
+        <div className="deck-stage" style={{ transform: `translateX(-${current * 100}%)` }}>
+          {slides.map((slide, i) => (
+            <div key={slide.key} className="deck-slide-wrapper" data-active={i === current}>
+              {slide.element}
+            </div>
+          ))}
         </div>
       </div>
       <div className="deck-dots no-print" aria-hidden>

@@ -250,7 +250,7 @@ function TermsSlide({ proposal }: { proposal: DeckProposal }) {
 
 function ClosingSlide({ proposal, token }: { proposal: DeckProposal; token: string }) {
   return (
-    <div className="deck-slide bg-primary text-white p-6 sm:p-10 md:p-16 lg:p-24 text-center">
+    <div className="deck-slide bg-[#2A4227] text-white p-6 sm:p-10 md:p-16 lg:p-24 text-center">
       <Stagger i={0}>
         <LogoMark size={48} className="text-white/60 mb-8 sm:mb-12 sm:size-[56px]" />
       </Stagger>

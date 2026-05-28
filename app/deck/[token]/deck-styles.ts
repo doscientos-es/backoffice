@@ -23,13 +23,13 @@ export const DECK_STYLES = `
     inset: 0;
     display: flex;
     will-change: transform;
+    transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
   }
   .deck-slide-wrapper {
     flex: 0 0 100%;
     width: 100%;
     height: 100%;
     overflow-y: auto;
-    animation: deck-enter 400ms cubic-bezier(0.22, 0.8, 0.2, 1);
   }
   .deck-slide {
     width: 100%;
@@ -39,17 +39,19 @@ export const DECK_STYLES = `
     align-items: center;
     justify-content: center;
     text-align: center;
-    background: inherit;
+    opacity: 0.4;
+    transition: opacity 600ms ease;
   }
-  @keyframes deck-enter {
-    from { transform: translateX(32px); }
-    to   { transform: translateX(0); }
+  .deck-slide-wrapper[data-active="true"] .deck-slide {
+    opacity: 1;
   }
   .deck-stagger {
     opacity: 0;
     transform: translateY(16px);
+  }
+  .deck-slide-wrapper[data-active="true"] .deck-stagger {
     animation: deck-stagger-in 600ms cubic-bezier(0.22, 0.8, 0.2, 1) forwards;
-    animation-delay: calc(var(--i, 0) * 70ms + 220ms);
+    animation-delay: calc(var(--i, 0) * 70ms + 300ms);
   }
   @keyframes deck-stagger-in {
     to { opacity: 1; transform: translateY(0); }
