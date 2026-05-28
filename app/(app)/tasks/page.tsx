@@ -2,15 +2,17 @@ import { ListPage } from "@/components/layout/list-page";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { requireUser } from "@/lib/auth";
 import { TASK_PRIORITY, TASK_STATUS, type TaskPriority, type TaskStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 import { Plus } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { type KanbanTask, TasksKanban } from "./tasks-kanban";
 import { TasksViewToggle } from "./view-toggle";
 
-export const metadata = { title: "Tareas · doscientos" };
+export const metadata: Metadata = { title: "Tareas · doscientos" };
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 25;

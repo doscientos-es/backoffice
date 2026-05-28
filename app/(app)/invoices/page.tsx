@@ -1,12 +1,14 @@
 import { ListPage } from "@/components/layout/list-page";
 import { StatCard } from "@/components/layout/stat-card";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { requireUser } from "@/lib/auth";
 import { INVOICE_STATUS, VERIFACTU_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { AlertTriangle, CheckCircle2, Clock, ShieldAlert } from "lucide-react";
+import type { Metadata } from "next";
 
-export const metadata = { title: "Facturas · doscientos" };
+export const metadata: Metadata = { title: "Facturas · doscientos" };
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 25;
@@ -41,6 +43,7 @@ export default async function InvoicesPage({
     page?: string;
   }>;
 }) {
+  await requireUser();
   const sp = await searchParams;
   const q = (sp.q ?? "").trim();
   const status = (sp.status ?? "").trim();

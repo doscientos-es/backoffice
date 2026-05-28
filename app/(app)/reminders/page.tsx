@@ -1,8 +1,10 @@
 import { ListPage } from "@/components/layout/list-page";
+import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDateTime } from "@/lib/utils";
+import type { Metadata } from "next";
 
-export const metadata = { title: "Avisos · doscientos" };
+export const metadata: Metadata = { title: "Avisos · doscientos" };
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 25;

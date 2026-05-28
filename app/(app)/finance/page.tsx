@@ -3,100 +3,29 @@ import { StatCard } from "@/components/layout/stat-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
-import {
-  EXPENSE_CATEGORY_LABELS,
-  type ExpenseCategory,
-  buildMonthlySeries,
-  profitMargin,
-} from "@/lib/finance";
-import { createServerClient } from "@/lib/supabase/server";
+import { EXPENSE_CATEGORY_LABELS } from "@/lib/finance";
+import { getFinanceOverview } from "@/lib/finance/queries";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { Percent, Receipt, TrendingDown, TrendingUp } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { FinanceChart } from "./finance-chart";
 
-export const metadata = { title: "Finanzas · doscientos" };
+export const metadata: Metadata = { title: "Finanzas · doscientos" };
 export const dynamic = "force-dynamic";
 
 export default async function FinancePage() {
   await requireUser();
-  const supabase = await createServerClient();
-
-  const today = new Date();
-  const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1);
-  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-  const monthStartISO = monthStart.toISOString().slice(0, 10);
-  const sixMonthsAgoISO = sixMonthsAgo.toISOString().slice(0, 10);
-
-  const [
-    { data: revenueRows },
-    { data: expenseRows },
-    { data: monthRevenue },
-    { data: monthExpenses },
-    { data: recentExpenses },
-    { data: recentInvoices },
-  ] = await Promise.all([
-    supabase
-      .from("invoices")
-      .select("issue_date, total")
-      .gte("issue_date", sixMonthsAgoISO)
-      .neq("status", "draft")
-      .is("deleted_at", null),
-    supabase
-      .from("expenses")
-      .select("expense_date, total")
-      .gte("expense_date", sixMonthsAgoISO)
-      .neq("status", "cancelled")
-      .is("deleted_at", null),
-    supabase
-      .from("invoices")
-      .select("total")
-      .gte("issue_date", monthStartISO)
-      .neq("status", "draft")
-      .is("deleted_at", null),
-    supabase
-      .from("expenses")
-      .select("total, category")
-      .gte("expense_date", monthStartISO)
-      .neq("status", "cancelled")
-      .is("deleted_at", null),
-    supabase
-      .from("expenses")
-      .select("id, vendor, category, total, expense_date, status")
-      .is("deleted_at", null)
-      .order("expense_date", { ascending: false })
-      .limit(5),
-    supabase
-      .from("invoices")
-      .select("id, full_number, total, issue_date, clients(name)")
-      .neq("status", "draft")
-      .is("deleted_at", null)
-      .order("issue_date", { ascending: false })
-      .limit(5),
-  ]);
-
-  const series = buildMonthlySeries(
-    (revenueRows ?? []).map((r) => ({ date: r.issue_date as string, total: Number(r.total ?? 0) })),
-    (expenseRows ?? []).map((r) => ({
-      date: r.expense_date as string,
-      total: Number(r.total ?? 0),
-    })),
-    today,
-  );
-
-  const revenueMonth = (monthRevenue ?? []).reduce((a, r) => a + Number(r.total ?? 0), 0);
-  const expenseMonth = (monthExpenses ?? []).reduce((a, r) => a + Number(r.total ?? 0), 0);
-  const netMonth = revenueMonth - expenseMonth;
-  const margin = profitMargin(revenueMonth, expenseMonth);
-
-  const byCategory = new Map<ExpenseCategory, number>();
-  for (const row of monthExpenses ?? []) {
-    const k = row.category as ExpenseCategory;
-    byCategory.set(k, (byCategory.get(k) ?? 0) + Number(row.total ?? 0));
-  }
-  const topCategories = Array.from(byCategory.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
+  const {
+    series,
+    revenueMonth,
+    expenseMonth,
+    netMonth,
+    margin,
+    topCategories,
+    recentExpenses,
+    recentInvoices,
+  } = await getFinanceOverview();
 
   return (
     <div className="flex flex-col gap-6">
@@ -184,23 +113,20 @@ export default async function FinancePage() {
               <p className="px-6 py-2 text-sm text-muted-foreground">Sin facturas recientes.</p>
             ) : (
               <ul className="divide-y divide-border">
-                {recentInvoices.map((inv) => {
-                  const client = (inv as unknown as { clients: { name: string } | null }).clients;
-                  return (
-                    <li
-                      key={inv.id as string}
-                      className="flex items-center justify-between px-6 py-2.5 text-sm"
-                    >
-                      <Link href={`/invoices/${inv.id}`} className="font-medium hover:underline">
-                        {(inv.full_number as string) ?? "—"}
-                        {client ? (
-                          <span className="ml-2 text-muted-foreground">· {client.name}</span>
-                        ) : null}
-                      </Link>
-                      <span className="tabular-nums">{formatEUR(Number(inv.total ?? 0))}</span>
-                    </li>
-                  );
-                })}
+                {recentInvoices.map((inv) => (
+                  <li
+                    key={inv.id}
+                    className="flex items-center justify-between px-6 py-2.5 text-sm"
+                  >
+                    <Link href={`/invoices/${inv.id}`} className="font-medium hover:underline">
+                      {inv.full_number ?? "—"}
+                      {inv.client_name ? (
+                        <span className="ml-2 text-muted-foreground">· {inv.client_name}</span>
+                      ) : null}
+                    </Link>
+                    <span className="tabular-nums">{formatEUR(inv.total)}</span>
+                  </li>
+                ))}
               </ul>
             )}
           </CardContent>
@@ -225,19 +151,15 @@ export default async function FinancePage() {
           ) : (
             <ul className="divide-y divide-border">
               {recentExpenses.map((e) => (
-                <li
-                  key={e.id as string}
-                  className="flex items-center justify-between px-6 py-2.5 text-sm"
-                >
+                <li key={e.id} className="flex items-center justify-between px-6 py-2.5 text-sm">
                   <Link href={`/finance/expenses/${e.id}`} className="font-medium hover:underline">
-                    {e.vendor as string}
+                    {e.vendor}
                     <span className="ml-2 text-xs text-muted-foreground">
-                      {EXPENSE_CATEGORY_LABELS[e.category as ExpenseCategory] ??
-                        (e.category as string)}{" "}
-                      · {formatDate(e.expense_date as string)}
+                      {EXPENSE_CATEGORY_LABELS[e.category] ?? e.category} ·{" "}
+                      {formatDate(e.expense_date)}
                     </span>
                   </Link>
-                  <span className="tabular-nums">{formatEUR(Number(e.total ?? 0))}</span>
+                  <span className="tabular-nums">{formatEUR(e.total)}</span>
                 </li>
               ))}
             </ul>
@@ -247,5 +169,3 @@ export default async function FinancePage() {
     </div>
   );
 }
-
-

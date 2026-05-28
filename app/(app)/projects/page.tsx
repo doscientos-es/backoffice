@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button";
+import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
+import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { GitHubModeBadge } from "./github-mode-badge";
@@ -28,6 +30,7 @@ export default async function ProjectsPage({
 }: {
   searchParams: Promise<{ q?: string; status?: string; page?: string }>;
 }) {
+  await requireUser();
   const sp = await searchParams;
   const q = (sp.q ?? "").trim();
   const status = (sp.status ?? "").trim();

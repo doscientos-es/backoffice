@@ -1,13 +1,15 @@
 import { ListPage } from "@/components/layout/list-page";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { requireUser } from "@/lib/auth";
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { Plus } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata = { title: "Propuestas · doscientos" };
+export const metadata: Metadata = { title: "Propuestas · doscientos" };
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 25;
@@ -26,6 +28,7 @@ export default async function ProposalsPage({
 }: {
   searchParams: Promise<{ q?: string; status?: string; page?: string }>;
 }) {
+  await requireUser();
   const sp = await searchParams;
   const q = (sp.q ?? "").trim();
   const status = (sp.status ?? "").trim();

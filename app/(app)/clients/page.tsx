@@ -1,9 +1,13 @@
+import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
+import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
+import { Plus } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ClientsList } from "./clients-list";
 
-export const metadata = { title: "Clientes · doscientos" };
+export const metadata: Metadata = { title: "Clientes · doscientos" };
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 25;
@@ -17,6 +21,7 @@ export default async function ClientsPage({
 }: {
   searchParams: Promise<{ q?: string; page?: string }>;
 }) {
+  await requireUser();
   const sp = await searchParams;
   const q = (sp.q ?? "").trim();
   const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);

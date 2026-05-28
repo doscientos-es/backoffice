@@ -17,12 +17,19 @@ import { updateInvoice } from "../../actions";
 
 export type EditableItem = LineItem;
 
+/**
+ * Initial items may come straight from the DB without a stable client-side
+ * `id` (e.g. when the invoice_items query omits it). The editor assigns a
+ * UUID at mount time, so we accept items where `id` is optional.
+ */
+export type InitialEditableItem = Omit<LineItem, "id"> & { id?: string };
+
 export type InvoiceEditorProps = {
   id: string;
   initialIssueDate: string;
   initialDueDate: string;
   initialNotes: string | null;
-  initialItems: EditableItem[];
+  initialItems: InitialEditableItem[];
   /** When true, fields are read-only (invoice issued). */
   locked: boolean;
 };

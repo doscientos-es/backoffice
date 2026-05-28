@@ -13,6 +13,7 @@ import {
 } from "./_components/widget-skeletons";
 
 export const metadata: Metadata = { title: "Inicio · doscientos" };
+export const dynamic = "force-dynamic";
 
 type PageProps = {
   searchParams: Promise<{ range?: string | string[] }>;

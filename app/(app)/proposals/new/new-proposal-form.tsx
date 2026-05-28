@@ -29,7 +29,9 @@ export function NewProposalForm({ clients, projects, initialClientId, initialPro
   const [title, setTitle] = useState("");
   const [validUntil, setValidUntil] = useState("");
   const [notes, setNotes] = useState("");
-  const [items, setItems] = useState<LineItem[]>([{ ...EMPTY_LINE_ITEM }]);
+  const [items, setItems] = useState<LineItem[]>([
+    { ...EMPTY_LINE_ITEM, id: crypto.randomUUID() },
+  ]);
 
   const payload = useMemo(
     () => ({

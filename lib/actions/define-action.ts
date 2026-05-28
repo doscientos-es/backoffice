@@ -30,9 +30,7 @@ export type DefineActionOptions<TSchema extends z.ZodTypeAny, TPayload> = {
   handler: (input: z.infer<TSchema>, ctx: ActionContext) => Promise<TPayload>;
 };
 
-type Input<TSchema extends z.ZodTypeAny> = TSchema extends z.ZodTypeAny
-  ? z.input<TSchema> | FormData
-  : void;
+type Input<TSchema extends z.ZodTypeAny> = z.input<TSchema> | FormData;
 
 /**
  * Wraps a server action with: auth guard, Zod validation, structured logging,
@@ -49,20 +47,23 @@ export function defineAction<TSchema extends z.ZodTypeAny, TPayload = void>(
   const log = scopedLogger(`action.${options.name}`);
 
   return async (rawInput?: Input<TSchema>): Promise<ActionResult<TPayload>> => {
+    const fail = (error: string): ActionResult<TPayload> =>
+      ({ ok: false, error }) as ActionResult<TPayload>;
+
     try {
-      const user = options.roles
-        ? await requireRole(options.roles)
-        : await requireUser();
+      const user = options.roles ? await requireRole(options.roles) : await requireUser();
 
       let input: z.infer<TSchema>;
       if (options.schema) {
-        const candidate =
-          rawInput instanceof FormData ? formDataToObject(rawInput) : (rawInput ?? {});
+        const candidate: unknown =
+          typeof FormData !== "undefined" && rawInput instanceof FormData
+            ? formDataToObject(rawInput)
+            : (rawInput ?? {});
         const parsed = options.schema.safeParse(candidate);
         if (!parsed.success) {
           const msg = parsed.error.issues[0]?.message ?? "Datos no válidos";
           log.warn({ issues: parsed.error.issues }, "validation failed");
-          return { ok: false, error: msg };
+          return fail(msg);
         }
         input = parsed.data;
       } else {
@@ -77,12 +78,14 @@ export function defineAction<TSchema extends z.ZodTypeAny, TPayload = void>(
           : (options.revalidate ?? []);
       for (const p of paths) revalidatePath(p);
 
-      return (payload === undefined ? { ok: true } : { ok: true, ...payload }) as ActionResult<TPayload>;
+      return (
+        payload === undefined ? { ok: true } : { ok: true, ...payload }
+      ) as ActionResult<TPayload>;
     } catch (err) {
       if (isFrameworkError(err)) throw err;
       const message = err instanceof Error ? err.message : "Error desconocido";
       log.error({ err }, "action failed");
-      return { ok: false, error: message };
+      return fail(message);
     }
   };
 }
