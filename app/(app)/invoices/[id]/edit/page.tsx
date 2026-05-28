@@ -28,7 +28,7 @@ export default async function EditInvoicePage({ params }: { params: Promise<{ id
 
   const { data: items } = await supabase
     .from("invoice_items")
-    .select("description, quantity, unit_price, vat_rate")
+    .select("id, description, quantity, unit_price, vat_rate")
     .eq("invoice_id", id)
     .order("position");
 
