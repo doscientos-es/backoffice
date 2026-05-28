@@ -23,6 +23,7 @@ export default async function RemindersPage({
 }: {
   searchParams: Promise<{ q?: string; status?: string; page?: string }>;
 }) {
+  await requireUser();
   const sp = await searchParams;
   const q = (sp.q ?? "").trim();
   const status = (sp.status ?? "").trim();

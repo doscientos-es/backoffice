@@ -54,6 +54,7 @@ export default async function TasksPage({
     view?: string;
   }>;
 }) {
+  await requireUser();
   const sp = await searchParams;
   const view: "board" | "list" = sp.view === "board" ? "board" : "list";
   const q = (sp.q ?? "").trim();
