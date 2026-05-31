@@ -10,7 +10,7 @@ import { parseKeyPoints, toEditableKeyPoints } from "@/lib/proposals/key-points"
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
-import { Check, FileText, Presentation } from "lucide-react";
+import { FileText, Presentation } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DuplicateProposalButton } from "./duplicate-proposal-button";
@@ -18,60 +18,9 @@ import { GenerateInvoiceButton } from "./generate-invoice-button";
 import { type EditableItem, ProposalEditor } from "./proposal-editor";
 import { type ProposalSpec, ProposalSpecs } from "./proposal-specs";
 import { SendPreviewButton } from "./send-preview-button";
+import { ShareLinks } from "./share-links";
 
 type Surface = "portal" | "deck";
-
-function formatViewedAt(value: string): string {
-  return new Date(value).toLocaleString("es-ES", {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function ShareLinkRow({
-  href,
-  icon,
-  label,
-  description,
-  lastViewedAt,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-  description: string;
-  lastViewedAt: string | null;
-}) {
-  return (
-    <Link
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      className="group flex items-center justify-between gap-3 rounded-md border border-border bg-background p-3 transition-colors hover:bg-accent hover:text-accent-foreground"
-    >
-      <div className="flex min-w-0 items-center gap-2.5">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground group-hover:bg-background">
-          {icon}
-        </span>
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <span className="text-sm font-medium">{label}</span>
-          <span className="truncate text-[11px] text-muted-foreground">{description}</span>
-        </div>
-      </div>
-      {lastViewedAt ? (
-        <div className="flex shrink-0 items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
-          <Check className="size-3.5" aria-hidden />
-          <time dateTime={lastViewedAt} className="text-[11px] tabular-nums">
-            Vista el {formatViewedAt(lastViewedAt)}
-          </time>
-        </div>
-      ) : (
-        <span className="shrink-0 text-[11px] text-muted-foreground">Sin abrir</span>
-      )}
-    </Link>
-  );
-}
 
 export const dynamic = "force-dynamic";
 
@@ -190,6 +139,7 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
             <StatusBadge meta={PROPOSAL_STATUS} value={status} />
             <DuplicateProposalButton proposalId={id} />
             {status === "accepted" ? <GenerateInvoiceButton proposalId={id} /> : null}
+            <DeleteProposalButton proposalId={id} />
           </div>
         }
       />
@@ -233,24 +183,13 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
           <CardHeader>
             <CardTitle>Compartir con el cliente</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col gap-3">
+          <CardContent className="flex flex-col gap-4">
             {token ? (
-              <div className="flex flex-col gap-2">
-                <ShareLinkRow
-                  href={`/p/proposal/${token}`}
-                  icon={<FileText className="size-4" aria-hidden />}
-                  label="Propuesta"
-                  description={`/p/proposal/${token}`}
-                  lastViewedAt={portalViewedAt}
-                />
-                <ShareLinkRow
-                  href={`/deck/${token}`}
-                  icon={<Presentation className="size-4" aria-hidden />}
-                  label="Presentación"
-                  description={`/deck/${token}`}
-                  lastViewedAt={deckViewedAt}
-                />
-              </div>
+              <ShareLinks
+                token={token}
+                portalViewedAt={portalViewedAt}
+                deckViewedAt={deckViewedAt}
+              />
             ) : null}
             {locked ? (
               <p className="text-xs text-muted-foreground">La propuesta ya ha sido respondida.</p>

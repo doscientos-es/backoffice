@@ -323,6 +323,36 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
   return { ok: true };
 }
 
+// ---------------- DELETE (soft) ----------------
+
+/**
+ * Soft-deletes a proposal by stamping `deleted_at`. The associated invoice
+ * FK (`invoices.proposal_id`) is `on delete set null` at the DB level, so
+ * already-issued invoices keep their data even after deletion. Reversible
+ * by clearing `deleted_at` directly in the database.
+ */
+export async function deleteProposal(
+  formData: FormData,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireUser();
+  const id = formData.get("id")?.toString() ?? "";
+  if (!z.string().uuid().safeParse(id).success) return { ok: false, error: "ID inválido" };
+
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("proposals")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) {
+    log.error({ err: error, id }, "delete_proposal_failed");
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath("/proposals");
+  return { ok: true };
+}
+
 // ---------------- SEND PREVIEW LINK (client portal) ----------------
 
 type SendPreviewResult =

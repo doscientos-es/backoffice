@@ -313,7 +313,7 @@ function Column({
       >
         <div
           className={cn(
-            "flex min-w-0 items-center gap-2",
+            "flex flex-1 min-w-0 items-center gap-2",
             collapsed && "md:flex-col md:group-hover/col:flex-row",
           )}
         >
@@ -331,9 +331,8 @@ function Column({
         </div>
         <div
           className={cn(
-            "flex w-full items-center justify-between gap-2",
-            collapsed &&
-              "md:w-auto md:justify-center md:group-hover/col:w-full md:group-hover/col:justify-between",
+            "flex shrink-0 items-center justify-between gap-2",
+            collapsed && "md:justify-center md:group-hover/col:justify-between",
           )}
         >
           {total > 0 && (

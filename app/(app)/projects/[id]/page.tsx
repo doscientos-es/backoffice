@@ -95,6 +95,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 clients={clients ?? []}
               />
             ) : null}
+            {canEdit ? <DeleteProjectButton projectId={project.id as string} /> : null}
           </div>
         }
       />

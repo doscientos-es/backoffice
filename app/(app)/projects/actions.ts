@@ -58,3 +58,24 @@ export const updateProject = defineAction({
     if (error) throw new Error(error.message);
   },
 });
+
+/**
+ * Soft-deletes a project by stamping `deleted_at`. The list and detail
+ * queries filter on `deleted_at is null`, so the row simply disappears
+ * from the UI. Related proposals/invoices keep their `project_id` until
+ * a hard delete occurs (FKs are `on delete set null`).
+ */
+export const deleteProject = defineAction({
+  name: "projects.delete",
+  schema: uuidIdInput,
+  revalidate: () => ["/projects"],
+  handler: async (input) => {
+    const supabase = await createServerClient();
+    const { error } = await supabase
+      .from("projects")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", input.id);
+
+    if (error) throw new Error(error.message);
+  },
+});
