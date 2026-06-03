@@ -16,7 +16,11 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
-import { INTERNAL_DOC_MAX_TAGS } from "@/lib/schemas/internal-doc";
+import {
+  INTERNAL_DOC_MAX_TAGS,
+  type InternalDocCategory,
+  type InternalDocVisibility,
+} from "@/lib/schemas/internal-doc";
 import { Paperclip, Pencil, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
@@ -38,8 +42,8 @@ type DocValues = {
   id: string;
   name: string;
   description: string | null;
-  category: string;
-  visibility: string;
+  category: InternalDocCategory;
+  visibility: InternalDocVisibility;
   tags: string[];
   effective_date: string | null;
   expires_at: string | null;
@@ -162,5 +166,169 @@ export function InternalDocEditDialog({
         />
       </DialogContent>
     </Dialog>
+  );
+}
+
+type EditFormProps = {
+  doc: DocValues;
+  canEditVisibility: boolean;
+  tags: string[];
+  draft: string;
+  fileName: string | null;
+  fileRef: React.RefObject<HTMLInputElement | null>;
+  feedbackState: ReturnType<typeof useFormFeedback>["state"];
+  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  onDraftChange: (value: string) => void;
+  onTagKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onAddTag: () => void;
+  onRemoveTag: (tag: string) => void;
+  onFileChange: (name: string | null) => void;
+};
+
+function InternalDocEditForm({
+  doc,
+  canEditVisibility,
+  tags,
+  draft,
+  fileName,
+  fileRef,
+  feedbackState,
+  onSubmit,
+  onDraftChange,
+  onTagKeyDown,
+  onAddTag,
+  onRemoveTag,
+  onFileChange,
+}: EditFormProps) {
+  const pending = feedbackState.status === "pending";
+  return (
+    <form onSubmit={onSubmit} className="flex flex-col gap-5">
+      <FormRow label="Nombre del documento" htmlFor="edit-name" required>
+        <Input id="edit-name" name="name" required maxLength={200} defaultValue={doc.name} />
+      </FormRow>
+
+      <div className="grid gap-5 sm:grid-cols-2">
+        <FormRow label="Categoría" htmlFor="edit-category">
+          <Select id="edit-category" name="category" defaultValue={doc.category}>
+            {CATEGORIES.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </Select>
+        </FormRow>
+
+        <FormRow
+          label="Visibilidad"
+          htmlFor="edit-visibility"
+          hint={canEditVisibility ? undefined : "Solo un administrador puede cambiarla."}
+        >
+          <Select
+            id="edit-visibility"
+            name="visibility"
+            defaultValue={doc.visibility}
+            disabled={!canEditVisibility}
+          >
+            <option value="all_team">Todo el equipo</option>
+            <option value="admins_only">Solo admins</option>
+          </Select>
+        </FormRow>
+
+        <FormRow label="Fecha de vigencia" htmlFor="edit-effective_date">
+          <Input
+            id="edit-effective_date"
+            name="effective_date"
+            type="date"
+            defaultValue={doc.effective_date ?? ""}
+          />
+        </FormRow>
+
+        <FormRow label="Fecha de expiración" htmlFor="edit-expires_at">
+          <Input
+            id="edit-expires_at"
+            name="expires_at"
+            type="date"
+            defaultValue={doc.expires_at ?? ""}
+          />
+        </FormRow>
+      </div>
+
+      <FormRow
+        label="Etiquetas"
+        htmlFor="edit-tags"
+        hint={`Pulsa Intro o coma para añadir. Máx. ${INTERNAL_DOC_MAX_TAGS}.`}
+      >
+        {tags.length > 0 && (
+          <div className="mb-1.5 flex flex-wrap gap-1.5">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+              >
+                {tag}
+                <button
+                  type="button"
+                  onClick={() => onRemoveTag(tag)}
+                  className="text-muted-foreground/70 hover:text-foreground"
+                  aria-label={`Quitar etiqueta ${tag}`}
+                >
+                  <X className="size-3" aria-hidden />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+        <Input
+          id="edit-tags"
+          value={draft}
+          onChange={(e) => onDraftChange(e.target.value)}
+          onKeyDown={onTagKeyDown}
+          onBlur={onAddTag}
+          maxLength={40}
+          placeholder="contrato, 2026…"
+        />
+      </FormRow>
+
+      <FormRow label="Descripción" htmlFor="edit-description">
+        <Textarea
+          id="edit-description"
+          name="description"
+          maxLength={2000}
+          rows={3}
+          defaultValue={doc.description ?? ""}
+        />
+      </FormRow>
+
+      <FormRow
+        label="Reemplazar archivo"
+        htmlFor="edit-file"
+        hint="Opcional. Sube una nueva versión; la anterior se sustituye."
+      >
+        <div className="flex items-center gap-3">
+          <input
+            ref={fileRef}
+            id="edit-file"
+            type="file"
+            accept={ACCEPTED}
+            className="sr-only"
+            onChange={(e) => onFileChange(e.target.files?.[0]?.name ?? null)}
+          />
+          <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+            <Paperclip className="size-3.5" aria-hidden />
+            Seleccionar archivo
+          </Button>
+          <span className="truncate text-sm text-muted-foreground max-w-48">
+            {fileName ?? "Sin cambios"}
+          </span>
+        </div>
+      </FormRow>
+
+      <DialogFooter className="items-center">
+        <FormFeedback state={feedbackState} />
+        <SubmitButton loading={pending} pendingLabel="Guardando…">
+          Guardar cambios
+        </SubmitButton>
+      </DialogFooter>
+    </form>
   );
 }

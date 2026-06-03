@@ -13,6 +13,7 @@ import { formatDate } from "@/lib/utils";
 import { FileText, Presentation } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { DeleteProposalButton } from "./delete-proposal-button";
 import { DuplicateProposalButton } from "./duplicate-proposal-button";
 import { GenerateInvoiceButton } from "./generate-invoice-button";
 import { type EditableItem, ProposalEditor } from "./proposal-editor";

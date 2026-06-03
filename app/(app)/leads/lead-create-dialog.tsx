@@ -35,10 +35,6 @@ export function LeadCreateDialog({ trigger, onCreated }: Props) {
     e.preventDefault();
     feedback.setPending();
     const fd = new FormData(e.currentTarget);
-    
-    // We cast the estimated_value since it comes as a string from FormData
-    const estimatedValueRaw = fd.get("estimated_value")?.toString();
-    const estimated_value = estimatedValueRaw ? parseFloat(estimatedValueRaw) : undefined;
 
     const res = await createLead({
       name: fd.get("name")?.toString() ?? "",
@@ -47,11 +43,10 @@ export function LeadCreateDialog({ trigger, onCreated }: Props) {
       phone: fd.get("phone")?.toString() ?? "",
       source: fd.get("source")?.toString() ?? "",
       notes: fd.get("notes")?.toString() ?? "",
-      estimated_value,
     });
 
     if (!res.ok) return feedback.setError(res.error);
-    
+
     feedback.setSuccess("Lead creado");
     formRef.current?.reset();
     onCreated?.(res.id);

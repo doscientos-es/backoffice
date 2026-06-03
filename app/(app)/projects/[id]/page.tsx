@@ -12,6 +12,7 @@ import { notFound } from "next/navigation";
 import { TaskCreateDialog } from "../../tasks/task-create-dialog";
 import { GitHubModeBadge } from "../github-mode-badge";
 import type { GitHubSyncMode } from "../github-sync-section";
+import { DeleteProjectButton } from "./delete-project-button";
 import { ProjectEditDialog } from "./project-edit-dialog";
 
 export const dynamic = "force-dynamic";

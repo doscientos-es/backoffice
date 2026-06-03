@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -24,6 +25,8 @@ export type ListControlsProps = {
     pageSize: number;
     total: number;
   };
+  /** Override classes on the root container (e.g. to remove border-b). */
+  className?: string;
 };
 
 function updateParams(
@@ -43,6 +46,7 @@ export function ListControls({
   searchPlaceholder = "Buscar…",
   filters = [],
   pagination,
+  className,
 }: ListControlsProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -53,7 +57,7 @@ export function ListControls({
 
   // Keep the latest router-related callbacks in a ref so the debounce effect
   // can depend only on `q` without re-creating the timeout on every render.
-  const commitRef = useRef<(value: string) => void>(() => {});
+  const commitRef = useRef<(value: string) => void>(() => { });
   commitRef.current = (value: string) => {
     const next = updateParams(params, { [searchKey]: value, page: null });
     router.replace(`${pathname}?${next.toString()}`, { scroll: false });
@@ -100,7 +104,12 @@ export function ListControls({
   const to = pagination ? Math.min(pagination.page * pagination.pageSize, pagination.total) : 0;
 
   return (
-    <div className="flex flex-col gap-2 border-b border-border px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+    <div
+      className={cn(
+        "flex flex-col gap-2 border-b border-border px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between",
+        className,
+      )}
+    >
       <div className="flex flex-1 flex-wrap items-center gap-2">
         {searchKey ? (
           <div className="relative max-w-xs flex-1">

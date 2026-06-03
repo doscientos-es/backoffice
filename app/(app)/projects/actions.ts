@@ -2,6 +2,7 @@
 
 import { defineAction } from "@/lib/actions/define-action";
 import { parseGithubRepoUrl } from "@/lib/integrations/github-sync";
+import { uuidIdInput } from "@/lib/schemas/common";
 import { ProjectInput, UpdateProjectInput } from "@/lib/schemas/project";
 import { createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";

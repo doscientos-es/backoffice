@@ -1,3 +1,4 @@
+import { ListControls } from "@/components/layout/list-controls";
 import { ListPage } from "@/components/layout/list-page";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -48,6 +49,7 @@ export default async function TasksPage({
     q?: string;
     status?: string;
     priority?: string;
+    project?: string;
     page?: string;
     view?: string;
   }>;
@@ -58,6 +60,7 @@ export default async function TasksPage({
   const q = (sp.q ?? "").trim();
   const status = (sp.status ?? "").trim();
   const priority = (sp.priority ?? "").trim();
+  const projectId = (sp.project ?? "").trim();
   const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
 
   const supabase = await createServerClient();
@@ -74,6 +77,8 @@ export default async function TasksPage({
   const leadsList = (leads ?? []) as Array<{ id: string; name: string }>;
   const membersList = (members ?? []) as Array<{ id: string; name: string }>;
 
+  const PROJECT_OPTIONS = projectsList.map((p) => ({ value: p.id, label: p.name }));
+
   // Board view: fetch up to 200 active tasks without pagination.
   if (view === "board") {
     let bq = supabase
@@ -84,6 +89,7 @@ export default async function TasksPage({
       .is("deleted_at", null);
     if (q.length > 0) bq = bq.ilike("title", `%${escapeIlike(q)}%`);
     if (priority) bq = bq.eq("priority", priority);
+    if (projectId) bq = bq.eq("project_id", projectId);
 
     const { data: boardData, error: boardErr } = await bq
       .order("kanban_order", { ascending: true, nullsFirst: false })
@@ -120,6 +126,17 @@ export default async function TasksPage({
             </div>
           }
         />
+        <div className="overflow-hidden rounded-xl border border-border bg-card">
+          <ListControls
+            searchKey="q"
+            searchPlaceholder="Buscar por título…"
+            filters={[
+              { key: "project", label: "Proyecto", options: PROJECT_OPTIONS },
+              { key: "priority", label: "Prioridad", options: PRIORITY_OPTIONS },
+            ]}
+            className="border-b-0"
+          />
+        </div>
         {boardErr ? (
           <p className="text-sm text-destructive">{boardErr.message}</p>
         ) : (
@@ -144,6 +161,7 @@ export default async function TasksPage({
   if (q.length > 0) query = query.ilike("title", `%${escapeIlike(q)}%`);
   if (status) query = query.eq("status", status);
   if (priority) query = query.eq("priority", priority);
+  if (projectId) query = query.eq("project_id", projectId);
 
   const { data, error, count } = await query
     .order("priority", { ascending: false })
@@ -173,11 +191,12 @@ export default async function TasksPage({
     <ListPage
       title="Tareas"
       description="Trabajo asignado al equipo, agrupado por proyecto y prioridad."
-      empty={q || status || priority ? "Sin coincidencias." : "Aún no hay tareas."}
+      empty={q || status || priority || projectId ? "Sin coincidencias." : "Aún no hay tareas."}
       error={error?.message}
       searchKey="q"
       searchPlaceholder="Buscar por título…"
       filters={[
+        { key: "project", label: "Proyecto", options: PROJECT_OPTIONS },
         { key: "status", label: "Estado", options: STATUS_OPTIONS },
         { key: "priority", label: "Prioridad", options: PRIORITY_OPTIONS },
       ]}
