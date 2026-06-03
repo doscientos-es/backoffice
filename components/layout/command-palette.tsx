@@ -1,6 +1,7 @@
 "use client";
 
 import type { SearchResultItem } from "@/app/api/search/route";
+import { OPEN_COMMAND_PALETTE_EVENT } from "@/components/layout/command-palette-trigger";
 import {
   CommandDialog,
   CommandEmpty,
@@ -9,16 +10,31 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
+  CommandShortcut,
 } from "@/components/ui/command";
 import {
+  CREATE_SHORTCUTS,
+  NAV_SHORTCUTS,
+  RECENTS_STORAGE_KEY,
+  type RecentItem,
+  mergeRecentItems,
+} from "@/lib/navigation/shortcuts";
+import {
+  Archive,
+  Bell,
   CheckSquare,
+  Clock,
   FileSignature,
+  FileText,
   FolderKanban,
+  Home,
   Inbox,
+  Megaphone,
   Plus,
   Receipt,
-  Search,
+  Settings,
   Users,
+  Wallet,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -39,23 +55,40 @@ const TYPE_LABEL: Record<SearchResultItem["type"], string> = {
   task: "Tareas",
 };
 
-const QUICK_LINKS = [
-  { href: "/inicio", label: "Ir a Inicio", icon: Search },
-  { href: "/leads", label: "Ir a Leads", icon: Inbox },
-  { href: "/clients", label: "Ir a Clientes", icon: Users },
-  { href: "/projects", label: "Ir a Proyectos", icon: FolderKanban },
-  { href: "/invoices", label: "Ir a Facturas", icon: Receipt },
-  { href: "/tasks", label: "Ir a Tareas", icon: CheckSquare },
-  { href: "/proposals", label: "Ir a Propuestas", icon: FileSignature },
+const NAV_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
+  "/inicio": Home,
+  "/leads": Inbox,
+  "/marketing": Megaphone,
+  "/clients": Users,
+  "/projects": FolderKanban,
+  "/proposals": FileSignature,
+  "/invoices": Receipt,
+  "/tasks": CheckSquare,
+  "/finance": Wallet,
+  "/reminders": Bell,
+  "/documents": FileText,
+  "/internal-docs": Archive,
+  "/settings": Settings,
+};
+
+/** Secciones sin chord dedicado (cubiertas solo por el palette). */
+const EXTRA_LINKS = [
+  { href: "/finance", label: "Finanzas" },
+  { href: "/reminders", label: "Avisos" },
+  { href: "/documents", label: "Documentos" },
+  { href: "/internal-docs", label: "Docs internos" },
+  { href: "/settings", label: "Ajustes" },
 ] as const;
 
-const QUICK_ACTIONS = [
-  { href: "/leads/new", label: "Nuevo lead", icon: Plus },
-  { href: "/clients/new", label: "Nuevo cliente", icon: Plus },
-  { href: "/projects/new", label: "Nuevo proyecto", icon: Plus },
-  { href: "/tasks/new", label: "Nueva tarea", icon: Plus },
-  { href: "/proposals/new", label: "Nueva propuesta", icon: Plus },
-] as const;
+function loadRecents(): RecentItem[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(RECENTS_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as RecentItem[]) : [];
+  } catch {
+    return [];
+  }
+}
 
 export function CommandPalette() {
   const router = useRouter();
@@ -63,6 +96,7 @@ export function CommandPalette() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResultItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [recents, setRecents] = useState<RecentItem[]>([]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -71,8 +105,13 @@ export function CommandPalette() {
         setOpen((v) => !v);
       }
     };
+    const onOpen = () => setOpen(true);
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    window.addEventListener(OPEN_COMMAND_PALETTE_EVENT, onOpen);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener(OPEN_COMMAND_PALETTE_EVENT, onOpen);
+    };
   }, []);
 
   useEffect(() => {
@@ -81,6 +120,7 @@ export function CommandPalette() {
       setResults([]);
       return;
     }
+    setRecents(loadRecents());
   }, [open]);
 
   useEffect(() => {
@@ -129,6 +169,19 @@ export function CommandPalette() {
     [router],
   );
 
+  const selectResult = useCallback(
+    (item: RecentItem) => {
+      const next = mergeRecentItems(loadRecents(), item);
+      try {
+        window.localStorage.setItem(RECENTS_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // localStorage no disponible: continúa sin persistir.
+      }
+      go(item.href);
+    },
+    [go],
+  );
+
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
       <CommandInput
@@ -148,7 +201,7 @@ export function CommandPalette() {
                 <CommandItem
                   key={r.id}
                   value={`${r.label} ${r.sublabel ?? ""} ${type}`}
-                  onSelect={() => go(r.href)}
+                  onSelect={() => selectResult({ href: r.href, label: r.label, type })}
                 >
                   <Icon className="size-4" />
                   <span className="truncate">{r.label}</span>
@@ -164,11 +217,43 @@ export function CommandPalette() {
         })}
         {query.trim().length === 0 ? (
           <>
+            {recents.length > 0 ? (
+              <>
+                <CommandGroup heading="Recientes">
+                  {recents.map((r) => {
+                    const Icon = r.type
+                      ? TYPE_ICON[r.type as SearchResultItem["type"]] ?? Clock
+                      : Clock;
+                    return (
+                      <CommandItem
+                        key={r.href}
+                        value={`reciente ${r.label}`}
+                        onSelect={() => selectResult(r)}
+                      >
+                        <Icon className="size-4" />
+                        <span className="truncate">{r.label}</span>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+                <CommandSeparator />
+              </>
+            ) : null}
             <CommandGroup heading="Navegación">
-              {QUICK_LINKS.map((l) => {
-                const Icon = l.icon;
+              {NAV_SHORTCUTS.map((l) => {
+                const Icon = NAV_ICON[l.href] ?? Home;
                 return (
-                  <CommandItem key={l.href} value={l.label} onSelect={() => go(l.href)}>
+                  <CommandItem key={l.href} value={`ir a ${l.label}`} onSelect={() => go(l.href)}>
+                    <Icon className="size-4" />
+                    {l.label}
+                    <CommandShortcut>G {l.key.toUpperCase()}</CommandShortcut>
+                  </CommandItem>
+                );
+              })}
+              {EXTRA_LINKS.map((l) => {
+                const Icon = NAV_ICON[l.href] ?? Home;
+                return (
+                  <CommandItem key={l.href} value={`ir a ${l.label}`} onSelect={() => go(l.href)}>
                     <Icon className="size-4" />
                     {l.label}
                   </CommandItem>
@@ -177,15 +262,13 @@ export function CommandPalette() {
             </CommandGroup>
             <CommandSeparator />
             <CommandGroup heading="Acciones">
-              {QUICK_ACTIONS.map((a) => {
-                const Icon = a.icon;
-                return (
-                  <CommandItem key={a.href} value={a.label} onSelect={() => go(a.href)}>
-                    <Icon className="size-4" />
-                    {a.label}
-                  </CommandItem>
-                );
-              })}
+              {CREATE_SHORTCUTS.map((a) => (
+                <CommandItem key={a.href} value={a.label} onSelect={() => go(a.href)}>
+                  <Plus className="size-4" />
+                  {a.label}
+                  <CommandShortcut>C {a.key.toUpperCase()}</CommandShortcut>
+                </CommandItem>
+              ))}
             </CommandGroup>
           </>
         ) : null}

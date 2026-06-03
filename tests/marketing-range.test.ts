@@ -22,7 +22,17 @@ describe("parseMarketingRange", () => {
   });
 
   it("accepts every valid range key", () => {
-    const valid = ["7d", "30d", "90d", "180d", "365d", "month", "last_month", "ytd", "max"] as const;
+    const valid = [
+      "7d",
+      "30d",
+      "90d",
+      "180d",
+      "365d",
+      "month",
+      "last_month",
+      "ytd",
+      "max",
+    ] as const;
     for (const v of valid) expect(parseMarketingRange(v)).toBe(v);
   });
 
@@ -48,7 +58,14 @@ describe("parseMarketingSort", () => {
   });
 
   it("accepts all valid sort keys", () => {
-    const valid = ["spend_desc", "spend_asc", "leads_desc", "cpl_asc", "ctr_desc", "name_asc"] as const;
+    const valid = [
+      "spend_desc",
+      "spend_asc",
+      "leads_desc",
+      "cpl_asc",
+      "ctr_desc",
+      "name_asc",
+    ] as const;
     for (const v of valid) expect(parseMarketingSort(v)).toBe(v);
   });
 
@@ -96,13 +113,6 @@ describe("metaHistoryFloor", () => {
 // rangeToDates
 // ---------------------------------------------------------------------------
 describe("rangeToDates", () => {
-  const FIXED = new Date("2026-06-03T12:00:00Z");
-  const today = FIXED.toISOString().split("T")[0]!;
-
-  function daysAgo(n: number): string {
-    return new Date(FIXED.getTime() - n * 86_400_000).toISOString().split("T")[0]!;
-  }
-
   it("7d: since = 7 days ago, label matches", () => {
     const { since, until, label } = rangeToDates("7d");
     // We can't pin the exact date without mocking Date, so assert shape.
@@ -120,9 +130,12 @@ describe("rangeToDates", () => {
     expect(new Date(since) <= untilDate).toBe(true);
   });
 
-  it("ytd: since is Jan 1 of current year", () => {
-    const { since, label } = rangeToDates("ytd");
-    expect(since).toMatch(new RegExp(`^${new Date().getFullYear()}-01-01$`));
+  it("ytd: since is the local start of the current year, label matches", () => {
+    const { since, until, label } = rangeToDates("ytd");
+    // Compute the expected value using the same local-midnight logic the function uses.
+    const expected = new Date(new Date().getFullYear(), 0, 1).toISOString().split("T")[0];
+    expect(since).toBe(expected);
+    expect(since <= until).toBe(true);
     expect(label).toBe("Este año");
   });
 

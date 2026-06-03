@@ -6,6 +6,7 @@ import type {
   AvisosData,
   DashboardKpis,
   DateRange,
+  MyDayData,
   MyTaskRow,
   OverdueInvoiceRow,
   ReminderRow,

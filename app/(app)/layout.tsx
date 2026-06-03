@@ -1,5 +1,7 @@
 import { Logo } from "@/components/branding";
 import { CommandPalette } from "@/components/layout/command-palette";
+import { CommandPaletteTrigger } from "@/components/layout/command-palette-trigger";
+import { KeyboardShortcuts } from "@/components/layout/keyboard-shortcuts";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { QuickCreateButton } from "@/components/layout/quick-create-button";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -17,12 +19,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <header className="flex h-12 items-center justify-between border-b border-border bg-card px-4 md:hidden">
           <MobileNav user={user} verifactuMode={verifactuMode} />
           <Logo size="sm" />
-          <div className="w-8" /> {/* Spacer */}
+          <CommandPaletteTrigger variant="icon" />
         </header>
 
         <main className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">{children}</main>
       </div>
       <CommandPalette />
+      <KeyboardShortcuts />
       <QuickCreateButton />
     </div>
   );

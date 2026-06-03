@@ -1,6 +1,7 @@
 "use client";
 
 import { Logo } from "@/components/branding";
+import { CommandPaletteTrigger } from "@/components/layout/command-palette-trigger";
 import { NotificationsBell } from "@/components/layout/notifications-bell";
 import { UserMenu } from "@/components/layout/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -54,6 +55,9 @@ export function Sidebar({ user }: { user: CurrentUser; verifactuMode: string }) 
         >
           <Logo size="md" />
         </Link>
+      </div>
+      <div className="px-2 pb-2">
+        <CommandPaletteTrigger />
       </div>
       <nav className="flex flex-1 flex-col gap-0.5 px-2" aria-label="Navegación principal">
         {NAV.map(({ href, label, icon: Icon }) => {

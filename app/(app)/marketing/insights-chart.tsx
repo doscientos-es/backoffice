@@ -26,14 +26,7 @@ const LEADS_COLOR = "var(--info)";
 const OTHERS_COLOR = "var(--muted-foreground)";
 
 /** Categorical palette for the top spend series (avoids the leads-line blue). */
-const SERIES_PALETTE = [
-  "#16a34a",
-  "#f59e0b",
-  "#8b5cf6",
-  "#ec4899",
-  "#14b8a6",
-  "#f97316",
-];
+const SERIES_PALETTE = ["#16a34a", "#f59e0b", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"];
 
 const dayFmt = new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "short" });
 
@@ -197,10 +190,7 @@ export function InsightsChart({ breakdown }: { breakdown: InsightsBreakdown }) {
               className="flex items-center gap-1.5 text-xs text-muted-foreground transition-opacity hover:text-foreground"
               style={{ opacity: isHidden ? 0.4 : 1 }}
             >
-              <span
-                className="size-2.5 shrink-0 rounded-xs"
-                style={{ background: color }}
-              />
+              <span className="size-2.5 shrink-0 rounded-xs" style={{ background: color }} />
               <span className="max-w-40 truncate">{item.label}</span>
             </button>
           );

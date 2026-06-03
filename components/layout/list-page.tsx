@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { ArrowRight, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { ReactNode } from "react";
+import { type ReactNode, useCallback, useRef } from "react";
 
 export type ListCell = ReactNode | string | number | null | undefined;
 export type ListAlign = "left" | "right";
@@ -69,8 +69,19 @@ export function ListPage({
   addLabel,
 }: ListPageProps) {
   const router = useRouter();
+  const prefetched = useRef<Set<string>>(new Set());
   const alignAt = (i: number): ListAlign => align?.[i] ?? "left";
   const hasControls = !!searchKey || (filters && filters.length > 0) || !!pagination;
+
+  // Prefetch on hover/focus para que lista→detalle sea instantáneo.
+  const prefetchRow = useCallback(
+    (href?: string) => {
+      if (!href || prefetched.current.has(href)) return;
+      prefetched.current.add(href);
+      router.prefetch(href);
+    },
+    [router],
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -123,6 +134,8 @@ export function ListPage({
                           if (onRowClick) onRowClick(row);
                           else if (row.href) router.push(row.href);
                         }}
+                        onMouseEnter={() => prefetchRow(row.href)}
+                        onFocus={() => prefetchRow(row.href)}
                         className={cn(
                           "group transition-colors hover:bg-muted/40",
                           isClickable && "cursor-pointer",
