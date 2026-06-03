@@ -3,7 +3,6 @@ import type {
   ExpensePaymentSource,
   ExpenseRecurrence,
   ExpenseStatus,
-  MonthlyPoint,
 } from "./helpers";
 
 export const EXPENSE_LIST_PAGE_SIZE = 25;
@@ -14,12 +13,14 @@ export type MemberContribution = {
   total: number;
 };
 
-export type FinanceOverview = {
-  series: MonthlyPoint[];
+export type FinanceKpis = {
   revenueMonth: number;
   expenseMonth: number;
   netMonth: number;
   margin: number | null;
+};
+
+export type FinanceDetails = {
   topCategories: [ExpenseCategory, number][];
   recentExpenses: ExpenseRow[];
   recentInvoices: InvoiceRow[];

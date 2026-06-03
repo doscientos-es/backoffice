@@ -1,14 +1,20 @@
+import {
+  MetaAdsBalanceSkeleton,
+  MetaAdsBalanceWidget,
+} from "@/components/marketing/meta-ads-balance-card";
 import { SectionBoundary } from "@/components/ui/error-boundary";
 import { requireUser } from "@/lib/auth";
 import { getGreeting, parseDashboardRange } from "@/lib/utils/date";
 import type { Metadata } from "next";
 import { AvisosWidget } from "./_components/avisos-widget";
 import { KpiGrid } from "./_components/kpi-grid";
+import { MyDayWidget } from "./_components/my-day-widget";
 import { RangeSelector } from "./_components/range-selector";
 import { RevenueWidget } from "./_components/revenue-widget";
 import {
   AvisosWidgetSkeleton,
   KpiGridSkeleton,
+  MyDayWidgetSkeleton,
   RangeSelectorSkeleton,
   RevenueWidgetSkeleton,
 } from "./_components/widget-skeletons";
@@ -43,6 +49,13 @@ export default async function InicioPage({ searchParams }: PageProps) {
       </div>
 
       <SectionBoundary
+        pending={<MyDayWidgetSkeleton />}
+        label="No se pudo cargar tu día"
+      >
+        <MyDayWidget />
+      </SectionBoundary>
+
+      <SectionBoundary
         key={range}
         pending={<KpiGridSkeleton />}
         label="No se pudieron cargar los KPIs"
@@ -50,8 +63,20 @@ export default async function InicioPage({ searchParams }: PageProps) {
         <KpiGrid range={range} />
       </SectionBoundary>
 
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <SectionBoundary
+          pending={<MetaAdsBalanceSkeleton />}
+          label="No se pudo cargar el saldo de Meta Ads"
+        >
+          <MetaAdsBalanceWidget />
+        </SectionBoundary>
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-        <SectionBoundary pending={<AvisosWidgetSkeleton />} label="No se pudieron cargar los avisos">
+        <SectionBoundary
+          pending={<AvisosWidgetSkeleton />}
+          label="No se pudieron cargar los avisos"
+        >
           <AvisosWidget />
         </SectionBoundary>
         <SectionBoundary

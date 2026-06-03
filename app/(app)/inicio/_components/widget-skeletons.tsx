@@ -3,6 +3,34 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const KPI_SKELETON_KEYS = ["kpi-a", "kpi-b", "kpi-c", "kpi-d", "kpi-e", "kpi-f"] as const;
 const AVISOS_SKELETON_KEYS = ["aviso-a", "aviso-b", "aviso-c", "aviso-d"] as const;
+const MY_DAY_SKELETON_KEYS = ["my-day-a", "my-day-b", "my-day-c"] as const;
+const MY_DAY_ROW_KEYS = ["row-a", "row-b", "row-c"] as const;
+
+export function MyDayWidgetSkeleton() {
+  return (
+    <div className="grid gap-4 lg:grid-cols-3">
+      {MY_DAY_SKELETON_KEYS.map((key) => (
+        <Card key={key} className="flex flex-col">
+          <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-3 w-16" />
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            {MY_DAY_ROW_KEYS.map((row) => (
+              <div key={row} className="flex items-center gap-3">
+                <div className="flex flex-1 flex-col gap-1.5">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
 
 export function KpiGridSkeleton() {
   return (

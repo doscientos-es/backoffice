@@ -6,7 +6,6 @@ import type {
   AvisosData,
   DashboardKpis,
   DateRange,
-  MyDayData,
   MyTaskRow,
   OverdueInvoiceRow,
   ReminderRow,
@@ -43,6 +42,25 @@ function toActionLead(row: Record<string, unknown>, sinceField: string): ActionL
     email: r.email ?? null,
     status: r.status,
     since: (row[sinceField] as string) ?? new Date().toISOString(),
+  };
+}
+
+type NameRef = { name: string } | { name: string }[] | null;
+
+/** Embedded to-one relations can come back as an object or a single-item array. */
+function refName(ref: NameRef): string | null {
+  if (!ref) return null;
+  return Array.isArray(ref) ? (ref[0]?.name ?? null) : ref.name;
+}
+
+function toMyTask(row: Record<string, unknown>): MyTaskRow {
+  return {
+    id: row.id as string,
+    title: row.title as string,
+    status: row.status as MyTaskRow["status"],
+    priority: row.priority as MyTaskRow["priority"],
+    due_date: (row.due_date as string | null) ?? null,
+    contextLabel: refName(row.projects as NameRef) ?? refName(row.leads as NameRef) ?? null,
   };
 }
 
@@ -265,4 +283,47 @@ export async function getRevenueSeries(months = 6): Promise<RevenuePoint[]> {
     current: Math.round(current * 100) / 100,
     previous: Math.round(previous * 100) / 100,
   }));
+}
+
+/**
+ * "Tu día": the personal action queue for the logged-in member. Returns their
+ * open tasks (soonest due first), the active leads they own (stalest first, so
+ * nothing rots) and unassigned active leads they could claim (newest first).
+ */
+export async function getMyDay(userId: string): Promise<MyDayData> {
+  const supabase = await createServerClient();
+  const leadFields = "id, name, company, phone, email, status";
+
+  const [tasksRes, myLeadsRes, unassignedRes] = await Promise.all([
+    supabase
+      .from("tasks")
+      .select("id, title, status, priority, due_date, projects(name), leads(name)")
+      .eq("assignee_id", userId)
+      .in("status", [...OPEN_TASK_STATUSES])
+      .is("deleted_at", null)
+      .order("due_date", { ascending: true, nullsFirst: false })
+      .limit(MY_DAY_LIMIT),
+    supabase
+      .from("leads")
+      .select(`${leadFields}, updated_at`)
+      .eq("assigned_to", userId)
+      .in("status", [...ACTIVE_LEAD_STATUSES])
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: true })
+      .limit(MY_DAY_LIMIT),
+    supabase
+      .from("leads")
+      .select(`${leadFields}, created_at`)
+      .is("assigned_to", null)
+      .in("status", [...ACTIVE_LEAD_STATUSES])
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(MY_DAY_LIMIT),
+  ]);
+
+  return {
+    tasks: (tasksRes.data ?? []).map(toMyTask),
+    myLeads: (myLeadsRes.data ?? []).map((row) => toActionLead(row, "updated_at")),
+    unassignedLeads: (unassignedRes.data ?? []).map((row) => toActionLead(row, "created_at")),
+  };
 }

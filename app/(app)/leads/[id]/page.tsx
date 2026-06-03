@@ -4,16 +4,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SectionBoundary } from "@/components/ui/error-boundary";
+import { MemberLabel } from "@/components/ui/member-avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { isAIEnabled } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { getLeadDetail } from "@/lib/leads/queries";
+import { listActiveMembers } from "@/lib/members/queries";
 import { LEAD_STATUS } from "@/lib/status";
 import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LeadAiPanel } from "./lead-ai-panel";
 import { LeadEditDialog } from "./lead-edit-dialog";
+import { LeadOwnerSelect } from "./owner-select";
 import { LeadQuickActions } from "./quick-actions";
 import { LeadStatusSelect } from "./status-select";
 
@@ -30,6 +33,7 @@ const INTERACTION_LABEL: Record<string, string> = {
   call: "Llamada",
   meeting: "Reunión",
   note: "Nota",
+  owner_change: "Responsable cambiado",
   portal_view: "Portal visto",
   portal_accept: "Propuesta aceptada",
   portal_reject: "Propuesta rechazada",
@@ -59,6 +63,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
 
   const aiEnabled = isAIEnabled();
   const canEdit = user.role !== "viewer";
+  const members = canEdit ? await listActiveMembers() : [];
   const canConvert =
     !linkedClientId &&
     lead.status !== "won" &&
@@ -131,6 +136,17 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                 <DetailRow label="Teléfono">{(lead.phone as string | null) ?? "—"}</DetailRow>
                 <DetailRow label="Empresa">{(lead.company as string | null) ?? "—"}</DetailRow>
                 <DetailRow label="Origen">{(lead.source as string | null) ?? "—"}</DetailRow>
+                <DetailRow label="Responsable">
+                  {canEdit ? (
+                    <LeadOwnerSelect
+                      leadId={lead.id as string}
+                      assignedTo={(lead.assigned_to as string | null) ?? null}
+                      members={members}
+                    />
+                  ) : (
+                    <MemberLabel member={lead.assignee} />
+                  )}
+                </DetailRow>
                 <DetailRow label="Valor estimado">
                   {lead.estimated_value != null ? formatEUR(Number(lead.estimated_value)) : "—"}
                 </DetailRow>
@@ -197,9 +213,12 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                             </p>
                           ) : null}
                         </div>
-                        <span className="shrink-0 text-xs text-muted-foreground">
-                          {relativeTime(i.created_at as string)}
-                        </span>
+                        <div className="flex shrink-0 flex-col items-end gap-1 text-xs text-muted-foreground">
+                          <span>{relativeTime(i.created_at as string)}</span>
+                          {i.performer ? (
+                            <MemberLabel member={i.performer} className="text-muted-foreground" />
+                          ) : null}
+                        </div>
                       </li>
                     );
                   })}

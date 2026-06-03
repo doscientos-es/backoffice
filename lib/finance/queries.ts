@@ -1,6 +1,7 @@
 import { scopedLogger } from "@/lib/logger";
 import { notDeleted } from "@/lib/supabase/filters";
 import { createServerClient } from "@/lib/supabase/server";
+import { cache } from "react";
 import {
   EXPENSE_CATEGORIES,
   EXPENSE_STATUSES,
@@ -8,6 +9,7 @@ import {
   type ExpensePaymentSource,
   type ExpenseRecurrence,
   type ExpenseStatus,
+  type MonthlyPoint,
   buildMonthlySeries,
   profitMargin,
 } from "./helpers";
@@ -16,7 +18,8 @@ import {
   type ExpenseDetailResult,
   type ExpenseListParams,
   type ExpenseListResult,
-  type FinanceOverview,
+  type FinanceDetails,
+  type FinanceKpis,
   type MemberContribution,
 } from "./types";
 
@@ -26,24 +29,69 @@ function escapeIlike(value: string): string {
   return value.replace(/[%_\\]/g, (m) => `\\${m}`);
 }
 
-export async function getFinanceOverview(): Promise<FinanceOverview> {
+/** ISO `YYYY-MM-DD` for the first day of the current month. */
+function currentMonthStartISO(now: Date = new Date()): string {
+  return new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+}
+
+/**
+ * Current-month expense rows (total + category), shared by the KPIs and the
+ * details section. Wrapped in `cache()` so both server components reuse a
+ * single DB round-trip within the same request instead of querying twice.
+ */
+const getCurrentMonthExpenses = cache(
+  async (): Promise<Array<{ total: number; category: ExpenseCategory }>> => {
+    const supabase = await createServerClient();
+    const { data } = await notDeleted(
+      supabase
+        .from("expenses")
+        .select("total, category")
+        .gte("expense_date", currentMonthStartISO())
+        .neq("status", "cancelled"),
+    );
+    return (data ?? []).map((r) => ({
+      total: Number(r.total ?? 0),
+      category: r.category as ExpenseCategory,
+    }));
+  },
+);
+
+/** Headline KPIs for the current month: revenue, expenses, net and margin. */
+export async function getFinanceKpis(): Promise<FinanceKpis> {
   const supabase = await createServerClient();
+  const monthStartISO = currentMonthStartISO();
 
+  const [{ data: monthRevenue }, monthExpenses] = await Promise.all([
+    notDeleted(
+      supabase
+        .from("invoices")
+        .select("total")
+        .gte("issue_date", monthStartISO)
+        .neq("status", "draft"),
+    ),
+    getCurrentMonthExpenses(),
+  ]);
+
+  const revenueMonth = (monthRevenue ?? []).reduce((a, r) => a + Number(r.total ?? 0), 0);
+  const expenseMonth = monthExpenses.reduce((a, r) => a + r.total, 0);
+
+  return {
+    revenueMonth,
+    expenseMonth,
+    netMonth: revenueMonth - expenseMonth,
+    margin: profitMargin(revenueMonth, expenseMonth),
+  };
+}
+
+/** Rolling 6-month revenue vs expense series for the overview chart. */
+export async function getFinanceMonthlySeries(): Promise<MonthlyPoint[]> {
+  const supabase = await createServerClient();
   const today = new Date();
-  const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1);
-  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-  const monthStartISO = monthStart.toISOString().slice(0, 10);
-  const sixMonthsAgoISO = sixMonthsAgo.toISOString().slice(0, 10);
+  const sixMonthsAgoISO = new Date(today.getFullYear(), today.getMonth() - 5, 1)
+    .toISOString()
+    .slice(0, 10);
 
-  const [
-    { data: revenueRows },
-    { data: expenseRows },
-    { data: monthRevenue },
-    { data: monthExpenses },
-    { data: recentExpenses },
-    { data: recentInvoices },
-    { data: memberExpenseRows },
-  ] = await Promise.all([
+  const [{ data: revenueRows }, { data: expenseRows }] = await Promise.all([
     notDeleted(
       supabase
         .from("invoices")
@@ -58,20 +106,32 @@ export async function getFinanceOverview(): Promise<FinanceOverview> {
         .gte("expense_date", sixMonthsAgoISO)
         .neq("status", "cancelled"),
     ),
-    notDeleted(
-      supabase
-        .from("invoices")
-        .select("total")
-        .gte("issue_date", monthStartISO)
-        .neq("status", "draft"),
-    ),
-    notDeleted(
-      supabase
-        .from("expenses")
-        .select("total, category")
-        .gte("expense_date", monthStartISO)
-        .neq("status", "cancelled"),
-    ),
+  ]);
+
+  return buildMonthlySeries(
+    (revenueRows ?? []).map((r) => ({
+      date: r.issue_date as string,
+      total: Number(r.total ?? 0),
+    })),
+    (expenseRows ?? []).map((r) => ({
+      date: r.expense_date as string,
+      total: Number(r.total ?? 0),
+    })),
+    today,
+  );
+}
+
+/** Supporting lists: top categories, recent movements and member contributions. */
+export async function getFinanceDetails(): Promise<FinanceDetails> {
+  const supabase = await createServerClient();
+
+  const [
+    monthExpenses,
+    { data: recentExpenses },
+    { data: recentInvoices },
+    { data: memberExpenseRows },
+  ] = await Promise.all([
+    getCurrentMonthExpenses(),
     notDeleted(
       supabase
         .from("expenses")
@@ -103,27 +163,9 @@ export async function getFinanceOverview(): Promise<FinanceOverview> {
     }>,
   ]);
 
-  const series = buildMonthlySeries(
-    (revenueRows ?? []).map((r) => ({
-      date: r.issue_date as string,
-      total: Number(r.total ?? 0),
-    })),
-    (expenseRows ?? []).map((r) => ({
-      date: r.expense_date as string,
-      total: Number(r.total ?? 0),
-    })),
-    today,
-  );
-
-  const revenueMonthTotal = (monthRevenue ?? []).reduce((a, r) => a + Number(r.total ?? 0), 0);
-  const expenseMonthTotal = (monthExpenses ?? []).reduce((a, r) => a + Number(r.total ?? 0), 0);
-  const netMonth = revenueMonthTotal - expenseMonthTotal;
-  const margin = profitMargin(revenueMonthTotal, expenseMonthTotal);
-
   const byCategory = new Map<ExpenseCategory, number>();
-  for (const row of monthExpenses ?? []) {
-    const k = row.category as ExpenseCategory;
-    byCategory.set(k, (byCategory.get(k) ?? 0) + Number(row.total ?? 0));
+  for (const row of monthExpenses) {
+    byCategory.set(row.category, (byCategory.get(row.category) ?? 0) + row.total);
   }
   const topCategories = Array.from(byCategory.entries())
     .sort((a, b) => b[1] - a[1])
@@ -160,11 +202,6 @@ export async function getFinanceOverview(): Promise<FinanceOverview> {
   }
 
   return {
-    series,
-    revenueMonth: revenueMonthTotal,
-    expenseMonth: expenseMonthTotal,
-    netMonth,
-    margin,
     topCategories,
     memberContributions,
     recentExpenses: (recentExpenses ?? []).map((e) => ({

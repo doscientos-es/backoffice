@@ -2,6 +2,7 @@ import { ListPage } from "@/components/layout/list-page";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
+import { MemberLabel } from "@/components/ui/member-avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { isAIEnabled } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
@@ -101,8 +102,8 @@ export default async function LeadsPage({
           { key: "source", label: "Origen", options: SOURCE_FILTER_OPTIONS },
         ]}
         pagination={{ page, pageSize: LEAD_LIST_PAGE_SIZE, total: count }}
-        headers={["Nombre", "Empresa", "Email", "Estado", "Creado", "Acciones"]}
-        align={["left", "left", "left", "left", "left", "right"]}
+        headers={["Nombre", "Empresa", "Email", "Estado", "Responsable", "Creado", "Acciones"]}
+        align={["left", "left", "left", "left", "left", "left", "right"]}
         addHref="/leads/new"
         addLabel="Añadir lead"
         rows={enrichedLeads.map((l) => ({
@@ -130,6 +131,7 @@ export default async function LeadsPage({
               </a>
             ) : null,
             <StatusBadge key="status" meta={LEAD_STATUS} value={l.status} />,
+            <MemberLabel key="assignee" member={l.assignee} size="sm" />,
             <span key="created" className="tabular-nums">
               {relativeTime(l.created_at)}
             </span>,

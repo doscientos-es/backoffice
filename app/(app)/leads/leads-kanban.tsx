@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { MemberAvatar } from "@/components/ui/member-avatar";
 import type { LeadListItem } from "@/lib/leads/types";
 import type { LeadStatus } from "@/lib/status";
 import { cn, formatEUR, relativeTime } from "@/lib/utils";
@@ -308,7 +309,7 @@ function Column({
           "flex shrink-0 flex-col gap-1 border-b border-border px-3 py-2.5 outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
           compact && "select-none",
           collapsed &&
-            "md:items-center md:gap-2 md:px-1.5 md:group-hover/col:flex-row md:group-hover/col:items-center md:group-hover/col:justify-between md:group-hover/col:gap-1 md:group-hover/col:px-3",
+          "md:items-center md:gap-2 md:px-1.5 md:group-hover/col:flex-row md:group-hover/col:items-center md:group-hover/col:justify-between md:group-hover/col:gap-1 md:group-hover/col:px-3",
         )}
       >
         <div
@@ -323,7 +324,7 @@ function Column({
               "truncate text-xs font-semibold tracking-wide",
               tone,
               collapsed &&
-                "md:rotate-180 md:[writing-mode:vertical-rl] md:group-hover/col:rotate-0 md:group-hover/col:[writing-mode:horizontal-tb]",
+              "md:rotate-180 md:[writing-mode:vertical-rl] md:group-hover/col:rotate-0 md:group-hover/col:[writing-mode:horizontal-tb]",
             )}
           >
             {label}
@@ -412,11 +413,11 @@ function Card({
       onKeyDown={
         onOpenQuickView
           ? (e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onOpenQuickView(lead.id);
-              }
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onOpenQuickView(lead.id);
             }
+          }
           : undefined
       }
       role={onOpenQuickView ? "button" : undefined}
@@ -457,11 +458,20 @@ function Card({
       )}
       <div className="flex items-center justify-between gap-2 pl-8 text-[11px] tabular-nums text-muted-foreground">
         <span className="whitespace-nowrap">{relativeTime(lead.created_at)}</span>
-        {lead.estimated_value != null && lead.estimated_value > 0 && (
-          <Badge variant="neutral" className="tabular-nums text-[10px] h-4 px-1.5">
-            {formatEUR(lead.estimated_value)}
-          </Badge>
-        )}
+        <div className="flex items-center gap-1.5">
+          {lead.estimated_value != null && lead.estimated_value > 0 && (
+            <Badge variant="neutral" className="tabular-nums text-[10px] h-4 px-1.5">
+              {formatEUR(lead.estimated_value)}
+            </Badge>
+          )}
+          {lead.assignee ? (
+            <MemberAvatar
+              member={lead.assignee}
+              size="sm"
+              className="size-5"
+            />
+          ) : null}
+        </div>
       </div>
     </div>
   );

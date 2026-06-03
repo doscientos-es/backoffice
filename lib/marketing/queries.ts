@@ -7,13 +7,16 @@ import type {
   ActiveAdRow,
   CampaignRow,
   CampaignsOverview,
-  InsightsTimePoint,
+  InsightsBreakdown,
+  InsightsBreakdownPoint,
+  InsightsSeriesMeta,
   MarketingOverview,
   MetaAdsBalance,
   MetaAdsBalanceStatus,
   RawAdRow,
   RawInsightRow,
 } from "./types";
+import { INSIGHTS_OTHERS_KEY } from "./types";
 
 const log = scopedLogger("marketing.queries");
 
@@ -254,46 +257,113 @@ export async function getCampaignsOverview(
   };
 }
 
-export type TimeSeriesOptions = {
+export type BreakdownOptions = {
   since: string;
   until: string;
+  dimension: MarketingView;
 };
 
+/** Number of top spenders shown as their own stacked series before "Otros". */
+const INSIGHTS_TOP_SERIES = 6;
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
 /**
- * Account-wide daily series for the evolution chart. Reads `marketing_insights`
- * directly (rather than going through ads) and folds every ad's row for a given
- * day into a single point, so the chart reflects total spend/leads/clics/
- * impresiones per day regardless of ad status.
+ * Daily spend for the evolution chart, broken down by the active dimension (ad
+ * or campaign). Walks `marketing_ads → marketing_insights` so each daily row
+ * keeps its ad/campaign identity, then keeps the top spenders as their own
+ * stacked series and folds the rest into a single "Otros" bucket so the chart
+ * stays readable. `leads` and `total` are account-wide per day, independent of
+ * how spend is split, so the leads line and the stack height stay accurate.
  */
-export async function getInsightsTimeSeries(opts: TimeSeriesOptions): Promise<InsightsTimePoint[]> {
+export async function getInsightsBreakdownSeries(
+  opts: BreakdownOptions,
+): Promise<InsightsBreakdown> {
   const supabase = await createServerClient();
 
-  const { data, error } = await supabase
-    .from("marketing_insights")
-    .select("date_start, date_stop, spend, total_leads, clicks, impressions")
-    .gte("date_start", opts.since)
-    .lte("date_start", opts.until);
-  if (error) log.error({ err: error }, "marketing_insights time-series query failed");
+  const { data: adsData, error } = await supabase.from("marketing_ads").select(
+    `id, name, campaign_id,
+       marketing_campaigns ( id, name ),
+       marketing_insights ( spend, total_leads, date_start, date_stop )`,
+  );
+  if (error) log.error({ err: error }, "marketing_insights breakdown query failed");
 
-  const rows = (data as unknown as RawInsightRow[]) || [];
-  const byDay = new Map<string, InsightsTimePoint>();
+  const ads = (adsData as unknown as RawAdRow[]) || [];
 
-  for (const row of rows) {
-    // Skip aggregate rows (date_start !== date_stop): they hold a whole
-    // period's totals and would spike a single day on the chart.
-    if (!row.date_start || row.date_start !== row.date_stop) continue;
-    let point = byDay.get(row.date_start);
-    if (!point) {
-      point = { date: row.date_start, spend: 0, leads: 0, clicks: 0, impressions: 0 };
-      byDay.set(row.date_start, point);
+  const entityLabel = new Map<string, string>();
+  const entityTotal = new Map<string, number>();
+  const spendByDayEntity = new Map<string, Map<string, number>>();
+  const leadsByDay = new Map<string, number>();
+
+  for (const ad of ads) {
+    const campaign = Array.isArray(ad.marketing_campaigns)
+      ? ad.marketing_campaigns[0]
+      : ad.marketing_campaigns;
+    const key =
+      opts.dimension === "campaigns" ? (campaign?.id ?? ad.campaign_id ?? "__none__") : ad.id;
+    const label =
+      opts.dimension === "campaigns" ? campaign?.name || "Sin campaña" : ad.name || "Sin nombre";
+    entityLabel.set(key, label);
+
+    for (const i of ad.marketing_insights ?? []) {
+      // Daily rows only (date_start === date_stop); ignore period aggregates.
+      if (!i.date_start || i.date_start !== i.date_stop) continue;
+      if (i.date_start < opts.since || i.date_start > opts.until) continue;
+
+      const spend = i.spend ?? 0;
+      entityTotal.set(key, (entityTotal.get(key) ?? 0) + spend);
+      leadsByDay.set(i.date_start, (leadsByDay.get(i.date_start) ?? 0) + (i.total_leads ?? 0));
+
+      let dayMap = spendByDayEntity.get(i.date_start);
+      if (!dayMap) {
+        dayMap = new Map();
+        spendByDayEntity.set(i.date_start, dayMap);
+      }
+      dayMap.set(key, (dayMap.get(key) ?? 0) + spend);
     }
-    point.spend += row.spend ?? 0;
-    point.leads += row.total_leads ?? 0;
-    point.clicks += row.clicks ?? 0;
-    point.impressions += row.impressions ?? 0;
   }
 
-  return Array.from(byDay.values()).sort((a, b) => a.date.localeCompare(b.date));
+  // Rank by total spend and keep the top N as their own series; everything
+  // else collapses into "Otros".
+  const topKeys = Array.from(entityTotal.entries())
+    .filter(([, total]) => total > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, INSIGHTS_TOP_SERIES)
+    .map(([key]) => key);
+  const topSet = new Set(topKeys);
+  const hasOthers = Array.from(entityLabel.keys()).some((k) => !topSet.has(k));
+
+  const series: InsightsSeriesMeta[] = topKeys.map((key) => ({
+    key,
+    label: entityLabel.get(key) ?? key,
+  }));
+  if (hasOthers) series.push({ key: INSIGHTS_OTHERS_KEY, label: "Otros" });
+
+  const points: InsightsBreakdownPoint[] = Array.from(spendByDayEntity.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, dayMap]) => {
+      const point: InsightsBreakdownPoint = {
+        date,
+        total: 0,
+        leads: leadsByDay.get(date) ?? 0,
+      };
+      // Seed every series so Recharts always resolves each dynamic dataKey.
+      for (const key of topKeys) point[key] = 0;
+      if (hasOthers) point[INSIGHTS_OTHERS_KEY] = 0;
+
+      let total = 0;
+      for (const [key, spend] of dayMap) {
+        total += spend;
+        const bucket = topSet.has(key) ? key : INSIGHTS_OTHERS_KEY;
+        point[bucket] = round2((point[bucket] as number) + spend);
+      }
+      point.total = round2(total);
+      return point;
+    });
+
+  return { dimension: opts.dimension, points, series };
 }
 
 export type MarketingOverviewResult =

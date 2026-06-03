@@ -4,6 +4,7 @@ import { defineAction } from "@/lib/actions/define-action";
 import { sendEmail } from "@/lib/email/resend";
 import { appendSignature, renderTemplate } from "@/lib/email/templates";
 import {
+  AssignLeadOwnerInput,
   ConvertLeadInput,
   CreateLeadInput,
   LogCallInput,
@@ -228,6 +229,48 @@ export const updateLeadEstimatedValue = defineAction({
   },
 });
 
+// ---------------- CLAIM (reclamar un lead sin owner) ----------------
+
+/**
+ * Assigns an unowned lead to the current member. Guarded by
+ * `assigned_to IS NULL` in the UPDATE so two members racing to claim the same
+ * lead can't both win — the loser gets a clear error instead of silently
+ * overwriting the owner.
+ */
+export const claimLead = defineAction({
+  name: "leads.claim",
+  schema: z.object({ leadId: z.string().uuid() }),
+  roles: ["owner", "admin", "member"],
+  revalidate: () => ["/leads", "/inicio"],
+  handler: async (input, { user }) => {
+    const supabase = await createServerClient();
+    const { data, error } = await supabase
+      .from("leads")
+      .update({
+        assigned_to: user.id,
+        updated_at: new Date().toISOString(),
+        updated_by: user.id,
+      })
+      .eq("id", input.leadId)
+      .is("assigned_to", null)
+      .is("deleted_at", null)
+      .select("id")
+      .maybeSingle();
+
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error("Este lead ya tiene responsable.");
+
+    await supabase.from("lead_interactions").insert({
+      lead_id: input.leadId,
+      type: "note",
+      subject: `Lead asignado a ${user.name}`,
+      performed_by: user.id,
+    });
+
+    return { id: data.id as string };
+  },
+});
+
 // ---------------- EMAIL ----------------
 
 export const sendEmailToLead = defineAction({
@@ -366,5 +409,58 @@ export const logLeadNote = defineAction({
       performed_by: user.id,
     });
     if (error) throw new Error(error.message);
+  },
+});
+
+// ---------------- ASSIGN OWNER ----------------
+
+/**
+ * Assigns (or clears) the team member responsible for a lead and records the
+ * change in the interactions timeline as `owner_change`, so the history shows
+ * who took ownership and when. No-ops when the owner is unchanged.
+ */
+export const assignLeadOwner = defineAction({
+  name: "leads.assignOwner",
+  schema: AssignLeadOwnerInput,
+  roles: ["owner", "admin", "member"],
+  revalidate: (payload, input) => ["/leads", `/leads/${input.leadId}`],
+  handler: async (data, { user }) => {
+    const supabase = await createServerClient();
+
+    const { data: current } = await supabase
+      .from("leads")
+      .select("assigned_to")
+      .eq("id", data.leadId)
+      .single();
+
+    const previousId = (current?.assigned_to as string | null) ?? null;
+    const nextId = data.assigneeId ?? null;
+    if (previousId === nextId) return;
+
+    const { error } = await supabase
+      .from("leads")
+      .update({ assigned_to: nextId, updated_at: new Date().toISOString(), updated_by: user.id })
+      .eq("id", data.leadId);
+    if (error) throw new Error(error.message);
+
+    // Resolve names for a readable `from → to` timeline entry.
+    const ids = [previousId, nextId].filter((v): v is string => v !== null);
+    const nameById = new Map<string, string>();
+    if (ids.length > 0) {
+      const { data: members } = await supabase
+        .from("team_members")
+        .select("id, name")
+        .in("id", ids);
+      for (const m of members ?? []) nameById.set(m.id as string, (m.name as string) ?? "");
+    }
+    const label = (id: string | null) => (id ? (nameById.get(id) ?? "?") : "Sin asignar");
+
+    await supabase.from("lead_interactions").insert({
+      lead_id: data.leadId,
+      type: "owner_change",
+      subject: `Responsable: ${label(previousId)} → ${label(nextId)}`,
+      performed_by: user.id,
+      payload: { from: previousId, to: nextId },
+    });
   },
 });

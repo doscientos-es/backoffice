@@ -1,4 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getMetaAdsBalance } from "@/lib/marketing/queries";
 import type { MetaAdsBalance, MetaAdsBalanceStatus } from "@/lib/marketing/types";
 import { cn, formatEUR } from "@/lib/utils";
 import { AlertTriangle, Flame, TrendingDown, Wallet } from "lucide-react";
@@ -60,7 +62,9 @@ export function MetaAdsBalanceCard({ data }: { data: MetaAdsBalance | null }) {
       <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
         <div>
           <CardTitle>Saldo Meta Ads</CardTitle>
-          <p className="mt-1 text-xs text-muted-foreground">Recargas registradas − gasto reportado</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Recargas registradas − gasto reportado
+          </p>
         </div>
         <div
           className={cn(
@@ -119,6 +123,41 @@ export function MetaAdsBalanceCard({ data }: { data: MetaAdsBalance | null }) {
               {formatDays(daysRemaining)}
             </div>
           </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Async server wrapper that fetches the balance and renders the card. Shared by
+ * the Marketing page and the dashboard so both stay in sync. Renders nothing
+ * when there is no recharge or spend recorded yet.
+ */
+export async function MetaAdsBalanceWidget() {
+  const data = await getMetaAdsBalance();
+  return <MetaAdsBalanceCard data={data} />;
+}
+
+/** Loading placeholder mirroring the card layout for Suspense boundaries. */
+export function MetaAdsBalanceSkeleton() {
+  return (
+    <Card>
+      <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
+        <div className="flex flex-col gap-1.5">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-3 w-40" />
+        </div>
+        <Skeleton className="size-9 rounded-lg" />
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-8 w-28" />
+          <Skeleton className="h-3 w-44" />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Skeleton className="h-14 rounded-lg" />
+          <Skeleton className="h-14 rounded-lg" />
         </div>
       </CardContent>
     </Card>

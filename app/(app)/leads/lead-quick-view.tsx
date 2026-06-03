@@ -18,10 +18,20 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { MemberLabel } from "@/components/ui/member-avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { LEAD_STATUS } from "@/lib/status";
 import { formatEUR, relativeTime } from "@/lib/utils";
-import { ArrowUpRight, Building2, Mail, Phone, Trash2, Wallet, X } from "lucide-react";
+import {
+  ArrowUpRight,
+  Building2,
+  Mail,
+  Phone,
+  Trash2,
+  UserRound,
+  Wallet,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { type ReactNode, useState, useTransition } from "react";
 import { LeadEditDialog } from "./[id]/lead-edit-dialog";
@@ -35,6 +45,7 @@ const INTERACTION_LABEL: Record<string, string> = {
   call: "Llamada",
   meeting: "Reunión",
   note: "Nota",
+  owner_change: "Responsable cambiado",
 };
 
 export function LeadQuickView({
@@ -104,6 +115,9 @@ function Body({
               <span className="tabular-nums">{formatEUR(lead.estimated_value as number)}</span>
             </Row>
           )}
+          <Row icon={<UserRound className="size-3.5" />}>
+            <MemberLabel member={lead.assignee} size="sm" />
+          </Row>
         </section>
         {lead.ai_summary && (
           <section className="flex flex-col gap-1.5">
@@ -248,6 +262,13 @@ function Interactions({ interactions }: { interactions: KanbanLead["recent_inter
               </div>
               {i.subject && (
                 <p className="line-clamp-2 text-[11px] text-muted-foreground">{i.subject}</p>
+              )}
+              {i.performer && (
+                <MemberLabel
+                  member={i.performer}
+                  size="sm"
+                  className="text-[11px] text-muted-foreground"
+                />
               )}
             </li>
           ))}

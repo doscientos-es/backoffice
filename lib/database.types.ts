@@ -48,7 +48,8 @@ export type Database = {
         | "portal_accept"
         | "portal_reject"
         | "email_received"
-        | "status_change";
+        | "status_change"
+        | "owner_change";
       internal_doc_category:
         | "legal"
         | "hr"

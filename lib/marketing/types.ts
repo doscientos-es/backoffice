@@ -1,3 +1,5 @@
+import type { MarketingView } from "./range";
+
 export type MarketingOverview = {
   ads: ActiveAdRow[];
   totalSpent: number;
@@ -27,15 +29,34 @@ export type ActiveAdRow = {
   currency: string;
 };
 
+/** Series key used for the aggregated "Otros" bucket in the breakdown chart. */
+export const INSIGHTS_OTHERS_KEY = "__otros__";
+
+/** A single series (one ad or one campaign) in the daily breakdown chart. */
+export type InsightsSeriesMeta = { key: string; label: string };
+
 /**
- * One day of account-wide aggregated insights, used to feed the evolution chart.
+ * One day of the breakdown chart. `total` and `leads` are account-wide for that
+ * day; every remaining numeric key is the per-series spend, keyed by its series
+ * `key`. The string index signature is what lets Recharts read each series by
+ * its dynamic `dataKey`.
  */
-export type InsightsTimePoint = {
+export type InsightsBreakdownPoint = {
   date: string;
-  spend: number;
+  total: number;
   leads: number;
-  clicks: number;
-  impressions: number;
+  [seriesKey: string]: string | number;
+};
+
+/**
+ * Daily spend broken down by ad or campaign, ready to feed a stacked bar chart.
+ * `series` lists the top spenders in stack order, plus an aggregated "Otros"
+ * bucket when there are more entities than the cap.
+ */
+export type InsightsBreakdown = {
+  dimension: MarketingView;
+  points: InsightsBreakdownPoint[];
+  series: InsightsSeriesMeta[];
 };
 
 export interface RawInsightRow {
