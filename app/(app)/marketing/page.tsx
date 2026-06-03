@@ -1,24 +1,7 @@
 import { PageHeader } from "@/components/layout/page-header";
-import { StatCard } from "@/components/layout/stat-card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SectionBoundary } from "@/components/ui/error-boundary";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { requireUser } from "@/lib/auth";
 import { serverEnv } from "@/lib/env";
-import {
-  getActiveAdsOverview,
-  getCampaignsOverview,
-  getInsightsTimeSeries,
-} from "@/lib/marketing/queries";
 import {
   parseMarketingRange,
   parseMarketingSort,
@@ -26,12 +9,15 @@ import {
   parseShowPaused,
   rangeToDates,
 } from "@/lib/marketing/range";
-import type { ActiveAdRow, CampaignRow } from "@/lib/marketing/types";
-import { cn, formatEUR, relativeTime } from "@/lib/utils";
-import { ExternalLink, MousePointerClick, TrendingUp, Users, Wallet } from "lucide-react";
 import type { Metadata } from "next";
-import { AdPreviewDialog } from "./ad-preview-dialog";
-import { InsightsChart } from "./insights-chart";
+import { MarketingInsights } from "./_components/marketing-insights";
+import { MarketingKpis } from "./_components/marketing-kpis";
+import {
+  InsightsSkeleton,
+  KpiSkeleton,
+  TableSkeleton,
+} from "./_components/marketing-skeletons";
+import { MarketingTable } from "./_components/marketing-table";
 import { OptionsToolbar } from "./options-toolbar";
 import { MarketingRangeSelector } from "./range-selector";
 import { SyncMarketingButton } from "./sync-button";
@@ -39,40 +25,6 @@ import { MarketingViewTabs } from "./view-tabs";
 
 export const metadata: Metadata = { title: "Marketing · doscientos" };
 export const dynamic = "force-dynamic";
-
-const numberFmt = new Intl.NumberFormat("es-ES");
-const percentFmt = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 2 });
-
-// Visual cue thresholds — agreed with the user as starting points.
-const CPL_GOOD = 15;
-const CPL_BAD = 25;
-const CTR_GOOD = 1.5;
-const CTR_BAD = 0.8;
-
-function cplClass(cpl: number, leads: number): string {
-  if (leads === 0) return "text-muted-foreground";
-  if (cpl <= CPL_GOOD) return "text-emerald-600 dark:text-emerald-400";
-  if (cpl >= CPL_BAD) return "text-red-600 dark:text-red-400";
-  return "";
-}
-
-function ctrClass(ctr: number): string {
-  if (ctr >= CTR_GOOD) return "text-emerald-600 dark:text-emerald-400";
-  if (ctr > 0 && ctr < CTR_BAD) return "text-red-600 dark:text-red-400";
-  return "";
-}
-
-function buildAdsManagerUrl(adId: string, accountId: string | null): string | null {
-  if (!accountId) return null;
-  const act = accountId.replace(/^act_/, "");
-  return `https://www.facebook.com/adsmanager/manage/ads/edit?selected_ad_ids=${adId}&act=${act}`;
-}
-
-function buildCampaignManagerUrl(campaignId: string, accountId: string | null): string | null {
-  if (!accountId || campaignId === "__none__") return null;
-  const act = accountId.replace(/^act_/, "");
-  return `https://www.facebook.com/adsmanager/manage/campaigns/edit?selected_campaign_ids=${campaignId}&act=${act}`;
-}
 
 type SearchParams = Promise<{
   range?: string;
@@ -92,31 +44,11 @@ export default async function MarketingPage({ searchParams }: { searchParams: Se
 
   const accountId = serverEnv().META_AD_ACCOUNT_ID || null;
 
-  const isCampaigns = view === "campaigns";
-  const adsOverview = isCampaigns
-    ? null
-    : await getActiveAdsOverview({ since, until, includePaused: showPaused, sort });
-  const campaignsOverview = isCampaigns ? await getCampaignsOverview({ since, until, sort }) : null;
-  const timeSeries = await getInsightsTimeSeries({ since, until });
-
-  const totals = (adsOverview ?? campaignsOverview)!;
-  const {
-    totalSpent,
-    totalLeads,
-    totalImpressions,
-    totalClicks,
-    avgCpl,
-    avgCtr,
-    avgCpc,
-    lastSyncAt,
-  } = totals;
-
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Marketing y Ads"
-        description={`Métricas de anuncios en Meta Ads · ${rangeLabel}.${lastSyncAt ? ` Sincronizado ${relativeTime(lastSyncAt)}.` : ""
-          }`}
+        description={`Métricas de anuncios en Meta Ads · ${rangeLabel}.`}
         actions={<SyncMarketingButton />}
       />
 
@@ -128,69 +60,35 @@ export default async function MarketingPage({ searchParams }: { searchParams: Se
         <OptionsToolbar sort={sort} showPaused={showPaused} hidePaused={view === "campaigns"} />
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Gasto"
-          value={formatEUR(totalSpent)}
-          tone="default"
-          icon={Wallet}
-          hint={rangeLabel}
+      <SectionBoundary pending={<KpiSkeleton />} label="No se pudieron cargar los KPIs">
+        <MarketingKpis
+          view={view}
+          since={since}
+          until={until}
+          sort={sort}
+          showPaused={showPaused}
+          rangeLabel={rangeLabel}
         />
-        <StatCard label="Leads (Meta)" value={totalLeads} tone="info" icon={Users} />
-        <StatCard
-          label="CPL promedio"
-          value={totalLeads > 0 ? `${formatEUR(avgCpl)} / lead` : "—"}
-          tone={
-            totalLeads === 0
-              ? "default"
-              : avgCpl <= CPL_GOOD
-                ? "success"
-                : avgCpl >= CPL_BAD
-                  ? "danger"
-                  : "warning"
-          }
-          icon={TrendingUp}
+      </SectionBoundary>
+
+      <SectionBoundary pending={<InsightsSkeleton />} label="No se pudo cargar el gráfico">
+        <MarketingInsights since={since} until={until} />
+      </SectionBoundary>
+
+      <SectionBoundary pending={<TableSkeleton />} label="No se pudo cargar la tabla">
+        <MarketingTable
+          view={view}
+          since={since}
+          until={until}
+          sort={sort}
+          showPaused={showPaused}
+          accountId={accountId}
         />
-        <StatCard
-          label="Clics totales"
-          value={`${numberFmt.format(totalClicks)} · ${percentFmt.format(avgCtr)}% CTR`}
-          tone="default"
-          icon={MousePointerClick}
-        />
-      </div>
-
-      {timeSeries.length > 0 && (
-        <SectionBoundary label="No se pudo cargar el gráfico">
-          <Card>
-            <CardHeader>
-              <CardTitle>Evolución diaria</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <InsightsChart data={timeSeries} />
-            </CardContent>
-          </Card>
-        </SectionBoundary>
-      )}
-
-      {campaignsOverview ? (
-        <CampaignsTable campaigns={campaignsOverview.campaigns} accountId={accountId} />
-      ) : adsOverview ? (
-        <AdsTable ads={adsOverview.ads} showPaused={showPaused} accountId={accountId} />
-      ) : null}
-
-      <p className="text-xs text-muted-foreground">
-        Datos atribuidos por Meta (acciones <code>lead</code> y{" "}
-        <code>onsite_conversion.lead_grouped</code>). CPC medio: {formatEUR(avgCpc)} · Impresiones:{" "}
-        {numberFmt.format(totalImpressions)}.
-      </p>
+      </SectionBoundary>
     </div>
   );
 }
 
-function AdsTable({
-  ads,
-  showPaused,
-  accountId,
 }: {
   ads: ActiveAdRow[];
   showPaused: boolean;

@@ -12,14 +12,19 @@ import {
   type LeadListItem,
   type LeadListParams,
   type LeadListResult,
+  type LeadMemberRef,
   RECENT_INTERACTIONS_PER_LEAD,
 } from "./types";
 
-const LIST_COLUMNS =
-  "id, name, company, email, phone, source, notes, status, created_at, updated_at, estimated_value, ai_summary, ai_updated_at";
+/** Embed of the lead owner. Disambiguated via the `assigned_to` FK column. */
+const ASSIGNEE_EMBED = "assignee:assigned_to(id, name, avatar_url, github_handle)";
 
-const DETAIL_COLUMNS =
-  "id, name, email, phone, company, source, status, notes, estimated_value, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_temperature, ai_confidence, ai_updated_at, lost_reason, lost_at";
+/** Embed of an interaction's author, via the `performed_by` FK column. */
+const PERFORMER_EMBED = "performer:performed_by(id, name, avatar_url, github_handle)";
+
+const LIST_COLUMNS = `id, name, company, email, phone, source, notes, status, created_at, updated_at, estimated_value, ai_summary, ai_updated_at, assigned_to, ${ASSIGNEE_EMBED}`;
+
+const DETAIL_COLUMNS = `id, name, email, phone, company, source, status, notes, estimated_value, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_temperature, ai_confidence, ai_updated_at, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`;
 
 const log = scopedLogger("leads.queries");
 
@@ -27,19 +32,33 @@ function escapeIlike(value: string): string {
   return value.replace(/[%_\\]/g, (m) => `\\${m}`);
 }
 
+/**
+ * Normalises an embedded `team_members` relation into a `LeadMemberRef`.
+ * Supabase may surface a to-one embed as either an object or a single-element
+ * array, so we handle both and fall back to `null` when unassigned.
+ */
+function mapMemberRef(value: unknown): LeadMemberRef | null {
+  const row = Array.isArray(value) ? value[0] : value;
+  if (!row || typeof row !== "object") return null;
+  const m = row as Record<string, unknown>;
+  if (typeof m.id !== "string") return null;
+  return {
+    id: m.id,
+    name: (m.name as string | null) ?? "",
+    avatar_url: (m.avatar_url as string | null) ?? null,
+    github_handle: (m.github_handle as string | null) ?? null,
+  };
+}
+
 export async function listLeads(params: LeadListParams): Promise<LeadListResult> {
   const supabase = await createServerClient();
 
-  let query = notDeleted(
-    supabase.from("leads").select(LIST_COLUMNS, { count: "exact" }),
-  );
+  let query = notDeleted(supabase.from("leads").select(LIST_COLUMNS, { count: "exact" }));
 
   if (params.view === "list") {
     if (params.q.length > 0) {
       const pattern = `%${escapeIlike(params.q)}%`;
-      query = query.or(
-        `name.ilike.${pattern},company.ilike.${pattern},email.ilike.${pattern}`,
-      );
+      query = query.or(`name.ilike.${pattern},company.ilike.${pattern},email.ilike.${pattern}`);
     }
     if (params.status) query = query.eq("status", params.status);
     if (params.source) query = query.eq("source", params.source);
@@ -70,22 +89,21 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
     estimated_value: l.estimated_value == null ? null : Number(l.estimated_value),
     ai_summary: (l.ai_summary as string | null) ?? null,
     ai_updated_at: (l.ai_updated_at as string | null) ?? null,
+    assignee: mapMemberRef(l.assignee),
     recent_interactions: interactionsByLead.get(l.id as string) ?? [],
   }));
 
   return { leads, count: count ?? 0, error: error?.message ?? null };
 }
 
-async function loadRecentInteractions(
-  leadIds: string[],
-): Promise<Map<string, LeadInteraction[]>> {
+async function loadRecentInteractions(leadIds: string[]): Promise<Map<string, LeadInteraction[]>> {
   const byLead = new Map<string, LeadInteraction[]>();
   if (leadIds.length === 0) return byLead;
 
   const supabase = await createServerClient();
   const { data } = await supabase
     .from("lead_interactions")
-    .select("id, lead_id, type, subject, body, created_at")
+    .select(`id, lead_id, type, subject, body, created_at, ${PERFORMER_EMBED}`)
     .in("lead_id", leadIds)
     .order("created_at", { ascending: false })
     .limit(leadIds.length * RECENT_INTERACTIONS_PER_LEAD);
@@ -100,6 +118,7 @@ async function loadRecentInteractions(
         subject: (i.subject as string | null) ?? null,
         body: (i.body as string | null) ?? null,
         created_at: i.created_at as string,
+        performer: mapMemberRef(i.performer),
       });
       byLead.set(leadId, list);
     }
@@ -115,7 +134,7 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
       notDeleted(supabase.from("leads").select(DETAIL_COLUMNS).eq("id", id)).maybeSingle(),
       supabase
         .from("lead_interactions")
-        .select("id, type, subject, body, created_at, payload")
+        .select(`id, type, subject, body, created_at, payload, ${PERFORMER_EMBED}`)
         .eq("lead_id", id)
         .order("created_at", { ascending: false })
         .limit(50),
@@ -131,6 +150,7 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
     subject: (i.subject as string | null) ?? null,
     body: (i.body as string | null) ?? null,
     created_at: i.created_at as string,
+    performer: mapMemberRef((i as Record<string, unknown>).performer),
     payload: i.payload ?? null,
   }));
 

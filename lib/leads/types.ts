@@ -4,12 +4,26 @@ export const LEAD_LIST_PAGE_SIZE = 25;
 export const LEAD_BOARD_LIMIT = 500;
 export const RECENT_INTERACTIONS_PER_LEAD = 3;
 
+/**
+ * Lightweight reference to a `team_members` row, used both for a lead's
+ * owner (`assigned_to`) and for the author of an interaction
+ * (`performed_by`). Carries the fields `memberAvatarUrl` needs to resolve
+ * an avatar plus an initials fallback.
+ */
+export type LeadMemberRef = {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+  github_handle: string | null;
+};
+
 export type LeadInteraction = {
   id: string;
   type: string;
   subject: string | null;
   body: string | null;
   created_at: string;
+  performer: LeadMemberRef | null;
 };
 
 export type LeadListItem = {
@@ -26,6 +40,7 @@ export type LeadListItem = {
   estimated_value: number | null;
   ai_summary: string | null;
   ai_updated_at: string | null;
+  assignee: LeadMemberRef | null;
   recent_interactions: LeadInteraction[];
 };
 
@@ -66,6 +81,8 @@ export type LeadDetail = {
   ai_updated_at: string | null;
   lost_reason: string | null;
   lost_at: string | null;
+  assigned_to: string | null;
+  assignee: LeadMemberRef | null;
 };
 
 export type LeadDetailInteraction = LeadInteraction & {
