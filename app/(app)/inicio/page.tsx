@@ -1,7 +1,7 @@
+import { SectionBoundary } from "@/components/ui/error-boundary";
 import { requireUser } from "@/lib/auth";
 import { getGreeting, parseDashboardRange } from "@/lib/utils/date";
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { AvisosWidget } from "./_components/avisos-widget";
 import { KpiGrid } from "./_components/kpi-grid";
 import { RangeSelector } from "./_components/range-selector";
@@ -37,22 +37,29 @@ export default async function InicioPage({ searchParams }: PageProps) {
             Aquí tienes lo que requiere tu atención.
           </p>
         </div>
-        <Suspense fallback={<RangeSelectorSkeleton />}>
+        <SectionBoundary pending={<RangeSelectorSkeleton />} label="No se pudo cargar el selector">
           <RangeSelector current={range} />
-        </Suspense>
+        </SectionBoundary>
       </div>
 
-      <Suspense key={range} fallback={<KpiGridSkeleton />}>
+      <SectionBoundary
+        key={range}
+        pending={<KpiGridSkeleton />}
+        label="No se pudieron cargar los KPIs"
+      >
         <KpiGrid range={range} />
-      </Suspense>
+      </SectionBoundary>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-        <Suspense fallback={<AvisosWidgetSkeleton />}>
+        <SectionBoundary pending={<AvisosWidgetSkeleton />} label="No se pudieron cargar los avisos">
           <AvisosWidget />
-        </Suspense>
-        <Suspense fallback={<RevenueWidgetSkeleton />}>
+        </SectionBoundary>
+        <SectionBoundary
+          pending={<RevenueWidgetSkeleton />}
+          label="No se pudieron cargar los ingresos"
+        >
           <RevenueWidget />
-        </Suspense>
+        </SectionBoundary>
       </div>
     </div>
   );

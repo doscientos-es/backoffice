@@ -26,6 +26,14 @@ export type ExpenseStatus = (typeof EXPENSE_STATUSES)[number];
 export const EXPENSE_RECURRENCES = ["none", "monthly", "quarterly", "yearly"] as const;
 export type ExpenseRecurrence = (typeof EXPENSE_RECURRENCES)[number];
 
+export const EXPENSE_PAYMENT_SOURCES = ["company", "member"] as const;
+export type ExpensePaymentSource = (typeof EXPENSE_PAYMENT_SOURCES)[number];
+
+export const EXPENSE_PAYMENT_SOURCE_LABELS: Record<ExpensePaymentSource, string> = {
+  company: "Cuenta de empresa",
+  member: "Socio",
+};
+
 export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   hosting: "Hosting",
   domain: "Dominios",

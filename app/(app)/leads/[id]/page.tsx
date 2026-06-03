@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SectionBoundary } from "@/components/ui/error-boundary";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { isAIEnabled } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
@@ -147,24 +148,26 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">Análisis IA</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <LeadAiPanel
-                leadId={lead.id as string}
-                aiEnabled={aiEnabled}
-                initialData={{
-                  ai_summary: (lead.ai_summary as string | null) ?? null,
-                  ai_suggested_next_step: (lead.ai_suggested_next_step as string | null) ?? null,
-                  ai_temperature: (lead.ai_temperature as "hot" | "warm" | "cold" | null) ?? null,
-                  ai_confidence: (lead.ai_confidence as number | null) ?? null,
-                  ai_updated_at: (lead.ai_updated_at as string | null) ?? null,
-                }}
-              />
-            </CardContent>
-          </Card>
+          <SectionBoundary label="No se pudo cargar el análisis IA">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">Análisis IA</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <LeadAiPanel
+                  leadId={lead.id as string}
+                  aiEnabled={aiEnabled}
+                  initialData={{
+                    ai_summary: (lead.ai_summary as string | null) ?? null,
+                    ai_suggested_next_step: (lead.ai_suggested_next_step as string | null) ?? null,
+                    ai_temperature: (lead.ai_temperature as "hot" | "warm" | "cold" | null) ?? null,
+                    ai_confidence: (lead.ai_confidence as number | null) ?? null,
+                    ai_updated_at: (lead.ai_updated_at as string | null) ?? null,
+                  }}
+                />
+              </CardContent>
+            </Card>
+          </SectionBoundary>
 
           <Card>
             <CardHeader>

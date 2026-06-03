@@ -1,10 +1,16 @@
 "use client";
 
+import { Select } from "@/components/ui/select";
 import { type MarketingRange, RANGE_OPTIONS } from "@/lib/marketing/range";
 import { cn } from "@/lib/utils";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 
+/**
+ * Date-range picker. Uses a single dropdown rather than a tab strip because
+ * Meta exposes many windows (up to the 37-month historical max) and they would
+ * not fit inline.
+ */
 export function MarketingRangeSelector({ current }: { current: MarketingRange }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -22,34 +28,20 @@ export function MarketingRangeSelector({ current }: { current: MarketingRange })
   };
 
   return (
-    <div
-      role="tablist"
-      aria-label="Rango temporal"
-      className={cn(
-        "inline-flex h-8 items-center rounded-lg border bg-card p-0.5 text-xs",
-        pending && "opacity-70",
-      )}
-    >
-      {RANGE_OPTIONS.map((opt) => {
-        const active = opt.value === current;
-        return (
-          <button
-            key={opt.value}
-            type="button"
-            role="tab"
-            aria-selected={active}
-            onClick={() => onSelect(opt.value)}
-            className={cn(
-              "rounded-md px-2.5 py-1 font-medium transition-colors",
-              active
-                ? "bg-foreground text-background"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {opt.short}
-          </button>
-        );
-      })}
+    <div className={cn("flex items-center gap-2 text-xs", pending && "opacity-70")}>
+      <span className="font-medium text-muted-foreground">Periodo</span>
+      <Select
+        aria-label="Rango temporal"
+        value={current}
+        onChange={(e) => onSelect(e.target.value as MarketingRange)}
+        className="h-8 w-44 text-xs"
+      >
+        {RANGE_OPTIONS.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </Select>
     </div>
   );
 }

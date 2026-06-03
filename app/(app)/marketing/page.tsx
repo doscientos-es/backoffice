@@ -3,6 +3,7 @@ import { StatCard } from "@/components/layout/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SectionBoundary } from "@/components/ui/error-boundary";
 import {
   Table,
   TableBody,
@@ -13,7 +14,11 @@ import {
 } from "@/components/ui/table";
 import { requireUser } from "@/lib/auth";
 import { serverEnv } from "@/lib/env";
-import { getActiveAdsOverview, getCampaignsOverview } from "@/lib/marketing/queries";
+import {
+  getActiveAdsOverview,
+  getCampaignsOverview,
+  getInsightsTimeSeries,
+} from "@/lib/marketing/queries";
 import {
   parseMarketingRange,
   parseMarketingSort,
@@ -26,6 +31,7 @@ import { cn, formatEUR, relativeTime } from "@/lib/utils";
 import { ExternalLink, MousePointerClick, TrendingUp, Users, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import { AdPreviewDialog } from "./ad-preview-dialog";
+import { InsightsChart } from "./insights-chart";
 import { OptionsToolbar } from "./options-toolbar";
 import { MarketingRangeSelector } from "./range-selector";
 import { SyncMarketingButton } from "./sync-button";
@@ -90,21 +96,27 @@ export default async function MarketingPage({ searchParams }: { searchParams: Se
   const adsOverview = isCampaigns
     ? null
     : await getActiveAdsOverview({ since, until, includePaused: showPaused, sort });
-  const campaignsOverview = isCampaigns
-    ? await getCampaignsOverview({ since, until, sort })
-    : null;
+  const campaignsOverview = isCampaigns ? await getCampaignsOverview({ since, until, sort }) : null;
+  const timeSeries = await getInsightsTimeSeries({ since, until });
 
   const totals = (adsOverview ?? campaignsOverview)!;
-  const { totalSpent, totalLeads, totalImpressions, totalClicks, avgCpl, avgCtr, avgCpc, lastSyncAt } =
-    totals;
+  const {
+    totalSpent,
+    totalLeads,
+    totalImpressions,
+    totalClicks,
+    avgCpl,
+    avgCtr,
+    avgCpc,
+    lastSyncAt,
+  } = totals;
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Marketing y Ads"
-        description={`Métricas de anuncios en Meta Ads · ${rangeLabel}.${
-          lastSyncAt ? ` Sincronizado ${relativeTime(lastSyncAt)}.` : ""
-        }`}
+        description={`Métricas de anuncios en Meta Ads · ${rangeLabel}.${lastSyncAt ? ` Sincronizado ${relativeTime(lastSyncAt)}.` : ""
+          }`}
         actions={<SyncMarketingButton />}
       />
 
@@ -146,6 +158,19 @@ export default async function MarketingPage({ searchParams }: { searchParams: Se
           icon={MousePointerClick}
         />
       </div>
+
+      {timeSeries.length > 0 && (
+        <SectionBoundary label="No se pudo cargar el gráfico">
+          <Card>
+            <CardHeader>
+              <CardTitle>Evolución diaria</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <InsightsChart data={timeSeries} />
+            </CardContent>
+          </Card>
+        </SectionBoundary>
+      )}
 
       {campaignsOverview ? (
         <CampaignsTable campaigns={campaignsOverview.campaigns} accountId={accountId} />
@@ -237,9 +262,7 @@ function AdsTable({
                     <TableCell className="text-right tabular-nums">
                       {ad.clicks > 0 ? formatEUR(ad.cpc) : "—"}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatEUR(ad.spend)}
-                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{formatEUR(ad.spend)}</TableCell>
                     <TableCell className="text-right tabular-nums">{ad.leads}</TableCell>
                     <TableCell
                       className={cn(
@@ -281,7 +304,6 @@ function AdsTable({
     </Card>
   );
 }
-
 
 function CampaignsTable({
   campaigns,

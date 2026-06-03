@@ -5,6 +5,7 @@ import type {
   ActiveAdRow,
   CampaignRow,
   CampaignsOverview,
+  InsightsTimePoint,
   MarketingOverview,
   RawAdRow,
   RawInsightRow,
@@ -51,16 +52,14 @@ export type AdsOverviewOptions = {
   sort?: MarketingSort;
 };
 
-export async function getActiveAdsOverview(
-  opts: AdsOverviewOptions,
-): Promise<MarketingOverview> {
+export async function getActiveAdsOverview(opts: AdsOverviewOptions): Promise<MarketingOverview> {
   const supabase = await createServerClient();
 
   // marketing_* tables hold external data from Meta and do not use the soft-delete convention.
   let query = supabase.from("marketing_ads").select(
     `id, name, status, preview_url, updated_at,
        marketing_campaigns ( name ),
-       marketing_insights ( spend, impressions, clicks, ctr, cpc, total_leads, cost_per_lead, currency, date_start )`,
+       marketing_insights ( spend, impressions, clicks, ctr, cpc, total_leads, cost_per_lead, currency, date_start, date_stop )`,
   );
   if (!opts.includePaused) query = query.eq("status", "ACTIVE");
 
@@ -73,8 +72,15 @@ export async function getActiveAdsOverview(
   const processedAds: ActiveAdRow[] = ads.map((ad) => {
     // Filter insights to the selected window. `date_start` is a `YYYY-MM-DD`
     // string from Supabase, so lexicographic compare matches calendar order.
+    // `date_start === date_stop` keeps only true daily rows, ignoring any legacy
+    // aggregate row (date_start = since, date_stop = until) that would otherwise
+    // pile a whole period's totals onto a single day.
     const insights = (ad.marketing_insights ?? []).filter(
-      (i) => i.date_start && i.date_start >= opts.since && i.date_start <= opts.until,
+      (i) =>
+        i.date_start &&
+        i.date_start === i.date_stop &&
+        i.date_start >= opts.since &&
+        i.date_start <= opts.until,
     );
     const agg = aggregateInsights(insights);
     const campaign = Array.isArray(ad.marketing_campaigns)
@@ -124,7 +130,6 @@ export async function getActiveAdsOverview(
   };
 }
 
-
 const CAMPAIGN_COMPARATORS: Record<MarketingSort, (a: CampaignRow, b: CampaignRow) => number> = {
   spend_desc: (a, b) => b.spend - a.spend,
   spend_asc: (a, b) => a.spend - b.spend,
@@ -154,16 +159,13 @@ export async function getCampaignsOverview(
   const { data: adsData, error: adsErr } = await supabase.from("marketing_ads").select(
     `id, status, updated_at, campaign_id,
        marketing_campaigns ( id, name, status, objective ),
-       marketing_insights ( spend, impressions, clicks, ctr, cpc, total_leads, cost_per_lead, currency, date_start )`,
+       marketing_insights ( spend, impressions, clicks, ctr, cpc, total_leads, cost_per_lead, currency, date_start, date_stop )`,
   );
   if (adsErr) log.error({ err: adsErr }, "marketing_ads (campaign view) query failed");
 
   const ads = (adsData as unknown as RawAdRow[]) || [];
 
-  const byCampaign = new Map<
-    string,
-    { row: CampaignRow; insights: RawInsightRow[] }
-  >();
+  const byCampaign = new Map<string, { row: CampaignRow; insights: RawInsightRow[] }>();
 
   for (const ad of ads) {
     const campaign = Array.isArray(ad.marketing_campaigns)
@@ -171,7 +173,11 @@ export async function getCampaignsOverview(
       : ad.marketing_campaigns;
     const campaignId = campaign?.id ?? ad.campaign_id ?? "__none__";
     const insights = (ad.marketing_insights ?? []).filter(
-      (i) => i.date_start && i.date_start >= opts.since && i.date_start <= opts.until,
+      (i) =>
+        i.date_start &&
+        i.date_start === i.date_stop &&
+        i.date_start >= opts.since &&
+        i.date_start <= opts.until,
     );
 
     let bucket = byCampaign.get(campaignId);
@@ -242,4 +248,46 @@ export async function getCampaignsOverview(
     currency,
     lastSyncAt,
   };
+}
+
+export type TimeSeriesOptions = {
+  since: string;
+  until: string;
+};
+
+/**
+ * Account-wide daily series for the evolution chart. Reads `marketing_insights`
+ * directly (rather than going through ads) and folds every ad's row for a given
+ * day into a single point, so the chart reflects total spend/leads/clics/
+ * impresiones per day regardless of ad status.
+ */
+export async function getInsightsTimeSeries(opts: TimeSeriesOptions): Promise<InsightsTimePoint[]> {
+  const supabase = await createServerClient();
+
+  const { data, error } = await supabase
+    .from("marketing_insights")
+    .select("date_start, date_stop, spend, total_leads, clicks, impressions")
+    .gte("date_start", opts.since)
+    .lte("date_start", opts.until);
+  if (error) log.error({ err: error }, "marketing_insights time-series query failed");
+
+  const rows = (data as unknown as RawInsightRow[]) || [];
+  const byDay = new Map<string, InsightsTimePoint>();
+
+  for (const row of rows) {
+    // Skip aggregate rows (date_start !== date_stop): they hold a whole
+    // period's totals and would spike a single day on the chart.
+    if (!row.date_start || row.date_start !== row.date_stop) continue;
+    let point = byDay.get(row.date_start);
+    if (!point) {
+      point = { date: row.date_start, spend: 0, leads: 0, clicks: 0, impressions: 0 };
+      byDay.set(row.date_start, point);
+    }
+    point.spend += row.spend ?? 0;
+    point.leads += row.total_leads ?? 0;
+    point.clicks += row.clicks ?? 0;
+    point.impressions += row.impressions ?? 0;
+  }
+
+  return Array.from(byDay.values()).sort((a, b) => a.date.localeCompare(b.date));
 }

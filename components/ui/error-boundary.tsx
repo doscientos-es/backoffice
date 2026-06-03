@@ -1,7 +1,8 @@
 "use client";
 
 import { AlertTriangle, RefreshCw } from "lucide-react";
-import { Component, type ErrorInfo, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { Component, type ErrorInfo, type ReactNode, Suspense } from "react";
 import { Button } from "./button";
 
 interface Props {
@@ -71,6 +72,72 @@ function DefaultFallback({ error, reset }: { error: Error; reset: () => void }) 
         )}
       </div>
       <Button size="sm" variant="outline" onClick={reset}>
+        <RefreshCw className="size-3.5" />
+        Reintentar
+      </Button>
+    </div>
+  );
+}
+
+/**
+ * Aísla una sección de página (típicamente un Server Component con su propio
+ * fetch) combinando ErrorBoundary + Suspense. Si la sección falla, solo cae
+ * esa pieza y el resto de la página sigue funcionando.
+ *
+ * Uso:
+ *   <SectionBoundary pending={<MiSkeleton />}>
+ *     <WidgetQueHaceFetch />
+ *   </SectionBoundary>
+ */
+export function SectionBoundary({
+  children,
+  pending,
+  label,
+}: {
+  children: ReactNode;
+  /** Skeleton mostrado mientras la sección carga. */
+  pending?: ReactNode;
+  /** Texto del fallback de error. Por defecto "No se pudo cargar esta sección". */
+  label?: string;
+}) {
+  return (
+    <ErrorBoundary
+      fallback={(error, reset) => <SectionErrorCard error={error} reset={reset} label={label} />}
+    >
+      <Suspense fallback={pending}>{children}</Suspense>
+    </ErrorBoundary>
+  );
+}
+
+function SectionErrorCard({
+  error,
+  reset,
+  label,
+}: {
+  error: Error;
+  reset: () => void;
+  label?: string;
+}) {
+  const router = useRouter();
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 rounded-xl bg-card p-6 text-center ring-1 ring-foreground/10">
+      <div className="flex size-10 items-center justify-center rounded-lg bg-destructive/10">
+        <AlertTriangle className="size-4 text-destructive" />
+      </div>
+      <div className="flex flex-col gap-0.5">
+        <p className="text-sm font-medium">{label ?? "No se pudo cargar esta sección"}</p>
+        {process.env.NODE_ENV === "development" && (
+          <p className="max-w-xs truncate text-[11px] text-muted-foreground/60">{error.message}</p>
+        )}
+      </div>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => {
+          router.refresh();
+          reset();
+        }}
+      >
         <RefreshCw className="size-3.5" />
         Reintentar
       </Button>

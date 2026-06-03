@@ -2,6 +2,14 @@
 
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   Drawer,
   DrawerClose,
   DrawerContent,
@@ -13,9 +21,10 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { PROJECT_STATUS, type ProjectStatus } from "@/lib/status";
 import { relativeTime } from "@/lib/utils";
-import { ArrowUpRight, Building2, ExternalLink, X } from "lucide-react";
+import { ArrowUpRight, Building2, ExternalLink, Trash2, X } from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { type ReactNode, useState, useTransition } from "react";
+import { deleteProject } from "./actions";
 import { GitHubModeBadge } from "./github-mode-badge";
 import type { GitHubSyncMode } from "./github-sync-section";
 
@@ -32,14 +41,15 @@ export type QuickProject = {
 
 export function ProjectQuickView({
   project,
-  onClose,
-}: { project: QuickProject | null; onClose: () => void }) {
+  canEdit = false,
+  onCloseAction,
+}: { project: QuickProject | null; canEdit?: boolean; onCloseAction: () => void }) {
   return (
-    <Drawer open={!!project} onOpenChange={(v) => !v && onClose()} direction="right">
+    <Drawer open={!!project} onOpenChange={(v) => !v && onCloseAction()} direction="right">
       <DrawerContent className="sm:max-w-sm">
         {project ? (
           <ErrorBoundary>
-            <Body project={project} />
+            <Body project={project} canEdit={canEdit} onCloseAction={onCloseAction} />
           </ErrorBoundary>
         ) : null}
       </DrawerContent>
@@ -47,7 +57,9 @@ export function ProjectQuickView({
   );
 }
 
-function Body({ project }: { project: QuickProject }) {
+type BodyProps = { project: QuickProject; canEdit: boolean; onCloseAction: () => void };
+
+function Body({ project, canEdit, onCloseAction }: BodyProps) {
   return (
     <>
       <DrawerHeader className="flex flex-row items-start justify-between gap-2 border-b border-border">
@@ -92,15 +104,74 @@ function Body({ project }: { project: QuickProject }) {
         {/* Aquí se podrían añadir Tareas próximas, etc. */}
       </div>
 
-      <div className="mt-auto border-t border-border p-3">
-        <Button asChild className="w-full" size="sm" variant="outline">
+      <footer className="mt-auto flex items-center gap-2 border-t border-border p-3">
+        {canEdit && (
+          <DeleteProjectButton
+            projectId={project.id}
+            projectName={project.name}
+            onDeleted={onCloseAction}
+          />
+        )}
+        <Button asChild className="flex-1" size="sm" variant="outline">
           <Link href={`/projects/${project.id}`}>
             Ver detalle completo
             <ArrowUpRight className="size-3.5" />
           </Link>
         </Button>
-      </div>
+      </footer>
     </>
+  );
+}
+
+function DeleteProjectButton({
+  projectId,
+  projectName,
+  onDeleted,
+}: {
+  projectId: string;
+  projectName: string;
+  onDeleted: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
+
+  function onConfirm() {
+    startTransition(async () => {
+      await deleteProject({ id: projectId });
+      setOpen(false);
+      onDeleted();
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Eliminar proyecto"
+          className="text-muted-foreground hover:text-destructive"
+        >
+          <Trash2 className="size-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Eliminar proyecto</DialogTitle>
+          <DialogDescription>
+            ¿Eliminar <strong>{projectName}</strong>? Podrás restaurarlo desde la base de datos.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex justify-end gap-2 pt-1">
+          <Button variant="ghost" size="sm" onClick={() => setOpen(false)} disabled={pending}>
+            Cancelar
+          </Button>
+          <Button variant="destructive" size="sm" onClick={onConfirm} disabled={pending}>
+            {pending ? "Eliminando…" : "Eliminar"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

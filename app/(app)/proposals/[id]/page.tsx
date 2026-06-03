@@ -3,6 +3,7 @@ import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SectionBoundary } from "@/components/ui/error-boundary";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
 import { isAIEnabled } from "@/lib/env";
@@ -145,39 +146,43 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
         }
       />
 
-      <ProposalEditor
-        id={id}
-        initialTitle={proposal.title as string}
-        initialValidUntil={(proposal.valid_until as string | null) ?? null}
-        initialNotes={(proposal.notes as string | null) ?? null}
-        initialContextMarkdown={(proposal.context_markdown as string | null) ?? null}
-        initialProblems={toEditableKeyPoints(parseKeyPoints(proposal.problems))}
-        initialSolutions={toEditableKeyPoints(parseKeyPoints(proposal.solutions))}
-        initialTerms={(proposal.terms as string | null) ?? null}
-        initialItems={editableItems}
-        locked={locked}
-      />
+      <SectionBoundary label="No se pudo cargar el editor de la propuesta">
+        <ProposalEditor
+          id={id}
+          initialTitle={proposal.title as string}
+          initialValidUntil={(proposal.valid_until as string | null) ?? null}
+          initialNotes={(proposal.notes as string | null) ?? null}
+          initialContextMarkdown={(proposal.context_markdown as string | null) ?? null}
+          initialProblems={toEditableKeyPoints(parseKeyPoints(proposal.problems))}
+          initialSolutions={toEditableKeyPoints(parseKeyPoints(proposal.solutions))}
+          initialTerms={(proposal.terms as string | null) ?? null}
+          initialItems={editableItems}
+          locked={locked}
+        />
+      </SectionBoundary>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Documentación técnica</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ProposalSpecs
-            proposalId={id}
-            specs={((specs ?? []) as unknown as ProposalSpec[]).map((s) => ({
-              id: s.id,
-              title: s.title,
-              body_markdown: s.body_markdown,
-              is_client_visible: s.is_client_visible,
-              portal_token: s.portal_token,
-              updated_at: s.updated_at,
-            }))}
-            aiEnabled={isAIEnabled()}
-            locked={locked}
-          />
-        </CardContent>
-      </Card>
+      <SectionBoundary label="No se pudo cargar la documentación técnica">
+        <Card>
+          <CardHeader>
+            <CardTitle>Documentación técnica</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ProposalSpecs
+              proposalId={id}
+              specs={((specs ?? []) as unknown as ProposalSpec[]).map((s) => ({
+                id: s.id,
+                title: s.title,
+                body_markdown: s.body_markdown,
+                is_client_visible: s.is_client_visible,
+                portal_token: s.portal_token,
+                updated_at: s.updated_at,
+              }))}
+              aiEnabled={isAIEnabled()}
+              locked={locked}
+            />
+          </CardContent>
+        </Card>
+      </SectionBoundary>
 
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <Card>

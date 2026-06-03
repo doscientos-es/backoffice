@@ -40,6 +40,7 @@ export async function getFinanceOverview(): Promise<FinanceOverview> {
     { data: monthExpenses },
     { data: recentExpenses },
     { data: recentInvoices },
+    { data: memberExpenseRows },
   ] = await Promise.all([
     notDeleted(
       supabase
@@ -84,6 +85,15 @@ export async function getFinanceOverview(): Promise<FinanceOverview> {
         .order("issue_date", { ascending: false })
         .limit(5),
     ),
+    // Member contributions: expenses personally paid by a partner
+    notDeleted(
+      supabase
+        .from("expenses")
+        .select("paid_by_member_id, total, team_members(name)")
+        .eq("payment_source", "member")
+        .neq("status", "cancelled")
+        .not("paid_by_member_id", "is", null),
+    ),
   ]);
 
   const series = buildMonthlySeries(
@@ -98,14 +108,8 @@ export async function getFinanceOverview(): Promise<FinanceOverview> {
     today,
   );
 
-  const revenueMonthTotal = (monthRevenue ?? []).reduce(
-    (a, r) => a + Number(r.total ?? 0),
-    0,
-  );
-  const expenseMonthTotal = (monthExpenses ?? []).reduce(
-    (a, r) => a + Number(r.total ?? 0),
-    0,
-  );
+  const revenueMonthTotal = (monthRevenue ?? []).reduce((a, r) => a + Number(r.total ?? 0), 0);
+  const expenseMonthTotal = (monthExpenses ?? []).reduce((a, r) => a + Number(r.total ?? 0), 0);
   const netMonth = revenueMonthTotal - expenseMonthTotal;
   const margin = profitMargin(revenueMonthTotal, expenseMonthTotal);
 
@@ -118,6 +122,23 @@ export async function getFinanceOverview(): Promise<FinanceOverview> {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
 
+  // Aggregate member contributions
+  const byMember = new Map<string, { name: string; total: number }>();
+  for (const row of memberExpenseRows ?? []) {
+    const memberId = row.paid_by_member_id as string;
+    const memberRaw = row.team_members as { name: string } | { name: string }[] | null;
+    const memberName =
+      (Array.isArray(memberRaw) ? memberRaw[0]?.name : memberRaw?.name) ?? memberId;
+    const existing = byMember.get(memberId);
+    byMember.set(memberId, {
+      name: memberName,
+      total: (existing?.total ?? 0) + Number(row.total ?? 0),
+    });
+  }
+  const memberContributions: MemberContribution[] = Array.from(byMember.entries()).map(
+    ([memberId, { name, total }]) => ({ memberId, memberName: name, total }),
+  );
+
   return {
     series,
     revenueMonth: revenueMonthTotal,
@@ -125,24 +146,29 @@ export async function getFinanceOverview(): Promise<FinanceOverview> {
     netMonth,
     margin,
     topCategories,
+    memberContributions,
     recentExpenses: (recentExpenses ?? []).map((e) => ({
       id: e.id,
       vendor: e.vendor,
       category: e.category as ExpenseCategory,
       total: Number(e.total ?? 0),
       expense_date: e.expense_date,
-      status: e.status as any,
+      status: e.status as ExpenseStatus,
     })),
     recentInvoices: (recentInvoices ?? []).map((inv) => ({
       id: inv.id,
       full_number: inv.full_number,
       total: Number(inv.total ?? 0),
       issue_date: inv.issue_date,
-      client_name: (inv.clients as any)?.name ?? null,
+      client_name:
+        (inv.clients as { name: string } | { name: string }[] | null) != null
+          ? ((Array.isArray(inv.clients)
+              ? inv.clients[0]?.name
+              : (inv.clients as { name: string })?.name) ?? null)
+          : null,
     })),
   };
 }
-
 
 export function parseExpenseListSearchParams(sp: {
   year?: string;
@@ -251,10 +277,7 @@ export async function getExpenseDetail(id: string): Promise<ExpenseDetailResult 
   const supabase = await createServerClient();
 
   const { data: expense, error } = await notDeleted(
-    supabase
-      .from("expenses")
-      .select("*, projects(id, name, clients(id, name))")
-      .eq("id", id),
+    supabase.from("expenses").select("*, projects(id, name, clients(id, name))").eq("id", id),
   ).maybeSingle();
 
   if (error) log.error({ id, err: error.message }, "expense_detail_failed");
@@ -271,7 +294,7 @@ export async function getExpenseDetail(id: string): Promise<ExpenseDetailResult 
   ).projects;
   const projectClient = rawProject
     ? Array.isArray(rawProject.clients)
-      ? rawProject.clients[0] ?? null
+      ? (rawProject.clients[0] ?? null)
       : rawProject.clients
     : null;
 
@@ -281,12 +304,14 @@ export async function getExpenseDetail(id: string): Promise<ExpenseDetailResult 
 
   if (projectsErr) log.error({ err: projectsErr.message }, "expense_project_options_failed");
 
-  const projectOptions = ((projectsRaw ?? []) as unknown as Array<{
-    id: string;
-    name: string;
-    clients: { name: string } | { name: string }[] | null;
-  }>).map((p) => {
-    const client = Array.isArray(p.clients) ? p.clients[0] ?? null : p.clients;
+  const projectOptions = (
+    (projectsRaw ?? []) as unknown as Array<{
+      id: string;
+      name: string;
+      clients: { name: string } | { name: string }[] | null;
+    }>
+  ).map((p) => {
+    const client = Array.isArray(p.clients) ? (p.clients[0] ?? null) : p.clients;
     return { id: p.id, name: p.name, clientName: client?.name ?? null };
   });
 

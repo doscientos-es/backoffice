@@ -2,6 +2,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/layout/stat-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SectionBoundary } from "@/components/ui/error-boundary";
 import { requireUser } from "@/lib/auth";
 import { EXPENSE_CATEGORY_LABELS } from "@/lib/finance";
 import { getFinanceOverview } from "@/lib/finance/queries";
@@ -66,22 +67,24 @@ export default async function FinancePage() {
         />
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Ingresos vs gastos · últimos 6 meses</CardTitle>
-            <Link
-              href="/finance/expenses"
-              className="text-xs text-muted-foreground hover:underline"
-            >
-              Ver todos los gastos →
-            </Link>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <FinanceChart data={series} />
-        </CardContent>
-      </Card>
+      <SectionBoundary label="No se pudo cargar el gráfico">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Ingresos vs gastos · últimos 6 meses</CardTitle>
+              <Link
+                href="/finance/expenses"
+                className="text-xs text-muted-foreground hover:underline"
+              >
+                Ver todos los gastos →
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <FinanceChart data={series} />
+          </CardContent>
+        </Card>
+      </SectionBoundary>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
         <Card>

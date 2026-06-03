@@ -25,7 +25,8 @@ export default async function ProjectsPage({
 }: {
   searchParams: Promise<{ q?: string; status?: string; page?: string }>;
 }) {
-  await requireUser();
+  const user = await requireUser();
+  const canEdit = user.role !== "viewer";
   const sp = await searchParams;
   const q = (sp.q ?? "").trim();
   const status = (sp.status ?? "").trim();
@@ -35,6 +36,7 @@ export default async function ProjectsPage({
 
   return (
     <ProjectsList
+      canEdit={canEdit}
       title="Proyectos"
       empty={q || status ? "Sin coincidencias." : "Aún no hay proyectos."}
       error={undefined}

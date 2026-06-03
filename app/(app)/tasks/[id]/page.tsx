@@ -3,6 +3,7 @@ import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SectionBoundary } from "@/components/ui/error-boundary";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
 import { TASK_STATUS } from "@/lib/status";
@@ -171,15 +172,17 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
       {/* Comments section */}
       {/* The TaskGithubActions block is defined below this component. */}
       <div className="mt-2">
-        <div className="rounded-xl border border-border bg-card p-4">
-          <h2 className="mb-3 text-sm font-semibold">Comentarios</h2>
-          <TaskComments
-            taskId={id}
-            memberId={user.id}
-            memberRole={user.role}
-            initialComments={(commentsData as unknown as CommentItem[]) ?? []}
-          />
-        </div>
+        <SectionBoundary label="No se pudieron cargar los comentarios">
+          <div className="rounded-xl border border-border bg-card p-4">
+            <h2 className="mb-3 text-sm font-semibold">Comentarios</h2>
+            <TaskComments
+              taskId={id}
+              memberId={user.id}
+              memberRole={user.role}
+              initialComments={(commentsData as unknown as CommentItem[]) ?? []}
+            />
+          </div>
+        </SectionBoundary>
       </div>
     </div>
   );

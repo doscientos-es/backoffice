@@ -31,6 +31,7 @@ export type Database = {
         | "taxes"
         | "salary"
         | "other";
+      expense_payment_source: "company" | "member";
       expense_recurrence: "none" | "monthly" | "quarterly" | "yearly";
       expense_status: "pending" | "paid" | "cancelled";
       interaction_type:

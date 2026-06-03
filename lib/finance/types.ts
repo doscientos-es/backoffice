@@ -1,11 +1,18 @@
 import type {
   ExpenseCategory,
+  ExpensePaymentSource,
   ExpenseRecurrence,
   ExpenseStatus,
   MonthlyPoint,
 } from "./helpers";
 
 export const EXPENSE_LIST_PAGE_SIZE = 25;
+
+export type MemberContribution = {
+  memberId: string;
+  memberName: string;
+  total: number;
+};
 
 export type FinanceOverview = {
   series: MonthlyPoint[];
@@ -16,6 +23,7 @@ export type FinanceOverview = {
   topCategories: [ExpenseCategory, number][];
   recentExpenses: ExpenseRow[];
   recentInvoices: InvoiceRow[];
+  memberContributions: MemberContribution[];
 };
 
 export type ExpenseRow = {
@@ -92,6 +100,9 @@ export type ExpenseDetail = {
   invoice_reference: string | null;
   project_id: string | null;
   notes: string | null;
+  payment_source: ExpensePaymentSource;
+  paid_by_member_id: string | null;
+  paid_by_member_name: string | null;
   project: ExpenseDetailProject | null;
 };
 

@@ -1,12 +1,9 @@
 "use server";
 
 import { requireUser } from "@/lib/auth";
-import {
-  type MetaAdPreviewFormat,
-  getMetaAdPreview,
-} from "@/lib/integrations/meta-marketing";
+import { type MetaAdPreviewFormat, getMetaAdPreview } from "@/lib/integrations/meta-marketing";
 import { syncMetaCatalog, syncMetaInsights } from "@/lib/marketing-sync";
-import { parseMarketingRange, rangeToDates } from "@/lib/marketing/range";
+import { metaHistoryFloor, parseMarketingRange, rangeToDates } from "@/lib/marketing/range";
 
 export async function syncMetaAction(
   rangeKey?: string,
@@ -18,13 +15,17 @@ export async function syncMetaAction(
       return { ok: false, error: catalogResult.error ?? "Error al sincronizar catálogo" };
     }
 
-    // Always sync at least the last 90 days so any range smaller than that
-    // has fresh data without re-hitting the API on every range switch.
+    // Sync the requested window (so longer ranges like "Histórico" actually
+    // pull their data), but never less than the last 90 days — so smaller
+    // ranges stay fresh without re-hitting the API on every switch — and never
+    // earlier than Meta's 37-month historical limit.
     const { since: requestedSince } = rangeToDates(parseMarketingRange(rangeKey));
     const today = new Date().toISOString().split("T")[0] ?? "";
     const ninetyDaysAgo =
       new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0] ?? "";
-    const since = requestedSince < ninetyDaysAgo ? requestedSince : ninetyDaysAgo;
+    const floor = metaHistoryFloor();
+    let since = requestedSince < ninetyDaysAgo ? requestedSince : ninetyDaysAgo;
+    if (since < floor) since = floor;
 
     const insightsResult = await syncMetaInsights(since, today);
     if (!insightsResult.ok) {
@@ -55,5 +56,3 @@ export async function getAdPreviewAction(
     };
   }
 }
-
-
