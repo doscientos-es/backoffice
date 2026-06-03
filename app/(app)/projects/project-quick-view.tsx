@@ -9,6 +9,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { PROJECT_STATUS, type ProjectStatus } from "@/lib/status";
 import { relativeTime } from "@/lib/utils";
@@ -36,7 +37,11 @@ export function ProjectQuickView({
   return (
     <Drawer open={!!project} onOpenChange={(v) => !v && onClose()} direction="right">
       <DrawerContent className="sm:max-w-sm">
-        {project ? <Body project={project} /> : null}
+        {project ? (
+          <ErrorBoundary>
+            <Body project={project} />
+          </ErrorBoundary>
+        ) : null}
       </DrawerContent>
     </Drawer>
   );

@@ -19,8 +19,8 @@ const META: Record<
 export function GitHubModeBadge({
   mode,
   showLabel = true,
-}: { mode: GitHubSyncMode | null | undefined; showLabel?: boolean }) {
-  const m = META[mode ?? "none"];
+}: { mode: GitHubSyncMode | string | null | undefined; showLabel?: boolean }) {
+  const m = META[(mode ?? "none") as GitHubSyncMode] ?? META.none;
   const Icon = m.icon;
   return (
     <Badge variant={m.variant} title={m.label}>

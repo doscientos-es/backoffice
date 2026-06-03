@@ -86,6 +86,26 @@ export function toIsoDate(d: Date): string {
 }
 
 /**
+ * Local-time short ISO date (YYYY-MM-DD). Preferred for form prefills so the
+ * suggested value matches the user's calendar day instead of the UTC day
+ * (which `toIsoDate` returns and can be off by one near midnight).
+ */
+export function todayIsoLocal(base: Date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${base.getFullYear()}-${pad(base.getMonth() + 1)}-${pad(base.getDate())}`;
+}
+
+/**
+ * Adds whole days to `base` and returns the result as a local-time YYYY-MM-DD
+ * string. Useful for suggesting end dates relative to today.
+ */
+export function addDaysIsoLocal(days: number, base: Date = new Date()): string {
+  const d = new Date(base);
+  d.setDate(d.getDate() + days);
+  return todayIsoLocal(d);
+}
+
+/**
  * Range label suitable for chart titles and KPI hints.
  */
 export function describeRange(range: DashboardRange): string {

@@ -44,6 +44,23 @@ export const createLead = defineAction({
   },
 });
 
+// ---------------- DELETE ----------------
+
+export const deleteLead = defineAction({
+  name: "leads.delete",
+  schema: z.object({ id: z.string().uuid() }),
+  roles: ["owner", "admin"],
+  revalidate: () => ["/leads"],
+  handler: async (input) => {
+    const supabase = await createServerClient();
+    const { error } = await supabase
+      .from("leads")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", input.id);
+    if (error) throw new Error(error.message);
+  },
+});
+
 // ---------------- UPDATE ----------------
 
 export const updateLead = defineAction({

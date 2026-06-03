@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
+import { addDaysIsoLocal, todayIsoLocal } from "@/lib/utils/date";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createProject } from "../actions";
@@ -40,7 +41,12 @@ export default async function NewProjectPage({
               idPrefix="new"
               clients={(clients as Array<{ id: string; name: string }> | null) ?? []}
               autoFocusName
-              defaults={{ client_id: client_id ?? "" }}
+              defaults={{
+                client_id: client_id ?? "",
+                // Suggest a typical 6-week project window starting today.
+                starts_at: todayIsoLocal(),
+                ends_at: addDaysIsoLocal(42),
+              }}
             />
             <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
               <Button asChild variant="ghost" size="sm">

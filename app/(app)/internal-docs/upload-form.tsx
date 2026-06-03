@@ -5,10 +5,11 @@ import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { todayIsoLocal } from "@/lib/utils/date";
 import { Loader2, Paperclip } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const CATEGORIES = [
   { value: "legal", label: "Legal" },
@@ -25,9 +26,19 @@ const ACCEPTED = ".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg";
 export function UploadForm() {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
+  const effectiveDateRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Suggest today's date for the effective date. Set after mount (not as
+  // defaultValue) to keep the value calendar-correct and avoid SSR/client
+  // hydration mismatches around midnight.
+  useEffect(() => {
+    if (effectiveDateRef.current && !effectiveDateRef.current.value) {
+      effectiveDateRef.current.value = todayIsoLocal();
+    }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -37,7 +48,10 @@ export function UploadForm() {
     const formData = new FormData(form);
 
     const file = fileRef.current?.files?.[0];
-    if (!file) { setError("Selecciona un archivo"); return; }
+    if (!file) {
+      setError("Selecciona un archivo");
+      return;
+    }
 
     formData.set("file", file);
 
@@ -77,27 +91,42 @@ export function UploadForm() {
             onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
             required
           />
-          <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => fileRef.current?.click()}
+          >
             <Paperclip className="size-3.5" />
             Seleccionar archivo
           </Button>
           {fileName ? (
             <span className="truncate text-sm text-muted-foreground max-w-xs">{fileName}</span>
           ) : (
-            <span className="text-sm text-muted-foreground">Máx. 50 MB · PDF, Word, Excel, imagen</span>
+            <span className="text-sm text-muted-foreground">
+              Máx. 50 MB · PDF, Word, Excel, imagen
+            </span>
           )}
         </div>
       </FormRow>
 
       <FormRow label="Nombre del documento" htmlFor="name" required>
-        <Input id="name" name="name" required maxLength={200} placeholder="Contrato marco de servicios 2026" />
+        <Input
+          id="name"
+          name="name"
+          required
+          maxLength={200}
+          placeholder="Contrato marco de servicios 2026"
+        />
       </FormRow>
 
       <div className="grid gap-5 sm:grid-cols-2">
         <FormRow label="Categoría" htmlFor="category">
           <Select id="category" name="category" defaultValue="other">
             {CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value}>{c.label}</option>
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
             ))}
           </Select>
         </FormRow>
@@ -109,17 +138,31 @@ export function UploadForm() {
           </Select>
         </FormRow>
 
-        <FormRow label="Fecha de vigencia" htmlFor="effective_date">
-          <Input id="effective_date" name="effective_date" type="date" />
+        <FormRow
+          label="Fecha de vigencia"
+          htmlFor="effective_date"
+          hint="Prerrellenada con hoy. Cámbiala si aplica otra fecha."
+        >
+          <Input ref={effectiveDateRef} id="effective_date" name="effective_date" type="date" />
         </FormRow>
 
-        <FormRow label="Fecha de expiración" htmlFor="expires_at">
+        <FormRow
+          label="Fecha de expiración"
+          htmlFor="expires_at"
+          hint="Opcional. Déjala vacía si el documento no caduca."
+        >
           <Input id="expires_at" name="expires_at" type="date" />
         </FormRow>
       </div>
 
       <FormRow label="Descripción" htmlFor="description">
-        <Textarea id="description" name="description" maxLength={2000} rows={3} placeholder="Breve descripción del contenido…" />
+        <Textarea
+          id="description"
+          name="description"
+          maxLength={2000}
+          rows={3}
+          placeholder="Breve descripción del contenido…"
+        />
       </FormRow>
 
       {error && <p className="text-sm font-medium text-destructive">{error}</p>}
@@ -129,7 +172,14 @@ export function UploadForm() {
           <Link href="/internal-docs">Cancelar</Link>
         </Button>
         <Button type="submit" size="sm" disabled={uploading}>
-          {uploading ? <><Loader2 className="size-3.5 animate-spin" />Subiendo…</> : "Subir documento"}
+          {uploading ? (
+            <>
+              <Loader2 className="size-3.5 animate-spin" />
+              Subiendo…
+            </>
+          ) : (
+            "Subir documento"
+          )}
         </Button>
       </div>
     </form>

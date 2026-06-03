@@ -1,6 +1,7 @@
 "use client";
 
 import { ListPage, type ListPageProps } from "@/components/layout/list-page";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { useState } from "react";
 import { ProjectQuickView, type QuickProject } from "./project-quick-view";
 
@@ -10,7 +11,9 @@ export function ProjectsList(props: ListPageProps) {
   return (
     <>
       <ListPage {...props} onRowClick={(row) => setSelectedProject(row.data as QuickProject)} />
-      <ProjectQuickView project={selectedProject} onClose={() => setSelectedProject(null)} />
+      <ErrorBoundary>
+        <ProjectQuickView project={selectedProject} onClose={() => setSelectedProject(null)} />
+      </ErrorBoundary>
     </>
   );
 }

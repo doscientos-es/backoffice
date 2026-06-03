@@ -103,5 +103,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: dbError?.message ?? "Error al guardar" }, { status: 500 });
   }
 
+  // Audit trail: record creation (best-effort, never blocks the upload).
+  await supabase.from("internal_document_events").insert({
+    document_id: docId,
+    action: "created",
+    actor_id: user.id,
+    payload: { name, category, visibility, size_bytes: file.size },
+  });
+
   return NextResponse.json({ id: data.id as string }, { status: 201 });
 }

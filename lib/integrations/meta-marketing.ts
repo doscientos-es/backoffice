@@ -210,8 +210,15 @@ export async function getMetaAds(): Promise<MetaMarketingAd[]> {
 }
 
 /**
- * Ad-level insights for a date range. Includes Meta-attributed lead actions
- * so we can compute CPL without depending on UTM matching.
+ * Ad-level insights for a date range, broken down per day. Includes
+ * Meta-attributed lead actions so we can compute CPL without depending on UTM
+ * matching.
+ *
+ * `time_increment: 1` is required: without it Meta returns a single aggregated
+ * row per ad (`date_start = since`, `date_stop = until`), which collides with the
+ * `marketing_insights (ad_id, date_start)` daily model and makes range filtering
+ * miss data and overlapping syncs double-count. With it, each row is a single
+ * day (`date_start === date_stop`).
  */
 export async function getMetaInsights(
   since: string,
@@ -225,6 +232,7 @@ export async function getMetaInsights(
     fields:
       "ad_id,date_start,date_stop,impressions,reach,clicks,spend,ctr,cpc,cpp,account_currency,actions,cost_per_action_type",
     time_range: JSON.stringify({ since, until }),
+    time_increment: "1",
   });
 }
 
@@ -247,9 +255,7 @@ export async function getMetaAdPreview(
   const token = env.META_USER_ACCESS_TOKEN || env.META_PAGE_ACCESS_TOKEN;
   if (!token) throw new Error("Meta Access Token (User or Page) not configured");
 
-  const url = new URL(
-    `https://graph.facebook.com/${env.META_GRAPH_API_VERSION}/${adId}/previews`,
-  );
+  const url = new URL(`https://graph.facebook.com/${env.META_GRAPH_API_VERSION}/${adId}/previews`);
   url.searchParams.set("access_token", token);
   url.searchParams.set("ad_format", format);
 
@@ -268,8 +274,13 @@ export async function getMetaAdPreview(
  * aggregated KPIs per campaign with Meta-attributed leads.
  */
 export async function getMetaCampaignInsights(
-  datePreset: "today" | "yesterday" | "this_month" | "last_month" | "last_30d" | "lifetime" =
-    "this_month",
+  datePreset:
+    | "today"
+    | "yesterday"
+    | "this_month"
+    | "last_month"
+    | "last_30d"
+    | "lifetime" = "this_month",
 ): Promise<MetaMarketingInsight[]> {
   const env = serverEnv();
   if (!env.META_AD_ACCOUNT_ID) throw new Error("META_AD_ACCOUNT_ID not configured");

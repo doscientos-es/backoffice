@@ -2,6 +2,14 @@
 
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   Drawer,
   DrawerClose,
   DrawerContent,
@@ -13,10 +21,11 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { LEAD_STATUS } from "@/lib/status";
 import { formatEUR, relativeTime } from "@/lib/utils";
-import { ArrowUpRight, Building2, Mail, Phone, Wallet, X } from "lucide-react";
+import { ArrowUpRight, Building2, Mail, Phone, Trash2, Wallet, X } from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { type ReactNode, useState, useTransition } from "react";
 import { LeadEditDialog } from "./[id]/lead-edit-dialog";
+import { deleteLead } from "./actions";
 import { QCallDialog, QEmailDialog, QNoteDialog } from "./lead-quick-action-dialogs";
 import type { KanbanLead } from "./leads-kanban";
 
@@ -42,7 +51,7 @@ export function LeadQuickView({
       <DrawerContent className="sm:max-w-sm">
         {lead ? (
           <ErrorBoundary>
-            <Body lead={lead} canEdit={canEdit} />
+            <Body lead={lead} canEdit={canEdit} onCloseAction={onCloseAction} />
           </ErrorBoundary>
         ) : null}
       </DrawerContent>
@@ -50,7 +59,15 @@ export function LeadQuickView({
   );
 }
 
-function Body({ lead, canEdit }: { lead: KanbanLead; canEdit: boolean }) {
+function Body({
+  lead,
+  canEdit,
+  onCloseAction,
+}: {
+  lead: KanbanLead;
+  canEdit: boolean;
+  onCloseAction: () => void;
+}) {
   const hasEstimated = lead.estimated_value != null && lead.estimated_value > 0;
   return (
     <div className="grid h-full grid-rows-[auto_1fr_auto_auto]">
@@ -108,18 +125,21 @@ function Body({ lead, canEdit }: { lead: KanbanLead; canEdit: boolean }) {
 
       <footer className="flex items-center gap-2 border-t border-border p-3">
         {canEdit && (
-          <LeadEditDialog
-            lead={{
-              id: lead.id,
-              name: lead.name,
-              company: lead.company,
-              email: lead.email,
-              phone: lead.phone,
-              source: lead.source,
-              notes: lead.notes,
-              estimated_value: lead.estimated_value,
-            }}
-          />
+          <>
+            <DeleteLeadButton leadId={lead.id} leadName={lead.name} onDeleted={onCloseAction} />
+            <LeadEditDialog
+              lead={{
+                id: lead.id,
+                name: lead.name,
+                company: lead.company,
+                email: lead.email,
+                phone: lead.phone,
+                source: lead.source,
+                notes: lead.notes,
+                estimated_value: lead.estimated_value,
+              }}
+            />
+          </>
         )}
         <Button asChild className="flex-1" size="sm" variant="outline">
           <Link href={`/leads/${lead.id}`}>
@@ -129,6 +149,58 @@ function Body({ lead, canEdit }: { lead: KanbanLead; canEdit: boolean }) {
         </Button>
       </footer>
     </div>
+  );
+}
+
+function DeleteLeadButton({
+  leadId,
+  leadName,
+  onDeleted,
+}: {
+  leadId: string;
+  leadName: string;
+  onDeleted: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
+
+  function onConfirm() {
+    startTransition(async () => {
+      await deleteLead({ id: leadId });
+      setOpen(false);
+      onDeleted();
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Eliminar lead"
+          className="text-muted-foreground hover:text-destructive"
+        >
+          <Trash2 className="size-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Eliminar lead</DialogTitle>
+          <DialogDescription>
+            ¿Eliminar <strong>{leadName}</strong>? Esta acción es reversible desde la base de datos.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex justify-end gap-2 pt-1">
+          <Button variant="ghost" size="sm" onClick={() => setOpen(false)} disabled={pending}>
+            Cancelar
+          </Button>
+          <Button variant="destructive" size="sm" onClick={onConfirm} disabled={pending}>
+            {pending ? "Eliminando…" : "Eliminar"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
