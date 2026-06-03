@@ -3,9 +3,9 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
-import { LayoutGrid, List } from "lucide-react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { LayoutGrid, List, Loader2 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useTransition } from "react";
 
 /** Params that are meaningful in both views. */
 const SHARED_PARAMS = ["q", "project", "priority"] as const;
@@ -13,7 +13,10 @@ const SHARED_PARAMS = ["q", "project", "priority"] as const;
 const LIST_ONLY_PARAMS = ["status"] as const;
 
 export function TasksViewToggle({ view }: { view: "board" | "list" }) {
+  const router = useRouter();
   const params = useSearchParams();
+  const [, startTransition] = useTransition();
+  const [pending, setPending] = useState<"board" | "list" | null>(null);
 
   function buildHref(target: "board" | "list"): string {
     const next = new URLSearchParams();
@@ -38,6 +41,15 @@ export function TasksViewToggle({ view }: { view: "board" | "list" }) {
     return qs ? `/tasks?${qs}` : "/tasks";
   }
 
+  const navigate = (target: "board" | "list") => {
+    if (target === view) return;
+    setPending(target);
+    startTransition(() => {
+      router.push(buildHref(target));
+      setPending(null);
+    });
+  };
+
   // Count filters the user has actively set (excluding page / view).
   const activeCount = [...SHARED_PARAMS, ...LIST_ONLY_PARAMS].filter(
     (k) => !!params.get(k),
@@ -56,26 +68,32 @@ export function TasksViewToggle({ view }: { view: "board" | "list" }) {
       )}
       <ButtonGroup className="rounded-lg border border-border bg-muted/30">
         <Button
-          asChild
           size="sm"
           variant={view === "board" ? "secondary" : "ghost"}
           className={view !== "board" ? "text-muted-foreground hover:text-foreground" : ""}
+          disabled={pending !== null}
+          onClick={() => navigate("board")}
         >
-          <Link href={buildHref("board")}>
+          {pending === "board" ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
             <LayoutGrid className="size-3.5" />
-            Tablero
-          </Link>
+          )}
+          Tablero
         </Button>
         <Button
-          asChild
           size="sm"
           variant={view === "list" ? "secondary" : "ghost"}
           className={view !== "list" ? "text-muted-foreground hover:text-foreground" : ""}
+          disabled={pending !== null}
+          onClick={() => navigate("list")}
         >
-          <Link href={buildHref("list")}>
+          {pending === "list" ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
             <List className="size-3.5" />
-            Lista
-          </Link>
+          )}
+          Lista
         </Button>
       </ButtonGroup>
     </div>

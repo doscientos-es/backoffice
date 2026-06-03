@@ -17,6 +17,8 @@ export function LeadNewForm() {
     e.preventDefault();
     feedback.setPending();
     const fd = new FormData(e.currentTarget);
+    const estimatedRaw = fd.get("estimated_value")?.toString() ?? "";
+    const estimated_value = estimatedRaw === "" ? null : Number(estimatedRaw);
 
     const res = await createLead({
       name: fd.get("name")?.toString() ?? "",
@@ -25,6 +27,7 @@ export function LeadNewForm() {
       phone: fd.get("phone")?.toString() ?? "",
       source: fd.get("source")?.toString() ?? "",
       notes: fd.get("notes")?.toString() ?? "",
+      estimated_value,
     });
 
     if (!res.ok) return feedback.setError(res.error);
@@ -33,7 +36,7 @@ export function LeadNewForm() {
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5">
-      <LeadFormFields idPrefix="new" autoFocusName />
+      <LeadFormFields idPrefix="new" includeEstimatedValue autoFocusName />
       <div className="flex items-center justify-end gap-3 border-t border-border pt-5">
         <FormFeedback state={feedback.state} pendingLabel="Creando…" />
         <SubmitButton loading={feedback.pending} pendingLabel="Creando…">

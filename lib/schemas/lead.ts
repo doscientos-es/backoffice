@@ -24,18 +24,14 @@ export const CreateLeadInput = z.object({
   company: optionalText(160),
   source: optionalText(80),
   notes: optionalText(4000),
+  estimated_value: z.number().min(0).max(99_999_999.99).nullable().optional(),
 });
 
 export type CreateLeadInputType = z.infer<typeof CreateLeadInput>;
 
 export const UpdateLeadInput = CreateLeadInput.extend({
   id: z.string().uuid(),
-  estimated_value: z
-    .number()
-    .min(0)
-    .max(99_999_999.99)
-    .nullable()
-    .optional(),
+  estimated_value: z.number().min(0).max(99_999_999.99).nullable().optional(),
 });
 
 export type UpdateLeadInputType = z.infer<typeof UpdateLeadInput>;
@@ -82,7 +78,13 @@ export const UpdateLeadStatusInput = z
 
 export type UpdateLeadStatusInputType = z.infer<typeof UpdateLeadStatusInput>;
 
-export const CALL_OUTCOMES = ["connected", "voicemail", "no_answer", "busy", "wrong_number"] as const;
+export const CALL_OUTCOMES = [
+  "connected",
+  "voicemail",
+  "no_answer",
+  "busy",
+  "wrong_number",
+] as const;
 export type CallOutcome = (typeof CALL_OUTCOMES)[number];
 
 export const LogCallInput = z

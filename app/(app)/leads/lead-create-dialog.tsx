@@ -35,6 +35,8 @@ export function LeadCreateDialog({ trigger, onCreated }: Props) {
     e.preventDefault();
     feedback.setPending();
     const fd = new FormData(e.currentTarget);
+    const estimatedRaw = fd.get("estimated_value")?.toString() ?? "";
+    const estimated_value = estimatedRaw === "" ? null : Number(estimatedRaw);
 
     const res = await createLead({
       name: fd.get("name")?.toString() ?? "",
@@ -43,6 +45,7 @@ export function LeadCreateDialog({ trigger, onCreated }: Props) {
       phone: fd.get("phone")?.toString() ?? "",
       source: fd.get("source")?.toString() ?? "",
       notes: fd.get("notes")?.toString() ?? "",
+      estimated_value,
     });
 
     if (!res.ok) return feedback.setError(res.error);
@@ -81,7 +84,7 @@ export function LeadCreateDialog({ trigger, onCreated }: Props) {
           onSubmit={onSubmit}
           className="flex flex-col gap-5 max-h-[80vh] overflow-y-auto pr-1"
         >
-          <LeadFormFields idPrefix="create" autoFocusName />
+          <LeadFormFields idPrefix="create" includeEstimatedValue autoFocusName />
           <div className="flex items-center justify-end gap-3 border-t border-border pt-3">
             <FormFeedback state={feedback.state} pendingLabel="Creando…" />
             <SubmitButton loading={feedback.pending} pendingLabel="Creando…">

@@ -3,6 +3,7 @@ import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DangerZone } from "@/components/ui/danger-zone";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
 import { EXPENSE_CATEGORY_LABELS, EXPENSE_RECURRENCE_LABELS } from "@/lib/finance";
@@ -120,22 +121,17 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
       </div>
 
       {canDelete ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Zona peligrosa</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form action={deleteExpense} className="flex items-center justify-between gap-3">
-              <input type="hidden" name="id" value={id} />
-              <p className="text-sm text-muted-foreground">
-                El gasto se eliminará del listado y dejará de contar en finanzas.
-              </p>
-              <Button type="submit" variant="destructive" size="sm">
-                Eliminar gasto
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+        <DangerZone>
+          <form action={deleteExpense} className="flex items-center justify-between gap-3">
+            <input type="hidden" name="id" value={id} />
+            <p className="text-sm text-muted-foreground">
+              El gasto se eliminará del listado y dejará de contar en finanzas.
+            </p>
+            <Button type="submit" variant="destructive" size="sm">
+              Eliminar gasto
+            </Button>
+          </form>
+        </DangerZone>
       ) : null}
     </div>
   );

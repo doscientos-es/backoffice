@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DangerZone } from "@/components/ui/danger-zone";
 import { DocPreview } from "@/components/ui/doc-preview";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { requireUser } from "@/lib/auth";
@@ -207,22 +208,17 @@ export default async function InternalDocDetailPage({
           </Card>
 
           {isAdmin && (
-            <Card className="border-destructive/30">
-              <CardHeader>
-                <CardTitle className="text-destructive">Zona de peligro</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form action={deleteInternalDoc} className="flex items-center gap-4">
-                  <input type="hidden" name="id" value={id} />
-                  <p className="flex-1 text-sm text-muted-foreground">
-                    Eliminar este documento de forma permanente. Esta acción no se puede deshacer.
-                  </p>
-                  <SubmitButton variant="destructive" size="sm" pendingLabel="Eliminando…">
-                    Eliminar
-                  </SubmitButton>
-                </form>
-              </CardContent>
-            </Card>
+            <DangerZone>
+              <form action={deleteInternalDoc} className="flex items-center gap-4">
+                <input type="hidden" name="id" value={id} />
+                <p className="flex-1 text-sm text-muted-foreground">
+                  Eliminar este documento de forma permanente. Esta acción no se puede deshacer.
+                </p>
+                <SubmitButton variant="destructive" size="sm" pendingLabel="Eliminando…">
+                  Eliminar
+                </SubmitButton>
+              </form>
+            </DangerZone>
           )}
         </div>
 
