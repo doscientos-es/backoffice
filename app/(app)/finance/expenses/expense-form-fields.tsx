@@ -1,3 +1,5 @@
+"use client";
+
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -5,11 +7,14 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   EXPENSE_CATEGORIES,
   EXPENSE_CATEGORY_LABELS,
+  EXPENSE_PAYMENT_SOURCES,
+  EXPENSE_PAYMENT_SOURCE_LABELS,
   EXPENSE_RECURRENCES,
   EXPENSE_RECURRENCE_LABELS,
   EXPENSE_STATUSES,
   EXPENSE_STATUS_LABELS,
 } from "@/lib/finance";
+import { useState } from "react";
 
 export type ExpenseFormDefaults = {
   vendor?: string;
@@ -27,6 +32,8 @@ export type ExpenseFormDefaults = {
   invoice_reference?: string | null;
   project_id?: string | null;
   notes?: string | null;
+  payment_source?: string | null;
+  paid_by_member_id?: string | null;
 };
 
 interface Props {
@@ -35,6 +42,7 @@ interface Props {
   idPrefix?: string;
   autoFocusVendor?: boolean;
   projects?: Array<{ id: string; name: string; clientName?: string | null }>;
+  teamMembers?: Array<{ id: string; name: string }>;
 }
 
 /**
@@ -46,10 +54,25 @@ export function ExpenseFormFields({
   idPrefix = "expense",
   autoFocusVendor = false,
   projects = [],
+  teamMembers = [],
 }: Props) {
   const d = defaults ?? {};
+  const [paymentSource, setPaymentSource] = useState(d.payment_source ?? "company");
+  const [showDetails, setShowDetails] = useState(
+    !!(d.vendor_nif || d.invoice_reference || d.project_id || d.description || d.notes || d.recurrence !== "none"),
+  );
+
+  const hasOptionalValues = !!(
+    d.vendor_nif ||
+    d.invoice_reference ||
+    d.project_id ||
+    d.description ||
+    d.notes
+  );
+
   return (
     <>
+      {/* ── Core fields ── */}
       <div className="grid gap-5 sm:grid-cols-2">
         <FormRow label="Proveedor" htmlFor={`${idPrefix}-vendor`} required>
           <Input
@@ -58,7 +81,7 @@ export function ExpenseFormFields({
             required
             maxLength={160}
             autoFocus={autoFocusVendor}
-            placeholder="Vercel, Supabase, OpenAI…"
+            placeholder="Meta, Notion, Google…"
             defaultValue={d.vendor ?? ""}
           />
         </FormRow>
@@ -84,32 +107,11 @@ export function ExpenseFormFields({
             defaultValue={d.expense_date ?? new Date().toISOString().slice(0, 10)}
           />
         </FormRow>
-        <FormRow label="Vencimiento" htmlFor={`${idPrefix}-due_date`}>
-          <Input
-            id={`${idPrefix}-due_date`}
-            name="due_date"
-            type="date"
-            defaultValue={d.due_date ?? ""}
-          />
-        </FormRow>
         <FormRow label="Estado" htmlFor={`${idPrefix}-status`}>
           <Select id={`${idPrefix}-status`} name="status" defaultValue={d.status ?? "paid"}>
             {EXPENSE_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {EXPENSE_STATUS_LABELS[s]}
-              </option>
-            ))}
-          </Select>
-        </FormRow>
-        <FormRow label="Recurrencia" htmlFor={`${idPrefix}-recurrence`}>
-          <Select
-            id={`${idPrefix}-recurrence`}
-            name="recurrence"
-            defaultValue={d.recurrence ?? "none"}
-          >
-            {EXPENSE_RECURRENCES.map((r) => (
-              <option key={r} value={r}>
-                {EXPENSE_RECURRENCE_LABELS[r]}
               </option>
             ))}
           </Select>
@@ -138,73 +140,158 @@ export function ExpenseFormFields({
             defaultValue={(d.tax_rate ?? 21).toString()}
           />
         </FormRow>
-        <FormRow label="Moneda" htmlFor={`${idPrefix}-currency`}>
-          <Input
-            id={`${idPrefix}-currency`}
-            name="currency"
-            maxLength={3}
-            defaultValue={d.currency ?? "EUR"}
-          />
-        </FormRow>
-        <FormRow label="Fecha de pago" htmlFor={`${idPrefix}-paid_at`}>
-          <Input
-            id={`${idPrefix}-paid_at`}
-            name="paid_at"
-            type="date"
-            defaultValue={d.paid_at ?? ""}
-          />
-        </FormRow>
-        <FormRow label="NIF proveedor" htmlFor={`${idPrefix}-vendor_nif`}>
-          <Input
-            id={`${idPrefix}-vendor_nif`}
-            name="vendor_nif"
-            maxLength={20}
-            placeholder="ESBxxxxxxxx"
-            defaultValue={d.vendor_nif ?? ""}
-          />
-        </FormRow>
-        <FormRow label="Nº factura proveedor" htmlFor={`${idPrefix}-invoice_reference`}>
-          <Input
-            id={`${idPrefix}-invoice_reference`}
-            name="invoice_reference"
-            maxLength={80}
-            defaultValue={d.invoice_reference ?? ""}
-          />
-        </FormRow>
-        <FormRow label="Proyecto (opcional)" htmlFor={`${idPrefix}-project_id`}>
+
+        {/* ── Payment source ── */}
+        <FormRow label="Pagado desde" htmlFor={`${idPrefix}-payment_source`}>
           <Select
-            id={`${idPrefix}-project_id`}
-            name="project_id"
-            defaultValue={d.project_id ?? ""}
+            id={`${idPrefix}-payment_source`}
+            name="payment_source"
+            value={paymentSource}
+            onChange={(e) => setPaymentSource(e.target.value)}
           >
-            <option value="">— Ninguno —</option>
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-                {p.clientName ? ` · ${p.clientName}` : ""}
+            {EXPENSE_PAYMENT_SOURCES.map((s) => (
+              <option key={s} value={s}>
+                {EXPENSE_PAYMENT_SOURCE_LABELS[s]}
               </option>
             ))}
           </Select>
         </FormRow>
+        {paymentSource === "member" && (
+          <FormRow label="Socio" htmlFor={`${idPrefix}-paid_by_member_id`} required>
+            <Select
+              id={`${idPrefix}-paid_by_member_id`}
+              name="paid_by_member_id"
+              defaultValue={d.paid_by_member_id ?? ""}
+              required
+            >
+              <option value="">— Selecciona —</option>
+              {teamMembers.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </Select>
+          </FormRow>
+        )}
+        {paymentSource === "company" && (
+          /* hidden sentinel so the field is always submitted */
+          <input type="hidden" name="paid_by_member_id" value="" />
+        )}
       </div>
-      <FormRow label="Descripción" htmlFor={`${idPrefix}-description`}>
-        <Input
-          id={`${idPrefix}-description`}
-          name="description"
-          maxLength={400}
-          placeholder="Hosting mensual, dominio anual…"
-          defaultValue={d.description ?? ""}
-        />
-      </FormRow>
-      <FormRow label="Notas" htmlFor={`${idPrefix}-notes`}>
-        <Textarea
-          id={`${idPrefix}-notes`}
-          name="notes"
-          rows={3}
-          maxLength={4000}
-          defaultValue={d.notes ?? ""}
-        />
-      </FormRow>
+
+      {/* ── Optional details ── */}
+      <div className="mt-4 border-t pt-3">
+        <button
+          type="button"
+          className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
+          onClick={() => setShowDetails((v) => !v)}
+        >
+          <span>{showDetails ? "▾" : "▸"}</span>
+          Más detalles (opcional)
+          {hasOptionalValues && !showDetails && (
+            <span className="ml-1 rounded bg-muted px-1.5 py-0.5 text-xs">con datos</span>
+          )}
+        </button>
+        {showDetails && (
+          <div className="mt-4 grid gap-5 sm:grid-cols-2">
+            <FormRow label="Vencimiento" htmlFor={`${idPrefix}-due_date`}>
+              <Input
+                id={`${idPrefix}-due_date`}
+                name="due_date"
+                type="date"
+                defaultValue={d.due_date ?? ""}
+              />
+            </FormRow>
+            <FormRow label="Fecha de pago" htmlFor={`${idPrefix}-paid_at`}>
+              <Input
+                id={`${idPrefix}-paid_at`}
+                name="paid_at"
+                type="date"
+                defaultValue={d.paid_at ?? ""}
+              />
+            </FormRow>
+            <FormRow label="Recurrencia" htmlFor={`${idPrefix}-recurrence`}>
+              <Select
+                id={`${idPrefix}-recurrence`}
+                name="recurrence"
+                defaultValue={d.recurrence ?? "none"}
+              >
+                {EXPENSE_RECURRENCES.map((r) => (
+                  <option key={r} value={r}>
+                    {EXPENSE_RECURRENCE_LABELS[r]}
+                  </option>
+                ))}
+              </Select>
+            </FormRow>
+            <FormRow label="NIF proveedor" htmlFor={`${idPrefix}-vendor_nif`}>
+              <Input
+                id={`${idPrefix}-vendor_nif`}
+                name="vendor_nif"
+                maxLength={20}
+                placeholder="ESBxxxxxxxx"
+                defaultValue={d.vendor_nif ?? ""}
+              />
+            </FormRow>
+            <FormRow label="Nº factura proveedor" htmlFor={`${idPrefix}-invoice_reference`}>
+              <Input
+                id={`${idPrefix}-invoice_reference`}
+                name="invoice_reference"
+                maxLength={80}
+                defaultValue={d.invoice_reference ?? ""}
+              />
+            </FormRow>
+            <FormRow label="Proyecto" htmlFor={`${idPrefix}-project_id`}>
+              <Select
+                id={`${idPrefix}-project_id`}
+                name="project_id"
+                defaultValue={d.project_id ?? ""}
+              >
+                <option value="">— Ninguno —</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                    {p.clientName ? ` · ${p.clientName}` : ""}
+                  </option>
+                ))}
+              </Select>
+            </FormRow>
+            <FormRow
+              label="Moneda"
+              htmlFor={`${idPrefix}-currency`}
+              className="sm:col-span-1"
+            >
+              <Input
+                id={`${idPrefix}-currency`}
+                name="currency"
+                maxLength={3}
+                defaultValue={d.currency ?? "EUR"}
+              />
+            </FormRow>
+            <div className="sm:col-span-2">
+              <FormRow label="Descripción" htmlFor={`${idPrefix}-description`}>
+                <Input
+                  id={`${idPrefix}-description`}
+                  name="description"
+                  maxLength={400}
+                  placeholder="Hosting mensual, dominio anual…"
+                  defaultValue={d.description ?? ""}
+                />
+              </FormRow>
+            </div>
+            <div className="sm:col-span-2">
+              <FormRow label="Notas" htmlFor={`${idPrefix}-notes`}>
+                <Textarea
+                  id={`${idPrefix}-notes`}
+                  name="notes"
+                  rows={3}
+                  maxLength={4000}
+                  defaultValue={d.notes ?? ""}
+                />
+              </FormRow>
+            </div>
+          </div>
+        )}
+      </div>
     </>
   );
 }

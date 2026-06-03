@@ -34,14 +34,17 @@ type Expense = {
   invoice_reference: string | null;
   project_id: string | null;
   notes: string | null;
+  payment_source?: string | null;
+  paid_by_member_id?: string | null;
 };
 
 interface Props {
   expense: Expense;
   projects: Array<{ id: string; name: string; clientName?: string | null }>;
+  teamMembers?: Array<{ id: string; name: string }>;
 }
 
-export function ExpenseEditDialog({ expense, projects }: Props) {
+export function ExpenseEditDialog({ expense, projects, teamMembers = [] }: Props) {
   const [open, setOpen] = useState(false);
   const feedback = useFormFeedback();
   const { formRef, isDirty, reset } = useFormDirty<HTMLFormElement>();
@@ -67,6 +70,8 @@ export function ExpenseEditDialog({ expense, projects }: Props) {
       invoice_reference: fd.get("invoice_reference")?.toString() ?? "",
       project_id: fd.get("project_id")?.toString() ?? "",
       notes: fd.get("notes")?.toString() ?? "",
+      payment_source: fd.get("payment_source")?.toString() ?? "company",
+      paid_by_member_id: fd.get("paid_by_member_id")?.toString() ?? "",
     });
     if (!res.ok) return feedback.setError(res.error);
     feedback.setSuccess("Guardado");
@@ -101,6 +106,7 @@ export function ExpenseEditDialog({ expense, projects }: Props) {
           <ExpenseFormFields
             idPrefix={`edit-${expense.id}`}
             projects={projects}
+            teamMembers={teamMembers}
             defaults={{
               vendor: expense.vendor,
               description: expense.description,
@@ -117,6 +123,8 @@ export function ExpenseEditDialog({ expense, projects }: Props) {
               invoice_reference: expense.invoice_reference,
               project_id: expense.project_id,
               notes: expense.notes,
+              payment_source: expense.payment_source,
+              paid_by_member_id: expense.paid_by_member_id,
             }}
           />
           <div className="flex items-center justify-end gap-3 border-t border-border pt-3">

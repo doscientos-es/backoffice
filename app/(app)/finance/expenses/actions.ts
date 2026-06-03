@@ -30,13 +30,19 @@ function readRaw(formData: FormData) {
     invoice_reference: formData.get("invoice_reference")?.toString() ?? "",
     project_id: formData.get("project_id")?.toString() ?? "",
     notes: formData.get("notes")?.toString() ?? "",
+    payment_source: formData.get("payment_source")?.toString() ?? "company",
+    paid_by_member_id: formData.get("paid_by_member_id")?.toString() ?? "",
   };
 }
 
-export async function createExpense(formData: FormData): Promise<void> {
+export async function createExpense(
+  formData: FormData,
+): Promise<{ ok: false; error: string } | never> {
   const user = await requireUser();
   const parsed = ExpenseInput.safeParse(readRaw(formData));
-  if (!parsed.success) throw new Error(parsed.error.errors[0]?.message ?? "Datos no válidos");
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+  }
 
   const { subtotal, taxAmount, total } = computeExpenseTotals(
     parsed.data.subtotal,
@@ -64,12 +70,14 @@ export async function createExpense(formData: FormData): Promise<void> {
       invoice_reference: parsed.data.invoice_reference ?? null,
       project_id: parsed.data.project_id ?? null,
       notes: parsed.data.notes ?? null,
+      payment_source: parsed.data.payment_source,
+      paid_by_member_id: parsed.data.paid_by_member_id ?? null,
       created_by: user.id,
     })
     .select("id")
     .single();
 
-  if (error || !data) throw new Error(error?.message ?? "No se pudo crear el gasto");
+  if (error || !data) return { ok: false, error: error?.message ?? "No se pudo crear el gasto" };
   revalidatePath("/finance");
   revalidatePath("/finance/expenses");
   redirect(`/finance/expenses/${data.id}`);
@@ -114,6 +122,8 @@ export async function updateExpense(
       invoice_reference: parsed.data.invoice_reference ?? null,
       project_id: parsed.data.project_id ?? null,
       notes: parsed.data.notes ?? null,
+      payment_source: parsed.data.payment_source,
+      paid_by_member_id: parsed.data.paid_by_member_id ?? null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", input.id);

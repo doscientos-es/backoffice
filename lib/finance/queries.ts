@@ -5,6 +5,7 @@ import {
   EXPENSE_CATEGORIES,
   EXPENSE_STATUSES,
   type ExpenseCategory,
+  type ExpensePaymentSource,
   type ExpenseRecurrence,
   type ExpenseStatus,
   buildMonthlySeries,
@@ -16,6 +17,7 @@ import {
   type ExpenseListParams,
   type ExpenseListResult,
   type FinanceOverview,
+  type MemberContribution,
 } from "./types";
 
 const log = scopedLogger("finance.queries");
@@ -90,10 +92,17 @@ export async function getFinanceOverview(): Promise<FinanceOverview> {
       supabase
         .from("expenses")
         .select("paid_by_member_id, total, team_members(name)")
-        .eq("payment_source", "member")
+        .eq("payment_source", "member" as string)
         .neq("status", "cancelled")
         .not("paid_by_member_id", "is", null),
-    ),
+    ) as unknown as Promise<{
+      data: Array<{
+        paid_by_member_id: string | null;
+        total: number | null;
+        team_members: { name: string } | { name: string }[] | null;
+      }>;
+      error: unknown;
+    }>,
   ]);
 
   const series = buildMonthlySeries(
@@ -277,7 +286,10 @@ export async function getExpenseDetail(id: string): Promise<ExpenseDetailResult 
   const supabase = await createServerClient();
 
   const { data: expense, error } = await notDeleted(
-    supabase.from("expenses").select("*, projects(id, name, clients(id, name))").eq("id", id),
+    supabase
+      .from("expenses")
+      .select("*, projects(id, name, clients(id, name)), team_members(id, name)")
+      .eq("id", id),
   ).maybeSingle();
 
   if (error) log.error({ id, err: error.message }, "expense_detail_failed");
@@ -335,6 +347,16 @@ export async function getExpenseDetail(id: string): Promise<ExpenseDetailResult 
       invoice_reference: (expense.invoice_reference as string | null) ?? null,
       project_id: (expense.project_id as string | null) ?? null,
       notes: (expense.notes as string | null) ?? null,
+      payment_source: ((expense.payment_source as string | null) ??
+        "company") as ExpensePaymentSource,
+      paid_by_member_id: (expense.paid_by_member_id as string | null) ?? null,
+      paid_by_member_name: (() => {
+        const raw = expense.team_members as
+          | { id: string; name: string }
+          | { id: string; name: string }[]
+          | null;
+        return (Array.isArray(raw) ? raw[0]?.name : raw?.name) ?? null;
+      })(),
       project: rawProject
         ? { id: rawProject.id, name: rawProject.name, clientName: projectClient?.name ?? null }
         : null,
