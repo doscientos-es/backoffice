@@ -3,6 +3,8 @@
  * Keeping them in `lib/` decouples the data layer from the UI components.
  */
 
+import type { LeadStatus, TaskPriority, TaskStatus } from "@/lib/status";
+
 export type DashboardRange = "7d" | "30d" | "90d" | "ytd";
 
 export type DateWindow = {
@@ -68,4 +70,35 @@ export type AvisosData = {
   verifactuPending: VerifactuPendingRow[];
   overdueInvoices: OverdueInvoiceRow[];
   certExpiresAt: string | null;
+};
+
+/**
+ * "Tu día" — the personal, action-oriented layer of the dashboard. Surfaces
+ * what the logged-in member should act on today: their open tasks, the leads
+ * they own that need follow-up, and unassigned leads they can claim.
+ */
+export type MyTaskRow = {
+  id: string;
+  title: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  due_date: string | null;
+  contextLabel: string | null; // project or lead name the task belongs to
+};
+
+export type ActionLeadRow = {
+  id: string;
+  name: string;
+  company: string | null;
+  phone: string | null;
+  email: string | null;
+  status: LeadStatus;
+  /** Timestamp used for relative time: last update (my leads) or creation (unassigned). */
+  since: string;
+};
+
+export type MyDayData = {
+  tasks: MyTaskRow[];
+  myLeads: ActionLeadRow[];
+  unassignedLeads: ActionLeadRow[];
 };

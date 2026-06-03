@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { AlertCircle, CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Field,
@@ -14,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { useGithubHandle } from "@/lib/hooks/use-github-handle";
 import { cn } from "@/lib/utils";
+import { AlertCircle, CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { useState } from "react";
 import { updateProfile } from "./actions";
 
 interface Props {
@@ -25,6 +25,7 @@ interface Props {
   jobTitle: string | null;
   phone: string | null;
   contactEmail: string | null;
+  iban: string | null;
 }
 
 function buildSignaturePreview(opts: {
@@ -58,6 +59,7 @@ export function ProfileForm({
   jobTitle,
   phone,
   contactEmail,
+  iban,
 }: Props) {
   const feedback = useFormFeedback();
   const [previewFields, setPreviewFields] = useState({
@@ -148,6 +150,24 @@ export function ProfileForm({
               setPreviewFields((p) => ({ ...p, phone: e.target.value }))
             }
           />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="iban" className="text-xs font-medium">
+            IBAN personal
+          </FieldLabel>
+          <Input
+            id="iban"
+            name="iban"
+            defaultValue={iban ?? ""}
+            placeholder="ES91 2100 0418 4502 0005 1332"
+            maxLength={34}
+            autoComplete="off"
+            spellCheck={false}
+            autoCapitalize="characters"
+          />
+          <FieldDescription>
+            Se usa para calcular aportaciones de capital en Finanzas.
+          </FieldDescription>
         </Field>
         <Field>
           <FieldLabel htmlFor="email_alias" className="text-xs font-medium">

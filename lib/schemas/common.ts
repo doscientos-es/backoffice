@@ -15,6 +15,17 @@ export const emptyToUndef = z.literal("").transform(() => undefined);
 /** Optional UUID. Accepts "" and treats it as undefined. */
 export const optionalUuid = z.string().uuid().optional().or(emptyToUndef);
 
+/**
+ * Assignable UUID for nullable foreign keys (e.g. an owner/assignee).
+ * Accepts a UUID, `null`, or "" — coercing "" to `null` so an empty
+ * `<select>` clears the relation instead of leaving it untouched.
+ */
+export const assignableUuid = z
+  .string()
+  .uuid()
+  .nullable()
+  .or(z.literal("").transform(() => null));
+
 /** Optional ISO date string (YYYY-MM-DD or full ISO). Accepts "". */
 export const optionalDate = z.string().optional().or(emptyToUndef);
 

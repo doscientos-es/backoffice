@@ -88,19 +88,17 @@ export async function getFinanceOverview(): Promise<FinanceOverview> {
         .limit(5),
     ),
     // Member contributions: expenses personally paid by a partner
-    notDeleted(
+    // Typed explicitly to avoid TS2589 with deep Supabase generic chains
+    Promise.resolve(
       supabase
         .from("expenses")
-        .select("paid_by_member_id, total, team_members(name)")
+        .select("paid_by_member_id, total")
+        .is("deleted_at", null)
         .eq("payment_source", "member" as string)
         .neq("status", "cancelled")
         .not("paid_by_member_id", "is", null),
-    ) as unknown as Promise<{
-      data: Array<{
-        paid_by_member_id: string | null;
-        total: number | null;
-        team_members: { name: string } | { name: string }[] | null;
-      }>;
+    ).then(async (q) => q) as unknown as Promise<{
+      data: Array<{ paid_by_member_id: string | null; total: number | null }> | null;
       error: unknown;
     }>,
   ]);
@@ -131,22 +129,35 @@ export async function getFinanceOverview(): Promise<FinanceOverview> {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
 
-  // Aggregate member contributions
-  const byMember = new Map<string, { name: string; total: number }>();
-  for (const row of memberExpenseRows ?? []) {
-    const memberId = row.paid_by_member_id as string;
-    const memberRaw = row.team_members as { name: string } | { name: string }[] | null;
-    const memberName =
-      (Array.isArray(memberRaw) ? memberRaw[0]?.name : memberRaw?.name) ?? memberId;
-    const existing = byMember.get(memberId);
-    byMember.set(memberId, {
-      name: memberName,
-      total: (existing?.total ?? 0) + Number(row.total ?? 0),
-    });
+  // Aggregate member contributions; resolve names with a second query only if needed
+  const memberRows =
+    (memberExpenseRows as Array<{
+      paid_by_member_id: string | null;
+      total: number | null;
+    }> | null) ?? [];
+  const byMember = new Map<string, number>();
+  for (const row of memberRows) {
+    if (!row.paid_by_member_id) continue;
+    byMember.set(
+      row.paid_by_member_id,
+      (byMember.get(row.paid_by_member_id) ?? 0) + Number(row.total ?? 0),
+    );
   }
-  const memberContributions: MemberContribution[] = Array.from(byMember.entries()).map(
-    ([memberId, { name, total }]) => ({ memberId, memberName: name, total }),
-  );
+
+  let memberContributions: MemberContribution[] = [];
+  if (byMember.size > 0) {
+    const memberIds = Array.from(byMember.keys());
+    const { data: membersData } = await supabase
+      .from("team_members")
+      .select("id, name")
+      .in("id", memberIds);
+    const nameMap = new Map((membersData ?? []).map((m) => [m.id as string, m.name as string]));
+    memberContributions = memberIds.map((memberId) => ({
+      memberId,
+      memberName: nameMap.get(memberId) ?? memberId,
+      total: byMember.get(memberId) ?? 0,
+    }));
+  }
 
   return {
     series,

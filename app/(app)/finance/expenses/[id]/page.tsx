@@ -6,9 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DangerZone } from "@/components/ui/danger-zone";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
-import { EXPENSE_CATEGORY_LABELS, EXPENSE_RECURRENCE_LABELS } from "@/lib/finance";
+import {
+  EXPENSE_CATEGORY_LABELS,
+  EXPENSE_PAYMENT_SOURCE_LABELS,
+  EXPENSE_RECURRENCE_LABELS,
+} from "@/lib/finance";
 import { getExpenseDetail } from "@/lib/finance/queries";
 import { EXPENSE_STATUS } from "@/lib/status";
+import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -21,10 +26,16 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
   const { id } = await params;
   const user = await requireUser();
 
-  const result = await getExpenseDetail(id);
+  const supabase = await createServerClient();
+  const [result, { data: teamMembersRaw }] = await Promise.all([
+    getExpenseDetail(id),
+    supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
+  ]);
+
   if (!result) notFound();
   const { expense, projectOptions } = result;
   const project = expense.project;
+  const teamMembers = (teamMembersRaw ?? []) as Array<{ id: string; name: string }>;
 
   const canDelete = user.role === "owner" || user.role === "admin";
   const canEdit = user.role !== "viewer";
@@ -38,6 +49,11 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
         actions={
           <div className="flex items-center gap-2">
             <StatusBadge meta={EXPENSE_STATUS} value={expense.status} />
+            {canEdit ? (
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/finance/expenses/new?from=${id}`}>Duplicar</Link>
+              </Button>
+            ) : null}
             {canEdit ? (
               <ExpenseEditDialog
                 expense={{
@@ -57,8 +73,11 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
                   invoice_reference: expense.invoice_reference,
                   project_id: expense.project_id,
                   notes: expense.notes,
+                  payment_source: expense.payment_source,
+                  paid_by_member_id: expense.paid_by_member_id,
                 }}
                 projects={projectOptions}
+                teamMembers={teamMembers}
               />
             ) : null}
           </div>
@@ -75,6 +94,11 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
               <DetailRow label="Proveedor">{expense.vendor}</DetailRow>
               <DetailRow label="Categoría">
                 {EXPENSE_CATEGORY_LABELS[expense.category] ?? expense.category}
+              </DetailRow>
+              <DetailRow label="Pagado desde">
+                {expense.payment_source === "member" && expense.paid_by_member_name
+                  ? `${EXPENSE_PAYMENT_SOURCE_LABELS.member} · ${expense.paid_by_member_name}`
+                  : EXPENSE_PAYMENT_SOURCE_LABELS[expense.payment_source] ?? expense.payment_source}
               </DetailRow>
               <DetailRow label="Recurrencia">
                 {EXPENSE_RECURRENCE_LABELS[expense.recurrence] ?? expense.recurrence}

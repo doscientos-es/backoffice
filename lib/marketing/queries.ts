@@ -1,12 +1,16 @@
 import { scopedLogger } from "@/lib/logger";
+import { notDeleted } from "@/lib/supabase/filters";
 import { createServerClient } from "@/lib/supabase/server";
-import type { MarketingSort } from "./range";
+import { cache } from "react";
+import type { MarketingSort, MarketingView } from "./range";
 import type {
   ActiveAdRow,
   CampaignRow,
   CampaignsOverview,
   InsightsTimePoint,
   MarketingOverview,
+  MetaAdsBalance,
+  MetaAdsBalanceStatus,
   RawAdRow,
   RawInsightRow,
 } from "./types";
@@ -290,4 +294,99 @@ export async function getInsightsTimeSeries(opts: TimeSeriesOptions): Promise<In
   }
 
   return Array.from(byDay.values()).sort((a, b) => a.date.localeCompare(b.date));
+}
+
+export type MarketingOverviewResult =
+  | ({ view: "ads" } & MarketingOverview)
+  | ({ view: "campaigns" } & CampaignsOverview);
+
+/**
+ * Unified overview resolver shared by the KPI and table sections. Wrapped in
+ * React `cache()` with primitive arguments so both sections (rendered in
+ * parallel under their own Suspense boundaries) trigger a single DB round-trip
+ * per request instead of fetching the same data twice.
+ */
+export const getMarketingOverview = cache(
+  async (
+    view: MarketingView,
+    since: string,
+    until: string,
+    sort: MarketingSort,
+    showPaused: boolean,
+  ): Promise<MarketingOverviewResult> => {
+    if (view === "campaigns") {
+      const overview = await getCampaignsOverview({ since, until, sort });
+      return { view: "campaigns", ...overview };
+    }
+    const overview = await getActiveAdsOverview({ since, until, includePaused: showPaused, sort });
+    return { view: "ads", ...overview };
+  },
+);
+
+// --- Meta Ads balance -------------------------------------------------------
+
+/** Low-balance alert thresholds for the Meta Ads account. */
+const META_BALANCE_WARNING_EUR = 50;
+const META_BALANCE_WARNING_DAYS = 7;
+const META_BALANCE_CRITICAL_DAYS = 3;
+/** Trailing window used to estimate the daily burn rate. */
+const META_BURN_WINDOW_DAYS = 30;
+
+/**
+ * Estimated Meta Ads account balance: total recorded recharges (expenses with
+ * category `meta_ads`) minus the spend Meta has reported. Also derives a daily
+ * burn rate from the trailing window to estimate the remaining runway and an
+ * alert status so the dashboard can warn before the account runs dry.
+ *
+ * Returns `null` when there is neither a recharge nor any spend yet, so callers
+ * can skip rendering the widget entirely.
+ */
+export async function getMetaAdsBalance(): Promise<MetaAdsBalance | null> {
+  const supabase = await createServerClient();
+
+  const burnFloor = new Date(Date.now() - META_BURN_WINDOW_DAYS * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+
+  const [
+    { data: rechargeRows, error: rechargeErr },
+    { data: spendRows, error: spendErr },
+    { data: burnRows, error: burnErr },
+  ] = await Promise.all([
+    notDeleted(supabase.from("expenses").select("total").eq("category", "meta_ads")).neq(
+      "status",
+      "cancelled",
+    ),
+    supabase.from("marketing_insights").select("spend, currency"),
+    supabase.from("marketing_insights").select("spend").gte("date_start", burnFloor),
+  ]);
+
+  if (rechargeErr) log.error({ err: rechargeErr.message }, "meta_balance_recharges_failed");
+  if (spendErr) log.error({ err: spendErr.message }, "meta_balance_spend_failed");
+  if (burnErr) log.error({ err: burnErr.message }, "meta_balance_burn_failed");
+
+  const totalRecharged = sum((rechargeRows ?? []).map((r) => Number(r.total ?? 0)));
+  const totalSpent = sum((spendRows ?? []).map((r) => Number(r.spend ?? 0)));
+
+  // Nothing recorded yet — let the caller skip the widget.
+  if (totalRecharged === 0 && totalSpent === 0) return null;
+
+  const balance = totalRecharged - totalSpent;
+  const burnTotal = sum((burnRows ?? []).map((r) => Number(r.spend ?? 0)));
+  const dailyBurn = burnTotal / META_BURN_WINDOW_DAYS;
+  const daysRemaining = dailyBurn > 0 ? balance / dailyBurn : null;
+
+  let status: MetaAdsBalanceStatus = "ok";
+  if (balance <= 0 || (daysRemaining !== null && daysRemaining < META_BALANCE_CRITICAL_DAYS)) {
+    status = "critical";
+  } else if (
+    balance < META_BALANCE_WARNING_EUR ||
+    (daysRemaining !== null && daysRemaining < META_BALANCE_WARNING_DAYS)
+  ) {
+    status = "warning";
+  }
+
+  const currency = (spendRows ?? []).find((r) => r.currency)?.currency ?? "EUR";
+
+  return { totalRecharged, totalSpent, balance, dailyBurn, daysRemaining, status, currency };
 }

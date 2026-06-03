@@ -2,6 +2,7 @@ import { serverEnv } from "@/lib/env";
 import { createServerClient } from "@/lib/supabase/server";
 import { shortMonthEs, toIsoDate } from "@/lib/utils/date";
 import type {
+  ActionLeadRow,
   AvisosData,
   DashboardKpis,
   DateRange,
@@ -12,8 +13,36 @@ import type {
 } from "./types";
 
 const AVISOS_LIMIT = 5;
+const MY_DAY_LIMIT = 6;
+
+/** Lead statuses that still require human follow-up (the rest are closed/parked). */
+const ACTIVE_LEAD_STATUSES = ["new", "qualifying", "quoted"] as const;
+/** Task statuses that are still actionable (not done / cancelled). */
+const OPEN_TASK_STATUSES = ["todo", "in_progress", "in_review"] as const;
 
 type ClientNameJoin = { clients: { name: string } | null };
+
+type LeadActionRecord = {
+  id: string;
+  name: string;
+  company: string | null;
+  phone: string | null;
+  email: string | null;
+  status: ActionLeadRow["status"];
+};
+
+function toActionLead(row: Record<string, unknown>, sinceField: string): ActionLeadRow {
+  const r = row as unknown as LeadActionRecord;
+  return {
+    id: r.id,
+    name: r.name,
+    company: r.company ?? null,
+    phone: r.phone ?? null,
+    email: r.email ?? null,
+    status: r.status,
+    since: (row[sinceField] as string) ?? new Date().toISOString(),
+  };
+}
 
 export async function getDashboardKpis(range: DateRange): Promise<DashboardKpis> {
   const supabase = await createServerClient();

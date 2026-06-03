@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { optionalEmail, optionalText, requiredText } from "./common";
+import { assignableUuid, optionalEmail, optionalText, requiredText } from "./common";
 
 /**
  * Zod schemas for the `leads` domain.
@@ -25,6 +25,7 @@ export const CreateLeadInput = z.object({
   source: optionalText(80),
   notes: optionalText(4000),
   estimated_value: z.number().min(0).max(99_999_999.99).nullable().optional(),
+  assigned_to: assignableUuid.optional(),
 });
 
 export type CreateLeadInputType = z.infer<typeof CreateLeadInput>;
@@ -129,3 +130,10 @@ export const SendEmailToLeadInput = z.object({
 });
 
 export type SendEmailToLeadInputType = z.infer<typeof SendEmailToLeadInput>;
+
+export const AssignLeadOwnerInput = z.object({
+  leadId: z.string().uuid(),
+  assigneeId: assignableUuid,
+});
+
+export type AssignLeadOwnerInputType = z.infer<typeof AssignLeadOwnerInput>;

@@ -26,6 +26,7 @@ export default async function FinancePage() {
     topCategories,
     recentExpenses,
     recentInvoices,
+    memberContributions,
   } = await getFinanceOverview();
 
   return (
@@ -169,6 +170,45 @@ export default async function FinancePage() {
           )}
         </CardContent>
       </Card>
+
+      {memberContributions.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Aportaciones de socios</CardTitle>
+          </CardHeader>
+          <CardContent className="px-0">
+            <ul className="divide-y divide-border">
+              {memberContributions
+                .sort((a, b) => b.total - a.total)
+                .map((c) => (
+                  <li
+                    key={c.memberId}
+                    className="flex items-center justify-between px-6 py-2.5 text-sm"
+                  >
+                    <span className="font-medium">{c.memberName}</span>
+                    <span className="tabular-nums">{formatEUR(c.total)}</span>
+                  </li>
+                ))}
+            </ul>
+            {memberContributions.length === 2 && (
+              <div className="border-t border-border px-6 py-2 text-xs text-muted-foreground">
+                Diferencia:{" "}
+                <span className="font-medium tabular-nums text-foreground">
+                  {formatEUR(
+                    Math.abs(
+                      (memberContributions[0]?.total ?? 0) - (memberContributions[1]?.total ?? 0),
+                    ),
+                  )}
+                </span>{" "}
+                a favor de{" "}
+                {(memberContributions[0]?.total ?? 0) >= (memberContributions[1]?.total ?? 0)
+                  ? memberContributions[0]?.memberName
+                  : memberContributions[1]?.memberName}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

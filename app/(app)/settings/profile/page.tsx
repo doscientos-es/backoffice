@@ -25,6 +25,7 @@ export default async function ProfileSettingsPage() {
             jobTitle={user.jobTitle ?? null}
             phone={user.phone ?? null}
             contactEmail={user.contactEmail ?? null}
+            iban={user.iban ?? null}
           />
         </CardContent>
       </Card>

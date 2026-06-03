@@ -18,11 +18,25 @@ const ProfileInput = z.object({
     .regex(/^[a-zA-Z0-9-]*$/, "Handle de GitHub inválido")
     .optional()
     .or(z.literal("").transform(() => undefined)),
-  job_title: z.string().max(160).optional().or(z.literal("").transform(() => undefined)),
-  phone: z.string().max(30).optional().or(z.literal("").transform(() => undefined)),
+  job_title: z
+    .string()
+    .max(160)
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  phone: z
+    .string()
+    .max(30)
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
   contact_email: z
     .string()
     .email("Email de contacto no válido")
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  iban: z
+    .string()
+    .max(34)
+    .regex(/^[A-Z]{2}[0-9]{2}[A-Z0-9]{4,30}$/, "IBAN no válido")
     .optional()
     .or(z.literal("").transform(() => undefined)),
 });
@@ -39,16 +53,14 @@ function buildSignatureHtml(opts: {
   lines.push("");
   lines.push("<strong>doscientos.es</strong>");
   lines.push(
-    "<span style=\"color:#666\">Construimos productos digitales escalables para empresas que quieren crecer con tecnología.</span>",
+    '<span style="color:#666">Construimos productos digitales escalables para empresas que quieren crecer con tecnología.</span>',
   );
   lines.push("");
   if (opts.contactEmail)
     lines.push(
       `📩 <a href="mailto:${opts.contactEmail}" style="color:inherit">${opts.contactEmail}</a>`,
     );
-  lines.push(
-    '🌐 <a href="https://doscientos.es" style="color:inherit">https://doscientos.es</a>',
-  );
+  lines.push('🌐 <a href="https://doscientos.es" style="color:inherit">https://doscientos.es</a>');
   if (opts.phone) lines.push(`📱 ${opts.phone}`);
   return `<p style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#333;margin:0">${lines.join("<br/>")}</p>`;
 }
@@ -64,6 +76,7 @@ export async function updateProfile(
     job_title: formData.get("job_title")?.toString() ?? "",
     phone: formData.get("phone")?.toString() ?? "",
     contact_email: formData.get("contact_email")?.toString() ?? "",
+    iban: formData.get("iban")?.toString() ?? "",
   };
   const parsed = ProfileInput.safeParse(raw);
   if (!parsed.success) {
@@ -88,6 +101,7 @@ export async function updateProfile(
       job_title: parsed.data.job_title ?? null,
       phone: parsed.data.phone ?? null,
       contact_email: parsed.data.contact_email ?? null,
+      iban: parsed.data.iban ?? null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", user.id);

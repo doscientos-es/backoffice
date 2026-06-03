@@ -20,6 +20,7 @@ export type CurrentUser = {
   jobTitle: string | null;
   phone: string | null;
   contactEmail: string | null;
+  iban: string | null;
 };
 
 export type AuthFailureReason =
@@ -45,7 +46,7 @@ export async function getCurrentUser(): Promise<AuthResult> {
   const { data: member, error } = await supabase
     .from("team_members")
     .select(
-      "id, name, email, role, avatar_url, email_alias, signature_html, email_send_enabled, github_handle, onboarded_at, deleted_at, job_title, phone, contact_email",
+      "id, name, email, role, avatar_url, email_alias, signature_html, email_send_enabled, github_handle, onboarded_at, deleted_at, job_title, phone, contact_email, iban",
     )
     .eq("id", user.id)
     .maybeSingle();
@@ -78,6 +79,7 @@ export async function getCurrentUser(): Promise<AuthResult> {
       jobTitle: (member.job_title as string | null) ?? null,
       phone: (member.phone as string | null) ?? null,
       contactEmail: (member.contact_email as string | null) ?? null,
+      iban: (member.iban as string | null) ?? null,
     },
   };
 }
