@@ -4,6 +4,9 @@ const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   typedRoutes: true,
+  // @react-pdf/renderer ships its own bundler-unfriendly deps; keep it as a
+  // server-side external so PDFs render inside route handlers without RSC issues.
+  serverExternalPackages: ["@react-pdf/renderer"],
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "hnzyllbksqvamqfubhri.supabase.co" },
