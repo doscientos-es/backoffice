@@ -1,5 +1,5 @@
 "use client";
-
+import { DateField } from "@/components/ui/date-field";
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -59,7 +59,14 @@ export function ExpenseFormFields({
   const d = defaults ?? {};
   const [paymentSource, setPaymentSource] = useState(d.payment_source ?? "company");
   const [showDetails, setShowDetails] = useState(
-    !!(d.vendor_nif || d.invoice_reference || d.project_id || d.description || d.notes || d.recurrence !== "none"),
+    !!(
+      d.vendor_nif ||
+      d.invoice_reference ||
+      d.project_id ||
+      d.description ||
+      d.notes ||
+      d.recurrence !== "none"
+    ),
   );
 
   const hasOptionalValues = !!(
@@ -74,8 +81,8 @@ export function ExpenseFormFields({
     <>
       {/* ── Legend ── */}
       <p className="text-xs text-muted-foreground">
-        Los campos marcados con <span className="text-destructive">*</span> son obligatorios.
-        El resto tienen valores por defecto y puedes dejarlos como están.
+        Los campos marcados con <span className="text-destructive">*</span> son obligatorios. El
+        resto tienen valores por defecto y puedes dejarlos como están.
       </p>
 
       {/* ── Required fields ── */}
@@ -92,10 +99,9 @@ export function ExpenseFormFields({
           />
         </FormRow>
         <FormRow label="Fecha del gasto" htmlFor={`${idPrefix}-expense_date`} required>
-          <Input
+          <DateField
             id={`${idPrefix}-expense_date`}
             name="expense_date"
-            type="date"
             required
             defaultValue={d.expense_date ?? new Date().toISOString().slice(0, 10)}
           />
@@ -209,18 +215,16 @@ export function ExpenseFormFields({
         {showDetails && (
           <div className="mt-4 grid gap-5 sm:grid-cols-2">
             <FormRow label="Vencimiento" htmlFor={`${idPrefix}-due_date`}>
-              <Input
+              <DateField
                 id={`${idPrefix}-due_date`}
                 name="due_date"
-                type="date"
                 defaultValue={d.due_date ?? ""}
               />
             </FormRow>
             <FormRow label="Fecha de pago" htmlFor={`${idPrefix}-paid_at`}>
-              <Input
+              <DateField
                 id={`${idPrefix}-paid_at`}
                 name="paid_at"
-                type="date"
                 defaultValue={d.paid_at ?? ""}
               />
             </FormRow>
@@ -269,11 +273,7 @@ export function ExpenseFormFields({
                 ))}
               </Select>
             </FormRow>
-            <FormRow
-              label="Moneda"
-              htmlFor={`${idPrefix}-currency`}
-              className="sm:col-span-1"
-            >
+            <FormRow label="Moneda" htmlFor={`${idPrefix}-currency`} className="sm:col-span-1">
               <Input
                 id={`${idPrefix}-currency`}
                 name="currency"
