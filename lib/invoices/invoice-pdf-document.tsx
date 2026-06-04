@@ -92,3 +92,127 @@ function BrandMark() {
 function statusLabel(status: string): string {
   return INVOICE_STATUS[status as InvoiceStatus]?.label ?? status;
 }
+
+/** Professional A4 invoice document mirroring the HTML portal view. */
+function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
+  const { company } = data;
+  return (
+    <Document title={`Factura ${data.fullNumber}`} author="doscientos">
+      <Page size="A4" style={styles.page}>
+        <View style={styles.header}>
+          <View>
+            <View style={styles.brandRow}>
+              <BrandMark />
+              <Text style={styles.brandName}>doscientos</Text>
+            </View>
+            {data.invoiceType ? <Text style={styles.docType}>{data.invoiceType}</Text> : null}
+          </View>
+          <View style={styles.headerRight}>
+            <Text style={styles.number}>{data.fullNumber}</Text>
+            <Text style={styles.status}>{statusLabel(data.status)}</Text>
+            {data.issueDate ? (
+              <Text style={styles.metaRow}>Emitida: {formatDate(data.issueDate)}</Text>
+            ) : null}
+            {data.dueDate ? (
+              <Text style={styles.metaRow}>Vencimiento: {formatDate(data.dueDate)}</Text>
+            ) : null}
+          </View>
+        </View>
+
+        <View style={styles.parties}>
+          {company ? (
+            <View style={styles.party}>
+              <Text style={styles.label}>Emitida por</Text>
+              <Text style={styles.partyName}>{company.name ?? "—"}</Text>
+              {company.nif ? <Text style={styles.partyLine}>NIF: {company.nif}</Text> : null}
+              {company.address ? <Text style={styles.partyLine}>{company.address}</Text> : null}
+              {company.iban ? <Text style={styles.partyLine}>IBAN: {company.iban}</Text> : null}
+            </View>
+          ) : null}
+          <View style={styles.party}>
+            <Text style={styles.label}>Facturado a</Text>
+            <Text style={styles.partyName}>{data.clientName ?? "—"}</Text>
+            {data.clientNif ? <Text style={styles.partyLine}>NIF: {data.clientNif}</Text> : null}
+          </View>
+        </View>
+
+        <View style={styles.table}>
+          <View style={styles.thead}>
+            <Text style={[styles.th, styles.cDesc]}>Descripción</Text>
+            <Text style={[styles.th, styles.cNum]}>Cant.</Text>
+            <Text style={[styles.th, styles.cNum]}>Precio</Text>
+            <Text style={[styles.th, styles.cVat]}>IVA</Text>
+            <Text style={[styles.th, styles.cAmount]}>Subtotal</Text>
+          </View>
+          {data.items.length === 0 ? (
+            <View style={styles.row}>
+              <Text style={[styles.cDesc, { color: FAINT }]}>Sin líneas.</Text>
+            </View>
+          ) : (
+            data.items.map((item, i) => (
+              <View key={i} style={styles.row} wrap={false}>
+                <Text style={styles.cDesc}>{item.description}</Text>
+                <Text style={styles.cNum}>{item.quantity}</Text>
+                <Text style={styles.cNum}>{formatEUR(item.unitPrice)}</Text>
+                <Text style={styles.cVat}>{item.vatRate}%</Text>
+                <Text style={[styles.cAmount, { fontFamily: "Helvetica-Bold" }]}>
+                  {formatEUR(item.subtotal)}
+                </Text>
+              </View>
+            ))
+          )}
+        </View>
+
+        <View style={styles.totals}>
+          <View style={styles.totalLine}>
+            <Text style={styles.totalMuted}>Base imponible</Text>
+            <Text style={styles.totalMuted}>{formatEUR(data.subtotal)}</Text>
+          </View>
+          {data.vatBreakdown.map((row) => (
+            <View key={row.rate} style={styles.totalLine}>
+              <Text style={styles.totalMuted}>
+                IVA {row.rate}% sobre {formatEUR(row.base)}
+              </Text>
+              <Text style={styles.totalMuted}>{formatEUR(row.tax)}</Text>
+            </View>
+          ))}
+          <View style={styles.grandRow}>
+            <Text style={styles.grandLabel}>Total</Text>
+            <Text style={styles.grandLabel}>{formatEUR(data.total)}</Text>
+          </View>
+        </View>
+
+        {data.idfact || data.verifactuCsv || data.qrDataUrl ? (
+          <View style={styles.fiscal}>
+            <View style={styles.fiscalInfo}>
+              <Text style={styles.label}>Datos fiscales</Text>
+              {data.idfact ? <Text style={styles.mono}>IDFACT: {data.idfact}</Text> : null}
+              {data.verifactuCsv ? (
+                <Text style={styles.mono}>CSV AEAT: {data.verifactuCsv}</Text>
+              ) : null}
+            </View>
+            {data.qrDataUrl ? (
+              <View style={styles.qrWrap}>
+                <Image style={styles.qr} src={data.qrDataUrl} />
+                <Text style={styles.qrCaption}>Verificar en AEAT</Text>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
+        <View style={styles.footer} fixed>
+          <Text style={styles.footerText}>
+            Factura verificable en la sede electrónica de la AEAT mediante el código QR. Sistema de
+            emisión conforme al Reglamento Verifactu (RD 1007/2023). Conserve esta factura conforme a
+            la normativa fiscal aplicable.
+          </Text>
+        </View>
+      </Page>
+    </Document>
+  );
+}
+
+/** Render an invoice snapshot to a PDF buffer suitable for a download response. */
+export async function renderInvoicePdf(data: InvoicePdfData): Promise<Buffer> {
+  return renderToBuffer(<InvoicePdfDocument data={data} />);
+}
