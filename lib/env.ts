@@ -21,6 +21,9 @@ const ServerSchema = PublicSchema.extend({
   VERIFACTU_CERT_EXPIRES_AT: z.string().optional().default(""),
   // Generic lead-intake webhook (Recurrev / GHL / landing forms)
   LEAD_INTAKE_TOKEN: z.string().optional().default(""),
+  // Comma-separated origins allowed to POST the public landing contact form.
+  // Use "*" only for local development.
+  LANDING_ALLOWED_ORIGINS: z.string().default("https://doscientos.es,https://www.doscientos.es"),
   // Meta Marketing API (developers.facebook.com)
   META_APP_ID: z.string().optional().default(""),
   META_APP_SECRET: z.string().optional().default(""),

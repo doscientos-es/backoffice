@@ -13,7 +13,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { getBrowserClient } from "@/lib/supabase/browser";
 import { cn, relativeTime } from "@/lib/utils";
-import { AtSign, Bell, BellOff, CheckCheck, MessageSquare, UserPlus } from "lucide-react";
+import { AtSign, Bell, BellOff, CheckCheck, MessageSquare, UserPlus, Zap } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -41,6 +41,7 @@ const EVENT_META: Record<string, { icon: ComponentType<{ className?: string }>; 
   task_comment: { icon: MessageSquare, tint: "text-blue-500" },
   task_mention: { icon: AtSign, tint: "text-violet-500" },
   task_assigned: { icon: UserPlus, tint: "text-emerald-500" },
+  lead_new: { icon: Zap, tint: "text-amber-500" },
 };
 
 function getEventMeta(eventType: string) {

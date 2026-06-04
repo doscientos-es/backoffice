@@ -3,6 +3,7 @@
 import { defineAction } from "@/lib/actions/define-action";
 import { sendEmail } from "@/lib/email/resend";
 import { appendSignature, renderTemplate } from "@/lib/email/templates";
+import { notifyNewLead } from "@/lib/integrations/notify-new-lead";
 import {
   AssignLeadOwnerInput,
   ConvertLeadInput,
@@ -40,6 +41,18 @@ export const createLead = defineAction({
     if (error || !data) {
       throw new Error(error?.message ?? "No se pudo crear el lead");
     }
+
+    // Notify admins/owners — fire-and-forget so the action response is not delayed.
+    notifyNewLead({
+      leadId: data.id as string,
+      leadName: input.name,
+      leadEmail: input.email ?? null,
+      leadPhone: input.phone ?? null,
+      leadCompany: input.company ?? null,
+      leadSource: input.source ?? "manual",
+    }).catch(() => {
+      /* logged inside notifyNewLead */
+    });
 
     return { id: data.id as string };
   },

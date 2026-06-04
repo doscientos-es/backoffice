@@ -1,5 +1,6 @@
 import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { notifyNewLead } from "./notify-new-lead";
 
 /**
  * Normalized payload accepted by ingestLead().
@@ -105,9 +106,18 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
     return { ok: false, error: error?.message ?? "insert failed" };
   }
 
-  log.info(
-    { leadId: data.id, source: row.source, externalSource: row.external_source },
-    "lead ingested",
-  );
-  return { ok: true, leadId: data.id as string, duplicate: false };
+  const leadId = data.id as string;
+  log.info({ leadId, source: row.source, externalSource: row.external_source }, "lead ingested");
+
+  // Notify admins/owners — fire-and-forget so the webhook response is not delayed.
+  notifyNewLead({
+    leadId,
+    leadName: row.name,
+    leadEmail: row.email,
+    leadPhone: row.phone,
+    leadCompany: row.company,
+    leadSource: row.source,
+  }).catch((e) => log.error({ err: e }, "notifyNewLead failed"));
+
+  return { ok: true, leadId, duplicate: false };
 }
