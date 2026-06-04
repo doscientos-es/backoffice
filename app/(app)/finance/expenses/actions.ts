@@ -40,7 +40,9 @@ function buildExpenseDbPayload(input: ExpenseInputType) {
 export const createExpense = defineAction({
   name: "expenses.create",
   schema: ExpenseInput,
-  handler: async (input, { user }) => {
+  // Always redirects (or throws) — pin to `void` so the result type stays a
+  // proper `ActionResult` union instead of distributing to `never`.
+  handler: async (input, { user }): Promise<void> => {
     const supabase = await createServerClient();
     const { data, error } = await supabase
       .from("expenses")
@@ -95,11 +97,11 @@ export const removeExpense = defineAction({
   },
 });
 
-export const deleteExpense = defineAction({
+const deleteExpenseAction = defineAction({
   name: "expenses.delete",
   schema: uuidIdInput,
   roles: ["owner", "admin"],
-  handler: async (input) => {
+  handler: async (input): Promise<void> => {
     const supabase = await createServerClient();
     const { error } = await supabase
       .from("expenses")
@@ -112,3 +114,13 @@ export const deleteExpense = defineAction({
     redirect("/finance/expenses");
   },
 });
+
+/**
+ * Form-action wrapper for the detail page's danger zone. `<form action={…}>`
+ * requires a `(FormData) => void` signature, so we discard the `ActionResult`:
+ * the handler redirects on success and the hidden `id` makes validation
+ * failure unreachable here.
+ */
+export async function deleteExpense(formData: FormData): Promise<void> {
+  await deleteExpenseAction(formData);
+}

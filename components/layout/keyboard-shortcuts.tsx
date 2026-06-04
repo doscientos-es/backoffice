@@ -5,6 +5,7 @@ import { CREATE_SHORTCUTS, NAV_SHORTCUTS, findShortcut } from "@/lib/navigation/
 import { ArrowRight, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 
 type Prefix = "g" | "c";
 
@@ -31,7 +32,9 @@ export function KeyboardShortcuts() {
 
     const arm = (p: Prefix) => {
       prefixRef.current = p;
-      setArmed(p);
+      // flushSync fuerza el re-render inmediato para que el toast aparezca
+      // al instante. Sin él, React 18 hace batching y retrasa el indicador visual.
+      flushSync(() => setArmed(p));
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
         prefixRef.current = null;

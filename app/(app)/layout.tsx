@@ -4,6 +4,7 @@ import { CommandPaletteTrigger } from "@/components/layout/command-palette-trigg
 import { KeyboardShortcuts } from "@/components/layout/keyboard-shortcuts";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { QuickCreateButton } from "@/components/layout/quick-create-button";
+import { ShortcutsDialog } from "@/components/layout/shortcuts-dialog";
 import { Sidebar } from "@/components/layout/sidebar";
 import { requireUser } from "@/lib/auth";
 
