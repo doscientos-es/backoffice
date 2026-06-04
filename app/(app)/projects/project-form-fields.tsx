@@ -1,3 +1,4 @@
+import { DateField } from "@/components/ui/date-field";
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -96,18 +97,16 @@ export function ProjectFormFields({
           </Select>
         </FormRow>
         <FormRow label="Inicio" htmlFor={`${idPrefix}-starts_at`}>
-          <Input
+          <DateField
             id={`${idPrefix}-starts_at`}
             name="starts_at"
-            type="date"
             defaultValue={d.starts_at ?? ""}
           />
         </FormRow>
         <FormRow label="Fin previsto" htmlFor={`${idPrefix}-ends_at`}>
-          <Input
+          <DateField
             id={`${idPrefix}-ends_at`}
             name="ends_at"
-            type="date"
             defaultValue={d.ends_at ?? ""}
           />
         </FormRow>

@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { DateField } from "@/components/ui/date-field";
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -26,18 +27,13 @@ const ACCEPTED = ".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg";
 export function UploadForm() {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
-  const effectiveDateRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Suggest today's date for the effective date. Set after mount (not as
-  // defaultValue) to keep the value calendar-correct and avoid SSR/client
-  // hydration mismatches around midnight.
+  // Avoid SSR/client hydration mismatch: set today's date after mount only.
+  const [effectiveDate, setEffectiveDate] = useState("");
   useEffect(() => {
-    if (effectiveDateRef.current && !effectiveDateRef.current.value) {
-      effectiveDateRef.current.value = todayIsoLocal();
-    }
+    setEffectiveDate(todayIsoLocal());
   }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -143,7 +139,12 @@ export function UploadForm() {
           htmlFor="effective_date"
           hint="Prerrellenada con hoy. Cámbiala si aplica otra fecha."
         >
-          <Input ref={effectiveDateRef} id="effective_date" name="effective_date" type="date" />
+          <DateField
+            id="effective_date"
+            name="effective_date"
+            value={effectiveDate}
+            onChange={setEffectiveDate}
+          />
         </FormRow>
 
         <FormRow
@@ -151,7 +152,7 @@ export function UploadForm() {
           htmlFor="expires_at"
           hint="Opcional. Déjala vacía si el documento no caduca."
         >
-          <Input id="expires_at" name="expires_at" type="date" />
+          <DateField id="expires_at" name="expires_at" defaultValue="" />
         </FormRow>
       </div>
 

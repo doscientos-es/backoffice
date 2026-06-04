@@ -3,6 +3,7 @@
 import { LineItemsTable } from "@/components/finance/line-items-table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { DateField } from "@/components/ui/date-field";
 import {
   Dialog,
   DialogContent,
@@ -183,11 +184,10 @@ export function NewProposalForm({ clients, leads, initialClientId, initialLeadId
                 />
               </FormRow>
               <FormRow label="Válida hasta" htmlFor="valid_until" hint="Fecha límite de aceptación.">
-                <Input
+                <DateField
                   id="valid_until"
-                  type="date"
                   value={validUntil}
-                  onChange={(e) => setValidUntil(e.target.value)}
+                  onChange={setValidUntil}
                 />
               </FormRow>
             </div>

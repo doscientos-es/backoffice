@@ -1,3 +1,4 @@
+import { DateField } from "@/components/ui/date-field";
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -138,10 +139,9 @@ export function TaskFormFields({
           </Select>
         </FormRow>
         <FormRow label="Vencimiento" htmlFor={`${idPrefix}-due_date`}>
-          <Input
+          <DateField
             id={`${idPrefix}-due_date`}
             name="due_date"
-            type="date"
             defaultValue={d.due_date ?? ""}
           />
         </FormRow>

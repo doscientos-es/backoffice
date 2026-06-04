@@ -4,8 +4,8 @@ import { LineItemsTable } from "@/components/finance/line-items-table";
 import { AutosaveIndicator } from "@/components/ui/autosave-indicator";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DateField } from "@/components/ui/date-field";
 import { FormRow } from "@/components/ui/form-row";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { EMPTY_LINE_ITEM, type LineItem } from "@/lib/finance";
 import { useAutosave } from "@/lib/hooks/use-autosave";
@@ -100,20 +100,18 @@ export function InvoiceEditor({
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <FormRow label="Fecha de emisión" htmlFor="issue-date">
-              <Input
+              <DateField
                 id="issue-date"
-                type="date"
                 value={issueDate}
-                onChange={(e) => setIssueDate(e.target.value)}
+                onChange={setIssueDate}
                 disabled={locked}
               />
             </FormRow>
             <FormRow label="Fecha de vencimiento" htmlFor="due-date">
-              <Input
+              <DateField
                 id="due-date"
-                type="date"
                 value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
+                onChange={setDueDate}
                 disabled={locked}
               />
             </FormRow>
