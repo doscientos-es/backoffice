@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useActionForm } from "@/lib/hooks/use-action-form";
 import type { VendorSuggestion } from "@/lib/finance/types";
+import { useActionForm } from "@/lib/hooks/use-action-form";
 import { createExpense } from "../actions";
 import { type ExpenseFormDefaults, ExpenseFormFields } from "../expense-form-fields";
 

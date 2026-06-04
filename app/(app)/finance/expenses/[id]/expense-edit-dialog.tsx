@@ -68,7 +68,12 @@ export function ExpenseEditDialog({
     onOpenChange?.(v);
   };
   const { formRef, isDirty, reset: resetDirty } = useFormDirty<HTMLFormElement>();
-  const { state, pending, onSubmit, reset: resetFeedback } = useActionForm(updateExpense, {
+  const {
+    state,
+    pending,
+    onSubmit,
+    reset: resetFeedback,
+  } = useActionForm(updateExpense, {
     successMessage: "Guardado",
     onSuccess: () => {
       resetDirty();

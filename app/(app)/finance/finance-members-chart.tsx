@@ -1,15 +1,7 @@
 "use client";
 
 import { formatEUR } from "@/lib/utils";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 export type MemberBar = { name: string; value: number };
 
@@ -17,11 +9,7 @@ export function FinanceMembersChart({ data }: { data: MemberBar[] }) {
   return (
     <div className="px-6" style={{ height: Math.max(120, data.length * 48) }}>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          data={data}
-          layout="vertical"
-          margin={{ top: 4, right: 12, left: 0, bottom: 0 }}
-        >
+        <BarChart data={data} layout="vertical" margin={{ top: 4, right: 12, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
           <XAxis
             type="number"
