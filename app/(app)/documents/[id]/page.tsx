@@ -55,17 +55,10 @@ export default async function DocumentDetailPage({
     <div className="flex flex-col gap-6">
       <PageHeader
         title={doc.name as string}
-        breadcrumbs={[
-          { label: "Documentos", href: "/documents" },
-          { label: doc.name as string },
-        ]}
+        breadcrumbs={[{ label: "Documentos", href: "/documents" }, { label: doc.name as string }]}
         actions={
           <Button asChild size="sm">
-            <Link
-              href={`/api/documents/${id}/download`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <Link href={`/api/documents/${id}/download`} target="_blank" rel="noopener noreferrer">
               <Download className="size-3.5" />
               Descargar
             </Link>
@@ -79,9 +72,7 @@ export default async function DocumentDetailPage({
         </CardHeader>
         <CardContent>
           <DetailGrid>
-            <DetailRow label="Tipo">
-              {(doc.mime_type as string | null) ?? "—"}
-            </DetailRow>
+            <DetailRow label="Tipo">{(doc.mime_type as string | null) ?? "—"}</DetailRow>
             <DetailRow label="Tamaño">
               {doc.size_bytes ? `${Math.ceil(Number(doc.size_bytes) / 1024)} KB` : "—"}
             </DetailRow>

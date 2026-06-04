@@ -70,9 +70,7 @@ export async function POST(req: NextRequest) {
   // Load project GitHub config — only bidirectional projects may push to GitHub.
   const { data: project } = await supabase
     .from("projects")
-    .select(
-      "github_sync_mode, github_repo_owner, github_repo_name, github_installation_id",
-    )
+    .select("github_sync_mode, github_repo_owner, github_repo_name, github_installation_id")
     .eq("id", task.project_id as string)
     .maybeSingle();
 

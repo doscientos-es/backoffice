@@ -31,8 +31,7 @@ export async function listProjects(params: ProjectListParams): Promise<ProjectLi
       ),
   );
 
-  if (params.q && params.q.length > 0)
-    query = query.ilike("name", `%${escapeIlike(params.q)}%`);
+  if (params.q && params.q.length > 0) query = query.ilike("name", `%${escapeIlike(params.q)}%`);
   if (params.status) query = query.eq("status", params.status);
 
   const { data, error, count } = await query
@@ -51,8 +50,7 @@ export async function listProjects(params: ProjectListParams): Promise<ProjectLi
       client_id: (p.client_id as string | null) ?? null,
       github_sync_mode: (p.github_sync_mode as string | null) ?? null,
       github_repo: (p.github_repo as string | null) ?? null,
-      client_name:
-        (p as unknown as { clients: { name: string } | null }).clients?.name ?? null,
+      client_name: (p as unknown as { clients: { name: string } | null }).clients?.name ?? null,
     })),
     count: count ?? 0,
   };
@@ -88,7 +86,10 @@ export async function getProjectDetail(
         .order("created_at", { ascending: false })
         .limit(PROJECT_RELATED_LIMIT),
       notDeleted(
-        supabase.from("invoices").select("id, full_number, status, total, issue_date").eq("project_id", id),
+        supabase
+          .from("invoices")
+          .select("id, full_number, status, total, issue_date")
+          .eq("project_id", id),
       )
         .order("issue_date", { ascending: false })
         .limit(PROJECT_RELATED_LIMIT),

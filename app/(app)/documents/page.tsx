@@ -1,5 +1,4 @@
 import { ListPage } from "@/components/layout/list-page";
-import { Badge } from "@/components/ui/badge";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
@@ -9,8 +8,6 @@ export const metadata: Metadata = { title: "Documentos · doscientos" };
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 25;
-
-
 
 function escapeIlike(value: string): string {
   return value.replace(/[%_\\]/g, (m) => `\\${m}`);

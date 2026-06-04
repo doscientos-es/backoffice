@@ -92,9 +92,7 @@ export default async function DeckPage({
   const [{ data: items }, { data: team }] = await Promise.all([
     admin
       .from("proposal_items")
-      .select(
-        "id, position, description, quantity, unit_price, vat_rate, subtotal, billing_cycle",
-      )
+      .select("id, position, description, quantity, unit_price, vat_rate, subtotal, billing_cycle")
       .eq("proposal_id", proposal.id as string)
       .order("position"),
     admin

@@ -5,12 +5,7 @@ import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Select } from "@/components/ui/select";
 import type { MemberRole } from "@/lib/auth";
 import { useRouter } from "next/navigation";
-import {
-  deactivateMember,
-  deleteMember,
-  reactivateMember,
-  updateMemberRole,
-} from "./actions";
+import { deactivateMember, deleteMember, reactivateMember, updateMemberRole } from "./actions";
 
 interface Props {
   memberId: string;

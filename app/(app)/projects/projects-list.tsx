@@ -5,10 +5,7 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { useState } from "react";
 import { ProjectQuickView, type QuickProject } from "./project-quick-view";
 
-export function ProjectsList({
-  canEdit = false,
-  ...props
-}: ListPageProps & { canEdit?: boolean }) {
+export function ProjectsList({ canEdit = false, ...props }: ListPageProps & { canEdit?: boolean }) {
   const [selectedProject, setSelectedProject] = useState<QuickProject | null>(null);
 
   return (

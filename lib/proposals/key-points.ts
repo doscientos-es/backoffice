@@ -32,9 +32,10 @@ export type EditableKeyPoint = {
 
 export function createEmptyKeyPoint(): EditableKeyPoint {
   return {
-    id: typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? crypto.randomUUID()
-      : `kp-${Math.random().toString(36).slice(2, 10)}`,
+    id:
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `kp-${Math.random().toString(36).slice(2, 10)}`,
     title: "",
     description: "",
   };
@@ -52,11 +53,8 @@ export function parseKeyPoints(value: unknown): KeyPoint[] {
     .map((v, i): KeyPoint => {
       const title = typeof v.title === "string" ? v.title.trim() : "";
       const description =
-        typeof v.description === "string" && v.description.trim().length > 0
-          ? v.description
-          : null;
-      const id =
-        typeof v.id === "string" && v.id.length > 0 ? v.id : `kp-${i}`;
+        typeof v.description === "string" && v.description.trim().length > 0 ? v.description : null;
+      const id = typeof v.id === "string" && v.id.length > 0 ? v.id : `kp-${i}`;
       return { id, title, description };
     })
     .filter((kp) => kp.title.length > 0);

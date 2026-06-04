@@ -9,15 +9,13 @@ export type InternalDocEvent = {
   payload: Record<string, unknown>;
 };
 
-const ACTION_META: Record<
-  InternalDocEvent["action"],
-  { label: string; Icon: typeof PencilLine }
-> = {
-  created: { label: "Creó el documento", Icon: FilePlus2 },
-  updated: { label: "Actualizó los detalles", Icon: PencilLine },
-  file_replaced: { label: "Reemplazó el archivo", Icon: FileUp },
-  deleted: { label: "Eliminó el documento", Icon: Trash2 },
-};
+const ACTION_META: Record<InternalDocEvent["action"], { label: string; Icon: typeof PencilLine }> =
+  {
+    created: { label: "Creó el documento", Icon: FilePlus2 },
+    updated: { label: "Actualizó los detalles", Icon: PencilLine },
+    file_replaced: { label: "Reemplazó el archivo", Icon: FileUp },
+    deleted: { label: "Eliminó el documento", Icon: Trash2 },
+  };
 
 const FIELD_LABELS: Record<string, string> = {
   name: "Nombre",

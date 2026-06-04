@@ -19,7 +19,12 @@ export function QuotedSuggestionDialog({
   onClose: () => void;
 }) {
   return (
-    <Dialog open={!!lead} onOpenChange={(v) => { if (!v) onClose(); }}>
+    <Dialog
+      open={!!lead}
+      onOpenChange={(v) => {
+        if (!v) onClose();
+      }}
+    >
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>Lead movido a Presupuestado</DialogTitle>

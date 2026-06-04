@@ -24,8 +24,7 @@ const log = scopedLogger("auth.callback");
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
-  const errorParam =
-    url.searchParams.get("error_description") ?? url.searchParams.get("error");
+  const errorParam = url.searchParams.get("error_description") ?? url.searchParams.get("error");
   const rawNext = url.searchParams.get("next");
   const next = rawNext && rawNext.startsWith("/") ? rawNext : "/inicio";
 
@@ -50,9 +49,7 @@ export async function GET(request: NextRequest) {
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
     log.error({ err: error }, "exchangeCodeForSession failed");
-    return NextResponse.redirect(
-      new URL("/login?error=callback_exchange_failed", request.url),
-    );
+    return NextResponse.redirect(new URL("/login?error=callback_exchange_failed", request.url));
   }
 
   return NextResponse.redirect(new URL(next, request.url));

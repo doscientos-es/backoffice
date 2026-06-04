@@ -71,7 +71,9 @@ export function DateField(props: Props) {
 
   // Internal ISO state (source of truth while user types)
   const [internalIso, setInternalIso] = useState<string>(() =>
-    isControlled ? (props as ControlledProps).value ?? "" : (props as UncontrolledProps).defaultValue ?? "",
+    isControlled
+      ? ((props as ControlledProps).value ?? "")
+      : ((props as UncontrolledProps).defaultValue ?? ""),
   );
   const [text, setText] = useState(() => isoToDisplay(internalIso));
   const nativeRef = useRef<HTMLInputElement>(null);
@@ -128,9 +130,7 @@ export function DateField(props: Props) {
   return (
     <div className="relative">
       {/* Hidden submission input — only rendered in uncontrolled mode */}
-      {!isControlled && props.name && (
-        <input type="hidden" name={props.name} value={internalIso} />
-      )}
+      {!isControlled && props.name && <input type="hidden" name={props.name} value={internalIso} />}
 
       <InputGroup className={className} data-disabled={disabled || undefined}>
         <input

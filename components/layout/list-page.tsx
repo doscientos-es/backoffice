@@ -88,7 +88,12 @@ export function ListPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title={title} description={description} breadcrumbs={breadcrumbs} actions={actions} />
+      <PageHeader
+        title={title}
+        description={description}
+        breadcrumbs={breadcrumbs}
+        actions={actions}
+      />
 
       <Card>
         <CardContent className="px-0 pt-0">

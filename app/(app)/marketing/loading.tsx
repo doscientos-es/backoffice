@@ -1,10 +1,6 @@
 import { PageHeaderSkeleton } from "@/components/layout/page-header-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  InsightsSkeleton,
-  KpiSkeleton,
-  TableSkeleton,
-} from "./_components/marketing-skeletons";
+import { InsightsSkeleton, KpiSkeleton, TableSkeleton } from "./_components/marketing-skeletons";
 
 export default function MarketingLoading() {
   return (

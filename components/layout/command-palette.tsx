@@ -222,7 +222,7 @@ export function CommandPalette() {
                 <CommandGroup heading="Recientes">
                   {recents.map((r) => {
                     const Icon = r.type
-                      ? TYPE_ICON[r.type as SearchResultItem["type"]] ?? Clock
+                      ? (TYPE_ICON[r.type as SearchResultItem["type"]] ?? Clock)
                       : Clock;
                     return (
                       <CommandItem

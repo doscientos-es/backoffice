@@ -22,7 +22,10 @@ export function ctrClass(ctr: number): string {
   return "";
 }
 
-export function cplTone(avgCpl: number, totalLeads: number): "default" | "success" | "danger" | "warning" {
+export function cplTone(
+  avgCpl: number,
+  totalLeads: number,
+): "default" | "success" | "danger" | "warning" {
   if (totalLeads === 0) return "default";
   if (avgCpl <= CPL_GOOD) return "success";
   if (avgCpl >= CPL_BAD) return "danger";
@@ -35,7 +38,10 @@ export function buildAdsManagerUrl(adId: string, accountId: string | null): stri
   return `https://www.facebook.com/adsmanager/manage/ads/edit?selected_ad_ids=${adId}&act=${act}`;
 }
 
-export function buildCampaignManagerUrl(campaignId: string, accountId: string | null): string | null {
+export function buildCampaignManagerUrl(
+  campaignId: string,
+  accountId: string | null,
+): string | null {
   if (!accountId || campaignId === "__none__") return null;
   const act = accountId.replace(/^act_/, "");
   return `https://www.facebook.com/adsmanager/manage/campaigns/edit?selected_campaign_ids=${campaignId}&act=${act}`;

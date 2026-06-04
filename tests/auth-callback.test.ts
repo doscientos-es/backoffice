@@ -82,9 +82,7 @@ describe("/auth/callback", () => {
   });
 
   it("surfaces provider error params without calling the exchange", async () => {
-    const res = await call(
-      "/auth/callback?error=access_denied&error_description=link%20expired",
-    );
+    const res = await call("/auth/callback?error=access_denied&error_description=link%20expired");
     expect(res.headers.get("location")).toContain("/login?error=callback_link%20expired");
     expect(state.callOrder).toEqual([]);
   });

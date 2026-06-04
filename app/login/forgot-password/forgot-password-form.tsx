@@ -50,9 +50,7 @@ export function ForgotPasswordForm() {
           <div className="flex flex-col items-center gap-3 text-center">
             <CheckCircle2 className="h-8 w-8 text-[color:var(--success)]" aria-hidden />
             <div>
-              <p className="text-sm font-medium text-primary">
-                Revisa tu bandeja de entrada
-              </p>
+              <p className="text-sm font-medium text-primary">Revisa tu bandeja de entrada</p>
               <p className="mt-1 text-xs text-muted">
                 Si <strong>{email}</strong> está registrado, te hemos enviado un enlace para
                 restablecer tu contraseña.

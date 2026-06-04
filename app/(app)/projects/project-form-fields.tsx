@@ -104,11 +104,7 @@ export function ProjectFormFields({
           />
         </FormRow>
         <FormRow label="Fin previsto" htmlFor={`${idPrefix}-ends_at`}>
-          <DateField
-            id={`${idPrefix}-ends_at`}
-            name="ends_at"
-            defaultValue={d.ends_at ?? ""}
-          />
+          <DateField id={`${idPrefix}-ends_at`} name="ends_at" defaultValue={d.ends_at ?? ""} />
         </FormRow>
       </div>
       <FormRow

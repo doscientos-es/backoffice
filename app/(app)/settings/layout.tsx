@@ -1,8 +1,8 @@
 import { requireUser } from "@/lib/auth";
+import type { Metadata } from "next";
 import { SettingsNav } from "./settings-nav";
-import { Metadata } from "next";
 
-export const metadata:Metadata = { title: "Ajustes · doscientos" };
+export const metadata: Metadata = { title: "Ajustes · doscientos" };
 
 export default async function SettingsLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();

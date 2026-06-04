@@ -86,7 +86,9 @@ describe("SettingsNav – active state", () => {
   it("marks /settings/company as active when on that path", () => {
     (usePathname as ReturnType<typeof vi.fn>).mockReturnValue("/settings/company");
     renderNav(false);
-    expect(screen.getByRole("link", { name: /empresa/i }).getAttribute("aria-current")).toBe("page");
+    expect(screen.getByRole("link", { name: /empresa/i }).getAttribute("aria-current")).toBe(
+      "page",
+    );
     expect(screen.getByRole("link", { name: /perfil/i }).getAttribute("aria-current")).toBeNull();
   });
 });

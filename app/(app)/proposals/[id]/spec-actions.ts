@@ -120,10 +120,7 @@ export async function deleteSpec(input: unknown): Promise<Result> {
     .select("proposal_id")
     .eq("id", parsed.data.id)
     .maybeSingle();
-  const { error } = await supabase
-    .from("proposal_specs")
-    .delete()
-    .eq("id", parsed.data.id);
+  const { error } = await supabase.from("proposal_specs").delete().eq("id", parsed.data.id);
   if (error) return { ok: false, error: error.message };
   const proposalId = (doc as { proposal_id: string | null } | null)?.proposal_id;
   if (proposalId) revalidatePath(`/proposals/${proposalId}`);

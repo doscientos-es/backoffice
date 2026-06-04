@@ -84,12 +84,7 @@ describe("PageHeader Breadcrumbs", () => {
   });
 
   it("renders back link if no breadcrumbs are provided", () => {
-    render(
-      <PageHeader
-        title="Detail"
-        back={<span data-testid="back">Back</span>}
-      />
-    );
+    render(<PageHeader title="Detail" back={<span data-testid="back">Back</span>} />);
     expect(screen.getByTestId("back")).toBeDefined();
   });
 });
@@ -134,4 +129,3 @@ describe("NewProjectPage Pre-fill", () => {
     expect(select.value).toBe("");
   });
 });
-

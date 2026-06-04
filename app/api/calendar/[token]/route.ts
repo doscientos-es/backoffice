@@ -6,7 +6,10 @@ export const runtime = "nodejs";
 
 function icsDate(iso: string | Date): string {
   const d = typeof iso === "string" ? new Date(iso) : iso;
-  return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  return d
+    .toISOString()
+    .replace(/[-:]/g, "")
+    .replace(/\.\d{3}/, "");
 }
 
 function icsDateOnly(dateStr: string): string {
@@ -15,10 +18,21 @@ function icsDateOnly(dateStr: string): string {
 }
 
 function escapeIcs(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
+  return value
+    .replace(/\\/g, "\\\\")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,")
+    .replace(/\n/g, "\\n");
 }
 
-function buildEvent(uid: string, summary: string, dtstart: string, dtend: string, description?: string, allDay = false) {
+function buildEvent(
+  uid: string,
+  summary: string,
+  dtstart: string,
+  dtend: string,
+  description?: string,
+  allDay = false,
+) {
   const lines = [
     "BEGIN:VEVENT",
     `UID:${uid}`,
@@ -40,10 +54,7 @@ function buildEvent(uid: string, summary: string, dtstart: string, dtend: string
  * Uses the service-role client because the feed must be reachable by calendar
  * apps without a session cookie.
  */
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ token: string }> },
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
 
   // Reject obviously malformed tokens before touching the DB.
@@ -92,14 +103,16 @@ export async function GET(
     const endStr = endDate.toISOString().split("T")[0]!.replace(/-/g, "");
     const project = (task as unknown as { projects: { name: string } | null }).projects;
     const summary = project ? `[${project.name}] ${task.title as string}` : (task.title as string);
-    events.push(buildEvent(
-      `task-${task.id as string}@doscientos`,
-      summary,
-      startStr,
-      endStr,
-      (task.description as string | null) ?? undefined,
-      true,
-    ));
+    events.push(
+      buildEvent(
+        `task-${task.id as string}@doscientos`,
+        summary,
+        startStr,
+        endStr,
+        (task.description as string | null) ?? undefined,
+        true,
+      ),
+    );
   }
 
   const memberName = member.name as string;

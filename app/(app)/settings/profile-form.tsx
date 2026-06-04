@@ -1,12 +1,7 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldContent, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -39,11 +34,10 @@ function buildSignaturePreview(opts: {
   lines.push("");
   lines.push("<strong>doscientos.es</strong>");
   lines.push(
-    "<span style=\"color:#888\">Construimos productos digitales escalables para empresas que quieren crecer con tecnología.</span>",
+    '<span style="color:#888">Construimos productos digitales escalables para empresas que quieren crecer con tecnología.</span>',
   );
   lines.push("");
-  if (opts.contactEmail)
-    lines.push(`📩 ${opts.contactEmail}`);
+  if (opts.contactEmail) lines.push(`📩 ${opts.contactEmail}`);
   lines.push("🌐 https://doscientos.es");
   if (opts.phone) lines.push(`📱 ${opts.phone}`);
   return lines.join("<br/>");
@@ -108,9 +102,7 @@ export function ProfileForm({
             placeholder="Co-founder & Software Engineer"
             maxLength={160}
             autoComplete="organization-title"
-            onChange={(e) =>
-              setPreviewFields((p) => ({ ...p, jobTitle: e.target.value }))
-            }
+            onChange={(e) => setPreviewFields((p) => ({ ...p, jobTitle: e.target.value }))}
           />
         </Field>
         <Field>
@@ -125,11 +117,11 @@ export function ProfileForm({
             autoComplete="email"
             defaultValue={contactEmail ?? ""}
             placeholder="pol@doscientos.es"
-            onChange={(e) =>
-              setPreviewFields((p) => ({ ...p, contactEmail: e.target.value }))
-            }
+            onChange={(e) => setPreviewFields((p) => ({ ...p, contactEmail: e.target.value }))}
           />
-          <FieldDescription>Aparece en la firma. Si se deja vacío, se usa el alias de envío.</FieldDescription>
+          <FieldDescription>
+            Aparece en la firma. Si se deja vacío, se usa el alias de envío.
+          </FieldDescription>
         </Field>
         <Field>
           <FieldLabel htmlFor="phone" className="text-xs font-medium">
@@ -144,9 +136,7 @@ export function ProfileForm({
             defaultValue={phone ?? ""}
             placeholder="+34 600 000 000"
             maxLength={30}
-            onChange={(e) =>
-              setPreviewFields((p) => ({ ...p, phone: e.target.value }))
-            }
+            onChange={(e) => setPreviewFields((p) => ({ ...p, phone: e.target.value }))}
           />
         </Field>
         <Field>
@@ -195,9 +185,7 @@ export function ProfileForm({
             {handleState.status === "valid" && handleState.avatarUrl ? (
               <AvatarImage src={handleState.avatarUrl} alt={handleState.displayName ?? handle} />
             ) : null}
-            <AvatarFallback>
-              {handle.trim().slice(0, 1).toUpperCase() || "·"}
-            </AvatarFallback>
+            <AvatarFallback>{handle.trim().slice(0, 1).toUpperCase() || "·"}</AvatarFallback>
           </Avatar>
           <div className="relative flex-1">
             <Input
@@ -210,9 +198,7 @@ export function ProfileForm({
               autoComplete="off"
               spellCheck={false}
               autoCapitalize="off"
-              aria-invalid={
-                handleState.status === "invalid" || handleState.status === "not_found"
-              }
+              aria-invalid={handleState.status === "invalid" || handleState.status === "not_found"}
               aria-describedby="github_handle_status"
               className="pr-9"
             />
@@ -253,7 +239,6 @@ export function ProfileForm({
     </form>
   );
 }
-
 
 function GithubHandleIcon({
   status,
@@ -303,10 +288,6 @@ function GithubHandleMessage({
         </span>
       );
     case "error":
-      return (
-        <span className="text-muted-foreground">
-          No se ha podido verificar ahora mismo.
-        </span>
-      );
+      return <span className="text-muted-foreground">No se ha podido verificar ahora mismo.</span>;
   }
 }

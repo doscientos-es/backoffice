@@ -75,8 +75,6 @@ export default async function MarketingPage({ searchParams }: { searchParams: Se
         />
       </SectionBoundary>
 
-
-
       <SectionBoundary
         key={`insights-${since}-${until}`}
         pending={<InsightsSkeleton />}

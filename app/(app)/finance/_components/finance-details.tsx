@@ -127,7 +127,6 @@ export async function FinanceDetails() {
                       />
                     ) : null}
                     <span className="tabular-nums">{formatEUR(e.total)}</span>
-
                   </div>
                 </li>
               ))}

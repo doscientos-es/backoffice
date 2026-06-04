@@ -40,7 +40,9 @@ export function DeckGridOverlay({
           <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.25em] sm:tracking-[0.3em] text-white/40 mb-1">
             Vista general
           </p>
-          <h2 className="text-lg sm:text-2xl font-bold text-white truncate">{slides.length} diapositivas</h2>
+          <h2 className="text-lg sm:text-2xl font-bold text-white truncate">
+            {slides.length} diapositivas
+          </h2>
         </div>
         <button
           type="button"

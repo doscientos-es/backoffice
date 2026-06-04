@@ -20,9 +20,7 @@ export default function InternalDocsError({
         <p className="max-w-sm text-sm text-muted-foreground">
           No se han podido cargar los documentos internos. Inténtalo de nuevo.
         </p>
-        {error.digest && (
-          <p className="text-xs text-muted-foreground">ID: {error.digest}</p>
-        )}
+        {error.digest && <p className="text-xs text-muted-foreground">ID: {error.digest}</p>}
       </div>
       <Button onClick={reset} size="sm">
         Reintentar

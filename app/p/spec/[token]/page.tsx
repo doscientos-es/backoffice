@@ -18,9 +18,7 @@ export const metadata = {
  * without a session — same pattern as `/p/proposal/[token]` and
  * `/p/invoice/[token]`.
  */
-export default async function PortalSpecPage({
-  params,
-}: { params: Promise<{ token: string }> }) {
+export default async function PortalSpecPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const admin = createAdminClient();
 

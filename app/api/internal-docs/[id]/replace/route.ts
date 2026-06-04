@@ -44,10 +44,7 @@ export async function POST(
   }
 
   // admins_only documents are only editable by owner/admin.
-  if (
-    (doc.visibility as string) === "admins_only" &&
-    !["owner", "admin"].includes(user.role)
-  ) {
+  if ((doc.visibility as string) === "admins_only" && !["owner", "admin"].includes(user.role)) {
     return NextResponse.json({ error: "Sin permiso" }, { status: 403 });
   }
 
@@ -111,7 +108,11 @@ export async function POST(
     action: "file_replaced",
     actor_id: user.id,
     payload: {
-      from: { filename: oldPath.split("/").pop() ?? null, size: doc.size_bytes ?? null, version: oldVersion },
+      from: {
+        filename: oldPath.split("/").pop() ?? null,
+        size: doc.size_bytes ?? null,
+        version: oldVersion,
+      },
       to: { filename: safeFilename, size: file.size, version: nextVersion },
     },
   });

@@ -47,10 +47,7 @@ Estructura obligatoria (en este orden):
 ## 10. Supuestos y riesgos
 ## 11. Criterios de aceptación`;
 
-export async function POST(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!isAIEnabled()) {
     return NextResponse.json({ error: "ai_disabled" }, { status: 503 });
   }
@@ -66,7 +63,9 @@ export async function POST(
 
   const { data: proposal } = await supabase
     .from("proposals")
-    .select("id, number, title, notes, project_id, client_id, clients(name, company), projects(name, description)")
+    .select(
+      "id, number, title, notes, project_id, client_id, clients(name, company), projects(name, description)",
+    )
     .eq("id", id)
     .is("deleted_at", null)
     .maybeSingle();
@@ -81,12 +80,16 @@ export async function POST(
     .eq("proposal_id", id)
     .order("position");
 
-  const client = (proposal as unknown as {
-    clients: { name: string; company: string | null } | null;
-  }).clients;
-  const project = (proposal as unknown as {
-    projects: { name: string; description: string | null } | null;
-  }).projects;
+  const client = (
+    proposal as unknown as {
+      clients: { name: string; company: string | null } | null;
+    }
+  ).clients;
+  const project = (
+    proposal as unknown as {
+      projects: { name: string; description: string | null } | null;
+    }
+  ).projects;
 
   const itemsText = (items ?? [])
     .map((it) => {

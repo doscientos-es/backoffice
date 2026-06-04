@@ -22,12 +22,8 @@ const ProjectBase = z.object({
   github_sync_mode: GithubSyncMode.default("none"),
   github_auto_sync: z.coerce.boolean().default(true),
   github_repo: z.string().url("URL inválida").optional().or(emptyToUndef),
-  github_installation_id: z
-    .union([z.coerce.number().int().positive(), emptyToUndef])
-    .optional(),
-  github_repo_id: z
-    .union([z.coerce.number().int().positive(), emptyToUndef])
-    .optional(),
+  github_installation_id: z.union([z.coerce.number().int().positive(), emptyToUndef]).optional(),
+  github_repo_id: z.union([z.coerce.number().int().positive(), emptyToUndef]).optional(),
   github_last_sync: z.string().optional().or(emptyToUndef),
 
   // --- Date range ---

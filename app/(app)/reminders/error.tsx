@@ -22,7 +22,9 @@ export default function RemindersError({
         </p>
         {error.digest && <p className="text-xs text-muted-foreground">ID: {error.digest}</p>}
       </div>
-      <Button onClick={reset} size="sm">Reintentar</Button>
+      <Button onClick={reset} size="sm">
+        Reintentar
+      </Button>
     </div>
   );
 }

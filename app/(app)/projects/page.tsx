@@ -63,31 +63,29 @@ export default async function ProjectsPage({
         </Button>
       }
       headers={["Nombre", "Cliente", "Estado", "GitHub"]}
-      rows={
-        data.map((p) => {
-          const mode = (p.github_sync_mode as GitHubSyncMode | null) ?? "none";
-          return {
+      rows={data.map((p) => {
+        const mode = (p.github_sync_mode as GitHubSyncMode | null) ?? "none";
+        return {
+          id: p.id,
+          href: `/projects/${p.id}`,
+          data: {
             id: p.id,
-            href: `/projects/${p.id}`,
-            data: {
-              id: p.id,
-              name: p.name,
-              client_name: p.client_name ?? "—",
-              status: p.status,
-              description: p.description,
-              updated_at: p.updated_at,
-              github_sync_mode: mode,
-              github_repo: p.github_repo,
-            },
-            cells: [
-              p.name,
-              p.client_name ?? "—",
-              p.status as string,
-              <GitHubModeBadge key="gh" mode={mode} />,
-            ],
-          };
-        })
-      }
+            name: p.name,
+            client_name: p.client_name ?? "—",
+            status: p.status,
+            description: p.description,
+            updated_at: p.updated_at,
+            github_sync_mode: mode,
+            github_repo: p.github_repo,
+          },
+          cells: [
+            p.name,
+            p.client_name ?? "—",
+            p.status as string,
+            <GitHubModeBadge key="gh" mode={mode} />,
+          ],
+        };
+      })}
     />
   );
 }

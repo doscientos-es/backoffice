@@ -108,12 +108,7 @@ export function InvoiceEditor({
               />
             </FormRow>
             <FormRow label="Fecha de vencimiento" htmlFor="due-date">
-              <DateField
-                id="due-date"
-                value={dueDate}
-                onChange={setDueDate}
-                disabled={locked}
-              />
+              <DateField id="due-date" value={dueDate} onChange={setDueDate} disabled={locked} />
             </FormRow>
             <FormRow label="Notas" htmlFor="notes">
               <Textarea

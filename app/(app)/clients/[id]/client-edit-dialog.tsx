@@ -72,11 +72,7 @@ export function ClientEditDialog({ client }: { client: Client }) {
           <DialogTitle>Editar cliente</DialogTitle>
           <DialogDescription>Actualiza los datos del cliente.</DialogDescription>
         </DialogHeader>
-        <form
-          ref={formRef}
-          onSubmit={onSubmit}
-          className="flex flex-col max-h-[70vh]"
-        >
+        <form ref={formRef} onSubmit={onSubmit} className="flex flex-col max-h-[70vh]">
           <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-5">
             <ClientFormFields
               idPrefix={`edit-${client.id}`}

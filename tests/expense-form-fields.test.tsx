@@ -55,10 +55,7 @@ describe("ExpenseFormFields — optional fields survive collapse", () => {
   it("submits optional fields even when the section starts collapsed", () => {
     // No optional values → section starts collapsed (showDetails = false).
     const form = renderInForm(
-      <ExpenseFormFields
-        idPrefix="c"
-        defaults={{ vendor: "Notion", subtotal: 9, tax_rate: 21 }}
-      />,
+      <ExpenseFormFields idPrefix="c" defaults={{ vendor: "Notion", subtotal: 9, tax_rate: 21 }} />,
     );
 
     // Section is collapsed, yet the optional controls are still in the DOM…

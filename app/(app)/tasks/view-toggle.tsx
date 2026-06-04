@@ -51,9 +51,7 @@ export function TasksViewToggle({ view }: { view: "board" | "list" }) {
   };
 
   // Count filters the user has actively set (excluding page / view).
-  const activeCount = [...SHARED_PARAMS, ...LIST_ONLY_PARAMS].filter(
-    (k) => !!params.get(k),
-  ).length;
+  const activeCount = [...SHARED_PARAMS, ...LIST_ONLY_PARAMS].filter((k) => !!params.get(k)).length;
 
   return (
     <div className="flex items-center gap-2">

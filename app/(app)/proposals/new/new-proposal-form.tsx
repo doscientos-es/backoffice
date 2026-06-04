@@ -183,12 +183,12 @@ export function NewProposalForm({ clients, leads, initialClientId, initialLeadId
                   placeholder="Propuesta de servicios"
                 />
               </FormRow>
-              <FormRow label="Válida hasta" htmlFor="valid_until" hint="Fecha límite de aceptación.">
-                <DateField
-                  id="valid_until"
-                  value={validUntil}
-                  onChange={setValidUntil}
-                />
+              <FormRow
+                label="Válida hasta"
+                htmlFor="valid_until"
+                hint="Fecha límite de aceptación."
+              >
+                <DateField id="valid_until" value={validUntil} onChange={setValidUntil} />
               </FormRow>
             </div>
           </CardContent>
@@ -244,8 +244,8 @@ export function NewProposalForm({ clients, leads, initialClientId, initialLeadId
           <DialogHeader>
             <DialogTitle>¿Mover lead a Presupuestado?</DialogTitle>
             <DialogDescription>
-              Has creado una propuesta para <strong>{pendingLeadMove?.leadName}</strong>.{" "}
-              ¿Quieres mover el lead a <strong>Presupuestado</strong> para reflejar el estado actual?
+              Has creado una propuesta para <strong>{pendingLeadMove?.leadName}</strong>. ¿Quieres
+              mover el lead a <strong>Presupuestado</strong> para reflejar el estado actual?
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2 pt-1">

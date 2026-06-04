@@ -85,9 +85,7 @@ export function ExpenseFormFields({
     () =>
       Array.from(
         new Set(
-          vendorSuggestions
-            .map((s) => s.vendor_nif?.trim())
-            .filter((n): n is string => Boolean(n)),
+          vendorSuggestions.map((s) => s.vendor_nif?.trim()).filter((n): n is string => Boolean(n)),
         ),
       ),
     [vendorSuggestions],
@@ -151,9 +149,7 @@ export function ExpenseFormFields({
           label="Proveedor"
           htmlFor={`${idPrefix}-vendor`}
           required
-          hint={
-            autofilled ? "NIF y categoría rellenados desde un gasto anterior" : undefined
-          }
+          hint={autofilled ? "NIF y categoría rellenados desde un gasto anterior" : undefined}
         >
           <Input
             id={`${idPrefix}-vendor`}
@@ -295,8 +291,7 @@ export function ExpenseFormFields({
           edit the server action would overwrite the existing columns with null,
           silently wiping data the user never touched.
         */}
-        <div
-          className={`mt-4 grid gap-5 sm:grid-cols-2 ${showDetails ? "" : "hidden"}`}>
+        <div className={`mt-4 grid gap-5 sm:grid-cols-2 ${showDetails ? "" : "hidden"}`}>
           <FormRow label="Vencimiento" htmlFor={`${idPrefix}-due_date`}>
             <DateField
               id={`${idPrefix}-due_date`}

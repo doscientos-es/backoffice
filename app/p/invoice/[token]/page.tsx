@@ -1,5 +1,6 @@
 import { LogoMark } from "@/components/branding";
 import { PortalPasswordGate } from "@/components/portal/password-gate";
+import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getCurrentUser } from "@/lib/auth";
 import { publicEnv, serverEnv } from "@/lib/env";
@@ -9,6 +10,7 @@ import { INVOICE_STATUS } from "@/lib/status";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { buildQrDataUrl, buildQrUrl } from "@/lib/verifactu/qr";
+import { Download } from "lucide-react";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { unlockInvoicePortal } from "./actions";
@@ -129,6 +131,12 @@ export default async function PortalInvoicePage({
               </span>
             ) : null}
           </div>
+          <Button variant="outline" size="sm" asChild className="mt-2">
+            <a href={`/p/invoice/${token}/pdf`}>
+              <Download className="mr-2 h-4 w-4" />
+              Descargar PDF
+            </a>
+          </Button>
         </div>
       </div>
 
@@ -261,8 +269,8 @@ export default async function PortalInvoicePage({
 
       {/* Fiscal info + QR */}
       {(invoice.idfact as string | null) ||
-        (invoice.verifactu_csv as string | null) ||
-        qrDataUrl ? (
+      (invoice.verifactu_csv as string | null) ||
+      qrDataUrl ? (
         <div className="border-t border-zinc-100 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-900/50 px-8 py-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex flex-col gap-1.5">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-0.5">

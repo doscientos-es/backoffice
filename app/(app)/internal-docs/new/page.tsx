@@ -18,9 +18,7 @@ export default async function NewInternalDocPage() {
           title="Subir documento"
           back={<BackLink href="/internal-docs" label="Volver" />}
         />
-        <p className="text-sm text-muted-foreground">
-          No tienes permiso para subir documentos.
-        </p>
+        <p className="text-sm text-muted-foreground">No tienes permiso para subir documentos.</p>
       </div>
     );
   }

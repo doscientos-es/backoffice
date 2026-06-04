@@ -45,9 +45,7 @@ export function SettingsNav({ canManageTeam }: { canManageTeam: boolean }) {
             <Icon
               className={cn(
                 "size-4 shrink-0 transition-colors",
-                active
-                  ? "text-primary"
-                  : "text-muted-foreground group-hover:text-foreground",
+                active ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
               )}
             />
             <span>{label}</span>

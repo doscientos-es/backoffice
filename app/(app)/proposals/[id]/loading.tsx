@@ -6,11 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function ProposalDetailLoading() {
   return (
     <div className="flex flex-col gap-6">
-      <PageHeaderSkeleton
-        breadcrumbs={[80, 120, 160]}
-        titleWidth={240}
-        actions={[110, 130]}
-      />
+      <PageHeaderSkeleton breadcrumbs={[80, 120, 160]} titleWidth={240} actions={[110, 130]} />
 
       <DetailCardSkeleton titleWidth={112} rowWidths={[180, 200, 140, 160]} />
 

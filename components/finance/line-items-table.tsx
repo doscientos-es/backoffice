@@ -66,14 +66,12 @@ export function LineItemsTable({
         <thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
           <tr>
             <th className="px-3 py-2 font-medium">Descripción</th>
-            {showBillingCycle && (
-              <th className="w-32 px-2 py-2 font-medium">Cadencia</th>
-            )}
+            {showBillingCycle && <th className="w-32 px-2 py-2 font-medium">Cadencia</th>}
             <th className="w-20 px-2 py-2 font-medium text-right">Cant.</th>
             <th className="w-28 px-2 py-2 font-medium text-right">Precio</th>
             <th className="w-20 px-2 py-2 font-medium text-right">IVA %</th>
             <th className="w-28 px-2 py-2 font-medium text-right">Subtotal</th>
-            <th className="w-9 px-1 py-2" aria-label="acciones"/>
+            <th className="w-9 px-1 py-2" aria-label="acciones" />
           </tr>
         </thead>
         <tbody>
@@ -93,9 +91,7 @@ export function LineItemsTable({
                 <td className="px-1 py-1.5">
                   <Select
                     value={it.billing_cycle ?? "none"}
-                    onChange={(e) =>
-                      update(i, { billing_cycle: e.target.value as BillingCycle })
-                    }
+                    onChange={(e) => update(i, { billing_cycle: e.target.value as BillingCycle })}
                     disabled={locked}
                     aria-label={`Cadencia línea ${i + 1}`}
                   >
@@ -225,9 +221,7 @@ export function LineItemsTable({
                 >
                   Subtotal
                 </td>
-                <td className="px-2 py-1.5 text-right tabular-nums">
-                  {formatEUR(flat.subtotal)}
-                </td>
+                <td className="px-2 py-1.5 text-right tabular-nums">{formatEUR(flat.subtotal)}</td>
                 <td />
               </tr>
               <tr>
@@ -237,9 +231,7 @@ export function LineItemsTable({
                 >
                   IVA
                 </td>
-                <td className="px-2 py-1.5 text-right tabular-nums">
-                  {formatEUR(flat.taxAmount)}
-                </td>
+                <td className="px-2 py-1.5 text-right tabular-nums">{formatEUR(flat.taxAmount)}</td>
                 <td />
               </tr>
               <tr className="font-semibold">

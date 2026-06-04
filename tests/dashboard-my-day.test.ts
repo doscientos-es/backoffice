@@ -186,8 +186,28 @@ describe("getMyDay", () => {
   });
 
   it("separates myLeads and unassignedLeads correctly", async () => {
-    db.myLeads = [{ id: "owned", name: "Owned", company: null, phone: null, email: null, status: "new", updated_at: "2026-01-01T00:00:00Z" }];
-    db.unassigned = [{ id: "free", name: "Free", company: null, phone: null, email: null, status: "new", created_at: "2026-01-02T00:00:00Z" }];
+    db.myLeads = [
+      {
+        id: "owned",
+        name: "Owned",
+        company: null,
+        phone: null,
+        email: null,
+        status: "new",
+        updated_at: "2026-01-01T00:00:00Z",
+      },
+    ];
+    db.unassigned = [
+      {
+        id: "free",
+        name: "Free",
+        company: null,
+        phone: null,
+        email: null,
+        status: "new",
+        created_at: "2026-01-02T00:00:00Z",
+      },
+    ];
 
     const { getMyDay } = await import("@/lib/dashboard/queries");
     const result = await getMyDay("user-1");

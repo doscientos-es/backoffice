@@ -5,8 +5,8 @@ import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 import { Plus } from "lucide-react";
-import Link from "next/link";
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = { title: "Docs internos · doscientos" };
 export const dynamic = "force-dynamic";
@@ -96,9 +96,13 @@ export default async function InternalDocsPage({
             CATEGORY_LABELS[(d.category as string) ?? "other"] ?? "Otro",
             d.size_bytes ? `${Math.ceil(Number(d.size_bytes) / 1024)} KB` : "—",
             (d.visibility as string) === "admins_only" ? (
-              <Badge variant="warning" key="vis">Solo admin</Badge>
+              <Badge variant="warning" key="vis">
+                Solo admin
+              </Badge>
             ) : (
-              <Badge variant="neutral" key="vis">Equipo</Badge>
+              <Badge variant="neutral" key="vis">
+                Equipo
+              </Badge>
             ),
             formatDate(d.created_at as string),
           ],

@@ -33,10 +33,7 @@ export async function GET(
   }
 
   // Visibility guard: admins_only → only owner/admin
-  if (
-    (doc.visibility as string) === "admins_only" &&
-    !["owner", "admin"].includes(user.role)
-  ) {
+  if ((doc.visibility as string) === "admins_only" && !["owner", "admin"].includes(user.role)) {
     return NextResponse.json({ error: "Sin permiso" }, { status: 403 });
   }
 

@@ -88,11 +88,7 @@ describe("buildMonthlySeries", () => {
   });
 
   it("accepts Date objects as input", () => {
-    const series = buildMonthlySeries(
-      [{ date: new Date(2026, 4, 1), total: 42 }],
-      [],
-      ref,
-    );
+    const series = buildMonthlySeries([{ date: new Date(2026, 4, 1), total: 42 }], [], ref);
     expect(series.at(-1)?.revenue).toBe(42);
   });
 });
@@ -108,9 +104,7 @@ describe("computeProposalTotals", () => {
   });
 
   it("treats missing billing_cycle as one-time", () => {
-    const r = computeProposalTotals([
-      { quantity: 2, unit_price: 50, vat_rate: 21 },
-    ]);
+    const r = computeProposalTotals([{ quantity: 2, unit_price: 50, vat_rate: 21 }]);
     expect(r.oneTime).toEqual({ subtotal: 100, taxAmount: 21, total: 121 });
     expect(r.monthly.total).toBe(0);
     expect(r.grand.total).toBe(121);

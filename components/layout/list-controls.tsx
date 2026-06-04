@@ -57,7 +57,7 @@ export function ListControls({
 
   // Keep the latest router-related callbacks in a ref so the debounce effect
   // can depend only on `q` without re-creating the timeout on every render.
-  const commitRef = useRef<(value: string) => void>(() => { });
+  const commitRef = useRef<(value: string) => void>(() => {});
   commitRef.current = (value: string) => {
     const next = updateParams(params, { [searchKey]: value, page: null });
     router.replace(`${pathname}?${next.toString()}`, { scroll: false });

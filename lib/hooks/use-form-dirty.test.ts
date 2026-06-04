@@ -51,11 +51,11 @@ describe("snapshot()", () => {
   });
 });
 
+import { useFormDirty } from "@/lib/hooks/use-form-dirty";
 // ---------------------------------------------------------------------------
 // Regression: callback ref must work when form mounts AFTER hook init
 // ---------------------------------------------------------------------------
-import { renderHook, act } from "@testing-library/react";
-import { useFormDirty } from "@/lib/hooks/use-form-dirty";
+import { act, renderHook } from "@testing-library/react";
 
 describe("useFormDirty — lazy form mount (dialog scenario)", () => {
   function makeForm(fields: Record<string, string> = {}): HTMLFormElement {

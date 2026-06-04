@@ -20,9 +20,7 @@ export default function AppError({
         <p className="max-w-sm text-sm text-muted-foreground">
           Ha ocurrido un error inesperado. Puedes intentarlo de nuevo o volver al inicio.
         </p>
-        {error.digest && (
-          <p className="text-xs text-muted-foreground">ID: {error.digest}</p>
-        )}
+        {error.digest && <p className="text-xs text-muted-foreground">ID: {error.digest}</p>}
       </div>
       <Button onClick={reset} size="sm">
         Reintentar

@@ -34,9 +34,7 @@ export default function GlobalError({
           <p className="max-w-sm text-sm text-zinc-500">
             Ha ocurrido un error crítico en la aplicación. Por favor, recarga la página.
           </p>
-          {error.digest && (
-            <p className="text-xs text-zinc-400">ID: {error.digest}</p>
-          )}
+          {error.digest && <p className="text-xs text-zinc-400">ID: {error.digest}</p>}
         </div>
         <button
           onClick={reset}

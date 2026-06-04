@@ -74,9 +74,7 @@ describe("inviteTeamMember", () => {
     expect(res).toEqual({ ok: true });
     expect(state.inviteCalls).toHaveLength(1);
     const opts = state.inviteCalls[0]?.opts;
-    expect(opts?.redirectTo).toMatch(
-      /\/auth\/callback\?next=%2Flogin%2Fupdate-password$/,
-    );
+    expect(opts?.redirectTo).toMatch(/\/auth\/callback\?next=%2Flogin%2Fupdate-password$/);
     // It must NOT skip the callback by pointing directly at update-password.
     expect(opts?.redirectTo).not.toMatch(/\/login\/update-password($|\?)/);
   });
@@ -108,7 +106,10 @@ describe("inviteTeamMember", () => {
   });
 
   it("propagates Supabase invite errors", async () => {
-    state.inviteResult = { data: { user: null as unknown as { id: string } }, error: { message: "rate limited" } };
+    state.inviteResult = {
+      data: { user: null as unknown as { id: string } },
+      error: { message: "rate limited" },
+    };
     const res = await inviteTeamMember(form("a@b.com"));
     expect(res).toEqual({ ok: false, error: "rate limited" });
     expect(state.upsertCalls).toHaveLength(0);

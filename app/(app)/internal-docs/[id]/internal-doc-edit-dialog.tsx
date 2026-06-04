@@ -313,7 +313,12 @@ function InternalDocEditForm({
             className="sr-only"
             onChange={(e) => onFileChange(e.target.files?.[0]?.name ?? null)}
           />
-          <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => fileRef.current?.click()}
+          >
             <Paperclip className="size-3.5" aria-hidden />
             Seleccionar archivo
           </Button>

@@ -94,11 +94,7 @@ export function TaskCreateDialog({
             Las tareas se asocian al proyecto actual y aparecen en el Kanban.
           </DialogDescription>
         </DialogHeader>
-        <form
-          ref={formRef}
-          onSubmit={onSubmit}
-          className="flex flex-col max-h-[70vh]"
-        >
+        <form ref={formRef} onSubmit={onSubmit} className="flex flex-col max-h-[70vh]">
           <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-5">
             {projectId ? <input type="hidden" name="project_id" value={projectId} /> : null}
             {leadId ? <input type="hidden" name="lead_id" value={leadId} /> : null}

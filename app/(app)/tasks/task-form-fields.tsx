@@ -139,11 +139,7 @@ export function TaskFormFields({
           </Select>
         </FormRow>
         <FormRow label="Vencimiento" htmlFor={`${idPrefix}-due_date`}>
-          <DateField
-            id={`${idPrefix}-due_date`}
-            name="due_date"
-            defaultValue={d.due_date ?? ""}
-          />
+          <DateField id={`${idPrefix}-due_date`} name="due_date" defaultValue={d.due_date ?? ""} />
         </FormRow>
       </div>
     </>

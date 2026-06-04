@@ -1,6 +1,6 @@
 import "server-only";
 
-import { type InvoiceStatus, INVOICE_STATUS } from "@/lib/status";
+import { INVOICE_STATUS, type InvoiceStatus } from "@/lib/status";
 import { formatDate, formatEUR } from "@/lib/utils";
 import {
   Circle,
@@ -30,11 +30,23 @@ const styles = StyleSheet.create({
   docType: { marginTop: 4, fontSize: 8, color: FAINT, textTransform: "uppercase" },
   headerRight: { alignItems: "flex-end" },
   number: { fontSize: 16, fontFamily: "Helvetica-Bold", color: INK },
-  status: { marginTop: 2, fontSize: 8, color: MUTED, textTransform: "uppercase", letterSpacing: 0.5 },
+  status: {
+    marginTop: 2,
+    fontSize: 8,
+    color: MUTED,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
   metaRow: { marginTop: 4, fontSize: 8, color: MUTED },
   parties: { flexDirection: "row", marginTop: 28, gap: 24 },
   party: { flex: 1 },
-  label: { fontSize: 7, color: FAINT, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 },
+  label: {
+    fontSize: 7,
+    color: FAINT,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
   partyName: { fontSize: 10, fontFamily: "Helvetica-Bold", color: INK },
   partyLine: { fontSize: 8, color: MUTED, marginTop: 2 },
   table: { marginTop: 28, borderTopWidth: 1, borderColor: LINE },
@@ -203,8 +215,8 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
         <View style={styles.footer} fixed>
           <Text style={styles.footerText}>
             Factura verificable en la sede electrónica de la AEAT mediante el código QR. Sistema de
-            emisión conforme al Reglamento Verifactu (RD 1007/2023). Conserve esta factura conforme a
-            la normativa fiscal aplicable.
+            emisión conforme al Reglamento Verifactu (RD 1007/2023). Conserve esta factura conforme
+            a la normativa fiscal aplicable.
           </Text>
         </View>
       </Page>

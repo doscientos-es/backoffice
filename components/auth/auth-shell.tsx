@@ -88,7 +88,9 @@ export function AuthShell({ title, description, footer, children }: AuthShellPro
         </Link>
         <div className="mb-6 text-center">
           <h1 className="text-xl font-semibold tracking-tight text-primary">{title}</h1>
-          {description ? <p className="mt-1.5 text-sm text-muted-foreground">{description}</p> : null}
+          {description ? (
+            <p className="mt-1.5 text-sm text-muted-foreground">{description}</p>
+          ) : null}
         </div>
         {children}
         {footer ? <p className="mt-6 text-center text-xs text-muted-foreground">{footer}</p> : null}

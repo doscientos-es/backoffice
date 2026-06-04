@@ -8,10 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { EMPTY_LINE_ITEM, type LineItem } from "@/lib/finance";
 import { useAutosave } from "@/lib/hooks/use-autosave";
-import {
-  type EditableKeyPoint,
-  serializeKeyPoints,
-} from "@/lib/proposals/key-points";
+import { type EditableKeyPoint, serializeKeyPoints } from "@/lib/proposals/key-points";
 import { useMemo, useState } from "react";
 import { updateProposal } from "../actions";
 
@@ -141,9 +138,8 @@ export function ProposalEditor({
         <header className="flex flex-col gap-0.5">
           <h2 className="text-sm font-semibold">Narrativa de la propuesta</h2>
           <p className="text-[11px] text-muted-foreground">
-            Contexto, problemas detectados y enfoque de la solución. Se muestran al
-            cliente antes del precio en el portal y como diapositivas en la
-            presentación.
+            Contexto, problemas detectados y enfoque de la solución. Se muestran al cliente antes
+            del precio en el portal y como diapositivas en la presentación.
           </p>
         </header>
 
@@ -208,9 +204,7 @@ export function ProposalEditor({
           disabled={locked}
           rows={6}
           className="font-mono text-xs"
-          placeholder={
-            "## Condiciones\n\n- 50% al inicio, 50% a la entrega.\n- Vigencia: 30 días."
-          }
+          placeholder={"## Condiciones\n\n- 50% al inicio, 50% a la entrega.\n- Vigencia: 30 días."}
         />
       </FormRow>
     </div>

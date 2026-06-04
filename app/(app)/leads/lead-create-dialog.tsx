@@ -75,15 +75,9 @@ export function LeadCreateDialog({ trigger, onCreated }: Props) {
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Nuevo lead</DialogTitle>
-          <DialogDescription>
-            Registra una nueva oportunidad comercial.
-          </DialogDescription>
+          <DialogDescription>Registra una nueva oportunidad comercial.</DialogDescription>
         </DialogHeader>
-        <form
-          ref={formRef}
-          onSubmit={onSubmit}
-          className="flex flex-col max-h-[80vh]"
-        >
+        <form ref={formRef} onSubmit={onSubmit} className="flex flex-col max-h-[80vh]">
           <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-5">
             <LeadFormFields idPrefix="create" includeEstimatedValue autoFocusName />
           </div>

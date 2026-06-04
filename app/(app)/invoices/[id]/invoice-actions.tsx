@@ -9,7 +9,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { CheckCircle2, FileEdit, MoreHorizontal, Send, Trash2, XCircle } from "lucide-react";
+import {
+  CheckCircle2,
+  Download,
+  FileEdit,
+  MoreHorizontal,
+  Send,
+  Trash2,
+  XCircle,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -76,6 +84,13 @@ export function InvoiceActions({ invoice }: Props) {
   return (
     <div className="flex items-center gap-2">
       <FormFeedback state={feedback.state} />
+
+      <Button variant="outline" size="sm" asChild>
+        <a href={`/api/invoices/${invoice.id}/pdf`}>
+          <Download className="mr-2 h-4 w-4" />
+          Descargar PDF
+        </a>
+      </Button>
 
       {canEdit && (
         <Button variant="outline" size="sm" asChild>

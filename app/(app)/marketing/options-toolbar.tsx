@@ -30,17 +30,14 @@ export function OptionsToolbar({ sort, showPaused, hidePaused = false }: Props) 
   }
 
   return (
-    <div
-      className={cn(
-        "flex flex-wrap items-center gap-3 text-xs",
-        pending && "opacity-70",
-      )}
-    >
+    <div className={cn("flex flex-wrap items-center gap-3 text-xs", pending && "opacity-70")}>
       <label className="flex items-center gap-2 text-muted-foreground">
         <span className="font-medium">Ordenar por</span>
         <Select
           value={sort}
-          onChange={(e) => updateParam("sort", e.target.value === "spend_desc" ? null : e.target.value)}
+          onChange={(e) =>
+            updateParam("sort", e.target.value === "spend_desc" ? null : e.target.value)
+          }
           className="h-8 w-44 text-xs"
         >
           {SORT_OPTIONS.map((opt) => (

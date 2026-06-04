@@ -22,16 +22,7 @@ import { MemberLabel } from "@/components/ui/member-avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { LEAD_STATUS } from "@/lib/status";
 import { formatEUR, relativeTime } from "@/lib/utils";
-import {
-  ArrowUpRight,
-  Building2,
-  Mail,
-  Phone,
-  Trash2,
-  UserRound,
-  Wallet,
-  X,
-} from "lucide-react";
+import { ArrowUpRight, Building2, Mail, Phone, Trash2, UserRound, Wallet, X } from "lucide-react";
 import Link from "next/link";
 import { type ReactNode, useState, useTransition } from "react";
 import { LeadEditDialog } from "./[id]/lead-edit-dialog";

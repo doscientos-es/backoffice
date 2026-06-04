@@ -3,9 +3,9 @@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  createEmptyKeyPoint,
   type EditableKeyPoint,
   KEY_POINTS_LIMITS,
+  createEmptyKeyPoint,
 } from "@/lib/proposals/key-points";
 import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
 
@@ -137,9 +137,7 @@ export function KeyPointsEditor({
         <Plus className="size-3.5" aria-hidden /> {addLabel}
       </button>
       {items.length >= max ? (
-        <p className="text-[11px] text-muted-foreground">
-          Máximo {max} puntos por bloque.
-        </p>
+        <p className="text-[11px] text-muted-foreground">Máximo {max} puntos por bloque.</p>
       ) : null}
     </div>
   );

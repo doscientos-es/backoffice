@@ -147,21 +147,21 @@ export default async function PortalProposalPage({
     !client || !client.nif?.trim() || !client.billing_address?.trim() || !client.name?.trim();
   const fiscalPrefill = client
     ? {
-      name: client.name ?? "",
-      nif: client.nif ?? "",
-      billing_address: client.billing_address ?? "",
-      contact_person: client.contact_person ?? "",
-      email: client.email ?? "",
-      phone: client.phone ?? "",
-    }
+        name: client.name ?? "",
+        nif: client.nif ?? "",
+        billing_address: client.billing_address ?? "",
+        contact_person: client.contact_person ?? "",
+        email: client.email ?? "",
+        phone: client.phone ?? "",
+      }
     : {
-      name: lead?.company ?? lead?.name ?? "",
-      nif: "",
-      billing_address: "",
-      contact_person: lead?.name ?? "",
-      email: lead?.email ?? "",
-      phone: lead?.phone ?? "",
-    };
+        name: lead?.company ?? lead?.name ?? "",
+        nif: "",
+        billing_address: "",
+        contact_person: lead?.name ?? "",
+        email: lead?.email ?? "",
+        phone: lead?.phone ?? "",
+      };
   const recipientName = client?.name ?? lead?.company ?? lead?.name ?? "—";
   const proposalNumber = (proposal.number as string | null) ?? "Borrador";
   const safeItems = (items ?? []) as unknown as ProposalItem[];

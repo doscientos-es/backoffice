@@ -19,13 +19,18 @@ export function ReopenConfirmDialog({
   onConfirm: () => void;
 }) {
   return (
-    <Dialog open={!!lead} onOpenChange={(v) => { if (!v) onCancel(); }}>
+    <Dialog
+      open={!!lead}
+      onOpenChange={(v) => {
+        if (!v) onCancel();
+      }}
+    >
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>Reabrir oportunidad</DialogTitle>
           <DialogDescription>
-            <strong>{lead?.name}</strong> ya estaba ganado. ¿Quieres reabrir esta
-            oportunidad como un nuevo ciclo de ventas?
+            <strong>{lead?.name}</strong> ya estaba ganado. ¿Quieres reabrir esta oportunidad como
+            un nuevo ciclo de ventas?
           </DialogDescription>
         </DialogHeader>
         <div className="flex justify-end gap-2 pt-1">

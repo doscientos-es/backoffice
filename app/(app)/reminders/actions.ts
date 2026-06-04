@@ -1,10 +1,7 @@
 "use server";
 
 import { requireUser } from "@/lib/auth";
-import {
-  CreateReminderInput,
-  ReminderIdInput,
-} from "@/lib/schemas/reminder";
+import { CreateReminderInput, ReminderIdInput } from "@/lib/schemas/reminder";
 import { createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 

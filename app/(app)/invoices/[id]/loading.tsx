@@ -8,11 +8,7 @@ const LINE_WIDTHS = [200, 60, 80, 60, 80];
 export default function InvoiceDetailLoading() {
   return (
     <div className="flex flex-col gap-6">
-      <PageHeaderSkeleton
-        breadcrumbs={[70, 120, 140, 110]}
-        titleWidth={240}
-        actions={[80, 110]}
-      />
+      <PageHeaderSkeleton breadcrumbs={[70, 120, 140, 110]} titleWidth={240} actions={[80, 110]} />
 
       <DetailCardSkeleton rowWidths={[180, 200, 140, 160, 200]} />
 

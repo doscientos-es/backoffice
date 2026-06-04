@@ -76,19 +76,13 @@ export function UserMenu({ user }: { user: CurrentUser }) {
             {avatarSrc ? <AvatarImage src={avatarSrc} alt={user.name} /> : null}
             <AvatarFallback>{initials(user.name)}</AvatarFallback>
           </Avatar>
-          <span className="hidden text-xs font-medium text-primary md:inline">
-            {user.name}
-          </span>
+          <span className="hidden text-xs font-medium text-primary md:inline">{user.name}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={6} className="w-56">
         <DropdownMenuLabel className="flex flex-col gap-1 pb-2">
-          <span className="truncate text-sm font-medium text-primary">
-            {user.name}
-          </span>
-          <span className="truncate text-xs font-normal text-muted">
-            {user.email}
-          </span>
+          <span className="truncate text-sm font-medium text-primary">{user.name}</span>
+          <span className="truncate text-xs font-normal text-muted">{user.email}</span>
           <Badge variant={ROLE_VARIANT[user.role]} className="mt-1 self-start">
             <ShieldCheck className="h-3 w-3" aria-hidden />
             {ROLE_LABELS[user.role]}

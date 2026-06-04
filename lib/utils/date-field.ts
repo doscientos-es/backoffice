@@ -34,9 +34,7 @@ export function displayToIso(text: string): string {
  */
 export function maskDate(value: string): string {
   const digits = value.replace(/[^0-9]/g, "").slice(0, 8);
-  return [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 8)]
-    .filter(Boolean)
-    .join("/");
+  return [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 8)].filter(Boolean).join("/");
 }
 
 /**
@@ -48,11 +46,7 @@ export function maskDate(value: string): string {
  * @param rawValue   The raw value (may contain `/` that the user typed).
  * @param masked     The masked output string.
  */
-export function mapCursorToMasked(
-  rawCursor: number,
-  rawValue: string,
-  masked: string,
-): number {
+export function mapCursorToMasked(rawCursor: number, rawValue: string, masked: string): number {
   // Count how many digits appear before the cursor in the raw string
   const digitsBeforeCursor = rawValue.slice(0, rawCursor).replace(/[^0-9]/g, "").length;
 
