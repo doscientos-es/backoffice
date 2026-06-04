@@ -13,16 +13,29 @@ const log = scopedLogger("public-leads");
 /** Max submissions per IP per minute. */
 const RATE_LIMIT = 5;
 
+/**
+ * Normalize an origin for comparison. Tolerates the common misconfigurations
+ * that silently break CORS in production: surrounding quotes (Vercel values
+ * pasted as `"https://..."`), stray whitespace, a trailing slash, and casing.
+ */
+function normalizeOrigin(value: string): string {
+  return value
+    .trim()
+    .replace(/^['"]+|['"]+$/g, "")
+    .replace(/\/+$/, "")
+    .toLowerCase();
+}
+
 function allowedOrigins(): string[] {
-  return serverEnv()
-    .LANDING_ALLOWED_ORIGINS.split(",")
-    .map((o) => o.trim())
-    .filter(Boolean);
+  return serverEnv().LANDING_ALLOWED_ORIGINS.split(",").map(normalizeOrigin).filter(Boolean);
 }
 
 function isAllowedOrigin(origin: string | null): boolean {
   const allowed = allowedOrigins();
-  return allowed.includes("*") || (Boolean(origin) && allowed.includes(origin as string));
+  return (
+    allowed.includes("*") ||
+    (Boolean(origin) && allowed.includes(normalizeOrigin(origin as string)))
+  );
 }
 
 /** CORS headers reflecting the request origin only when it is allowlisted. */
@@ -36,7 +49,8 @@ function corsHeaders(origin: string | null): Record<string, string> {
   const allowed = allowedOrigins();
   if (allowed.includes("*")) {
     headers["Access-Control-Allow-Origin"] = "*";
-  } else if (origin && allowed.includes(origin)) {
+  } else if (origin && allowed.includes(normalizeOrigin(origin))) {
+    // Echo the request's original Origin header (browsers require an exact match).
     headers["Access-Control-Allow-Origin"] = origin;
   }
   return headers;

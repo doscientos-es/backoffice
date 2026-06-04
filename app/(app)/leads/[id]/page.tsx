@@ -240,6 +240,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                 leadName={lead.name as string}
                 leadEmail={(lead.email as string | null) ?? null}
                 leadPhone={(lead.phone as string | null) ?? null}
+                claimable={canEdit && !lead.assigned_to}
               />
             </CardContent>
           </Card>

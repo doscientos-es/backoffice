@@ -14,9 +14,10 @@ import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarClock } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { CalendarClock, Hand, Loader2 } from "lucide-react";
+import { type ReactNode, useState, useTransition } from "react";
 import { createReminder } from "../../reminders/actions";
+import { claimLead } from "../actions";
 import { QCallDialog, QEmailDialog, QNoteDialog } from "../lead-quick-action-dialogs";
 
 type Props = {
@@ -24,16 +25,49 @@ type Props = {
   leadName: string;
   leadEmail: string | null;
   leadPhone: string | null;
+  claimable?: boolean;
 };
 
-export function LeadQuickActions({ leadId, leadName, leadEmail, leadPhone }: Props) {
+export function LeadQuickActions({ leadId, leadName, leadEmail, leadPhone, claimable }: Props) {
   return (
     <div className="flex flex-col gap-2">
+      {claimable && <ClaimButton leadId={leadId} />}
       <QCallDialog leadId={leadId} leadPhone={leadPhone} leadName={leadName} />
       <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
       <QNoteDialog leadId={leadId} />
       <ScheduleDialog leadId={leadId} leadName={leadName} />
     </div>
+  );
+}
+
+function ClaimButton({ leadId }: { leadId: string }) {
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  const onClick = () => {
+    setError(null);
+    startTransition(async () => {
+      const res = await claimLead({ leadId });
+      if (!res.ok) setError(res.error);
+      // revalidatePath in the action handles the server re-render
+    });
+  };
+
+  return (
+    <Button
+      type="button"
+      variant="default"
+      size="sm"
+      className="w-full justify-start gap-2"
+      disabled={pending}
+      onClick={onClick}
+      title={error ?? "Asignarme este lead"}
+    >
+      <span className="text-primary-foreground/70">
+        {pending ? <Loader2 className="size-4 animate-spin" /> : <Hand className="size-4" />}
+      </span>
+      <span className="text-sm font-medium">{error ? "Reintentar" : "Asignármelo"}</span>
+    </Button>
   );
 }
 
