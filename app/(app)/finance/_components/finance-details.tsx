@@ -6,6 +6,8 @@ import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import Link from "next/link";
 import { ExpenseListActions } from "../expenses/_components/expense-list-actions";
+import { FinanceCategoryChart } from "../finance-category-chart";
+import { FinanceMembersChart } from "../finance-members-chart";
 
 export async function FinanceDetails() {
   const user = await requireUser();
@@ -35,6 +37,14 @@ export async function FinanceDetails() {
   const canEdit = user.role !== "viewer";
   const canDelete = user.role === "owner" || user.role === "admin";
 
+  const categorySlices = topCategories.map(([cat, total]) => ({
+    name: EXPENSE_CATEGORY_LABELS[cat] ?? cat,
+    value: total,
+  }));
+  const memberBars = [...memberContributions]
+    .sort((a, b) => b.total - a.total)
+    .map((c) => ({ name: c.memberName, value: c.total }));
+
   return (
     <div className="flex flex-col gap-6">
       <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
@@ -43,17 +53,10 @@ export async function FinanceDetails() {
             <CardTitle>Top categorías · este mes</CardTitle>
           </CardHeader>
           <CardContent className="px-0">
-            {topCategories.length === 0 ? (
+            {categorySlices.length === 0 ? (
               <p className="px-6 py-2 text-sm text-muted-foreground">Sin gastos este mes.</p>
             ) : (
-              <ul className="divide-y divide-border">
-                {topCategories.map(([cat, total]) => (
-                  <li key={cat} className="flex items-center justify-between px-6 py-2.5 text-sm">
-                    <span>{EXPENSE_CATEGORY_LABELS[cat] ?? cat}</span>
-                    <span className="font-medium tabular-nums">{formatEUR(total)}</span>
-                  </li>
-                ))}
-              </ul>
+              <FinanceCategoryChart data={categorySlices} />
             )}
           </CardContent>
         </Card>
@@ -141,19 +144,7 @@ export async function FinanceDetails() {
             <CardTitle>Aportaciones de socios</CardTitle>
           </CardHeader>
           <CardContent className="px-0">
-            <ul className="divide-y divide-border">
-              {memberContributions
-                .sort((a, b) => b.total - a.total)
-                .map((c) => (
-                  <li
-                    key={c.memberId}
-                    className="flex items-center justify-between px-6 py-2.5 text-sm"
-                  >
-                    <span className="font-medium">{c.memberName}</span>
-                    <span className="tabular-nums">{formatEUR(c.total)}</span>
-                  </li>
-                ))}
-            </ul>
+            <FinanceMembersChart data={memberBars} />
             {memberContributions.length === 2 && (
               <div className="border-t border-border px-6 py-2 text-xs text-muted-foreground">
                 Diferencia:{" "}

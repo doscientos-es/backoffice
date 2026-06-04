@@ -4,9 +4,10 @@ import type { MonthlyPoint } from "@/lib/finance";
 import { formatEUR } from "@/lib/utils";
 import {
   Bar,
-  BarChart,
   CartesianGrid,
+  ComposedChart,
   Legend,
+  Line,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -23,7 +24,7 @@ export function FinanceChart({ data }: { data: MonthlyPoint[] }) {
   return (
     <div className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+        <ComposedChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
           <XAxis
             dataKey="month"
@@ -67,7 +68,15 @@ export function FinanceChart({ data }: { data: MonthlyPoint[] }) {
             radius={[4, 4, 0, 0]}
             maxBarSize={28}
           />
-        </BarChart>
+          <Line
+            type="monotone"
+            dataKey="net"
+            stroke="var(--info)"
+            strokeWidth={2}
+            dot={{ r: 2.5, fill: "var(--info)" }}
+            activeDot={{ r: 4 }}
+          />
+        </ComposedChart>
       </ResponsiveContainer>
     </div>
   );

@@ -65,6 +65,32 @@ export const EXPENSE_RECURRENCE_LABELS: Record<ExpenseRecurrence, string> = {
 };
 
 /**
+ * Canonical defaults for a brand-new expense — the single source of truth
+ * shared by the form UI (initial field values) and the Zod schema (server-side
+ * fallback when a field is absent from FormData). Keeps the two from drifting.
+ *
+ * `expense_date` is intentionally omitted: it defaults to "today", computed at
+ * render time rather than baked into a constant.
+ */
+export const EXPENSE_FORM_DEFAULTS = {
+  category: "service",
+  status: "paid",
+  recurrence: "none",
+  currency: "EUR",
+  tax_rate: 21,
+  subtotal: 0,
+  payment_source: "company",
+} as const satisfies {
+  category: ExpenseCategory;
+  status: ExpenseStatus;
+  recurrence: ExpenseRecurrence;
+  currency: string;
+  tax_rate: number;
+  subtotal: number;
+  payment_source: ExpensePaymentSource;
+};
+
+/**
  * Cadence at which a proposal line item is billed. Re-exports the expense
  * recurrence vocabulary so proposals and expenses speak the same language.
  */

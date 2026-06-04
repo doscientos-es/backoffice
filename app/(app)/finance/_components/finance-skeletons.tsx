@@ -56,11 +56,32 @@ function ListCardSkeleton({ rows = 5 }: { rows?: number }) {
   );
 }
 
+function DonutCardSkeleton() {
+  return (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-5 w-44 rounded" />
+      </CardHeader>
+      <CardContent className="flex flex-col items-center gap-5 px-6 sm:flex-row">
+        <Skeleton className="size-44 shrink-0 rounded-full" />
+        <div className="flex w-full flex-col gap-3">
+          {LIST_ROW_KEYS.map((key) => (
+            <div key={key} className="flex items-center justify-between">
+              <Skeleton className="h-4 w-32 rounded" />
+              <Skeleton className="h-4 w-16 rounded" />
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function DetailsSkeleton() {
   return (
     <div className="flex flex-col gap-6">
       <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-        <ListCardSkeleton />
+        <DonutCardSkeleton />
         <ListCardSkeleton />
       </div>
       <ListCardSkeleton />

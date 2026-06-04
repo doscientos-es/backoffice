@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   EXPENSE_CATEGORIES,
   EXPENSE_CATEGORY_LABELS,
+  EXPENSE_FORM_DEFAULTS,
   EXPENSE_PAYMENT_SOURCES,
   EXPENSE_PAYMENT_SOURCE_LABELS,
   EXPENSE_RECURRENCES,
@@ -67,10 +68,12 @@ export function ExpenseFormFields({
   vendorSuggestions = [],
 }: Props) {
   const d = defaults ?? {};
-  const [paymentSource, setPaymentSource] = useState(d.payment_source ?? "company");
+  const [paymentSource, setPaymentSource] = useState(
+    d.payment_source ?? EXPENSE_FORM_DEFAULTS.payment_source,
+  );
   const [vendor, setVendor] = useState(d.vendor ?? "");
   const [vendorNif, setVendorNif] = useState(d.vendor_nif ?? "");
-  const [category, setCategory] = useState(d.category ?? "service");
+  const [category, setCategory] = useState(d.category ?? EXPENSE_FORM_DEFAULTS.category);
   const [autofilled, setAutofilled] = useState(false);
 
   // Lookup of known vendors (case-insensitive) and the list of distinct NIFs
@@ -187,7 +190,7 @@ export function ExpenseFormFields({
             min="0"
             required
             inputMode="decimal"
-            defaultValue={(d.subtotal ?? 0).toString()}
+            defaultValue={(d.subtotal ?? EXPENSE_FORM_DEFAULTS.subtotal).toString()}
           />
         </FormRow>
         <FormRow label="Pagado desde" htmlFor={`${idPrefix}-payment_source`} required>
@@ -250,7 +253,11 @@ export function ExpenseFormFields({
           </Select>
         </FormRow>
         <FormRow label="Estado" htmlFor={`${idPrefix}-status`} hint="Por defecto: Pagado">
-          <Select id={`${idPrefix}-status`} name="status" defaultValue={d.status ?? "paid"}>
+          <Select
+            id={`${idPrefix}-status`}
+            name="status"
+            defaultValue={d.status ?? EXPENSE_FORM_DEFAULTS.status}
+          >
             {EXPENSE_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {EXPENSE_STATUS_LABELS[s]}
@@ -267,7 +274,7 @@ export function ExpenseFormFields({
             min="0"
             max="100"
             inputMode="decimal"
-            defaultValue={(d.tax_rate ?? 21).toString()}
+            defaultValue={(d.tax_rate ?? EXPENSE_FORM_DEFAULTS.tax_rate).toString()}
           />
         </FormRow>
       </div>
@@ -306,7 +313,7 @@ export function ExpenseFormFields({
             <Select
               id={`${idPrefix}-recurrence`}
               name="recurrence"
-              defaultValue={d.recurrence ?? "none"}
+              defaultValue={d.recurrence ?? EXPENSE_FORM_DEFAULTS.recurrence}
             >
               {EXPENSE_RECURRENCES.map((r) => (
                 <option key={r} value={r}>
@@ -361,7 +368,7 @@ export function ExpenseFormFields({
               id={`${idPrefix}-currency`}
               name="currency"
               maxLength={3}
-              defaultValue={d.currency ?? "EUR"}
+              defaultValue={d.currency ?? EXPENSE_FORM_DEFAULTS.currency}
             />
           </FormRow>
           <div className="sm:col-span-2">

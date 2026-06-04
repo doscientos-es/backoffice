@@ -9,8 +9,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { useActionForm } from "@/lib/hooks/use-action-form";
 import { useFormDirty } from "@/lib/hooks/use-form-dirty";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
@@ -66,25 +67,21 @@ export function ExpenseEditDialog({
     if (!isControlled) setInternalOpen(v);
     onOpenChange?.(v);
   };
-  const feedback = useFormFeedback();
-  const { formRef, isDirty, reset } = useFormDirty<HTMLFormElement>();
-
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    feedback.setPending();
-    const res = await updateExpense(new FormData(e.currentTarget));
-    if (!res.ok) return feedback.setError(res.error);
-    feedback.setSuccess("Guardado");
-    reset();
-    setTimeout(() => setOpen(false), 400);
-  }
+  const { formRef, isDirty, reset: resetDirty } = useFormDirty<HTMLFormElement>();
+  const { state, pending, onSubmit, reset: resetFeedback } = useActionForm(updateExpense, {
+    successMessage: "Guardado",
+    onSuccess: () => {
+      resetDirty();
+      setTimeout(() => setOpen(false), 400);
+    },
+  });
 
   return (
     <Dialog
       open={open}
       onOpenChange={(v) => {
         setOpen(v);
-        if (!v) feedback.reset();
+        if (!v) resetFeedback();
       }}
     >
       {!hideTrigger && (
@@ -130,8 +127,8 @@ export function ExpenseEditDialog({
             />
           </div>
           <div className="shrink-0 flex items-center justify-end gap-3 border-t border-border pt-3">
-            <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
-            <SubmitButton loading={feedback.pending} disabled={!isDirty} pendingLabel="Guardando…">
+            <FormFeedback state={state} pendingLabel="Guardando…" />
+            <SubmitButton loading={pending} disabled={!isDirty} pendingLabel="Guardando…">
               Guardar cambios
             </SubmitButton>
           </div>

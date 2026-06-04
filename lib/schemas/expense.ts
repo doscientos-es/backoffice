@@ -1,5 +1,6 @@
 import {
   EXPENSE_CATEGORIES,
+  EXPENSE_FORM_DEFAULTS,
   EXPENSE_PAYMENT_SOURCES,
   EXPENSE_RECURRENCES,
   EXPENSE_STATUSES,
@@ -37,20 +38,20 @@ export type ExpensePaymentSourceType = z.infer<typeof ExpensePaymentSource>;
 const ExpenseBase = z.object({
   vendor: z.string().min(1, "El proveedor es obligatorio").max(160),
   description: z.string().max(400).optional().or(emptyToUndef),
-  category: ExpenseCategory.default("other"),
-  status: ExpenseStatus.default("paid"),
-  recurrence: ExpenseRecurrence.default("none"),
+  category: ExpenseCategory.default(EXPENSE_FORM_DEFAULTS.category),
+  status: ExpenseStatus.default(EXPENSE_FORM_DEFAULTS.status),
+  recurrence: ExpenseRecurrence.default(EXPENSE_FORM_DEFAULTS.recurrence),
   expense_date: z.string().min(1, "La fecha es obligatoria"),
   due_date: optionalDate,
   paid_at: optionalDate,
-  currency: z.string().min(3).max(3).default("EUR"),
+  currency: z.string().min(3).max(3).default(EXPENSE_FORM_DEFAULTS.currency),
   subtotal: z.coerce.number().min(0, "El importe debe ser ≥ 0"),
-  tax_rate: z.coerce.number().min(0).max(100).default(21),
+  tax_rate: z.coerce.number().min(0).max(100).default(EXPENSE_FORM_DEFAULTS.tax_rate),
   vendor_nif: z.string().max(20).optional().or(emptyToUndef),
   invoice_reference: z.string().max(80).optional().or(emptyToUndef),
   project_id: z.string().uuid().optional().or(emptyToUndef),
   notes: z.string().max(4000).optional().or(emptyToUndef),
-  payment_source: ExpensePaymentSource.default("company"),
+  payment_source: ExpensePaymentSource.default(EXPENSE_FORM_DEFAULTS.payment_source),
   paid_by_member_id: z.string().uuid().optional().or(emptyToUndef),
 });
 
