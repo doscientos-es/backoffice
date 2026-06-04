@@ -1,4 +1,3 @@
-import { BackLink } from "@/components/layout/back-link";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -45,7 +44,11 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
       <PageHeader
         title={expense.vendor}
         description={EXPENSE_CATEGORY_LABELS[expense.category] ?? expense.category}
-        back={<BackLink href="/finance/expenses" label="Volver a gastos" />}
+        breadcrumbs={[
+          { label: "Finanzas", href: "/finance" },
+          { label: "Gastos", href: "/finance/expenses" },
+          { label: expense.vendor },
+        ]}
         actions={
           <div className="flex items-center gap-2">
             <StatusBadge meta={EXPENSE_STATUS} value={expense.status} />
@@ -98,7 +101,8 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
               <DetailRow label="Pagado desde">
                 {expense.payment_source === "member" && expense.paid_by_member_name
                   ? `${EXPENSE_PAYMENT_SOURCE_LABELS.member} · ${expense.paid_by_member_name}`
-                  : EXPENSE_PAYMENT_SOURCE_LABELS[expense.payment_source] ?? expense.payment_source}
+                  : (EXPENSE_PAYMENT_SOURCE_LABELS[expense.payment_source] ??
+                    expense.payment_source)}
               </DetailRow>
               <DetailRow label="Recurrencia">
                 {EXPENSE_RECURRENCE_LABELS[expense.recurrence] ?? expense.recurrence}

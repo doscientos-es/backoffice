@@ -29,62 +29,51 @@ export const ExpensePaymentSource = z.enum(EXPENSE_PAYMENT_SOURCES);
 export type ExpensePaymentSourceType = z.infer<typeof ExpensePaymentSource>;
 
 /**
- * Shape produced by the new-expense / edit-expense forms. Strings come from
- * HTML inputs so we coerce + collapse empty strings to undefined wherever the
- * field is optional. The shape stays usable from both FormData (via
- * `formDataToObject`) and JSON callers.
+ * Shared field shape for the new-expense / edit-expense forms. Strings come
+ * from HTML inputs so we coerce + collapse empty strings to undefined wherever
+ * the field is optional. Kept as a bare `z.object` (no refinement) so it can be
+ * `.extend`ed for the update schema, mirroring `lib/schemas/project.ts`.
  */
-export const ExpenseInput = z
-  .object({
-    vendor: z.string().min(1, "El proveedor es obligatorio").max(160),
-    description: z.string().max(400).optional().or(emptyToUndef),
-    category: ExpenseCategory.default("other"),
-    status: ExpenseStatus.default("paid"),
-    recurrence: ExpenseRecurrence.default("none"),
-    expense_date: z.string().min(1, "La fecha es obligatoria"),
-    due_date: optionalDate,
-    paid_at: optionalDate,
-    currency: z.string().min(3).max(3).default("EUR"),
-    subtotal: z.coerce.number().min(0, "El importe debe ser ≥ 0"),
-    tax_rate: z.coerce.number().min(0).max(100).default(21),
-    vendor_nif: z.string().max(20).optional().or(emptyToUndef),
-    invoice_reference: z.string().max(80).optional().or(emptyToUndef),
-    project_id: z.string().uuid().optional().or(emptyToUndef),
-    notes: z.string().max(4000).optional().or(emptyToUndef),
-    payment_source: ExpensePaymentSource.default("company"),
-    paid_by_member_id: z.string().uuid().optional().or(emptyToUndef),
-  })
-  .refine((d) => d.payment_source === "company" || !!d.paid_by_member_id, {
-    message: "Selecciona el socio que ha pagado este gasto",
-    path: ["paid_by_member_id"],
-  });
+const ExpenseBase = z.object({
+  vendor: z.string().min(1, "El proveedor es obligatorio").max(160),
+  description: z.string().max(400).optional().or(emptyToUndef),
+  category: ExpenseCategory.default("other"),
+  status: ExpenseStatus.default("paid"),
+  recurrence: ExpenseRecurrence.default("none"),
+  expense_date: z.string().min(1, "La fecha es obligatoria"),
+  due_date: optionalDate,
+  paid_at: optionalDate,
+  currency: z.string().min(3).max(3).default("EUR"),
+  subtotal: z.coerce.number().min(0, "El importe debe ser ≥ 0"),
+  tax_rate: z.coerce.number().min(0).max(100).default(21),
+  vendor_nif: z.string().max(20).optional().or(emptyToUndef),
+  invoice_reference: z.string().max(80).optional().or(emptyToUndef),
+  project_id: z.string().uuid().optional().or(emptyToUndef),
+  notes: z.string().max(4000).optional().or(emptyToUndef),
+  payment_source: ExpensePaymentSource.default("company"),
+  paid_by_member_id: z.string().uuid().optional().or(emptyToUndef),
+});
+
+/** A non-company expense must record which partner paid it. */
+const hasPayer = (d: z.infer<typeof ExpenseBase>) =>
+  d.payment_source === "company" || !!d.paid_by_member_id;
+const payerRefinement = {
+  message: "Selecciona el socio que ha pagado este gasto",
+  path: ["paid_by_member_id"],
+};
+
+/** Create payload, consumed from FormData via `formDataToObject`. */
+export const ExpenseInput = ExpenseBase.refine(hasPayer, payerRefinement);
 export type ExpenseInputType = z.infer<typeof ExpenseInput>;
 
 export const ExpenseIdInput = uuidIdInput;
 
 /**
- * Wire shape used by `updateExpense`: all fields are submitted as strings
- * from the edit form and then validated by `ExpenseInput`. Kept as a
- * dedicated type so callers (form handlers) don't need to know about the
- * parsed/coerced shape.
+ * Update payload: the create shape plus the row `id`. Validated/coerced by the
+ * same rules as `ExpenseInput`, so callers submit raw form values (strings) and
+ * the action receives a fully typed object.
  */
-export type UpdateExpenseInput = {
-  id: string;
-  vendor: string;
-  description: string;
-  category: string;
-  status: string;
-  recurrence: string;
-  expense_date: string;
-  due_date: string;
-  paid_at: string;
-  currency: string;
-  subtotal: string;
-  tax_rate: string;
-  vendor_nif: string;
-  invoice_reference: string;
-  project_id: string;
-  notes: string;
-  payment_source: string;
-  paid_by_member_id: string;
-};
+export const UpdateExpenseInput = ExpenseBase.extend({
+  id: z.string().uuid("ID inválido"),
+}).refine(hasPayer, payerRefinement);
+export type UpdateExpenseInputType = z.infer<typeof UpdateExpenseInput>;

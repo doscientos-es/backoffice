@@ -1,5 +1,6 @@
 "use client";
 
+import { OPEN_SHORTCUTS_DIALOG_EVENT } from "@/components/layout/shortcuts-dialog";
 import { CREATE_SHORTCUTS, NAV_SHORTCUTS, findShortcut } from "@/lib/navigation/shortcuts";
 import { ArrowRight, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -54,6 +55,14 @@ export function KeyboardShortcuts() {
       // No secuestrar teclas mientras un diálogo/command palette está abierto.
       if (document.querySelector('[data-slot="dialog-content"]')) return;
 
+      // `?` abre el panel de referencia de atajos.
+      if (e.key === "?") {
+        e.preventDefault();
+        window.dispatchEvent(new Event(OPEN_SHORTCUTS_DIALOG_EVENT));
+        clear();
+        return;
+      }
+
       const key = e.key.toLowerCase();
       const active = prefixRef.current;
 
@@ -88,16 +97,18 @@ export function KeyboardShortcuts() {
         return;
       if (document.querySelector('[data-slot="dialog-content"]')) return;
       const key = e.key.toLowerCase();
-      if (key === "g" || key === "c" || prefixRef.current !== null) {
+      if (key === "g" || key === "c" || e.key === "?" || prefixRef.current !== null) {
         e.preventDefault();
       }
     };
 
-    document.addEventListener("keydown", onKey);
-    document.addEventListener("keypress", onKeyPress);
+    // Capture phase: interceptamos antes de que Zen/Firefox dispare su
+    // "find as you type", que de otro modo abre la barra de búsqueda con `g`.
+    document.addEventListener("keydown", onKey, { capture: true });
+    document.addEventListener("keypress", onKeyPress, { capture: true });
     return () => {
-      document.removeEventListener("keydown", onKey);
-      document.removeEventListener("keypress", onKeyPress);
+      document.removeEventListener("keydown", onKey, { capture: true });
+      document.removeEventListener("keypress", onKeyPress, { capture: true });
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [router]);

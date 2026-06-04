@@ -26,6 +26,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </div>
       <CommandPalette />
       <KeyboardShortcuts />
+      <ShortcutsDialog />
       <QuickCreateButton />
     </div>
   );

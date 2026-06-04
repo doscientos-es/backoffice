@@ -1,13 +1,17 @@
 import { LogoMark } from "@/components/branding";
+import { PortalPasswordGate } from "@/components/portal/password-gate";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { getCurrentUser } from "@/lib/auth";
 import { publicEnv, serverEnv } from "@/lib/env";
 import { buildVatBreakdown } from "@/lib/finance";
+import { isPortalUnlocked } from "@/lib/portal/access";
 import { INVOICE_STATUS } from "@/lib/status";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { buildQrDataUrl, buildQrUrl } from "@/lib/verifactu/qr";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { unlockInvoicePortal } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Factura · doscientos", robots: { index: false, follow: false } };
@@ -35,6 +39,21 @@ export default async function PortalInvoicePage({
     .maybeSingle();
 
   if (!invoice || invoice.status === "draft") notFound();
+
+  // Client-facing access gate: hidden invoices 404 and password-protected ones
+  // show the unlock form until the visitor presents a valid cookie. Logged-in
+  // team members always bypass so they can preview the link.
+  const auth = await getCurrentUser();
+  if (!auth.ok) {
+    if ((invoice.is_client_visible as boolean | null) === false) notFound();
+    const unlocked = await isPortalUnlocked(
+      token,
+      (invoice.portal_password_hash as string | null) ?? null,
+    );
+    if (!unlocked) {
+      return <PortalPasswordGate token={token} action={unlockInvoicePortal} />;
+    }
+  }
 
   const { data: items } = await admin
     .from("invoice_items")

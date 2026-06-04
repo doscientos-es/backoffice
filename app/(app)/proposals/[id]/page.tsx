@@ -1,6 +1,7 @@
 import { BackLink } from "@/components/layout/back-link";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
+import { PortalAccessControls } from "@/components/portal/portal-access-controls";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SectionBoundary } from "@/components/ui/error-boundary";
@@ -14,6 +15,7 @@ import { formatDate } from "@/lib/utils";
 import { FileText, Presentation } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { updateProposalPortalAccess } from "../actions";
 import { DeleteProposalButton } from "./delete-proposal-button";
 import { DuplicateProposalButton } from "./duplicate-proposal-button";
 import { GenerateInvoiceButton } from "./generate-invoice-button";
@@ -191,11 +193,19 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             {token ? (
-              <ShareLinks
-                token={token}
-                portalViewedAt={portalViewedAt}
-                deckViewedAt={deckViewedAt}
-              />
+              <>
+                <ShareLinks
+                  token={token}
+                  portalViewedAt={portalViewedAt}
+                  deckViewedAt={deckViewedAt}
+                />
+                <PortalAccessControls
+                  id={id}
+                  initialVisible={(proposal.is_client_visible as boolean | null) ?? true}
+                  hasPassword={Boolean(proposal.portal_password_hash)}
+                  action={updateProposalPortalAccess}
+                />
+              </>
             ) : null}
             {locked ? (
               <p className="text-xs text-muted-foreground">La propuesta ya ha sido respondida.</p>

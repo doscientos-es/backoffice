@@ -3,7 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const revalidatePath = vi.fn();
 vi.mock("next/cache", () => ({ revalidatePath }));
 
-type ProposalRow = { id: string; status: string } | null;
+type ProposalRow = {
+  id: string;
+  status: string;
+  lead_id?: string | null;
+  client_id?: string | null;
+  clients?: { name: string | null; nif: string | null; billing_address: string | null } | null;
+} | null;
 type FetchResult = { data: ProposalRow; error: unknown };
 type UpdateResult = { error: unknown };
 
@@ -12,31 +18,33 @@ const state: {
   updateResult: UpdateResult;
   lastPatch: Record<string, unknown> | null;
   lastUpdateId: string | null;
-  fetchConsumed: boolean;
 } = {
   fetchResult: { data: null, error: null },
   updateResult: { error: null },
   lastPatch: null,
   lastUpdateId: null,
-  fetchConsumed: false,
 };
 
-// Mock builder that tolerates arbitrary chains used by side-effect helpers
-// (ensureProjectForProposal, promoteLeadFromClient). The primary
-// transitionProposal flow is exercised through `state.fetchResult` and
-// `state.updateResult`; secondary lookups resolve to empty so side-effects
-// short-circuit without polluting the assertions.
+// Mock builder keyed on the primary lookup: only the query that filters by
+// `portal_token` resolves to `state.fetchResult`. Every secondary lookup used
+// by the side-effect helpers (ensureProjectForProposal, promoteLeadFromClient,
+// ensureClientForProposal) filters by other columns and resolves to empty, so
+// they short-circuit without polluting the assertions.
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
     from: (_table: string) => {
       const empty = { data: null, error: null };
+      let isPrimary = false;
       const chain: Record<string, unknown> = {
         select: () => chain,
-        eq: () => chain,
+        eq: (col: string) => {
+          if (col === "portal_token") isPrimary = true;
+          return chain;
+        },
         is: () => chain,
         order: () => chain,
         limit: () => chain,
-        maybeSingle: async () => (state.fetchConsumed ? empty : ((state.fetchConsumed = true), state.fetchResult)),
+        maybeSingle: async () => (isPrimary ? state.fetchResult : empty),
         single: async () => empty,
         insert: () => chain,
         update: (patch: Record<string, unknown>) => {
@@ -56,13 +64,20 @@ vi.mock("@/lib/supabase/admin", () => ({
 
 const VALID_TOKEN = "a".repeat(48);
 
+// A client row with the minimum fiscal data so `acceptWithFiscal` skips the
+// fiscal-form requirement and exercises the plain accept → update path.
+const COMPLETE_CLIENT = {
+  name: "Acme SL",
+  nif: "B12345678",
+  billing_address: "Calle Mayor 1, Madrid",
+};
+
 describe("portal proposal actions", () => {
   beforeEach(() => {
     state.fetchResult = { data: null, error: null };
     state.updateResult = { error: null };
     state.lastPatch = null;
     state.lastUpdateId = null;
-    state.fetchConsumed = false;
     revalidatePath.mockClear();
   });
 
@@ -115,7 +130,10 @@ describe("portal proposal actions", () => {
 
   it("accepts a sent proposal and revalidates the portal path", async () => {
     const { acceptProposal } = await import("@/app/p/proposal/[token]/actions");
-    state.fetchResult = { data: { id: "p1", status: "sent" }, error: null };
+    state.fetchResult = {
+      data: { id: "p1", status: "sent", lead_id: null, client_id: "c1", clients: COMPLETE_CLIENT },
+      error: null,
+    };
 
     const result = await acceptProposal(VALID_TOKEN);
     expect(result).toEqual({ ok: true });
@@ -147,7 +165,10 @@ describe("portal proposal actions", () => {
 
   it("surfaces DB update errors", async () => {
     const { acceptProposal } = await import("@/app/p/proposal/[token]/actions");
-    state.fetchResult = { data: { id: "p4", status: "sent" }, error: null };
+    state.fetchResult = {
+      data: { id: "p4", status: "sent", lead_id: null, client_id: "c1", clients: COMPLETE_CLIENT },
+      error: null,
+    };
     state.updateResult = { error: { message: "db down" } };
 
     const result = await acceptProposal(VALID_TOKEN);

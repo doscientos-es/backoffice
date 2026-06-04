@@ -44,7 +44,7 @@ export function ExpenseListActions({
   function handleDelete() {
     setError(null);
     startTransition(async () => {
-      const res = await removeExpense(expense.id);
+      const res = await removeExpense({ id: expense.id });
       if (res.ok) {
         setConfirmOpen(false);
         router.refresh();

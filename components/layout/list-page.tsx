@@ -5,7 +5,8 @@ import {
   ListControls,
   type ListControlsProps,
 } from "@/components/layout/list-controls";
-import { PageHeader } from "@/components/layout/page-header";
+import { type BreadcrumbEntry, PageHeader } from "@/components/layout/page-header";
+export type { BreadcrumbEntry };
 import { Card, CardContent } from "@/components/ui/card";
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
@@ -28,6 +29,7 @@ export type ListRow = {
 export type ListPageProps = {
   title: string;
   description?: string;
+  breadcrumbs?: BreadcrumbEntry[];
   headers: string[];
   align?: ListAlign[];
   rows: ListRow[];
@@ -53,6 +55,7 @@ export type ListPageProps = {
 export function ListPage({
   title,
   description,
+  breadcrumbs,
   headers,
   align,
   rows,
@@ -85,7 +88,7 @@ export function ListPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title={title} description={description} actions={actions} />
+      <PageHeader title={title} description={description} breadcrumbs={breadcrumbs} actions={actions} />
 
       <Card>
         <CardContent className="px-0 pt-0">

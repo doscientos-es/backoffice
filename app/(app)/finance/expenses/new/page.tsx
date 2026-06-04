@@ -1,4 +1,3 @@
-import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
@@ -32,12 +31,14 @@ export default async function NewExpensePage({
       getExpenseVendorSuggestions(),
     ]);
 
-  const projects = ((projectsRaw ?? []) as unknown as Array<{
-    id: string;
-    name: string;
-    clients: { name: string } | { name: string }[] | null;
-  }>).map((p) => {
-    const client = Array.isArray(p.clients) ? p.clients[0] ?? null : p.clients;
+  const projects = (
+    (projectsRaw ?? []) as unknown as Array<{
+      id: string;
+      name: string;
+      clients: { name: string } | { name: string }[] | null;
+    }>
+  ).map((p) => {
+    const client = Array.isArray(p.clients) ? (p.clients[0] ?? null) : p.clients;
     return { id: p.id, name: p.name, clientName: client?.name ?? null };
   });
 
@@ -71,7 +72,11 @@ export default async function NewExpensePage({
             ? "Copia basada en un gasto existente. Cambia lo que necesites."
             : "Registra un gasto operativo (Vercel, Supabase, dominios, software…)."
         }
-        back={<BackLink href="/finance/expenses" label="Volver a gastos" />}
+        breadcrumbs={[
+          { label: "Finanzas", href: "/finance" },
+          { label: "Gastos", href: "/finance/expenses" },
+          { label: from ? "Duplicar gasto" : "Nuevo gasto" },
+        ]}
       />
       <Card>
         <CardContent className="pt-6">

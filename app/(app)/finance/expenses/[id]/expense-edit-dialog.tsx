@@ -72,27 +72,7 @@ export function ExpenseEditDialog({
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     feedback.setPending();
-    const fd = new FormData(e.currentTarget);
-    const res = await updateExpense({
-      id: expense.id,
-      vendor: fd.get("vendor")?.toString() ?? "",
-      description: fd.get("description")?.toString() ?? "",
-      category: fd.get("category")?.toString() ?? "other",
-      status: fd.get("status")?.toString() ?? "paid",
-      recurrence: fd.get("recurrence")?.toString() ?? "none",
-      expense_date: fd.get("expense_date")?.toString() ?? "",
-      due_date: fd.get("due_date")?.toString() ?? "",
-      paid_at: fd.get("paid_at")?.toString() ?? "",
-      currency: fd.get("currency")?.toString() ?? "EUR",
-      subtotal: fd.get("subtotal")?.toString() ?? "0",
-      tax_rate: fd.get("tax_rate")?.toString() ?? "21",
-      vendor_nif: fd.get("vendor_nif")?.toString() ?? "",
-      invoice_reference: fd.get("invoice_reference")?.toString() ?? "",
-      project_id: fd.get("project_id")?.toString() ?? "",
-      notes: fd.get("notes")?.toString() ?? "",
-      payment_source: fd.get("payment_source")?.toString() ?? "company",
-      paid_by_member_id: fd.get("paid_by_member_id")?.toString() ?? "",
-    });
+    const res = await updateExpense(new FormData(e.currentTarget));
     if (!res.ok) return feedback.setError(res.error);
     feedback.setSuccess("Guardado");
     reset();
@@ -125,6 +105,7 @@ export function ExpenseEditDialog({
           onSubmit={onSubmit}
           className="flex flex-col max-h-[70vh]"
         >
+          <input type="hidden" name="id" value={expense.id} />
           <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-5">
             <ExpenseFormFields
               idPrefix={`edit-${expense.id}`}

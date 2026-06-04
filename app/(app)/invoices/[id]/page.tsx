@@ -1,5 +1,6 @@
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
+import { PortalAccessControls } from "@/components/portal/portal-access-controls";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
@@ -12,6 +13,7 @@ import { buildQrDataUrl, buildQrUrl } from "@/lib/verifactu/qr";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { updateInvoicePortalAccess } from "../actions";
 import { InvoiceActions } from "./invoice-actions";
 
 export const dynamic = "force-dynamic";
@@ -261,6 +263,22 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
               </DetailGrid>
             </CardContent>
           </Card>
+
+          {(invoice.portal_token as string | null) ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Acceso del cliente</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <PortalAccessControls
+                  id={invoice.id as string}
+                  initialVisible={(invoice.is_client_visible as boolean | null) ?? true}
+                  hasPassword={Boolean(invoice.portal_password_hash)}
+                  action={updateInvoicePortalAccess}
+                />
+              </CardContent>
+            </Card>
+          ) : null}
 
           {/* QR Verifactu */}
           {qrDataUrl ? (

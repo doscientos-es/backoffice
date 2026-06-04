@@ -79,6 +79,10 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Sea
     <ListPage
       title="Gastos"
       description={`${totalLabel}: ${formatEUR(total)}`}
+      breadcrumbs={[
+        { label: "Finanzas", href: "/finance" },
+        { label: "Gastos" },
+      ]}
       actions={
         <Button asChild size="sm">
           <Link href="/finance/expenses/new">Nuevo gasto</Link>

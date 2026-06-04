@@ -1,9 +1,11 @@
 import { LogoMark } from "@/components/branding";
+import { PortalPasswordGate } from "@/components/portal/password-gate";
 import { Markdown } from "@/components/ui/markdown";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getCurrentUser } from "@/lib/auth";
 import { BILLING_CYCLE_LABELS, type BillingCycle, computeProposalTotals } from "@/lib/finance";
 import { scopedLogger } from "@/lib/logger";
+import { isPortalUnlocked } from "@/lib/portal/access";
 import { parseKeyPoints } from "@/lib/proposals/key-points";
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -12,6 +14,7 @@ import { FileText, Presentation } from "lucide-react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { unlockProposalPortal } from "./actions";
 import { PortalKeyPointsList, PortalNarrativeBlock } from "./narrative";
 import { ProposalActions } from "./proposal-actions";
 
@@ -50,6 +53,26 @@ export default async function PortalProposalPage({
 
   if (!proposal || proposal.status === "draft") notFound();
 
+  // Detect whether the current visitor is a logged-in team member so we can
+  // tag the view appropriately, avoid bumping the proposal to 'viewed' when we
+  // are previewing it ourselves, and bypass the client-facing access gate.
+  const auth = await getCurrentUser();
+  const isTeam = auth.ok;
+
+  // Client-facing access gate: hidden proposals 404 and password-protected
+  // ones show the unlock form until the visitor presents a valid cookie. Team
+  // members always bypass so they can preview the link.
+  if (!isTeam) {
+    if ((proposal.is_client_visible as boolean | null) === false) notFound();
+    const unlocked = await isPortalUnlocked(
+      token,
+      (proposal.portal_password_hash as string | null) ?? null,
+    );
+    if (!unlocked) {
+      return <PortalPasswordGate token={token} action={unlockProposalPortal} />;
+    }
+  }
+
   const { data: items } = await admin
     .from("proposal_items")
     .select("id, position, description, quantity, unit_price, vat_rate, subtotal, billing_cycle")
@@ -62,12 +85,6 @@ export default async function PortalProposalPage({
     .eq("proposal_id", proposal.id as string)
     .eq("is_client_visible", true)
     .not("portal_token", "is", null);
-
-  // Detect whether the current visitor is a logged-in team member so we can
-  // tag the view appropriately and avoid bumping the proposal to 'viewed'
-  // when we are previewing it ourselves.
-  const auth = await getCurrentUser();
-  const isTeam = auth.ok;
 
   // Bump status from 'sent' to 'viewed' only on the first external (client)
   // view. Team previews never transition the status.
@@ -130,21 +147,21 @@ export default async function PortalProposalPage({
     !client || !client.nif?.trim() || !client.billing_address?.trim() || !client.name?.trim();
   const fiscalPrefill = client
     ? {
-        name: client.name ?? "",
-        nif: client.nif ?? "",
-        billing_address: client.billing_address ?? "",
-        contact_person: client.contact_person ?? "",
-        email: client.email ?? "",
-        phone: client.phone ?? "",
-      }
+      name: client.name ?? "",
+      nif: client.nif ?? "",
+      billing_address: client.billing_address ?? "",
+      contact_person: client.contact_person ?? "",
+      email: client.email ?? "",
+      phone: client.phone ?? "",
+    }
     : {
-        name: lead?.company ?? lead?.name ?? "",
-        nif: "",
-        billing_address: "",
-        contact_person: lead?.name ?? "",
-        email: lead?.email ?? "",
-        phone: lead?.phone ?? "",
-      };
+      name: lead?.company ?? lead?.name ?? "",
+      nif: "",
+      billing_address: "",
+      contact_person: lead?.name ?? "",
+      email: lead?.email ?? "",
+      phone: lead?.phone ?? "",
+    };
   const recipientName = client?.name ?? lead?.company ?? lead?.name ?? "—";
   const proposalNumber = (proposal.number as string | null) ?? "Borrador";
   const safeItems = (items ?? []) as unknown as ProposalItem[];

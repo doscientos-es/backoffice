@@ -57,6 +57,7 @@ alter policy notif_prefs_all on public.notification_preferences
 -- the role column is left unchanged (equals their current role).
 drop policy if exists team_members_update_admin on public.team_members;
 drop policy if exists team_members_update_self on public.team_members;
+drop policy if exists team_members_update on public.team_members;
 create policy team_members_update on public.team_members
   for update using (
     public.current_member_role() in ('owner', 'admin')
