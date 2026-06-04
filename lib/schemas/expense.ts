@@ -5,7 +5,7 @@ import {
   EXPENSE_STATUSES,
 } from "@/lib/finance";
 import { z } from "zod";
-import { emptyToUndef, uuidIdInput } from "./common";
+import { emptyToUndef, optionalDate, uuidIdInput } from "./common";
 
 /**
  * Zod schemas for the `expenses` domain.
@@ -42,8 +42,8 @@ export const ExpenseInput = z
     status: ExpenseStatus.default("paid"),
     recurrence: ExpenseRecurrence.default("none"),
     expense_date: z.string().min(1, "La fecha es obligatoria"),
-    due_date: z.string().optional().or(emptyToUndef),
-    paid_at: z.string().optional().or(emptyToUndef),
+    due_date: optionalDate,
+    paid_at: optionalDate,
     currency: z.string().min(3).max(3).default("EUR"),
     subtotal: z.coerce.number().min(0, "El importe debe ser ≥ 0"),
     tax_rate: z.coerce.number().min(0).max(100).default(21),

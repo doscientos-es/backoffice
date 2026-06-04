@@ -336,7 +336,9 @@ export async function getExpenseDetail(id: string): Promise<ExpenseDetailResult 
   const { data: expense, error } = await notDeleted(
     supabase
       .from("expenses")
-      .select("*, projects(id, name, clients(id, name)), team_members(id, name)")
+      // `expenses` has two FKs to `team_members` (created_by + paid_by_member_id),
+      // so the embed must disambiguate or PostgREST errors out (→ null → 404).
+      .select("*, projects(id, name, clients(id, name)), team_members!paid_by_member_id(id, name)")
       .eq("id", id),
   ).maybeSingle();
 

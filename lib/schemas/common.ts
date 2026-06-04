@@ -26,8 +26,18 @@ export const assignableUuid = z
   .nullable()
   .or(z.literal("").transform(() => null));
 
-/** Optional ISO date string (YYYY-MM-DD or full ISO). Accepts "". */
-export const optionalDate = z.string().optional().or(emptyToUndef);
+/**
+ * Optional ISO date string (YYYY-MM-DD or full ISO). Collapses "" → undefined
+ * so empty `<input type="date">` values never reach a `date` column (which
+ * would raise `invalid input syntax for type date: ""`).
+ *
+ * Note: we must transform here rather than `z.string().optional().or(emptyToUndef)`,
+ * because `z.string()` happily accepts "" and short-circuits the union.
+ */
+export const optionalDate = z
+  .string()
+  .optional()
+  .transform((v) => (v && v.length > 0 ? v : undefined));
 
 /** Optional email. Accepts "" and treats it as undefined. */
 export const optionalEmail = z.string().email("Email no válido").optional().or(emptyToUndef);
