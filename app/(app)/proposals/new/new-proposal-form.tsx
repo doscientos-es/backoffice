@@ -131,6 +131,10 @@ export function NewProposalForm({ clients, leads, initialClientId, initialLeadId
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <Card>
           <CardContent className="pt-6">
+            <p className="mb-4 text-xs text-muted-foreground">
+              Los campos marcados con <span className="text-destructive">*</span> son obligatorios.
+              El resto puedes dejarlos en blanco y completarlos más tarde.
+            </p>
             <div className="grid gap-5 sm:grid-cols-2">
               <FormRow
                 label="Destinatario"
