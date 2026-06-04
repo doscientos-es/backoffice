@@ -25,7 +25,6 @@ interface Props {
   jobTitle: string | null;
   phone: string | null;
   contactEmail: string | null;
-  iban: string | null;
 }
 
 function buildSignaturePreview(opts: {
@@ -59,7 +58,6 @@ export function ProfileForm({
   jobTitle,
   phone,
   contactEmail,
-  iban,
 }: Props) {
   const feedback = useFormFeedback();
   const [previewFields, setPreviewFields] = useState({
@@ -150,24 +148,6 @@ export function ProfileForm({
               setPreviewFields((p) => ({ ...p, phone: e.target.value }))
             }
           />
-        </Field>
-        <Field>
-          <FieldLabel htmlFor="iban" className="text-xs font-medium">
-            IBAN personal
-          </FieldLabel>
-          <Input
-            id="iban"
-            name="iban"
-            defaultValue={iban ?? ""}
-            placeholder="ES91 2100 0418 4502 0005 1332"
-            maxLength={34}
-            autoComplete="off"
-            spellCheck={false}
-            autoCapitalize="characters"
-          />
-          <FieldDescription>
-            Se usa para calcular aportaciones de capital en Finanzas.
-          </FieldDescription>
         </Field>
         <Field>
           <FieldLabel htmlFor="email_alias" className="text-xs font-medium">

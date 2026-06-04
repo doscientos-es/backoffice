@@ -33,12 +33,6 @@ const ProfileInput = z.object({
     .email("Email de contacto no válido")
     .optional()
     .or(z.literal("").transform(() => undefined)),
-  iban: z
-    .string()
-    .max(34)
-    .regex(/^[A-Z]{2}[0-9]{2}[A-Z0-9]{4,30}$/, "IBAN no válido")
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
 });
 
 function buildSignatureHtml(opts: {
@@ -76,7 +70,6 @@ export async function updateProfile(
     job_title: formData.get("job_title")?.toString() ?? "",
     phone: formData.get("phone")?.toString() ?? "",
     contact_email: formData.get("contact_email")?.toString() ?? "",
-    iban: formData.get("iban")?.toString() ?? "",
   };
   const parsed = ProfileInput.safeParse(raw);
   if (!parsed.success) {
@@ -101,7 +94,6 @@ export async function updateProfile(
       job_title: parsed.data.job_title ?? null,
       phone: parsed.data.phone ?? null,
       contact_email: parsed.data.contact_email ?? null,
-      iban: parsed.data.iban ?? null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", user.id);
