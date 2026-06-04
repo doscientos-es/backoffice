@@ -42,15 +42,10 @@ export function MonthExpensesCard({ data }: { data: MonthFinanceSummary }) {
       <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
         <div>
           <CardTitle>Gasto del mes</CardTitle>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Gastos registrados este mes
-          </p>
+          <p className="mt-1 text-xs text-muted-foreground">Gastos registrados este mes</p>
         </div>
         <div
-          className={cn(
-            "flex size-9 shrink-0 items-center justify-center rounded-lg",
-            iconClass,
-          )}
+          className={cn("flex size-9 shrink-0 items-center justify-center rounded-lg", iconClass)}
         >
           <Receipt className="size-4" aria-hidden />
         </div>

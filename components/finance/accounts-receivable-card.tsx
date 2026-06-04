@@ -40,10 +40,7 @@ export function AccountsReceivableCard({ data }: { data: AccountsReceivable }) {
           <p className="mt-1 text-xs text-muted-foreground">Facturado sin cobrar</p>
         </div>
         <div
-          className={cn(
-            "flex size-9 shrink-0 items-center justify-center rounded-lg",
-            iconClass,
-          )}
+          className={cn("flex size-9 shrink-0 items-center justify-center rounded-lg", iconClass)}
         >
           <HandCoins className="size-4" aria-hidden />
         </div>
@@ -68,7 +65,8 @@ export function AccountsReceivableCard({ data }: { data: AccountsReceivable }) {
           >
             <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
             <span>
-              {formatEUR(overdueTotal)} en {pluralize(overdueCount, "factura vencida", "facturas vencidas")} · cobrar ya
+              {formatEUR(overdueTotal)} en{" "}
+              {pluralize(overdueCount, "factura vencida", "facturas vencidas")} · cobrar ya
             </span>
           </Link>
         ) : null}

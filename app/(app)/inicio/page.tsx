@@ -56,10 +56,7 @@ export default async function InicioPage({ searchParams }: PageProps) {
         </SectionBoundary>
       </div>
 
-      <SectionBoundary
-        pending={<MyDayWidgetSkeleton />}
-        label="No se pudo cargar tu día"
-      >
+      <SectionBoundary pending={<MyDayWidgetSkeleton />} label="No se pudo cargar tu día">
         <MyDayWidget />
       </SectionBoundary>
 
