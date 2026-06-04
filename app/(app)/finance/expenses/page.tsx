@@ -1,5 +1,6 @@
 import { ListPage } from "@/components/layout/list-page";
 import { Button } from "@/components/ui/button";
+import { MemberLabel } from "@/components/ui/member-avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
 import {
@@ -17,6 +18,7 @@ import { EXPENSE_LIST_PAGE_SIZE } from "@/lib/finance/types";
 import { EXPENSE_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
+import { Building2 } from "lucide-react";
 import Link from "next/link";
 import { ExpenseListActions } from "./_components/expense-list-actions";
 
@@ -58,7 +60,11 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Sea
       .select("id, name, clients(name)")
       .is("deleted_at", null)
       .order("name"),
-    supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
+    supabase
+      .from("team_members")
+      .select("id, name, avatar_url, github_handle")
+      .is("deleted_at", null)
+      .order("name"),
     getExpenseVendorSuggestions(),
   ]);
 
@@ -67,7 +73,13 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Sea
     name: p.name as string,
     clientName: (p.clients as unknown as { name: string } | null)?.name ?? null,
   }));
-  const teamMembers = (teamMembersRaw ?? []) as Array<{ id: string; name: string }>;
+  const teamMembers = (teamMembersRaw ?? []) as Array<{
+    id: string;
+    name: string;
+    avatar_url: string | null;
+    github_handle: string | null;
+  }>;
+  const memberMap = new Map(teamMembers.map((m) => [m.id, m]));
 
   const canEdit = user.role !== "viewer";
   const canDelete = user.role === "owner" || user.role === "admin";
@@ -100,29 +112,47 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Sea
         { key: "status", label: "Estado", options: STATUS_FILTER_OPTIONS },
       ]}
       pagination={{ page, pageSize: EXPENSE_LIST_PAGE_SIZE, total: count }}
-      headers={["Proveedor", "Fecha", "Categoría", "Estado", "Total", ""]}
-      align={["left", "left", "left", "left", "right", "right"]}
-      rows={expenses.map((e) => ({
-        id: e.id,
-        href: `/finance/expenses/${e.id}`,
-        cells: [
-          e.vendor,
-          formatDate(e.expense_date),
-          EXPENSE_CATEGORY_LABELS[e.category] ?? e.category,
-          <StatusBadge key={`${e.id}-status`} meta={EXPENSE_STATUS} value={e.status} />,
-          formatEUR(e.total),
-          canEdit ? (
-            <ExpenseListActions
-              key={`${e.id}-actions`}
-              expense={e}
-              projects={projects}
-              teamMembers={teamMembers}
-              vendorSuggestions={vendorSuggestions}
-              canDelete={canDelete}
-            />
-          ) : null,
-        ],
-      }))}
+      headers={["Proveedor", "Fecha", "Categoría", "Estado", "Pagado por", "Total", ""]}
+      align={["left", "left", "left", "left", "left", "right", "right"]}
+      rows={expenses.map((e) => {
+        const payer =
+          e.payment_source === "member" && e.paid_by_member_id
+            ? memberMap.get(e.paid_by_member_id) ?? null
+            : null;
+
+        return {
+          id: e.id,
+          href: `/finance/expenses/${e.id}`,
+          cells: [
+            e.vendor,
+            formatDate(e.expense_date),
+            EXPENSE_CATEGORY_LABELS[e.category] ?? e.category,
+            <StatusBadge key={`${e.id}-status`} meta={EXPENSE_STATUS} value={e.status} />,
+            payer ? (
+              <MemberLabel key={`${e.id}-payer`} member={payer} size="sm" />
+            ) : (
+              <span
+                key={`${e.id}-payer`}
+                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"
+              >
+                <Building2 className="size-3.5 shrink-0" />
+                Empresa
+              </span>
+            ),
+            formatEUR(e.total),
+            canEdit ? (
+              <ExpenseListActions
+                key={`${e.id}-actions`}
+                expense={e}
+                projects={projects}
+                teamMembers={teamMembers}
+                vendorSuggestions={vendorSuggestions}
+                canDelete={canDelete}
+              />
+            ) : null,
+          ],
+        };
+      })}
     />
   );
 }
