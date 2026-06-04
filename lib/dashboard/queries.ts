@@ -1,11 +1,15 @@
 import { serverEnv } from "@/lib/env";
+import { EXPENSE_CATEGORY_LABELS, type ExpenseCategory, profitMargin } from "@/lib/finance/helpers";
+import { notDeleted } from "@/lib/supabase/filters";
 import { createServerClient } from "@/lib/supabase/server";
 import { shortMonthEs, toIsoDate } from "@/lib/utils/date";
 import type {
+  AccountsReceivable,
   ActionLeadRow,
   AvisosData,
   DashboardKpis,
   DateRange,
+  MonthFinanceSummary,
   MyDayData,
   MyTaskRow,
   OverdueInvoiceRow,
@@ -284,6 +288,104 @@ export async function getRevenueSeries(months = 6): Promise<RevenuePoint[]> {
     current: Math.round(current * 100) / 100,
     previous: Math.round(previous * 100) / 100,
   }));
+}
+
+/**
+ * Snapshot of Accounts Receivable used by the dashboard A/R tile. We sum
+ * `issued` + `overdue` totals to get what is still pending collection, with a
+ * dedicated breakdown of the overdue subset, plus how much has already been
+ * collected within the current calendar month.
+ */
+export async function getAccountsReceivable(): Promise<AccountsReceivable> {
+  const supabase = await createServerClient();
+  const now = new Date();
+  const monthStart = toIsoDate(new Date(now.getFullYear(), now.getMonth(), 1));
+
+  const [issuedRes, overdueRes, paidMonthRes] = await Promise.all([
+    notDeleted(supabase.from("invoices").select("total", { count: "exact" })).eq(
+      "status",
+      "issued",
+    ),
+    notDeleted(supabase.from("invoices").select("total", { count: "exact" })).eq(
+      "status",
+      "overdue",
+    ),
+    notDeleted(supabase.from("invoices").select("total", { count: "exact" }))
+      .eq("status", "paid")
+      .gte("issue_date", monthStart),
+  ]);
+
+  const issuedTotal = (issuedRes.data ?? []).reduce((a, r) => a + Number(r.total ?? 0), 0);
+  const overdueTotal = (overdueRes.data ?? []).reduce((a, r) => a + Number(r.total ?? 0), 0);
+  const paidMonthTotal = (paidMonthRes.data ?? []).reduce((a, r) => a + Number(r.total ?? 0), 0);
+
+  return {
+    pendingTotal: issuedTotal + overdueTotal,
+    pendingCount: (issuedRes.count ?? 0) + (overdueRes.count ?? 0),
+    overdueTotal,
+    overdueCount: overdueRes.count ?? 0,
+    paidMonthTotal,
+    paidMonthCount: paidMonthRes.count ?? 0,
+  };
+}
+
+/**
+ * Current-month revenue / expense snapshot for the dashboard expenses tile.
+ * Mirrors {@link getFinanceKpis} but additionally surfaces the dominant
+ * expense category so the dashboard can hint where the money is going without
+ * loading the full Finance page.
+ */
+export async function getMonthFinanceSummary(): Promise<MonthFinanceSummary> {
+  const supabase = await createServerClient();
+  const now = new Date();
+  const monthStart = toIsoDate(new Date(now.getFullYear(), now.getMonth(), 1));
+
+  const [{ data: revenueRows }, { data: expenseRows }] = await Promise.all([
+    notDeleted(
+      supabase
+        .from("invoices")
+        .select("total")
+        .gte("issue_date", monthStart)
+        .neq("status", "draft"),
+    ),
+    notDeleted(
+      supabase
+        .from("expenses")
+        .select("total, category")
+        .gte("expense_date", monthStart)
+        .neq("status", "cancelled"),
+    ),
+  ]);
+
+  const revenueMonth = (revenueRows ?? []).reduce((a, r) => a + Number(r.total ?? 0), 0);
+
+  const byCategory = new Map<ExpenseCategory, number>();
+  let expenseMonth = 0;
+  for (const row of expenseRows ?? []) {
+    const total = Number(row.total ?? 0);
+    expenseMonth += total;
+    const category = row.category as ExpenseCategory;
+    byCategory.set(category, (byCategory.get(category) ?? 0) + total);
+  }
+
+  let topCategory: MonthFinanceSummary["topCategory"] = null;
+  for (const [category, total] of byCategory) {
+    if (!topCategory || total > topCategory.total) {
+      topCategory = {
+        category,
+        label: EXPENSE_CATEGORY_LABELS[category] ?? category,
+        total,
+      };
+    }
+  }
+
+  return {
+    revenueMonth,
+    expenseMonth,
+    netMonth: revenueMonth - expenseMonth,
+    margin: profitMargin(revenueMonth, expenseMonth),
+    topCategory,
+  };
 }
 
 /**

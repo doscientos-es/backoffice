@@ -9,13 +9,12 @@ import { getBrowserClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 export function LoginForm() {
-  const router = useRouter();
   const search = useSearchParams();
-  const next = search.get("next") ?? "/inicio";
+  const next = safeNext(search.get("next"));
   const urlError = search.get("error");
 
   const [email, setEmail] = useState("");
@@ -47,10 +46,12 @@ export function LoginForm() {
       setFormError(friendlyError(authError.message));
       return;
     }
-    // Keep loading=true while we navigate so the button stays in its
-    // "Entrando…" state instead of flashing back to "Entrar".
-    router.replace(next);
-    router.refresh();
+    // Hard navigation (not router.replace + refresh): forces the browser to
+    // re-send the freshly-set auth cookies on a real request and bypasses the
+    // client Router Cache, which in production could still hold a pre-fetched
+    // unauthenticated RSC payload and bounce the user back to /login on the
+    // first attempt. Keep loading=true so the button stays in "Entrando…".
+    window.location.assign(next);
   }
 
   return (
@@ -147,6 +148,17 @@ export function LoginForm() {
       </CardContent>
     </Card>
   );
+}
+
+/**
+ * Restrict the post-login redirect to same-origin internal paths. Prevents an
+ * open redirect now that we navigate with `window.location.assign` (which,
+ * unlike `router.replace`, would happily follow an absolute or
+ * protocol-relative URL like `//evil.com`).
+ */
+function safeNext(raw: string | null): string {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/inicio";
+  return raw;
 }
 
 function friendlyError(raw: string): string {

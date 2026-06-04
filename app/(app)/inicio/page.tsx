@@ -1,4 +1,12 @@
 import {
+  AccountsReceivableSkeleton,
+  AccountsReceivableWidget,
+} from "@/components/finance/accounts-receivable-card";
+import {
+  MonthExpensesSkeleton,
+  MonthExpensesWidget,
+} from "@/components/finance/month-expenses-card";
+import {
   MetaAdsBalanceSkeleton,
   MetaAdsBalanceWidget,
 } from "@/components/marketing/meta-ads-balance-card";
@@ -69,6 +77,18 @@ export default async function InicioPage({ searchParams }: PageProps) {
           label="No se pudo cargar el saldo de Meta Ads"
         >
           <MetaAdsBalanceWidget />
+        </SectionBoundary>
+        <SectionBoundary
+          pending={<AccountsReceivableSkeleton />}
+          label="No se pudo cargar el cobro pendiente"
+        >
+          <AccountsReceivableWidget />
+        </SectionBoundary>
+        <SectionBoundary
+          pending={<MonthExpensesSkeleton />}
+          label="No se pudo cargar el gasto del mes"
+        >
+          <MonthExpensesWidget />
         </SectionBoundary>
       </div>
 

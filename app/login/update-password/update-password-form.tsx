@@ -7,13 +7,11 @@ import { Input } from "@/components/ui/input";
 import { PasswordStrength } from "@/components/ui/password-strength";
 import { getBrowserClient } from "@/lib/supabase/browser";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const MIN_LENGTH = 8;
 
 export function UpdatePasswordForm() {
-  const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [show, setShow] = useState(false);
@@ -54,10 +52,10 @@ export function UpdatePasswordForm() {
       setError(authError.message);
       return;
     }
-    // Keep loading=true while we navigate so the button stays in its
-    // "Guardando…" state instead of flashing back to "Actualizar contraseña".
-    router.replace("/inicio");
-    router.refresh();
+    // Hard navigation (not router.replace + refresh): forces the browser to
+    // re-send the updated auth cookies on a real request and bypasses the
+    // client Router Cache. Keep loading=true so the button stays in "Guardando…".
+    window.location.assign("/inicio");
   }
 
   if (hasSession === false) {

@@ -102,3 +102,29 @@ export type MyDayData = {
   myLeads: ActionLeadRow[];
   unassignedLeads: ActionLeadRow[];
 };
+
+/**
+ * Snapshot of Accounts Receivable for the dashboard tile: total outstanding
+ * (issued + overdue), how much of it is overdue, and how much was already
+ * collected within the current calendar month.
+ */
+export type AccountsReceivable = {
+  pendingTotal: number;
+  pendingCount: number;
+  overdueTotal: number;
+  overdueCount: number;
+  paidMonthTotal: number;
+  paidMonthCount: number;
+};
+
+/**
+ * Current-month finance snapshot for the dashboard tile: invoiced revenue,
+ * registered expenses, the resulting net and the dominant expense category.
+ */
+export type MonthFinanceSummary = {
+  revenueMonth: number;
+  expenseMonth: number;
+  netMonth: number;
+  margin: number | null;
+  topCategory: { category: string; label: string; total: number } | null;
+};

@@ -8,7 +8,6 @@ import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
-import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { completeOnboarding, skipOnboarding } from "./actions";
 
@@ -31,7 +30,6 @@ export function OnboardingForm({
   defaultEmailSendEnabled,
   defaultSignatureHtml,
 }: Props) {
-  const router = useRouter();
   const feedback = useFormFeedback();
   const [skipPending, startSkip] = useTransition();
   const [name, setName] = useState(defaultName);
@@ -63,8 +61,11 @@ export function OnboardingForm({
       return;
     }
     feedback.setSuccess("Listo");
-    router.replace("/inicio");
-    router.refresh();
+    // Hard navigation (not router.replace + refresh): the server action already
+    // ran revalidatePath, so a real request re-renders /inicio with the now
+    // onboarded state and avoids a client Router Cache race bouncing the user
+    // back to /onboarding on the first attempt.
+    window.location.assign("/inicio");
   }
 
   function handleSkip() {
