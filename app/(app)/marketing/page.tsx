@@ -75,14 +75,7 @@ export default async function MarketingPage({ searchParams }: { searchParams: Se
         />
       </SectionBoundary>
 
-      <div className="grid gap-3 lg:grid-cols-3">
-        <SectionBoundary
-          pending={<MetaAdsBalanceSkeleton />}
-          label="No se pudo cargar el saldo de Meta Ads"
-        >
-          <MetaAdsBalanceWidget />
-        </SectionBoundary>
-      </div>
+
 
       <SectionBoundary
         key={`insights-${since}-${until}`}
@@ -106,6 +99,14 @@ export default async function MarketingPage({ searchParams }: { searchParams: Se
           accountId={accountId}
         />
       </SectionBoundary>
+      <div className="grid gap-3 lg:grid-cols-3">
+        <SectionBoundary
+          pending={<MetaAdsBalanceSkeleton />}
+          label="No se pudo cargar el saldo de Meta Ads"
+        >
+          <MetaAdsBalanceWidget />
+        </SectionBoundary>
+      </div>
     </div>
   );
 }
