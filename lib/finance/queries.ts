@@ -30,24 +30,23 @@ function escapeIlike(value: string): string {
   return value.replace(/[%_\\]/g, (m) => `\\${m}`);
 }
 
-/** ISO `YYYY-MM-DD` for the first day of the current month. */
-function currentMonthStartISO(now: Date = new Date()): string {
-  return new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-}
-
 /**
- * Current-month expense rows (total + category), shared by the KPIs and the
- * details section. Wrapped in `cache()` so both server components reuse a
- * single DB round-trip within the same request instead of querying twice.
+ * Expense rows (total + category) for a given date range, shared by the KPIs
+ * and the details section. Wrapped in `cache()` so both server components with
+ * the same (since, until) reuse a single DB round-trip per request.
  */
-const getCurrentMonthExpenses = cache(
-  async (): Promise<Array<{ total: number; category: ExpenseCategory }>> => {
+const getExpensesInRange = cache(
+  async (
+    since: string,
+    until: string,
+  ): Promise<Array<{ total: number; category: ExpenseCategory }>> => {
     const supabase = await createServerClient();
     const { data } = await notDeleted(
       supabase
         .from("expenses")
         .select("total, category")
-        .gte("expense_date", currentMonthStartISO())
+        .gte("expense_date", since)
+        .lte("expense_date", until)
         .neq("status", "cancelled"),
     );
     return (data ?? []).map((r) => ({
@@ -57,24 +56,24 @@ const getCurrentMonthExpenses = cache(
   },
 );
 
-/** Headline KPIs for the current month: revenue, expenses, net and margin. */
-export async function getFinanceKpis(): Promise<FinanceKpis> {
+/** Headline KPIs for the selected date window: revenue, expenses, net and margin. */
+export async function getFinanceKpis(since: string, until: string): Promise<FinanceKpis> {
   const supabase = await createServerClient();
-  const monthStartISO = currentMonthStartISO();
 
-  const [{ data: monthRevenue }, monthExpenses] = await Promise.all([
+  const [{ data: revenue }, expenses] = await Promise.all([
     notDeleted(
       supabase
         .from("invoices")
         .select("total")
-        .gte("issue_date", monthStartISO)
+        .gte("issue_date", since)
+        .lte("issue_date", until)
         .neq("status", "draft"),
     ),
-    getCurrentMonthExpenses(),
+    getExpensesInRange(since, until),
   ]);
 
-  const revenueMonth = (monthRevenue ?? []).reduce((a, r) => a + Number(r.total ?? 0), 0);
-  const expenseMonth = monthExpenses.reduce((a, r) => a + r.total, 0);
+  const revenueMonth = (revenue ?? []).reduce((a, r) => a + Number(r.total ?? 0), 0);
+  const expenseMonth = expenses.reduce((a, r) => a + r.total, 0);
 
   return {
     revenueMonth,
@@ -123,16 +122,17 @@ export async function getFinanceMonthlySeries(): Promise<MonthlyPoint[]> {
 }
 
 /** Supporting lists: top categories, recent movements and member contributions. */
-export async function getFinanceDetails(): Promise<FinanceDetails> {
+/** Supporting lists: top categories for the range, recent movements, and all-time member contributions. */
+export async function getFinanceDetails(since: string, until: string): Promise<FinanceDetails> {
   const supabase = await createServerClient();
 
   const [
-    monthExpenses,
+    rangeExpenses,
     { data: recentExpenses },
     { data: recentInvoices },
     { data: memberExpenseRows },
   ] = await Promise.all([
-    getCurrentMonthExpenses(),
+    getExpensesInRange(since, until),
     notDeleted(
       supabase
         .from("expenses")
@@ -167,7 +167,7 @@ export async function getFinanceDetails(): Promise<FinanceDetails> {
   ]);
 
   const byCategory = new Map<ExpenseCategory, number>();
-  for (const row of monthExpenses) {
+  for (const row of rangeExpenses) {
     byCategory.set(row.category, (byCategory.get(row.category) ?? 0) + row.total);
   }
   const topCategories = Array.from(byCategory.entries())

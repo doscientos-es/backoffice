@@ -7,9 +7,10 @@ import { formatDate, formatEUR } from "@/lib/utils";
 import Link from "next/link";
 import { ExpenseListActions } from "../expenses/_components/expense-list-actions";
 import { FinanceCategoryChart } from "../finance-category-chart";
-import { FinanceMembersChart } from "../finance-members-chart";
 
-export async function FinanceDetails() {
+type Props = { since: string; until: string; rangeLabel: string };
+
+export async function FinanceDetails({ since, until, rangeLabel }: Props) {
   const user = await requireUser();
   const supabase = await createServerClient();
   const [
@@ -18,7 +19,7 @@ export async function FinanceDetails() {
     { data: teamMembersRaw },
     vendorSuggestions,
   ] = await Promise.all([
-    getFinanceDetails(),
+    getFinanceDetails(since, until),
     supabase
       .from("projects")
       .select("id, name, clients(name)")
@@ -50,11 +51,11 @@ export async function FinanceDetails() {
       <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
         <Card>
           <CardHeader>
-            <CardTitle>Top categorías · este mes</CardTitle>
+            <CardTitle>Top categorías · {rangeLabel.toLowerCase()}</CardTitle>
           </CardHeader>
           <CardContent className="px-0">
             {categorySlices.length === 0 ? (
-              <p className="px-6 py-2 text-sm text-muted-foreground">Sin gastos este mes.</p>
+              <p className="px-6 py-2 text-sm text-muted-foreground">Sin gastos en este periodo.</p>
             ) : (
               <FinanceCategoryChart data={categorySlices} />
             )}
@@ -141,12 +142,19 @@ export async function FinanceDetails() {
       {memberContributions.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Aportaciones de socios</CardTitle>
+            <CardTitle>Aportaciones de socios · histórico</CardTitle>
           </CardHeader>
           <CardContent className="px-0">
-            <FinanceMembersChart data={memberBars} />
+            <ul className="divide-y divide-border">
+              {memberBars.map((m) => (
+                <li key={m.name} className="flex items-center justify-between px-6 py-2.5 text-sm">
+                  <span className="font-medium">{m.name}</span>
+                  <span className="tabular-nums">{formatEUR(m.value)}</span>
+                </li>
+              ))}
+            </ul>
             {memberContributions.length === 2 && (
-              <div className="border-t border-border px-6 py-2 text-xs text-muted-foreground">
+              <p className="border-t border-border px-6 py-2 text-xs text-muted-foreground">
                 Diferencia:{" "}
                 <span className="font-medium tabular-nums text-foreground">
                   {formatEUR(
@@ -159,7 +167,7 @@ export async function FinanceDetails() {
                 {(memberContributions[0]?.total ?? 0) >= (memberContributions[1]?.total ?? 0)
                   ? memberContributions[0]?.memberName
                   : memberContributions[1]?.memberName}
-              </div>
+              </p>
             )}
           </CardContent>
         </Card>

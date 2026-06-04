@@ -2,24 +2,31 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { SectionBoundary } from "@/components/ui/error-boundary";
 import { requireUser } from "@/lib/auth";
+import { financeRangeToDates, parseFinanceRange } from "@/lib/finance/range";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FinanceDetails } from "./_components/finance-details";
 import { FinanceKpis } from "./_components/finance-kpis";
 import { FinanceOverviewChart } from "./_components/finance-overview-chart";
+import { FinanceRangeSelector } from "./_components/finance-range-selector";
 import { ChartSkeleton, DetailsSkeleton, KpisSkeleton } from "./_components/finance-skeletons";
 
 export const metadata: Metadata = { title: "Finanzas · doscientos" };
 export const dynamic = "force-dynamic";
 
-export default async function FinancePage() {
+type SearchParams = Promise<{ range?: string }>;
+
+export default async function FinancePage({ searchParams }: { searchParams: SearchParams }) {
   await requireUser();
+  const sp = await searchParams;
+  const range = parseFinanceRange(sp.range);
+  const { since, until, label: rangeLabel } = financeRangeToDates(range);
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Finanzas"
-        description="Ingresos (facturas) vs gastos operativos."
+        description={`Ingresos (facturas) vs gastos operativos · ${rangeLabel}.`}
         actions={
           <div className="flex items-center gap-2">
             <Button asChild variant="outline" size="sm">
@@ -32,16 +39,26 @@ export default async function FinancePage() {
         }
       />
 
-      <SectionBoundary pending={<KpisSkeleton />} label="No se pudieron cargar los KPIs">
-        <FinanceKpis />
+      <FinanceRangeSelector current={range} />
+
+      <SectionBoundary
+        key={`kpis-${since}-${until}`}
+        pending={<KpisSkeleton />}
+        label="No se pudieron cargar los KPIs"
+      >
+        <FinanceKpis since={since} until={until} rangeLabel={rangeLabel} />
       </SectionBoundary>
 
       <SectionBoundary pending={<ChartSkeleton />} label="No se pudo cargar el gráfico">
         <FinanceOverviewChart />
       </SectionBoundary>
 
-      <SectionBoundary pending={<DetailsSkeleton />} label="No se pudieron cargar los detalles">
-        <FinanceDetails />
+      <SectionBoundary
+        key={`details-${since}-${until}`}
+        pending={<DetailsSkeleton />}
+        label="No se pudieron cargar los detalles"
+      >
+        <FinanceDetails since={since} until={until} rangeLabel={rangeLabel} />
       </SectionBoundary>
     </div>
   );
