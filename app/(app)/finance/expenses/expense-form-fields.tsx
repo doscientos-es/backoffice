@@ -222,11 +222,7 @@ export function ExpenseFormFields({
               />
             </FormRow>
             <FormRow label="Fecha de pago" htmlFor={`${idPrefix}-paid_at`}>
-              <DateField
-                id={`${idPrefix}-paid_at`}
-                name="paid_at"
-                defaultValue={d.paid_at ?? ""}
-              />
+              <DateField id={`${idPrefix}-paid_at`} name="paid_at" defaultValue={d.paid_at ?? ""} />
             </FormRow>
             <FormRow label="Recurrencia" htmlFor={`${idPrefix}-recurrence`}>
               <Select
