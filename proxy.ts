@@ -2,7 +2,13 @@ import { rateLimit } from "@/lib/ratelimit";
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/auth/callback", "/api/webhooks", "/api/email/webhook"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/auth/callback",
+  "/api/webhooks",
+  "/api/email/webhook",
+  "/api/public",
+];
 
 function clientIp(request: NextRequest): string {
   const fwd = request.headers.get("x-forwarded-for");
