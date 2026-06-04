@@ -72,7 +72,13 @@ export function ExpenseFormFields({
 
   return (
     <>
-      {/* ── Core fields ── */}
+      {/* ── Legend ── */}
+      <p className="text-xs text-muted-foreground">
+        Los campos marcados con <span className="text-destructive">*</span> son obligatorios.
+        El resto tienen valores por defecto y puedes dejarlos como están.
+      </p>
+
+      {/* ── Required fields ── */}
       <div className="grid gap-5 sm:grid-cols-2">
         <FormRow label="Proveedor" htmlFor={`${idPrefix}-vendor`} required>
           <Input
@@ -85,19 +91,6 @@ export function ExpenseFormFields({
             defaultValue={d.vendor ?? ""}
           />
         </FormRow>
-        <FormRow label="Categoría" htmlFor={`${idPrefix}-category`}>
-          <Select
-            id={`${idPrefix}-category`}
-            name="category"
-            defaultValue={d.category ?? "service"}
-          >
-            {EXPENSE_CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {EXPENSE_CATEGORY_LABELS[c]}
-              </option>
-            ))}
-          </Select>
-        </FormRow>
         <FormRow label="Fecha del gasto" htmlFor={`${idPrefix}-expense_date`} required>
           <Input
             id={`${idPrefix}-expense_date`}
@@ -106,15 +99,6 @@ export function ExpenseFormFields({
             required
             defaultValue={d.expense_date ?? new Date().toISOString().slice(0, 10)}
           />
-        </FormRow>
-        <FormRow label="Estado" htmlFor={`${idPrefix}-status`}>
-          <Select id={`${idPrefix}-status`} name="status" defaultValue={d.status ?? "paid"}>
-            {EXPENSE_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {EXPENSE_STATUS_LABELS[s]}
-              </option>
-            ))}
-          </Select>
         </FormRow>
         <FormRow label="Subtotal (sin IVA)" htmlFor={`${idPrefix}-subtotal`} required>
           <Input
@@ -128,26 +112,13 @@ export function ExpenseFormFields({
             defaultValue={(d.subtotal ?? 0).toString()}
           />
         </FormRow>
-        <FormRow label="IVA %" htmlFor={`${idPrefix}-tax_rate`}>
-          <Input
-            id={`${idPrefix}-tax_rate`}
-            name="tax_rate"
-            type="number"
-            step="0.01"
-            min="0"
-            max="100"
-            inputMode="decimal"
-            defaultValue={(d.tax_rate ?? 21).toString()}
-          />
-        </FormRow>
-
-        {/* ── Payment source ── */}
-        <FormRow label="Pagado desde" htmlFor={`${idPrefix}-payment_source`}>
+        <FormRow label="Pagado desde" htmlFor={`${idPrefix}-payment_source`} required>
           <Select
             id={`${idPrefix}-payment_source`}
             name="payment_source"
             value={paymentSource}
             onChange={(e) => setPaymentSource(e.target.value)}
+            required
           >
             {EXPENSE_PAYMENT_SOURCES.map((s) => (
               <option key={s} value={s}>
@@ -157,7 +128,12 @@ export function ExpenseFormFields({
           </Select>
         </FormRow>
         {paymentSource === "member" && (
-          <FormRow label="Socio" htmlFor={`${idPrefix}-paid_by_member_id`} required>
+          <FormRow
+            label="Socio que pagó"
+            htmlFor={`${idPrefix}-paid_by_member_id`}
+            required
+            className="sm:col-span-2"
+          >
             <Select
               id={`${idPrefix}-paid_by_member_id`}
               name="paid_by_member_id"
@@ -177,6 +153,44 @@ export function ExpenseFormFields({
           /* hidden sentinel so the field is always submitted */
           <input type="hidden" name="paid_by_member_id" value="" />
         )}
+      </div>
+
+      {/* ── Defaults (optional, with sensible values) ── */}
+      <div className="mt-2 grid gap-5 sm:grid-cols-3">
+        <FormRow label="Categoría" htmlFor={`${idPrefix}-category`} hint="Por defecto: Servicio">
+          <Select
+            id={`${idPrefix}-category`}
+            name="category"
+            defaultValue={d.category ?? "service"}
+          >
+            {EXPENSE_CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {EXPENSE_CATEGORY_LABELS[c]}
+              </option>
+            ))}
+          </Select>
+        </FormRow>
+        <FormRow label="Estado" htmlFor={`${idPrefix}-status`} hint="Por defecto: Pagado">
+          <Select id={`${idPrefix}-status`} name="status" defaultValue={d.status ?? "paid"}>
+            {EXPENSE_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {EXPENSE_STATUS_LABELS[s]}
+              </option>
+            ))}
+          </Select>
+        </FormRow>
+        <FormRow label="IVA %" htmlFor={`${idPrefix}-tax_rate`} hint="Por defecto: 21 %">
+          <Input
+            id={`${idPrefix}-tax_rate`}
+            name="tax_rate"
+            type="number"
+            step="0.01"
+            min="0"
+            max="100"
+            inputMode="decimal"
+            defaultValue={(d.tax_rate ?? 21).toString()}
+          />
+        </FormRow>
       </div>
 
       {/* ── Optional details ── */}
