@@ -79,21 +79,23 @@ export function TaskEditDialog({ task, members }: Props) {
         <form
           ref={formRef}
           onSubmit={onSubmit}
-          className="flex flex-col gap-5 max-h-[70vh] overflow-y-auto pr-1"
+          className="flex flex-col max-h-[70vh]"
         >
-          <TaskFormFields
-            idPrefix={`edit-${task.id}`}
-            members={members}
-            defaults={{
-              title: task.title,
-              description: task.description,
-              assignee_id: task.assignee_id,
-              status: task.status,
-              priority: task.priority,
-              due_date: task.due_date,
-            }}
-          />
-          <div className="flex items-center justify-end gap-3 border-t border-border pt-3">
+          <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-5">
+            <TaskFormFields
+              idPrefix={`edit-${task.id}`}
+              members={members}
+              defaults={{
+                title: task.title,
+                description: task.description,
+                assignee_id: task.assignee_id,
+                status: task.status,
+                priority: task.priority,
+                due_date: task.due_date,
+              }}
+            />
+          </div>
+          <div className="shrink-0 flex items-center justify-end gap-3 border-t border-border pt-3">
             <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
             <SubmitButton loading={feedback.pending} disabled={!isDirty} pendingLabel="Guardando…">
               Guardar cambios

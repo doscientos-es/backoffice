@@ -89,26 +89,28 @@ export function ProjectEditDialog({ project, clients }: Props) {
         <form
           ref={formRef}
           onSubmit={onSubmit}
-          className="flex flex-col gap-5 max-h-[70vh] overflow-y-auto pr-1"
+          className="flex flex-col max-h-[70vh]"
         >
-          <ProjectFormFields
-            idPrefix={`edit-${project.id}`}
-            clients={clients}
-            showClientPlaceholder={false}
-            defaults={{
-              client_id: project.client_id,
-              name: project.name,
-              status: project.status,
-              starts_at: project.starts_at,
-              ends_at: project.ends_at,
-              description: project.description,
-              github_sync_mode: project.github_sync_mode ?? "none",
-              github_repo: project.github_repo,
-              github_installation_id: project.github_installation_id,
-              github_auto_sync: project.github_auto_sync ?? true,
-            }}
-          />
-          <div className="flex items-center justify-end gap-3 border-t border-border pt-3">
+          <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-5">
+            <ProjectFormFields
+              idPrefix={`edit-${project.id}`}
+              clients={clients}
+              showClientPlaceholder={false}
+              defaults={{
+                client_id: project.client_id,
+                name: project.name,
+                status: project.status,
+                starts_at: project.starts_at,
+                ends_at: project.ends_at,
+                description: project.description,
+                github_sync_mode: project.github_sync_mode ?? "none",
+                github_repo: project.github_repo,
+                github_installation_id: project.github_installation_id,
+                github_auto_sync: project.github_auto_sync ?? true,
+              }}
+            />
+          </div>
+          <div className="shrink-0 flex items-center justify-end gap-3 border-t border-border pt-3">
             <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
             <SubmitButton loading={feedback.pending} disabled={!isDirty} pendingLabel="Guardando…">
               Guardar cambios

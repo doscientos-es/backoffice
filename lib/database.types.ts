@@ -26,6 +26,7 @@ export type Database = {
         | "hardware"
         | "office"
         | "marketing"
+        | "meta_ads"
         | "professional"
         | "travel"
         | "taxes"

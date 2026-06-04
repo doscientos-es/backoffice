@@ -14,7 +14,14 @@ import {
   EXPENSE_STATUSES,
   EXPENSE_STATUS_LABELS,
 } from "@/lib/finance";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+
+export type VendorSuggestion = {
+  vendor: string;
+  vendor_nif: string | null;
+  category: string;
+  payment_source: string;
+};
 
 export type ExpenseFormDefaults = {
   vendor?: string;
@@ -43,6 +50,8 @@ interface Props {
   autoFocusVendor?: boolean;
   projects?: Array<{ id: string; name: string; clientName?: string | null }>;
   teamMembers?: Array<{ id: string; name: string }>;
+  /** Previously used vendors to power the vendor/NIF autocomplete. */
+  vendorSuggestions?: VendorSuggestion[];
 }
 
 /**
@@ -55,9 +64,58 @@ export function ExpenseFormFields({
   autoFocusVendor = false,
   projects = [],
   teamMembers = [],
+  vendorSuggestions = [],
 }: Props) {
   const d = defaults ?? {};
   const [paymentSource, setPaymentSource] = useState(d.payment_source ?? "company");
+  const [vendor, setVendor] = useState(d.vendor ?? "");
+  const [vendorNif, setVendorNif] = useState(d.vendor_nif ?? "");
+  const [category, setCategory] = useState(d.category ?? "service");
+  const [autofilled, setAutofilled] = useState(false);
+
+  // Lookup of known vendors (case-insensitive) and the list of distinct NIFs
+  // for the native <datalist> autocomplete.
+  const vendorByName = useMemo(() => {
+    const map = new Map<string, VendorSuggestion>();
+    for (const s of vendorSuggestions) map.set(s.vendor.trim().toLowerCase(), s);
+    return map;
+  }, [vendorSuggestions]);
+
+  const nifOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          vendorSuggestions
+            .map((s) => s.vendor_nif?.trim())
+            .filter((n): n is string => Boolean(n)),
+        ),
+      ),
+    [vendorSuggestions],
+  );
+
+  /**
+   * When the typed/picked vendor matches a previous one, pre-fill its fiscal
+   * data without clobbering values the user already entered. Reveals the
+   * optional details so the user can see what got filled.
+   */
+  function handleVendorChange(value: string) {
+    setVendor(value);
+    const match = vendorByName.get(value.trim().toLowerCase());
+    if (!match) {
+      setAutofilled(false);
+      return;
+    }
+    let didFill = false;
+    if (match.vendor_nif && !vendorNif.trim()) {
+      setVendorNif(match.vendor_nif);
+      didFill = true;
+    }
+    if (didFill) {
+      setCategory(match.category);
+      setShowDetails(true);
+    }
+    setAutofilled(didFill);
+  }
   const [showDetails, setShowDetails] = useState(
     !!(
       d.vendor_nif ||
@@ -87,7 +145,14 @@ export function ExpenseFormFields({
 
       {/* ── Required fields ── */}
       <div className="grid gap-5 sm:grid-cols-2">
-        <FormRow label="Proveedor" htmlFor={`${idPrefix}-vendor`} required>
+        <FormRow
+          label="Proveedor"
+          htmlFor={`${idPrefix}-vendor`}
+          required
+          hint={
+            autofilled ? "NIF y categoría rellenados desde un gasto anterior" : undefined
+          }
+        >
           <Input
             id={`${idPrefix}-vendor`}
             name="vendor"
@@ -95,8 +160,17 @@ export function ExpenseFormFields({
             maxLength={160}
             autoFocus={autoFocusVendor}
             placeholder="Meta, Notion, Google…"
-            defaultValue={d.vendor ?? ""}
+            list={vendorSuggestions.length ? `${idPrefix}-vendor-options` : undefined}
+            value={vendor}
+            onChange={(e) => handleVendorChange(e.target.value)}
           />
+          {vendorSuggestions.length > 0 && (
+            <datalist id={`${idPrefix}-vendor-options`}>
+              {vendorSuggestions.map((s) => (
+                <option key={s.vendor} value={s.vendor} />
+              ))}
+            </datalist>
+          )}
         </FormRow>
         <FormRow label="Fecha del gasto" htmlFor={`${idPrefix}-expense_date`} required>
           <DateField
@@ -167,7 +241,8 @@ export function ExpenseFormFields({
           <Select
             id={`${idPrefix}-category`}
             name="category"
-            defaultValue={d.category ?? "service"}
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
           >
             {EXPENSE_CATEGORIES.map((c) => (
               <option key={c} value={c}>
@@ -243,8 +318,17 @@ export function ExpenseFormFields({
                 name="vendor_nif"
                 maxLength={20}
                 placeholder="ESBxxxxxxxx"
-                defaultValue={d.vendor_nif ?? ""}
+                list={nifOptions.length ? `${idPrefix}-nif-options` : undefined}
+                value={vendorNif}
+                onChange={(e) => setVendorNif(e.target.value)}
               />
+              {nifOptions.length > 0 && (
+                <datalist id={`${idPrefix}-nif-options`}>
+                  {nifOptions.map((n) => (
+                    <option key={n} value={n} />
+                  ))}
+                </datalist>
+              )}
             </FormRow>
             <FormRow label="Nº factura proveedor" htmlFor={`${idPrefix}-invoice_reference`}>
               <Input

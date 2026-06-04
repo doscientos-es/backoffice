@@ -15,7 +15,7 @@ import { useFormDirty } from "@/lib/hooks/use-form-dirty";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { updateExpense } from "../actions";
-import { ExpenseFormFields } from "../expense-form-fields";
+import { ExpenseFormFields, type VendorSuggestion } from "../expense-form-fields";
 
 type Expense = {
   id: string;
@@ -42,10 +42,30 @@ interface Props {
   expense: Expense;
   projects: Array<{ id: string; name: string; clientName?: string | null }>;
   teamMembers?: Array<{ id: string; name: string }>;
+  vendorSuggestions?: VendorSuggestion[];
+  /** Controlled open state (used when triggered from the list kebab menu). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** Hide the built-in "Editar" trigger when opened externally. */
+  hideTrigger?: boolean;
 }
 
-export function ExpenseEditDialog({ expense, projects, teamMembers = [] }: Props) {
-  const [open, setOpen] = useState(false);
+export function ExpenseEditDialog({
+  expense,
+  projects,
+  teamMembers = [],
+  vendorSuggestions = [],
+  open: controlledOpen,
+  onOpenChange,
+  hideTrigger = false,
+}: Props) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = (v: boolean) => {
+    if (!isControlled) setInternalOpen(v);
+    onOpenChange?.(v);
+  };
   const feedback = useFormFeedback();
   const { formRef, isDirty, reset } = useFormDirty<HTMLFormElement>();
 
@@ -87,12 +107,14 @@ export function ExpenseEditDialog({ expense, projects, teamMembers = [] }: Props
         if (!v) feedback.reset();
       }}
     >
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Pencil className="size-4" aria-hidden />
-          Editar
-        </Button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm">
+            <Pencil className="size-4" aria-hidden />
+            Editar
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Editar gasto</DialogTitle>
@@ -101,39 +123,38 @@ export function ExpenseEditDialog({ expense, projects, teamMembers = [] }: Props
         <form
           ref={formRef}
           onSubmit={onSubmit}
-          className="flex flex-col gap-5 max-h-[70vh] overflow-y-auto pr-1"
+          className="flex flex-col max-h-[70vh]"
         >
-          <ExpenseFormFields
-            idPrefix={`edit-${expense.id}`}
-            projects={projects}
-            teamMembers={teamMembers}
-            defaults={{
-              vendor: expense.vendor,
-              description: expense.description,
-              category: expense.category,
-              status: expense.status,
-              recurrence: expense.recurrence,
-              expense_date: expense.expense_date.slice(0, 10),
-              due_date: expense.due_date?.slice(0, 10) ?? "",
-              paid_at: expense.paid_at?.slice(0, 10) ?? "",
-              currency: expense.currency,
-              subtotal: Number(expense.subtotal ?? 0),
-              tax_rate: Number(expense.tax_rate ?? 0),
-              vendor_nif: expense.vendor_nif,
-              invoice_reference: expense.invoice_reference,
-              project_id: expense.project_id,
-              notes: expense.notes,
-              payment_source: expense.payment_source,
-              paid_by_member_id: expense.paid_by_member_id,
-            }}
-          />
-          <div className="flex items-center justify-end gap-3 border-t border-border pt-3">
+          <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-5">
+            <ExpenseFormFields
+              idPrefix={`edit-${expense.id}`}
+              projects={projects}
+              teamMembers={teamMembers}
+              vendorSuggestions={vendorSuggestions}
+              defaults={{
+                vendor: expense.vendor,
+                description: expense.description,
+                category: expense.category,
+                status: expense.status,
+                recurrence: expense.recurrence,
+                expense_date: expense.expense_date.slice(0, 10),
+                due_date: expense.due_date?.slice(0, 10) ?? "",
+                paid_at: expense.paid_at?.slice(0, 10) ?? "",
+                currency: expense.currency,
+                subtotal: Number(expense.subtotal ?? 0),
+                tax_rate: Number(expense.tax_rate ?? 0),
+                vendor_nif: expense.vendor_nif,
+                invoice_reference: expense.invoice_reference,
+                project_id: expense.project_id,
+                notes: expense.notes,
+                payment_source: expense.payment_source,
+                paid_by_member_id: expense.paid_by_member_id,
+              }}
+            />
+          </div>
+          <div className="shrink-0 flex items-center justify-end gap-3 border-t border-border pt-3">
             <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
-            <SubmitButton
-              loading={feedback.pending}
-              disabled={!isDirty}
-              pendingLabel="Guardando…"
-            >
+            <SubmitButton loading={feedback.pending} disabled={!isDirty} pendingLabel="Guardando…">
               Guardar cambios
             </SubmitButton>
           </div>

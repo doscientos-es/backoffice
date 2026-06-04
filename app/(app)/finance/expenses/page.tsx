@@ -1,6 +1,7 @@
 import { ListPage } from "@/components/layout/list-page";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { requireUser } from "@/lib/auth";
 import {
   EXPENSE_CATEGORIES,
   EXPENSE_CATEGORY_LABELS,
@@ -10,8 +11,10 @@ import {
 import { getExpensesPage, parseExpenseListSearchParams } from "@/lib/finance/queries";
 import { EXPENSE_LIST_PAGE_SIZE } from "@/lib/finance/types";
 import { EXPENSE_STATUS } from "@/lib/status";
+import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import Link from "next/link";
+import { ExpenseListActions } from "./_components/expense-list-actions";
 
 export const metadata = { title: "Gastos · doscientos" };
 export const dynamic = "force-dynamic";
@@ -35,9 +38,29 @@ type SearchParams = Promise<{
 }>;
 
 export default async function ExpensesPage({ searchParams }: { searchParams: SearchParams }) {
-  const sp = await searchParams;
+  const [sp, user] = await Promise.all([searchParams, requireUser()]);
   const { params } = parseExpenseListSearchParams(sp);
-  const { expenses, count, total, years, error } = await getExpensesPage(params);
+
+  const supabase = await createServerClient();
+  const [{ expenses, count, total, years, error }, { data: projectsRaw }, { data: teamMembersRaw }] =
+    await Promise.all([
+      getExpensesPage(params),
+      supabase
+        .from("projects")
+        .select("id, name, clients(name)")
+        .is("deleted_at", null)
+        .order("name"),
+      supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
+    ]);
+
+  const projects = (projectsRaw ?? []).map((p) => ({
+    id: p.id as string,
+    name: p.name as string,
+    clientName: (p.clients as unknown as { name: string } | null)?.name ?? null,
+  }));
+  const teamMembers = (teamMembersRaw ?? []) as Array<{ id: string; name: string }>;
+
+  const canEdit = user.role !== "viewer";
   const { category, status, q, page } = params;
   const year = params.year && years.includes(params.year) ? params.year : null;
   const totalLabel = year ? `Total ${year}` : "Total filtrado";
@@ -66,17 +89,25 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Sea
         { key: "status", label: "Estado", options: STATUS_FILTER_OPTIONS },
       ]}
       pagination={{ page, pageSize: EXPENSE_LIST_PAGE_SIZE, total: count }}
-      headers={["Fecha", "Proveedor", "Categoría", "Estado", "Total"]}
-      align={["left", "left", "left", "left", "right"]}
+      headers={["Proveedor", "Fecha", "Categoría", "Estado", "Total", ""]}
+      align={["left", "left", "left", "left", "right", "right"]}
       rows={expenses.map((e) => ({
         id: e.id,
         href: `/finance/expenses/${e.id}`,
         cells: [
-          formatDate(e.expense_date),
           e.vendor,
+          formatDate(e.expense_date),
           EXPENSE_CATEGORY_LABELS[e.category] ?? e.category,
           <StatusBadge key={`${e.id}-status`} meta={EXPENSE_STATUS} value={e.status} />,
           formatEUR(e.total),
+          canEdit ? (
+            <ExpenseListActions
+              key={`${e.id}-actions`}
+              expense={e}
+              projects={projects}
+              teamMembers={teamMembers}
+            />
+          ) : null,
         ],
       }))}
     />

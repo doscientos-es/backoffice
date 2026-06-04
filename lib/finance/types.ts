@@ -52,6 +52,31 @@ export type ExpenseListItem = {
   total: number;
   expense_date: string;
   recurrence: ExpenseRecurrence;
+  // Editable payload so the list can open the edit dialog and duplicate
+  // without an extra round-trip per row.
+  description: string | null;
+  due_date: string | null;
+  paid_at: string | null;
+  currency: string;
+  subtotal: number;
+  tax_rate: number;
+  vendor_nif: string | null;
+  invoice_reference: string | null;
+  project_id: string | null;
+  notes: string | null;
+  payment_source: ExpensePaymentSource;
+  paid_by_member_id: string | null;
+};
+
+/**
+ * A previously used vendor with its most recent fiscal data, used to power
+ * the vendor/NIF autocomplete in the expense form.
+ */
+export type VendorSuggestion = {
+  vendor: string;
+  vendor_nif: string | null;
+  category: ExpenseCategory;
+  payment_source: ExpensePaymentSource;
 };
 
 export type ExpenseListParams = {

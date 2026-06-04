@@ -135,6 +135,29 @@ export async function updateExpense(
   return { ok: true };
 }
 
+/**
+ * Soft-deletes an expense and returns a result instead of redirecting, so the
+ * list view can refresh in place (the kebab "Eliminar" action). The detail
+ * page keeps using `deleteExpense`, which redirects back to the list.
+ */
+export async function removeExpense(
+  id: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireRole(["owner", "admin"]);
+  if (!z.string().uuid().safeParse(id).success) return { ok: false, error: "ID inválido" };
+
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("expenses")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/finance/expenses");
+  revalidatePath("/finance");
+  return { ok: true };
+}
+
 export async function deleteExpense(formData: FormData): Promise<void> {
   await requireRole(["owner", "admin"]);
   const id = formData.get("id")?.toString() ?? "";

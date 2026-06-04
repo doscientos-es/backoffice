@@ -75,21 +75,23 @@ export function ClientEditDialog({ client }: { client: Client }) {
         <form
           ref={formRef}
           onSubmit={onSubmit}
-          className="flex flex-col gap-5 max-h-[70vh] overflow-y-auto pr-1"
+          className="flex flex-col max-h-[70vh]"
         >
-          <ClientFormFields
-            idPrefix={`edit-${client.id}`}
-            defaults={{
-              name: client.name,
-              nif: client.nif,
-              email: client.email,
-              phone: client.phone,
-              contact_person: client.contact_person,
-              billing_address: client.billing_address,
-              notes: client.notes,
-            }}
-          />
-          <div className="flex items-center justify-end gap-3 border-t border-border pt-3">
+          <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-5">
+            <ClientFormFields
+              idPrefix={`edit-${client.id}`}
+              defaults={{
+                name: client.name,
+                nif: client.nif,
+                email: client.email,
+                phone: client.phone,
+                contact_person: client.contact_person,
+                billing_address: client.billing_address,
+                notes: client.notes,
+              }}
+            />
+          </div>
+          <div className="shrink-0 flex items-center justify-end gap-3 border-t border-border pt-3">
             <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
             <SubmitButton loading={feedback.pending} disabled={!isDirty} pendingLabel="Guardando…">
               Guardar cambios

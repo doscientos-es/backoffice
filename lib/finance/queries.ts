@@ -21,6 +21,7 @@ import {
   type FinanceDetails,
   type FinanceKpis,
   type MemberContribution,
+  type VendorSuggestion,
 } from "./types";
 
 const log = scopedLogger("finance.queries");
@@ -274,9 +275,10 @@ export async function getExpensesPage(params: ExpenseListParams): Promise<Expens
   let pageQuery = notDeleted(
     supabase
       .from("expenses")
-      .select("id, vendor, category, status, total, expense_date, recurrence", {
-        count: "exact",
-      }),
+      .select(
+        "id, vendor, category, status, total, expense_date, recurrence, description, due_date, paid_at, currency, subtotal, tax_rate, vendor_nif, invoice_reference, project_id, notes, payment_source, paid_by_member_id",
+        { count: "exact" },
+      ),
   );
   let totalsQuery = notDeleted(supabase.from("expenses").select("total"));
 
@@ -322,12 +324,63 @@ export async function getExpensesPage(params: ExpenseListParams): Promise<Expens
       total: Number(e.total ?? 0),
       expense_date: e.expense_date as string,
       recurrence: e.recurrence as ExpenseRecurrence,
+      description: (e.description as string | null) ?? null,
+      due_date: (e.due_date as string | null) ?? null,
+      paid_at: (e.paid_at as string | null) ?? null,
+      currency: (e.currency as string | null) ?? "EUR",
+      subtotal: Number(e.subtotal ?? 0),
+      tax_rate: Number(e.tax_rate ?? 0),
+      vendor_nif: (e.vendor_nif as string | null) ?? null,
+      invoice_reference: (e.invoice_reference as string | null) ?? null,
+      project_id: (e.project_id as string | null) ?? null,
+      notes: (e.notes as string | null) ?? null,
+      payment_source: ((e.payment_source as string | null) ?? "company") as ExpensePaymentSource,
+      paid_by_member_id: (e.paid_by_member_id as string | null) ?? null,
     })),
     count: count ?? 0,
     total,
     years,
     error: error?.message ?? null,
   };
+}
+
+/**
+ * Distinct previously used vendors with their most recent NIF, category and
+ * payment source. Powers the vendor/NIF autocomplete in the expense form:
+ * picking a known vendor pre-fills its fiscal data. Deduped case-insensitively
+ * keeping the most recent occurrence.
+ */
+export async function getExpenseVendorSuggestions(): Promise<VendorSuggestion[]> {
+  const supabase = await createServerClient();
+
+  const { data, error } = await notDeleted(
+    supabase.from("expenses").select("vendor, vendor_nif, category, payment_source, expense_date"),
+  )
+    .order("expense_date", { ascending: false })
+    .limit(500);
+
+  if (error) {
+    log.error({ err: error.message }, "expense_vendor_suggestions_failed");
+    return [];
+  }
+
+  const seen = new Set<string>();
+  const suggestions: VendorSuggestion[] = [];
+  for (const row of data ?? []) {
+    const vendor = (row.vendor as string | null)?.trim();
+    if (!vendor) continue;
+    const key = vendor.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    suggestions.push({
+      vendor,
+      vendor_nif: (row.vendor_nif as string | null) ?? null,
+      category: row.category as ExpenseCategory,
+      payment_source: ((row.payment_source as string | null) ?? "company") as ExpensePaymentSource,
+    });
+  }
+
+  return suggestions.sort((a, b) => a.vendor.localeCompare(b.vendor, "es"));
 }
 
 export async function getExpenseDetail(id: string): Promise<ExpenseDetailResult | null> {
