@@ -3,7 +3,7 @@ import { getDashboardKpis } from "@/lib/dashboard/queries";
 import type { DashboardRange } from "@/lib/dashboard/types";
 import { formatEUR } from "@/lib/utils";
 import { computeTrend, describeRange, resolveDateRange } from "@/lib/utils/date";
-import { AlertTriangle, FileSignature, Inbox, LineChart, Target, Wallet } from "lucide-react";
+import { FileSignature, Inbox, LineChart, Target } from "lucide-react";
 
 export async function KpiGrid({ range }: { range: DashboardRange }) {
   const dateRange = resolveDateRange(range);
@@ -13,7 +13,7 @@ export async function KpiGrid({ range }: { range: DashboardRange }) {
   const conversionPct = Math.round(kpis.conversionRate * 1000) / 10;
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <StatCard
         label="Leads nuevos"
         value={kpis.leadsNew}
@@ -48,23 +48,6 @@ export async function KpiGrid({ range }: { range: DashboardRange }) {
         href="/leads"
         hint={`leads ganados · ${rangeLabel}`}
         trend={computeTrend(kpis.conversionRate * 100, kpis.conversionRatePrev * 100)}
-      />
-      <StatCard
-        label="Facturas vencidas"
-        value={kpis.overdueCount}
-        tone={kpis.overdueCount > 0 ? "danger" : "default"}
-        icon={AlertTriangle}
-        href="/invoices?status=overdue"
-        hint={kpis.overdueCount > 0 ? "requieren cobro" : "todo al día"}
-      />
-      <StatCard
-        label="Ingresos este mes"
-        value={formatEUR(kpis.monthRevenue)}
-        tone="success"
-        icon={Wallet}
-        href="/finance"
-        hint="vs. mes anterior"
-        trend={computeTrend(kpis.monthRevenue, kpis.monthRevenuePrev)}
       />
     </div>
   );

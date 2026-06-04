@@ -6,10 +6,6 @@ import {
   MonthExpensesSkeleton,
   MonthExpensesWidget,
 } from "@/components/finance/month-expenses-card";
-import {
-  MetaAdsBalanceSkeleton,
-  MetaAdsBalanceWidget,
-} from "@/components/marketing/meta-ads-balance-card";
 import { SectionBoundary } from "@/components/ui/error-boundary";
 import { requireUser } from "@/lib/auth";
 import { getGreeting, parseDashboardRange } from "@/lib/utils/date";
@@ -41,68 +37,71 @@ export default async function InicioPage({ searchParams }: PageProps) {
   const firstName = user.name.split(" ")[0];
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {greeting}, {firstName} 👋
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Aquí tienes lo que requiere tu atención.
-          </p>
-        </div>
-        <SectionBoundary pending={<RangeSelectorSkeleton />} label="No se pudo cargar el selector">
-          <RangeSelector current={range} />
-        </SectionBoundary>
+    <div className="flex flex-col gap-8">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {greeting}, {firstName} 👋
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Aquí tienes lo que requiere tu atención.
+        </p>
       </div>
 
-      <SectionBoundary pending={<MyDayWidgetSkeleton />} label="No se pudo cargar tu día">
-        <MyDayWidget />
-      </SectionBoundary>
-
-      <SectionBoundary
-        key={range}
-        pending={<KpiGridSkeleton />}
-        label="No se pudieron cargar los KPIs"
-      >
-        <KpiGrid range={range} />
-      </SectionBoundary>
-
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <SectionBoundary
-          pending={<MetaAdsBalanceSkeleton />}
-          label="No se pudo cargar el saldo de Meta Ads"
-        >
-          <MetaAdsBalanceWidget />
+      {/* Para hoy: tu cola de trabajo y los avisos que requieren acción */}
+      <div className="flex flex-col gap-4">
+        <SectionBoundary pending={<MyDayWidgetSkeleton />} label="No se pudo cargar tu día">
+          <MyDayWidget />
         </SectionBoundary>
-        <SectionBoundary
-          pending={<AccountsReceivableSkeleton />}
-          label="No se pudo cargar el cobro pendiente"
-        >
-          <AccountsReceivableWidget />
-        </SectionBoundary>
-        <SectionBoundary
-          pending={<MonthExpensesSkeleton />}
-          label="No se pudo cargar el gasto del mes"
-        >
-          <MonthExpensesWidget />
-        </SectionBoundary>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
         <SectionBoundary
           pending={<AvisosWidgetSkeleton />}
           label="No se pudieron cargar los avisos"
         >
           <AvisosWidget />
         </SectionBoundary>
+      </div>
+
+      {/* La empresa de un vistazo: KPIs comerciales, salud financiera e ingresos */}
+      <section className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-sm font-medium text-muted-foreground">La empresa de un vistazo</h2>
+          <SectionBoundary
+            pending={<RangeSelectorSkeleton />}
+            label="No se pudo cargar el selector"
+          >
+            <RangeSelector current={range} />
+          </SectionBoundary>
+        </div>
+
+        <SectionBoundary
+          key={range}
+          pending={<KpiGridSkeleton />}
+          label="No se pudieron cargar los KPIs"
+        >
+          <KpiGrid range={range} />
+        </SectionBoundary>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <SectionBoundary
+            pending={<AccountsReceivableSkeleton />}
+            label="No se pudo cargar el cobro pendiente"
+          >
+            <AccountsReceivableWidget />
+          </SectionBoundary>
+          <SectionBoundary
+            pending={<MonthExpensesSkeleton />}
+            label="No se pudo cargar el gasto del mes"
+          >
+            <MonthExpensesWidget />
+          </SectionBoundary>
+        </div>
+
         <SectionBoundary
           pending={<RevenueWidgetSkeleton />}
           label="No se pudieron cargar los ingresos"
         >
           <RevenueWidget />
         </SectionBoundary>
-      </div>
+      </section>
     </div>
   );
 }
