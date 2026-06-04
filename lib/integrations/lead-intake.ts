@@ -1,40 +1,51 @@
 import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { z } from "zod";
+import { runLeadPipeline } from "./lead-pipeline";
 import { notifyNewLead } from "./notify-new-lead";
 
+// ── Input schema ──────────────────────────────────────────────────────────
+
+const utmSchema = z.object({
+  source: z.string().optional().nullable(),
+  medium: z.string().optional().nullable(),
+  campaign: z.string().optional().nullable(),
+  term: z.string().optional().nullable(),
+  content: z.string().optional().nullable(),
+});
+
+const contextSchema = z.object({
+  referrer: z.string().optional().nullable(),
+  ip: z.string().optional().nullable(),
+  device: z.string().optional().nullable(),
+  browser: z.string().optional().nullable(),
+  language: z.string().optional().nullable(),
+});
+
 /**
- * Normalized payload accepted by ingestLead().
- * Adapters (Meta, Google Ads, landing form, Tally...) translate provider-specific
+ * Validated schema for ingestLead() inputs.
+ * Adapters (Meta, Recurrev, landing, manual) translate provider-specific
  * payloads into this shape so the storage layer stays agnostic.
+ * Exporting lets adapters reuse it for unit tests.
  */
-export type LeadIntake = {
-  name: string;
-  email?: string | null;
-  phone?: string | null;
-  company?: string | null;
-  notes?: string | null;
-  source: string;
+export const LeadIntakeSchema = z.object({
+  name: z.string().trim().min(1, "name is required"),
+  email: z.string().email("invalid email").optional().nullable(),
+  phone: z.string().optional().nullable(),
+  company: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
+  source: z.string().trim().min(1, "source is required"),
   /** Provider-side stable identifier (e.g. Meta leadgen_id). Used for idempotency. */
-  externalId?: string | null;
+  externalId: z.string().optional().nullable(),
   /** Provider key. Must match externalId namespace, e.g. "meta_lead_ads". */
-  externalSource?: string | null;
-  utm?: {
-    source?: string | null;
-    medium?: string | null;
-    campaign?: string | null;
-    term?: string | null;
-    content?: string | null;
-  };
-  context?: {
-    referrer?: string | null;
-    ip?: string | null;
-    device?: string | null;
-    browser?: string | null;
-    language?: string | null;
-  };
+  externalSource: z.string().optional().nullable(),
+  utm: utmSchema.optional(),
+  context: contextSchema.optional(),
   /** Raw provider payload for audit / debugging. Stored as jsonb. */
-  rawPayload?: unknown;
-};
+  rawPayload: z.unknown().optional(),
+});
+
+export type LeadIntake = z.infer<typeof LeadIntakeSchema>;
 
 export type LeadIntakeResult =
   | { ok: true; leadId: string; duplicate: boolean }
@@ -42,20 +53,28 @@ export type LeadIntakeResult =
 
 const log = scopedLogger("lead-intake");
 
+/** Window for email/phone soft-dedupe when no externalId is present. */
+const SOFT_DEDUPE_WINDOW_MS = 48 * 60 * 60 * 1000;
+
 export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
-  if (!input.name?.trim()) {
-    return { ok: false, error: "name is required" };
+  // ── 1. Validate & normalize ────────────────────────────────────────────
+  const parsed = LeadIntakeSchema.safeParse(input);
+  if (!parsed.success) {
+    const firstError = parsed.error.errors[0]?.message ?? "invalid input";
+    log.warn({ errors: parsed.error.errors }, "ingestLead validation failed");
+    return { ok: false, error: firstError };
   }
+  const norm = parsed.data;
 
   const supabase = createAdminClient();
 
-  // Idempotency: if we already stored this external lead, return the existing id.
-  if (input.externalId && input.externalSource) {
+  // ── 2. Idempotency: externalId dedupe ──────────────────────────────────
+  if (norm.externalId && norm.externalSource) {
     const { data: existing, error: lookupErr } = await supabase
       .from("leads")
       .select("id")
-      .eq("external_source", input.externalSource)
-      .eq("external_id", input.externalId)
+      .eq("external_source", norm.externalSource)
+      .eq("external_id", norm.externalId)
       .is("deleted_at", null)
       .maybeSingle();
     if (lookupErr) {
@@ -67,38 +86,72 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
     }
   }
 
+  // ── 3. Soft dedupe: same email or phone within 48 h (no externalId) ────
+  if (!norm.externalId) {
+    const cutoff = new Date(Date.now() - SOFT_DEDUPE_WINDOW_MS).toISOString();
+
+    if (norm.email) {
+      const { data: byEmail } = await supabase
+        .from("leads")
+        .select("id")
+        .eq("email", norm.email)
+        .is("deleted_at", null)
+        .gte("created_at", cutoff)
+        .limit(1)
+        .maybeSingle();
+      if (byEmail?.id) {
+        log.info({ leadId: byEmail.id }, "soft-dedupe hit by email");
+        return { ok: true, leadId: byEmail.id as string, duplicate: true };
+      }
+    } else if (norm.phone) {
+      const { data: byPhone } = await supabase
+        .from("leads")
+        .select("id")
+        .eq("phone", norm.phone)
+        .is("deleted_at", null)
+        .gte("created_at", cutoff)
+        .limit(1)
+        .maybeSingle();
+      if (byPhone?.id) {
+        log.info({ leadId: byPhone.id }, "soft-dedupe hit by phone");
+        return { ok: true, leadId: byPhone.id as string, duplicate: true };
+      }
+    }
+  }
+
+  // ── 4. Insert ──────────────────────────────────────────────────────────
   const row = {
-    name: input.name.trim().slice(0, 160),
-    email: input.email?.trim() || null,
-    phone: input.phone?.trim() || null,
-    company: input.company?.trim() || null,
-    notes: input.notes?.trim() || null,
-    source: input.source.trim().slice(0, 80),
-    external_id: input.externalId ?? null,
-    external_source: input.externalSource ?? null,
-    utm_source: input.utm?.source ?? null,
-    utm_medium: input.utm?.medium ?? null,
-    utm_campaign: input.utm?.campaign ?? null,
-    utm_term: input.utm?.term ?? null,
-    utm_content: input.utm?.content ?? null,
-    referrer: input.context?.referrer ?? null,
-    ip: input.context?.ip ?? null,
-    device: input.context?.device ?? null,
-    browser: input.context?.browser ?? null,
-    language: input.context?.language ?? null,
-    raw_payload: (input.rawPayload ?? null) as Record<string, unknown> | null,
+    name: norm.name.trim().slice(0, 160),
+    email: norm.email?.trim() || null,
+    phone: norm.phone?.trim() || null,
+    company: norm.company?.trim() || null,
+    notes: norm.notes?.trim() || null,
+    source: norm.source.trim().slice(0, 80),
+    external_id: norm.externalId ?? null,
+    external_source: norm.externalSource ?? null,
+    utm_source: norm.utm?.source ?? null,
+    utm_medium: norm.utm?.medium ?? null,
+    utm_campaign: norm.utm?.campaign ?? null,
+    utm_term: norm.utm?.term ?? null,
+    utm_content: norm.utm?.content ?? null,
+    referrer: norm.context?.referrer ?? null,
+    ip: norm.context?.ip ?? null,
+    device: norm.context?.device ?? null,
+    browser: norm.context?.browser ?? null,
+    language: norm.context?.language ?? null,
+    raw_payload: (norm.rawPayload ?? null) as Record<string, unknown> | null,
   };
 
   const { data, error } = await supabase.from("leads").insert(row).select("id").single();
 
   if (error || !data) {
     // Race condition: another concurrent webhook delivery beat us. Re-fetch.
-    if (error?.code === "23505" && input.externalId && input.externalSource) {
+    if (error?.code === "23505" && norm.externalId && norm.externalSource) {
       const { data: dup } = await supabase
         .from("leads")
         .select("id")
-        .eq("external_source", input.externalSource)
-        .eq("external_id", input.externalId)
+        .eq("external_source", norm.externalSource)
+        .eq("external_id", norm.externalId)
         .maybeSingle();
       if (dup?.id) return { ok: true, leadId: dup.id as string, duplicate: true };
     }
@@ -109,7 +162,10 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
   const leadId = data.id as string;
   log.info({ leadId, source: row.source, externalSource: row.external_source }, "lead ingested");
 
-  // Notify admins/owners — fire-and-forget so the webhook response is not delayed.
+  // ── 5. Post-insert pipeline: score + auto-assign (fire-and-forget) ─────
+  runLeadPipeline(leadId, norm).catch((e) => log.error({ err: e }, "lead pipeline failed"));
+
+  // ── 6. Notify admins/owners (fire-and-forget) ──────────────────────────
   notifyNewLead({
     leadId,
     leadName: row.name,

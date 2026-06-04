@@ -36,6 +36,7 @@ const ServerSchema = PublicSchema.extend({
   GITHUB_APP_ID: z.string().optional().default(""),
   GITHUB_APP_PRIVATE_KEY_BASE64: z.string().optional().default(""), // RSA private key in base64
   GITHUB_WEBHOOK_SECRET: z.string().optional().default(""),
+  CAL_WEBHOOK_SECRET: z.string().optional().default(""),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
 });
 
