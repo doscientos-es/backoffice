@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { serverEnv } from "@/lib/env";
 import { ingestLead } from "@/lib/integrations/lead-intake";
 import { type RecurrevWebhookPayload, mapRecurrevToIntake } from "@/lib/integrations/recurrev";
@@ -11,6 +12,14 @@ const log = scopedLogger("lead-intake-webhook");
 
 function unauthorized() {
   return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+}
+
+/** Constant-time string comparison to avoid token timing attacks. */
+function safeEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return timingSafeEqual(bufA, bufB);
 }
 
 /**
@@ -44,7 +53,7 @@ export async function POST(request: NextRequest) {
   const authHeader = request.headers.get("authorization") ?? "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : authHeader.trim();
 
-  if (!token || token !== env.LEAD_INTAKE_TOKEN) {
+  if (!token || !safeEqual(token, env.LEAD_INTAKE_TOKEN)) {
     log.warn({ tokenProvided: Boolean(token) }, "invalid token");
     return unauthorized();
   }

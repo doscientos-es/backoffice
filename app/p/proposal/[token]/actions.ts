@@ -7,6 +7,7 @@ import {
   promoteLeadFromClient,
 } from "@/lib/crm/conversion";
 import { scopedLogger } from "@/lib/logger";
+import { unlockPortalResource } from "@/lib/portal/access";
 import {
   AcceptProposalFiscalData,
   type AcceptProposalFiscalDataType,
@@ -154,4 +155,9 @@ export async function acceptProposal(token: string, fiscal?: unknown): Promise<A
 export async function rejectProposal(token: string, reason?: string): Promise<ActionResult> {
   const parsedReason = ProposalRejectionReason.safeParse(reason);
   return rejectAction(token, parsedReason.success ? parsedReason.data : undefined);
+}
+
+/** Public unlock-form submit for a password-protected proposal portal link. */
+export async function unlockProposalPortal(input: unknown): Promise<ActionResult> {
+  return unlockPortalResource("proposals", input);
 }

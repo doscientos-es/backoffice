@@ -2,7 +2,7 @@ import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
-import { getExpenseDetail } from "@/lib/finance/queries";
+import { getExpenseDetail, getExpenseVendorSuggestions } from "@/lib/finance/queries";
 import { createServerClient } from "@/lib/supabase/server";
 import type { Metadata } from "next";
 import { NewExpenseForm } from "./new-expense-form";
@@ -20,11 +20,17 @@ export default async function NewExpensePage({
 
   const supabase = await createServerClient();
 
-  const [{ data: projectsRaw }, { data: teamMembersRaw }, sourceExpense] = await Promise.all([
-    supabase.from("projects").select("id, name, clients(name)").is("deleted_at", null).order("name"),
-    supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
-    from ? getExpenseDetail(from) : Promise.resolve(null),
-  ]);
+  const [{ data: projectsRaw }, { data: teamMembersRaw }, sourceExpense, vendorSuggestions] =
+    await Promise.all([
+      supabase
+        .from("projects")
+        .select("id, name, clients(name)")
+        .is("deleted_at", null)
+        .order("name"),
+      supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
+      from ? getExpenseDetail(from) : Promise.resolve(null),
+      getExpenseVendorSuggestions(),
+    ]);
 
   const projects = ((projectsRaw ?? []) as unknown as Array<{
     id: string;
@@ -69,7 +75,12 @@ export default async function NewExpensePage({
       />
       <Card>
         <CardContent className="pt-6">
-          <NewExpenseForm projects={projects} teamMembers={teamMembers} defaults={defaults} />
+          <NewExpenseForm
+            projects={projects}
+            teamMembers={teamMembers}
+            defaults={defaults}
+            vendorSuggestions={vendorSuggestions}
+          />
         </CardContent>
       </Card>
     </div>

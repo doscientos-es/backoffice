@@ -8,7 +8,11 @@ import {
   EXPENSE_STATUSES,
   EXPENSE_STATUS_LABELS,
 } from "@/lib/finance";
-import { getExpensesPage, parseExpenseListSearchParams } from "@/lib/finance/queries";
+import {
+  getExpenseVendorSuggestions,
+  getExpensesPage,
+  parseExpenseListSearchParams,
+} from "@/lib/finance/queries";
 import { EXPENSE_LIST_PAGE_SIZE } from "@/lib/finance/types";
 import { EXPENSE_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
@@ -42,16 +46,21 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Sea
   const { params } = parseExpenseListSearchParams(sp);
 
   const supabase = await createServerClient();
-  const [{ expenses, count, total, years, error }, { data: projectsRaw }, { data: teamMembersRaw }] =
-    await Promise.all([
-      getExpensesPage(params),
-      supabase
-        .from("projects")
-        .select("id, name, clients(name)")
-        .is("deleted_at", null)
-        .order("name"),
-      supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
-    ]);
+  const [
+    { expenses, count, total, years, error },
+    { data: projectsRaw },
+    { data: teamMembersRaw },
+    vendorSuggestions,
+  ] = await Promise.all([
+    getExpensesPage(params),
+    supabase
+      .from("projects")
+      .select("id, name, clients(name)")
+      .is("deleted_at", null)
+      .order("name"),
+    supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
+    getExpenseVendorSuggestions(),
+  ]);
 
   const projects = (projectsRaw ?? []).map((p) => ({
     id: p.id as string,
@@ -61,6 +70,7 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Sea
   const teamMembers = (teamMembersRaw ?? []) as Array<{ id: string; name: string }>;
 
   const canEdit = user.role !== "viewer";
+  const canDelete = user.role === "owner" || user.role === "admin";
   const { category, status, q, page } = params;
   const year = params.year && years.includes(params.year) ? params.year : null;
   const totalLabel = year ? `Total ${year}` : "Total filtrado";
@@ -106,6 +116,8 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Sea
               expense={e}
               projects={projects}
               teamMembers={teamMembers}
+              vendorSuggestions={vendorSuggestions}
+              canDelete={canDelete}
             />
           ) : null,
         ],

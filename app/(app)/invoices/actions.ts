@@ -5,6 +5,7 @@ import { promoteLeadFromClient } from "@/lib/crm/conversion";
 import { serverEnv } from "@/lib/env";
 import { computeLineTotals } from "@/lib/finance";
 import { scopedLogger } from "@/lib/logger";
+import { buildPortalAccessPatch } from "@/lib/portal/access";
 import {
   CreateInvoiceFromProposalInput,
   SendInvoiceInput,
@@ -12,6 +13,7 @@ import {
   type UpdateInvoiceInputType,
   UpdateInvoiceStatusInput,
 } from "@/lib/schemas/invoice";
+import { UpdatePortalAccessInput } from "@/lib/schemas/portal";
 import { createServerClient } from "@/lib/supabase/server";
 import { submitToVerifactu } from "@/lib/verifactu/client";
 import { buildQrUrl } from "@/lib/verifactu/qr";
@@ -393,5 +395,35 @@ export async function updateInvoice(
   }
 
   revalidatePath(`/invoices/${data.id}`);
+  return { ok: true };
+}
+
+// ---------------- PORTAL ACCESS (visibility + password) ----------------
+
+/**
+ * Updates the public-link access controls of an invoice: the
+ * `is_client_visible` toggle and/or the optional password gate. Only touches
+ * portal metadata, so it is allowed even after the invoice is issued (the
+ * Verifactu immutability trigger guards only the fiscal columns).
+ */
+export async function updateInvoicePortalAccess(
+  input: unknown,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireRole(["owner", "admin"]);
+  const parsed = UpdatePortalAccessInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+  }
+  const patch = buildPortalAccessPatch(parsed.data);
+  if (Object.keys(patch).length === 0) return { ok: true };
+
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("invoices").update(patch).eq("id", parsed.data.id);
+  if (error) {
+    log.error({ err: error, id: parsed.data.id }, "update_invoice_portal_access_failed");
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath(`/invoices/${parsed.data.id}`);
   return { ok: true };
 }

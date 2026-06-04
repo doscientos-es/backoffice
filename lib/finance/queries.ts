@@ -136,7 +136,9 @@ export async function getFinanceDetails(): Promise<FinanceDetails> {
     notDeleted(
       supabase
         .from("expenses")
-        .select("id, vendor, category, total, expense_date, status")
+        .select(
+          "id, vendor, category, status, total, expense_date, recurrence, description, due_date, paid_at, currency, subtotal, tax_rate, vendor_nif, invoice_reference, project_id, notes, payment_source, paid_by_member_id",
+        )
         .order("expense_date", { ascending: false })
         .limit(5),
     ),
@@ -206,12 +208,25 @@ export async function getFinanceDetails(): Promise<FinanceDetails> {
     topCategories,
     memberContributions,
     recentExpenses: (recentExpenses ?? []).map((e) => ({
-      id: e.id,
-      vendor: e.vendor,
+      id: e.id as string,
+      vendor: e.vendor as string,
       category: e.category as ExpenseCategory,
-      total: Number(e.total ?? 0),
-      expense_date: e.expense_date,
       status: e.status as ExpenseStatus,
+      total: Number(e.total ?? 0),
+      expense_date: e.expense_date as string,
+      recurrence: e.recurrence as ExpenseRecurrence,
+      description: (e.description as string | null) ?? null,
+      due_date: (e.due_date as string | null) ?? null,
+      paid_at: (e.paid_at as string | null) ?? null,
+      currency: (e.currency as string | null) ?? "EUR",
+      subtotal: Number(e.subtotal ?? 0),
+      tax_rate: Number(e.tax_rate ?? 0),
+      vendor_nif: (e.vendor_nif as string | null) ?? null,
+      invoice_reference: (e.invoice_reference as string | null) ?? null,
+      project_id: (e.project_id as string | null) ?? null,
+      notes: (e.notes as string | null) ?? null,
+      payment_source: ((e.payment_source as string | null) ?? "company") as ExpensePaymentSource,
+      paid_by_member_id: (e.paid_by_member_id as string | null) ?? null,
     })),
     recentInvoices: (recentInvoices ?? []).map((inv) => ({
       id: inv.id,

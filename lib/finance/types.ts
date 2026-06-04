@@ -22,18 +22,9 @@ export type FinanceKpis = {
 
 export type FinanceDetails = {
   topCategories: [ExpenseCategory, number][];
-  recentExpenses: ExpenseRow[];
+  recentExpenses: ExpenseListItem[];
   recentInvoices: InvoiceRow[];
   memberContributions: MemberContribution[];
-};
-
-export type ExpenseRow = {
-  id: string;
-  vendor: string;
-  category: ExpenseCategory;
-  total: number;
-  expense_date: string;
-  status: ExpenseStatus;
 };
 
 export type InvoiceRow = {

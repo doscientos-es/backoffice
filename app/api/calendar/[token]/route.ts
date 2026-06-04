@@ -1,5 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 function icsDate(iso: string | Date): string {
   const d = typeof iso === "string" ? new Date(iso) : iso;
@@ -29,13 +32,25 @@ function buildEvent(uid: string, summary: string, dtstart: string, dtend: string
   return lines.join("\r\n");
 }
 
+/**
+ * GET /api/calendar/[token]
+ *
+ * Public iCal feed of a member's tasks. Access is gated by an unguessable,
+ * rotatable `calendar_token` (NOT the member UUID, which is not secret).
+ * Uses the service-role client because the feed must be reachable by calendar
+ * apps without a session cookie.
+ */
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ memberId: string }> },
+  { params }: { params: Promise<{ token: string }> },
 ) {
-  const { memberId } = await params;
+  const { token } = await params;
 
-  // Use service-role client (this endpoint uses its own token validation below)
+  // Reject obviously malformed tokens before touching the DB.
+  if (!token || !/^[a-f0-9]{32,128}$/i.test(token)) {
+    return new NextResponse("Not found", { status: 404 });
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !serviceKey) {
@@ -44,15 +59,17 @@ export async function GET(
 
   const supabase = createClient(supabaseUrl, serviceKey);
 
-  // Validate member exists
+  // Resolve the member by their secret calendar token.
   const { data: member } = await supabase
     .from("team_members")
     .select("id, name")
-    .eq("id", memberId)
+    .eq("calendar_token", token)
     .is("deleted_at", null)
     .maybeSingle();
 
   if (!member) return new NextResponse("Not found", { status: 404 });
+
+  const memberId = member.id as string;
 
   // Fetch tasks assigned to this member with a due_date
   const { data: tasks } = await supabase
@@ -102,7 +119,7 @@ export async function GET(
     status: 200,
     headers: {
       "Content-Type": "text/calendar; charset=utf-8",
-      "Content-Disposition": `attachment; filename="doscientos-${memberId}.ics"`,
+      "Content-Disposition": `attachment; filename="doscientos-calendar.ics"`,
       "Cache-Control": "no-store",
     },
   });

@@ -26,6 +26,7 @@ export const NAV_SHORTCUTS: Shortcut[] = [
   { href: "/projects", label: "Proyectos", key: "p" },
   { href: "/proposals", label: "Propuestas", key: "r" },
   { href: "/invoices", label: "Facturas", key: "f" },
+  { href: "/finance/expenses", label: "Gastos", key: "x" },
   { href: "/tasks", label: "Tareas", key: "t" },
 ];
 
@@ -57,11 +58,7 @@ export const RECENTS_STORAGE_KEY = "doscientos:command-recents";
  * Inserta `item` al principio de la lista de recientes, deduplicando por
  * `href` y limitando a `max` elementos. Función pura (testeable).
  */
-export function mergeRecentItems(
-  list: RecentItem[],
-  item: RecentItem,
-  max = 5,
-): RecentItem[] {
+export function mergeRecentItems(list: RecentItem[], item: RecentItem, max = 5): RecentItem[] {
   const deduped = list.filter((r) => r.href !== item.href);
   return [item, ...deduped].slice(0, max);
 }

@@ -1,18 +1,20 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import type { VendorSuggestion } from "@/lib/finance/types";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createExpense } from "../actions";
-import { ExpenseFormFields, type ExpenseFormDefaults } from "../expense-form-fields";
+import { type ExpenseFormDefaults, ExpenseFormFields } from "../expense-form-fields";
 
 interface Props {
   projects: Array<{ id: string; name: string; clientName?: string | null }>;
   teamMembers: Array<{ id: string; name: string }>;
   defaults?: ExpenseFormDefaults;
+  vendorSuggestions?: VendorSuggestion[];
 }
 
-export function NewExpenseForm({ projects, teamMembers, defaults }: Props) {
+export function NewExpenseForm({ projects, teamMembers, defaults, vendorSuggestions }: Props) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -43,6 +45,7 @@ export function NewExpenseForm({ projects, teamMembers, defaults }: Props) {
         projects={projects}
         teamMembers={teamMembers}
         defaults={defaults}
+        vendorSuggestions={vendorSuggestions}
       />
       {error && (
         <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">

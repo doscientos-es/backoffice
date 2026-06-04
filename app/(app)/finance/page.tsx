@@ -21,9 +21,14 @@ export default async function FinancePage() {
         title="Finanzas"
         description="Ingresos (facturas) vs gastos operativos."
         actions={
-          <Button asChild size="sm">
-            <Link href="/finance/expenses/new">Nuevo gasto</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link href="/finance/expenses">Ver gastos</Link>
+            </Button>
+            <Button asChild size="sm">
+              <Link href="/finance/expenses/new">Nuevo gasto</Link>
+            </Button>
+          </div>
         }
       />
 

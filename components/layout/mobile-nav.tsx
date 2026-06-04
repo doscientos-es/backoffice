@@ -5,12 +5,7 @@ import { NotificationsBell } from "@/components/layout/notifications-bell";
 import { UserMenu } from "@/components/layout/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
+import { Drawer, DrawerClose, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import type { CurrentUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -22,6 +17,7 @@ import {
   FolderKanban,
   Home,
   Inbox,
+  Landmark,
   Menu,
   Receipt,
   Settings,
@@ -41,6 +37,7 @@ const NAV = [
   { href: "/proposals", label: "Propuestas", icon: FileSignature },
   { href: "/invoices", label: "Facturas", icon: Receipt },
   { href: "/finance", label: "Finanzas", icon: Wallet },
+  { href: "/finance/expenses", label: "Gastos", icon: Landmark },
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
   { href: "/reminders", label: "Avisos", icon: Bell },
   { href: "/documents", label: "Documentos", icon: FileText },
@@ -62,6 +59,7 @@ export function MobileNav({
       <Drawer direction="left" open={open} onOpenChange={setOpen}>
         <DrawerTrigger asChild>
           <button
+            type="button"
             aria-label="Abrir menú"
             className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
           >
@@ -77,6 +75,7 @@ export function MobileNav({
               </Link>
               <DrawerClose asChild>
                 <button
+                  type="button"
                   aria-label="Cerrar menú"
                   className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 >

@@ -123,6 +123,8 @@ export function ExpenseFormFields({
       d.project_id ||
       d.description ||
       d.notes ||
+      d.due_date ||
+      d.paid_at ||
       d.recurrence !== "none"
     ),
   );
@@ -287,104 +289,109 @@ export function ExpenseFormFields({
             <span className="ml-1 rounded bg-muted px-1.5 py-0.5 text-xs">con datos</span>
           )}
         </button>
-        {showDetails && (
-          <div className="mt-4 grid gap-5 sm:grid-cols-2">
-            <FormRow label="Vencimiento" htmlFor={`${idPrefix}-due_date`}>
-              <DateField
-                id={`${idPrefix}-due_date`}
-                name="due_date"
-                defaultValue={d.due_date ?? ""}
-              />
-            </FormRow>
-            <FormRow label="Fecha de pago" htmlFor={`${idPrefix}-paid_at`}>
-              <DateField id={`${idPrefix}-paid_at`} name="paid_at" defaultValue={d.paid_at ?? ""} />
-            </FormRow>
-            <FormRow label="Recurrencia" htmlFor={`${idPrefix}-recurrence`}>
-              <Select
-                id={`${idPrefix}-recurrence`}
-                name="recurrence"
-                defaultValue={d.recurrence ?? "none"}
-              >
-                {EXPENSE_RECURRENCES.map((r) => (
-                  <option key={r} value={r}>
-                    {EXPENSE_RECURRENCE_LABELS[r]}
-                  </option>
+        {/*
+          Always mounted, only hidden via CSS when collapsed. Conditionally
+          rendering (mount/unmount) would drop these names from FormData, and on
+          edit the server action would overwrite the existing columns with null,
+          silently wiping data the user never touched.
+        */}
+        <div
+          className={`mt-4 grid gap-5 sm:grid-cols-2 ${showDetails ? "" : "hidden"}`}>
+          <FormRow label="Vencimiento" htmlFor={`${idPrefix}-due_date`}>
+            <DateField
+              id={`${idPrefix}-due_date`}
+              name="due_date"
+              defaultValue={d.due_date ?? ""}
+            />
+          </FormRow>
+          <FormRow label="Fecha de pago" htmlFor={`${idPrefix}-paid_at`}>
+            <DateField id={`${idPrefix}-paid_at`} name="paid_at" defaultValue={d.paid_at ?? ""} />
+          </FormRow>
+          <FormRow label="Recurrencia" htmlFor={`${idPrefix}-recurrence`}>
+            <Select
+              id={`${idPrefix}-recurrence`}
+              name="recurrence"
+              defaultValue={d.recurrence ?? "none"}
+            >
+              {EXPENSE_RECURRENCES.map((r) => (
+                <option key={r} value={r}>
+                  {EXPENSE_RECURRENCE_LABELS[r]}
+                </option>
+              ))}
+            </Select>
+          </FormRow>
+          <FormRow label="NIF proveedor" htmlFor={`${idPrefix}-vendor_nif`}>
+            <Input
+              id={`${idPrefix}-vendor_nif`}
+              name="vendor_nif"
+              maxLength={20}
+              placeholder="ESBxxxxxxxx"
+              list={nifOptions.length ? `${idPrefix}-nif-options` : undefined}
+              value={vendorNif}
+              onChange={(e) => setVendorNif(e.target.value)}
+            />
+            {nifOptions.length > 0 && (
+              <datalist id={`${idPrefix}-nif-options`}>
+                {nifOptions.map((n) => (
+                  <option key={n} value={n} />
                 ))}
-              </Select>
-            </FormRow>
-            <FormRow label="NIF proveedor" htmlFor={`${idPrefix}-vendor_nif`}>
+              </datalist>
+            )}
+          </FormRow>
+          <FormRow label="Nº factura proveedor" htmlFor={`${idPrefix}-invoice_reference`}>
+            <Input
+              id={`${idPrefix}-invoice_reference`}
+              name="invoice_reference"
+              maxLength={80}
+              defaultValue={d.invoice_reference ?? ""}
+            />
+          </FormRow>
+          <FormRow label="Proyecto" htmlFor={`${idPrefix}-project_id`}>
+            <Select
+              id={`${idPrefix}-project_id`}
+              name="project_id"
+              defaultValue={d.project_id ?? ""}
+            >
+              <option value="">— Ninguno —</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                  {p.clientName ? ` · ${p.clientName}` : ""}
+                </option>
+              ))}
+            </Select>
+          </FormRow>
+          <FormRow label="Moneda" htmlFor={`${idPrefix}-currency`} className="sm:col-span-1">
+            <Input
+              id={`${idPrefix}-currency`}
+              name="currency"
+              maxLength={3}
+              defaultValue={d.currency ?? "EUR"}
+            />
+          </FormRow>
+          <div className="sm:col-span-2">
+            <FormRow label="Descripción" htmlFor={`${idPrefix}-description`}>
               <Input
-                id={`${idPrefix}-vendor_nif`}
-                name="vendor_nif"
-                maxLength={20}
-                placeholder="ESBxxxxxxxx"
-                list={nifOptions.length ? `${idPrefix}-nif-options` : undefined}
-                value={vendorNif}
-                onChange={(e) => setVendorNif(e.target.value)}
-              />
-              {nifOptions.length > 0 && (
-                <datalist id={`${idPrefix}-nif-options`}>
-                  {nifOptions.map((n) => (
-                    <option key={n} value={n} />
-                  ))}
-                </datalist>
-              )}
-            </FormRow>
-            <FormRow label="Nº factura proveedor" htmlFor={`${idPrefix}-invoice_reference`}>
-              <Input
-                id={`${idPrefix}-invoice_reference`}
-                name="invoice_reference"
-                maxLength={80}
-                defaultValue={d.invoice_reference ?? ""}
-              />
-            </FormRow>
-            <FormRow label="Proyecto" htmlFor={`${idPrefix}-project_id`}>
-              <Select
-                id={`${idPrefix}-project_id`}
-                name="project_id"
-                defaultValue={d.project_id ?? ""}
-              >
-                <option value="">— Ninguno —</option>
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                    {p.clientName ? ` · ${p.clientName}` : ""}
-                  </option>
-                ))}
-              </Select>
-            </FormRow>
-            <FormRow label="Moneda" htmlFor={`${idPrefix}-currency`} className="sm:col-span-1">
-              <Input
-                id={`${idPrefix}-currency`}
-                name="currency"
-                maxLength={3}
-                defaultValue={d.currency ?? "EUR"}
+                id={`${idPrefix}-description`}
+                name="description"
+                maxLength={400}
+                placeholder="Hosting mensual, dominio anual…"
+                defaultValue={d.description ?? ""}
               />
             </FormRow>
-            <div className="sm:col-span-2">
-              <FormRow label="Descripción" htmlFor={`${idPrefix}-description`}>
-                <Input
-                  id={`${idPrefix}-description`}
-                  name="description"
-                  maxLength={400}
-                  placeholder="Hosting mensual, dominio anual…"
-                  defaultValue={d.description ?? ""}
-                />
-              </FormRow>
-            </div>
-            <div className="sm:col-span-2">
-              <FormRow label="Notas" htmlFor={`${idPrefix}-notes`}>
-                <Textarea
-                  id={`${idPrefix}-notes`}
-                  name="notes"
-                  rows={3}
-                  maxLength={4000}
-                  defaultValue={d.notes ?? ""}
-                />
-              </FormRow>
-            </div>
           </div>
-        )}
+          <div className="sm:col-span-2">
+            <FormRow label="Notas" htmlFor={`${idPrefix}-notes`}>
+              <Textarea
+                id={`${idPrefix}-notes`}
+                name="notes"
+                rows={3}
+                maxLength={4000}
+                defaultValue={d.notes ?? ""}
+              />
+            </FormRow>
+          </div>
+        </div>
       </div>
     </>
   );

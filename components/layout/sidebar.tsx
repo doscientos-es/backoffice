@@ -90,9 +90,7 @@ export function Sidebar({ user }: { user: CurrentUser; verifactuMode: string }) 
       <footer className="flex flex-col border-t border-border p-2 gap-2">
         <ErrorBoundary>
           <div className="flex items-center justify-end gap-1">
-            <span className="px-2 text-xs text-muted-foreground -mr-1">
-              v{version}
-            </span>
+            <span className="px-2 text-xs text-muted-foreground -mr-1">v{version}</span>
             <NotificationsBell memberId={user.id} />
             <ThemeToggle />
           </div>

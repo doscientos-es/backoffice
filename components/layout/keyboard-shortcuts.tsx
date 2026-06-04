@@ -74,9 +74,30 @@ export function KeyboardShortcuts() {
       clear();
     };
 
+    // Firefox/Zen Browser activa su "Quick Find" en keypress, no en keydown.
+    // preventDefault() en keydown no lo suprime, así que hay que bloquearlo aquí.
+    const onKeyPress = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        target?.isContentEditable
+      )
+        return;
+      if (document.querySelector('[data-slot="dialog-content"]')) return;
+      const key = e.key.toLowerCase();
+      if (key === "g" || key === "c" || prefixRef.current !== null) {
+        e.preventDefault();
+      }
+    };
+
     document.addEventListener("keydown", onKey);
+    document.addEventListener("keypress", onKeyPress);
     return () => {
       document.removeEventListener("keydown", onKey);
+      document.removeEventListener("keypress", onKeyPress);
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [router]);

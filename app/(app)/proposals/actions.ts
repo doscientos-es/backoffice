@@ -7,6 +7,8 @@ import { sendEmail } from "@/lib/email/resend";
 import { publicEnv } from "@/lib/env";
 import { computeProposalTotals } from "@/lib/finance";
 import { scopedLogger } from "@/lib/logger";
+import { buildPortalAccessPatch } from "@/lib/portal/access";
+import { UpdatePortalAccessInput } from "@/lib/schemas/portal";
 import {
   CreateProposalInput,
   DuplicateProposalInput,
@@ -351,6 +353,35 @@ export async function deleteProposal(
   }
 
   revalidatePath("/proposals");
+  return { ok: true };
+}
+
+// ---------------- PORTAL ACCESS (visibility + password) ----------------
+
+/**
+ * Updates the public-link access controls of a proposal: the
+ * `is_client_visible` toggle and/or the optional password gate. Each field is
+ * independent — omit one to leave it untouched. `password: null` clears it.
+ */
+export async function updateProposalPortalAccess(
+  input: unknown,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireUser();
+  const parsed = UpdatePortalAccessInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+  }
+  const patch = buildPortalAccessPatch(parsed.data);
+  if (Object.keys(patch).length === 0) return { ok: true };
+
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("proposals").update(patch).eq("id", parsed.data.id);
+  if (error) {
+    log.error({ err: error, id: parsed.data.id }, "update_proposal_portal_access_failed");
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath(`/proposals/${parsed.data.id}`);
   return { ok: true };
 }
 
