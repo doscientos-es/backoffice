@@ -1,5 +1,6 @@
 import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { after } from "next/server";
 import { z } from "zod";
 import { runLeadPipeline } from "./lead-pipeline";
 import { notifyNewLead } from "./notify-new-lead";
@@ -162,18 +163,23 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
   const leadId = data.id as string;
   log.info({ leadId, source: row.source, externalSource: row.external_source }, "lead ingested");
 
-  // ── 5. Post-insert pipeline: score + auto-assign (fire-and-forget) ─────
-  runLeadPipeline(leadId, norm).catch((e) => log.error({ err: e }, "lead pipeline failed"));
-
-  // ── 6. Notify admins/owners (fire-and-forget) ──────────────────────────
-  notifyNewLead({
-    leadId,
-    leadName: row.name,
-    leadEmail: row.email,
-    leadPhone: row.phone,
-    leadCompany: row.company,
-    leadSource: row.source,
-  }).catch((e) => log.error({ err: e }, "notifyNewLead failed"));
+  // ── 5 & 6. Background work (scored, auto-assigned, notified) ───────────────
+  // Scheduled with `after()` so it is guaranteed to run once the response has
+  // been sent. A bare fire-and-forget promise is torn down with the Route
+  // Handler before it completes, which silently dropped notifications/emails.
+  after(async () => {
+    await Promise.allSettled([
+      runLeadPipeline(leadId, norm).catch((e) => log.error({ err: e }, "lead pipeline failed")),
+      notifyNewLead({
+        leadId,
+        leadName: row.name,
+        leadEmail: row.email,
+        leadPhone: row.phone,
+        leadCompany: row.company,
+        leadSource: row.source,
+      }).catch((e) => log.error({ err: e }, "notifyNewLead failed")),
+    ]);
+  });
 
   return { ok: true, leadId, duplicate: false };
 }
