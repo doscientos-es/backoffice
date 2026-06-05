@@ -69,7 +69,7 @@ export function InvoiceEditor({
     data: payload,
     enabled: !locked,
     storageKey: `invoice-edit:${id}`,
-    onSave: async (data) => {
+    onSaveAction: async (data) => {
       const res = await updateInvoice(data);
       if (!res.ok) return { error: res.error };
     },

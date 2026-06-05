@@ -16,7 +16,7 @@ export type UseAutosaveOptions<T> = {
   /** Reactive payload. Each change triggers a debounced save. */
   data: T;
   /** Called once the debounce elapses. Must return a `{ error }` on failure or void/undefined on success. */
-  onSave: (data: T) => Promise<{ error?: string } | void>;
+  onSaveAction: (data: T) => Promise<{ error?: string } | undefined>;
   /** Debounce in ms before flushing the pending value. Defaults to 2000 ms (sec. 29.5). */
   debounceMs?: number;
   /** Disable autosave (e.g. while loading initial data). */
@@ -38,7 +38,7 @@ export type UseAutosaveOptions<T> = {
  */
 export function useAutosave<T>({
   data,
-  onSave,
+  onSaveAction,
   debounceMs = 2000,
   enabled = true,
   serialize = (d) => JSON.stringify(d),
@@ -50,18 +50,19 @@ export function useAutosave<T>({
     error: null,
   });
 
-  const onSaveRef = useRef(onSave);
+  const onSaveRef = useRef(onSaveAction);
   const serializeRef = useRef(serialize);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedSnapshotRef = useRef<string | null>(null);
   const pendingSnapshotRef = useRef<string | null>(null);
+  const pendingPayloadRef = useRef<{ value: T } | null>(null);
   const inFlightRef = useRef(false);
   const mountedRef = useRef(true);
 
   useEffect(() => {
-    onSaveRef.current = onSave;
+    onSaveRef.current = onSaveAction;
     serializeRef.current = serialize;
-  }, [onSave, serialize]);
+  }, [onSaveAction, serialize]);
 
   useEffect(() => {
     return () => {
@@ -75,6 +76,7 @@ export function useAutosave<T>({
       if (inFlightRef.current) {
         // A save is already running; remember the latest snapshot and retry once it finishes.
         pendingSnapshotRef.current = snapshot;
+        pendingPayloadRef.current = { value: payload };
         return;
       }
       inFlightRef.current = true;
@@ -112,11 +114,14 @@ export function useAutosave<T>({
         } catch {}
       }
 
-      // If new edits arrived while we were saving, schedule another flush.
+      // If new edits arrived while we were saving, schedule another flush
+      // with the payload captured at that point (not the stale one we just saved).
       const next = pendingSnapshotRef.current;
+      const nextPayload = pendingPayloadRef.current;
       pendingSnapshotRef.current = null;
-      if (next && next !== lastSavedSnapshotRef.current) {
-        void flush(next, payload);
+      pendingPayloadRef.current = null;
+      if (next && nextPayload && next !== lastSavedSnapshotRef.current) {
+        void flush(next, nextPayload.value);
       }
     },
     [storageKey],

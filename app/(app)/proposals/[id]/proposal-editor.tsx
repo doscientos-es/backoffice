@@ -81,7 +81,7 @@ export function ProposalEditor({
     data: payload,
     enabled: !locked,
     storageKey: `proposal-edit:${id}`,
-    onSave: async (data) => {
+    onSaveAction: async (data) => {
       const res = await updateProposal(data);
       if (!res.ok) return { error: res.error };
     },
