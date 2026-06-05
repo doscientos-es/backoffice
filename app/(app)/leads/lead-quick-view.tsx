@@ -20,13 +20,15 @@ import {
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { MemberLabel } from "@/components/ui/member-avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
+import type { MemberOption } from "@/lib/members/queries";
 import { LEAD_STATUS } from "@/lib/status";
 import { formatEUR, relativeTime } from "@/lib/utils";
-import { ArrowUpRight, Building2, Mail, Phone, Trash2, UserRound, Wallet, X } from "lucide-react";
+import { ArrowUpRight, Building2, Hand, Loader2, Mail, Phone, Trash2, UserRound, Wallet, X } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { type ReactNode, useState, useTransition } from "react";
 import { LeadEditDialog } from "./[id]/lead-edit-dialog";
-import { deleteLead } from "./actions";
+import { assignLeadOwner, claimLead, deleteLead } from "./actions";
 import { QCallDialog, QEmailDialog, QNoteDialog } from "./lead-quick-action-dialogs";
 import type { KanbanLead } from "./leads-kanban";
 
@@ -42,10 +44,12 @@ const INTERACTION_LABEL: Record<string, string> = {
 export function LeadQuickView({
   lead,
   canEdit = false,
+  members = [],
   onCloseAction,
 }: {
   lead: KanbanLead | null;
   canEdit?: boolean;
+  members?: MemberOption[];
   onCloseAction: () => void;
 }) {
   return (
@@ -53,7 +57,7 @@ export function LeadQuickView({
       <DrawerContent className="sm:max-w-sm">
         {lead ? (
           <ErrorBoundary>
-            <Body lead={lead} canEdit={canEdit} onCloseAction={onCloseAction} />
+            <Body lead={lead} canEdit={canEdit} members={members} onCloseAction={onCloseAction} />
           </ErrorBoundary>
         ) : null}
       </DrawerContent>
@@ -64,10 +68,12 @@ export function LeadQuickView({
 function Body({
   lead,
   canEdit,
+  members,
   onCloseAction,
 }: {
   lead: KanbanLead;
   canEdit: boolean;
+  members: MemberOption[];
   onCloseAction: () => void;
 }) {
   const hasEstimated = lead.estimated_value != null && lead.estimated_value > 0;
@@ -107,7 +113,11 @@ function Body({
             </Row>
           )}
           <Row icon={<UserRound className="size-3.5" />}>
-            <MemberLabel member={lead.assignee} size="sm" />
+            {canEdit && !lead.assignee ? (
+              <AssignWidget leadId={lead.id} members={members} />
+            ) : (
+              <MemberLabel member={lead.assignee} size="sm" />
+            )}
           </Row>
         </section>
         {lead.ai_summary && (
@@ -266,6 +276,67 @@ function Interactions({ interactions }: { interactions: KanbanLead["recent_inter
         </ul>
       )}
     </section>
+  );
+}
+
+// ─── Assign Widget ───────────────────────────────────────────────────────────
+
+function AssignWidget({ leadId, members }: { leadId: string; members: MemberOption[] }) {
+  const router = useRouter();
+  const [claimPending, startClaim] = useTransition();
+  const [assignPending, startAssign] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const isPending = claimPending || assignPending;
+
+  const handleClaim = () => {
+    setError(null);
+    startClaim(async () => {
+      const res = await claimLead({ leadId });
+      if (res.ok) router.refresh();
+      else setError(res.error);
+    });
+  };
+
+  const handleAssign = (assigneeId: string) => {
+    if (!assigneeId) return;
+    setError(null);
+    startAssign(async () => {
+      const res = await assignLeadOwner({ leadId, assigneeId });
+      if (res.ok) router.refresh();
+      else setError(res.error);
+    });
+  };
+
+  return (
+    <div className="flex flex-col gap-1.5 w-full min-w-0">
+      <Button
+        type="button"
+        variant="outline"
+        size="xs"
+        disabled={isPending}
+        onClick={handleClaim}
+        className="w-full justify-start gap-1.5"
+      >
+        {claimPending ? <Loader2 className="size-3 animate-spin" /> : <Hand className="size-3" />}
+        Asignármelo
+      </Button>
+      <select
+        disabled={isPending}
+        className="h-7 w-full rounded-md border border-input bg-background px-2 text-xs text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+        value=""
+        onChange={(e) => handleAssign(e.target.value)}
+      >
+        <option value="" disabled>
+          Asignar a…
+        </option>
+        {members.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.name}
+          </option>
+        ))}
+      </select>
+      {error && <p className="text-[11px] text-destructive">{error}</p>}
+    </div>
   );
 }
 

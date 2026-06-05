@@ -8,6 +8,7 @@ import { isAIEnabled } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { listLeads } from "@/lib/leads/queries";
 import { LEAD_LIST_PAGE_SIZE } from "@/lib/leads/types";
+import { listActiveMembers } from "@/lib/members/queries";
 import { LEAD_STATUS, type LeadStatus } from "@/lib/status";
 import { relativeTime } from "@/lib/utils";
 import { ArrowRight } from "lucide-react";
@@ -66,17 +67,10 @@ export default async function LeadsPage({
   const aiEnabled = isAIEnabled();
   const canEdit = user.role !== "viewer";
 
-  const {
-    leads: enrichedLeads,
-    count,
-    error,
-  } = await listLeads({
-    view,
-    q,
-    status,
-    source,
-    page,
-  });
+  const [{ leads: enrichedLeads, count, error }, members] = await Promise.all([
+    listLeads({ view, q, status, source, page }),
+    listActiveMembers(),
+  ]);
 
   const actions = (
     <div className="flex items-center gap-2">
@@ -172,7 +166,7 @@ export default async function LeadsPage({
           </CardContent>
         </Card>
       ) : (
-        <LeadsKanban leads={enrichedLeads} canEdit={canEdit} />
+        <LeadsKanban leads={enrichedLeads} canEdit={canEdit} members={members} />
       )}
     </div>
   );

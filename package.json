@@ -1,6 +1,6 @@
 {
   "name": "backoffice-doscientos",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "engines": {
@@ -12,7 +12,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "biome check .",
-    "lint:fix": "biome check --write . -unsafe",
+    "lint:fix": "biome check --write --unsafe .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",

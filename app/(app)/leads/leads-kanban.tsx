@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { MemberAvatar } from "@/components/ui/member-avatar";
 import type { LeadListItem } from "@/lib/leads/types";
+import type { MemberOption } from "@/lib/members/queries";
 import type { LeadStatus } from "@/lib/status";
 import { cn, formatEUR, relativeTime } from "@/lib/utils";
 import {
@@ -108,9 +109,11 @@ type Action = { id: string; status: LeadStatus };
 export function LeadsKanban({
   leads,
   canEdit = false,
+  members = [],
 }: {
   leads: KanbanLead[];
   canEdit?: boolean;
+  members?: MemberOption[];
 }) {
   const [, startTransition] = useTransition();
   const [optimistic, applyOptimistic] = useOptimistic(leads, (state, { id, status }: Action) =>
@@ -235,6 +238,7 @@ export function LeadsKanban({
       <LeadQuickView
         lead={quickViewId ? (optimistic.find((l) => l.id === quickViewId) ?? null) : null}
         canEdit={canEdit}
+        members={members}
         onCloseAction={() => setQuickViewId(null)}
       />
     </DndContext>
@@ -306,7 +310,7 @@ function Column({
           "flex shrink-0 flex-col gap-1 border-b border-border px-3 py-2.5 outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
           compact && "select-none",
           collapsed &&
-            "md:items-center md:gap-2 md:px-1.5 md:group-hover/col:flex-row md:group-hover/col:items-center md:group-hover/col:justify-between md:group-hover/col:gap-1 md:group-hover/col:px-3",
+          "md:items-center md:gap-2 md:px-1.5 md:group-hover/col:flex-row md:group-hover/col:items-center md:group-hover/col:justify-between md:group-hover/col:gap-1 md:group-hover/col:px-3",
         )}
       >
         <div
@@ -321,7 +325,7 @@ function Column({
               "truncate text-xs font-semibold tracking-wide",
               tone,
               collapsed &&
-                "md:rotate-180 md:[writing-mode:vertical-rl] md:group-hover/col:rotate-0 md:group-hover/col:[writing-mode:horizontal-tb]",
+              "md:rotate-180 md:[writing-mode:vertical-rl] md:group-hover/col:rotate-0 md:group-hover/col:[writing-mode:horizontal-tb]",
             )}
           >
             {label}
@@ -410,11 +414,11 @@ function Card({
       onKeyDown={
         onOpenQuickView
           ? (e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onOpenQuickView(lead.id);
-              }
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onOpenQuickView(lead.id);
             }
+          }
           : undefined
       }
       role={onOpenQuickView ? "button" : undefined}
