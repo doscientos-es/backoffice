@@ -62,9 +62,19 @@ describe("SettingsNav – item visibility", () => {
     expect(screen.getAllByRole("link")).toHaveLength(2);
   });
 
-  it("renders exactly 3 links for admin", () => {
+  it("renders exactly 4 links for admin", () => {
     renderNav(true);
-    expect(screen.getAllByRole("link")).toHaveLength(3);
+    expect(screen.getAllByRole("link")).toHaveLength(4);
+  });
+
+  it("shows Plantillas email when canManageTeam is true", () => {
+    renderNav(true);
+    expect(screen.getByText("Plantillas email")).toBeTruthy();
+  });
+
+  it("hides Plantillas email when canManageTeam is false", () => {
+    renderNav(false);
+    expect(screen.queryByText("Plantillas email")).toBeNull();
   });
 });
 
