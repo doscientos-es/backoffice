@@ -15,9 +15,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
-import { appendSignature, renderTemplate } from "@/lib/email/templates";
+import { appendSignature, markdownToHtml, renderTemplate } from "@/lib/email/templates";
 import { formatDate } from "@/lib/utils";
-import { Pencil, Plus, Power } from "lucide-react";
+import { Copy, Pencil, Plus, Power } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import {
@@ -64,8 +64,8 @@ export function EmailTemplatesManager({ templates }: Props) {
 
   const previewSubject = useMemo(() => renderTemplate(form.subject, SAMPLE_VARS), [form.subject]);
   const previewBody = useMemo(() => {
-    const rendered = renderTemplate(form.body_html, SAMPLE_VARS);
-    return form.include_signature ? appendSignature(rendered, SAMPLE_SIGNATURE) : rendered;
+    const html = markdownToHtml(renderTemplate(form.body_html, SAMPLE_VARS));
+    return form.include_signature ? appendSignature(html, SAMPLE_SIGNATURE) : html;
   }, [form.body_html, form.include_signature]);
 
   function openCreate() {
@@ -80,6 +80,20 @@ export function EmailTemplatesManager({ templates }: Props) {
     setForm({
       name: tpl.name,
       slug: tpl.slug,
+      subject: tpl.subject,
+      body_html: tpl.body_html,
+      include_signature: tpl.include_signature,
+    });
+    setError(null);
+    setOpen(true);
+  }
+
+  /** Abre el formulario de creación precargado con los datos de una plantilla existente. */
+  function openDuplicate(tpl: EmailTemplate) {
+    setEditing(null);
+    setForm({
+      name: `${tpl.name} (copia)`,
+      slug: `${tpl.slug}-copia`,
       subject: tpl.subject,
       body_html: tpl.body_html,
       include_signature: tpl.include_signature,
@@ -182,6 +196,14 @@ export function EmailTemplatesManager({ templates }: Props) {
                       <Button
                         variant="ghost"
                         size="icon-sm"
+                        onClick={() => openDuplicate(tpl)}
+                        title="Duplicar"
+                      >
+                        <Copy className="size-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
                         onClick={() => handleToggle(tpl)}
                         title={tpl.active ? "Desactivar" : "Activar"}
                         disabled={isPending}
@@ -245,19 +267,20 @@ export function EmailTemplatesManager({ templates }: Props) {
                     required
                   />
                 </div>
-                <div className="flex min-h-0 flex-1 flex-col gap-1.5">
-                  <Label htmlFor="tpl-body">Cuerpo HTML</Label>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="tpl-body">Cuerpo (Markdown)</Label>
                   <Textarea
                     id="tpl-body"
                     value={form.body_html}
                     onChange={(e) => setForm((f) => ({ ...f, body_html: e.target.value }))}
                     rows={16}
-                    placeholder="<p>Hola {{nombre}},</p>..."
+                    placeholder={"Hola **{{nombre}}**,\n\nGracias por tu interés…"}
                     required
-                    className="min-h-65 flex-1 font-mono text-xs"
+                    className="min-h-80 font-mono text-xs"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Variables disponibles: <code className="font-mono">{"{{nombre}}"}</code>{" "}
+                    Se escribe en Markdown (se convierte a HTML al previsualizar y enviar). Variables
+                    disponibles: <code className="font-mono">{"{{nombre}}"}</code>{" "}
                     <code className="font-mono">{"{{empresa}}"}</code>{" "}
                     <code className="font-mono">{"{{email}}"}</code>{" "}
                     <code className="font-mono">{"{{sender_name}}"}</code>
@@ -295,7 +318,7 @@ export function EmailTemplatesManager({ templates }: Props) {
                       )}
                     </p>
                   </div>
-                  <div className="min-h-65 px-4 py-3 text-sm text-neutral-800">
+                  <div className="max-h-115 min-h-65 overflow-y-auto px-4 py-3 text-sm text-neutral-800">
                     {form.body_html.trim() ? (
                       <div
                         className="[&_a]:text-[#2A4227] [&_a]:underline"

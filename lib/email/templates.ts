@@ -1,3 +1,17 @@
+import { marked } from "marked";
+
+/**
+ * Converts a Markdown source into an HTML string for email bodies.
+ *
+ * - `breaks: true` turns single newlines into `<br>`, matching the line-break
+ *   behaviour operators expect when writing plain text.
+ * - Raw HTML is passed through untouched, so legacy HTML templates keep
+ *   rendering exactly as before.
+ */
+export function markdownToHtml(source: string): string {
+  return marked.parse(source, { async: false, breaks: true, gfm: true });
+}
+
 /**
  * Minimal {{var}} interpolation. Unknown variables are left as-is so the
  * template editor can show them visibly to the operator.

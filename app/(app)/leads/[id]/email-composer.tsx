@@ -133,21 +133,21 @@ export function EmailComposer({
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="body" className="text-xs font-medium">
-          Mensaje (HTML) <span className="text-destructive">*</span>
+          Mensaje (Markdown) <span className="text-destructive">*</span>
         </Label>
         <Textarea
           id="body"
           value={body}
           onChange={(e) => setBody(e.target.value)}
           rows={8}
-          placeholder="<p>Hola {{nombre}},</p><p>…</p>"
+          placeholder={"Hola **{{nombre}}**,\n\n…"}
           required
           className="font-mono text-xs"
           aria-describedby="body-hint"
         />
         <p id="body-hint" className="text-[11px] text-muted-foreground">
-          Variables disponibles: <code>{"{{nombre}}"}</code>, <code>{"{{empresa}}"}</code>,{" "}
-          <code>{"{{email}}"}</code>. Tu firma se añade al final.
+          Se escribe en Markdown. Variables disponibles: <code>{"{{nombre}}"}</code>,{" "}
+          <code>{"{{empresa}}"}</code>, <code>{"{{email}}"}</code>. Tu firma se añade al final.
         </p>
       </div>
       <div className="flex items-center justify-end gap-3">

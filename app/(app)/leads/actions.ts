@@ -2,7 +2,7 @@
 
 import { defineAction } from "@/lib/actions/define-action";
 import { sendEmail } from "@/lib/email/resend";
-import { appendSignature, renderTemplate } from "@/lib/email/templates";
+import { appendSignature, markdownToHtml, renderTemplate } from "@/lib/email/templates";
 import { notifyNewLead } from "@/lib/integrations/notify-new-lead";
 import {
   AssignLeadOwnerInput,
@@ -307,15 +307,16 @@ export const sendEmailToLead = defineAction({
       .single();
     if (leadErr || !lead) throw new Error(leadErr?.message ?? "Lead no encontrado");
 
-    const rendered = renderTemplate(data.bodyHtml, {
+    const renderedMarkdown = renderTemplate(data.bodyHtml, {
       nombre: lead.name as string,
       empresa: (lead.company as string | null) ?? "",
       email: (lead.email as string | null) ?? "",
       sender_name: user.name,
     });
+    const renderedHtml = markdownToHtml(renderedMarkdown);
     const finalHtml = data.includeSignature
-      ? appendSignature(rendered, user.signatureHtml)
-      : rendered;
+      ? appendSignature(renderedHtml, user.signatureHtml)
+      : renderedHtml;
 
     let resendId: string | null = null;
     let mocked = false;

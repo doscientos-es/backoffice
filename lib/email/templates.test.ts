@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderTemplate, appendSignature, extractVariables } from "./templates";
+import { appendSignature, extractVariables, markdownToHtml, renderTemplate } from "./templates";
 
 describe("Email Templates Logic", () => {
   const sampleVars = {
@@ -44,6 +44,34 @@ describe("Email Templates Logic", () => {
       const html = "<p>Contenido</p>";
       expect(appendSignature(html, null)).toBe(html);
       expect(appendSignature(html, "")).toBe(html);
+    });
+  });
+
+  describe("markdownToHtml", () => {
+    it("should convert basic markdown to html", () => {
+      const result = markdownToHtml("Hola **mundo**");
+      expect(result).toContain("<strong>mundo</strong>");
+      expect(result).toContain("<p>");
+    });
+
+    it("should convert single newlines to line breaks", () => {
+      const result = markdownToHtml("Línea 1\nLínea 2");
+      expect(result).toContain("<br>");
+    });
+
+    it("should pass raw HTML through untouched (legacy templates)", () => {
+      const result = markdownToHtml('<p>Hola <a href="https://x.com">link</a></p>');
+      expect(result).toContain('<a href="https://x.com">link</a>');
+    });
+
+    it("should render markdown links", () => {
+      const result = markdownToHtml("[doscientos](https://doscientos.es)");
+      expect(result).toContain('href="https://doscientos.es"');
+    });
+
+    it("should work after variable interpolation", () => {
+      const html = markdownToHtml(renderTemplate("Hola **{{nombre}}**", sampleVars));
+      expect(html).toContain("<strong>María García</strong>");
     });
   });
 
