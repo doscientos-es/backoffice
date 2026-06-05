@@ -34,6 +34,7 @@ const INTERACTION_LABEL: Record<string, string> = {
   meeting: "Reunión",
   note: "Nota",
   owner_change: "Responsable cambiado",
+  status_change: "Cambio de estado",
   portal_view: "Portal visto",
   portal_accept: "Propuesta aceptada",
   portal_reject: "Propuesta rechazada",
@@ -213,10 +214,16 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                             </p>
                           ) : null}
                         </div>
-                        <div className="flex shrink-0 flex-col items-end gap-1 text-xs text-muted-foreground">
-                          <span>{relativeTime(i.created_at as string)}</span>
+                        <div className="flex shrink-0 flex-col items-end gap-0.5 text-xs text-muted-foreground">
+                          <span className="tabular-nums">
+                            {relativeTime(i.created_at as string)}
+                          </span>
                           {i.performer ? (
-                            <MemberLabel member={i.performer} className="text-muted-foreground" />
+                            <MemberLabel
+                              member={i.performer}
+                              size="xs"
+                              className="gap-1 text-[11px] text-muted-foreground/70"
+                            />
                           ) : null}
                         </div>
                       </li>
@@ -241,6 +248,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                 leadEmail={(lead.email as string | null) ?? null}
                 leadPhone={(lead.phone as string | null) ?? null}
                 claimable={canEdit && !lead.assigned_to}
+                aiEnabled={aiEnabled}
               />
             </CardContent>
           </Card>

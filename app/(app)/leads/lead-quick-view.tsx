@@ -39,6 +39,7 @@ const INTERACTION_LABEL: Record<string, string> = {
   meeting: "Reunión",
   note: "Nota",
   owner_change: "Responsable cambiado",
+  status_change: "Cambio de estado",
 };
 
 export function LeadQuickView({

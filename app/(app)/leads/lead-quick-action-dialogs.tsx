@@ -21,11 +21,13 @@ import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import type { CallOutcome } from "@/lib/schemas/lead";
-import { Mail, NotebookPen, Phone } from "lucide-react";
+import { Mail, NotebookPen, Phone, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createReminder } from "../reminders/actions";
+import { EmailComposer } from "./[id]/email-composer";
 import { logLeadCall, logLeadEmail, logLeadNote } from "./actions";
+
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -349,6 +351,49 @@ export function QNoteDialog({ leadId }: { leadId: string }) {
             <SubmitButton loading={feedback.pending}>Guardar nota</SubmitButton>
           </div>
         </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function QSendEmailDialog({
+  leadId,
+  leadEmail,
+  aiEnabled,
+}: {
+  leadId: string;
+  leadEmail: string | null;
+  aiEnabled?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const router = useRouter();
+
+  function handleSuccess() {
+    router.refresh();
+    setTimeout(() => setOpen(false), 400);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+          <Send className="size-3.5 text-muted-foreground" />
+          Enviar email
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Enviar email</DialogTitle>
+          {leadEmail && <DialogDescription>{leadEmail}</DialogDescription>}
+        </DialogHeader>
+        <EmailComposer
+          leadId={leadId}
+          defaultTo={leadEmail ?? ""}
+          disabled={!leadEmail}
+          disabledReason="Este lead no tiene email registrado."
+          aiEnabled={aiEnabled}
+          onSuccess={handleSuccess}
+        />
       </DialogContent>
     </Dialog>
   );

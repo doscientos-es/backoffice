@@ -16,6 +16,7 @@ export type EmailComposerProps = {
   disabled?: boolean;
   disabledReason?: string;
   aiEnabled?: boolean;
+  onSuccess?: () => void;
 };
 
 export function EmailComposer({
@@ -24,6 +25,7 @@ export function EmailComposer({
   disabled,
   disabledReason,
   aiEnabled,
+  onSuccess,
 }: EmailComposerProps) {
   const [to, setTo] = useState(defaultTo);
   const [subject, setSubject] = useState("");
@@ -76,6 +78,7 @@ export function EmailComposer({
       feedback.setSuccess(res.mocked ? "Email simulado (modo dev)" : "Email enviado");
       setSubject("");
       setBody("");
+      onSuccess?.();
     } else {
       feedback.setError(res.error);
     }

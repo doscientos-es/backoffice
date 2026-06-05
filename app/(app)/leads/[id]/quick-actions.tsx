@@ -18,7 +18,12 @@ import { CalendarClock, Hand, Loader2 } from "lucide-react";
 import { type ReactNode, useState, useTransition } from "react";
 import { createReminder } from "../../reminders/actions";
 import { claimLead } from "../actions";
-import { QCallDialog, QEmailDialog, QNoteDialog } from "../lead-quick-action-dialogs";
+import {
+  QCallDialog,
+  QEmailDialog,
+  QNoteDialog,
+  QSendEmailDialog,
+} from "../lead-quick-action-dialogs";
 
 type Props = {
   leadId: string;
@@ -26,13 +31,22 @@ type Props = {
   leadEmail: string | null;
   leadPhone: string | null;
   claimable?: boolean;
+  aiEnabled?: boolean;
 };
 
-export function LeadQuickActions({ leadId, leadName, leadEmail, leadPhone, claimable }: Props) {
+export function LeadQuickActions({
+  leadId,
+  leadName,
+  leadEmail,
+  leadPhone,
+  claimable,
+  aiEnabled,
+}: Props) {
   return (
     <div className="flex flex-col gap-2">
       {claimable && <ClaimButton leadId={leadId} />}
       <QCallDialog leadId={leadId} leadPhone={leadPhone} leadName={leadName} />
+      <QSendEmailDialog leadId={leadId} leadEmail={leadEmail} aiEnabled={aiEnabled} />
       <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
       <QNoteDialog leadId={leadId} />
       <ScheduleDialog leadId={leadId} leadName={leadName} />

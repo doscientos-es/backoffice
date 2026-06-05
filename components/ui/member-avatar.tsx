@@ -27,7 +27,7 @@ export function MemberAvatar({
   className,
 }: {
   member: AvatarMember | null;
-  size?: "sm" | "default" | "lg";
+  size?: "xs" | "sm" | "default" | "lg";
   className?: string;
 }) {
   if (!member) {
@@ -58,7 +58,7 @@ export function MemberLabel({
   className,
 }: {
   member: AvatarMember | null;
-  size?: "sm" | "default" | "lg";
+  size?: "xs" | "sm" | "default" | "lg";
   className?: string;
 }) {
   return (

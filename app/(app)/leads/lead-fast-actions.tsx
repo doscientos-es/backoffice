@@ -43,6 +43,8 @@ const INTERACTION_LABEL: Record<string, string> = {
   call: "Llamada",
   meeting: "Reunión",
   note: "Nota",
+  owner_change: "Responsable cambiado",
+  status_change: "Cambio de estado",
   portal_view: "Portal visto",
   portal_accept: "Propuesta aceptada",
   portal_reject: "Propuesta rechazada",
