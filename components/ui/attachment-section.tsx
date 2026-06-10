@@ -24,7 +24,7 @@ interface Props {
   canEdit: boolean;
 }
 
-const ACCEPTED = ".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg,.zip";
+const ACCEPTED = ".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg";
 
 function formatSize(bytes: number | null): string {
   if (!bytes) return "";

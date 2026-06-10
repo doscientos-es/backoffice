@@ -7,6 +7,18 @@ export const dynamic = "force-dynamic";
 
 const MAX_SIZE_BYTES = 52_428_800; // 50 MB
 
+const ALLOWED_MIME_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "image/png",
+  "image/jpeg",
+  "text/plain",
+  "text/csv",
+];
+
 const ENTITY_FIELDS = ["lead_id", "project_id", "proposal_id", "client_id"] as const;
 type EntityField = (typeof ENTITY_FIELDS)[number];
 const ENTITY_TYPE_MAP: Record<string, EntityField> = {
@@ -45,6 +57,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
   if (file.size > MAX_SIZE_BYTES) {
     return NextResponse.json({ error: "El archivo supera el límite de 50 MB" }, { status: 413 });
+  }
+
+  if (file.type && !ALLOWED_MIME_TYPES.includes(file.type)) {
+    return NextResponse.json(
+      { error: `Tipo de archivo no permitido (${file.type})` },
+      { status: 400 },
+    );
   }
 
   const entityType = (formData.get("entityType") as string | null) ?? null;
