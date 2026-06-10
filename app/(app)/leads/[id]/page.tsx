@@ -1,5 +1,6 @@
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
+import { type AttachmentItem, AttachmentSection } from "@/components/ui/attachment-section";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +12,7 @@ import { requireUser } from "@/lib/auth";
 import { getLeadDetail } from "@/lib/leads/queries";
 import { listActiveMembers } from "@/lib/members/queries";
 import { LEAD_STATUS } from "@/lib/status";
+import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -65,6 +67,14 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   const aiEnabled = isAIEnabled();
   const canEdit = user.role !== "viewer";
   const members = canEdit ? await listActiveMembers() : [];
+
+  const supabase = await createServerClient();
+  const { data: attachments } = await supabase
+    .from("attachments")
+    .select("id, name, mime_type, size_bytes, created_at")
+    .eq("lead_id", id)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
   const canConvert =
     !linkedClientId &&
     lead.status !== "won" &&
@@ -233,6 +243,12 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
               )}
             </CardContent>
           </Card>
+          <AttachmentSection
+            entityType="lead"
+            entityId={lead.id as string}
+            attachments={(attachments ?? []) as AttachmentItem[]}
+            canEdit={canEdit}
+          />
         </div>
 
         {/* Sidebar */}

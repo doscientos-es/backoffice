@@ -1,7 +1,7 @@
 "use client";
 
 import { Select } from "@/components/ui/select";
-import { type FinanceRange, FINANCE_RANGE_OPTIONS } from "@/lib/finance/range";
+import { FINANCE_RANGE_OPTIONS, type FinanceRange } from "@/lib/finance/range";
 import { cn } from "@/lib/utils";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";

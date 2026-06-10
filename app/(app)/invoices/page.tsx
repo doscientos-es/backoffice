@@ -62,13 +62,16 @@ export default async function InvoicesPage({
     (() => {
       let query = supabase
         .from("invoices")
-        .select("id, full_number, idfact, status, verifactu_status, total, issue_date, due_date", {
-          count: "exact",
-        })
+        .select(
+          "id, full_number, idfact, status, verifactu_status, total, issue_date, due_date, client_id, client_name, clients(id, name)",
+          { count: "exact" },
+        )
         .is("deleted_at", null);
       if (q.length > 0) {
         const pattern = `%${escapeIlike(q)}%`;
-        query = query.or(`full_number.ilike.${pattern},idfact.ilike.${pattern}`);
+        query = query.or(
+          `full_number.ilike.${pattern},idfact.ilike.${pattern},client_name.ilike.${pattern}`,
+        );
       }
       if (status) query = query.eq("status", status);
       if (verifactu) query = query.eq("verifactu_status", verifactu);
@@ -147,32 +150,52 @@ export default async function InvoicesPage({
         empty={q || status || verifactu ? "Sin coincidencias." : "Aún no hay facturas."}
         error={error?.message}
         searchKey="q"
-        searchPlaceholder="Buscar por nº o IDFACT…"
+        searchPlaceholder="Buscar por cliente, nº o IDFACT…"
         filters={[
           { key: "status", label: "Estado", options: STATUS_FILTER_OPTIONS },
           { key: "verifactu", label: "Verifactu", options: VERIFACTU_FILTER_OPTIONS },
         ]}
         pagination={{ page, pageSize: PAGE_SIZE, total: count ?? 0 }}
-        headers={["Nº", "IDFACT", "Estado", "Verifactu", "Importe", "Emisión", "Vencimiento"]}
-        align={["left", "left", "left", "left", "right", "left", "left"]}
+        headers={[
+          "Nº",
+          "Cliente",
+          "IDFACT",
+          "Estado",
+          "Verifactu",
+          "Importe",
+          "Emisión",
+          "Vencimiento",
+        ]}
+        align={["left", "left", "left", "left", "left", "right", "left", "left"]}
         rows={
-          data?.map((i) => ({
-            id: i.id as string,
-            href: `/invoices/${i.id}`,
-            cells: [
-              i.full_number as string,
-              (i.idfact as string | null) ?? null,
-              <StatusBadge key="status" meta={INVOICE_STATUS} value={i.status as string} />,
-              <StatusBadge
-                key="verifactu"
-                meta={VERIFACTU_STATUS}
-                value={i.verifactu_status as string}
-              />,
-              formatEUR(i.total as number),
-              formatDate(i.issue_date as string),
-              formatDate(i.due_date as string | null),
-            ],
-          })) ?? []
+          data?.map((i) => {
+            const clientName =
+              (i.client_name as string | null) ??
+              (i as unknown as { clients: { name: string } | null }).clients?.name ??
+              null;
+            return {
+              id: i.id as string,
+              href: `/invoices/${i.id}`,
+              cells: [
+                i.full_number as string,
+                clientName ? (
+                  <span key="client" className="font-medium text-foreground">
+                    {clientName}
+                  </span>
+                ) : null,
+                (i.idfact as string | null) ?? null,
+                <StatusBadge key="status" meta={INVOICE_STATUS} value={i.status as string} />,
+                <StatusBadge
+                  key="verifactu"
+                  meta={VERIFACTU_STATUS}
+                  value={i.verifactu_status as string}
+                />,
+                formatEUR(i.total as number),
+                formatDate(i.issue_date as string),
+                formatDate(i.due_date as string | null),
+              ],
+            };
+          }) ?? []
         }
       />
     </div>

@@ -15,6 +15,7 @@ import { notFound } from "next/navigation";
 import { GitHubModeBadge } from "../../projects/github-mode-badge";
 import type { GitHubSyncMode } from "../../projects/github-sync-section";
 import { syncTaskToGithub } from "../actions";
+import { DeleteTaskButton } from "./delete-task-button";
 import { type CommentItem, TaskComments } from "./task-comments";
 import { TaskEditDialog } from "./task-edit-dialog";
 
@@ -87,6 +88,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
                 members={(members ?? []) as Array<{ id: string; name: string }>}
               />
             ) : null}
+            {canEdit ? <DeleteTaskButton taskId={id} /> : null}
           </div>
         }
       />

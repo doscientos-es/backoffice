@@ -17,6 +17,7 @@ import { formatDate, formatEUR } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClientEditDialog } from "./client-edit-dialog";
+import { DeleteClientButton } from "./delete-client-button";
 
 export const dynamic = "force-dynamic";
 
@@ -37,18 +38,21 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         breadcrumbs={[{ label: "Clientes", href: "/clients" }, { label: client.name as string }]}
         actions={
           user.role !== "viewer" ? (
-            <ClientEditDialog
-              client={{
-                id: client.id as string,
-                name: client.name as string,
-                nif: (client.nif as string | null) ?? null,
-                email: (client.email as string | null) ?? null,
-                phone: (client.phone as string | null) ?? null,
-                contact_person: (client.contact_person as string | null) ?? null,
-                billing_address: (client.billing_address as string | null) ?? null,
-                notes: (client.notes as string | null) ?? null,
-              }}
-            />
+            <div className="flex items-center gap-2">
+              <ClientEditDialog
+                client={{
+                  id: client.id as string,
+                  name: client.name as string,
+                  nif: (client.nif as string | null) ?? null,
+                  email: (client.email as string | null) ?? null,
+                  phone: (client.phone as string | null) ?? null,
+                  contact_person: (client.contact_person as string | null) ?? null,
+                  billing_address: (client.billing_address as string | null) ?? null,
+                  notes: (client.notes as string | null) ?? null,
+                }}
+              />
+              <DeleteClientButton clientId={client.id as string} />
+            </div>
           ) : undefined
         }
       />

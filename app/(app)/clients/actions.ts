@@ -3,6 +3,7 @@
 import { defineAction } from "@/lib/actions/define-action";
 import { requireUser } from "@/lib/auth";
 import { CreateClientInput, UpdateClientInput } from "@/lib/schemas/client";
+import { uuidIdInput } from "@/lib/schemas/common";
 import { createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -79,6 +80,24 @@ export const updateClient = defineAction({
         notes: input.notes ?? null,
         updated_at: new Date().toISOString(),
       })
+      .eq("id", input.id);
+    if (error) throw new Error(error.message);
+  },
+});
+
+// ---------- DELETE ----------
+// Soft-deletes a client by stamping `deleted_at`. The list and detail queries
+// filter on `deleted_at is null`, so the row disappears from the UI while
+// remaining recoverable from the database (mirrors projects/proposals).
+export const deleteClient = defineAction({
+  name: "clients.delete",
+  schema: uuidIdInput,
+  revalidate: () => ["/clients"],
+  handler: async (input) => {
+    const supabase = await createServerClient();
+    const { error } = await supabase
+      .from("clients")
+      .update({ deleted_at: new Date().toISOString() })
       .eq("id", input.id);
     if (error) throw new Error(error.message);
   },

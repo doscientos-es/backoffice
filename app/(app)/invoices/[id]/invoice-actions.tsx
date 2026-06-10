@@ -37,17 +37,18 @@ export function InvoiceActions({ invoice }: Props) {
   const [pending, startTransition] = useTransition();
   const feedback = useFormFeedback();
 
-  const handleStatusUpdate = (status: "issued" | "paid" | "cancelled") => {
+  const handleStatusUpdate = (status: "issued" | "paid" | "cancelled", successLabel?: string) => {
     startTransition(async () => {
       feedback.setPending();
       const res = await updateInvoiceStatus({ id: invoice.id, status });
       if (res.ok) {
         feedback.setSuccess(
-          status === "issued"
+          successLabel ??
+          (status === "issued"
             ? "Factura emitida"
             : status === "paid"
               ? "Factura pagada"
-              : "Factura anulada",
+              : "Factura anulada"),
         );
       } else {
         feedback.setError(res.error);
@@ -72,14 +73,17 @@ export function InvoiceActions({ invoice }: Props) {
 
   const isDraft = invoice.status === "draft";
   const isIssued = invoice.status === "issued";
-  const isCancelled = invoice.status === "cancelled";
+  const isPaid = invoice.status === "paid";
   const isOverdue = invoice.status === "overdue";
 
   const canEdit = isDraft;
   const canIssue = isDraft;
   const canMarkPaid = isIssued || isOverdue;
+  const canMarkUncollected = isPaid;
   const canCancel = isIssued || isOverdue;
-  const canDelete = isDraft || isCancelled;
+  // Durante las pruebas cualquier factura debe poder borrarse (soft-delete,
+  // reversible desde la base de datos vía `deleted_at`).
+  const canDelete = true;
 
   return (
     <div className="flex items-center gap-2">
@@ -121,10 +125,22 @@ export function InvoiceActions({ invoice }: Props) {
         </Button>
       )}
 
+      {canMarkUncollected && (
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={pending}
+          onClick={() => handleStatusUpdate("issued", "Factura marcada como no cobrada")}
+        >
+          <XCircle className="mr-2 h-4 w-4" />
+          Marcar como no cobrada
+        </Button>
+      )}
+
       {/* AEAT Button if already issued */}
       {!isDraft &&
-      invoice.verifactu_status !== "accepted" &&
-      invoice.verifactu_status !== "excluded" ? (
+        invoice.verifactu_status !== "accepted" &&
+        invoice.verifactu_status !== "excluded" ? (
         <SendAeatButton
           invoiceId={invoice.id}
           label={invoice.verifactu_status === "rejected" ? "Reintentar AEAT" : "Enviar a AEAT"}

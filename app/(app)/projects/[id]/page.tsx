@@ -1,5 +1,6 @@
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
+import { AttachmentSection } from "@/components/ui/attachment-section";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -38,31 +39,42 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     ? await supabase.from("clients").select("id, name").is("deleted_at", null).order("name")
     : { data: null as Array<{ id: string; name: string }> | null };
 
-  const [{ data: tasks }, { data: proposals }, { data: invoices }, { data: members }] =
-    await Promise.all([
-      supabase
-        .from("tasks")
-        .select("id, title, status")
-        .eq("project_id", id)
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false })
-        .limit(20),
-      supabase
-        .from("proposals")
-        .select("id, number, title, status, total")
-        .eq("project_id", id)
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false })
-        .limit(10),
-      supabase
-        .from("invoices")
-        .select("id, full_number, status, total, issue_date")
-        .eq("project_id", id)
-        .is("deleted_at", null)
-        .order("issue_date", { ascending: false })
-        .limit(10),
-      supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
-    ]);
+  const [
+    { data: tasks },
+    { data: proposals },
+    { data: invoices },
+    { data: members },
+    { data: attachments },
+  ] = await Promise.all([
+    supabase
+      .from("tasks")
+      .select("id, title, status")
+      .eq("project_id", id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("proposals")
+      .select("id, number, title, status, total")
+      .eq("project_id", id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(10),
+    supabase
+      .from("invoices")
+      .select("id, full_number, status, total, issue_date")
+      .eq("project_id", id)
+      .is("deleted_at", null)
+      .order("issue_date", { ascending: false })
+      .limit(10),
+    supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
+    supabase
+      .from("attachments")
+      .select("id, name, mime_type, size_bytes, created_at")
+      .eq("project_id", id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false }),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -252,6 +264,15 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             )}
           </CardContent>
         </Card>
+
+        <AttachmentSection
+          entityType="project"
+          entityId={id}
+          attachments={
+            (attachments ?? []) as import("@/components/ui/attachment-section").AttachmentItem[]
+          }
+          canEdit={canEdit}
+        />
       </div>
     </div>
   );

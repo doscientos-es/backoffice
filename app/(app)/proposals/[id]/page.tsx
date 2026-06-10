@@ -2,6 +2,7 @@ import { BackLink } from "@/components/layout/back-link";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { PortalAccessControls } from "@/components/portal/portal-access-controls";
+import { AttachmentSection } from "@/components/ui/attachment-section";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SectionBoundary } from "@/components/ui/error-boundary";
@@ -87,6 +88,13 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
     .select("id, title, body_markdown, is_client_visible, portal_token, updated_at")
     .eq("proposal_id", id)
     .order("created_at", { ascending: true });
+
+  const { data: attachments } = await supabase
+    .from("attachments")
+    .select("id, name, mime_type, size_bytes, created_at")
+    .eq("proposal_id", id)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
 
   const { data: clientFull } = await supabase
     .from("proposals")
@@ -308,6 +316,15 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
           )}
         </CardContent>
       </Card>
+
+      <AttachmentSection
+        entityType="proposal"
+        entityId={id}
+        attachments={
+          (attachments ?? []) as import("@/components/ui/attachment-section").AttachmentItem[]
+        }
+        canEdit={!locked}
+      />
     </div>
   );
 }

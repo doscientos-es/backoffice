@@ -40,13 +40,25 @@ export async function updateInvoiceStatus(
   const { id, status } = parsed.data;
 
   const supabase = await createServerClient();
-  const updates: any = { status, updated_at: new Date().toISOString() };
 
-  if (status === "paid") {
-    updates.paid_at = new Date().toISOString();
-  }
-  if (status === "issued") {
-    updates.issued_at = new Date().toISOString();
+  // Read current fiscal timestamps so we don't clobber the original issue date
+  // when transitioning between non-draft states (e.g. reverting paid → issued).
+  const { data: current } = await supabase
+    .from("invoices")
+    .select("issued_at")
+    .eq("id", id)
+    .maybeSingle();
+
+  const now = new Date().toISOString();
+  const updates: any = { status, updated_at: now };
+
+  // `paid_at` reflects collection: set it when paid, clear it otherwise so a
+  // paid invoice can be marked back as "no cobrada" (used during testing).
+  updates.paid_at = status === "paid" ? now : null;
+
+  // Stamp `issued_at` only the first time the invoice leaves draft.
+  if (status === "issued" && !current?.issued_at) {
+    updates.issued_at = now;
   }
 
   const { error } = await supabase.from("invoices").update(updates).eq("id", id);
