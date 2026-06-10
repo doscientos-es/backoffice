@@ -2,7 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, Loader2, Paperclip } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Download, Loader2, Paperclip, UploadCloud } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
@@ -36,16 +37,15 @@ function formatSize(bytes: number | null): string {
 export function AttachmentSection({ entityType, entityId, attachments, canEdit }: Props) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
+  // Tracks nested dragenter/dragleave so the overlay doesn't flicker over children.
+  const dragDepth = useRef(0);
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [errors, setErrors] = useState<string[]>([]);
+  const [dragActive, setDragActive] = useState(false);
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setError(null);
-    setUploading(true);
-
+  /** Uploads a single file; resolves to an error message or null on success. */
+  async function uploadFile(file: File): Promise<string | null> {
     try {
       const formData = new FormData();
       formData.set("file", file);
@@ -55,23 +55,89 @@ export function AttachmentSection({ entityType, entityId, attachments, canEdit }
       const res = await fetch("/api/attachments/upload", { method: "POST", body: formData });
       const json = (await res.json()) as { id?: string; error?: string };
 
-      if (!res.ok || !json.id) {
-        setError(json.error ?? "Error al subir el archivo");
-        return;
-      }
-
-      router.refresh();
+      if (!res.ok || !json.id) return json.error ?? "Error al subir";
+      return null;
     } catch {
-      setError("Error de red. Inténtalo de nuevo.");
-    } finally {
-      setUploading(false);
-      // reset input so the same file can be re-uploaded after an error
-      if (fileRef.current) fileRef.current.value = "";
+      return "Error de red";
     }
   }
 
+  /** Uploads files sequentially, reporting per-file failures. Shared by the button and drop zone. */
+  async function uploadFiles(files: File[]) {
+    if (files.length === 0 || uploading) return;
+
+    setErrors([]);
+    setUploading(true);
+    setProgress({ done: 0, total: files.length });
+
+    const failures: string[] = [];
+    let done = 0;
+    for (const file of files) {
+      const err = await uploadFile(file);
+      if (err) failures.push(`${file.name}: ${err}`);
+      done += 1;
+      setProgress({ done, total: files.length });
+    }
+
+    setErrors(failures);
+    setUploading(false);
+    setProgress(null);
+    // reset input so the same file can be re-selected after an error
+    if (fileRef.current) fileRef.current.value = "";
+    router.refresh();
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    void uploadFiles(e.target.files ? Array.from(e.target.files) : []);
+  }
+
+  function handleDragEnter(e: React.DragEvent) {
+    if (!canEdit || uploading) return;
+    e.preventDefault();
+    dragDepth.current += 1;
+    setDragActive(true);
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    if (!canEdit || uploading) return;
+    e.preventDefault();
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    if (!canEdit || uploading) return;
+    e.preventDefault();
+    dragDepth.current -= 1;
+    if (dragDepth.current <= 0) {
+      dragDepth.current = 0;
+      setDragActive(false);
+    }
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    if (!canEdit || uploading) return;
+    e.preventDefault();
+    dragDepth.current = 0;
+    setDragActive(false);
+    void uploadFiles(e.dataTransfer?.files ? Array.from(e.dataTransfer.files) : []);
+  }
+
   return (
-    <Card>
+    <Card
+      className={cn(
+        "relative",
+        dragActive && "ring-2 ring-primary ring-offset-2",
+      )}
+      onDragEnter={canEdit ? handleDragEnter : undefined}
+      onDragOver={canEdit ? handleDragOver : undefined}
+      onDragLeave={canEdit ? handleDragLeave : undefined}
+      onDrop={canEdit ? handleDrop : undefined}
+    >
+      {canEdit && dragActive && (
+        <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 rounded-[inherit] border-2 border-dashed border-primary bg-background/85 backdrop-blur-sm">
+          <UploadCloud className="size-6 text-primary" />
+          <p className="text-sm font-medium">Suelta los archivos para adjuntarlos</p>
+        </div>
+      )}
       <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
         <CardTitle>Adjuntos</CardTitle>
         {canEdit && (
@@ -80,6 +146,7 @@ export function AttachmentSection({ entityType, entityId, attachments, canEdit }
               ref={fileRef}
               type="file"
               accept={ACCEPTED}
+              multiple
               className="sr-only"
               onChange={handleFileChange}
               disabled={uploading}
@@ -94,12 +161,12 @@ export function AttachmentSection({ entityType, entityId, attachments, canEdit }
               {uploading ? (
                 <>
                   <Loader2 className="size-3.5 animate-spin" />
-                  Subiendo…
+                  {progress ? `Subiendo ${progress.done}/${progress.total}…` : "Subiendo…"}
                 </>
               ) : (
                 <>
                   <Paperclip className="size-3.5" />
-                  Añadir archivo
+                  Añadir archivos
                 </>
               )}
             </Button>
@@ -107,11 +174,19 @@ export function AttachmentSection({ entityType, entityId, attachments, canEdit }
         )}
       </CardHeader>
       <CardContent className="px-0">
-        {error && (
-          <p className="px-6 pb-2 text-sm font-medium text-destructive">{error}</p>
+        {errors.length > 0 && (
+          <ul className="px-6 pb-2 space-y-0.5">
+            {errors.map((msg) => (
+              <li key={msg} className="text-sm font-medium text-destructive">
+                {msg}
+              </li>
+            ))}
+          </ul>
         )}
         {attachments.length === 0 ? (
-          <p className="px-6 py-2 text-sm text-muted-foreground">Sin adjuntos.</p>
+          <p className="px-6 py-2 text-sm text-muted-foreground">
+            {canEdit ? "Sin adjuntos. Arrastra archivos aquí o usa «Añadir archivos»." : "Sin adjuntos."}
+          </p>
         ) : (
           <ul className="divide-y divide-border">
             {attachments.map((a) => (
