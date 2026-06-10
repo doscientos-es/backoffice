@@ -44,33 +44,35 @@ describe("hashPortalPassword / verifyPortalPassword", () => {
 });
 
 describe("buildPortalAccessPatch", () => {
+  const ID = "00000000-0000-4000-8000-000000000000";
+
   it("returns an empty patch when nothing was touched", () => {
-    expect(buildPortalAccessPatch({})).toEqual({});
+    expect(buildPortalAccessPatch({ id: ID })).toEqual({});
   });
 
   it("maps the visibility toggle", () => {
-    expect(buildPortalAccessPatch({ is_client_visible: false })).toEqual({
+    expect(buildPortalAccessPatch({ id: ID, is_client_visible: false })).toEqual({
       is_client_visible: false,
     });
   });
 
   it("hashes a new password into portal_password_hash", () => {
-    const patch = buildPortalAccessPatch({ password: "let-me-in" });
+    const patch = buildPortalAccessPatch({ id: ID, password: "let-me-in" });
     expect(typeof patch.portal_password_hash).toBe("string");
     expect(verifyPortalPassword("let-me-in", patch.portal_password_hash as string)).toBe(true);
   });
 
   it("clears the hash when password is null or empty string", () => {
-    expect(buildPortalAccessPatch({ password: null })).toEqual({
+    expect(buildPortalAccessPatch({ id: ID, password: null })).toEqual({
       portal_password_hash: null,
     });
-    expect(buildPortalAccessPatch({ password: "" })).toEqual({
+    expect(buildPortalAccessPatch({ id: ID, password: "" })).toEqual({
       portal_password_hash: null,
     });
   });
 
   it("combines visibility and password changes", () => {
-    const patch = buildPortalAccessPatch({ is_client_visible: true, password: "pw" });
+    const patch = buildPortalAccessPatch({ id: ID, is_client_visible: true, password: "pw" });
     expect(patch.is_client_visible).toBe(true);
     expect(verifyPortalPassword("pw", patch.portal_password_hash as string)).toBe(true);
   });

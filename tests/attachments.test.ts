@@ -143,7 +143,7 @@ describe("POST /api/attachments/upload", () => {
     const big = new File([new Uint8Array(52_428_801)], "big.pdf", { type: "application/pdf" });
     const res = await POST(uploadRequest(big));
     expect(res.status).toBe(413);
-  });
+  }, 30_000); // allocates ~52 MB; coverage instrumentation adds significant overhead
 
   it("returns 400 for disallowed MIME type", async () => {
     const zip = new File([new Uint8Array(100)], "archive.zip", { type: "application/zip" });

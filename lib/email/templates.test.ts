@@ -29,6 +29,10 @@ describe("Email Templates Logic", () => {
       const result = renderTemplate(template, sampleVars);
       expect(result).toBe("Hola María García");
     });
+
+    it("should leave placeholders untouched for null/undefined values", () => {
+      expect(renderTemplate("{{a}} {{b}}", { a: null, b: undefined })).toBe("{{a}} {{b}}");
+    });
   });
 
   describe("appendSignature", () => {
