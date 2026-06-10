@@ -1,4 +1,12 @@
-import { cn, formatEUR, truncate } from "@/lib/utils";
+import {
+  cn,
+  formatDate,
+  formatDateTime,
+  formatEUR,
+  memberAvatarUrl,
+  relativeTime,
+  truncate,
+} from "@/lib/utils";
 import { describe, expect, it } from "vitest";
 
 describe("cn", () => {
