@@ -1,6 +1,5 @@
 import { AttachmentSection } from "@/components/ui/attachment-section";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── router stub ──────────────────────────────────────────────────────────────
@@ -72,6 +71,16 @@ describe("attachment list", () => {
   });
 });
 
+// ── helper: simulate file input change ───────────────────────────────────────
+function simulateFileInput(input: HTMLInputElement, files: File[]) {
+  Object.defineProperty(input, "files", {
+    value: files,
+    writable: false,
+    configurable: true,
+  });
+  fireEvent.change(input);
+}
+
 // ── button-triggered upload ───────────────────────────────────────────────────
 describe("button upload", () => {
   it("calls /api/attachments/upload and refreshes on success", async () => {
@@ -82,7 +91,7 @@ describe("button upload", () => {
 
     render(<AttachmentSection {...BASE_PROPS} />);
     const input = document.querySelector("input[type=file]") as HTMLInputElement;
-    await userEvent.upload(input, makeFile("doc.pdf"));
+    simulateFileInput(input, [makeFile("doc.pdf")]);
 
     await waitFor(() => expect(mockRefresh).toHaveBeenCalledOnce());
     expect(fetch).toHaveBeenCalledOnce();
@@ -96,7 +105,7 @@ describe("button upload", () => {
 
     render(<AttachmentSection {...BASE_PROPS} />);
     const input = document.querySelector("input[type=file]") as HTMLInputElement;
-    await userEvent.upload(input, makeFile("bad.exe", "application/x-msdownload"));
+    simulateFileInput(input, [makeFile("bad.exe", "application/x-msdownload")]);
 
     await waitFor(() => screen.getByText(/Tipo no permitido/));
     expect(screen.getByText(/bad\.exe/)).toBeDefined();
@@ -110,7 +119,7 @@ describe("button upload", () => {
 
     render(<AttachmentSection {...BASE_PROPS} />);
     const input = document.querySelector("input[type=file]") as HTMLInputElement;
-    await userEvent.upload(input, [makeFile("a.pdf"), makeFile("b.pdf")]);
+    simulateFileInput(input, [makeFile("a.pdf"), makeFile("b.pdf")]);
 
     await waitFor(() => screen.getByText(/Demasiado grande/));
     expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -126,7 +135,7 @@ describe("button upload", () => {
 
     render(<AttachmentSection {...BASE_PROPS} />);
     const input = document.querySelector("input[type=file]") as HTMLInputElement;
-    await userEvent.upload(input, makeFile("doc.pdf"));
+    simulateFileInput(input, [makeFile("doc.pdf")]);
 
     await waitFor(() => screen.getByText(/Error de red/));
   });
