@@ -1,0 +1,127 @@
+import { describe, expect, it } from "vitest";
+import {
+  AssignLeadOwnerInput,
+  CALL_OUTCOMES,
+  ConvertLeadInput,
+  CreateLeadInput,
+  LeadStatus,
+  LogCallInput,
+  LogEmailInput,
+  LogNoteInput,
+  SendEmailToLeadInput,
+  UpdateLeadInput,
+  UpdateLeadStatusInput,
+} from "@/lib/schemas/lead";
+
+const uuid = "11111111-1111-1111-1111-111111111111";
+
+describe("LeadStatus", () => {
+  it("accepts known states and rejects unknown", () => {
+    expect(LeadStatus.parse("new")).toBe("new");
+    expect(LeadStatus.safeParse("nope").success).toBe(false);
+  });
+});
+
+describe("CreateLeadInput", () => {
+  it("requires a name and coerces empty optionals", () => {
+    const out = CreateLeadInput.parse({ name: "Acme", email: "", phone: "" });
+    expect(out.name).toBe("Acme");
+    expect(out.email).toBeUndefined();
+    expect(out.phone).toBeUndefined();
+  });
+  it("rejects empty name and invalid email", () => {
+    expect(CreateLeadInput.safeParse({ name: "" }).success).toBe(false);
+    expect(CreateLeadInput.safeParse({ name: "X", email: "bad" }).success).toBe(false);
+  });
+  it("validates estimated_value bounds", () => {
+    expect(CreateLeadInput.safeParse({ name: "X", estimated_value: -1 }).success).toBe(false);
+    expect(CreateLeadInput.parse({ name: "X", estimated_value: 100 }).estimated_value).toBe(100);
+  });
+});
+
+describe("UpdateLeadInput", () => {
+  it("requires a valid id", () => {
+    expect(UpdateLeadInput.safeParse({ name: "X" }).success).toBe(false);
+    expect(UpdateLeadInput.parse({ id: uuid, name: "X" }).id).toBe(uuid);
+  });
+});
+
+describe("ConvertLeadInput", () => {
+  it("requires fiscal fields", () => {
+    expect(
+      ConvertLeadInput.safeParse({ leadId: uuid, name: "X", nif: "", billing_address: "" }).success,
+    ).toBe(false);
+    expect(
+      ConvertLeadInput.parse({
+        leadId: uuid,
+        name: "X",
+        nif: "B12345678",
+        billing_address: "C/ Falsa 1",
+      }).nif,
+    ).toBe("B12345678");
+  });
+});
+
+describe("UpdateLeadStatusInput refinements", () => {
+  it("forbids a reason for non-closure states", () => {
+    expect(
+      UpdateLeadStatusInput.safeParse({ leadId: uuid, status: "new", lostReason: "x" }).success,
+    ).toBe(false);
+  });
+  it("requires a reason for closure states", () => {
+    expect(UpdateLeadStatusInput.safeParse({ leadId: uuid, status: "lost" }).success).toBe(false);
+    expect(
+      UpdateLeadStatusInput.safeParse({ leadId: uuid, status: "lost", lostReason: "Caro" }).success,
+    ).toBe(true);
+    expect(
+      UpdateLeadStatusInput.safeParse({ leadId: uuid, status: "not_interested", lostReason: "x" })
+        .success,
+    ).toBe(true);
+  });
+  it("allows non-closure states without a reason", () => {
+    expect(UpdateLeadStatusInput.safeParse({ leadId: uuid, status: "won" }).success).toBe(true);
+  });
+});
+
+describe("LogCallInput", () => {
+  it("requires notes or transcript", () => {
+    expect(LogCallInput.safeParse({ leadId: uuid }).success).toBe(false);
+    expect(LogCallInput.safeParse({ leadId: uuid, notes: "Hablamos" }).success).toBe(true);
+    expect(LogCallInput.safeParse({ leadId: uuid, transcript: "..." }).success).toBe(true);
+  });
+  it("coerces duration and validates outcome", () => {
+    const out = LogCallInput.parse({ leadId: uuid, notes: "x", durationMinutes: "12" });
+    expect(out.durationMinutes).toBe(12);
+    expect(CALL_OUTCOMES).toContain("voicemail");
+  });
+});
+
+describe("LogEmailInput / LogNoteInput", () => {
+  it("validates email log shape", () => {
+    expect(
+      LogEmailInput.safeParse({ leadId: uuid, direction: "outgoing", subject: "Hi" }).success,
+    ).toBe(true);
+    expect(LogEmailInput.safeParse({ leadId: uuid, direction: "x", subject: "Hi" }).success).toBe(
+      false,
+    );
+  });
+  it("requires note content", () => {
+    expect(LogNoteInput.safeParse({ leadId: uuid, content: "" }).success).toBe(false);
+    expect(LogNoteInput.safeParse({ leadId: uuid, content: "ok" }).success).toBe(true);
+  });
+});
+
+describe("SendEmailToLeadInput / AssignLeadOwnerInput", () => {
+  it("applies includeSignature default and requires recipient", () => {
+    const out = SendEmailToLeadInput.parse({
+      leadId: uuid,
+      subject: "S",
+      bodyHtml: "<p>x</p>",
+      to: "a@b.com",
+    });
+    expect(out.includeSignature).toBe(true);
+  });
+  it("coerces empty assignee to null", () => {
+    expect(AssignLeadOwnerInput.parse({ leadId: uuid, assigneeId: "" }).assigneeId).toBeNull();
+  });
+});
