@@ -1,5 +1,6 @@
 import { serverEnv } from "@/lib/env";
 import QRCode from "qrcode";
+import { AEAT_VALIDATE_QR_URL } from "@/lib/verifactu/constants";
 
 /**
  * Build the QR payload URL pointing to the AEAT cotejo endpoint (or the mock).
@@ -12,9 +13,6 @@ export type QrParams = {
   total: number;
 };
 
-const AEAT_PROD = "https://prewww2.aeat.es/wlpl/TIKE-CONT/ValidarQR";
-const AEAT_TEST = "https://prewww2.aeat.es/wlpl/TIKE-CONT/ValidarQR";
-
 export function buildQrUrl(p: QrParams, appUrl: string): string {
   const env = serverEnv();
   const dd = String(p.issueDate.getUTCDate()).padStart(2, "0");
@@ -26,8 +24,8 @@ export function buildQrUrl(p: QrParams, appUrl: string): string {
     fecha: `${dd}-${mm}-${yyyy}`,
     importe: p.total.toFixed(2),
   });
-  if (env.VERIFACTU_ENV === "prod") return `${AEAT_PROD}?${qs.toString()}`;
-  if (env.VERIFACTU_ENV === "test") return `${AEAT_TEST}?${qs.toString()}`;
+  if (env.VERIFACTU_ENV === "prod") return `${AEAT_VALIDATE_QR_URL.prod}?${qs.toString()}`;
+  if (env.VERIFACTU_ENV === "test") return `${AEAT_VALIDATE_QR_URL.test}?${qs.toString()}`;
   return `${appUrl}/p/verify?${qs.toString()}`;
 }
 

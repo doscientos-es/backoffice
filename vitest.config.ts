@@ -27,14 +27,29 @@ export default defineConfig({
         // ── Auto-generated ───────────────────────────────────────────────
         "lib/database.types.ts",
 
+        // ── Type-only modules (no runtime statements to cover) ───────────
+        "lib/**/types.ts",
+
         // ── Framework wiring / config (no business logic) ────────────────
         "lib/env.ts",
         "lib/auth.ts",
 
-        // ── Thin external-service clients (no logic to unit-test) ────────
+        // ── Data-access layers: Supabase query builders. These assert
+        //    mock call shapes only; they belong to integration/e2e suites.
+        "lib/**/queries.ts",
+
+        // ── External-service clients & integrations (network I/O) ────────
         "lib/ai.ts",
         "lib/supabase/**",
+        "lib/integrations/**",
         "lib/email/resend.ts",
+        "lib/email/render.ts",
+
+        // ── Client-side React hooks needing a DOM/render + network harness ─
+        //    (use-form-dirty is pure and remains covered.)
+        "lib/hooks/use-action-form.ts",
+        "lib/hooks/use-autosave.ts",
+        "lib/hooks/use-github-handle.ts",
 
         // ── React PDF component (visual, not logic) ───────────────────────
         "lib/invoices/invoice-pdf-document.tsx",
@@ -46,7 +61,7 @@ export default defineConfig({
         "lib/**/*.test.{ts,tsx}",
       ],
 
-      reporter: ["text", "html", "lcov"],
+      reporter: ["text", "html", "lcov", "json-summary"],
       reportsDirectory: "./coverage",
 
       // Color thresholds in the HTML report: <50 % → red, 50–80 % → yellow, ≥80 % → green
