@@ -31,7 +31,7 @@ export function ProjectsList({ canEdit = false, ...props }: ListPageProps & { ca
         <ProjectQuickView
           project={selectedProject}
           canEdit={canEdit}
-          onDelete={handleDelete}
+          onDeleteAction={handleDelete}
           onCloseAction={() => setSelectedProject(null)}
         />
       </ErrorBoundary>

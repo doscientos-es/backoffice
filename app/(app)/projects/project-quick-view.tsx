@@ -132,21 +132,18 @@ function Body({ project, canEdit, onDeleteAction }: BodyProps) {
 function DeleteProjectButton({
   projectId,
   projectName,
-  onDeleted,
+  onConfirmAction,
 }: {
   projectId: string;
   projectName: string;
-  onDeleted: () => void;
+  /** Triggers the optimistic removal + delete in the parent list. */
+  onConfirmAction: (id: string) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [pending, startTransition] = useTransition();
 
   function onConfirm() {
-    startTransition(async () => {
-      await deleteProject({ id: projectId });
-      setOpen(false);
-      onDeleted();
-    });
+    setOpen(false);
+    onConfirmAction(projectId);
   }
 
   return (
@@ -169,11 +166,11 @@ function DeleteProjectButton({
           </DialogDescription>
         </DialogHeader>
         <div className="flex justify-end gap-2 pt-1">
-          <Button variant="ghost" size="sm" onClick={() => setOpen(false)} disabled={pending}>
+          <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
             Cancelar
           </Button>
-          <Button variant="destructive" size="sm" onClick={onConfirm} disabled={pending}>
-            {pending ? "Eliminando…" : "Eliminar"}
+          <Button variant="destructive" size="sm" onClick={onConfirm}>
+            Eliminar
           </Button>
         </div>
       </DialogContent>

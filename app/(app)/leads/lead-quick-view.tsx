@@ -28,7 +28,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useState, useTransition } from "react";
 import { LeadEditDialog } from "./[id]/lead-edit-dialog";
-import { assignLeadOwner, claimLead, deleteLead } from "./actions";
+import { assignLeadOwner, claimLead } from "./actions";
 import { QCallDialog, QEmailDialog, QNoteDialog } from "./lead-quick-action-dialogs";
 import type { KanbanLead } from "./leads-kanban";
 
@@ -46,11 +46,14 @@ export function LeadQuickView({
   lead,
   canEdit = false,
   members = [],
+  onDeleteAction,
   onCloseAction,
 }: {
   lead: KanbanLead | null;
   canEdit?: boolean;
   members?: MemberOption[];
+  /** Optimistically removes the lead from the board and runs the delete. */
+  onDeleteAction: (id: string) => void;
   onCloseAction: () => void;
 }) {
   return (
@@ -58,7 +61,7 @@ export function LeadQuickView({
       <DrawerContent className="sm:max-w-sm">
         {lead ? (
           <ErrorBoundary>
-            <Body lead={lead} canEdit={canEdit} members={members} onCloseAction={onCloseAction} />
+            <Body lead={lead} canEdit={canEdit} members={members} onDeleteAction={onDeleteAction} />
           </ErrorBoundary>
         ) : null}
       </DrawerContent>
@@ -70,12 +73,12 @@ function Body({
   lead,
   canEdit,
   members,
-  onCloseAction,
+  onDeleteAction,
 }: {
   lead: KanbanLead;
   canEdit: boolean;
   members: MemberOption[];
-  onCloseAction: () => void;
+  onDeleteAction: (id: string) => void;
 }) {
   const hasEstimated = lead.estimated_value != null && lead.estimated_value > 0;
   return (
@@ -142,7 +145,11 @@ function Body({
       <footer className="flex items-center gap-2 border-t border-border p-3">
         {canEdit && (
           <>
-            <DeleteLeadButton leadId={lead.id} leadName={lead.name} onDeleted={onCloseAction} />
+            <DeleteLeadButton
+              leadId={lead.id}
+              leadName={lead.name}
+              onConfirmAction={onDeleteAction}
+            />
             <LeadEditDialog
               lead={{
                 id: lead.id,
@@ -171,21 +178,18 @@ function Body({
 function DeleteLeadButton({
   leadId,
   leadName,
-  onDeleted,
+  onConfirmAction,
 }: {
   leadId: string;
   leadName: string;
-  onDeleted: () => void;
+  /** Triggers the optimistic removal + delete in the parent board. */
+  onConfirmAction: (id: string) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [pending, startTransition] = useTransition();
 
   function onConfirm() {
-    startTransition(async () => {
-      await deleteLead({ id: leadId });
-      setOpen(false);
-      onDeleted();
-    });
+    setOpen(false);
+    onConfirmAction(leadId);
   }
 
   return (
@@ -208,11 +212,11 @@ function DeleteLeadButton({
           </DialogDescription>
         </DialogHeader>
         <div className="flex justify-end gap-2 pt-1">
-          <Button variant="ghost" size="sm" onClick={() => setOpen(false)} disabled={pending}>
+          <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
             Cancelar
           </Button>
-          <Button variant="destructive" size="sm" onClick={onConfirm} disabled={pending}>
-            {pending ? "Eliminando…" : "Eliminar"}
+          <Button variant="destructive" size="sm" onClick={onConfirm}>
+            Eliminar
           </Button>
         </div>
       </DialogContent>

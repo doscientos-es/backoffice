@@ -21,7 +21,7 @@ import {
 import { AlertTriangle, PanelRightOpen, Plus } from "lucide-react";
 import Link from "next/link";
 import { useOptimistic, useState, useTransition } from "react";
-import { updateLeadStatus } from "./actions";
+import { deleteLead, updateLeadStatus } from "./actions";
 import { CloseReasonDialog, type CloseReasonVariant } from "./close-reason-dialog";
 import { LeadQuickView } from "./lead-quick-view";
 import { QuotedSuggestionDialog } from "./quoted-suggestion-dialog";
@@ -104,7 +104,9 @@ const COLUMNS: ColumnDef[] = [
   },
 ];
 
-type Action = { id: string; status: LeadStatus };
+type Action =
+  | { type: "move"; id: string; status: LeadStatus }
+  | { type: "remove"; id: string };
 
 export function LeadsKanban({
   leads,
@@ -116,8 +118,10 @@ export function LeadsKanban({
   members?: MemberOption[];
 }) {
   const [, startTransition] = useTransition();
-  const [optimistic, applyOptimistic] = useOptimistic(leads, (state, { id, status }: Action) =>
-    state.map((l) => (l.id === id ? { ...l, status } : l)),
+  const [optimistic, applyOptimistic] = useOptimistic(leads, (state, action: Action) =>
+    action.type === "remove"
+      ? state.filter((l) => l.id !== action.id)
+      : state.map((l) => (l.id === action.id ? { ...l, status: action.status } : l)),
   );
   const [activeId, setActiveId] = useState<string | null>(null);
   const [pendingClosure, setPendingClosure] = useState<{
@@ -143,11 +147,25 @@ export function LeadsKanban({
 
   const commitMove = (id: string, to: LeadStatus, lostReason?: string) => {
     startTransition(async () => {
-      applyOptimistic({ id, status: to });
+      applyOptimistic({ type: "move", id, status: to });
       feedback.setPending();
       const res = await updateLeadStatus({ leadId: id, status: to, lostReason });
       if (!res.ok) feedback.setError(res.error);
       else feedback.setSuccess("Estado actualizado");
+    });
+  };
+
+  // Optimistically drops the card from the board; the server revalidation keeps
+  // it gone on success, and on failure React reverts the state (the card
+  // reappears) with an error shown in the feedback bar.
+  const commitDelete = (id: string) => {
+    setQuickViewId(null);
+    startTransition(async () => {
+      applyOptimistic({ type: "remove", id });
+      feedback.setPending();
+      const res = await deleteLead({ id });
+      if (!res.ok) feedback.setError(res.error);
+      else feedback.setSuccess("Lead eliminado");
     });
   };
 
@@ -239,6 +257,7 @@ export function LeadsKanban({
         lead={quickViewId ? (optimistic.find((l) => l.id === quickViewId) ?? null) : null}
         canEdit={canEdit}
         members={members}
+        onDeleteAction={commitDelete}
         onCloseAction={() => setQuickViewId(null)}
       />
     </DndContext>
