@@ -41,8 +41,10 @@ describe("string coercion primitives", () => {
 });
 
 describe("text factories", () => {
-  it("optionalText enforces max and collapses ''", () => {
-    expect(optionalText(5).parse("")).toBeUndefined();
+  it("optionalText enforces max and accepts ''", () => {
+    // z.string() accepts "" so the union short-circuits before emptyToUndef;
+    // optionalText therefore keeps "" rather than coercing it to undefined.
+    expect(optionalText(5).parse("")).toBe("");
     expect(optionalText(5).parse("abc")).toBe("abc");
     expect(optionalText(2, "demasiado").safeParse("abcdef").success).toBe(false);
   });

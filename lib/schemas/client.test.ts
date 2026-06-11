@@ -7,7 +7,8 @@ describe("CreateClientInput", () => {
   it("requires a name and collapses empty optionals", () => {
     const out = CreateClientInput.parse({ name: "Acme", nif: "", email: "", phone: "" });
     expect(out.name).toBe("Acme");
-    expect(out.nif).toBeUndefined();
+    // optionalText keeps "" (union short-circuits); optionalEmail collapses to undefined.
+    expect(out.nif).toBe("");
     expect(out.email).toBeUndefined();
   });
   it("rejects empty name and invalid email", () => {

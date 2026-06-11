@@ -21,8 +21,59 @@ describe("formatEUR", () => {
     expect(out).toMatch(/1.?234,50/);
     expect(out).toMatch(/€/);
   });
-  it("returns em-dash on null", () => {
+  it("parses numeric strings", () => {
+    expect(formatEUR("10")).toMatch(/10,00/);
+  });
+  it("returns em-dash on null, undefined and non-finite", () => {
     expect(formatEUR(null)).toBe("—");
+    expect(formatEUR(undefined)).toBe("—");
+    expect(formatEUR(Number.POSITIVE_INFINITY)).toBe("—");
+    expect(formatEUR("abc")).toBe("—");
+  });
+});
+
+describe("formatDate / formatDateTime", () => {
+  it("formats a date string", () => {
+    expect(formatDate("2025-01-15")).toMatch(/2025/);
+    expect(formatDate(new Date("2025-01-15"))).toMatch(/2025/);
+  });
+  it("formats a datetime", () => {
+    expect(formatDateTime("2025-01-15T10:30:00Z")).toMatch(/2025/);
+  });
+  it("returns em-dash on empty input", () => {
+    expect(formatDate(null)).toBe("—");
+    expect(formatDateTime(undefined)).toBe("—");
+  });
+});
+
+describe("relativeTime", () => {
+  it("returns em-dash on empty input", () => {
+    expect(relativeTime(null)).toBe("—");
+  });
+  it("buckets recent and old timestamps", () => {
+    const now = Date.now();
+    expect(relativeTime(new Date(now - 5_000))).toBeTypeOf("string");
+    expect(relativeTime(new Date(now - 120_000))).toBeTypeOf("string");
+    expect(relativeTime(new Date(now - 7_200_000))).toBeTypeOf("string");
+    expect(relativeTime(new Date(now - 172_800_000))).toBeTypeOf("string");
+    expect(relativeTime(new Date(now - 5_184_000_000))).toBeTypeOf("string");
+    expect(relativeTime(new Date(now - 63_072_000_000))).toBeTypeOf("string");
+  });
+});
+
+describe("memberAvatarUrl", () => {
+  it("prefers an explicit avatar url", () => {
+    expect(memberAvatarUrl({ avatarUrl: "https://x/a.png" })).toBe("https://x/a.png");
+  });
+  it("derives a github avatar from a valid handle", () => {
+    expect(memberAvatarUrl({ githubHandle: "octocat" }, 32)).toBe(
+      "https://github.com/octocat.png?size=32",
+    );
+  });
+  it("returns null for missing/invalid handles", () => {
+    expect(memberAvatarUrl({})).toBeNull();
+    expect(memberAvatarUrl({ githubHandle: "  " })).toBeNull();
+    expect(memberAvatarUrl({ githubHandle: "-bad" })).toBeNull();
   });
 });
 

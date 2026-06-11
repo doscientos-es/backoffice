@@ -44,13 +44,20 @@ describe("financeRangeToDates", () => {
     }
   });
 
+  // `since` is built from a local-time Date and serialised via toISOString()
+  // (UTC), so we derive the expectation with the same formula to stay
+  // timezone-agnostic instead of asserting a literal "-01" suffix.
+  const iso = (d: Date) => d.toISOString().split("T")[0];
+
   it("month starts on the first of the current month", () => {
+    const now = new Date();
     const r = financeRangeToDates("month");
-    expect(r.since.endsWith("-01")).toBe(true);
+    expect(r.since).toBe(iso(new Date(now.getFullYear(), now.getMonth(), 1)));
   });
 
   it("ytd starts on Jan 1st", () => {
-    expect(financeRangeToDates("ytd").since.endsWith("-01-01")).toBe(true);
+    const now = new Date();
+    expect(financeRangeToDates("ytd").since).toBe(iso(new Date(now.getFullYear(), 0, 1)));
   });
 
   it("max starts at the historical floor", () => {

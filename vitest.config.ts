@@ -72,13 +72,13 @@ export default defineConfig({
         lines:      [50, 80],
       },
 
-      // Uncomment to enforce minimum coverage and fail CI below these values:
-      // thresholds: {
-      //   lines:      60,
-      //   functions:  60,
-      //   branches:   55,
-      //   statements: 60,
-      // },
+      // Enforced minimums – CI fails below 80 % global on every metric.
+      thresholds: {
+        statements: 80,
+        branches:   80,
+        functions:  80,
+        lines:      80,
+      },
     },
   },
 

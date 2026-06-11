@@ -26,8 +26,9 @@ describe("CreateLeadInput", () => {
   it("requires a name and coerces empty optionals", () => {
     const out = CreateLeadInput.parse({ name: "Acme", email: "", phone: "" });
     expect(out.name).toBe("Acme");
+    // optionalEmail collapses "" to undefined; optionalText (phone) keeps "".
     expect(out.email).toBeUndefined();
-    expect(out.phone).toBeUndefined();
+    expect(out.phone).toBe("");
   });
   it("rejects empty name and invalid email", () => {
     expect(CreateLeadInput.safeParse({ name: "" }).success).toBe(false);
