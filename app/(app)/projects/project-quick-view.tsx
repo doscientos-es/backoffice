@@ -23,8 +23,7 @@ import { PROJECT_STATUS, type ProjectStatus } from "@/lib/status";
 import { relativeTime } from "@/lib/utils";
 import { ArrowUpRight, Building2, ExternalLink, Trash2, X } from "lucide-react";
 import Link from "next/link";
-import { type ReactNode, useState, useTransition } from "react";
-import { deleteProject } from "./actions";
+import { type ReactNode, useState } from "react";
 import { GitHubModeBadge } from "./github-mode-badge";
 import type { GitHubSyncMode } from "./github-sync-section";
 
@@ -42,14 +41,21 @@ export type QuickProject = {
 export function ProjectQuickView({
   project,
   canEdit = false,
+  onDeleteAction,
   onCloseAction,
-}: { project: QuickProject | null; canEdit?: boolean; onCloseAction: () => void }) {
+}: {
+  project: QuickProject | null;
+  canEdit?: boolean;
+  /** Optimistically removes the project from the list and runs the delete. */
+  onDeleteAction: (id: string) => void;
+  onCloseAction: () => void;
+}) {
   return (
     <Drawer open={!!project} onOpenChange={(v) => !v && onCloseAction()} direction="right">
       <DrawerContent className="sm:max-w-sm">
         {project ? (
           <ErrorBoundary>
-            <Body project={project} canEdit={canEdit} onCloseAction={onCloseAction} />
+            <Body project={project} canEdit={canEdit} onDeleteAction={onDeleteAction} />
           </ErrorBoundary>
         ) : null}
       </DrawerContent>
@@ -57,9 +63,9 @@ export function ProjectQuickView({
   );
 }
 
-type BodyProps = { project: QuickProject; canEdit: boolean; onCloseAction: () => void };
+type BodyProps = { project: QuickProject; canEdit: boolean; onDeleteAction: (id: string) => void };
 
-function Body({ project, canEdit, onCloseAction }: BodyProps) {
+function Body({ project, canEdit, onDeleteAction }: BodyProps) {
   return (
     <>
       <DrawerHeader className="flex flex-row items-start justify-between gap-2 border-b border-border">
@@ -109,7 +115,7 @@ function Body({ project, canEdit, onCloseAction }: BodyProps) {
           <DeleteProjectButton
             projectId={project.id}
             projectName={project.name}
-            onDeleted={onCloseAction}
+            onConfirmAction={onDeleteAction}
           />
         )}
         <Button asChild className="flex-1" size="sm" variant="outline">
