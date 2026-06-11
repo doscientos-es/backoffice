@@ -1,7 +1,11 @@
+"use client";
+
+import { claimLead } from "@/app/(app)/leads/actions";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { ActionLeadRow, MyDayData, MyTaskRow } from "@/lib/dashboard/types";
+import { useOptimisticRemoval } from "@/lib/hooks/use-optimistic-removal";
 import { LEAD_STATUS, TASK_STATUS } from "@/lib/status";
 import { relativeTime } from "@/lib/utils";
 import { ChevronRight, Inbox, ListTodo, Phone, UserRound } from "lucide-react";
@@ -15,6 +19,8 @@ export type MyDayPanelProps = MyDayData;
  * bottom — open tasks, the leads they own, and unassigned leads to grab.
  */
 export function MyDayPanel({ tasks, myLeads, unassignedLeads }: MyDayPanelProps) {
+  const { items: visibleUnassigned, remove: claimOptimistic } = useOptimisticRemoval(unassignedLeads);
+
   return (
     <div className="grid gap-4 lg:grid-cols-3">
       <Column
@@ -44,12 +50,16 @@ export function MyDayPanel({ tasks, myLeads, unassignedLeads }: MyDayPanelProps)
       <Column
         icon={<Inbox className="size-4 text-amber-500" />}
         title="Leads sin asignar"
-        count={unassignedLeads.length}
+        count={visibleUnassigned.length}
         href="/leads"
         empty="Todos los leads tienen responsable."
       >
-        {unassignedLeads.map((l) => (
-          <LeadItem key={l.id} lead={l} claimable />
+        {visibleUnassigned.map((l) => (
+          <LeadItem
+            key={l.id}
+            lead={l}
+            onClaimAction={(id) => claimOptimistic(id, () => claimLead({ leadId: id }))}
+          />
         ))}
       </Column>
     </div>
@@ -117,7 +127,13 @@ function TaskItem({ task }: { task: MyTaskRow }) {
   );
 }
 
-function LeadItem({ lead, claimable = false }: { lead: ActionLeadRow; claimable?: boolean }) {
+function LeadItem({
+  lead,
+  onClaimAction,
+}: {
+  lead: ActionLeadRow;
+  onClaimAction?: (id: string) => void;
+}) {
   return (
     <li className="flex items-center justify-between gap-2">
       <Link href={`/leads/${lead.id}`} className="min-w-0 flex-1 hover:underline">
@@ -128,8 +144,8 @@ function LeadItem({ lead, claimable = false }: { lead: ActionLeadRow; claimable?
       </Link>
       <div className="flex shrink-0 items-center gap-1.5">
         <StatusBadge meta={LEAD_STATUS} value={lead.status} />
-        {claimable ? (
-          <ClaimLeadButton leadId={lead.id} />
+        {onClaimAction ? (
+          <ClaimLeadButton leadId={lead.id} onClaimAction={onClaimAction} />
         ) : lead.phone ? (
           <a
             href={`tel:${lead.phone}`}

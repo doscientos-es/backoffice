@@ -1,7 +1,7 @@
 "use client";
 
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Select } from "@/components/ui/select";
+import { useOptimisticUpdate } from "@/lib/hooks/use-optimistic-update";
 import type { LeadStatusType } from "@/lib/schemas/lead";
 import { useState } from "react";
 import { updateLeadStatus } from "../actions";
@@ -32,35 +32,30 @@ export function LeadStatusSelect({
   status: string;
   leadName: string;
 }) {
-  const feedback = useFormFeedback();
+  const { value: currentStatus, commit } = useOptimisticUpdate<LeadStatusType>(
+    status as LeadStatusType,
+  );
   const [pendingClosure, setPendingClosure] = useState<CloseReasonVariant | null>(null);
   const [showQuotedSuggestion, setShowQuotedSuggestion] = useState(false);
 
-  const commit = async (to: LeadStatusType, lostReason?: string) => {
-    feedback.setPending();
-    const res = await updateLeadStatus({ leadId, status: to, lostReason });
-    if (!res.ok) {
-      feedback.setError(res.error);
-    } else {
-      feedback.setSuccess("Estado actualizado");
-      if (to === "quoted") setShowQuotedSuggestion(true);
-    }
+  const apply = (to: LeadStatusType, lostReason?: string) => {
+    commit(to, () => updateLeadStatus({ leadId, status: to, lostReason }));
+    if (to === "quoted") setShowQuotedSuggestion(true);
   };
 
   return (
     <div className="flex items-center gap-2">
       <Select
-        defaultValue={status}
-        disabled={feedback.pending}
+        value={currentStatus}
         className="h-8 w-40"
-        onChange={async (e) => {
+        onChange={(e) => {
           const next = e.target.value as LeadStatusType;
           const variant = CLOSURE_VARIANTS[next];
           if (variant) {
             setPendingClosure(variant);
             return;
           }
-          commit(next);
+          apply(next);
         }}
       >
         {OPTIONS.map((o) => (
@@ -69,7 +64,6 @@ export function LeadStatusSelect({
           </option>
         ))}
       </Select>
-      <FormFeedback state={feedback.state} pendingLabel="Actualizando…" />
 
       <CloseReasonDialog
         lead={pendingClosure ? { id: leadId, name: leadName } : null}
@@ -79,7 +73,7 @@ export function LeadStatusSelect({
           if (!pendingClosure) return;
           const next = pendingClosure;
           setPendingClosure(null);
-          commit(next, reason);
+          apply(next, reason);
         }}
       />
 

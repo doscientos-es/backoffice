@@ -14,8 +14,9 @@ import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarClock, Hand, Loader2 } from "lucide-react";
+import { CalendarClock, Hand } from "lucide-react";
 import { type ReactNode, useState, useTransition } from "react";
+import { sileo } from "sileo";
 import { createReminder } from "../../reminders/actions";
 import { claimLead } from "../actions";
 import {
@@ -55,15 +56,19 @@ export function LeadQuickActions({
 }
 
 function ClaimButton({ leadId }: { leadId: string }) {
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const [claimed, setClaimed] = useState(false);
+  const [, startTransition] = useTransition();
+
+  if (claimed) return null;
 
   const onClick = () => {
-    setError(null);
+    setClaimed(true); // optimistic: hide button immediately
     startTransition(async () => {
       const res = await claimLead({ leadId });
-      if (!res.ok) setError(res.error);
-      // revalidatePath in the action handles the server re-render
+      if (!res.ok) {
+        setClaimed(false); // revert
+        sileo.error({ title: res.error });
+      }
     });
   };
 
@@ -73,14 +78,12 @@ function ClaimButton({ leadId }: { leadId: string }) {
       variant="default"
       size="sm"
       className="w-full justify-start gap-2"
-      disabled={pending}
       onClick={onClick}
-      title={error ?? "Asignarme este lead"}
     >
       <span className="text-primary-foreground/70">
-        {pending ? <Loader2 className="size-4 animate-spin" /> : <Hand className="size-4" />}
+        <Hand className="size-4" />
       </span>
-      <span className="text-sm font-medium">{error ? "Reintentar" : "Asignármelo"}</span>
+      <span className="text-sm font-medium">Asignármelo</span>
     </Button>
   );
 }

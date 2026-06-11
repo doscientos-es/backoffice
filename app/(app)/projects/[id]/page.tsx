@@ -15,6 +15,7 @@ import { GitHubModeBadge } from "../github-mode-badge";
 import type { GitHubSyncMode } from "../github-sync-section";
 import { DeleteProjectButton } from "./delete-project-button";
 import { ProjectEditDialog } from "./project-edit-dialog";
+import { WorkLogSection, type WorkLogRow } from "./work-log-section";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +46,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     { data: invoices },
     { data: members },
     { data: attachments },
+    { data: workLogsData },
+    { data: invoiceTotals },
   ] = await Promise.all([
     supabase
       .from("tasks")
@@ -74,7 +77,39 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       .eq("project_id", id)
       .is("deleted_at", null)
       .order("created_at", { ascending: false }),
+    supabase
+      .from("work_logs")
+      .select(
+        "id, work_date, hours, note, team_members:member_id(id, name, avatar_url, github_handle)",
+      )
+      .eq("project_id", id)
+      .is("deleted_at", null)
+      .order("work_date", { ascending: false }),
+    supabase.from("invoices").select("total").eq("project_id", id).is("deleted_at", null),
   ]);
+
+  const workLogs: WorkLogRow[] = ((workLogsData ?? []) as Array<Record<string, unknown>>).map(
+    (w) => {
+      const m = w.team_members as {
+        name: string;
+        avatar_url: string | null;
+        github_handle: string | null;
+      } | null;
+      return {
+        id: w.id as string,
+        work_date: w.work_date as string,
+        hours: Number(w.hours) || 0,
+        note: (w.note as string | null) ?? null,
+        member: m
+          ? { name: m.name, avatar_url: m.avatar_url ?? null, github_handle: m.github_handle ?? null }
+          : null,
+      };
+    },
+  );
+  const invoicedTotal = ((invoiceTotals ?? []) as Array<{ total: number | string | null }>).reduce(
+    (sum, r) => sum + Number(r.total ?? 0),
+    0,
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -190,6 +225,13 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           )}
         </CardContent>
       </Card>
+
+      <WorkLogSection
+        projectId={id}
+        logs={workLogs}
+        invoicedTotal={invoicedTotal}
+        canEdit={canEdit}
+      />
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Proposals */}

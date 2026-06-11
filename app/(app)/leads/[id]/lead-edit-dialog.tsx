@@ -9,11 +9,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { useFormDirty } from "@/lib/hooks/use-form-dirty";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
+import { sileo } from "sileo";
 import { updateLead } from "../actions";
 import { LeadFormFields } from "../lead-form-fields";
 
@@ -30,16 +30,13 @@ type Lead = {
 
 export function LeadEditDialog({ lead }: { lead: Lead }) {
   const [open, setOpen] = useState(false);
-  const feedback = useFormFeedback();
   const { formRef, isDirty, reset } = useFormDirty<HTMLFormElement>();
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    feedback.setPending();
     const fd = new FormData(e.currentTarget);
     const estimatedRaw = fd.get("estimated_value")?.toString() ?? "";
-    const estimated = estimatedRaw === "" ? null : Number(estimatedRaw);
-    const res = await updateLead({
+    const payload = {
       id: lead.id,
       name: fd.get("name")?.toString() ?? "",
       email: fd.get("email")?.toString() ?? "",
@@ -47,21 +44,19 @@ export function LeadEditDialog({ lead }: { lead: Lead }) {
       company: fd.get("company")?.toString() ?? "",
       source: fd.get("source")?.toString() ?? "",
       notes: fd.get("notes")?.toString() ?? "",
-      estimated_value: estimated,
-    });
-    if (!res.ok) return feedback.setError(res.error);
-    feedback.setSuccess("Guardado");
+      estimated_value: estimatedRaw === "" ? null : Number(estimatedRaw),
+    };
+    // Close immediately (optimistic) — server revalidatePath updates the page.
     reset();
-    setTimeout(() => setOpen(false), 400);
+    setOpen(false);
+    const res = await updateLead(payload);
+    if (!res.ok) sileo.error({ title: res.error ?? "No se pudo guardar el lead" });
   }
 
   return (
     <Dialog
       open={open}
-      onOpenChange={(v) => {
-        setOpen(v);
-        if (!v) feedback.reset();
-      }}
+      onOpenChange={setOpen}
     >
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
@@ -89,10 +84,7 @@ export function LeadEditDialog({ lead }: { lead: Lead }) {
             }}
           />
           <div className="flex items-center justify-end gap-3 border-t border-border pt-3">
-            <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
-            <SubmitButton loading={feedback.pending} disabled={!isDirty} pendingLabel="Guardando…">
-              Guardar cambios
-            </SubmitButton>
+            <SubmitButton disabled={!isDirty}>Guardar cambios</SubmitButton>
           </div>
         </form>
       </DialogContent>
