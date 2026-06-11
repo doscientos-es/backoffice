@@ -356,6 +356,33 @@ export async function deleteProposal(
   return { ok: true };
 }
 
+/**
+ * Reverses a soft-delete by clearing `deleted_at`. Backs the "Deshacer" toast
+ * shown after `deleteProposal`. Mirrors `deleteProposal`'s FormData signature.
+ */
+export async function restoreProposal(
+  formData: FormData,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireUser();
+  const id = formData.get("id")?.toString() ?? "";
+  if (!z.string().uuid().safeParse(id).success) return { ok: false, error: "ID inválido" };
+
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("proposals")
+    .update({ deleted_at: null })
+    .eq("id", id);
+
+  if (error) {
+    log.error({ err: error, id }, "restore_proposal_failed");
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath(`/proposals/${id}`);
+  revalidatePath("/proposals");
+  return { ok: true };
+}
+
 // ---------------- PORTAL ACCESS (visibility + password) ----------------
 
 /**

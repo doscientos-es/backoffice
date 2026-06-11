@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { useUndoableDelete } from "@/lib/hooks/use-undoable-delete";
 import {
   CheckCircle2,
   Download,
@@ -26,10 +27,16 @@ import {
   XCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { deleteInvoice, updateInvoiceStatus } from "../actions";
+import { deleteInvoice, restoreInvoice, updateInvoiceStatus } from "../actions";
 import { SendAeatButton } from "./send-aeat-button";
+
+/** Builds the `{ id }` FormData both delete and restore invoice actions expect. */
+function idFormData(invoiceId: string): FormData {
+  const fd = new FormData();
+  fd.append("id", invoiceId);
+  return fd;
+}
 
 interface Props {
   invoice: {
@@ -40,10 +47,18 @@ interface Props {
 }
 
 export function InvoiceActions({ invoice }: Props) {
-  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const feedback = useFormFeedback();
   const [confirmUncollected, setConfirmUncollected] = useState(false);
+
+  // Soft-delete (reversible via `deleted_at`): frictionless delete with a
+  // "Deshacer" toast instead of a blocking confirm dialog.
+  const { run: handleDelete, pending: deletePending } = useUndoableDelete({
+    successMessage: "Factura eliminada",
+    onDelete: () => deleteInvoice(idFormData(invoice.id)),
+    onRestore: () => restoreInvoice(idFormData(invoice.id)),
+    redirectTo: "/invoices",
+  });
 
   const handleStatusUpdate = (status: "issued" | "paid" | "cancelled", successLabel?: string) => {
     startTransition(async () => {
@@ -58,21 +73,6 @@ export function InvoiceActions({ invoice }: Props) {
               ? "Factura pagada"
               : "Factura anulada"),
         );
-      } else {
-        feedback.setError(res.error);
-      }
-    });
-  };
-
-  const handleDelete = async () => {
-    if (!confirm("¿Estás seguro de que quieres eliminar esta factura?")) return;
-
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.append("id", invoice.id);
-      const res = await deleteInvoice(fd);
-      if (res.ok) {
-        router.push("/invoices");
       } else {
         feedback.setError(res.error);
       }
@@ -213,7 +213,7 @@ export function InvoiceActions({ invoice }: Props) {
                 {canCancel && <DropdownMenuSeparator />}
                 <DropdownMenuItem
                   className="text-destructive"
-                  disabled={pending}
+                  disabled={pending || deletePending}
                   onClick={handleDelete}
                 >
                   <Trash2 className="mr-2 h-4 w-4" />

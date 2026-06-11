@@ -102,3 +102,19 @@ export const deleteClient = defineAction({
     if (error) throw new Error(error.message);
   },
 });
+
+// Reverses a soft-delete by clearing `deleted_at`. Backs the "Deshacer" toast
+// shown after `deleteClient`, restoring the row to the list/detail views.
+export const restoreClient = defineAction({
+  name: "clients.restore",
+  schema: uuidIdInput,
+  revalidate: (_payload, input) => [`/clients/${input.id}`, "/clients"],
+  handler: async (input) => {
+    const supabase = await createServerClient();
+    const { error } = await supabase
+      .from("clients")
+      .update({ deleted_at: null })
+      .eq("id", input.id);
+    if (error) throw new Error(error.message);
+  },
+});

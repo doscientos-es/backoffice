@@ -7,39 +7,25 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { useUndoableDelete } from "@/lib/hooks/use-undoable-delete";
 import { MoreHorizontal, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
-import { deleteClient } from "../actions";
+import { deleteClient, restoreClient } from "../actions";
 
 /**
  * Kebab menu hosting destructive actions for a client. Soft-deletes via
- * `deleted_at`, so the row disappears from the UI but stays recoverable from
- * the database. Mirrors the dropdown affordance used in projects/proposals.
+ * `deleted_at`, so the row disappears from the UI but stays recoverable. The
+ * delete is frictionless (no confirm dialog) and offers a "Deshacer" toast.
  */
 export function DeleteClientButton({ clientId }: { clientId: string }) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const feedback = useFormFeedback();
-
-  const onDelete = () => {
-    if (!confirm("¿Eliminar este cliente? Podrás restaurarlo desde la base de datos.")) return;
-    startTransition(async () => {
-      feedback.setPending();
-      const res = await deleteClient({ id: clientId });
-      if (res.ok) {
-        router.push("/clients");
-        router.refresh();
-      } else {
-        feedback.setError(res.error);
-      }
-    });
-  };
+  const { run: onDelete, pending } = useUndoableDelete({
+    successMessage: "Cliente eliminado",
+    onDelete: () => deleteClient({ id: clientId }),
+    onRestore: () => restoreClient({ id: clientId }),
+    redirectTo: "/clients",
+  });
 
   return (
     <div className="flex items-center gap-2">
-      <FormFeedback state={feedback.state} />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" disabled={pending} aria-label="Más acciones">

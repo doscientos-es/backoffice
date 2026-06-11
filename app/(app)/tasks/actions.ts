@@ -191,3 +191,25 @@ export async function deleteTask(
   revalidatePath("/tasks");
   return { ok: true };
 }
+
+/**
+ * Reverses a soft-delete by clearing `deleted_at`. Backs the "Deshacer" toast
+ * shown after `deleteTask`. Mirrors `deleteTask`'s `{ taskId }` signature.
+ */
+export async function restoreTask(
+  input: unknown,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireUser();
+  const parsed = z.object({ taskId: z.string().uuid() }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: "ID inválido" };
+
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("tasks")
+    .update({ deleted_at: null })
+    .eq("id", parsed.data.taskId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/tasks");
+  return { ok: true };
+}

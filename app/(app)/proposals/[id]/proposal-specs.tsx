@@ -3,6 +3,7 @@
 import { AiNotice } from "@/components/ui/ai-notice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Markdown } from "@/components/ui/markdown";
@@ -98,8 +99,9 @@ function SpecRow({ spec, locked }: { spec: ProposalSpec; locked: boolean }) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(spec.title);
   const [body, setBody] = useState(spec.body_markdown);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const feedback = useFormFeedback();
-  const [, startTransition] = useTransition();
+  const [deleting, startTransition] = useTransition();
 
   async function handleSave() {
     feedback.setPending();
@@ -123,12 +125,16 @@ function SpecRow({ spec, locked }: { spec: ProposalSpec; locked: boolean }) {
     } else feedback.setError(res.error);
   }
 
-  async function handleDelete() {
-    if (!confirm("¿Eliminar esta documentación?")) return;
+  // Hard delete (irreversible): a `proposal_specs` row is removed permanently,
+  // so this keeps an explicit ConfirmDialog rather than the undo-toast pattern.
+  function handleDelete() {
     feedback.setPending();
-    const res = await deleteSpec({ id: spec.id });
-    if (res.ok) startTransition(() => router.refresh());
-    else feedback.setError(res.error);
+    setConfirmDelete(false);
+    startTransition(async () => {
+      const res = await deleteSpec({ id: spec.id });
+      if (res.ok) router.refresh();
+      else feedback.setError(res.error);
+    });
   }
 
   return (
@@ -193,14 +199,25 @@ function SpecRow({ spec, locked }: { spec: ProposalSpec; locked: boolean }) {
           <Button
             size="icon-sm"
             variant="ghost"
-            onClick={handleDelete}
-            disabled={locked}
+            onClick={() => setConfirmDelete(true)}
+            disabled={locked || deleting}
             aria-label="Eliminar"
           >
             <Trash2 className="size-3.5 text-destructive" />
           </Button>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title="¿Eliminar esta documentación?"
+        description="Esta acción es permanente y no se puede deshacer."
+        confirmLabel="Eliminar"
+        destructive
+        pending={deleting}
+        onConfirm={handleDelete}
+      />
 
       {editing ? (
         <Textarea

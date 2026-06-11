@@ -7,39 +7,25 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { useUndoableDelete } from "@/lib/hooks/use-undoable-delete";
 import { MoreHorizontal, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
-import { deleteProject } from "../actions";
+import { deleteProject, restoreProject } from "../actions";
 
 /**
  * Kebab menu hosting destructive actions for a project. Soft-deletes via
- * `deleted_at`; related proposals/invoices keep their `project_id` cleared
- * by the FK `on delete set null` clause if a hard delete ever happens.
+ * `deleted_at`. The delete is frictionless (no confirm dialog) and offers a
+ * "Deshacer" toast to restore it.
  */
 export function DeleteProjectButton({ projectId }: { projectId: string }) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const feedback = useFormFeedback();
-
-  const onDelete = () => {
-    if (!confirm("¿Eliminar este proyecto? Podrás restaurarlo desde la base de datos.")) return;
-    startTransition(async () => {
-      feedback.setPending();
-      const res = await deleteProject({ id: projectId });
-      if (res.ok) {
-        router.push("/projects");
-        router.refresh();
-      } else {
-        feedback.setError(res.error);
-      }
-    });
-  };
+  const { run: onDelete, pending } = useUndoableDelete({
+    successMessage: "Proyecto eliminado",
+    onDelete: () => deleteProject({ id: projectId }),
+    onRestore: () => restoreProject({ id: projectId }),
+    redirectTo: "/projects",
+  });
 
   return (
     <div className="flex items-center gap-2">
-      <FormFeedback state={feedback.state} />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" disabled={pending} aria-label="Más acciones">

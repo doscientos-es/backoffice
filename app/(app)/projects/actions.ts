@@ -80,3 +80,22 @@ export const deleteProject = defineAction({
     if (error) throw new Error(error.message);
   },
 });
+
+/**
+ * Reverses a soft-delete by clearing `deleted_at`. Backs the "Deshacer" toast
+ * shown after `deleteProject`, returning the project to the UI.
+ */
+export const restoreProject = defineAction({
+  name: "projects.restore",
+  schema: uuidIdInput,
+  revalidate: (_payload, input) => [`/projects/${input.id}`, "/projects"],
+  handler: async (input) => {
+    const supabase = await createServerClient();
+    const { error } = await supabase
+      .from("projects")
+      .update({ deleted_at: null })
+      .eq("id", input.id);
+
+    if (error) throw new Error(error.message);
+  },
+});

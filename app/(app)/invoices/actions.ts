@@ -90,6 +90,30 @@ export async function deleteInvoice(
 }
 
 /**
+ * Reverses a soft-delete by clearing `deleted_at`. Backs the "Deshacer" toast
+ * shown after `deleteInvoice`. Mirrors its FormData signature and role guard.
+ */
+export async function restoreInvoice(
+  formData: FormData,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireRole(["owner", "admin"]);
+  const id = formData.get("id")?.toString() ?? "";
+  if (!z.string().uuid().safeParse(id).success) return { ok: false, error: "ID inválido" };
+
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("invoices")
+    .update({ deleted_at: null })
+    .eq("id", id);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/invoices/${id}`);
+  revalidatePath("/invoices");
+  return { ok: true };
+}
+
+/**
  * Sends an invoice to Verifactu (AEAT). Computes the SHA-256 hash chain entry
  * using the previous invoice in `chain_sequence` order, builds the IDFACT and
  * QR URL, submits via `submitToVerifactu`, and persists the result.
