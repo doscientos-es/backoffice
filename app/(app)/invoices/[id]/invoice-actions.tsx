@@ -2,6 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -20,7 +27,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { deleteInvoice, updateInvoiceStatus } from "../actions";
 import { SendAeatButton } from "./send-aeat-button";
 
@@ -36,6 +43,7 @@ export function InvoiceActions({ invoice }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const feedback = useFormFeedback();
+  const [confirmUncollected, setConfirmUncollected] = useState(false);
 
   const handleStatusUpdate = (status: "issued" | "paid" | "cancelled", successLabel?: string) => {
     startTransition(async () => {
@@ -126,15 +134,50 @@ export function InvoiceActions({ invoice }: Props) {
       )}
 
       {canMarkUncollected && (
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={pending}
-          onClick={() => handleStatusUpdate("issued", "Factura marcada como no cobrada")}
-        >
-          <XCircle className="mr-2 h-4 w-4" />
-          Marcar como no cobrada
-        </Button>
+        <>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={pending}
+            onClick={() => setConfirmUncollected(true)}
+          >
+            <XCircle className="mr-2 h-4 w-4" />
+            Marcar como no cobrada
+          </Button>
+          <Dialog open={confirmUncollected} onOpenChange={setConfirmUncollected}>
+            <DialogContent className="sm:max-w-sm">
+              <DialogHeader>
+                <DialogTitle>¿Revertir cobro de la factura?</DialogTitle>
+                <DialogDescription>
+                  Esto eliminará la fecha de cobro y devolverá la factura al estado{" "}
+                  <strong>Emitida</strong>. Esta acción debería usarse solo para corregir errores,
+                  nunca para anular un cobro real.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex justify-end gap-2 pt-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={pending}
+                  onClick={() => setConfirmUncollected(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={pending}
+                  onClick={() => {
+                    setConfirmUncollected(false);
+                    handleStatusUpdate("issued", "Factura marcada como no cobrada");
+                  }}
+                >
+                  Confirmar reversión
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </>
       )}
 
       {/* AEAT Button if already issued */}

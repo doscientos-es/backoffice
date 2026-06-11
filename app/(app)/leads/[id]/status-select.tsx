@@ -6,6 +6,7 @@ import type { LeadStatusType } from "@/lib/schemas/lead";
 import { useState } from "react";
 import { updateLeadStatus } from "../actions";
 import { CloseReasonDialog, type CloseReasonVariant } from "../close-reason-dialog";
+import { QuotedSuggestionDialog } from "../quoted-suggestion-dialog";
 
 const OPTIONS = [
   { value: "new", label: "Nuevo" },
@@ -33,12 +34,17 @@ export function LeadStatusSelect({
 }) {
   const feedback = useFormFeedback();
   const [pendingClosure, setPendingClosure] = useState<CloseReasonVariant | null>(null);
+  const [showQuotedSuggestion, setShowQuotedSuggestion] = useState(false);
 
   const commit = async (to: LeadStatusType, lostReason?: string) => {
     feedback.setPending();
     const res = await updateLeadStatus({ leadId, status: to, lostReason });
-    if (!res.ok) feedback.setError(res.error);
-    else feedback.setSuccess("Estado actualizado");
+    if (!res.ok) {
+      feedback.setError(res.error);
+    } else {
+      feedback.setSuccess("Estado actualizado");
+      if (to === "quoted") setShowQuotedSuggestion(true);
+    }
   };
 
   return (
@@ -75,6 +81,11 @@ export function LeadStatusSelect({
           setPendingClosure(null);
           commit(next, reason);
         }}
+      />
+
+      <QuotedSuggestionDialog
+        lead={showQuotedSuggestion ? { id: leadId, name: leadName } : null}
+        onClose={() => setShowQuotedSuggestion(false)}
       />
     </div>
   );

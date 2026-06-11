@@ -28,6 +28,7 @@ export const NAV_SHORTCUTS: Shortcut[] = [
   { href: "/invoices", label: "Facturas", key: "f" },
   { href: "/finance/expenses", label: "Gastos", key: "x" },
   { href: "/tasks", label: "Tareas", key: "t" },
+  { href: "/reminders", label: "Avisos", key: "a" },
 ];
 
 /** Creación rápida vía `c` + tecla. */
