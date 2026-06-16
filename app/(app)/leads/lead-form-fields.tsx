@@ -4,7 +4,8 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
 export const LEAD_SOURCES = [
-  "Web",
+  "Landing",
+  "Anuncios Meta",
   "Referencia",
   "Conocido",
   "LinkedIn",
