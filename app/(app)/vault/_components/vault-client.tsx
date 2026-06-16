@@ -14,7 +14,7 @@ import {
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { VAULT_SERVICE_LABELS, VAULT_SERVICES, type VaultService } from "@/lib/schemas/vault";
+import { VAULT_SERVICES, VAULT_SERVICE_LABELS, type VaultService } from "@/lib/schemas/vault";
 import { cn } from "@/lib/utils";
 import {
   ChevronDown,
@@ -73,14 +73,18 @@ export function VaultClient({
   passwordSet,
   unlocked,
   clients,
+  isAdmin,
 }: {
   items: VaultItem[];
   passwordSet: boolean;
   unlocked: boolean;
   clients: Client[];
+  isAdmin: boolean;
 }) {
   const [dialog, setDialog] = useState<Dialog_>(null);
   const [editItem, setEditItem] = useState<VaultItem | null>(null);
+  const [pendingEditItem, setPendingEditItem] = useState<VaultItem | null>(null);
+  const [localUnlocked, setLocalUnlocked] = useState(unlocked);
   const [revealed, setRevealed] = useState<Record<string, string>>({});
   const [pending, startTransition] = useTransition();
 
@@ -162,12 +166,27 @@ export function VaultClient({
         return next;
       });
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function openEdit(item: VaultItem) {
+    if (!isAdmin) return;
+    if (item.is_sensitive && !localUnlocked) {
+      setPendingEditItem(item);
+      setDialog("unlock");
+      return;
+    }
     setEditItem(item);
     setDialog("edit");
+  }
+
+  function handleUnlockSuccess() {
+    setLocalUnlocked(true);
+    if (pendingEditItem) {
+      setEditItem(pendingEditItem);
+      setPendingEditItem(null);
+      setDialog("edit");
+    }
   }
 
   function handleReveal(item: VaultItem) {
@@ -179,7 +198,7 @@ export function VaultClient({
       });
       return;
     }
-    if (item.is_sensitive && !unlocked) {
+    if (item.is_sensitive && !localUnlocked) {
       setDialog("unlock");
       return;
     }
@@ -245,9 +264,11 @@ export function VaultClient({
                 <ShieldAlert className="size-3.5" /> Activar contraseña
               </Button>
             )}
-            <Button size="sm" onClick={() => setDialog("add")}>
-              <Plus className="size-3.5" /> Añadir
-            </Button>
+            {isAdmin && (
+              <Button size="sm" onClick={() => setDialog("add")}>
+                <Plus className="size-3.5" /> Añadir
+              </Button>
+            )}
           </div>
         }
       />
@@ -397,14 +418,16 @@ export function VaultClient({
                         </td>
                         <td className="px-5 py-3">{expiresLabel(item.expires_at)}</td>
                         <td className="px-5 py-3">
-                          <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                            <Button variant="ghost" size="icon-xs" onClick={() => openEdit(item)} aria-label="Editar">
-                              <Pencil className="size-3.5" />
-                            </Button>
-                            <Button variant="ghost" size="icon-xs" onClick={() => handleDelete(item.id)} aria-label="Eliminar" className="text-destructive hover:bg-destructive/10 hover:text-destructive">
-                              <Trash2 className="size-3.5" />
-                            </Button>
-                          </div>
+                          {isAdmin && (
+                            <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                              <Button variant="ghost" size="icon-xs" onClick={() => openEdit(item)} aria-label="Editar">
+                                <Pencil className="size-3.5" />
+                              </Button>
+                              <Button variant="ghost" size="icon-xs" onClick={() => handleDelete(item.id)} aria-label="Eliminar" className="text-destructive hover:bg-destructive/10 hover:text-destructive">
+                                <Trash2 className="size-3.5" />
+                              </Button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     );
@@ -452,7 +475,10 @@ export function VaultClient({
             <DialogTitle>Desbloquear bóveda</DialogTitle>
             <DialogDescription>Introduce la contraseña maestra para acceder a los secretos sensibles. La sesión dura 4 horas.</DialogDescription>
           </DialogHeader>
-          <UnlockForm onClose={() => setDialog(null)} />
+          <UnlockForm
+            onClose={() => setDialog(null)}
+            onSuccess={pendingEditItem ? handleUnlockSuccess : undefined}
+          />
         </DialogContent>
       </Dialog>
 

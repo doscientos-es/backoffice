@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Bóveda · doscientos" };
 export const dynamic = "force-dynamic";
 
 export default async function VaultPage() {
-  await requireUser();
+  const user = await requireUser();
   const supabase = await createServerClient();
 
   const [itemsResult, settingsResult, clientsResult] = await Promise.all([
@@ -40,6 +40,8 @@ export default async function VaultPage() {
     created_at: string;
   };
 
+  const isAdmin = user.role === "owner" || user.role === "admin";
+
   return (
     <VaultClient
       items={(itemsResult.data as VaultItemRow[] | null) ?? []}
@@ -48,6 +50,7 @@ export default async function VaultPage() {
       clients={
         (clientsResult.data as Array<{ id: string; name: string }> | null) ?? []
       }
+      isAdmin={isAdmin}
     />
   );
 }

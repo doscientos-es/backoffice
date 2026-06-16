@@ -7,7 +7,14 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { setVaultPassword, unlockVault } from "../actions";
 
 /** Dialog body: unlock the vault with master password */
-export function UnlockForm({ onClose }: { onClose: () => void }) {
+export function UnlockForm({
+  onClose,
+  onSuccess,
+}: {
+  onClose: () => void;
+  /** Called after a successful unlock instead of reloading the page. */
+  onSuccess?: () => void;
+}) {
   const feedback = useFormFeedback();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -17,7 +24,11 @@ export function UnlockForm({ onClose }: { onClose: () => void }) {
     const result = await unlockVault(fd);
     if (result.ok) {
       feedback.setSuccess("Bóveda desbloqueada");
-      setTimeout(() => { onClose(); window.location.reload(); }, 500);
+      setTimeout(() => {
+        onClose();
+        if (onSuccess) onSuccess();
+        else window.location.reload();
+      }, 500);
     } else {
       feedback.setError(result.error);
     }
