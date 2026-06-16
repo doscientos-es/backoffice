@@ -100,12 +100,22 @@ export default async function LeadsPage({
           { key: "source", label: "Origen", options: SOURCE_FILTER_OPTIONS },
         ]}
         pagination={{ page, pageSize: LEAD_LIST_PAGE_SIZE, total: count }}
-        headers={["Nombre", "Empresa", "Email", "Estado", "Responsable", "Creado", "Acciones"]}
+        headers={[
+          { label: "Nombre", sortKey: "name" },
+          { label: "Empresa", sortKey: "company" },
+          "Email",
+          { label: "Estado", sortKey: "status" },
+          "Responsable",
+          { label: "Creado", sortKey: "created_at" },
+          "Acciones",
+        ]}
         align={["left", "left", "left", "left", "left", "left", "right"]}
+        exportFilename="leads"
         addHref="/leads/new"
         addLabel="Añadir lead"
         rows={enrichedLeads.map((l) => ({
           id: l.id,
+          csvValues: [l.name, l.company ?? "", l.email ?? "", l.status, l.assignee?.name ?? "", l.created_at],
           cells: [
             <Link
               key="name"

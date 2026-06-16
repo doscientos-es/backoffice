@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth";
 import { listClients } from "@/lib/clients/queries";
-import { CLIENT_LIST_PAGE_SIZE } from "@/lib/clients/types";
+import { CLIENT_LIST_PAGE_SIZE, CLIENT_SORT_COLUMNS } from "@/lib/clients/types";
+import { parsePage, parseSortParam, parseStringParam } from "@/lib/utils/search-params";
 import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -13,14 +14,15 @@ export const dynamic = "force-dynamic";
 export default async function ClientsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   await requireUser();
   const sp = await searchParams;
-  const q = (sp.q ?? "").trim();
-  const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
+  const q = parseStringParam(sp, "q");
+  const page = parsePage(sp);
+  const { sort, dir } = parseSortParam(sp, CLIENT_SORT_COLUMNS, "created_at", "desc");
 
-  const { data, count } = await listClients({ q, page });
+  const { data, count } = await listClients({ q, page, sort, dir });
 
   return (
     <ClientsList
@@ -48,6 +50,12 @@ export default async function ClientsPage({
           </Link>
         </Button>
       }
+      headers={[
+        { label: "Nombre", sortKey: "name" },
+        { label: "NIF", sortKey: "nif" },
+        { label: "Email", sortKey: "email" },
+      ]}
+      exportFilename="clientes"
       rows={
         data?.map((c) => ({
           id: c.id as string,
@@ -66,9 +74,9 @@ export default async function ClientsPage({
             (c.nif as string | null) ?? "—",
             (c.email as string | null) ?? "—",
           ],
+          csvValues: [c.name, c.nif ?? "", c.email ?? ""],
         })) ?? []
       }
-      headers={["Nombre", "NIF", "Email"]}
     />
   );
 }

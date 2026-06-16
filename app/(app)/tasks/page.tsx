@@ -6,9 +6,9 @@ import { requireUser } from "@/lib/auth";
 import { TASK_PRIORITY, TASK_STATUS, type TaskPriority, type TaskStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { listTasksBoard, listTasksList } from "@/lib/tasks/queries";
-import { TASK_LIST_PAGE_SIZE } from "@/lib/tasks/types";
+import { TASK_LIST_PAGE_SIZE, TASK_SORT_COLUMNS } from "@/lib/tasks/types";
 import { formatDate } from "@/lib/utils";
-import { parseStringParam, parsePage } from "@/lib/utils/search-params";
+import { parseStringParam, parsePage, parseSortParam } from "@/lib/utils/search-params";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { TaskCreateDialog } from "./task-create-dialog";
@@ -43,6 +43,7 @@ export default async function TasksPage({
   const priority = parseStringParam(sp, "priority");
   const projectId = parseStringParam(sp, "project");
   const page = parsePage(sp);
+  const { sort, dir } = parseSortParam(sp, TASK_SORT_COLUMNS, "priority", "desc");
 
   const supabase = await createServerClient();
 
@@ -96,11 +97,19 @@ export default async function TasksPage({
     );
   }
 
-  const { data, count, error } = await listTasksList({ q, status, priority, projectId, page });
+  const { data, count, error } = await listTasksList({ q, status, priority, projectId, page, sort, dir });
 
   const rows = data.map((t) => ({
     id: t.id,
     href: `/tasks/${t.id}`,
+    csvValues: [
+      t.title,
+      t.projects?.name ?? "",
+      t.status,
+      t.priority,
+      t.team_members?.name ?? "",
+      t.due_date ?? "",
+    ],
     cells: [
       t.title,
       t.projects ? (
@@ -143,8 +152,17 @@ export default async function TasksPage({
       }
       addHref="/tasks/new"
       addLabel="Nueva tarea"
-      headers={["Título", "Proyecto", "Estado", "Prioridad", "Asignada", "Vence", ""]}
+      headers={[
+        { label: "Título", sortKey: "title" },
+        "Proyecto",
+        { label: "Estado", sortKey: "status" },
+        { label: "Prioridad", sortKey: "priority" },
+        "Asignada",
+        { label: "Vence", sortKey: "due_date" },
+        "",
+      ]}
       align={["left", "left", "left", "left", "left", "left", "right"]}
+      exportFilename="tareas"
       rows={rows}
     />
   );

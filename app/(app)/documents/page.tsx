@@ -2,6 +2,7 @@ import { ListPage } from "@/components/layout/list-page";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
+import { escapeIlike, parsePage, parseSortParam, parseStringParam } from "@/lib/utils/search-params";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Documentos · doscientos" };
@@ -9,19 +10,18 @@ export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 25;
 
-function escapeIlike(value: string): string {
-  return value.replace(/[%_\\]/g, (m) => `\\${m}`);
-}
+const DOCUMENT_SORT_COLUMNS = ["name", "mime_type", "size_bytes", "created_at"] as const;
 
 export default async function DocumentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   await requireUser();
   const sp = await searchParams;
-  const q = (sp.q ?? "").trim();
-  const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
+  const q = parseStringParam(sp, "q");
+  const page = parsePage(sp);
+  const { sort, dir } = parseSortParam(sp, DOCUMENT_SORT_COLUMNS, "created_at", "desc");
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
@@ -33,8 +33,9 @@ export default async function DocumentsPage({
 
   if (q.length > 0) query = query.ilike("name", `%${escapeIlike(q)}%`);
 
+  const ascending = sort !== "created_at" ? dir !== "desc" : false;
   const { data, error, count } = await query
-    .order("created_at", { ascending: false })
+    .order(sort, { ascending, nullsFirst: false })
     .range(from, to);
 
   return (
@@ -44,9 +45,14 @@ export default async function DocumentsPage({
       error={error?.message}
       searchKey="q"
       searchPlaceholder="Buscar por nombre…"
-      filters={[]}
       pagination={{ page, pageSize: PAGE_SIZE, total: count ?? 0 }}
-      headers={["Nombre", "Formato", "Tamaño", "Subido"]}
+      headers={[
+        { label: "Nombre", sortKey: "name" },
+        { label: "Formato", sortKey: "mime_type" },
+        { label: "Tamaño", sortKey: "size_bytes" },
+        { label: "Subido", sortKey: "created_at" },
+      ]}
+      exportFilename="documentos"
       rows={
         data?.map((d) => ({
           id: d.id as string,
@@ -56,6 +62,12 @@ export default async function DocumentsPage({
             (d.mime_type as string | null) ?? null,
             d.size_bytes ? `${Math.ceil(Number(d.size_bytes) / 1024)} KB` : null,
             formatDate(d.created_at as string),
+          ],
+          csvValues: [
+            d.name as string,
+            (d.mime_type as string | null) ?? "",
+            d.size_bytes ? Math.ceil(Number(d.size_bytes) / 1024) : 0,
+            d.created_at as string,
           ],
         })) ?? []
       }

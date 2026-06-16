@@ -9,7 +9,9 @@ import {
 } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { parseEnumParam, parsePage, parseStringParam } from "@/lib/utils/search-params";
+import { parseEnumParam, parsePage, parseSortParam, parseStringParam } from "@/lib/utils/search-params";
+
+const SUBSCRIPTION_SORT_COLUMNS = ["name", "status", "amount", "next_invoice_date"] as const;
 import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -44,6 +46,7 @@ export default async function SubscriptionsPage({
     Object.keys(SUBSCRIPTION_BILLING_CYCLE) as SubscriptionBillingCycle[],
   );
   const page = parsePage(sp);
+  const { sort, dir } = parseSortParam(sp, SUBSCRIPTION_SORT_COLUMNS, "next_invoice_date", "asc");
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
@@ -61,7 +64,7 @@ export default async function SubscriptionsPage({
   if (billingCycle) query = query.eq("billing_cycle", billingCycle);
 
   const { data, error, count } = await query
-    .order("next_invoice_date", { ascending: true, nullsFirst: false })
+    .order(sort, { ascending: dir === "asc", nullsFirst: false })
     .range(from, to);
 
   type Row = {
@@ -106,12 +109,12 @@ export default async function SubscriptionsPage({
       title="Suscripciones"
       description="Servicios recurrentes con facturación periódica."
       headers={[
-        { label: "Nombre", sortable: true },
-        { label: "Cliente", sortable: true },
-        "Estado",
+        { label: "Nombre", sortKey: "name" },
+        "Cliente",
+        { label: "Estado", sortKey: "status" },
         "Ciclo",
-        { label: "Importe base", align: "right" },
-        { label: "Próxima factura", sortable: true },
+        { label: "Importe base", align: "right", sortKey: "amount" },
+        { label: "Próxima factura", sortKey: "next_invoice_date" },
       ]}
       align={["left", "left", "left", "left", "right", "left"]}
       rows={rows}

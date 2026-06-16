@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth";
 import { listProjects } from "@/lib/projects/queries";
-import { PROJECT_LIST_PAGE_SIZE } from "@/lib/projects/types";
+import { PROJECT_LIST_PAGE_SIZE, PROJECT_SORT_COLUMNS } from "@/lib/projects/types";
+import { parsePage, parseSortParam, parseStringParam } from "@/lib/utils/search-params";
 import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -23,16 +24,17 @@ const STATUS_OPTIONS = [
 export default async function ProjectsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; page?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await requireUser();
   const canEdit = user.role !== "viewer";
   const sp = await searchParams;
-  const q = (sp.q ?? "").trim();
-  const status = (sp.status ?? "").trim();
-  const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
+  const q = parseStringParam(sp, "q");
+  const status = parseStringParam(sp, "status");
+  const page = parsePage(sp);
+  const { sort, dir } = parseSortParam(sp, PROJECT_SORT_COLUMNS, "updated_at", "desc");
 
-  const { data, count } = await listProjects({ q, status, page });
+  const { data, count } = await listProjects({ q, status, page, sort, dir });
 
   return (
     <ProjectsList
@@ -62,7 +64,13 @@ export default async function ProjectsPage({
           </Link>
         </Button>
       }
-      headers={["Nombre", "Cliente", "Estado", "GitHub"]}
+      headers={[
+        { label: "Nombre", sortKey: "name" },
+        "Cliente",
+        { label: "Estado", sortKey: "status" },
+        "GitHub",
+      ]}
+      exportFilename="proyectos"
       rows={data.map((p) => {
         const mode = (p.github_sync_mode as GitHubSyncMode | null) ?? "none";
         return {
@@ -84,6 +92,7 @@ export default async function ProjectsPage({
             p.status as string,
             <GitHubModeBadge key="gh" mode={mode} />,
           ],
+          csvValues: [p.name, p.client_name ?? "", p.status ?? "", mode],
         };
       })}
     />
