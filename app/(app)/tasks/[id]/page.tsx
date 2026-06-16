@@ -18,6 +18,7 @@ import { syncTaskToGithub } from "../actions";
 import { DeleteTaskButton } from "./delete-task-button";
 import { type CommentItem, TaskComments } from "./task-comments";
 import { TaskEditDialog } from "./task-edit-dialog";
+import { TaskStatusSelect } from "./task-status-select";
 
 export const dynamic = "force-dynamic";
 
@@ -73,7 +74,11 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
         back={<BackLink href={backHref} label={backLabel} />}
         actions={
           <div className="flex items-center gap-2">
-            <StatusBadge meta={TASK_STATUS} value={task.status as string} />
+            {canEdit ? (
+              <TaskStatusSelect taskId={id} status={task.status as string} />
+            ) : (
+              <StatusBadge meta={TASK_STATUS} value={task.status as string} />
+            )}
             {canEdit ? (
               <TaskEditDialog
                 task={{

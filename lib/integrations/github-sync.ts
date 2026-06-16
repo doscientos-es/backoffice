@@ -8,7 +8,12 @@
  */
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createGitHubIssue } from "./github";
+import {
+  createGitHubBranchFromDefault,
+  createGitHubIssue,
+  issueBranchName,
+  updateGitHubIssueState,
+} from "./github";
 
 export type GitHubSyncMode = "none" | "link_only" | "bidirectional";
 
@@ -51,28 +56,61 @@ async function loadEligibleProject(projectId: string): Promise<ProjectSyncRow | 
 }
 
 /**
- * Auto-create a GitHub issue for a task. Non-blocking: failures are logged and swallowed.
- * Returns true on success, false otherwise.
+ * Auto-create a GitHub issue for a task, assign it to the task's assignee (if they
+ * have a github_handle), and create a feature branch off the default branch.
+ * Non-blocking: failures are logged and swallowed. Returns true on success.
  */
 export async function autoSyncTaskIssue(taskId: string, projectId: string): Promise<boolean> {
   try {
     const project = await loadEligibleProject(projectId);
     if (!project) return false;
+
     const admin = createAdminClient();
+
     const { data: task } = await admin
       .from("tasks")
-      .select("id, title, description, github_issue_number")
+      .select("id, title, description, assignee_id, github_issue_number")
       .eq("id", taskId)
       .maybeSingle();
     if (!task || task.github_issue_number) return false;
 
+    // Resolve github_handle for the assignee
+    let assigneeHandle: string | undefined;
+    if (task.assignee_id) {
+      const { data: member } = await admin
+        .from("team_members")
+        .select("github_handle")
+        .eq("id", task.assignee_id as string)
+        .maybeSingle();
+      if (member?.github_handle) assigneeHandle = member.github_handle as string;
+    }
+
+    const owner = project.github_repo_owner as string;
+    const repo = project.github_repo_name as string;
+    const installationId = project.github_installation_id as number;
+    const title = task.title as string;
+
     const issue = await createGitHubIssue({
-      installationId: project.github_installation_id as number,
-      owner: project.github_repo_owner as string,
-      repo: project.github_repo_name as string,
-      title: task.title as string,
+      installationId,
+      owner,
+      repo,
+      title,
       body: (task.description as string | null) ?? "",
+      assignees: assigneeHandle ? [assigneeHandle] : [],
     });
+
+    // Create feature branch — non-fatal if it fails (e.g. duplicate, no push access)
+    let branchName: string | null = null;
+    try {
+      branchName = await createGitHubBranchFromDefault({
+        installationId,
+        owner,
+        repo,
+        branchName: issueBranchName(issue.number, title),
+      });
+    } catch (branchErr) {
+      console.warn("[github-sync] branch creation skipped", { taskId, err: branchErr });
+    }
 
     const now = new Date().toISOString();
     await admin
@@ -81,12 +119,55 @@ export async function autoSyncTaskIssue(taskId: string, projectId: string): Prom
         github_issue_number: issue.number,
         github_issue_url: issue.html_url,
         github_synced_at: now,
+        ...(branchName ? { github_branch: branchName } : {}),
       })
       .eq("id", taskId);
     await admin.from("projects").update({ github_synced_at: now }).eq("id", project.id);
     return true;
   } catch (err) {
     console.error("[github-sync] autoSyncTaskIssue failed", { taskId, projectId, err });
+    return false;
+  }
+}
+
+/**
+ * Syncs a task's status change back to its linked GitHub issue.
+ * - done / cancelled  → closes the issue
+ * - any other status  → reopens the issue
+ *
+ * Only runs for bidirectional projects with auto-sync enabled and a linked issue.
+ * Fire-and-forget safe: errors are logged, never thrown.
+ */
+export async function syncTaskStatusToGitHub(taskId: string, newStatus: string): Promise<boolean> {
+  try {
+    const admin = createAdminClient();
+    const { data: task } = await admin
+      .from("tasks")
+      .select("github_issue_number, project_id")
+      .eq("id", taskId)
+      .maybeSingle();
+
+    if (!task?.github_issue_number || !task?.project_id) return false;
+
+    const project = await loadEligibleProject(task.project_id as string);
+    if (!project) return false;
+
+    const state = newStatus === "done" || newStatus === "cancelled" ? "closed" : "open";
+    await updateGitHubIssueState(
+      project.github_installation_id as number,
+      project.github_repo_owner as string,
+      project.github_repo_name as string,
+      task.github_issue_number as number,
+      state,
+    );
+
+    await admin
+      .from("tasks")
+      .update({ github_synced_at: new Date().toISOString() })
+      .eq("id", taskId);
+    return true;
+  } catch (err) {
+    console.error("[github-sync] syncTaskStatusToGitHub failed", { taskId, newStatus, err });
     return false;
   }
 }

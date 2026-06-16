@@ -6,13 +6,18 @@
  *
  * Steps (sec. 19.2):
  *   1. Load task + project (needs github_repo_owner / github_repo_name / installation_id)
- *   2. Create issue via GitHub API
- *   3. Save github_issue_number + github_issue_url to the task
- *   4. Log activity
+ *   2. Create issue via GitHub API (with assignee)
+ *   3. Create feature branch off default branch
+ *   4. Save github_issue_number + github_issue_url + github_branch to the task
+ *   5. Log activity
  */
 
 import { requireUser } from "@/lib/auth";
-import { createGitHubIssue } from "@/lib/integrations/github";
+import {
+  createGitHubBranchFromDefault,
+  createGitHubIssue,
+  issueBranchName,
+} from "@/lib/integrations/github";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
 import { type NextRequest, NextResponse } from "next/server";
@@ -118,14 +123,19 @@ export async function POST(req: NextRequest) {
     if (tagName) labels.push(tagName);
   }
 
+  const owner = project.github_repo_owner as string;
+  const repo = project.github_repo_name as string;
+  const installationId = project.github_installation_id as number;
+  const title = task.title as string;
+
   // Create issue in GitHub
   let issue: Awaited<ReturnType<typeof createGitHubIssue>>;
   try {
     issue = await createGitHubIssue({
-      installationId: project.github_installation_id as number,
-      owner: project.github_repo_owner as string,
-      repo: project.github_repo_name as string,
-      title: task.title as string,
+      installationId,
+      owner,
+      repo,
+      title,
       body: (task.description as string | null) ?? "",
       labels,
       assignees: assigneeHandle ? [assigneeHandle] : [],
@@ -137,6 +147,22 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Create feature branch off the default branch — non-fatal
+  let branchName: string | null = null;
+  try {
+    branchName = await createGitHubBranchFromDefault({
+      installationId,
+      owner,
+      repo,
+      branchName: issueBranchName(issue.number, title),
+    });
+  } catch (branchErr) {
+    console.warn("[create-issue] branch creation skipped", {
+      task_id: body.task_id,
+      err: branchErr,
+    });
+  }
+
   // Save back to task
   await admin
     .from("tasks")
@@ -144,6 +170,7 @@ export async function POST(req: NextRequest) {
       github_issue_number: issue.number,
       github_issue_url: issue.html_url,
       github_synced_at: new Date().toISOString(),
+      ...(branchName ? { github_branch: branchName } : {}),
     })
     .eq("id", body.task_id);
 
@@ -154,12 +181,13 @@ export async function POST(req: NextRequest) {
     action: "github_issue_created",
     actor_type: "team",
     actor_id: user.id,
-    metadata: { issue_number: issue.number, issue_url: issue.html_url },
+    metadata: { issue_number: issue.number, issue_url: issue.html_url, branch: branchName },
   });
 
   return NextResponse.json({
     ok: true,
     issue_number: issue.number,
     issue_url: issue.html_url,
+    branch: branchName,
   });
 }

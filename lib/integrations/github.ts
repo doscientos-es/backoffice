@@ -169,6 +169,73 @@ export async function createGitHubIssue(params: CreateIssueParams): Promise<GitH
   });
 }
 
+// ---------------------------------------------------------------------------
+// Branch helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Slugifies a task title into a valid git branch segment (≤ 50 chars).
+ */
+function slugifyTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 50);
+}
+
+/**
+ * Builds the branch name for an issue: `feature/{issueNumber}-{slug}`.
+ */
+export function issueBranchName(issueNumber: number, title: string): string {
+  return `feature/${issueNumber}-${slugifyTitle(title)}`;
+}
+
+/**
+ * Creates a branch off the repository's default branch HEAD.
+ * Reuses a single installation token for all three API calls.
+ * Returns the full branch name (e.g. "feature/42-fix-login").
+ */
+export async function createGitHubBranchFromDefault(params: {
+  installationId: number;
+  owner: string;
+  repo: string;
+  branchName: string;
+}): Promise<string> {
+  const token = await getInstallationToken(params.installationId);
+  const { default_branch } = await ghFetch<{ default_branch: string }>(
+    token,
+    "GET",
+    `/repos/${params.owner}/${params.repo}`,
+  );
+  const refData = await ghFetch<{ object: { sha: string } }>(
+    token,
+    "GET",
+    `/repos/${params.owner}/${params.repo}/git/ref/heads/${default_branch}`,
+  );
+  await ghFetch(token, "POST", `/repos/${params.owner}/${params.repo}/git/refs`, {
+    ref: `refs/heads/${params.branchName}`,
+    sha: refData.object.sha,
+  });
+  return params.branchName;
+}
+
+/**
+ * Opens or closes a GitHub issue.
+ * Closing: done / cancelled statuses.
+ * Opening: any other status (todo, in_progress, in_review).
+ */
+export async function updateGitHubIssueState(
+  installationId: number,
+  owner: string,
+  repo: string,
+  issueNumber: number,
+  state: "open" | "closed",
+): Promise<void> {
+  const token = await getInstallationToken(installationId);
+  await ghFetch(token, "PATCH", `/repos/${owner}/${repo}/issues/${issueNumber}`, { state });
+}
+
 export async function getGitHubIssue(
   installationId: number,
   owner: string,
