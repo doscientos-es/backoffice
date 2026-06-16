@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Send } from "lucide-react";
+import { CheckCheck, Send } from "lucide-react";
 import { useRef, useState, useTransition } from "react";
-import { sendPreviewLink } from "../actions";
+import { markProposalAsSent, sendPreviewLink } from "../actions";
 
 type Props = {
   id: string;
@@ -24,8 +24,22 @@ export function SendPreviewButton({ id, defaultEmail, alreadySent }: Props) {
   const [to, setTo] = useState(defaultEmail ?? "");
   const [message, setMessage] = useState("");
   const feedback = useFormFeedback({ successResetMs: 4000 });
+  const markFeedback = useFormFeedback({ successResetMs: 4000 });
   const [pending, startTransition] = useTransition();
+  const [markPending, startMarkTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
+
+  const handleMarkAsSent = () => {
+    markFeedback.setPending();
+    startMarkTransition(async () => {
+      const res = await markProposalAsSent({ id });
+      if (!res.ok) {
+        markFeedback.setError(res.error);
+      } else {
+        markFeedback.setSuccess("Marcada como enviada");
+      }
+    });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,9 +61,21 @@ export function SendPreviewButton({ id, defaultEmail, alreadySent }: Props) {
 
   if (!open) {
     return (
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
+        <FormFeedback state={markFeedback.state} pendingLabel="Guardando…" />
         <FormFeedback state={feedback.state} pendingLabel="Enviando…" />
-        <Button type="button" size="sm" onClick={() => setOpen(true)} disabled={pending}>
+        {!alreadySent && (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={handleMarkAsSent}
+            disabled={markPending || pending}
+          >
+            <CheckCheck aria-hidden /> Marcar como enviada
+          </Button>
+        )}
+        <Button type="button" size="sm" onClick={() => setOpen(true)} disabled={pending || markPending}>
           <Send aria-hidden /> {alreadySent ? "Reenviar preview" : "Enviar preview al cliente"}
         </Button>
       </div>

@@ -3,6 +3,7 @@
 import { LineItemsTable } from "@/components/finance/line-items-table";
 import { KeyPointsEditor } from "@/components/proposals/key-points-editor";
 import { AutosaveIndicator } from "@/components/ui/autosave-indicator";
+import { Button } from "@/components/ui/button";
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -103,6 +104,16 @@ export function ProposalEditor({
           savedAt={autosave.savedAt}
           error={autosave.error}
         />
+        {!locked && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={autosave.saveNow}
+            disabled={autosave.status === "saving"}
+          >
+            Guardar
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">

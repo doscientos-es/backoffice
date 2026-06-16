@@ -69,7 +69,10 @@ export function Sidebar({ user }: { user: CurrentUser; verifactuMode: string }) 
       <div className="px-2 pb-2">
         <CommandPaletteTrigger />
       </div>
-      <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-1" aria-label="Navegación principal">
+      <nav
+        className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-1"
+        aria-label="Navegación principal"
+      >
         {NAV_PRIMARY.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`);
           return (

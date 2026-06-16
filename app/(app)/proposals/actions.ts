@@ -368,10 +368,7 @@ export async function restoreProposal(
   if (!z.string().uuid().safeParse(id).success) return { ok: false, error: "ID inválido" };
 
   const supabase = await createServerClient();
-  const { error } = await supabase
-    .from("proposals")
-    .update({ deleted_at: null })
-    .eq("id", id);
+  const { error } = await supabase.from("proposals").update({ deleted_at: null }).eq("id", id);
 
   if (error) {
     log.error({ err: error, id }, "restore_proposal_failed");
@@ -409,6 +406,47 @@ export async function updateProposalPortalAccess(
   }
 
   revalidatePath(`/proposals/${parsed.data.id}`);
+  return { ok: true };
+}
+
+// ---------------- MARK AS SENT (without email) ----------------
+
+/**
+ * Transitions a draft proposal to `sent` and assigns it a legal number without sending any email — useful when the proposal was delivered in person, by phone, or through another channel.
+ */
+export async function markProposalAsSent(
+  input: unknown,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireUser();
+
+  const parsed = z.object({ id: z.string().uuid() }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: "ID inválido" };
+  const { id } = parsed.data;
+
+  const supabase = await createServerClient();
+  const { data: proposal, error: readError } = await supabase
+    .from("proposals")
+    .select("id, number, status")
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (readError || !proposal) return { ok: false, error: "Propuesta no encontrada" };
+  if (proposal.status !== "draft") return { ok: true }; // idempotent
+
+  const number = (proposal.number as string | null) ?? (await nextProposalNumber(supabase));
+  const { error } = await supabase
+    .from("proposals")
+    .update({ number, status: "sent", sent_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) {
+    log.error({ err: error, id }, "mark_proposal_as_sent_failed");
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath(`/proposals/${id}`);
+  revalidatePath("/proposals");
   return { ok: true };
 }
 
