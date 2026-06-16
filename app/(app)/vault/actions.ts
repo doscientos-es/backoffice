@@ -18,7 +18,6 @@ import {
   verifyVaultPassword,
 } from "@/lib/vault/access";
 import { decryptSecret, encryptSecret } from "@/lib/vault/crypto";
-import { z } from "zod";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -149,20 +148,29 @@ export const setVaultPassword = defineAction({
 
 export const revealVaultSecret = defineAction({
   name: "vault.reveal",
-  schema: z.object({ id: z.string().uuid(), is_sensitive: z.boolean() }),
+  schema: uuidIdInput,
   handler: async (input) => {
-    const hash = await getVaultPasswordHash();
-    if (input.is_sensitive && !(await isVaultUnlocked(hash))) {
-      throw new Error("Desbloquea la bóveda para ver este secreto");
-    }
     const supabase = await createServerClient();
     const { data, error } = await supabase
       .from("vault_items")
-      .select("secret_encrypted")
+      .select("secret_encrypted, is_sensitive")
       .eq("id", input.id)
       .is("deleted_at", null)
       .single();
     if (error || !data) throw new Error("Item no encontrado");
-    return { secret: decryptSecret((data as { secret_encrypted: string }).secret_encrypted) };
+    const row = data as { secret_encrypted: string; is_sensitive: boolean };
+
+    // The unlock gate is decided from the STORED sensitivity flag, never from a
+    // client-supplied value. Trusting client input here was an IDOR/broken
+    // access-control vector: any caller could pass is_sensitive=false and
+    // decrypt a sensitive secret without unlocking the vault.
+    if (row.is_sensitive) {
+      const hash = await getVaultPasswordHash();
+      if (!(await isVaultUnlocked(hash))) {
+        throw new Error("Desbloquea la bóveda para ver este secreto");
+      }
+    }
+
+    return { secret: decryptSecret(row.secret_encrypted) };
   },
 });

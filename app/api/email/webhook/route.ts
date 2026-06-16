@@ -11,13 +11,46 @@ const RESEND_TO_INTERACTION: Record<string, string> = {
   "email.complained": "email_complained",
 };
 
-function verifySignature(secret: string, body: string, signature: string | null): boolean {
-  if (!signature) return false;
-  const expected = createHmac("sha256", secret).update(body).digest("hex");
-  const a = Buffer.from(expected);
-  const b = Buffer.from(signature.replace(/^sha256=/, ""));
-  if (a.length !== b.length) return false;
-  return timingSafeEqual(a, b);
+/** Maximum age (seconds) accepted for a Svix timestamp to prevent replay attacks. */
+const SVIX_TIMESTAMP_TOLERANCE_S = 300;
+
+/**
+ * Verifies a Resend webhook using the Svix signing scheme.
+ *
+ * Message = `${svix-id}.${svix-timestamp}.${rawBody}`
+ * Secret  = base64-decoded `whsec_…` value from Resend dashboard.
+ * Header  = `svix-signature: v1,<base64> [v1,<base64> …]`
+ */
+function verifySvixSignature(
+  secret: string,
+  body: string,
+  msgId: string | null,
+  msgTimestamp: string | null,
+  sigHeader: string | null,
+): boolean {
+  if (!msgId || !msgTimestamp || !sigHeader) return false;
+
+  // Replay protection: reject messages older than tolerance window.
+  const ts = Number(msgTimestamp);
+  if (!Number.isFinite(ts) || Math.abs(Date.now() / 1000 - ts) > SVIX_TIMESTAMP_TOLERANCE_S) {
+    return false;
+  }
+
+  // Decode the whsec_<base64> secret used by Resend.
+  const rawKey = Buffer.from(secret.startsWith("whsec_") ? secret.slice(6) : secret, "base64");
+
+  const toSign = `${msgId}.${msgTimestamp}.${body}`;
+  const expected = createHmac("sha256", rawKey).update(toSign).digest("base64");
+
+  // The header may carry multiple space-separated `v1,<base64>` signatures.
+  return sigHeader
+    .split(" ")
+    .filter((s) => s.startsWith("v1,"))
+    .some((sig) => {
+      const a = Buffer.from(expected, "base64");
+      const b = Buffer.from(sig.slice(3), "base64");
+      return a.length === b.length && timingSafeEqual(a, b);
+    });
 }
 
 export async function POST(request: NextRequest) {
@@ -26,9 +59,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Webhook not configured" }, { status: 503 });
   }
   const raw = await request.text();
-  const signature =
-    request.headers.get("resend-signature") ?? request.headers.get("svix-signature");
-  if (!verifySignature(env.RESEND_WEBHOOK_SECRET, raw, signature)) {
+  if (
+    !verifySvixSignature(
+      env.RESEND_WEBHOOK_SECRET,
+      raw,
+      request.headers.get("svix-id"),
+      request.headers.get("svix-timestamp"),
+      request.headers.get("svix-signature"),
+    )
+  ) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 

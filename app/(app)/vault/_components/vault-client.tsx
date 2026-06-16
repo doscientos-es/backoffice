@@ -156,7 +156,7 @@ export function VaultClient({
     if (nonSensitive.length === 0) return;
     startTransition(async () => {
       const results = await Promise.all(
-        nonSensitive.map((item) => revealVaultSecret({ id: item.id, is_sensitive: false })),
+        nonSensitive.map((item) => revealVaultSecret({ id: item.id })),
       );
       setRevealed((rv) => {
         const next = { ...rv };
@@ -203,7 +203,7 @@ export function VaultClient({
       return;
     }
     startTransition(async () => {
-      const r = await revealVaultSecret({ id: item.id, is_sensitive: item.is_sensitive });
+      const r = await revealVaultSecret({ id: item.id });
       if (r.ok && "secret" in r) setRevealed((rv) => ({ ...rv, [item.id]: r.secret as string }));
     });
   }

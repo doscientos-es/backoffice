@@ -5,12 +5,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { publicEnv } from "@/lib/env";
 import { getBrowserClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export function LoginForm() {
   const search = useSearchParams();
@@ -22,6 +24,8 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const hcaptchaRef = useRef<HCaptcha>(null);
 
   // Stale auth cookies (e.g. session without a team_members row) would loop
   // the user back here forever. Clear them so the next login is clean.
@@ -38,12 +42,21 @@ export function LoginForm() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setFormError(null);
+    if (publicEnv.NEXT_PUBLIC_HCAPTCHA_SITE_KEY && !captchaToken) {
+      setFormError("Por favor, completa el captcha.");
+      return;
+    }
     setLoading(true);
     const supabase = getBrowserClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+      options: { captchaToken: captchaToken ?? undefined },
+    });
     if (authError) {
       setLoading(false);
       setFormError(friendlyError(authError.message));
+      hcaptchaRef.current?.resetCaptcha();
       return;
     }
     // Hard navigation (not router.replace + refresh): forces the browser to
@@ -135,6 +148,16 @@ export function LoginForm() {
               {displayedError}
             </p>
           ) : null}
+          {publicEnv.NEXT_PUBLIC_HCAPTCHA_SITE_KEY && (
+            <div className="flex justify-center">
+              <HCaptcha
+                ref={hcaptchaRef}
+                sitekey={publicEnv.NEXT_PUBLIC_HCAPTCHA_SITE_KEY}
+                onVerify={(token) => setCaptchaToken(token)}
+                onExpire={() => setCaptchaToken(null)}
+              />
+            </div>
+          )}
           <Button type="submit" disabled={loading} className="mt-1">
             {loading ? (
               <>

@@ -1,4 +1,5 @@
 import { optionalDate, optionalText, optionalUuid, requiredText } from "@/lib/schemas/common";
+import { passwordField } from "@/lib/schemas/password";
 import { z } from "zod";
 
 export const VAULT_SERVICES = [
@@ -57,7 +58,7 @@ export const UpdateVaultItemInput = CreateVaultItemInput.extend({
 export type UpdateVaultItemInputType = z.infer<typeof UpdateVaultItemInput>;
 
 export const VaultPasswordInput = z.object({
-  password: z.string().min(8, "Mínimo 8 caracteres"),
+  password: passwordField,
   current_password: z
     .string()
     .optional()

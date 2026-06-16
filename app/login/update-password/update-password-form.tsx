@@ -5,11 +5,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { PasswordStrength } from "@/components/ui/password-strength";
+import { PASSWORD_MIN_LENGTH, validatePassword } from "@/lib/schemas/password";
 import { getBrowserClient } from "@/lib/supabase/browser";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
-const MIN_LENGTH = 8;
+const MIN_LENGTH = PASSWORD_MIN_LENGTH;
 
 export function UpdatePasswordForm() {
   const [password, setPassword] = useState("");
@@ -43,8 +44,9 @@ export function UpdatePasswordForm() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (password.length < MIN_LENGTH) {
-      setError(`La contraseña debe tener al menos ${MIN_LENGTH} caracteres.`);
+    const policyError = validatePassword(password);
+    if (policyError) {
+      setError(policyError);
       return;
     }
     if (password !== confirm) {
@@ -130,7 +132,7 @@ export function UpdatePasswordForm() {
               </div>
               <PasswordStrength value={password} />
               <FieldDescription id="password-hint">
-                Mínimo {MIN_LENGTH} caracteres. Usa mayúsculas, números y símbolos.
+                Mínimo {MIN_LENGTH} caracteres con minúsculas, mayúsculas, números y símbolos.
               </FieldDescription>
             </Field>
             <Field>

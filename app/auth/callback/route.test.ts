@@ -58,8 +58,13 @@ describe("/auth/callback", () => {
     expect(res.headers.get("location")).toBe("http://localhost/inicio");
   });
 
-  it("rejects external next values and falls back to /inicio", async () => {
+  it("rejects absolute external next values and falls back to /inicio", async () => {
     const res = await call("/auth/callback?code=abc&next=https://evil.com/steal");
+    expect(res.headers.get("location")).toBe("http://localhost/inicio");
+  });
+
+  it("rejects protocol-relative next values (//evil.com) and falls back to /inicio", async () => {
+    const res = await call("/auth/callback?code=abc&next=//evil.com/phishing");
     expect(res.headers.get("location")).toBe("http://localhost/inicio");
   });
 

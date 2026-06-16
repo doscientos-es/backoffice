@@ -14,6 +14,7 @@
 import { AI_MODELS, isAIEnabled, runAIJson } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { scopedLogger } from "@/lib/logger";
+import { rateLimit } from "@/lib/ratelimit";
 import { createServerClient } from "@/lib/supabase/server";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -49,10 +50,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "ai_disabled" }, { status: 503 });
   }
 
+  let user: Awaited<ReturnType<typeof requireUser>>;
   try {
-    await requireUser();
+    user = await requireUser();
   } catch {
     return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
+  }
+
+  const rl = rateLimit(`ai:${user.id}`, 10);
+  if (!rl.success) {
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }
 
   let body: z.infer<typeof BodySchema>;
@@ -112,9 +119,11 @@ ${interactionsText || "(sin interacciones registradas)"}`;
     });
     result = ResultSchema.parse(raw);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "AI call failed";
-    log.error({ leadId: body.lead_id, err: message }, "ai_summarize_failed");
-    return NextResponse.json({ error: message }, { status: 502 });
+    log.error(
+      { leadId: body.lead_id, err: err instanceof Error ? err.message : err },
+      "ai_summarize_failed",
+    );
+    return NextResponse.json({ error: "AI service unavailable" }, { status: 502 });
   }
 
   const { error: updateErr } = await supabase

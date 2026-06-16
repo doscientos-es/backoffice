@@ -60,7 +60,9 @@ export function verifyPortalPassword(password: string, stored: string): boolean 
 
 /** HMAC binding an unlock grant to a specific token + password hash. */
 function fingerprint(token: string, passwordHash: string): string {
-  const secret = serverEnv().SUPABASE_SERVICE_ROLE_KEY;
+  const env = serverEnv();
+  // Prefer a dedicated secret to reduce blast radius if the service-role key leaks.
+  const secret = env.PORTAL_COOKIE_SECRET ?? env.SUPABASE_SERVICE_ROLE_KEY;
   return createHmac("sha256", secret).update(`${token}:${passwordHash}`).digest("hex");
 }
 

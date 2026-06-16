@@ -26,7 +26,10 @@ export async function GET(request: NextRequest) {
   const code = url.searchParams.get("code");
   const errorParam = url.searchParams.get("error_description") ?? url.searchParams.get("error");
   const rawNext = url.searchParams.get("next");
-  const next = rawNext && rawNext.startsWith("/") ? rawNext : "/inicio";
+  // Block protocol-relative URLs like //evil.com (startsWith("/") passes but
+  // resolves to an external origin when fed to new URL()).
+  const next =
+    rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/inicio";
 
   if (errorParam) {
     log.warn({ errorParam }, "callback received provider error");

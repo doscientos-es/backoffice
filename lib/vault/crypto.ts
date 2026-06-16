@@ -23,7 +23,15 @@ function getEncryptionKey(): Buffer {
     if (buf.length !== 32) throw new Error("VAULT_ENCRYPTION_KEY must be 32 bytes (base64)");
     return buf;
   }
-  // Fallback: derive from service-role key (dev convenience only).
+  // In production, a dedicated key is mandatory — deriving from the service-role key
+  // would mean a single secret leak compromises both DB access and vault encryption.
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "VAULT_ENCRYPTION_KEY is required in production. " +
+        "Generate one with: openssl rand -base64 32",
+    );
+  }
+  // Dev/test convenience fallback only.
   const seed = serverEnv().SUPABASE_SERVICE_ROLE_KEY;
   return scryptSync(seed, "vault-key-salt-v1", 32) as Buffer;
 }
@@ -46,8 +54,7 @@ export function decryptSecret(ciphertext: string): string {
   const [ivHex, authTagHex, encHex] = parts as [string, string, string];
   const decipher = createDecipheriv(ALGORITHM, key, Buffer.from(ivHex, "hex"));
   decipher.setAuthTag(Buffer.from(authTagHex, "hex"));
-  return Buffer.concat([
-    decipher.update(Buffer.from(encHex, "hex")),
-    decipher.final(),
-  ]).toString("utf8");
+  return Buffer.concat([decipher.update(Buffer.from(encHex, "hex")), decipher.final()]).toString(
+    "utf8",
+  );
 }

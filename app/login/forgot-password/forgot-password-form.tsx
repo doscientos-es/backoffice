@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { publicEnv } from "@/lib/env";
 import { getBrowserClient } from "@/lib/supabase/browser";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 function friendlyError(raw: string): string {
   const m = raw.toLowerCase();
@@ -21,23 +23,27 @@ export function ForgotPasswordForm() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const hcaptchaRef = useRef<HCaptcha>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (publicEnv.NEXT_PUBLIC_HCAPTCHA_SITE_KEY && !captchaToken) {
+      setError("Por favor, completa el captcha.");
+      return;
+    }
     setLoading(true);
     const supabase = getBrowserClient();
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    // Route through /auth/callback so the recovery code is exchanged into a
-    // fresh session (after signing out any pre-existing one) before the user
-    // lands on the update-password form. Otherwise a stale cookie session in
-    // the same browser would be the one whose password gets rewritten.
     const { error: authError } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${origin}/auth/callback?next=${encodeURIComponent("/login/update-password")}`,
+      captchaToken: captchaToken ?? undefined,
     });
     setLoading(false);
     if (authError) {
       setError(friendlyError(authError.message));
+      hcaptchaRef.current?.resetCaptcha();
       return;
     }
     setSent(true);
@@ -103,6 +109,16 @@ export function ForgotPasswordForm() {
               {error}
             </p>
           ) : null}
+          {publicEnv.NEXT_PUBLIC_HCAPTCHA_SITE_KEY && (
+            <div className="flex justify-center">
+              <HCaptcha
+                ref={hcaptchaRef}
+                sitekey={publicEnv.NEXT_PUBLIC_HCAPTCHA_SITE_KEY}
+                onVerify={(token) => setCaptchaToken(token)}
+                onExpire={() => setCaptchaToken(null)}
+              />
+            </div>
+          )}
           <Button type="submit" disabled={loading || !email}>
             {loading ? (
               <>

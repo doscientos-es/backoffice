@@ -5,10 +5,15 @@ const PublicSchema = z.object({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(20),
   NEXT_PUBLIC_APP_URL: z.string().url().default("https://app.doscientos.es"),
   NEXT_PUBLIC_APP_NAME: z.string().default("doscientos backoffice"),
+  NEXT_PUBLIC_HCAPTCHA_SITE_KEY: z.string().optional(),
 });
 
 const ServerSchema = PublicSchema.extend({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(20),
+  // Dedicated HMAC secret for portal unlock cookies. Set this to a random
+  // 32-byte hex string (e.g. `openssl rand -hex 32`). Falls back to the
+  // service-role key when not set; set it to reduce blast radius.
+  PORTAL_COOKIE_SECRET: z.string().min(20).optional(),
   RESEND_API_KEY: z.string().optional().default(""),
   RESEND_WEBHOOK_SECRET: z.string().optional().default(""),
   RESEND_FROM_DOMAIN: z.string().default("doscientos.es"),
@@ -48,6 +53,7 @@ export const publicEnv = PublicSchema.parse({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME,
+  NEXT_PUBLIC_HCAPTCHA_SITE_KEY: process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY,
 });
 
 let cachedServerEnv: z.infer<typeof ServerSchema> | null = null;
