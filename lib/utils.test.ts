@@ -50,7 +50,7 @@ describe("relativeTime", () => {
   it("returns em-dash on empty input", () => {
     expect(relativeTime(null)).toBe("—");
   });
-  it("buckets recent and old timestamps", () => {
+  it("buckets recent and old past timestamps", () => {
     const now = Date.now();
     expect(relativeTime(new Date(now - 5_000))).toBeTypeOf("string");
     expect(relativeTime(new Date(now - 120_000))).toBeTypeOf("string");
@@ -58,6 +58,18 @@ describe("relativeTime", () => {
     expect(relativeTime(new Date(now - 172_800_000))).toBeTypeOf("string");
     expect(relativeTime(new Date(now - 5_184_000_000))).toBeTypeOf("string");
     expect(relativeTime(new Date(now - 63_072_000_000))).toBeTypeOf("string");
+  });
+  it("future dates use the correct time unit, not seconds", () => {
+    const now = Date.now();
+    // 5 hours in the future — must NOT show seconds
+    const fiveHours = relativeTime(new Date(now + 5 * 3_600_000));
+    expect(fiveHours).not.toMatch(/segundo/);
+    expect(fiveHours).toMatch(/hora/);
+    // 3 days in the future
+    const threeDays = relativeTime(new Date(now + 3 * 86_400_000));
+    expect(threeDays).not.toMatch(/segundo/);
+    // 2 months in the future
+    expect(relativeTime(new Date(now + 60 * 86_400_000))).toBeTypeOf("string");
   });
 });
 

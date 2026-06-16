@@ -1,6 +1,7 @@
 "use server";
 
 import { defineAction } from "@/lib/actions/define-action";
+import { requireRole } from "@/lib/auth";
 import { uuidIdInput } from "@/lib/schemas/common";
 import {
   CreateVaultItemInput,
@@ -58,7 +59,23 @@ export const updateVaultItem = defineAction({
   schema: UpdateVaultItemInput,
   revalidate: () => ["/vault"],
   handler: async (input) => {
+    await requireRole(["owner", "admin"]);
     const supabase = await createServerClient();
+
+    // If the stored item is sensitive, the vault must be unlocked.
+    const { data: current } = await supabase
+      .from("vault_items")
+      .select("is_sensitive")
+      .eq("id", input.id)
+      .is("deleted_at", null)
+      .single();
+    if ((current as { is_sensitive: boolean } | null)?.is_sensitive) {
+      const hash = await getVaultPasswordHash();
+      if (!(await isVaultUnlocked(hash))) {
+        throw new Error("Desbloquea la bóveda para editar este secreto sensible");
+      }
+    }
+
     const patch: Record<string, unknown> = {
       name: input.name,
       service: input.service,
@@ -80,6 +97,7 @@ export const deleteVaultItem = defineAction({
   schema: uuidIdInput,
   revalidate: () => ["/vault"],
   handler: async (input) => {
+    await requireRole(["owner", "admin"]);
     const supabase = await createServerClient();
     const { error } = await supabase
       .from("vault_items")

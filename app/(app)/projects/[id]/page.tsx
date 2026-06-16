@@ -18,12 +18,22 @@ import type { GitHubSyncMode } from "../github-sync-section";
 import { type ChecklistItemRow, ChecklistSection } from "./checklist-section";
 import { DeleteProjectButton } from "./delete-project-button";
 import { ProjectEditDialog } from "./project-edit-dialog";
+import { ProjectTasksViewToggle } from "./project-tasks-view-toggle";
+import { type KanbanTask, TasksKanban } from "./tasks/tasks-kanban";
 import { type WorkLogRow, WorkLogSection } from "./work-log-section";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ProjectDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ tasks_view?: string }>;
+}) {
   const { id } = await params;
+  const { tasks_view } = await searchParams;
+  const isBoard = tasks_view === "board";
   const user = await requireUser();
   const supabase = await createServerClient();
 
@@ -55,13 +65,22 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     { data: settings },
     { data: checklistData },
   ] = await Promise.all([
-    supabase
-      .from("tasks")
-      .select("id, title, status")
-      .eq("project_id", id)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false })
-      .limit(20),
+    isBoard
+      ? supabase
+        .from("tasks")
+        .select(
+          "id, title, status, priority, due_date, kanban_order, team_members:assignee_id(id, name)",
+        )
+        .eq("project_id", id)
+        .is("deleted_at", null)
+        .order("kanban_order", { ascending: true })
+      : supabase
+        .from("tasks")
+        .select("id, title, status")
+        .eq("project_id", id)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(20),
     supabase
       .from("proposals")
       .select("id, number, title, status, total")
@@ -241,18 +260,38 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Tareas</CardTitle>
           <div className="flex items-center gap-2">
-            <Button asChild size="sm" variant="outline">
-              <Link href={`/projects/${id}/tasks`}>Ver Kanban</Link>
-            </Button>
+            <ProjectTasksViewToggle view={isBoard ? "board" : "list"} />
             <TaskCreateDialog
               projectId={id}
               members={(members ?? []) as Array<{ id: string; name: string }>}
             />
           </div>
         </CardHeader>
-        <CardContent className="px-0">
+        <CardContent className={isBoard ? "px-4 pb-4 pt-0" : "px-0"}>
           {!tasks || tasks.length === 0 ? (
             <p className="px-6 py-2 text-sm text-muted-foreground">Sin tareas.</p>
+          ) : isBoard ? (
+            <TasksKanban
+              tasks={
+                (tasks as unknown as Array<{
+                  id: string;
+                  title: string;
+                  status: KanbanTask["status"];
+                  priority: KanbanTask["priority"];
+                  due_date: string | null;
+                  kanban_order: string;
+                  team_members: { id: string; name: string } | null;
+                }>).map((t) => ({
+                  id: t.id,
+                  title: t.title,
+                  status: t.status,
+                  priority: t.priority,
+                  due_date: t.due_date,
+                  kanban_order: t.kanban_order,
+                  assignee: t.team_members,
+                }))
+              }
+            />
           ) : (
             <ul className="divide-y divide-border">
               {tasks.map((t) => (
