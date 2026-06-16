@@ -354,3 +354,57 @@ export function profitMargin(revenue: number, expense: number): number | null {
   const margin = ((revenue - expense) / revenue) * 100;
   return Math.round(margin * 10) / 10;
 }
+
+/** Profitability breakdown for a single project (or client aggregate). */
+export type ProjectProfitability = {
+  /** Facturado computable (sin borradores ni anuladas). */
+  revenue: number;
+  /** Σ horas registradas (work_logs). */
+  hours: number;
+  /** Coste interno por hora aplicado. */
+  hourlyCost: number;
+  /** hours × hourlyCost. */
+  laborCost: number;
+  /** Σ gastos atribuidos al proyecto. */
+  expenses: number;
+  /** laborCost + expenses. */
+  totalCost: number;
+  /** revenue − totalCost (€ absolutos). */
+  margin: number;
+  /** Margen como % 0..100, o null si no hay ingresos. */
+  marginPct: number | null;
+  /** €/h efectivo (revenue ÷ hours), o null sin horas. */
+  effectiveRate: number | null;
+};
+
+/**
+ * Computes a project's profitability from already-aggregated inputs. Pure and
+ * side-effect free so it can be reused server-side and unit-tested. Hours are
+ * "valued" with the company-wide internal hourly cost (`settings.internal_hourly_cost`):
+ * when that cost is 0 the labor cost is 0 and the margin collapses to
+ * `revenue − expenses`.
+ */
+export function computeProjectProfitability(input: {
+  revenue: number;
+  hours: number;
+  hourlyCost: number;
+  expenses: number;
+}): ProjectProfitability {
+  const revenue = roundCurrency(Number(input.revenue) || 0);
+  const hours = Number(input.hours) || 0;
+  const hourlyCost = Number(input.hourlyCost) || 0;
+  const expenses = roundCurrency(Number(input.expenses) || 0);
+  const laborCost = roundCurrency(hours * hourlyCost);
+  const totalCost = roundCurrency(laborCost + expenses);
+  return {
+    revenue,
+    hours,
+    hourlyCost,
+    laborCost,
+    expenses,
+    totalCost,
+    margin: roundCurrency(revenue - totalCost),
+    marginPct: profitMargin(revenue, totalCost),
+    effectiveRate: hours > 0 ? roundCurrency(revenue / hours) : null,
+  };
+}
