@@ -40,6 +40,25 @@ export const createProject = defineAction({
 
     if (error || !data) throw new Error(error?.message ?? "No se pudo crear el proyecto");
 
+    // Apply onboarding template if requested
+    if (input.template_id) {
+      const { data: tplItems } = await supabase
+        .from("onboarding_template_items")
+        .select("label, position")
+        .eq("template_id", input.template_id)
+        .order("position");
+
+      if (tplItems && tplItems.length > 0) {
+        await supabase.from("project_checklist_items").insert(
+          tplItems.map((item) => ({
+            project_id: data.id,
+            label: item.label as string,
+            position: item.position as number,
+          })),
+        );
+      }
+    }
+
     revalidatePath("/projects");
     redirect(`/projects/${data.id}`);
   },

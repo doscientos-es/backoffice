@@ -23,11 +23,17 @@ export default async function NewProjectPage({
   await requireUser();
   const { client_id } = await searchParams;
   const supabase = await createServerClient();
-  const { data: clients } = await supabase
-    .from("clients")
-    .select("id, name")
-    .is("deleted_at", null)
-    .order("name");
+
+  const [{ data: clients }, { data: templates }] = await Promise.all([
+    supabase.from("clients").select("id, name").is("deleted_at", null).order("name"),
+    supabase
+      .from("onboarding_templates")
+      .select("id, name, description")
+      .is("deleted_at", null)
+      .order("position"),
+  ]);
+
+  type Template = { id: string; name: string; description: string | null };
 
   return (
     <div className="flex flex-col gap-6">
@@ -45,11 +51,45 @@ export default async function NewProjectPage({
               orgDefaultInstallationId={githubDefaultInstallationId()}
               defaults={{
                 client_id: client_id ?? "",
-                // Suggest a typical 6-week project window starting today.
                 starts_at: todayIsoLocal(),
                 ends_at: addDaysIsoLocal(42),
               }}
             />
+
+            {/* Onboarding checklist template selector */}
+            {(templates as Template[] | null)?.length ? (
+              <div className="flex flex-col gap-2 border-t border-border pt-4">
+                <p className="text-sm font-medium">Checklist de onboarding</p>
+                <p className="text-xs text-muted-foreground">
+                  Elige una plantilla para generar la lista de tareas de inicio del proyecto.
+                </p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {/* Empty option */}
+                  <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-muted/40 has-checked:border-primary has-checked:bg-primary/5 transition-colors">
+                    <input type="radio" name="template_id" value="" defaultChecked className="mt-0.5 accent-primary" />
+                    <span className="text-sm">
+                      <span className="font-medium">Sin plantilla</span>
+                      <span className="block text-xs text-muted-foreground">Empezar con checklist vacío</span>
+                    </span>
+                  </label>
+                  {(templates as Template[]).map((t) => (
+                    <label
+                      key={t.id}
+                      className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-muted/40 has-checked:border-primary has-checked:bg-primary/5 transition-colors"
+                    >
+                      <input type="radio" name="template_id" value={t.id} className="mt-0.5 accent-primary" />
+                      <span className="text-sm">
+                        <span className="font-medium">{t.name}</span>
+                        {t.description ? (
+                          <span className="block text-xs text-muted-foreground">{t.description}</span>
+                        ) : null}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
             <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
               <Button asChild variant="ghost" size="sm">
                 <Link href="/projects">Cancelar</Link>

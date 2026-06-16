@@ -15,6 +15,7 @@ import { notFound } from "next/navigation";
 import { TaskCreateDialog } from "../../tasks/task-create-dialog";
 import { GitHubModeBadge } from "../github-mode-badge";
 import type { GitHubSyncMode } from "../github-sync-section";
+import { type ChecklistItemRow, ChecklistSection } from "./checklist-section";
 import { DeleteProjectButton } from "./delete-project-button";
 import { ProjectEditDialog } from "./project-edit-dialog";
 import { type WorkLogRow, WorkLogSection } from "./work-log-section";
@@ -52,6 +53,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     { data: invoiceTotals },
     { data: expenseTotals },
     { data: settings },
+    { data: checklistData },
   ] = await Promise.all([
     supabase
       .from("tasks")
@@ -97,6 +99,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       .is("deleted_at", null)
       .neq("status", "cancelled"),
     supabase.from("settings").select("internal_hourly_cost").eq("id", 1).maybeSingle(),
+    supabase
+      .from("project_checklist_items")
+      .select("id, label, is_done, position")
+      .eq("project_id", id)
+      .is("deleted_at", null)
+      .order("position"),
   ]);
 
   const workLogs: WorkLogRow[] = ((workLogsData ?? []) as Array<Record<string, unknown>>).map(
@@ -112,7 +120,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         hours: Number(w.hours) || 0,
         note: (w.note as string | null) ?? null,
         member: m
-          ? { name: m.name, avatar_url: m.avatar_url ?? null, github_handle: m.github_handle ?? null }
+          ? {
+            name: m.name,
+            avatar_url: m.avatar_url ?? null,
+            github_handle: m.github_handle ?? null,
+          }
           : null,
       };
     },
@@ -263,6 +275,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         projectId={id}
         logs={workLogs}
         invoicedTotal={invoicedTotal}
+        canEdit={canEdit}
+      />
+
+      <ChecklistSection
+        projectId={id}
+        items={(checklistData as ChecklistItemRow[] | null) ?? []}
         canEdit={canEdit}
       />
 

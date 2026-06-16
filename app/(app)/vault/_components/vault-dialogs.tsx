@@ -4,8 +4,7 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { useFormState } from "react-dom";
-import { lockVault, setVaultPassword, unlockVault } from "../actions";
+import { setVaultPassword, unlockVault } from "../actions";
 
 /** Dialog body: unlock the vault with master password */
 export function UnlockForm({ onClose }: { onClose: () => void }) {

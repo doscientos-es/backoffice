@@ -18,6 +18,7 @@ import {
   FolderKanban,
   Home,
   Inbox,
+  KeyRound,
   Megaphone,
   Receipt,
   Settings,
@@ -37,15 +38,16 @@ const NAV_PRIMARY = [
   { href: "/proposals", label: "Propuestas", icon: FileSignature },
   { href: "/invoices", label: "Facturas", icon: Receipt },
   { href: "/finance", label: "Finanzas", icon: Wallet },
-  { href: "/tasks", label: "Tareas", icon: CheckSquare },
-  { href: "/reminders", label: "Avisos", icon: Bell },
+  { href: "/internal-docs", label: "Docs internos", icon: Archive },
+  { href: "/marketing", label: "Marketing", icon: Megaphone },
   { href: "/settings", label: "Ajustes", icon: Settings },
 ] as const;
 
 const NAV_SECONDARY = [
-  { href: "/marketing", label: "Marketing", icon: Megaphone },
+  { href: "/vault", label: "Bóveda", icon: KeyRound },
+  { href: "/reminders", label: "Avisos", icon: Bell },
+  { href: "/tasks", label: "Tareas", icon: CheckSquare },
   { href: "/documents", label: "Documentos", icon: FileText },
-  { href: "/internal-docs", label: "Docs internos", icon: Archive },
 ] as const;
 
 export function Sidebar({ user }: { user: CurrentUser; verifactuMode: string }) {

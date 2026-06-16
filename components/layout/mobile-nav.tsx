@@ -10,6 +10,7 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import type { CurrentUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import {
+  Archive,
   Bell,
   CheckSquare,
   FileSignature,
@@ -17,7 +18,9 @@ import {
   FolderKanban,
   Home,
   Inbox,
+  KeyRound,
   Landmark,
+  Megaphone,
   Menu,
   Receipt,
   Settings,
@@ -38,8 +41,11 @@ const NAV = [
   { href: "/invoices", label: "Facturas", icon: Receipt },
   { href: "/finance", label: "Finanzas", icon: Wallet },
   { href: "/finance/expenses", label: "Gastos", icon: Landmark },
+  { href: "/marketing", label: "Marketing", icon: Megaphone },
+  { href: "/internal-docs", label: "Docs internos", icon: Archive },
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
   { href: "/reminders", label: "Avisos", icon: Bell },
+  { href: "/vault", label: "Bóveda", icon: KeyRound },
   { href: "/documents", label: "Documentos", icon: FileText },
   { href: "/settings", label: "Ajustes", icon: Settings },
 ] as const;

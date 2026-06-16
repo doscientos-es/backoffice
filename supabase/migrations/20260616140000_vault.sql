@@ -12,7 +12,7 @@ alter table public.settings
 do $$ begin
   if not exists (select 1 from pg_type where typname = 'vault_service') then
     create type public.vault_service as enum (
-      'hosting', 'domain', 'cms', 'database', 'api',
+      'hosting', 'domain', 'token', 'cms', 'database', 'api',
       'email', 'ssh', 'vpn', 'other'
     );
   end if;

@@ -38,7 +38,7 @@ export const CreateVaultItemInput = z.object({
   is_sensitive: z
     .string()
     .optional()
-    .transform((v) => v === "true" || v === "on" || v === undefined)
+    .transform((v) => v === "true" || v === "on")
     .or(z.boolean()),
   expires_at: optionalDate,
   client_id: optionalUuid,

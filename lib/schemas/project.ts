@@ -15,6 +15,8 @@ export type GithubSyncModeType = z.infer<typeof GithubSyncMode>;
 const ProjectBase = z.object({
   client_id: z.string().uuid("Cliente inválido"),
   name: requiredText(160, "El nombre es obligatorio"),
+  /** Template to clone as onboarding checklist (only used on create). */
+  template_id: z.string().uuid().optional().or(emptyToUndef),
   description: optionalText(4000),
   status: ProjectStatus.default("planning"),
 

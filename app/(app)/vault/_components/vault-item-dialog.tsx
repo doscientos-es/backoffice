@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
-import { VAULT_SERVICE_LABELS, VAULT_SERVICES } from "@/lib/schemas/vault";
+import { VAULT_SERVICES, VAULT_SERVICE_LABELS } from "@/lib/schemas/vault";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { createVaultItem, updateVaultItem } from "../actions";
@@ -110,6 +110,7 @@ export function VaultItemForm({ item, clients, onClose }: Props) {
         </Field>
         <Field className="sm:col-span-2">
           <label className="flex items-center gap-2 cursor-pointer text-sm">
+            <input type="hidden" name="is_sensitive" value="false" />
             <input
               type="checkbox"
               name="is_sensitive"
