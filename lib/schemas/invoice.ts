@@ -23,8 +23,8 @@ export type CreateInvoiceFromProposalInputType = z.infer<typeof CreateInvoiceFro
 export const UpdateInvoiceInput = z.object({
   id: z.string().uuid(),
   issue_date: z.string().optional(),
-  due_date: z.string().optional(),
-  notes: z.string().max(4000).optional().nullable(),
+  due_date: z.string().nullable().optional(),
+  notes: z.string().max(4000).nullable().optional(),
   items: z.array(lineItemInput).min(1).optional(),
 });
 export type UpdateInvoiceInputType = z.input<typeof UpdateInvoiceInput>;

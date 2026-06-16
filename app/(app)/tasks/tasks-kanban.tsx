@@ -16,7 +16,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { useOptimistic, useState, useTransition } from "react";
 import { updateTaskStatus } from "./actions";
@@ -70,7 +70,7 @@ function isOverdue(task: KanbanTask): boolean {
   return new Date(task.due_date).getTime() < Date.now();
 }
 
-export function TasksKanban({ tasks }: { tasks: KanbanTask[] }) {
+export function TasksKanban({ tasks, capped }: { tasks: KanbanTask[]; capped?: boolean }) {
   const [, startTransition] = useTransition();
   const [optimistic, applyOptimistic] = useOptimistic(tasks, (state, { id, status }: Action) =>
     state.map((t) => (t.id === id ? { ...t, status } : t)),
@@ -112,6 +112,15 @@ export function TasksKanban({ tasks }: { tasks: KanbanTask[] }) {
 
   return (
     <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
+      {capped ? (
+        <div className="flex items-center gap-2 rounded-lg border border-amber-300/40 bg-amber-50/60 px-4 py-2.5 text-sm text-amber-800 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300">
+          <TriangleAlert className="size-4 shrink-0" />
+          <span>
+            Se muestran las primeras <strong>200</strong> tareas. Usa los filtros para acotar los
+            resultados.
+          </span>
+        </div>
+      ) : null}
       <div className="flex justify-end pb-1 min-h-5">
         <FormFeedback state={feedback.state} pendingLabel="Actualizando…" />
       </div>

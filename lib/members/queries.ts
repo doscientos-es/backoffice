@@ -1,5 +1,6 @@
 import { notDeleted } from "@/lib/supabase/filters";
 import { createServerClient } from "@/lib/supabase/server";
+import { cache } from "react";
 
 /**
  * Minimal team member shape used to populate owner/assignee selectors and to
@@ -13,10 +14,10 @@ export type MemberOption = {
 };
 
 /**
- * Lists active (non soft-deleted) team members ordered by name. Used by the
- * lead owner selector and any other assignee picker.
+ * Lists active (non soft-deleted) team members ordered by name.
+ * Wrapped with React.cache() to deduplicate DB calls within the same render.
  */
-export async function listActiveMembers(): Promise<MemberOption[]> {
+export const listActiveMembers = cache(async (): Promise<MemberOption[]> => {
   const supabase = await createServerClient();
   const { data } = await notDeleted(
     supabase.from("team_members").select("id, name, avatar_url, github_handle"),
@@ -28,4 +29,4 @@ export async function listActiveMembers(): Promise<MemberOption[]> {
     avatar_url: (m.avatar_url as string | null) ?? null,
     github_handle: (m.github_handle as string | null) ?? null,
   }));
-}
+});

@@ -104,7 +104,9 @@ export default async function TasksPage({
       projects: { id: string; name: string } | null;
       team_members: { id: string; name: string } | null;
     };
-    const tasks: KanbanTask[] = ((boardData as unknown as BoardRow[]) ?? []).map((t) => ({
+    const rawBoard = (boardData as unknown as BoardRow[]) ?? [];
+    const capped = rawBoard.length >= 200;
+    const tasks: KanbanTask[] = rawBoard.map((t) => ({
       id: t.id,
       title: t.title,
       status: t.status,
@@ -140,7 +142,7 @@ export default async function TasksPage({
         {boardErr ? (
           <p className="text-sm text-destructive">{boardErr.message}</p>
         ) : (
-          <TasksKanban tasks={tasks} />
+          <TasksKanban tasks={tasks} capped={capped} />
         )}
       </div>
     );

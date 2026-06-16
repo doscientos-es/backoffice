@@ -396,7 +396,7 @@ export async function updateInvoice(
 
   const updates: any = { updated_at: new Date().toISOString() };
   if (data.issue_date) updates.issue_date = data.issue_date;
-  if (data.due_date) updates.due_date = data.due_date;
+  if (data.due_date !== undefined) updates.due_date = data.due_date ?? null;
   if (data.notes !== undefined) updates.notes = data.notes;
 
   if (data.items) {

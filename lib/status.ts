@@ -136,3 +136,22 @@ export const EXPENSE_STATUS: StatusMeta<ExpenseStatus> = {
   paid: { label: EXPENSE_STATUS_LABELS.paid, variant: "success" },
   cancelled: { label: EXPENSE_STATUS_LABELS.cancelled, variant: "neutral" },
 };
+
+// ---------------------------------------------------------------------------
+// Subscriptions
+// ---------------------------------------------------------------------------
+export type SubscriptionStatus = "active" | "paused" | "cancelled";
+
+export const SUBSCRIPTION_STATUS: StatusMeta<SubscriptionStatus> = {
+  active: { label: "Activa", variant: "success" },
+  paused: { label: "Pausada", variant: "warning" },
+  cancelled: { label: "Cancelada", variant: "danger" },
+};
+
+export type SubscriptionBillingCycle = "monthly" | "quarterly" | "yearly";
+
+export const SUBSCRIPTION_BILLING_CYCLE: Record<SubscriptionBillingCycle, string> = {
+  monthly: "Mensual",
+  quarterly: "Trimestral",
+  yearly: "Anual",
+};

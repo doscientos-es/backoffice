@@ -21,6 +21,7 @@ import {
   CheckCircle2,
   Download,
   FileEdit,
+  Loader2,
   MoreHorizontal,
   Send,
   Trash2,
@@ -48,6 +49,7 @@ interface Props {
 
 export function InvoiceActions({ invoice }: Props) {
   const [pending, startTransition] = useTransition();
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const feedback = useFormFeedback();
   const [confirmUncollected, setConfirmUncollected] = useState(false);
 

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -27,6 +27,8 @@ export type ListControlsProps = {
   };
   /** Override classes on the root container (e.g. to remove border-b). */
   className?: string;
+  /** Si se provee, muestra un botón "Exportar CSV" que llama este callback. */
+  onExport?: () => void;
 };
 
 function updateParams(
@@ -47,6 +49,7 @@ export function ListControls({
   filters = [],
   pagination,
   className,
+  onExport,
 }: ListControlsProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -139,33 +142,47 @@ export function ListControls({
           </Select>
         ))}
       </div>
-      {pagination ? (
-        <div className="flex items-center gap-2">
-          <span className="text-xs tabular-nums text-muted-foreground">
-            {pagination.total === 0 ? "Sin resultados" : `${from}–${to} de ${pagination.total}`}
-          </span>
+      <div className="flex shrink-0 items-center gap-1">
+        {onExport ? (
           <Button
             type="button"
             size="sm"
             variant="ghost"
-            disabled={pagination.page <= 1}
-            onClick={() => setPage(pagination.page - 1)}
-            aria-label="Página anterior"
+            onClick={onExport}
+            aria-label="Exportar CSV"
           >
-            <ChevronLeft className="size-4" />
+            <Download className="size-3.5" />
+            <span className="hidden sm:inline">Exportar</span>
           </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            disabled={pagination.page >= totalPages}
-            onClick={() => setPage(pagination.page + 1)}
-            aria-label="Página siguiente"
-          >
-            <ChevronRight className="size-4" />
-          </Button>
-        </div>
-      ) : null}
+        ) : null}
+        {pagination ? (
+          <>
+            <span className="text-xs tabular-nums text-muted-foreground">
+              {pagination.total === 0 ? "Sin resultados" : `${from}–${to} de ${pagination.total}`}
+            </span>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              disabled={pagination.page <= 1}
+              onClick={() => setPage(pagination.page - 1)}
+              aria-label="Página anterior"
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              disabled={pagination.page >= totalPages}
+              onClick={() => setPage(pagination.page + 1)}
+              aria-label="Página siguiente"
+            >
+              <ChevronRight className="size-4" />
+            </Button>
+          </>
+        ) : null}
+      </div>
     </div>
   );
 }

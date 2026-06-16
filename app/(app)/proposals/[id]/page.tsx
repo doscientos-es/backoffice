@@ -20,6 +20,7 @@ import { updateProposalPortalAccess } from "../actions";
 import { DeleteProposalButton } from "./delete-proposal-button";
 import { DuplicateProposalButton } from "./duplicate-proposal-button";
 import { GenerateInvoiceButton } from "./generate-invoice-button";
+import { MarkAcceptedButton } from "./mark-accepted-button";
 import { type EditableItem, ProposalEditor } from "./proposal-editor";
 import { type ProposalSpec, ProposalSpecs } from "./proposal-specs";
 import { SendPreviewButton } from "./send-preview-button";
@@ -150,7 +151,11 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
           <div className="flex items-center gap-2">
             <StatusBadge meta={PROPOSAL_STATUS} value={status} />
             <DuplicateProposalButton proposalId={id} />
-            {status === "accepted" ? <GenerateInvoiceButton proposalId={id} /> : null}
+            {status === "accepted" ? (
+              <GenerateInvoiceButton proposalId={id} />
+            ) : status !== "rejected" ? (
+              <MarkAcceptedButton proposalId={id} />
+            ) : null}
             <DeleteProposalButton proposalId={id} />
           </div>
         }

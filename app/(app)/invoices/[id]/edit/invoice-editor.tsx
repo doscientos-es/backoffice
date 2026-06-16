@@ -1,18 +1,16 @@
 "use client";
 
 import { LineItemsTable } from "@/components/finance/line-items-table";
-import { AutosaveIndicator } from "@/components/ui/autosave-indicator";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateField } from "@/components/ui/date-field";
 import { FormRow } from "@/components/ui/form-row";
 import { Textarea } from "@/components/ui/textarea";
 import { EMPTY_LINE_ITEM, type LineItem } from "@/lib/finance";
-import { useAutosave } from "@/lib/hooks/use-autosave";
 import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { updateInvoice } from "../../actions";
 
 export type EditableItem = LineItem;
@@ -27,7 +25,7 @@ export type InitialEditableItem = Omit<LineItem, "id"> & { id?: string };
 export type InvoiceEditorProps = {
   id: string;
   initialIssueDate: string;
-  initialDueDate: string;
+  initialDueDate: string | null;
   initialNotes: string | null;
   initialItems: InitialEditableItem[];
   /** When true, fields are read-only (invoice issued). */
@@ -44,9 +42,10 @@ export function InvoiceEditor({
 }: InvoiceEditorProps) {
   const router = useRouter();
   const [saving, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   const [issueDate, setIssueDate] = useState(initialIssueDate);
-  const [dueDate, setDueDate] = useState(initialDueDate);
+  const [dueDate, setDueDate] = useState(initialDueDate ?? "");
   const [notes, setNotes] = useState(initialNotes ?? "");
   const [items, setItems] = useState<EditableItem[]>(
     initialItems.length > 0
@@ -54,31 +53,47 @@ export function InvoiceEditor({
       : [{ ...EMPTY_LINE_ITEM, id: crypto.randomUUID() } as EditableItem],
   );
 
-  const payload = useMemo(
-    () => ({
-      id,
-      issue_date: issueDate,
-      due_date: dueDate,
-      notes: notes || null,
-      items,
-    }),
-    [id, issueDate, dueDate, notes, items],
-  );
+  // Track whether there are unsaved changes.
+  const [dirty, setDirty] = useState(false);
+  const isFirstRender = useRef(true);
 
-  const autosave = useAutosave({
-    data: payload,
-    enabled: !locked,
-    storageKey: `invoice-edit:${id}`,
-    onSaveAction: async (data) => {
-      const res = await updateInvoice(data);
-      if (!res.ok) return { error: res.error };
-    },
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setDirty(true);
+    setError(null);
+  }, [issueDate, dueDate, notes, items]);
+
+  const buildPayload = () => ({
+    id,
+    issue_date: issueDate,
+    due_date: dueDate || null,
+    notes: notes || null,
+    items,
   });
+
+  const handleSave = () => {
+    startTransition(async () => {
+      const res = await updateInvoice(buildPayload());
+      if (!res.ok) {
+        setError(res.error);
+      } else {
+        setDirty(false);
+        setError(null);
+      }
+    });
+  };
 
   const handleSaveAndReturn = () => {
     startTransition(async () => {
-      await autosave.saveNow();
-      router.push(`/invoices/${id}`);
+      const res = await updateInvoice(buildPayload());
+      if (!res.ok) {
+        setError(res.error);
+      } else {
+        router.push(`/invoices/${id}`);
+      }
     });
   };
 
@@ -124,15 +139,18 @@ export function InvoiceEditor({
         </Card>
       </div>
 
-      {/* Sticky action bar — bleeds to the edges of <main> via negative margins
-          so it spans the available content width without overlapping the sidebar. */}
-      <div className="sticky bottom-0 z-10 -mx-4 -mb-4 border-t border-border bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70 md:-mx-6 md:-mb-6">
+      {/* Sticky action bar */}
+      <div className="sticky bottom-0 z-10 -mx-4 -mb-4 border-t border-border bg-background/85 backdrop-blur supports-backdrop-filter:bg-background/70 md:-mx-6 md:-mb-6">
         <div className="flex items-center justify-between gap-4 px-4 py-3 md:px-6">
-          <AutosaveIndicator
-            status={autosave.status}
-            savedAt={autosave.savedAt}
-            error={autosave.error}
-          />
+          <div className="text-sm">
+            {error && <span className="text-destructive">{error}</span>}
+            {!error && dirty && !saving && (
+              <span className="text-muted-foreground">Cambios sin guardar</span>
+            )}
+            {!error && !dirty && !saving && (
+              <span className="text-muted-foreground">Sin cambios pendientes</span>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" asChild>
               <Link href={`/invoices/${id}`}>
@@ -141,14 +159,21 @@ export function InvoiceEditor({
               </Link>
             </Button>
             {!locked && (
-              <Button
-                size="sm"
-                disabled={saving || autosave.status === "saving"}
-                onClick={handleSaveAndReturn}
-              >
-                <Save className="size-3.5" />
-                {saving ? "Guardando…" : "Guardar y volver"}
-              </Button>
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={saving || !dirty}
+                  onClick={handleSave}
+                >
+                  <Save className="size-3.5" />
+                  {saving ? "Guardando…" : "Guardar"}
+                </Button>
+                <Button size="sm" disabled={saving} onClick={handleSaveAndReturn}>
+                  <Save className="size-3.5" />
+                  {saving ? "Guardando…" : "Guardar y volver"}
+                </Button>
+              </>
             )}
           </div>
         </div>
