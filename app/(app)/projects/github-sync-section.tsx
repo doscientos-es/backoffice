@@ -1,9 +1,10 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Github, Link2, RefreshCw } from "lucide-react";
-import { type ReactNode, useId, useState } from "react";
+import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 
 interface OrgRepo {
   id: number;
@@ -12,8 +13,6 @@ interface OrgRepo {
 }
 
 type RepoLoadState = "idle" | "loading" | "ok" | "error";
-
-const MANUAL = "__manual__";
 
 export type GitHubSyncMode = "none" | "link_only" | "bidirectional";
 
@@ -152,20 +151,11 @@ export function GitHubSyncSection({
             {/* ── Org selector ── */}
             {repoLoadState === "ok" && !isManualEntry && (
               <>
-                {/* Hidden input carries the actual URL for form submission */}
                 <input type="hidden" name="github_repo" value={selectedRepoUrl} />
                 <Select
                   id={`${idPrefix}-repo`}
                   value={selectedRepoUrl}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    if (v === MANUAL) {
-                      setIsManualEntry(true);
-                      setSelectedRepoUrl("");
-                    } else {
-                      setSelectedRepoUrl(v);
-                    }
-                  }}
+                  onChange={(e) => setSelectedRepoUrl(e.target.value)}
                   required
                 >
                   <option value="" disabled>
@@ -176,28 +166,23 @@ export function GitHubSyncSection({
                       {r.name}
                     </option>
                   ))}
-                  <option value={MANUAL}>Otro repositorio (URL manual)…</option>
                 </Select>
+                <button
+                  type="button"
+                  className="self-start text-[11px] text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    setIsManualEntry(true);
+                    setSelectedRepoUrl("");
+                  }}
+                >
+                  Introducir URL manualmente…
+                </button>
               </>
             )}
 
             {/* ── Manual URL entry (error fallback or user chose manual) ── */}
             {(repoLoadState === "error" || isManualEntry) && (
               <div className="flex flex-col gap-1.5">
-                {repoLoadState === "ok" && orgRepos.length > 0 && (
-                  <button
-                    type="button"
-                    className="self-start text-[11px] text-primary hover:underline"
-                    onClick={() => {
-                      setIsManualEntry(false);
-                      setSelectedRepoUrl(
-                        orgRepos.find((r) => r.html_url === defaultRepoUrl)?.html_url ?? "",
-                      );
-                    }}
-                  >
-                    ← Ver repos de la org
-                  </button>
-                )}
                 <Input
                   id={`${idPrefix}-repo`}
                   name="github_repo"
@@ -207,7 +192,22 @@ export function GitHubSyncSection({
                   value={selectedRepoUrl}
                   onChange={(e) => setSelectedRepoUrl(e.target.value)}
                   placeholder="https://github.com/owner/repo"
+                  autoFocus={isManualEntry && repoLoadState === "ok"}
                 />
+                {repoLoadState === "ok" && orgRepos.length > 0 && (
+                  <button
+                    type="button"
+                    className="self-start text-[11px] text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      setIsManualEntry(false);
+                      setSelectedRepoUrl(
+                        orgRepos.find((r) => r.html_url === defaultRepoUrl)?.html_url ?? "",
+                      );
+                    }}
+                  >
+                    ← Seleccionar de la org
+                  </button>
+                )}
               </div>
             )}
           </Field>

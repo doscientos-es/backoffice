@@ -22,13 +22,20 @@ export function UpdatePasswordForm() {
 
   useEffect(() => {
     const supabase = getBrowserClient();
-    supabase.auth.getSession().then(({ data }) => {
-      setHasSession(!!data.session);
-      setSessionEmail(data.session?.user.email ?? null);
+    // getUser() verifies the token against the Supabase Auth server — unlike
+    // getSession() / onAuthStateChange session objects which come from storage
+    // and may not be authentic.
+    supabase.auth.getUser().then(({ data }) => {
+      setHasSession(!!data.user);
+      setSessionEmail(data.user?.email ?? null);
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setHasSession(!!session);
-      setSessionEmail(session?.user.email ?? null);
+    const { data: sub } = supabase.auth.onAuthStateChange(() => {
+      // Re-fetch the authenticated user on every auth event instead of
+      // trusting the session payload from storage.
+      supabase.auth.getUser().then(({ data }) => {
+        setHasSession(!!data.user);
+        setSessionEmail(data.user?.email ?? null);
+      });
     });
     return () => sub.subscription.unsubscribe();
   }, []);
