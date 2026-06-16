@@ -10,9 +10,9 @@ import {
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { parseEnumParam, parsePage, parseSortParam, parseStringParam } from "@/lib/utils/search-params";
+import { Plus } from "lucide-react";
 
 const SUBSCRIPTION_SORT_COLUMNS = ["name", "status", "amount", "next_invoice_date"] as const;
-import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 

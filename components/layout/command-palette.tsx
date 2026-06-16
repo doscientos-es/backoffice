@@ -32,6 +32,7 @@ import {
   Megaphone,
   Plus,
   Receipt,
+  Repeat,
   Settings,
   Users,
   Wallet,
@@ -63,6 +64,7 @@ const NAV_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
   "/projects": FolderKanban,
   "/proposals": FileSignature,
   "/invoices": Receipt,
+  "/subscriptions": Repeat,
   "/tasks": CheckSquare,
   "/finance": Wallet,
   "/reminders": Bell,
@@ -73,6 +75,7 @@ const NAV_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
 
 /** Secciones sin chord dedicado (cubiertas solo por el palette). */
 const EXTRA_LINKS = [
+  { href: "/subscriptions", label: "Suscripciones" },
   { href: "/finance", label: "Finanzas" },
   { href: "/reminders", label: "Avisos" },
   { href: "/documents", label: "Documentos" },

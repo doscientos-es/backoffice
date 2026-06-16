@@ -5,14 +5,15 @@ import { DangerZone } from "@/components/ui/danger-zone";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { requireUser } from "@/lib/auth";
+import { computeLineTotals } from "@/lib/finance";
 import { SUBSCRIPTION_STATUS, type SubscriptionStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { deleteSubscription, updateSubscription } from "../actions";
+import { deleteSubscription } from "../actions";
 import { GenerateInvoiceButton } from "./generate-invoice-button";
-import { SubscriptionFormFields } from "../subscription-form-fields";
+import { SubscriptionEditForm } from "./subscription-edit-form";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Suscripción · doscientos" };
@@ -44,7 +45,11 @@ export default async function SubscriptionDetailPage({
   const clientsArr = (clients ?? []) as { id: string; name: string }[];
   const projectsArr = (projects ?? []) as { id: string; name: string }[];
 
-  const totalWithVat = Number(sub.amount) * (1 + Number(sub.vat_rate) / 100);
+  const { total: totalWithVat } = computeLineTotals([
+    { quantity: 1, unit_price: Number(sub.amount), vat_rate: Number(sub.vat_rate) },
+  ]);
+
+  const canGenerateInvoice = canEdit && sub.status === "active";
 
   return (
     <div className="flex flex-col gap-6">
@@ -56,9 +61,7 @@ export default async function SubscriptionDetailPage({
           actions={
             <div className="flex items-center gap-2">
               <StatusBadge meta={SUBSCRIPTION_STATUS} value={sub.status as SubscriptionStatus} />
-              {canEdit && sub.status !== "cancelled" ? (
-                <GenerateInvoiceButton subscriptionId={id} />
-              ) : null}
+              {canGenerateInvoice ? <GenerateInvoiceButton subscriptionId={id} /> : null}
             </div>
           }
         />
@@ -67,37 +70,25 @@ export default async function SubscriptionDetailPage({
       {canEdit ? (
         <Card>
           <CardContent className="pt-6">
-            <form
-              action={async (fd) => {
-                "use server";
-                fd.append("id", id);
-                const res = await updateSubscription(fd);
-                if (res.ok) redirect("/subscriptions");
+            <SubscriptionEditForm
+              id={id}
+              clients={clientsArr}
+              projects={projectsArr}
+              defaults={{
+                client_id: sub.client_id as string,
+                project_id: (sub.project_id as string | null) ?? "",
+                name: sub.name as string,
+                description: (sub.description as string | null) ?? "",
+                status: sub.status as string,
+                billing_cycle: sub.billing_cycle as string,
+                amount: Number(sub.amount),
+                vat_rate: Number(sub.vat_rate),
+                start_date: sub.start_date as string,
+                next_invoice_date: sub.next_invoice_date as string,
+                end_date: (sub.end_date as string | null) ?? "",
+                notes: (sub.notes as string | null) ?? "",
               }}
-              className="flex flex-col gap-6"
-            >
-              <SubscriptionFormFields
-                clients={clientsArr}
-                projects={projectsArr}
-                defaults={{
-                  client_id: sub.client_id as string,
-                  project_id: (sub.project_id as string | null) ?? "",
-                  name: sub.name as string,
-                  description: (sub.description as string | null) ?? "",
-                  status: sub.status as string,
-                  billing_cycle: sub.billing_cycle as string,
-                  amount: Number(sub.amount),
-                  vat_rate: Number(sub.vat_rate),
-                  start_date: sub.start_date as string,
-                  next_invoice_date: sub.next_invoice_date as string,
-                  end_date: (sub.end_date as string | null) ?? "",
-                  notes: (sub.notes as string | null) ?? "",
-                }}
-              />
-              <div className="flex justify-end">
-                <SubmitButton>Guardar cambios</SubmitButton>
-              </div>
-            </form>
+            />
           </CardContent>
         </Card>
       ) : null}

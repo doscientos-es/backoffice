@@ -15,7 +15,7 @@ export function GenerateInvoiceButton({ subscriptionId }: { subscriptionId: stri
   const handleClick = () => {
     feedback.setPending();
     startTransition(async () => {
-      const res = await createInvoiceFromSubscription(subscriptionId);
+      const res = await createInvoiceFromSubscription({ id: subscriptionId });
       if (!res.ok) {
         feedback.setError(res.error);
         return;
@@ -27,6 +27,7 @@ export function GenerateInvoiceButton({ subscriptionId }: { subscriptionId: stri
 
   return (
     <div className="flex items-center gap-2">
+      {/* FormFeedback shows the spinner + label while pending; the button text stays static */}
       <FormFeedback state={feedback.state} pendingLabel="Generando…" />
       <Button
         type="button"
@@ -36,7 +37,7 @@ export function GenerateInvoiceButton({ subscriptionId }: { subscriptionId: stri
         onClick={handleClick}
       >
         <FileText className="size-4" />
-        {pending ? "Generando…" : "Generar factura"}
+        Generar factura
       </Button>
     </div>
   );
