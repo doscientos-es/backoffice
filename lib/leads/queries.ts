@@ -64,8 +64,10 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
   const from = (params.page - 1) * LEAD_LIST_PAGE_SIZE;
   const to = from + LEAD_LIST_PAGE_SIZE - 1;
 
+  const sortCol = params.sort ?? "created_at";
+  const ascending = params.sort ? params.dir !== "desc" : false;
   const { data, error, count } = await (params.view === "list"
-    ? query.order("created_at", { ascending: false }).range(from, to)
+    ? query.order(sortCol, { ascending, nullsFirst: false }).range(from, to)
     : query.order("created_at", { ascending: false }).limit(LEAD_BOARD_LIMIT));
 
   const rows = data ?? [];

@@ -33,8 +33,10 @@ export async function listClients(params: ClientListParams): Promise<ClientListR
     query = query.or(`name.ilike.${p},nif.ilike.${p},email.ilike.${p}`);
   }
 
+  const sortCol = params.sort ?? "created_at";
+  const ascending = params.sort ? params.dir !== "desc" : false;
   const { data, error, count } = await query
-    .order("created_at", { ascending: false })
+    .order(sortCol, { ascending, nullsFirst: false })
     .range(from, to);
 
   if (error) log.error({ err: error.message }, "list_clients_failed");

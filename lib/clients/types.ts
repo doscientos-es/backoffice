@@ -18,9 +18,13 @@ export type ClientListItem = {
   updated_at: string | null;
 };
 
+export const CLIENT_SORT_COLUMNS = ["name", "nif", "email", "created_at"] as const;
+
 export type ClientListParams = {
   q?: string;
   page?: number;
+  sort?: string;
+  dir?: "asc" | "desc";
 };
 
 export type ClientListResult = {

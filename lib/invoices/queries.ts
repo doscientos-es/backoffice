@@ -38,7 +38,9 @@ export async function listInvoices(params: InvoiceListParams): Promise<InvoiceLi
       }
       if (params.status) query = query.eq("status", params.status);
       if (params.verifactu) query = query.eq("verifactu_status", params.verifactu);
-      return query.order("issue_date", { ascending: false }).range(from, to);
+      const sortCol = params.sort ?? "issue_date";
+      const ascending = params.dir === "asc";
+      return query.order(sortCol, { ascending, nullsFirst: false }).range(from, to);
     })(),
     notDeleted(supabase.from("invoices").select("total", { count: "exact" })).eq(
       "status",

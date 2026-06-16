@@ -34,8 +34,10 @@ export async function listProjects(params: ProjectListParams): Promise<ProjectLi
   if (params.q && params.q.length > 0) query = query.ilike("name", `%${escapeIlike(params.q)}%`);
   if (params.status) query = query.eq("status", params.status);
 
+  const sortCol = params.sort ?? "created_at";
+  const ascending = params.sort ? params.dir !== "desc" : false;
   const { data, error, count } = await query
-    .order("created_at", { ascending: false })
+    .order(sortCol, { ascending, nullsFirst: false })
     .range(from, to);
 
   if (error) log.error({ err: error.message }, "list_projects_failed");

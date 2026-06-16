@@ -11,48 +11,110 @@ import { formatDate, formatEUR } from "@/lib/utils";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { deleteSubscription, updateSubscription } from "../actions";
+import { GenerateInvoiceButton } from "./generate-invoice-button";
 import { SubscriptionFormFields } from "../subscription-form-fields";
+
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Suscripcion" };
-export default async function SubscriptionDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export const metadata: Metadata = { title: "Suscripción · doscientos" };
+
+export default async function SubscriptionDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   const user = await requireUser();
   const canEdit = user.role !== "viewer";
+
   const supabase = await createServerClient();
+
   const [{ data: sub }, { data: clients }, { data: projects }] = await Promise.all([
-    supabase.from("subscriptions").select("*,clients(id,name),projects(id,name)").eq("id", id).is("deleted_at", null).maybeSingle(),
+    supabase
+      .from("subscriptions")
+      .select("*, clients(id, name), projects(id, name)")
+      .eq("id", id)
+      .is("deleted_at", null)
+      .maybeSingle(),
     supabase.from("clients").select("id, name").is("deleted_at", null).order("name"),
     supabase.from("projects").select("id, name").is("deleted_at", null).order("name"),
   ]);
+
   if (!sub) notFound();
+
   const clientsArr = (clients ?? []) as { id: string; name: string }[];
   const projectsArr = (projects ?? []) as { id: string; name: string }[];
+
   const totalWithVat = Number(sub.amount) * (1 + Number(sub.vat_rate) / 100);
+
   return (
     <div className="flex flex-col gap-6">
       <div>
         <BackLink href="/subscriptions" label="Suscripciones" />
         <PageHeader
           title={sub.name as string}
-          description={`${formatEUR(totalWithVat)} IVA incl. - ${formatDate(sub.next_invoice_date as string | null)}`}
-          actions={<StatusBadge meta={SUBSCRIPTION_STATUS} value={sub.status as SubscriptionStatus} />}
+          description={`${formatEUR(totalWithVat)} IVA incl. · ${formatDate(sub.next_invoice_date as string | null)}`}
+          actions={
+            <div className="flex items-center gap-2">
+              <StatusBadge meta={SUBSCRIPTION_STATUS} value={sub.status as SubscriptionStatus} />
+              {canEdit && sub.status !== "cancelled" ? (
+                <GenerateInvoiceButton subscriptionId={id} />
+              ) : null}
+            </div>
+          }
         />
       </div>
+
       {canEdit ? (
-        <Card><CardContent className="pt-6">
-          <form action={async (fd) => { "use server"; fd.append("id", id); const res = await updateSubscription(fd); if (res.ok) redirect("/subscriptions"); }} className="flex flex-col gap-6">
-            <SubscriptionFormFields
-              clients={clientsArr} projects={projectsArr}
-              defaults={{ client_id: sub.client_id as string, project_id: (sub.project_id as string|null) ?? "", name: sub.name as string, description: (sub.description as string|null) ?? "", status: sub.status as string, billing_cycle: sub.billing_cycle as string, amount: Number(sub.amount), vat_rate: Number(sub.vat_rate), start_date: sub.start_date as string, next_invoice_date: sub.next_invoice_date as string, end_date: (sub.end_date as string|null) ?? "" }}
-            />
-            <div className="flex justify-end"><SubmitButton>Guardar cambios</SubmitButton></div>
-          </form>
-        </CardContent></Card>
+        <Card>
+          <CardContent className="pt-6">
+            <form
+              action={async (fd) => {
+                "use server";
+                fd.append("id", id);
+                const res = await updateSubscription(fd);
+                if (res.ok) redirect("/subscriptions");
+              }}
+              className="flex flex-col gap-6"
+            >
+              <SubscriptionFormFields
+                clients={clientsArr}
+                projects={projectsArr}
+                defaults={{
+                  client_id: sub.client_id as string,
+                  project_id: (sub.project_id as string | null) ?? "",
+                  name: sub.name as string,
+                  description: (sub.description as string | null) ?? "",
+                  status: sub.status as string,
+                  billing_cycle: sub.billing_cycle as string,
+                  amount: Number(sub.amount),
+                  vat_rate: Number(sub.vat_rate),
+                  start_date: sub.start_date as string,
+                  next_invoice_date: sub.next_invoice_date as string,
+                  end_date: (sub.end_date as string | null) ?? "",
+                  notes: (sub.notes as string | null) ?? "",
+                }}
+              />
+              <div className="flex justify-end">
+                <SubmitButton>Guardar cambios</SubmitButton>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       ) : null}
+
       {canEdit && user.role !== "member" ? (
-        <DangerZone title="Eliminar suscripcion" description="Accion irreversible.">
-          <form action={async () => { "use server"; await deleteSubscription({ id }); redirect("/subscriptions"); }}>
-            <SubmitButton variant="destructive">Eliminar</SubmitButton>
+        <DangerZone
+          title="Eliminar suscripción"
+          description="Se eliminará de forma permanente. Esta acción no se puede deshacer."
+        >
+          <form
+            action={async () => {
+              "use server";
+              await deleteSubscription({ id });
+              redirect("/subscriptions");
+            }}
+          >
+            <SubmitButton variant="destructive">Eliminar suscripción</SubmitButton>
           </form>
         </DangerZone>
       ) : null}

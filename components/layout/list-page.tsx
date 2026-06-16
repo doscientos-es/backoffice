@@ -21,7 +21,7 @@ import {
 } from "@tanstack/react-table";
 import { ArrowDown, ArrowRight, ArrowUp, ArrowUpDown, Download, Plus } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
 
 export type ListCell = ReactNode | string | number | null | undefined;
@@ -33,6 +33,12 @@ export type ListHeader =
       label: string;
       /** Activa la ordenación cliente (requiere `sortValues` en las filas). */
       sortable?: boolean;
+      /**
+       * Clave de columna DB para ordenación en el servidor.
+       * Al hacer clic actualiza los URL params `sort` + `dir` y resetea `page`.
+       * Tiene preferencia sobre `sortable`.
+       */
+      sortKey?: string;
       align?: ListAlign;
     };
 
@@ -84,6 +90,9 @@ function headerLabel(h: ListHeader): string {
 }
 function headerSortable(h: ListHeader): boolean {
   return typeof h !== "string" && !!h.sortable;
+}
+function headerSortKey(h: ListHeader): string | undefined {
+  return typeof h !== "string" ? h.sortKey : undefined;
 }
 function headerAlign(h: ListHeader, fallback?: ListAlign): ListAlign {
   if (typeof h !== "string" && h.align) return h.align;
@@ -137,8 +146,15 @@ export function ListPage({
   exportFilename,
 }: ListPageProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const urlParams = useSearchParams();
   const prefetched = useRef<Set<string>>(new Set());
 
+  // Server-side sort state (from URL)
+  const serverSortKey = urlParams.get("sort") ?? "";
+  const serverSortDir = (urlParams.get("dir") ?? "asc") as "asc" | "desc";
+
+  // Client-side sort state (TanStack, for sortable-without-sortKey columns)
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const prefetchRow = useCallback(
@@ -150,15 +166,54 @@ export function ListPage({
     [router],
   );
 
+  const handleServerSort = useCallback(
+    (sortKey: string) => {
+      const isActive = serverSortKey === sortKey;
+      const newDir = isActive && serverSortDir === "asc" ? "desc" : "asc";
+      const next = new URLSearchParams(urlParams.toString());
+      next.set("sort", sortKey);
+      next.set("dir", newDir);
+      next.delete("page");
+      router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+    },
+    [router, pathname, urlParams, serverSortKey, serverSortDir],
+  );
+
   // ── Column definitions ──────────────────────────────────────────────────
   const columns = useMemo<ColumnDef<ListRow>[]>(() =>
     headers.map((h, colIdx) => {
       const sortable = headerSortable(h);
+      const sortKey = headerSortKey(h);
       return {
         id: `col_${colIdx}`,
         accessorFn: (row) => row.sortValues?.[colIdx] ?? null,
         header: ({ column }) => {
           const label = headerLabel(h);
+
+          // Server-side sort (via URL param)
+          if (sortKey) {
+            const isActive = serverSortKey === sortKey;
+            const isAsc = isActive && serverSortDir === "asc";
+            const isDesc = isActive && serverSortDir === "desc";
+            return (
+              <button
+                type="button"
+                onClick={() => handleServerSort(sortKey)}
+                className="inline-flex items-center gap-1 text-xs font-medium tracking-wide text-muted-foreground hover:text-foreground"
+              >
+                {label}
+                {isAsc ? (
+                  <ArrowUp className="size-3 text-primary" />
+                ) : isDesc ? (
+                  <ArrowDown className="size-3 text-primary" />
+                ) : (
+                  <ArrowUpDown className="size-3 opacity-40" />
+                )}
+              </button>
+            );
+          }
+
+          // Client-side sort (TanStack, current page only)
           if (!sortable) return label;
           const sorted = column.getIsSorted();
           return (
@@ -179,11 +234,12 @@ export function ListPage({
           );
         },
         cell: ({ row }) => row.original.cells[colIdx],
-        enableSorting: sortable,
+        enableSorting: sortable && !sortKey,
         sortingFn: "alphanumeric",
       };
     }),
-  [headers]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [headers, serverSortKey, serverSortDir, handleServerSort]);
 
   const table = useReactTable({
     data: rows,

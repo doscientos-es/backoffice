@@ -54,3 +54,22 @@ export function parseEnumParam<T extends string>(
   const raw = parseStringParam(params, key);
   return (validValues as readonly string[]).includes(raw) ? (raw as T) : null;
 }
+
+export type SortDir = "asc" | "desc";
+
+/**
+ * Lee los params `sort` y `dir` y los valida contra una lista de columnas
+ * permitidas. Si el valor no es válido, devuelve `defaultColumn` y `defaultDir`.
+ */
+export function parseSortParam(
+  params: RawParams,
+  validColumns: readonly string[],
+  defaultColumn: string,
+  defaultDir: SortDir = "asc",
+): { sort: string; dir: SortDir } {
+  const rawSort = parseStringParam(params, "sort");
+  const rawDir = parseStringParam(params, "dir");
+  const sort = (validColumns as readonly string[]).includes(rawSort) ? rawSort : defaultColumn;
+  const dir: SortDir = rawDir === "asc" || rawDir === "desc" ? rawDir : defaultDir;
+  return { sort, dir };
+}

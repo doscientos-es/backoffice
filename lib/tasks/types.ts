@@ -41,12 +41,16 @@ export type TaskListItem = {
   team_members: { id: string; name: string } | null;
 };
 
+export const TASK_SORT_COLUMNS = ["title", "status", "priority", "due_date"] as const;
+
 export type TaskListParams = {
   q?: string;
   status?: string;
   priority?: string;
   projectId?: string;
   page?: number;
+  sort?: string;
+  dir?: "asc" | "desc";
 };
 
 export type TaskListResult = {

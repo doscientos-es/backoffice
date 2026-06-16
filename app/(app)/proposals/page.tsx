@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
+import { escapeIlike, parsePage, parseSortParam, parseStringParam } from "@/lib/utils/search-params";
 import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -14,25 +15,24 @@ export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 25;
 
+const PROPOSAL_SORT_COLUMNS = ["number", "title", "status", "total", "valid_until"] as const;
+
 const STATUS_FILTER_OPTIONS = (Object.keys(PROPOSAL_STATUS) as ProposalStatus[]).map((value) => ({
   value,
   label: PROPOSAL_STATUS[value].label,
 }));
 
-function escapeIlike(value: string): string {
-  return value.replace(/[%_\\]/g, (m) => `\\${m}`);
-}
-
 export default async function ProposalsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; page?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   await requireUser();
   const sp = await searchParams;
-  const q = (sp.q ?? "").trim();
-  const status = (sp.status ?? "").trim();
-  const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
+  const q = parseStringParam(sp, "q");
+  const status = parseStringParam(sp, "status");
+  const page = parsePage(sp);
+  const { sort, dir } = parseSortParam(sp, PROPOSAL_SORT_COLUMNS, "created_at", "desc");
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
@@ -48,8 +48,9 @@ export default async function ProposalsPage({
   }
   if (status) query = query.eq("status", status);
 
+  const ascending = sort !== "created_at" ? dir !== "desc" : false;
   const { data, error, count } = await query
-    .order("created_at", { ascending: false })
+    .order(sort, { ascending, nullsFirst: false })
     .range(from, to);
 
   const newAction = (
@@ -74,8 +75,15 @@ export default async function ProposalsPage({
       searchPlaceholder="Buscar por número o título…"
       filters={[{ key: "status", label: "Estado", options: STATUS_FILTER_OPTIONS }]}
       pagination={{ page, pageSize: PAGE_SIZE, total: count ?? 0 }}
-      headers={["Número", "Título", "Estado", "Importe", "Válida hasta"]}
+      headers={[
+        { label: "Número", sortKey: "number" },
+        { label: "Título", sortKey: "title" },
+        { label: "Estado", sortKey: "status" },
+        { label: "Importe", align: "right", sortKey: "total" },
+        { label: "Válida hasta", sortKey: "valid_until" },
+      ]}
       align={["left", "left", "left", "right", "left"]}
+      exportFilename="propuestas"
       rows={
         data?.map((p) => ({
           id: p.id as string,
@@ -86,6 +94,13 @@ export default async function ProposalsPage({
             <StatusBadge key="status" meta={PROPOSAL_STATUS} value={p.status as string} />,
             formatEUR(p.total as number),
             formatDate(p.valid_until as string | null),
+          ],
+          csvValues: [
+            (p.number as string | null) ?? "Borrador",
+            p.title as string,
+            p.status as string,
+            p.total as number,
+            (p.valid_until as string | null) ?? "",
           ],
         })) ?? []
       }

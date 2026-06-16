@@ -46,12 +46,22 @@ export type LeadListItem = {
 
 export type LeadListView = "board" | "list";
 
+export const LEAD_SORT_COLUMNS = [
+  "name",
+  "company",
+  "status",
+  "estimated_value",
+  "created_at",
+] as const;
+
 export type LeadListParams = {
   view: LeadListView;
   q: string;
   status: LeadStatus | null;
   source: string | null;
   page: number;
+  sort?: string;
+  dir?: "asc" | "desc";
 };
 
 export type LeadListResult = {

@@ -7,10 +7,11 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { isAIEnabled } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { listLeads } from "@/lib/leads/queries";
-import { LEAD_BOARD_LIMIT, LEAD_LIST_PAGE_SIZE } from "@/lib/leads/types";
+import { LEAD_BOARD_LIMIT, LEAD_LIST_PAGE_SIZE, LEAD_SORT_COLUMNS } from "@/lib/leads/types";
 import { listActiveMembers } from "@/lib/members/queries";
 import { LEAD_STATUS, type LeadStatus } from "@/lib/status";
 import { relativeTime } from "@/lib/utils";
+import { parseSortParam } from "@/lib/utils/search-params";
 import { ArrowRight, TriangleAlert } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -62,13 +63,14 @@ export default async function LeadsPage({
     ? (sp.source as string)
     : null;
   const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
+  const { sort, dir } = parseSortParam(sp, LEAD_SORT_COLUMNS, "created_at", "desc");
 
   const user = await requireUser();
   const aiEnabled = isAIEnabled();
   const canEdit = user.role !== "viewer";
 
   const [{ leads: enrichedLeads, count, error }, members] = await Promise.all([
-    listLeads({ view, q, status, source, page }),
+    listLeads({ view, q, status, source, page, sort, dir }),
     listActiveMembers(),
   ]);
 

@@ -20,10 +20,14 @@ export type ProjectListItem = {
   client_name: string | null;
 };
 
+export const PROJECT_SORT_COLUMNS = ["name", "status", "updated_at"] as const;
+
 export type ProjectListParams = {
   q?: string;
   status?: string;
   page?: number;
+  sort?: string;
+  dir?: "asc" | "desc";
 };
 
 export type ProjectListResult = {

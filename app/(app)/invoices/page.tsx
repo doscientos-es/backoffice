@@ -6,7 +6,8 @@ import { listInvoices } from "@/lib/invoices/queries";
 import { INVOICE_LIST_PAGE_SIZE } from "@/lib/invoices/types";
 import { INVOICE_STATUS, VERIFACTU_STATUS } from "@/lib/status";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { parseStringParam, parsePage } from "@/lib/utils/search-params";
+import { parseStringParam, parsePage, parseSortParam } from "@/lib/utils/search-params";
+import { INVOICE_SORT_COLUMNS } from "@/lib/invoices/types";
 import { AlertTriangle, CheckCircle2, Clock, ShieldAlert } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -40,8 +41,9 @@ export default async function InvoicesPage({
   const status = parseStringParam(sp, "status");
   const verifactu = parseStringParam(sp, "verifactu");
   const page = parsePage(sp);
+  const { sort, dir } = parseSortParam(sp, INVOICE_SORT_COLUMNS, "issue_date", "desc");
 
-  const { data, count, stats, error } = await listInvoices({ q, status, verifactu, page });
+  const { data, count, stats, error } = await listInvoices({ q, status, verifactu, page, sort, dir });
 
   const { pendingTotal, pendingCount, overdueTotal, overdueCount, paidMonthTotal, verifactuKoCount } =
     stats;
@@ -97,16 +99,17 @@ export default async function InvoicesPage({
         ]}
         pagination={{ page, pageSize: INVOICE_LIST_PAGE_SIZE, total: count }}
         headers={[
-          "Nº",
-          "Cliente",
+          { label: "Nº", sortKey: "full_number" },
+          { label: "Cliente", sortKey: "client_name" },
           "IDFACT",
-          "Estado",
+          { label: "Estado", sortKey: "status" },
           "Verifactu",
-          "Importe",
-          "Emisión",
-          "Vencimiento",
+          { label: "Importe", align: "right", sortKey: "total" },
+          { label: "Emisión", sortKey: "issue_date" },
+          { label: "Vencimiento", sortKey: "due_date" },
         ]}
         align={["left", "left", "left", "left", "left", "right", "left", "left"]}
+        exportFilename="facturas"
         rows={data.map((i) => ({
           id: i.id,
           href: `/invoices/${i.id}`,
@@ -123,6 +126,16 @@ export default async function InvoicesPage({
             formatEUR(i.total ?? 0),
             formatDate(i.issue_date),
             formatDate(i.due_date),
+          ],
+          csvValues: [
+            i.full_number ?? "",
+            i.client_name ?? "",
+            i.idfact ?? "",
+            i.status ?? "",
+            i.verifactu_status ?? "",
+            i.total ?? 0,
+            i.issue_date ?? "",
+            i.due_date ?? "",
           ],
         }))}
       />

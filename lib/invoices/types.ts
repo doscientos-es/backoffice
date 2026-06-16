@@ -27,11 +27,22 @@ export type InvoiceStats = {
   verifactuKoCount: number;
 };
 
+export const INVOICE_SORT_COLUMNS = [
+  "full_number",
+  "client_name",
+  "status",
+  "total",
+  "issue_date",
+  "due_date",
+] as const;
+
 export type InvoiceListParams = {
   q?: string;
   status?: string;
   verifactu?: string;
   page?: number;
+  sort?: string;
+  dir?: "asc" | "desc";
 };
 
 export type InvoiceListResult = {
