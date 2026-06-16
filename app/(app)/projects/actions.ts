@@ -10,6 +10,7 @@ import { redirect } from "next/navigation";
 
 function buildDbPayload(p: any) {
   const repo = p.github_repo ? parseGithubRepoUrl(p.github_repo) : null;
+  const isHourly = p.billing_type === "hourly";
   return {
     client_id: p.client_id,
     name: p.name,
@@ -17,6 +18,9 @@ function buildDbPayload(p: any) {
     status: p.status,
     starts_at: p.starts_at ?? null,
     ends_at: p.ends_at ?? null,
+    billing_type: p.billing_type,
+    hourly_rate: isHourly ? (p.hourly_rate ?? null) : null,
+    hourly_vat_rate: isHourly ? p.hourly_vat_rate : 21,
     github_sync_mode: p.github_sync_mode,
     github_auto_sync: p.github_sync_mode === "bidirectional" ? p.github_auto_sync : true,
     github_repo: p.github_sync_mode === "none" ? null : (p.github_repo ?? null),

@@ -20,6 +20,16 @@ export const CreateInvoiceFromProposalInput = z.object({
 });
 export type CreateInvoiceFromProposalInputType = z.infer<typeof CreateInvoiceFromProposalInput>;
 
+/**
+ * Generate a draft invoice for an hourly project from the hours logged in a
+ * given calendar month. `month` is `YYYY-MM`.
+ */
+export const CreateMonthlyHourlyInvoiceInput = z.object({
+  projectId: z.string().uuid(),
+  month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Mes no válido (YYYY-MM)"),
+});
+export type CreateMonthlyHourlyInvoiceInputType = z.infer<typeof CreateMonthlyHourlyInvoiceInput>;
+
 export const UpdateInvoiceInput = z.object({
   id: z.string().uuid(),
   issue_date: z.string().optional(),

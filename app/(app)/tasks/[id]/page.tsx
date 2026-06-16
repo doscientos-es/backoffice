@@ -15,6 +15,7 @@ import { notFound } from "next/navigation";
 import { GitHubModeBadge } from "../../projects/github-mode-badge";
 import type { GitHubSyncMode } from "../../projects/github-sync-section";
 import { syncTaskToGithub } from "../actions";
+import { BranchCommand } from "./branch-command";
 import { DeleteTaskButton } from "./delete-task-button";
 import { type CommentItem, TaskComments } from "./task-comments";
 import { TaskEditDialog } from "./task-edit-dialog";
@@ -30,7 +31,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
   const { data: task } = await supabase
     .from("tasks")
     .select(
-      "*, projects(id, name, github_sync_mode, github_repo, github_repo_owner, github_repo_name), leads(id, name), team_members:assignee_id(id, name), creator:created_by(id, name)",
+      "*, projects(id, name, github_sync_mode, github_repo, github_repo_owner, github_repo_name, clients(id, name)), leads(id, name), team_members:assignee_id(id, name), creator:created_by(id, name)",
     )
     .eq("id", id)
     .is("deleted_at", null)
@@ -45,6 +46,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
     github_repo: string | null;
     github_repo_owner: string | null;
     github_repo_name: string | null;
+    clients: { id: string; name: string } | null;
   };
   const project = (task as unknown as { projects: ProjectMeta | null }).projects;
   const ghMode: GitHubSyncMode = project?.github_sync_mode ?? "none";
@@ -52,6 +54,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
   const assignee = (task as unknown as { team_members: { id: string; name: string } | null })
     .team_members;
   const creator = (task as unknown as { creator: { id: string; name: string } | null }).creator;
+  const client = project?.clients ?? null;
 
   const [{ data: members }, { data: commentsData }] = await Promise.all([
     supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
@@ -105,24 +108,34 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
           </CardHeader>
           <CardContent>
             <DetailGrid>
-              <DetailRow label="Proyecto">
-                {project ? (
-                  <Link href={`/projects/${project.id}`} className="hover:underline">
-                    {project.name}
-                  </Link>
-                ) : (
-                  "—"
-                )}
-              </DetailRow>
-              <DetailRow label="Lead">
-                {lead ? (
-                  <Link href={`/leads/${lead.id}`} className="hover:underline">
-                    {lead.name}
-                  </Link>
-                ) : (
-                  "—"
-                )}
-              </DetailRow>
+              {project ? (
+                <>
+                  <DetailRow label="Cliente">
+                    {client ? (
+                      <Link href={`/clients/${client.id}`} className="hover:underline">
+                        {client.name}
+                      </Link>
+                    ) : (
+                      "—"
+                    )}
+                  </DetailRow>
+                  <DetailRow label="Proyecto">
+                    <Link href={`/projects/${project.id}`} className="hover:underline">
+                      {project.name}
+                    </Link>
+                  </DetailRow>
+                </>
+              ) : (
+                <DetailRow label="Lead">
+                  {lead ? (
+                    <Link href={`/leads/${lead.id}`} className="hover:underline">
+                      {lead.name}
+                    </Link>
+                  ) : (
+                    "—"
+                  )}
+                </DetailRow>
+              )}
               <DetailRow label="Asignada">{assignee?.name ?? "—"}</DetailRow>
               <DetailRow label="Creada por">{creator?.name ?? "—"}</DetailRow>
               <DetailRow label="Vence">{formatDate(task.due_date as string | null)}</DetailRow>
@@ -166,6 +179,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
                   body={(task.description as string | null) ?? ""}
                   issueUrl={(task.github_issue_url as string | null) ?? null}
                   issueNumber={(task.github_issue_number as number | null) ?? null}
+                  branch={(task.github_branch as string | null) ?? null}
                   repoOwner={project.github_repo_owner}
                   repoName={project.github_repo_name}
                   repoUrl={project.github_repo}
@@ -195,12 +209,6 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
   );
 }
 
-/**
- * Mode-aware GitHub actions rendered inside the task detail card.
- *
- *   • link_only      → "Crear nuevo issue en GitHub" pre-filled link (no API hit).
- *   • bidirectional  → existing issue link OR a manual sync trigger when not yet synced.
- */
 function TaskGithubActions({
   taskId,
   mode,
@@ -208,6 +216,7 @@ function TaskGithubActions({
   body,
   issueUrl,
   issueNumber,
+  branch,
   repoOwner,
   repoName,
   repoUrl,
@@ -218,6 +227,7 @@ function TaskGithubActions({
   body: string;
   issueUrl: string | null;
   issueNumber: number | null;
+  branch: string | null;
   repoOwner: string | null;
   repoName: string | null;
   repoUrl: string | null;
@@ -247,12 +257,15 @@ function TaskGithubActions({
 
   if (issueUrl) {
     return (
-      <Button asChild size="sm" variant="outline" className="w-fit">
-        <a href={issueUrl} target="_blank" rel="noreferrer">
-          Ver issue #{issueNumber} en GitHub
-          <ArrowUpRight className="size-3.5" />
-        </a>
-      </Button>
+      <div className="flex flex-col gap-3">
+        <Button asChild size="sm" variant="outline" className="w-fit">
+          <a href={issueUrl} target="_blank" rel="noreferrer">
+            Ver issue #{issueNumber} en GitHub
+            <ArrowUpRight className="size-3.5" />
+          </a>
+        </Button>
+        {branch ? <BranchCommand branch={branch} /> : null}
+      </div>
     );
   }
 

@@ -2,7 +2,7 @@
 
 import { defineAction } from "@/lib/actions/define-action";
 import { requireUser } from "@/lib/auth";
-import { autoSyncTaskIssue } from "@/lib/integrations/github-sync";
+import { autoSyncTaskIssue, syncTaskStatusToGitHub } from "@/lib/integrations/github-sync";
 import {
   CreateTaskInput,
   MoveTaskInput,
@@ -81,6 +81,7 @@ export const updateTask = defineAction({
 
     const { error } = await supabase.from("tasks").update(updates).eq("id", input.id);
     if (error) throw new Error(error.message);
+    void syncTaskStatusToGitHub(input.id, input.status);
   },
 });
 
@@ -96,6 +97,7 @@ export const updateTaskStatus = defineAction({
 
     const { error } = await supabase.from("tasks").update(updates).eq("id", data.taskId);
     if (error) throw new Error(error.message);
+    void syncTaskStatusToGitHub(data.taskId, data.status);
   },
 });
 

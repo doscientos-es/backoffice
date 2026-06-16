@@ -16,10 +16,19 @@ const { state } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/auth", () => ({
-  requireRole: vi.fn(async () => ({
-    id: "00000000-0000-0000-0000-000000000000",
-    role: state.actorRole,
-  })),
+  // Mirrors the real guard: redirect() (which throws a NEXT_REDIRECT error)
+  // when the actor's role is not in the allowed list.
+  requireRole: vi.fn(async (roles: string[]) => {
+    if (!roles.includes(state.actorRole)) {
+      const err = new Error("NEXT_REDIRECT") as Error & { digest: string };
+      err.digest = "NEXT_REDIRECT;replace;/inicio?error=forbidden;307;";
+      throw err;
+    }
+    return {
+      id: "00000000-0000-0000-0000-000000000000",
+      role: state.actorRole,
+    };
+  }),
 }));
 
 vi.mock("@/lib/supabase/admin", () => ({
@@ -47,7 +56,7 @@ vi.mock("@/lib/supabase/server", () => ({
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
-import { inviteTeamMember } from "@/app/(app)/settings/team/actions";
+import { inviteTeamMember, updateMemberRole } from "@/app/(app)/settings/team/actions";
 
 function form(email: string, name = "Test User", role = "member") {
   const fd = new FormData();
@@ -113,5 +122,35 @@ describe("inviteTeamMember", () => {
     const res = await inviteTeamMember(form("a@b.com"));
     expect(res).toEqual({ ok: false, error: "rate limited" });
     expect(state.upsertCalls).toHaveLength(0);
+  });
+});
+
+describe("updateMemberRole", () => {
+  const OTHER = "22222222-2222-2222-2222-222222222222";
+  const SELF = "00000000-0000-0000-0000-000000000000";
+
+  beforeEach(() => {
+    state.actorRole = "owner";
+  });
+
+  it("blocks a member from changing another member's role", async () => {
+    state.actorRole = "member";
+    await expect(updateMemberRole({ memberId: OTHER, role: "owner" })).rejects.toThrow(
+      "NEXT_REDIRECT",
+    );
+  });
+
+  it("blocks a member from changing their own role", async () => {
+    state.actorRole = "member";
+    await expect(updateMemberRole({ memberId: SELF, role: "owner" })).rejects.toThrow(
+      "NEXT_REDIRECT",
+    );
+  });
+
+  it("blocks a viewer from changing roles", async () => {
+    state.actorRole = "viewer";
+    await expect(updateMemberRole({ memberId: OTHER, role: "admin" })).rejects.toThrow(
+      "NEXT_REDIRECT",
+    );
   });
 });
