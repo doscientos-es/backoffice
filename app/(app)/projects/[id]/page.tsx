@@ -17,6 +17,7 @@ import { GitHubModeBadge } from "../github-mode-badge";
 import type { GitHubSyncMode } from "../github-sync-section";
 import { type ChecklistItemRow, ChecklistSection } from "./checklist-section";
 import { DeleteProjectButton } from "./delete-project-button";
+import { MonthlyInvoiceSection } from "./monthly-invoice-section";
 import { ProjectEditDialog } from "./project-edit-dialog";
 import { ProjectTasksViewToggle } from "./project-tasks-view-toggle";
 import { type KanbanTask, TasksKanban } from "./tasks/tasks-kanban";
@@ -198,6 +199,10 @@ export default async function ProjectDetailPage({
                   starts_at: (project.starts_at as string | null) ?? null,
                   ends_at: (project.ends_at as string | null) ?? null,
                   description: (project.description as string | null) ?? null,
+                  billing_type: (project.billing_type as "fixed" | "hourly" | null) ?? "fixed",
+                  hourly_rate: project.hourly_rate != null ? Number(project.hourly_rate) : null,
+                  hourly_vat_rate:
+                    project.hourly_vat_rate != null ? Number(project.hourly_vat_rate) : null,
                   github_sync_mode: (project.github_sync_mode as GitHubSyncMode | null) ?? "none",
                   github_repo: (project.github_repo as string | null) ?? null,
                   github_installation_id: (project.github_installation_id as number | null) ?? null,
@@ -272,8 +277,8 @@ export default async function ProjectDetailPage({
             <p className="px-6 py-2 text-sm text-muted-foreground">Sin tareas.</p>
           ) : isBoard ? (
             <TasksKanban
-              tasks={
-                (tasks as unknown as Array<{
+              tasks={(
+                tasks as unknown as Array<{
                   id: string;
                   title: string;
                   status: KanbanTask["status"];
@@ -281,16 +286,16 @@ export default async function ProjectDetailPage({
                   due_date: string | null;
                   kanban_order: string;
                   team_members: { id: string; name: string } | null;
-                }>).map((t) => ({
-                  id: t.id,
-                  title: t.title,
-                  status: t.status,
-                  priority: t.priority,
-                  due_date: t.due_date,
-                  kanban_order: t.kanban_order,
-                  assignee: t.team_members,
-                }))
-              }
+                }>
+              ).map((t) => ({
+                id: t.id,
+                title: t.title,
+                status: t.status,
+                priority: t.priority,
+                due_date: t.due_date,
+                kanban_order: t.kanban_order,
+                assignee: t.team_members,
+              }))}
             />
           ) : (
             <ul className="divide-y divide-border">
@@ -316,6 +321,14 @@ export default async function ProjectDetailPage({
         invoicedTotal={invoicedTotal}
         canEdit={canEdit}
       />
+
+      {canEdit && project.billing_type === "hourly" && Number(project.hourly_rate ?? 0) > 0 ? (
+        <MonthlyInvoiceSection
+          projectId={id}
+          hourlyRate={Number(project.hourly_rate)}
+          hourlyVatRate={Number(project.hourly_vat_rate ?? 0)}
+        />
+      ) : null}
 
       <ChecklistSection
         projectId={id}

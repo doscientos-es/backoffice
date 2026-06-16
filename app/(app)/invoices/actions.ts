@@ -8,6 +8,7 @@ import { scopedLogger } from "@/lib/logger";
 import { buildPortalAccessPatch } from "@/lib/portal/access";
 import {
   CreateInvoiceFromProposalInput,
+  CreateMonthlyHourlyInvoiceInput,
   SendInvoiceInput,
   UpdateInvoiceInput as UpdateInvoiceInputSchema,
   type UpdateInvoiceInputType,
@@ -101,10 +102,7 @@ export async function restoreInvoice(
   if (!z.string().uuid().safeParse(id).success) return { ok: false, error: "ID inválido" };
 
   const supabase = await createServerClient();
-  const { error } = await supabase
-    .from("invoices")
-    .update({ deleted_at: null })
-    .eq("id", id);
+  const { error } = await supabase.from("invoices").update({ deleted_at: null }).eq("id", id);
 
   if (error) return { ok: false, error: error.message };
 
@@ -360,6 +358,135 @@ export async function createInvoiceFromProposal(input: unknown): Promise<FromPro
 
   revalidatePath("/invoices");
   revalidatePath(`/proposals/${proposalId}`);
+  return { ok: true, id: invoice.id as string };
+}
+
+/**
+ * Generate a draft invoice for an hourly project from the hours logged in a
+ * calendar month. Sums `work_logs.hours` for the month and bills them as a
+ * single line at the project's `hourly_rate` / `hourly_vat_rate` (e.g. Palumba:
+ * 40 €/h, 0 % VAT). Fixed-price projects are rejected.
+ */
+export async function createHourlyInvoice(input: unknown): Promise<FromProposalResult> {
+  const user = await requireUser();
+  const parsed = CreateMonthlyHourlyInvoiceInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Datos no válidos" };
+  const { projectId, month } = parsed.data;
+
+  const supabase = await createServerClient();
+
+  const { data: project, error: projectError } = await supabase
+    .from("projects")
+    .select("id, client_id, name, billing_type, hourly_rate, hourly_vat_rate")
+    .eq("id", projectId)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (projectError || !project) return { ok: false, error: "Proyecto no encontrado" };
+  if (project.billing_type !== "hourly") {
+    return { ok: false, error: "El proyecto no factura por horas" };
+  }
+  const rate = Number(project.hourly_rate ?? 0);
+  if (!(rate > 0)) return { ok: false, error: "El proyecto no tiene un precio/hora válido" };
+  const vatRate = Number(project.hourly_vat_rate ?? 0);
+
+  // Month window: [YYYY-MM-01, first day of next month). The schema regex
+  // guarantees `YYYY-MM`, so the parsed parts are always valid integers.
+  const year = Number(month.slice(0, 4));
+  const mon = Number(month.slice(5, 7));
+  const monthStart = `${month}-01`;
+  const monthEnd = new Date(Date.UTC(year, mon, 1)).toISOString().slice(0, 10);
+
+  const { data: logs, error: logsError } = await supabase
+    .from("work_logs")
+    .select("hours")
+    .eq("project_id", projectId)
+    .is("deleted_at", null)
+    .gte("work_date", monthStart)
+    .lt("work_date", monthEnd);
+
+  if (logsError) return { ok: false, error: logsError.message };
+  const hours = (logs ?? []).reduce((sum, l) => sum + Number(l.hours ?? 0), 0);
+  if (!(hours > 0)) {
+    return { ok: false, error: "No hay horas registradas en ese mes" };
+  }
+
+  const { data: client } = await supabase
+    .from("clients")
+    .select("name, nif, billing_address")
+    .eq("id", project.client_id as string)
+    .maybeSingle();
+
+  const { data: settings } = await supabase
+    .from("settings")
+    .select("invoice_series")
+    .eq("id", 1)
+    .maybeSingle();
+  const series = ((settings?.invoice_series as string | null) ?? "A").trim() || "A";
+
+  const { data: lastInSeries } = await supabase
+    .from("invoices")
+    .select("number")
+    .eq("series", series)
+    .order("number", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const nextNumber = ((lastInSeries?.number as number | null) ?? 0) + 1;
+
+  const monthLabel = new Intl.DateTimeFormat("es-ES", {
+    month: "long",
+    year: "numeric",
+  }).format(new Date(`${monthStart}T00:00:00`));
+  const description = `Horas trabajadas — ${monthLabel}`;
+
+  const { subtotal, taxAmount, total } = computeLineTotals([
+    { quantity: hours, unit_price: rate, vat_rate: vatRate },
+  ]);
+
+  const { data: invoice, error: insertError } = await supabase
+    .from("invoices")
+    .insert({
+      client_id: project.client_id,
+      project_id: project.id,
+      series,
+      number: nextNumber,
+      status: "draft",
+      currency: "EUR",
+      subtotal,
+      tax_amount: taxAmount,
+      total,
+      client_nif: (client?.nif as string | null) ?? null,
+      client_name: (client?.name as string | null) ?? null,
+      client_address: (client?.billing_address as string | null) ?? null,
+      created_by: user.id,
+    })
+    .select("id")
+    .single();
+
+  if (insertError || !invoice) {
+    log.error({ err: insertError, projectId, month }, "create_hourly_invoice_failed");
+    return { ok: false, error: insertError?.message ?? "No se pudo crear la factura" };
+  }
+
+  const { error: itemsInsertError } = await supabase.from("invoice_items").insert({
+    invoice_id: invoice.id,
+    position: 0,
+    description,
+    quantity: hours,
+    unit_price: rate,
+    vat_rate: vatRate,
+  });
+
+  if (itemsInsertError) {
+    log.error(
+      { err: itemsInsertError, invoiceId: invoice.id, projectId, month },
+      "create_hourly_invoice_items_failed",
+    );
+    return { ok: false, error: itemsInsertError.message };
+  }
+
+  revalidatePath("/invoices");
+  revalidatePath(`/projects/${projectId}`);
   return { ok: true, id: invoice.id as string };
 }
 

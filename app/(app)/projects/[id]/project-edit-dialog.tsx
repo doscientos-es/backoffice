@@ -54,6 +54,8 @@ export function ProjectEditDialog({ project, clients, orgDefaultInstallationId =
     feedback.setPending();
     const fd = new FormData(e.currentTarget);
     const installIdRaw = fd.get("github_installation_id")?.toString() ?? "";
+    const rateRaw = fd.get("hourly_rate")?.toString() ?? "";
+    const vatRaw = fd.get("hourly_vat_rate")?.toString() ?? "";
     const res = await updateProject({
       id: project.id,
       client_id: fd.get("client_id")?.toString() ?? "",
@@ -62,6 +64,9 @@ export function ProjectEditDialog({ project, clients, orgDefaultInstallationId =
       status: (fd.get("status")?.toString() ?? "planning") as ProjectStatusType,
       starts_at: fd.get("starts_at")?.toString() ?? "",
       ends_at: fd.get("ends_at")?.toString() ?? "",
+      billing_type: (fd.get("billing_type")?.toString() ?? "fixed") as ProjectBillingType,
+      hourly_rate: rateRaw === "" ? "" : Number(rateRaw),
+      hourly_vat_rate: vatRaw === "" ? 21 : Number(vatRaw),
       github_sync_mode: (fd.get("github_sync_mode")?.toString() ?? "none") as GithubSyncModeType,
       github_auto_sync: !!fd.get("github_auto_sync"),
       github_repo: fd.get("github_repo")?.toString() ?? "",
@@ -106,6 +111,9 @@ export function ProjectEditDialog({ project, clients, orgDefaultInstallationId =
                 starts_at: project.starts_at,
                 ends_at: project.ends_at,
                 description: project.description,
+                billing_type: project.billing_type ?? "fixed",
+                hourly_rate: project.hourly_rate,
+                hourly_vat_rate: project.hourly_vat_rate,
                 github_sync_mode: project.github_sync_mode ?? "none",
                 github_repo: project.github_repo,
                 github_installation_id: project.github_installation_id,
