@@ -41,14 +41,15 @@ const keyPointListField = z
 
 /**
  * A proposal must target exactly one of (client_id, lead_id). Project
- * association is removed: when the proposal is accepted, a project is
- * auto-generated and linked back. Drafts authored against a lead get
- * upgraded to a client at acceptance time via the portal fiscal form.
+ * association is optional: link an existing project when the proposal
+ * extends ongoing work. Drafts authored against a lead get upgraded to a
+ * client at acceptance time via the portal fiscal form.
  */
 export const CreateProposalInput = z
   .object({
     client_id: optionalUuid,
     lead_id: optionalUuid,
+    project_id: optionalUuid,
     title: z.string().min(1, "Título obligatorio").max(200),
     valid_until: z.string().optional().or(emptyToUndef),
     notes: z.string().max(4000).optional(),

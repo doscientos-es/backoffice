@@ -27,6 +27,7 @@ import { createProposalAction } from "../actions";
 type Props = {
   clients: Array<{ id: string; name: string }>;
   leads: Array<{ id: string; name: string; company: string | null; status: string }>;
+  projects: Array<{ id: string; name: string; client_id: string }>;
   initialClientId?: string;
   initialLeadId?: string;
 };
@@ -45,7 +46,7 @@ type Recipient = { kind: "client"; id: string } | { kind: "lead"; id: string } |
  * The recipient is either an existing client OR an open lead: the proposal
  * never targets a project (projects are auto-generated on acceptance).
  */
-export function NewProposalForm({ clients, leads, initialClientId, initialLeadId }: Props) {
+export function NewProposalForm({ clients, leads, projects, initialClientId, initialLeadId }: Props) {
   const router = useRouter();
   const feedback = useFormFeedback({ successResetMs: 4000 });
   const [pending, startTransition] = useTransition();
@@ -59,6 +60,16 @@ export function NewProposalForm({ clients, leads, initialClientId, initialLeadId
   const [title, setTitle] = useState("");
   const [validUntil, setValidUntil] = useState("");
   const [notes, setNotes] = useState("");
+  const [projectId, setProjectId] = useState("");
+
+  // Projects available for the selected client
+  const clientProjects = useMemo(
+    () =>
+      recipient?.kind === "client"
+        ? projects.filter((p) => p.client_id === recipient.id)
+        : [],
+    [projects, recipient],
+  );
   const [items, setItems] = useState<LineItem[]>([{ ...EMPTY_LINE_ITEM, id: crypto.randomUUID() }]);
   const [pendingLeadMove, setPendingLeadMove] = useState<{
     leadId: string;
@@ -83,6 +94,7 @@ export function NewProposalForm({ clients, leads, initialClientId, initialLeadId
       const res = await createProposalAction({
         client_id: recipient.kind === "client" ? recipient.id : undefined,
         lead_id: recipient.kind === "lead" ? recipient.id : undefined,
+        project_id: projectId || undefined,
         title: title.trim(),
         valid_until: validUntil || undefined,
         notes: notes || undefined,
@@ -117,6 +129,7 @@ export function NewProposalForm({ clients, leads, initialClientId, initialLeadId
   }
 
   function onRecipientChange(value: string) {
+    setProjectId(""); // reset project when recipient changes
     if (!value) {
       setRecipient(null);
       return;
@@ -190,6 +203,26 @@ export function NewProposalForm({ clients, leads, initialClientId, initialLeadId
               >
                 <DateField id="valid_until" value={validUntil} onChange={setValidUntil} />
               </FormRow>
+              {clientProjects.length > 0 && (
+                <FormRow
+                  label="Proyecto"
+                  htmlFor="project_id"
+                  hint="Opcional. Vincula esta propuesta a un proyecto existente."
+                >
+                  <Select
+                    id="project_id"
+                    value={projectId}
+                    onChange={(e) => setProjectId(e.target.value)}
+                  >
+                    <option value="">— Sin proyecto —</option>
+                    {clientProjects.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </Select>
+                </FormRow>
+              )}
             </div>
           </CardContent>
         </Card>

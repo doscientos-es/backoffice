@@ -1,7 +1,7 @@
 "use server";
 
 import { ProposalEmail } from "@/components/email";
-import { requireUser } from "@/lib/auth";
+import { requireRole, requireUser } from "@/lib/auth";
 import { renderEmail } from "@/lib/email/render";
 import { sendEmail } from "@/lib/email/resend";
 import { publicEnv } from "@/lib/env";
@@ -61,6 +61,7 @@ async function insertDraftProposal(
     .insert({
       client_id: data.client_id ?? null,
       lead_id: data.lead_id ?? null,
+      project_id: data.project_id ?? null,
       number: null,
       title: data.title,
       status: "draft",
@@ -568,4 +569,54 @@ export async function sendPreviewLink(input: unknown): Promise<SendPreviewResult
 
   revalidatePath(`/proposals/${id}`);
   return { ok: true, portalUrl, mocked };
+}
+
+// ---------------- MARK AS ACCEPTED (manual) ----------------
+
+/**
+ * Allows team members to mark a proposal as accepted without the client
+ * going through the portal — useful when acceptance happened in person or by phone.
+ * Idempotent: already-accepted proposals return ok immediately.
+ */
+export async function markProposalAsAccepted(
+  input: unknown,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireRole(["owner", "admin"]);
+
+  const parsed = z.object({ id: z.string().uuid() }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: "ID inválido" };
+  const { id } = parsed.data;
+
+  const supabase = await createServerClient();
+  const { data: proposal, error: readError } = await supabase
+    .from("proposals")
+    .select("id, number, status")
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (readError || !proposal) return { ok: false, error: "Propuesta no encontrada" };
+  if (proposal.status === "accepted") return { ok: true };
+  if (proposal.status === "rejected") return { ok: false, error: "No se puede aceptar una propuesta rechazada" };
+
+  // Ensure it has a number (drafts that were never sent won't have one yet).
+  const number = (proposal.number as string | null) ?? (await nextProposalNumber(supabase));
+
+  const { error } = await supabase
+    .from("proposals")
+    .update({
+      number,
+      status: "accepted",
+      responded_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+
+  if (error) {
+    log.error({ err: error, id }, "mark_proposal_as_accepted_failed");
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath(`/proposals/${id}`);
+  revalidatePath("/proposals");
+  return { ok: true };
 }

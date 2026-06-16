@@ -10,8 +10,8 @@ export const dynamic = "force-dynamic";
 
 /**
  * Lead-first proposal creation: the recipient is either an existing client
- * or an open lead. Projects are no longer selected up-front; they are
- * generated automatically when the proposal is accepted.
+ * or an open lead. An optional project can be linked when the proposal
+ * extends ongoing work for a known client.
  */
 export default async function NewProposalPage({
   searchParams,
@@ -20,13 +20,18 @@ export default async function NewProposalPage({
   const { client_id, lead_id } = await searchParams;
 
   const supabase = await createServerClient();
-  const [{ data: clients }, { data: leads }] = await Promise.all([
+  const [{ data: clients }, { data: leads }, { data: projects }] = await Promise.all([
     supabase.from("clients").select("id, name").is("deleted_at", null).order("name"),
     supabase
       .from("leads")
       .select("id, name, company, status")
       .is("deleted_at", null)
       .not("status", "in", "(won,lost,not_interested,archived)")
+      .order("name"),
+    supabase
+      .from("projects")
+      .select("id, name, client_id")
+      .is("deleted_at", null)
       .order("name"),
   ]);
 
@@ -45,6 +50,9 @@ export default async function NewProposalPage({
             company: string | null;
             status: string;
           }>
+        }
+        projects={
+          (projects ?? []) as Array<{ id: string; name: string; client_id: string }>
         }
         initialClientId={client_id}
         initialLeadId={lead_id}
