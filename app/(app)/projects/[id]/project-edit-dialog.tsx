@@ -36,9 +36,11 @@ type Project = {
 interface Props {
   project: Project;
   clients: Array<{ id: string; name: string }>;
+  /** Installation ID de la org, fallback cuando el proyecto no tiene uno propio. */
+  orgDefaultInstallationId?: number | null;
 }
 
-export function ProjectEditDialog({ project, clients }: Props) {
+export function ProjectEditDialog({ project, clients, orgDefaultInstallationId = null }: Props) {
   const [open, setOpen] = useState(false);
   const feedback = useFormFeedback();
   const { formRef, isDirty, reset } = useFormDirty<HTMLFormElement>();
@@ -92,6 +94,7 @@ export function ProjectEditDialog({ project, clients }: Props) {
               idPrefix={`edit-${project.id}`}
               clients={clients}
               showClientPlaceholder={false}
+              orgDefaultInstallationId={orgDefaultInstallationId}
               defaults={{
                 client_id: project.client_id,
                 name: project.name,

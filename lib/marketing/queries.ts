@@ -1,8 +1,10 @@
+import { META_LEAD_SOURCE } from "@/lib/integrations/meta-leads";
 import { scopedLogger } from "@/lib/logger";
 import { notDeleted } from "@/lib/supabase/filters";
 import { createServerClient } from "@/lib/supabase/server";
 import { cache } from "react";
 import type { MarketingSort, MarketingView } from "./range";
+import { type MarketingRoi, computeMarketingRoi } from "./roi";
 import type {
   ActiveAdRow,
   CampaignRow,
@@ -459,4 +461,86 @@ export async function getMetaAdsBalance(): Promise<MetaAdsBalance | null> {
   const currency = (spendRows ?? []).find((r) => r.currency)?.currency ?? "EUR";
 
   return { totalRecharged, totalSpent, balance, dailyBurn, daysRemaining, status, currency };
+}
+
+// --- CAC / ROAS -------------------------------------------------------------
+
+/** End-of-day boundary so a `date` window also captures same-day timestamps. */
+function endOfDay(date: string): string {
+  return `${date}T23:59:59.999`;
+}
+
+/**
+ * Closes the marketing loop for the Meta Ads channel: ties the spend Meta
+ * reported to the customers it actually produced and the revenue they invoiced.
+ *
+ * Attribution chain: a Meta lead (`leads.external_source = META_LEAD_SOURCE`)
+ * converted into a `clients` row within the window counts as one acquisition;
+ * its lifetime non-draft invoices are the attributed revenue. See `roi.ts` for
+ * why revenue is lifetime rather than windowed.
+ */
+export async function getMarketingRoi(since: string, until: string): Promise<MarketingRoi> {
+  const supabase = await createServerClient();
+
+  // 1. Spend + leads from Meta insights. Keep only true daily rows in the
+  //    window (date_start === date_stop) to avoid double-counting any legacy
+  //    period-aggregate row, mirroring the overview queries.
+  const { data: insightRows, error: insightErr } = await supabase
+    .from("marketing_insights")
+    .select("spend, total_leads, currency, date_start, date_stop");
+  if (insightErr) log.error({ err: insightErr.message }, "roi_insights_failed");
+  const insights = ((insightRows as unknown as RawInsightRow[]) ?? []).filter(
+    (i) =>
+      i.date_start &&
+      i.date_start === i.date_stop &&
+      i.date_start >= since &&
+      i.date_start <= until,
+  );
+  const spend = sum(insights.map((i) => i.spend));
+  const leads = sum(insights.map((i) => i.total_leads));
+  const currency = insights.find((i) => i.currency)?.currency ?? "EUR";
+
+  // 2. Clients acquired in the window from a Meta-sourced lead.
+  const { data: metaLeads, error: leadsErr } = await notDeleted(
+    supabase.from("leads").select("id").eq("external_source", META_LEAD_SOURCE),
+  );
+  if (leadsErr) log.error({ err: leadsErr.message }, "roi_meta_leads_failed");
+  const metaLeadIds = (metaLeads ?? []).map((l) => l.id as string);
+
+  let acquiredClientIds: string[] = [];
+  if (metaLeadIds.length > 0) {
+    const { data: clientRows, error: clientsErr } = await notDeleted(
+      supabase
+        .from("clients")
+        .select("id")
+        .in("lead_id", metaLeadIds)
+        .gte("created_at", since)
+        .lte("created_at", endOfDay(until)),
+    );
+    if (clientsErr) log.error({ err: clientsErr.message }, "roi_clients_failed");
+    acquiredClientIds = (clientRows ?? []).map((c) => c.id as string);
+  }
+
+  // 3. Lifetime invoiced revenue from those clients (drafts/cancelled excluded).
+  let revenue = 0;
+  if (acquiredClientIds.length > 0) {
+    const { data: invoiceRows, error: invoicesErr } = await notDeleted(
+      supabase
+        .from("invoices")
+        .select("total")
+        .in("client_id", acquiredClientIds)
+        .neq("status", "draft")
+        .neq("status", "cancelled"),
+    );
+    if (invoicesErr) log.error({ err: invoicesErr.message }, "roi_invoices_failed");
+    revenue = sum((invoiceRows ?? []).map((r) => Number(r.total ?? 0)));
+  }
+
+  return computeMarketingRoi({
+    spend,
+    leads,
+    acquiredCustomers: acquiredClientIds.length,
+    revenue,
+    currency,
+  });
 }

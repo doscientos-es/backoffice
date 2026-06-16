@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { requireUser } from "@/lib/auth";
+import { githubDefaultInstallationId } from "@/lib/env";
 import { createServerClient } from "@/lib/supabase/server";
 import { addDaysIsoLocal, todayIsoLocal } from "@/lib/utils/date";
 import type { Metadata } from "next";
@@ -41,6 +42,7 @@ export default async function NewProjectPage({
               idPrefix="new"
               clients={(clients as Array<{ id: string; name: string }> | null) ?? []}
               autoFocusName
+              orgDefaultInstallationId={githubDefaultInstallationId()}
               defaults={{
                 client_id: client_id ?? "",
                 // Suggest a typical 6-week project window starting today.

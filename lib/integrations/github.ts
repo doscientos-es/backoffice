@@ -114,6 +114,28 @@ async function ghFetch<T>(token: string, method: string, path: string, body?: un
 // Public API
 // ---------------------------------------------------------------------------
 
+export interface GitHubRepo {
+  id: number;
+  name: string;
+  full_name: string;
+  html_url: string;
+  private: boolean;
+}
+
+/**
+ * Lists all repositories accessible to a given installation (up to 100).
+ * Uses the installation access token, so only repos the App can see are returned.
+ */
+export async function listInstallationRepos(installationId: number): Promise<GitHubRepo[]> {
+  const token = await getInstallationToken(installationId);
+  const data = await ghFetch<{ repositories: GitHubRepo[] }>(
+    token,
+    "GET",
+    "/installation/repositories?per_page=100",
+  );
+  return data.repositories ?? [];
+}
+
 export interface GitHubIssueResult {
   number: number;
   html_url: string;

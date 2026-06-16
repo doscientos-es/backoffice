@@ -26,6 +26,7 @@ export default async function CompanySettingsPage() {
             defaultVatRate={(settings?.default_vat_rate as number | null) ?? 21}
             iban={(settings?.iban as string | null) ?? ""}
             companyAddress={(settings?.company_address as string | null) ?? ""}
+            internalHourlyCost={(settings?.internal_hourly_cost as number | null) ?? 0}
           />
         </CardContent>
       </Card>

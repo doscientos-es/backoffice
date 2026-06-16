@@ -123,6 +123,7 @@ const CompanyInput = z.object({
     .or(z.literal("").transform(() => undefined)),
   default_vat_rate: z.coerce.number().min(0).max(100),
   invoice_series: z.string().min(1).max(10),
+  internal_hourly_cost: z.coerce.number().min(0).max(100000),
 });
 
 export async function updateCompanySettings(
@@ -136,6 +137,7 @@ export async function updateCompanySettings(
     iban: formData.get("iban")?.toString() ?? "",
     default_vat_rate: formData.get("default_vat_rate")?.toString() ?? "21",
     invoice_series: formData.get("invoice_series")?.toString() ?? "A",
+    internal_hourly_cost: formData.get("internal_hourly_cost")?.toString() ?? "0",
   };
   const parsed = CompanyInput.safeParse(raw);
   if (!parsed.success) {
@@ -152,6 +154,7 @@ export async function updateCompanySettings(
       iban: parsed.data.iban ?? null,
       default_vat_rate: parsed.data.default_vat_rate,
       invoice_series: parsed.data.invoice_series,
+      internal_hourly_cost: parsed.data.internal_hourly_cost,
       updated_at: new Date().toISOString(),
     })
     .eq("id", 1);

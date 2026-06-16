@@ -35,6 +35,11 @@ interface Props {
   /** Whether the client selector includes the disabled placeholder option. */
   showClientPlaceholder?: boolean;
   autoFocusName?: boolean;
+  /**
+   * Installation ID de la org, usado como fallback cuando el proyecto aún no
+   * tiene uno propio. Permite prerellenar el campo de sync bidireccional.
+   */
+  orgDefaultInstallationId?: number | null;
 }
 
 /**
@@ -47,6 +52,7 @@ export function ProjectFormFields({
   idPrefix = "project",
   showClientPlaceholder = true,
   autoFocusName = false,
+  orgDefaultInstallationId = null,
 }: Props) {
   const d = defaults ?? {};
   return (
@@ -125,7 +131,7 @@ export function ProjectFormFields({
         idPrefix={idPrefix}
         defaultMode={d.github_sync_mode ?? "none"}
         defaultRepoUrl={d.github_repo ?? null}
-        defaultInstallationId={d.github_installation_id ?? null}
+        defaultInstallationId={d.github_installation_id ?? orgDefaultInstallationId ?? null}
         defaultAutoSync={d.github_auto_sync ?? true}
       />
     </>

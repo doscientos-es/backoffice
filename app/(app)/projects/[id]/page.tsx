@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
+import { githubDefaultInstallationId } from "@/lib/env";
+import { computeProjectProfitability } from "@/lib/finance";
 import { INVOICE_STATUS, PROJECT_STATUS, PROPOSAL_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
@@ -15,7 +17,7 @@ import { GitHubModeBadge } from "../github-mode-badge";
 import type { GitHubSyncMode } from "../github-sync-section";
 import { DeleteProjectButton } from "./delete-project-button";
 import { ProjectEditDialog } from "./project-edit-dialog";
-import { WorkLogSection, type WorkLogRow } from "./work-log-section";
+import { type WorkLogRow, WorkLogSection } from "./work-log-section";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +50,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     { data: attachments },
     { data: workLogsData },
     { data: invoiceTotals },
+    { data: expenseTotals },
+    { data: settings },
   ] = await Promise.all([
     supabase
       .from("tasks")
@@ -85,7 +89,14 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       .eq("project_id", id)
       .is("deleted_at", null)
       .order("work_date", { ascending: false }),
-    supabase.from("invoices").select("total").eq("project_id", id).is("deleted_at", null),
+    supabase.from("invoices").select("total, status").eq("project_id", id).is("deleted_at", null),
+    supabase
+      .from("expenses")
+      .select("total")
+      .eq("project_id", id)
+      .is("deleted_at", null)
+      .neq("status", "cancelled"),
+    supabase.from("settings").select("internal_hourly_cost").eq("id", 1).maybeSingle(),
   ]);
 
   const workLogs: WorkLogRow[] = ((workLogsData ?? []) as Array<Record<string, unknown>>).map(
@@ -110,6 +121,27 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     (sum, r) => sum + Number(r.total ?? 0),
     0,
   );
+
+  // Profitability: revenue excludes drafts/cancelled, hours are valued with the
+  // company-wide internal hourly cost (Ajustes › Empresa), expenses exclude cancelled.
+  const computableRevenue = (
+    (invoiceTotals ?? []) as Array<{ total: number | string | null; status: string | null }>
+  )
+    .filter((r) => r.status !== "draft" && r.status !== "cancelled")
+    .reduce((sum, r) => sum + Number(r.total ?? 0), 0);
+  const expensesTotal = ((expenseTotals ?? []) as Array<{ total: number | string | null }>).reduce(
+    (sum, r) => sum + Number(r.total ?? 0),
+    0,
+  );
+  const profitability = computeProjectProfitability({
+    revenue: computableRevenue,
+    hours: workLogs.reduce((sum, w) => sum + w.hours, 0),
+    hourlyCost: Number(
+      (settings as { internal_hourly_cost?: number | string | null } | null)
+        ?.internal_hourly_cost ?? 0,
+    ),
+    expenses: expensesTotal,
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -141,6 +173,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                   github_auto_sync: (project.github_auto_sync as boolean | null) ?? true,
                 }}
                 clients={clients ?? []}
+                orgDefaultInstallationId={githubDefaultInstallationId()}
               />
             ) : null}
             {canEdit ? <DeleteProjectButton projectId={project.id as string} /> : null}
@@ -233,6 +266,68 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         canEdit={canEdit}
       />
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Rentabilidad</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
+            <ProfitStat label="Ingresos" value={formatEUR(profitability.revenue)} />
+            <ProfitStat
+              label="Horas"
+              value={
+                Number.isInteger(profitability.hours)
+                  ? `${profitability.hours} h`
+                  : `${profitability.hours.toFixed(2)} h`
+              }
+            />
+            <ProfitStat label="Coste/h interno" value={formatEUR(profitability.hourlyCost)} />
+            <ProfitStat label="Coste horas" value={formatEUR(profitability.laborCost)} />
+            <ProfitStat label="Gastos" value={formatEUR(profitability.expenses)} />
+            <ProfitStat label="Coste total" value={formatEUR(profitability.totalCost)} />
+          </dl>
+          <div className="flex flex-wrap items-end justify-between gap-4 border-t border-border pt-4">
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Margen
+              </dt>
+              <dd
+                className={`mt-1 text-2xl font-semibold tabular-nums ${profitability.margin >= 0
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-red-600 dark:text-red-400"
+                  }`}
+              >
+                {formatEUR(profitability.margin)}
+                {profitability.marginPct !== null ? (
+                  <span className="ml-2 text-sm font-medium text-muted-foreground">
+                    {profitability.marginPct}%
+                  </span>
+                ) : null}
+              </dd>
+            </div>
+            <div className="text-right">
+              <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                €/h efectivo
+              </dt>
+              <dd className="mt-1 text-lg font-medium tabular-nums">
+                {profitability.effectiveRate !== null
+                  ? `${formatEUR(profitability.effectiveRate)}/h`
+                  : "—"}
+              </dd>
+            </div>
+          </div>
+          {profitability.hourlyCost === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              Configura el{" "}
+              <Link href="/settings/company" className="text-primary hover:underline">
+                coste/hora interno
+              </Link>{" "}
+              para valorar las horas en el margen.
+            </p>
+          ) : null}
+        </CardContent>
+      </Card>
+
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Proposals */}
         <Card>
@@ -316,6 +411,15 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           canEdit={canEdit}
         />
       </div>
+    </div>
+  );
+}
+
+function ProfitStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</dt>
+      <dd className="mt-0.5 text-sm font-medium tabular-nums">{value}</dd>
     </div>
   );
 }

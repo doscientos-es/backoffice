@@ -2,6 +2,7 @@ import {
   buildVatBreakdown,
   computeLineSubtotal,
   computeLineTotals,
+  computeProjectProfitability,
   roundCurrency,
 } from "@/lib/finance";
 import { describe, expect, it } from "vitest";
@@ -88,5 +89,67 @@ describe("buildVatBreakdown", () => {
     expect(twentyOne).toEqual({ rate: 21, base: 100, tax: 21 });
     // sorted: 0 before 21
     expect(rows[0]?.rate).toBe(0);
+  });
+});
+
+describe("computeProjectProfitability", () => {
+  it("values hours with the internal hourly cost", () => {
+    const r = computeProjectProfitability({
+      revenue: 1000,
+      hours: 10,
+      hourlyCost: 30,
+      expenses: 100,
+    });
+    expect(r.laborCost).toBe(300);
+    expect(r.totalCost).toBe(400);
+    expect(r.margin).toBe(600);
+    expect(r.marginPct).toBe(60);
+    expect(r.effectiveRate).toBe(100);
+  });
+
+  it("collapses margin to revenue − expenses when hourly cost is 0", () => {
+    const r = computeProjectProfitability({
+      revenue: 500,
+      hours: 8,
+      hourlyCost: 0,
+      expenses: 200,
+    });
+    expect(r.laborCost).toBe(0);
+    expect(r.totalCost).toBe(200);
+    expect(r.margin).toBe(300);
+  });
+
+  it("returns null rate/percentage with no hours or revenue", () => {
+    const r = computeProjectProfitability({ revenue: 0, hours: 0, hourlyCost: 50, expenses: 0 });
+    expect(r.effectiveRate).toBeNull();
+    expect(r.marginPct).toBeNull();
+    expect(r.margin).toBe(0);
+  });
+
+  it("yields a negative margin when costs exceed revenue", () => {
+    const r = computeProjectProfitability({
+      revenue: 200,
+      hours: 10,
+      hourlyCost: 40,
+      expenses: 50,
+    });
+    expect(r.totalCost).toBe(450);
+    expect(r.margin).toBe(-250);
+    expect(r.marginPct).toBe(-125);
+  });
+
+  it("coerces non-numeric inputs to zero", () => {
+    const r = computeProjectProfitability({
+      // @ts-expect-error exercising runtime coercion of bad input
+      revenue: "x",
+      hours: Number.NaN,
+      hourlyCost: 30,
+      expenses: 100,
+    });
+    expect(r.revenue).toBe(0);
+    expect(r.hours).toBe(0);
+    expect(r.laborCost).toBe(0);
+    expect(r.totalCost).toBe(100);
+    expect(r.margin).toBe(-100);
   });
 });

@@ -23,6 +23,21 @@ export function KpiSkeleton() {
   );
 }
 
+export function RoiSkeleton() {
+  return (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-5 w-56 rounded" />
+      </CardHeader>
+      <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {KPI_SKELETON_KEYS.map((key) => (
+          <Skeleton key={key} className="h-20 w-full rounded-lg" />
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
 export function InsightsSkeleton() {
   return (
     <Card>

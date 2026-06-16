@@ -14,6 +14,7 @@ interface Props {
   defaultVatRate: number;
   iban: string;
   companyAddress: string;
+  internalHourlyCost: number;
 }
 
 export function CompanyForm({
@@ -23,6 +24,7 @@ export function CompanyForm({
   defaultVatRate,
   iban,
   companyAddress,
+  internalHourlyCost,
 }: Props) {
   const feedback = useFormFeedback();
 
@@ -94,6 +96,25 @@ export function CompanyForm({
             defaultValue={defaultVatRate}
             placeholder="21"
           />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="internal_hourly_cost" className="text-xs font-medium">
+            Coste interno por hora (€/h)
+          </FieldLabel>
+          <Input
+            id="internal_hourly_cost"
+            name="internal_hourly_cost"
+            type="number"
+            inputMode="decimal"
+            min="0"
+            step="0.01"
+            defaultValue={internalHourlyCost}
+            placeholder="0"
+            aria-describedby="internal-hourly-cost-hint"
+          />
+          <FieldDescription id="internal-hourly-cost-hint">
+            Valora las horas registradas al calcular la rentabilidad de cada proyecto.
+          </FieldDescription>
         </Field>
         <Field className="sm:col-span-2">
           <FieldLabel htmlFor="iban" className="text-xs font-medium">

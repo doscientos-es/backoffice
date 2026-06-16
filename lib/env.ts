@@ -36,6 +36,9 @@ const ServerSchema = PublicSchema.extend({
   GITHUB_APP_ID: z.string().optional().default(""),
   GITHUB_APP_PRIVATE_KEY_BASE64: z.string().optional().default(""), // RSA private key in base64
   GITHUB_WEBHOOK_SECRET: z.string().optional().default(""),
+  // Installation ID por defecto (instalación de la App en la org doscientos-es).
+  // Prerellena el campo del proyecto; cada proyecto puede sobreescribirlo.
+  GITHUB_DEFAULT_INSTALLATION_ID: z.string().optional().default(""),
   CAL_WEBHOOK_SECRET: z.string().optional().default(""),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
 });
@@ -57,4 +60,15 @@ export function serverEnv() {
 /** true solo si OPENAI_API_KEY está configurada — usa esto para feature-gate toda la lógica de IA */
 export function isAIEnabled(): boolean {
   return Boolean(process.env.OPENAI_API_KEY?.trim());
+}
+
+/**
+ * Installation ID por defecto para sync con GitHub (instalación en la org).
+ * Devuelve null si no está configurado o el valor no es un entero positivo.
+ */
+export function githubDefaultInstallationId(): number | null {
+  const raw = process.env.GITHUB_DEFAULT_INSTALLATION_ID?.trim();
+  if (!raw) return null;
+  const n = Number(raw);
+  return Number.isInteger(n) && n > 0 ? n : null;
 }

@@ -16,7 +16,13 @@ import {
 import type { Metadata } from "next";
 import { MarketingInsights } from "./_components/marketing-insights";
 import { MarketingKpis } from "./_components/marketing-kpis";
-import { InsightsSkeleton, KpiSkeleton, TableSkeleton } from "./_components/marketing-skeletons";
+import { MarketingRoi } from "./_components/marketing-roi";
+import {
+  InsightsSkeleton,
+  KpiSkeleton,
+  RoiSkeleton,
+  TableSkeleton,
+} from "./_components/marketing-skeletons";
 import { MarketingTable } from "./_components/marketing-table";
 import { OptionsToolbar } from "./options-toolbar";
 import { MarketingRangeSelector } from "./range-selector";
@@ -97,6 +103,15 @@ export default async function MarketingPage({ searchParams }: { searchParams: Se
           accountId={accountId}
         />
       </SectionBoundary>
+
+      <SectionBoundary
+        key={`roi-${since}-${until}`}
+        pending={<RoiSkeleton />}
+        label="No se pudo calcular el CAC / ROAS"
+      >
+        <MarketingRoi since={since} until={until} rangeLabel={rangeLabel} />
+      </SectionBoundary>
+
       <div className="grid gap-3 lg:grid-cols-3">
         <SectionBoundary
           pending={<MetaAdsBalanceSkeleton />}
