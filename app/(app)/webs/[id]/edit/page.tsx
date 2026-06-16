@@ -24,12 +24,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 export default async function EditWebPage({ params }: { params: Promise<{ id: string }> }) {
   await requireUser();
   const { id } = await params;
+  const supabase = await createServerClient();
 
   const [site, { data: clients }] = await Promise.all([
     getWebProject(id),
-    (await import("@/lib/supabase/server").then((m) => m.createServerClient())).then((sb) =>
-      sb.from("clients").select("id, name").is("deleted_at", null).order("name"),
-    ),
+    supabase.from("clients").select("id, name").is("deleted_at", null).order("name"),
   ]);
 
   if (!site) notFound();

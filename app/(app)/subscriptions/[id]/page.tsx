@@ -1,0 +1,61 @@
+import { BackLink } from "@/components/layout/back-link";
+import { PageHeader } from "@/components/layout/page-header";
+import { Card, CardContent } from "@/components/ui/card";
+import { DangerZone } from "@/components/ui/danger-zone";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { requireUser } from "@/lib/auth";
+import { SUBSCRIPTION_STATUS, type SubscriptionStatus } from "@/lib/status";
+import { createServerClient } from "@/lib/supabase/server";
+import { formatDate, formatEUR } from "@/lib/utils";
+import type { Metadata } from "next";
+import { notFound, redirect } from "next/navigation";
+import { deleteSubscription, updateSubscription } from "../actions";
+import { SubscriptionFormFields } from "../subscription-form-fields";
+export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Suscripcion" };
+export default async function SubscriptionDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const user = await requireUser();
+  const canEdit = user.role !== "viewer";
+  const supabase = await createServerClient();
+  const [{ data: sub }, { data: clients }, { data: projects }] = await Promise.all([
+    supabase.from("subscriptions").select("*,clients(id,name),projects(id,name)").eq("id", id).is("deleted_at", null).maybeSingle(),
+    supabase.from("clients").select("id, name").is("deleted_at", null).order("name"),
+    supabase.from("projects").select("id, name").is("deleted_at", null).order("name"),
+  ]);
+  if (!sub) notFound();
+  const clientsArr = (clients ?? []) as { id: string; name: string }[];
+  const projectsArr = (projects ?? []) as { id: string; name: string }[];
+  const totalWithVat = Number(sub.amount) * (1 + Number(sub.vat_rate) / 100);
+  return (
+    <div className="flex flex-col gap-6">
+      <div>
+        <BackLink href="/subscriptions" label="Suscripciones" />
+        <PageHeader
+          title={sub.name as string}
+          description={`${formatEUR(totalWithVat)} IVA incl. - ${formatDate(sub.next_invoice_date as string | null)}`}
+          actions={<StatusBadge meta={SUBSCRIPTION_STATUS} value={sub.status as SubscriptionStatus} />}
+        />
+      </div>
+      {canEdit ? (
+        <Card><CardContent className="pt-6">
+          <form action={async (fd) => { "use server"; fd.append("id", id); const res = await updateSubscription(fd); if (res.ok) redirect("/subscriptions"); }} className="flex flex-col gap-6">
+            <SubscriptionFormFields
+              clients={clientsArr} projects={projectsArr}
+              defaults={{ client_id: sub.client_id as string, project_id: (sub.project_id as string|null) ?? "", name: sub.name as string, description: (sub.description as string|null) ?? "", status: sub.status as string, billing_cycle: sub.billing_cycle as string, amount: Number(sub.amount), vat_rate: Number(sub.vat_rate), start_date: sub.start_date as string, next_invoice_date: sub.next_invoice_date as string, end_date: (sub.end_date as string|null) ?? "" }}
+            />
+            <div className="flex justify-end"><SubmitButton>Guardar cambios</SubmitButton></div>
+          </form>
+        </CardContent></Card>
+      ) : null}
+      {canEdit && user.role !== "member" ? (
+        <DangerZone title="Eliminar suscripcion" description="Accion irreversible.">
+          <form action={async () => { "use server"; await deleteSubscription({ id }); redirect("/subscriptions"); }}>
+            <SubmitButton variant="destructive">Eliminar</SubmitButton>
+          </form>
+        </DangerZone>
+      ) : null}
+    </div>
+  );
+}

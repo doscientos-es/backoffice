@@ -7,11 +7,11 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { isAIEnabled } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { listLeads } from "@/lib/leads/queries";
-import { LEAD_LIST_PAGE_SIZE } from "@/lib/leads/types";
+import { LEAD_BOARD_LIMIT, LEAD_LIST_PAGE_SIZE } from "@/lib/leads/types";
 import { listActiveMembers } from "@/lib/members/queries";
 import { LEAD_STATUS, type LeadStatus } from "@/lib/status";
 import { relativeTime } from "@/lib/utils";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, TriangleAlert } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LeadCreateDialog } from "./lead-create-dialog";
@@ -71,6 +71,8 @@ export default async function LeadsPage({
     listLeads({ view, q, status, source, page }),
     listActiveMembers(),
   ]);
+
+  const boardCapped = view === "board" && enrichedLeads.length >= LEAD_BOARD_LIMIT;
 
   const actions = (
     <div className="flex items-center gap-2">
@@ -166,7 +168,18 @@ export default async function LeadsPage({
           </CardContent>
         </Card>
       ) : (
-        <LeadsKanban leads={enrichedLeads} canEdit={canEdit} members={members} />
+        <>
+          {boardCapped ? (
+            <div className="flex items-center gap-2 rounded-lg border border-amber-300/40 bg-amber-50/60 px-4 py-2.5 text-sm text-amber-800 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300">
+              <TriangleAlert className="size-4 shrink-0" />
+              <span>
+                Se muestran los primeros <strong>{LEAD_BOARD_LIMIT}</strong> leads. Usa los filtros
+                para acotar los resultados.
+              </span>
+            </div>
+          ) : null}
+          <LeadsKanban leads={enrichedLeads} canEdit={canEdit} members={members} />
+        </>
       )}
     </div>
   );

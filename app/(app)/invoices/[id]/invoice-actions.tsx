@@ -63,9 +63,11 @@ export function InvoiceActions({ invoice }: Props) {
   });
 
   const handleStatusUpdate = (status: "issued" | "paid" | "cancelled", successLabel?: string) => {
+    setPendingStatus(status);
     startTransition(async () => {
       feedback.setPending();
       const res = await updateInvoiceStatus({ id: invoice.id, status });
+      setPendingStatus(null);
       if (res.ok) {
         feedback.setSuccess(
           successLabel ??
@@ -117,8 +119,10 @@ export function InvoiceActions({ invoice }: Props) {
 
       {canIssue && (
         <Button size="sm" disabled={pending} onClick={() => handleStatusUpdate("issued")}>
-          <Send className="mr-2 h-4 w-4" />
-          Emitir factura
+          {pendingStatus === "issued"
+            ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            : <Send className="mr-2 h-4 w-4" />}
+          {pendingStatus === "issued" ? "Emitiendo…" : "Emitir factura"}
         </Button>
       )}
 
@@ -130,8 +134,10 @@ export function InvoiceActions({ invoice }: Props) {
           onClick={() => handleStatusUpdate("paid")}
           className="text-success-foreground hover:text-success-foreground"
         >
-          <CheckCircle2 className="mr-2 h-4 w-4" />
-          Marcar pagada
+          {pendingStatus === "paid"
+            ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            : <CheckCircle2 className="mr-2 h-4 w-4" />}
+          {pendingStatus === "paid" ? "Guardando…" : "Marcar pagada"}
         </Button>
       )}
 
