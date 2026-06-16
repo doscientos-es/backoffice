@@ -1,13 +1,32 @@
-"use client";
-
 import { HOSTING_PROVIDER_LABELS } from "@/lib/schemas/web-project";
 import { cn, relativeTime } from "@/lib/utils";
 import { domainExpiryDays, domainExpiryState } from "@/lib/webs/domain-expiry";
 import type { ExpiryState } from "@/lib/webs/domain-expiry";
+import { checkSiteStatus } from "@/lib/webs/og";
 import type { WebProjectListItem } from "@/lib/webs/types";
-import { AlertTriangle, Clock, ExternalLink, Globe, Server, ShieldAlert } from "lucide-react";
+import { AlertTriangle, Clock, Globe, Server, ShieldAlert } from "lucide-react";
 import Link from "next/link";
+import { Suspense } from "react";
+import { WebCardExternalLink } from "./web-card-external-link";
 
+// ─── Status dot ──────────────────────────────────────────────────────────────
+
+async function SiteStatusDot({ url }: { url: string }) {
+  const s = await checkSiteStatus(url);
+  const label = s.ok
+    ? `Online · ${s.status}${s.latencyMs !== null ? ` · ${s.latencyMs}ms` : ""}`
+    : (s.error ?? `Error ${s.status ?? ""}`);
+  return (
+    <span
+      className={cn(
+        "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-card",
+        s.ok ? "bg-green-500" : "bg-destructive",
+      )}
+      title={label}
+      aria-label={label}
+    />
+  );
+}
 
 function ExpiryBadge({ days, state }: { days: number; state: ExpiryState }) {
   if (state === "expired")
@@ -68,7 +87,7 @@ export function WebCard({ site }: { site: WebProjectListItem }) {
     >
       {/* Header */}
       <div className="flex items-start gap-3 p-4 pb-3">
-        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted ring-1 ring-border/60">
+        <div className="relative mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted ring-1 ring-border/60">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={`https://www.google.com/s2/favicons?domain=${hostname}&sz=64`}
@@ -77,6 +96,13 @@ export function WebCard({ site }: { site: WebProjectListItem }) {
             height={20}
             className="rounded-sm"
           />
+          <Suspense
+            fallback={
+              <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 animate-pulse rounded-full border-2 border-card bg-muted-foreground/30" />
+            }
+          >
+            <SiteStatusDot url={site.url} />
+          </Suspense>
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
@@ -87,18 +113,7 @@ export function WebCard({ site }: { site: WebProjectListItem }) {
             {hostname}
           </p>
         </div>
-        {/* Quick open — client event handler requires "use client" */}
-        <a
-          href={site.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="shrink-0 rounded-md p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-muted hover:text-foreground group-hover:opacity-100"
-          aria-label={`Abrir ${site.name}`}
-          title="Abrir en nueva pestaña"
-        >
-          <ExternalLink className="size-3.5" />
-        </a>
+        <WebCardExternalLink url={site.url} name={site.name} />
       </div>
 
       {/* Client name */}
