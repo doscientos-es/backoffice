@@ -16,6 +16,7 @@ import type { GithubSyncModeType, ProjectStatusType } from "@/lib/schemas/projec
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { updateProject } from "../actions";
+import type { ProjectBillingType } from "../billing-section";
 import type { GitHubSyncMode } from "../github-sync-section";
 import { ProjectFormFields } from "../project-form-fields";
 
@@ -27,6 +28,9 @@ type Project = {
   starts_at: string | null;
   ends_at: string | null;
   description: string | null;
+  billing_type: ProjectBillingType | null;
+  hourly_rate: number | null;
+  hourly_vat_rate: number | null;
   github_sync_mode: GitHubSyncMode | null;
   github_repo: string | null;
   github_installation_id: number | null;

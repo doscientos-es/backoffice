@@ -3,6 +3,7 @@ import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { BillingSection, type ProjectBillingType } from "./billing-section";
 import type { GitHubSyncMode } from "./github-sync-section";
 import { GitHubSyncSection } from "./github-sync-section";
 
@@ -21,6 +22,9 @@ export type ProjectFormDefaults = {
   starts_at?: string | null;
   ends_at?: string | null;
   description?: string | null;
+  billing_type?: ProjectBillingType | null;
+  hourly_rate?: number | null;
+  hourly_vat_rate?: number | null;
   github_sync_mode?: GitHubSyncMode | null;
   github_repo?: string | null;
   github_installation_id?: number | null;
@@ -127,6 +131,12 @@ export function ProjectFormFields({
           placeholder="Objetivos, entregables, criterios de aceptación…"
         />
       </FormRow>
+      <BillingSection
+        idPrefix={idPrefix}
+        defaultBillingType={d.billing_type ?? "fixed"}
+        defaultHourlyRate={d.hourly_rate ?? null}
+        defaultHourlyVatRate={d.hourly_vat_rate ?? null}
+      />
       <GitHubSyncSection
         idPrefix={idPrefix}
         defaultMode={d.github_sync_mode ?? "none"}
