@@ -10,7 +10,8 @@
  * Mar 3; Feb 29 + 1 year on a non-leap year → Feb 28).
  */
 export function advanceDate(date: string, cycle: string): string {
-  const [y, m, d] = date.split("-").map(Number);
+  const parts = date.split("-").map(Number);
+  const [y = 0, m = 1, d = 1] = parts;
   let newYear = y;
   let newMonth = m; // 1-based
 
