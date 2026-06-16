@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDateTime } from "@/lib/utils";
 import type { Metadata } from "next";
+import { ReminderRowActions } from "./reminder-row-actions";
 
 export const metadata: Metadata = { title: "Avisos · doscientos" };
 export const dynamic = "force-dynamic";
@@ -53,7 +54,8 @@ export default async function RemindersPage({
       searchPlaceholder="Buscar por título…"
       filters={[{ key: "status", label: "Estado", options: STATUS_OPTIONS }]}
       pagination={{ page, pageSize: PAGE_SIZE, total: count ?? 0 }}
-      headers={["Título", "Recordar el", "Completado"]}
+      headers={["Título", "Recordar el", "Completado", ""]}
+      align={["left", "left", "left", "right"]}
       rows={
         data?.map((r) => ({
           id: r.id as string,
@@ -62,6 +64,11 @@ export default async function RemindersPage({
             r.title as string,
             formatDateTime(r.remind_at as string),
             r.completed_at ? formatDateTime(r.completed_at as string) : "—",
+            <ReminderRowActions
+              key={r.id}
+              reminderId={r.id as string}
+              completedAt={(r.completed_at as string | null) ?? null}
+            />,
           ],
         })) ?? []
       }

@@ -15,6 +15,7 @@ export type InvoiceListItem = {
   total: number | null;
   issue_date: string | null;
   due_date: string | null;
+  client_name: string | null;
 };
 
 export type InvoiceStats = {
@@ -37,6 +38,7 @@ export type InvoiceListResult = {
   data: InvoiceListItem[];
   count: number;
   stats: InvoiceStats;
+  error: string | null;
 };
 
 // ─── Detail ────────────────────────────────────────────────────────────────────

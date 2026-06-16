@@ -9,6 +9,24 @@ type ActionResult = { ok: true } | { ok: false; error: string };
 type CreateReminderResult = { ok: true; id: string } | { ok: false; error: string };
 
 /**
+ * Permanently deletes a reminder (no soft-delete, the table has no deleted_at).
+ */
+export async function deleteReminder(input: unknown): Promise<ActionResult> {
+  await requireUser();
+  const parsed = ReminderIdInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "ID inválido" };
+
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("reminders").delete().eq("id", parsed.data.id);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/inicio");
+  revalidatePath("/reminders");
+  return { ok: true };
+}
+
+/**
  * Creates a reminder linked to a lead, client or project. Used from the
  * lead detail page (quick action "Agendar") so the user can schedule a
  * follow-up call right after contacting a lead.

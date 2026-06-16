@@ -22,6 +22,7 @@ import {
   KeyRound,
   Megaphone,
   Receipt,
+  Repeat,
   Settings,
   Users,
   Wallet,
@@ -36,12 +37,13 @@ const NAV_PRIMARY = [
   { href: "/leads", label: "Leads", icon: Inbox },
   { href: "/clients", label: "Clientes", icon: Users },
   { href: "/projects", label: "Proyectos", icon: FolderKanban },
-  { href: "/webs", label: "Webs", icon: Globe },
   { href: "/proposals", label: "Propuestas", icon: FileSignature },
   { href: "/invoices", label: "Facturas", icon: Receipt },
+  { href: "/subscriptions", label: "Suscripciones", icon: Repeat },
   { href: "/finance", label: "Finanzas", icon: Wallet },
   { href: "/internal-docs", label: "Docs internos", icon: Archive },
   { href: "/marketing", label: "Marketing", icon: Megaphone },
+  { href: "/webs", label: "Webs", icon: Globe },
   { href: "/settings", label: "Ajustes", icon: Settings },
 ] as const;
 

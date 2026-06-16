@@ -2,16 +2,16 @@ import { ListPage } from "@/components/layout/list-page";
 import { StatCard } from "@/components/layout/stat-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
+import { listInvoices } from "@/lib/invoices/queries";
+import { INVOICE_LIST_PAGE_SIZE } from "@/lib/invoices/types";
 import { INVOICE_STATUS, VERIFACTU_STATUS } from "@/lib/status";
-import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
+import { parseStringParam, parsePage } from "@/lib/utils/search-params";
 import { AlertTriangle, CheckCircle2, Clock, ShieldAlert } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Facturas · doscientos" };
 export const dynamic = "force-dynamic";
-
-const PAGE_SIZE = 25;
 
 const STATUS_FILTER_OPTIONS = [
   { value: "draft", label: "Borrador" },
@@ -29,85 +29,25 @@ const VERIFACTU_FILTER_OPTIONS = [
   { value: "excluded", label: "Excluida" },
 ];
 
-function escapeIlike(value: string): string {
-  return value.replace(/[%_\\]/g, (m) => `\\${m}`);
-}
-
 export default async function InvoicesPage({
   searchParams,
 }: {
-  searchParams: Promise<{
-    q?: string;
-    status?: string;
-    verifactu?: string;
-    page?: string;
-  }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   await requireUser();
   const sp = await searchParams;
-  const q = (sp.q ?? "").trim();
-  const status = (sp.status ?? "").trim();
-  const verifactu = (sp.verifactu ?? "").trim();
-  const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
-  const from = (page - 1) * PAGE_SIZE;
-  const to = from + PAGE_SIZE - 1;
+  const q = parseStringParam(sp, "q");
+  const status = parseStringParam(sp, "status");
+  const verifactu = parseStringParam(sp, "verifactu");
+  const page = parsePage(sp);
 
-  const supabase = await createServerClient();
+  const { data, count, stats, error } = await listInvoices({ q, status, verifactu, page });
 
-  // Aggregates for stat cards (computed in parallel with the list query).
+  const { pendingTotal, pendingCount, overdueTotal, overdueCount, paidMonthTotal, verifactuKoCount } =
+    stats;
+
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-
-  const [listRes, pendingRes, overdueRes, paidMonthRes, verifactuKoRes] = await Promise.all([
-    (() => {
-      let query = supabase
-        .from("invoices")
-        .select(
-          "id, full_number, idfact, status, verifactu_status, total, issue_date, due_date, client_id, client_name, clients(id, name)",
-          { count: "exact" },
-        )
-        .is("deleted_at", null);
-      if (q.length > 0) {
-        const pattern = `%${escapeIlike(q)}%`;
-        query = query.or(
-          `full_number.ilike.${pattern},idfact.ilike.${pattern},client_name.ilike.${pattern}`,
-        );
-      }
-      if (status) query = query.eq("status", status);
-      if (verifactu) query = query.eq("verifactu_status", verifactu);
-      return query.order("issue_date", { ascending: false }).range(from, to);
-    })(),
-    supabase
-      .from("invoices")
-      .select("total", { count: "exact" })
-      .is("deleted_at", null)
-      .eq("status", "issued"),
-    supabase
-      .from("invoices")
-      .select("total", { count: "exact" })
-      .is("deleted_at", null)
-      .eq("status", "overdue"),
-    supabase
-      .from("invoices")
-      .select("total")
-      .is("deleted_at", null)
-      .eq("status", "paid")
-      .gte("issue_date", monthStart),
-    supabase
-      .from("invoices")
-      .select("id", { count: "exact", head: true })
-      .is("deleted_at", null)
-      .eq("verifactu_status", "rejected"),
-  ]);
-
-  const { data, error, count } = listRes;
-  const pendingTotal = (pendingRes.data ?? []).reduce((acc, r) => acc + Number(r.total ?? 0), 0);
-  const overdueTotal = (overdueRes.data ?? []).reduce((acc, r) => acc + Number(r.total ?? 0), 0);
-  const paidMonthTotal = (paidMonthRes.data ?? []).reduce(
-    (acc, r) => acc + Number(r.total ?? 0),
-    0,
-  );
-  const verifactuKoCount = verifactuKoRes.count ?? 0;
 
   return (
     <div className="flex flex-col gap-5">
@@ -117,7 +57,7 @@ export default async function InvoicesPage({
           value={formatEUR(pendingTotal)}
           tone="info"
           icon={Clock}
-          hint={`${pendingRes.count ?? 0} factura(s) emitida(s)`}
+          hint={`${pendingCount} factura(s) emitida(s)`}
           href="/invoices?status=issued"
         />
         <StatCard
@@ -125,7 +65,7 @@ export default async function InvoicesPage({
           value={formatEUR(overdueTotal)}
           tone="danger"
           icon={AlertTriangle}
-          hint={`${overdueRes.count ?? 0} factura(s) vencida(s)`}
+          hint={`${overdueCount} factura(s) vencida(s)`}
           href="/invoices?status=overdue"
         />
         <StatCard
@@ -148,14 +88,14 @@ export default async function InvoicesPage({
       <ListPage
         title="Facturas"
         empty={q || status || verifactu ? "Sin coincidencias." : "Aún no hay facturas."}
-        error={error?.message}
+        error={error ?? undefined}
         searchKey="q"
         searchPlaceholder="Buscar por cliente, nº o IDFACT…"
         filters={[
           { key: "status", label: "Estado", options: STATUS_FILTER_OPTIONS },
           { key: "verifactu", label: "Verifactu", options: VERIFACTU_FILTER_OPTIONS },
         ]}
-        pagination={{ page, pageSize: PAGE_SIZE, total: count ?? 0 }}
+        pagination={{ page, pageSize: INVOICE_LIST_PAGE_SIZE, total: count }}
         headers={[
           "Nº",
           "Cliente",
@@ -167,36 +107,24 @@ export default async function InvoicesPage({
           "Vencimiento",
         ]}
         align={["left", "left", "left", "left", "left", "right", "left", "left"]}
-        rows={
-          data?.map((i) => {
-            const clientName =
-              (i.client_name as string | null) ??
-              (i as unknown as { clients: { name: string } | null }).clients?.name ??
-              null;
-            return {
-              id: i.id as string,
-              href: `/invoices/${i.id}`,
-              cells: [
-                i.full_number as string,
-                clientName ? (
-                  <span key="client" className="font-medium text-foreground">
-                    {clientName}
-                  </span>
-                ) : null,
-                (i.idfact as string | null) ?? null,
-                <StatusBadge key="status" meta={INVOICE_STATUS} value={i.status as string} />,
-                <StatusBadge
-                  key="verifactu"
-                  meta={VERIFACTU_STATUS}
-                  value={i.verifactu_status as string}
-                />,
-                formatEUR(i.total as number),
-                formatDate(i.issue_date as string),
-                formatDate(i.due_date as string | null),
-              ],
-            };
-          }) ?? []
-        }
+        rows={data.map((i) => ({
+          id: i.id,
+          href: `/invoices/${i.id}`,
+          cells: [
+            i.full_number,
+            i.client_name ? (
+              <span key="client" className="font-medium text-foreground">
+                {i.client_name}
+              </span>
+            ) : null,
+            i.idfact,
+            <StatusBadge key="status" meta={INVOICE_STATUS} value={i.status ?? ""} />,
+            <StatusBadge key="verifactu" meta={VERIFACTU_STATUS} value={i.verifactu_status ?? ""} />,
+            formatEUR(i.total ?? 0),
+            formatDate(i.issue_date),
+            formatDate(i.due_date),
+          ],
+        }))}
       />
     </div>
   );

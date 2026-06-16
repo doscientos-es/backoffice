@@ -1,6 +1,7 @@
 import { scopedLogger } from "@/lib/logger";
 import { notDeleted } from "@/lib/supabase/filters";
 import { createServerClient } from "@/lib/supabase/server";
+import { escapeIlike } from "@/lib/utils/search-params";
 import {
   INVOICE_LIST_PAGE_SIZE,
   type InvoiceDetailResult,
@@ -9,10 +10,6 @@ import {
 } from "./types";
 
 const log = scopedLogger("invoices.queries");
-
-function escapeIlike(value: string): string {
-  return value.replace(/[%_\\]/g, (m) => `\\${m}`);
-}
 
 export async function listInvoices(params: InvoiceListParams): Promise<InvoiceListResult> {
   const supabase = await createServerClient();
@@ -29,13 +26,15 @@ export async function listInvoices(params: InvoiceListParams): Promise<InvoiceLi
         supabase
           .from("invoices")
           .select(
-            "id, full_number, idfact, status, verifactu_status, total, issue_date, due_date",
+            "id, full_number, idfact, status, verifactu_status, total, issue_date, due_date, client_name",
             { count: "exact" },
           ),
       );
       if (params.q && params.q.length > 0) {
         const pattern = `%${escapeIlike(params.q)}%`;
-        query = query.or(`full_number.ilike.${pattern},idfact.ilike.${pattern}`);
+        query = query.or(
+          `full_number.ilike.${pattern},idfact.ilike.${pattern},client_name.ilike.${pattern}`,
+        );
       }
       if (params.status) query = query.eq("status", params.status);
       if (params.verifactu) query = query.eq("verifactu_status", params.verifactu);
@@ -77,6 +76,7 @@ export async function listInvoices(params: InvoiceListParams): Promise<InvoiceLi
       total: i.total == null ? null : Number(i.total),
       issue_date: (i.issue_date as string | null) ?? null,
       due_date: (i.due_date as string | null) ?? null,
+      client_name: (i.client_name as string | null) ?? null,
     })),
     count: listRes.count ?? 0,
     stats: {
@@ -87,6 +87,7 @@ export async function listInvoices(params: InvoiceListParams): Promise<InvoiceLi
       paidMonthTotal,
       verifactuKoCount: verifactuKoRes.count ?? 0,
     },
+    error: listRes.error?.message ?? null,
   };
 }
 

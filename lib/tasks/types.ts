@@ -20,6 +20,13 @@ export type TaskBoardItem = {
 export type TaskBoardParams = {
   q?: string;
   priority?: string;
+  projectId?: string;
+};
+
+export type TaskBoardResult = {
+  items: TaskBoardItem[];
+  capped: boolean;
+  error: string | null;
 };
 
 // ─── List ─────────────────────────────────────────────────────────────────────
@@ -38,12 +45,14 @@ export type TaskListParams = {
   q?: string;
   status?: string;
   priority?: string;
+  projectId?: string;
   page?: number;
 };
 
 export type TaskListResult = {
   data: TaskListItem[];
   count: number;
+  error: string | null;
 };
 
 // ─── Detail ────────────────────────────────────────────────────────────────────

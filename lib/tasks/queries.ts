@@ -1,11 +1,13 @@
 import { scopedLogger } from "@/lib/logger";
 import { notDeleted } from "@/lib/supabase/filters";
 import { createServerClient } from "@/lib/supabase/server";
+import { escapeIlike } from "@/lib/utils/search-params";
 import {
   TASK_BOARD_LIMIT,
   TASK_LIST_PAGE_SIZE,
   type TaskBoardItem,
   type TaskBoardParams,
+  type TaskBoardResult,
   type TaskDetailResult,
   type TaskListItem,
   type TaskListParams,
@@ -14,11 +16,17 @@ import {
 
 const log = scopedLogger("tasks.queries");
 
-function escapeIlike(value: string): string {
-  return value.replace(/[%_\\]/g, (m) => `\\${m}`);
-}
+type TaskRow = {
+  id: string;
+  title: string;
+  status: string;
+  priority: string;
+  due_date: string | null;
+  projects: { id: string; name: string } | null;
+  team_members: { id: string; name: string } | null;
+};
 
-export async function listTasksBoard(params: TaskBoardParams): Promise<TaskBoardItem[]> {
+export async function listTasksBoard(params: TaskBoardParams): Promise<TaskBoardResult> {
   const supabase = await createServerClient();
 
   let query = notDeleted(
@@ -31,6 +39,7 @@ export async function listTasksBoard(params: TaskBoardParams): Promise<TaskBoard
 
   if (params.q && params.q.length > 0) query = query.ilike("title", `%${escapeIlike(params.q)}%`);
   if (params.priority) query = query.eq("priority", params.priority);
+  if (params.projectId) query = query.eq("project_id", params.projectId);
 
   const { data, error } = await query
     .order("kanban_order", { ascending: true, nullsFirst: false })
@@ -38,17 +47,8 @@ export async function listTasksBoard(params: TaskBoardParams): Promise<TaskBoard
 
   if (error) log.error({ err: error.message }, "list_tasks_board_failed");
 
-  type Row = {
-    id: string;
-    title: string;
-    status: string;
-    priority: string;
-    due_date: string | null;
-    projects: { id: string; name: string } | null;
-    team_members: { id: string; name: string } | null;
-  };
-
-  return ((data as unknown as Row[]) ?? []).map((t) => ({
+  const rows = (data as unknown as TaskRow[]) ?? [];
+  const items: TaskBoardItem[] = rows.map((t) => ({
     id: t.id,
     title: t.title,
     status: t.status,
@@ -57,6 +57,8 @@ export async function listTasksBoard(params: TaskBoardParams): Promise<TaskBoard
     project: t.projects ? { id: t.projects.id, name: t.projects.name } : null,
     assignee_name: t.team_members?.name ?? null,
   }));
+
+  return { items, capped: rows.length >= TASK_BOARD_LIMIT, error: error?.message ?? null };
 }
 
 export async function listTasksList(params: TaskListParams): Promise<TaskListResult> {
@@ -77,6 +79,7 @@ export async function listTasksList(params: TaskListParams): Promise<TaskListRes
   if (params.q && params.q.length > 0) query = query.ilike("title", `%${escapeIlike(params.q)}%`);
   if (params.status) query = query.eq("status", params.status);
   if (params.priority) query = query.eq("priority", params.priority);
+  if (params.projectId) query = query.eq("project_id", params.projectId);
 
   const { data, error, count } = await query
     .order("priority", { ascending: false })
@@ -88,6 +91,7 @@ export async function listTasksList(params: TaskListParams): Promise<TaskListRes
   return {
     data: (data as unknown as TaskListItem[]) ?? [],
     count: count ?? 0,
+    error: error?.message ?? null,
   };
 }
 

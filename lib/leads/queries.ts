@@ -2,6 +2,7 @@ import { scopedLogger } from "@/lib/logger";
 import type { LeadStatus } from "@/lib/status";
 import { notDeleted } from "@/lib/supabase/filters";
 import { createServerClient } from "@/lib/supabase/server";
+import { escapeIlike } from "@/lib/utils/search-params";
 import {
   LEAD_BOARD_LIMIT,
   LEAD_LIST_PAGE_SIZE,
@@ -27,10 +28,6 @@ const LIST_COLUMNS = `id, name, company, email, phone, source, notes, status, cr
 const DETAIL_COLUMNS = `id, name, email, phone, company, source, status, notes, estimated_value, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_temperature, ai_confidence, ai_updated_at, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`;
 
 const log = scopedLogger("leads.queries");
-
-function escapeIlike(value: string): string {
-  return value.replace(/[%_\\]/g, (m) => `\\${m}`);
-}
 
 /**
  * Normalises an embedded `team_members` relation into a `LeadMemberRef`.

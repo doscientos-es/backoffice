@@ -9,19 +9,17 @@ import { type BreadcrumbEntry, PageHeader } from "@/components/layout/page-heade
 export type { BreadcrumbEntry };
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 import {
   type ColumnDef,
-  type RowSelectionState,
   type SortingState,
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowDown, ArrowRight, ArrowUp, ArrowUpDown, Download, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, ArrowUpDown, Download, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
@@ -75,8 +73,6 @@ export type ListPageProps = {
   onRowClick?: (row: ListRow) => void;
   addHref?: string;
   addLabel?: string;
-  /** Acciones en lote. Si se proveen, aparece columna de checkbox. */
-  bulkActions?: BulkAction[];
   /** Nombre del fichero CSV sin extensión. Si se provee, muestra botón Exportar. */
   exportFilename?: string;
 };
@@ -138,16 +134,12 @@ export function ListPage({
   onRowClick,
   addHref,
   addLabel,
-  bulkActions,
   exportFilename,
 }: ListPageProps) {
   const router = useRouter();
   const prefetched = useRef<Set<string>>(new Set());
 
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-
-  const withSelection = !!bulkActions?.length;
 
   const prefetchRow = useCallback(
     (href?: string) => {
@@ -159,8 +151,8 @@ export function ListPage({
   );
 
   // ── Column definitions ──────────────────────────────────────────────────
-  const columns = useMemo<ColumnDef<ListRow>[]>(() => {
-    const dataCols: ColumnDef<ListRow>[] = headers.map((h, colIdx) => {
+  const columns = useMemo<ColumnDef<ListRow>[]>(() =>
+    headers.map((h, colIdx) => {
       const sortable = headerSortable(h);
       return {
         id: `col_${colIdx}`,
@@ -190,61 +182,23 @@ export function ListPage({
         enableSorting: sortable,
         sortingFn: "alphanumeric",
       };
-    });
-
-    if (!withSelection) return dataCols;
-
-    const selectCol: ColumnDef<ListRow> = {
-      id: "select",
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllRowsSelected()
-              ? true
-              : table.getIsSomeRowsSelected()
-                ? "indeterminate"
-                : false
-          }
-          onCheckedChange={(v) => table.toggleAllRowsSelected(!!v)}
-          aria-label="Seleccionar todo"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(v) => row.toggleSelected(!!v)}
-          onClick={(e) => e.stopPropagation()}
-          aria-label="Seleccionar fila"
-        />
-      ),
-      enableSorting: false,
-      size: 44,
-    };
-
-    return [selectCol, ...dataCols];
-  }, [headers, withSelection]);
+    }),
+  [headers]);
 
   const table = useReactTable({
     data: rows,
     columns,
-    state: { sorting, rowSelection },
+    state: { sorting },
     onSortingChange: setSorting,
-    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getRowId: (row) => row.id,
-    enableRowSelection: withSelection,
   });
 
-  const selectedIds = Object.keys(rowSelection).filter((k) => rowSelection[k]);
   const hasControls = !!searchKey || (filters && filters.length > 0) || !!pagination;
 
-  const alignAt = (colIdx: number): ListAlign => {
-    // data columns are offset by 1 when select column exists
-    const hIdx = withSelection ? colIdx - 1 : colIdx;
-    if (hIdx < 0) return "left";
-    return headerAlign(headers[hIdx] ?? "left", align?.[hIdx]);
-  };
+  const alignAt = (colIdx: number): ListAlign =>
+    headerAlign(headers[colIdx] ?? "left", align?.[colIdx]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -267,42 +221,6 @@ export function ListPage({
                 exportFilename ? () => exportToCSV(headers, rows, exportFilename) : undefined
               }
             />
-          ) : null}
-
-          {/* Bulk action toolbar */}
-          {withSelection && selectedIds.length > 0 ? (
-            <div className="flex items-center gap-3 border-b border-border bg-primary/5 px-5 py-2">
-              <span className="text-xs font-medium text-foreground">
-                {selectedIds.length} seleccionada{selectedIds.length !== 1 ? "s" : ""}
-              </span>
-              <div className="flex items-center gap-2">
-                {bulkActions!.map((action) => {
-                  const Icon = action.icon ?? Trash2;
-                  return (
-                    <Button
-                      key={action.label}
-                      size="sm"
-                      variant={action.variant === "destructive" ? "destructive" : "outline"}
-                      onClick={async () => {
-                        await action.onAction(selectedIds);
-                        setRowSelection({});
-                      }}
-                    >
-                      <Icon className="size-3.5" />
-                      {action.label}
-                    </Button>
-                  );
-                })}
-              </div>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="ml-auto text-xs"
-                onClick={() => setRowSelection({})}
-              >
-                Cancelar
-              </Button>
-            </div>
           ) : null}
 
           {!hasControls && exportFilename ? (
@@ -340,9 +258,7 @@ export function ListPage({
                           className={cn(
                             "px-5 py-3 text-xs font-medium tracking-wide text-muted-foreground",
                             right ? "text-right" : "text-left",
-                            header.id === "select" && "w-11 px-3",
                           )}
-                          style={header.column.columnDef.size ? { width: header.column.columnDef.size } : undefined}
                         >
                           {flexRender(header.column.columnDef.header, header.getContext())}
                         </th>
@@ -366,40 +282,34 @@ export function ListPage({
                         className={cn(
                           "group transition-colors hover:bg-muted/40",
                           isClickable && "cursor-pointer",
-                          tableRow.getIsSelected() && "bg-primary/5",
                         )}
                       >
                         {tableRow.getVisibleCells().map((cell, colIdx) => {
-                          const isSelectCol = cell.column.id === "select";
-                          const dataColIdx = withSelection ? colIdx - 1 : colIdx;
-                          const isFirst = !withSelection ? colIdx === 0 : colIdx === 1;
+                          const isFirst = colIdx === 0;
                           const right = alignAt(colIdx) === "right";
                           return (
                             <td
                               key={cell.id}
                               className={cn(
                                 "px-5 py-3 align-middle",
-                                isSelectCol && "w-11 px-3",
-                                !isSelectCol && isFirst
+                                isFirst
                                   ? "font-medium text-foreground"
                                   : "text-muted-foreground",
-                                right && "text-right tabular-nums",
+                                right && "text-right",
                               )}
                             >
-                              {isSelectCol ? (
-                                flexRender(cell.column.columnDef.cell, cell.getContext())
-                              ) : isFirst && row.href ? (
+                              {isFirst && row.href ? (
                                 <Link
                                   href={row.href}
                                   onClick={(e) => e.stopPropagation()}
                                   className="inline-flex items-center gap-1.5 underline-offset-2 transition-all hover:underline group-hover:text-primary"
                                 >
-                                  {row.cells[dataColIdx] ?? <span className="text-muted-foreground/40">—</span>}
+                                  {row.cells[colIdx] ?? <span className="text-muted-foreground/40">—</span>}
                                   <ArrowRight className="size-3.5 shrink-0 opacity-0 -translate-x-1 transition-all group-hover:opacity-60 group-hover:translate-x-0" />
                                 </Link>
                               ) : (
                                 (() => {
-                                  const c = row.cells[dataColIdx];
+                                  const c = row.cells[colIdx];
                                   return c == null || c === "—" ? (
                                     <span className="text-muted-foreground/40">—</span>
                                   ) : (
