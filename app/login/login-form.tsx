@@ -206,6 +206,9 @@ function authFailureMessage(reason: string): string {
       return "No se pudo verificar tu acceso. Inténtalo de nuevo en unos segundos.";
     case "forbidden":
       return "No tienes permisos para esa sección.";
+    case "callback_exchange_failed":
+    case "callback_no_code":
+      return "El enlace ha caducado o ya fue utilizado. Solicita uno nuevo.";
     default:
       return "Sesión expirada. Vuelve a entrar.";
   }

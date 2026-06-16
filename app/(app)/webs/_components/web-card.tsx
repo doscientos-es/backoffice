@@ -1,10 +1,9 @@
 "use client";
 
 import { HOSTING_PROVIDER_LABELS } from "@/lib/schemas/web-project";
-import type { WebProjectListItem } from "@/lib/webs/types";
 import { cn, relativeTime } from "@/lib/utils";
+import type { WebProjectListItem } from "@/lib/webs/types";
 import { AlertTriangle, Clock, ExternalLink, Globe, Server, ShieldAlert } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -84,13 +83,13 @@ export function WebCard({ site }: { site: WebProjectListItem }) {
       {/* Header */}
       <div className="flex items-start gap-3 p-4 pb-3">
         <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted ring-1 ring-border/60">
-          <Image
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             src={`https://www.google.com/s2/favicons?domain=${hostname}&sz=64`}
             alt=""
             width={20}
             height={20}
             className="rounded-sm"
-            unoptimized
           />
         </div>
         <div className="min-w-0 flex-1">

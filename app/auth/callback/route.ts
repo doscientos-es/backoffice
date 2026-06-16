@@ -40,12 +40,13 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createServerClient();
 
-  // Critical: scrub any pre-existing browser session before processing the
-  // token. If a teammate clicks an invite link in a browser where another
-  // user's cookies are still active, the next `updateUser({ password })`
-  // call would otherwise rewrite that user's password.
-  await supabase.auth.signOut({ scope: "local" });
-
+  // exchangeCodeForSession always creates a fresh session for the recovery
+  // link's recipient, overwriting any existing session in the cookies. We
+  // must NOT call signOut() here first: signOut clears the PKCE code-verifier
+  // cookie that @supabase/ssr stored when the browser called
+  // resetPasswordForEmail / inviteUserByEmail, so the exchange would fail
+  // immediately with an "invalid code verifier" error and the user would land
+  // on /login with a spurious "session expired" message.
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
     log.error({ err: error }, "exchangeCodeForSession failed");
