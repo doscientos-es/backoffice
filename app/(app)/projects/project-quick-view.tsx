@@ -18,12 +18,16 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { computeHoursFromRange } from "@/lib/schemas/work-log";
 import { PROJECT_STATUS, type ProjectStatus } from "@/lib/status";
 import { relativeTime } from "@/lib/utils";
-import { ArrowUpRight, Building2, ExternalLink, Trash2, X } from "lucide-react";
+import { ArrowUpRight, Building2, Clock, ExternalLink, Trash2, X } from "lucide-react";
 import Link from "next/link";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useState, useTransition } from "react";
+import { sileo } from "sileo";
+import { addWorkLog } from "./[id]/work-log-actions";
 import { GitHubModeBadge } from "./github-mode-badge";
 import type { GitHubSyncMode } from "./github-sync-section";
 
@@ -107,7 +111,17 @@ function Body({ project, canEdit, onDeleteAction }: BodyProps) {
           )}
         </section>
 
-        {/* Aquí se podrían añadir Tareas próximas, etc. */}
+        {canEdit && (
+          <section className="flex flex-col gap-2.5">
+            <Heading>
+              <span className="flex items-center gap-1.5">
+                <Clock className="size-3" />
+                Registrar horas
+              </span>
+            </Heading>
+            <QuickAddHours projectId={project.id} />
+          </section>
+        )}
       </div>
 
       <footer className="mt-auto flex items-center gap-2 border-t border-border p-3">
@@ -126,6 +140,107 @@ function Body({ project, canEdit, onDeleteAction }: BodyProps) {
         </Button>
       </footer>
     </>
+  );
+}
+
+const todayISO = () => new Date().toISOString().slice(0, 10);
+
+function QuickAddHours({ projectId }: { projectId: string }) {
+  const [date, setDate] = useState(todayISO);
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
+  const [note, setNote] = useState("");
+  const [adding, startAdd] = useTransition();
+
+  const duration = start && end ? computeHoursFromRange(start, end) : null;
+
+  function onAdd() {
+    if (!start || !end) {
+      sileo.error({ title: "Indica hora de inicio y fin." });
+      return;
+    }
+    if (duration === null) {
+      sileo.error({ title: "La hora de fin debe ser posterior a la de inicio." });
+      return;
+    }
+    startAdd(async () => {
+      const res = await addWorkLog({
+        project_id: projectId,
+        work_date: date,
+        start_time: start,
+        end_time: end,
+        note,
+      });
+      if (!res.ok) {
+        sileo.error({ title: res.error });
+        return;
+      }
+      sileo.success({ title: "Horas registradas." });
+      setStart("");
+      setEnd("");
+      setNote("");
+    });
+  }
+
+  const hh = duration !== null ? Math.floor(Math.round(duration * 60) / 60) : null;
+  const mm = duration !== null ? Math.round(duration * 60) % 60 : null;
+  const durationLabel =
+    duration !== null
+      ? hh === 0
+        ? `${mm} min`
+        : mm === 0
+          ? `${hh} h`
+          : `${hh} h ${mm} min`
+      : null;
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Input
+        type="date"
+        value={date}
+        max={todayISO()}
+        onChange={(e) => setDate(e.target.value)}
+        className="h-8 text-xs"
+        aria-label="Fecha"
+      />
+      <div className="flex items-center gap-1">
+        <Input
+          type="time"
+          value={start}
+          max={end || undefined}
+          onChange={(e) => setStart(e.target.value)}
+          className="h-8 flex-1 tabular-nums text-xs"
+          aria-label="Hora de inicio"
+        />
+        <span className="text-xs text-muted-foreground">→</span>
+        <Input
+          type="time"
+          value={end}
+          min={start || undefined}
+          onChange={(e) => setEnd(e.target.value)}
+          className="h-8 flex-1 tabular-nums text-xs"
+          aria-label="Hora de fin"
+        />
+        {durationLabel && (
+          <span className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">
+            {durationLabel}
+          </span>
+        )}
+      </div>
+      <div className="flex gap-2">
+        <Input
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Nota (opcional)"
+          maxLength={500}
+          className="h-8 flex-1 text-xs"
+          aria-label="Nota"
+        />
+        <Button size="sm" onClick={onAdd} disabled={adding || !start || !end}>
+          Añadir
+        </Button>
+      </div>
+    </div>
   );
 }
 

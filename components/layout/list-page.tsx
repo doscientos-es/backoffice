@@ -40,6 +40,8 @@ export type ListHeader =
        */
       sortKey?: string;
       align?: ListAlign;
+      /** Ancho mínimo CSS para la columna (ej. "8rem"). Evita wrapping en celdas cortas. */
+      minWidth?: string;
     };
 
 export type ListRow = {
@@ -97,6 +99,9 @@ function headerSortKey(h: ListHeader): string | undefined {
 function headerAlign(h: ListHeader, fallback?: ListAlign): ListAlign {
   if (typeof h !== "string" && h.align) return h.align;
   return fallback ?? "left";
+}
+function headerMinWidth(h: ListHeader): string | undefined {
+  return typeof h !== "string" ? h.minWidth : undefined;
 }
 
 function exportToCSV(headers: ListHeader[], rows: ListRow[], filename: string) {
@@ -311,6 +316,7 @@ export function ListPage({
                       return (
                         <th
                           key={header.id}
+                          style={headerMinWidth(headers[colIdx] ?? "") ? { minWidth: headerMinWidth(headers[colIdx] ?? "") } : undefined}
                           className={cn(
                             "px-5 py-3 text-xs font-medium tracking-wide text-muted-foreground",
                             right ? "text-right" : "text-left",

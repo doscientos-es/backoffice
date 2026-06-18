@@ -4,10 +4,10 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
 import { listInvoices } from "@/lib/invoices/queries";
 import { INVOICE_LIST_PAGE_SIZE } from "@/lib/invoices/types";
+import { INVOICE_SORT_COLUMNS } from "@/lib/invoices/types";
 import { INVOICE_STATUS, VERIFACTU_STATUS } from "@/lib/status";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { parseStringParam, parsePage, parseSortParam } from "@/lib/utils/search-params";
-import { INVOICE_SORT_COLUMNS } from "@/lib/invoices/types";
+import { parsePage, parseSortParam, parseStringParam } from "@/lib/utils/search-params";
 import { AlertTriangle, CheckCircle2, Clock, ShieldAlert } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -99,14 +99,14 @@ export default async function InvoicesPage({
         ]}
         pagination={{ page, pageSize: INVOICE_LIST_PAGE_SIZE, total: count }}
         headers={[
-          { label: "Nº", sortKey: "full_number" },
-          { label: "Cliente", sortKey: "client_name" },
+          { label: "Nº", sortKey: "full_number", minWidth: "8rem" },
+          { label: "Cliente", sortKey: "client_name", minWidth: "10rem" },
           "IDFACT",
           { label: "Estado", sortKey: "status" },
           "Verifactu",
           { label: "Importe", align: "right", sortKey: "total" },
-          { label: "Emisión", sortKey: "issue_date" },
-          { label: "Vencimiento", sortKey: "due_date" },
+          { label: "Emisión", sortKey: "issue_date", minWidth: "7rem" },
+          { label: "Vencimiento", sortKey: "due_date", minWidth: "7rem" },
         ]}
         align={["left", "left", "left", "left", "left", "right", "left", "left"]}
         exportFilename="facturas"

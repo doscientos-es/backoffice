@@ -106,7 +106,7 @@ export default async function ProjectDetailPage({
     supabase
       .from("work_logs")
       .select(
-        "id, work_date, hours, note, team_members:member_id(id, name, avatar_url, github_handle)",
+        "id, work_date, start_time, end_time, hours, note, team_members:member_id(id, name, avatar_url, github_handle)",
       )
       .eq("project_id", id)
       .is("deleted_at", null)
@@ -137,6 +137,8 @@ export default async function ProjectDetailPage({
       return {
         id: w.id as string,
         work_date: w.work_date as string,
+        start_time: ((w.start_time as string | null) ?? null)?.slice(0, 5) ?? null,
+        end_time: ((w.end_time as string | null) ?? null)?.slice(0, 5) ?? null,
         hours: Number(w.hours) || 0,
         note: (w.note as string | null) ?? null,
         member: m
@@ -319,6 +321,8 @@ export default async function ProjectDetailPage({
         projectId={id}
         logs={workLogs}
         invoicedTotal={invoicedTotal}
+        billingType={(project.billing_type as "fixed" | "hourly" | null) ?? "fixed"}
+        hourlyRate={project.hourly_rate != null ? Number(project.hourly_rate) : null}
         canEdit={canEdit}
       />
 
