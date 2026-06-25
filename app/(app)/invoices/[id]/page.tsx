@@ -25,7 +25,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
 
   const { data: invoice } = await supabase
     .from("invoices")
-    .select("*, clients(id, name), projects(id, name)")
+    .select("*, clients(id, name, email), projects(id, name)")
     .eq("id", id)
     .is("deleted_at", null)
     .maybeSingle();
@@ -40,7 +40,19 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
 
   const { data: settings } = await supabase.from("settings").select("*").eq("id", 1).single();
 
-  const client = (invoice as unknown as { clients: { id: string; name: string } | null }).clients;
+  const { data: payments } = await supabase
+    .from("invoice_payments")
+    .select("id, amount, status, ds_authorisation_code, created_at, confirmed_at")
+    .eq("invoice_id", id)
+    .order("created_at", { ascending: false });
+
+  const confirmedPayments = (payments ?? []).filter((p) => p.status === "confirmed");
+  const amountPaid = confirmedPayments.reduce((sum, p) => sum + Number(p.amount ?? 0), 0);
+  const amountDue = Math.max(0, Number(invoice.total ?? 0) - amountPaid);
+
+  const client = (
+    invoice as unknown as { clients: { id: string; name: string; email: string | null } | null }
+  ).clients;
   const project = (invoice as unknown as { projects: { id: string; name: string } | null })
     .projects;
 
@@ -99,6 +111,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                 status: invoice.status as string,
                 verifactu_status: invoice.verifactu_status as string,
               }}
+              clientEmail={client?.email ?? null}
             />
           </div>
         }
@@ -263,6 +276,65 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
               </DetailGrid>
             </CardContent>
           </Card>
+
+          {/* Payment history */}
+          {payments && payments.length > 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Cobros</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3">
+                <DetailGrid>
+                  <DetailRow label="Cobrado">
+                    <span className="tabular-nums font-medium text-emerald-700 dark:text-emerald-400">
+                      {formatEUR(amountPaid)}
+                    </span>
+                  </DetailRow>
+                  <DetailRow label="Pendiente">
+                    <span className="tabular-nums font-medium">{formatEUR(amountDue)}</span>
+                  </DetailRow>
+                </DetailGrid>
+                <ul className="flex flex-col divide-y divide-border border-t border-border">
+                  {payments.map((p) => {
+                    const status = p.status as string;
+                    const tone =
+                      status === "confirmed"
+                        ? "text-emerald-700 dark:text-emerald-400"
+                        : status === "failed"
+                          ? "text-red-600 dark:text-red-400"
+                          : "text-muted-foreground";
+                    const label =
+                      status === "confirmed"
+                        ? "Confirmado"
+                        : status === "failed"
+                          ? "Rechazado"
+                          : "Pendiente";
+                    return (
+                      <li
+                        key={p.id as string}
+                        className="flex items-center justify-between gap-3 py-2 text-sm"
+                      >
+                        <div className="min-w-0">
+                          <span className="tabular-nums font-medium">
+                            {formatEUR(p.amount as number)}
+                          </span>
+                          <span className="ml-2 text-xs text-muted-foreground">
+                            {formatDate((p.confirmed_at ?? p.created_at) as string)}
+                          </span>
+                          {(p.ds_authorisation_code as string | null) ? (
+                            <span className="ml-2 font-mono text-[10px] text-muted-foreground">
+                              aut. {p.ds_authorisation_code as string}
+                            </span>
+                          ) : null}
+                        </div>
+                        <span className={`shrink-0 text-xs font-medium ${tone}`}>{label}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </CardContent>
+            </Card>
+          ) : null}
 
           {(invoice.portal_token as string | null) ? (
             <Card>

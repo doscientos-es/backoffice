@@ -1,21 +1,36 @@
 import { StatCard } from "@/components/layout/stat-card";
 import { getFinanceKpis } from "@/lib/finance/queries";
 import { formatEUR } from "@/lib/utils";
-import { Percent, Receipt, TrendingDown, TrendingUp } from "lucide-react";
+import { HandCoins, Hourglass, Percent, Receipt, TrendingDown, TrendingUp } from "lucide-react";
 
 type Props = { since: string; until: string; rangeLabel: string };
 
 export async function FinanceKpis({ since, until, rangeLabel }: Props) {
-  const { revenueMonth, expenseMonth, netMonth, margin } = await getFinanceKpis(since, until);
+  const { revenueMonth, expenseMonth, netMonth, margin, cashCollected, pendingCollection } =
+    await getFinanceKpis(since, until);
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       <StatCard
-        label="Ingresos"
+        label="Ingresos (facturado)"
         value={formatEUR(revenueMonth)}
         tone="success"
         icon={TrendingUp}
         hint={rangeLabel}
+      />
+      <StatCard
+        label="Cobrado (caja)"
+        value={formatEUR(cashCollected)}
+        tone="success"
+        icon={HandCoins}
+        hint={rangeLabel}
+      />
+      <StatCard
+        label="Pendiente de cobro"
+        value={formatEUR(pendingCollection)}
+        tone={pendingCollection > 0 ? "warning" : "info"}
+        icon={Hourglass}
+        hint="Facturas emitidas/vencidas"
       />
       <StatCard
         label="Gastos"

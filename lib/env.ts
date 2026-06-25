@@ -45,6 +45,12 @@ const ServerSchema = PublicSchema.extend({
   // Prerellena el campo del proyecto; cada proyecto puede sobreescribirlo.
   GITHUB_DEFAULT_INSTALLATION_ID: z.string().optional().default(""),
   CAL_WEBHOOK_SECRET: z.string().optional().default(""),
+  // Redsys / BBVA Paygold
+  REDSYS_MERCHANT_CODE: z.string().default("370475436"),
+  REDSYS_TERMINAL: z.string().default("001"),
+  REDSYS_CURRENCY: z.string().default("978"), // EUR
+  REDSYS_SECRET_KEY: z.string().default("sq7HjrUOBfKmC576ILgskD5srU870gJ7"), // TEST KEY
+  REDSYS_ENVIRONMENT: z.enum(["test", "prod"]).default("test"),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
 });
 

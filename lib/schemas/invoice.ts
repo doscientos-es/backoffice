@@ -15,6 +15,17 @@ export const InvoiceIdInput = uuidIdInput;
 
 export const SendInvoiceInput = uuidIdInput;
 
+/**
+ * Input for emailing the public portal link of an invoice to the client.
+ * `to` overrides the client's stored email; `message` is an optional note.
+ */
+export const SendInvoiceEmailInput = z.object({
+  id: z.string().uuid(),
+  to: z.string().email().optional(),
+  message: z.string().max(1000).optional(),
+});
+export type SendInvoiceEmailInputType = z.infer<typeof SendInvoiceEmailInput>;
+
 export const CreateInvoiceFromProposalInput = z.object({
   proposalId: z.string().uuid(),
 });

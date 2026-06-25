@@ -31,6 +31,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { deleteInvoice, restoreInvoice, updateInvoiceStatus } from "../actions";
 import { SendAeatButton } from "./send-aeat-button";
+import { SendInvoiceButton } from "./send-invoice-button";
 
 /** Builds the `{ id }` FormData both delete and restore invoice actions expect. */
 function idFormData(invoiceId: string): FormData {
@@ -45,9 +46,11 @@ interface Props {
     status: string;
     verifactu_status: string;
   };
+  /** Client email, prefilled as the default recipient in the send dialog. */
+  clientEmail?: string | null;
 }
 
-export function InvoiceActions({ invoice }: Props) {
+export function InvoiceActions({ invoice, clientEmail }: Props) {
   const [pending, startTransition] = useTransition();
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const feedback = useFormFeedback();
@@ -90,6 +93,8 @@ export function InvoiceActions({ invoice }: Props) {
 
   const canEdit = isDraft;
   const canIssue = isDraft;
+  // Once issued (or beyond), the invoice has a portal link worth emailing.
+  const canSendEmail = !isDraft;
   const canMarkPaid = isIssued || isOverdue;
   const canMarkUncollected = isPaid;
   const canCancel = isIssued || isOverdue;
@@ -116,6 +121,8 @@ export function InvoiceActions({ invoice }: Props) {
           </Link>
         </Button>
       )}
+
+      {canSendEmail && <SendInvoiceButton invoiceId={invoice.id} defaultEmail={clientEmail} />}
 
       {canIssue && (
         <Button size="sm" disabled={pending} onClick={() => handleStatusUpdate("issued")}>

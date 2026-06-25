@@ -60,26 +60,53 @@ const getExpensesInRange = cache(
 export async function getFinanceKpis(since: string, until: string): Promise<FinanceKpis> {
   const supabase = await createServerClient();
 
-  const [{ data: revenue }, expenses] = await Promise.all([
-    notDeleted(
+  const [{ data: revenue }, expenses, { data: collected }, { data: outstandingInvoices }] =
+    await Promise.all([
+      notDeleted(
+        supabase
+          .from("invoices")
+          .select("total")
+          .gte("issue_date", since)
+          .lte("issue_date", until)
+          .neq("status", "draft"),
+      ),
+      getExpensesInRange(since, until),
+      // Real cash collected through the gateway within the range (by confirmation date).
       supabase
-        .from("invoices")
-        .select("total")
-        .gte("issue_date", since)
-        .lte("issue_date", until)
-        .neq("status", "draft"),
-    ),
-    getExpensesInRange(since, until),
-  ]);
+        .from("invoice_payments")
+        .select("amount")
+        .eq("status", "confirmed")
+        .gte("confirmed_at", since)
+        .lte("confirmed_at", `${until}T23:59:59.999Z`),
+      // Open invoices (issued/overdue) to compute outstanding receivables.
+      notDeleted(supabase.from("invoices").select("id, total").in("status", ["issued", "overdue"])),
+    ]);
 
   const revenueMonth = (revenue ?? []).reduce((a, r) => a + Number(r.total ?? 0), 0);
   const expenseMonth = expenses.reduce((a, r) => a + r.total, 0);
+  const cashCollected = (collected ?? []).reduce((a, r) => a + Number(r.amount ?? 0), 0);
+
+  const openIds = (outstandingInvoices ?? []).map((r) => r.id as string);
+  const openTotal = (outstandingInvoices ?? []).reduce((a, r) => a + Number(r.total ?? 0), 0);
+
+  let paidOnOpen = 0;
+  if (openIds.length > 0) {
+    const { data: openPayments } = await supabase
+      .from("invoice_payments")
+      .select("amount")
+      .eq("status", "confirmed")
+      .in("invoice_id", openIds);
+    paidOnOpen = (openPayments ?? []).reduce((a, r) => a + Number(r.amount ?? 0), 0);
+  }
+  const pendingCollection = Math.max(0, openTotal - paidOnOpen);
 
   return {
     revenueMonth,
     expenseMonth,
     netMonth: revenueMonth - expenseMonth,
     margin: profitMargin(revenueMonth, expenseMonth),
+    cashCollected,
+    pendingCollection,
   };
 }
 

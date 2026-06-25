@@ -6,6 +6,8 @@ import {
   hasCompleteFiscalData,
   promoteLeadFromClient,
 } from "@/lib/crm/conversion";
+import { publicEnv, serverEnv } from "@/lib/env";
+import { createRedsysPayment, getRedsysUrl } from "@/lib/integrations/redsys";
 import { scopedLogger } from "@/lib/logger";
 import { unlockPortalResource } from "@/lib/portal/access";
 import {
@@ -20,6 +22,16 @@ import { revalidatePath } from "next/cache";
 const log = scopedLogger("portal.proposal");
 
 type ActionResult = { ok: true } | { ok: false; error: string };
+
+export type PaymentInitResult =
+  | {
+      ok: true;
+      url: string;
+      signatureVersion: string;
+      merchantParameters: string;
+      signature: string;
+    }
+  | { ok: false; error: string };
 
 /**
  * Atomically transitions a proposal to `accepted`, performing the fiscal-data
@@ -160,4 +172,74 @@ export async function rejectProposal(token: string, reason?: string): Promise<Ac
 /** Public unlock-form submit for a password-protected proposal portal link. */
 export async function unlockProposalPortal(input: unknown): Promise<ActionResult> {
   return unlockPortalResource("proposals", input);
+}
+
+/**
+ * Initiates a Redsys payment (deposit/señal) for an accepted proposal.
+ */
+export async function initiateProposalPayment(
+  proposalId: string,
+  token: string,
+): Promise<PaymentInitResult> {
+  const admin = createAdminClient();
+
+  const { data: proposal } = await admin
+    .from("proposals")
+    .select("id, status, total")
+    .eq("id", proposalId)
+    .eq("portal_token", token)
+    .maybeSingle();
+
+  if (!proposal || proposal.status !== "accepted") {
+    return { ok: false, error: "Propuesta no disponible para pago" };
+  }
+
+  // Fixed 50% deposit for proposal signal
+  const amount = Math.round(Number(proposal.total) * 50) / 100;
+
+  // Check if signal already paid
+  const { data: existing } = await admin
+    .from("invoice_payments")
+    .select("id")
+    .eq("proposal_id", proposalId)
+    .eq("status", "confirmed")
+    .maybeSingle();
+
+  if (existing) {
+    return { ok: false, error: "La señal ya ha sido abonada" };
+  }
+
+  const { data: payment, error: insertError } = await admin
+    .from("invoice_payments")
+    .insert({ proposal_id: proposalId, amount })
+    .select("redsys_order")
+    .single();
+
+  if (insertError || !payment?.redsys_order) {
+    return { ok: false, error: "Error al crear el registro de pago" };
+  }
+
+  const env = serverEnv();
+  const amountCents = Math.round(amount * 100).toString();
+
+  const redsysData = createRedsysPayment({
+    Ds_Merchant_Amount: amountCents,
+    Ds_Merchant_Order: payment.redsys_order as string,
+    Ds_Merchant_MerchantCode: env.REDSYS_MERCHANT_CODE,
+    Ds_Merchant_Terminal: env.REDSYS_TERMINAL,
+    Ds_Merchant_Currency: env.REDSYS_CURRENCY,
+    Ds_Merchant_TransactionType: "0",
+    Ds_Merchant_MerchantURL: `${publicEnv.NEXT_PUBLIC_APP_URL}/api/webhooks/redsys`,
+    Ds_Merchant_UrlOK: `${publicEnv.NEXT_PUBLIC_APP_URL}/p/proposal/${token}?success=1`,
+    Ds_Merchant_UrlKO: `${publicEnv.NEXT_PUBLIC_APP_URL}/p/proposal/${token}?error=1`,
+    Ds_Merchant_MerchantData: proposalId,
+  });
+
+  return {
+    ok: true,
+    url: getRedsysUrl(),
+    signatureVersion: redsysData.Ds_SignatureVersion,
+    merchantParameters: redsysData.Ds_MerchantParameters,
+    signature: redsysData.Ds_Signature,
+  };
 }

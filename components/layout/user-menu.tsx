@@ -64,7 +64,7 @@ export function UserMenu({ user }: { user: CurrentUser }) {
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"

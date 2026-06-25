@@ -18,6 +18,10 @@ export type FinanceKpis = {
   expenseMonth: number;
   netMonth: number;
   margin: number | null;
+  // Real cash collected via the payment gateway within the range.
+  cashCollected: number;
+  // All-time outstanding amount on issued/overdue invoices (total minus confirmed payments).
+  pendingCollection: number;
 };
 
 export type FinanceDetails = {

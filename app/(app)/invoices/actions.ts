@@ -1,14 +1,17 @@
 "use server";
-
+import { InvoiceEmail } from "@/components/email";
 import { requireRole, requireUser } from "@/lib/auth";
 import { promoteLeadFromClient } from "@/lib/crm/conversion";
-import { serverEnv } from "@/lib/env";
+import { renderEmail } from "@/lib/email/render";
+import { sendEmail } from "@/lib/email/resend";
+import { publicEnv, serverEnv } from "@/lib/env";
 import { computeLineTotals } from "@/lib/finance";
 import { scopedLogger } from "@/lib/logger";
 import { buildPortalAccessPatch } from "@/lib/portal/access";
 import {
   CreateInvoiceFromProposalInput,
   CreateMonthlyHourlyInvoiceInput,
+  SendInvoiceEmailInput,
   SendInvoiceInput,
   UpdateInvoiceInput as UpdateInvoiceInputSchema,
   type UpdateInvoiceInputType,
@@ -16,6 +19,7 @@ import {
 } from "@/lib/schemas/invoice";
 import { UpdatePortalAccessInput } from "@/lib/schemas/portal";
 import { createServerClient } from "@/lib/supabase/server";
+import { formatDate, formatEUR } from "@/lib/utils";
 import { submitToVerifactu } from "@/lib/verifactu/client";
 import { buildQrUrl } from "@/lib/verifactu/qr";
 import { revalidatePath } from "next/cache";
@@ -589,4 +593,85 @@ export async function updateInvoicePortalAccess(
 
   revalidatePath(`/invoices/${parsed.data.id}`);
   return { ok: true };
+}
+
+// ---------------- SEND INVOICE EMAIL (client portal) ----------------
+
+type SendInvoiceEmailResult =
+  | { ok: true; portalUrl: string; mocked: boolean }
+  | { ok: false; error: string };
+
+/**
+ * Emails the public portal link of an invoice to the client via Resend so they
+ * can view, download and pay it online. Requires the invoice to be issued and
+ * client-visible. Idempotent: does not change the invoice status.
+ */
+export async function sendInvoiceEmail(input: unknown): Promise<SendInvoiceEmailResult> {
+  const user = await requireUser();
+
+  const parsed = SendInvoiceEmailInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+  }
+  const { id, to: overrideTo, message } = parsed.data;
+
+  const supabase = await createServerClient();
+  const { data: invoice, error: readError } = await supabase
+    .from("invoices")
+    .select(
+      "id, full_number, total, due_date, status, portal_token, is_client_visible, clients(name, email)",
+    )
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (readError || !invoice) return { ok: false, error: "Factura no encontrada" };
+
+  if (invoice.status === "draft") {
+    return { ok: false, error: "Emite la factura antes de enviarla al cliente" };
+  }
+  if (!invoice.is_client_visible) {
+    return { ok: false, error: "La factura no es visible para el cliente" };
+  }
+
+  const client = (invoice as unknown as { clients: { name: string; email: string | null } | null })
+    .clients;
+  const recipient = overrideTo ?? client?.email ?? null;
+  if (!recipient) return { ok: false, error: "El cliente no tiene email registrado" };
+
+  const portalToken = invoice.portal_token as string | null;
+  if (!portalToken) return { ok: false, error: "La factura no tiene token de portal" };
+
+  const invoiceNumber = (invoice.full_number as string | null) ?? "—";
+  const portalUrl = `${publicEnv.NEXT_PUBLIC_APP_URL}/p/invoice/${portalToken}`;
+  const html = await renderEmail(
+    InvoiceEmail({
+      clientName: client?.name ?? "Hola",
+      invoiceNumber,
+      total: formatEUR(invoice.total as number),
+      dueDate: invoice.due_date ? formatDate(invoice.due_date as string) : "—",
+      portalUrl,
+      appUrl: publicEnv.NEXT_PUBLIC_APP_URL,
+      message,
+    }),
+  );
+
+  let mocked = false;
+  try {
+    const result = await sendEmail({
+      fromName: user.name,
+      fromAlias: user.emailAlias ?? "facturacion",
+      to: recipient,
+      replyTo: user.contactEmail ?? user.email,
+      subject: `Factura ${invoiceNumber}`,
+      html,
+      tags: { invoice_id: id, kind: "invoice_link" },
+    });
+    mocked = result.mocked;
+  } catch (err) {
+    log.error({ err, invoiceId: id }, "send_invoice_email_failed");
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo enviar el email" };
+  }
+
+  revalidatePath(`/invoices/${id}`);
+  return { ok: true, portalUrl, mocked };
 }

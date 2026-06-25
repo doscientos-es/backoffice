@@ -46,7 +46,8 @@ export function InvoiceEmail({
       <Text style={headingStyle}>Hola, {clientName}</Text>
       <Text style={bodyStyle}>
         Te enviamos la factura <strong>{invoiceNumber}</strong> por importe de{" "}
-        <strong>{total}</strong>. Puedes consultarla y descargarla en el enlace de abajo.
+        <strong>{total}</strong>. Puedes consultarla, descargarla y pagarla online de forma segura
+        desde el enlace de abajo.
       </Text>
 
       {/* Optional custom message */}
@@ -87,7 +88,7 @@ export function InvoiceEmail({
           boxSizing: "border-box",
         }}
       >
-        Ver factura
+        Ver y pagar
       </Button>
 
       <Hr style={{ borderColor: "#e4e4e7", margin: "28px 0 16px" }} />

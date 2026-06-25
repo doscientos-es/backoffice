@@ -17,6 +17,7 @@ import { Select } from "@/components/ui/select";
 import { VAULT_SERVICES, VAULT_SERVICE_LABELS, type VaultService } from "@/lib/schemas/vault";
 import { cn } from "@/lib/utils";
 import {
+  Check,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -25,6 +26,7 @@ import {
   Copy,
   Eye,
   EyeOff,
+  Loader2,
   Lock,
   LockOpen,
   Pencil,
@@ -35,6 +37,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { sileo } from "sileo";
 import { deleteVaultItem, lockVault, revealVaultSecret } from "../actions";
 import { SetPasswordForm, UnlockForm } from "./vault-dialogs";
 import { VaultItemForm } from "./vault-item-dialog";
@@ -86,7 +89,9 @@ export function VaultClient({
   const [pendingEditItem, setPendingEditItem] = useState<VaultItem | null>(null);
   const [localUnlocked, setLocalUnlocked] = useState(unlocked);
   const [revealed, setRevealed] = useState<Record<string, string>>({});
-  const [pending, startTransition] = useTransition();
+  const [revealingId, setRevealingId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
 
   // ── filters / sort / pagination ────────────────────────────────────────────
   const [search, setSearch] = useState("");
@@ -202,10 +207,29 @@ export function VaultClient({
       setDialog("unlock");
       return;
     }
+    setRevealingId(item.id);
     startTransition(async () => {
       const r = await revealVaultSecret({ id: item.id });
-      if (r.ok && "secret" in r) setRevealed((rv) => ({ ...rv, [item.id]: r.secret as string }));
+      if (r.ok && "secret" in r) {
+        setRevealed((rv) => ({ ...rv, [item.id]: r.secret as string }));
+      } else {
+        sileo.error({ title: "No se pudo revelar el secreto" });
+      }
+      setRevealingId(null);
     });
+  }
+
+  async function handleCopy(item: VaultItem) {
+    const secret = revealed[item.id];
+    if (!secret) return;
+    try {
+      await navigator.clipboard.writeText(secret);
+      setCopiedId(item.id);
+      sileo.success({ title: "Copiado al portapapeles" });
+      setTimeout(() => setCopiedId((c) => (c === item.id ? null : c)), 1500);
+    } catch {
+      sileo.error({ title: "No se pudo copiar" });
+    }
   }
 
   function handleDelete(id: string) {
@@ -385,6 +409,8 @@ export function VaultClient({
                 <tbody className="divide-y divide-border/60">
                   {paged.map((item) => {
                     const isRevealed = !!revealed[item.id];
+                    const isRevealing = revealingId === item.id;
+                    const isCopied = copiedId === item.id;
                     return (
                       <tr key={item.id} className="group transition-colors hover:bg-muted/40">
                         <td className="px-5 py-3 font-medium text-foreground">
@@ -406,12 +432,34 @@ export function VaultClient({
                             <span className={cn("font-mono text-xs", isRevealed ? "select-all text-foreground" : "tracking-widest text-muted-foreground")}>
                               {isRevealed ? revealed[item.id] : "••••••••"}
                             </span>
-                            <button type="button" onClick={() => handleReveal(item)} className="text-muted-foreground transition-colors hover:text-foreground" aria-label={isRevealed ? "Ocultar" : "Revelar"}>
-                              {isRevealed ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                            <button
+                              type="button"
+                              onClick={() => handleReveal(item)}
+                              disabled={isRevealing}
+                              aria-busy={isRevealing}
+                              className="text-muted-foreground transition-colors hover:text-foreground"
+                              aria-label={isRevealing ? "Revelando…" : isRevealed ? "Ocultar" : "Revelar"}
+                            >
+                              {isRevealing ? (
+                                <Loader2 className="size-3.5 animate-spin" />
+                              ) : isRevealed ? (
+                                <EyeOff className="size-3.5" />
+                              ) : (
+                                <Eye className="size-3.5" />
+                              )}
                             </button>
                             {isRevealed && (
-                              <button type="button" onClick={() => navigator.clipboard.writeText(revealed[item.id]!)} className="text-muted-foreground transition-colors hover:text-foreground" aria-label="Copiar">
-                                <Copy className="size-3.5" />
+                              <button
+                                type="button"
+                                onClick={() => handleCopy(item)}
+                                className="text-muted-foreground transition-colors hover:text-foreground"
+                                aria-label={isCopied ? "Copiado" : "Copiar"}
+                              >
+                                {isCopied ? (
+                                  <Check className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+                                ) : (
+                                  <Copy className="size-3.5" />
+                                )}
                               </button>
                             )}
                           </div>
