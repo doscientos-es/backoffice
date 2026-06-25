@@ -16,7 +16,7 @@ const baseInput = {
 describe("verifactu hash", () => {
   it("uses '0' as previous_hash for the first invoice", () => {
     const payload = buildHashPayload(baseInput);
-    expect(payload).toContain("|0|");
+    expect(payload).toContain("&0&");
   });
 
   it("formats issue date as DD-MM-YYYY", () => {
@@ -24,11 +24,11 @@ describe("verifactu hash", () => {
     expect(payload).toContain("25-05-2026");
   });
 
-  it("produces a deterministic SHA-256 hex hash", () => {
+  it("produces a deterministic SHA-256 uppercase hex hash", () => {
     const h1 = computeInvoiceHash(baseInput);
     const h2 = computeInvoiceHash(baseInput);
     expect(h1).toBe(h2);
-    expect(h1).toMatch(/^[a-f0-9]{64}$/);
+    expect(h1).toMatch(/^[A-F0-9]{64}$/);
   });
 
   it("chains different hashes for different previous_hash", () => {
@@ -39,8 +39,8 @@ describe("verifactu hash", () => {
 
   it("formats amounts with 2 decimals", () => {
     const payload = buildHashPayload({ ...baseInput, taxAmount: 21, total: 121 });
-    expect(payload).toContain("|21.00|");
-    expect(payload).toContain("|121.00|");
+    expect(payload).toContain("&21.00&");
+    expect(payload).toContain("&121.00&");
   });
 });
 

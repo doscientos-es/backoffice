@@ -36,7 +36,7 @@ describe("verifactu/client", () => {
     const xml = buildVerifactuXml(baseInput, "deadbeef");
     expect(xml).toContain("<sum:NIF>B12345678</sum:NIF>");
     expect(xml).toContain("<sum:NumSerieFactura>A-000001</sum:NumSerieFactura>");
-    expect(xml).toContain("<sum:FechaExpedicionFactura>2026-03-15</sum:FechaExpedicionFactura>");
+    expect(xml).toContain("<sum:FechaExpedicionFactura>15-03-2026</sum:FechaExpedicionFactura>");
     expect(xml).toContain("<sum:TipoFactura>F1</sum:TipoFactura>");
     expect(xml).toContain("<sum:CuotaTotal>21.00</sum:CuotaTotal>");
     expect(xml).toContain("<sum:ImporteTotal>121.00</sum:ImporteTotal>");
@@ -57,7 +57,7 @@ describe("verifactu/client", () => {
     const { submitToVerifactu } = await import("@/lib/verifactu/client");
     const result = await submitToVerifactu(baseInput);
     expect(result.status).toBe("accepted");
-    expect(result.hash).toMatch(/^[a-f0-9]{64}$/);
+    expect(result.hash).toMatch(/^[A-F0-9]{64}$/);
     expect(result.csv).toBe(result.hash.slice(0, 16).toUpperCase());
     expect(result.idfact).toBe("B12345678-A-000001-20260315");
     expect(result.errorMessage).toBeNull();
@@ -71,7 +71,7 @@ describe("verifactu/client", () => {
     const result = await submitToVerifactu(baseInput);
     expect(result.status).toBe("error");
     expect(result.csv).toBeNull();
-    expect(result.errorMessage).toMatch(/no implementado/i);
+    expect(result.errorMessage).toMatch(/certificado|certificate/i);
   });
 
   it("computes the same hash twice for the same payload (determinism)", async () => {

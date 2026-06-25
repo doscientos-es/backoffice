@@ -13,8 +13,8 @@
  */
 
 import { createHash } from "node:crypto";
-import forge from "node-forge";
 import { spanishTimestamp } from "@/lib/verifactu/hash";
+import forge from "node-forge";
 
 const DS_NS = "http://www.w3.org/2000/09/xmldsig#";
 const XADES_NS = "http://uri.etsi.org/01903/v1.3.2#";
@@ -36,8 +36,7 @@ export function loadP12Cert(p12Base64: string, password: string): P12Cert {
   const p12Asn1 = forge.asn1.fromDer(forge.util.createBuffer(p12Buf));
   const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, false, password);
 
-  const certBags =
-    p12.getBags({ bagType: forge.pki.oids.certBag })[forge.pki.oids.certBag] ?? [];
+  const certBags = p12.getBags({ bagType: forge.pki.oids.certBag })[forge.pki.oids.certBag] ?? [];
   const keyBags =
     p12.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag })[
       forge.pki.oids.pkcs8ShroudedKeyBag
@@ -63,17 +62,120 @@ export function loadP12Cert(p12Base64: string, password: string): P12Cert {
     .join(",");
 
   // Serial number as decimal (forge gives hex without 0x prefix)
-  const serialNumber = BigInt("0x" + cert.serialNumber).toString(10);
+  const serialNumber = BigInt(`0x${cert.serialNumber}`).toString(10);
 
   return { certDerBase64, certDigestB64, issuerName, serialNumber, privateKey };
 }
 
 function escapeRdn(v: string): string {
-  return v.replace(/[,+="\\<>;#]/g, (c) => "\\" + c);
+  return v.replace(/[,+="\\<>;#]/g, (c) => `\\${c}`);
 }
 
 function escapeXml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+// ─── XML builders ────────────────────────────────────────────────────────────
+
+function buildSignedProperties(cert: P12Cert, signingTime: Date, id: string): string {
+  const time = spanishTimestamp(signingTime);
+  return (
+    `<xades:SignedProperties xmlns:xades="${XADES_NS}" Id="${id}">` +
+    `<xades:SignedSignatureProperties>` +
+    `<xades:SigningTime>${time}</xades:SigningTime>` +
+    `<xades:SigningCertificateV2>` +
+    `<xades:Cert>` +
+    `<xades:CertDigest>` +
+    `<ds:DigestMethod xmlns:ds="${DS_NS}" Algorithm="${SHA256_ALG}"/>` +
+    `<ds:DigestValue xmlns:ds="${DS_NS}">${cert.certDigestB64}</ds:DigestValue>` +
+    `</xades:CertDigest>` +
+    `<xades:IssuerSerialV2>` +
+    `<ds:X509IssuerName xmlns:ds="${DS_NS}">${escapeXml(cert.issuerName)}</ds:X509IssuerName>` +
+    `<ds:X509SerialNumber xmlns:ds="${DS_NS}">${cert.serialNumber}</ds:X509SerialNumber>` +
+    "</xades:IssuerSerialV2>" +
+    `</xades:Cert>` +
+    `</xades:SigningCertificateV2>` +
+    `</xades:SignedSignatureProperties>` +
+    "</xades:SignedProperties>"
+  );
+}
+
+function buildSignedInfo(
+  sigId: string,
+  spropsId: string,
+  docDigest: string,
+  propsDigest: string,
+): string {
+  return (
+    `<ds:SignedInfo xmlns:ds="${DS_NS}">` +
+    `<ds:CanonicalizationMethod Algorithm="${C14N_ALG}"/>` +
+    `<ds:SignatureMethod Algorithm="${RSA_SHA256}"/>` +
+    `<ds:Reference Id="${sigId}-REF-DOC" URI="">` +
+    `<ds:Transforms>` +
+    `<ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>` +
+    `<ds:Transform Algorithm="${C14N_ALG}"/>` +
+    `</ds:Transforms>` +
+    `<ds:DigestMethod Algorithm="${SHA256_ALG}"/>` +
+    `<ds:DigestValue>${docDigest}</ds:DigestValue>` +
+    `</ds:Reference>` +
+    `<ds:Reference Id="${sigId}-REF-XADES" Type="http://uri.etsi.org/01903#SignedProperties" URI="#${spropsId}">` +
+    `<ds:DigestMethod Algorithm="${SHA256_ALG}"/>` +
+    `<ds:DigestValue>${propsDigest}</ds:DigestValue>` +
+    `</ds:Reference>` +
+    `</ds:SignedInfo>`
+  );
+}
+
+// ─── Public API ──────────────────────────────────────────────────────────────
+
+/**
+ * Embed an XAdES-BES enveloped signature inside `unsignedXml`.
+ * The signature element is inserted just before the root closing tag.
+ */
+export function signXml(unsignedXml: string, cert: P12Cert, signingTime?: Date): string {
+  const now = signingTime ?? new Date();
+  const docBuf = Buffer.from(unsignedXml, "utf8");
+  const sigId = `SIG-${createHash("sha256").update(docBuf).digest("hex").slice(0, 8).toUpperCase()}`;
+  const spropsId = `${sigId}-SPROPS`;
+
+  // 1. Document digest (unsigned XML bytes)
+  const docDigest = sha256b64(docBuf);
+
+  // 2. SignedProperties digest
+  const signedPropsXml = buildSignedProperties(cert, now, spropsId);
+  const propsDigest = sha256b64(Buffer.from(signedPropsXml, "utf8"));
+
+  // 3. Build and sign SignedInfo
+  const signedInfoXml = buildSignedInfo(sigId, spropsId, docDigest, propsDigest);
+  const md = forge.md.sha256.create();
+  md.update(signedInfoXml, "utf8");
+  const signatureB64 = Buffer.from(cert.privateKey.sign(md), "binary").toString("base64");
+
+  // 4. Assemble full ds:Signature element
+  const signatureEl =
+    `<ds:Signature xmlns:ds="${DS_NS}" Id="${sigId}">` +
+    signedInfoXml +
+    `<ds:SignatureValue Id="${sigId}-VALUE">${signatureB64}</ds:SignatureValue>` +
+    `<ds:KeyInfo>` +
+    `<ds:X509Data>` +
+    `<ds:X509Certificate>${cert.certDerBase64}</ds:X509Certificate>` +
+    `</ds:X509Data>` +
+    `</ds:KeyInfo>` +
+    `<ds:Object Id="${sigId}-OBJ">` +
+    `<xades:QualifyingProperties xmlns:xades="${XADES_NS}" Target="#${sigId}">` +
+    signedPropsXml +
+    `</xades:QualifyingProperties>` +
+    `</ds:Object>` +
+    `</ds:Signature>`;
+
+  // 5. Embed before root closing tag
+  const lastClose = unsignedXml.lastIndexOf("</");
+  if (lastClose === -1) throw new Error("signXml: cannot locate root closing tag");
+  return unsignedXml.slice(0, lastClose) + signatureEl + unsignedXml.slice(lastClose);
 }
 
 function sha256b64(buf: Buffer): string {

@@ -1,11 +1,16 @@
+import { PaymentReceiptEmail } from "@/components/email";
+import { renderEmail } from "@/lib/email/render";
+import { sendEmail } from "@/lib/email/resend";
+import { publicEnv } from "@/lib/env";
 import {
   isRedsysSuccess,
   parseRedsysResponse,
   verifyRedsysSignature,
 } from "@/lib/integrations/redsys";
+import { createDepositInvoice } from "@/lib/invoices/create-deposit-invoice";
 import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { formatEUR } from "@/lib/utils";
+import { formatDate, formatEUR } from "@/lib/utils";
 
 const log = scopedLogger("api.webhooks.redsys");
 
@@ -128,9 +133,34 @@ export async function POST(req: Request) {
 
       // Handle Proposal payment (deposit)
       if (payment.proposal_id) {
+        // Auto-generate a draft deposit invoice (best-effort — must not block the webhook)
+        const depositResult = await createDepositInvoice(
+          supabase,
+          payment.proposal_id as string,
+          Number(payment.amount),
+        );
+        if (depositResult.ok) {
+          // Link the payment to the newly created invoice
+          await supabase
+            .from("invoice_payments")
+            .update({ invoice_id: depositResult.invoiceId })
+            .eq("id", payment.id);
+          log.info(
+            { paymentId: payment.id, invoiceId: depositResult.invoiceId },
+            "deposit_invoice_created",
+          );
+        } else {
+          log.error(
+            { paymentId: payment.id, err: depositResult.error },
+            "deposit_invoice_creation_failed",
+          );
+        }
+
         const { data: proposal } = await supabase
           .from("proposals")
-          .select("id, number, title")
+          .select(
+            "id, number, title, portal_token, clients(name, email), leads(name, company, email)",
+          )
           .eq("id", payment.proposal_id as string)
           .maybeSingle();
 
@@ -156,6 +186,53 @@ export async function POST(req: Request) {
                 link: `/proposals/${proposal.id}`,
               })),
             );
+          }
+
+          // Email the client a link to the payment receipt (best-effort: a
+          // failure here must never turn the webhook into a non-200 response).
+          const client = (
+            proposal as unknown as {
+              clients: { name: string | null; email: string | null } | null;
+            }
+          ).clients;
+          const lead = (
+            proposal as unknown as {
+              leads: { name: string | null; company: string | null; email: string | null } | null;
+            }
+          ).leads;
+          const recipientEmail = client?.email ?? lead?.email ?? null;
+          const portalToken = proposal.portal_token as string | null;
+
+          if (recipientEmail && portalToken) {
+            try {
+              const appUrl = publicEnv.NEXT_PUBLIC_APP_URL;
+              const html = await renderEmail(
+                PaymentReceiptEmail({
+                  clientName: client?.name ?? lead?.company ?? lead?.name ?? "Hola",
+                  proposalNumber: proposal.number as string,
+                  proposalTitle: proposal.title as string,
+                  amount: formatEUR(Number(payment.amount)),
+                  paymentDate: formatDate(new Date().toISOString()),
+                  reference: orderId ?? "",
+                  receiptUrl: `${appUrl}/p/proposal/${portalToken}/receipt/${payment.id}`,
+                  appUrl,
+                }),
+              );
+              await sendEmail({
+                fromName: "doscientos",
+                fromAlias: "notificaciones",
+                to: recipientEmail,
+                subject: `Pago confirmado \u00b7 ${proposal.number}`,
+                html,
+                tags: { proposal_id: proposal.id as string, type: "payment_receipt" },
+              });
+              log.info({ paymentId: payment.id, proposalId: proposal.id }, "receipt_email_sent");
+            } catch (e) {
+              log.error(
+                { err: e instanceof Error ? e.message : String(e), paymentId: payment.id },
+                "receipt_email_failed",
+              );
+            }
           }
         }
       }

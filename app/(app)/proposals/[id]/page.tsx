@@ -12,8 +12,8 @@ import { isAIEnabled } from "@/lib/env";
 import { parseKeyPoints, toEditableKeyPoints } from "@/lib/proposals/key-points";
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
-import { formatDate } from "@/lib/utils";
-import { FileText, Presentation } from "lucide-react";
+import { formatDate, formatEUR } from "@/lib/utils";
+import { CheckCircle2, Clock, FileText, Presentation, XCircle } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { updateProposalPortalAccess } from "../actions";
@@ -95,6 +95,13 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
     .select("id, name, mime_type, size_bytes, created_at")
     .eq("proposal_id", id)
     .is("deleted_at", null)
+    .order("created_at", { ascending: false });
+
+  // Deposit payments made from the proposal portal
+  const { data: depositPayments } = await supabase
+    .from("invoice_payments")
+    .select("id, amount, status, confirmed_at, created_at, invoice_id")
+    .eq("proposal_id", id)
     .order("created_at", { ascending: false });
 
   const { data: clientFull } = await supabase
@@ -321,6 +328,70 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
           )}
         </CardContent>
       </Card>
+
+      {depositPayments && depositPayments.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Señal / Pagos de reserva</CardTitle>
+          </CardHeader>
+          <CardContent className="px-0">
+            <ul className="divide-y divide-border text-sm">
+              {depositPayments.map((p) => {
+                const pStatus = p.status as string;
+                const icon =
+                  pStatus === "confirmed" ? (
+                    <CheckCircle2 className="size-4 text-emerald-600" />
+                  ) : pStatus === "failed" ? (
+                    <XCircle className="size-4 text-red-500" />
+                  ) : (
+                    <Clock className="size-4 text-amber-500" />
+                  );
+                return (
+                  <li
+                    key={p.id as string}
+                    className="flex items-center justify-between gap-3 px-6 py-3"
+                  >
+                    <div className="flex items-center gap-2">
+                      {icon}
+                      <span className="font-medium tabular-nums">
+                        {formatEUR(Number(p.amount))}
+                      </span>
+                      <Badge
+                        variant={
+                          pStatus === "confirmed"
+                            ? "success"
+                            : pStatus === "failed"
+                              ? "danger"
+                              : "warning"
+                        }
+                      >
+                        {pStatus === "confirmed"
+                          ? "Confirmado"
+                          : pStatus === "failed"
+                            ? "Fallido"
+                            : "Pendiente"}
+                      </Badge>
+                      {p.confirmed_at && (
+                        <span className="text-xs text-muted-foreground">
+                          {formatDate(p.confirmed_at as string)}
+                        </span>
+                      )}
+                    </div>
+                    {p.invoice_id && (
+                      <Link
+                        href={`/invoices/${p.invoice_id}`}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Ver factura →
+                      </Link>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
 
       <AttachmentSection
         entityType="proposal"

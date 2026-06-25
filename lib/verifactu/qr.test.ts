@@ -48,7 +48,7 @@ describe("buildQrUrl", () => {
 
   it("uses the AEAT prod endpoint in prod mode", async () => {
     const { buildQrUrl } = await importQr("prod");
-    expect(buildQrUrl(params, APP_URL)).toContain("aeat.es");
+    expect(buildQrUrl(params, APP_URL)).toContain("agenciatributaria.gob.es");
   });
 });
 
