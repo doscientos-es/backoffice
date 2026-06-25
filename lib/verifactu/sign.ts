@@ -42,11 +42,13 @@ export function loadP12Cert(p12Base64: string, password: string): P12Cert {
   const certBags = p12.getBags({ bagType: certBagType })[certBagType] ?? [];
   const keyBags = p12.getBags({ bagType: keyBagType })[keyBagType] ?? [];
 
-  if (!certBags.length) throw new Error("PKCS12: no certificate bag found");
-  if (!keyBags.length) throw new Error("PKCS12: no private key bag found");
+  const certBag = certBags[0];
+  const keyBag = keyBags[0];
+  if (!certBag?.cert) throw new Error("PKCS12: no certificate bag found");
+  if (!keyBag?.key) throw new Error("PKCS12: no private key bag found");
 
-  const cert = certBags[0].cert!;
-  const privateKey = keyBags[0].key as forge.pki.rsa.PrivateKey;
+  const cert = certBag.cert;
+  const privateKey = keyBag.key as forge.pki.rsa.PrivateKey;
 
   const certDerBytes = forge.asn1.toDer(forge.pki.certificateToAsn1(cert)).getBytes();
   const certDerBase64 = Buffer.from(certDerBytes, "binary").toString("base64");
