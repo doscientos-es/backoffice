@@ -75,7 +75,7 @@ export function ProposalActions({ token, needsFiscal, fiscalPrefill }: Props) {
           <CardTitle>Datos de facturación</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <p className="text-sm text-muted">
+          <p className="text-sm text-muted-foreground">
             Necesitamos tus datos fiscales para emitir la factura al aceptar la propuesta.
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -199,7 +199,7 @@ export function ProposalActions({ token, needsFiscal, fiscalPrefill }: Props) {
         <CardTitle>Tu respuesta</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-muted">
+        <p className="text-sm text-muted-foreground">
           Acepta o rechaza esta propuesta. Esta acción es definitiva.
         </p>
         <div className="flex items-center gap-3">
