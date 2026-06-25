@@ -35,7 +35,7 @@ export default async function ProposalReceiptPage({
   if (!payment) notFound();
 
   const { data: settings } = await admin.from("settings").select("*").eq("id", 1).maybeSingle();
-  
+
   const client = (proposal as any).clients;
   const lead = (proposal as any).leads;
   const recipientName = client?.name ?? lead?.company ?? lead?.name ?? "—";
@@ -81,7 +81,7 @@ export default async function ProposalReceiptPage({
                   {settings.company_name as string}
                 </p>
                 <p className="text-xs text-zinc-500">{settings.company_nif as string}</p>
-                <p className="text-xs text-zinc-500 whitespace-pre-line max-w-[200px]">
+                <p className="text-xs text-zinc-500 whitespace-pre-line max-w-50">
                   {settings.company_address as string}
                 </p>
               </div>
