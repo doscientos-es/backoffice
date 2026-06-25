@@ -1,5 +1,7 @@
 import { LogoMark } from "@/components/branding";
 import { PortalPasswordGate } from "@/components/portal/password-gate";
+import { ProposalPaymentButton } from "@/components/portal/proposal-payment-button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Markdown } from "@/components/ui/markdown";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getCurrentUser } from "@/lib/auth";
@@ -10,7 +12,7 @@ import { parseKeyPoints } from "@/lib/proposals/key-points";
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { FileText, Presentation } from "lucide-react";
+import { CheckCircle2, FileText, Presentation, XCircle } from "lucide-react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
@@ -38,8 +40,13 @@ type ProposalItem = {
 
 export default async function PortalProposalPage({
   params,
-}: { params: Promise<{ token: string }> }) {
+  searchParams,
+}: {
+  params: Promise<{ token: string }>;
+  searchParams: Promise<{ success?: string; error?: string }>;
+}) {
   const { token } = await params;
+  const { success, error } = await searchParams;
   const admin = createAdminClient();
 
   const { data: proposal } = await admin
@@ -147,21 +154,21 @@ export default async function PortalProposalPage({
     !client || !client.nif?.trim() || !client.billing_address?.trim() || !client.name?.trim();
   const fiscalPrefill = client
     ? {
-        name: client.name ?? "",
-        nif: client.nif ?? "",
-        billing_address: client.billing_address ?? "",
-        contact_person: client.contact_person ?? "",
-        email: client.email ?? "",
-        phone: client.phone ?? "",
-      }
+      name: client.name ?? "",
+      nif: client.nif ?? "",
+      billing_address: client.billing_address ?? "",
+      contact_person: client.contact_person ?? "",
+      email: client.email ?? "",
+      phone: client.phone ?? "",
+    }
     : {
-        name: lead?.company ?? lead?.name ?? "",
-        nif: "",
-        billing_address: "",
-        contact_person: lead?.name ?? "",
-        email: lead?.email ?? "",
-        phone: lead?.phone ?? "",
-      };
+      name: lead?.company ?? lead?.name ?? "",
+      nif: "",
+      billing_address: "",
+      contact_person: lead?.name ?? "",
+      email: lead?.email ?? "",
+      phone: lead?.phone ?? "",
+    };
   const recipientName = client?.name ?? lead?.company ?? lead?.name ?? "—";
   const proposalNumber = (proposal.number as string | null) ?? "Borrador";
   const safeItems = (items ?? []) as unknown as ProposalItem[];
@@ -189,8 +196,37 @@ export default async function PortalProposalPage({
   const hasRecurring =
     totals.monthly.total > 0 || totals.quarterly.total > 0 || totals.yearly.total > 0;
 
+  // Fetch confirmed payments for this proposal (signal/deposit)
+  const { data: proposalPayments } = await admin
+    .from("invoice_payments")
+    .select("id, amount, status, created_at")
+    .eq("proposal_id", proposal.id as string)
+    .eq("status", "confirmed");
+
+  const confirmedPayments = proposalPayments ?? [];
+  const signalPaid = confirmedPayments.length > 0;
+  const depositAmount = Math.round(Number(proposal.total) * 50) / 100;
+
   return (
     <div className="flex flex-col gap-4">
+      {success && (
+        <Alert className="border-emerald-500 bg-emerald-50 dark:bg-emerald-950/20">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          <AlertTitle className="text-emerald-800 dark:text-emerald-300">Pago confirmado</AlertTitle>
+          <AlertDescription className="text-emerald-700 dark:text-emerald-400">
+            Hemos recibido el pago de la señal. El proyecto se pondrá en marcha en breve.
+          </AlertDescription>
+        </Alert>
+      )}
+      {error && (
+        <Alert variant="destructive">
+          <XCircle className="h-4 w-4" />
+          <AlertTitle>Error en el pago</AlertTitle>
+          <AlertDescription>
+            No se ha podido procesar el pago. Por favor, inténtalo de nuevo o contacta con nosotros.
+          </AlertDescription>
+        </Alert>
+      )}
       <article className="rounded-xl bg-white dark:bg-zinc-900 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-800 overflow-hidden">
         {/* Document header */}
         <div className="border-b border-zinc-200 dark:border-zinc-800 px-8 py-7 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
@@ -451,9 +487,49 @@ export default async function PortalProposalPage({
 
       {/* Response area */}
       {responded ? (
-        <p className="text-center text-xs text-zinc-400 dark:text-zinc-600 py-2">
-          Respondida el {formatDate(proposal.responded_at as string | null)}.
-        </p>
+        <div className="flex flex-col items-center gap-4 py-4">
+          <p className="text-center text-xs text-zinc-400 dark:text-zinc-600">
+            Respondida el {formatDate(proposal.responded_at as string | null)}.
+          </p>
+
+          {status === "accepted" && !signalPaid && !isTeam && (
+            <div className="w-full max-w-md p-6 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm flex flex-col items-center gap-4">
+              <div className="text-center space-y-1">
+                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                  Reserva tu proyecto
+                </p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                  Para poner en marcha el proyecto, es necesario abonar la señal del 50%.
+                </p>
+              </div>
+              <ProposalPaymentButton
+                proposalId={proposal.id as string}
+                token={token}
+                depositAmount={depositAmount}
+              />
+            </div>
+          )}
+
+          {status === "accepted" && signalPaid && confirmedPayments[0] && (
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/50">
+                <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                  Señal de reserva abonada ({formatEUR(confirmedPayments[0].amount)})
+                </span>
+              </div>
+              <a
+                href={`/p/proposal/${token}/receipt/${confirmedPayments[0].id}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs font-medium text-[#2A4227] dark:text-[#9CC196] hover:underline flex items-center gap-1.5"
+              >
+                <FileText className="size-3.5" />
+                Ver justificante de pago
+              </a>
+            </div>
+          )}
+        </div>
       ) : (
         <ProposalActions token={token} needsFiscal={needsFiscal} fiscalPrefill={fiscalPrefill} />
       )}

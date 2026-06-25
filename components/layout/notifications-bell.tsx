@@ -255,6 +255,7 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
                         {isUnread && (
                           <span
                             className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary"
+                            role="img"
                             aria-label="Sin leer"
                           />
                         )}
