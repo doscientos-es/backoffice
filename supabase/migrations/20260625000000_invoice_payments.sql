@@ -22,3 +22,10 @@ create index if not exists invoice_payments_invoice_idx on public.invoice_paymen
 create index if not exists invoice_payments_order_idx   on public.invoice_payments(redsys_order);
 create index if not exists invoice_payments_status_idx  on public.invoice_payments(status)
   where status = 'confirmed';
+
+-- RLS: team members can read; writes are always from service_role (admin client).
+alter table public.invoice_payments enable row level security;
+
+drop policy if exists invoice_payments_select on public.invoice_payments;
+create policy invoice_payments_select on public.invoice_payments
+  for select using (public.is_team_member());

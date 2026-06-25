@@ -1,5 +1,6 @@
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
+import { CopyPortalLink } from "@/components/portal/copy-portal-link";
 import { PortalAccessControls } from "@/components/portal/portal-access-controls";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -341,7 +342,11 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
               <CardHeader>
                 <CardTitle>Acceso del cliente</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex flex-col gap-4">
+                <CopyPortalLink
+                  path={`/p/invoice/${invoice.portal_token as string}`}
+                  label="Enlace de pago"
+                />
                 <PortalAccessControls
                   id={invoice.id as string}
                   initialVisible={(invoice.is_client_visible as boolean | null) ?? true}
