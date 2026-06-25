@@ -207,6 +207,12 @@ table,
   }
 }
 
+/* Sileo toasts: drop-shadow siguiendo la forma SVG para que sean visibles
+   sobre fondos blancos en light mode. En dark mode es imperceptible. */
+[data-sileo-svg] {
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1)) drop-shadow(0 0 0 1px rgba(0, 0, 0, 0.07));
+}
+
 /* Print: portal proposals/invoices PDF rendering */
 @media print {
   .no-print {
