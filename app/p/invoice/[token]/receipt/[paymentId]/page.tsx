@@ -1,7 +1,8 @@
 import { LogoMark } from "@/components/branding";
+import { ReceiptPrintButton } from "@/components/portal/receipt-print-button";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { CheckCircle2, Printer } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -46,14 +47,7 @@ export default async function ReceiptPage({
             <CheckCircle2 className="h-5 w-5" />
             <span className="text-sm font-medium">Pago confirmado</span>
           </div>
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md text-xs font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
-          >
-            <Printer className="h-3.5 w-3.5" />
-            Imprimir justificante
-          </button>
+          <ReceiptPrintButton />
         </div>
 
         {/* The Receipt Document */}
@@ -154,17 +148,6 @@ export default async function ReceiptPage({
           </div>
         </article>
       </div>
-
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            // Script to handle print if needed via URL param
-            if (new URLSearchParams(window.location.search).has('print')) {
-              window.print();
-            }
-          `,
-        }}
-      />
     </div>
   );
 }
