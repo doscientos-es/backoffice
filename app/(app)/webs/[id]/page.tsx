@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireUser } from "@/lib/auth";
+import { serverEnv } from "@/lib/env";
+import { isFileBrowserConfigured } from "@/lib/filebrowser";
 import { HOSTING_PROVIDER_LABELS } from "@/lib/schemas/web-project";
 import { checkSiteStatus, fetchOgMetadata } from "@/lib/webs/og";
 import { getWebProject } from "@/lib/webs/queries";
@@ -16,10 +18,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { BackupsCard } from "../_components/backups-card";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const site = await getWebProject(id);
   return { title: site ? `${site.name} · Webs · doscientos` : "Web · doscientos" };
@@ -29,12 +34,16 @@ async function StatusCard({ url }: { url: string }) {
   const s: SiteStatus = await checkSiteStatus(url);
   return (
     <Card>
-      <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Estado</CardTitle></CardHeader>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-medium">Estado</CardTitle>
+      </CardHeader>
       <CardContent>
         <div className="flex items-center gap-2">
-          {s.ok
-            ? <CheckCircle className="size-5 text-green-500" />
-            : <XCircle className="size-5 text-destructive" />}
+          {s.ok ? (
+            <CheckCircle className="size-5 text-green-500" />
+          ) : (
+            <XCircle className="size-5 text-destructive" />
+          )}
           <span className={`text-sm font-semibold ${s.ok ? "text-green-600" : "text-destructive"}`}>
             {s.ok ? `OK · ${s.status}` : (s.error ?? `Error ${s.status ?? ""}`)}
           </span>
@@ -54,7 +63,9 @@ async function OgCard({ site }: { site: WebProjectDetail }) {
 
   return (
     <Card>
-      <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Open Graph</CardTitle></CardHeader>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-medium">Open Graph</CardTitle>
+      </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {image ? (
           <div className="relative aspect-[1200/630] w-full overflow-hidden rounded-lg border border-border bg-muted">
@@ -71,7 +82,20 @@ async function OgCard({ site }: { site: WebProjectDetail }) {
           <DetailRow label="Site name">{og.siteName ?? "—"}</DetailRow>
           <DetailRow label="Tipo">{og.type ?? "—"}</DetailRow>
           <DetailRow label="Twitter card">{og.twitterCard ?? "—"}</DetailRow>
-          <DetailRow label="Canonical">{og.canonical ? <a href={og.canonical} target="_blank" rel="noopener noreferrer" className="break-all text-primary underline-offset-2 hover:underline">{og.canonical}</a> : "—"}</DetailRow>
+          <DetailRow label="Canonical">
+            {og.canonical ? (
+              <a
+                href={og.canonical}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="break-all text-primary underline-offset-2 hover:underline"
+              >
+                {og.canonical}
+              </a>
+            ) : (
+              "—"
+            )}
+          </DetailRow>
         </DetailGrid>
       </CardContent>
     </Card>
@@ -81,7 +105,9 @@ async function OgCard({ site }: { site: WebProjectDetail }) {
 function OgSkeleton() {
   return (
     <Card>
-      <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Open Graph</CardTitle></CardHeader>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-medium">Open Graph</CardTitle>
+      </CardHeader>
       <CardContent className="flex flex-col gap-3">
         <Skeleton className="aspect-[1200/630] w-full rounded-lg" />
         <Skeleton className="h-4 w-3/4" />
@@ -99,8 +125,15 @@ export default async function WebDetailPage({ params }: { params: Promise<{ id: 
   if (!site) notFound();
 
   const hostingLabel = site.hosting_provider
-    ? (HOSTING_PROVIDER_LABELS[site.hosting_provider as keyof typeof HOSTING_PROVIDER_LABELS] ?? site.hosting_provider)
+    ? (HOSTING_PROVIDER_LABELS[site.hosting_provider as keyof typeof HOSTING_PROVIDER_LABELS] ??
+      site.hosting_provider)
     : null;
+
+  // Only offer the "force backup" button when there are stored DB credentials
+  // and the bridge that actually runs the script is configured.
+  const env = serverEnv();
+  const canForceBackup =
+    site.has_db_password && Boolean(env.BACKUP_RUNNER_URL && env.BACKUP_RUNNER_TOKEN);
 
   return (
     <div className="flex flex-col gap-6">
@@ -111,11 +144,15 @@ export default async function WebDetailPage({ params }: { params: Promise<{ id: 
           <div className="flex gap-2">
             <Button asChild variant="outline" size="sm">
               <a href={site.url} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="mr-1.5 size-4" />Abrir
+                <ExternalLink className="mr-1.5 size-4" />
+                Abrir
               </a>
             </Button>
             <Button asChild size="sm">
-              <Link href={`/webs/${id}/edit`}><Edit className="mr-1.5 size-4" />Editar</Link>
+              <Link href={`/webs/${id}/edit`}>
+                <Edit className="mr-1.5 size-4" />
+                Editar
+              </Link>
             </Button>
           </div>
         }
@@ -128,28 +165,59 @@ export default async function WebDetailPage({ params }: { params: Promise<{ id: 
             <CardContent className="pt-6">
               <DetailGrid>
                 <DetailRow label="URL">
-                  <a href={site.url} target="_blank" rel="noopener noreferrer" className="break-all text-primary underline-offset-2 hover:underline flex items-center gap-1">
-                    <Globe className="size-3.5 shrink-0" />{site.url}
+                  <a
+                    href={site.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="break-all text-primary underline-offset-2 hover:underline flex items-center gap-1"
+                  >
+                    <Globe className="size-3.5 shrink-0" />
+                    {site.url}
                   </a>
                 </DetailRow>
                 <DetailRow label="Tipo">
-                  {site.is_own ? <Badge variant="info">Web propia</Badge> : <Badge variant="neutral">Web de cliente</Badge>}
+                  {site.is_own ? (
+                    <Badge variant="info">Web propia</Badge>
+                  ) : (
+                    <Badge variant="neutral">Web de cliente</Badge>
+                  )}
                 </DetailRow>
                 <DetailRow label="Hosting">
-                  {site.hosting_url
-                    ? <a href={site.hosting_url} target="_blank" rel="noopener noreferrer" className="text-primary underline-offset-2 hover:underline">{hostingLabel ?? "—"}</a>
-                    : (hostingLabel ?? "—")}
+                  {site.hosting_url ? (
+                    <a
+                      href={site.hosting_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary underline-offset-2 hover:underline"
+                    >
+                      {hostingLabel ?? "—"}
+                    </a>
+                  ) : (
+                    (hostingLabel ?? "—")
+                  )}
                 </DetailRow>
                 <DetailRow label="Registrador">{site.domain_registrar ?? "—"}</DetailRow>
                 <DetailRow label="Vence dominio">
                   {site.domain_expires_at
-                    ? new Date(site.domain_expires_at).toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" })
+                    ? new Date(site.domain_expires_at).toLocaleDateString("es-ES", {
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric",
+                      })
                     : "—"}
                 </DetailRow>
                 <DetailRow label="Tech stack">
-                  {site.tech_stack.length > 0
-                    ? <div className="flex flex-wrap gap-1">{site.tech_stack.map((t) => <Badge key={t} variant="neutral" className="font-mono text-[10px]">{t}</Badge>)}</div>
-                    : "—"}
+                  {site.tech_stack.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {site.tech_stack.map((t) => (
+                        <Badge key={t} variant="neutral" className="font-mono text-[10px]">
+                          {t}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    "—"
+                  )}
                 </DetailRow>
                 <DetailRow label="Notas">{site.notes ?? "—"}</DetailRow>
               </DetailGrid>
@@ -157,14 +225,29 @@ export default async function WebDetailPage({ params }: { params: Promise<{ id: 
           </Card>
         </div>
 
-        {/* Right: status + OG */}
+        {/* Right: status + OG + backups */}
         <div className="flex flex-col gap-4">
-          <Suspense fallback={<Card><CardContent className="pt-6"><Skeleton className="h-8 w-full" /></CardContent></Card>}>
+          <Suspense
+            fallback={
+              <Card>
+                <CardContent className="pt-6">
+                  <Skeleton className="h-8 w-full" />
+                </CardContent>
+              </Card>
+            }
+          >
             <StatusCard url={site.url} />
           </Suspense>
           <Suspense fallback={<OgSkeleton />}>
             <OgCard site={site} />
           </Suspense>
+          {site.backup_slug && isFileBrowserConfigured() && (
+            <BackupsCard
+              clientSlug={site.backup_slug}
+              projectId={site.id}
+              canForceBackup={canForceBackup}
+            />
+          )}
         </div>
       </div>
     </div>

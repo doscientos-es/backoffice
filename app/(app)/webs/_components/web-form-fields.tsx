@@ -3,7 +3,7 @@ import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { HOSTING_PROVIDER_LABELS, HOSTING_PROVIDERS } from "@/lib/schemas/web-project";
+import { HOSTING_PROVIDERS, HOSTING_PROVIDER_LABELS } from "@/lib/schemas/web-project";
 import type { WebProjectDetail } from "@/lib/webs/types";
 
 type Defaults = Partial<WebProjectDetail>;
@@ -128,6 +128,90 @@ export function WebFormFields({ clients, defaults: d = {}, idPrefix = "web", aut
           Marcar como web de doscientos
         </label>
       </FormRow>
+
+      <FormRow
+        label="Slug de backups"
+        htmlFor={`${idPrefix}-backup_slug`}
+        hint="Nombre de carpeta en FileBrowser (ej: optinergia). Dejar vacío si no hay backups."
+      >
+        <Input
+          id={`${idPrefix}-backup_slug`}
+          name="backup_slug"
+          maxLength={200}
+          defaultValue={d.backup_slug ?? ""}
+          placeholder="optinergia"
+        />
+      </FormRow>
+
+      <fieldset className="space-y-4 rounded-lg border border-border p-4">
+        <legend className="px-1 text-sm font-medium text-muted-foreground">Conexión a BD</legend>
+        <p className="text-xs text-muted-foreground">
+          Credenciales para backups automáticos. La contraseña se guarda cifrada (AES-256-GCM) y
+          nunca se expone al navegador.
+        </p>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <FormRow label="Host" htmlFor={`${idPrefix}-db_host`}>
+            <Input
+              id={`${idPrefix}-db_host`}
+              name="db_host"
+              maxLength={255}
+              defaultValue={d.db_host ?? ""}
+              placeholder="127.0.0.1"
+            />
+          </FormRow>
+
+          <FormRow label="Puerto" htmlFor={`${idPrefix}-db_port`}>
+            <Input
+              id={`${idPrefix}-db_port`}
+              name="db_port"
+              type="number"
+              min={1}
+              max={65535}
+              defaultValue={d.db_port ?? ""}
+              placeholder="5432"
+            />
+          </FormRow>
+
+          <FormRow label="Base de datos" htmlFor={`${idPrefix}-db_name`}>
+            <Input
+              id={`${idPrefix}-db_name`}
+              name="db_name"
+              maxLength={255}
+              defaultValue={d.db_name ?? ""}
+              placeholder="optinergia_prod"
+            />
+          </FormRow>
+
+          <FormRow label="Usuario" htmlFor={`${idPrefix}-db_user`}>
+            <Input
+              id={`${idPrefix}-db_user`}
+              name="db_user"
+              maxLength={255}
+              defaultValue={d.db_user ?? ""}
+              placeholder="postgres"
+            />
+          </FormRow>
+        </div>
+
+        <FormRow
+          label="Contraseña"
+          htmlFor={`${idPrefix}-db_pass`}
+          hint={
+            d.has_db_password
+              ? "Ya hay una contraseña guardada. Déjalo vacío para mantenerla."
+              : "Se almacenará cifrada."
+          }
+        >
+          <Input
+            id={`${idPrefix}-db_pass`}
+            name="db_pass"
+            type="password"
+            maxLength={500}
+            autoComplete="new-password"
+            placeholder={d.has_db_password ? "••••••••" : ""}
+          />
+        </FormRow>
+      </fieldset>
 
       <FormRow label="Notas" htmlFor={`${idPrefix}-notes`}>
         <Textarea

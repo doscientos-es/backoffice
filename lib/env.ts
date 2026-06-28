@@ -45,6 +45,16 @@ const ServerSchema = PublicSchema.extend({
   // Prerellena el campo del proyecto; cada proyecto puede sobreescribirlo.
   GITHUB_DEFAULT_INSTALLATION_ID: z.string().optional().default(""),
   CAL_WEBHOOK_SECRET: z.string().optional().default(""),
+  // File Browser (internal backup server)
+  FILEBROWSER_API_URL: z.string().url().or(z.literal("")).optional().default(""),
+  FILEBROWSER_USER: z.string().optional().default(""),
+  FILEBROWSER_PASSWORD: z.string().optional().default(""),
+  // Backup runner — a lightweight HTTP endpoint exposed on the backup server
+  // (Tailscale-reachable). Vercel POSTs the decrypted DB credentials + clientSlug
+  // here; the server runs backup-runner.sh and replies with the status. The
+  // nightly cron is handled natively on the server (cron-backups.sh), not here.
+  BACKUP_RUNNER_URL: z.string().url().or(z.literal("")).optional().default(""), // e.g. http://100.72.49.68:9100/run
+  BACKUP_RUNNER_TOKEN: z.string().optional().default(""), // shared Bearer secret
   // Redsys / BBVA Paygold
   REDSYS_MERCHANT_CODE: z.string().default("370475436"),
   REDSYS_TERMINAL: z.string().default("001"),

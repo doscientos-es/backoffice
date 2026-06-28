@@ -62,6 +62,19 @@ export const WebProjectInput = z.object({
         : [],
     ),
   notes: optionalText(4000),
+  /** FileBrowser folder name for this site's backups (e.g. "optinergia"). */
+  backup_slug: optionalText(200),
+  // ── DB connection for automated backups ──────────────────────────────────
+  db_host: optionalText(255),
+  db_port: z
+    .string()
+    .optional()
+    .transform((v) => (v && v.length > 0 ? Number(v) : undefined))
+    .pipe(z.number().int().min(1).max(65535).optional()),
+  db_name: optionalText(255),
+  db_user: optionalText(255),
+  /** Plaintext from the form. Encrypted with AES-256-GCM before persisting. */
+  db_pass: optionalText(500),
 });
 
 export type WebProjectInputType = z.infer<typeof WebProjectInput>;

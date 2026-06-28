@@ -54,6 +54,12 @@ export async function getWebProject(id: string): Promise<WebProjectDetail | null
     domain_expires_at: (data.domain_expires_at as string | null) ?? null,
     tech_stack: (data.tech_stack as string[]) ?? [],
     notes: (data.notes as string | null) ?? null,
+    backup_slug: (data.backup_slug as string | null) ?? null,
+    db_host: (data.db_host as string | null) ?? null,
+    db_port: (data.db_port as number | null) ?? null,
+    db_name: (data.db_name as string | null) ?? null,
+    db_user: (data.db_user as string | null) ?? null,
+    has_db_password: Boolean(data.db_pass_encrypted),
     updated_at: (data.updated_at as string | null) ?? null,
   };
 }

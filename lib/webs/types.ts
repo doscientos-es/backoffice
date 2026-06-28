@@ -23,6 +23,14 @@ export type WebProjectDetail = {
   domain_expires_at: string | null;
   tech_stack: string[];
   notes: string | null;
+  backup_slug: string | null;
+  /** DB connection metadata for automated backups (password never exposed). */
+  db_host: string | null;
+  db_port: number | null;
+  db_name: string | null;
+  db_user: string | null;
+  /** True when an encrypted DB password is stored; the value itself is never sent to the client. */
+  has_db_password: boolean;
   updated_at: string | null;
 };
 

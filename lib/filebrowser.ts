@@ -1,0 +1,149 @@
+/**
+ * FileBrowser server utility
+ *
+ * Authenticates against the internal FileBrowser instance and exposes helpers
+ * to list / create backup directories and files for a given client slug.
+ *
+ * All calls happen server-side — credentials never reach the browser.
+ */
+
+import { scopedLogger } from "@/lib/logger";
+
+const log = scopedLogger("filebrowser");
+
+// Module-level token cache. Resets on cold start or explicit invalidation.
+let cachedToken: string | null = null;
+
+function apiUrl(): string {
+  // Strip trailing slashes so `${apiUrl()}/login` never produces a double slash.
+  return (process.env.FILEBROWSER_API_URL ?? "").replace(/\/+$/, "");
+}
+
+export function isFileBrowserConfigured(): boolean {
+  return Boolean(
+    process.env.FILEBROWSER_API_URL?.trim() &&
+      process.env.FILEBROWSER_USER?.trim() &&
+      process.env.FILEBROWSER_PASSWORD?.trim(),
+  );
+}
+
+async function getAuthToken(): Promise<string> {
+  if (cachedToken) return cachedToken;
+
+  const res = await fetch(`${apiUrl()}/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username: process.env.FILEBROWSER_USER,
+      password: process.env.FILEBROWSER_PASSWORD,
+    }),
+  });
+
+  if (!res.ok) {
+    log.error({ status: res.status }, "filebrowser_auth_failed");
+    throw new Error("Error de autenticación en FileBrowser");
+  }
+
+  // FileBrowser returns the JWT as plain text in the body.
+  const token = await res.text();
+  cachedToken = token;
+  return token;
+}
+
+export type FileBrowserItem = {
+  name: string;
+  path: string;
+  size: number;
+  isDir: boolean;
+  modified: string;
+  type: string;
+};
+
+export type FileBrowserListing = {
+  name: string;
+  path: string;
+  isDir: boolean;
+  items: FileBrowserItem[];
+};
+
+/**
+ * Ensures a top-level backup directory exists in FileBrowser for `clientSlug`.
+ *
+ * Uses `POST /api/resources/{slug}/` (trailing slash = directory, `override=false`).
+ * - 200 → created.
+ * - 409 → already exists; treated as success (idempotent).
+ * - Any other error → logged and returns `false` (non-fatal; backups still work,
+ *   the folder will be created on first script run).
+ *
+ * Returns `true` when the directory is ready, `false` on any failure.
+ */
+export async function ensureClientBackupDir(clientSlug: string): Promise<boolean> {
+  if (!isFileBrowserConfigured()) return false;
+
+  try {
+    const token = await getAuthToken();
+    const url = `${apiUrl()}/resources/${encodeURIComponent(clientSlug)}/?override=false`;
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "X-Auth": token },
+      cache: "no-store",
+    });
+
+    if (res.ok || res.status === 409) {
+      // 200 = created, 409 = already exists — both are fine.
+      log.info({ clientSlug }, "filebrowser_dir_ready");
+      return true;
+    }
+
+    if (res.status === 401) {
+      cachedToken = null;
+      log.warn({ clientSlug }, "filebrowser_token_expired_on_mkdir");
+    } else {
+      log.warn({ clientSlug, status: res.status }, "filebrowser_mkdir_failed");
+    }
+    return false;
+  } catch (err) {
+    log.error({ clientSlug, err }, "filebrowser_mkdir_error");
+    return false;
+  }
+}
+
+/**
+ * Fetch the directory listing for `clientSlug[/subPath]` from FileBrowser.
+ * Returns `null` on any error (missing config, auth failure, 404, etc.).
+ */
+export async function getClientBackups(
+  clientSlug: string,
+  subPath = "",
+): Promise<FileBrowserListing | null> {
+  if (!isFileBrowserConfigured()) return null;
+
+  try {
+    const token = await getAuthToken();
+    const cleanSub = subPath ? `/${subPath}` : "";
+    const url = `${apiUrl()}/resources/${encodeURIComponent(clientSlug)}${cleanSub}`;
+
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "X-Auth": token },
+      next: { revalidate: 60 },
+    });
+
+    if (!res.ok) {
+      if (res.status === 401) {
+        // Token expired — clear cache so next call re-authenticates.
+        cachedToken = null;
+        log.warn({ clientSlug }, "filebrowser_token_expired");
+      } else {
+        log.warn({ clientSlug, status: res.status }, "filebrowser_resources_failed");
+      }
+      return null;
+    }
+
+    return (await res.json()) as FileBrowserListing;
+  } catch (err) {
+    log.error({ clientSlug, err }, "filebrowser_request_error");
+    return null;
+  }
+}
