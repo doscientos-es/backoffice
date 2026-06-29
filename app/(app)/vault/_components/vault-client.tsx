@@ -87,6 +87,7 @@ export function VaultClient({
   const [dialog, setDialog] = useState<Dialog_>(null);
   const [editItem, setEditItem] = useState<VaultItem | null>(null);
   const [pendingEditItem, setPendingEditItem] = useState<VaultItem | null>(null);
+  const [pendingRevealItem, setPendingRevealItem] = useState<VaultItem | null>(null);
   const [localUnlocked, setLocalUnlocked] = useState(unlocked);
   const [revealed, setRevealed] = useState<Record<string, string>>({});
   const [revealingId, setRevealingId] = useState<string | null>(null);
@@ -191,6 +192,22 @@ export function VaultClient({
       setEditItem(pendingEditItem);
       setPendingEditItem(null);
       setDialog("edit");
+      return;
+    }
+    if (pendingRevealItem) {
+      const item = pendingRevealItem;
+      setPendingRevealItem(null);
+      setDialog(null);
+      setRevealingId(item.id);
+      startTransition(async () => {
+        const r = await revealVaultSecret({ id: item.id });
+        if (r.ok && "secret" in r) {
+          setRevealed((rv) => ({ ...rv, [item.id]: r.secret as string }));
+        } else {
+          sileo.error({ title: "No se pudo revelar el secreto" });
+        }
+        setRevealingId(null);
+      });
     }
   }
 
@@ -204,6 +221,7 @@ export function VaultClient({
       return;
     }
     if (item.is_sensitive && !localUnlocked) {
+      setPendingRevealItem(item);
       setDialog("unlock");
       return;
     }
@@ -525,7 +543,7 @@ export function VaultClient({
           </DialogHeader>
           <UnlockForm
             onClose={() => setDialog(null)}
-            onSuccess={pendingEditItem ? handleUnlockSuccess : undefined}
+            onSuccess={handleUnlockSuccess}
           />
         </DialogContent>
       </Dialog>

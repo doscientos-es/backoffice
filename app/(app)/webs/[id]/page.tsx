@@ -119,10 +119,13 @@ function OgSkeleton() {
 }
 
 export default async function WebDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireUser();
+  const user = await requireUser();
   const { id } = await params;
   const site = await getWebProject(id);
   if (!site) notFound();
+
+  // Deleting backups is irreversible (no soft-delete), so it's gated to owner/admin.
+  const canDeleteBackups = user.role === "owner" || user.role === "admin";
 
   const hostingLabel = site.hosting_provider
     ? (HOSTING_PROVIDER_LABELS[site.hosting_provider as keyof typeof HOSTING_PROVIDER_LABELS] ??
@@ -200,10 +203,10 @@ export default async function WebDetailPage({ params }: { params: Promise<{ id: 
                 <DetailRow label="Vence dominio">
                   {site.domain_expires_at
                     ? new Date(site.domain_expires_at).toLocaleDateString("es-ES", {
-                        day: "2-digit",
-                        month: "long",
-                        year: "numeric",
-                      })
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    })
                     : "—"}
                 </DetailRow>
                 <DetailRow label="Tech stack">
@@ -246,6 +249,7 @@ export default async function WebDetailPage({ params }: { params: Promise<{ id: 
               clientSlug={site.backup_slug}
               projectId={site.id}
               canForceBackup={canForceBackup}
+              canDelete={canDeleteBackups}
             />
           )}
         </div>

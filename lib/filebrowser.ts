@@ -27,12 +27,15 @@ export function isFileBrowserConfigured(): boolean {
   );
 }
 
+/** Headers required to bypass the localtunnel reminder page. */
+const TUNNEL_HEADERS = { "Bypass-Tunnel-Reminder": "true" };
+
 async function getAuthToken(): Promise<string> {
   if (cachedToken) return cachedToken;
 
   const res = await fetch(`${apiUrl()}/login`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...TUNNEL_HEADERS },
     body: JSON.stringify({
       username: process.env.FILEBROWSER_USER,
       password: process.env.FILEBROWSER_PASSWORD,
@@ -86,7 +89,7 @@ export async function ensureClientBackupDir(clientSlug: string): Promise<boolean
 
     const res = await fetch(url, {
       method: "POST",
-      headers: { "X-Auth": token },
+      headers: { "X-Auth": token, ...TUNNEL_HEADERS },
       cache: "no-store",
     });
 
@@ -126,7 +129,7 @@ export async function getClientBackups(
 
     const res = await fetch(url, {
       method: "GET",
-      headers: { "X-Auth": token },
+      headers: { "X-Auth": token, ...TUNNEL_HEADERS },
       next: { revalidate: 60 },
     });
 
@@ -145,5 +148,44 @@ export async function getClientBackups(
   } catch (err) {
     log.error({ clientSlug, err }, "filebrowser_request_error");
     return null;
+  }
+}
+
+/**
+ * Permanently deletes a single backup file at `clientSlug/filePath` in
+ * FileBrowser via `DELETE /api/resources/{slug}/{filePath}`.
+ *
+ * `filePath` is the path relative to the slug root (e.g. `daily/dump.sql`).
+ * The caller MUST validate it against path traversal before reaching here.
+ * Returns `true` on success, `false` on any failure (missing config, auth, etc.).
+ */
+export async function deleteClientBackup(clientSlug: string, filePath: string): Promise<boolean> {
+  if (!isFileBrowserConfigured()) return false;
+
+  try {
+    const token = await getAuthToken();
+    const url = `${apiUrl()}/resources/${encodeURIComponent(clientSlug)}/${filePath}`;
+
+    const res = await fetch(url, {
+      method: "DELETE",
+      headers: { "X-Auth": token, ...TUNNEL_HEADERS },
+      cache: "no-store",
+    });
+
+    if (res.ok) {
+      log.info({ clientSlug, filePath }, "filebrowser_delete_ok");
+      return true;
+    }
+
+    if (res.status === 401) {
+      cachedToken = null;
+      log.warn({ clientSlug, filePath }, "filebrowser_token_expired_on_delete");
+    } else {
+      log.warn({ clientSlug, filePath, status: res.status }, "filebrowser_delete_failed");
+    }
+    return false;
+  } catch (err) {
+    log.error({ clientSlug, filePath, err }, "filebrowser_delete_error");
+    return false;
   }
 }
