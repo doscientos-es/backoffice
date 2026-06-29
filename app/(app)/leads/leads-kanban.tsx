@@ -18,8 +18,9 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { AlertTriangle, PanelRightOpen, Plus } from "lucide-react";
+import { AlertTriangle, PanelRightOpen, Plus, RefreshCw } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useOptimistic, useState, useTransition } from "react";
 import { deleteLead, updateLeadStatus } from "./actions";
 import { CloseReasonDialog, type CloseReasonVariant } from "./close-reason-dialog";
@@ -117,13 +118,23 @@ export function LeadsKanban({
   canEdit?: boolean;
   members?: MemberOption[];
 }) {
+  const router = useRouter();
   const [, startTransition] = useTransition();
+  const [isRefreshing, startRefresh] = useTransition();
+  const [lastRefresh, setLastRefresh] = useState<Date>(() => new Date());
   const [optimistic, applyOptimistic] = useOptimistic(leads, (state, action: Action) =>
     action.type === "remove"
       ? state.filter((l) => l.id !== action.id)
       : state.map((l) => (l.id === action.id ? { ...l, status: action.status } : l)),
   );
   const [activeId, setActiveId] = useState<string | null>(null);
+
+  const handleRefresh = () => {
+    startRefresh(() => {
+      router.refresh();
+      setLastRefresh(new Date());
+    });
+  };
   const [pendingClosure, setPendingClosure] = useState<{
     id: string;
     name: string;
@@ -212,7 +223,21 @@ export function LeadsKanban({
 
   return (
     <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
-      <div className="flex justify-end pb-1 min-h-5">
+      <div className="flex items-center justify-between pb-1 min-h-5">
+        <button
+          type="button"
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+          title="Actualizar leads"
+        >
+          <RefreshCw className={cn("size-3", isRefreshing && "animate-spin")} />
+          <span>
+            {isRefreshing
+              ? "Actualizando…"
+              : `Actualizado ${relativeTime(lastRefresh.toISOString())}`}
+          </span>
+        </button>
         <FormFeedback state={feedback.state} pendingLabel="Actualizando…" />
       </div>
       <div className="flex gap-3 overflow-x-auto pb-2 h-[calc(100dvh-11rem)] min-h-[28rem]">
