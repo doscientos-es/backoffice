@@ -11,6 +11,12 @@ import { useCallback, useEffect, useState, useTransition } from "react";
 import { sileo } from "sileo";
 import { ForceBackupButton } from "./force-backup-button";
 
+// Session-scoped stale-while-revalidate cache. Keyed by `slug:subPath`, it lets
+// a revisited folder render instantly while a fresh listing loads in the
+// background, instead of flashing a skeleton on every mount/navigation. The
+// server still owns freshness via its tagged Data Cache; this is UI-only.
+const listingCache = new Map<string, FileBrowserListing>();
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function formatBytes(bytes: number): string {
@@ -147,17 +153,34 @@ export function BackupsCard({
   const [error, setError] = useState(false);
 
   const fetchListing = useCallback(
-    async (path: string) => {
-      setLoading(true);
+    async (path: string, forceFresh = false) => {
+      const cacheKey = `${clientSlug}:${path}`;
+      if (forceFresh) listingCache.delete(cacheKey);
+
+      const cached = listingCache.get(cacheKey);
+      if (cached) {
+        // Show last-known data immediately; the fetch below revalidates it.
+        setListing(cached);
+        setLoading(false);
+      } else {
+        setLoading(true);
+      }
       setError(false);
+
       try {
         const url = `/api/backups/${clientSlug}${path ? `?path=${encodeURIComponent(path)}` : ""}`;
-        const res = await fetch(url);
+        const res = await fetch(url, forceFresh ? { cache: "no-store" } : undefined);
         if (!res.ok) throw new Error();
-        setListing(await res.json());
+        const data = (await res.json()) as FileBrowserListing;
+        listingCache.set(cacheKey, data);
+        setListing(data);
       } catch {
-        setError(true);
-        setListing(null);
+        // Keep showing cached data on a background-refresh failure; only surface
+        // the error state when there is nothing cached to display.
+        if (!cached) {
+          setError(true);
+          setListing(null);
+        }
       } finally {
         setLoading(false);
       }
@@ -216,7 +239,7 @@ export function BackupsCard({
               variant="outline"
               size="sm"
               className="h-7 gap-1.5 text-xs"
-              onClick={() => fetchListing(subPath)}
+              onClick={() => fetchListing(subPath, true)}
             >
               <RefreshCw className="size-3" />
               Reintentar
@@ -242,7 +265,7 @@ export function BackupsCard({
                 clientSlug={clientSlug}
                 subPath={subPath}
                 canDelete={canDelete}
-                onDeleted={() => fetchListing(subPath)}
+                onDeleted={() => fetchListing(subPath, true)}
               />
             ))}
           </div>

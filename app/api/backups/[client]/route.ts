@@ -1,5 +1,11 @@
 import { requireUser } from "@/lib/auth";
-import { deleteClientBackup, getClientBackups, isFileBrowserConfigured } from "@/lib/filebrowser";
+import {
+  backupsCacheTag,
+  deleteClientBackup,
+  getClientBackups,
+  isFileBrowserConfigured,
+} from "@/lib/filebrowser";
+import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request, { params }: { params: Promise<{ client: string }> }) {
@@ -59,6 +65,10 @@ export async function DELETE(
   if (!ok) {
     return NextResponse.json({ error: "No se pudo eliminar el archivo" }, { status: 503 });
   }
+
+  // Drop the cached listings for this client so the next fetch reflects the
+  // deletion instead of serving the (now stale) revalidate-window snapshot.
+  revalidateTag(backupsCacheTag(client));
 
   return NextResponse.json({ ok: true });
 }

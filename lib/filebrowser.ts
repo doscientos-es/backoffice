@@ -30,6 +30,15 @@ export function isFileBrowserConfigured(): boolean {
 /** Headers required to bypass the localtunnel reminder page. */
 const TUNNEL_HEADERS = { "Bypass-Tunnel-Reminder": "true" };
 
+/**
+ * Next.js Data Cache tag for a client's backup listings. Tagging every
+ * `getClientBackups` fetch lets mutating actions (delete, force backup)
+ * invalidate every cached sub-folder listing for that client in one call.
+ */
+export function backupsCacheTag(clientSlug: string): string {
+  return `backups:${clientSlug}`;
+}
+
 async function getAuthToken(): Promise<string> {
   if (cachedToken) return cachedToken;
 
@@ -130,7 +139,10 @@ export async function getClientBackups(
     const res = await fetch(url, {
       method: "GET",
       headers: { "X-Auth": token, ...TUNNEL_HEADERS },
-      next: { revalidate: 60 },
+      // Backups change a few times a day at most; cache the (slow, tunnelled)
+      // upstream listing for 10 min and rely on tag invalidation after a delete
+      // or forced backup to keep mutations immediately consistent.
+      next: { revalidate: 600, tags: [backupsCacheTag(clientSlug)] },
     });
 
     if (!res.ok) {
@@ -181,7 +193,11 @@ export async function deleteClientBackup(clientSlug: string, filePath: string): 
       cachedToken = null;
       log.warn({ clientSlug, filePath }, "filebrowser_token_expired_on_delete");
     } else {
-      log.warn({ clientSlug, filePath, status: res.status }, "filebrowser_delete_failed");
+      const body = await res.text().catch(() => "");
+      log.warn(
+        { clientSlug, filePath, status: res.status, body: body.slice(0, 300) },
+        "filebrowser_delete_failed",
+      );
     }
     return false;
   } catch (err) {

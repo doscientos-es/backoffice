@@ -2,12 +2,13 @@
 
 import { defineAction } from "@/lib/actions/define-action";
 import { serverEnv } from "@/lib/env";
-import { ensureClientBackupDir, isFileBrowserConfigured } from "@/lib/filebrowser";
+import { backupsCacheTag, ensureClientBackupDir, isFileBrowserConfigured } from "@/lib/filebrowser";
 import { uuidIdInput } from "@/lib/schemas/common";
 import { UpdateWebProjectInput, WebProjectInput } from "@/lib/schemas/web-project";
 import { createServerClient } from "@/lib/supabase/server";
 import { encryptSecret } from "@/lib/vault/crypto";
 import { getWebProjectDbCredentials } from "@/lib/webs/credentials";
+import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
@@ -143,6 +144,10 @@ export const triggerWebBackup = defineAction({
       const detail = (await res.json().catch(() => null)) as { error?: string } | null;
       throw new Error(detail?.error ?? `El backup ha fallado (HTTP ${res.status}).`);
     }
+
+    // The dump produced a new file upstream; drop the cached listings so it
+    // shows without waiting for the revalidate window to expire.
+    if (input.slug) revalidateTag(backupsCacheTag(input.slug));
   },
 });
 
