@@ -147,7 +147,7 @@ export const triggerWebBackup = defineAction({
 
     // The dump produced a new file upstream; drop the cached listings so it
     // shows without waiting for the revalidate window to expire.
-    if (input.slug) revalidateTag(backupsCacheTag(input.slug));
+    if (input.slug) revalidateTag(backupsCacheTag(input.slug), "default");
   },
 });
 

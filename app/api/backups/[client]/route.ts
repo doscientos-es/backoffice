@@ -68,7 +68,7 @@ export async function DELETE(
 
   // Drop the cached listings for this client so the next fetch reflects the
   // deletion instead of serving the (now stale) revalidate-window snapshot.
-  revalidateTag(backupsCacheTag(client));
+  revalidateTag(backupsCacheTag(client), "default");
 
   return NextResponse.json({ ok: true });
 }
