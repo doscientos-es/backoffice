@@ -8,6 +8,8 @@ const PUBLIC_PATHS = [
   "/api/webhooks",
   "/api/email/webhook",
   "/api/public",
+  // Integration endpoints authenticate themselves via secrets; no session needed.
+  "/api/integrations",
 ];
 
 function clientIp(request: NextRequest): string {
