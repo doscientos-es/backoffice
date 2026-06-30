@@ -25,7 +25,8 @@ export const ServerSchema = PublicSchema.extend({
   RESEND_API_KEY: z.string().optional().default(""),
   RESEND_WEBHOOK_SECRET: z.string().optional().default(""),
   RESEND_FROM_DOMAIN: z.string().default("doscientos.es"),
-  OPENAI_API_KEY: z.string().optional().default(""), // vacío = IA desactivada
+  GEMINI_API_KEY: z.string().optional().default(""), // preferido — Google Gemini 2.5 Flash-Lite
+  OPENAI_API_KEY: z.string().optional().default(""), // fallback — vacío = IA desactivada
   VERIFACTU_ENV: z.enum(["mock", "test", "prod"]).default("mock"),
   VERIFACTU_NIF_EMISOR: z.string().optional().default(""),
   VERIFACTU_EMISOR_NAME: z.string().default("DOSCIENTOS DESARROLLO TECNOLOGICO, S.L."),

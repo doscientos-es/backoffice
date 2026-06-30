@@ -1,35 +1,50 @@
 /**
- * Cliente OpenAI con feature-gate.
- * Nunca instanciar directamente — usar getOpenAI() y comprobar isAIEnabled() antes.
+ * Cliente AI con feature-gate.
+ * Soporta Google Gemini (via endpoint OpenAI-compatible) y OpenAI como fallback.
+ * Nunca instanciar directamente — usar getAIClient() y comprobar isAIEnabled() antes.
+ *
+ * Prioridad: GEMINI_API_KEY > OPENAI_API_KEY
  */
 import OpenAI from "openai";
 import { isAIEnabled } from "./env";
 
+const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/";
+
 /**
- * Modelos recomendados para cada tarea.
- * Usamos gpt-4o-mini por defecto para ahorrar tokens según decisión del equipo.
+ * Modelos por tarea.
+ * Gemini 2.5 Flash-Lite: mejor relación precio/calidad para backoffice (junio 2026).
  */
 export const AI_MODELS = {
-  default: "gpt-4o-mini",
-  summarizer: "gpt-4o-mini",
-  drafter: "gpt-4o-mini", // Cambiado de gpt-4o a gpt-4o-mini
+  default: "gemini-2.5-flash-lite",
+  summarizer: "gemini-2.5-flash-lite",
+  drafter: "gemini-2.5-flash-lite",
 } as const;
 
 let _client: OpenAI | null = null;
 
 /**
- * Devuelve el cliente OpenAI si la API key está configurada.
- * Lanza un error claro si se llama sin key (el caller debe comprobar isAIEnabled() antes).
+ * Devuelve el cliente AI configurado (Gemini o OpenAI).
+ * Lanza un error claro si se llama sin ninguna key.
  */
-export function getOpenAI(): OpenAI {
+export function getAIClient(): OpenAI {
   if (!isAIEnabled()) {
-    throw new Error("OpenAI no está configurado. Añade OPENAI_API_KEY a las variables de entorno.");
+    throw new Error(
+      "IA no configurada. Añade GEMINI_API_KEY (o OPENAI_API_KEY) a las variables de entorno.",
+    );
   }
   if (!_client) {
-    _client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const geminiKey = process.env.GEMINI_API_KEY?.trim();
+    if (geminiKey) {
+      _client = new OpenAI({ apiKey: geminiKey, baseURL: GEMINI_BASE_URL });
+    } else {
+      _client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    }
   }
   return _client;
 }
+
+/** @deprecated Usa getAIClient(). Mantenido por compatibilidad. */
+export const getOpenAI = getAIClient;
 
 /** Timeout máximo por llamada — spec sec. 22.3: 30s y devolver error si falla. */
 export const AI_TIMEOUT_MS = 30_000;
@@ -57,7 +72,7 @@ export type RunAIChatInput = {
  *  - el modelo no devuelve contenido
  */
 export async function runAIChat(input: RunAIChatInput): Promise<string> {
-  const client = getOpenAI();
+  const client = getAIClient();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
 

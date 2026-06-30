@@ -15,9 +15,9 @@ export function serverEnv() {
   return cachedServerEnv;
 }
 
-/** true solo si OPENAI_API_KEY está configurada — usa esto para feature-gate toda la lógica de IA */
+/** true si GEMINI_API_KEY o OPENAI_API_KEY están configuradas — feature-gate para toda la lógica de IA */
 export function isAIEnabled(): boolean {
-  return Boolean(process.env.OPENAI_API_KEY?.trim());
+  return Boolean(process.env.GEMINI_API_KEY?.trim() || process.env.OPENAI_API_KEY?.trim());
 }
 
 /**
