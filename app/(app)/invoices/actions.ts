@@ -6,6 +6,7 @@ import { renderEmail } from "@/lib/email/render";
 import { sendEmail } from "@/lib/email/resend";
 import { publicEnv, serverEnv } from "@/lib/env";
 import { computeLineTotals } from "@/lib/finance";
+import { backupInvoiceToDrive } from "@/lib/google/backup";
 import { scopedLogger } from "@/lib/logger";
 import { buildPortalAccessPatch } from "@/lib/portal/access";
 import {
