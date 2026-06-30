@@ -41,22 +41,28 @@ function buildSignatureHtml(opts: {
   contactEmail?: string;
   phone?: string;
 }): string {
-  const lines: string[] = [];
-  lines.push(`<strong>${opts.name}</strong>`);
-  if (opts.jobTitle) lines.push(opts.jobTitle);
-  lines.push("");
-  lines.push("<strong>doscientos.es</strong>");
-  lines.push(
-    '<span style="color:#666">Construimos productos digitales escalables para empresas que quieren crecer con tecnología.</span>',
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.doscientos.es";
+  const logoSrc = `${appUrl.replace(/\/$/, "")}/brand/logo.svg`;
+
+  const textLines: string[] = [];
+  textLines.push(`<strong style="color:#111">${opts.name}</strong>`);
+  if (opts.jobTitle) textLines.push(`<span style="color:#555">${opts.jobTitle}</span>`);
+  textLines.push("");
+  textLines.push('<strong style="color:#2A4227">doscientos.es</strong>');
+  textLines.push(
+    '<span style="color:#888;font-size:12px">Construimos productos digitales escalables para empresas que quieren crecer con tecnología.</span>',
   );
-  lines.push("");
+  textLines.push("");
   if (opts.contactEmail)
-    lines.push(
+    textLines.push(
       `📩 <a href="mailto:${opts.contactEmail}" style="color:inherit">${opts.contactEmail}</a>`,
     );
-  lines.push('🌐 <a href="https://doscientos.es" style="color:inherit">https://doscientos.es</a>');
-  if (opts.phone) lines.push(`📱 ${opts.phone}`);
-  return `<p style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#333;margin:0">${lines.join("<br/>")}</p>`;
+  textLines.push(
+    '🌐 <a href="https://doscientos.es" style="color:inherit">https://doscientos.es</a>',
+  );
+  if (opts.phone) textLines.push(`📱 ${opts.phone}`);
+
+  return `<table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#333;margin:0"><tr><td style="padding-right:14px;vertical-align:middle;border-right:2px solid #2A4227"><img src="${logoSrc}" width="36" height="36" alt="doscientos" style="display:block"/></td><td style="padding-left:14px;vertical-align:top">${textLines.join("<br/>")}</td></tr></table>`;
 }
 
 export async function updateProfile(

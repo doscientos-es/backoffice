@@ -28,19 +28,20 @@ function buildSignaturePreview(opts: {
   contactEmail: string;
   phone: string;
 }): string {
-  const lines: string[] = [];
-  lines.push(`<strong>${opts.name}</strong>`);
-  if (opts.jobTitle) lines.push(opts.jobTitle);
-  lines.push("");
-  lines.push("<strong>doscientos.es</strong>");
-  lines.push(
-    '<span style="color:#888">Construimos productos digitales escalables para empresas que quieren crecer con tecnología.</span>',
+  const logoSrc = "/brand/logo.svg";
+  const textLines: string[] = [];
+  textLines.push(`<strong style="color:#111">${opts.name}</strong>`);
+  if (opts.jobTitle) textLines.push(`<span style="color:#555">${opts.jobTitle}</span>`);
+  textLines.push("");
+  textLines.push('<strong style="color:#2A4227">doscientos.es</strong>');
+  textLines.push(
+    '<span style="color:#888;font-size:12px">Construimos productos digitales escalables para empresas que quieren crecer con tecnología.</span>',
   );
-  lines.push("");
-  if (opts.contactEmail) lines.push(`📩 ${opts.contactEmail}`);
-  lines.push("🌐 https://doscientos.es");
-  if (opts.phone) lines.push(`📱 ${opts.phone}`);
-  return lines.join("<br/>");
+  textLines.push("");
+  if (opts.contactEmail) textLines.push(`📩 ${opts.contactEmail}`);
+  textLines.push("🌐 https://doscientos.es");
+  if (opts.phone) textLines.push(`📱 ${opts.phone}`);
+  return `<table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#333;margin:0"><tr><td style="padding-right:14px;vertical-align:middle;border-right:2px solid #2A4227"><img src="${logoSrc}" width="36" height="36" alt="doscientos" style="display:block"/></td><td style="padding-left:14px;vertical-align:top">${textLines.join("<br/>")}</td></tr></table>`;
 }
 
 export function ProfileForm({
