@@ -1,6 +1,8 @@
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- used in JSX below
+import { NifInput } from "./nif-input";
 
 export type ClientFormDefaults = {
   name?: string | null;
@@ -49,16 +51,9 @@ export function ClientFormFields({
         <FormRow
           label="NIF / CIF"
           htmlFor={`${idPrefix}-nif`}
-          hint="Identificador fiscal (España)."
+          hint="Identificador fiscal. Pulsa VIES para validar IVA intracomunitario UE."
         >
-          <Input
-            id={`${idPrefix}-nif`}
-            name="nif"
-            maxLength={20}
-            defaultValue={d.nif ?? ""}
-            placeholder="B12345678"
-            autoComplete="off"
-          />
+          <NifInput id={`${idPrefix}-nif`} defaultValue={d.nif} />
         </FormRow>
         <FormRow label="Email" htmlFor={`${idPrefix}-email`}>
           <Input
