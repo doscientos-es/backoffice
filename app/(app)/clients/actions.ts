@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { CreateClientInput, UpdateClientInput } from "@/lib/schemas/client";
 import { uuidIdInput } from "@/lib/schemas/common";
 import { createServerClient } from "@/lib/supabase/server";
+import { type ViesResult, validateVatVies } from "@/lib/vies/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -102,6 +103,18 @@ export const deleteClient = defineAction({
     if (error) throw new Error(error.message);
   },
 });
+
+// ---------- VIES VAT VALIDATION ----------
+// Called client-side (via server action) from the NIF input field.
+// Returns a serialisable result — no throws — so the caller can render inline
+// feedback without an error boundary.
+export async function validateVat(nif: string): Promise<ViesResult> {
+  await requireUser();
+  if (!nif.trim()) {
+    return { valid: false, reason: "invalid", message: "Introduce un NIF/CIF/VAT primero." };
+  }
+  return validateVatVies(nif);
+}
 
 // Reverses a soft-delete by clearing `deleted_at`. Backs the "Deshacer" toast
 // shown after `deleteClient`, restoring the row to the list/detail views.

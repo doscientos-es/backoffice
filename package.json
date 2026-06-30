@@ -19,7 +19,8 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "db:types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_REF --schema public > lib/database.types.ts",
-    "env:example": "tsx scripts/generate-env-example.ts"
+    "env:example": "tsx scripts/generate-env-example.ts",
+    "google:smoke": "tsx scripts/google-smoke.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
@@ -39,6 +40,7 @@
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "fast-xml-parser": "^4.5.1",
+    "google-auth-library": "^10.9.0",
     "lru-cache": "^11.0.2",
     "lucide-react": "^0.469.0",
     "marked": "^18.0.5",

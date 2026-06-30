@@ -7,6 +7,7 @@ import {
   promoteLeadFromClient,
 } from "@/lib/crm/conversion";
 import { publicEnv, serverEnv } from "@/lib/env";
+import { backupProposalToDrive } from "@/lib/google/backup";
 import { createRedsysPayment, getRedsysUrl } from "@/lib/integrations/redsys";
 import { scopedLogger } from "@/lib/logger";
 import { unlockPortalResource } from "@/lib/portal/access";
@@ -104,9 +105,10 @@ async function acceptWithFiscal(token: string, fiscalInput: unknown): Promise<Ac
     .eq("id", proposal.id);
   if (updateError) return { ok: false, error: "No se pudo actualizar la propuesta" };
 
-  // Best-effort side-effects: project creation + lead promotion. Failures
-  // are logged but never reverse the acceptance — the customer's response
-  // is the source of truth.
+  // Best-effort side-effects: Drive backup, project creation, lead promotion.
+  // Failures are logged but never reverse the acceptance — the customer's
+  // response is the source of truth.
+  void backupProposalToDrive(proposal.id as string);
   try {
     const { projectId } = await ensureProjectForProposal(admin, proposal.id as string);
 

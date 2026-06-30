@@ -3,14 +3,20 @@
 import { defineAction } from "@/lib/actions/define-action";
 import { sendEmail } from "@/lib/email/resend";
 import { appendSignature, markdownToHtml, renderTemplate } from "@/lib/email/templates";
+import { isGoogleEnabled, serverEnv } from "@/lib/env";
+import { findConflicts, insertEvent } from "@/lib/google/calendar";
+import type { CalendarBusySlot } from "@/lib/google/calendar";
+import { resolveSubject } from "@/lib/google/client";
 import { notifyNewLead } from "@/lib/integrations/notify-new-lead";
 import {
   AssignLeadOwnerInput,
+  CheckMeetingSlotInput,
   ConvertLeadInput,
   CreateLeadInput,
   LogCallInput,
   LogEmailInput,
   LogNoteInput,
+  ScheduleLeadMeetingInput,
   SendEmailToLeadInput,
   UpdateLeadInput,
   UpdateLeadStatusInput,
@@ -476,5 +482,82 @@ export const assignLeadOwner = defineAction({
       performed_by: user.id,
       payload: { from: previousId, to: nextId },
     });
+  },
+});
+
+// ---------------- CALENDAR (Google Workspace) ----------------
+
+/**
+ * Step 1 — Check for conflicts on the shared calendar without creating anything.
+ * Returns the overlapping events so the user can decide whether to proceed.
+ */
+export const checkLeadMeetingSlot = defineAction({
+  name: "leads.checkMeetingSlot",
+  schema: CheckMeetingSlotInput,
+  roles: ["owner", "admin", "member"],
+  handler: async (data, { user }): Promise<{ conflicts: CalendarBusySlot[] }> => {
+    if (!isGoogleEnabled()) return { conflicts: [] };
+    const calendarId = serverEnv().GOOGLE_CALENDAR_ID;
+    if (!calendarId) return { conflicts: [] };
+    const subject = resolveSubject(user.email);
+
+    const conflicts = await findConflicts({
+      subject,
+      calendarId,
+      start: new Date(data.start),
+      end: new Date(data.end),
+    });
+    return { conflicts };
+  },
+});
+
+/**
+ * Step 2 — Create the meeting on the shared calendar and record it as a
+ * `meeting` interaction in the lead timeline.
+ */
+export const scheduleLeadMeeting = defineAction<
+  typeof ScheduleLeadMeetingInput,
+  { eventId: string; htmlLink: string | null; meetUrl: string | null }
+>({
+  name: "leads.scheduleMeeting",
+  schema: ScheduleLeadMeetingInput,
+  roles: ["owner", "admin", "member"],
+  revalidate: (_payload, input) => [`/leads/${input.leadId}`],
+  handler: async (data, { user }) => {
+    if (!isGoogleEnabled()) throw new Error("Google Workspace no está configurado");
+    const calendarId = serverEnv().GOOGLE_CALENDAR_ID;
+    if (!calendarId) throw new Error("GOOGLE_CALENDAR_ID no configurado");
+    const subject = resolveSubject(user.email);
+
+    const event = await insertEvent({
+      subject,
+      calendarId,
+      summary: data.title,
+      description: data.description,
+      start: new Date(data.start),
+      end: new Date(data.end),
+      attendees: data.attendeeEmails,
+      withMeet: data.withMeet,
+    });
+
+    const supabase = await createServerClient();
+    const { error } = await supabase.from("lead_interactions").insert({
+      lead_id: data.leadId,
+      type: "meeting",
+      subject: data.title,
+      body: data.description ?? null,
+      performed_by: user.id,
+      payload: {
+        calendar_event_id: event.id,
+        calendar_html_link: event.htmlLink,
+        meet_url: event.meetUrl,
+        start: data.start,
+        end: data.end,
+        attendees: data.attendeeEmails ?? [],
+      },
+    });
+    if (error) throw new Error(error.message);
+
+    return { eventId: event.id, htmlLink: event.htmlLink, meetUrl: event.meetUrl };
   },
 });

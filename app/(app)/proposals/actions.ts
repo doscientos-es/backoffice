@@ -6,6 +6,7 @@ import { renderEmail } from "@/lib/email/render";
 import { sendEmail } from "@/lib/email/resend";
 import { publicEnv } from "@/lib/env";
 import { computeProposalTotals } from "@/lib/finance";
+import { backupProposalToDrive } from "@/lib/google/backup";
 import { scopedLogger } from "@/lib/logger";
 import { buildPortalAccessPatch } from "@/lib/portal/access";
 import { UpdatePortalAccessInput } from "@/lib/schemas/portal";
@@ -581,7 +582,7 @@ export async function sendPreviewLink(input: unknown): Promise<SendPreviewResult
 export async function markProposalAsAccepted(
   input: unknown,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  await requireRole(["owner", "admin"]);
+  const user = await requireRole(["owner", "admin"]);
 
   const parsed = z.object({ id: z.string().uuid() }).safeParse(input);
   if (!parsed.success) return { ok: false, error: "ID inválido" };
@@ -597,7 +598,8 @@ export async function markProposalAsAccepted(
 
   if (readError || !proposal) return { ok: false, error: "Propuesta no encontrada" };
   if (proposal.status === "accepted") return { ok: true };
-  if (proposal.status === "rejected") return { ok: false, error: "No se puede aceptar una propuesta rechazada" };
+  if (proposal.status === "rejected")
+    return { ok: false, error: "No se puede aceptar una propuesta rechazada" };
 
   // Ensure it has a number (drafts that were never sent won't have one yet).
   const number = (proposal.number as string | null) ?? (await nextProposalNumber(supabase));
@@ -615,6 +617,9 @@ export async function markProposalAsAccepted(
     log.error({ err: error, id }, "mark_proposal_as_accepted_failed");
     return { ok: false, error: error.message };
   }
+
+  // Best-effort Drive backup — fires as the acting user.
+  void backupProposalToDrive(id, user.email);
 
   revalidatePath(`/proposals/${id}`);
   revalidatePath("/proposals");

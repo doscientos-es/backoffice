@@ -20,6 +20,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+
+private/
+
 # misc
 .DS_Store
 *.pem

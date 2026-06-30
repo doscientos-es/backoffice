@@ -53,6 +53,19 @@ export const ServerSchema = PublicSchema.extend({
   // Installation ID por defecto (instalación de la App en la org doscientos-es).
   GITHUB_DEFAULT_INSTALLATION_ID: z.string().optional().default(""),
   CAL_WEBHOOK_SECRET: z.string().optional().default(""),
+  // Google Workspace service account (domain-wide delegation over doscientos.es).
+  // Powers Drive backups and Calendar scheduling server-to-server, impersonating
+  // GOOGLE_DRIVE_SUBJECT_EMAIL. Empty SA values = Google integration disabled.
+  GOOGLE_WORKSPACE_DOMAIN: z.string().default("doscientos.es"),
+  GOOGLE_SA_CLIENT_EMAIL: z.string().optional().default(""), // service-account@project.iam.gserviceaccount.com
+  GOOGLE_SA_PRIVATE_KEY_BASE64: z.string().optional().default(""), // PEM private key, base64-encoded
+  // @doscientos.es email the service account impersonates for Drive / Calendar ops.
+  GOOGLE_DRIVE_SUBJECT_EMAIL: z.string().optional().default(""),
+  // Drive backup root folders (top-level; client subfolders are auto-created inside).
+  GOOGLE_DRIVE_INVOICES_FOLDER_ID: z.string().optional().default(""),
+  GOOGLE_DRIVE_PROPOSALS_FOLDER_ID: z.string().optional().default(""),
+  // Shared Google Calendar ID for lead meetings (e.g. "doscientos.es_xxx@group.calendar.google.com").
+  GOOGLE_CALENDAR_ID: z.string().optional().default(""),
   // n8n automation — Lead → Telegram notification
   N8N_LEAD_WEBHOOK_URL: z.string().url().or(z.literal("")).optional().default(""),
   // Shared secret for authenticating traffic between the backoffice and n8n,

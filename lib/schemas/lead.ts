@@ -137,3 +137,26 @@ export const AssignLeadOwnerInput = z.object({
 });
 
 export type AssignLeadOwnerInputType = z.infer<typeof AssignLeadOwnerInput>;
+
+/** Check for calendar conflicts without creating anything. */
+export const CheckMeetingSlotInput = z.object({
+  leadId: z.string().uuid(),
+  /** ISO-8601 datetime string (e.g. "2026-07-01T10:00:00+02:00"). */
+  start: z.string().datetime({ offset: true }),
+  end: z.string().datetime({ offset: true }),
+});
+export type CheckMeetingSlotInputType = z.infer<typeof CheckMeetingSlotInput>;
+
+/** Schedule a meeting on the shared calendar and log it as an interaction. */
+export const ScheduleLeadMeetingInput = z.object({
+  leadId: z.string().uuid(),
+  start: z.string().datetime({ offset: true }),
+  end: z.string().datetime({ offset: true }),
+  title: requiredText(200, "El título es obligatorio"),
+  description: optionalText(4000),
+  /** Emails to invite (lead + any team members). */
+  attendeeEmails: z.array(z.string().email()).max(20).optional(),
+  /** Attach a Google Meet link. Default true. */
+  withMeet: z.boolean().default(true),
+});
+export type ScheduleLeadMeetingInputType = z.infer<typeof ScheduleLeadMeetingInput>;

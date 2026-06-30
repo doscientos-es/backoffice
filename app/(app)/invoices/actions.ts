@@ -39,7 +39,7 @@ type FromProposalResult = { ok: true; id: string } | { ok: false; error: string 
 export async function updateInvoiceStatus(
   input: unknown,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  await requireRole(["owner", "admin"]);
+  const user = await requireRole(["owner", "admin"]);
   const parsed = UpdateInvoiceStatusInput.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Datos no válidos" };
   const { id, status } = parsed.data;
@@ -68,6 +68,11 @@ export async function updateInvoiceStatus(
 
   const { error } = await supabase.from("invoices").update(updates).eq("id", id);
   if (error) return { ok: false, error: error.message };
+
+  // Best-effort Drive backup on first issuance — fires as the acting user.
+  if (status === "issued" && !current?.issued_at) {
+    void backupInvoiceToDrive(id, user.email);
+  }
 
   revalidatePath(`/invoices/${id}`);
   revalidatePath("/invoices");

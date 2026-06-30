@@ -21,6 +21,16 @@ export function isAIEnabled(): boolean {
 }
 
 /**
+ * true si la service account de Google Workspace está configurada — feature-gate
+ * para Drive (backups) y Calendar (agenda de leads). Requiere email + clave.
+ */
+export function isGoogleEnabled(): boolean {
+  return Boolean(
+    process.env.GOOGLE_SA_CLIENT_EMAIL?.trim() && process.env.GOOGLE_SA_PRIVATE_KEY_BASE64?.trim(),
+  );
+}
+
+/**
  * Installation ID por defecto para sync con GitHub (instalación en la org).
  * Devuelve null si no está configurado o el valor no es un entero positivo.
  */
