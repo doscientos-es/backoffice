@@ -35,13 +35,12 @@ export function InviteForm({ actorRole }: Props) {
       <div className="grid gap-4 sm:grid-cols-[1fr_1fr_180px]">
         <Field>
           <FieldLabel htmlFor="invite_name" className="text-xs font-medium">
-            Nombre <span className="text-destructive">*</span>
+            Nombre <span className="text-muted-foreground font-normal">(opcional)</span>
           </FieldLabel>
           <Input
             id="invite_name"
             name="name"
-            required
-            placeholder="Nombre y apellidos"
+            placeholder="Se completa en el onboarding"
             autoComplete="name"
             maxLength={120}
           />
@@ -73,7 +72,9 @@ export function InviteForm({ actorRole }: Props) {
         </Field>
       </div>
       <FieldDescription>
-        Se enviará un email con un enlace de invitación. Caduca a las 72&nbsp;horas.
+        Solo emails <strong>@doscientos.es</strong>. El invitado recibirá un enlace para activar su
+        cuenta y, a partir de ahí, entrará con <strong>Continuar con Google</strong>. Caduca a las
+        72&nbsp;horas.
       </FieldDescription>
       <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
         <FormFeedback

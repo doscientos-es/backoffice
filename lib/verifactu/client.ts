@@ -3,10 +3,20 @@ import { scopedLogger } from "@/lib/logger";
 import { AEAT_SOAP_ACTION_ALTA, AEAT_SOAP_ENDPOINT } from "@/lib/verifactu/constants";
 import { computeInvoiceHash, spanishTimestamp } from "@/lib/verifactu/hash";
 import { buildIdfact } from "@/lib/verifactu/idfact";
-import { loadP12Cert, signXml } from "@/lib/verifactu/sign";
+import { loadP12Cert } from "@/lib/verifactu/sign";
 import { XMLParser } from "fast-xml-parser";
 
 const log = scopedLogger("verifactu");
+
+export type VatLine = { rate: number; base: number; tax: number };
+
+/** Subset of env vars accessed by buildVerifactuXml — easier to mock in tests. */
+export type SistemaInformaticoEnv = {
+  VERIFACTU_SOFTWARE_NAME: string;
+  VERIFACTU_SOFTWARE_ID: string;
+  VERIFACTU_SOFTWARE_VERSION: string;
+  VERIFACTU_INSTALLATION_NUMBER: string;
+};
 
 export type VerifactuSubmitInput = {
   nif: string;
@@ -17,6 +27,14 @@ export type VerifactuSubmitInput = {
   total: number;
   previousHash: string | null;
   generatedAt: Date;
+  emisorName: string;
+  clientNif: string | null;
+  clientName: string | null;
+  descriptionOperacion: string;
+  vatLines: VatLine[];
+  /** Required for Encadenamiento.RegistroAnterior (non-first invoices). */
+  previousInvoiceNumber: string | null;
+  previousIssueDate: Date | null;
 };
 
 export type VerifactuSubmitResult = {
@@ -28,52 +46,127 @@ export type VerifactuSubmitResult = {
   errorMessage: string | null;
 };
 
-/** Format a Date as DD-MM-YYYY (AEAT field format). */
+function esc(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 function ddmmyyyy(d: Date): string {
   const dd = String(d.getUTCDate()).padStart(2, "0");
   const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const yyyy = d.getUTCFullYear();
-  return `${dd}-${mm}-${yyyy}`;
+  return `${dd}-${mm}-${d.getUTCFullYear()}`;
 }
 
 /**
- * Build the SIF/Verifactu XML payload (Anexo I/II, HAC/1177/2024).
+ * Build the VERI*FACTU XML payload per Anexo I/II, HAC/1177/2024.
  *
- * Dates follow the AEAT XSD type patterns:
- *   FechaExpedicionFactura → DD-MM-YYYY
- *   FechaHoraHusoGenRegistro → DD-MM-YYYYTHH:MM:SS+HH:MM
+ * All mandatory XSD elements are included: IDVersion, ObligadoEmision/NombreRazon,
+ * NombreRazonEmisor, Destinatarios (F1), DescripcionOperacion, Desglose (per-rate),
+ * SistemaInformatico, TipoHuella.
+ *
+ * No XAdES signature — VERI*FACTU uses mTLS + hash chain for integrity.
+ * XAdES is only required in offline (non-verifactu) mode.
  */
-export function buildVerifactuXml(input: VerifactuSubmitInput, hash: string): string {
+export function buildVerifactuXml(
+  input: VerifactuSubmitInput,
+  hash: string,
+  env: SistemaInformaticoEnv,
+): string {
   const SUM =
     "https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd";
+
+  // Encadenamiento: first invoice → PrimerRegistro; subsequent → full previous ID
+  const encadenamiento =
+    input.previousHash && input.previousInvoiceNumber && input.previousIssueDate
+      ? [
+          "      <sum:Encadenamiento>",
+          "        <sum:RegistroAnterior>",
+          `          <sum:IDEmisorFacturaAnterior>${esc(input.nif)}</sum:IDEmisorFacturaAnterior>`,
+          `          <sum:NumSerieFacturaAnterior>${esc(input.previousInvoiceNumber)}</sum:NumSerieFacturaAnterior>`,
+          `          <sum:FechaExpedicionFacturaAnterior>${ddmmyyyy(input.previousIssueDate)}</sum:FechaExpedicionFacturaAnterior>`,
+          `          <sum:Huella>${esc(input.previousHash)}</sum:Huella>`,
+          "        </sum:RegistroAnterior>",
+          "      </sum:Encadenamiento>",
+        ].join("\n")
+      : "      <sum:Encadenamiento><sum:PrimerRegistro>S</sum:PrimerRegistro></sum:Encadenamiento>";
+
+  // Destinatarios: required for F1 (full invoice) when client NIF is known
+  const destinatarios =
+    input.invoiceType === "F1" && input.clientNif
+      ? [
+          "      <sum:Destinatarios>",
+          "        <sum:IDDestinatario>",
+          `          <sum:NombreRazon>${esc(input.clientName ?? "")}</sum:NombreRazon>`,
+          `          <sum:NIF>${esc(input.clientNif)}</sum:NIF>`,
+          "        </sum:IDDestinatario>",
+          "      </sum:Destinatarios>",
+        ].join("\n")
+      : null;
+
+  // Desglose: one DetalleDesglose per distinct VAT rate
+  const desgloseLines = input.vatLines
+    .map((l) =>
+      [
+        "        <sum:DetalleDesglose>",
+        "          <sum:ClaveRegimen>01</sum:ClaveRegimen>",
+        "          <sum:CalificacionOperacion>S1</sum:CalificacionOperacion>",
+        `          <sum:TipoImpositivo>${l.rate.toFixed(2)}</sum:TipoImpositivo>`,
+        `          <sum:BaseImponibleOImporteNoSujeto>${l.base.toFixed(2)}</sum:BaseImponibleOImporteNoSujeto>`,
+        `          <sum:CuotaRepercutida>${l.tax.toFixed(2)}</sum:CuotaRepercutida>`,
+        "        </sum:DetalleDesglose>",
+      ].join("\n"),
+    )
+    .join("\n");
+
   return [
     `<sum:RegFactuSistemaFacturacion xmlns:sum="${SUM}">`,
     "  <sum:Cabecera>",
     "    <sum:ObligadoEmision>",
-    `      <sum:NIF>${input.nif}</sum:NIF>`,
+    `      <sum:NombreRazon>${esc(input.emisorName)}</sum:NombreRazon>`,
+    `      <sum:NIF>${esc(input.nif)}</sum:NIF>`,
     "    </sum:ObligadoEmision>",
     "  </sum:Cabecera>",
     "  <sum:RegistroFactura>",
     "    <sum:RegistroAlta>",
+    "      <sum:IDVersion>1.0</sum:IDVersion>",
     "      <sum:IDFactura>",
-    `        <sum:IDEmisorFactura>${input.nif}</sum:IDEmisorFactura>`,
-    `        <sum:NumSerieFactura>${input.invoiceNumber}</sum:NumSerieFactura>`,
+    `        <sum:IDEmisorFactura>${esc(input.nif)}</sum:IDEmisorFactura>`,
+    `        <sum:NumSerieFactura>${esc(input.invoiceNumber)}</sum:NumSerieFactura>`,
     `        <sum:FechaExpedicionFactura>${ddmmyyyy(input.issueDate)}</sum:FechaExpedicionFactura>`,
     "      </sum:IDFactura>",
-    `      <sum:TipoFactura>${input.invoiceType}</sum:TipoFactura>`,
+    `      <sum:NombreRazonEmisor>${esc(input.emisorName)}</sum:NombreRazonEmisor>`,
+    `      <sum:TipoFactura>${esc(input.invoiceType)}</sum:TipoFactura>`,
+    `      <sum:DescripcionOperacion>${esc(input.descriptionOperacion.slice(0, 250))}</sum:DescripcionOperacion>`,
+    destinatarios,
+    "      <sum:Desglose>",
+    desgloseLines,
+    "      </sum:Desglose>",
     `      <sum:CuotaTotal>${input.taxAmount.toFixed(2)}</sum:CuotaTotal>`,
     `      <sum:ImporteTotal>${input.total.toFixed(2)}</sum:ImporteTotal>`,
-    "      <sum:Encadenamiento>",
-    input.previousHash
-      ? `        <sum:RegistroAnterior><sum:Huella>${input.previousHash}</sum:Huella></sum:RegistroAnterior>`
-      : "        <sum:PrimerRegistro>S</sum:PrimerRegistro>",
-    "      </sum:Encadenamiento>",
-    `      <sum:Huella>${hash}</sum:Huella>`,
+    encadenamiento,
+    "      <sum:SistemaInformatico>",
+    `        <sum:NombreRazon>${esc(input.emisorName)}</sum:NombreRazon>`,
+    `        <sum:NIF>${esc(input.nif)}</sum:NIF>`,
+    `        <sum:NombreSistemaInformatico>${esc(env.VERIFACTU_SOFTWARE_NAME)}</sum:NombreSistemaInformatico>`,
+    `        <sum:IdSistemaInformatico>${esc(env.VERIFACTU_SOFTWARE_ID)}</sum:IdSistemaInformatico>`,
+    `        <sum:Version>${esc(env.VERIFACTU_SOFTWARE_VERSION)}</sum:Version>`,
+    `        <sum:NumeroInstalacion>${esc(env.VERIFACTU_INSTALLATION_NUMBER)}</sum:NumeroInstalacion>`,
+    "        <sum:TipoUsoPosibleSoloVerifactu>S</sum:TipoUsoPosibleSoloVerifactu>",
+    "        <sum:TipoUsoPosibleMultiOT>N</sum:TipoUsoPosibleMultiOT>",
+    "        <sum:IndicadorMultiples>N</sum:IndicadorMultiples>",
+    "      </sum:SistemaInformatico>",
     `      <sum:FechaHoraHusoGenRegistro>${spanishTimestamp(input.generatedAt)}</sum:FechaHoraHusoGenRegistro>`,
+    "      <sum:TipoHuella>01</sum:TipoHuella>",
+    `      <sum:Huella>${esc(hash)}</sum:Huella>`,
     "    </sum:RegistroAlta>",
     "  </sum:RegistroFactura>",
     "</sum:RegFactuSistemaFacturacion>",
-  ].join("\n");
+  ]
+    .filter((l) => l !== null)
+    .join("\n");
 }
 
 /** Wrap the (signed) registration document in a SOAP 1.1 envelope. */

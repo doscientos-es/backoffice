@@ -58,9 +58,9 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 import { inviteTeamMember, updateMemberRole } from "@/app/(app)/settings/team/actions";
 
-function form(email: string, name = "Test User", role = "member") {
+function form(email: string, name: string | null = "Test User", role = "member") {
   const fd = new FormData();
-  fd.set("name", name);
+  if (name !== null) fd.set("name", name);
   fd.set("email", email);
   fd.set("role", role);
   return fd;
@@ -78,14 +78,14 @@ describe("inviteTeamMember", () => {
     state.upsertResult = { error: null };
   });
 
-  it("routes redirectTo through /auth/callback with the update-password next", async () => {
+  it("routes redirectTo through /auth/callback with the onboarding next", async () => {
     const res = await inviteTeamMember(form("nuevo@doscientos.es"));
     expect(res).toEqual({ ok: true });
     expect(state.inviteCalls).toHaveLength(1);
     const opts = state.inviteCalls[0]?.opts;
-    expect(opts?.redirectTo).toMatch(/\/auth\/callback\?next=%2Flogin%2Fupdate-password$/);
-    // It must NOT skip the callback by pointing directly at update-password.
-    expect(opts?.redirectTo).not.toMatch(/\/login\/update-password($|\?)/);
+    expect(opts?.redirectTo).toMatch(/\/auth\/callback\?next=%2Fonboarding$/);
+    // Google-first: it must NOT force a password step on the invitee.
+    expect(opts?.redirectTo).not.toMatch(/update-password/);
   });
 
   it("lowercases and trims the email before inviting and upserting", async () => {
@@ -95,12 +95,25 @@ describe("inviteTeamMember", () => {
   });
 
   it("forwards the invitee name as user metadata", async () => {
-    await inviteTeamMember(form("a@b.com", "Ada Lovelace"));
+    await inviteTeamMember(form("ada@doscientos.es", "Ada Lovelace"));
     expect(state.inviteCalls[0]?.opts.data).toEqual({ name: "Ada Lovelace" });
   });
 
+  it("derives the name from the email local-part when omitted", async () => {
+    await inviteTeamMember(form("ada@doscientos.es", null));
+    expect(state.inviteCalls[0]?.opts.data).toEqual({ name: "ada" });
+    expect(state.upsertCalls[0]?.row.name).toBe("ada");
+  });
+
+  it("rejects emails outside the @doscientos.es domain", async () => {
+    const res = await inviteTeamMember(form("ada@gmail.com"));
+    expect(res).toEqual({ ok: false, error: "El email debe ser del dominio @doscientos.es." });
+    expect(state.inviteCalls).toHaveLength(0);
+    expect(state.upsertCalls).toHaveLength(0);
+  });
+
   it("upserts the team_members row with the invited auth user id", async () => {
-    await inviteTeamMember(form("a@b.com", "Ada", "admin"));
+    await inviteTeamMember(form("ada@doscientos.es", "Ada", "admin"));
     const row = state.upsertCalls[0]?.row;
     expect(row?.id).toBe("11111111-1111-1111-1111-111111111111");
     expect(row?.role).toBe("admin");
@@ -109,7 +122,7 @@ describe("inviteTeamMember", () => {
 
   it("rejects when an admin tries to assign the owner role", async () => {
     state.actorRole = "admin";
-    const res = await inviteTeamMember(form("a@b.com", "Ada", "owner"));
+    const res = await inviteTeamMember(form("ada@doscientos.es", "Ada", "owner"));
     expect(res).toEqual({ ok: false, error: "No tienes permisos para asignar ese rol." });
     expect(state.inviteCalls).toHaveLength(0);
   });
@@ -119,7 +132,7 @@ describe("inviteTeamMember", () => {
       data: { user: null as unknown as { id: string } },
       error: { message: "rate limited" },
     };
-    const res = await inviteTeamMember(form("a@b.com"));
+    const res = await inviteTeamMember(form("ada@doscientos.es"));
     expect(res).toEqual({ ok: false, error: "rate limited" });
     expect(state.upsertCalls).toHaveLength(0);
   });

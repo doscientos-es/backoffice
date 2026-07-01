@@ -12,9 +12,20 @@ type ActionResult = { ok: true } | { ok: false; error: string };
 const ASSIGNABLE_ROLES = ["owner", "admin", "member", "viewer"] as const;
 const RoleEnum = z.enum(ASSIGNABLE_ROLES);
 
+// Everyone who accesses the backoffice signs in with their Google Workspace
+// account under this domain. Invites are restricted to it so a mistyped
+// personal address can't be provisioned (and then fail to sign in with Google).
+const COMPANY_EMAIL_DOMAIN = "doscientos.es";
+
 const InviteInput = z.object({
-  name: z.string().min(1, "El nombre es obligatorio").max(160),
-  email: z.string().email("Email no válido").max(200),
+  name: z.string().trim().max(160, "El nombre no puede superar 160 caracteres").optional(),
+  email: z
+    .string()
+    .email("Email no válido")
+    .max(200)
+    .refine((value) => value.endsWith(`@${COMPANY_EMAIL_DOMAIN}`), {
+      message: `El email debe ser del dominio @${COMPANY_EMAIL_DOMAIN}.`,
+    }),
   role: RoleEnum,
 });
 
@@ -44,14 +55,22 @@ export async function inviteTeamMember(formData: FormData): Promise<ActionResult
     return { ok: false, error: "No tienes permisos para asignar ese rol." };
   }
 
+  const { email, role } = parsed.data;
+  // Name is optional: fall back to the email local-part so the member always
+  // has a readable label until they set their real name during onboarding.
+  const name = parsed.data.name || email.split("@")[0];
+
   const admin = createAdminClient();
-  // Route through /auth/callback so the PKCE code is exchanged into a session
-  // for the invitee, with any pre-existing browser session signed out first.
-  const redirectTo = `${publicEnv.NEXT_PUBLIC_APP_URL}/auth/callback?next=${encodeURIComponent("/login/update-password")}`;
-  const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(
-    parsed.data.email,
-    { data: { name: parsed.data.name }, redirectTo },
-  );
+  // Google-first onboarding: the invite email is an accept + auto-login link.
+  // Clicking it exchanges the PKCE code (confirming the email and creating a
+  // session) and lands the invitee straight on /onboarding — no password step.
+  // Once the email is confirmed, future sign-ins go through "Continuar con
+  // Google", which Supabase auto-links to this account by matching the email.
+  const redirectTo = `${publicEnv.NEXT_PUBLIC_APP_URL}/auth/callback?next=${encodeURIComponent("/onboarding")}`;
+  const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
+    data: { name },
+    redirectTo,
+  });
   if (inviteError || !invited?.user) {
     return { ok: false, error: inviteError?.message ?? "No se pudo enviar la invitación." };
   }
@@ -59,9 +78,9 @@ export async function inviteTeamMember(formData: FormData): Promise<ActionResult
   const { error: upsertError } = await admin.from("team_members").upsert(
     {
       id: invited.user.id,
-      email: parsed.data.email,
-      name: parsed.data.name,
-      role: parsed.data.role,
+      email,
+      name,
+      role,
       deleted_at: null,
       updated_at: new Date().toISOString(),
     },

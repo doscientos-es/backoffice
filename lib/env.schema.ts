@@ -33,6 +33,14 @@ export const ServerSchema = PublicSchema.extend({
   VERIFACTU_CERT_P12_BASE64: z.string().optional().default(""),
   VERIFACTU_CERT_PASSWORD: z.string().optional().default(""),
   VERIFACTU_CERT_EXPIRES_AT: z.string().optional().default(""),
+  // SistemaInformatico (required in every RegistroAlta submission).
+  // For production, register the software at AEAT Sede Electrónica first:
+  //   https://www.agenciatributaria.gob.es/AEAT.sede/tramitacion/Z65.shtml
+  // The IdSistemaInformatico is assigned during that registration.
+  VERIFACTU_SOFTWARE_NAME: z.string().default("Doscientos Backoffice"),
+  VERIFACTU_SOFTWARE_ID: z.string().default("BACK01"),
+  VERIFACTU_SOFTWARE_VERSION: z.string().default("1.0.0"),
+  VERIFACTU_INSTALLATION_NUMBER: z.string().default("00000001"),
   // Generic lead-intake webhook (Recurrev / GHL / landing forms)
   LEAD_INTAKE_TOKEN: z.string().optional().default(""),
   // Comma-separated origins allowed to POST the public landing contact form.
