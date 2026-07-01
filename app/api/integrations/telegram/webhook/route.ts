@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { serverEnv } from "@/lib/env";
+import { telegramRequest } from "@/lib/integrations/telegram";
 import { scopedLogger } from "@/lib/logger";
 import type { LeadStatusType } from "@/lib/schemas/lead";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -37,12 +38,7 @@ const STATUS_LABEL: Record<LeadStatusType, string> = {
 const CLOSURE_STATUSES = new Set<LeadStatusType>(["lost", "not_interested"]);
 
 async function tg(token: string, method: string, body: Record<string, unknown>) {
-  return fetch(`https://api.telegram.org/bot${token}/${method}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(5000),
-  }).catch((e) => log.error({ err: e }, `tg.${method} failed`));
+  return telegramRequest(method, body, { token });
 }
 
 /**
@@ -144,7 +140,10 @@ export async function POST(request: NextRequest) {
   }
 
   // Dismiss the spinner in Telegram
-  await tg(token, "answerCallbackQuery", { callback_query_id: callbackQueryId, text: `✓ ${label}` });
+  await tg(token, "answerCallbackQuery", {
+    callback_query_id: callbackQueryId,
+    text: `✓ ${label}`,
+  });
 
   // Edit the original notification message to show the new status
   if (chatId && messageId) {
