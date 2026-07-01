@@ -1,9 +1,10 @@
-import type { VerifactuConfig, VerifactuSoftware } from "@/lib/verifactu/config";
 import { AEAT_SOAP_ACTION_ALTA, AEAT_SOAP_ENDPOINT } from "@/lib/verifactu/constants";
 import { computeInvoiceHash, spanishTimestamp } from "@/lib/verifactu/hash";
 import { buildIdfact } from "@/lib/verifactu/idfact";
 import { type VerifactuLogger, noopLogger } from "@/lib/verifactu/logger";
 import { loadP12Cert } from "@/lib/verifactu/sign";
+import type { VerifactuConfig, VerifactuSoftware } from "@/lib/verifactu/types";
+import { validateVerifactuXml } from "@/lib/verifactu/validate";
 import { XMLParser } from "fast-xml-parser";
 
 export type VatLine = { rate: number; base: number; tax: number };
@@ -27,6 +28,24 @@ export type VerifactuSubmitInput = {
   previousIssueDate: Date | null;
 };
 
+/**
+ * Stable, typed classification of why a submission did not succeed. Consumers
+ * can `switch` on this instead of parsing free-text messages:
+ *  - `cert_missing`  → no P12 certificate/password configured
+ *  - `cert_invalid`  → the P12 failed to load (bad file or password)
+ *  - `xml_invalid`   → the payload we generated is not well-formed XML
+ *  - `network_error` → transport failure reaching AEAT
+ *  - `http_error`    → AEAT responded with HTTP >= 400
+ *  - `aeat_rejected` → AEAT parsed the request but rejected the record
+ */
+export type VerifactuErrorCode =
+  | "cert_missing"
+  | "cert_invalid"
+  | "xml_invalid"
+  | "network_error"
+  | "http_error"
+  | "aeat_rejected";
+
 export type VerifactuSubmitResult = {
   status: "accepted" | "rejected" | "error";
   csv: string | null;
@@ -34,6 +53,10 @@ export type VerifactuSubmitResult = {
   idfact: string;
   response: Record<string, unknown>;
   errorMessage: string | null;
+  /** Typed error category for programmatic handling; `null` when accepted. */
+  errorCode: VerifactuErrorCode | null;
+  /** Raw AEAT `CodigoErrorRegistro` when the registry rejected the record. */
+  aeatCode: string | null;
 };
 
 function esc(s: string): string {
@@ -164,8 +187,13 @@ function buildSoapEnvelope(innerXml: string): string {
   return `<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"><soapenv:Header/><soapenv:Body>${innerXml}</soapenv:Body></soapenv:Envelope>`;
 }
 
-/** Parse the AEAT SOAP response and extract CSV + status. */
-function parseSoapResponse(body: string): { csv: string | null; status: "accepted" | "rejected" } {
+/** Parse the AEAT SOAP response and extract CSV, status and any registry error. */
+function parseSoapResponse(body: string): {
+  csv: string | null;
+  status: "accepted" | "rejected";
+  aeatCode: string | null;
+  aeatDescription: string | null;
+} {
   const parser = new XMLParser({ ignoreAttributes: false, removeNSPrefix: true });
   const obj = parser.parse(body) as Record<string, unknown>;
   // Traverse: Envelope > Body > RespuestaRegFactuSistemaFacturacion
@@ -176,7 +204,22 @@ function parseSoapResponse(body: string): { csv: string | null; status: "accepte
   const estadoEnvio = String(resp?.EstadoEnvio ?? "");
   const csv = resp?.CSV ? String(resp.CSV) : null;
   const status = estadoEnvio.toLowerCase().includes("correcto") ? "accepted" : "rejected";
-  return { csv, status };
+
+  // Per-record registry errors: AEAT returns one RespuestaLinea per record,
+  // which fast-xml-parser yields as a single object or an array. Surface the
+  // first CodigoErrorRegistro/DescripcionErrorRegistro found.
+  const lineas = resp?.RespuestaLinea;
+  const firstLinea = (Array.isArray(lineas) ? lineas[0] : lineas) as
+    | Record<string, unknown>
+    | undefined;
+  const aeatCode =
+    firstLinea?.CodigoErrorRegistro != null ? String(firstLinea.CodigoErrorRegistro) : null;
+  const aeatDescription =
+    firstLinea?.DescripcionErrorRegistro != null
+      ? String(firstLinea.DescripcionErrorRegistro)
+      : null;
+
+  return { csv, status, aeatCode, aeatDescription };
 }
 
 function mockCsv(hash: string): string {
@@ -251,6 +294,26 @@ export async function submitToVerifactu(
     "verifactu_submit_start",
   );
 
+  // ── Well-formedness gate ──────────────────────────────────────────────────
+  // Never ship a malformed payload (even in mock/CI): catches builder breakage.
+  const validation = validateVerifactuXml(xml);
+  if (!validation.valid) {
+    logger.error(
+      { invoice: input.invoiceNumber, reason: validation.message, line: validation.line },
+      "verifactu_xml_invalid",
+    );
+    return {
+      status: "error",
+      csv: null,
+      hash,
+      idfact,
+      response: { error: "malformed XML", detail: validation.message },
+      errorMessage: `XML mal formado: ${validation.message}`,
+      errorCode: "xml_invalid",
+      aeatCode: null,
+    };
+  }
+
   // ── Mock mode ────────────────────────────────────────────────────────────
   if (config.environment === "mock") {
     const csv = mockCsv(hash);
@@ -262,6 +325,8 @@ export async function submitToVerifactu(
       idfact,
       response: { mock: true, csv, acceptedAt: new Date().toISOString() },
       errorMessage: null,
+      errorCode: null,
+      aeatCode: null,
     };
   }
 
@@ -276,6 +341,8 @@ export async function submitToVerifactu(
       response: { error: "certificate not configured" },
       errorMessage:
         "Certificado P12 no configurado (VERIFACTU_CERT_P12_BASE64 / VERIFACTU_CERT_PASSWORD)",
+      errorCode: "cert_missing",
+      aeatCode: null,
     };
   }
 
@@ -291,6 +358,8 @@ export async function submitToVerifactu(
       idfact,
       response: { error: String(err) },
       errorMessage: `Error cargando certificado: ${String(err)}`,
+      errorCode: "cert_invalid",
+      aeatCode: null,
     };
   }
 
@@ -319,6 +388,8 @@ export async function submitToVerifactu(
       idfact,
       response: { error: String(err) },
       errorMessage: `Error de red: ${String(err)}`,
+      errorCode: "network_error",
+      aeatCode: null,
     };
   }
 
@@ -331,17 +402,21 @@ export async function submitToVerifactu(
       idfact,
       response: { httpStatus, body: rawResponse },
       errorMessage: `AEAT HTTP ${httpStatus}`,
+      errorCode: "http_error",
+      aeatCode: null,
     };
   }
 
-  const { csv, status } = parseSoapResponse(rawResponse);
-  logger.info({ invoice: input.invoiceNumber, csv, status }, "verifactu_submit_ok");
+  const { csv, status, aeatCode, aeatDescription } = parseSoapResponse(rawResponse);
+  logger.info({ invoice: input.invoiceNumber, csv, status, aeatCode }, "verifactu_submit_ok");
   return {
     status,
     csv,
     hash,
     idfact,
-    response: { rawResponse },
-    errorMessage: status === "rejected" ? "AEAT rechazó el registro" : null,
+    response: { rawResponse, aeatCode, aeatDescription },
+    errorMessage: status === "rejected" ? (aeatDescription ?? "AEAT rechazó el registro") : null,
+    errorCode: status === "rejected" ? "aeat_rejected" : null,
+    aeatCode: status === "rejected" ? aeatCode : null,
   };
 }

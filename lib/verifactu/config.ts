@@ -1,49 +1,20 @@
 import { serverEnv } from "@/lib/env";
+import type { VerifactuConfig } from "@/lib/verifactu/types";
 
 /**
- * Configuration contract for the Verifactu module.
+ * App-specific adapter for the Verifactu package.
  *
- * This is the module's public "inputs" surface alongside `VerifactuSubmitInput`.
- * Everything the module needs to run is expressed here as concrete, serialisable
- * data — no env access, no framework coupling.
- *
- * `config.ts` is intentionally the ONLY file inside `lib/verifactu/**` that
- * reads application env (`@/lib/env`). It is the single adapter that binds this
- * app to the module. When the module is extracted to a standalone package,
- * every file moves EXCEPT this one: each consuming project keeps its own
- * `verifactuConfigFromEnv()` that maps its env/secrets to `VerifactuConfig`.
+ * This file is intentionally the ONLY one inside `lib/verifactu/**` that reads
+ * application env (`@/lib/env`). It is the single bridge that binds THIS app to
+ * the (portable) Verifactu package. The public configuration contract lives in
+ * `types.ts`; when the package is extracted, every file moves with it EXCEPT
+ * this adapter: each consuming project keeps its own `verifactuConfigFromEnv()`
+ * that maps its own env/secrets into a `VerifactuConfig`.
  */
-export type VerifactuEnvironment = "mock" | "test" | "prod";
-
-export type VerifactuCertificate = {
-  /** PKCS#12 (.p12) client certificate, base64-encoded. */
-  p12Base64: string;
-  /** Passphrase for the .p12 certificate. */
-  password: string;
-};
-
-/** `SistemaInformatico` block — assigned when registering the software at AEAT. */
-export type VerifactuSoftware = {
-  name: string;
-  id: string;
-  version: string;
-  installationNumber: string;
-};
-
-export type VerifactuConfig = {
-  environment: VerifactuEnvironment;
-  certificate: VerifactuCertificate;
-  software: VerifactuSoftware;
-  /** Base URL of the consuming app — used to build the mock QR verify route. */
-  appUrl: string;
-};
-
-/** Minimal config subset needed to build the tributary QR URL. */
-export type VerifactuQrConfig = Pick<VerifactuConfig, "environment" | "appUrl">;
 
 /**
  * Adapter: builds a `VerifactuConfig` from this app's validated env.
- * The only bridge between the app and the Verifactu module.
+ * The only bridge between the app and the Verifactu package.
  */
 export function verifactuConfigFromEnv(): VerifactuConfig {
   const env = serverEnv();

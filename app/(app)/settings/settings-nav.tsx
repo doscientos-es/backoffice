@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Activity, Building2, Mail, User, Users } from "lucide-react";
+import { Activity, Building2, Mail, Shield, User, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -11,7 +11,8 @@ type Item = {
   | "/settings/company"
   | "/settings/team"
   | "/settings/email-templates"
-  | "/settings/diagnostics";
+  | "/settings/diagnostics"
+  | "/settings/legal";
   label: string;
   icon: typeof User;
   requiresAdmin: boolean;
@@ -23,6 +24,7 @@ const ITEMS: readonly Item[] = [
   { href: "/settings/team", label: "Equipo", icon: Users, requiresAdmin: true },
   { href: "/settings/email-templates", label: "Plantillas email", icon: Mail, requiresAdmin: true },
   { href: "/settings/diagnostics", label: "Diagnóstico", icon: Activity, requiresAdmin: true },
+  { href: "/settings/legal", label: "Legal / Verifactu", icon: Shield, requiresAdmin: false },
 ] as const;
 
 export function SettingsNav({ canManageTeam }: { canManageTeam: boolean }) {

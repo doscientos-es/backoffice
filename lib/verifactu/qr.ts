@@ -1,5 +1,5 @@
-import type { VerifactuQrConfig } from "@/lib/verifactu/config";
 import { AEAT_VALIDATE_QR_URL } from "@/lib/verifactu/constants";
+import type { VerifactuQrConfig } from "@/lib/verifactu/types";
 import QRCode from "qrcode";
 
 /**

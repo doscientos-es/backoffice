@@ -1,5 +1,7 @@
+import { createVerifactuClient } from "@/lib/verifactu";
 import { buildVerifactuXml, submitToVerifactu } from "@/lib/verifactu/client";
-import type { VerifactuConfig, VerifactuSoftware } from "@/lib/verifactu/config";
+import type { VerifactuConfig, VerifactuSoftware } from "@/lib/verifactu/types";
+import { validateVerifactuXml } from "@/lib/verifactu/validate";
 import { describe, expect, it } from "vitest";
 
 const mockSoftware: VerifactuSoftware = {
@@ -152,6 +154,8 @@ describe("verifactu/client", () => {
     expect(result.csv).toBe(result.hash.slice(0, 16).toUpperCase());
     expect(result.idfact).toBe("B12345678-A-000001-20260315");
     expect(result.errorMessage).toBeNull();
+    expect(result.errorCode).toBeNull();
+    expect(result.aeatCode).toBeNull();
     expect(result.response).toMatchObject({ mock: true });
   });
 
@@ -159,6 +163,7 @@ describe("verifactu/client", () => {
     const result = await submitToVerifactu(baseInput, { ...mockConfig, environment: "test" });
     expect(result.status).toBe("error");
     expect(result.csv).toBeNull();
+    expect(result.errorCode).toBe("cert_missing");
     expect(result.errorMessage).toMatch(/certificado|certificate/i);
   });
 
@@ -166,5 +171,69 @@ describe("verifactu/client", () => {
     const a = await submitToVerifactu(baseInput, mockConfig);
     const b = await submitToVerifactu(baseInput, mockConfig);
     expect(a.hash).toBe(b.hash);
+  });
+
+  it("generated XML passes the well-formedness gate", () => {
+    const xml = buildVerifactuXml(baseInput, "deadbeef", mockSoftware);
+    expect(validateVerifactuXml(xml)).toEqual({ valid: true });
+  });
+
+  it("validateVerifactuXml flags malformed XML with a message", () => {
+    const result = validateVerifactuXml("<sum:Foo><sum:Bar></sum:Foo>");
+    expect(result.valid).toBe(false);
+    if (!result.valid) expect(result.message).toBeTruthy();
+  });
+});
+
+describe("verifactu/facade", () => {
+  const baseInput = {
+    nif: "B12345678",
+    invoiceNumber: "A-000001",
+    invoiceType: "F1",
+    issueDate: new Date("2026-03-15T00:00:00.000Z"),
+    taxAmount: 21,
+    total: 121,
+    previousHash: null,
+    generatedAt: new Date("2026-03-15T12:00:00.000Z"),
+    emisorName: "Test Company S.L.",
+    clientNif: "12345678A",
+    clientName: "Test Client",
+    descriptionOperacion: "Servicios de prueba",
+    vatLines: [{ rate: 21, base: 100, tax: 21 }],
+    previousInvoiceNumber: null,
+    previousIssueDate: null,
+  };
+
+  it("registerInvoice delegates to submitToVerifactu with the bound config", async () => {
+    const client = createVerifactuClient(mockConfig);
+    const viaFacade = await client.registerInvoice(baseInput);
+    const viaFn = await submitToVerifactu(baseInput, mockConfig);
+    expect(viaFacade.status).toBe("accepted");
+    expect(viaFacade.hash).toBe(viaFn.hash);
+    expect(viaFacade.idfact).toBe(viaFn.idfact);
+  });
+
+  it("buildQrUrl uses the bound config's environment/appUrl", () => {
+    const client = createVerifactuClient(mockConfig);
+    const url = client.buildQrUrl({
+      nif: "B12345678",
+      invoiceNumber: "A-000001",
+      issueDate: new Date("2026-03-15T00:00:00.000Z"),
+      total: 121,
+    });
+    expect(url.startsWith("https://app.test/p/verify?")).toBe(true);
+    expect(url).toContain("nif=B12345678");
+    expect(url).toContain("importe=121.00");
+  });
+
+  it("buildQrDataUrl returns a PNG data URL for the bound config", async () => {
+    const client = createVerifactuClient(mockConfig);
+    const dataUrl = await client.buildQrDataUrl({
+      nif: "B12345678",
+      invoiceNumber: "A-000001",
+      issueDate: new Date("2026-03-15T00:00:00.000Z"),
+      total: 121,
+    });
+    expect(dataUrl.startsWith("data:image/png;base64,")).toBe(true);
   });
 });

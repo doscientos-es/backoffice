@@ -57,14 +57,14 @@ describe("SettingsNav – item visibility", () => {
     expect(screen.getByText("Equipo")).toBeTruthy();
   });
 
-  it("renders exactly 2 links for non-admin", () => {
+  it("renders exactly 3 links for non-admin", () => {
     renderNav(false);
-    expect(screen.getAllByRole("link")).toHaveLength(2);
+    expect(screen.getAllByRole("link")).toHaveLength(3);
   });
 
-  it("renders exactly 5 links for admin", () => {
+  it("renders exactly 6 links for admin", () => {
     renderNav(true);
-    expect(screen.getAllByRole("link")).toHaveLength(5);
+    expect(screen.getAllByRole("link")).toHaveLength(6);
   });
 
   it("shows Plantillas email when canManageTeam is true", () => {
@@ -85,6 +85,13 @@ describe("SettingsNav – item visibility", () => {
   it("hides Diagnóstico when canManageTeam is false", () => {
     renderNav(false);
     expect(screen.queryByText("Diagnóstico")).toBeNull();
+  });
+
+  it("shows Legal / Verifactu regardless of canManageTeam", () => {
+    renderNav(false);
+    expect(screen.getByText("Legal / Verifactu")).toBeTruthy();
+    renderNav(true);
+    expect(screen.getByText("Legal / Verifactu")).toBeTruthy();
   });
 });
 

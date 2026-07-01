@@ -21,9 +21,8 @@ import {
 import { UpdatePortalAccessInput } from "@/lib/schemas/portal";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { submitToVerifactu } from "@/lib/verifactu/client";
+import { createVerifactuClient } from "@/lib/verifactu";
 import { verifactuConfigFromEnv } from "@/lib/verifactu/config";
-import { buildQrUrl } from "@/lib/verifactu/qr";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -132,7 +131,7 @@ export async function restoreInvoice(
  */
 export async function sendToAeat(formData: FormData): Promise<ActionResult> {
   await requireRole(["owner", "admin"]);
-  const verifactuConfig = verifactuConfigFromEnv();
+  const verifactu = createVerifactuClient(verifactuConfigFromEnv(), log);
 
   const parsed = SendInvoiceInput.safeParse({ id: formData.get("id")?.toString() ?? "" });
   if (!parsed.success) return { ok: false, error: "ID inválido" };
@@ -209,37 +208,30 @@ export async function sendToAeat(formData: FormData): Promise<ActionResult> {
   const generatedAt = new Date();
   const issueDate = new Date(invoice.issue_date as string);
 
-  const result = await submitToVerifactu(
-    {
-      nif: emisorNif,
-      invoiceNumber: invoice.full_number as string,
-      invoiceType: invoice.invoice_type as string,
-      issueDate,
-      taxAmount: Number(invoice.tax_amount ?? 0),
-      total: Number(invoice.total ?? 0),
-      previousHash,
-      generatedAt,
-      emisorName,
-      clientNif: (invoice.client_nif as string | null) ?? null,
-      clientName: (invoice.client_name as string | null) ?? null,
-      descriptionOperacion,
-      vatLines,
-      previousInvoiceNumber,
-      previousIssueDate,
-    },
-    verifactuConfig,
-    log,
-  );
+  const result = await verifactu.registerInvoice({
+    nif: emisorNif,
+    invoiceNumber: invoice.full_number as string,
+    invoiceType: invoice.invoice_type as string,
+    issueDate,
+    taxAmount: Number(invoice.tax_amount ?? 0),
+    total: Number(invoice.total ?? 0),
+    previousHash,
+    generatedAt,
+    emisorName,
+    clientNif: (invoice.client_nif as string | null) ?? null,
+    clientName: (invoice.client_name as string | null) ?? null,
+    descriptionOperacion,
+    vatLines,
+    previousInvoiceNumber,
+    previousIssueDate,
+  });
 
-  const qrUrl = buildQrUrl(
-    {
-      nif: emisorNif,
-      invoiceNumber: invoice.full_number as string,
-      issueDate,
-      total: Number(invoice.total ?? 0),
-    },
-    verifactuConfig,
-  );
+  const qrUrl = verifactu.buildQrUrl({
+    nif: emisorNif,
+    invoiceNumber: invoice.full_number as string,
+    issueDate,
+    total: Number(invoice.total ?? 0),
+  });
 
   const { error: updateError } = await supabase
     .from("invoices")
