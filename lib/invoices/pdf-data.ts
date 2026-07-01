@@ -1,6 +1,5 @@
 import "server-only";
 
-import { serverEnv } from "@/lib/env";
 import { type VatBreakdownRow, buildVatBreakdown } from "@/lib/finance";
 import { verifactuConfigFromEnv } from "@/lib/verifactu/config";
 import { buildQrDataUrl, buildQrUrl } from "@/lib/verifactu/qr";
@@ -75,12 +74,14 @@ export type BuildInvoicePdfInput = {
 /**
  * Build the Verifactu QR data URL when the invoice carries the required fiscal
  * data. Mirrors the logic used by the HTML invoice views. Returns `null` when
- * the emisor NIF is not configured or the invoice is incomplete.
+ * the emisor NIF is missing or the invoice is incomplete.
  */
-async function buildInvoiceQr(invoice: BuildInvoicePdfInput["invoice"]): Promise<string | null> {
-  const env = serverEnv();
+async function buildInvoiceQr(
+  invoice: BuildInvoicePdfInput["invoice"],
+  emisorNif: string | null,
+): Promise<string | null> {
   if (
-    !env.VERIFACTU_NIF_EMISOR ||
+    !emisorNif ||
     invoice.status === "draft" ||
     !invoice.full_number ||
     !invoice.issue_date ||
@@ -90,7 +91,7 @@ async function buildInvoiceQr(invoice: BuildInvoicePdfInput["invoice"]): Promise
   }
   const qrUrl = buildQrUrl(
     {
-      nif: env.VERIFACTU_NIF_EMISOR,
+      nif: emisorNif,
       invoiceNumber: invoice.full_number,
       issueDate: new Date(invoice.issue_date),
       total: invoice.total,
@@ -136,7 +137,7 @@ export async function buildInvoicePdfData(input: BuildInvoicePdfInput): Promise<
     vatBreakdown: buildVatBreakdown(
       normalisedItems.map((i) => ({ vat_rate: i.vatRate, subtotal: i.subtotal })),
     ),
-    qrDataUrl: await buildInvoiceQr(invoice),
+    qrDataUrl: await buildInvoiceQr(invoice, settings?.company_nif ?? null),
   };
 }
 

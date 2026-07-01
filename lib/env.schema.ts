@@ -28,8 +28,6 @@ export const ServerSchema = PublicSchema.extend({
   GEMINI_API_KEY: z.string().optional().default(""), // preferido — Google Gemini 2.5 Flash-Lite
   OPENAI_API_KEY: z.string().optional().default(""), // fallback — vacío = IA desactivada
   VERIFACTU_ENV: z.enum(["mock", "test", "prod"]).default("mock"),
-  VERIFACTU_NIF_EMISOR: z.string().optional().default(""),
-  VERIFACTU_EMISOR_NAME: z.string().default("DOSCIENTOS DESARROLLO TECNOLOGICO, S.L."),
   VERIFACTU_CERT_P12_BASE64: z.string().optional().default(""),
   VERIFACTU_CERT_PASSWORD: z.string().optional().default(""),
   VERIFACTU_CERT_EXPIRES_AT: z.string().optional().default(""),

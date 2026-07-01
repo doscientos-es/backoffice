@@ -4,7 +4,7 @@ import { requireRole, requireUser } from "@/lib/auth";
 import { promoteLeadFromClient } from "@/lib/crm/conversion";
 import { renderEmail } from "@/lib/email/render";
 import { sendEmail } from "@/lib/email/resend";
-import { publicEnv, serverEnv } from "@/lib/env";
+import { publicEnv } from "@/lib/env";
 import { buildVatBreakdown, computeLineTotals } from "@/lib/finance";
 import { backupInvoiceToDrive } from "@/lib/google/backup";
 import { scopedLogger } from "@/lib/logger";
@@ -132,18 +132,26 @@ export async function restoreInvoice(
  */
 export async function sendToAeat(formData: FormData): Promise<ActionResult> {
   await requireRole(["owner", "admin"]);
-  const env = serverEnv();
   const verifactuConfig = verifactuConfigFromEnv();
 
   const parsed = SendInvoiceInput.safeParse({ id: formData.get("id")?.toString() ?? "" });
   if (!parsed.success) return { ok: false, error: "ID inválido" };
   const { id } = parsed.data;
 
-  if (!env.VERIFACTU_NIF_EMISOR) {
-    return { ok: false, error: "Falta VERIFACTU_NIF_EMISOR en el entorno" };
-  }
-
   const supabase = await createServerClient();
+
+  const { data: settings } = await supabase
+    .from("settings")
+    .select("company_nif, company_name")
+    .eq("id", 1)
+    .maybeSingle();
+
+  const emisorNif = (settings?.company_nif as string | null) ?? null;
+  const emisorName = (settings?.company_name as string | null) ?? "";
+
+  if (!emisorNif) {
+    return { ok: false, error: "Falta el NIF de la empresa en Ajustes" };
+  }
 
   const { data: invoice, error: readError } = await supabase
     .from("invoices")
@@ -203,7 +211,7 @@ export async function sendToAeat(formData: FormData): Promise<ActionResult> {
 
   const result = await submitToVerifactu(
     {
-      nif: env.VERIFACTU_NIF_EMISOR,
+      nif: emisorNif,
       invoiceNumber: invoice.full_number as string,
       invoiceType: invoice.invoice_type as string,
       issueDate,
@@ -211,7 +219,7 @@ export async function sendToAeat(formData: FormData): Promise<ActionResult> {
       total: Number(invoice.total ?? 0),
       previousHash,
       generatedAt,
-      emisorName: env.VERIFACTU_EMISOR_NAME,
+      emisorName,
       clientNif: (invoice.client_nif as string | null) ?? null,
       clientName: (invoice.client_name as string | null) ?? null,
       descriptionOperacion,
@@ -225,7 +233,7 @@ export async function sendToAeat(formData: FormData): Promise<ActionResult> {
 
   const qrUrl = buildQrUrl(
     {
-      nif: env.VERIFACTU_NIF_EMISOR,
+      nif: emisorNif,
       invoiceNumber: invoice.full_number as string,
       issueDate,
       total: Number(invoice.total ?? 0),

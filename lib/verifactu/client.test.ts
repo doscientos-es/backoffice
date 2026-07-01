@@ -56,6 +56,68 @@ describe("verifactu/client", () => {
     expect(xml).toContain("<sum:IdSistemaInformatico>TEST01</sum:IdSistemaInformatico>");
   });
 
+  // Golden regression lock: any change to the emitted XML (element order, new
+  // fields, formatting) breaks this snapshot. spanishTimestamp is pinned to
+  // Europe/Madrid, so the output is deterministic across machines/timezones.
+  it("buildVerifactuXml matches the golden XML snapshot", () => {
+    const xml = buildVerifactuXml(baseInput, "GOLDENHASH", mockSoftware);
+    expect(xml).toMatchInlineSnapshot(`
+      "<sum:RegFactuSistemaFacturacion xmlns:sum="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd">
+        <sum:Cabecera>
+          <sum:ObligadoEmision>
+            <sum:NombreRazon>Test Company S.L.</sum:NombreRazon>
+            <sum:NIF>B12345678</sum:NIF>
+          </sum:ObligadoEmision>
+        </sum:Cabecera>
+        <sum:RegistroFactura>
+          <sum:RegistroAlta>
+            <sum:IDVersion>1.0</sum:IDVersion>
+            <sum:IDFactura>
+              <sum:IDEmisorFactura>B12345678</sum:IDEmisorFactura>
+              <sum:NumSerieFactura>A-000001</sum:NumSerieFactura>
+              <sum:FechaExpedicionFactura>15-03-2026</sum:FechaExpedicionFactura>
+            </sum:IDFactura>
+            <sum:NombreRazonEmisor>Test Company S.L.</sum:NombreRazonEmisor>
+            <sum:TipoFactura>F1</sum:TipoFactura>
+            <sum:DescripcionOperacion>Servicios de prueba</sum:DescripcionOperacion>
+            <sum:Destinatarios>
+              <sum:IDDestinatario>
+                <sum:NombreRazon>Test Client</sum:NombreRazon>
+                <sum:NIF>12345678A</sum:NIF>
+              </sum:IDDestinatario>
+            </sum:Destinatarios>
+            <sum:Desglose>
+              <sum:DetalleDesglose>
+                <sum:ClaveRegimen>01</sum:ClaveRegimen>
+                <sum:CalificacionOperacion>S1</sum:CalificacionOperacion>
+                <sum:TipoImpositivo>21.00</sum:TipoImpositivo>
+                <sum:BaseImponibleOImporteNoSujeto>100.00</sum:BaseImponibleOImporteNoSujeto>
+                <sum:CuotaRepercutida>21.00</sum:CuotaRepercutida>
+              </sum:DetalleDesglose>
+            </sum:Desglose>
+            <sum:CuotaTotal>21.00</sum:CuotaTotal>
+            <sum:ImporteTotal>121.00</sum:ImporteTotal>
+            <sum:Encadenamiento><sum:PrimerRegistro>S</sum:PrimerRegistro></sum:Encadenamiento>
+            <sum:SistemaInformatico>
+              <sum:NombreRazon>Test Company S.L.</sum:NombreRazon>
+              <sum:NIF>B12345678</sum:NIF>
+              <sum:NombreSistemaInformatico>TestApp</sum:NombreSistemaInformatico>
+              <sum:IdSistemaInformatico>TEST01</sum:IdSistemaInformatico>
+              <sum:Version>1.0.0</sum:Version>
+              <sum:NumeroInstalacion>00000001</sum:NumeroInstalacion>
+              <sum:TipoUsoPosibleSoloVerifactu>S</sum:TipoUsoPosibleSoloVerifactu>
+              <sum:TipoUsoPosibleMultiOT>N</sum:TipoUsoPosibleMultiOT>
+              <sum:IndicadorMultiples>N</sum:IndicadorMultiples>
+            </sum:SistemaInformatico>
+            <sum:FechaHoraHusoGenRegistro>15-03-2026T13:00:00+01:00</sum:FechaHoraHusoGenRegistro>
+            <sum:TipoHuella>01</sum:TipoHuella>
+            <sum:Huella>GOLDENHASH</sum:Huella>
+          </sum:RegistroAlta>
+        </sum:RegistroFactura>
+      </sum:RegFactuSistemaFacturacion>"
+    `);
+  });
+
   it("buildVerifactuXml chains via RegistroAnterior when previousHash + prev invoice ID are set", () => {
     const xml = buildVerifactuXml(
       {

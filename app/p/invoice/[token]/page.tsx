@@ -4,7 +4,6 @@ import { RedsysPaymentButton } from "@/components/portal/redsys-payment-button";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getCurrentUser } from "@/lib/auth";
-import { serverEnv } from "@/lib/env";
 import { buildVatBreakdown } from "@/lib/finance";
 import { isPortalUnlocked } from "@/lib/portal/access";
 import { INVOICE_STATUS } from "@/lib/status";
@@ -83,16 +82,11 @@ export default async function PortalInvoicePage({
   const vatBreakdown = buildVatBreakdown(safeItems);
 
   let qrDataUrl: string | null = null;
-  const env = serverEnv();
-  if (
-    env.VERIFACTU_NIF_EMISOR &&
-    invoice.full_number &&
-    invoice.issue_date &&
-    invoice.total != null
-  ) {
+  const emisorNif = (settings?.company_nif as string | null) ?? null;
+  if (emisorNif && invoice.full_number && invoice.issue_date && invoice.total != null) {
     const qrUrl = buildQrUrl(
       {
-        nif: env.VERIFACTU_NIF_EMISOR,
+        nif: emisorNif,
         invoiceNumber: invoice.full_number as string,
         issueDate: new Date(invoice.issue_date as string),
         total: invoice.total as number,
@@ -119,12 +113,14 @@ export default async function PortalInvoicePage({
   const amountDue = Math.round(((invoice.total as number) - amountPaid) * 100) / 100;
 
   const payments = canPay
-    ? (await admin
-      .from("invoice_payments")
-      .select("id, amount, ds_authorisation_code, confirmed_at")
-      .eq("invoice_id", invoice.id as string)
-      .eq("status", "confirmed")
-      .order("confirmed_at", { ascending: false })).data ?? []
+    ? ((
+      await admin
+        .from("invoice_payments")
+        .select("id, amount, ds_authorisation_code, confirmed_at")
+        .eq("invoice_id", invoice.id as string)
+        .eq("status", "confirmed")
+        .order("confirmed_at", { ascending: false })
+    ).data ?? [])
     : [];
 
   return (
@@ -132,13 +128,17 @@ export default async function PortalInvoicePage({
       {success === "1" && (
         <div className="flex items-center gap-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 p-4 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300">
           <CheckCircle2 className="h-5 w-5 shrink-0" />
-          <p className="text-sm font-medium">¡Pago realizado con éxito! La factura se marcará como pagada en breve.</p>
+          <p className="text-sm font-medium">
+            ¡Pago realizado con éxito! La factura se marcará como pagada en breve.
+          </p>
         </div>
       )}
       {paymentError === "1" && (
         <div className="flex items-center gap-3 rounded-lg bg-rose-50 dark:bg-rose-950/30 p-4 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300">
           <XCircle className="h-5 w-5 shrink-0" />
-          <p className="text-sm font-medium">El pago no se pudo completar. Por favor, inténtelo de nuevo o contacte con soporte.</p>
+          <p className="text-sm font-medium">
+            El pago no se pudo completar. Por favor, inténtelo de nuevo o contacte con soporte.
+          </p>
         </div>
       )}
 
@@ -412,8 +412,8 @@ export default async function PortalInvoicePage({
         <div className="border-t border-zinc-200 dark:border-zinc-800 px-8 py-4">
           <p className="text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">
             Factura verificable en la sede electrónica de la AEAT mediante el código QR. Sistema de
-            emisión conforme al Reglamento Verifactu (RD 1007/2023). Conserve esta factura conforme a
-            la normativa fiscal aplicable.
+            emisión conforme al Reglamento Verifactu (RD 1007/2023). Conserve esta factura conforme
+            a la normativa fiscal aplicable.
           </p>
         </div>
       </article>
