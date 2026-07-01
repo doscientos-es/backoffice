@@ -316,6 +316,12 @@ function authFailureMessage(reason: string): string {
     case "callback_no_code":
       return "El enlace ha caducado o ya fue utilizado. Solicita uno nuevo.";
     default:
+      // Any other `callback_*` code is a provider-level OAuth error (e.g.
+      // Supabase returning "Signups not allowed for oauthproviders" when
+      // disable_signup=true and the Google email has no matching auth.users row).
+      if (reason.startsWith("callback_")) {
+        return "No se pudo completar el inicio de sesión con Google. Asegúrate de usar el email con el que fuiste invitado, o contacta con un administrador.";
+      }
       return "Sesión expirada. Vuelve a entrar.";
   }
 }

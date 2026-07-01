@@ -36,6 +36,8 @@ export function OnboardingForm({
   const [skipPending, startSkip] = useTransition();
   const [name, setName] = useState(defaultName);
   const [handle, setHandle] = useState(defaultGithubHandle ?? "");
+  const [handleError, setHandleError] = useState<string | null>(null);
+  const [aliasError, setAliasError] = useState<string | null>(null);
 
   // Priority: Google avatar (synced on login) → GitHub avatar from handle → null
   const avatarSrc = useMemo(() => {
@@ -55,9 +57,31 @@ export function OnboardingForm({
       .toUpperCase();
   }, [name, email]);
 
+  function validateHandle(value: string): string | null {
+    const v = value.trim();
+    if (!v) return null;
+    if (v.length > 39) return "El handle no puede superar 39 caracteres";
+    if (!/^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,38})$/.test(v))
+      return "Solo letras, números y guiones; debe empezar por letra o número";
+    return null;
+  }
+
+  function validateAlias(value: string): string | null {
+    const v = value.trim();
+    if (!v) return null;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? null : "Introduce un email válido";
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    // Client-side re-validation so inline errors are visible before the round-trip.
+    const hErr = validateHandle(fd.get("github_handle")?.toString() ?? "");
+    const aErr = validateAlias(fd.get("email_alias")?.toString() ?? "");
+    setHandleError(hErr);
+    setAliasError(aErr);
+    if (hErr || aErr) return;
+
     feedback.setPending();
     const result = await completeOnboarding(fd);
     if (!result.ok) {
@@ -74,7 +98,11 @@ export function OnboardingForm({
 
   function handleSkip() {
     startSkip(async () => {
-      await skipOnboarding();
+      try {
+        await skipOnboarding();
+      } catch {
+        feedback.setError("No se pudo saltar el onboarding. Inténtalo de nuevo.");
+      }
     });
   }
 
@@ -115,7 +143,7 @@ export function OnboardingForm({
             maxLength={160}
           />
         </Field>
-        <Field>
+        <Field data-invalid={handleError ? "true" : undefined}>
           <FieldLabel htmlFor="github_handle" className="text-xs font-medium">
             GitHub handle <span className="text-muted-foreground">(opcional)</span>
           </FieldLabel>
@@ -123,16 +151,26 @@ export function OnboardingForm({
             id="github_handle"
             name="github_handle"
             value={handle}
-            onChange={(e) => setHandle(e.target.value)}
+            onChange={(e) => {
+              setHandle(e.target.value);
+              if (handleError) setHandleError(validateHandle(e.target.value));
+            }}
+            onBlur={(e) => setHandleError(validateHandle(e.target.value))}
             placeholder="tu-usuario"
             maxLength={39}
             autoComplete="off"
+            aria-invalid={handleError ? true : undefined}
+            aria-describedby={handleError ? "github-handle-error" : "github-handle-hint"}
           />
-          <FieldDescription>
-            Sincroniza tus tareas con issues y PRs, y nos da tu avatar.
-          </FieldDescription>
+          {handleError ? (
+            <FieldError id="github-handle-error">{handleError}</FieldError>
+          ) : (
+            <FieldDescription id="github-handle-hint">
+              Sincroniza tus tareas con issues y PRs, y nos da tu avatar.
+            </FieldDescription>
+          )}
         </Field>
-        <Field>
+        <Field data-invalid={aliasError ? "true" : undefined}>
           <FieldLabel htmlFor="email_alias" className="text-xs font-medium">
             Alias de envío <span className="text-muted-foreground">(opcional)</span>
           </FieldLabel>
@@ -144,10 +182,20 @@ export function OnboardingForm({
             defaultValue={defaultEmailAlias ?? ""}
             placeholder="notificaciones@empresa.com"
             autoComplete="email"
+            aria-invalid={aliasError ? true : undefined}
+            aria-describedby={aliasError ? "email-alias-error" : "email-alias-hint"}
+            onBlur={(e) => setAliasError(validateAlias(e.target.value))}
+            onChange={(e) => {
+              if (aliasError) setAliasError(validateAlias(e.target.value));
+            }}
           />
-          <FieldDescription>
-            Dirección desde la que se enviarán los emails que mandes a clientes.
-          </FieldDescription>
+          {aliasError ? (
+            <FieldError id="email-alias-error">{aliasError}</FieldError>
+          ) : (
+            <FieldDescription id="email-alias-hint">
+              Dirección desde la que se enviarán los emails que mandes a clientes.
+            </FieldDescription>
+          )}
         </Field>
         <Field orientation="horizontal" className="items-center pt-5">
           <input

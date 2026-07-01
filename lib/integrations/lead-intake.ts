@@ -54,8 +54,15 @@ export type LeadIntakeResult =
 
 const log = scopedLogger("lead-intake");
 
-/** Window for email/phone soft-dedupe when no externalId is present. */
-const SOFT_DEDUPE_WINDOW_MS = 48 * 60 * 60 * 1000;
+/**
+ * Window for email/phone soft-dedupe.
+ * 7 days covers the typical landing-form → Cal.com booking gap where the
+ * same person submits the contact form and then schedules a call days later.
+ * Without this, both events would create separate leads and fire duplicate
+ * notifications, because Cal.com always carries its own externalId (booking
+ * uid) which is different from the landing-form dedupeKey.
+ */
+const SOFT_DEDUPE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
 export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
   // ── 1. Validate & normalize ────────────────────────────────────────────
@@ -87,8 +94,11 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
     }
   }
 
-  // ── 3. Soft dedupe: same email or phone within 48 h (no externalId) ────
-  if (!norm.externalId) {
+  // ── 3. Soft dedupe: same email or phone within window ─────────────────
+  // Runs even when externalId is present so that cross-source flows (e.g.
+  // landing form → Cal.com booking) map to the same lead and suppress the
+  // duplicate notification instead of creating a second one.
+  {
     const cutoff = new Date(Date.now() - SOFT_DEDUPE_WINDOW_MS).toISOString();
 
     if (norm.email) {
@@ -101,7 +111,7 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
         .limit(1)
         .maybeSingle();
       if (byEmail?.id) {
-        log.info({ leadId: byEmail.id }, "soft-dedupe hit by email");
+        log.info({ leadId: byEmail.id, source: norm.source }, "soft-dedupe hit by email");
         return { ok: true, leadId: byEmail.id as string, duplicate: true };
       }
     } else if (norm.phone) {
@@ -114,7 +124,7 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
         .limit(1)
         .maybeSingle();
       if (byPhone?.id) {
-        log.info({ leadId: byPhone.id }, "soft-dedupe hit by phone");
+        log.info({ leadId: byPhone.id, source: norm.source }, "soft-dedupe hit by phone");
         return { ok: true, leadId: byPhone.id as string, duplicate: true };
       }
     }
