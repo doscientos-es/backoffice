@@ -194,10 +194,58 @@ function mockCsv(hash: string): string {
 }
 
 /**
+ * SOAP POST with mutual TLS — presents the P12 client certificate during the
+ * TLS handshake, which is required by all AEAT VERI*FACTU web services.
+ */
+async function soapPost(
+  endpoint: string,
+  body: string,
+  soapAction: string,
+  pfxBuf: Buffer,
+  passphrase: string,
+): Promise<{ status: number; text: string }> {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const https = require("node:https") as typeof import("node:https");
+  return new Promise((resolve, reject) => {
+    const u = new URL(endpoint);
+    const bodyBuf = Buffer.from(body, "utf8");
+    const req = https.request(
+      {
+        hostname: u.hostname,
+        port: u.port ? Number(u.port) : 443,
+        path: u.pathname + u.search,
+        method: "POST",
+        headers: {
+          "Content-Type": "text/xml; charset=utf-8",
+          "Content-Length": bodyBuf.length,
+          SOAPAction: soapAction,
+        },
+        pfx: pfxBuf,
+        passphrase,
+        rejectUnauthorized: true,
+      },
+      (res) => {
+        const chunks: Buffer[] = [];
+        res.on("data", (c: Buffer) => chunks.push(c));
+        res.on("end", () =>
+          resolve({ status: res.statusCode ?? 0, text: Buffer.concat(chunks).toString("utf8") }),
+        );
+      },
+    );
+    req.on("error", reject);
+    req.write(bodyBuf);
+    req.end();
+  });
+}
+
+/**
  * Sends an invoice record to Verifactu. Dispatches by `VERIFACTU_ENV`:
  *  - `mock`  → no network call (hash + QR only; used for MVP and CI)
- *  - `test`  → AEAT pre-production SOAP endpoint (requires P12 cert)
- *  - `prod`  → AEAT production SOAP endpoint (requires P12 cert)
+ *  - `test`  → AEAT pre-production SOAP endpoint (mTLS with P12 cert)
+ *  - `prod`  → AEAT production SOAP endpoint (mTLS with P12 cert)
+ *
+ * No XAdES signature is applied: VERI*FACTU uses mTLS + hash chain for
+ * integrity. Switching test↔prod is a one-variable change (VERIFACTU_ENV).
  */
 export async function submitToVerifactu(
   input: VerifactuSubmitInput,
@@ -205,7 +253,7 @@ export async function submitToVerifactu(
   const env = serverEnv();
   const hash = computeInvoiceHash(input);
   const idfact = buildIdfact(input.nif, input.invoiceNumber, input.issueDate);
-  const xml = buildVerifactuXml(input, hash);
+  const xml = buildVerifactuXml(input, hash, env);
 
   log.info(
     { mode: env.VERIFACTU_ENV, invoice: input.invoiceNumber, hash, idfact, xmlBytes: xml.length },
@@ -227,91 +275,82 @@ export async function submitToVerifactu(
   }
 
   // ── Real SOAP submission (test / prod) ────────────────────────────────────
-  if (env.VERIFACTU_ENV === "test" || env.VERIFACTU_ENV === "prod") {
-    if (!env.VERIFACTU_CERT_P12_BASE64 || !env.VERIFACTU_CERT_PASSWORD) {
-      log.error({ mode: env.VERIFACTU_ENV }, "verifactu_cert_missing");
-      return {
-        status: "error",
-        csv: null,
-        hash,
-        idfact,
-        response: { error: "certificate not configured" },
-        errorMessage:
-          "Certificado P12 no configurado (VERIFACTU_CERT_P12_BASE64 / VERIFACTU_CERT_PASSWORD)",
-      };
-    }
-
-    let cert: ReturnType<typeof loadP12Cert>;
-    try {
-      cert = loadP12Cert(env.VERIFACTU_CERT_P12_BASE64, env.VERIFACTU_CERT_PASSWORD);
-    } catch (err) {
-      log.error({ err }, "verifactu_cert_load_error");
-      return {
-        status: "error",
-        csv: null,
-        hash,
-        idfact,
-        response: { error: String(err) },
-        errorMessage: `Error cargando certificado: ${String(err)}`,
-      };
-    }
-
-    const signedXml = signXml(xml, cert, input.generatedAt);
-    const soapBody = buildSoapEnvelope(signedXml);
-    const endpoint = AEAT_SOAP_ENDPOINT[env.VERIFACTU_ENV];
-
-    let rawResponse: string;
-    try {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "text/xml; charset=utf-8",
-          SOAPAction: AEAT_SOAP_ACTION_ALTA,
-        },
-        body: soapBody,
-      });
-      rawResponse = await res.text();
-      if (!res.ok) {
-        log.warn({ status: res.status, endpoint }, "verifactu_http_error");
-        return {
-          status: "error",
-          csv: null,
-          hash,
-          idfact,
-          response: { httpStatus: res.status, body: rawResponse },
-          errorMessage: `AEAT HTTP ${res.status}`,
-        };
-      }
-    } catch (err) {
-      log.error({ err, endpoint }, "verifactu_network_error");
-      return {
-        status: "error",
-        csv: null,
-        hash,
-        idfact,
-        response: { error: String(err) },
-        errorMessage: `Error de red: ${String(err)}`,
-      };
-    }
-
-    const { csv, status } = parseSoapResponse(rawResponse);
-    log.info({ invoice: input.invoiceNumber, csv, status }, "verifactu_submit_ok");
+  if (!env.VERIFACTU_CERT_P12_BASE64 || !env.VERIFACTU_CERT_PASSWORD) {
+    log.error({ mode: env.VERIFACTU_ENV }, "verifactu_cert_missing");
     return {
-      status,
-      csv,
+      status: "error",
+      csv: null,
       hash,
       idfact,
-      response: { rawResponse },
-      errorMessage: status === "rejected" ? "AEAT rechazó el registro" : null,
+      response: { error: "certificate not configured" },
+      errorMessage:
+        "Certificado P12 no configurado (VERIFACTU_CERT_P12_BASE64 / VERIFACTU_CERT_PASSWORD)",
     };
   }
 
+  // Validate cert + password before making any network call
+  try {
+    loadP12Cert(env.VERIFACTU_CERT_P12_BASE64, env.VERIFACTU_CERT_PASSWORD);
+  } catch (err) {
+    log.error({ err }, "verifactu_cert_load_error");
+    return {
+      status: "error",
+      csv: null,
+      hash,
+      idfact,
+      response: { error: String(err) },
+      errorMessage: `Error cargando certificado: ${String(err)}`,
+    };
+  }
+
+  const pfxBuf = Buffer.from(env.VERIFACTU_CERT_P12_BASE64, "base64");
+  const soapBody = buildSoapEnvelope(xml);
+  const endpoint = AEAT_SOAP_ENDPOINT[env.VERIFACTU_ENV];
+
+  let rawResponse: string;
+  let httpStatus: number;
+  try {
+    const res = await soapPost(
+      endpoint,
+      soapBody,
+      AEAT_SOAP_ACTION_ALTA,
+      pfxBuf,
+      env.VERIFACTU_CERT_PASSWORD,
+    );
+    rawResponse = res.text;
+    httpStatus = res.status;
+  } catch (err) {
+    log.error({ err, endpoint }, "verifactu_network_error");
+    return {
+      status: "error",
+      csv: null,
+      hash,
+      idfact,
+      response: { error: String(err) },
+      errorMessage: `Error de red: ${String(err)}`,
+    };
+  }
+
+  if (httpStatus >= 400) {
+    log.warn({ status: httpStatus, endpoint }, "verifactu_http_error");
+    return {
+      status: "error",
+      csv: null,
+      hash,
+      idfact,
+      response: { httpStatus, body: rawResponse },
+      errorMessage: `AEAT HTTP ${httpStatus}`,
+    };
+  }
+
+  const { csv, status } = parseSoapResponse(rawResponse);
+  log.info({ invoice: input.invoiceNumber, csv, status }, "verifactu_submit_ok");
   return {
-    status: "error",
-    csv: null,
+    status,
+    csv,
     hash,
     idfact,
-    response: { error: "unknown VERIFACTU_ENV" },
-    errorMessage: "VERIFACTU_ENV desconocido",
+    response: { rawResponse },
+    errorMessage: status === "rejected" ? "AEAT rechazó el registro" : null,
   };
 }

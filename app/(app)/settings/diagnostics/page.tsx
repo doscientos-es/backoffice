@@ -16,7 +16,6 @@ export default async function DiagnosticsSettingsPage() {
   const config = {
     telegramBot: byKey("telegram_bot"),
     telegramChat: byKey("telegram_chat"),
-    n8n: byKey("n8n"),
     ai: byKey("ai"),
   };
 

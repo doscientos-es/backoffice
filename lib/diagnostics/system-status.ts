@@ -49,11 +49,6 @@ export function getSystemStatus(): SystemStatus {
       label: "Chat de Telegram (envío directo)",
       configured: has(env.TELEGRAM_CHAT_ID),
     },
-    {
-      key: "n8n",
-      label: "n8n (Lead → Telegram)",
-      configured: has(env.N8N_LEAD_WEBHOOK_URL),
-    },
     { key: "google", label: "Google Workspace", configured: isGoogleEnabled() },
     { key: "calendar", label: "Google Calendar", configured: has(env.GOOGLE_CALENDAR_ID) },
     {
@@ -86,7 +81,11 @@ export function getSystemStatus(): SystemStatus {
     },
     { key: "lead_intake", label: "Webhook lead-intake", configured: has(env.LEAD_INTAKE_TOKEN) },
     { key: "backup", label: "Backup runner", configured: has(env.BACKUP_RUNNER_URL) },
-    { key: "hcaptcha", label: "hCaptcha", configured: has(publicEnv.NEXT_PUBLIC_HCAPTCHA_SITE_KEY) },
+    {
+      key: "hcaptcha",
+      label: "hCaptcha",
+      configured: has(publicEnv.NEXT_PUBLIC_HCAPTCHA_SITE_KEY),
+    },
   ];
 
   const runtime: RuntimeInfo[] = [

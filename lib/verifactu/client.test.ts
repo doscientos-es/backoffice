@@ -1,6 +1,14 @@
+import type { SistemaInformaticoEnv } from "@/lib/verifactu/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const ORIGINAL_ENV = { ...process.env };
+
+const mockSistemaEnv: SistemaInformaticoEnv = {
+  VERIFACTU_SOFTWARE_NAME: "TestApp",
+  VERIFACTU_SOFTWARE_ID: "TEST01",
+  VERIFACTU_SOFTWARE_VERSION: "1.0.0",
+  VERIFACTU_INSTALLATION_NUMBER: "00000001",
+};
 
 beforeEach(() => {
   process.env = {
@@ -10,6 +18,10 @@ beforeEach(() => {
     SUPABASE_SERVICE_ROLE_KEY: "service-role-key-aaaaaaaaaaaaaaaaaaa",
     VERIFACTU_ENV: "mock",
     VERIFACTU_NIF_EMISOR: "B12345678",
+    VERIFACTU_SOFTWARE_NAME: "TestApp",
+    VERIFACTU_SOFTWARE_ID: "TEST01",
+    VERIFACTU_SOFTWARE_VERSION: "1.0.0",
+    VERIFACTU_INSTALLATION_NUMBER: "00000001",
     LOG_LEVEL: "error",
   };
   vi.resetModules();
@@ -29,28 +41,64 @@ describe("verifactu/client", () => {
     total: 121,
     previousHash: null,
     generatedAt: new Date("2026-03-15T12:00:00.000Z"),
+    emisorName: "Test Company S.L.",
+    clientNif: "12345678A",
+    clientName: "Test Client",
+    descriptionOperacion: "Servicios de prueba",
+    vatLines: [{ rate: 21, base: 100, tax: 21 }],
+    previousInvoiceNumber: null,
+    previousIssueDate: null,
   };
 
-  it("buildVerifactuXml includes core fiscal fields and primer registro marker", async () => {
+  it("buildVerifactuXml includes all mandatory fiscal fields", async () => {
     const { buildVerifactuXml } = await import("@/lib/verifactu/client");
-    const xml = buildVerifactuXml(baseInput, "deadbeef");
+    const xml = buildVerifactuXml(baseInput, "deadbeef", mockSistemaEnv);
+    expect(xml).toContain("<sum:IDVersion>1.0</sum:IDVersion>");
     expect(xml).toContain("<sum:NIF>B12345678</sum:NIF>");
+    expect(xml).toContain("<sum:NombreRazonEmisor>Test Company S.L.</sum:NombreRazonEmisor>");
     expect(xml).toContain("<sum:NumSerieFactura>A-000001</sum:NumSerieFactura>");
     expect(xml).toContain("<sum:FechaExpedicionFactura>15-03-2026</sum:FechaExpedicionFactura>");
     expect(xml).toContain("<sum:TipoFactura>F1</sum:TipoFactura>");
+    expect(xml).toContain(
+      "<sum:DescripcionOperacion>Servicios de prueba</sum:DescripcionOperacion>",
+    );
+    expect(xml).toContain("<sum:NIF>12345678A</sum:NIF>"); // Destinatarios
+    expect(xml).toContain("<sum:TipoImpositivo>21.00</sum:TipoImpositivo>");
     expect(xml).toContain("<sum:CuotaTotal>21.00</sum:CuotaTotal>");
     expect(xml).toContain("<sum:ImporteTotal>121.00</sum:ImporteTotal>");
     expect(xml).toContain("<sum:PrimerRegistro>S</sum:PrimerRegistro>");
+    expect(xml).toContain("<sum:TipoHuella>01</sum:TipoHuella>");
     expect(xml).toContain("<sum:Huella>deadbeef</sum:Huella>");
+    expect(xml).toContain("<sum:IdSistemaInformatico>TEST01</sum:IdSistemaInformatico>");
   });
 
-  it("buildVerifactuXml chains via RegistroAnterior when previousHash is set", async () => {
+  it("buildVerifactuXml chains via RegistroAnterior when previousHash + prev invoice ID are set", async () => {
     const { buildVerifactuXml } = await import("@/lib/verifactu/client");
-    const xml = buildVerifactuXml({ ...baseInput, previousHash: "abc123" }, "newhash");
-    expect(xml).toContain(
-      "<sum:RegistroAnterior><sum:Huella>abc123</sum:Huella></sum:RegistroAnterior>",
+    const xml = buildVerifactuXml(
+      {
+        ...baseInput,
+        previousHash: "abc123",
+        previousInvoiceNumber: "A-000001",
+        previousIssueDate: new Date("2026-01-15T00:00:00.000Z"),
+      },
+      "newhash",
+      mockSistemaEnv,
     );
+    expect(xml).toContain("<sum:RegistroAnterior>");
+    expect(xml).toContain("<sum:NumSerieFacturaAnterior>A-000001</sum:NumSerieFacturaAnterior>");
+    expect(xml).toContain("<sum:Huella>abc123</sum:Huella>");
     expect(xml).not.toContain("PrimerRegistro");
+  });
+
+  it("buildVerifactuXml falls back to PrimerRegistro when previousInvoiceNumber is missing", async () => {
+    const { buildVerifactuXml } = await import("@/lib/verifactu/client");
+    // previousHash set but previousInvoiceNumber not → treated as first invoice
+    const xml = buildVerifactuXml(
+      { ...baseInput, previousHash: "abc123" },
+      "newhash",
+      mockSistemaEnv,
+    );
+    expect(xml).toContain("<sum:PrimerRegistro>S</sum:PrimerRegistro>");
   });
 
   it("submitToVerifactu in mock mode returns accepted with deterministic CSV", async () => {
@@ -64,7 +112,7 @@ describe("verifactu/client", () => {
     expect(result.response).toMatchObject({ mock: true });
   });
 
-  it("submitToVerifactu returns 'error' (not implemented) for test/prod modes", async () => {
+  it("submitToVerifactu returns error when cert is missing in test mode", async () => {
     process.env.VERIFACTU_ENV = "test";
     vi.resetModules();
     const { submitToVerifactu } = await import("@/lib/verifactu/client");

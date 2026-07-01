@@ -3,7 +3,6 @@
 import { AI_MODELS, isAIEnabled, runAIChat } from "@/lib/ai";
 import { requireRole } from "@/lib/auth";
 import { sendEmail } from "@/lib/email/resend";
-import { serverEnv } from "@/lib/env";
 import { telegramGetMe, telegramSendMessage } from "@/lib/integrations/telegram";
 import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -22,7 +21,9 @@ export async function testTelegramBot(): Promise<TestResult> {
   await requireRole([...ADMIN]);
   const res = await telegramGetMe();
   if (!res.ok) return fail(res.error);
-  const username = res.result.username ? `@${res.result.username}` : res.result.first_name ?? "bot";
+  const username = res.result.username
+    ? `@${res.result.username}`
+    : (res.result.first_name ?? "bot");
   return { ok: true, detail: `Bot conectado: ${username}` };
 }
 
@@ -44,38 +45,6 @@ export async function testTelegramLeadMessage(): Promise<TestResult> {
   const res = await telegramSendMessage({ text, parseMode: "Markdown" });
   if (!res.ok) return fail(res.error);
   return { ok: true, detail: "Mensaje enviado al chat de Telegram" };
-}
-
-/** Fires the current n8n lead webhook with mock data (tests the live path). */
-export async function testN8nWebhook(): Promise<TestResult> {
-  await requireRole([...ADMIN]);
-  const { N8N_LEAD_WEBHOOK_URL: url, N8N_WEBHOOK_SECRET: secret } = serverEnv();
-  if (!url) return fail("N8N_LEAD_WEBHOOK_URL no configurado");
-
-  try {
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (secret) headers["X-Webhook-Secret"] = secret;
-    const res = await fetch(url, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        leadId: "diagnostic-test",
-        nombre: "Lead de prueba",
-        email: "test@doscientos.es",
-        telefono: "600000000",
-        empresa: "ACME S.L.",
-        fuente: "diagnóstico",
-        url: "",
-      }),
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) return fail(`n8n respondió HTTP ${res.status}`);
-    return { ok: true, detail: `n8n respondió HTTP ${res.status}` };
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "error de red";
-    log.error({ err: e }, "n8n webhook test failed");
-    return fail(msg);
-  }
 }
 
 /** Sends a test email to the current admin via Resend. */

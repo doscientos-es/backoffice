@@ -74,11 +74,6 @@ export const ServerSchema = PublicSchema.extend({
   GOOGLE_DRIVE_PROPOSALS_FOLDER_ID: z.string().optional().default(""),
   // Shared Google Calendar ID for lead meetings (e.g. "doscientos.es_xxx@group.calendar.google.com").
   GOOGLE_CALENDAR_ID: z.string().optional().default(""),
-  // n8n automation — Lead → Telegram notification
-  N8N_LEAD_WEBHOOK_URL: z.string().url().or(z.literal("")).optional().default(""),
-  // Shared secret for authenticating traffic between the backoffice and n8n,
-  // in both directions (outbound webhook header + inbound callback endpoint).
-  N8N_WEBHOOK_SECRET: z.string().optional().default(""),
   // Telegram Bot — direct webhook handler (callbacks from inline buttons)
   TELEGRAM_BOT_TOKEN: z.string().optional().default(""),
   // Secret set in setWebhook; Telegram sends it as X-Telegram-Bot-Api-Secret-Token.

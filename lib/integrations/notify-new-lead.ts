@@ -2,7 +2,8 @@ import { LeadConfirmationEmail } from "@/components/email/lead-confirmation-emai
 import { NewLeadEmail } from "@/components/email/new-lead-email";
 import { renderEmail } from "@/lib/email/render";
 import { sendEmail } from "@/lib/email/resend";
-import { publicEnv, serverEnv } from "@/lib/env";
+import { publicEnv } from "@/lib/env";
+import { telegramSendMessage } from "@/lib/integrations/telegram";
 import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -115,32 +116,37 @@ export async function notifyNewLead(input: NotifyNewLeadInput): Promise<void> {
     "lead_new notifications dispatched",
   );
 
-  // ── 4. n8n → Telegram notification ──────────────────────────────────────
-  const { N8N_LEAD_WEBHOOK_URL: n8nUrl, N8N_WEBHOOK_SECRET: n8nSecret } = serverEnv();
-  if (n8nUrl) {
-    try {
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      // Authenticate the webhook so only the backoffice can inject leads.
-      if (n8nSecret) headers["X-Webhook-Secret"] = n8nSecret;
-      await fetch(n8nUrl, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          // leadId lets n8n deduplicate retries and build callback buttons.
-          leadId: input.leadId,
-          nombre: input.leadName,
-          email: input.leadEmail ?? "",
-          telefono: input.leadPhone ?? "",
-          empresa: input.leadCompany ?? "",
-          fuente: input.leadSource,
-          url: leadUrl,
-        }),
-        signal: AbortSignal.timeout(5000),
-      });
-      log.info({ leadId: input.leadId }, "n8n lead webhook fired");
-    } catch (e) {
-      log.error({ err: e, leadId: input.leadId }, "n8n lead webhook failed");
-    }
+  // ── 4. Telegram direct notification ─────────────────────────────────────
+  const lines = [
+    "🔔 *Nuevo lead*",
+    "",
+    `👤 ${input.leadName}`,
+    input.leadEmail ? `📧 ${input.leadEmail}` : null,
+    input.leadPhone ? `📱 ${input.leadPhone}` : null,
+    input.leadCompany ? `🏢 ${input.leadCompany}` : null,
+    `🎯 Fuente: ${input.leadSource}`,
+    "",
+    `🔗 [Ver en backoffice](${leadUrl})`,
+  ]
+    .filter((l) => l !== null)
+    .join("\n");
+
+  const tgRes = await telegramSendMessage({
+    text: lines,
+    parseMode: "Markdown",
+    inlineKeyboard: [
+      [
+        { text: "✅ Contactado", callback_data: `c:${input.leadId}` },
+        { text: "🏆 Ganado", callback_data: `w:${input.leadId}` },
+        { text: "❌ No interesa", callback_data: `n:${input.leadId}` },
+      ],
+    ],
+  });
+
+  if (tgRes.ok) {
+    log.info({ leadId: input.leadId }, "telegram lead notification sent");
+  } else {
+    log.error({ leadId: input.leadId, err: tgRes.error }, "telegram lead notification failed");
   }
 
   // ── 5. Confirmation email to the lead ────────────────────────────────────

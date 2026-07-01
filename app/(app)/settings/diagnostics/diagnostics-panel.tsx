@@ -8,7 +8,6 @@ import { AlertCircle, CheckCircle2, Loader2, Play } from "lucide-react";
 import {
   type TestResult,
   testAI,
-  testN8nWebhook,
   testResendEmail,
   testSupabaseConnection,
   testTelegramBot,
@@ -18,7 +17,6 @@ import {
 export type DiagnosticsConfig = {
   telegramBot: boolean;
   telegramChat: boolean;
-  n8n: boolean;
   ai: boolean;
 };
 
@@ -107,13 +105,6 @@ export function DiagnosticsPanel({ config }: { config: DiagnosticsConfig }) {
       run: testTelegramBot,
       disabled: !config.telegramBot,
       disabledHint: "Falta TELEGRAM_BOT_TOKEN",
-    },
-    {
-      title: "Lead → Telegram (vía n8n)",
-      description: "Dispara el webhook actual de n8n con datos de ejemplo.",
-      run: testN8nWebhook,
-      disabled: !config.n8n,
-      disabledHint: "Falta N8N_LEAD_WEBHOOK_URL",
     },
     {
       title: "Email (Resend)",

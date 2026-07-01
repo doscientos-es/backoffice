@@ -5,7 +5,7 @@ import { promoteLeadFromClient } from "@/lib/crm/conversion";
 import { renderEmail } from "@/lib/email/render";
 import { sendEmail } from "@/lib/email/resend";
 import { publicEnv, serverEnv } from "@/lib/env";
-import { computeLineTotals } from "@/lib/finance";
+import { buildVatBreakdown, computeLineTotals } from "@/lib/finance";
 import { backupInvoiceToDrive } from "@/lib/google/backup";
 import { scopedLogger } from "@/lib/logger";
 import { buildPortalAccessPatch } from "@/lib/portal/access";
@@ -146,7 +146,7 @@ export async function sendToAeat(formData: FormData): Promise<ActionResult> {
   const { data: invoice, error: readError } = await supabase
     .from("invoices")
     .select(
-      "id, client_id, status, verifactu_status, full_number, invoice_type, issue_date, tax_amount, total, previous_hash, chain_sequence",
+      "id, client_id, status, verifactu_status, full_number, invoice_type, issue_date, tax_amount, total, previous_hash, chain_sequence, client_nif, client_name",
     )
     .eq("id", id)
     .is("deleted_at", null)
@@ -165,17 +165,36 @@ export async function sendToAeat(formData: FormData): Promise<ActionResult> {
     return { ok: false, error: "Esta factura está excluida de Verifactu" };
   }
 
-  // Resolve previous hash from the latest accepted invoice in the chain.
+  // Resolve previous hash + invoice ID from the latest accepted invoice in the chain.
   const { data: prev } = await supabase
     .from("invoices")
-    .select("current_hash, chain_sequence")
+    .select("current_hash, chain_sequence, full_number, issue_date")
     .eq("verifactu_status", "accepted")
     .not("current_hash", "is", null)
     .order("chain_sequence", { ascending: false, nullsFirst: false })
     .limit(1)
     .maybeSingle();
 
+  // Fetch line items for Desglose (VAT breakdown) and DescripcionOperacion.
+  const { data: items } = await supabase
+    .from("invoice_items")
+    .select("description, vat_rate, subtotal")
+    .eq("invoice_id", id)
+    .order("position");
+
+  const vatLines = buildVatBreakdown(
+    (items ?? []).map((it) => ({ vat_rate: it.vat_rate, subtotal: it.subtotal })),
+  );
+  const descriptionOperacion =
+    (items ?? [])
+      .map((it) => it.description)
+      .filter(Boolean)
+      .join(", ")
+      .slice(0, 250) || "Prestación de servicios profesionales";
+
   const previousHash = (prev?.current_hash as string | null) ?? null;
+  const previousInvoiceNumber = (prev?.full_number as string | null) ?? null;
+  const previousIssueDate = prev?.issue_date ? new Date(prev.issue_date as string) : null;
   const nextSequence = ((prev?.chain_sequence as number | null) ?? 0) + 1;
   const generatedAt = new Date();
   const issueDate = new Date(invoice.issue_date as string);
@@ -189,6 +208,13 @@ export async function sendToAeat(formData: FormData): Promise<ActionResult> {
     total: Number(invoice.total ?? 0),
     previousHash,
     generatedAt,
+    emisorName: env.VERIFACTU_EMISOR_NAME,
+    clientNif: (invoice.client_nif as string | null) ?? null,
+    clientName: (invoice.client_name as string | null) ?? null,
+    descriptionOperacion,
+    vatLines,
+    previousInvoiceNumber,
+    previousIssueDate,
   });
 
   const qrUrl = buildQrUrl(
