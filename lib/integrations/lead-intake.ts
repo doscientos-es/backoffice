@@ -94,15 +94,18 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
     }
   }
 
-  // ── 3. Soft dedupe: same email or phone within window ─────────────────
+  // ── 3. Soft dedupe + enrich: same email or phone within window ─────────
   // Runs even when externalId is present so that cross-source flows (e.g.
-  // landing form → Cal.com booking) map to the same lead and suppress the
-  // duplicate notification instead of creating a second one.
+  // landing form → Cal.com booking) map to the same lead. Instead of dropping
+  // the second event, we merge whatever new context it carries into the
+  // existing lead (filling gaps + appending notes) and suppress the duplicate
+  // notification by returning `duplicate: true`.
   {
     const cutoff = new Date(Date.now() - SOFT_DEDUPE_WINDOW_MS).toISOString();
 
+    let matchedId: string | null = null;
     if (norm.email) {
-      const { data: byEmail } = await supabase
+      const { data } = await supabase
         .from("leads")
         .select("id")
         .eq("email", norm.email)
@@ -110,12 +113,9 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
         .gte("created_at", cutoff)
         .limit(1)
         .maybeSingle();
-      if (byEmail?.id) {
-        log.info({ leadId: byEmail.id, source: norm.source }, "soft-dedupe hit by email");
-        return { ok: true, leadId: byEmail.id as string, duplicate: true };
-      }
+      if (data?.id) matchedId = data.id as string;
     } else if (norm.phone) {
-      const { data: byPhone } = await supabase
+      const { data } = await supabase
         .from("leads")
         .select("id")
         .eq("phone", norm.phone)
@@ -123,10 +123,15 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
         .gte("created_at", cutoff)
         .limit(1)
         .maybeSingle();
-      if (byPhone?.id) {
-        log.info({ leadId: byPhone.id, source: norm.source }, "soft-dedupe hit by phone");
-        return { ok: true, leadId: byPhone.id as string, duplicate: true };
-      }
+      if (data?.id) matchedId = data.id as string;
+    }
+
+    if (matchedId) {
+      await enrichLead(supabase, matchedId, norm).catch((e) =>
+        log.error({ err: e, leadId: matchedId }, "lead enrich failed"),
+      );
+      log.info({ leadId: matchedId, source: norm.source }, "soft-dedupe hit, lead enriched");
+      return { ok: true, leadId: matchedId, duplicate: true };
     }
   }
 
@@ -192,4 +197,68 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
   });
 
   return { ok: true, leadId, duplicate: false };
+}
+
+/**
+ * Non-destructive merge of a fresh intake into an already-existing lead.
+ *
+ * Used when soft-dedupe resolves a second submission (e.g. a Cal.com booking
+ * after a landing-form contact) to the same person. Fills only the fields the
+ * existing lead is still missing — first-touch attribution (`source`,
+ * `external_*`, `name`) is preserved — and appends any new notes so the
+ * combined context (phone from the form, meeting details from Cal.com, …) is
+ * captured on a single lead. Never throws to the caller.
+ */
+async function enrichLead(
+  supabase: ReturnType<typeof createAdminClient>,
+  leadId: string,
+  norm: LeadIntake,
+): Promise<void> {
+  const { data: existing, error } = await supabase
+    .from("leads")
+    .select(
+      "email, phone, company, notes, utm_source, utm_medium, utm_campaign, utm_term, utm_content, referrer, ip, device, browser, language",
+    )
+    .eq("id", leadId)
+    .maybeSingle();
+  if (error || !existing) return;
+
+  const updates: Record<string, unknown> = {};
+
+  // Fill a column only when the existing lead has no value for it yet.
+  const fillGap = (column: string, current: unknown, incoming: string | null | undefined) => {
+    const value = incoming?.trim();
+    if (value && !current) updates[column] = value;
+  };
+
+  fillGap("email", existing.email, norm.email);
+  fillGap("phone", existing.phone, norm.phone);
+  fillGap("company", existing.company, norm.company);
+  fillGap("utm_source", existing.utm_source, norm.utm?.source);
+  fillGap("utm_medium", existing.utm_medium, norm.utm?.medium);
+  fillGap("utm_campaign", existing.utm_campaign, norm.utm?.campaign);
+  fillGap("utm_term", existing.utm_term, norm.utm?.term);
+  fillGap("utm_content", existing.utm_content, norm.utm?.content);
+  fillGap("referrer", existing.referrer, norm.context?.referrer);
+  fillGap("ip", existing.ip, norm.context?.ip);
+  fillGap("device", existing.device, norm.context?.device);
+  fillGap("browser", existing.browser, norm.context?.browser);
+  fillGap("language", existing.language, norm.context?.language);
+
+  // Append incoming notes unless they are already present (guards retries).
+  const incomingNotes = norm.notes?.trim();
+  const currentNotes = (existing.notes as string | null) ?? "";
+  if (incomingNotes && !currentNotes.includes(incomingNotes)) {
+    updates.notes = currentNotes ? `${currentNotes}\n\n---\n${incomingNotes}` : incomingNotes;
+  }
+
+  if (Object.keys(updates).length === 0) return;
+
+  updates.updated_at = new Date().toISOString();
+  const { error: updateErr } = await supabase.from("leads").update(updates).eq("id", leadId);
+  if (updateErr) {
+    log.error({ err: updateErr, leadId }, "enrichLead update failed");
+  } else {
+    log.info({ leadId, fields: Object.keys(updates) }, "lead enriched from duplicate intake");
+  }
 }

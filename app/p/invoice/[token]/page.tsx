@@ -4,12 +4,13 @@ import { RedsysPaymentButton } from "@/components/portal/redsys-payment-button";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getCurrentUser } from "@/lib/auth";
-import { publicEnv, serverEnv } from "@/lib/env";
+import { serverEnv } from "@/lib/env";
 import { buildVatBreakdown } from "@/lib/finance";
 import { isPortalUnlocked } from "@/lib/portal/access";
 import { INVOICE_STATUS } from "@/lib/status";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
+import { verifactuConfigFromEnv } from "@/lib/verifactu/config";
 import { buildQrDataUrl, buildQrUrl } from "@/lib/verifactu/qr";
 import { CheckCircle2, Download, XCircle } from "lucide-react";
 import type { Metadata } from "next";
@@ -96,7 +97,7 @@ export default async function PortalInvoicePage({
         issueDate: new Date(invoice.issue_date as string),
         total: invoice.total as number,
       },
-      publicEnv.NEXT_PUBLIC_APP_URL,
+      verifactuConfigFromEnv(),
     );
     qrDataUrl = await buildQrDataUrl(qrUrl);
   }

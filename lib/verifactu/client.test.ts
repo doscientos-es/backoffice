@@ -1,35 +1,20 @@
-import type { SistemaInformaticoEnv } from "@/lib/verifactu/client";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { buildVerifactuXml, submitToVerifactu } from "@/lib/verifactu/client";
+import type { VerifactuConfig, VerifactuSoftware } from "@/lib/verifactu/config";
+import { describe, expect, it } from "vitest";
 
-const ORIGINAL_ENV = { ...process.env };
-
-const mockSistemaEnv: SistemaInformaticoEnv = {
-  VERIFACTU_SOFTWARE_NAME: "TestApp",
-  VERIFACTU_SOFTWARE_ID: "TEST01",
-  VERIFACTU_SOFTWARE_VERSION: "1.0.0",
-  VERIFACTU_INSTALLATION_NUMBER: "00000001",
+const mockSoftware: VerifactuSoftware = {
+  name: "TestApp",
+  id: "TEST01",
+  version: "1.0.0",
+  installationNumber: "00000001",
 };
 
-beforeEach(() => {
-  process.env = {
-    ...ORIGINAL_ENV,
-    NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon-key-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    SUPABASE_SERVICE_ROLE_KEY: "service-role-key-aaaaaaaaaaaaaaaaaaa",
-    VERIFACTU_ENV: "mock",
-    VERIFACTU_NIF_EMISOR: "B12345678",
-    VERIFACTU_SOFTWARE_NAME: "TestApp",
-    VERIFACTU_SOFTWARE_ID: "TEST01",
-    VERIFACTU_SOFTWARE_VERSION: "1.0.0",
-    VERIFACTU_INSTALLATION_NUMBER: "00000001",
-    LOG_LEVEL: "error",
-  };
-  vi.resetModules();
-});
-
-afterEach(() => {
-  process.env = { ...ORIGINAL_ENV };
-});
+const mockConfig: VerifactuConfig = {
+  environment: "mock",
+  certificate: { p12Base64: "", password: "" },
+  software: mockSoftware,
+  appUrl: "https://app.test",
+};
 
 describe("verifactu/client", () => {
   const baseInput = {
@@ -50,9 +35,8 @@ describe("verifactu/client", () => {
     previousIssueDate: null,
   };
 
-  it("buildVerifactuXml includes all mandatory fiscal fields", async () => {
-    const { buildVerifactuXml } = await import("@/lib/verifactu/client");
-    const xml = buildVerifactuXml(baseInput, "deadbeef", mockSistemaEnv);
+  it("buildVerifactuXml includes all mandatory fiscal fields", () => {
+    const xml = buildVerifactuXml(baseInput, "deadbeef", mockSoftware);
     expect(xml).toContain("<sum:IDVersion>1.0</sum:IDVersion>");
     expect(xml).toContain("<sum:NIF>B12345678</sum:NIF>");
     expect(xml).toContain("<sum:NombreRazonEmisor>Test Company S.L.</sum:NombreRazonEmisor>");
@@ -72,8 +56,7 @@ describe("verifactu/client", () => {
     expect(xml).toContain("<sum:IdSistemaInformatico>TEST01</sum:IdSistemaInformatico>");
   });
 
-  it("buildVerifactuXml chains via RegistroAnterior when previousHash + prev invoice ID are set", async () => {
-    const { buildVerifactuXml } = await import("@/lib/verifactu/client");
+  it("buildVerifactuXml chains via RegistroAnterior when previousHash + prev invoice ID are set", () => {
     const xml = buildVerifactuXml(
       {
         ...baseInput,
@@ -82,7 +65,7 @@ describe("verifactu/client", () => {
         previousIssueDate: new Date("2026-01-15T00:00:00.000Z"),
       },
       "newhash",
-      mockSistemaEnv,
+      mockSoftware,
     );
     expect(xml).toContain("<sum:RegistroAnterior>");
     expect(xml).toContain("<sum:NumSerieFacturaAnterior>A-000001</sum:NumSerieFacturaAnterior>");
@@ -90,20 +73,18 @@ describe("verifactu/client", () => {
     expect(xml).not.toContain("PrimerRegistro");
   });
 
-  it("buildVerifactuXml falls back to PrimerRegistro when previousInvoiceNumber is missing", async () => {
-    const { buildVerifactuXml } = await import("@/lib/verifactu/client");
+  it("buildVerifactuXml falls back to PrimerRegistro when previousInvoiceNumber is missing", () => {
     // previousHash set but previousInvoiceNumber not → treated as first invoice
     const xml = buildVerifactuXml(
       { ...baseInput, previousHash: "abc123" },
       "newhash",
-      mockSistemaEnv,
+      mockSoftware,
     );
     expect(xml).toContain("<sum:PrimerRegistro>S</sum:PrimerRegistro>");
   });
 
   it("submitToVerifactu in mock mode returns accepted with deterministic CSV", async () => {
-    const { submitToVerifactu } = await import("@/lib/verifactu/client");
-    const result = await submitToVerifactu(baseInput);
+    const result = await submitToVerifactu(baseInput, mockConfig);
     expect(result.status).toBe("accepted");
     expect(result.hash).toMatch(/^[A-F0-9]{64}$/);
     expect(result.csv).toBe(result.hash.slice(0, 16).toUpperCase());
@@ -113,19 +94,15 @@ describe("verifactu/client", () => {
   });
 
   it("submitToVerifactu returns error when cert is missing in test mode", async () => {
-    process.env.VERIFACTU_ENV = "test";
-    vi.resetModules();
-    const { submitToVerifactu } = await import("@/lib/verifactu/client");
-    const result = await submitToVerifactu(baseInput);
+    const result = await submitToVerifactu(baseInput, { ...mockConfig, environment: "test" });
     expect(result.status).toBe("error");
     expect(result.csv).toBeNull();
     expect(result.errorMessage).toMatch(/certificado|certificate/i);
   });
 
   it("computes the same hash twice for the same payload (determinism)", async () => {
-    const { submitToVerifactu } = await import("@/lib/verifactu/client");
-    const a = await submitToVerifactu(baseInput);
-    const b = await submitToVerifactu(baseInput);
+    const a = await submitToVerifactu(baseInput, mockConfig);
+    const b = await submitToVerifactu(baseInput, mockConfig);
     expect(a.hash).toBe(b.hash);
   });
 });

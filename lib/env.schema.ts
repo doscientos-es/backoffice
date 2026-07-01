@@ -38,7 +38,7 @@ export const ServerSchema = PublicSchema.extend({
   //   https://www.agenciatributaria.gob.es/AEAT.sede/tramitacion/Z65.shtml
   // The IdSistemaInformatico is assigned during that registration.
   VERIFACTU_SOFTWARE_NAME: z.string().default("Doscientos Backoffice"),
-  VERIFACTU_SOFTWARE_ID: z.string().default("BACK01"),
+  VERIFACTU_SOFTWARE_ID: z.string().max(2).default("D1"),
   VERIFACTU_SOFTWARE_VERSION: z.string().default("1.0.0"),
   VERIFACTU_INSTALLATION_NUMBER: z.string().default("00000001"),
   // Generic lead-intake webhook (Recurrev / GHL / landing forms)

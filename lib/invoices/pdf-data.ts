@@ -1,7 +1,8 @@
 import "server-only";
 
-import { publicEnv, serverEnv } from "@/lib/env";
+import { serverEnv } from "@/lib/env";
 import { type VatBreakdownRow, buildVatBreakdown } from "@/lib/finance";
+import { verifactuConfigFromEnv } from "@/lib/verifactu/config";
 import { buildQrDataUrl, buildQrUrl } from "@/lib/verifactu/qr";
 
 /**
@@ -94,7 +95,7 @@ async function buildInvoiceQr(invoice: BuildInvoicePdfInput["invoice"]): Promise
       issueDate: new Date(invoice.issue_date),
       total: invoice.total,
     },
-    publicEnv.NEXT_PUBLIC_APP_URL,
+    verifactuConfigFromEnv(),
   );
   return buildQrDataUrl(qrUrl);
 }

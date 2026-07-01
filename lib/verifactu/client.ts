@@ -1,22 +1,12 @@
-import { serverEnv } from "@/lib/env";
-import { scopedLogger } from "@/lib/logger";
+import type { VerifactuConfig, VerifactuSoftware } from "@/lib/verifactu/config";
 import { AEAT_SOAP_ACTION_ALTA, AEAT_SOAP_ENDPOINT } from "@/lib/verifactu/constants";
 import { computeInvoiceHash, spanishTimestamp } from "@/lib/verifactu/hash";
 import { buildIdfact } from "@/lib/verifactu/idfact";
+import { type VerifactuLogger, noopLogger } from "@/lib/verifactu/logger";
 import { loadP12Cert } from "@/lib/verifactu/sign";
 import { XMLParser } from "fast-xml-parser";
 
-const log = scopedLogger("verifactu");
-
 export type VatLine = { rate: number; base: number; tax: number };
-
-/** Subset of env vars accessed by buildVerifactuXml — easier to mock in tests. */
-export type SistemaInformaticoEnv = {
-  VERIFACTU_SOFTWARE_NAME: string;
-  VERIFACTU_SOFTWARE_ID: string;
-  VERIFACTU_SOFTWARE_VERSION: string;
-  VERIFACTU_INSTALLATION_NUMBER: string;
-};
 
 export type VerifactuSubmitInput = {
   nif: string;
@@ -73,7 +63,7 @@ function ddmmyyyy(d: Date): string {
 export function buildVerifactuXml(
   input: VerifactuSubmitInput,
   hash: string,
-  env: SistemaInformaticoEnv,
+  software: VerifactuSoftware,
 ): string {
   const SUM =
     "https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd";
@@ -150,10 +140,10 @@ export function buildVerifactuXml(
     "      <sum:SistemaInformatico>",
     `        <sum:NombreRazon>${esc(input.emisorName)}</sum:NombreRazon>`,
     `        <sum:NIF>${esc(input.nif)}</sum:NIF>`,
-    `        <sum:NombreSistemaInformatico>${esc(env.VERIFACTU_SOFTWARE_NAME)}</sum:NombreSistemaInformatico>`,
-    `        <sum:IdSistemaInformatico>${esc(env.VERIFACTU_SOFTWARE_ID)}</sum:IdSistemaInformatico>`,
-    `        <sum:Version>${esc(env.VERIFACTU_SOFTWARE_VERSION)}</sum:Version>`,
-    `        <sum:NumeroInstalacion>${esc(env.VERIFACTU_INSTALLATION_NUMBER)}</sum:NumeroInstalacion>`,
+    `        <sum:NombreSistemaInformatico>${esc(software.name)}</sum:NombreSistemaInformatico>`,
+    `        <sum:IdSistemaInformatico>${esc(software.id)}</sum:IdSistemaInformatico>`,
+    `        <sum:Version>${esc(software.version)}</sum:Version>`,
+    `        <sum:NumeroInstalacion>${esc(software.installationNumber)}</sum:NumeroInstalacion>`,
     "        <sum:TipoUsoPosibleSoloVerifactu>S</sum:TipoUsoPosibleSoloVerifactu>",
     "        <sum:TipoUsoPosibleMultiOT>N</sum:TipoUsoPosibleMultiOT>",
     "        <sum:IndicadorMultiples>N</sum:IndicadorMultiples>",
@@ -249,21 +239,22 @@ async function soapPost(
  */
 export async function submitToVerifactu(
   input: VerifactuSubmitInput,
+  config: VerifactuConfig,
+  logger: VerifactuLogger = noopLogger,
 ): Promise<VerifactuSubmitResult> {
-  const env = serverEnv();
   const hash = computeInvoiceHash(input);
   const idfact = buildIdfact(input.nif, input.invoiceNumber, input.issueDate);
-  const xml = buildVerifactuXml(input, hash, env);
+  const xml = buildVerifactuXml(input, hash, config.software);
 
-  log.info(
-    { mode: env.VERIFACTU_ENV, invoice: input.invoiceNumber, hash, idfact, xmlBytes: xml.length },
+  logger.info(
+    { mode: config.environment, invoice: input.invoiceNumber, hash, idfact, xmlBytes: xml.length },
     "verifactu_submit_start",
   );
 
   // ── Mock mode ────────────────────────────────────────────────────────────
-  if (env.VERIFACTU_ENV === "mock") {
+  if (config.environment === "mock") {
     const csv = mockCsv(hash);
-    log.info({ invoice: input.invoiceNumber, csv }, "verifactu_submit_mock_ok");
+    logger.info({ invoice: input.invoiceNumber, csv }, "verifactu_submit_mock_ok");
     return {
       status: "accepted",
       csv,
@@ -275,8 +266,8 @@ export async function submitToVerifactu(
   }
 
   // ── Real SOAP submission (test / prod) ────────────────────────────────────
-  if (!env.VERIFACTU_CERT_P12_BASE64 || !env.VERIFACTU_CERT_PASSWORD) {
-    log.error({ mode: env.VERIFACTU_ENV }, "verifactu_cert_missing");
+  if (!config.certificate.p12Base64 || !config.certificate.password) {
+    logger.error({ mode: config.environment }, "verifactu_cert_missing");
     return {
       status: "error",
       csv: null,
@@ -290,9 +281,9 @@ export async function submitToVerifactu(
 
   // Validate cert + password before making any network call
   try {
-    loadP12Cert(env.VERIFACTU_CERT_P12_BASE64, env.VERIFACTU_CERT_PASSWORD);
+    loadP12Cert(config.certificate.p12Base64, config.certificate.password);
   } catch (err) {
-    log.error({ err }, "verifactu_cert_load_error");
+    logger.error({ err }, "verifactu_cert_load_error");
     return {
       status: "error",
       csv: null,
@@ -303,9 +294,9 @@ export async function submitToVerifactu(
     };
   }
 
-  const pfxBuf = Buffer.from(env.VERIFACTU_CERT_P12_BASE64, "base64");
+  const pfxBuf = Buffer.from(config.certificate.p12Base64, "base64");
   const soapBody = buildSoapEnvelope(xml);
-  const endpoint = AEAT_SOAP_ENDPOINT[env.VERIFACTU_ENV];
+  const endpoint = AEAT_SOAP_ENDPOINT[config.environment];
 
   let rawResponse: string;
   let httpStatus: number;
@@ -315,12 +306,12 @@ export async function submitToVerifactu(
       soapBody,
       AEAT_SOAP_ACTION_ALTA,
       pfxBuf,
-      env.VERIFACTU_CERT_PASSWORD,
+      config.certificate.password,
     );
     rawResponse = res.text;
     httpStatus = res.status;
   } catch (err) {
-    log.error({ err, endpoint }, "verifactu_network_error");
+    logger.error({ err, endpoint }, "verifactu_network_error");
     return {
       status: "error",
       csv: null,
@@ -332,7 +323,7 @@ export async function submitToVerifactu(
   }
 
   if (httpStatus >= 400) {
-    log.warn({ status: httpStatus, endpoint }, "verifactu_http_error");
+    logger.warn({ status: httpStatus, endpoint }, "verifactu_http_error");
     return {
       status: "error",
       csv: null,
@@ -344,7 +335,7 @@ export async function submitToVerifactu(
   }
 
   const { csv, status } = parseSoapResponse(rawResponse);
-  log.info({ invoice: input.invoiceNumber, csv, status }, "verifactu_submit_ok");
+  logger.info({ invoice: input.invoiceNumber, csv, status }, "verifactu_submit_ok");
   return {
     status,
     csv,

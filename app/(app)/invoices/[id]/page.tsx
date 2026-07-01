@@ -5,11 +5,11 @@ import { PortalAccessControls } from "@/components/portal/portal-access-controls
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
-import { publicEnv } from "@/lib/env";
 import { buildVatBreakdown } from "@/lib/finance";
 import { INVOICE_STATUS, VERIFACTU_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
+import { verifactuConfigFromEnv } from "@/lib/verifactu/config";
 import { buildQrDataUrl, buildQrUrl } from "@/lib/verifactu/qr";
 import Image from "next/image";
 import Link from "next/link";
@@ -79,7 +79,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         issueDate: new Date(invoice.issue_date as string),
         total: invoice.total as number,
       },
-      publicEnv.NEXT_PUBLIC_APP_URL,
+      verifactuConfigFromEnv(),
     );
     qrDataUrl = await buildQrDataUrl(qrUrl);
   }
