@@ -84,7 +84,7 @@ export default async function LegalPage() {
             Art. 13 RD 1007/2023 — debe estar accesible dentro del SIF en cada versión.
           </CardDescription>
         </CardHeader>
-        <CardContent className="prose prose-sm dark:prose-invert max-w-none text-sm leading-relaxed">
+        <CardContent className="prose prose-sm dark:prose-invert text-sm leading-relaxed">
           <p className="text-muted-foreground text-xs mb-4">Generado el {today}</p>
 
           <h3 className="font-semibold text-base mb-2">
