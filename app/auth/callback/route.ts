@@ -1,4 +1,5 @@
 import { scopedLogger } from "@/lib/logger";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
   // Block protocol-relative URLs like //evil.com (startsWith("/") passes but
   // resolves to an external origin when fed to new URL()).
   const next =
-    rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/inicio";
+    rawNext?.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/inicio";
 
   if (errorParam) {
     log.warn({ errorParam }, "callback received provider error");
@@ -50,10 +51,33 @@ export async function GET(request: NextRequest) {
   // resetPasswordForEmail / inviteUserByEmail, so the exchange would fail
   // immediately with an "invalid code verifier" error and the user would land
   // on /login with a spurious "session expired" message.
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
     log.error({ err: error }, "exchangeCodeForSession failed");
     return NextResponse.redirect(new URL("/login?error=callback_exchange_failed", request.url));
+  }
+
+  // Sync Google avatar → team_members.avatar_url on every OAuth sign-in.
+  // Uses the admin client to bypass the owner/admin-only UPDATE RLS policy.
+  // We always overwrite so the avatar stays in sync if the user updates their
+  // Google profile picture. Falls back to GitHub avatar via memberAvatarUrl()
+  // when avatar_url is null.
+  const user = data?.user;
+  if (user?.app_metadata?.provider === "google") {
+    const googleAvatar =
+      (user.user_metadata?.avatar_url as string | undefined) ??
+      (user.user_metadata?.picture as string | undefined) ??
+      null;
+    if (googleAvatar) {
+      const admin = createAdminClient();
+      const { error: avatarError } = await admin
+        .from("team_members")
+        .update({ avatar_url: googleAvatar, updated_at: new Date().toISOString() })
+        .eq("id", user.id);
+      if (avatarError) {
+        log.warn({ err: avatarError, userId: user.id }, "google avatar sync failed");
+      }
+    }
   }
 
   return NextResponse.redirect(new URL(next, request.url));

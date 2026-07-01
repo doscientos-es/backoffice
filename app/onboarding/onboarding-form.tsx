@@ -14,6 +14,7 @@ import { completeOnboarding, skipOnboarding } from "./actions";
 interface Props {
   defaultName: string;
   email: string;
+  defaultAvatarUrl: string | null;
   defaultGithubHandle: string | null;
   defaultEmailAlias: string | null;
   defaultEmailSendEnabled: boolean;
@@ -25,6 +26,7 @@ const HANDLE_RE = /^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,38})$/;
 export function OnboardingForm({
   defaultName,
   email,
+  defaultAvatarUrl,
   defaultGithubHandle,
   defaultEmailAlias,
   defaultEmailSendEnabled,
@@ -35,10 +37,12 @@ export function OnboardingForm({
   const [name, setName] = useState(defaultName);
   const [handle, setHandle] = useState(defaultGithubHandle ?? "");
 
+  // Priority: Google avatar (synced on login) → GitHub avatar from handle → null
   const avatarSrc = useMemo(() => {
+    if (defaultAvatarUrl) return defaultAvatarUrl;
     const trimmed = handle.trim();
     return HANDLE_RE.test(trimmed) ? `https://github.com/${trimmed}.png?size=200` : undefined;
-  }, [handle]);
+  }, [defaultAvatarUrl, handle]);
 
   const initials = useMemo(() => {
     const source = name.trim() || email;
@@ -86,9 +90,11 @@ export function OnboardingForm({
             <span className="text-sm font-medium">{name || "Sin nombre"}</span>
             <span className="text-xs text-muted-foreground">{email}</span>
             <span className="text-[11px] text-muted-foreground">
-              {avatarSrc
-                ? "Avatar de GitHub detectado."
-                : "Añade tu handle de GitHub para usar tu avatar."}
+              {defaultAvatarUrl
+                ? "Avatar de Google detectado."
+                : avatarSrc
+                  ? "Avatar de GitHub detectado."
+                  : "Tu avatar se tomará de Google o de tu handle de GitHub."}
             </span>
           </div>
         </CardContent>

@@ -9,7 +9,7 @@ import { publicEnv } from "@/lib/env";
 import { getBrowserClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
 import HCaptcha from "@hcaptcha/react-hcaptcha";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { ChevronDown, Eye, EyeOff, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -26,6 +26,7 @@ export function LoginForm() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [showEmailForm, setShowEmailForm] = useState(false);
   const hcaptchaRef = useRef<HCaptcha>(null);
 
   // Stale auth cookies (e.g. session without a team_members row) would loop
@@ -90,113 +91,24 @@ export function LoginForm() {
 
   return (
     <Card>
-      <CardContent className="pt-5">
-        <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="email" className="text-xs font-medium">
-                Email <span className="text-destructive">*</span>
-              </FieldLabel>
-              <Input
-                id="email"
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                autoFocus
-                required
-                placeholder="tu@doscientos.es"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                aria-invalid={displayedError ? true : undefined}
-                aria-describedby={displayedError ? "login-error" : undefined}
-                disabled={loading}
-              />
-            </Field>
-            <Field>
-              <div className="flex items-center justify-between">
-                <FieldLabel htmlFor="password" className="text-xs font-medium">
-                  Contraseña <span className="text-destructive">*</span>
-                </FieldLabel>
-                <Link
-                  href="/login/forgot-password"
-                  className="text-xs text-[color:var(--text-muted)] hover:text-primary hover:underline underline-offset-2"
-                  tabIndex={loading ? -1 : 0}
-                >
-                  ¿La olvidaste?
-                </Link>
-              </div>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
-                  required
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  aria-invalid={displayedError ? true : undefined}
-                  aria-describedby={displayedError ? "login-error" : undefined}
-                  disabled={loading}
-                  className="pr-9"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  tabIndex={-1}
-                  aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-                  aria-pressed={showPassword}
-                  className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-[color:var(--text-muted)] hover:text-primary disabled:pointer-events-none"
-                  disabled={loading}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" aria-hidden />
-                  ) : (
-                    <Eye className="h-4 w-4" aria-hidden />
-                  )}
-                </button>
-              </div>
-            </Field>
-          </FieldGroup>
-          {displayedError ? (
-            <p
-              id="login-error"
-              role="alert"
-              className={cn(
-                "rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs",
-                "text-destructive",
-              )}
-            >
-              {displayedError}
-            </p>
-          ) : null}
-          {publicEnv.NEXT_PUBLIC_HCAPTCHA_SITE_KEY && (
-            <div className="flex justify-center">
-              <HCaptcha
-                ref={hcaptchaRef}
-                sitekey={publicEnv.NEXT_PUBLIC_HCAPTCHA_SITE_KEY}
-                onVerify={(token) => setCaptchaToken(token)}
-                onExpire={() => setCaptchaToken(null)}
-              />
-            </div>
-          )}
-          <Button type="submit" disabled={loading || googleLoading} className="mt-1">
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Entrando…
-              </>
-            ) : (
-              "Entrar"
+      <CardContent className="pt-5 flex flex-col gap-4">
+        {/* Error messages always visible */}
+        {displayedError ? (
+          <p
+            id="login-error"
+            role="alert"
+            className={cn(
+              "rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs",
+              "text-destructive",
             )}
-          </Button>
-        </form>
-        <div className="my-4 flex items-center gap-3">
-          <span className="h-px flex-1 bg-border" />
-          <span className="text-xs text-(--text-muted)">o</span>
-          <span className="h-px flex-1 bg-border" />
-        </div>
+          >
+            {displayedError}
+          </p>
+        ) : null}
+
+        {/* Primary CTA: Google */}
         <Button
           type="button"
-          variant="outline"
           className="w-full"
           onClick={onGoogle}
           disabled={loading || googleLoading}
@@ -208,6 +120,114 @@ export function LoginForm() {
           )}
           Continuar con Google
         </Button>
+
+        {/* Divider */}
+        <div className="flex items-center gap-3">
+          <span className="h-px flex-1 bg-border" />
+          <span className="text-xs text-(--text-muted)">o</span>
+          <span className="h-px flex-1 bg-border" />
+        </div>
+
+        {/* Secondary: email + password (collapsible) */}
+        {!showEmailForm ? (
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full text-(--text-muted)"
+            onClick={() => setShowEmailForm(true)}
+            disabled={googleLoading}
+          >
+            Acceder con email y contraseña
+            <ChevronDown className="h-3.5 w-3.5 ml-1 opacity-60" aria-hidden />
+          </Button>
+        ) : (
+          <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="email" className="text-xs font-medium">
+                  Email <span className="text-destructive">*</span>
+                </FieldLabel>
+                <Input
+                  id="email"
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  autoFocus
+                  required
+                  placeholder="tu@doscientos.es"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  aria-invalid={displayedError ? true : undefined}
+                  aria-describedby={displayedError ? "login-error" : undefined}
+                  disabled={loading}
+                />
+              </Field>
+              <Field>
+                <div className="flex items-center justify-between">
+                  <FieldLabel htmlFor="password" className="text-xs font-medium">
+                    Contraseña <span className="text-destructive">*</span>
+                  </FieldLabel>
+                  <Link
+                    href="/login/forgot-password"
+                    className="text-xs text-(--text-muted) hover:text-primary hover:underline underline-offset-2"
+                    tabIndex={loading ? -1 : 0}
+                  >
+                    ¿La olvidaste?
+                  </Link>
+                </div>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    required
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    aria-invalid={displayedError ? true : undefined}
+                    aria-describedby={displayedError ? "login-error" : undefined}
+                    disabled={loading}
+                    className="pr-9"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    tabIndex={-1}
+                    aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                    aria-pressed={showPassword}
+                    className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-(--text-muted) hover:text-primary disabled:pointer-events-none"
+                    disabled={loading}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" aria-hidden />
+                    ) : (
+                      <Eye className="h-4 w-4" aria-hidden />
+                    )}
+                  </button>
+                </div>
+              </Field>
+            </FieldGroup>
+            {publicEnv.NEXT_PUBLIC_HCAPTCHA_SITE_KEY && (
+              <div className="flex justify-center">
+                <HCaptcha
+                  ref={hcaptchaRef}
+                  sitekey={publicEnv.NEXT_PUBLIC_HCAPTCHA_SITE_KEY}
+                  onVerify={(token) => setCaptchaToken(token)}
+                  onExpire={() => setCaptchaToken(null)}
+                />
+              </div>
+            )}
+            <Button type="submit" disabled={loading || googleLoading} className="mt-1">
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Entrando…
+                </>
+              ) : (
+                "Entrar"
+              )}
+            </Button>
+          </form>
+        )}
       </CardContent>
     </Card>
   );
@@ -241,18 +261,16 @@ export function LoginFormSkeleton() {
     <Card aria-hidden>
       <CardContent className="pt-5">
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Skeleton className="h-3 w-12" />
-            <Skeleton className="h-9 w-full" />
+          {/* Google button */}
+          <Skeleton className="h-9 w-full" />
+          {/* Divider */}
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-px flex-1" />
+            <Skeleton className="h-3 w-4" />
+            <Skeleton className="h-px flex-1" />
           </div>
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <Skeleton className="h-3 w-20" />
-              <Skeleton className="h-3 w-24" />
-            </div>
-            <Skeleton className="h-9 w-full" />
-          </div>
-          <Skeleton className="mt-1 h-9 w-full" />
+          {/* Email toggle */}
+          <Skeleton className="h-9 w-full" />
         </div>
       </CardContent>
     </Card>

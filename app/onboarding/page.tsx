@@ -19,6 +19,7 @@ export default async function OnboardingPage() {
       <OnboardingForm
         defaultName={user.name}
         email={user.email}
+        defaultAvatarUrl={user.avatarUrl}
         defaultGithubHandle={user.githubHandle}
         defaultEmailAlias={user.emailAlias}
         defaultEmailSendEnabled={user.emailSendEnabled}
