@@ -34,9 +34,6 @@ function buildSignaturePreview(opts: {
   if (opts.jobTitle) textLines.push(`<span style="color:#555">${opts.jobTitle}</span>`);
   textLines.push("");
   textLines.push('<strong style="color:#2A4227">doscientos.es</strong>');
-  textLines.push(
-    '<span style="color:#888;font-size:12px">Construimos productos digitales escalables para empresas que quieren crecer con tecnología.</span>',
-  );
   textLines.push("");
   if (opts.contactEmail) textLines.push(`📩 ${opts.contactEmail}`);
   textLines.push("🌐 https://doscientos.es");
