@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 // ── mocks (hoisted before imports) ──────────────────────────────────────────
@@ -90,6 +90,7 @@ describe("SettingsNav – item visibility", () => {
   it("shows Legal / Verifactu regardless of canManageTeam", () => {
     renderNav(false);
     expect(screen.getByText("Legal / Verifactu")).toBeTruthy();
+    cleanup();
     renderNav(true);
     expect(screen.getByText("Legal / Verifactu")).toBeTruthy();
   });

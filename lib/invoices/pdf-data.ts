@@ -137,7 +137,7 @@ export async function buildInvoicePdfData(input: BuildInvoicePdfInput): Promise<
     vatBreakdown: buildVatBreakdown(
       normalisedItems.map((i) => ({ vat_rate: i.vatRate, subtotal: i.subtotal })),
     ),
-    qrDataUrl: await buildInvoiceQr(invoice, settings?.company_nif ?? null),
+    qrDataUrl: await buildInvoiceQr(invoice, process.env.VERIFACTU_NIF_EMISOR || null),
   };
 }
 

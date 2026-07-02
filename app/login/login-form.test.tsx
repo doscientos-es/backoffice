@@ -65,6 +65,10 @@ function setup() {
     configurable: true,
   });
   render(<LoginForm />);
+  // The email/password form is collapsed by default behind the toggle button.
+  act(() => {
+    fireEvent.click(screen.getByRole("button", { name: /acceder con email/i }));
+  });
   return { assignSpy };
 }
 
