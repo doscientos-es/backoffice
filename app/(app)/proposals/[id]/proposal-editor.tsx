@@ -1,15 +1,25 @@
 "use client";
 
 import { LineItemsTable } from "@/components/finance/line-items-table";
+import { ProblemSolutionEditor } from "@/components/proposals/problem-solution-editor";
+import { AiNotice } from "@/components/ui/ai-notice";
 import { AutosaveIndicator } from "@/components/ui/autosave-indicator";
 import { Button } from "@/components/ui/button";
+import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { Markdown } from "@/components/ui/markdown";
 import { Textarea } from "@/components/ui/textarea";
 import { EMPTY_LINE_ITEM, type LineItem } from "@/lib/finance";
 import { useAutosave } from "@/lib/hooks/use-autosave";
-import { type EditableKeyPoint, serializeKeyPoints } from "@/lib/proposals/key-points";
+import {
+  type EditableKeyPoint,
+  type EditablePair,
+  createEmptyPair,
+  serializeKeyPoints,
+  unzipPairs,
+  zipKeyPoints,
+} from "@/lib/proposals/key-points";
 import { useMemo, useState } from "react";
 import { updateProposal } from "../actions";
 

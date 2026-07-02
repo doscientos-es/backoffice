@@ -179,6 +179,7 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
           initialSolutions={toEditableKeyPoints(parseKeyPoints(proposal.solutions))}
           initialTerms={(proposal.terms as string | null) ?? null}
           initialItems={editableItems}
+          aiEnabled={isAIEnabled()}
           locked={locked}
         />
       </SectionBoundary>
