@@ -20,6 +20,9 @@ importers:
       '@dnd-kit/utilities':
         specifier: ^3.2.2
         version: 3.2.2(react@19.2.6)
+      '@doscientos/verifactu':
+        specifier: ^0.1.5
+        version: 0.1.5(date-fns@4.3.0)
       '@hcaptcha/react-hcaptcha':
         specifier: ^2.0.2
         version: 2.0.2
@@ -429,6 +432,10 @@ packages:
     resolution: {integrity: sha512-+MKAJEOfaBe5SmV6t34p80MMKhjvUz0vRrvVJbPT0WElzaOJ/1xs+D+KDv+tD/NE5ujfrChEcshd4fLn0wpiqg==}
     peerDependencies:
       react: '>=16.8.0'
+
+  '@doscientos/verifactu@0.1.5':
+    resolution: {integrity: sha512-DFG41A2j8oZcAVu8ToiNt2y+GQEpD2uM5wKcR+5WvnKGe1vTkHcqKqX0dny/5LxjZwH44a/dOC3jt4c1iXvEvg==}
+    engines: {node: '>=18'}
 
   '@dotenvx/dotenvx@1.69.1':
     resolution: {integrity: sha512-kwQB5KcAegxw/+NGUgXAo5ovyOSjlMhoXSSnSEpDhoHJwzMcMO0HE1U0VCYZ7jbAeCMGamed9XdWzOA5ixtTNg==}
@@ -5174,6 +5181,15 @@ snapshots:
     dependencies:
       react: 19.2.6
       tslib: 2.8.1
+
+  '@doscientos/verifactu@0.1.5(date-fns@4.3.0)':
+    dependencies:
+      date-fns-tz: 3.2.0(date-fns@4.3.0)
+      fast-xml-parser: 4.5.6
+      node-forge: 1.4.0
+      qrcode: 1.5.4
+    transitivePeerDependencies:
+      - date-fns
 
   '@dotenvx/dotenvx@1.69.1':
     dependencies:

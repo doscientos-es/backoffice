@@ -2,7 +2,7 @@ import "server-only";
 
 import { type VatBreakdownRow, buildVatBreakdown } from "@/lib/finance";
 import { verifactuConfigFromEnv } from "@/lib/verifactu/config";
-import { buildQrDataUrl, buildQrUrl } from "@/lib/verifactu/qr";
+import { buildQrDataUrl, buildQrUrl } from "@doscientos/verifactu";
 
 /**
  * Normalised, render-ready snapshot of an invoice for the PDF document.

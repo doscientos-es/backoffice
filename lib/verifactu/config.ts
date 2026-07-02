@@ -1,5 +1,5 @@
 import { serverEnv } from "@/lib/env";
-import type { VerifactuConfig } from "@/lib/verifactu/types";
+import type { VerifactuConfig } from "@doscientos/verifactu";
 
 /**
  * App-specific adapter for the Verifactu package.

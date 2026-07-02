@@ -21,8 +21,8 @@ import {
 import { UpdatePortalAccessInput } from "@/lib/schemas/portal";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { createVerifactuClient } from "@/lib/verifactu";
 import { verifactuConfigFromEnv } from "@/lib/verifactu/config";
+import { createVerifactuClient } from "@doscientos/verifactu";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 

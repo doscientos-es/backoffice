@@ -10,7 +10,7 @@ import { INVOICE_STATUS, VERIFACTU_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { verifactuConfigFromEnv } from "@/lib/verifactu/config";
-import { buildQrDataUrl, buildQrUrl } from "@/lib/verifactu/qr";
+import { buildQrDataUrl, buildQrUrl } from "@doscientos/verifactu";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
