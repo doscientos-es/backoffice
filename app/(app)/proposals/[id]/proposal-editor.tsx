@@ -1,7 +1,6 @@
 "use client";
 
 import { LineItemsTable } from "@/components/finance/line-items-table";
-import { KeyPointsEditor } from "@/components/proposals/key-points-editor";
 import { AutosaveIndicator } from "@/components/ui/autosave-indicator";
 import { Button } from "@/components/ui/button";
 import { FormRow } from "@/components/ui/form-row";
@@ -28,6 +27,8 @@ export type ProposalEditorProps = {
   initialItems: EditableItem[];
   /** When true, fields are read-only (proposal accepted/rejected). */
   locked: boolean;
+  /** Gates the "generate problems/solutions with AI" affordance. */
+  aiEnabled: boolean;
 };
 
 /**
@@ -50,14 +51,18 @@ export function ProposalEditor({
   initialTerms,
   initialItems,
   locked,
+  aiEnabled,
 }: ProposalEditorProps) {
   const [title, setTitle] = useState(initialTitle);
   const [validUntil, setValidUntil] = useState(initialValidUntil ?? "");
   const [notes, setNotes] = useState(initialNotes ?? "");
   const [notesPreview, setNotesPreview] = useState(false);
   const [contextMarkdown, setContextMarkdown] = useState(initialContextMarkdown ?? "");
-  const [problems, setProblems] = useState<EditableKeyPoint[]>(initialProblems);
-  const [solutions, setSolutions] = useState<EditableKeyPoint[]>(initialSolutions);
+  const [pairs, setPairs] = useState<EditablePair[]>(() =>
+    zipKeyPoints(initialProblems, initialSolutions),
+  );
+  const [generating, setGenerating] = useState(false);
+  const aiFeedback = useFormFeedback();
   const [terms, setTerms] = useState(initialTerms ?? "");
   const [items, setItems] = useState<EditableItem[]>(
     initialItems.length > 0
@@ -65,8 +70,9 @@ export function ProposalEditor({
       : [{ ...EMPTY_LINE_ITEM, id: crypto.randomUUID() } as EditableItem],
   );
 
-  const payload = useMemo(
-    () => ({
+  const payload = useMemo(() => {
+    const { problems, solutions } = unzipPairs(pairs);
+    return {
       id,
       title,
       valid_until: validUntil || null,
@@ -76,9 +82,8 @@ export function ProposalEditor({
       solutions: serializeKeyPoints(solutions),
       terms: terms || null,
       items,
-    }),
-    [id, title, validUntil, notes, contextMarkdown, problems, solutions, terms, items],
-  );
+    };
+  }, [id, title, validUntil, notes, contextMarkdown, pairs, terms, items]);
 
   const autosave = useAutosave({
     data: payload,
@@ -89,6 +94,23 @@ export function ProposalEditor({
       if (!res.ok) return { error: res.error };
     },
   });
+
+  async function handleGenerateNarrative() {
+    setGenerating(true);
+    aiFeedback.setPending();
+    try {
+      const res = await fetch(`/api/proposals/${id}/generate-narrative`, { method: "POST" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "No se pudo generar la narrativa.");
+      const incoming = (json.pairs ?? []) as Array<Omit<EditablePair, "id">>;
+      setPairs(incoming.map((p) => ({ ...createEmptyPair(), ...p })));
+      aiFeedback.setSuccess("Narrativa generada");
+    } catch (err) {
+      aiFeedback.setError(err instanceof Error ? err.message : "Error desconocido");
+    } finally {
+      setGenerating(false);
+    }
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -166,12 +188,18 @@ export function ProposalEditor({
 
       {/* Narrative blocks — shown before the price on every client surface */}
       <section className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4">
-        <header className="flex flex-col gap-0.5">
-          <h2 className="text-sm font-semibold">Narrativa de la propuesta</h2>
-          <p className="text-[11px] text-muted-foreground">
-            Contexto, problemas detectados y enfoque de la solución. Se muestran al cliente antes
-            del precio en el portal y como diapositivas en la presentación.
-          </p>
+        <header className="flex items-start justify-between gap-3">
+          <div className="flex flex-col gap-0.5">
+            <h2 className="text-sm font-semibold">Narrativa de la propuesta</h2>
+            <p className="text-[11px] text-muted-foreground">
+              Contexto, problemas detectados y enfoque de la solución. Se muestran al cliente antes
+              del precio en el portal y como diapositivas en la presentación.
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <FormFeedback state={aiFeedback.state} pendingLabel="Generando…" />
+            {!aiEnabled ? <AiNotice inline /> : null}
+          </div>
         </header>
 
         <FormRow
@@ -191,34 +219,17 @@ export function ProposalEditor({
         </FormRow>
 
         <FormRow
-          label="Problemas detectados"
-          htmlFor="problems"
-          hint="Lo que el cliente nos ha contado. Una tarjeta por reto."
+          label="Problemas y soluciones"
+          htmlFor="problems-solutions"
+          hint="Cada problema con la solución que proponemos. Se muestran emparejados al cliente."
         >
-          <KeyPointsEditor
-            items={problems}
-            onChange={setProblems}
+          <ProblemSolutionEditor
+            items={pairs}
+            onChange={setPairs}
             locked={locked}
-            ariaLabel="Lista de problemas"
-            titlePlaceholder="Problema detectado"
-            descriptionPlaceholder="Descripción (opcional)"
-            addLabel="Añadir problema"
-          />
-        </FormRow>
-
-        <FormRow
-          label="Cómo lo abordamos"
-          htmlFor="solutions"
-          hint="Cómo planteamos resolverlo. Una tarjeta por iniciativa."
-        >
-          <KeyPointsEditor
-            items={solutions}
-            onChange={setSolutions}
-            locked={locked}
-            ariaLabel="Lista de soluciones"
-            titlePlaceholder="Iniciativa o enfoque"
-            descriptionPlaceholder="Descripción (opcional)"
-            addLabel="Añadir solución"
+            aiEnabled={aiEnabled}
+            onGenerate={handleGenerateNarrative}
+            generating={generating}
           />
         </FormRow>
       </section>
