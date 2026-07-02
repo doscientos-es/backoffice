@@ -1,8 +1,12 @@
 import {
+  type EditablePair,
   createEmptyKeyPoint,
+  createEmptyPair,
   parseKeyPoints,
   serializeKeyPoints,
   toEditableKeyPoints,
+  unzipPairs,
+  zipKeyPoints,
 } from "@/lib/proposals/key-points";
 import { describe, expect, it } from "vitest";
 
@@ -105,5 +109,121 @@ describe("createEmptyKeyPoint", () => {
     expect(a.description).toBe("");
     expect(a.id.length).toBeGreaterThan(0);
     expect(a.id).not.toBe(b.id);
+  });
+});
+
+describe("createEmptyPair", () => {
+  it("creates a blank pair with a non-empty unique id", () => {
+    const a = createEmptyPair();
+    const b = createEmptyPair();
+    expect(a).toMatchObject({
+      problem: "",
+      problemDescription: "",
+      solution: "",
+      solutionDescription: "",
+    });
+    expect(a.id.length).toBeGreaterThan(0);
+    expect(a.id).not.toBe(b.id);
+  });
+});
+
+describe("zipKeyPoints", () => {
+  it("pairs a problem with the solution sharing its id", () => {
+    expect(
+      zipKeyPoints(
+        [{ id: "a", title: "P", description: "pd" }],
+        [{ id: "a", title: "S", description: "sd" }],
+      ),
+    ).toEqual([
+      { id: "a", problem: "P", problemDescription: "pd", solution: "S", solutionDescription: "sd" },
+    ]);
+  });
+
+  it("falls back to positional order for legacy independent lists", () => {
+    const pairs = zipKeyPoints(
+      [
+        { id: "p1", title: "P1" },
+        { id: "p2", title: "P2" },
+      ],
+      [
+        { id: "s1", title: "S1" },
+        { id: "s2", title: "S2" },
+      ],
+    );
+    expect(pairs.map((p) => [p.problem, p.solution])).toEqual([
+      ["P1", "S1"],
+      ["P2", "S2"],
+    ]);
+    // The pair keeps the problem's id so a re-zip stays stable.
+    expect(pairs.map((p) => p.id)).toEqual(["p1", "p2"]);
+  });
+
+  it("prefers id matches even when order differs", () => {
+    const pairs = zipKeyPoints(
+      [
+        { id: "a", title: "Pa" },
+        { id: "b", title: "Pb" },
+      ],
+      [
+        { id: "b", title: "Sb" },
+        { id: "a", title: "Sa" },
+      ],
+    );
+    expect(pairs).toEqual([
+      { id: "a", problem: "Pa", problemDescription: "", solution: "Sa", solutionDescription: "" },
+      { id: "b", problem: "Pb", problemDescription: "", solution: "Sb", solutionDescription: "" },
+    ]);
+  });
+
+  it("keeps orphan solutions as solution-only pairs", () => {
+    const pairs = zipKeyPoints(
+      [{ id: "a", title: "P" }],
+      [
+        { id: "a", title: "S" },
+        { id: "x", title: "Extra" },
+      ],
+    );
+    expect(pairs).toHaveLength(2);
+    expect(pairs[1]).toEqual({
+      id: "x",
+      problem: "",
+      problemDescription: "",
+      solution: "Extra",
+      solutionDescription: "",
+    });
+  });
+
+  it("leaves the solution blank when a problem has none", () => {
+    const pairs = zipKeyPoints([{ id: "a", title: "P" }], []);
+    expect(pairs).toEqual([
+      { id: "a", problem: "P", problemDescription: "", solution: "", solutionDescription: "" },
+    ]);
+  });
+});
+
+describe("unzipPairs", () => {
+  it("splits pairs into two id-aligned lists", () => {
+    const { problems, solutions } = unzipPairs([
+      { id: "a", problem: "P", problemDescription: "pd", solution: "S", solutionDescription: "sd" },
+    ]);
+    expect(problems).toEqual([{ id: "a", title: "P", description: "pd" }]);
+    expect(solutions).toEqual([{ id: "a", title: "S", description: "sd" }]);
+  });
+
+  it("round-trips pairs through unzip → zip", () => {
+    const pairs: EditablePair[] = [
+      { id: "1", problem: "P1", problemDescription: "d1", solution: "S1", solutionDescription: "" },
+      { id: "2", problem: "P2", problemDescription: "", solution: "S2", solutionDescription: "d2" },
+    ];
+    const { problems, solutions } = unzipPairs(pairs);
+    expect(zipKeyPoints(problems, solutions)).toEqual(pairs);
+  });
+
+  it("serializes cleanly, dropping the blank half of a one-sided pair", () => {
+    const { problems, solutions } = unzipPairs([
+      { id: "a", problem: "P", problemDescription: "", solution: "", solutionDescription: "" },
+    ]);
+    expect(serializeKeyPoints(problems)).toEqual([{ id: "a", title: "P", description: null }]);
+    expect(serializeKeyPoints(solutions)).toBeNull();
   });
 });

@@ -30,15 +30,100 @@ export type EditableKeyPoint = {
   description: string;
 };
 
+function newId(): string {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `kp-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 export function createEmptyKeyPoint(): EditableKeyPoint {
+  return { id: newId(), title: "", description: "" };
+}
+
+/**
+ * A problem paired with the solution we propose for it. This is the shape the
+ * editor works with: the two stored jsonb columns (`problems`, `solutions`)
+ * are zipped into pairs on load and split back on save, matching a problem to
+ * its solution by a shared `id`. Keeping the wire storage as two arrays means
+ * the portal and deck keep reading them independently, so no migration or
+ * client-surface rewrite is needed.
+ */
+export type EditablePair = {
+  id: string;
+  problem: string;
+  problemDescription: string;
+  solution: string;
+  solutionDescription: string;
+};
+
+export function createEmptyPair(): EditablePair {
   return {
-    id:
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `kp-${Math.random().toString(36).slice(2, 10)}`,
-    title: "",
-    description: "",
+    id: newId(),
+    problem: "",
+    problemDescription: "",
+    solution: "",
+    solutionDescription: "",
   };
+}
+
+/**
+ * Zip stored problems and solutions into editable pairs. A solution is matched
+ * to a problem sharing its `id` (the model this editor now writes); when ids
+ * don't line up — legacy proposals authored as two independent lists — it falls
+ * back to positional order. Solutions with no matching problem become
+ * solution-only pairs so nothing is silently dropped.
+ */
+export function zipKeyPoints(
+  problems: ReadonlyArray<{ id: string; title: string; description?: string | null }>,
+  solutions: ReadonlyArray<{ id: string; title: string; description?: string | null }>,
+): EditablePair[] {
+  const remaining = [...solutions];
+  const takeFor = (problemId: string): (typeof remaining)[number] | undefined => {
+    if (remaining.length === 0) return undefined;
+    const byId = remaining.findIndex((s) => s.id === problemId);
+    return remaining.splice(byId >= 0 ? byId : 0, 1)[0];
+  };
+
+  const pairs: EditablePair[] = problems.map((p) => {
+    const sol = takeFor(p.id);
+    return {
+      id: p.id,
+      problem: p.title,
+      problemDescription: p.description ?? "",
+      solution: sol?.title ?? "",
+      solutionDescription: sol?.description ?? "",
+    };
+  });
+
+  for (const s of remaining) {
+    pairs.push({
+      id: s.id,
+      problem: "",
+      problemDescription: "",
+      solution: s.title,
+      solutionDescription: s.description ?? "",
+    });
+  }
+  return pairs;
+}
+
+/**
+ * Split editable pairs back into the two `EditableKeyPoint` lists the storage
+ * layer expects. Problem and solution keep the pair's `id` so a later
+ * `zipKeyPoints` can re-match them. Feed each list to `serializeKeyPoints`,
+ * which drops blank entries just like the standalone editor did.
+ */
+export function unzipPairs(pairs: EditablePair[]): {
+  problems: EditableKeyPoint[];
+  solutions: EditableKeyPoint[];
+} {
+  const problems: EditableKeyPoint[] = [];
+  const solutions: EditableKeyPoint[] = [];
+  for (const p of pairs) {
+    problems.push({ id: p.id, title: p.problem, description: p.problemDescription });
+    solutions.push({ id: p.id, title: p.solution, description: p.solutionDescription });
+  }
+  return { problems, solutions };
 }
 
 /**
