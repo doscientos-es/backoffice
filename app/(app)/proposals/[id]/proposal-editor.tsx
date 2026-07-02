@@ -6,6 +6,7 @@ import { AutosaveIndicator } from "@/components/ui/autosave-indicator";
 import { Button } from "@/components/ui/button";
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
+import { Markdown } from "@/components/ui/markdown";
 import { Textarea } from "@/components/ui/textarea";
 import { EMPTY_LINE_ITEM, type LineItem } from "@/lib/finance";
 import { useAutosave } from "@/lib/hooks/use-autosave";
@@ -53,6 +54,7 @@ export function ProposalEditor({
   const [title, setTitle] = useState(initialTitle);
   const [validUntil, setValidUntil] = useState(initialValidUntil ?? "");
   const [notes, setNotes] = useState(initialNotes ?? "");
+  const [notesPreview, setNotesPreview] = useState(false);
   const [contextMarkdown, setContextMarkdown] = useState(initialContextMarkdown ?? "");
   const [problems, setProblems] = useState<EditableKeyPoint[]>(initialProblems);
   const [solutions, setSolutions] = useState<EditableKeyPoint[]>(initialSolutions);
@@ -131,16 +133,34 @@ export function ProposalEditor({
               disabled={locked}
             />
           </FormRow>
-          <FormRow label="Notas" htmlFor="notes">
-            <Textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              disabled={locked}
-              rows={6}
-              placeholder="Notas internas o para el cliente…"
-            />
-          </FormRow>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground">Notas</span>
+              {notes && (
+                <button
+                  type="button"
+                  onClick={() => setNotesPreview((p) => !p)}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {notesPreview ? "Editar" : "Previsualizar"}
+                </button>
+              )}
+            </div>
+            {notesPreview && notes ? (
+              <div className="rounded-md border border-border bg-muted/20 px-3 py-2 min-h-36">
+                <Markdown source={notes} />
+              </div>
+            ) : (
+              <Textarea
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                disabled={locked}
+                rows={6}
+                placeholder="Notas internas o para el cliente… (soporta Markdown)"
+              />
+            )}
+          </div>
         </aside>
       </div>
 

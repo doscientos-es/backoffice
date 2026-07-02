@@ -439,9 +439,10 @@ export default async function PortalProposalPage({
             <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-2">
               Notas
             </p>
-            <p className="whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
-              {proposal.notes as string}
-            </p>
+            <Markdown
+              source={proposal.notes as string}
+              className="text-zinc-700 dark:text-zinc-300"
+            />
           </div>
         ) : null}
 
