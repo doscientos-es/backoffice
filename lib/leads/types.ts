@@ -3,6 +3,7 @@ import type { LeadStatus } from "@/lib/status";
 export const LEAD_LIST_PAGE_SIZE = 25;
 export const LEAD_BOARD_LIMIT = 500;
 export const RECENT_INTERACTIONS_PER_LEAD = 3;
+export const LEAD_RELATED_LIMIT = 5;
 
 /**
  * Lightweight reference to a `team_members` row, used both for a lead's
@@ -99,10 +100,35 @@ export type LeadDetailInteraction = LeadInteraction & {
   payload: unknown;
 };
 
+/** Related records shown as commercial shortcuts on the lead detail page. */
+export type LeadRelatedProposal = {
+  id: string;
+  number: string | null;
+  title: string | null;
+  status: string | null;
+  total: number | null;
+};
+
+export type LeadRelatedProject = {
+  id: string;
+  name: string;
+  status: string | null;
+};
+
+export type LeadRelatedInvoice = {
+  id: string;
+  full_number: string | null;
+  status: string | null;
+  total: number | null;
+};
+
 export type LeadDetailResult = {
   lead: LeadDetail;
   interactions: LeadDetailInteraction[];
   linkedClientId: string | null;
+  proposals: LeadRelatedProposal[];
+  projects: LeadRelatedProject[];
+  invoices: LeadRelatedInvoice[];
 };
 
 export type LeadConvertSeed = {

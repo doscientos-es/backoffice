@@ -6,6 +6,7 @@ import { escapeIlike } from "@/lib/utils/search-params";
 import {
   LEAD_BOARD_LIMIT,
   LEAD_LIST_PAGE_SIZE,
+  LEAD_RELATED_LIMIT,
   type LeadConvertResult,
   type LeadDetailInteraction,
   type LeadDetailResult,
@@ -143,6 +144,43 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
   if (leadErr) log.error({ leadId: id, err: leadErr.message }, "lead_query_failed");
   if (!lead) return null;
 
+  const linkedClientId = (linkedClient?.id as string | undefined) ?? null;
+
+  // Commercial pipeline. Proposals may target the lead directly (lead-first
+  // flow) or the linked client once converted; projects and invoices only
+  // exist against a client, so we skip them until one is linked.
+  const proposalsBuilder = notDeleted(
+    supabase.from("proposals").select("id, number, title, status, total"),
+  );
+  const { data: proposalRows } = await (linkedClientId
+    ? proposalsBuilder.or(`lead_id.eq.${id},client_id.eq.${linkedClientId}`)
+    : proposalsBuilder.eq("lead_id", id)
+  )
+    .order("created_at", { ascending: false })
+    .limit(LEAD_RELATED_LIMIT);
+
+  let projectRows: Record<string, unknown>[] = [];
+  let invoiceRows: Record<string, unknown>[] = [];
+  if (linkedClientId) {
+    const [{ data: projects }, { data: invoices }] = await Promise.all([
+      notDeleted(
+        supabase.from("projects").select("id, name, status").eq("client_id", linkedClientId),
+      )
+        .order("created_at", { ascending: false })
+        .limit(LEAD_RELATED_LIMIT),
+      notDeleted(
+        supabase
+          .from("invoices")
+          .select("id, full_number, status, total, issue_date")
+          .eq("client_id", linkedClientId),
+      )
+        .order("issue_date", { ascending: false })
+        .limit(LEAD_RELATED_LIMIT),
+    ]);
+    projectRows = (projects ?? []) as Record<string, unknown>[];
+    invoiceRows = (invoices ?? []) as Record<string, unknown>[];
+  }
+
   const detailInteractions: LeadDetailInteraction[] = (interactions ?? []).map((i) => ({
     id: i.id as string,
     type: i.type as string,
@@ -156,7 +194,25 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
   return {
     lead: lead as unknown as LeadDetailResult["lead"],
     interactions: detailInteractions,
-    linkedClientId: (linkedClient?.id as string | undefined) ?? null,
+    linkedClientId,
+    proposals: (proposalRows ?? []).map((p) => ({
+      id: p.id as string,
+      number: (p.number as string | null) ?? null,
+      title: (p.title as string | null) ?? null,
+      status: (p.status as string | null) ?? null,
+      total: p.total == null ? null : Number(p.total),
+    })),
+    projects: projectRows.map((p) => ({
+      id: p.id as string,
+      name: p.name as string,
+      status: (p.status as string | null) ?? null,
+    })),
+    invoices: invoiceRows.map((i) => ({
+      id: i.id as string,
+      full_number: (i.full_number as string | null) ?? null,
+      status: (i.status as string | null) ?? null,
+      total: i.total == null ? null : Number(i.total),
+    })),
   };
 }
 

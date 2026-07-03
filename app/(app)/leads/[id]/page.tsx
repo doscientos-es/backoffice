@@ -17,6 +17,7 @@ import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LeadAiPanel } from "./lead-ai-panel";
+import { LeadCommercial } from "./lead-commercial";
 import { LeadEditDialog } from "./lead-edit-dialog";
 import { LeadOwnerSelect } from "./owner-select";
 import { LeadQuickActions } from "./quick-actions";
@@ -62,7 +63,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
 
   const result = await getLeadDetail(id);
   if (!result) notFound();
-  const { lead, interactions, linkedClientId } = result;
+  const { lead, interactions, linkedClientId, proposals, projects, invoices } = result;
 
   const aiEnabled = isAIEnabled();
   const canEdit = user.role !== "viewer";
@@ -123,6 +124,14 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             />
           </>
         }
+      />
+
+      <LeadCommercial
+        leadId={lead.id as string}
+        linkedClientId={linkedClientId}
+        proposals={proposals}
+        projects={projects}
+        invoices={invoices}
       />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
