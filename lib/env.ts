@@ -15,9 +15,21 @@ export function serverEnv() {
   return cachedServerEnv;
 }
 
-/** true si GEMINI_API_KEY o OPENAI_API_KEY están configuradas — feature-gate para toda la lógica de IA */
+/**
+ * true si la IA está lista para usarse — feature-gate para toda la lógica de IA.
+ * Controlado por AI_PROVIDER:
+ *   "vertex"   → necesita GOOGLE_CLOUD_PROJECT_ID (usa ADC, sin API key)
+ *   "openai"   → necesita OPENAI_API_KEY
+ *   "gemini"   → necesita GEMINI_API_KEY
+ *   "deepseek" → necesita DEEPSEEK_API_KEY
+ */
 export function isAIEnabled(): boolean {
-  return Boolean(process.env.GEMINI_API_KEY?.trim() || process.env.OPENAI_API_KEY?.trim());
+  const provider = process.env.AI_PROVIDER?.trim();
+  if (provider === "vertex") return Boolean(process.env.GOOGLE_CLOUD_PROJECT_ID?.trim());
+  if (provider === "openai") return Boolean(process.env.OPENAI_API_KEY?.trim());
+  if (provider === "gemini") return Boolean(process.env.GEMINI_API_KEY?.trim());
+  if (provider === "deepseek") return Boolean(process.env.DEEPSEEK_API_KEY?.trim());
+  return false;
 }
 
 /**

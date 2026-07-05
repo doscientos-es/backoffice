@@ -72,7 +72,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   const { data: proposal } = await supabase
     .from("proposals")
     .select(
-      "id, number, title, notes, context_markdown, clients(name, company), projects(name, description)",
+      "id, number, title, notes, context_markdown, clients(name), projects(name, description)",
     )
     .eq("id", id)
     .is("deleted_at", null)
@@ -88,9 +88,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     .eq("proposal_id", id)
     .order("position");
 
-  const client = (
-    proposal as unknown as { clients: { name: string; company: string | null } | null }
-  ).clients;
+  const client = (proposal as unknown as { clients: { name: string } | null }).clients;
   const project = (
     proposal as unknown as { projects: { name: string; description: string | null } | null }
   ).projects;
@@ -104,7 +102,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     .join("\n");
 
   const userPrompt = `Propuesta: ${proposal.number as string} — ${proposal.title as string}
-Cliente: ${client?.name ?? "—"}${client?.company ? ` (${client.company})` : ""}
+Cliente: ${client?.name ?? "—"}
 Proyecto: ${project?.name ?? "—"}
 Descripción proyecto: ${project?.description ?? "—"}
 Contexto: ${(proposal.context_markdown as string | null) ?? "—"}

@@ -91,7 +91,8 @@ export async function testSupabaseConnection(): Promise<TestResult> {
 /** Pings the AI provider with a tiny prompt. */
 export async function testAI(): Promise<TestResult> {
   await requireRole([...ADMIN]);
-  if (!isAIEnabled()) return fail("IA no configurada (GEMINI_API_KEY / OPENAI_API_KEY)");
+  if (!isAIEnabled())
+    return fail("IA no configurada (AI_PROVIDER no establecido o credenciales faltantes)");
   try {
     const out = await runAIChat({
       model: AI_MODELS.default,

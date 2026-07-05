@@ -1,8 +1,4 @@
 import { PageHeader } from "@/components/layout/page-header";
-import {
-  MetaAdsBalanceSkeleton,
-  MetaAdsBalanceWidget,
-} from "@/components/marketing/meta-ads-balance-card";
 import { SectionBoundary } from "@/components/ui/error-boundary";
 import { requireUser } from "@/lib/auth";
 import { serverEnv } from "@/lib/env";
@@ -29,7 +25,7 @@ import { MarketingRangeSelector } from "./range-selector";
 import { SyncMarketingButton } from "./sync-button";
 import { MarketingViewTabs } from "./view-tabs";
 
-export const metadata: Metadata = { title: "Marketing · doscientos" };
+export const metadata: Metadata = { title: "Anuncios · doscientos" };
 export const dynamic = "force-dynamic";
 
 type SearchParams = Promise<{
@@ -53,7 +49,7 @@ export default async function MarketingPage({ searchParams }: { searchParams: Se
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Marketing y Ads"
+        title="Anuncios"
         description={`Métricas de anuncios en Meta Ads · ${rangeLabel}.`}
         actions={<SyncMarketingButton />}
       />
@@ -111,15 +107,6 @@ export default async function MarketingPage({ searchParams }: { searchParams: Se
       >
         <MarketingRoi since={since} until={until} rangeLabel={rangeLabel} />
       </SectionBoundary>
-
-      <div className="grid gap-3 lg:grid-cols-3">
-        <SectionBoundary
-          pending={<MetaAdsBalanceSkeleton />}
-          label="No se pudo cargar el saldo de Meta Ads"
-        >
-          <MetaAdsBalanceWidget />
-        </SectionBoundary>
-      </div>
     </div>
   );
 }

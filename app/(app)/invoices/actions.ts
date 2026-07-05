@@ -441,11 +441,13 @@ export async function createHourlyInvoice(input: unknown): Promise<FromProposalR
 
   const { data: logs, error: logsError } = await supabase
     .from("work_logs")
-    .select("hours")
+    .select("id, hours, work_date, start_time, end_time, note")
     .eq("project_id", projectId)
     .is("deleted_at", null)
+    .is("invoice_id", null)
     .gte("work_date", monthStart)
-    .lt("work_date", monthEnd);
+    .lt("work_date", monthEnd)
+    .order("work_date", { ascending: true });
 
   if (logsError) return { ok: false, error: logsError.message };
   const hours = (logs ?? []).reduce((sum, l) => sum + Number(l.hours ?? 0), 0);
@@ -525,6 +527,25 @@ export async function createHourlyInvoice(input: unknown): Promise<FromProposalR
       "create_hourly_invoice_items_failed",
     );
     return { ok: false, error: itemsInsertError.message };
+  }
+
+  // Link each work log to this invoice so they appear in the portal breakdown
+  // and cannot be accidentally included in a future invoice.
+  const logIds = (logs ?? []).map((l) => l.id as string);
+  if (logIds.length > 0) {
+    const { error: linkError } = await supabase
+      .from("work_logs")
+      .update({ invoice_id: invoice.id })
+      .in("id", logIds);
+
+    if (linkError) {
+      log.error(
+        { err: linkError, invoiceId: invoice.id, logIds },
+        "create_hourly_invoice_link_logs_failed",
+      );
+      // Non-fatal: the invoice was created; the link failure is logged but we
+      // don't roll back the whole operation.
+    }
   }
 
   revalidatePath("/invoices");

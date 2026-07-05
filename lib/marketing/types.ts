@@ -119,23 +119,3 @@ export type CampaignsOverview = {
   currency: string;
   lastSyncAt: string | null;
 };
-
-export type MetaAdsBalanceStatus = "ok" | "warning" | "critical";
-
-/**
- * Estimated balance of the Meta Ads account, derived from recorded recharges
- * (expenses with category `meta_ads`) minus the spend Meta has reported via the
- * Marketing API. It is an estimate: API spend is net of any billing taxes and
- * only covers the synced insight window.
- */
-export type MetaAdsBalance = {
-  totalRecharged: number;
-  totalSpent: number;
-  balance: number;
-  /** Average €/day over the trailing burn window. */
-  dailyBurn: number;
-  /** balance / dailyBurn, or null when there is no recent spend. */
-  daysRemaining: number | null;
-  status: MetaAdsBalanceStatus;
-  currency: string;
-};

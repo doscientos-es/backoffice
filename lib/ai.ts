@@ -1,104 +1,131 @@
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { createVertex } from "@ai-sdk/google-vertex";
+import { createOpenAI } from "@ai-sdk/openai";
 /**
- * Cliente AI con feature-gate.
- * Soporta Google Gemini (via endpoint OpenAI-compatible) y OpenAI como fallback.
- * Nunca instanciar directamente — usar getAIClient() y comprobar isAIEnabled() antes.
+ * Cliente AI - capa de abstraccion sobre Vercel AI SDK.
  *
- * Prioridad: GEMINI_API_KEY > OPENAI_API_KEY
+ * Proveedor controlado por AI_PROVIDER env var:
+ *  - "vertex": Google Vertex AI. Autenticación en dos modos:
+ *      · Local  → ADC (`gcloud auth application-default login`), sin env de credenciales.
+ *      · Vercel/prod → Service Account vía GOOGLE_SA_CLIENT_EMAIL + GOOGLE_SA_PRIVATE_KEY_BASE64
+ *        (no hay ADC ni metadata server en serverless, hay que pasar las credenciales).
+ *  - "gemini": Google AI Studio (requiere GEMINI_API_KEY)
+ *  - "openai": OpenAI (requiere OPENAI_API_KEY)
+ *  - "deepseek": DeepSeek (requiere DEEPSEEK_API_KEY)
  */
-import OpenAI from "openai";
+import { type LanguageModel, generateText } from "ai";
 import { isAIEnabled } from "./env";
-
-const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/";
 
 /**
  * Modelos por tarea.
- * Gemini 2.5 Flash-Lite: mejor relación precio/calidad para backoffice (junio 2026).
+ * Usamos nombres genéricos que se mapean al proveedor elegido.
  */
 export const AI_MODELS = {
-  default: "gemini-2.5-flash-lite",
-  summarizer: "gemini-2.5-flash-lite",
-  drafter: "gemini-2.5-flash-lite",
+  default: "gemini-2.5-flash",
+  summarizer: "gemini-2.5-flash",
+  drafter: "gemini-2.5-flash",
 } as const;
 
-let _client: OpenAI | null = null;
-
-/**
- * Devuelve el cliente AI configurado (Gemini o OpenAI).
- * Lanza un error claro si se llama sin ninguna key.
- */
-export function getAIClient(): OpenAI {
-  if (!isAIEnabled()) {
-    throw new Error(
-      "IA no configurada. Añade GEMINI_API_KEY (o OPENAI_API_KEY) a las variables de entorno.",
-    );
-  }
-  if (!_client) {
-    const geminiKey = process.env.GEMINI_API_KEY?.trim();
-    if (geminiKey) {
-      _client = new OpenAI({ apiKey: geminiKey, baseURL: GEMINI_BASE_URL });
-    } else {
-      _client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    }
-  }
-  return _client;
-}
-
-/** @deprecated Usa getAIClient(). Mantenido por compatibilidad. */
-export const getOpenAI = getAIClient;
-
-/** Timeout máximo por llamada — spec sec. 22.3: 30s y devolver error si falla. */
+/** Timeout máximo por llamada — 30s. */
 export const AI_TIMEOUT_MS = 30_000;
 
+/**
+ * Opciones de autenticación para Vertex.
+ * Si la Service Account está en el entorno (Vercel/producción) devuelve sus
+ * credenciales explícitas; si no (local), devuelve undefined para que el SDK
+ * use ADC automáticamente.
+ */
+function vertexAuthOptions():
+  | { credentials: { client_email: string; private_key: string } }
+  | undefined {
+  const clientEmail = process.env.GOOGLE_SA_CLIENT_EMAIL?.trim();
+  const keyB64 = process.env.GOOGLE_SA_PRIVATE_KEY_BASE64?.trim();
+  if (!clientEmail || !keyB64) return undefined;
+  const privateKey = Buffer.from(keyB64, "base64").toString("utf8").trim();
+  return { credentials: { client_email: clientEmail, private_key: privateKey } };
+}
+
+/**
+ * Resuelve el modelo de IA según el proveedor configurado en AI_PROVIDER.
+ */
+function resolveModel(modelName: string): LanguageModel {
+  const provider = process.env.AI_PROVIDER?.trim();
+
+  if (provider === "vertex") {
+    const auth = vertexAuthOptions();
+    const vertex = createVertex({
+      project: process.env.GOOGLE_CLOUD_PROJECT_ID,
+      location: process.env.GOOGLE_CLOUD_LOCATION || "us-central1",
+      ...(auth ? { googleAuthOptions: auth } : {}),
+    });
+    return vertex(modelName);
+  }
+
+  if (provider === "gemini") {
+    const google = createGoogleGenerativeAI({
+      apiKey: process.env.GEMINI_API_KEY,
+    });
+    return google(modelName);
+  }
+
+  if (provider === "openai") {
+    const openai = createOpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+    return openai(modelName);
+  }
+
+  if (provider === "deepseek") {
+    const deepseek = createOpenAI({
+      baseURL: "https://api.deepseek.com",
+      apiKey: process.env.DEEPSEEK_API_KEY,
+    });
+    return deepseek(modelName);
+  }
+
+  throw new Error(`Proveedor de IA '${provider}' no soportado o no configurado.`);
+}
+
 export type RunAIChatInput = {
-  /** Modelo OpenAI (usar AI_MODELS.*). */
+  /** Nombre del modelo (usar AI_MODELS.*). */
   model: string;
   /** System prompt — define rol y formato de respuesta. */
   system: string;
   /** User prompt — datos del caso concreto. */
   user: string;
-  /** Si true, fuerza response_format JSON (el modelo NUNCA devuelve markdown). */
+  /** Si true, intenta forzar formato JSON. */
   json?: boolean;
-  /** Temperatura del muestreo. Default 0.3 (preferimos consistencia). */
+  /** Temperatura del muestreo. Default 0.3. */
   temperature?: number;
 };
 
 /**
- * Ejecuta una chat completion con timeout de 30s y devuelve el contenido crudo.
- * El caller decide si parsea JSON o lo usa tal cual.
- *
- * Lanza Error con mensaje legible si:
- *  - la IA no está configurada
- *  - se supera el timeout
- *  - el modelo no devuelve contenido
+ * Ejecuta una chat completion con timeout de 30s y devuelve el texto.
  */
 export async function runAIChat(input: RunAIChatInput): Promise<string> {
-  const client = getAIClient();
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+  if (!isAIEnabled()) {
+    throw new Error("IA no configurada. Verifica AI_PROVIDER y credenciales en .env.local");
+  }
+
+  const model = resolveModel(input.model);
 
   try {
-    const completion = await client.chat.completions.create(
-      {
-        model: input.model,
-        temperature: input.temperature ?? 0.3,
-        messages: [
-          { role: "system", content: input.system },
-          { role: "user", content: input.user },
-        ],
-        ...(input.json ? { response_format: { type: "json_object" } as const } : {}),
-      },
-      { signal: controller.signal },
-    );
-    const content = completion.choices[0]?.message?.content?.trim();
-    if (!content) throw new Error("La IA no devolvió contenido.");
-    return content;
+    const { text } = await generateText({
+      model,
+      system: input.system,
+      prompt: input.user,
+      temperature: input.temperature ?? 0.3,
+      abortSignal: AbortSignal.timeout(AI_TIMEOUT_MS),
+      ...(input.json ? { responseFormat: { type: "json" } } : {}),
+    });
+
+    if (!text) throw new Error("La IA no devolvió contenido.");
+    return text;
   } catch (err) {
-    if (err instanceof Error && err.name === "AbortError") {
+    if (err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError")) {
       throw new Error("La IA tardó demasiado en responder (timeout 30s).");
     }
     throw err;
-  } finally {
-    clearTimeout(timer);
   }
 }
 

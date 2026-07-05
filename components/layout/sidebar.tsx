@@ -42,7 +42,7 @@ const NAV_PRIMARY = [
   { href: "/subscriptions", label: "Suscripciones", icon: Repeat },
   { href: "/finance", label: "Finanzas", icon: Wallet },
   { href: "/internal-docs", label: "Docs internos", icon: Archive },
-  { href: "/marketing", label: "Marketing", icon: Megaphone },
+  { href: "/marketing", label: "Anuncios", icon: Megaphone },
   { href: "/webs", label: "Webs", icon: Globe },
   { href: "/settings", label: "Ajustes", icon: Settings },
 ] as const;

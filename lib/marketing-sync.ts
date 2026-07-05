@@ -1,3 +1,4 @@
+import { roundCurrency } from "@/lib/finance/helpers";
 import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
 import * as MetaAPI from "./integrations/meta-marketing";
@@ -123,6 +124,115 @@ export async function syncMetaInsights(since: string, until: string) {
     return { ok: true, synced: insights.length };
   } catch (err) {
     log.error({ err }, "syncMetaInsights failed");
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+/**
+ * Mirror Meta Ads spend into the finance module as monthly expenses so the
+ * amount invested shows up in cash-flow, P&L and expense reports without any
+ * manual bookkeeping.
+ *
+ * Spend from `marketing_insights` is aggregated per calendar month and written
+ * as a single expense per month (vendor "Meta", category `meta_ads`), keyed by
+ * `invoice_reference = meta-ads-YYYY-MM` so repeated syncs upsert rather than
+ * duplicate. Each affected month is recomputed in full from the start of its
+ * month — never just the requested window — so a partial boundary month (or a
+ * still-accumulating current month) always reflects the correct total.
+ *
+ * Meta EU billing is reverse-charge, so the recorded amount is booked with 0%
+ * tax (`subtotal = total = spend`); the user can adjust individual rows later.
+ */
+export async function syncMetaSpendToExpenses(since: string, until: string) {
+  const supabase = createAdminClient();
+
+  try {
+    // Expand the lower bound to the first day of `since`'s month so each touched
+    // month is aggregated in full, keeping the upsert idempotent regardless of
+    // the window Meta was polled with.
+    const monthFloor = `${since.slice(0, 7)}-01`;
+
+    const { data: rows, error: readErr } = await supabase
+      .from("marketing_insights")
+      .select("spend, currency, date_start, date_stop")
+      .gte("date_start", monthFloor)
+      .lte("date_start", until);
+    if (readErr) throw readErr;
+
+    // Keep only true daily rows (date_start === date_stop) to avoid folding a
+    // legacy period-aggregate row into a month, mirroring the dashboard queries.
+    type MonthBucket = { spend: number; currency: string; maxDate: string };
+    const byMonth = new Map<string, MonthBucket>();
+    for (const r of rows ?? []) {
+      if (!r.date_start || r.date_start !== r.date_stop) continue;
+      const key = r.date_start.slice(0, 7); // YYYY-MM
+      const bucket = byMonth.get(key) ?? {
+        spend: 0,
+        currency: r.currency ?? "EUR",
+        maxDate: r.date_start,
+      };
+      bucket.spend += Number(r.spend ?? 0);
+      if (r.date_start > bucket.maxDate) bucket.maxDate = r.date_start;
+      byMonth.set(key, bucket);
+    }
+
+    const months = Array.from(byMonth.entries())
+      .map(([key, b]) => ({ key, ...b, spend: roundCurrency(b.spend) }))
+      .filter((m) => m.spend > 0);
+    if (months.length === 0) return { ok: true, synced: 0 };
+
+    // Look up which months already have an auto-synced expense so we update in
+    // place instead of inserting duplicates (no DB unique constraint on ref).
+    const refs = months.map((m) => `meta-ads-${m.key}`);
+    const { data: existing, error: existErr } = await supabase
+      .from("expenses")
+      .select("id, invoice_reference")
+      .eq("category", "meta_ads")
+      .in("invoice_reference", refs)
+      .is("deleted_at", null);
+    if (existErr) throw existErr;
+    const idByRef = new Map(
+      (existing ?? []).map((e) => [e.invoice_reference as string, e.id as string]),
+    );
+
+    const now = new Date().toISOString();
+    const toInsert: Record<string, unknown>[] = [];
+
+    for (const m of months) {
+      const ref = `meta-ads-${m.key}`;
+      const row = {
+        vendor: "Meta",
+        description: `Inversión en anuncios de Meta (${m.key})`,
+        category: "meta_ads" as const,
+        status: "paid" as const,
+        recurrence: "none" as const,
+        expense_date: m.maxDate,
+        currency: m.currency || "EUR",
+        subtotal: m.spend,
+        tax_rate: 0,
+        tax_amount: 0,
+        total: m.spend,
+        invoice_reference: ref,
+        updated_at: now,
+      };
+
+      const existingId = idByRef.get(ref);
+      if (existingId) {
+        const { error: updErr } = await supabase.from("expenses").update(row).eq("id", existingId);
+        if (updErr) throw updErr;
+      } else {
+        toInsert.push(row);
+      }
+    }
+
+    if (toInsert.length > 0) {
+      const { error: insErr } = await supabase.from("expenses").insert(toInsert);
+      if (insErr) throw insErr;
+    }
+
+    return { ok: true, synced: months.length };
+  } catch (err) {
+    log.error({ err }, "syncMetaSpendToExpenses failed");
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
   }
 }

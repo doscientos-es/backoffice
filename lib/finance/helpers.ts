@@ -43,7 +43,7 @@ export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   hardware: "Hardware",
   office: "Oficina",
   marketing: "Marketing",
-  meta_ads: "Meta Ads (recargas)",
+  meta_ads: "Meta Ads",
   professional: "Profesionales",
   travel: "Desplazamientos",
   taxes: "Impuestos",

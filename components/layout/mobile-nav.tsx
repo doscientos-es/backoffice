@@ -41,7 +41,7 @@ const NAV = [
   { href: "/invoices", label: "Facturas", icon: Receipt },
   { href: "/finance", label: "Finanzas", icon: Wallet },
   { href: "/finance/expenses", label: "Gastos", icon: Landmark },
-  { href: "/marketing", label: "Marketing", icon: Megaphone },
+  { href: "/marketing", label: "Anuncios", icon: Megaphone },
   { href: "/internal-docs", label: "Docs internos", icon: Archive },
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
   { href: "/reminders", label: "Avisos", icon: Bell },

@@ -16,7 +16,7 @@ interface AiNoticeProps {
 }
 
 export function AiNotice({
-  message = "La asistencia de IA no está disponible. Para activarla, añade OPENAI_API_KEY en las variables de entorno.",
+  message = "La asistencia de IA no está disponible. Para activarla, establece AI_PROVIDER en las variables de entorno.",
   inline = false,
 }: AiNoticeProps) {
   if (inline) {

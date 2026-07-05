@@ -73,6 +73,13 @@ export default async function PortalInvoicePage({
     .eq("invoice_id", invoice.id as string)
     .order("position");
 
+  const { data: workLogs } = await admin
+    .from("work_logs")
+    .select("id, work_date, hours, start_time, end_time, note")
+    .eq("invoice_id", invoice.id as string)
+    .is("deleted_at", null)
+    .order("work_date", { ascending: true });
+
   const { data: settings } = await admin.from("settings").select("*").eq("id", 1).maybeSingle();
 
   const client = (invoice as unknown as { clients: { name: string } | null }).clients;
@@ -405,6 +412,60 @@ export default async function PortalInvoicePage({
                 <p className="text-[10px] text-zinc-400 dark:text-zinc-600">Verificar en AEAT</p>
               </div>
             ) : null}
+          </div>
+        ) : null}
+
+        {/* Work log breakdown (only shown when logs are linked to this invoice) */}
+        {workLogs && workLogs.length > 0 ? (
+          <div className="border-t border-zinc-200 dark:border-zinc-800">
+            <div className="px-8 py-5 bg-zinc-50 dark:bg-zinc-900/50">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+                Desglose de actividad
+              </p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-zinc-100 dark:border-zinc-800/60">
+                    <th className="px-8 py-2.5 text-left text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+                      Fecha
+                    </th>
+                    <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+                      Horario
+                    </th>
+                    <th className="px-4 py-2.5 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+                      Horas
+                    </th>
+                    <th className="px-8 py-2.5 text-left text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+                      Descripción
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {workLogs.map((log, i) => (
+                    <tr
+                      key={log.id as string}
+                      className={i > 0 ? "border-t border-zinc-100 dark:border-zinc-800/60" : ""}
+                    >
+                      <td className="px-8 py-3 tabular-nums text-zinc-700 dark:text-zinc-300 whitespace-nowrap">
+                        {formatDate(log.work_date as string)}
+                      </td>
+                      <td className="px-4 py-3 tabular-nums text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
+                        {log.start_time && log.end_time
+                          ? `${(log.start_time as string).slice(0, 5)} – ${(log.end_time as string).slice(0, 5)}`
+                          : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
+                        {Number(log.hours).toFixed(2)} h
+                      </td>
+                      <td className="px-8 py-3 text-zinc-600 dark:text-zinc-400">
+                        {(log.note as string | null) ?? "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : null}
 

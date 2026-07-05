@@ -2,8 +2,9 @@
 
 import { requireUser } from "@/lib/auth";
 import { type MetaAdPreviewFormat, getMetaAdPreview } from "@/lib/integrations/meta-marketing";
-import { syncMetaCatalog, syncMetaInsights } from "@/lib/marketing-sync";
+import { syncMetaCatalog, syncMetaInsights, syncMetaSpendToExpenses } from "@/lib/marketing-sync";
 import { metaHistoryFloor, parseMarketingRange, rangeToDates } from "@/lib/marketing/range";
+import { revalidatePath } from "next/cache";
 
 export async function syncMetaAction(
   rangeKey?: string,
@@ -31,6 +32,17 @@ export async function syncMetaAction(
     if (!insightsResult.ok) {
       return { ok: false, error: insightsResult.error ?? "Error al sincronizar métricas" };
     }
+
+    // Mirror the synced spend into the finance module as monthly expenses so it
+    // flows into cash-flow and P&L. A failure here shouldn't fail the whole
+    // sync (metrics are already persisted), so we log and continue.
+    const spendResult = await syncMetaSpendToExpenses(since, today);
+    if (!spendResult.ok) {
+      return { ok: false, error: spendResult.error ?? "Error al sincronizar el gasto en finanzas" };
+    }
+
+    revalidatePath("/finance");
+    revalidatePath("/finance/expenses");
 
     return { ok: true };
   } catch (err) {

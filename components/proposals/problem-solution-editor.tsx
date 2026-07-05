@@ -7,7 +7,7 @@ import {
   KEY_POINTS_LIMITS,
   createEmptyPair,
 } from "@/lib/proposals/key-points";
-import { ChevronDown, ChevronUp, Plus, Sparkles, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
 
 export type ProblemSolutionEditorProps = {
   items: EditablePair[];
@@ -81,9 +81,17 @@ export function ProblemSolutionEditor({
               type="button"
               onClick={onGenerate}
               disabled={disabled}
-              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
+              aria-busy={generating}
+              className="group inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary shadow-sm transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:pointer-events-none disabled:opacity-60"
             >
-              <Sparkles className="size-3.5" aria-hidden />
+              {generating ? (
+                <Loader2 className="size-3.5 animate-spin" aria-hidden />
+              ) : (
+                <Sparkles
+                  className="size-3.5 transition-transform group-hover:scale-110"
+                  aria-hidden
+                />
+              )}
               {generating ? "Generando…" : "Generar 3 con IA"}
             </button>
           ) : null}
