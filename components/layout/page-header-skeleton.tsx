@@ -39,13 +39,13 @@ export function PageHeaderSkeleton({
           ))}
         </div>
       ) : null}
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="min-w-0">
           <Skeleton className="h-7 rounded" style={{ width: titleWidth }} />
           {withDescription ? <Skeleton className="mt-2 h-4 w-48 rounded" /> : null}
         </div>
         {actions.length > 0 ? (
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
             {actions.map((w, i) => (
               <Skeleton key={`${w}-${i}`} className="h-8 rounded-md" style={{ width: w }} />
             ))}

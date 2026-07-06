@@ -6,7 +6,7 @@ import { NotificationsBell } from "@/components/layout/notifications-bell";
 import { UserMenu } from "@/components/layout/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
-import type { CurrentUser } from "@/lib/auth";
+import type { CurrentUser, MemberRole } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import {
   Archive,
@@ -32,31 +32,47 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { version } from "../../package.json";
 
-const NAV_PRIMARY = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  /** Si se indica, solo los roles listados ven este item. Sin restricción = todos. */
+  allowedRoles?: MemberRole[];
+};
+
+const ADMIN_ROLES: MemberRole[] = ["owner", "admin"];
+
+const NAV_PRIMARY: NavItem[] = [
   { href: "/inicio", label: "Inicio", icon: Home },
   { href: "/leads", label: "Leads", icon: Inbox },
   { href: "/clients", label: "Clientes", icon: Users },
   { href: "/projects", label: "Proyectos", icon: FolderKanban },
   { href: "/proposals", label: "Propuestas", icon: FileSignature },
-  { href: "/invoices", label: "Facturas", icon: Receipt },
-  { href: "/subscriptions", label: "Suscripciones", icon: Repeat },
-  { href: "/finance", label: "Finanzas", icon: Wallet },
+  { href: "/invoices", label: "Facturas", icon: Receipt, allowedRoles: ADMIN_ROLES },
+  { href: "/subscriptions", label: "Suscripciones", icon: Repeat, allowedRoles: ADMIN_ROLES },
+  { href: "/finance", label: "Finanzas", icon: Wallet, allowedRoles: ADMIN_ROLES },
   { href: "/internal-docs", label: "Docs internos", icon: Archive },
-  { href: "/marketing", label: "Anuncios", icon: Megaphone },
-  { href: "/webs", label: "Webs", icon: Globe },
+  { href: "/marketing", label: "Anuncios", icon: Megaphone, allowedRoles: ADMIN_ROLES },
+  { href: "/webs", label: "Webs", icon: Globe, allowedRoles: ADMIN_ROLES },
   { href: "/settings", label: "Ajustes", icon: Settings },
-] as const;
+];
 
-const NAV_SECONDARY = [
-  { href: "/vault", label: "Bóveda", icon: KeyRound },
+const NAV_SECONDARY: NavItem[] = [
+  { href: "/vault", label: "Bóveda", icon: KeyRound, allowedRoles: ADMIN_ROLES },
   { href: "/reminders", label: "Avisos", icon: Bell },
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
   { href: "/documents", label: "Documentos", icon: FileText },
-] as const;
+];
 
 export function Sidebar({ user }: { user: CurrentUser; verifactuMode: string }) {
   const pathname = usePathname();
-  const hasSecondaryActive = NAV_SECONDARY.some(
+  const visiblePrimary = NAV_PRIMARY.filter(
+    (item) => !item.allowedRoles || item.allowedRoles.includes(user.role),
+  );
+  const visibleSecondary = NAV_SECONDARY.filter(
+    (item) => !item.allowedRoles || item.allowedRoles.includes(user.role),
+  );
+  const hasSecondaryActive = visibleSecondary.some(
     ({ href }) => pathname === href || pathname.startsWith(`${href}/`),
   );
   const [moreOpen, setMoreOpen] = useState(hasSecondaryActive);
@@ -79,7 +95,7 @@ export function Sidebar({ user }: { user: CurrentUser; verifactuMode: string }) 
         className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-1"
         aria-label="Navegación principal"
       >
-        {NAV_PRIMARY.map(({ href, label, icon: Icon }) => {
+        {visiblePrimary.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`);
           return (
             <Link
@@ -125,7 +141,7 @@ export function Sidebar({ user }: { user: CurrentUser; verifactuMode: string }) 
           <span className="truncate">Más</span>
         </button>
         {moreOpen &&
-          NAV_SECONDARY.map(({ href, label, icon: Icon }) => {
+          visibleSecondary.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || pathname.startsWith(`${href}/`);
             return (
               <Link

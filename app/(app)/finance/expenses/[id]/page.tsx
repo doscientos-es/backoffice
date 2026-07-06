@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DangerZone } from "@/components/ui/danger-zone";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { requireUser } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import {
   EXPENSE_CATEGORY_LABELS,
   EXPENSE_PAYMENT_SOURCE_LABELS,
@@ -23,7 +23,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ExpenseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const user = await requireUser();
+  const user = await requireRole(["owner", "admin"]);
 
   const supabase = await createServerClient();
   const [result, { data: teamMembersRaw }] = await Promise.all([

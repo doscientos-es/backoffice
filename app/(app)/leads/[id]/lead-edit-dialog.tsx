@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { useFormDirty } from "@/lib/hooks/use-form-dirty";
+import type { MemberOption } from "@/lib/members/queries";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { sileo } from "sileo";
@@ -29,9 +30,10 @@ type Lead = {
   company_size: string | null;
   solution_type: string | null;
   urgency: string | null;
+  assigned_to: string | null;
 };
 
-export function LeadEditDialog({ lead }: { lead: Lead }) {
+export function LeadEditDialog({ lead, members = [] }: { lead: Lead; members?: MemberOption[] }) {
   const [open, setOpen] = useState(false);
   const { formRef, isDirty, reset } = useFormDirty<HTMLFormElement>();
 
@@ -51,6 +53,7 @@ export function LeadEditDialog({ lead }: { lead: Lead }) {
       company_size: fd.get("company_size")?.toString() ?? "",
       solution_type: fd.get("solution_type")?.toString() ?? "",
       urgency: fd.get("urgency")?.toString() ?? "",
+      assigned_to: fd.get("assigned_to")?.toString() ?? "",
     };
     // Close immediately (optimistic) — server revalidatePath updates the page.
     reset();
@@ -80,6 +83,7 @@ export function LeadEditDialog({ lead }: { lead: Lead }) {
             <LeadFormFields
               idPrefix={`edit-${lead.id}`}
               includeEstimatedValue
+              members={members}
               defaults={{
                 name: lead.name,
                 company: lead.company,
@@ -91,6 +95,7 @@ export function LeadEditDialog({ lead }: { lead: Lead }) {
                 company_size: lead.company_size,
                 solution_type: lead.solution_type,
                 urgency: lead.urgency,
+                assigned_to: lead.assigned_to,
               }}
             />
           </div>

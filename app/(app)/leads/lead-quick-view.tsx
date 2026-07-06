@@ -67,8 +67,8 @@ export function LeadQuickView({
   lead: KanbanLead | null;
   canEdit?: boolean;
   members?: MemberOption[];
-  /** Optimistically removes the lead from the board and runs the delete. */
-  onDeleteAction: (id: string) => void;
+  /** Optimistically removes the lead from the board and runs the delete. Optional — falls back to router.refresh(). */
+  onDeleteAction?: (id: string) => void;
   onCloseAction: () => void;
 }) {
   return (
@@ -93,7 +93,7 @@ function Body({
   lead: KanbanLead;
   canEdit: boolean;
   members: MemberOption[];
-  onDeleteAction: (id: string) => void;
+  onDeleteAction?: (id: string) => void;
 }) {
   const hasEstimated = lead.estimated_value != null && lead.estimated_value > 0;
   return (
@@ -189,12 +189,15 @@ function Body({
       <footer className="flex items-center gap-2 border-t border-border p-3">
         {canEdit && (
           <>
-            <DeleteLeadButton
-              leadId={lead.id}
-              leadName={lead.name}
-              onConfirmAction={onDeleteAction}
-            />
+            {onDeleteAction && (
+              <DeleteLeadButton
+                leadId={lead.id}
+                leadName={lead.name}
+                onConfirmAction={onDeleteAction}
+              />
+            )}
             <LeadEditDialog
+              members={members}
               lead={{
                 id: lead.id,
                 name: lead.name,
@@ -207,6 +210,7 @@ function Body({
                 company_size: lead.company_size ?? null,
                 solution_type: lead.solution_type ?? null,
                 urgency: lead.urgency ?? null,
+                assigned_to: lead.assignee?.id ?? null,
               }}
             />
           </>

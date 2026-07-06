@@ -57,7 +57,7 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
 
   if (params.q.length > 0) {
     const pattern = `%${escapeIlike(params.q)}%`;
-    query = query.or(`name.ilike.${pattern},company.ilike.${pattern},email.ilike.${pattern}`);
+    query = query.or(`name.ilike.${pattern},company.ilike.${pattern},email.ilike.${pattern},phone.ilike.${pattern}`);
   }
   if (params.status) query = query.eq("status", params.status);
   if (params.source) query = query.eq("source", params.source);

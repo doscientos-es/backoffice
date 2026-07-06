@@ -2,7 +2,7 @@ import { ListPage } from "@/components/layout/list-page";
 import { Button } from "@/components/ui/button";
 import { MemberLabel } from "@/components/ui/member-avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { requireUser } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import {
   EXPENSE_CATEGORIES,
   EXPENSE_CATEGORY_LABELS,
@@ -44,7 +44,7 @@ type SearchParams = Promise<{
 }>;
 
 export default async function ExpensesPage({ searchParams }: { searchParams: SearchParams }) {
-  const [sp, user] = await Promise.all([searchParams, requireUser()]);
+  const [sp, user] = await Promise.all([searchParams, requireRole(["owner", "admin"])]);
   const { params } = parseExpenseListSearchParams(sp);
 
   const supabase = await createServerClient();

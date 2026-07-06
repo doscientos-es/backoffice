@@ -1,6 +1,6 @@
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
-import { requireUser } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { getExpenseDetail, getExpenseVendorSuggestions } from "@/lib/finance/queries";
 import { createServerClient } from "@/lib/supabase/server";
 import type { Metadata } from "next";
@@ -14,7 +14,7 @@ export default async function NewExpensePage({
 }: {
   searchParams: Promise<{ from?: string }>;
 }) {
-  await requireUser();
+  await requireRole(["owner", "admin"]);
   const { from } = await searchParams;
 
   const supabase = await createServerClient();

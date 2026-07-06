@@ -1,25 +1,20 @@
 import { ListControls } from "@/components/layout/list-controls";
-import { ListPage } from "@/components/layout/list-page";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
-import { MemberLabel } from "@/components/ui/member-avatar";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { isAIEnabled } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { listLeads } from "@/lib/leads/queries";
 import { LEAD_BOARD_LIMIT, LEAD_LIST_PAGE_SIZE, LEAD_SORT_COLUMNS } from "@/lib/leads/types";
 import { listActiveMembers } from "@/lib/members/queries";
 import { LEAD_STATUS, type LeadStatus } from "@/lib/status";
-import { relativeTime } from "@/lib/utils";
 import { parseSortParam } from "@/lib/utils/search-params";
-import { ArrowRight, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { LeadCreateDialog } from "./lead-create-dialog";
-import { LeadFastActions } from "./lead-fast-actions";
 import { LEAD_SOURCES } from "./lead-form-fields";
 import { LeadsKanban } from "./leads-kanban";
+import { LeadsList } from "./leads-list";
 import { LeadsViewToggle } from "./view-toggle";
 
 export const metadata: Metadata = { title: "Leads · doscientos" };
@@ -31,17 +26,6 @@ const STATUS_FILTER_OPTIONS = (Object.keys(LEAD_STATUS) as LeadStatus[]).map((va
 }));
 
 const SOURCE_FILTER_OPTIONS = LEAD_SOURCES.map((s) => ({ value: s, label: s }));
-
-function Initials({ name }: { name: string }) {
-  const parts = (name ?? "").trim().split(/\s+/);
-  const letters =
-    parts.length >= 2 ? (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "") : (parts[0]?.[0] ?? "?");
-  return (
-    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold uppercase text-primary">
-      {letters}
-    </span>
-  );
-}
 
 export default async function LeadsPage({
   searchParams,
@@ -94,7 +78,11 @@ export default async function LeadsPage({
   if (view === "list") {
     const hasFilters = q.length > 0 || !!status || !!source || !!assignee;
     return (
-      <ListPage
+      <LeadsList
+        leads={enrichedLeads}
+        aiEnabled={aiEnabled}
+        canEdit={canEdit}
+        members={members}
         title="Leads"
         description="Oportunidades comerciales sin contrato firmado."
         actions={actions}
@@ -122,52 +110,6 @@ export default async function LeadsPage({
         exportFilename="leads"
         addHref="/leads/new"
         addLabel="Añadir lead"
-        rows={enrichedLeads.map((l) => ({
-          id: l.id,
-          csvValues: [
-            l.name,
-            l.company ?? "",
-            l.email ?? "",
-            l.status,
-            l.assignee?.name ?? "",
-            l.created_at,
-            l.company_size ?? "",
-            l.solution_type ?? "",
-            l.urgency ?? "",
-            l.source ?? "",
-          ],
-          cells: [
-            <Link
-              key="name"
-              href={`/leads/${l.id}`}
-              className="group/leadname inline-flex items-center gap-2.5"
-            >
-              <Initials name={l.name} />
-              <span className="font-medium truncate max-w-40 underline-offset-2 group-hover/leadname:underline group-hover/leadname:text-primary transition-colors">
-                {l.name}
-              </span>
-              <ArrowRight className="size-3.5 shrink-0 opacity-0 -translate-x-1 transition-all group-hover/leadname:opacity-60 group-hover/leadname:translate-x-0" />
-            </Link>,
-            l.company,
-            l.email ? (
-              <a
-                key="email"
-                href={`mailto:${l.email}`}
-                className="hover:text-foreground transition-colors"
-              >
-                {l.email}
-              </a>
-            ) : null,
-            <StatusBadge key="status" meta={LEAD_STATUS} value={l.status} />,
-            <MemberLabel key="assignee" member={l.assignee} size="sm" />,
-            <span key="created" className="tabular-nums">
-              {relativeTime(l.created_at)}
-            </span>,
-            <div key="actions" className="flex justify-end">
-              <LeadFastActions lead={l} aiEnabled={aiEnabled} />
-            </div>,
-          ],
-        }))}
       />
     );
   }
@@ -182,9 +124,8 @@ export default async function LeadsPage({
 
       <ListControls
         searchKey="q"
-        searchPlaceholder="Buscar por nombre, empresa o email…"
+        searchPlaceholder="Buscar por nombre, empresa, email o teléfono…"
         filters={[
-          { key: "status", label: "Estado", options: STATUS_FILTER_OPTIONS },
           { key: "source", label: "Origen", options: SOURCE_FILTER_OPTIONS },
           { key: "assignee", label: "Responsable", options: ASSIGNEE_FILTER_OPTIONS },
         ]}

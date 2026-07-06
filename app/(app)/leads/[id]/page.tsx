@@ -19,7 +19,6 @@ import { notFound } from "next/navigation";
 import { LeadAiPanel } from "./lead-ai-panel";
 import { LeadCommercial } from "./lead-commercial";
 import { LeadEditDialog } from "./lead-edit-dialog";
-import { LeadOwnerSelect } from "./owner-select";
 import { LeadQuickActions } from "./quick-actions";
 import { LeadStatusSelect } from "./status-select";
 
@@ -95,6 +94,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           <>
             {canEdit ? (
               <LeadEditDialog
+                members={members}
                 lead={{
                   id: lead.id as string,
                   name: lead.name as string,
@@ -108,6 +108,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                   company_size: (lead.company_size as string | null) ?? null,
                   solution_type: (lead.solution_type as string | null) ?? null,
                   urgency: (lead.urgency as string | null) ?? null,
+                  assigned_to: (lead.assigned_to as string | null) ?? null,
                 }}
               />
             ) : null}
@@ -160,15 +161,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                 <DetailRow label="Empresa">{(lead.company as string | null) ?? "—"}</DetailRow>
                 <DetailRow label="Origen">{(lead.source as string | null) ?? "—"}</DetailRow>
                 <DetailRow label="Responsable">
-                  {canEdit ? (
-                    <LeadOwnerSelect
-                      leadId={lead.id as string}
-                      assignedTo={(lead.assigned_to as string | null) ?? null}
-                      members={members}
-                    />
-                  ) : (
-                    <MemberLabel member={lead.assignee} />
-                  )}
+                  <MemberLabel member={lead.assignee} />
                 </DetailRow>
                 <DetailRow label="Valor estimado">
                   {lead.estimated_value != null ? formatEUR(Number(lead.estimated_value)) : "—"}

@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { MemberAvatar } from "@/components/ui/member-avatar";
 import type { LeadListItem } from "@/lib/leads/types";
 import type { MemberOption } from "@/lib/members/queries";
@@ -18,7 +19,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { AlertTriangle, PanelRightOpen, Plus, RefreshCw } from "lucide-react";
+import { AlertTriangle, PanelRightOpen, Phone, Plus, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useOptimistic, useState, useTransition } from "react";
@@ -490,13 +491,24 @@ function Card({
         <LeadInitials name={lead.name} />
         <span className="flex-1 truncate text-sm font-medium leading-tight">{lead.name}</span>
         {stale && !isOverlay && (
-          <span
-            title={`Sin cambios desde hace ${relativeTime(lead.updated_at)}`}
-            aria-label="Lead estancado"
-            className="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"
-          >
-            <AlertTriangle className="size-2.5" aria-hidden />
-          </span>
+          <HoverCard openDelay={300} closeDelay={100}>
+            <HoverCardTrigger asChild>
+              <span
+                aria-label="Lead estancado"
+                className="inline-flex size-4 shrink-0 cursor-default items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"
+              >
+                <AlertTriangle className="size-2.5" aria-hidden />
+              </span>
+            </HoverCardTrigger>
+            <HoverCardContent side="top" align="end" className="w-auto px-2.5 py-1.5">
+              <p className="text-xs text-muted-foreground">
+                Sin cambios{" "}
+                <span className="font-medium text-foreground tabular-nums">
+                  {relativeTime(lead.updated_at)}
+                </span>
+              </p>
+            </HoverCardContent>
+          </HoverCard>
         )}
         {!isOverlay && onOpenQuickView && (
           <PanelRightOpen
@@ -505,43 +517,45 @@ function Card({
           />
         )}
       </div>
-      {(lead.company || lead.email) && (
+      {(lead.company || lead.email || lead.phone) && (
         <div className="flex flex-col gap-0.5 pl-8">
           {lead.company && <p className="truncate text-xs text-muted-foreground">{lead.company}</p>}
           {lead.email && <p className="truncate text-xs text-muted-foreground">{lead.email}</p>}
-        </div>
-      )}
-      {(lead.urgency || lead.source) && (
-        <div className="flex flex-wrap items-center gap-1 pl-8">
-          {lead.urgency && (
-            <span
-              className={cn(
-                "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium",
-                URGENCY_STYLE[lead.urgency] ?? "bg-muted text-muted-foreground",
-              )}
+          {lead.phone && (
+            <a
+              href={`tel:${lead.phone}`}
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-1 truncate text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              {lead.urgency}
-            </span>
-          )}
-          {lead.source && (
-            <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-              {lead.source}
-            </span>
+              <Phone className="size-2.5 shrink-0" />
+              {lead.phone}
+            </a>
           )}
         </div>
       )}
-      <div className="flex items-center justify-between gap-2 pl-8 text-[11px] tabular-nums text-muted-foreground">
-        <span className="whitespace-nowrap">{relativeTime(lead.created_at)}</span>
+      {lead.urgency && (
+        <div className="flex flex-wrap items-center gap-1 pl-8">
+          <span
+            className={cn(
+              "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium",
+              URGENCY_STYLE[lead.urgency] ?? "bg-muted text-muted-foreground",
+            )}
+          >
+            {lead.urgency}
+          </span>
+        </div>
+      )}
+      <div className="flex items-center justify-between gap-1.5 pl-8">
         <div className="flex items-center gap-1.5">
           {lead.estimated_value != null && lead.estimated_value > 0 && (
             <Badge variant="neutral" className="tabular-nums text-[10px] h-4 px-1.5">
               {formatEUR(lead.estimated_value)}
             </Badge>
           )}
-          {lead.assignee ? (
-            <MemberAvatar member={lead.assignee} size="sm" className="size-5" />
-          ) : null}
         </div>
+        {lead.assignee ? (
+          <MemberAvatar member={lead.assignee} size="sm" className="size-5 shrink-0" />
+        ) : null}
       </div>
     </div>
   );

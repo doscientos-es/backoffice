@@ -7,7 +7,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Drawer, DrawerClose, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
-import type { CurrentUser } from "@/lib/auth";
+import type { CurrentUser, MemberRole } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import {
   Archive,
@@ -32,23 +32,32 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-const NAV = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  allowedRoles?: MemberRole[];
+};
+
+const ADMIN_ROLES: MemberRole[] = ["owner", "admin"];
+
+const NAV: NavItem[] = [
   { href: "/inicio", label: "Inicio", icon: Home },
   { href: "/leads", label: "Leads", icon: Inbox },
   { href: "/clients", label: "Clientes", icon: Users },
   { href: "/projects", label: "Proyectos", icon: FolderKanban },
   { href: "/proposals", label: "Propuestas", icon: FileSignature },
-  { href: "/invoices", label: "Facturas", icon: Receipt },
-  { href: "/finance", label: "Finanzas", icon: Wallet },
-  { href: "/finance/expenses", label: "Gastos", icon: Landmark },
-  { href: "/marketing", label: "Anuncios", icon: Megaphone },
+  { href: "/invoices", label: "Facturas", icon: Receipt, allowedRoles: ADMIN_ROLES },
+  { href: "/finance", label: "Finanzas", icon: Wallet, allowedRoles: ADMIN_ROLES },
+  { href: "/finance/expenses", label: "Gastos", icon: Landmark, allowedRoles: ADMIN_ROLES },
+  { href: "/marketing", label: "Anuncios", icon: Megaphone, allowedRoles: ADMIN_ROLES },
   { href: "/internal-docs", label: "Docs internos", icon: Archive },
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
   { href: "/reminders", label: "Avisos", icon: Bell },
-  { href: "/vault", label: "Bóveda", icon: KeyRound },
+  { href: "/vault", label: "Bóveda", icon: KeyRound, allowedRoles: ADMIN_ROLES },
   { href: "/documents", label: "Documentos", icon: FileText },
   { href: "/settings", label: "Ajustes", icon: Settings },
-] as const;
+];
 
 export function MobileNav({
   user,
@@ -59,6 +68,9 @@ export function MobileNav({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const visibleNav = NAV.filter(
+    (item) => !item.allowedRoles || item.allowedRoles.includes(user.role),
+  );
 
   return (
     <div className="md:hidden">
@@ -95,7 +107,7 @@ export function MobileNav({
               className="flex flex-1 flex-col gap-0.5 px-2 py-3 overflow-y-auto"
               aria-label="Navegación principal"
             >
-              {NAV.map(({ href, label, icon: Icon }) => {
+              {visibleNav.map(({ href, label, icon: Icon }) => {
                 const active = pathname === href || pathname.startsWith(`${href}/`);
                 return (
                   <Link

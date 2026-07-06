@@ -1,6 +1,6 @@
 import { ListPage } from "@/components/layout/list-page";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { requireUser } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import {
   SUBSCRIPTION_BILLING_CYCLE,
   SUBSCRIPTION_STATUS,
@@ -35,7 +35,7 @@ export default async function SubscriptionsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await requireUser();
+  await requireRole(["owner", "admin"]);
   const sp = await searchParams;
 
   const q = parseStringParam(sp, "q");
