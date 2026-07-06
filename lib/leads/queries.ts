@@ -61,6 +61,7 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
   }
   if (params.status) query = query.eq("status", params.status);
   if (params.source) query = query.eq("source", params.source);
+  if (params.assignee) query = query.eq("assigned_to", params.assignee);
 
   const from = (params.page - 1) * LEAD_LIST_PAGE_SIZE;
   const to = from + LEAD_LIST_PAGE_SIZE - 1;

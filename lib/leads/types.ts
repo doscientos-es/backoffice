@@ -66,6 +66,7 @@ export type LeadListParams = {
   q: string;
   status: LeadStatus | null;
   source: string | null;
+  assignee: string | null;
   page: number;
   sort?: string;
   dir?: "asc" | "desc";

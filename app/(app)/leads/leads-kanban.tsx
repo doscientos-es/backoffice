@@ -32,6 +32,16 @@ export type KanbanLead = LeadListItem;
 
 const STALE_DAYS = 3;
 const STALE_MS = STALE_DAYS * 24 * 60 * 60 * 1000;
+
+const URGENCY_STYLE: Record<string, string> = {
+  Inmediata:
+    "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400",
+  "Este mes":
+    "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400",
+  "Este trimestre":
+    "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-400",
+  "Sin urgencia": "bg-muted text-muted-foreground",
+};
 const TERMINAL_STATUSES: ReadonlySet<LeadStatus> = new Set([
   "won",
   "lost",
@@ -499,6 +509,25 @@ function Card({
         <div className="flex flex-col gap-0.5 pl-8">
           {lead.company && <p className="truncate text-xs text-muted-foreground">{lead.company}</p>}
           {lead.email && <p className="truncate text-xs text-muted-foreground">{lead.email}</p>}
+        </div>
+      )}
+      {(lead.urgency || lead.source) && (
+        <div className="flex flex-wrap items-center gap-1 pl-8">
+          {lead.urgency && (
+            <span
+              className={cn(
+                "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium",
+                URGENCY_STYLE[lead.urgency] ?? "bg-muted text-muted-foreground",
+              )}
+            >
+              {lead.urgency}
+            </span>
+          )}
+          {lead.source && (
+            <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+              {lead.source}
+            </span>
+          )}
         </div>
       )}
       <div className="flex items-center justify-between gap-2 pl-8 text-[11px] tabular-nums text-muted-foreground">

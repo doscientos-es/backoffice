@@ -51,6 +51,7 @@ export default async function LeadsPage({
     q?: string;
     status?: string;
     source?: string;
+    assignee?: string;
     page?: string;
   }>;
 }) {
@@ -70,10 +71,15 @@ export default async function LeadsPage({
   const aiEnabled = isAIEnabled();
   const canEdit = user.role !== "viewer";
 
-  const [{ leads: enrichedLeads, count, error }, members] = await Promise.all([
-    listLeads({ view, q, status, source, page, sort, dir }),
-    listActiveMembers(),
-  ]);
+  const members = await listActiveMembers();
+  const memberIds = new Set(members.map((m) => m.id));
+  const assignee = memberIds.has(sp.assignee ?? "") ? (sp.assignee as string) : null;
+
+  const { leads: enrichedLeads, count, error } = await listLeads({
+    view, q, status, source, assignee, page, sort, dir,
+  });
+
+  const ASSIGNEE_FILTER_OPTIONS = members.map((m) => ({ value: m.id, label: m.name }));
 
 
   const boardCapped = view === "board" && enrichedLeads.length >= LEAD_BOARD_LIMIT;
@@ -86,7 +92,7 @@ export default async function LeadsPage({
   );
 
   if (view === "list") {
-    const hasFilters = q.length > 0 || !!status || !!source;
+    const hasFilters = q.length > 0 || !!status || !!source || !!assignee;
     return (
       <ListPage
         title="Leads"
@@ -100,6 +106,7 @@ export default async function LeadsPage({
         filters={[
           { key: "status", label: "Estado", options: STATUS_FILTER_OPTIONS },
           { key: "source", label: "Origen", options: SOURCE_FILTER_OPTIONS },
+          { key: "assignee", label: "Responsable", options: ASSIGNEE_FILTER_OPTIONS },
         ]}
         pagination={{ page, pageSize: LEAD_LIST_PAGE_SIZE, total: count }}
         headers={[
@@ -179,6 +186,7 @@ export default async function LeadsPage({
         filters={[
           { key: "status", label: "Estado", options: STATUS_FILTER_OPTIONS },
           { key: "source", label: "Origen", options: SOURCE_FILTER_OPTIONS },
+          { key: "assignee", label: "Responsable", options: ASSIGNEE_FILTER_OPTIONS },
         ]}
         className="rounded-xl border border-border bg-card px-4"
       />
