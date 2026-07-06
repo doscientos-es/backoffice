@@ -89,6 +89,10 @@ export type LeadDetail = {
   status: LeadStatus;
   notes: string | null;
   estimated_value: number | null;
+  company_size: string | null;
+  solution_type: string | null;
+  urgency: string | null;
+  first_contacted_at: string | null;
   created_at: string;
   updated_at: string | null;
   ai_summary: string | null;

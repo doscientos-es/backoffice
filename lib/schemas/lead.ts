@@ -26,6 +26,9 @@ export const CreateLeadInput = z.object({
   notes: optionalText(4000),
   estimated_value: z.number().min(0).max(99_999_999.99).nullable().optional(),
   assigned_to: assignableUuid.optional(),
+  company_size: optionalText(80),
+  solution_type: optionalText(80),
+  urgency: optionalText(80),
 });
 
 export type CreateLeadInputType = z.infer<typeof CreateLeadInput>;

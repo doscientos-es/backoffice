@@ -46,6 +46,9 @@ export function LeadCreateDialog({ trigger, onCreated }: Props) {
       source: fd.get("source")?.toString() ?? "",
       notes: fd.get("notes")?.toString() ?? "",
       estimated_value,
+      company_size: fd.get("company_size")?.toString() ?? "",
+      solution_type: fd.get("solution_type")?.toString() ?? "",
+      urgency: fd.get("urgency")?.toString() ?? "",
     });
 
     if (!res.ok) return feedback.setError(res.error);

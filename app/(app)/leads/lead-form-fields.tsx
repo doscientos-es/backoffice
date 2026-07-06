@@ -22,6 +22,9 @@ export type LeadFormDefaults = {
   source?: string | null;
   notes?: string | null;
   estimated_value?: number | null;
+  company_size?: string | null;
+  solution_type?: string | null;
+  urgency?: string | null;
 };
 
 /**
@@ -130,6 +133,41 @@ export function LeadFormFields({
             />
           </FormRow>
         ) : null}
+        <FormRow label="Tamaño empresa" htmlFor={`${idPrefix}-company_size`}>
+          <Select
+            id={`${idPrefix}-company_size`}
+            name="company_size"
+            defaultValue={d.company_size ?? ""}
+          >
+            <option value="">— Sin especificar —</option>
+            <option value="1-10">1–10 empleados</option>
+            <option value="10-50">10–50 empleados</option>
+            <option value="50-200">50–200 empleados</option>
+            <option value="200+">+200 empleados</option>
+          </Select>
+        </FormRow>
+        <FormRow label="Urgencia" htmlFor={`${idPrefix}-urgency`}>
+          <Select
+            id={`${idPrefix}-urgency`}
+            name="urgency"
+            defaultValue={d.urgency ?? ""}
+          >
+            <option value="">— Sin especificar —</option>
+            <option value="Inmediata">Inmediata</option>
+            <option value="Este mes">Este mes</option>
+            <option value="Este trimestre">Este trimestre</option>
+            <option value="Sin urgencia">Sin urgencia</option>
+          </Select>
+        </FormRow>
+        <FormRow label="Tipo de solución" htmlFor={`${idPrefix}-solution_type`} className="sm:col-span-2">
+          <Input
+            id={`${idPrefix}-solution_type`}
+            name="solution_type"
+            maxLength={80}
+            defaultValue={d.solution_type ?? ""}
+            placeholder="Software a medida, Web corporativa, App móvil…"
+          />
+        </FormRow>
       </div>
       <FormRow
         label="Notas"
@@ -141,6 +179,7 @@ export function LeadFormFields({
           name="notes"
           rows={4}
           maxLength={4000}
+          className="resize-y"
           defaultValue={d.notes ?? ""}
           placeholder="Reunión inicial el 14/03 — interesados en módulo de facturación…"
         />

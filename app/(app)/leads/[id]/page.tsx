@@ -105,6 +105,9 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                   notes: (lead.notes as string | null) ?? null,
                   estimated_value:
                     lead.estimated_value != null ? Number(lead.estimated_value) : null,
+                  company_size: (lead.company_size as string | null) ?? null,
+                  solution_type: (lead.solution_type as string | null) ?? null,
+                  urgency: (lead.urgency as string | null) ?? null,
                 }}
               />
             ) : null}

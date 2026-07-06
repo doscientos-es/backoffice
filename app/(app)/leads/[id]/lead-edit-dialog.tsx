@@ -26,6 +26,9 @@ type Lead = {
   source: string | null;
   notes: string | null;
   estimated_value: number | null;
+  company_size: string | null;
+  solution_type: string | null;
+  urgency: string | null;
 };
 
 export function LeadEditDialog({ lead }: { lead: Lead }) {
@@ -45,6 +48,9 @@ export function LeadEditDialog({ lead }: { lead: Lead }) {
       source: fd.get("source")?.toString() ?? "",
       notes: fd.get("notes")?.toString() ?? "",
       estimated_value: estimatedRaw === "" ? null : Number(estimatedRaw),
+      company_size: fd.get("company_size")?.toString() ?? "",
+      solution_type: fd.get("solution_type")?.toString() ?? "",
+      urgency: fd.get("urgency")?.toString() ?? "",
     };
     // Close immediately (optimistic) — server revalidatePath updates the page.
     reset();
@@ -64,26 +70,31 @@ export function LeadEditDialog({ lead }: { lead: Lead }) {
           Editar
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Editar lead</DialogTitle>
           <DialogDescription>Actualiza los datos del lead.</DialogDescription>
         </DialogHeader>
-        <form ref={formRef} onSubmit={onSubmit} className="flex flex-col gap-5">
-          <LeadFormFields
-            idPrefix={`edit-${lead.id}`}
-            includeEstimatedValue
-            defaults={{
-              name: lead.name,
-              company: lead.company,
-              email: lead.email,
-              phone: lead.phone,
-              source: lead.source,
-              notes: lead.notes,
-              estimated_value: lead.estimated_value,
-            }}
-          />
-          <div className="flex items-center justify-end gap-3 border-t border-border pt-3">
+        <form ref={formRef} onSubmit={onSubmit} className="flex flex-col max-h-[80vh]">
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 flex flex-col gap-5">
+            <LeadFormFields
+              idPrefix={`edit-${lead.id}`}
+              includeEstimatedValue
+              defaults={{
+                name: lead.name,
+                company: lead.company,
+                email: lead.email,
+                phone: lead.phone,
+                source: lead.source,
+                notes: lead.notes,
+                estimated_value: lead.estimated_value,
+                company_size: lead.company_size,
+                solution_type: lead.solution_type,
+                urgency: lead.urgency,
+              }}
+            />
+          </div>
+          <div className="shrink-0 flex items-center justify-end gap-3 border-t border-border pt-3">
             <SubmitButton disabled={!isDirty}>Guardar cambios</SubmitButton>
           </div>
         </form>
