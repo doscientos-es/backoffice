@@ -115,7 +115,18 @@ export default async function LeadsPage({
         addLabel="Añadir lead"
         rows={enrichedLeads.map((l) => ({
           id: l.id,
-          csvValues: [l.name, l.company ?? "", l.email ?? "", l.status, l.assignee?.name ?? "", l.created_at],
+          csvValues: [
+            l.name,
+            l.company ?? "",
+            l.email ?? "",
+            l.status,
+            l.assignee?.name ?? "",
+            l.created_at,
+            l.company_size ?? "",
+            l.solution_type ?? "",
+            l.urgency ?? "",
+            l.source ?? "",
+          ],
           cells: [
             <Link
               key="name"

@@ -204,6 +204,9 @@ function Body({
                 source: lead.source,
                 notes: lead.notes,
                 estimated_value: lead.estimated_value,
+                company_size: lead.company_size ?? null,
+                solution_type: lead.solution_type ?? null,
+                urgency: lead.urgency ?? null,
               }}
             />
           </>

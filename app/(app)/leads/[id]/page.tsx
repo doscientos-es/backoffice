@@ -174,6 +174,9 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                   {lead.estimated_value != null ? formatEUR(Number(lead.estimated_value)) : "—"}
                 </DetailRow>
                 <DetailRow label="Creado">{formatDate(lead.created_at as string)}</DetailRow>
+                <DetailRow label="Tamaño">{lead.company_size ?? "—"}</DetailRow>
+                <DetailRow label="Urgencia">{lead.urgency ?? "—"}</DetailRow>
+                <DetailRow label="Solución">{lead.solution_type ?? "—"}</DetailRow>
               </DetailGrid>
 
               {lead.notes ? (

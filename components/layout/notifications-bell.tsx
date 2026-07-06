@@ -11,14 +11,18 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty-state";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useBrowserNotifications } from "@/lib/hooks/use-browser-notifications";
 import { getBrowserClient } from "@/lib/supabase/browser";
 import { cn, relativeTime } from "@/lib/utils";
 import {
   AtSign,
   Bell,
   BellOff,
+  BellRing,
   CheckCheck,
   CircleDollarSign,
+  FileCheck,
+  FileX,
   MessageSquare,
   UserPlus,
   Zap,
@@ -53,10 +57,28 @@ const EVENT_META: Record<string, { icon: ComponentType<{ className?: string }>; 
   lead_new: { icon: Zap, tint: "text-amber-500" },
   invoice_paid: { icon: CircleDollarSign, tint: "text-emerald-500" },
   invoice_payment: { icon: CircleDollarSign, tint: "text-emerald-500" },
+  proposal_accepted: { icon: FileCheck, tint: "text-emerald-500" },
+  proposal_rejected: { icon: FileX, tint: "text-destructive" },
+};
+
+/** Human-readable titles for OS-level browser notifications. */
+const BROWSER_NOTIF_TITLE: Record<string, string> = {
+  lead_new: "🔔 Nuevo lead",
+  task_comment: "💬 Nuevo comentario",
+  task_mention: "💬 Te han mencionado",
+  task_assigned: "✅ Tarea asignada",
+  invoice_paid: "💰 Factura cobrada",
+  invoice_payment: "💰 Pago recibido",
+  proposal_accepted: "✅ Propuesta aceptada",
+  proposal_rejected: "❌ Propuesta rechazada",
 };
 
 function getEventMeta(eventType: string) {
   return EVENT_META[eventType] ?? { icon: Bell, tint: "text-muted-foreground" };
+}
+
+function getBrowserTitle(eventType: string) {
+  return BROWSER_NOTIF_TITLE[eventType] ?? "Nueva notificación";
 }
 
 function initials(name: string | null | undefined): string {
@@ -98,6 +120,7 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
   const [notifs, setNotifs] = useState<Notif[]>([]);
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
+  const { permission, requestPermission, notify } = useBrowserNotifications();
 
   const fetchNotifs = useCallback(async () => {
     const supabase = getBrowserClient();
@@ -125,13 +148,21 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
           table: "notifications",
           filter: `recipient_id=eq.${memberId}`,
         },
-        () => fetchNotifs(),
+        (payload) => {
+          fetchNotifs();
+          const row = payload.new as { event_type?: string; body?: string | null };
+          notify({
+            title: getBrowserTitle(row.event_type ?? ""),
+            body: row.body ?? undefined,
+            tag: row.event_type,
+          });
+        },
       )
       .subscribe();
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [memberId, fetchNotifs]);
+  }, [memberId, fetchNotifs, notify]);
 
   const unread = useMemo(() => notifs.filter((n) => !n.read_at), [notifs]);
   const groups = useMemo(() => groupByDay(notifs), [notifs]);
@@ -180,17 +211,32 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
               <span className="text-xs text-muted-foreground">{unread.length} sin leer</span>
             )}
           </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="xs"
-            onClick={markAllRead}
-            disabled={unread.length === 0 || pending}
-            className="text-xs"
-          >
-            <CheckCheck className="size-3" />
-            Marcar leídas
-          </Button>
+          <div className="flex items-center gap-1">
+            {permission === "default" && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                onClick={requestPermission}
+                className="text-xs text-amber-600 hover:text-amber-700"
+                title="Activar notificaciones del navegador"
+              >
+                <BellRing className="size-3" />
+                Activar
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="xs"
+              onClick={markAllRead}
+              disabled={unread.length === 0 || pending}
+              className="text-xs"
+            >
+              <CheckCheck className="size-3" />
+              Marcar leídas
+            </Button>
+          </div>
         </div>
 
         {notifs.length === 0 ? (
