@@ -17,18 +17,14 @@ export function serverEnv() {
 
 /**
  * true si la IA está lista para usarse — feature-gate para toda la lógica de IA.
- * Controlado por AI_PROVIDER:
- *   "vertex"   → necesita GOOGLE_CLOUD_PROJECT_ID (usa ADC, sin API key)
- *   "openai"   → necesita OPENAI_API_KEY
- *   "gemini"   → necesita GEMINI_API_KEY
- *   "deepseek" → necesita DEEPSEEK_API_KEY
+ * Hoy solo está cableado Vertex (ver resolveModel() en lib/ai.ts):
+ *   "vertex" → necesita GOOGLE_CLOUD_PROJECT_ID (usa ADC, sin API key)
+ * Para reactivar otros proveedores en el futuro, añade aquí su check y su
+ * branch en resolveModel().
  */
 export function isAIEnabled(): boolean {
   const provider = process.env.AI_PROVIDER?.trim();
   if (provider === "vertex") return Boolean(process.env.GOOGLE_CLOUD_PROJECT_ID?.trim());
-  if (provider === "openai") return Boolean(process.env.OPENAI_API_KEY?.trim());
-  if (provider === "gemini") return Boolean(process.env.GEMINI_API_KEY?.trim());
-  if (provider === "deepseek") return Boolean(process.env.DEEPSEEK_API_KEY?.trim());
   return false;
 }
 

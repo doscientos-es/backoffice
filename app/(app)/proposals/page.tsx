@@ -128,10 +128,10 @@ export default async function ProposalsPage({
       rows={
         data?.map((p) => {
           const clientName =
-            (p.clients as { name: string } | null)?.name ??
-            (p.leads as { name: string } | null)?.name ??
+            (p.clients as { name: string }[] | null)?.[0]?.name ??
+            (p.leads as { name: string }[] | null)?.[0]?.name ??
             "—";
-          const projectName = (p.projects as { name: string } | null)?.name ?? "—";
+          const projectName = (p.projects as { name: string }[] | null)?.[0]?.name ?? "—";
           return {
             id: p.id as string,
             href: `/proposals/${p.id}`,

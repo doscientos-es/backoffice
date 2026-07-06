@@ -1,18 +1,19 @@
 /**
  * POST /api/crm/ai/draft-email
  *
- * Genera un borrador de email (asunto + cuerpo HTML) para un lead.
- * NO envía el email ni lo persiste — el equipo SIEMPRE revisa antes de
- * enviar (sec. 22.2 description.md).
+ * Genera un borrador de email (asunto + cuerpo en Markdown) para un lead.
+ * El cuerpo se emite en Markdown porque el composer y sendEmailToLead lo
+ * convierten a HTML con markdownToHtml. NO envía el email ni lo persiste — el
+ * equipo SIEMPRE revisa antes de enviar (sec. 22.2 description.md).
  *
  * Body: { lead_id: string, kind?: string, instructions?: string }
  *  - kind: tipo de email deseado (p.ej. "follow_up", "intro", "propuesta")
  *  - instructions: notas adicionales libres del usuario
  *
- * Auth: requireUser. 503 si OPENAI_API_KEY no está configurada.
+ * Auth: requireUser (viewer denegado). 503 si la IA no está configurada.
  */
 
-import { AI_MODELS, isAIEnabled, runAIJson } from "@/lib/ai";
+import { AI_MODELS, isAIEnabled, runAIObject } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { scopedLogger } from "@/lib/logger";
 import { rateLimit } from "@/lib/ratelimit";
@@ -39,16 +40,13 @@ type AIResult = z.infer<typeof ResultSchema>;
 
 const SYSTEM_PROMPT = `Eres un asistente de CRM que redacta emails en español
 para una agencia de desarrollo web. Tono profesional, cercano, sin tecnicismos
-innecesarios. Estructura el cuerpo como HTML simple (<p>, <ul>, <li>, <strong>)
-sin <html>/<body>/<head>, listo para incrustar en un email transaccional.
+innecesarios. Redacta el cuerpo en Markdown simple (párrafos, **negrita**,
+listas con "-"), sin encabezados ni HTML.
 
-Responde SOLO con un JSON con esta forma exacta:
-{
-  "subject": "asunto del email (max 100 caracteres)",
-  "body":    "cuerpo HTML simple"
-}
-No incluyas markdown ni texto fuera del JSON. Firma del usuario se añade aparte;
-no la incluyas en el body.`;
+- "subject": asunto del email (máx. 100 caracteres).
+- "body": cuerpo del email en Markdown.
+
+La firma del usuario se añade aparte; no la incluyas en el body.`;
 
 export async function POST(req: NextRequest) {
   if (!isAIEnabled()) {
@@ -60,6 +58,10 @@ export async function POST(req: NextRequest) {
     user = await requireUser();
   } catch {
     return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
+  }
+
+  if (user.role === "viewer") {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
   const rl = rateLimit(`ai:${user.id}`, 10);
@@ -121,13 +123,14 @@ Remitente: ${user.name} (${user.email})`;
 
   let result: AIResult;
   try {
-    const raw = await runAIJson<unknown>({
+    result = await runAIObject({
       model: AI_MODELS.drafter,
       system: SYSTEM_PROMPT,
       user: userPrompt,
+      schema: ResultSchema,
       temperature: 0.6, // un poco más de variedad para emails
+      maxOutputTokens: 1200,
     });
-    result = ResultSchema.parse(raw);
   } catch (err) {
     log.error(
       { leadId: body.lead_id, err: err instanceof Error ? err.message : err },

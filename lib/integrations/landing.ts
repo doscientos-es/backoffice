@@ -17,6 +17,7 @@ export const LandingLeadInput = z.object({
   message: optionalText(4000),
   budget: optionalText(80),
   companySize: optionalText(80),
+  urgency: optionalText(80),
   // Attribution (the landing forwards these from the URL / first-touch cookie).
   utm_source: optionalText(200),
   utm_medium: optionalText(200),
@@ -55,6 +56,7 @@ export function mapLandingToIntake(
   const notesParts = [
     input.message ?? null,
     input.companySize ? `Tamaño de empresa: ${input.companySize}` : null,
+    input.urgency ? `Urgencia: ${input.urgency}` : null,
     input.budget ? `Presupuesto: ${input.budget}` : null,
   ].filter((v): v is string => Boolean(v));
 
@@ -68,6 +70,8 @@ export function mapLandingToIntake(
     company: input.company ?? null,
     notes: notesParts.length ? notesParts.join("\n") : null,
     estimatedValue: parseBudgetFloor(input.budget),
+    companySize: input.companySize ?? null,
+    urgency: input.urgency ?? null,
     source: "landing",
     externalId: dedupeKey,
     externalSource: dedupeKey ? "landing_form" : null,

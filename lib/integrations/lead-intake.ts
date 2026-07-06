@@ -37,6 +37,10 @@ export const LeadIntakeSchema = z.object({
   notes: z.string().optional().nullable(),
   /** Best-effort estimated pipeline value (e.g. parsed from a form budget range). */
   estimatedValue: z.number().min(0).max(99_999_999.99).optional().nullable(),
+  /** Firmographic + intent signals parsed from the form (drive scoring/filtering). */
+  companySize: z.string().optional().nullable(),
+  solutionType: z.string().optional().nullable(),
+  urgency: z.string().optional().nullable(),
   source: z.string().trim().min(1, "source is required"),
   /** Provider-side stable identifier (e.g. Meta leadgen_id). Used for idempotency. */
   externalId: z.string().optional().nullable(),
@@ -73,7 +77,83 @@ export function parseBudgetFloor(text: string | null | undefined): number | null
   return amounts.length > 0 ? Math.min(...amounts) : null;
 }
 
-const log = scopedLogger("lead-intake");
+/** Lowercases and strips Spanish accents so keyword matching is diacritic-safe. */
+function normalize(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
+}
+
+/** A question/answer pair extracted from a form ("¿Tamaño de empresa?" → "10-50"). */
+export type FormAnswer = { label: string; value: string };
+
+/**
+ * Structured qualification signals derived from free-text form answers.
+ * Both the Meta and Recurrev mappers feed their "¿…?" answers through here so
+ * the same firmographic/intent data lands in dedicated columns regardless of
+ * how the lead reached us — enabling scoring and Kanban filtering.
+ */
+export type QualificationFields = {
+  companySize: string | null;
+  solutionType: string | null;
+  urgency: string | null;
+};
+
+export function classifyFormAnswers(answers: FormAnswer[]): QualificationFields {
+  const out: QualificationFields = {
+    companySize: null,
+    solutionType: null,
+    urgency: null,
+  };
+  for (const { label, value } of answers) {
+    const v = value?.trim();
+    if (!v) continue;
+    const key = normalize(label);
+    if (out.companySize == null && (key.includes("tamano") || key.includes("empleado"))) {
+      out.companySize = v;
+    } else if (
+      out.solutionType == null &&
+      (key.includes("solucion") || key.includes("necesitas") || key.includes("proyecto"))
+    ) {
+      out.solutionType = v;
+    } else if (
+      out.urgency == null &&
+      (key.includes("cuando") ||
+        key.includes("plazo") ||
+        key.includes("urgen") ||
+        key.includes("empezar") ||
+        key.includes("inicio") ||
+        key.includes("urgencia"))
+    ) {
+      out.urgency = v;
+    }
+  }
+  return out;
+}
+
+/**
+ * Parses the lower employee count from a company-size answer, mirroring
+ * parseBudgetFloor: "10-50 empleados" → 10, "Más de 200" → 200, "1-10" → 1.
+ */
+export function parseEmployeeFloor(text: string | null | undefined): number | null {
+  if (!text || !text.trim()) return null;
+  const counts = (text.match(/\d[\d.]*/g) ?? [])
+    .map((m) => Number.parseInt(m.replace(/\./g, ""), 10))
+    .filter((n) => Number.isFinite(n) && n > 0);
+  return counts.length > 0 ? Math.min(...counts) : null;
+}
+
+/** Maps a free-text urgency answer to a 0–1 intent weight for scoring. */
+export function urgencyWeight(text: string | null | undefined): number {
+  if (!text) return 0;
+  const v = normalize(text);
+  if (v.includes("inmediat") || v.includes("urgent") || /\bya\b/.test(v)) return 1;
+  if (v.includes("mes")) return 0.7;
+  if (v.includes("trimestre") || v.includes("3 mes")) return 0.4;
+  if (v.includes("explor") || v.includes("solo informacion") || v.includes("sin prisa")) return 0.1;
+  return 0;
+}
 
 /**
  * Window for email/phone soft-dedupe.
@@ -83,6 +163,8 @@ const log = scopedLogger("lead-intake");
  * notifications, because Cal.com always carries its own externalId (booking
  * uid) which is different from the landing-form dedupeKey.
  */
+const log = scopedLogger("lead-intake");
+
 const SOFT_DEDUPE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
 export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
@@ -164,6 +246,9 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
     company: norm.company?.trim() || null,
     notes: norm.notes?.trim() || null,
     estimated_value: norm.estimatedValue ?? null,
+    company_size: norm.companySize?.trim() || null,
+    solution_type: norm.solutionType?.trim() || null,
+    urgency: norm.urgency?.trim() || null,
     source: norm.source.trim().slice(0, 80),
     external_id: norm.externalId ?? null,
     external_source: norm.externalSource ?? null,
@@ -215,6 +300,9 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
         leadCompany: row.company,
         leadSource: row.source,
         leadNotes: row.notes,
+        leadEstimatedValue: row.estimated_value,
+        leadCompanySize: row.company_size,
+        leadUrgency: row.urgency,
       }).catch((e) => log.error({ err: e }, "notifyNewLead failed")),
     ]);
   });
@@ -240,7 +328,7 @@ async function enrichLead(
   const { data: existing, error } = await supabase
     .from("leads")
     .select(
-      "email, phone, company, notes, estimated_value, utm_source, utm_medium, utm_campaign, utm_term, utm_content, referrer, ip, device, browser, language",
+      "email, phone, company, notes, estimated_value, company_size, solution_type, urgency, decision_role, utm_source, utm_medium, utm_campaign, utm_term, utm_content, referrer, ip, device, browser, language",
     )
     .eq("id", leadId)
     .maybeSingle();
@@ -257,6 +345,9 @@ async function enrichLead(
   fillGap("email", existing.email, norm.email);
   fillGap("phone", existing.phone, norm.phone);
   fillGap("company", existing.company, norm.company);
+  fillGap("company_size", existing.company_size, norm.companySize);
+  fillGap("solution_type", existing.solution_type, norm.solutionType);
+  fillGap("urgency", existing.urgency, norm.urgency);
   fillGap("utm_source", existing.utm_source, norm.utm?.source);
   fillGap("utm_medium", existing.utm_medium, norm.utm?.medium);
   fillGap("utm_campaign", existing.utm_campaign, norm.utm?.campaign);

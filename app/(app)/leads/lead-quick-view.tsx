@@ -23,7 +23,22 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import type { MemberOption } from "@/lib/members/queries";
 import { LEAD_STATUS } from "@/lib/status";
 import { formatEUR, relativeTime } from "@/lib/utils";
-import { ArrowUpRight, Building2, Hand, Loader2, Mail, Phone, Trash2, UserRound, Wallet, X } from "lucide-react";
+import {
+  ArrowUpRight,
+  Building2,
+  Clock,
+  Hand,
+  Loader2,
+  Mail,
+  Phone,
+  Timer,
+  Trash2,
+  UserRound,
+  Users,
+  Wallet,
+  Wrench,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useState, useTransition } from "react";
@@ -123,7 +138,28 @@ function Body({
               <MemberLabel member={lead.assignee} size="sm" />
             )}
           </Row>
+          <Row icon={<Timer className="size-3.5" />}>
+            {lead.first_contacted_at ? (
+              <span className="tabular-nums">
+                Primer contacto {relativeTime(lead.first_contacted_at)}
+              </span>
+            ) : (
+              <span className="text-muted-foreground">Sin contactar</span>
+            )}
+          </Row>
         </section>
+        {(lead.company_size || lead.solution_type || lead.urgency) && (
+          <section className="flex flex-col gap-1.5 text-xs">
+            <Heading>Cualificación</Heading>
+            {lead.company_size && (
+              <Row icon={<Users className="size-3.5" />}>{lead.company_size}</Row>
+            )}
+            {lead.solution_type && (
+              <Row icon={<Wrench className="size-3.5" />}>{lead.solution_type}</Row>
+            )}
+            {lead.urgency && <Row icon={<Clock className="size-3.5" />}>{lead.urgency}</Row>}
+          </section>
+        )}
         {lead.notes && (
           <section className="flex flex-col gap-1.5">
             <Heading>Notas</Heading>

@@ -26,6 +26,23 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+/**
+ * Speed-to-lead: stamps `first_contacted_at` on the first real outbound touch
+ * (call, logged email, sent email or booked meeting). The
+ * `is("first_contacted_at", null)` guard keeps it idempotent and race-safe —
+ * only the first contact wins; later touches are no-ops.
+ */
+async function markFirstContacted(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  leadId: string,
+): Promise<void> {
+  await supabase
+    .from("leads")
+    .update({ first_contacted_at: new Date().toISOString() })
+    .eq("id", leadId)
+    .is("first_contacted_at", null);
+}
+
 // ---------------- CREATE ----------------
 
 export const createLead = defineAction({
@@ -355,6 +372,8 @@ export const sendEmailToLead = defineAction({
       payload: { template_slug: data.templateSlug ?? null, mocked },
     });
 
+    await markFirstContacted(supabase, data.leadId);
+
     revalidatePath(`/leads/${data.leadId}`);
     return { emailId: resendId, mocked };
   },
@@ -391,6 +410,8 @@ export const logLeadCall = defineAction({
       },
     });
     if (error) throw new Error(error.message);
+
+    await markFirstContacted(supabase, leadId);
   },
 });
 
@@ -411,6 +432,8 @@ export const logLeadEmail = defineAction({
       payload: { manual: true, direction, counterparty: counterparty ?? null },
     });
     if (error) throw new Error(error.message);
+
+    await markFirstContacted(supabase, leadId);
   },
 });
 
@@ -557,6 +580,8 @@ export const scheduleLeadMeeting = defineAction<
       },
     });
     if (error) throw new Error(error.message);
+
+    await markFirstContacted(supabase, data.leadId);
 
     return { eventId: event.id, htmlLink: event.htmlLink, meetUrl: event.meetUrl };
   },

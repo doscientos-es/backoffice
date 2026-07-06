@@ -15,7 +15,17 @@ export type NotifyNewLeadInput = {
   leadCompany?: string | null;
   leadSource: string;
   leadNotes?: string | null;
+  /** Qualification signals surfaced at the top of the Telegram alert. */
+  leadEstimatedValue?: number | null;
+  leadCompanySize?: string | null;
+  leadUrgency?: string | null;
 };
+
+const eur = new Intl.NumberFormat("es-ES", {
+  style: "currency",
+  currency: "EUR",
+  maximumFractionDigits: 0,
+});
 
 const log = scopedLogger("notify-new-lead");
 
@@ -118,6 +128,16 @@ export async function notifyNewLead(input: NotifyNewLeadInput): Promise<void> {
   );
 
   // ── 4. Telegram direct notification ─────────────────────────────────────
+  // Qualification block: budget, firmographics and intent up top so the sales
+  // team can triage the lead at a glance without opening the backoffice.
+  const qualLines = [
+    input.leadEstimatedValue != null
+      ? `💰 Valor estimado: ${eur.format(input.leadEstimatedValue)}`
+      : null,
+    input.leadCompanySize ? `👥 Tamaño: ${input.leadCompanySize}` : null,
+    input.leadUrgency ? `⏱️ Urgencia: ${input.leadUrgency}` : null,
+  ].filter((l): l is string => l !== null);
+
   const notesLines = input.leadNotes
     ? ["", "📋 *Formulario*", ...input.leadNotes.split("\n").map((l) => `  ${l}`)]
     : [];
@@ -130,6 +150,7 @@ export async function notifyNewLead(input: NotifyNewLeadInput): Promise<void> {
     input.leadPhone ? `📱 ${input.leadPhone}` : null,
     input.leadCompany ? `🏢 ${input.leadCompany}` : null,
     `🎯 Fuente: ${input.leadSource}`,
+    ...qualLines,
     ...notesLines,
     "",
     `🔗 [Ver en backoffice](${leadUrl})`,

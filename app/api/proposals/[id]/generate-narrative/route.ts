@@ -5,11 +5,11 @@
  * del proyecto, cliente y líneas. NO persiste nada: devuelve el JSON para que
  * el editor lo cargue y el equipo lo revise antes de guardar (autosave).
  *
- * Auth: requireUser.
+ * Auth: requireUser (viewer denegado).
  * 503 si no hay clave de IA (isAIEnabled() falsy).
  */
 
-import { AI_MODELS, isAIEnabled, runAIJson } from "@/lib/ai";
+import { AI_MODELS, isAIEnabled, runAIObject } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { scopedLogger } from "@/lib/logger";
 import { rateLimit } from "@/lib/ratelimit";
@@ -59,6 +59,10 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     user = await requireUser();
   } catch {
     return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
+  }
+
+  if (user.role === "viewer") {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
   const rl = rateLimit(`ai:${user.id}`, 10);
@@ -115,13 +119,14 @@ Genera 3 pares problema→solución siguiendo el formato indicado.`;
 
   let result: z.infer<typeof ResultSchema>;
   try {
-    const raw = await runAIJson<unknown>({
+    result = await runAIObject({
       model: AI_MODELS.drafter,
       system: SYSTEM_PROMPT,
       user: userPrompt,
+      schema: ResultSchema,
       temperature: 0.5,
+      maxOutputTokens: 1800,
     });
-    result = ResultSchema.parse(raw);
   } catch (err) {
     const message = err instanceof Error ? err.message : "AI call failed";
     log.error({ proposalId: id, err: message }, "ai_generate_narrative_failed");

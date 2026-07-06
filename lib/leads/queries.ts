@@ -24,9 +24,11 @@ const ASSIGNEE_EMBED = "assignee:assigned_to(id, name, avatar_url, github_handle
 /** Embed of an interaction's author, via the `performed_by` FK column. */
 const PERFORMER_EMBED = "performer:performed_by(id, name, avatar_url, github_handle)";
 
-const LIST_COLUMNS = `id, name, company, email, phone, source, notes, status, created_at, updated_at, estimated_value, ai_summary, ai_updated_at, assigned_to, ${ASSIGNEE_EMBED}`;
+const QUALIFICATION_COLUMNS = "company_size, solution_type, urgency, first_contacted_at";
 
-const DETAIL_COLUMNS = `id, name, email, phone, company, source, status, notes, estimated_value, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_temperature, ai_confidence, ai_updated_at, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`;
+const LIST_COLUMNS = `id, name, company, email, phone, source, notes, status, created_at, updated_at, estimated_value, ${QUALIFICATION_COLUMNS}, ai_summary, ai_updated_at, assigned_to, ${ASSIGNEE_EMBED}`;
+
+const DETAIL_COLUMNS = `id, name, email, phone, company, source, status, notes, estimated_value, ${QUALIFICATION_COLUMNS}, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_temperature, ai_confidence, ai_updated_at, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`;
 
 const log = scopedLogger("leads.queries");
 
@@ -87,6 +89,10 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
     created_at: l.created_at as string,
     updated_at: (l.updated_at as string | null) ?? (l.created_at as string),
     estimated_value: l.estimated_value == null ? null : Number(l.estimated_value),
+    company_size: (l.company_size as string | null) ?? null,
+    solution_type: (l.solution_type as string | null) ?? null,
+    urgency: (l.urgency as string | null) ?? null,
+    first_contacted_at: (l.first_contacted_at as string | null) ?? null,
     ai_summary: (l.ai_summary as string | null) ?? null,
     ai_updated_at: (l.ai_updated_at as string | null) ?? null,
     assignee: mapMemberRef(l.assignee),

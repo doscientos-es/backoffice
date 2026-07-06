@@ -6,13 +6,14 @@
  * tabla `documents` enlazado a la propuesta, y se devuelve su id para que el
  * cliente pueda navegar a editarlo o marcarlo como visible.
  *
- * Auth: requireUser.
- * 503 si no hay OPENAI_API_KEY (isAIEnabled() falsy).
+ * Auth: requireUser (viewer denegado).
+ * 503 si la IA no está configurada (isAIEnabled() falsy).
  */
 
 import { AI_MODELS, isAIEnabled, runAIChat } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { scopedLogger } from "@/lib/logger";
+import { rateLimit } from "@/lib/ratelimit";
 import { createServerClient } from "@/lib/supabase/server";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -52,10 +53,20 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "ai_disabled" }, { status: 503 });
   }
 
+  let user: Awaited<ReturnType<typeof requireUser>>;
   try {
-    await requireUser();
+    user = await requireUser();
   } catch {
     return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
+  }
+
+  if (user.role === "viewer") {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
+
+  const rl = rateLimit(`ai:${user.id}`, 10);
+  if (!rl.success) {
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }
 
   const { id } = await params;
@@ -117,6 +128,7 @@ Genera la especificación técnica completa siguiendo la estructura indicada.`;
       system: SYSTEM_PROMPT,
       user: userPrompt,
       temperature: 0.4,
+      maxOutputTokens: 4000,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "AI call failed";
@@ -125,7 +137,6 @@ Genera la especificación técnica completa siguiendo la estructura indicada.`;
   }
 
   const title = `Especificación técnica · ${proposal.title as string}`;
-  const user = await requireUser();
 
   const { data: doc, error: insertErr } = await supabase
     .from("proposal_specs")

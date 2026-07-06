@@ -39,6 +39,12 @@ export type LeadListItem = {
   created_at: string;
   updated_at: string;
   estimated_value: number | null;
+  /** Firmographic + intent signals parsed from the lead form. */
+  company_size: string | null;
+  solution_type: string | null;
+  urgency: string | null;
+  /** Speed-to-lead: first time a sales rep engaged the lead. */
+  first_contacted_at: string | null;
   ai_summary: string | null;
   ai_updated_at: string | null;
   assignee: LeadMemberRef | null;

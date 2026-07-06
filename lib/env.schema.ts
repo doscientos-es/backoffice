@@ -25,9 +25,11 @@ export const ServerSchema = PublicSchema.extend({
   RESEND_API_KEY: z.string().optional().default(""),
   RESEND_WEBHOOK_SECRET: z.string().optional().default(""),
   RESEND_FROM_DOMAIN: z.string().default("doscientos.es"),
-  // AI provider selection. Set ONE of:
+  // AI provider selection. Hoy solo está cableado "vertex" en lib/ai.ts.
+  //   "vertex"  → GOOGLE_CLOUD_PROJECT_ID + ADC (org policy, no key) [ACTIVO]
+  // El resto quedan reservados para reactivar en el futuro (añadir su branch
+  // en resolveModel() de lib/ai.ts):
   //   "gemini"  → GEMINI_API_KEY (Google AI Studio, key required)
-  //   "vertex"  → GOOGLE_CLOUD_PROJECT_ID + ADC (org policy, no key)
   //   "openai"  → OPENAI_API_KEY
   //   "deepseek"→ DEEPSEEK_API_KEY
   // Leave empty / unset to disable AI features.
@@ -36,7 +38,8 @@ export const ServerSchema = PublicSchema.extend({
   OPENAI_API_KEY: z.string().optional().default(""),
   DEEPSEEK_API_KEY: z.string().optional().default(""),
   GOOGLE_CLOUD_PROJECT_ID: z.string().optional().default(""),
-  GOOGLE_CLOUD_LOCATION: z.string().optional().default("us-central1"),
+  // Región EU por defecto (GDPR): los datos del lead no salen de la UE.
+  GOOGLE_CLOUD_LOCATION: z.string().optional().default("europe-west1"),
   VERIFACTU_ENV: z.enum(["mock", "test", "prod"]).default("mock"),
   VERIFACTU_CERT_P12_BASE64: z.string().optional().default(""),
   VERIFACTU_CERT_PASSWORD: z.string().optional().default(""),

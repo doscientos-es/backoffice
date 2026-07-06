@@ -1,24 +1,26 @@
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createVertex } from "@ai-sdk/google-vertex";
-import { createOpenAI } from "@ai-sdk/openai";
 /**
  * Cliente AI - capa de abstraccion sobre Vercel AI SDK.
  *
- * Proveedor controlado por AI_PROVIDER env var:
+ * Proveedor controlado por AI_PROVIDER env var. Hoy solo está cableado Vertex;
+ * la estructura de resolveModel() está preparada para reactivar otros
+ * proveedores (gemini / openai / deepseek) añadiendo su branch en el futuro.
+ *
  *  - "vertex": Google Vertex AI. Autenticación en dos modos:
  *      · Local  → ADC (`gcloud auth application-default login`), sin env de credenciales.
  *      · Vercel/prod → Service Account vía GOOGLE_SA_CLIENT_EMAIL + GOOGLE_SA_PRIVATE_KEY_BASE64
  *        (no hay ADC ni metadata server en serverless, hay que pasar las credenciales).
- *  - "gemini": Google AI Studio (requiere GEMINI_API_KEY)
- *  - "openai": OpenAI (requiere OPENAI_API_KEY)
- *  - "deepseek": DeepSeek (requiere DEEPSEEK_API_KEY)
  */
-import { type LanguageModel, generateText } from "ai";
+import { type LanguageModel, type LanguageModelUsage, Output, generateText } from "ai";
+import type { z } from "zod";
 import { isAIEnabled } from "./env";
+import { scopedLogger } from "./logger";
+
+const log = scopedLogger("ai");
 
 /**
  * Modelos por tarea.
- * Usamos nombres genéricos que se mapean al proveedor elegido.
+ * IDs de modelo Gemini, servidos vía Vertex AI.
  */
 export const AI_MODELS = {
   default: "gemini-2.5-flash",
@@ -47,6 +49,8 @@ function vertexAuthOptions():
 
 /**
  * Resuelve el modelo de IA según el proveedor configurado en AI_PROVIDER.
+ * Solo Vertex está cableado; para reactivar otros proveedores añade su branch
+ * aquí (p.ej. gemini / openai / deepseek) y su clave en env.schema.ts.
  */
 function resolveModel(modelName: string): LanguageModel {
   const provider = process.env.AI_PROVIDER?.trim();
@@ -55,35 +59,36 @@ function resolveModel(modelName: string): LanguageModel {
     const auth = vertexAuthOptions();
     const vertex = createVertex({
       project: process.env.GOOGLE_CLOUD_PROJECT_ID,
-      location: process.env.GOOGLE_CLOUD_LOCATION || "us-central1",
+      // Región EU por defecto (GDPR): los datos del lead no salen de la UE.
+      location: process.env.GOOGLE_CLOUD_LOCATION || "europe-west1",
       ...(auth ? { googleAuthOptions: auth } : {}),
     });
     return vertex(modelName);
   }
 
-  if (provider === "gemini") {
-    const google = createGoogleGenerativeAI({
-      apiKey: process.env.GEMINI_API_KEY,
-    });
-    return google(modelName);
-  }
-
-  if (provider === "openai") {
-    const openai = createOpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-    return openai(modelName);
-  }
-
-  if (provider === "deepseek") {
-    const deepseek = createOpenAI({
-      baseURL: "https://api.deepseek.com",
-      apiKey: process.env.DEEPSEEK_API_KEY,
-    });
-    return deepseek(modelName);
-  }
-
   throw new Error(`Proveedor de IA '${provider}' no soportado o no configurado.`);
+}
+
+/** Registra el consumo de tokens de una llamada para control de coste. */
+function logUsage(model: string, usage: LanguageModelUsage | undefined, ms: number): void {
+  log.info(
+    {
+      model,
+      inputTokens: usage?.inputTokens,
+      outputTokens: usage?.outputTokens,
+      totalTokens: usage?.totalTokens,
+      ms,
+    },
+    "ai_usage",
+  );
+}
+
+/** Traduce errores de timeout del SDK a un mensaje claro. */
+function normalizeAIError(err: unknown): Error {
+  if (err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError")) {
+    return new Error("La IA tardó demasiado en responder (timeout 30s).");
+  }
+  return err instanceof Error ? err : new Error("Fallo en la llamada a la IA.");
 }
 
 export type RunAIChatInput = {
@@ -93,10 +98,10 @@ export type RunAIChatInput = {
   system: string;
   /** User prompt — datos del caso concreto. */
   user: string;
-  /** Si true, intenta forzar formato JSON. */
-  json?: boolean;
   /** Temperatura del muestreo. Default 0.3. */
   temperature?: number;
+  /** Límite de tokens de salida — controla coste y evita truncados. */
+  maxOutputTokens?: number;
 };
 
 /**
@@ -108,34 +113,75 @@ export async function runAIChat(input: RunAIChatInput): Promise<string> {
   }
 
   const model = resolveModel(input.model);
+  const startedAt = Date.now();
 
   try {
-    const { text } = await generateText({
+    const { text, usage } = await generateText({
       model,
       system: input.system,
       prompt: input.user,
       temperature: input.temperature ?? 0.3,
+      ...(input.maxOutputTokens ? { maxOutputTokens: input.maxOutputTokens } : {}),
       abortSignal: AbortSignal.timeout(AI_TIMEOUT_MS),
-      ...(input.json ? { responseFormat: { type: "json" } } : {}),
     });
 
+    logUsage(input.model, usage, Date.now() - startedAt);
     if (!text) throw new Error("La IA no devolvió contenido.");
     return text;
   } catch (err) {
-    if (err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError")) {
-      throw new Error("La IA tardó demasiado en responder (timeout 30s).");
-    }
-    throw err;
+    throw normalizeAIError(err);
   }
 }
 
-/** Igual que runAIChat pero parsea la respuesta como JSON. */
-export async function runAIJson<T>(input: Omit<RunAIChatInput, "json">): Promise<T> {
-  const raw = await runAIChat({ ...input, json: true });
+export type RunAIObjectInput<S extends z.ZodType> = {
+  /** Nombre del modelo (usar AI_MODELS.*). */
+  model: string;
+  /** System prompt — define rol e instrucciones. */
+  system: string;
+  /** User prompt — datos del caso concreto. */
+  user: string;
+  /** Schema Zod que valida y tipa la salida estructurada. */
+  schema: S;
+  /** Temperatura del muestreo. Default 0.3. */
+  temperature?: number;
+  /** Límite de tokens de salida — controla coste y evita truncados. */
+  maxOutputTokens?: number;
+};
+
+/**
+ * Genera una respuesta estructurada validada contra un schema Zod, usando el
+ * structured-output nativo del proveedor (Gemini responseSchema). Elimina el
+ * parseo manual de JSON y garantiza el tipado de la salida.
+ *
+ * El tipo de retorno se deriva de z.infer<S> (tipo de SALIDA del schema), de
+ * modo que los campos con .default() se tratan como obligatorios en el
+ * resultado, tal y como Zod los rellena.
+ */
+export async function runAIObject<S extends z.ZodType>(
+  input: RunAIObjectInput<S>,
+): Promise<z.infer<S>> {
+  if (!isAIEnabled()) {
+    throw new Error("IA no configurada. Verifica AI_PROVIDER y credenciales en .env.local");
+  }
+
+  const model = resolveModel(input.model);
+  const startedAt = Date.now();
+
   try {
-    return JSON.parse(raw) as T;
-  } catch {
-    throw new Error("La IA devolvió un JSON no válido.");
+    const { output, usage } = await generateText({
+      model,
+      output: Output.object({ schema: input.schema }),
+      system: input.system,
+      prompt: input.user,
+      temperature: input.temperature ?? 0.3,
+      ...(input.maxOutputTokens ? { maxOutputTokens: input.maxOutputTokens } : {}),
+      abortSignal: AbortSignal.timeout(AI_TIMEOUT_MS),
+    });
+
+    logUsage(input.model, usage, Date.now() - startedAt);
+    return output;
+  } catch (err) {
+    throw normalizeAIError(err);
   }
 }
 

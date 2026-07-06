@@ -5,13 +5,13 @@
  * Persiste el resultado en leads.ai_* (sec. 22.1 description.md).
  *
  * Body: { lead_id: string }
- * Auth: requireUser (cualquier miembro del equipo).
+ * Auth: requireUser (viewer denegado — la operación escribe en el lead).
  *
- * Devuelve 503 si OPENAI_API_KEY no está configurada — el feature-gate vive
- * en isAIEnabled() para que el frontend pueda detectarlo y mostrar <AiNotice/>.
+ * Devuelve 503 si la IA no está configurada — el feature-gate vive en
+ * isAIEnabled() para que el frontend pueda detectarlo y mostrar <AiNotice/>.
  */
 
-import { AI_MODELS, isAIEnabled, runAIJson } from "@/lib/ai";
+import { AI_MODELS, isAIEnabled, runAIObject } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { scopedLogger } from "@/lib/logger";
 import { rateLimit } from "@/lib/ratelimit";
@@ -36,14 +36,11 @@ const ResultSchema = z.object({
 type AIResult = z.infer<typeof ResultSchema>;
 
 const SYSTEM_PROMPT = `Eres un asistente de CRM para una agencia de desarrollo web española.
-Analiza la información del lead y sus interacciones, y responde SOLO con un JSON con esta forma exacta:
-{
-  "summary": "resumen en 2-3 frases en español",
-  "suggested_next_step": "acción concreta recomendada (1 frase)",
-  "temperature": "hot" | "warm" | "cold",
-  "confidence": 0.0-1.0
-}
-No incluyas markdown ni texto fuera del JSON.`;
+Analiza la información del lead y sus interacciones y devuelve:
+- "summary": resumen en 2-3 frases en español.
+- "suggested_next_step": acción concreta recomendada (1 frase).
+- "temperature": "hot" | "warm" | "cold".
+- "confidence": número entre 0.0 y 1.0.`;
 
 export async function POST(req: NextRequest) {
   if (!isAIEnabled()) {
@@ -55,6 +52,10 @@ export async function POST(req: NextRequest) {
     user = await requireUser();
   } catch {
     return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
+  }
+
+  if (user.role === "viewer") {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
   const rl = rateLimit(`ai:${user.id}`, 10);
@@ -112,12 +113,13 @@ ${interactionsText || "(sin interacciones registradas)"}`;
 
   let result: AIResult;
   try {
-    const raw = await runAIJson<unknown>({
+    result = await runAIObject({
       model: AI_MODELS.summarizer,
       system: SYSTEM_PROMPT,
       user: userPrompt,
+      schema: ResultSchema,
+      maxOutputTokens: 800,
     });
-    result = ResultSchema.parse(raw);
   } catch (err) {
     log.error(
       { leadId: body.lead_id, err: err instanceof Error ? err.message : err },

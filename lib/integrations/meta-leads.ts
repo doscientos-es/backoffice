@@ -1,6 +1,11 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { serverEnv } from "@/lib/env";
-import { type LeadIntake, parseBudgetFloor } from "@/lib/integrations/lead-intake";
+import {
+  type FormAnswer,
+  type LeadIntake,
+  classifyFormAnswers,
+  parseBudgetFloor,
+} from "@/lib/integrations/lead-intake";
 import { scopedLogger } from "@/lib/logger";
 
 const log = scopedLogger("meta-leads");
@@ -103,6 +108,7 @@ const FIELD_ALIASES = {
   firstName: ["first_name", "nombre"],
   lastName: ["last_name", "apellidos", "apellido"],
   company: ["company_name", "empresa", "company", "organizacion"],
+  urgency: ["urgency", "urgencia", "cuando_necesitas_empezar", "plazo", "priority"],
 } as const;
 
 function findField(fields: MetaLeadField[], candidates: ReadonlyArray<string>): string | null {
@@ -118,14 +124,13 @@ function findField(fields: MetaLeadField[], candidates: ReadonlyArray<string>): 
 }
 
 /**
- * Extracts custom form questions from Meta field_data.
- * Spanish forms use "¿…?" as the question pattern.
- * Produces the same human-readable block as the Recurrev mapper, e.g.:
- *   Tamaño de empresa: 10-50 empleados
- *   Qué solución necesitas desarrollar: Software a Medida
+ * Extracts custom form questions from Meta field_data as label/value pairs.
+ * Spanish forms use "¿…?" as the question pattern. The pairs feed both the
+ * human-readable `notes` block and the structured classifier
+ * (classifyFormAnswers) that fills the qualification columns.
  */
-function extractMetaFormQuestionsAsNotes(fields: MetaLeadField[]): string | null {
-  const lines: string[] = [];
+function extractMetaFormAnswers(fields: MetaLeadField[]): FormAnswer[] {
+  const answers: FormAnswer[] = [];
   for (const field of fields) {
     const key = field.name.trim();
     if (!key.startsWith("¿")) continue;
@@ -135,9 +140,14 @@ function extractMetaFormQuestionsAsNotes(fields: MetaLeadField[]): string | null
       .replace(/^¿/, "")
       .replace(/\?\s*$/, "")
       .trim();
-    lines.push(`${label}: ${value}`);
+    answers.push({ label, value });
   }
-  return lines.length > 0 ? lines.join("\n") : null;
+  return answers;
+}
+
+/** Renders extracted answers into the human-readable `notes` block. */
+function formAnswersToNotes(answers: FormAnswer[]): string | null {
+  return answers.length > 0 ? answers.map((a) => `${a.label}: ${a.value}`).join("\n") : null;
 }
 
 /**
@@ -168,13 +178,20 @@ export function mapMetaLeadgenToIntake(
       .join(" ") ||
     "Lead sin nombre";
 
+  const formAnswers = extractMetaFormAnswers(res.field_data);
+  const qualification = classifyFormAnswers(formAnswers);
+  const explicitUrgency = findField(res.field_data, FIELD_ALIASES.urgency);
+
   return {
     name: fullName,
     email: findField(res.field_data, FIELD_ALIASES.email),
     phone: findField(res.field_data, FIELD_ALIASES.phone),
     company: findField(res.field_data, FIELD_ALIASES.company),
-    notes: extractMetaFormQuestionsAsNotes(res.field_data),
+    notes: formAnswersToNotes(formAnswers),
     estimatedValue: parseMetaBudgetToEstimatedValue(res.field_data),
+    companySize: qualification.companySize,
+    solutionType: qualification.solutionType,
+    urgency: explicitUrgency || qualification.urgency,
     source: META_LEAD_SOURCE,
     externalId: res.id,
     externalSource: META_LEAD_SOURCE,
