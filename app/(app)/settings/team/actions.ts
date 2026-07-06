@@ -43,13 +43,18 @@ function describeInviteError(error: unknown): string {
   const lower = raw.toLowerCase();
 
   if (status === 429 || lower.includes("rate limit")) {
-    return "Límite de emails alcanzado. Configura un SMTP propio o espera antes de reintentar.";
-  }
-  if (lower.includes("error sending") || lower.includes("smtp") || status === 500) {
-    return "No se pudo enviar el email de invitación. Falta configurar un servidor SMTP en Supabase.";
+    return "Límite de emails alcanzado. Espera unos minutos antes de reintentar.";
   }
   if (lower.includes("already been registered") || lower.includes("already registered")) {
     return "Ese email ya tiene cuenta. Búscalo en la lista o reactívalo.";
+  }
+  if (lower.includes("error sending") || lower.includes("smtp") || status === 500) {
+    // SMTP is configured (Resend); surface the real provider error so we can
+    // see the actual cause (e.g. unverified sender domain) instead of a
+    // misleading "falta configurar SMTP" message.
+    return raw
+      ? `El proveedor de email rechazó el envío: ${raw}`
+      : "El proveedor de email (Resend) rechazó el envío. Revisa que el dominio del remitente esté verificado.";
   }
   return raw || "No se pudo enviar la invitación.";
 }
