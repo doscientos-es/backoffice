@@ -50,6 +50,31 @@ export type PaymentInitResult =
  * transaction across multiple tables — `ensureClientForProposal` re-points
  * the proposal to the new client_id before we mark it accepted.
  */
+/** Best-effort: inserts an in-app notification row for all owners/admins. */
+async function notifyAdmins(
+  admin: ReturnType<typeof createAdminClient>,
+  eventType: string,
+  body: string,
+  link: string,
+): Promise<void> {
+  const { data: recipients } = await admin
+    .from("team_members")
+    .select("id")
+    .in("role", ["owner", "admin"])
+    .is("deleted_at", null);
+  if (!recipients?.length) return;
+  await admin.from("notifications").insert(
+    recipients.map((r) => ({
+      recipient_id: r.id as string,
+      actor_id: null,
+      event_type: eventType,
+      entity_type: "proposal",
+      body,
+      link,
+    })),
+  );
+}
+
 async function acceptWithFiscal(token: string, fiscalInput: unknown): Promise<ActionResult> {
   const parsed = ProposalPortalToken.safeParse(token);
   if (!parsed.success) return { ok: false, error: "Token inválido" };
@@ -58,7 +83,7 @@ async function acceptWithFiscal(token: string, fiscalInput: unknown): Promise<Ac
   const { data: proposal, error: fetchError } = await admin
     .from("proposals")
     .select(
-      "id, status, client_id, lead_id, clients(name, nif, billing_address), leads(name, email, phone, company)",
+      "id, status, title, client_id, lead_id, clients(name, nif, billing_address), leads(name, email, phone, company)",
     )
     .eq("portal_token", parsed.data)
     .is("deleted_at", null)
@@ -105,10 +130,20 @@ async function acceptWithFiscal(token: string, fiscalInput: unknown): Promise<Ac
     .eq("id", proposal.id);
   if (updateError) return { ok: false, error: "No se pudo actualizar la propuesta" };
 
-  // Best-effort side-effects: Drive backup, project creation, lead promotion.
+  // Best-effort side-effects: Drive backup, project creation, lead promotion, notification.
   // Failures are logged but never reverse the acceptance — the customer's
   // response is the source of truth.
   void backupProposalToDrive(proposal.id as string);
+  const proposalTitle = (proposal as unknown as { title?: string | null }).title;
+  const leadData = (proposal as unknown as { leads?: { name?: string | null } | null }).leads;
+  const contactName = leadData?.name ?? client?.name ?? null;
+  const notifBody = [proposalTitle, contactName].filter(Boolean).join(" · ");
+  void notifyAdmins(
+    admin,
+    "proposal_accepted",
+    notifBody || "Propuesta aceptada",
+    `/proposals/${proposal.id}`,
+  );
   try {
     const { projectId } = await ensureProjectForProposal(admin, proposal.id as string);
 
@@ -137,7 +172,7 @@ async function rejectAction(token: string, rejectionReason?: string): Promise<Ac
   const admin = createAdminClient();
   const { data: proposal, error: fetchError } = await admin
     .from("proposals")
-    .select("id, status")
+    .select("id, status, title, clients(name), leads(name)")
     .eq("portal_token", parsed.data)
     .is("deleted_at", null)
     .maybeSingle();
@@ -157,6 +192,18 @@ async function rejectAction(token: string, rejectionReason?: string): Promise<Ac
 
   const { error: updateError } = await admin.from("proposals").update(patch).eq("id", proposal.id);
   if (updateError) return { ok: false, error: "No se pudo actualizar la propuesta" };
+
+  const proposalTitle = (proposal as unknown as { title?: string | null }).title;
+  const leadData = (proposal as unknown as { leads?: { name?: string | null } | null }).leads;
+  const clientData = (proposal as unknown as { clients?: { name?: string | null } | null }).clients;
+  const contactName = leadData?.name ?? clientData?.name ?? null;
+  const notifBody = [proposalTitle, contactName].filter(Boolean).join(" · ");
+  void notifyAdmins(
+    admin,
+    "proposal_rejected",
+    notifBody || "Propuesta rechazada",
+    `/proposals/${proposal.id}`,
+  );
 
   revalidatePath(`/p/proposal/${parsed.data}`);
   return { ok: true };
