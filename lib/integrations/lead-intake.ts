@@ -44,7 +44,7 @@ export const LeadIntakeSchema = z.object({
   source: z.string().trim().min(1, "source is required"),
   /** Provider-side stable identifier (e.g. Meta leadgen_id). Used for idempotency. */
   externalId: z.string().optional().nullable(),
-  /** Provider key. Must match externalId namespace, e.g. "meta_lead_ads". */
+  /** Provider key. Must match externalId namespace, e.g. "Anuncios Meta". */
   externalSource: z.string().optional().nullable(),
   utm: utmSchema.optional(),
   context: contextSchema.optional(),

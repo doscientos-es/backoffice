@@ -70,8 +70,8 @@ describe("mapMetaLeadgenToIntake", () => {
     expect(out.phone).toBe("+34600111222");
     expect(out.company).toBe("Acme SL");
     expect(out.externalId).toBe("lg_123");
-    expect(out.externalSource).toBe("meta_lead_ads");
-    expect(out.source).toBe("meta_lead_ads");
+    expect(out.externalSource).toBe("Anuncios Meta");
+    expect(out.source).toBe("Anuncios Meta");
   });
 
   it("propagates ad / adset / campaign into utm", () => {
@@ -168,5 +168,38 @@ describe("mapMetaLeadgenToIntake", () => {
   it("returns null notes when no ¿…? fields present", () => {
     const out = mapMetaLeadgenToIntake(base);
     expect(out.notes).toBeNull();
+  });
+
+  it("extracts qualification fields using classifyFormAnswers keywords", () => {
+    const out = mapMetaLeadgenToIntake({
+      ...base,
+      field_data: [
+        { name: "full_name", values: ["Test"] },
+        { name: "¿Tamaño de empresa?", values: ["10-50 empleados"] },
+        { name: "¿Qué solución necesitas desarrollar?", values: ["Software a Medida"] },
+        { name: "¿Cuál es la urgencia?", values: ["Inmediata"] },
+      ],
+    });
+    expect(out.companySize).toBe("10-50 empleados");
+    expect(out.solutionType).toBe("Software a Medida");
+    expect(out.urgency).toBe("Inmediata");
+  });
+
+  it("prioritizes explicit urgency field over keyword classification", () => {
+    const out = mapMetaLeadgenToIntake({
+      ...base,
+      field_data: [
+        { name: "full_name", values: ["Test"] },
+        { name: "urgencia", values: ["Crítica"] },
+        { name: "¿Para cuándo necesitas el proyecto?", values: ["Mañana"] },
+      ],
+    });
+    expect(out.urgency).toBe("Crítica");
+  });
+
+  it("uses 'Anuncios Meta' as source and externalSource", () => {
+    const out = mapMetaLeadgenToIntake(base);
+    expect(out.source).toBe("Anuncios Meta");
+    expect(out.externalSource).toBe("Anuncios Meta");
   });
 });

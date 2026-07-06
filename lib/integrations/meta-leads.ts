@@ -10,7 +10,7 @@ import { scopedLogger } from "@/lib/logger";
 
 const log = scopedLogger("meta-leads");
 
-export const META_LEAD_SOURCE = "meta_lead_ads";
+export const META_LEAD_SOURCE = "Anuncios Meta";
 
 /**
  * Meta sends a JSON body and signs it with HMAC-SHA256 using the App Secret.

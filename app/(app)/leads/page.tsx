@@ -73,6 +73,8 @@ export default async function LeadsPage({
     listLeads({ view, q, status, source, page, sort, dir }),
     listActiveMembers(),
   ]);
+  console.log(`[LeadsPage] view=${view} count=${count} leadsFetched=${enrichedLeads.length} firstLeads=${JSON.stringify(enrichedLeads.slice(0, 3).map(l => ({ id: l.id, name: l.name, status: l.status, source: l.source })))}`);
+
 
   const boardCapped = view === "board" && enrichedLeads.length >= LEAD_BOARD_LIMIT;
 
@@ -177,32 +179,42 @@ export default async function LeadsPage({
             <p className="text-sm text-destructive">{error}</p>
           </CardContent>
         </Card>
-      ) : enrichedLeads.length === 0 ? (
+      ) : (
         <Card>
           <CardContent className="px-0 pt-0">
-            <Empty className="border-0 py-10">
-              <EmptyHeader>
-                <EmptyTitle>Aún no hay leads.</EmptyTitle>
-              </EmptyHeader>
-              <EmptyContent>
-                <LeadCreateDialog />
-              </EmptyContent>
-            </Empty>
+            <ListControls
+              searchKey="q"
+              searchPlaceholder="Buscar por nombre, empresa o email…"
+              filters={[
+                { key: "status", label: "Estado", options: STATUS_FILTER_OPTIONS },
+                { key: "source", label: "Origen", options: SOURCE_FILTER_OPTIONS },
+              ]}
+            />
+            {enrichedLeads.length === 0 ? (
+              <Empty className="border-0 py-10">
+                <EmptyHeader>
+                  <EmptyTitle>Aún no hay leads.</EmptyTitle>
+                </EmptyHeader>
+                <EmptyContent>
+                  <LeadCreateDialog />
+                </EmptyContent>
+              </Empty>
+            ) : (
+              <div className="p-6">
+                {boardCapped ? (
+                  <div className="mb-6 flex items-center gap-2 rounded-lg border border-amber-300/40 bg-amber-50/60 px-4 py-2.5 text-sm text-amber-800 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300">
+                    <TriangleAlert className="size-4 shrink-0" />
+                    <span>
+                      Se muestran los primeros <strong>{LEAD_BOARD_LIMIT}</strong> leads. Usa los filtros
+                      para acotar los resultados.
+                    </span>
+                  </div>
+                ) : null}
+                <LeadsKanban leads={enrichedLeads} canEdit={canEdit} members={members} />
+              </div>
+            )}
           </CardContent>
         </Card>
-      ) : (
-        <>
-          {boardCapped ? (
-            <div className="flex items-center gap-2 rounded-lg border border-amber-300/40 bg-amber-50/60 px-4 py-2.5 text-sm text-amber-800 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300">
-              <TriangleAlert className="size-4 shrink-0" />
-              <span>
-                Se muestran los primeros <strong>{LEAD_BOARD_LIMIT}</strong> leads. Usa los filtros
-                para acotar los resultados.
-              </span>
-            </div>
-          ) : null}
-          <LeadsKanban leads={enrichedLeads} canEdit={canEdit} members={members} />
-        </>
       )}
     </div>
   );

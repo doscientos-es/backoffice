@@ -55,14 +55,12 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
 
   let query = notDeleted(supabase.from("leads").select(LIST_COLUMNS, { count: "exact" }));
 
-  if (params.view === "list") {
-    if (params.q.length > 0) {
-      const pattern = `%${escapeIlike(params.q)}%`;
-      query = query.or(`name.ilike.${pattern},company.ilike.${pattern},email.ilike.${pattern}`);
-    }
-    if (params.status) query = query.eq("status", params.status);
-    if (params.source) query = query.eq("source", params.source);
+  if (params.q.length > 0) {
+    const pattern = `%${escapeIlike(params.q)}%`;
+    query = query.or(`name.ilike.${pattern},company.ilike.${pattern},email.ilike.${pattern}`);
   }
+  if (params.status) query = query.eq("status", params.status);
+  if (params.source) query = query.eq("source", params.source);
 
   const from = (params.page - 1) * LEAD_LIST_PAGE_SIZE;
   const to = from + LEAD_LIST_PAGE_SIZE - 1;
