@@ -64,7 +64,7 @@ export const ServerSchema = PublicSchema.extend({
   META_PAGE_ACCESS_TOKEN: z.string().optional().default(""), // Used for leads webhooks
   META_USER_ACCESS_TOKEN: z.string().optional().default(""), // Used for Marketing API (ads/insights)
   META_AD_ACCOUNT_ID: z.string().optional().default(""), // Format: act_xxxxxxxx
-  META_GRAPH_API_VERSION: z.string().default("v23.0"),
+  META_GRAPH_API_VERSION: z.string().default("v25.0"),
   // GitHub App integration (bidirectional sync)
   GITHUB_APP_ID: z.string().optional().default(""),
   GITHUB_APP_PRIVATE_KEY_BASE64: z.string().optional().default(""), // RSA private key in base64
