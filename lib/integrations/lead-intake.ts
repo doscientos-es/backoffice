@@ -113,20 +113,25 @@ export function classifyFormAnswers(answers: FormAnswer[]): QualificationFields 
     if (out.companySize == null && (key.includes("tamano") || key.includes("empleado"))) {
       out.companySize = v;
     } else if (
-      out.solutionType == null &&
-      (key.includes("solucion") || key.includes("necesitas") || key.includes("proyecto"))
-    ) {
-      out.solutionType = v;
-    } else if (
+      // Urgency is evaluated before solutionType because time-related questions
+      // ("¿Para cuándo necesitas tener el proyecto listo?") share the "necesitas"
+      // and "proyecto" tokens with solution questions. Matching the temporal
+      // signal first keeps classification order-independent.
       out.urgency == null &&
       (key.includes("cuando") ||
         key.includes("plazo") ||
         key.includes("urgen") ||
         key.includes("empezar") ||
         key.includes("inicio") ||
+        key.includes("solucionar") ||
         key.includes("urgencia"))
     ) {
       out.urgency = v;
+    } else if (
+      out.solutionType == null &&
+      (key.includes("solucion") || key.includes("necesitas") || key.includes("proyecto"))
+    ) {
+      out.solutionType = v;
     }
   }
   return out;
