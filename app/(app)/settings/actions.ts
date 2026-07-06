@@ -1,6 +1,6 @@
 "use server";
 
-import { requireUser } from "@/lib/auth";
+import { requireRole, requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -103,6 +103,94 @@ export async function updateProfile(
 
   if (error) return { ok: false, error: error.message };
   revalidatePath("/settings/profile");
+  return { ok: true };
+}
+
+// ---------- Owner: edit any member's profile ----------
+
+const MemberProfileInput = z.object({
+  member_id: z.string().uuid("ID no válido"),
+  name: z.string().trim().min(1, "El nombre es obligatorio").max(160),
+  github_handle: z
+    .string()
+    .max(39)
+    .regex(/^[a-zA-Z0-9-]*$/, "Handle de GitHub inválido")
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  job_title: z
+    .string()
+    .max(160)
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  phone: z
+    .string()
+    .max(30)
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  contact_email: z
+    .string()
+    .email("Email de contacto no válido")
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  email_alias: z
+    .string()
+    .email("Alias no válido")
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  email_send_enabled: z.enum(["on", "off"]).transform((v) => v === "on"),
+  avatar_url: z
+    .string()
+    .url("URL de avatar no válida")
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+});
+
+export async function updateMemberProfile(
+  formData: FormData,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireRole(["owner"]);
+  const raw = {
+    member_id: formData.get("member_id")?.toString() ?? "",
+    name: formData.get("name")?.toString() ?? "",
+    github_handle: formData.get("github_handle")?.toString() ?? "",
+    job_title: formData.get("job_title")?.toString() ?? "",
+    phone: formData.get("phone")?.toString() ?? "",
+    contact_email: formData.get("contact_email")?.toString() ?? "",
+    email_alias: formData.get("email_alias")?.toString() ?? "",
+    email_send_enabled: formData.get("email_send_enabled")?.toString() === "on" ? "on" : "off",
+    avatar_url: formData.get("avatar_url")?.toString() ?? "",
+  };
+  const parsed = MemberProfileInput.safeParse(raw);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+  }
+
+  const signatureHtml = buildSignatureHtml({
+    name: parsed.data.name,
+    jobTitle: parsed.data.job_title,
+    contactEmail: parsed.data.contact_email ?? parsed.data.email_alias,
+    phone: parsed.data.phone,
+  });
+
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("team_members")
+    .update({
+      name: parsed.data.name,
+      avatar_url: parsed.data.avatar_url ?? null,
+      email_alias: parsed.data.email_alias ?? null,
+      signature_html: signatureHtml,
+      email_send_enabled: parsed.data.email_send_enabled,
+      github_handle: parsed.data.github_handle ?? null,
+      job_title: parsed.data.job_title ?? null,
+      phone: parsed.data.phone ?? null,
+      contact_email: parsed.data.contact_email ?? null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", parsed.data.member_id);
+
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/settings/team");
   return { ok: true };
 }
 

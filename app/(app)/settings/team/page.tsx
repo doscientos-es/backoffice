@@ -1,12 +1,13 @@
 import { PageHeader } from "@/components/layout/page-header";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
 import { type MemberRole, requireRole } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
-import { formatDate } from "@/lib/utils";
+import { formatDate, memberAvatarUrl } from "@/lib/utils";
 import { InviteForm } from "./invite-form";
+import { MemberProfileDialog } from "./member-profile-dialog";
 import { MemberRowActions } from "./member-row-actions";
 
 export const metadata = { title: "Equipo · doscientos" };
@@ -44,6 +45,13 @@ type MemberRow = {
   role: MemberRole;
   created_at: string;
   deleted_at: string | null;
+  avatar_url: string | null;
+  github_handle: string | null;
+  job_title: string | null;
+  phone: string | null;
+  contact_email: string | null;
+  email_alias: string | null;
+  email_send_enabled: boolean;
 };
 
 export default async function TeamSettingsPage() {
@@ -52,7 +60,9 @@ export default async function TeamSettingsPage() {
 
   const { data, error } = await supabase
     .from("team_members")
-    .select("id, name, email, role, created_at, deleted_at")
+    .select(
+      "id, name, email, role, created_at, deleted_at, avatar_url, github_handle, job_title, phone, contact_email, email_alias, email_send_enabled",
+    )
     .order("deleted_at", { ascending: true, nullsFirst: true })
     .order("created_at", { ascending: true });
 
@@ -116,10 +126,16 @@ export default async function TeamSettingsPage() {
                       >
                         <td className="px-5 py-2.5 align-middle">
                           <div className="flex items-center gap-3">
-                            <Avatar className="size-7">
+                            <Avatar className="size-7 shrink-0">
+                              {memberAvatarUrl({ avatarUrl: m.avatar_url, githubHandle: m.github_handle }) ? (
+                                <AvatarImage
+                                  src={memberAvatarUrl({ avatarUrl: m.avatar_url, githubHandle: m.github_handle })!}
+                                  alt={m.name}
+                                />
+                              ) : null}
                               <AvatarFallback>{initials(m.name)}</AvatarFallback>
                             </Avatar>
-                            <div className="min-w-0">
+                            <div className="min-w-0 flex-1">
                               <div className="truncate font-medium">
                                 {m.name}
                                 {isSelf ? (
@@ -132,6 +148,22 @@ export default async function TeamSettingsPage() {
                                 {m.email}
                               </div>
                             </div>
+                            {actor.role === "owner" ? (
+                              <MemberProfileDialog
+                                member={{
+                                  id: m.id,
+                                  name: m.name,
+                                  email: m.email,
+                                  avatarUrl: m.avatar_url,
+                                  githubHandle: m.github_handle,
+                                  jobTitle: m.job_title,
+                                  phone: m.phone,
+                                  contactEmail: m.contact_email,
+                                  emailAlias: m.email_alias,
+                                  emailSendEnabled: m.email_send_enabled,
+                                }}
+                              />
+                            ) : null}
                           </div>
                         </td>
                         <td className="px-5 py-2.5 align-middle">

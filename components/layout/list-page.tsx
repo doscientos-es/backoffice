@@ -285,14 +285,15 @@ export function ListPage({
           ) : null}
 
           {!hasControls && exportFilename ? (
-            <div className="flex justify-end px-4 py-2">
+            <div className="flex justify-end px-3 py-2">
               <Button
-                size="sm"
+                size="icon-sm"
                 variant="ghost"
                 onClick={() => exportToCSV(headers, rows, exportFilename)}
+                aria-label="Exportar CSV"
+                title="Exportar CSV"
               >
                 <Download className="size-3.5" />
-                Exportar CSV
               </Button>
             </div>
           ) : null}

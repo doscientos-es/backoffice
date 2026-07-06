@@ -30,6 +30,30 @@ function canAssignRole(actor: MemberRole, target: MemberRole): boolean {
   return actor === "owner" || actor === "admin";
 }
 
+/**
+ * Turns a Supabase auth error into a readable Spanish message. Supabase errors
+ * are `Error` instances whose properties are non-enumerable, so a naive
+ * `String(err)` / `JSON.stringify(err)` can surface as "{}". We inspect the
+ * known fields and map the common invite failures (rate limit, email delivery)
+ * to actionable text.
+ */
+function describeInviteError(error: unknown): string {
+  const status = (error as { status?: number } | null)?.status;
+  const raw = (error as { message?: string } | null)?.message?.trim() ?? "";
+  const lower = raw.toLowerCase();
+
+  if (status === 429 || lower.includes("rate limit")) {
+    return "Límite de emails alcanzado. Configura un SMTP propio o espera antes de reintentar.";
+  }
+  if (lower.includes("error sending") || lower.includes("smtp") || status === 500) {
+    return "No se pudo enviar el email de invitación. Falta configurar un servidor SMTP en Supabase.";
+  }
+  if (lower.includes("already been registered") || lower.includes("already registered")) {
+    return "Ese email ya tiene cuenta. Búscalo en la lista o reactívalo.";
+  }
+  return raw || "No se pudo enviar la invitación.";
+}
+
 export async function inviteTeamMember(formData: FormData): Promise<ActionResult> {
   const actor = await requireRole(["owner", "admin"]);
   const parsed = InviteInput.safeParse({
@@ -61,7 +85,15 @@ export async function inviteTeamMember(formData: FormData): Promise<ActionResult
     redirectTo,
   });
   if (inviteError || !invited?.user) {
-    return { ok: false, error: inviteError?.message ?? "No se pudo enviar la invitación." };
+    // Log the full error server-side; the client only ever gets a readable
+    // string (never "{}" from a serialized Error, whose props are non-enumerable).
+    console.error("[inviteTeamMember] inviteUserByEmail failed", {
+      email,
+      status: (inviteError as { status?: number } | null)?.status,
+      code: (inviteError as { code?: string } | null)?.code,
+      message: inviteError?.message,
+    });
+    return { ok: false, error: describeInviteError(inviteError) };
   }
 
   const { error: upsertError } = await admin.from("team_members").upsert(

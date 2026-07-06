@@ -21,12 +21,16 @@ export function InviteForm({ actorRole }: Props) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     feedback.setPending();
-    const result = await inviteTeamMember(fd);
-    if (result.ok) {
-      feedback.setSuccess("Invitación enviada");
-      formRef.current?.reset();
-    } else {
-      feedback.setError(result.error);
+    try {
+      const result = await inviteTeamMember(fd);
+      if (result.ok) {
+        feedback.setSuccess("Invitación enviada");
+        formRef.current?.reset();
+      } else {
+        feedback.setError(result.error || "No se pudo enviar la invitación.");
+      }
+    } catch (err) {
+      feedback.setError(err instanceof Error ? err.message : "Error inesperado al invitar.");
     }
   }
 
@@ -55,7 +59,7 @@ export function InviteForm({ actorRole }: Props) {
             type="email"
             inputMode="email"
             required
-            placeholder="nombre@doscientos.es"
+            placeholder="nombre@gmail.com"
             autoComplete="email"
           />
         </Field>
@@ -72,9 +76,8 @@ export function InviteForm({ actorRole }: Props) {
         </Field>
       </div>
       <FieldDescription>
-        Solo emails <strong>@doscientos.es</strong>. El invitado recibirá un enlace para activar su
-        cuenta y, a partir de ahí, entrará con <strong>Continuar con Google</strong>. Caduca a las
-        72&nbsp;horas.
+        El invitado recibirá un enlace para activar su cuenta y, a partir de ahí, entrará con{" "}
+        <strong>Continuar con Google</strong>. Caduca a las 72&nbsp;horas.
       </FieldDescription>
       <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
         <FormFeedback
