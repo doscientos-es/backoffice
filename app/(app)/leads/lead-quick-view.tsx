@@ -124,6 +124,14 @@ function Body({
             )}
           </Row>
         </section>
+        {lead.notes && (
+          <section className="flex flex-col gap-1.5">
+            <Heading>Notas</Heading>
+            <p className="whitespace-pre-wrap text-xs leading-relaxed text-foreground">
+              {lead.notes}
+            </p>
+          </section>
+        )}
         {lead.ai_summary && (
           <section className="flex flex-col gap-1.5">
             <Heading>Resumen IA</Heading>

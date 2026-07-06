@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { serverEnv } from "@/lib/env";
-import type { LeadIntake } from "@/lib/integrations/lead-intake";
+import { type LeadIntake, parseBudgetFloor } from "@/lib/integrations/lead-intake";
 import { scopedLogger } from "@/lib/logger";
 
 const log = scopedLogger("meta-leads");
@@ -117,6 +117,42 @@ function findField(fields: MetaLeadField[], candidates: ReadonlyArray<string>): 
   return null;
 }
 
+/**
+ * Extracts custom form questions from Meta field_data.
+ * Spanish forms use "¿…?" as the question pattern.
+ * Produces the same human-readable block as the Recurrev mapper, e.g.:
+ *   Tamaño de empresa: 10-50 empleados
+ *   Qué solución necesitas desarrollar: Software a Medida
+ */
+function extractMetaFormQuestionsAsNotes(fields: MetaLeadField[]): string | null {
+  const lines: string[] = [];
+  for (const field of fields) {
+    const key = field.name.trim();
+    if (!key.startsWith("¿")) continue;
+    const value = field.values?.[0]?.trim();
+    if (!value) continue;
+    const label = key
+      .replace(/^¿/, "")
+      .replace(/\?\s*$/, "")
+      .trim();
+    lines.push(`${label}: ${value}`);
+  }
+  return lines.length > 0 ? lines.join("\n") : null;
+}
+
+/**
+ * Locates the "presupuesto" answer among the Meta field_data and delegates the
+ * numeric parsing to the shared parseBudgetFloor() helper.
+ */
+function parseMetaBudgetToEstimatedValue(fields: MetaLeadField[]): number | null {
+  for (const field of fields) {
+    if (!field.name.toLowerCase().includes("presupuesto")) continue;
+    const parsed = parseBudgetFloor(field.values?.[0]);
+    if (parsed !== null) return parsed;
+  }
+  return null;
+}
+
 /** Converts a Graph API leadgen response into our generic LeadIntake shape. */
 export function mapMetaLeadgenToIntake(
   res: MetaLeadgenResponse,
@@ -137,6 +173,8 @@ export function mapMetaLeadgenToIntake(
     email: findField(res.field_data, FIELD_ALIASES.email),
     phone: findField(res.field_data, FIELD_ALIASES.phone),
     company: findField(res.field_data, FIELD_ALIASES.company),
+    notes: extractMetaFormQuestionsAsNotes(res.field_data),
+    estimatedValue: parseMetaBudgetToEstimatedValue(res.field_data),
     source: META_LEAD_SOURCE,
     externalId: res.id,
     externalSource: META_LEAD_SOURCE,

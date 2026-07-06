@@ -2,6 +2,12 @@ import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { CopyPortalLink } from "@/components/portal/copy-portal-link";
 import { PortalAccessControls } from "@/components/portal/portal-access-controls";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
@@ -46,6 +52,13 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
     .select("id, amount, status, ds_authorisation_code, created_at, confirmed_at")
     .eq("invoice_id", id)
     .order("created_at", { ascending: false });
+
+  const { data: workLogs } = await supabase
+    .from("work_logs")
+    .select("id, work_date, hours, start_time, end_time, note")
+    .eq("invoice_id", id)
+    .is("deleted_at", null)
+    .order("work_date", { ascending: true });
 
   const confirmedPayments = (payments ?? []).filter((p) => p.status === "confirmed");
   const amountPaid = confirmedPayments.reduce((sum, p) => sum + Number(p.amount ?? 0), 0);
@@ -373,6 +386,70 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           ) : null}
         </div>
       </div>
+
+      {/* Work log breakdown */}
+      {workLogs && workLogs.length > 0 ? (
+        <div className="rounded-xl bg-card ring-1 ring-foreground/10 overflow-hidden">
+          <Accordion type="single" collapsible>
+            <AccordionItem value="work-logs" className="border-b-0">
+              <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/50 active:bg-muted/80 transition-colors rounded-none border-0 cursor-pointer select-none">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-base font-semibold">Desglose de actividad</span>
+                  <span className="text-xs font-normal text-muted-foreground">
+                    {workLogs.length} {workLogs.length === 1 ? "registro" : "registros"} ·{" "}
+                    {workLogs.reduce((s, l) => s + Number(l.hours), 0).toFixed(2)} h
+                  </span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-0 pb-0">
+                <div className="border-t border-border overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                      <tr>
+                        <th className="px-5 py-2 font-medium">Fecha</th>
+                        <th className="px-5 py-2 font-medium">Horario</th>
+                        <th className="px-5 py-2 font-medium text-right">Horas</th>
+                        <th className="px-5 py-2 font-medium">Descripción</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {workLogs.map((log) => (
+                        <tr key={log.id as string} className="border-t border-border">
+                          <td className="px-5 py-2.5 tabular-nums whitespace-nowrap">
+                            {formatDate(log.work_date as string)}
+                          </td>
+                          <td className="px-5 py-2.5 tabular-nums text-muted-foreground whitespace-nowrap">
+                            {log.start_time && log.end_time
+                              ? `${(log.start_time as string).slice(0, 5)} – ${(log.end_time as string).slice(0, 5)}`
+                              : "—"}
+                          </td>
+                          <td className="px-5 py-2.5 text-right tabular-nums">
+                            {Number(log.hours).toFixed(2)} h
+                          </td>
+                          <td className="px-5 py-2.5 text-muted-foreground">
+                            {(log.note as string | null) ?? "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot className="border-t-2 border-border">
+                      <tr className="font-semibold">
+                        <td colSpan={2} className="px-5 py-2.5 text-right text-xs text-muted-foreground">
+                          Total horas
+                        </td>
+                        <td className="px-5 py-2.5 text-right tabular-nums">
+                          {workLogs.reduce((s, l) => s + Number(l.hours), 0).toFixed(2)} h
+                        </td>
+                        <td />
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
+      ) : null}
 
       {/* Legal footer (RD 1007/2023 — Verifactu) */}
       <p className="text-[11px] leading-relaxed text-muted-foreground border-t border-border pt-4">

@@ -35,6 +35,8 @@ export const LeadIntakeSchema = z.object({
   phone: z.string().optional().nullable(),
   company: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
+  /** Best-effort estimated pipeline value (e.g. parsed from a form budget range). */
+  estimatedValue: z.number().min(0).max(99_999_999.99).optional().nullable(),
   source: z.string().trim().min(1, "source is required"),
   /** Provider-side stable identifier (e.g. Meta leadgen_id). Used for idempotency. */
   externalId: z.string().optional().nullable(),
@@ -51,6 +53,25 @@ export type LeadIntake = z.infer<typeof LeadIntakeSchema>;
 export type LeadIntakeResult =
   | { ok: true; leadId: string; duplicate: boolean }
   | { ok: false; error: string };
+
+/**
+ * Parses a conservative numeric floor (EUR) from a free-text budget answer.
+ * Meta / landing forms send ranges, not exact amounts, so we take the lowest
+ * figure present to avoid overstating the pipeline value:
+ *   "Más de 10.000€"    → 10000
+ *   "Menos de 5.000€"   → 5000
+ *   "5.000€ - 10.000€"  → 5000
+ * Spanish uses "." as the thousands separator, which we strip before parsing.
+ * Shared by every adapter (Recurrev, Meta, landing) so the mapping stays
+ * identical regardless of how the lead reached us.
+ */
+export function parseBudgetFloor(text: string | null | undefined): number | null {
+  if (!text || !text.trim()) return null;
+  const amounts = (text.match(/\d[\d.]*/g) ?? [])
+    .map((m) => Number.parseInt(m.replace(/\./g, ""), 10))
+    .filter((n) => Number.isFinite(n) && n > 0);
+  return amounts.length > 0 ? Math.min(...amounts) : null;
+}
 
 const log = scopedLogger("lead-intake");
 
@@ -142,6 +163,7 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
     phone: norm.phone?.trim() || null,
     company: norm.company?.trim() || null,
     notes: norm.notes?.trim() || null,
+    estimated_value: norm.estimatedValue ?? null,
     source: norm.source.trim().slice(0, 80),
     external_id: norm.externalId ?? null,
     external_source: norm.externalSource ?? null,
@@ -192,6 +214,7 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
         leadPhone: row.phone,
         leadCompany: row.company,
         leadSource: row.source,
+        leadNotes: row.notes,
       }).catch((e) => log.error({ err: e }, "notifyNewLead failed")),
     ]);
   });
@@ -217,7 +240,7 @@ async function enrichLead(
   const { data: existing, error } = await supabase
     .from("leads")
     .select(
-      "email, phone, company, notes, utm_source, utm_medium, utm_campaign, utm_term, utm_content, referrer, ip, device, browser, language",
+      "email, phone, company, notes, estimated_value, utm_source, utm_medium, utm_campaign, utm_term, utm_content, referrer, ip, device, browser, language",
     )
     .eq("id", leadId)
     .maybeSingle();
@@ -244,6 +267,11 @@ async function enrichLead(
   fillGap("device", existing.device, norm.context?.device);
   fillGap("browser", existing.browser, norm.context?.browser);
   fillGap("language", existing.language, norm.context?.language);
+
+  // Numeric gap: only set the parsed budget when no value has been assigned yet.
+  if (norm.estimatedValue != null && existing.estimated_value == null) {
+    updates.estimated_value = norm.estimatedValue;
+  }
 
   // Append incoming notes unless they are already present (guards retries).
   const incomingNotes = norm.notes?.trim();

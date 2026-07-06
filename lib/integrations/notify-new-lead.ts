@@ -14,6 +14,7 @@ export type NotifyNewLeadInput = {
   leadPhone?: string | null;
   leadCompany?: string | null;
   leadSource: string;
+  leadNotes?: string | null;
 };
 
 const log = scopedLogger("notify-new-lead");
@@ -117,6 +118,10 @@ export async function notifyNewLead(input: NotifyNewLeadInput): Promise<void> {
   );
 
   // ── 4. Telegram direct notification ─────────────────────────────────────
+  const notesLines = input.leadNotes
+    ? ["", "📋 *Formulario*", ...input.leadNotes.split("\n").map((l) => `  ${l}`)]
+    : [];
+
   const lines = [
     "🔔 *Nuevo lead*",
     "",
@@ -125,6 +130,7 @@ export async function notifyNewLead(input: NotifyNewLeadInput): Promise<void> {
     input.leadPhone ? `📱 ${input.leadPhone}` : null,
     input.leadCompany ? `🏢 ${input.leadCompany}` : null,
     `🎯 Fuente: ${input.leadSource}`,
+    ...notesLines,
     "",
     `🔗 [Ver en backoffice](${leadUrl})`,
   ]

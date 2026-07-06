@@ -1,4 +1,4 @@
-import type { LeadIntake } from "@/lib/integrations/lead-intake";
+import { type LeadIntake, parseBudgetFloor } from "@/lib/integrations/lead-intake";
 import { optionalEmail, optionalText, requiredText } from "@/lib/schemas/common";
 import { z } from "zod";
 
@@ -65,6 +65,7 @@ export function mapLandingToIntake(
     phone: input.phone ?? null,
     company: input.company ?? null,
     notes: notesParts.length ? notesParts.join("\n") : null,
+    estimatedValue: parseBudgetFloor(input.budget),
     source: "landing",
     externalId: dedupeKey,
     externalSource: dedupeKey ? "landing_form" : null,

@@ -1,4 +1,4 @@
-import type { LeadIntake } from "@/lib/integrations/lead-intake";
+import { type LeadIntake, parseBudgetFloor } from "@/lib/integrations/lead-intake";
 
 /**
  * Shape of the JSON body that Recurrev (GoHighLevel) sends via "Webhook personalizado".
@@ -56,6 +56,46 @@ function pick(...values: (string | null | undefined)[]): string | null {
 }
 
 /**
+ * Extracts custom form questions from the Meta lead form.
+ * GHL forwards the original Meta field labels verbatim as payload keys;
+ * Spanish forms use "¿…?" as the question pattern, making them easy to detect.
+ * Produces a human-readable block ready for the `notes` field, e.g.:
+ *   Tamaño de empresa: 10-50 empleados
+ *   Qué solución necesitas desarrollar: Software a Medida (CRM, ERP, etc)
+ *   Presupuesto estimado: Más de 10.000€
+ */
+function extractFormQuestionsAsNotes(payload: RecurrevWebhookPayload): string | null {
+  const lines: string[] = [];
+  for (const [rawKey, value] of Object.entries(payload)) {
+    const key = rawKey.trim(); // GHL occasionally appends trailing whitespace/tabs
+    if (!key.startsWith("¿")) continue;
+    if (typeof value !== "string" || !value.trim()) continue;
+    // "¿Tamaño de empresa?" → "Tamaño de empresa"
+    const label = key
+      .replace(/^¿/, "")
+      .replace(/\?\s*$/, "")
+      .trim();
+    lines.push(`${label}: ${value.trim()}`);
+  }
+  return lines.length > 0 ? lines.join("\n") : null;
+}
+
+/**
+ * Locates the "presupuesto" answer among the payload keys and delegates the
+ * numeric parsing to the shared parseBudgetFloor() helper.
+ */
+function parseBudgetToEstimatedValue(payload: RecurrevWebhookPayload): number | null {
+  for (const [rawKey, value] of Object.entries(payload)) {
+    const key = rawKey.trim().toLowerCase();
+    if (!key.includes("presupuesto")) continue;
+    if (typeof value !== "string") continue;
+    const parsed = parseBudgetFloor(value);
+    if (parsed !== null) return parsed;
+  }
+  return null;
+}
+
+/**
  * Map a Recurrev "Webhook personalizado" payload to the generic LeadIntake shape.
  * Tolerant: accepts camelCase and snake_case variants of every field.
  */
@@ -73,12 +113,18 @@ export function mapRecurrevToIntake(
   // Stable ID for idempotency (contact.id from GHL)
   const externalId = pick(payload.external_id, payload.contact_id, payload.id);
 
+  // Combine manual notes with custom form questions extracted from the payload
+  const manualNotes = pick(payload.notes);
+  const formNotes = extractFormQuestionsAsNotes(payload);
+  const combinedNotes = [manualNotes, formNotes].filter(Boolean).join("\n\n") || null;
+
   return {
     name: resolvedName,
     email: pick(payload.email) ?? null,
     phone: pick(payload.phone) ?? null,
     company: pick(payload.company, payload.companyName, payload.company_name) ?? null,
-    notes: pick(payload.notes) ?? null,
+    notes: combinedNotes,
+    estimatedValue: parseBudgetToEstimatedValue(payload),
     source: pick(payload.source) ?? "recurrev",
     externalId: externalId ?? null,
     externalSource: externalId ? "recurrev" : null,

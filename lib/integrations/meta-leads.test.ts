@@ -126,4 +126,47 @@ describe("mapMetaLeadgenToIntake", () => {
       webhookCtx: { pageId: "page_99", createdTime: 1700000000 },
     });
   });
+
+  it("extracts ¿…? form questions as notes", () => {
+    const out = mapMetaLeadgenToIntake({
+      ...base,
+      field_data: [
+        { name: "full_name", values: ["Test User"] },
+        { name: "¿Tamaño de empresa?", values: ["10-50 empleados"] },
+        { name: "¿Qué solución necesitas desarrollar?", values: ["Software a Medida"] },
+        { name: "¿Cuál es tu presupuesto estimado?", values: ["Más de 10.000€"] },
+      ],
+    });
+    expect(out.notes).toContain("Tamaño de empresa: 10-50 empleados");
+    expect(out.notes).toContain("Qué solución necesitas desarrollar: Software a Medida");
+    expect(out.notes).toContain("Cuál es tu presupuesto estimado: Más de 10.000€");
+  });
+
+  it("parses budget into estimatedValue (lower bound of range)", () => {
+    const cases: Array<[string, number]> = [
+      ["Más de 10.000€", 10000],
+      ["Menos de 5.000€", 5000],
+      ["5.000€ - 10.000€", 5000],
+    ];
+    for (const [text, expected] of cases) {
+      const out = mapMetaLeadgenToIntake({
+        ...base,
+        field_data: [
+          { name: "full_name", values: ["Test"] },
+          { name: "¿Cuál es tu presupuesto estimado?", values: [text] },
+        ],
+      });
+      expect(out.estimatedValue).toBe(expected);
+    }
+  });
+
+  it("returns null estimatedValue when no budget field present", () => {
+    const out = mapMetaLeadgenToIntake(base);
+    expect(out.estimatedValue).toBeNull();
+  });
+
+  it("returns null notes when no ¿…? fields present", () => {
+    const out = mapMetaLeadgenToIntake(base);
+    expect(out.notes).toBeNull();
+  });
 });
