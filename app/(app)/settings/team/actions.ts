@@ -12,20 +12,9 @@ type ActionResult = { ok: true } | { ok: false; error: string };
 const ASSIGNABLE_ROLES = ["owner", "admin", "member", "viewer"] as const;
 const RoleEnum = z.enum(ASSIGNABLE_ROLES);
 
-// Everyone who accesses the backoffice signs in with their Google Workspace
-// account under this domain. Invites are restricted to it so a mistyped
-// personal address can't be provisioned (and then fail to sign in with Google).
-const COMPANY_EMAIL_DOMAIN = "doscientos.es";
-
 const InviteInput = z.object({
   name: z.string().trim().max(160, "El nombre no puede superar 160 caracteres").optional(),
-  email: z
-    .string()
-    .email("Email no válido")
-    .max(200)
-    .refine((value) => value.endsWith(`@${COMPANY_EMAIL_DOMAIN}`), {
-      message: `El email debe ser del dominio @${COMPANY_EMAIL_DOMAIN}.`,
-    }),
+  email: z.string().email("Email no válido").max(200),
   role: RoleEnum,
 });
 

@@ -20,7 +20,7 @@ type Item = {
 
 const ITEMS: readonly Item[] = [
   { href: "/settings/profile", label: "Perfil", icon: User, requiresAdmin: false },
-  { href: "/settings/company", label: "Empresa", icon: Building2, requiresAdmin: false },
+  { href: "/settings/company", label: "Empresa", icon: Building2, requiresAdmin: true },
   { href: "/settings/team", label: "Equipo", icon: Users, requiresAdmin: true },
   { href: "/settings/email-templates", label: "Plantillas email", icon: Mail, requiresAdmin: true },
   { href: "/settings/diagnostics", label: "Diagnóstico", icon: Activity, requiresAdmin: true },
@@ -34,7 +34,7 @@ export function SettingsNav({ canManageTeam }: { canManageTeam: boolean }) {
   return (
     <nav
       aria-label="Ajustes"
-      className="-mx-1 flex shrink-0 gap-1 overflow-x-auto px-1 md:mx-0 md:w-48 md:flex-col md:overflow-visible md:px-0"
+      className="-mx-1 flex shrink-0 gap-1 overflow-x-auto px-1 md:sticky md:top-6 md:mx-0 md:w-48 md:self-start md:flex-col md:overflow-visible md:px-0"
     >
       {items.map(({ href, label, icon: Icon }) => {
         const active = pathname === href || pathname.startsWith(`${href}/`);

@@ -1,13 +1,13 @@
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
-import { requireUser } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import { CompanyForm } from "../company-form";
 
 export const metadata = { title: "Empresa · Ajustes · doscientos" };
 
 export default async function CompanySettingsPage() {
-  await requireUser();
+  await requireRole(["owner", "admin"]);
   const supabase = await createServerClient();
   const { data: settings } = await supabase.from("settings").select("*").eq("id", 1).single();
 

@@ -42,8 +42,13 @@ describe("SettingsNav – item visibility", () => {
     expect(screen.getByText("Perfil")).toBeTruthy();
   });
 
-  it("always shows Empresa", () => {
+  it("hides Empresa when canManageTeam is false (viewer / member)", () => {
     renderNav(false);
+    expect(screen.queryByText("Empresa")).toBeNull();
+  });
+
+  it("shows Empresa when canManageTeam is true (admin / owner)", () => {
+    renderNav(true);
     expect(screen.getByText("Empresa")).toBeTruthy();
   });
 
@@ -57,9 +62,9 @@ describe("SettingsNav – item visibility", () => {
     expect(screen.getByText("Equipo")).toBeTruthy();
   });
 
-  it("renders exactly 3 links for non-admin", () => {
+  it("renders exactly 2 links for non-admin (Perfil + Legal)", () => {
     renderNav(false);
-    expect(screen.getAllByRole("link")).toHaveLength(3);
+    expect(screen.getAllByRole("link")).toHaveLength(2);
   });
 
   it("renders exactly 6 links for admin", () => {
@@ -107,13 +112,13 @@ describe("SettingsNav – active state", () => {
   it("does not set aria-current on inactive routes", () => {
     (usePathname as ReturnType<typeof vi.fn>).mockReturnValue("/settings/profile");
     renderNav(false);
-    const empresaLink = screen.getByRole("link", { name: /empresa/i });
-    expect(empresaLink.getAttribute("aria-current")).toBeNull();
+    const legalLink = screen.getByRole("link", { name: /legal/i });
+    expect(legalLink.getAttribute("aria-current")).toBeNull();
   });
 
-  it("marks /settings/company as active when on that path", () => {
+  it("marks /settings/company as active when on that path (admin)", () => {
     (usePathname as ReturnType<typeof vi.fn>).mockReturnValue("/settings/company");
-    renderNav(false);
+    renderNav(true);
     expect(screen.getByRole("link", { name: /empresa/i }).getAttribute("aria-current")).toBe(
       "page",
     );

@@ -105,11 +105,10 @@ describe("inviteTeamMember", () => {
     expect(state.upsertCalls[0]?.row.name).toBe("ada");
   });
 
-  it("rejects emails outside the @doscientos.es domain", async () => {
+  it("accepts emails from any domain (external collaborators)", async () => {
     const res = await inviteTeamMember(form("ada@gmail.com"));
-    expect(res).toEqual({ ok: false, error: "El email debe ser del dominio @doscientos.es." });
-    expect(state.inviteCalls).toHaveLength(0);
-    expect(state.upsertCalls).toHaveLength(0);
+    expect(res).toEqual({ ok: true });
+    expect(state.inviteCalls[0]?.email).toBe("ada@gmail.com");
   });
 
   it("upserts the team_members row with the invited auth user id", async () => {
