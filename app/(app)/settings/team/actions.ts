@@ -39,6 +39,7 @@ function canAssignRole(actor: MemberRole, target: MemberRole): boolean {
  */
 function describeInviteError(error: unknown): string {
   const status = (error as { status?: number } | null)?.status;
+  const code = (error as { code?: string } | null)?.code?.toLowerCase() ?? "";
   const raw = (error as { message?: string } | null)?.message?.trim() ?? "";
   const lower = raw.toLowerCase();
 
@@ -47,6 +48,18 @@ function describeInviteError(error: unknown): string {
   }
   if (lower.includes("already been registered") || lower.includes("already registered")) {
     return "Ese email ya tiene cuenta. Búscalo en la lista o reactívalo.";
+  }
+  // Postgres trigger/constraint failure while inserting into auth.users. GoTrue
+  // wraps these as a 500 with code "unexpected_failure" and often an empty
+  // message (which serializes to "{}"), so match on the code/text explicitly.
+  if (
+    code === "unexpected_failure" ||
+    lower.includes("database error saving new user") ||
+    lower.includes("database error")
+  ) {
+    return raw
+      ? `Error de base de datos al crear el usuario: ${raw}`
+      : "Error de base de datos al crear el usuario. Revisa los triggers de auth.users (p. ej. restricciones de email).";
   }
   if (lower.includes("error sending") || lower.includes("smtp") || status === 500) {
     // SMTP is configured (Resend); surface the real provider error so we can
