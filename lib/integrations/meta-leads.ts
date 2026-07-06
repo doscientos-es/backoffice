@@ -111,6 +111,21 @@ const FIELD_ALIASES = {
   urgency: ["urgency", "urgencia", "cuando_necesitas_empezar", "plazo", "priority"],
 } as const;
 
+/**
+ * Standard contact fields Meta prefills from the user's profile. They are
+ * captured separately (name/email/phone/company), so they must never leak into
+ * the qualifying-answer extraction — otherwise they'd pollute `notes` or be
+ * misread by the keyword classifier.
+ */
+const CONTACT_FIELD_KEYS: ReadonlySet<string> = new Set([
+  ...FIELD_ALIASES.email,
+  ...FIELD_ALIASES.phone,
+  ...FIELD_ALIASES.fullName,
+  ...FIELD_ALIASES.firstName,
+  ...FIELD_ALIASES.lastName,
+  ...FIELD_ALIASES.company,
+]);
+
 function findField(fields: MetaLeadField[], candidates: ReadonlyArray<string>): string | null {
   const normalized = fields.map((f) => ({
     key: f.name.toLowerCase().trim(),
@@ -125,21 +140,26 @@ function findField(fields: MetaLeadField[], candidates: ReadonlyArray<string>): 
 
 /**
  * Extracts custom form questions from Meta field_data as label/value pairs.
- * Spanish forms use "¿…?" as the question pattern. The pairs feed both the
- * human-readable `notes` block and the structured classifier
- * (classifyFormAnswers) that fills the qualification columns.
+ * Any field that isn't a standard contact field counts as a qualifying answer,
+ * regardless of whether Meta sends the raw Spanish question ("¿…?", when the
+ * field ID is left as default) or a custom/snake_case field ID. The label is
+ * only cosmetically cleaned for "¿…?" questions; either form still feeds the
+ * keyword classifier (classifyFormAnswers) so urgency/solution/size are matched
+ * whatever the field ID happens to be.
  */
 function extractMetaFormAnswers(fields: MetaLeadField[]): FormAnswer[] {
   const answers: FormAnswer[] = [];
   for (const field of fields) {
     const key = field.name.trim();
-    if (!key.startsWith("¿")) continue;
+    if (CONTACT_FIELD_KEYS.has(key.toLowerCase())) continue;
     const value = field.values?.[0]?.trim();
     if (!value) continue;
-    const label = key
-      .replace(/^¿/, "")
-      .replace(/\?\s*$/, "")
-      .trim();
+    const label = key.startsWith("¿")
+      ? key
+          .replace(/^¿/, "")
+          .replace(/\?\s*$/, "")
+          .trim()
+      : key;
     answers.push({ label, value });
   }
   return answers;

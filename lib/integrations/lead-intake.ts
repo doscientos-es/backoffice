@@ -333,7 +333,7 @@ async function enrichLead(
   const { data: existing, error } = await supabase
     .from("leads")
     .select(
-      "email, phone, company, notes, estimated_value, company_size, solution_type, urgency, decision_role, utm_source, utm_medium, utm_campaign, utm_term, utm_content, referrer, ip, device, browser, language",
+      "email, phone, company, notes, estimated_value, company_size, solution_type, urgency, utm_source, utm_medium, utm_campaign, utm_term, utm_content, referrer, ip, device, browser, language",
     )
     .eq("id", leadId)
     .maybeSingle();
