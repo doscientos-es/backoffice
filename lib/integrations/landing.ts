@@ -16,6 +16,7 @@ export const LandingLeadInput = z.object({
   company: optionalText(160),
   message: optionalText(4000),
   budget: optionalText(80),
+  companySize: optionalText(80),
   // Attribution (the landing forwards these from the URL / first-touch cookie).
   utm_source: optionalText(200),
   utm_medium: optionalText(200),
@@ -53,6 +54,7 @@ export function mapLandingToIntake(
 ): LeadIntake {
   const notesParts = [
     input.message ?? null,
+    input.companySize ? `Tamaño de empresa: ${input.companySize}` : null,
     input.budget ? `Presupuesto: ${input.budget}` : null,
   ].filter((v): v is string => Boolean(v));
 

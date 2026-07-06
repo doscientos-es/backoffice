@@ -22,7 +22,7 @@ export type UseAutosaveOptions<T> = {
   /** Disable autosave (e.g. while loading initial data). */
   enabled?: boolean;
   /** Stable key used to compare two snapshots. Defaults to JSON.stringify. */
-  serialize?: (data: T) => string;
+  serializeAction?: (data: T) => string;
   /** Optional localStorage key to queue the last unsaved snapshot until the next successful save. */
   storageKey?: string;
 };
@@ -41,7 +41,7 @@ export function useAutosave<T>({
   onSaveAction,
   debounceMs = 2000,
   enabled = true,
-  serialize = (d) => JSON.stringify(d),
+  serializeAction = (d: T) => JSON.stringify(d),
   storageKey,
 }: UseAutosaveOptions<T>) {
   const [state, setState] = useState<AutosaveState>({
@@ -51,7 +51,7 @@ export function useAutosave<T>({
   });
 
   const onSaveRef = useRef(onSaveAction);
-  const serializeRef = useRef(serialize);
+  const serializeRef = useRef(serializeAction);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedSnapshotRef = useRef<string | null>(null);
   const pendingSnapshotRef = useRef<string | null>(null);
@@ -61,8 +61,8 @@ export function useAutosave<T>({
 
   useEffect(() => {
     onSaveRef.current = onSaveAction;
-    serializeRef.current = serialize;
-  }, [onSaveAction, serialize]);
+    serializeRef.current = serializeAction;
+  }, [onSaveAction, serializeAction]);
 
   useEffect(() => {
     return () => {
