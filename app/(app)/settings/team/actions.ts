@@ -1,10 +1,10 @@
 "use server";
 
-import { type MemberRole, requireRole } from "@/lib/auth";
-import { publicEnv } from "@/lib/env";
 import { TeamInviteEmail } from "@/components/email";
+import { type MemberRole, requireRole } from "@/lib/auth";
 import { renderEmail } from "@/lib/email/render";
 import { sendEmail } from "@/lib/email/resend";
+import { publicEnv } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
@@ -107,18 +107,24 @@ export async function inviteTeamMember(formData: FormData): Promise<ActionResult
 
   const admin = createAdminClient();
   const appUrl = publicEnv.NEXT_PUBLIC_APP_URL;
-  // Google-first onboarding: the invite link exchanges a PKCE code (confirming
-  // the email and creating a session) and lands the invitee straight on
-  // /onboarding — no password step. Future sign-ins go through "Continuar con
-  // Google", which Supabase auto-links to this account by matching the email.
+  // Google-first onboarding: the invite link confirms the email + creates a
+  // session, then lands the invitee straight on /onboarding — no password step.
+  // Future sign-ins go through "Continuar con Google", which Supabase
+  // auto-links to this account by matching the email.
   //
-  // We use generateLink instead of inviteUserByEmail so that Supabase does NOT
-  // send its own plain-text email. We then send our own branded email via Resend.
-  const redirectTo = `${appUrl}/auth/callback?next=${encodeURIComponent("/onboarding")}`;
+  // We use generateLink (not inviteUserByEmail) so Supabase does NOT send its
+  // own plain-text email — we send our own branded email via Resend.
+  //
+  // IMPORTANT: we build the link ourselves from `properties.hashed_token` and
+  // point it at /auth/confirm (verifyOtp). We do NOT use `properties.action_link`
+  // because that hits Supabase's /verify endpoint, which uses the implicit flow
+  // and redirects with the tokens in the URL hash (#access_token=…) instead of
+  // `?code=`. Our server-side callback can't read the hash, so those links
+  // always failed with `callback_no_code`.
   const { data: linkData, error: inviteError } = await admin.auth.admin.generateLink({
     type: "invite",
     email,
-    options: { data: { name }, redirectTo },
+    options: { data: { name }, redirectTo: `${appUrl}/auth/confirm` },
   });
   if (inviteError || !linkData?.user) {
     console.error("[inviteTeamMember] generateLink failed", {
@@ -130,7 +136,12 @@ export async function inviteTeamMember(formData: FormData): Promise<ActionResult
     return { ok: false, error: describeInviteError(inviteError) };
   }
   const invited = linkData;
-  const inviteUrl = linkData.properties.action_link;
+  const confirmParams = new URLSearchParams({
+    token_hash: linkData.properties.hashed_token,
+    type: "invite",
+    next: "/onboarding",
+  });
+  const inviteUrl = `${appUrl}/auth/confirm?${confirmParams.toString()}`;
 
   // Send custom branded email via Resend.
   try {

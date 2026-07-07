@@ -1,54 +1,39 @@
-import { Img, Row, Section, Text } from "@react-email/components";
+import { Row, Section, Text } from "@react-email/components";
 
 export type EmailLogoProps = {
-  /** Absolute base URL of the app — used to resolve /brand/logo.svg */
-  appUrl: string;
-  /** Mark size in pixels. Default 22. */
-  size?: number;
+  /**
+   * Absolute base URL of the app. Kept for API compatibility with callers,
+   * currently unused since the header renders a text-only wordmark.
+   */
+  appUrl?: string;
 };
 
 /**
  * Horizontally centered brand lockup for email headers.
- * Uses <Img> so major clients (Gmail, Outlook, Apple Mail) render it.
- * Falls back gracefully to "doscientos" alt text when images are blocked.
+ *
+ * Renders a plain text wordmark instead of an <Img>: email clients (Gmail,
+ * Outlook, Apple Mail) either strip SVGs or fail to load images hosted behind
+ * a non-public origin (e.g. localhost in dev), which left a broken image at the
+ * top of every email. A styled text wordmark renders reliably everywhere.
  */
-export function EmailLogo({ appUrl, size = 22 }: EmailLogoProps) {
-  const logoSrc = `${appUrl.replace(/\/$/, "")}/brand/logo.svg`;
-
+export function EmailLogo(_props: EmailLogoProps) {
   return (
     <Section style={{ paddingBottom: 0 }}>
       <Row>
         <td align="center">
-          <table role="presentation" cellPadding={0} cellSpacing={0} style={{ margin: "0 auto" }}>
-            <tbody>
-              <tr>
-                <td style={{ verticalAlign: "middle", paddingRight: 8 }}>
-                  <Img
-                    src={logoSrc}
-                    alt="doscientos"
-                    width={size}
-                    height={size}
-                    style={{ display: "block" }}
-                  />
-                </td>
-                <td style={{ verticalAlign: "middle" }}>
-                  <Text
-                    style={{
-                      margin: 0,
-                      fontFamily:
-                        "'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      fontSize: 14,
-                      fontWeight: 600,
-                      letterSpacing: "-0.02em",
-                      color: "#111111",
-                    }}
-                  >
-                    doscientos
-                  </Text>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <Text
+            style={{
+              margin: 0,
+              fontFamily:
+                "'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontSize: 20,
+              fontWeight: 700,
+              letterSpacing: "-0.02em",
+              color: "#2A4227",
+            }}
+          >
+            doscientos
+          </Text>
         </td>
       </Row>
     </Section>

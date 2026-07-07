@@ -134,7 +134,7 @@ export function EmailTemplatesManager({ templates, signatureHtml }: Props) {
   }
 
   return (
-    <>
+    <section>
       <div className="flex justify-end mb-4">
         <Button size="sm" onClick={openCreate}>
           <Plus className="size-3.5 mr-1.5" />
@@ -327,7 +327,7 @@ export function EmailTemplatesManager({ templates, signatureHtml }: Props) {
                   </Badge>
                 </div>
 
-                <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
+                <div className="rounded-lg border border-border bg-white shadow-sm">
                   <div className="space-y-1 border-b border-neutral-200 bg-neutral-50 px-4 py-2.5">
                     <p className="text-[10px] uppercase tracking-wide text-neutral-400">Asunto</p>
                     <p className="text-sm font-medium text-neutral-900">
@@ -336,7 +336,7 @@ export function EmailTemplatesManager({ templates, signatureHtml }: Props) {
                       )}
                     </p>
                   </div>
-                  <div className="max-h-115 min-h-65 overflow-y-auto px-4 py-3 text-sm text-neutral-800">
+                  <div className="min-h-40 px-4 py-3 text-sm text-neutral-800">
                     {form.body_html.trim() ? (
                       <div
                         className="[&_a]:text-[#2A4227] [&_a]:underline"
@@ -382,6 +382,6 @@ export function EmailTemplatesManager({ templates, signatureHtml }: Props) {
           </form>
         </DialogContent>
       </Dialog>
-    </>
+    </section>
   );
 }
