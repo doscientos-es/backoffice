@@ -38,7 +38,9 @@ export async function listEmailTemplates(): Promise<EmailTemplate[]> {
   const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("email_templates")
-    .select("id, name, slug, subject, body_html, variables, include_signature, active, created_at, updated_at")
+    .select(
+      "id, name, slug, subject, body_html, variables, include_signature, active, created_at, updated_at",
+    )
     .order("created_at", { ascending: true });
   if (error) throw new Error(error.message);
   return (data ?? []) as EmailTemplate[];
@@ -49,7 +51,8 @@ export async function createEmailTemplate(
 ): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const user = await requireRole(["owner", "admin"]);
   const parsed = TemplateInput.safeParse(input);
-  if (!parsed.success) return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+  if (!parsed.success)
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
 
   const variables = extractVariables(parsed.data.body_html);
   const supabase = await createServerClient();
@@ -70,7 +73,8 @@ export async function updateEmailTemplate(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   await requireRole(["owner", "admin"]);
   const parsed = TemplateInput.safeParse(input);
-  if (!parsed.success) return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+  if (!parsed.success)
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
 
   const variables = extractVariables(parsed.data.body_html);
   const supabase = await createServerClient();
@@ -94,6 +98,18 @@ export async function toggleEmailTemplateActive(
     .from("email_templates")
     .update({ active, updated_at: new Date().toISOString() })
     .eq("id", id);
+
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/settings/email-templates");
+  return { ok: true };
+}
+
+export async function deleteEmailTemplate(
+  id: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireRole(["owner", "admin"]);
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("email_templates").delete().eq("id", id);
 
   if (error) return { ok: false, error: error.message };
   revalidatePath("/settings/email-templates");

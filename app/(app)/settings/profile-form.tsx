@@ -5,6 +5,7 @@ import { Field, FieldContent, FieldDescription, FieldLabel } from "@/components/
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { buildSignatureHtml } from "@/lib/email/signature";
 import { useGithubHandle } from "@/lib/hooks/use-github-handle";
 import { cn } from "@/lib/utils";
 import { AlertCircle, CheckCircle2, Loader2, XCircle } from "lucide-react";
@@ -22,24 +23,7 @@ interface Props {
   contactEmail: string | null;
 }
 
-function buildSignaturePreview(opts: {
-  name: string;
-  jobTitle: string;
-  contactEmail: string;
-  phone: string;
-}): string {
-  const logoSrc = "/brand/logo.svg";
-  const textLines: string[] = [];
-  textLines.push(`<strong style="color:#111">${opts.name}</strong>`);
-  if (opts.jobTitle) textLines.push(`<span style="color:#555">${opts.jobTitle}</span>`);
-  textLines.push("");
-  textLines.push('<strong style="color:#2A4227">doscientos.es</strong>');
-  textLines.push("");
-  if (opts.contactEmail) textLines.push(`📩 ${opts.contactEmail}`);
-  textLines.push("🌐 https://doscientos.es");
-  if (opts.phone) textLines.push(`📱 ${opts.phone}`);
-  return `<table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#333;margin:0"><tr><td style="padding-right:14px;vertical-align:middle;border-right:2px solid #2A4227"><img src="${logoSrc}" width="36" height="36" alt="doscientos" style="display:block"/></td><td style="padding-left:14px;vertical-align:top">${textLines.join("<br/>")}</td></tr></table>`;
-}
+
 
 export function ProfileForm({
   name,
@@ -60,7 +44,7 @@ export function ProfileForm({
   const [handle, setHandle] = useState(githubHandle ?? "");
   const handleState = useGithubHandle(handle);
 
-  const signaturePreview = buildSignaturePreview({
+  const signaturePreview = buildSignatureHtml({
     name,
     jobTitle: previewFields.jobTitle,
     contactEmail: previewFields.contactEmail,

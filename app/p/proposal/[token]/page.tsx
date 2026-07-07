@@ -49,6 +49,10 @@ export default async function PortalProposalPage({
   const { success, error } = await searchParams;
   const admin = createAdminClient();
 
+  // Resolve auth first so team members can preview drafts.
+  const auth = await getCurrentUser();
+  const isTeam = auth.ok;
+
   const { data: proposal } = await admin
     .from("proposals")
     .select(
@@ -58,13 +62,10 @@ export default async function PortalProposalPage({
     .is("deleted_at", null)
     .maybeSingle();
 
-  if (!proposal || proposal.status === "draft") notFound();
+  // Drafts are only accessible to authenticated team members.
+  if (!proposal || (proposal.status === "draft" && !isTeam)) notFound();
 
-  // Detect whether the current visitor is a logged-in team member so we can
-  // tag the view appropriately, avoid bumping the proposal to 'viewed' when we
-  // are previewing it ourselves, and bypass the client-facing access gate.
-  const auth = await getCurrentUser();
-  const isTeam = auth.ok;
+  const isDraft = proposal.status === "draft";
 
   // Client-facing access gate: hidden proposals 404 and password-protected
   // ones show the unlock form until the visitor presents a valid cookie. Team
@@ -94,8 +95,8 @@ export default async function PortalProposalPage({
     .not("portal_token", "is", null);
 
   // Bump status from 'sent' to 'viewed' only on the first external (client)
-  // view. Team previews never transition the status.
-  if (!isTeam && proposal.status === "sent") {
+  // view. Team previews and drafts never transition the status.
+  if (!isTeam && !isDraft && proposal.status === "sent") {
     await admin
       .from("proposals")
       .update({ status: "viewed", viewed_at: new Date().toISOString() })
@@ -103,22 +104,24 @@ export default async function PortalProposalPage({
       .eq("status", "sent");
   }
 
-  // Best-effort view tracking. Never throws to the visitor.
-  try {
-    const h = await headers();
-    const forwarded = h.get("x-forwarded-for");
-    const ip = forwarded ? forwarded.split(",")[0]?.trim() : (h.get("x-real-ip") ?? null);
-    const userAgent = h.get("user-agent");
-    await admin.from("proposal_view_events").insert({
-      proposal_id: proposal.id as string,
-      viewer_type: isTeam ? "team" : "client",
-      team_member_id: isTeam ? auth.user.id : null,
-      surface: "portal",
-      ip,
-      user_agent: userAgent,
-    });
-  } catch (err) {
-    log.warn({ err, proposalId: proposal.id }, "proposal_view_insert_failed");
+  // Best-effort view tracking. Skipped for draft previews.
+  if (!isDraft) {
+    try {
+      const h = await headers();
+      const forwarded = h.get("x-forwarded-for");
+      const ip = forwarded ? forwarded.split(",")[0]?.trim() : (h.get("x-real-ip") ?? null);
+      const userAgent = h.get("user-agent");
+      await admin.from("proposal_view_events").insert({
+        proposal_id: proposal.id as string,
+        viewer_type: isTeam ? "team" : "client",
+        team_member_id: isTeam ? auth.user.id : null,
+        surface: "portal",
+        ip,
+        user_agent: userAgent,
+      });
+    } catch (err) {
+      log.warn({ err, proposalId: proposal.id }, "proposal_view_insert_failed");
+    }
   }
 
   const client = (
@@ -209,6 +212,13 @@ export default async function PortalProposalPage({
 
   return (
     <div className="flex flex-col gap-4">
+      {isDraft && (
+        <div className="flex items-center justify-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5 text-xs font-semibold text-amber-800 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-300">
+          <span className="uppercase tracking-wider">Borrador</span>
+          <span className="opacity-50">·</span>
+          <span className="font-normal opacity-75">Vista previa — solo visible para el equipo</span>
+        </div>
+      )}
       {success && (
         <Alert className="border-emerald-500 bg-emerald-50 dark:bg-emerald-950/20">
           <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
@@ -486,8 +496,8 @@ export default async function PortalProposalPage({
         </div>
       </article>
 
-      {/* Response area */}
-      {responded ? (
+      {/* Response area — hidden for draft previews */}
+      {!isDraft && responded ? (
         <div className="flex flex-col items-center gap-4 py-4">
           <p className="text-center text-xs text-zinc-400 dark:text-zinc-600">
             Respondida el {formatDate(proposal.responded_at as string | null)}.
@@ -531,9 +541,9 @@ export default async function PortalProposalPage({
             </div>
           )}
         </div>
-      ) : (
+      ) : !isDraft ? (
         <ProposalActions token={token} needsFiscal={needsFiscal} fiscalPrefill={fiscalPrefill} />
-      )}
+      ) : null}
     </div>
   );
 }

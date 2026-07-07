@@ -7,7 +7,6 @@ import { isGoogleEnabled, serverEnv } from "@/lib/env";
 import { findConflicts, insertEvent } from "@/lib/google/calendar";
 import type { CalendarBusySlot } from "@/lib/google/calendar";
 import { resolveSubject } from "@/lib/google/client";
-import { notifyNewLead } from "@/lib/integrations/notify-new-lead";
 import {
   AssignLeadOwnerInput,
   CheckMeetingSlotInput,
@@ -64,18 +63,6 @@ export const createLead = defineAction({
     if (error || !data) {
       throw new Error(error?.message ?? "No se pudo crear el lead");
     }
-
-    // Notify admins/owners — fire-and-forget so the action response is not delayed.
-    notifyNewLead({
-      leadId: data.id as string,
-      leadName: input.name,
-      leadEmail: input.email ?? null,
-      leadPhone: input.phone ?? null,
-      leadCompany: input.company ?? null,
-      leadSource: input.source ?? "manual",
-    }).catch(() => {
-      /* logged inside notifyNewLead */
-    });
 
     return { id: data.id as string };
   },

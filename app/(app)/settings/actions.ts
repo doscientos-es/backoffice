@@ -1,6 +1,7 @@
 "use server";
 
 import { requireRole, requireUser } from "@/lib/auth";
+import { buildSignatureHtml } from "@/lib/email/signature";
 import { createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -35,32 +36,7 @@ const ProfileInput = z.object({
     .or(z.literal("").transform(() => undefined)),
 });
 
-function buildSignatureHtml(opts: {
-  name: string;
-  jobTitle?: string;
-  contactEmail?: string;
-  phone?: string;
-}): string {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.doscientos.es";
-  const logoSrc = `${appUrl.replace(/\/$/, "")}/brand/logo.svg`;
 
-  const textLines: string[] = [];
-  textLines.push(`<strong style="color:#111">${opts.name}</strong>`);
-  if (opts.jobTitle) textLines.push(`<span style="color:#555">${opts.jobTitle}</span>`);
-  textLines.push("");
-  textLines.push('<strong style="color:#2A4227">doscientos.es</strong>');
-  textLines.push("");
-  if (opts.contactEmail)
-    textLines.push(
-      `📩 <a href="mailto:${opts.contactEmail}" style="color:inherit">${opts.contactEmail}</a>`,
-    );
-  textLines.push(
-    '🌐 <a href="https://doscientos.es" style="color:inherit">https://doscientos.es</a>',
-  );
-  if (opts.phone) textLines.push(`📱 ${opts.phone}`);
-
-  return `<table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#333;margin:0"><tr><td style="padding-right:14px;vertical-align:middle;border-right:2px solid #2A4227"><img src="${logoSrc}" width="36" height="36" alt="doscientos" style="display:block"/></td><td style="padding-left:14px;vertical-align:top">${textLines.join("<br/>")}</td></tr></table>`;
-}
 
 export async function updateProfile(
   formData: FormData,
@@ -79,12 +55,15 @@ export async function updateProfile(
     return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
   }
 
-  const signatureHtml = buildSignatureHtml({
-    name: user.name,
-    jobTitle: parsed.data.job_title,
-    contactEmail: parsed.data.contact_email ?? parsed.data.email_alias,
-    phone: parsed.data.phone,
-  });
+  const signatureHtml = buildSignatureHtml(
+    {
+      name: user.name,
+      jobTitle: parsed.data.job_title,
+      contactEmail: parsed.data.contact_email ?? parsed.data.email_alias,
+      phone: parsed.data.phone,
+    },
+    process.env.NEXT_PUBLIC_APP_URL ?? "https://app.doscientos.es",
+  );
 
   const supabase = await createServerClient();
   const { error } = await supabase
@@ -165,12 +144,15 @@ export async function updateMemberProfile(
     return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
   }
 
-  const signatureHtml = buildSignatureHtml({
-    name: parsed.data.name,
-    jobTitle: parsed.data.job_title,
-    contactEmail: parsed.data.contact_email ?? parsed.data.email_alias,
-    phone: parsed.data.phone,
-  });
+  const signatureHtml = buildSignatureHtml(
+    {
+      name: parsed.data.name,
+      jobTitle: parsed.data.job_title,
+      contactEmail: parsed.data.contact_email ?? parsed.data.email_alias,
+      phone: parsed.data.phone,
+    },
+    process.env.NEXT_PUBLIC_APP_URL ?? "https://app.doscientos.es",
+  );
 
   const supabase = await createServerClient();
   const { error } = await supabase

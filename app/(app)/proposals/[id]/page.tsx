@@ -219,6 +219,7 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
                   token={token}
                   portalViewedAt={portalViewedAt}
                   deckViewedAt={deckViewedAt}
+                  isDraft={status === "draft"}
                 />
                 <PortalAccessControls
                   id={id}

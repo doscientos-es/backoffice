@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Check, Copy, ExternalLink, FileText, Presentation } from "lucide-react";
+import { AlertTriangle, Check, Copy, ExternalLink, FileText, Presentation } from "lucide-react";
 import { useState } from "react";
 import { sileo } from "sileo";
 
@@ -30,23 +30,34 @@ function formatViewedAt(value: string): string {
 
 /**
  * Renders the two public share links of a proposal (portal + deck) with
- * copy-to-clipboard and open-in-new-tab affordances. The whole row is no
- * longer a single Link — actions are explicit so the hover state stays
- * subtle and clicks are intentional.
+ * copy-to-clipboard and open-in-new-tab affordances. When `isDraft` is true
+ * a warning callout is shown so team members don't accidentally share the
+ * link before the proposal has been sent (clients would get a 404).
  */
 export function ShareLinks({
   token,
   portalViewedAt,
   deckViewedAt,
+  isDraft = false,
 }: {
   token: string;
   portalViewedAt: string | null;
   deckViewedAt: string | null;
+  isDraft?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <ShareLinkRow kind="portal" token={token} lastViewedAt={portalViewedAt} />
-      <ShareLinkRow kind="deck" token={token} lastViewedAt={deckViewedAt} />
+      {isDraft && (
+        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-300">
+          <AlertTriangle className="mt-px size-3.5 shrink-0" aria-hidden />
+          <span>
+            <strong className="font-semibold">Borrador — </strong>
+            estos enlaces dan error 404 al cliente. Envía la propuesta para activarlos.
+          </span>
+        </div>
+      )}
+      <ShareLinkRow kind="portal" token={token} lastViewedAt={portalViewedAt} isDraft={isDraft} />
+      <ShareLinkRow kind="deck" token={token} lastViewedAt={deckViewedAt} isDraft={isDraft} />
     </div>
   );
 }
@@ -55,10 +66,12 @@ function ShareLinkRow({
   kind,
   token,
   lastViewedAt,
+  isDraft = false,
 }: {
   kind: ShareLinkKind;
   token: string;
   lastViewedAt: string | null;
+  isDraft?: boolean;
 }) {
   const meta = META[kind];
   const path = meta.path(token);
@@ -85,6 +98,7 @@ function ShareLinkRow({
       className={cn(
         "group flex items-center gap-3 rounded-lg border border-border/60 px-2.5 py-2 transition-colors",
         "hover:border-border hover:bg-muted/40",
+        isDraft && "opacity-60",
       )}
     >
       <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">

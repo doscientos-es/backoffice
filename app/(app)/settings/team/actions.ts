@@ -2,6 +2,9 @@
 
 import { type MemberRole, requireRole } from "@/lib/auth";
 import { publicEnv } from "@/lib/env";
+import { TeamInviteEmail } from "@/components/email";
+import { renderEmail } from "@/lib/email/render";
+import { sendEmail } from "@/lib/email/resend";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
@@ -24,6 +27,17 @@ const RoleInput = z.object({
 });
 
 const MemberIdInput = z.object({ memberId: z.string().uuid() });
+
+const ROLE_LABELS: Record<string, string> = {
+  owner: "Propietario",
+  admin: "Administrador",
+  member: "Miembro",
+  viewer: "Solo lectura",
+};
+
+function roleLabel(role: string): string {
+  return ROLE_LABELS[role] ?? role;
+}
 
 function canAssignRole(actor: MemberRole, target: MemberRole): boolean {
   if (target === "owner") return actor === "owner";
@@ -92,26 +106,53 @@ export async function inviteTeamMember(formData: FormData): Promise<ActionResult
   const name = parsed.data.name || email.split("@")[0];
 
   const admin = createAdminClient();
-  // Google-first onboarding: the invite email is an accept + auto-login link.
-  // Clicking it exchanges the PKCE code (confirming the email and creating a
-  // session) and lands the invitee straight on /onboarding — no password step.
-  // Once the email is confirmed, future sign-ins go through "Continuar con
+  const appUrl = publicEnv.NEXT_PUBLIC_APP_URL;
+  // Google-first onboarding: the invite link exchanges a PKCE code (confirming
+  // the email and creating a session) and lands the invitee straight on
+  // /onboarding — no password step. Future sign-ins go through "Continuar con
   // Google", which Supabase auto-links to this account by matching the email.
-  const redirectTo = `${publicEnv.NEXT_PUBLIC_APP_URL}/auth/callback?next=${encodeURIComponent("/onboarding")}`;
-  const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
-    data: { name },
-    redirectTo,
+  //
+  // We use generateLink instead of inviteUserByEmail so that Supabase does NOT
+  // send its own plain-text email. We then send our own branded email via Resend.
+  const redirectTo = `${appUrl}/auth/callback?next=${encodeURIComponent("/onboarding")}`;
+  const { data: linkData, error: inviteError } = await admin.auth.admin.generateLink({
+    type: "invite",
+    email,
+    options: { data: { name }, redirectTo },
   });
-  if (inviteError || !invited?.user) {
-    // Log the full error server-side; the client only ever gets a readable
-    // string (never "{}" from a serialized Error, whose props are non-enumerable).
-    console.error("[inviteTeamMember] inviteUserByEmail failed", {
+  if (inviteError || !linkData?.user) {
+    console.error("[inviteTeamMember] generateLink failed", {
       email,
       status: (inviteError as { status?: number } | null)?.status,
       code: (inviteError as { code?: string } | null)?.code,
       message: inviteError?.message,
     });
     return { ok: false, error: describeInviteError(inviteError) };
+  }
+  const invited = linkData;
+  const inviteUrl = linkData.properties.action_link;
+
+  // Send custom branded email via Resend.
+  try {
+    const html = await renderEmail(
+      TeamInviteEmail({
+        inviteeName: name !== email.split("@")[0] ? name : undefined,
+        inviteUrl,
+        roleLabel: roleLabel(role),
+        appUrl,
+      }),
+    );
+    await sendEmail({
+      fromName: "doscientos",
+      fromAlias: "hola",
+      to: email,
+      subject: "Te han invitado a unirte al equipo de doscientos",
+      html,
+      tags: { type: "team_invite" },
+    });
+  } catch (emailErr) {
+    // Non-fatal: the user was already created. Log and continue.
+    console.error("[inviteTeamMember] sendEmail failed", emailErr);
   }
 
   const { error: upsertError } = await admin.from("team_members").upsert(

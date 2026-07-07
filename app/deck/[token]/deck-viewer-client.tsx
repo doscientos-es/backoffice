@@ -42,11 +42,13 @@ export function DeckViewer({
   items,
   team,
   token,
+  isDraft = false,
 }: {
   proposal: DeckProposal;
   items: DeckProposalItem[];
   team: DeckTeamMember[];
   token: string;
+  isDraft?: boolean;
 }) {
   const watermark = proposal.client_email ?? proposal.client_name ?? undefined;
   const slides = useMemo(
@@ -108,7 +110,7 @@ export function DeckViewer({
           totalSlides: total,
           viewerType: "client",
         }),
-      }).catch(() => {});
+      }).catch(() => { });
     }, 800);
     return () => clearTimeout(t);
   }, [current, token, total, slides]);
@@ -134,8 +136,8 @@ export function DeckViewer({
   const prev = useCallback(() => setCurrent((i) => Math.max(0, i - 1)), []);
   const next = useCallback(() => setCurrent((i) => Math.min(total - 1, i + 1)), [total]);
   const toggleFullscreen = useCallback(() => {
-    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-    else document.documentElement.requestFullscreen().catch(() => {});
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => { });
+    else document.documentElement.requestFullscreen().catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -224,6 +226,13 @@ export function DeckViewer({
 
   return (
     <main className="deck-root">
+      {isDraft && (
+        <div className="no-print fixed top-0 inset-x-0 z-9999 flex items-center justify-center gap-2 bg-amber-400 px-4 py-1.5 text-xs font-semibold text-amber-950">
+          <span className="uppercase tracking-wider">Borrador</span>
+          <span className="opacity-60">·</span>
+          <span className="font-normal opacity-80">Vista previa — solo visible para el equipo</span>
+        </div>
+      )}
       <style>{DECK_STYLES}</style>
       <div className="deck-progress no-print" aria-hidden>
         <div className="deck-progress-bar" style={{ width: `${progress}%` }} />

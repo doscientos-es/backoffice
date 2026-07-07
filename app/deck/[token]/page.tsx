@@ -80,6 +80,10 @@ export default async function DeckPage({
   const { token } = await params;
   const admin = createAdminClient();
 
+  // Resolve auth first so team members can preview drafts.
+  const auth = await getCurrentUser();
+  const isTeam = auth.ok;
+
   const { data: proposal } = await admin
     .from("proposals")
     .select("*, clients(name, email)")
@@ -87,7 +91,10 @@ export default async function DeckPage({
     .is("deleted_at", null)
     .maybeSingle();
 
-  if (!proposal || proposal.status === "draft") notFound();
+  // Drafts are only accessible to authenticated team members.
+  if (!proposal || (proposal.status === "draft" && !isTeam)) notFound();
+
+  const isDraft = proposal.status === "draft";
 
   const [{ data: items }, { data: team }] = await Promise.all([
     admin
@@ -103,15 +110,9 @@ export default async function DeckPage({
       .limit(6),
   ]);
 
-  // Detect whether the current visitor is a logged-in team member so we can
-  // tag the view appropriately and avoid bumping the proposal to 'viewed'
-  // when we are previewing it ourselves. Mirrors the portal proposal page.
-  const auth = await getCurrentUser();
-  const isTeam = auth.ok;
-
   // Bump status from 'sent' to 'viewed' on the first external (client) open
-  // of the deck. Team previews never transition the status.
-  if (!isTeam && proposal.status === "sent") {
+  // of the deck. Team previews and drafts never transition the status.
+  if (!isTeam && !isDraft && proposal.status === "sent") {
     await admin
       .from("proposals")
       .update({ status: "viewed", viewed_at: new Date().toISOString() })
@@ -119,22 +120,24 @@ export default async function DeckPage({
       .eq("status", "sent");
   }
 
-  // Best-effort page-level view tracking. Never throws to the visitor.
-  try {
-    const h = await headers();
-    const forwarded = h.get("x-forwarded-for");
-    const ip = forwarded ? forwarded.split(",")[0]?.trim() : (h.get("x-real-ip") ?? null);
-    const userAgent = h.get("user-agent");
-    await admin.from("proposal_view_events").insert({
-      proposal_id: proposal.id as string,
-      viewer_type: isTeam ? "team" : "client",
-      team_member_id: isTeam ? auth.user.id : null,
-      surface: "deck",
-      ip,
-      user_agent: userAgent,
-    });
-  } catch (err) {
-    log.warn({ err, proposalId: proposal.id }, "deck_view_insert_failed");
+  // Best-effort page-level view tracking. Skipped for draft previews.
+  if (!isDraft) {
+    try {
+      const h = await headers();
+      const forwarded = h.get("x-forwarded-for");
+      const ip = forwarded ? forwarded.split(",")[0]?.trim() : (h.get("x-real-ip") ?? null);
+      const userAgent = h.get("user-agent");
+      await admin.from("proposal_view_events").insert({
+        proposal_id: proposal.id as string,
+        viewer_type: isTeam ? "team" : "client",
+        team_member_id: isTeam ? auth.user.id : null,
+        surface: "deck",
+        ip,
+        user_agent: userAgent,
+      });
+    } catch (err) {
+      log.warn({ err, proposalId: proposal.id }, "deck_view_insert_failed");
+    }
   }
 
   const client = (proposal as unknown as { clients: { name: string; email: string | null } | null })
@@ -161,5 +164,13 @@ export default async function DeckPage({
   const deckItems = (items ?? []) as unknown as DeckProposalItem[];
   const deckTeam = (team ?? []) as unknown as DeckTeamMember[];
 
-  return <DeckViewer proposal={deckProposal} items={deckItems} team={deckTeam} token={token} />;
+  return (
+    <DeckViewer
+      proposal={deckProposal}
+      items={deckItems}
+      team={deckTeam}
+      token={token}
+      isDraft={isDraft}
+    />
+  );
 }

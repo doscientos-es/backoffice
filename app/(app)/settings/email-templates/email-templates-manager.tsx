@@ -17,18 +17,19 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { appendSignature, markdownToHtml, renderTemplate } from "@/lib/email/templates";
 import { formatDate } from "@/lib/utils";
-import { Copy, Pencil, Plus, Power } from "lucide-react";
+import { Copy, Pencil, Plus, Power, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import {
   type EmailTemplate,
   type EmailTemplateInput,
   createEmailTemplate,
+  deleteEmailTemplate,
   toggleEmailTemplateActive,
   updateEmailTemplate,
 } from "./actions";
 
-type Props = { templates: EmailTemplate[] };
+type Props = { templates: EmailTemplate[]; signatureHtml: string | null };
 
 const EMPTY_FORM: EmailTemplateInput = {
   name: "",
@@ -46,15 +47,7 @@ const SAMPLE_VARS: Record<string, string> = {
   sender_name: "Pol Gubau",
 };
 
-/** Firma de ejemplo usada únicamente en la vista previa. */
-const SAMPLE_SIGNATURE =
-  '<div style="font-size:13px;color:#666;line-height:1.5;margin-top:4px">' +
-  '<strong style="color:#2A4227">Pol Gubau</strong><br/>' +
-  "doscientos · Estudio de producto<br/>" +
-  '<a href="mailto:pol@doscientos.studio">pol@doscientos.studio</a>' +
-  "</div>";
-
-export function EmailTemplatesManager({ templates }: Props) {
+export function EmailTemplatesManager({ templates, signatureHtml }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<EmailTemplate | null>(null);
@@ -65,8 +58,8 @@ export function EmailTemplatesManager({ templates }: Props) {
   const previewSubject = useMemo(() => renderTemplate(form.subject, SAMPLE_VARS), [form.subject]);
   const previewBody = useMemo(() => {
     const html = markdownToHtml(renderTemplate(form.body_html, SAMPLE_VARS));
-    return form.include_signature ? appendSignature(html, SAMPLE_SIGNATURE) : html;
-  }, [form.body_html, form.include_signature]);
+    return form.include_signature ? appendSignature(html, signatureHtml) : html;
+  }, [form.body_html, form.include_signature, signatureHtml]);
 
   function openCreate() {
     setEditing(null);
@@ -125,6 +118,21 @@ export function EmailTemplatesManager({ templates }: Props) {
     });
   }
 
+  function handleDelete(tpl: EmailTemplate) {
+    const confirmed = window.confirm(
+      `¿Eliminar la plantilla "${tpl.name}"?\n\nEsta acción no se puede deshacer.`,
+    );
+    if (!confirmed) return;
+    startTransition(async () => {
+      const res = await deleteEmailTemplate(tpl.id);
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
+      router.refresh();
+    });
+  }
+
   return (
     <>
       <div className="flex justify-end mb-4">
@@ -163,7 +171,7 @@ export function EmailTemplatesManager({ templates }: Props) {
                     <p className="font-medium">{tpl.name}</p>
                     <p className="text-xs text-muted-foreground font-mono">{tpl.slug}</p>
                   </td>
-                  <td className="px-4 py-2.5 align-middle text-muted-foreground max-w-[220px] truncate">
+                  <td className="px-4 py-2.5 align-middle text-muted-foreground max-w-55 truncate">
                     {tpl.subject}
                   </td>
                   <td className="px-4 py-2.5 align-middle">
@@ -209,6 +217,16 @@ export function EmailTemplatesManager({ templates }: Props) {
                         disabled={isPending}
                       >
                         <Power className="size-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => handleDelete(tpl)}
+                        title="Eliminar"
+                        disabled={isPending}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="size-3.5" />
                       </Button>
                     </div>
                   </td>
@@ -279,8 +297,8 @@ export function EmailTemplatesManager({ templates }: Props) {
                     className="min-h-80 font-mono text-xs"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Se escribe en Markdown (se convierte a HTML al previsualizar y enviar). Variables
-                    disponibles: <code className="font-mono">{"{{nombre}}"}</code>{" "}
+                    Se escribe en Markdown (se convierte a HTML al previsualizar y enviar).
+                    Variables disponibles: <code className="font-mono">{"{{nombre}}"}</code>{" "}
                     <code className="font-mono">{"{{empresa}}"}</code>{" "}
                     <code className="font-mono">{"{{email}}"}</code>{" "}
                     <code className="font-mono">{"{{sender_name}}"}</code>

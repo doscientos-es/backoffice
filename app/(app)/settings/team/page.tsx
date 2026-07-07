@@ -79,7 +79,7 @@ export default async function TeamSettingsPage() {
         <CardHeader>
           <CardTitle>Invitar miembro</CardTitle>
           <CardDescription>
-            Le enviaremos un email con un enlace para que defina su contraseña.
+            Le enviaremos un email con un enlace de acceso. Entrará directamente sin necesidad de contraseña.
           </CardDescription>
         </CardHeader>
         <CardContent>
