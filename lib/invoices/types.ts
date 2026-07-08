@@ -77,7 +77,11 @@ export type InvoiceLineItem = {
 export type InvoiceSettings = {
   company_name: string | null;
   company_nif: string | null;
-  company_address: string | null;
+  company_address_street: string | null;
+  company_address_zip: string | null;
+  company_address_city: string | null;
+  company_address_province: string | null;
+  company_address_country: string | null;
   iban: string | null;
 };
 
@@ -94,7 +98,11 @@ export type InvoiceDetail = {
   issue_date: string | null;
   due_date: string | null;
   client_nif: string | null;
-  client_address: string | null;
+  client_address_street: string | null;
+  client_address_zip: string | null;
+  client_address_city: string | null;
+  client_address_province: string | null;
+  client_address_country: string | null;
   client: InvoiceDetailClient | null;
   project: InvoiceDetailProject | null;
 };
@@ -108,7 +116,7 @@ export type InvoiceDetailResult = {
 // ─── Query-level shapes (read) ────────────────────────────────────────────────
 
 /** Minimal timestamps fetched before a status transition. */
-export type InvoiceTimestamps = { issued_at: string | null };
+export type InvoiceTimestamps = { issued_at: string | null; client_id: string | null };
 
 /** Payload fetched before submitting to Verifactu. */
 export type InvoiceForVerifactu = {
@@ -172,7 +180,11 @@ export type ProposalItem = {
 export type ClientInfo = {
   name: string | null;
   nif: string | null;
-  billing_address: string | null;
+  billing_address_street: string | null;
+  billing_address_zip: string | null;
+  billing_address_city: string | null;
+  billing_address_province: string | null;
+  billing_address_country: string | null;
 };
 
 /** Project data needed to create a monthly hourly invoice. */
@@ -211,6 +223,14 @@ export type InvoiceStatusPatch = {
   updated_at: string;
   paid_at: string | null;
   issued_at?: string;
+  // Client snapshot — refreshed on first issuance so draft edits to the client are captured.
+  client_nif?: string | null;
+  client_name?: string | null;
+  client_address_street?: string | null;
+  client_address_zip?: string | null;
+  client_address_city?: string | null;
+  client_address_province?: string | null;
+  client_address_country?: string | null;
 };
 
 /** Fields patched after a Verifactu submission attempt. */
@@ -242,7 +262,11 @@ export type NewInvoiceData = {
   total: number;
   client_nif: string | null;
   client_name: string | null;
-  client_address: string | null;
+  client_address_street: string | null;
+  client_address_zip: string | null;
+  client_address_city: string | null;
+  client_address_province: string | null;
+  client_address_country: string | null;
   notes?: string | null;
   created_by: string;
 };

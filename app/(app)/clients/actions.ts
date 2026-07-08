@@ -21,7 +21,11 @@ export async function createClient(formData: FormData): Promise<void> {
     nif: formData.get("nif")?.toString() ?? "",
     email: formData.get("email")?.toString() ?? "",
     phone: formData.get("phone")?.toString() ?? "",
-    billing_address: formData.get("billing_address")?.toString() ?? "",
+    billing_address_street: formData.get("billing_address_street")?.toString() ?? "",
+    billing_address_zip: formData.get("billing_address_zip")?.toString() ?? "",
+    billing_address_city: formData.get("billing_address_city")?.toString() ?? "",
+    billing_address_province: formData.get("billing_address_province")?.toString() ?? "",
+    billing_address_country: formData.get("billing_address_country")?.toString() ?? "ES",
     contact_person: formData.get("contact_person")?.toString() ?? "",
     notes: formData.get("notes")?.toString() ?? "",
   };
@@ -33,10 +37,15 @@ export async function createClient(formData: FormData): Promise<void> {
     .from("clients")
     .insert({
       name: parsed.data.name,
+      label: parsed.data.label ?? null,
       nif: parsed.data.nif ?? null,
       email: parsed.data.email ?? null,
       phone: parsed.data.phone ?? null,
-      billing_address: parsed.data.billing_address ?? null,
+      billing_address_street: parsed.data.billing_address_street ?? null,
+      billing_address_zip: parsed.data.billing_address_zip ?? null,
+      billing_address_city: parsed.data.billing_address_city ?? null,
+      billing_address_province: parsed.data.billing_address_province ?? null,
+      billing_address_country: parsed.data.billing_address_country ?? "ES",
       contact_person: parsed.data.contact_person ?? null,
       notes: parsed.data.notes ?? null,
     })
@@ -58,7 +67,11 @@ export type UpdateClientInputType = {
   nif: string;
   email: string;
   phone: string;
-  billing_address: string;
+  billing_address_street: string;
+  billing_address_zip: string;
+  billing_address_city: string;
+  billing_address_province: string;
+  billing_address_country: string;
   contact_person: string;
   notes: string;
 };
@@ -73,10 +86,15 @@ export const updateClient = defineAction({
       .from("clients")
       .update({
         name: input.name,
+        label: input.label ?? null,
         nif: input.nif ?? null,
         email: input.email ?? null,
         phone: input.phone ?? null,
-        billing_address: input.billing_address ?? null,
+        billing_address_street: input.billing_address_street ?? null,
+        billing_address_zip: input.billing_address_zip ?? null,
+        billing_address_city: input.billing_address_city ?? null,
+        billing_address_province: input.billing_address_province ?? null,
+        billing_address_country: input.billing_address_country ?? "ES",
         contact_person: input.contact_person ?? null,
         notes: input.notes ?? null,
         updated_at: new Date().toISOString(),

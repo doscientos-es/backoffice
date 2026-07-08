@@ -292,6 +292,23 @@ export default async function PortalInvoicePage({
                 NIF: {invoice.client_nif as string}
               </p>
             ) : null}
+            {(invoice.client_address_street as string | null) ||
+              (invoice.client_address_city as string | null) ? (
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 whitespace-pre-wrap">
+                {[
+                  invoice.client_address_street,
+                  [invoice.client_address_zip, invoice.client_address_city]
+                    .filter(Boolean)
+                    .join(" "),
+                  invoice.client_address_province,
+                  (invoice.client_address_country as string | null)?.toUpperCase() !== "ES"
+                    ? invoice.client_address_country
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join("\n")}
+              </p>
+            ) : null}
           </div>
         </div>
 

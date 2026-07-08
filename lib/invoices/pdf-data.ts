@@ -1,5 +1,6 @@
 import "server-only";
 
+import { formatAddress } from "@/lib/address";
 import { type VatBreakdownRow, buildVatBreakdown } from "@/lib/finance";
 import { verifactuConfigFromEnv } from "@/lib/verifactu/config";
 import { buildQrDataUrl, buildQrUrl } from "@doscientos/verifactu";
@@ -77,7 +78,11 @@ export type BuildInvoicePdfInput = {
     subtotal: number | null;
     total: number | null;
     client_nif: string | null;
-    client_address: string | null;
+    client_address_street?: string | null;
+    client_address_zip?: string | null;
+    client_address_city?: string | null;
+    client_address_province?: string | null;
+    client_address_country?: string | null;
   };
   clientName: string | null;
   items: ReadonlyArray<{
@@ -90,7 +95,11 @@ export type BuildInvoicePdfInput = {
   settings: {
     company_name: string | null;
     company_nif: string | null;
-    company_address: string | null;
+    company_address_street?: string | null;
+    company_address_zip?: string | null;
+    company_address_city?: string | null;
+    company_address_province?: string | null;
+    company_address_country?: string | null;
     iban: string | null;
   } | null;
   workLogs?: ReadonlyArray<InvoicePdfWorkLogInput>;
@@ -157,12 +166,26 @@ export async function buildInvoicePdfData(input: BuildInvoicePdfInput): Promise<
     verifactuCsv: invoice.verifactu_csv,
     clientName: input.clientName,
     clientNif: invoice.client_nif,
-    clientAddress: invoice.client_address,
+    clientAddress:
+      formatAddress({
+        street: invoice.client_address_street,
+        zip: invoice.client_address_zip,
+        city: invoice.client_address_city,
+        province: invoice.client_address_province,
+        country: invoice.client_address_country,
+      }) || null,
     company: settings
       ? {
           name: settings.company_name,
           nif: settings.company_nif,
-          address: settings.company_address,
+          address:
+            formatAddress({
+              street: settings.company_address_street,
+              zip: settings.company_address_zip,
+              city: settings.company_address_city,
+              province: settings.company_address_province,
+              country: settings.company_address_country,
+            }) || null,
           iban: settings.iban,
         }
       : null,

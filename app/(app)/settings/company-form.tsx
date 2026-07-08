@@ -3,8 +3,9 @@
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { Textarea } from "@/components/ui/textarea";
+import { COUNTRY_OPTIONS } from "@/lib/address";
 import { updateCompanySettings } from "./actions";
 
 interface Props {
@@ -13,7 +14,11 @@ interface Props {
   invoiceSeries: string;
   defaultVatRate: number;
   iban: string;
-  companyAddress: string;
+  companyAddressStreet: string;
+  companyAddressZip: string;
+  companyAddressCity: string;
+  companyAddressProvince: string;
+  companyAddressCountry: string;
   internalHourlyCost: number;
 }
 
@@ -23,7 +28,11 @@ export function CompanyForm({
   invoiceSeries,
   defaultVatRate,
   iban,
-  companyAddress,
+  companyAddressStreet,
+  companyAddressZip,
+  companyAddressCity,
+  companyAddressProvince,
+  companyAddressCountry,
   internalHourlyCost,
 }: Props) {
   const feedback = useFormFeedback();
@@ -132,18 +141,80 @@ export function CompanyForm({
           </FieldDescription>
         </Field>
       </div>
-      <Field>
-        <FieldLabel htmlFor="company_address" className="text-xs font-medium">
-          Dirección fiscal
-        </FieldLabel>
-        <Textarea
-          id="company_address"
-          name="company_address"
-          rows={2}
-          defaultValue={companyAddress}
-          placeholder={"Calle, número\nCP Ciudad, País"}
-        />
-      </Field>
+      <div>
+        <p className="mb-3 text-sm font-medium">Dirección fiscal</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field className="sm:col-span-2">
+            <FieldLabel htmlFor="company_address_street" className="text-xs font-medium">
+              Calle y número
+            </FieldLabel>
+            <Input
+              id="company_address_street"
+              name="company_address_street"
+              maxLength={200}
+              defaultValue={companyAddressStreet}
+              placeholder="Calle Mayor, 1 - 3ª"
+              autoComplete="street-address"
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="company_address_zip" className="text-xs font-medium">
+              Código postal
+            </FieldLabel>
+            <Input
+              id="company_address_zip"
+              name="company_address_zip"
+              maxLength={20}
+              defaultValue={companyAddressZip}
+              placeholder="08001"
+              autoComplete="postal-code"
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="company_address_city" className="text-xs font-medium">
+              Ciudad
+            </FieldLabel>
+            <Input
+              id="company_address_city"
+              name="company_address_city"
+              maxLength={100}
+              defaultValue={companyAddressCity}
+              placeholder="Barcelona"
+              autoComplete="address-level2"
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="company_address_province" className="text-xs font-medium">
+              Provincia
+            </FieldLabel>
+            <Input
+              id="company_address_province"
+              name="company_address_province"
+              maxLength={100}
+              defaultValue={companyAddressProvince}
+              placeholder="Barcelona"
+              autoComplete="address-level1"
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="company_address_country" className="text-xs font-medium">
+              País
+            </FieldLabel>
+            <Select
+              id="company_address_country"
+              name="company_address_country"
+              defaultValue={companyAddressCountry || "ES"}
+              autoComplete="country"
+            >
+              {COUNTRY_OPTIONS.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        </div>
+      </div>
       <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
         <FormFeedback state={feedback.state} successLabel="Empresa guardada" />
         <SubmitButton pendingLabel="Guardando…" loading={feedback.pending}>

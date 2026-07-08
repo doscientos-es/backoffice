@@ -90,7 +90,11 @@ export async function GET(
       subtotal: invoice.subtotal == null ? null : Number(invoice.subtotal),
       total: invoice.total == null ? null : Number(invoice.total),
       client_nif: (invoice.client_nif as string | null) ?? null,
-      client_address: (invoice.client_address as string | null) ?? null,
+      client_address_street: (invoice.client_address_street as string | null) ?? null,
+      client_address_zip: (invoice.client_address_zip as string | null) ?? null,
+      client_address_city: (invoice.client_address_city as string | null) ?? null,
+      client_address_province: (invoice.client_address_province as string | null) ?? null,
+      client_address_country: (invoice.client_address_country as string | null) ?? null,
     },
     clientName,
     items: (items ?? []) as Array<{
@@ -104,7 +108,11 @@ export async function GET(
       ? {
           company_name: (settings.company_name as string | null) ?? null,
           company_nif: (settings.company_nif as string | null) ?? null,
-          company_address: (settings.company_address as string | null) ?? null,
+          company_address_street: (settings.company_address_street as string | null) ?? null,
+          company_address_zip: (settings.company_address_zip as string | null) ?? null,
+          company_address_city: (settings.company_address_city as string | null) ?? null,
+          company_address_province: (settings.company_address_province as string | null) ?? null,
+          company_address_country: (settings.company_address_country as string | null) ?? null,
           iban: (settings.iban as string | null) ?? null,
         }
       : null,

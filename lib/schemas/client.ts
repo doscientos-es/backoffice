@@ -11,10 +11,17 @@ import { optionalEmail, optionalText, requiredText } from "./common";
 
 export const CreateClientInput = z.object({
   name: requiredText(160, "El nombre es obligatorio"),
+  /** Short display name shown in lists. Falls back to `name` when absent. */
+  label: optionalText(100),
   nif: optionalText(20),
   email: optionalEmail,
   phone: optionalText(40),
-  billing_address: optionalText(400),
+  // Structured billing address — each part stored separately.
+  billing_address_street: optionalText(200),
+  billing_address_zip: optionalText(20),
+  billing_address_city: optionalText(100),
+  billing_address_province: optionalText(100),
+  billing_address_country: optionalText(10).default("ES"),
   contact_person: optionalText(160),
   notes: optionalText(4000),
 });

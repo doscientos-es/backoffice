@@ -153,22 +153,7 @@ export async function FinanceDetails({ since, until, rangeLabel }: Props) {
                 </li>
               ))}
             </ul>
-            {memberContributions.length === 2 && (
-              <p className="border-t border-border px-6 py-2 text-xs text-muted-foreground">
-                Diferencia:{" "}
-                <span className="font-medium tabular-nums text-foreground">
-                  {formatEUR(
-                    Math.abs(
-                      (memberContributions[0]?.total ?? 0) - (memberContributions[1]?.total ?? 0),
-                    ),
-                  )}
-                </span>{" "}
-                a favor de{" "}
-                {(memberContributions[0]?.total ?? 0) >= (memberContributions[1]?.total ?? 0)
-                  ? memberContributions[0]?.memberName
-                  : memberContributions[1]?.memberName}
-              </p>
-            )}
+
           </CardContent>
         </Card>
       )}

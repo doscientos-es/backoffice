@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { formatAddress } from "@/lib/address";
 import { requireUser } from "@/lib/auth";
 import { getClientDetail } from "@/lib/clients/queries";
 import {
@@ -33,9 +34,9 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title={client.name as string}
+        title={(client.label as string | null)?.trim() || (client.name as string)}
         description={(client.nif as string | null) ?? undefined}
-        breadcrumbs={[{ label: "Clientes", href: "/clients" }, { label: client.name as string }]}
+        breadcrumbs={[{ label: "Clientes", href: "/clients" }, { label: (client.label as string | null)?.trim() || (client.name as string) }]}
         actions={
           user.role !== "viewer" ? (
             <div className="flex items-center gap-2">
@@ -43,11 +44,18 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                 client={{
                   id: client.id as string,
                   name: client.name as string,
+                  label: (client.label as string | null) ?? null,
                   nif: (client.nif as string | null) ?? null,
                   email: (client.email as string | null) ?? null,
                   phone: (client.phone as string | null) ?? null,
                   contact_person: (client.contact_person as string | null) ?? null,
-                  billing_address: (client.billing_address as string | null) ?? null,
+                  billing_address_street: (client.billing_address_street as string | null) ?? null,
+                  billing_address_zip: (client.billing_address_zip as string | null) ?? null,
+                  billing_address_city: (client.billing_address_city as string | null) ?? null,
+                  billing_address_province:
+                    (client.billing_address_province as string | null) ?? null,
+                  billing_address_country:
+                    (client.billing_address_country as string | null) ?? null,
                   notes: (client.notes as string | null) ?? null,
                 }}
               />
@@ -70,12 +78,26 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
             </DetailRow>
             <DetailRow label="Creado">{formatDate(client.created_at as string)}</DetailRow>
           </DetailGrid>
-          {client.billing_address ? (
+          {formatAddress({
+            street: client.billing_address_street as string | null,
+            zip: client.billing_address_zip as string | null,
+            city: client.billing_address_city as string | null,
+            province: client.billing_address_province as string | null,
+            country: client.billing_address_country as string | null,
+          }) ? (
             <div className="mt-4 border-t border-border pt-3">
               <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Dirección
               </p>
-              <p className="whitespace-pre-wrap text-sm">{client.billing_address as string}</p>
+              <p className="whitespace-pre-wrap text-sm">
+                {formatAddress({
+                  street: client.billing_address_street as string | null,
+                  zip: client.billing_address_zip as string | null,
+                  city: client.billing_address_city as string | null,
+                  province: client.billing_address_province as string | null,
+                  country: client.billing_address_country as string | null,
+                })}
+              </p>
             </div>
           ) : null}
           {client.notes ? (

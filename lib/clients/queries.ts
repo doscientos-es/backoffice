@@ -25,7 +25,10 @@ export async function listClients(params: ClientListParams): Promise<ClientListR
   let query = notDeleted(
     supabase
       .from("clients")
-      .select("id, name, nif, email, phone, contact_person, updated_at", { count: "exact" }),
+      .select(
+        "id, name, label, nif, email, phone, contact_person, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country, notes, updated_at",
+        { count: "exact" },
+      ),
   );
 
   if (params.q && params.q.length > 0) {
@@ -45,10 +48,17 @@ export async function listClients(params: ClientListParams): Promise<ClientListR
     data: (data ?? []).map((c) => ({
       id: c.id as string,
       name: c.name as string,
+      label: (c.label as string | null) ?? null,
       nif: (c.nif as string | null) ?? null,
       email: (c.email as string | null) ?? null,
       phone: (c.phone as string | null) ?? null,
       contact_person: (c.contact_person as string | null) ?? null,
+      billing_address_street: (c.billing_address_street as string | null) ?? null,
+      billing_address_zip: (c.billing_address_zip as string | null) ?? null,
+      billing_address_city: (c.billing_address_city as string | null) ?? null,
+      billing_address_province: (c.billing_address_province as string | null) ?? null,
+      billing_address_country: (c.billing_address_country as string | null) ?? null,
+      notes: (c.notes as string | null) ?? null,
       updated_at: (c.updated_at as string | null) ?? null,
     })),
     count: count ?? 0,
@@ -88,11 +98,16 @@ export async function getClientDetail(id: string): Promise<ClientDetailResult> {
     client: {
       id: client.id as string,
       name: client.name as string,
+      label: (client.label as string | null) ?? null,
       nif: (client.nif as string | null) ?? null,
       email: (client.email as string | null) ?? null,
       phone: (client.phone as string | null) ?? null,
       contact_person: (client.contact_person as string | null) ?? null,
-      billing_address: (client.billing_address as string | null) ?? null,
+      billing_address_street: (client.billing_address_street as string | null) ?? null,
+      billing_address_zip: (client.billing_address_zip as string | null) ?? null,
+      billing_address_city: (client.billing_address_city as string | null) ?? null,
+      billing_address_province: (client.billing_address_province as string | null) ?? null,
+      billing_address_country: (client.billing_address_country as string | null) ?? null,
       notes: (client.notes as string | null) ?? null,
       created_at: (client.created_at as string | null) ?? null,
       updated_at: (client.updated_at as string | null) ?? null,

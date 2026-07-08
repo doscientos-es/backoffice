@@ -30,19 +30,19 @@ export type ListAlign = "left" | "right";
 export type ListHeader =
   | string
   | {
-      label: string;
-      /** Activa la ordenación cliente (requiere `sortValues` en las filas). */
-      sortable?: boolean;
-      /**
-       * Clave de columna DB para ordenación en el servidor.
-       * Al hacer clic actualiza los URL params `sort` + `dir` y resetea `page`.
-       * Tiene preferencia sobre `sortable`.
-       */
-      sortKey?: string;
-      align?: ListAlign;
-      /** Ancho mínimo CSS para la columna (ej. "8rem"). Evita wrapping en celdas cortas. */
-      minWidth?: string;
-    };
+    label: string;
+    /** Activa la ordenación cliente (requiere `sortValues` en las filas). */
+    sortable?: boolean;
+    /**
+     * Clave de columna DB para ordenación en el servidor.
+     * Al hacer clic actualiza los URL params `sort` + `dir` y resetea `page`.
+     * Tiene preferencia sobre `sortable`.
+     */
+    sortKey?: string;
+    align?: ListAlign;
+    /** Ancho mínimo CSS para la columna (ej. "8rem"). Evita wrapping en celdas cortas. */
+    minWidth?: string;
+  };
 
 export type ListRow = {
   id: string;
@@ -53,6 +53,8 @@ export type ListRow = {
   /** Valores planos paralelos a `cells` usados para el CSV exportado. */
   csvValues?: (string | number | null | undefined)[];
   data?: unknown;
+  /** Acciones inline (editar, eliminar…) renderizadas en la última columna. */
+  rowActions?: ReactNode;
 };
 
 export type BulkAction = {
@@ -243,8 +245,8 @@ export function ListPage({
         sortingFn: "alphanumeric",
       };
     }),
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  [headers, serverSortKey, serverSortDir, handleServerSort]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [headers, serverSortKey, serverSortDir, handleServerSort]);
 
   const table = useReactTable({
     data: rows,
@@ -257,6 +259,7 @@ export function ListPage({
   });
 
   const hasControls = !!searchKey || (filters && filters.length > 0) || !!pagination;
+  const hasRowActions = rows.some((r) => r.rowActions != null);
 
   const alignAt = (colIdx: number): ListAlign =>
     headerAlign(headers[colIdx] ?? "left", align?.[colIdx]);
@@ -327,6 +330,7 @@ export function ListPage({
                         </th>
                       );
                     })}
+                    {hasRowActions && <th className="w-px px-3 py-3" aria-label="Acciones" />}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60">
@@ -383,6 +387,14 @@ export function ListPage({
                             </td>
                           );
                         })}
+                        {hasRowActions && (
+                          <td
+                            className="px-3 py-2 text-right align-middle"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {row.rowActions}
+                          </td>
+                        )}
                       </tr>
                     );
                   })}

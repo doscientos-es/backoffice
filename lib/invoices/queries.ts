@@ -128,7 +128,9 @@ export async function getInvoiceDetail(id: string): Promise<InvoiceDetailResult>
       .order("position"),
     supabase
       .from("settings")
-      .select("company_name, company_nif, company_address, iban")
+      .select(
+        "company_name, company_nif, company_address_street, company_address_zip, company_address_city, company_address_province, company_address_country, iban",
+      )
       .eq("id", 1)
       .single(),
   ]);
@@ -152,6 +154,11 @@ export async function getInvoiceDetail(id: string): Promise<InvoiceDetailResult>
       issue_date: (invoice.issue_date as string | null) ?? null,
       due_date: (invoice.due_date as string | null) ?? null,
       client_nif: (invoice.client_nif as string | null) ?? null,
+      client_address_street: (invoice.client_address_street as string | null) ?? null,
+      client_address_zip: (invoice.client_address_zip as string | null) ?? null,
+      client_address_city: (invoice.client_address_city as string | null) ?? null,
+      client_address_province: (invoice.client_address_province as string | null) ?? null,
+      client_address_country: (invoice.client_address_country as string | null) ?? null,
       client,
       project,
     },
@@ -168,7 +175,11 @@ export async function getInvoiceDetail(id: string): Promise<InvoiceDetailResult>
       ? {
           company_name: (settings.company_name as string | null) ?? null,
           company_nif: (settings.company_nif as string | null) ?? null,
-          company_address: (settings.company_address as string | null) ?? null,
+          company_address_street: (settings.company_address_street as string | null) ?? null,
+          company_address_zip: (settings.company_address_zip as string | null) ?? null,
+          company_address_city: (settings.company_address_city as string | null) ?? null,
+          company_address_province: (settings.company_address_province as string | null) ?? null,
+          company_address_country: (settings.company_address_country as string | null) ?? null,
           iban: (settings.iban as string | null) ?? null,
         }
       : null,
@@ -183,8 +194,43 @@ export async function getInvoiceDetail(id: string): Promise<InvoiceDetailResult>
  */
 export async function findInvoiceTimestamps(id: string): Promise<InvoiceTimestamps | null> {
   const supabase = await createServerClient();
-  const { data } = await supabase.from("invoices").select("issued_at").eq("id", id).maybeSingle();
-  return data ? { issued_at: (data.issued_at as string | null) ?? null } : null;
+  const { data } = await supabase
+    .from("invoices")
+    .select("issued_at, client_id")
+    .eq("id", id)
+    .maybeSingle();
+  return data
+    ? {
+        issued_at: (data.issued_at as string | null) ?? null,
+        client_id: (data.client_id as string | null) ?? null,
+      }
+    : null;
+}
+
+/**
+ * Overwrites the client snapshot fields on a draft invoice with fresh data
+ * from the client record. The `.eq("status", "draft")` guard is an extra
+ * safety net on top of the `fn_check_invoice_immutable` trigger.
+ */
+export async function patchInvoiceClientSnapshot(
+  id: string,
+  snapshot: {
+    client_nif: string | null;
+    client_name: string | null;
+    client_address_street: string | null;
+    client_address_zip: string | null;
+    client_address_city: string | null;
+    client_address_province: string | null;
+    client_address_country: string | null;
+  },
+): Promise<void> {
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("invoices")
+    .update({ ...snapshot, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("status", "draft");
+  if (error) throw new Error(error.message);
 }
 
 /** Applies a status/timestamp patch to an invoice row. Throws on DB error. */
@@ -354,14 +400,20 @@ export async function findClientInfo(clientId: string): Promise<ClientInfo | nul
   const supabase = await createServerClient();
   const { data } = await supabase
     .from("clients")
-    .select("name, nif, billing_address")
+    .select(
+      "name, nif, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country",
+    )
     .eq("id", clientId)
     .maybeSingle();
   if (!data) return null;
   return {
     name: (data.name as string | null) ?? null,
     nif: (data.nif as string | null) ?? null,
-    billing_address: (data.billing_address as string | null) ?? null,
+    billing_address_street: (data.billing_address_street as string | null) ?? null,
+    billing_address_zip: (data.billing_address_zip as string | null) ?? null,
+    billing_address_city: (data.billing_address_city as string | null) ?? null,
+    billing_address_province: (data.billing_address_province as string | null) ?? null,
+    billing_address_country: (data.billing_address_country as string | null) ?? null,
   };
 }
 

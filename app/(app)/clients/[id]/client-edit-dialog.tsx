@@ -13,22 +13,34 @@ import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { useFormDirty } from "@/lib/hooks/use-form-dirty";
 import { Pencil } from "lucide-react";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { updateClient } from "../actions";
 import { ClientFormFields } from "../client-form-fields";
 
 type Client = {
   id: string;
   name: string;
+  label: string | null;
   nif: string | null;
   email: string | null;
   phone: string | null;
   contact_person: string | null;
-  billing_address: string | null;
+  billing_address_street: string | null;
+  billing_address_zip: string | null;
+  billing_address_city: string | null;
+  billing_address_province: string | null;
+  billing_address_country: string | null;
   notes: string | null;
 };
 
-export function ClientEditDialog({ client }: { client: Client }) {
+export function ClientEditDialog({
+  client,
+  trigger,
+}: {
+  client: Client;
+  /** Custom trigger element. Defaults to the standard "Editar" button. */
+  trigger?: ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   const feedback = useFormFeedback();
   const { formRef, isDirty, reset } = useFormDirty<HTMLFormElement>();
@@ -40,10 +52,15 @@ export function ClientEditDialog({ client }: { client: Client }) {
     const res = await updateClient({
       id: client.id,
       name: fd.get("name")?.toString() ?? "",
+      label: fd.get("label")?.toString() ?? "",
       nif: fd.get("nif")?.toString() ?? "",
       email: fd.get("email")?.toString() ?? "",
       phone: fd.get("phone")?.toString() ?? "",
-      billing_address: fd.get("billing_address")?.toString() ?? "",
+      billing_address_street: fd.get("billing_address_street")?.toString() ?? "",
+      billing_address_zip: fd.get("billing_address_zip")?.toString() ?? "",
+      billing_address_city: fd.get("billing_address_city")?.toString() ?? "",
+      billing_address_province: fd.get("billing_address_province")?.toString() ?? "",
+      billing_address_country: fd.get("billing_address_country")?.toString() ?? "ES",
       contact_person: fd.get("contact_person")?.toString() ?? "",
       notes: fd.get("notes")?.toString() ?? "",
     });
@@ -62,10 +79,12 @@ export function ClientEditDialog({ client }: { client: Client }) {
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Pencil className="size-4" aria-hidden />
-          Editar
-        </Button>
+        {trigger ?? (
+          <Button variant="outline" size="sm">
+            <Pencil className="size-4" aria-hidden />
+            Editar
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
@@ -78,11 +97,16 @@ export function ClientEditDialog({ client }: { client: Client }) {
               idPrefix={`edit-${client.id}`}
               defaults={{
                 name: client.name,
+                label: client.label,
                 nif: client.nif,
                 email: client.email,
                 phone: client.phone,
                 contact_person: client.contact_person,
-                billing_address: client.billing_address,
+                billing_address_street: client.billing_address_street,
+                billing_address_zip: client.billing_address_zip,
+                billing_address_city: client.billing_address_city,
+                billing_address_province: client.billing_address_province,
+                billing_address_country: client.billing_address_country,
                 notes: client.notes,
               }}
             />

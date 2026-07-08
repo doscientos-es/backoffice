@@ -36,8 +36,6 @@ const ProfileInput = z.object({
     .or(z.literal("").transform(() => undefined)),
 });
 
-
-
 export async function updateProfile(
   formData: FormData,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
@@ -184,11 +182,27 @@ const CompanyInput = z.object({
     .max(20)
     .optional()
     .or(z.literal("").transform(() => undefined)),
-  company_address: z
+  company_address_street: z
     .string()
-    .max(400)
+    .max(200)
     .optional()
     .or(z.literal("").transform(() => undefined)),
+  company_address_zip: z
+    .string()
+    .max(20)
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  company_address_city: z
+    .string()
+    .max(100)
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  company_address_province: z
+    .string()
+    .max(100)
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  company_address_country: z.string().max(10).default("ES"),
   iban: z
     .string()
     .max(40)
@@ -206,7 +220,11 @@ export async function updateCompanySettings(
   const raw = {
     company_name: formData.get("company_name")?.toString() ?? "",
     company_nif: formData.get("company_nif")?.toString() ?? "",
-    company_address: formData.get("company_address")?.toString() ?? "",
+    company_address_street: formData.get("company_address_street")?.toString() ?? "",
+    company_address_zip: formData.get("company_address_zip")?.toString() ?? "",
+    company_address_city: formData.get("company_address_city")?.toString() ?? "",
+    company_address_province: formData.get("company_address_province")?.toString() ?? "",
+    company_address_country: formData.get("company_address_country")?.toString() ?? "ES",
     iban: formData.get("iban")?.toString() ?? "",
     default_vat_rate: formData.get("default_vat_rate")?.toString() ?? "21",
     invoice_series: formData.get("invoice_series")?.toString() ?? "A",
@@ -223,7 +241,11 @@ export async function updateCompanySettings(
     .update({
       company_name: parsed.data.company_name,
       company_nif: parsed.data.company_nif ?? null,
-      company_address: parsed.data.company_address ?? null,
+      company_address_street: parsed.data.company_address_street ?? null,
+      company_address_zip: parsed.data.company_address_zip ?? null,
+      company_address_city: parsed.data.company_address_city ?? null,
+      company_address_province: parsed.data.company_address_province ?? null,
+      company_address_country: parsed.data.company_address_country ?? "ES",
       iban: parsed.data.iban ?? null,
       default_vat_rate: parsed.data.default_vat_rate,
       invoice_series: parsed.data.invoice_series,

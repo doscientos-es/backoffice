@@ -2,10 +2,12 @@ import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth";
 import { listClients } from "@/lib/clients/queries";
 import { CLIENT_LIST_PAGE_SIZE, CLIENT_SORT_COLUMNS } from "@/lib/clients/types";
+import { clientDisplayName } from "@/lib/clients/utils";
 import { parsePage, parseSortParam, parseStringParam } from "@/lib/utils/search-params";
 import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ClientRowActions } from "./client-row-actions";
 import { ClientsList } from "./clients-list";
 
 export const metadata: Metadata = { title: "Clientes · doscientos" };
@@ -70,11 +72,26 @@ export default async function ClientsPage({
             updated_at: c.updated_at,
           },
           cells: [
-            c.name as string,
+            clientDisplayName(c),
             (c.nif as string | null) ?? "—",
             (c.email as string | null) ?? "—",
           ],
-          csvValues: [c.name, c.nif ?? "", c.email ?? ""],
+          csvValues: [clientDisplayName(c), c.nif ?? "", c.email ?? ""],
+          rowActions: (
+            <ClientRowActions
+              client={{
+                id: c.id,
+                name: c.name,
+                label: c.label,
+                nif: c.nif,
+                email: c.email,
+                phone: c.phone,
+                contact_person: c.contact_person,
+                billing_address: c.billing_address,
+                notes: c.notes,
+              }}
+            />
+          ),
         })) ?? []
       }
     />

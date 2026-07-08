@@ -8,7 +8,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
 import { buildVatBreakdown } from "@/lib/finance";
@@ -22,6 +22,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { updateInvoicePortalAccess } from "../actions";
 import { InvoiceActions } from "./invoice-actions";
+import { RefreshClientSnapshotButton } from "./refresh-client-snapshot-button";
 
 export const dynamic = "force-dynamic";
 
@@ -247,6 +248,11 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           <Card>
             <CardHeader>
               <CardTitle>Información fiscal</CardTitle>
+              {invoice.status === "draft" && client?.id ? (
+                <CardAction>
+                  <RefreshClientSnapshotButton invoiceId={invoice.id as string} />
+                </CardAction>
+              ) : null}
             </CardHeader>
             <CardContent>
               <DetailGrid>
@@ -434,7 +440,10 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                     </tbody>
                     <tfoot className="border-t-2 border-border">
                       <tr className="font-semibold">
-                        <td colSpan={2} className="px-5 py-2.5 text-right text-xs text-muted-foreground">
+                        <td
+                          colSpan={2}
+                          className="px-5 py-2.5 text-right text-xs text-muted-foreground"
+                        >
                           Total horas
                         </td>
                         <td className="px-5 py-2.5 text-right tabular-nums">

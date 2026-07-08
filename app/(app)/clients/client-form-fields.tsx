@@ -1,16 +1,23 @@
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { COUNTRY_OPTIONS } from "@/lib/address";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- used in JSX below
 import { NifInput } from "./nif-input";
 
 export type ClientFormDefaults = {
   name?: string | null;
+  label?: string | null;
   nif?: string | null;
   email?: string | null;
   phone?: string | null;
   contact_person?: string | null;
-  billing_address?: string | null;
+  billing_address_street?: string | null;
+  billing_address_zip?: string | null;
+  billing_address_city?: string | null;
+  billing_address_province?: string | null;
+  billing_address_country?: string | null;
   notes?: string | null;
 };
 
@@ -46,6 +53,19 @@ export function ClientFormFields({
             defaultValue={d.name ?? ""}
             placeholder="Acme S.L."
             autoComplete="organization"
+          />
+        </FormRow>
+        <FormRow
+          label="Alias / Label"
+          htmlFor={`${idPrefix}-label`}
+          hint="Nombre corto para listas. Si está vacío se usa la razón social."
+        >
+          <Input
+            id={`${idPrefix}-label`}
+            name="label"
+            maxLength={100}
+            defaultValue={d.label ?? ""}
+            placeholder="Acme"
           />
         </FormRow>
         <FormRow
@@ -90,20 +110,73 @@ export function ClientFormFields({
           />
         </FormRow>
       </div>
-      <FormRow
-        label="Dirección de facturación"
-        htmlFor={`${idPrefix}-billing_address`}
-        hint="Se usará en las facturas emitidas a este cliente."
-      >
-        <Textarea
-          id={`${idPrefix}-billing_address`}
-          name="billing_address"
-          rows={2}
-          maxLength={400}
-          defaultValue={d.billing_address ?? ""}
-          placeholder={"Calle, número\nCP Ciudad, País"}
-        />
-      </FormRow>
+      <div className="col-span-full">
+        <p className="mb-3 text-sm font-medium">Dirección de facturación</p>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Se usará en las facturas. Cada campo se guarda por separado para garantizar validez
+          fiscal.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormRow
+            label="Calle y número"
+            htmlFor={`${idPrefix}-billing_address_street`}
+            className="sm:col-span-2"
+          >
+            <Input
+              id={`${idPrefix}-billing_address_street`}
+              name="billing_address_street"
+              maxLength={200}
+              defaultValue={d.billing_address_street ?? ""}
+              placeholder="Calle Mayor, 1 - 3ª"
+              autoComplete="street-address"
+            />
+          </FormRow>
+          <FormRow label="Código postal" htmlFor={`${idPrefix}-billing_address_zip`}>
+            <Input
+              id={`${idPrefix}-billing_address_zip`}
+              name="billing_address_zip"
+              maxLength={20}
+              defaultValue={d.billing_address_zip ?? ""}
+              placeholder="08001"
+              autoComplete="postal-code"
+            />
+          </FormRow>
+          <FormRow label="Ciudad" htmlFor={`${idPrefix}-billing_address_city`}>
+            <Input
+              id={`${idPrefix}-billing_address_city`}
+              name="billing_address_city"
+              maxLength={100}
+              defaultValue={d.billing_address_city ?? ""}
+              placeholder="Barcelona"
+              autoComplete="address-level2"
+            />
+          </FormRow>
+          <FormRow label="Provincia" htmlFor={`${idPrefix}-billing_address_province`}>
+            <Input
+              id={`${idPrefix}-billing_address_province`}
+              name="billing_address_province"
+              maxLength={100}
+              defaultValue={d.billing_address_province ?? ""}
+              placeholder="Barcelona"
+              autoComplete="address-level1"
+            />
+          </FormRow>
+          <FormRow label="País" htmlFor={`${idPrefix}-billing_address_country`}>
+            <Select
+              id={`${idPrefix}-billing_address_country`}
+              name="billing_address_country"
+              defaultValue={d.billing_address_country ?? "ES"}
+              autoComplete="country"
+            >
+              {COUNTRY_OPTIONS.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.label}
+                </option>
+              ))}
+            </Select>
+          </FormRow>
+        </div>
+      </div>
       <FormRow
         label="Notas"
         htmlFor={`${idPrefix}-notes`}

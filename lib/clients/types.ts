@@ -11,10 +11,18 @@ export const CLIENT_RELATED_LIMIT = 10;
 export type ClientListItem = {
   id: string;
   name: string;
+  /** Optional short display name. Falls back to `name` when null. */
+  label: string | null;
   nif: string | null;
   email: string | null;
   phone: string | null;
   contact_person: string | null;
+  billing_address_street: string | null;
+  billing_address_zip: string | null;
+  billing_address_city: string | null;
+  billing_address_province: string | null;
+  billing_address_country: string | null;
+  notes: string | null;
   updated_at: string | null;
 };
 
@@ -61,11 +69,17 @@ export type ClientInvoiceItem = {
 export type ClientDetail = {
   id: string;
   name: string;
+  /** Optional short display name. Falls back to `name` when null. */
+  label: string | null;
   nif: string | null;
   email: string | null;
   phone: string | null;
   contact_person: string | null;
-  billing_address: string | null;
+  billing_address_street: string | null;
+  billing_address_zip: string | null;
+  billing_address_city: string | null;
+  billing_address_province: string | null;
+  billing_address_country: string | null;
   notes: string | null;
   created_at: string | null;
   updated_at: string | null;

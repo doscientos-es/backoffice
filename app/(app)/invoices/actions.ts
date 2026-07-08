@@ -26,6 +26,7 @@ import {
   insertInvoiceWithItems,
   linkWorkLogsToInvoice,
   patchInvoiceAfterVerifactu,
+  patchInvoiceClientSnapshot,
   patchInvoiceHeader,
   patchInvoiceStatus,
   replaceInvoiceItems,
@@ -61,6 +62,8 @@ export type UpdateInvoiceInput = UpdateInvoiceInputType;
 /**
  * Updates the status of an invoice. If moving to 'paid', we set 'paid_at'.
  * If moving to 'issued' from 'draft', we set 'issued_at'.
+ * On first issuance the client snapshot (name, nif, address) is refreshed from
+ * the current client record so any edits made while in draft are captured.
  * Best-effort Drive backup fires on first issuance.
  */
 export const updateInvoiceStatus = defineAction({
@@ -72,18 +75,73 @@ export const updateInvoiceStatus = defineAction({
     const { id, status } = input;
     const timestamps = await findInvoiceTimestamps(id);
     const now = new Date().toISOString();
+    const isFirstIssuance = status === "issued" && !timestamps?.issued_at;
+
+    // Refresh the client snapshot at the moment of issuance.
+    const clientSnapshot =
+      isFirstIssuance && timestamps?.client_id ? await findClientInfo(timestamps.client_id) : null;
 
     await patchInvoiceStatus(id, {
       status,
       updated_at: now,
       paid_at: status === "paid" ? now : null,
-      ...(status === "issued" && !timestamps?.issued_at ? { issued_at: now } : {}),
+      ...(isFirstIssuance ? { issued_at: now } : {}),
+      ...(clientSnapshot
+        ? {
+            client_name: clientSnapshot.name,
+            client_nif: clientSnapshot.nif,
+            client_address_street: clientSnapshot.billing_address_street,
+            client_address_zip: clientSnapshot.billing_address_zip,
+            client_address_city: clientSnapshot.billing_address_city,
+            client_address_province: clientSnapshot.billing_address_province,
+            client_address_country: clientSnapshot.billing_address_country,
+          }
+        : {}),
     });
 
     // Best-effort Drive backup on first issuance — fires as the acting user.
-    if (status === "issued" && !timestamps?.issued_at) {
+    if (isFirstIssuance) {
       void backupInvoiceToDrive(id, user.email);
     }
+  },
+});
+
+// ─── Draft: reload client snapshot ───────────────────────────────────────────
+
+/**
+ * While the invoice is still a draft, pull the latest fiscal data from the
+ * linked client record and overwrite the invoice snapshot fields. Once the
+ * invoice is issued the immutability trigger will block any further edits.
+ */
+export const refreshInvoiceClientSnapshot = defineAction({
+  name: "invoices.refreshClientSnapshot",
+  schema: uuidIdInput,
+  revalidate: (_p, input) => [`/invoices/${input.id}`],
+  handler: async (input) => {
+    const supabase = await createServerClient();
+
+    // Fetch the invoice's linked client_id
+    const { data: inv, error: invErr } = await supabase
+      .from("invoices")
+      .select("client_id, status")
+      .eq("id", input.id)
+      .maybeSingle();
+    if (invErr || !inv) throw new Error(invErr?.message ?? "Factura no encontrada");
+    if (inv.status !== "draft") throw new Error("Solo se pueden actualizar facturas en borrador");
+    if (!inv.client_id) throw new Error("La factura no tiene un cliente asociado");
+
+    const client = await findClientInfo(inv.client_id as string);
+    if (!client) throw new Error("Cliente no encontrado");
+
+    await patchInvoiceClientSnapshot(input.id, {
+      client_name: client.name,
+      client_nif: client.nif,
+      client_address_street: client.billing_address_street,
+      client_address_zip: client.billing_address_zip,
+      client_address_city: client.billing_address_city,
+      client_address_province: client.billing_address_province,
+      client_address_country: client.billing_address_country,
+    });
   },
 });
 
@@ -269,7 +327,11 @@ export const createInvoiceFromProposal = defineAction<
         total,
         client_nif: client?.nif ?? null,
         client_name: client?.name ?? null,
-        client_address: client?.billing_address ?? null,
+        client_address_street: client?.billing_address_street ?? null,
+        client_address_zip: client?.billing_address_zip ?? null,
+        client_address_city: client?.billing_address_city ?? null,
+        client_address_province: client?.billing_address_province ?? null,
+        client_address_country: client?.billing_address_country ?? null,
         notes: proposal.notes,
         created_by: user.id,
       },
@@ -340,7 +402,11 @@ export const createHourlyInvoice = defineAction<
         total,
         client_nif: client?.nif ?? null,
         client_name: client?.name ?? null,
-        client_address: client?.billing_address ?? null,
+        client_address_street: client?.billing_address_street ?? null,
+        client_address_zip: client?.billing_address_zip ?? null,
+        client_address_city: client?.billing_address_city ?? null,
+        client_address_province: client?.billing_address_province ?? null,
+        client_address_country: client?.billing_address_country ?? null,
         created_by: user.id,
       },
       [
