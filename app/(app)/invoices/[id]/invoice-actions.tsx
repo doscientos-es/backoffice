@@ -16,7 +16,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { useUndoableDelete } from "@/lib/hooks/use-undoable-delete";
+import { INVOICE_STATUS, VERIFACTU_STATUS } from "@/lib/status";
 import {
   CheckCircle2,
   Download,
@@ -98,38 +100,70 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
   const canMarkPaid = isIssued || isOverdue;
   const canMarkUncollected = isPaid;
   const canCancel = isIssued || isOverdue;
-  // Durante las pruebas cualquier factura debe poder borrarse (soft-delete,
-  // reversible desde la base de datos vía `deleted_at`).
-  const canDelete = true;
+  // Las facturas aceptadas por la AEAT son inmutables por ley (RD 1007/2023).
+  // Nunca pueden eliminarse; debe emitirse una factura rectificativa en su lugar.
+  const canDelete = invoice.verifactu_status !== "accepted";
 
   return (
     <div className="flex items-center gap-2">
+      {/* Status badges — lives here so the page header actions slot stays compact */}
+      <div className="flex flex-col items-end gap-1 mr-1">
+        <StatusBadge meta={INVOICE_STATUS} value={invoice.status} />
+        <StatusBadge
+          meta={VERIFACTU_STATUS}
+          value={invoice.verifactu_status}
+          className="text-[10px] py-0 h-4"
+          labelPrefix="Verifactu: "
+        />
+      </div>
+
+      {/* Subtle vertical separator */}
+      <div className="w-px h-7 bg-border shrink-0 mx-0.5" aria-hidden />
+
       <FormFeedback state={feedback.state} />
 
-      <Button variant="outline" size="sm" asChild>
+      {/* Icon-only secondary actions */}
+      <Button
+        variant="outline"
+        size="sm"
+        className="px-2"
+        title="Descargar PDF"
+        aria-label="Descargar PDF"
+        asChild
+      >
         <a href={`/api/invoices/${invoice.id}/pdf`}>
-          <Download className="mr-2 h-4 w-4" />
-          Descargar PDF
+          <Download className="h-4 w-4" />
         </a>
       </Button>
 
       {canEdit && (
-        <Button variant="outline" size="sm" asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="px-2"
+          title="Editar factura"
+          aria-label="Editar factura"
+          asChild
+        >
           <Link href={`/invoices/${invoice.id}/edit`}>
-            <FileEdit className="mr-2 h-4 w-4" />
-            Editar
+            <FileEdit className="h-4 w-4" />
           </Link>
         </Button>
       )}
 
-      {canSendEmail && <SendInvoiceButton invoiceId={invoice.id} defaultEmail={clientEmail} />}
+      {canSendEmail && (
+        <SendInvoiceButton invoiceId={invoice.id} defaultEmail={clientEmail} iconOnly />
+      )}
 
+      {/* Primary CTA — keep text for clarity */}
       {canIssue && (
         <Button size="sm" disabled={pending} onClick={() => handleStatusUpdate("issued")}>
-          {pendingStatus === "issued"
-            ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            : <Send className="mr-2 h-4 w-4" />}
-          {pendingStatus === "issued" ? "Emitiendo…" : "Emitir factura"}
+          {pendingStatus === "issued" ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Send className="h-4 w-4" />
+          )}
+          {pendingStatus === "issued" ? "Emitiendo…" : "Emitir"}
         </Button>
       )}
 
@@ -141,10 +175,12 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
           onClick={() => handleStatusUpdate("paid")}
           className="text-success-foreground hover:text-success-foreground"
         >
-          {pendingStatus === "paid"
-            ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            : <CheckCircle2 className="mr-2 h-4 w-4" />}
-          {pendingStatus === "paid" ? "Guardando…" : "Marcar pagada"}
+          {pendingStatus === "paid" ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <CheckCircle2 className="h-4 w-4" />
+          )}
+          {pendingStatus === "paid" ? "Guardando…" : "Pagada"}
         </Button>
       )}
 
@@ -153,11 +189,13 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
           <Button
             variant="outline"
             size="sm"
+            className="px-2"
             disabled={pending}
+            title="Revertir cobro"
+            aria-label="Revertir cobro"
             onClick={() => setConfirmUncollected(true)}
           >
-            <XCircle className="mr-2 h-4 w-4" />
-            Marcar como no cobrada
+            <XCircle className="h-4 w-4" />
           </Button>
           <Dialog open={confirmUncollected} onOpenChange={setConfirmUncollected}>
             <DialogContent className="sm:max-w-sm">

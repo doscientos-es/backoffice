@@ -52,6 +52,7 @@ export default async function EditInvoicePage({ params }: { params: Promise<{ id
         initialIssueDate={invoice.issue_date}
         initialDueDate={invoice.due_date}
         initialNotes={invoice.notes}
+        initialPaymentTerms={invoice.payment_terms}
         initialItems={items ?? []}
         locked={invoice.status !== "draft"}
       />

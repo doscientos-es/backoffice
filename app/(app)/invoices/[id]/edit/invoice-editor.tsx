@@ -27,6 +27,7 @@ export type InvoiceEditorProps = {
   initialIssueDate: string;
   initialDueDate: string | null;
   initialNotes: string | null;
+  initialPaymentTerms: string | null;
   initialItems: InitialEditableItem[];
   /** When true, fields are read-only (invoice issued). */
   locked: boolean;
@@ -37,6 +38,7 @@ export function InvoiceEditor({
   initialIssueDate,
   initialDueDate,
   initialNotes,
+  initialPaymentTerms,
   initialItems,
   locked,
 }: InvoiceEditorProps) {
@@ -47,6 +49,7 @@ export function InvoiceEditor({
   const [issueDate, setIssueDate] = useState(initialIssueDate);
   const [dueDate, setDueDate] = useState(initialDueDate ?? "");
   const [notes, setNotes] = useState(initialNotes ?? "");
+  const [paymentTerms, setPaymentTerms] = useState(initialPaymentTerms ?? "");
   const [items, setItems] = useState<EditableItem[]>(
     initialItems.length > 0
       ? initialItems.map((it) => ({ ...it, id: it.id || crypto.randomUUID() }))
@@ -64,13 +67,14 @@ export function InvoiceEditor({
     }
     setDirty(true);
     setError(null);
-  }, [issueDate, dueDate, notes, items]);
+  }, [issueDate, dueDate, notes, paymentTerms, items]);
 
   const buildPayload = () => ({
     id,
     issue_date: issueDate,
     due_date: dueDate || null,
     notes: notes || null,
+    payment_terms: paymentTerms || null,
     items,
   });
 
@@ -133,6 +137,16 @@ export function InvoiceEditor({
                 disabled={locked}
                 rows={6}
                 placeholder="Notas internas o para el cliente…"
+              />
+            </FormRow>
+            <FormRow label="Términos de pago" htmlFor="payment-terms">
+              <Textarea
+                id="payment-terms"
+                value={paymentTerms}
+                onChange={(e) => setPaymentTerms(e.target.value)}
+                disabled={locked}
+                rows={4}
+                placeholder="Se usa el valor por defecto de la empresa si se deja vacío…"
               />
             </FormRow>
           </CardContent>

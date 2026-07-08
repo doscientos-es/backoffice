@@ -61,6 +61,10 @@ export type InvoicePdfData = {
   total: number;
   vatBreakdown: VatBreakdownRow[];
   qrDataUrl: string | null;
+  /** Public portal URL so clients can pay online (shown in payment section). */
+  portalUrl: string | null;
+  /** Payment terms shown in the payment section (per-invoice override or company default). */
+  paymentTerms: string | null;
   /** Tracked hours linked to this invoice, rendered on a second page. */
   workLogs: InvoicePdfWorkLog[];
 };
@@ -83,6 +87,10 @@ export type BuildInvoicePdfInput = {
     client_address_city?: string | null;
     client_address_province?: string | null;
     client_address_country?: string | null;
+    /** Portal token used to build the public payment URL. */
+    portal_token?: string | null;
+    /** Per-invoice override for the payment terms. */
+    payment_terms?: string | null;
   };
   clientName: string | null;
   items: ReadonlyArray<{
@@ -101,6 +109,8 @@ export type BuildInvoicePdfInput = {
     company_address_province?: string | null;
     company_address_country?: string | null;
     iban: string | null;
+    /** Company-wide default payment terms. */
+    payment_terms?: string | null;
   } | null;
   workLogs?: ReadonlyArray<InvoicePdfWorkLogInput>;
 };
@@ -135,6 +145,18 @@ async function buildInvoiceQr(
   return buildQrDataUrl(qrUrl);
 }
 
+/** Default payment term (Ley 3/2004): 30 days from the issue date. */
+const DEFAULT_DUE_DAYS = 30;
+
+/** Returns an ISO date string `days` after the given ISO date, or `null`. */
+function addDaysIso(isoDate: string | null, days: number): string | null {
+  if (!isoDate) return null;
+  const d = new Date(isoDate);
+  if (Number.isNaN(d.getTime())) return null;
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 /** Shape raw query rows into the render-ready {@link InvoicePdfData}. */
 export async function buildInvoicePdfData(input: BuildInvoicePdfInput): Promise<InvoicePdfData> {
   const { invoice, items, settings } = input;
@@ -161,7 +183,7 @@ export async function buildInvoicePdfData(input: BuildInvoicePdfInput): Promise<
     invoiceType: invoice.invoice_type,
     status: invoice.status ?? "draft",
     issueDate: invoice.issue_date,
-    dueDate: invoice.due_date,
+    dueDate: invoice.due_date ?? addDaysIso(invoice.issue_date, DEFAULT_DUE_DAYS),
     idfact: invoice.idfact,
     verifactuCsv: invoice.verifactu_csv,
     clientName: input.clientName,
@@ -195,7 +217,15 @@ export async function buildInvoicePdfData(input: BuildInvoicePdfInput): Promise<
     vatBreakdown: buildVatBreakdown(
       normalisedItems.map((i) => ({ vat_rate: i.vatRate, subtotal: i.subtotal })),
     ),
-    qrDataUrl: await buildInvoiceQr(invoice, process.env.VERIFACTU_NIF_EMISOR || null),
+    // Use the same NIF that sendToAeat uses (company_nif from DB settings).
+    // process.env.VERIFACTU_NIF_EMISOR is intentionally NOT used here to keep a
+    // single source of truth and ensure the QR matches the AEAT submission.
+    qrDataUrl: await buildInvoiceQr(invoice, settings?.company_nif || null),
+    portalUrl:
+      invoice.portal_token && process.env.NEXT_PUBLIC_APP_URL
+        ? `${process.env.NEXT_PUBLIC_APP_URL}/p/invoice/${invoice.portal_token}`
+        : null,
+    paymentTerms: invoice.payment_terms ?? settings?.payment_terms ?? null,
     workLogs: normalisedWorkLogs,
   };
 }

@@ -46,6 +46,7 @@ export const UpdateInvoiceInput = z.object({
   issue_date: z.string().optional(),
   due_date: z.string().nullable().optional(),
   notes: z.string().max(4000).nullable().optional(),
+  payment_terms: z.string().max(4000).nullable().optional(),
   items: z.array(lineItemInput).min(1).optional(),
 });
 export type UpdateInvoiceInputType = z.input<typeof UpdateInvoiceInput>;

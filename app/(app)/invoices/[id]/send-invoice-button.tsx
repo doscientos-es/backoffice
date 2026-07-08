@@ -26,9 +26,12 @@ import { sendInvoiceEmail } from "../actions";
 export function SendInvoiceButton({
   invoiceId,
   defaultEmail,
+  iconOnly = false,
 }: {
   invoiceId: string;
   defaultEmail?: string | null;
+  /** Render the trigger as a square icon-only button (no label text). */
+  iconOnly?: boolean;
 }) {
   const feedback = useFormFeedback();
   const [open, setOpen] = useState(false);
@@ -53,10 +56,22 @@ export function SendInvoiceButton({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Mail className="mr-2 h-4 w-4" />
-          Enviar email
-        </Button>
+        {iconOnly ? (
+          <Button
+            variant="outline"
+            size="sm"
+            className="px-2"
+            title="Enviar email al cliente"
+            aria-label="Enviar email al cliente"
+          >
+            <Mail className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button variant="outline" size="sm">
+            <Mail className="mr-2 h-4 w-4" />
+            Enviar email
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>

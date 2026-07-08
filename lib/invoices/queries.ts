@@ -129,7 +129,7 @@ export async function getInvoiceDetail(id: string): Promise<InvoiceDetailResult>
     supabase
       .from("settings")
       .select(
-        "company_name, company_nif, company_address_street, company_address_zip, company_address_city, company_address_province, company_address_country, iban",
+        "company_name, company_nif, company_address_street, company_address_zip, company_address_city, company_address_province, company_address_country, iban, payment_terms",
       )
       .eq("id", 1)
       .single(),
@@ -159,6 +159,7 @@ export async function getInvoiceDetail(id: string): Promise<InvoiceDetailResult>
       client_address_city: (invoice.client_address_city as string | null) ?? null,
       client_address_province: (invoice.client_address_province as string | null) ?? null,
       client_address_country: (invoice.client_address_country as string | null) ?? null,
+      payment_terms: (invoice.payment_terms as string | null) ?? null,
       client,
       project,
     },
@@ -181,6 +182,7 @@ export async function getInvoiceDetail(id: string): Promise<InvoiceDetailResult>
           company_address_province: (settings.company_address_province as string | null) ?? null,
           company_address_country: (settings.company_address_country as string | null) ?? null,
           iban: (settings.iban as string | null) ?? null,
+          payment_terms: (settings.payment_terms as string | null) ?? null,
         }
       : null,
   };
@@ -435,16 +437,16 @@ export async function findInvoiceSeries(): Promise<string> {
  * Returns the next available invoice number for a given series.
  * Reads the current maximum and adds 1.
  */
+/**
+ * Returns the next available invoice number for a given series.
+ * Uses the `next_invoice_number` RPC which acquires an advisory lock to
+ * serialise concurrent calls and avoid duplicate number collisions.
+ */
 export async function findNextInvoiceNumberForSeries(series: string): Promise<number> {
   const supabase = await createServerClient();
-  const { data } = await supabase
-    .from("invoices")
-    .select("number")
-    .eq("series", series)
-    .order("number", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  return ((data?.number as number | null) ?? 0) + 1;
+  const { data, error } = await supabase.rpc("next_invoice_number", { p_series: series });
+  if (error) throw new Error(error.message);
+  return data as number;
 }
 
 /**

@@ -83,6 +83,7 @@ export type InvoiceSettings = {
   company_address_province: string | null;
   company_address_country: string | null;
   iban: string | null;
+  payment_terms: string | null;
 };
 
 export type InvoiceDetail = {
@@ -103,6 +104,7 @@ export type InvoiceDetail = {
   client_address_city: string | null;
   client_address_province: string | null;
   client_address_country: string | null;
+  payment_terms: string | null;
   client: InvoiceDetailClient | null;
   project: InvoiceDetailProject | null;
 };
@@ -244,8 +246,8 @@ export type VerifactuPatch = {
   verifactu_submitted_at: string;
   verifactu_csv: string | null;
   verifactu_response: unknown;
+  verifactu_error: string | null;
   qr_url: string;
-  issued_at?: string;
 };
 
 /** Data required to insert a new invoice row. */
@@ -268,6 +270,7 @@ export type NewInvoiceData = {
   client_address_province: string | null;
   client_address_country: string | null;
   notes?: string | null;
+  payment_terms?: string | null;
   created_by: string;
 };
 
@@ -286,6 +289,7 @@ export type InvoiceHeaderPatch = {
   issue_date?: string;
   due_date?: string | null;
   notes?: string | null;
+  payment_terms?: string | null;
   subtotal?: number;
   tax_amount?: number;
   total?: number;

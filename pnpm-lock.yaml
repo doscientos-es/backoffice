@@ -30,8 +30,8 @@ importers:
         specifier: ^3.2.2
         version: 3.2.2(react@19.2.6)
       '@doscientos/verifactu':
-        specifier: ^0.1.5
-        version: 0.1.5(date-fns@4.3.0)
+        specifier: ^0.1.7
+        version: 0.1.7(date-fns@4.3.0)
       '@hcaptcha/react-hcaptcha':
         specifier: ^2.0.2
         version: 2.0.2
@@ -488,9 +488,9 @@ packages:
     peerDependencies:
       react: '>=16.8.0'
 
-  '@doscientos/verifactu@0.1.5':
-    resolution: {integrity: sha512-DFG41A2j8oZcAVu8ToiNt2y+GQEpD2uM5wKcR+5WvnKGe1vTkHcqKqX0dny/5LxjZwH44a/dOC3jt4c1iXvEvg==}
-    engines: {node: '>=18'}
+  '@doscientos/verifactu@0.1.7':
+    resolution: {integrity: sha512-MnvGQmXl00xGrpvq/StR7xmT+pDaTJLimM1MhdSTDDkpgUb2p4VIBn9p4wl0Z1Q5lBYnxmaKhflwGa7Zlnyd1Q==}
+    engines: {node: '>=20'}
 
   '@dotenvx/dotenvx@1.69.1':
     resolution: {integrity: sha512-kwQB5KcAegxw/+NGUgXAo5ovyOSjlMhoXSSnSEpDhoHJwzMcMO0HE1U0VCYZ7jbAeCMGamed9XdWzOA5ixtTNg==}
@@ -5246,7 +5246,7 @@ snapshots:
       react: 19.2.6
       tslib: 2.8.1
 
-  '@doscientos/verifactu@0.1.5(date-fns@4.3.0)':
+  '@doscientos/verifactu@0.1.7(date-fns@4.3.0)':
     dependencies:
       date-fns-tz: 3.2.0(date-fns@4.3.0)
       fast-xml-parser: 4.5.6

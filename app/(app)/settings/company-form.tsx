@@ -5,6 +5,7 @@ import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { Textarea } from "@/components/ui/textarea";
 import { COUNTRY_OPTIONS } from "@/lib/address";
 import { updateCompanySettings } from "./actions";
 
@@ -20,6 +21,7 @@ interface Props {
   companyAddressProvince: string;
   companyAddressCountry: string;
   internalHourlyCost: number;
+  paymentTerms: string;
 }
 
 export function CompanyForm({
@@ -34,6 +36,7 @@ export function CompanyForm({
   companyAddressProvince,
   companyAddressCountry,
   internalHourlyCost,
+  paymentTerms,
 }: Props) {
   const feedback = useFormFeedback();
 
@@ -138,6 +141,24 @@ export function CompanyForm({
           />
           <FieldDescription>
             Se incluye en las facturas para pagos por transferencia.
+          </FieldDescription>
+        </Field>
+        <Field className="sm:col-span-2">
+          <FieldLabel htmlFor="payment_terms" className="text-xs font-medium">
+            Términos de pago por defecto
+          </FieldLabel>
+          <Textarea
+            id="payment_terms"
+            name="payment_terms"
+            rows={3}
+            maxLength={4000}
+            defaultValue={paymentTerms}
+            placeholder="Pago mediante transferencia bancaria o pago online (tarjeta/Bizum). Vencimiento a 30 días desde la fecha de emisión."
+            aria-describedby="payment-terms-hint"
+          />
+          <FieldDescription id="payment-terms-hint">
+            Texto que aparece en la sección de pago de las facturas. Se puede
+            sobrescribir en cada factura.
           </FieldDescription>
         </Field>
       </div>

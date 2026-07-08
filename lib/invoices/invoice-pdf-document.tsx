@@ -75,6 +75,26 @@ const styles = StyleSheet.create({
   qrWrap: { alignItems: "center" },
   qr: { width: 78, height: 78 },
   qrCaption: { fontSize: 6, color: FAINT, marginTop: 3 },
+  payment: {
+    marginTop: 20,
+    padding: 12,
+    backgroundColor: "#f4f4f5",
+    borderRadius: 4,
+    borderLeftWidth: 3,
+    borderLeftColor: BRAND,
+  },
+  paymentTitle: {
+    fontSize: 7,
+    fontFamily: "Helvetica-Bold",
+    color: BRAND,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: 6,
+  },
+  paymentRow: { flexDirection: "row", marginTop: 3, gap: 4 },
+  paymentKey: { fontSize: 8, color: MUTED, width: 90 },
+  paymentVal: { fontSize: 8, color: INK, fontFamily: "Helvetica-Bold", flex: 1 },
+  paymentNote: { fontSize: 7, color: FAINT, marginTop: 6 },
   footer: {
     position: "absolute",
     bottom: 32,
@@ -213,6 +233,51 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
             <Text style={styles.grandLabel}>{formatEUR(data.total)}</Text>
           </View>
         </View>
+
+        {(data.company?.iban || data.dueDate || data.portalUrl || data.paymentTerms) &&
+          data.status !== "cancelled" ? (
+          <View style={styles.payment}>
+            <Text style={styles.paymentTitle}>Instrucciones de pago</Text>
+
+            {data.dueDate ? (
+              <View style={styles.paymentRow}>
+                <Text style={styles.paymentKey}>Fecha límite</Text>
+                <Text style={styles.paymentVal}>{formatDate(data.dueDate)}</Text>
+              </View>
+            ) : null}
+
+            {data.company?.iban ? (
+              <>
+                <View style={styles.paymentRow}>
+                  <Text style={styles.paymentKey}>Forma de pago</Text>
+                  <Text style={styles.paymentVal}>Transferencia bancaria</Text>
+                </View>
+                <View style={styles.paymentRow}>
+                  <Text style={styles.paymentKey}>IBAN</Text>
+                  <Text style={styles.paymentVal}>{data.company.iban}</Text>
+                </View>
+                <View style={styles.paymentRow}>
+                  <Text style={styles.paymentKey}>Beneficiario</Text>
+                  <Text style={styles.paymentVal}>{data.company.name ?? "—"}</Text>
+                </View>
+                <View style={styles.paymentRow}>
+                  <Text style={styles.paymentKey}>Concepto</Text>
+                  <Text style={styles.paymentVal}>Factura {data.fullNumber}</Text>
+                </View>
+              </>
+            ) : null}
+
+            {data.portalUrl ? (
+              <Text style={styles.paymentNote}>
+                También puede abonar esta factura online mediante tarjeta o Bizum en: {data.portalUrl}
+              </Text>
+            ) : null}
+
+            {data.paymentTerms ? (
+              <Text style={styles.paymentNote}>{data.paymentTerms}</Text>
+            ) : null}
+          </View>
+        ) : null}
 
         {data.idfact || data.verifactuCsv || data.qrDataUrl ? (
           <View style={styles.fiscal}>

@@ -5,6 +5,7 @@ import { CommandPaletteTrigger } from "@/components/layout/command-palette-trigg
 import { NotificationsBell } from "@/components/layout/notifications-bell";
 import { UserMenu } from "@/components/layout/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Badge } from "@/components/ui/badge";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import type { CurrentUser, MemberRole } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -152,7 +153,7 @@ function NavLink({
   );
 }
 
-export function Sidebar({ user }: { user: CurrentUser; verifactuMode: string }) {
+export function Sidebar({ user, verifactuMode }: { user: CurrentUser; verifactuMode: string }) {
   const pathname = usePathname();
 
   const visibleGroups = NAV_GROUPS.map((g) => ({
@@ -190,20 +191,17 @@ export function Sidebar({ user }: { user: CurrentUser; verifactuMode: string }) 
         aria-label="Navegación principal"
       >
         {visibleGroups.map((group, gi) => (
-          <div key={group.label ?? "__home"} className={cn("flex flex-col gap-0.5", gi > 0 && "mt-3")}>
+          <div
+            key={group.label ?? "__home"}
+            className={cn("flex flex-col gap-0.5", gi > 0 && "mt-3")}
+          >
             {group.label && (
               <p className="px-2.5 pb-0.5 pt-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 select-none">
                 {group.label}
               </p>
             )}
             {group.items.map(({ href, label, icon }) => (
-              <NavLink
-                key={href}
-                href={href}
-                label={label}
-                icon={icon}
-                active={isActive(href)}
-              />
+              <NavLink key={href} href={href} label={label} icon={icon} active={isActive(href)} />
             ))}
           </div>
         ))}
@@ -246,10 +244,24 @@ export function Sidebar({ user }: { user: CurrentUser; verifactuMode: string }) 
 
       <footer className="flex flex-col border-t border-border p-2 gap-2">
         <ErrorBoundary>
-          <div className="flex items-center justify-end gap-1">
-            <span className="px-2 text-xs text-muted-foreground -mr-1">v{version}</span>
-            <NotificationsBell memberId={user.id} />
-            <ThemeToggle />
+          <div className="flex items-center justify-between gap-1">
+            <Badge
+              variant={
+                verifactuMode === "PROD"
+                  ? "success"
+                  : verifactuMode === "TEST"
+                    ? "warning"
+                    : "neutral"
+              }
+              className="h-4 px-1 text-[9px] font-bold uppercase ml-1"
+            >
+              AEAT {verifactuMode}
+            </Badge>
+            <div className="flex items-center gap-1">
+              <span className="px-2 text-xs text-muted-foreground -mr-1">v{version}</span>
+              <NotificationsBell memberId={user.id} />
+              <ThemeToggle />
+            </div>
           </div>
           <UserMenu user={user} />
         </ErrorBoundary>

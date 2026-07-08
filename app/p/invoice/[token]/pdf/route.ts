@@ -95,6 +95,8 @@ export async function GET(
       client_address_city: (invoice.client_address_city as string | null) ?? null,
       client_address_province: (invoice.client_address_province as string | null) ?? null,
       client_address_country: (invoice.client_address_country as string | null) ?? null,
+      portal_token: token,
+      payment_terms: (invoice.payment_terms as string | null) ?? null,
     },
     clientName,
     items: (items ?? []) as Array<{
@@ -114,6 +116,7 @@ export async function GET(
           company_address_province: (settings.company_address_province as string | null) ?? null,
           company_address_country: (settings.company_address_country as string | null) ?? null,
           iban: (settings.iban as string | null) ?? null,
+          payment_terms: (settings.payment_terms as string | null) ?? null,
         }
       : null,
     workLogs,

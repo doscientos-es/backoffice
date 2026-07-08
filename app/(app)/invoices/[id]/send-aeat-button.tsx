@@ -20,7 +20,9 @@ export function SendAeatButton({
     if (result.ok) {
       feedback.setSuccess(result.csv ? `Aceptada · CSV ${result.csv}` : "Factura procesada");
     } else {
-      feedback.setError(result.error);
+      // Show a short inline indicator; the full AEAT error is displayed in the
+      // banner above (verifactu_error) after the page revalidates.
+      feedback.setError("Rechazada por AEAT");
     }
   }
 

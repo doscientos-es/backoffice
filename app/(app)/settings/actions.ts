@@ -208,6 +208,11 @@ const CompanyInput = z.object({
     .max(40)
     .optional()
     .or(z.literal("").transform(() => undefined)),
+  payment_terms: z
+    .string()
+    .max(4000)
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
   default_vat_rate: z.coerce.number().min(0).max(100),
   invoice_series: z.string().min(1).max(10),
   internal_hourly_cost: z.coerce.number().min(0).max(100000),
@@ -226,6 +231,7 @@ export async function updateCompanySettings(
     company_address_province: formData.get("company_address_province")?.toString() ?? "",
     company_address_country: formData.get("company_address_country")?.toString() ?? "ES",
     iban: formData.get("iban")?.toString() ?? "",
+    payment_terms: formData.get("payment_terms")?.toString() ?? "",
     default_vat_rate: formData.get("default_vat_rate")?.toString() ?? "21",
     invoice_series: formData.get("invoice_series")?.toString() ?? "A",
     internal_hourly_cost: formData.get("internal_hourly_cost")?.toString() ?? "0",
@@ -247,6 +253,7 @@ export async function updateCompanySettings(
       company_address_province: parsed.data.company_address_province ?? null,
       company_address_country: parsed.data.company_address_country ?? "ES",
       iban: parsed.data.iban ?? null,
+      payment_terms: parsed.data.payment_terms ?? null,
       default_vat_rate: parsed.data.default_vat_rate,
       invoice_series: parsed.data.invoice_series,
       internal_hourly_cost: parsed.data.internal_hourly_cost,

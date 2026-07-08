@@ -9,14 +9,13 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
 import { buildVatBreakdown } from "@/lib/finance";
-import { INVOICE_STATUS, VERIFACTU_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { verifactuConfigFromEnv } from "@/lib/verifactu/config";
 import { buildQrDataUrl, buildQrUrl } from "@doscientos/verifactu";
+import { AlertTriangle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -76,11 +75,12 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
     (items ?? []) as Array<{ vat_rate: number | string | null; subtotal: number | string | null }>,
   );
 
-  // Build QR if issued and has required data
+  // Build QR using the same NIF that sendToAeat uses (company_nif from DB settings)
+  // so the QR always matches the AEAT-registered record.
   let qrDataUrl: string | null = null;
-  const nif = process.env.VERIFACTU_NIF_EMISOR ?? "";
+  const emisorNif = (settings?.company_nif as string | null) ?? "";
   if (
-    nif &&
+    emisorNif &&
     invoice.status !== "draft" &&
     invoice.full_number &&
     invoice.issue_date &&
@@ -88,7 +88,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
   ) {
     const qrUrl = buildQrUrl(
       {
-        nif,
+        nif: emisorNif,
         invoiceNumber: invoice.full_number as string,
         issueDate: new Date(invoice.issue_date as string),
         total: invoice.total as number,
@@ -100,6 +100,23 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="flex flex-col gap-6">
+      {invoice.verifactu_status === "rejected" && (
+        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-800/40 dark:bg-red-950/30 dark:text-red-300">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+          <div className="min-w-0">
+            <p className="font-semibold">AEAT rechazó la factura</p>
+            {(invoice.verifactu_error as string | null) ? (
+              <p className="mt-1 wrap-break-word text-red-700 dark:text-red-400">
+                {invoice.verifactu_error as string}
+              </p>
+            ) : null}
+            <p className="mt-1 text-xs text-red-600/80 dark:text-red-400/70">
+              Corrige el motivo y vuelve a enviar con "Reintentar AEAT".
+            </p>
+          </div>
+        </div>
+      )}
+
       <PageHeader
         title={`Factura ${invoice.full_number as string}`}
         description={client?.name}
@@ -110,25 +127,14 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           { label: invoice.full_number as string },
         ]}
         actions={
-          <div className="flex items-center gap-3">
-            <div className="flex flex-col items-end gap-1 mr-2">
-              <StatusBadge meta={INVOICE_STATUS} value={invoice.status as string} />
-              <StatusBadge
-                meta={VERIFACTU_STATUS}
-                value={invoice.verifactu_status as string}
-                className="text-[10px] py-0 h-4"
-                labelPrefix="Verifactu: "
-              />
-            </div>
-            <InvoiceActions
-              invoice={{
-                id: invoice.id as string,
-                status: invoice.status as string,
-                verifactu_status: invoice.verifactu_status as string,
-              }}
-              clientEmail={client?.email ?? null}
-            />
-          </div>
+          <InvoiceActions
+            invoice={{
+              id: invoice.id as string,
+              status: invoice.status as string,
+              verifactu_status: invoice.verifactu_status as string,
+            }}
+            clientEmail={client?.email ?? null}
+          />
         }
       />
 

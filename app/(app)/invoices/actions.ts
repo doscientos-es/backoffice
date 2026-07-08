@@ -153,6 +153,19 @@ export const deleteInvoice = defineAction({
   roles: ["owner", "admin"],
   revalidate: () => ["/invoices"],
   handler: async (input) => {
+    // Facturas aceptadas por la AEAT no pueden eliminarse (RD 1007/2023 art. 8).
+    // Debe emitirse una factura rectificativa en su lugar.
+    const supabase = await createServerClient();
+    const { data: inv } = await supabase
+      .from("invoices")
+      .select("verifactu_status")
+      .eq("id", input.id)
+      .maybeSingle();
+    if (inv?.verifactu_status === "accepted") {
+      throw new Error(
+        "Las facturas aceptadas por la AEAT no pueden eliminarse. Emite una factura rectificativa.",
+      );
+    }
     await softDeleteInvoice(input.id);
   },
 });
@@ -171,6 +184,27 @@ export const restoreInvoice = defineAction({
 });
 
 // ─── Verifactu (AEAT) ─────────────────────────────────────────────────────────
+
+/**
+ * Extracts the most descriptive error message from a Verifactu submission result.
+ * Handles both AEAT application-level errors (with errorMessage) and SOAP Faults
+ * (where errorMessage is generic but rawResponse contains the faultstring).
+ */
+function extractVerifactuError(result: {
+  errorMessage?: string | null;
+  response?: unknown;
+}): string {
+  // If the package gives us a specific (non-generic) message, use it.
+  const msg = result.errorMessage;
+  if (msg && msg !== "AEAT rechazó el registro" && msg !== "AEAT rechazó la factura") {
+    return msg;
+  }
+  // Fall back to parsing the faultstring from the SOAP Fault rawResponse.
+  const raw = (result.response as { rawResponse?: string } | undefined)?.rawResponse ?? "";
+  const match = raw.match(/<faultstring>([^<]+)<\/faultstring>/);
+  if (match?.[1]) return match[1].trim();
+  return msg ?? "AEAT rechazó la factura";
+}
 
 /**
  * Submits an invoice to Verifactu (AEAT). Computes the SHA-256 hash chain entry,
@@ -255,14 +289,14 @@ export const sendToAeat = defineAction<typeof SendInvoiceInput, { csv: string | 
       verifactu_submitted_at: generatedAt.toISOString(),
       verifactu_csv: result.csv,
       verifactu_response: result.response,
+      verifactu_error: result.status === "accepted" ? null : extractVerifactuError(result),
       qr_url: qrUrl,
-      ...(invoice.verifactu_status === "pending" ? { issued_at: generatedAt.toISOString() } : {}),
     });
 
     log.info({ invoiceId: id, csv: result.csv, status: result.status }, "verifactu_submit_done");
 
     if (result.status !== "accepted") {
-      throw new Error(result.errorMessage ?? "AEAT rechazó la factura");
+      throw new Error(extractVerifactuError(result));
     }
 
     // Once fiscally accepted, the originating lead is definitively won.
@@ -455,6 +489,7 @@ export const updateInvoice = defineAction({
     if (input.issue_date) headerPatch.issue_date = input.issue_date;
     if (input.due_date !== undefined) headerPatch.due_date = input.due_date ?? null;
     if (input.notes !== undefined) headerPatch.notes = input.notes;
+    if (input.payment_terms !== undefined) headerPatch.payment_terms = input.payment_terms ?? null;
 
     if (input.items) {
       const { subtotal, taxAmount, total } = computeLineTotals(input.items);
