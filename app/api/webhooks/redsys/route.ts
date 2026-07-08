@@ -97,7 +97,7 @@ export async function POST(req: Request) {
           if (invoice.status !== "paid" && isFullyPaid) {
             await supabase
               .from("invoices")
-              .update({ status: "paid", paid_at: new Date().toISOString() })
+              .update({ status: "paid", paid_at: new Date().toISOString(), payment_method: "card" })
               .eq("id", invoice.id);
             log.info({ invoiceId: invoice.id, totalPaid }, "invoice_marked_as_paid");
           }

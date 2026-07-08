@@ -103,11 +103,7 @@ export type BuildInvoicePdfInput = {
   settings: {
     company_name: string | null;
     company_nif: string | null;
-    company_address_street?: string | null;
-    company_address_zip?: string | null;
-    company_address_city?: string | null;
-    company_address_province?: string | null;
-    company_address_country?: string | null;
+    company_address?: string | null;
     iban: string | null;
     /** Company-wide default payment terms. */
     payment_terms?: string | null;
@@ -200,14 +196,7 @@ export async function buildInvoicePdfData(input: BuildInvoicePdfInput): Promise<
       ? {
           name: settings.company_name,
           nif: settings.company_nif,
-          address:
-            formatAddress({
-              street: settings.company_address_street,
-              zip: settings.company_address_zip,
-              city: settings.company_address_city,
-              province: settings.company_address_province,
-              country: settings.company_address_country,
-            }) || null,
+          address: settings.company_address || null,
           iban: settings.iban,
         }
       : null,

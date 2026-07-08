@@ -9,6 +9,7 @@ import {
   INVOICE_LIST_PAGE_SIZE,
   type InvoiceDetailResult,
   type InvoiceForEmail,
+  type InvoiceForRectification,
   type InvoiceForVerifactu,
   type InvoiceHeaderPatch,
   type InvoiceItemInsert,
@@ -128,9 +129,7 @@ export async function getInvoiceDetail(id: string): Promise<InvoiceDetailResult>
       .order("position"),
     supabase
       .from("settings")
-      .select(
-        "company_name, company_nif, company_address_street, company_address_zip, company_address_city, company_address_province, company_address_country, iban, payment_terms",
-      )
+      .select("company_name, company_nif, company_address, iban, payment_terms")
       .eq("id", 1)
       .single(),
   ]);
@@ -176,11 +175,7 @@ export async function getInvoiceDetail(id: string): Promise<InvoiceDetailResult>
       ? {
           company_name: (settings.company_name as string | null) ?? null,
           company_nif: (settings.company_nif as string | null) ?? null,
-          company_address_street: (settings.company_address_street as string | null) ?? null,
-          company_address_zip: (settings.company_address_zip as string | null) ?? null,
-          company_address_city: (settings.company_address_city as string | null) ?? null,
-          company_address_province: (settings.company_address_province as string | null) ?? null,
-          company_address_country: (settings.company_address_country as string | null) ?? null,
+          company_address: (settings.company_address as string | null) ?? null,
           iban: (settings.iban as string | null) ?? null,
           payment_terms: (settings.payment_terms as string | null) ?? null,
         }
@@ -653,4 +648,90 @@ export async function findInvoiceForEmail(id: string): Promise<InvoiceForEmail |
     is_client_visible: Boolean(data.is_client_visible),
     client: rawClient ?? null,
   };
+}
+
+// ─── Rectification helpers ────────────────────────────────────────────────────
+
+/**
+ * Fetches the original invoice fields needed to clone a rectification invoice.
+ * Returns `null` when the invoice is deleted or does not exist.
+ */
+export async function findInvoiceForRectification(
+  id: string,
+): Promise<InvoiceForRectification | null> {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("invoices")
+    .select(
+      "id, status, verifactu_status, invoice_type, full_number, series, number, issue_date, client_id, project_id, client_nif, client_name, client_address_street, client_address_zip, client_address_city, client_address_province, client_address_country, notes, payment_terms, subtotal, tax_amount, total, is_rectification",
+    )
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (error)
+    log.error({ invoiceId: id, err: error.message }, "find_invoice_for_rectification_failed");
+  if (!data) return null;
+  return {
+    id: data.id as string,
+    status: data.status as string,
+    verifactu_status: data.verifactu_status as string,
+    invoice_type: data.invoice_type as string,
+    full_number: data.full_number as string,
+    series: data.series as string,
+    number: data.number as number,
+    issue_date: data.issue_date as string,
+    client_id: data.client_id as string,
+    project_id: (data.project_id as string | null) ?? null,
+    client_nif: (data.client_nif as string | null) ?? null,
+    client_name: (data.client_name as string | null) ?? null,
+    client_address_street: (data.client_address_street as string | null) ?? null,
+    client_address_zip: (data.client_address_zip as string | null) ?? null,
+    client_address_city: (data.client_address_city as string | null) ?? null,
+    client_address_province: (data.client_address_province as string | null) ?? null,
+    client_address_country: (data.client_address_country as string | null) ?? null,
+    notes: (data.notes as string | null) ?? null,
+    payment_terms: (data.payment_terms as string | null) ?? null,
+    subtotal: Number(data.subtotal ?? 0),
+    tax_amount: Number(data.tax_amount ?? 0),
+    total: Number(data.total ?? 0),
+    is_rectification: Boolean(data.is_rectification),
+  };
+}
+
+/**
+ * Inserts a rectification invoice with its cloned line items.
+ * Uses explicit casts for the new rectification columns not yet in generated types.
+ */
+export async function insertRectificationWithItems(
+  invoiceData: NewInvoiceData & {
+    invoice_type: string;
+    is_rectification: true;
+    rectified_invoice_id: string;
+    rectification_reason: string;
+    rectification_type: string;
+  },
+  items: InvoiceItemInsert[],
+): Promise<{ id: string }> {
+  const supabase = await createServerClient();
+  // Cast to `any` because the generated DB types don't include the new
+  // rectification columns until the schema types are regenerated.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: invoice, error: invoiceError } = await supabase
+    .from("invoices")
+    // biome-ignore lint/suspicious/noExplicitAny: new columns not yet in generated types
+    .insert(invoiceData as any)
+    .select("id")
+    .single();
+  if (invoiceError || !invoice)
+    throw new Error(invoiceError?.message ?? "No se pudo crear la factura rectificativa");
+
+  const { error: itemsError } = await supabase
+    .from("invoice_items")
+    .insert(items.map((it) => ({ ...it, invoice_id: invoice.id as string })));
+  if (itemsError) {
+    log.error({ err: itemsError, invoiceId: invoice.id }, "insert_rectification_items_failed");
+    throw new Error(itemsError.message);
+  }
+
+  return { id: invoice.id as string };
 }

@@ -1,0 +1,731 @@
+﻿
+[1m[46m RUN [49m[22m [36mv3.2.4 [39m[90mC:/Users/pol.gubau/dev/projects/doscientos/doscientos/internal/backoffice[39m
+
+ [32mΓ£ô[39m lib/portal/access.test.ts[2m > [22mhashPortalPassword / verifyPortalPassword[2m > [22mproduces a self-describing scrypt string[32m 51[2mms[22m[39m
+ [32mΓ£ô[39m lib/portal/access.test.ts[2m > [22mhashPortalPassword / verifyPortalPassword[2m > [22muses a random salt so two hashes of the same password differ[32m 111[2mms[22m[39m
+ [32mΓ£ô[39m lib/portal/access.test.ts[2m > [22mhashPortalPassword / verifyPortalPassword[2m > [22mverifies a correct password[32m 100[2mms[22m[39m
+ [32mΓ£ô[39m lib/portal/access.test.ts[2m > [22mhashPortalPassword / verifyPortalPassword[2m > [22mrejects an incorrect password[32m 151[2mms[22m[39m
+ [32mΓ£ô[39m lib/portal/access.test.ts[2m > [22mhashPortalPassword / verifyPortalPassword[2m > [22mrejects malformed stored hashes[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/portal/access.test.ts[2m > [22mhashPortalPassword / verifyPortalPassword[2m > [22mrejects when the stored derived key length differs[32m 111[2mms[22m[39m
+ [32mΓ£ô[39m lib/portal/access.test.ts[2m > [22mbuildPortalAccessPatch[2m > [22mreturns an empty patch when nothing was touched[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/portal/access.test.ts[2m > [22mbuildPortalAccessPatch[2m > [22mmaps the visibility toggle[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/portal/access.test.ts[2m > [22mbuildPortalAccessPatch[2m > [22mhashes a new password into portal_password_hash[32m 149[2mms[22m[39m
+ [32mΓ£ô[39m lib/portal/access.test.ts[2m > [22mbuildPortalAccessPatch[2m > [22mclears the hash when password is null or empty string[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/portal/access.test.ts[2m > [22mbuildPortalAccessPatch[2m > [22mcombines visibility and password changes[32m 157[2mms[22m[39m
+ [31m├ù[39m app/(app)/settings/team/actions.test.ts[2m > [22minviteTeamMember[2m > [22mroutes redirectTo through /auth/callback with the onboarding next[32m 8[2mms[22m[39m
+[31m   ΓåÆ admin.auth.admin.generateLink is not a function[39m
+ [31m├ù[39m app/(app)/settings/team/actions.test.ts[2m > [22minviteTeamMember[2m > [22mlowercases and trims the email before inviting and upserting[32m 1[2mms[22m[39m
+[31m   ΓåÆ admin.auth.admin.generateLink is not a function[39m
+ [31m├ù[39m app/(app)/settings/team/actions.test.ts[2m > [22minviteTeamMember[2m > [22mforwards the invitee name as user metadata[32m 1[2mms[22m[39m
+[31m   ΓåÆ admin.auth.admin.generateLink is not a function[39m
+ [31m├ù[39m app/(app)/settings/team/actions.test.ts[2m > [22minviteTeamMember[2m > [22mderives the name from the email local-part when omitted[32m 1[2mms[22m[39m
+[31m   ΓåÆ admin.auth.admin.generateLink is not a function[39m
+ [31m├ù[39m app/(app)/settings/team/actions.test.ts[2m > [22minviteTeamMember[2m > [22maccepts emails from any domain (external collaborators)[32m 1[2mms[22m[39m
+[31m   ΓåÆ admin.auth.admin.generateLink is not a function[39m
+ [31m├ù[39m app/(app)/settings/team/actions.test.ts[2m > [22minviteTeamMember[2m > [22mupserts the team_members row with the invited auth user id[32m 1[2mms[22m[39m
+[31m   ΓåÆ admin.auth.admin.generateLink is not a function[39m
+ [32mΓ£ô[39m app/(app)/settings/team/actions.test.ts[2m > [22minviteTeamMember[2m > [22mrejects when an admin tries to assign the owner role[32m 3[2mms[22m[39m
+ [31m├ù[39m app/(app)/settings/team/actions.test.ts[2m > [22minviteTeamMember[2m > [22mpropagates Supabase invite errors[32m 1[2mms[22m[39m
+[31m   ΓåÆ admin.auth.admin.generateLink is not a function[39m
+ [32mΓ£ô[39m app/(app)/settings/team/actions.test.ts[2m > [22mupdateMemberRole[2m > [22mblocks a member from changing another member's role[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/settings/team/actions.test.ts[2m > [22mupdateMemberRole[2m > [22mblocks a member from changing their own role[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/settings/team/actions.test.ts[2m > [22mupdateMemberRole[2m > [22mblocks a viewer from changing roles[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m app/login/login-form.test.tsx[2m > [22mLoginForm ΓÇô rendering[2m > [22mrenders email and password fields[32m 79[2mms[22m[39m
+ [32mΓ£ô[39m app/login/login-form.test.tsx[2m > [22mLoginForm ΓÇô rendering[2m > [22mrenders a submit button with label 'Entrar'[32m 65[2mms[22m[39m
+ [32mΓ£ô[39m app/login/login-form.test.tsx[2m > [22mLoginForm ΓÇô rendering[2m > [22mrenders the forgot-password link[32m 29[2mms[22m[39m
+ [32mΓ£ô[39m app/login/login-form.test.tsx[2m > [22mLoginForm ΓÇô password visibility toggle[2m > [22mpassword is hidden by default[32m 21[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/queries.test.ts[2m > [22mgetInsightsBreakdownSeries[2m > [22maggregates data by day and entity (ads)[33m 1657[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/queries.test.ts[2m > [22mgetInsightsBreakdownSeries[2m > [22mgroups bottom spenders into 'Otros' (more than 6 entities)[32m 35[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/queries.test.ts[2m > [22mgetInsightsBreakdownSeries[2m > [22mhandles the campaigns dimension correctly[32m 32[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/queries.test.ts[2m > [22mgetInsightsBreakdownSeries[2m > [22mfilters by date range and ignores aggregates[32m 35[2mms[22m[39m
+ [32mΓ£ô[39m app/login/login-form.test.tsx[2m > [22mLoginForm ΓÇô password visibility toggle[2m > [22mclicking the eye button reveals the password[32m 54[2mms[22m[39m
+ [32mΓ£ô[39m app/login/login-form.test.tsx[2m > [22mLoginForm ΓÇô password visibility toggle[2m > [22mclicking the eye button again hides the password[32m 60[2mms[22m[39m
+ [32mΓ£ô[39m app/login/login-form.test.tsx[2m > [22mLoginForm ΓÇô URL error messages[2m > [22mmaps ?error=no_team_member to a readable message[32m 16[2mms[22m[39m
+ [32mΓ£ô[39m app/login/login-form.test.tsx[2m > [22mLoginForm ΓÇô URL error messages[2m > [22mmaps ?error=team_member_deleted to a readable message[32m 19[2mms[22m[39m
+ [32mΓ£ô[39m app/login/login-form.test.tsx[2m > [22mLoginForm ΓÇô URL error messages[2m > [22mmaps ?error=db_error to a readable message[32m 16[2mms[22m[39m
+ [32mΓ£ô[39m app/login/login-form.test.tsx[2m > [22mLoginForm ΓÇô URL error messages[2m > [22mmaps ?error=forbidden to a readable message[32m 17[2mms[22m[39m
+ [32mΓ£ô[39m app/login/login-form.test.tsx[2m > [22mLoginForm ΓÇô URL error messages[2m > [22mmaps ?error=callback_no_code to a readable message[32m 20[2mms[22m[39m
+ [32mΓ£ô[39m app/login/login-form.test.tsx[2m > [22mLoginForm ΓÇô submit flow[2m > [22mcalls signInWithPassword with the typed credentials[32m 138[2mms[22m[39m
+ [32mΓ£ô[39m app/login/login-form.test.tsx[2m > [22mLoginForm ΓÇô submit flow[2m > [22mdefaults redirect to /inicio when no ?next param[32m 104[2mms[22m[39m
+ [32mΓ£ô[39m app/login/login-form.test.tsx[2m > [22mLoginForm ΓÇô submit flow[2m > [22mredirects to ?next when it is a safe internal path[32m 105[2mms[22m[39m
+ [32mΓ£ô[39m app/login/login-form.test.tsx[2m > [22mLoginForm ΓÇô submit flow[2m > [22mshows a friendly error when credentials are wrong[32m 88[2mms[22m[39m
+ [32mΓ£ô[39m app/login/login-form.test.tsx[2m > [22mLoginForm ΓÇô submit flow[2m > [22mshows a rate-limit message when too many attempts[32m 72[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/settings/settings-nav.test.tsx[2m > [22mSettingsNav ΓÇô item visibility[2m > [22malways shows Perfil[32m 99[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/settings/settings-nav.test.tsx[2m > [22mSettingsNav ΓÇô item visibility[2m > [22mhides Empresa when canManageTeam is false (viewer / member)[32m 10[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/settings/settings-nav.test.tsx[2m > [22mSettingsNav ΓÇô item visibility[2m > [22mshows Empresa when canManageTeam is true (admin / owner)[32m 15[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/settings/settings-nav.test.tsx[2m > [22mSettingsNav ΓÇô item visibility[2m > [22mhides Equipo when canManageTeam is false (viewer / member)[32m 6[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/settings/settings-nav.test.tsx[2m > [22mSettingsNav ΓÇô item visibility[2m > [22mshows Equipo when canManageTeam is true (admin / owner)[32m 16[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/settings/settings-nav.test.tsx[2m > [22mSettingsNav ΓÇô item visibility[2m > [22mrenders exactly 2 links for non-admin (Perfil + Legal)[32m 32[2mms[22m[39m
+ [32mΓ£ô[39m lib/invoices/pdf-data.test.ts[2m > [22mbuildInvoicePdfData[2m > [22mnormalises items, coercing null fields to safe numbers[33m 3144[2mms[22m[39m
+ [32mΓ£ô[39m lib/invoices/pdf-data.test.ts[2m > [22mbuildInvoicePdfData[2m > [22mreturns null company when settings are absent[32m 17[2mms[22m[39m
+ [31m├ù[39m lib/invoices/pdf-data.test.ts[2m > [22mbuildInvoicePdfData[2m > [22momits the QR when the emisor NIF is not configured[32m 38[2mms[22m[39m
+[31m   ΓåÆ expected 'data:image/png;base64,iVBORw0KGgoAAAAΓÇª' to be null[39m
+ [32mΓ£ô[39m lib/invoices/pdf-data.test.ts[2m > [22mbuildInvoicePdfData[2m > [22momits the QR for draft invoices even with a NIF[32m 29[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/settings/settings-nav.test.tsx[2m > [22mSettingsNav ΓÇô item visibility[2m > [22mrenders exactly 6 links for admin[32m 31[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/settings/settings-nav.test.tsx[2m > [22mSettingsNav ΓÇô item visibility[2m > [22mshows Plantillas email when canManageTeam is true[32m 27[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/settings/settings-nav.test.tsx[2m > [22mSettingsNav ΓÇô item visibility[2m > [22mhides Plantillas email when canManageTeam is false[32m 12[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/settings/settings-nav.test.tsx[2m > [22mSettingsNav ΓÇô item visibility[2m > [22mshows Diagn├│stico when canManageTeam is true[32m 33[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/settings/settings-nav.test.tsx[2m > [22mSettingsNav ΓÇô item visibility[2m > [22mhides Diagn├│stico when canManageTeam is false[32m 3[2mms[22m[39m
+ [32mΓ£ô[39m lib/invoices/pdf-data.test.ts[2m > [22mbuildInvoicePdfData[2m > [22mbuilds a QR data URL for a complete, issued invoice[32m 29[2mms[22m[39m
+ [32mΓ£ô[39m lib/invoices/pdf-data.test.ts[2m > [22minvoicePdfFilename[2m > [22muses the full number when present[32m 20[2mms[22m[39m
+ [32mΓ£ô[39m lib/invoices/pdf-data.test.ts[2m > [22minvoicePdfFilename[2m > [22mfalls back to the id when the number is null or sanitises to empty[32m 18[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/settings/settings-nav.test.tsx[2m > [22mSettingsNav ΓÇô item visibility[2m > [22mshows Legal / Verifactu regardless of canManageTeam[32m 33[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/settings/settings-nav.test.tsx[2m > [22mSettingsNav ΓÇô active state[2m > [22msets aria-current=page on the active route[32m 12[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/settings/settings-nav.test.tsx[2m > [22mSettingsNav ΓÇô active state[2m > [22mdoes not set aria-current on inactive routes[32m 6[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/settings/settings-nav.test.tsx[2m > [22mSettingsNav ΓÇô active state[2m > [22mmarks /settings/company as active when on that path (admin)[32m 24[2mms[22m[39m
+ [32mΓ£ô[39m app/api/attachments/upload/route.test.ts[2m > [22mPOST /api/attachments/upload[2m > [22mreturns 401 when not authenticated[32m 7[2mms[22m[39m
+ [32mΓ£ô[39m app/api/attachments/upload/route.test.ts[2m > [22mPOST /api/attachments/upload[2m > [22mreturns 403 for viewer role[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/api/attachments/upload/route.test.ts[2m > [22mPOST /api/attachments/upload[2m > [22mreturns 413 when file exceeds 50 MB[33m 3354[2mms[22m[39m
+ [32mΓ£ô[39m app/api/attachments/upload/route.test.ts[2m > [22mPOST /api/attachments/upload[2m > [22mreturns 400 for disallowed MIME type[32m 25[2mms[22m[39m
+ [32mΓ£ô[39m app/api/attachments/upload/route.test.ts[2m > [22mPOST /api/attachments/upload[2m > [22mreturns 400 for invalid entityType[32m 3[2mms[22m[39m
+ [32mΓ£ô[39m app/api/attachments/upload/route.test.ts[2m > [22mPOST /api/attachments/upload[2m > [22mreturns 500 and rolls back storage on DB failure[32m 5[2mms[22m[39m
+ [32mΓ£ô[39m app/api/attachments/upload/route.test.ts[2m > [22mPOST /api/attachments/upload[2m > [22mreturns 201 with attachment id on success[32m 3[2mms[22m[39m
+ [32mΓ£ô[39m components/ui/attachment-section.test.tsx[2m > [22mread-only mode (canEdit=false)[2m > [22mhides the file button and upload input[32m 101[2mms[22m[39m
+ [32mΓ£ô[39m components/ui/attachment-section.test.tsx[2m > [22mread-only mode (canEdit=false)[2m > [22mshows 'Sin adjuntos.' without the drag hint[32m 6[2mms[22m[39m
+ [32mΓ£ô[39m components/ui/attachment-section.test.tsx[2m > [22mempty state with canEdit[2m > [22mshows drag hint text[32m 16[2mms[22m[39m
+ [32mΓ£ô[39m components/ui/attachment-section.test.tsx[2m > [22mattachment list[2m > [22mrenders attachment names with download links[32m 54[2mms[22m[39m
+ [32mΓ£ô[39m components/ui/attachment-section.test.tsx[2m > [22mbutton upload[2m > [22mcalls /api/attachments/upload and refreshes on success[32m 33[2mms[22m[39m
+ [32mΓ£ô[39m components/ui/attachment-section.test.tsx[2m > [22mbutton upload[2m > [22mdisplays per-file error when upload fails[32m 94[2mms[22m[39m
+ [32mΓ£ô[39m app/p/proposal/[token]/actions.test.ts[2m > [22mportal proposal actions[2m > [22mrejects malformed tokens without touching the DB[33m 4177[2mms[22m[39m
+{"level":30,"time":"2026-07-08T13:13:38.414Z","app":"backoffice-doscientos","scope":"portal.proposal","proposalId":"p1","projectId":null,"msg":"proposal_accepted_side_effects_done"}
+ [32mΓ£ô[39m app/p/proposal/[token]/actions.test.ts[2m > [22mportal proposal actions[2m > [22mreturns not-found when the proposal does not exist[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/p/proposal/[token]/actions.test.ts[2m > [22mportal proposal actions[2m > [22mblocks transitions from already-responded states[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m app/p/proposal/[token]/actions.test.ts[2m > [22mportal proposal actions[2m > [22mblocks transitions from draft or expired[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/p/proposal/[token]/actions.test.ts[2m > [22mportal proposal actions[2m > [22maccepts a sent proposal and revalidates the portal path[32m 22[2mms[22m[39m
+ [32mΓ£ô[39m app/p/proposal/[token]/actions.test.ts[2m > [22mportal proposal actions[2m > [22mrejects a viewed proposal and stores the rejection reason[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/p/proposal/[token]/actions.test.ts[2m > [22mportal proposal actions[2m > [22momits signature_data when no rejection reason is provided[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/p/proposal/[token]/actions.test.ts[2m > [22mportal proposal actions[2m > [22msurfaces DB update errors[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m components/ui/attachment-section.test.tsx[2m > [22mbutton upload[2m > [22muploads multiple files sequentially and collects partial errors[32m 90[2mms[22m[39m
+ [32mΓ£ô[39m components/ui/attachment-section.test.tsx[2m > [22mbutton upload[2m > [22mshows 'Error de red' on network failure[32m 81[2mms[22m[39m
+ [32mΓ£ô[39m components/ui/attachment-section.test.tsx[2m > [22mdrag-and-drop[2m > [22mshows overlay on dragenter and hides on dragleave[32m 40[2mms[22m[39m
+ [32mΓ£ô[39m components/ui/attachment-section.test.tsx[2m > [22mdrag-and-drop[2m > [22muploads dropped files[32m 15[2mms[22m[39m
+ [32mΓ£ô[39m components/ui/attachment-section.test.tsx[2m > [22mdrag-and-drop[2m > [22mignores drag events when canEdit is false[32m 3[2mms[22m[39m
+ [32mΓ£ô[39m lib/dashboard/queries.test.ts[2m > [22mgetMyDay[2m > [22mreturns empty arrays when there is no data[32m 172[2mms[22m[39m
+ [32mΓ£ô[39m lib/dashboard/queries.test.ts[2m > [22mgetMyDay[2m > [22mmaps a task row into MyTaskRow shape[32m 16[2mms[22m[39m
+ [32mΓ£ô[39m lib/dashboard/queries.test.ts[2m > [22mgetMyDay[2m > [22muses lead name as contextLabel when task has no project[32m 11[2mms[22m[39m
+ [32mΓ£ô[39m lib/dashboard/queries.test.ts[2m > [22mgetMyDay[2m > [22mcontextLabel is null when neither project nor lead is present[32m 11[2mms[22m[39m
+ [32mΓ£ô[39m lib/dashboard/queries.test.ts[2m > [22mgetMyDay[2m > [22mmaps a lead row into ActionLeadRow with updated_at as 'since'[32m 10[2mms[22m[39m
+ [32mΓ£ô[39m lib/dashboard/queries.test.ts[2m > [22mgetMyDay[2m > [22mmaps an unassigned lead with created_at as 'since'[32m 10[2mms[22m[39m
+ [32mΓ£ô[39m lib/dashboard/queries.test.ts[2m > [22mgetMyDay[2m > [22mseparates myLeads and unassignedLeads correctly[32m 11[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils.test.ts[2m > [22mcn[2m > [22mmerges Tailwind classes[32m 15[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils.test.ts[2m > [22mformatEUR[2m > [22mformats a number with EUR[32m 43[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils.test.ts[2m > [22mformatEUR[2m > [22mparses numeric strings[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils.test.ts[2m > [22mformatEUR[2m > [22mreturns em-dash on null, undefined and non-finite[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils.test.ts[2m > [22mformatDate / formatDateTime[2m > [22mformats a date string[32m 10[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils.test.ts[2m > [22mformatDate / formatDateTime[2m > [22mformats a datetime[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils.test.ts[2m > [22mformatDate / formatDateTime[2m > [22mreturns em-dash on empty input[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils.test.ts[2m > [22mrelativeTime[2m > [22mreturns em-dash on empty input[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils.test.ts[2m > [22mrelativeTime[2m > [22mbuckets recent and old past timestamps[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils.test.ts[2m > [22mrelativeTime[2m > [22mfuture dates use the correct time unit, not seconds[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils.test.ts[2m > [22mmemberAvatarUrl[2m > [22mprefers an explicit avatar url[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils.test.ts[2m > [22mmemberAvatarUrl[2m > [22mderives a github avatar from a valid handle[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils.test.ts[2m > [22mmemberAvatarUrl[2m > [22mreturns null for missing/invalid handles[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils.test.ts[2m > [22mtruncate[2m > [22mtruncates long strings with ellipsis[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils.test.ts[2m > [22mtruncate[2m > [22mkeeps short strings intact[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m components/layout/page-header.test.tsx[2m > [22mPageHeader[2m > [22mrenders title and description[32m 66[2mms[22m[39m
+ [32mΓ£ô[39m components/layout/page-header.test.tsx[2m > [22mPageHeader[2m > [22mrenders breadcrumbs when provided[32m 41[2mms[22m[39m
+ [32mΓ£ô[39m components/layout/page-header.test.tsx[2m > [22mPageHeader[2m > [22mrenders back slot when no breadcrumbs are provided[32m 4[2mms[22m[39m
+ [32mΓ£ô[39m lib/hooks/use-form-dirty.test.ts[2m > [22msnapshot()[2m > [22mreturns the same string for identical field values[32m 10[2mms[22m[39m
+ [32mΓ£ô[39m lib/hooks/use-form-dirty.test.ts[2m > [22msnapshot()[2m > [22mdetects a change from 21 to 0[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/hooks/use-form-dirty.test.ts[2m > [22msnapshot()[2m > [22mdetects a change from any value to empty string[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/hooks/use-form-dirty.test.ts[2m > [22msnapshot()[2m > [22mis order-independent (sorted by field name)[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/hooks/use-form-dirty.test.ts[2m > [22museFormDirty ΓÇö lazy form mount (dialog scenario)[2m > [22misDirty is false before any form is attached[32m 61[2mms[22m[39m
+ [32mΓ£ô[39m lib/hooks/use-form-dirty.test.ts[2m > [22museFormDirty ΓÇö lazy form mount (dialog scenario)[2m > [22misDirty becomes true when a field value changes after late mount[32m 5[2mms[22m[39m
+ [32mΓ£ô[39m lib/hooks/use-form-dirty.test.ts[2m > [22museFormDirty ΓÇö lazy form mount (dialog scenario)[2m > [22misDirty stays false when value matches baseline (no real change)[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/hooks/use-form-dirty.test.ts[2m > [22museFormDirty ΓÇö lazy form mount (dialog scenario)[2m > [22mreset() re-baselines so subsequent no-op changes are not dirty[32m 4[2mms[22m[39m
+ [32mΓ£ô[39m lib/hooks/use-form-dirty.test.ts[2m > [22museFormDirty ΓÇö lazy form mount (dialog scenario)[2m > [22mre-captures baseline when form remounts (dialog reopen)[32m 3[2mms[22m[39m
+ [32mΓ£ô[39m components/email/payment-receipt-email.test.tsx[2m > [22mPaymentReceiptEmail[2m > [22mrenders the correct information in the HTML[32m 73[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/finance/expenses/expense-form-fields.test.tsx[2m > [22mExpenseFormFields ΓÇö optional fields survive collapse[2m > [22mkeeps optional values in FormData after the user collapses the section[32m 228[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/finance/expenses/expense-form-fields.test.tsx[2m > [22mExpenseFormFields ΓÇö optional fields survive collapse[2m > [22msubmits optional fields even when the section starts collapsed[32m 115[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/finance/expenses/expense-form-fields.test.tsx[2m > [22mExpenseFormFields ΓÇö optional fields survive collapse[2m > [22mauto-expands the section when due_date is the only optional value[32m 80[2mms[22m[39m
+{"level":50,"time":"2026-07-08T13:13:42.810Z","app":"backoffice-doscientos","scope":"action.vault.reveal","err":{"type":"Error","message":"Desbloquea la b├│veda para ver este secreto","stack":"Error: Desbloquea la b├│veda para ver este secreto\n    at Object.handler (C:\\Users\\pol.gubau\\dev\\projects\\doscientos\\doscientos\\internal\\backoffice\\app\\(app)\\vault\\actions.ts:170:15)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at Module.<anonymous> (C:\\Users\\pol.gubau\\dev\\projects\\doscientos\\doscientos\\internal\\backoffice\\lib\\actions\\define-action.ts:73:23)\n    at C:\\Users\\pol.gubau\\dev\\projects\\doscientos\\doscientos\\internal\\backoffice\\app\\(app)\\vault\\actions.test.ts:100:20\n    at file:///C:/Users/pol.gubau/dev/projects/doscientos/doscientos/internal/backoffice/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"},"msg":"action failed"}
+{"level":50,"time":"2026-07-08T13:13:42.846Z","app":"backoffice-doscientos","scope":"action.vault.reveal","err":{"type":"Error","message":"Item no encontrado","stack":"Error: Item no encontrado\n    at Object.handler (C:\\Users\\pol.gubau\\dev\\projects\\doscientos\\doscientos\\internal\\backoffice\\app\\(app)\\vault\\actions.ts:160:31)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at Module.<anonymous> (C:\\Users\\pol.gubau\\dev\\projects\\doscientos\\doscientos\\internal\\backoffice\\lib\\actions\\define-action.ts:73:23)\n    at C:\\Users\\pol.gubau\\dev\\projects\\doscientos\\doscientos\\internal\\backoffice\\app\\(app)\\vault\\actions.test.ts:118:20\n    at file:///C:/Users/pol.gubau/dev/projects/doscientos/doscientos/internal/backoffice/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"},"msg":"action failed"}
+ [32mΓ£ô[39m app/(app)/vault/actions.test.ts[2m > [22mrevealVaultSecret ΓÇö IDOR regression[2m > [22mreturns the decrypted secret for a non-sensitive item without unlocking[32m 4[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/vault/actions.test.ts[2m > [22mrevealVaultSecret ΓÇö IDOR regression[2m > [22mblocks reveal of a sensitive item when the vault is locked[32m 37[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/vault/actions.test.ts[2m > [22mrevealVaultSecret ΓÇö IDOR regression[2m > [22mreturns the decrypted secret for a sensitive item when the vault IS unlocked[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/vault/actions.test.ts[2m > [22mrevealVaultSecret ΓÇö IDOR regression[2m > [22mreturns error when the item is not found (e.g. soft-deleted)[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/vault/actions.test.ts[2m > [22mrevealVaultSecret ΓÇö IDOR regression[2m > [22mtreats a sensitive item as locked when no password is set (hash=null)[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/meta-leads.test.ts[2m > [22mverifyMetaSignature[2m > [22maccepts a correctly-signed payload[32m 3[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/meta-leads.test.ts[2m > [22mverifyMetaSignature[2m > [22maccepts signature without sha256= prefix[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/meta-leads.test.ts[2m > [22mverifyMetaSignature[2m > [22mrejects tampered body[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/meta-leads.test.ts[2m > [22mverifyMetaSignature[2m > [22mrejects wrong secret[32m 3[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/meta-leads.test.ts[2m > [22mverifyMetaSignature[2m > [22mrejects missing/empty signature[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/meta-leads.test.ts[2m > [22mverifyMetaSignature[2m > [22mrejects when appSecret is empty[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/meta-leads.test.ts[2m > [22mmapMetaLeadgenToIntake[2m > [22mmaps standard English field names[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/meta-leads.test.ts[2m > [22mmapMetaLeadgenToIntake[2m > [22mpropagates ad / adset / campaign into utm[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/meta-leads.test.ts[2m > [22mmapMetaLeadgenToIntake[2m > [22mfalls back to first_name + last_name when full_name missing[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/meta-leads.test.ts[2m > [22mmapMetaLeadgenToIntake[2m > [22maccepts Spanish localized field names[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/meta-leads.test.ts[2m > [22mmapMetaLeadgenToIntake[2m > [22mdefaults to placeholder when no name field present[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/meta-leads.test.ts[2m > [22mmapMetaLeadgenToIntake[2m > [22mstores raw payload for audit[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/meta-leads.test.ts[2m > [22mmapMetaLeadgenToIntake[2m > [22mextracts ┬┐ΓÇª? form questions as notes[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/meta-leads.test.ts[2m > [22mmapMetaLeadgenToIntake[2m > [22mparses budget into estimatedValue (lower bound of range)[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/meta-leads.test.ts[2m > [22mmapMetaLeadgenToIntake[2m > [22mreturns null estimatedValue when no budget field present[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/meta-leads.test.ts[2m > [22mmapMetaLeadgenToIntake[2m > [22mreturns null notes when no ┬┐ΓÇª? fields present[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/meta-leads.test.ts[2m > [22mmapMetaLeadgenToIntake[2m > [22mextracts qualification fields using classifyFormAnswers keywords[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/meta-leads.test.ts[2m > [22mmapMetaLeadgenToIntake[2m > [22mprioritizes explicit urgency field over keyword classification[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/meta-leads.test.ts[2m > [22mmapMetaLeadgenToIntake[2m > [22muses 'Anuncios Meta' as source and externalSource[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/email/templates.test.ts[2m > [22mEmail Templates Logic[2m > [22mrenderTemplate[2m > [22mshould replace variables correctly[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/email/templates.test.ts[2m > [22mEmail Templates Logic[2m > [22mrenderTemplate[2m > [22mshould handle missing variables by leaving them as-is[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/email/templates.test.ts[2m > [22mEmail Templates Logic[2m > [22mrenderTemplate[2m > [22mshould handle spaces inside braces[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/email/templates.test.ts[2m > [22mEmail Templates Logic[2m > [22mrenderTemplate[2m > [22mshould leave placeholders untouched for null/undefined values[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/email/templates.test.ts[2m > [22mEmail Templates Logic[2m > [22mappendSignature[2m > [22mshould append signature if provided[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/email/templates.test.ts[2m > [22mEmail Templates Logic[2m > [22mappendSignature[2m > [22mshould return original html if signature is null or empty[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/email/templates.test.ts[2m > [22mEmail Templates Logic[2m > [22mmarkdownToHtml[2m > [22mshould convert basic markdown to html[32m 21[2mms[22m[39m
+ [32mΓ£ô[39m lib/email/templates.test.ts[2m > [22mEmail Templates Logic[2m > [22mmarkdownToHtml[2m > [22mshould convert single newlines to line breaks[32m 5[2mms[22m[39m
+ [32mΓ£ô[39m lib/email/templates.test.ts[2m > [22mEmail Templates Logic[2m > [22mmarkdownToHtml[2m > [22mshould pass raw HTML through untouched (legacy templates)[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/email/templates.test.ts[2m > [22mEmail Templates Logic[2m > [22mmarkdownToHtml[2m > [22mshould render markdown links[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/email/templates.test.ts[2m > [22mEmail Templates Logic[2m > [22mmarkdownToHtml[2m > [22mshould work after variable interpolation[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/email/templates.test.ts[2m > [22mEmail Templates Logic[2m > [22mextractVariables[2m > [22mshould extract all variables from a string[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/email/templates.test.ts[2m > [22mEmail Templates Logic[2m > [22mextractVariables[2m > [22mshould handle empty strings[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/email/templates.test.ts[2m > [22mEmail Templates Logic[2m > [22mextractVariables[2m > [22mshould not duplicate variables[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m app/api/documents/[id]/download/route.test.ts[2m > [22mGET /api/documents/[id]/download[2m > [22mreturns 401 when not authenticated[32m 8[2mms[22m[39m
+ [32mΓ£ô[39m app/api/documents/[id]/download/route.test.ts[2m > [22mGET /api/documents/[id]/download[2m > [22mreturns 404 for a soft-deleted attachment (deleted_at IS NULL filter)[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m app/api/documents/[id]/download/route.test.ts[2m > [22mGET /api/documents/[id]/download[2m > [22mreturns 404 when attachment does not exist[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/api/documents/[id]/download/route.test.ts[2m > [22mGET /api/documents/[id]/download[2m > [22mreturns 400 when the DB row has no storage_path[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/api/documents/[id]/download/route.test.ts[2m > [22mGET /api/documents/[id]/download[2m > [22mredirects to signed URL on success[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/projects/new/page.test.tsx[2m > [22mNewProjectPage pre-fill[2m > [22mpre-fills client_id from searchParams[32m 162[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/projects/new/page.test.tsx[2m > [22mNewProjectPage pre-fill[2m > [22mdefaults to empty client when searchParams is empty[32m 85[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/leads/actions.test.ts[2m > [22mcreateLead[2m > [22mreturns ok:true with the new lead id[32m 4[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/leads/actions.test.ts[2m > [22mcreateLead[2m > [22mincludes created_by from the authenticated user[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/leads/actions.test.ts[2m > [22mcreateLead[2m > [22mreturns ok:false with a message when the DB fails[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/leads/actions.test.ts[2m > [22mcreateLead[2m > [22mfails validation when name is missing[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/leads/actions.test.ts[2m > [22mdeleteLead[2m > [22msucceeds for admin role[32m 3[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/leads/actions.test.ts[2m > [22mdeleteLead[2m > [22mis restricted to owner/admin (throws redirect for member)[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/leads/actions.test.ts[2m > [22mdeleteLead[2m > [22mfails validation when id is not a UUID[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/leads/actions.test.ts[2m > [22mupdateLead[2m > [22mreturns ok:true for a valid patch[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/leads/actions.test.ts[2m > [22mupdateLead[2m > [22msets updated_by to the current user[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/leads/actions.test.ts[2m > [22mupdateLeadStatus[2m > [22mreturns ok:true when the update succeeds[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/leads/actions.test.ts[2m > [22mupdateLeadStatus[2m > [22msets lost_reason when closing as lost[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/leads/actions.test.ts[2m > [22mupdateLeadStatus[2m > [22mclears lost_reason when re-opening[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/leads/actions.test.ts[2m > [22mclaimLead[2m > [22mreturns ok:true when lead has no owner[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date-field.test.ts[2m > [22misoToDisplay[2m > [22mconverts a valid ISO date to dd/MM/yyyy[32m 17[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date-field.test.ts[2m > [22misoToDisplay[2m > [22mreturns empty string for empty input[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date-field.test.ts[2m > [22misoToDisplay[2m > [22mreturns empty string for invalid ISO[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date-field.test.ts[2m > [22misoToDisplay[2m > [22mhandles leap year correctly[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date-field.test.ts[2m > [22misoToDisplay[2m > [22mhandles last day of year[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date-field.test.ts[2m > [22misoToDisplay[2m > [22mreturns empty string for partial ISO[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date-field.test.ts[2m > [22mdisplayToIso[2m > [22mconverts dd/MM/yyyy to ISO yyyy-MM-dd[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date-field.test.ts[2m > [22mdisplayToIso[2m > [22mreturns empty string for empty input[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date-field.test.ts[2m > [22mdisplayToIso[2m > [22mreturns empty string for partial input[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date-field.test.ts[2m > [22mdisplayToIso[2m > [22maccepts valid leap year date[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date-field.test.ts[2m > [22mdisplayToIso[2m > [22mrejects 29 Feb on a non-leap year[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date-field.test.ts[2m > [22mdisplayToIso[2m > [22mrejects overflow day 31 in a 30-day month[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date-field.test.ts[2m > [22mdisplayToIso[2m > [22mrejects month 13[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date-field.test.ts[2m > [22mdisplayToIso[2m > [22mrejects day 00[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date-field.test.ts[2m > [22mdisplayToIso[2m > [22mreturns empty string for completely invalid text[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date-field.test.ts[2m > [22mmaskDate[2m > [22madds separator after 2 digits[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date-field.test.ts[2m > [22mmaskDate[2m > [22madds two separators for a full date[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date-field.test.ts[2m > [22mmaskDate[2m > [22mstrips non-digit characters[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date-field.test.ts[2m > [22mmaskDate[2m > [22mlimits to 8 significant digits (10 chars with separators)[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date-field.test.ts[2m > [22mmaskDate[2m > [22mreturns empty string for empty input[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date-field.test.ts[2m > [22mmaskDate[2m > [22mhandles pasted ISO date by stripping dashes[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date-field.test.ts[2m > [22mmaskDate[2m > [22mhandles a single digit[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/lead.test.ts[2m > [22mLeadStatus[2m > [22maccepts known states and rejects unknown[32m 3[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/lead.test.ts[2m > [22mCreateLeadInput[2m > [22mrequires a name and coerces empty optionals[32m 3[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/lead.test.ts[2m > [22mCreateLeadInput[2m > [22mrejects empty name and invalid email[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/lead.test.ts[2m > [22mCreateLeadInput[2m > [22mvalidates estimated_value bounds[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/lead.test.ts[2m > [22mUpdateLeadInput[2m > [22mrequires a valid id[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/lead.test.ts[2m > [22mConvertLeadInput[2m > [22mrequires fiscal fields[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/lead.test.ts[2m > [22mUpdateLeadStatusInput refinements[2m > [22mforbids a reason for non-closure states[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/lead.test.ts[2m > [22mUpdateLeadStatusInput refinements[2m > [22mrequires a reason for closure states[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/lead.test.ts[2m > [22mUpdateLeadStatusInput refinements[2m > [22mallows non-closure states without a reason[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/lead.test.ts[2m > [22mLogCallInput[2m > [22mrequires notes or transcript[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/lead.test.ts[2m > [22mLogCallInput[2m > [22mcoerces duration and validates outcome[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/lead.test.ts[2m > [22mLogEmailInput / LogNoteInput[2m > [22mvalidates email log shape[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/lead.test.ts[2m > [22mLogEmailInput / LogNoteInput[2m > [22mrequires note content[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/lead.test.ts[2m > [22mSendEmailToLeadInput / AssignLeadOwnerInput[2m > [22mapplies includeSignature default and requires recipient[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/lead.test.ts[2m > [22mSendEmailToLeadInput / AssignLeadOwnerInput[2m > [22mcoerces empty assignee to null[32m 0[2mms[22m[39m
+{"level":40,"time":"2026-07-08T13:13:44.858Z","app":"backoffice-doscientos","scope":"crm.conversion","err":{"type":"Object","message":"db down","stack":""},"leadId":"l1","msg":"lead_promote_failed"}
+ [32mΓ£ô[39m lib/crm/conversion.test.ts[2m > [22mhasCompleteFiscalData[2m > [22mis true only when name, nif and billing_address are all present[32m 35[2mms[22m[39m
+ [32mΓ£ô[39m lib/crm/conversion.test.ts[2m > [22mhasCompleteFiscalData[2m > [22mis false when any field is missing or blank[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/crm/conversion.test.ts[2m > [22mpromoteLeadFromClient[2m > [22mreturns not-promoted when the client has no linked lead[32m 7[2mms[22m[39m
+ [32mΓ£ô[39m lib/crm/conversion.test.ts[2m > [22mpromoteLeadFromClient[2m > [22mpromotes an open lead to won and logs an interaction[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/crm/conversion.test.ts[2m > [22mpromoteLeadFromClient[2m > [22mskips leads already in a terminal state[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/crm/conversion.test.ts[2m > [22mpromoteLeadFromClient[2m > [22mreturns not-promoted (swallowing the error) when the update fails[32m 24[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/lead-intake.test.ts[2m > [22mingestLead ΓÇô new lead[2m > [22minserts a row and returns duplicate: false[32m 9[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/lead-intake.test.ts[2m > [22mingestLead ΓÇô new lead[2m > [22mreturns ok:false when validation fails[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/lead-intake.test.ts[2m > [22mingestLead ΓÇô externalId dedupe[2m > [22mreturns duplicate: true without inserting when externalId already exists[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/lead-intake.test.ts[2m > [22mingestLead ΓÇô soft-dedupe by email (cross-source)[2m > [22mreturns duplicate: true and does not insert a second lead[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/lead-intake.test.ts[2m > [22mingestLead ΓÇô soft-dedupe by email (cross-source)[2m > [22menriches the existing lead with company from the second source[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/lead-intake.test.ts[2m > [22mingestLead ΓÇô soft-dedupe by email (cross-source)[2m > [22mdoes not overwrite existing company with incoming value[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/lead-intake.test.ts[2m > [22mingestLead ΓÇô soft-dedupe by phone[2m > [22mmatches by phone when email is absent and enriches[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/lead-intake.test.ts[2m > [22menrichLead ΓÇô note appending[2m > [22mappends notes with separator when existing notes are present[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/lead-intake.test.ts[2m > [22menrichLead ΓÇô note appending[2m > [22msets notes directly when existing lead has none[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/lead-intake.test.ts[2m > [22menrichLead ΓÇô note appending[2m > [22mis idempotent: does not append the same note twice[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/common.test.ts[2m > [22mstring coercion primitives[2m > [22memptyToUndef maps '' to undefined[32m 3[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/common.test.ts[2m > [22mstring coercion primitives[2m > [22moptionalUuid accepts uuid, '' and rejects garbage[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/common.test.ts[2m > [22mstring coercion primitives[2m > [22massignableUuid coerces '' to null[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/common.test.ts[2m > [22mstring coercion primitives[2m > [22moptionalDate collapses '' to undefined but keeps real dates[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/common.test.ts[2m > [22mstring coercion primitives[2m > [22moptionalEmail validates or collapses[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/common.test.ts[2m > [22mtext factories[2m > [22moptionalText enforces max and accepts ''[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/common.test.ts[2m > [22mtext factories[2m > [22mrequiredText trims and enforces min/max[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/common.test.ts[2m > [22mformDataToObject[2m > [22mkeeps only string entries[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/common.test.ts[2m > [22mshared object schemas[2m > [22muuidIdInput validates the id[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/common.test.ts[2m > [22mshared object schemas[2m > [22mlineItemInput coerces numbers and applies defaults[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/invoices/actions.rectification.test.ts[2m > [22mcreateRectification ΓÇô happy path[2m > [22mreturns ok:true with the new invoice id[32m 6[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/invoices/actions.rectification.test.ts[2m > [22mcreateRectification ΓÇô happy path[2m > [22mcreates the rectification with series R and is_rectification:true[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/invoices/actions.rectification.test.ts[2m > [22mcreateRectification ΓÇô happy path[2m > [22mcopies financial totals from the original invoice[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/invoices/actions.rectification.test.ts[2m > [22mcreateRectification ΓÇô happy path[2m > [22mstores the rectification reason[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/invoices/actions.rectification.test.ts[2m > [22mcreateRectification ΓÇô happy path[2m > [22mmarks the original invoice as rectified[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/invoices/actions.rectification.test.ts[2m > [22mcreateRectification ΓÇô happy path[2m > [22mworks for R4 type as well[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/invoices/actions.rectification.test.ts[2m > [22mcreateRectification ΓÇô happy path[2m > [22mworks for paid invoices[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/invoices/actions.rectification.test.ts[2m > [22mcreateRectification ΓÇô happy path[2m > [22mworks for overdue invoices[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/invoices/actions.rectification.test.ts[2m > [22mcreateRectification ΓÇô business rule guards[2m > [22mfails when original invoice is not found[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/invoices/actions.rectification.test.ts[2m > [22mcreateRectification ΓÇô business rule guards[2m > [22mfails when original is in draft status[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/invoices/actions.rectification.test.ts[2m > [22mcreateRectification ΓÇô business rule guards[2m > [22mfails when original is cancelled[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/invoices/actions.rectification.test.ts[2m > [22mcreateRectification ΓÇô business rule guards[2m > [22mfails when original is already rectified[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/invoices/actions.rectification.test.ts[2m > [22mcreateRectification ΓÇô business rule guards[2m > [22mfails when the invoice is itself a rectification[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/invoices/actions.rectification.test.ts[2m > [22mcreateRectification ΓÇô role restriction[2m > [22mthrows for viewer role (not in allowed list)[32m 4[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/invoices/actions.rectification.test.ts[2m > [22mcreateRectification ΓÇô role restriction[2m > [22mallows owner role[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/invoices/actions.rectification.test.ts[2m > [22mcreateRectification ΓÇô input validation[2m > [22mfails when reason is empty[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/invoices/actions.rectification.test.ts[2m > [22mcreateRectification ΓÇô input validation[2m > [22mfails when originalInvoiceId is not a UUID[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/invoices/actions.rectification.test.ts[2m > [22mcreateRectification ΓÇô input validation[2m > [22mfails for invalid rectification type[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/invoices/actions.rectification.test.ts[2m > [22mcreateRectification ΓÇô DB errors[2m > [22mreturns ok:false when fetching items fails[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/internal-doc.test.ts[2m > [22minternal-doc constants & enums[2m > [22mexpose catalogue arrays and limits[32m 5[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/internal-doc.test.ts[2m > [22mUpdateInternalDocInput[2m > [22mdefaults tags to an empty array[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/internal-doc.test.ts[2m > [22mUpdateInternalDocInput[2m > [22mtrims and accepts tags within limits[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/internal-doc.test.ts[2m > [22mUpdateInternalDocInput[2m > [22mrejects too many tags[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/internal-doc.test.ts[2m > [22mUpdateInternalDocInput[2m > [22mrequires a name and a valid id[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/internal-doc.test.ts[2m > [22mInternalDocIdInput[2m > [22mvalidates the uuid payload[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/index.test.ts[2m > [22mcomputeExpenseTotals[2m > [22mcomputes tax and total with 21% IVA[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/index.test.ts[2m > [22mcomputeExpenseTotals[2m > [22mhandles 0% tax rate[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/index.test.ts[2m > [22mcomputeExpenseTotals[2m > [22mrounds to 2 decimals[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/index.test.ts[2m > [22mcomputeExpenseTotals[2m > [22mcoerces non-finite inputs to zero[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/index.test.ts[2m > [22mprofitMargin[2m > [22mreturns null when revenue is 0[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/index.test.ts[2m > [22mprofitMargin[2m > [22mcomputes positive margin[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/index.test.ts[2m > [22mprofitMargin[2m > [22mcan be negative when expense > revenue[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/index.test.ts[2m > [22mbuildMonthlySeries[2m > [22mreturns 6 months ending at the reference month[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/index.test.ts[2m > [22mbuildMonthlySeries[2m > [22maggregates revenue and expense by month[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/index.test.ts[2m > [22mbuildMonthlySeries[2m > [22mignores rows outside the 6-month window[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/index.test.ts[2m > [22mbuildMonthlySeries[2m > [22maccepts Date objects as input[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/index.test.ts[2m > [22mcomputeProposalTotals[2m > [22mreturns zeroed buckets for an empty list[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/index.test.ts[2m > [22mcomputeProposalTotals[2m > [22mtreats missing billing_cycle as one-time[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/index.test.ts[2m > [22mcomputeProposalTotals[2m > [22mbuckets each cadence independently and keeps recurring per-period[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/index.test.ts[2m > [22mcomputeProposalTotals[2m > [22maggregates multiple lines sharing the same cadence[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/index.test.ts[2m > [22mcomputeProposalTotals[2m > [22mfalls back to one-time on an unknown billing_cycle value[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/index.test.ts[2m > [22mcomputeProposalTotals[2m > [22mtreats null billing_cycle as one-time[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/index.test.ts[2m > [22mcomputeProposalTotals[2m > [22mcoerces NaN numeric inputs to zero[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/expense.test.ts[2m > [22mexpense enums[2m > [22mexpose canonical vocabularies[32m 4[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/expense.test.ts[2m > [22mExpenseInput payer refinement[2m > [22mapplies defaults and coerces subtotal[32m 4[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/expense.test.ts[2m > [22mExpenseInput payer refinement[2m > [22mrequires a payer when the source is a member[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/expense.test.ts[2m > [22mExpenseInput payer refinement[2m > [22mrejects a negative subtotal and a missing vendor[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/expense.test.ts[2m > [22mUpdateExpenseInput / ExpenseIdInput[2m > [22mextends the base shape with an id[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/expense.test.ts[2m > [22mUpdateExpenseInput / ExpenseIdInput[2m > [22mvalidates a bare uuid id[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/proposals/key-points.test.ts[2m > [22mparseKeyPoints[2m > [22mreturns [] for non-array input[32m 3[2mms[22m[39m
+ [32mΓ£ô[39m lib/proposals/key-points.test.ts[2m > [22mparseKeyPoints[2m > [22mnormalises entries and trims the title[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/proposals/key-points.test.ts[2m > [22mparseKeyPoints[2m > [22mdrops entries without a usable title[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/proposals/key-points.test.ts[2m > [22mparseKeyPoints[2m > [22msynthesises an id from the index when missing or blank[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/proposals/key-points.test.ts[2m > [22mparseKeyPoints[2m > [22mnulls out blank/whitespace descriptions[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/proposals/key-points.test.ts[2m > [22mparseKeyPoints[2m > [22mskips non-object array members (index is over the filtered array)[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/proposals/key-points.test.ts[2m > [22mtoEditableKeyPoints[2m > [22mhydrates null descriptions into empty strings[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/proposals/key-points.test.ts[2m > [22mserializeKeyPoints[2m > [22mreturns null for an empty list[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/proposals/key-points.test.ts[2m > [22mserializeKeyPoints[2m > [22mreturns null when every entry is blank[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/proposals/key-points.test.ts[2m > [22mserializeKeyPoints[2m > [22mtrims, drops blank titles and collapses empty descriptions to null[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/proposals/key-points.test.ts[2m > [22mserializeKeyPoints[2m > [22mround-trips through parse ΓåÆ toEditable ΓåÆ serialize[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/proposals/key-points.test.ts[2m > [22mcreateEmptyKeyPoint[2m > [22mcreates a blank point with a non-empty unique id[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/proposals/key-points.test.ts[2m > [22mcreateEmptyPair[2m > [22mcreates a blank pair with a non-empty unique id[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/proposals/key-points.test.ts[2m > [22mzipKeyPoints[2m > [22mpairs a problem with the solution sharing its id[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/proposals/key-points.test.ts[2m > [22mzipKeyPoints[2m > [22mfalls back to positional order for legacy independent lists[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/proposals/key-points.test.ts[2m > [22mzipKeyPoints[2m > [22mprefers id matches even when order differs[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/proposals/key-points.test.ts[2m > [22mzipKeyPoints[2m > [22mkeeps orphan solutions as solution-only pairs[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/proposals/key-points.test.ts[2m > [22mzipKeyPoints[2m > [22mleaves the solution blank when a problem has none[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/proposals/key-points.test.ts[2m > [22munzipPairs[2m > [22msplits pairs into two id-aligned lists[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/proposals/key-points.test.ts[2m > [22munzipPairs[2m > [22mround-trips pairs through unzip ΓåÆ zip[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/proposals/key-points.test.ts[2m > [22munzipPairs[2m > [22mserializes cleanly, dropping the blank half of a one-sided pair[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/follow-ups.test.ts[2m > [22mgetFollowUps logic[2m > [22mreturns an empty response when no data exists[32m 5[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/follow-ups.test.ts[2m > [22mgetFollowUps logic[2m > [22mcorrectly maps a stale lead row[32m 6[2mms[22m[39m
+ [32mΓ£ô[39m lib/integrations/follow-ups.test.ts[2m > [22mgetFollowUps logic[2m > [22mcorrectly maps a pending proposal row[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/navigation/shortcuts.test.ts[2m > [22mfindShortcut[2m > [22mmatches by key case-insensitively[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/navigation/shortcuts.test.ts[2m > [22mfindShortcut[2m > [22mreturns undefined for an unknown key[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/navigation/shortcuts.test.ts[2m > [22mfindShortcut[2m > [22mresolves create shortcuts independently from nav ones[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/navigation/shortcuts.test.ts[2m > [22mshortcut tables are internally consistent[2m > [22mhas unique keys within each list[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/navigation/shortcuts.test.ts[2m > [22mshortcut tables are internally consistent[2m > [22muses lowercase single-character keys[32m 4[2mms[22m[39m
+ [32mΓ£ô[39m lib/navigation/shortcuts.test.ts[2m > [22mmergeRecentItems[2m > [22mprepends the new item[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/navigation/shortcuts.test.ts[2m > [22mmergeRecentItems[2m > [22mdeduplicates by href, moving the item to the front[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/navigation/shortcuts.test.ts[2m > [22mmergeRecentItems[2m > [22mcaps the list at the max length (default 5)[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/navigation/shortcuts.test.ts[2m > [22mmergeRecentItems[2m > [22mhonours a custom max[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/range.test.ts[2m > [22mparseMarketingRange[2m > [22mdefaults to 30d for undefined[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/range.test.ts[2m > [22mparseMarketingRange[2m > [22mdefaults to 30d for an unknown string[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/range.test.ts[2m > [22mparseMarketingRange[2m > [22maccepts every valid range key[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/range.test.ts[2m > [22mparseMarketingRange[2m > [22mpicks the first element from an array[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/range.test.ts[2m > [22mparseMarketingRange[2m > [22mfalls back when the array contains an invalid value[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/range.test.ts[2m > [22mparseMarketingSort[2m > [22mdefaults to spend_desc for undefined[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/range.test.ts[2m > [22mparseMarketingSort[2m > [22mdefaults to spend_desc for unknown string[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/range.test.ts[2m > [22mparseMarketingSort[2m > [22maccepts all valid sort keys[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/range.test.ts[2m > [22mparseMarketingSort[2m > [22mpicks the first element from an array[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/range.test.ts[2m > [22mparseShowPaused[2m > [22mreturns false for undefined[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/range.test.ts[2m > [22mparseShowPaused[2m > [22mreturns false for the string '0'[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/range.test.ts[2m > [22mparseShowPaused[2m > [22mreturns false for 'false'[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/range.test.ts[2m > [22mparseShowPaused[2m > [22mreturns true for '1'[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/range.test.ts[2m > [22mparseShowPaused[2m > [22mreturns true for 'true'[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/range.test.ts[2m > [22mparseShowPaused[2m > [22mpicks the first element from an array[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/range.test.ts[2m > [22mparseMarketingView[2m > [22mdefaults to ads for undefined[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/range.test.ts[2m > [22mparseMarketingView[2m > [22mdefaults to ads for unknown value[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/range.test.ts[2m > [22mparseMarketingView[2m > [22maccepts 'campaigns'[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/range.test.ts[2m > [22mparseMarketingView[2m > [22maccepts 'ads'[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/range.test.ts[2m > [22mmetaHistoryFloor[2m > [22mgoes back exactly 37 months from the reference date[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/range.test.ts[2m > [22mrangeToDates[2m > [22m7d: since = 7 days ago, label matches[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/range.test.ts[2m > [22mrangeToDates[2m > [22mlast_month: until is day-before-current-month (last day of prev month)[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/range.test.ts[2m > [22mrangeToDates[2m > [22mytd: since is the local start of the current year, label matches[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/range.test.ts[2m > [22mrangeToDates[2m > [22mmax: label is Hist├│rico[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/marketing/range.test.ts[2m > [22mrangeToDates[2m > [22munknown range falls back to 30d label[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m app/auth/callback/route.test.ts[2m > [22m/auth/callback[2m > [22mexchanges the code without signing out first (preserves PKCE verifier cookie)[32m 6[2mms[22m[39m
+ [32mΓ£ô[39m app/auth/callback/route.test.ts[2m > [22m/auth/callback[2m > [22mredirects to the validated next path on success[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/auth/callback/route.test.ts[2m > [22m/auth/callback[2m > [22mdefaults next to /inicio when missing[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/auth/callback/route.test.ts[2m > [22m/auth/callback[2m > [22mrejects absolute external next values and falls back to /inicio[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/auth/callback/route.test.ts[2m > [22m/auth/callback[2m > [22mrejects protocol-relative next values (//evil.com) and falls back to /inicio[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m app/auth/callback/route.test.ts[2m > [22m/auth/callback[2m > [22mredirects to /login with error when code is missing[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/auth/callback/route.test.ts[2m > [22m/auth/callback[2m > [22msurfaces provider error params without calling the exchange[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m app/auth/callback/route.test.ts[2m > [22m/auth/callback[2m > [22mredirects to /login when exchangeCodeForSession fails[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/ranking.test.ts[2m > [22mrankBetween[2m > [22mreturns a key strictly between two adjacent-gap keys[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/ranking.test.ts[2m > [22mrankBetween[2m > [22mappends when both bounds are open-ended[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/ranking.test.ts[2m > [22mrankBetween[2m > [22mrecurses into the tail when characters are adjacent[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/ranking.test.ts[2m > [22mrankBetween[2m > [22mproduces a key before 'a' boundary by going open-left[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/ranking.test.ts[2m > [22mrankBetween[2m > [22mproduces a key after the last when open-right[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/ranking.test.ts[2m > [22mrankBetween[2m > [22mrankAfter(null) seeds the very first key[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/ranking.test.ts[2m > [22mrankBetween[2m > [22mthrows when a >= b[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/ranking.test.ts[2m > [22mrankBetween[2m > [22mthrows on invalid (non a-z) keys[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/ranking.test.ts[2m > [22mrankBetween ordering invariants[2m > [22mkeeps lexicographic order across many sequential inserts at the end[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/ranking.test.ts[2m > [22mrankBetween ordering invariants[2m > [22mkeeps order when repeatedly inserting between two fixed keys[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/ranking.test.ts[2m > [22mrankBetween ordering invariants[2m > [22mcan always split the gap between two freshly generated neighbours[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/reminder.test.ts[2m > [22mCreateReminderInput[2m > [22maccepts a reminder linked to a lead[32m 4[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/reminder.test.ts[2m > [22mCreateReminderInput[2m > [22maccepts links to client or project[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/reminder.test.ts[2m > [22mCreateReminderInput[2m > [22mrequires at least one relation[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/reminder.test.ts[2m > [22mCreateReminderInput[2m > [22mrequires a non-empty title[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/reminder.test.ts[2m > [22mCreateReminderInput[2m > [22mrejects an unparseable date[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/reminder.test.ts[2m > [22mReminderIdInput[2m > [22mvalidates the uuid payload[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/invoice.test.ts[2m > [22mInvoiceStatus[2m > [22mvalidates members[32m 3[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/invoice.test.ts[2m > [22mInvoiceStatus[2m > [22mincludes rectified[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/invoice.test.ts[2m > [22mid payloads[2m > [22mvalidate uuid shapes[32m 3[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/invoice.test.ts[2m > [22mUpdateInvoiceInput[2m > [22mrequires at least one line item when items provided[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/invoice.test.ts[2m > [22mUpdateInvoiceInput[2m > [22mcoerces line items and defaults[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/invoice.test.ts[2m > [22mUpdateInvoiceInput[2m > [22maccepts a payload with only an id[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/invoice.test.ts[2m > [22mUpdateInvoiceStatusInput[2m > [22mvalidates id + status[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/invoice.test.ts[2m > [22mCreateRectificationInput[2m > [22maccepts R1 and R4 types[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/invoice.test.ts[2m > [22mCreateRectificationInput[2m > [22mrejects unknown rectification types[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/invoice.test.ts[2m > [22mCreateRectificationInput[2m > [22mrequires a non-empty reason[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/invoice.test.ts[2m > [22mCreateRectificationInput[2m > [22mrejects reason longer than 500 chars[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/invoice.test.ts[2m > [22mCreateRectificationInput[2m > [22mrequires originalInvoiceId to be a UUID[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date.test.ts[2m > [22mshortMonthEs[2m > [22mreturns a localized short month without trailing period[32m 3[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date.test.ts[2m > [22mgetGreeting[2m > [22madapts to the hour of day[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date.test.ts[2m > [22mparseDashboardRange[2m > [22maccepts known ranges[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date.test.ts[2m > [22mparseDashboardRange[2m > [22mdefaults to 30d for unknown / missing / array values[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date.test.ts[2m > [22mdescribeRange[2m > [22mmaps every range to a human label[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date.test.ts[2m > [22mcomputeTrend[2m > [22mreturns flat 0 when both values are zero[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date.test.ts[2m > [22mcomputeTrend[2m > [22mreturns null when previous is zero but current is not[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date.test.ts[2m > [22mcomputeTrend[2m > [22mcomputes a positive delta and 'up' direction[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date.test.ts[2m > [22mcomputeTrend[2m > [22mcomputes a negative delta and 'down' direction[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date.test.ts[2m > [22mcomputeTrend[2m > [22muses the magnitude of previous and stays flat within the dead-band[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date.test.ts[2m > [22mtoIsoDate / todayIsoLocal / addDaysIsoLocal[2m > [22mtoIsoDate returns the UTC YYYY-MM-DD slice[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date.test.ts[2m > [22mtoIsoDate / todayIsoLocal / addDaysIsoLocal[2m > [22mtodayIsoLocal formats local calendar day with zero padding[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date.test.ts[2m > [22mtoIsoDate / todayIsoLocal / addDaysIsoLocal[2m > [22maddDaysIsoLocal shifts whole days and rolls over months[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date.test.ts[2m > [22mresolveDateRange[2m > [22mbuilds rolling windows of equal length for 30d[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date.test.ts[2m > [22mresolveDateRange[2m > [22muses 7 days for the 7d range[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/utils/date.test.ts[2m > [22mresolveDateRange[2m > [22mytd starts on Jan 1 and compares with the same span last year[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/ratelimit.test.ts[2m > [22mrateLimit[2m > [22mallows requests under the limit[32m 3[2mms[22m[39m
+ [32mΓ£ô[39m lib/ratelimit.test.ts[2m > [22mrateLimit[2m > [22mblocks requests over the limit[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/ratelimit.test.ts[2m > [22mrateLimit[2m > [22misolates buckets per key[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/ratelimit.test.ts[2m > [22mrateLimit[2m > [22mresets after the window expires[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/ratelimit.test.ts[2m > [22mrateLimit[2m > [22mexposes the resetAt timestamp[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/task.test.ts[2m > [22mTaskStatus / TaskPriority[2m > [22mvalidate enum members[32m 4[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/task.test.ts[2m > [22mCreateTaskInput[2m > [22mrequires a project or lead[32m 4[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/task.test.ts[2m > [22mCreateTaskInput[2m > [22mapplies status/priority defaults[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/task.test.ts[2m > [22mCreateTaskInput[2m > [22mrejects an empty title[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/task.test.ts[2m > [22mUpdateTaskInput[2m > [22mrequires id, status and priority[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/task.test.ts[2m > [22mUpdateTaskStatusInput / MoveTaskInput[2m > [22mvalidates status change[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/task.test.ts[2m > [22mUpdateTaskStatusInput / MoveTaskInput[2m > [22maccepts optional before/after ids and null[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/status.test.ts[2m > [22mstatus metadata maps[2m > [22mINVOICE_STATUS[2m > [22mhas a non-empty label and a known variant for every entry[32m 3[2mms[22m[39m
+ [32mΓ£ô[39m lib/status.test.ts[2m > [22mstatus metadata maps[2m > [22mPROPOSAL_STATUS[2m > [22mhas a non-empty label and a known variant for every entry[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/status.test.ts[2m > [22mstatus metadata maps[2m > [22mLEAD_STATUS[2m > [22mhas a non-empty label and a known variant for every entry[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/status.test.ts[2m > [22mstatus metadata maps[2m > [22mPROJECT_STATUS[2m > [22mhas a non-empty label and a known variant for every entry[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/status.test.ts[2m > [22mstatus metadata maps[2m > [22mTASK_STATUS[2m > [22mhas a non-empty label and a known variant for every entry[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/status.test.ts[2m > [22mstatus metadata maps[2m > [22mTASK_PRIORITY[2m > [22mhas a non-empty label and a known variant for every entry[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/status.test.ts[2m > [22mstatus metadata maps[2m > [22mVERIFACTU_STATUS[2m > [22mhas a non-empty label and a known variant for every entry[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/status.test.ts[2m > [22mstatus metadata maps[2m > [22mVERIFACTU_ALERT_STATUS[2m > [22mhas a non-empty label and a known variant for every entry[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/status.test.ts[2m > [22mstatus metadata maps[2m > [22mEXPENSE_STATUS[2m > [22mhas a non-empty label and a known variant for every entry[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/status.test.ts[2m > [22mspecific mappings[2m > [22mrenders proposal.sent consistently[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/status.test.ts[2m > [22mspecific mappings[2m > [22mmaps invoice states[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/status.test.ts[2m > [22mspecific mappings[2m > [22mmaps lead and task states[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/status.test.ts[2m > [22mspecific mappings[2m > [22mmaps verifactu states (full + alert subset)[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/status.test.ts[2m > [22mspecific mappings[2m > [22mborrows expense labels from lib/finance[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/project.test.ts[2m > [22mproject enums[2m > [22mvalidate status and sync mode[32m 3[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/project.test.ts[2m > [22mProjectInput github refinement[2m > [22mapplies defaults when sync is disabled[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/project.test.ts[2m > [22mProjectInput github refinement[2m > [22mrequires a repo url when sync is enabled[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/project.test.ts[2m > [22mProjectInput github refinement[2m > [22mrejects a malformed repo url[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/project.test.ts[2m > [22mProjectInput github refinement[2m > [22maccepts a valid repo url for one-way sync[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/project.test.ts[2m > [22mProjectInput github refinement[2m > [22mrequires an installation id for bidirectional sync[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/project.test.ts[2m > [22mUpdateProjectInput[2m > [22mrequires a valid id[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/helpers.test.ts[2m > [22mroundCurrency[2m > [22mrounds to 2 decimals[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/helpers.test.ts[2m > [22mcomputeLineSubtotal[2m > [22mmultiplies quantity by unit price[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/helpers.test.ts[2m > [22mcomputeLineSubtotal[2m > [22mrounds the product to 2 decimals[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/helpers.test.ts[2m > [22mcomputeLineSubtotal[2m > [22mcoerces non-numeric inputs to zero[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/helpers.test.ts[2m > [22mcomputeLineTotals[2m > [22mreturns zeros for an empty list[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/helpers.test.ts[2m > [22mcomputeLineTotals[2m > [22maggregates subtotal, tax and total across mixed VAT rates[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/helpers.test.ts[2m > [22mcomputeLineTotals[2m > [22mtreats line items as one-time regardless of cadence[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/helpers.test.ts[2m > [22mcomputeLineTotals[2m > [22mcoerces NaN inputs to zero[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/helpers.test.ts[2m > [22mbuildVatBreakdown[2m > [22mreturns an empty array for no items[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/helpers.test.ts[2m > [22mbuildVatBreakdown[2m > [22mgroups bases and taxes per distinct rate, sorted ascending[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/helpers.test.ts[2m > [22mbuildVatBreakdown[2m > [22mtolerates string and null inputs coming from Supabase[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/helpers.test.ts[2m > [22mcomputeProjectProfitability[2m > [22mvalues hours with the internal hourly cost[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/helpers.test.ts[2m > [22mcomputeProjectProfitability[2m > [22mcollapses margin to revenue ΓêÆ expenses when hourly cost is 0[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/helpers.test.ts[2m > [22mcomputeProjectProfitability[2m > [22mreturns null rate/percentage with no hours or revenue[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/helpers.test.ts[2m > [22mcomputeProjectProfitability[2m > [22myields a negative margin when costs exceed revenue[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/helpers.test.ts[2m > [22mcomputeProjectProfitability[2m > [22mcoerces non-numeric inputs to zero[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/client.test.ts[2m > [22mCreateClientInput[2m > [22mrequires a name and collapses empty optionals[32m 6[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/client.test.ts[2m > [22mCreateClientInput[2m > [22mrejects empty name and invalid email[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/client.test.ts[2m > [22mUpdateClientInput[2m > [22mextends create with a required id[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/range.test.ts[2m > [22mparseFinanceRange[2m > [22mreturns the value when valid[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/range.test.ts[2m > [22mparseFinanceRange[2m > [22munwraps an array of search params[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/range.test.ts[2m > [22mparseFinanceRange[2m > [22mfalls back to 'month' for invalid or missing values[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/range.test.ts[2m > [22mFINANCE_RANGE_OPTIONS[2m > [22mlists every range with a label[32m 4[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/range.test.ts[2m > [22mfinanceRangeToDates[2m > [22mreturns ISO dates and a label for every range[32m 3[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/range.test.ts[2m > [22mfinanceRangeToDates[2m > [22mmonth starts on the first of the current month[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/range.test.ts[2m > [22mfinanceRangeToDates[2m > [22mytd starts on Jan 1st[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/range.test.ts[2m > [22mfinanceRangeToDates[2m > [22mmax starts at the historical floor[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/finance/range.test.ts[2m > [22mfinanceRangeToDates[2m > [22mlast_month ends before this month starts[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/subscriptions/helpers.test.ts[2m > [22madvanceDate[2m > [22mmonthly[2m > [22madvances a normal date by one month[32m 4[2mms[22m[39m
+ [32mΓ£ô[39m lib/subscriptions/helpers.test.ts[2m > [22madvanceDate[2m > [22mmonthly[2m > [22mclamps Jan 31 to Feb 28 on a non-leap year[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/subscriptions/helpers.test.ts[2m > [22madvanceDate[2m > [22mmonthly[2m > [22mclamps Jan 31 to Feb 29 on a leap year[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/subscriptions/helpers.test.ts[2m > [22madvanceDate[2m > [22mmonthly[2m > [22mclamps Mar 31 to Apr 30[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/subscriptions/helpers.test.ts[2m > [22madvanceDate[2m > [22mmonthly[2m > [22mrolls over from December to January of the next year[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/subscriptions/helpers.test.ts[2m > [22madvanceDate[2m > [22mmonthly[2m > [22mclamps Dec 31 to Jan 31 (no overflow)[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/subscriptions/helpers.test.ts[2m > [22madvanceDate[2m > [22mquarterly[2m > [22madvances by three months[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/subscriptions/helpers.test.ts[2m > [22madvanceDate[2m > [22mquarterly[2m > [22mclamps Nov 30 to Feb 28 on a non-leap year[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/subscriptions/helpers.test.ts[2m > [22madvanceDate[2m > [22mquarterly[2m > [22mclamps Nov 30 to Feb 29 on a leap year[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/subscriptions/helpers.test.ts[2m > [22madvanceDate[2m > [22mquarterly[2m > [22mrolls over across the year boundary[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/subscriptions/helpers.test.ts[2m > [22madvanceDate[2m > [22myearly[2m > [22madvances by one year[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/subscriptions/helpers.test.ts[2m > [22madvanceDate[2m > [22myearly[2m > [22mclamps Feb 29 to Feb 28 on the next non-leap year[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/subscriptions/helpers.test.ts[2m > [22madvanceDate[2m > [22myearly[2m > [22mkeeps Feb 29 on the next leap year[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/subscriptions/helpers.test.ts[2m > [22madvanceDate[2m > [22munknown cycle[2m > [22mreturns the original date unchanged for an unknown cycle[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/password.test.ts[2m > [22mconstants[2m > [22mPASSWORD_MIN_LENGTH is 8[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/password.test.ts[2m > [22mconstants[2m > [22mPASSWORD_COMPLEXITY_REGEX requires all four character classes[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/password.test.ts[2m > [22mvalidatePassword[2m > [22mreturns null for a fully compliant password[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/password.test.ts[2m > [22mvalidatePassword[2m > [22mreturns length message when password is too short[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/password.test.ts[2m > [22mvalidatePassword[2m > [22mreturns complexity message when no uppercase[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/password.test.ts[2m > [22mvalidatePassword[2m > [22mreturns complexity message when no lowercase[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/password.test.ts[2m > [22mvalidatePassword[2m > [22mreturns complexity message when no digit[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/password.test.ts[2m > [22mvalidatePassword[2m > [22mreturns complexity message when no symbol[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/password.test.ts[2m > [22mvalidatePassword[2m > [22mreturns length message (not complexity) for empty string[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/password.test.ts[2m > [22mpasswordField[2m > [22mpasses a valid password[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/password.test.ts[2m > [22mpasswordField[2m > [22mrejects a password that is too short[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/password.test.ts[2m > [22mpasswordField[2m > [22mrejects a password missing a symbol[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/password.test.ts[2m > [22mpasswordField[2m > [22mrejects a password missing an uppercase letter[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/password.test.ts[2m > [22mpasswordField[2m > [22mrejects a password missing a lowercase letter[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m lib/schemas/password.test.ts[2m > [22mpasswordField[2m > [22mrejects a password missing a digit[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/settings/page.test.ts[2m > [22msettings root page[2m > [22mredirects to /settings/profile[32m 3[2mms[22m[39m
+ [32mΓ£ô[39m app/(app)/settings/page.test.ts[2m > [22msettings root page[2m > [22mredirects exactly once per render[32m 0[2mms[22m[39m
+pnpm : 
+En línea: 1 Carácter: 1
++ pnpm vitest run --reporter=verbose 2>&1 | Out-File -FilePath "test-ou ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m[1m[41m Failed Tests 8 [49m[22m[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m
+
+[41m[1m FAIL [22m[49m lib/invoices/pdf-data.test.ts[2m > [22mbuildInvoicePdfData[2m > [22momits the QR when the emisor NIF is not 
+configured
+[31m[1mAssertionError[22m: expected 'data:image/png;base64,iVBORw0KGgoAAAAΓÇª' to be null[39m
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAADwCAYAAAA+VemSAAAAAklEQVR4AewaftIAAAo4SURBVO3BUY5juZYEwXBC+9+yT30TpwBqbkuVzBdm+Eeq6korVX
+Wtlaq61kpVXWulqq61UlXXeuUvgPxUaiZAnlDzFJCfQM0TQCZqJkCeUPMOIDs1EyA7NRMgP5Wa3UpVXWulqq61UlXXWqmqa61U1bVeeZOabwLyLUDeoeYJNe8AslPzFJBTQCZqPgHIRM0
+pNU+o+SYgp1aq6lorVXWtlaq61kpVXeuV/wCQp9Q8peYUkJ2aCZAJkJ2aCZAdkHeo2QF5Ss0OyETNBMgpNafU/FRAnlLzxEpVXWulqq61UlXXWqmqa61U1bVe+UWA7NRM1OyATNR8gpqn
+1JwCckrNBMgpNRMgT6nZAZmo+a1WqupaK1V1rZWqutZKVV3rlV9EzSkg36RmB+QdanZAJmo+Qc0EyA7IRM0pIPV3K1V1rZWqutZKVV1rpaqutVJV13rlP6DmNwNySs0pNe8AcgrIN6nZA
+TkFZKLmKSA7NU+p+ddWqupaK1V1rZWqutZKVV1rpaqu9cqbgPxUQHZqTqmZAJmo2QGZqNkBmag5pWYCZKdmAmSnZgJkouabgOzUTIA8AeSnWqmqa61U1bVWqupaK1V1LfwjvwSQnZoJkF
+NqPgHIN6k5BWSi5ikgOzUTIE+p+a1WqupaK1V1rZWqutZKVV1rpaqu9cpfAJmo2QE5pWYC5Ck1T6h5Csg3qTkFZKJmp+YpIBM1OyBPqXkKyE7NO4Ds1EyAnFKzW6mqa61U1bVWqupaK1V
+1rVf+A2pOAZmoOQVkAmSn5ikgEzWn1OyAvEPNDshTQE6p+QnU7ICcUjNRcwrIRM0OyETNDsiplaq61kpVXWulqq61UlXXWqmqa73yF2omQHZqngJySs0EyA7IRM0OyETNKTVPqTmlZgJk
+p+YUkAmQiZon1LwDyE7NKSATNf+amlMrVXWtlaq61kpVXWulqq6Ff+QhIBM1p4BM1JwCslMzAXJKzQTITs0pIE+pmQDZqZkA2amZADml5icA8oSaTwFySs1upaqutVJV11qpqmutVNW1V
+qrqWvhHBkAmap4A8pSaCZBTanZA3qHmm4B8i5p3ANmpmQB5Ss0OyFNqngJySs0OyETNbqWqrrVSVddaqaprrVTVtVaq6lqvfJmaCZCJmh2QU2omQHZqngJySs1TaiZA/jUgp9RMgDyl5h
+SQnZqn1JxSc2qlqq61UlXXWqmqa61U1bVeeROQnZoJkJ2adwDZqZkAOaVmB+Qdak6p2QGZqDkF5JSaCZAdkHeo+QQ1TwHZqXkKyETNDshTanYrVXWtlaq61kpVXWulqq61UlXXeuWHU7M
+DMlHzhJpvUvMONU8Amaj5JiCn1JxSMwHyTUB2ak4BObVSVddaqaprrVTVtVaq6lqvfJCaHZCJmgmQnZpPADJRMwHyGwA5pWYC5JSaHZB3APkENf+amlMrVXWtlaq61kpVXWulqq61UlXX
+euWHU7MDckrNBMgpIBM1OyATIKfUTIDs1HwTkFNqngLylJodkImaHZCJmgmQHZCJmidWqupaK1V1rZWqutZKVV1rpaqu9cp/AMgpNRMgT6nZAXlKzW+m5puA7NRMgEzUnAJyCshOzQTIU
+0B2ak6tVNW1VqrqWitVda2VqroW/pE3APkENT8VkImaJ4A8pWYCZKfmFJB3qNkBmag5BeSUmlNAJmp2QCZqTgGZqHlipaqutVJV11qpqmutVNW1VqrqWvhHBkBOqfkUIDs13wTkKTU7IB
+M1p4BM1JwCslPzTUD+F6nZAZmo2a1U1bVWqupaK1V1rZWqutYrb1LzTWpOAdmpmQA5pWYC5CZAJmpOAZmo2QF5Ss0pIBM1OyCn1EyATNScAvLESlVda6WqrrVSVddaqaprrVTVtV75CzU
+TIDs1EyCfoOYUkE9RcxM1EyCn1EyAnFKzAzIBMlGzU/OUmh2Qb1JzaqWqrrVSVddaqaprrVTVtV75CyATNU+omQCZqHlCzSkgEyA/AZCdmk9Q801qngIyUXMKyE7NO4Ds1EzU7IBM1OxW
+qupaK1V1rZWqutZKVV1rpaqu9cqbgHyCmgmQnZqfQM0OyCk1EyA/FZBvAjJR84Sap4CcAvIJK1V1rZWqutZKVV1rpaqutVJV18I/8kVA3qFmB2SiZgfkU9T8a0BOqXkKyETNDshTaiZAn
+lAzAXJKzQTIKTU7IBM1u5WqutZKVV1rpaqutVJV13rlTUBOqdmpmQCZANmpmQA5pWYH5JuAvEPNJwDZqXkHkJ2aU0DeoWYH5BSQb1LzCStVda2VqrrWSlVda6WqrrVSVdd65U1qdkAmQH
+Zq3qFmB2Si5hSQnZpPAXJKzVNqdkA+Rc1vpeab1JxaqaprrVTVtVaq6lorVXWtV/4CyETNNwE5BeQTgEzU7IB8k5oJkFNqTqk5BeSUmncA+QQ1p4D8aytVda2VqrrWSlVda6WqrrVSVdf
+CP/IGIDs13wRkouYUkFNqJkB2ar4JyCk1nwJkp2YCZKdmAmSi5hSQnZpTQCZqngJySs1upaqutVJV11qpqmutVNW1VqrqWq/8BZCJmh2QiZodkImaCZCdmgmQnZqJmqfU7IA8pWYC5JSa
+HZCJmk8A8lMBeQrIRM0OyCesVNW1VqrqWitVda2VqrrWK3+h5ikgOzXvUPOvAfkENRMgEzU7IKfUTIDs1EyATNTsgEzU7IBM1EyA7NScUjMBslPzDiDfslJV11qpqmutVNW1VqrqWitVd
+a1X3gTkCSCfomYHZKLmlJoJkJ2ab1IzAfIEkIman0DNE0BOAfkUNU+sVNW1VqrqWitVda2VqrrWK29S81MBOQVkp+YdanZAJmo+AchEzQ7IpwDZqZkA2an5JjVPAZmo2QE5BWSiZrdSVd
+daqaprrVTVtVaq6lorVXWtV/4CyE+l5pSaCZAdkImap4Ds1EzUTIDs1JxScwrIO9TsgNwGyE7NO4CcArJTc2qlqq61UlXXWqmqa61U1bVeeZOabwLyBJBTat4B5Akg71CzA3JKzQTIKSC
+n1EyA7IBM1HyTmqfU7IB8wkpVXWulqq61UlXXWqmqa61U1bVe+Q8AeUrNU2p2QD5FzQ7IKTXfBGSi5hSQp9TsgEyATNQ8AeQnULMDMlGzW6mqa61U1bVWqupaK1V1rZWqutYrvwiQnZqn
+gEzUnFKzA/IONafU7ICcAjJRcwrIKTUTIBMgOzUTNZ8A5F9bqaprrVTVtVaq6lorVXWtV+r/DchOzQTITs2nAHlCzVNqTgGZqDkF5JSaU0AmaiZAdmo+YaWqrrVSVddaqaprrVTVtVaq6
+lqv/AfU/ARqfgMgT6nZAZkA2amZAJmo2QGZqHkKyLeomQCZqDkFZKfm1EpVXWulqq61UlXXWqmqa73yJiA/FZAn1LxDzQ7IU2omQHZqPgHIRM0EyE7NKTXvULMD8hSQnZqJmgmQnZpPWK
+mqa61U1bVWqupaK1V1rZWquhb+kaq60kpVXWulqq61UlXXWqmqa/0fr0+98h0hNVEAAAAASUVORK5CYII="
+
+[36m [2mΓ¥»[22m lib/invoices/pdf-data.test.ts:[2m79:28[22m[39m
+    [90m 77| [39m    [35mconst[39m { buildInvoicePdfData } [33m=[39m [35mawait[39m [34mimportPdfData[39m([32m""[39m)[33m;[39m
+    [90m 78| [39m    [35mconst[39m data [33m=[39m [35mawait[39m [34mbuildInvoicePdfData[39m([34mmakeInput[39m())[33m;[39m
+    [90m 79| [39m    [34mexpect[39m(data[33m.[39mqrDataUrl)[33m.[39m[34mtoBeNull[39m()[33m;[39m
+    [90m   | [39m                           [31m^[39m
+    [90m 80| [39m  })[33m;[39m
+    [90m 81| [39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1/8]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m app/(app)/settings/team/actions.test.ts[2m > [22minviteTeamMember[2m > [22mroutes redirectTo through 
+/auth/callback with the onboarding next
+[31m[1mTypeError[22m: admin.auth.admin.generateLink is not a function[39m
+[36m [2mΓ¥»[22m Module.inviteTeamMember app/(app)/settings/team/actions.ts:[2m124:73[22m[39m
+    [90m122| [39m  // `?code=`. Our server-side callback can't read the hash, so those ΓÇª
+    [90m123| [39m  [90m// always failed with `callback_no_code`.[39m
+    [90m124| [39m  const { data: linkData, error: inviteError } = await admin.auth.admiΓÇª
+    [90m   | [39m                                                                        [31m^[39m
+    [90m125| [39m    type[33m:[39m [32m"invite"[39m[33m,[39m
+    [90m126| [39m    email[33m,[39m
+[90m [2mΓ¥»[22m app/(app)/settings/team/actions.test.ts:[2m82:17[22m[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[2/8]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m app/(app)/settings/team/actions.test.ts[2m > [22minviteTeamMember[2m > [22mlowercases and trims the email 
+before inviting and upserting
+[31m[1mTypeError[22m: admin.auth.admin.generateLink is not a function[39m
+[36m [2mΓ¥»[22m Module.inviteTeamMember app/(app)/settings/team/actions.ts:[2m124:73[22m[39m
+    [90m122| [39m  // `?code=`. Our server-side callback can't read the hash, so those ΓÇª
+    [90m123| [39m  [90m// always failed with `callback_no_code`.[39m
+    [90m124| [39m  const { data: linkData, error: inviteError } = await admin.auth.admiΓÇª
+    [90m   | [39m                                                                        [31m^[39m
+    [90m125| [39m    type[33m:[39m [32m"invite"[39m[33m,[39m
+    [90m126| [39m    email[33m,[39m
+[90m [2mΓ¥»[22m app/(app)/settings/team/actions.test.ts:[2m92:5[22m[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[3/8]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m app/(app)/settings/team/actions.test.ts[2m > [22minviteTeamMember[2m > [22mforwards the invitee name as user 
+metadata
+[31m[1mTypeError[22m: admin.auth.admin.generateLink is not a function[39m
+[36m [2mΓ¥»[22m Module.inviteTeamMember app/(app)/settings/team/actions.ts:[2m124:73[22m[39m
+    [90m122| [39m  // `?code=`. Our server-side callback can't read the hash, so those ΓÇª
+    [90m123| [39m  [90m// always failed with `callback_no_code`.[39m
+    [90m124| [39m  const { data: linkData, error: inviteError } = await admin.auth.admiΓÇª
+    [90m   | [39m                                                                        [31m^[39m
+    [90m125| [39m    type[33m:[39m [32m"invite"[39m[33m,[39m
+    [90m126| [39m    email[33m,[39m
+[90m [2mΓ¥»[22m app/(app)/settings/team/actions.test.ts:[2m98:5[22m[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[4/8]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m app/(app)/settings/team/actions.test.ts[2m > [22minviteTeamMember[2m > [22mderives the name from the email 
+local-part when omitted
+[31m[1mTypeError[22m: admin.auth.admin.generateLink is not a function[39m
+[36m [2mΓ¥»[22m Module.inviteTeamMember app/(app)/settings/team/actions.ts:[2m124:73[22m[39m
+    [90m122| [39m  // `?code=`. Our server-side callback can't read the hash, so those ΓÇª
+    [90m123| [39m  [90m// always failed with `callback_no_code`.[39m
+    [90m124| [39m  const { data: linkData, error: inviteError } = await admin.auth.admiΓÇª
+    [90m   | [39m                                                                        [31m^[39m
+    [90m125| [39m    type[33m:[39m [32m"invite"[39m[33m,[39m
+    [90m126| [39m    email[33m,[39m
+[90m [2mΓ¥»[22m app/(app)/settings/team/actions.test.ts:[2m103:5[22m[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[5/8]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m app/(app)/settings/team/actions.test.ts[2m > [22minviteTeamMember[2m > [22maccepts emails from any domain 
+(external collaborators)
+[31m[1mTypeError[22m: admin.auth.admin.generateLink is not a function[39m
+[36m [2mΓ¥»[22m Module.inviteTeamMember app/(app)/settings/team/actions.ts:[2m124:73[22m[39m
+    [90m122| [39m  // `?code=`. Our server-side callback can't read the hash, so those ΓÇª
+    [90m123| [39m  [90m// always failed with `callback_no_code`.[39m
+    [90m124| [39m  const { data: linkData, error: inviteError } = await admin.auth.admiΓÇª
+    [90m   | [39m                                                                        [31m^[39m
+    [90m125| [39m    type[33m:[39m [32m"invite"[39m[33m,[39m
+    [90m126| [39m    email[33m,[39m
+[90m [2mΓ¥»[22m app/(app)/settings/team/actions.test.ts:[2m109:17[22m[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[6/8]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m app/(app)/settings/team/actions.test.ts[2m > [22minviteTeamMember[2m > [22mupserts the team_members row with 
+the invited auth user id
+[31m[1mTypeError[22m: admin.auth.admin.generateLink is not a function[39m
+[36m [2mΓ¥»[22m Module.inviteTeamMember app/(app)/settings/team/actions.ts:[2m124:73[22m[39m
+    [90m122| [39m  // `?code=`. Our server-side callback can't read the hash, so those ΓÇª
+    [90m123| [39m  [90m// always failed with `callback_no_code`.[39m
+    [90m124| [39m  const { data: linkData, error: inviteError } = await admin.auth.admiΓÇª
+    [90m   | [39m                                                                        [31m^[39m
+    [90m125| [39m    type[33m:[39m [32m"invite"[39m[33m,[39m
+    [90m126| [39m    email[33m,[39m
+[90m [2mΓ¥»[22m app/(app)/settings/team/actions.test.ts:[2m115:5[22m[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[7/8]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m app/(app)/settings/team/actions.test.ts[2m > [22minviteTeamMember[2m > [22mpropagates Supabase invite errors
+[31m[1mTypeError[22m: admin.auth.admin.generateLink is not a function[39m
+[36m [2mΓ¥»[22m Module.inviteTeamMember app/(app)/settings/team/actions.ts:[2m124:73[22m[39m
+    [90m122| [39m  // `?code=`. Our server-side callback can't read the hash, so those ΓÇª
+    [90m123| [39m  [90m// always failed with `callback_no_code`.[39m
+    [90m124| [39m  const { data: linkData, error: inviteError } = await admin.auth.admiΓÇª
+    [90m   | [39m                                                                        [31m^[39m
+    [90m125| [39m    type[33m:[39m [32m"invite"[39m[33m,[39m
+    [90m126| [39m    email[33m,[39m
+[90m [2mΓ¥»[22m app/(app)/settings/team/actions.test.ts:[2m134:17[22m[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[8/8]ΓÄ»[22m[39m
+
+[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m[1m[41m Unhandled Errors [49m[22m[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m
+[31m[1m
+Vitest caught 3 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.[22m[39m
+
+[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m[1m[41m Unhandled Rejection [49m[22m[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m
+[31m[1mTypeError[22m: admin.from(...).select(...).in is not a function[39m
+[36m [2mΓ¥»[22m notifyAdmins app/p/proposal/[token]/actions.ts:[2m63:6[22m[39m
+    [90m 61| [39m    [33m.[39m[35mfrom[39m([32m"team_members"[39m)
+    [90m 62| [39m    [33m.[39m[34mselect[39m([32m"id"[39m)
+    [90m 63| [39m    [33m.[39m[35min[39m([32m"role"[39m[33m,[39m [[32m"owner"[39m[33m,[39m [32m"admin"[39m])
+    [90m   | [39m     [31m^[39m
+    [90m 64| [39m    [33m.[39m[34mis[39m([32m"deleted_at"[39m[33m,[39m [35mnull[39m)[33m;[39m
+    [90m 65| [39m  [35mif[39m ([33m![39mrecipients[33m?.[39mlength) [35mreturn[39m[33m;[39m
+[90m [2mΓ¥»[22m acceptWithFiscal app/p/proposal/[token]/actions.ts:[2m141:8[22m[39m
+[90m [2mΓ¥»[22m processTicksAndRejections node:internal/process/task_queues:[2m104:5[22m[39m
+[90m [2mΓ¥»[22m app/p/proposal/[token]/actions.test.ts:[2m138:20[22m[39m
+
+[2m Test Files [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m47 passed[39m[22m[90m (49)[39m
+[2m      Tests [22m [1m[31m8 failed[39m[22m[2m | [22m[1m[32m493 passed[39m[22m[90m (501)[39m
+[2m     Errors [22m [1m[31m3 errors[39m[22m
+[2m   Start at [22m 15:13:33
+[2m   Duration [22m 18.30s[2m (transform 4.77s, setup 422ms, collect 28.74s, tests 17.29s, environment 42.42s, prepare 10.59s)[22m
+
+[90m [2mΓ¥»[22m node_modules/@vitest/runner/dist/chunk-hooks.js:[2m752:20[22m[39m
+
+[31mThis error originated in "[1mapp/p/proposal/[token]/actions.test.ts[22m" test file. It doesn't mean the error was thrown inside the 
+file itself, but while it was running.[39m
+
+[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m[1m[41m Unhandled Rejection [49m[22m[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m
+[31m[1mTypeError[22m: admin.from(...).select(...).in is not a function[39m
+[36m [2mΓ¥»[22m notifyAdmins app/p/proposal/[token]/actions.ts:[2m63:6[22m[39m
+    [90m 61| [39m    [33m.[39m[35mfrom[39m([32m"team_members"[39m)
+    [90m 62| [39m    [33m.[39m[34mselect[39m([32m"id"[39m)
+    [90m 63| [39m    [33m.[39m[35min[39m([32m"role"[39m[33m,[39m [[32m"owner"[39m[33m,[39m [32m"admin"[39m])
+    [90m   | [39m     [31m^[39m
+    [90m 64| [39m    [33m.[39m[34mis[39m([32m"deleted_at"[39m[33m,[39m [35mnull[39m)[33m;[39m
+    [90m 65| [39m  [35mif[39m ([33m![39mrecipients[33m?.[39mlength) [35mreturn[39m[33m;[39m
+[90m [2mΓ¥»[22m rejectAction app/p/proposal/[token]/actions.ts:[2m201:8[22m[39m
+[90m [2mΓ¥»[22m processTicksAndRejections node:internal/process/task_queues:[2m104:5[22m[39m
+[90m [2mΓ¥»[22m app/p/proposal/[token]/actions.test.ts:[2m150:20[22m[39m
+[90m [2mΓ¥»[22m node_modules/@vitest/runner/dist/chunk-hooks.js:[2m752:20[22m[39m
+
+[31mThis error originated in "[1mapp/p/proposal/[token]/actions.test.ts[22m" test file. It doesn't mean the error was thrown inside the 
+file itself, but while it was running.[39m
+
+[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m[1m[41m Unhandled Rejection [49m[22m[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m
+[31m[1mTypeError[22m: admin.from(...).select(...).in is not a function[39m
+[36m [2mΓ¥»[22m notifyAdmins app/p/proposal/[token]/actions.ts:[2m63:6[22m[39m
+    [90m 61| [39m    [33m.[39m[35mfrom[39m([32m"team_members"[39m)
+    [90m 62| [39m    [33m.[39m[34mselect[39m([32m"id"[39m)
+    [90m 63| [39m    [33m.[39m[35min[39m([32m"role"[39m[33m,[39m [[32m"owner"[39m[33m,[39m [32m"admin"[39m])
+    [90m   | [39m     [31m^[39m
+    [90m 64| [39m    [33m.[39m[34mis[39m([32m"deleted_at"[39m[33m,[39m [35mnull[39m)[33m;[39m
+    [90m 65| [39m  [35mif[39m ([33m![39mrecipients[33m?.[39mlength) [35mreturn[39m[33m;[39m
+[90m [2mΓ¥»[22m rejectAction app/p/proposal/[token]/actions.ts:[2m201:8[22m[39m
+[90m [2mΓ¥»[22m processTicksAndRejections node:internal/process/task_queues:[2m104:5[22m[39m
+[90m [2mΓ¥»[22m app/p/proposal/[token]/actions.test.ts:[2m162:5[22m[39m
+[90m [2mΓ¥»[22m node_modules/@vitest/runner/dist/chunk-hooks.js:[2m752:20[22m[39m
+
+[31mThis error originated in "[1mapp/p/proposal/[token]/actions.test.ts[22m" test file. It doesn't mean the error was thrown inside the 
+file itself, but while it was running.[39m
+[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m
+

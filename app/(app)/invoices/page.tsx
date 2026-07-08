@@ -1,5 +1,6 @@
 import { ListPage } from "@/components/layout/list-page";
 import { StatCard } from "@/components/layout/stat-card";
+import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
 import { listInvoices } from "@/lib/invoices/queries";
@@ -8,7 +9,7 @@ import { INVOICE_SORT_COLUMNS } from "@/lib/invoices/types";
 import { INVOICE_STATUS, VERIFACTU_STATUS } from "@/lib/status";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { parsePage, parseSortParam, parseStringParam } from "@/lib/utils/search-params";
-import { AlertTriangle, CheckCircle2, Clock, ShieldAlert } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Download, ShieldAlert } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Facturas · doscientos" };
@@ -93,6 +94,17 @@ export default async function InvoicesPage({
         error={error ?? undefined}
         searchKey="q"
         searchPlaceholder="Buscar por cliente, nº o IDFACT…"
+        actions={
+          <Button variant="outline" size="sm" asChild>
+            <a
+              href={`/api/invoices/libro-registro?year=${now.getFullYear()}`}
+              download={`libro-registro-${now.getFullYear()}.csv`}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Libro Registro {now.getFullYear()}
+            </a>
+          </Button>
+        }
         filters={[
           { key: "status", label: "Estado", options: STATUS_FILTER_OPTIONS },
           { key: "verifactu", label: "Verifactu", options: VERIFACTU_FILTER_OPTIONS },

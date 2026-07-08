@@ -2,10 +2,13 @@
 
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { IbanInput } from "@/components/ui/iban-input";
 import { Input } from "@/components/ui/input";
+import { NifInputOffline } from "@/components/ui/nif-input";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
+import { ZipInput } from "@/components/ui/zip-input";
 import { COUNTRY_OPTIONS } from "@/lib/address";
 import { updateCompanySettings } from "./actions";
 
@@ -67,15 +70,9 @@ export function CompanyForm({
         </Field>
         <Field>
           <FieldLabel htmlFor="company_nif" className="text-xs font-medium">
-            NIF
+            NIF / CIF
           </FieldLabel>
-          <Input
-            id="company_nif"
-            name="company_nif"
-            defaultValue={companyNif}
-            placeholder="B12345678"
-            maxLength={20}
-          />
+          <NifInputOffline id="company_nif" name="company_nif" defaultValue={companyNif} />
         </Field>
         <Field>
           <FieldLabel htmlFor="invoice_series" className="text-xs font-medium">
@@ -132,13 +129,7 @@ export function CompanyForm({
           <FieldLabel htmlFor="iban" className="text-xs font-medium">
             IBAN
           </FieldLabel>
-          <Input
-            id="iban"
-            name="iban"
-            defaultValue={iban}
-            placeholder="ES00 0000 0000 0000 0000 0000"
-            className="font-mono"
-          />
+          <IbanInput id="iban" name="iban" defaultValue={iban} />
           <FieldDescription>
             Se incluye en las facturas para pagos por transferencia.
           </FieldDescription>
@@ -157,13 +148,13 @@ export function CompanyForm({
             aria-describedby="payment-terms-hint"
           />
           <FieldDescription id="payment-terms-hint">
-            Texto que aparece en la sección de pago de las facturas. Se puede
-            sobrescribir en cada factura.
+            Texto que aparece en la sección de pago de las facturas. Se puede sobrescribir en cada
+            factura.
           </FieldDescription>
         </Field>
       </div>
-      <div>
-        <p className="mb-3 text-sm font-medium">Dirección fiscal</p>
+      <div className="flex flex-col gap-3">
+        <p className="text-sm font-medium">Dirección fiscal</p>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field className="sm:col-span-2">
             <FieldLabel htmlFor="company_address_street" className="text-xs font-medium">
@@ -178,45 +169,13 @@ export function CompanyForm({
               autoComplete="street-address"
             />
           </Field>
-          <Field>
-            <FieldLabel htmlFor="company_address_zip" className="text-xs font-medium">
-              Código postal
-            </FieldLabel>
-            <Input
-              id="company_address_zip"
-              name="company_address_zip"
-              maxLength={20}
-              defaultValue={companyAddressZip}
-              placeholder="08001"
-              autoComplete="postal-code"
-            />
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="company_address_city" className="text-xs font-medium">
-              Ciudad
-            </FieldLabel>
-            <Input
-              id="company_address_city"
-              name="company_address_city"
-              maxLength={100}
-              defaultValue={companyAddressCity}
-              placeholder="Barcelona"
-              autoComplete="address-level2"
-            />
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="company_address_province" className="text-xs font-medium">
-              Provincia
-            </FieldLabel>
-            <Input
-              id="company_address_province"
-              name="company_address_province"
-              maxLength={100}
-              defaultValue={companyAddressProvince}
-              placeholder="Barcelona"
-              autoComplete="address-level1"
-            />
-          </Field>
+          <ZipInput
+            namePrefix="company_address"
+            defaultZip={companyAddressZip}
+            defaultCity={companyAddressCity}
+            defaultProvince={companyAddressProvince}
+            country={companyAddressCountry || "ES"}
+          />
           <Field>
             <FieldLabel htmlFor="company_address_country" className="text-xs font-medium">
               País
@@ -235,6 +194,7 @@ export function CompanyForm({
             </Select>
           </Field>
         </div>
+        <FieldDescription>Aparece en las facturas como dirección del emisor.</FieldDescription>
       </div>
       <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
         <FormFeedback state={feedback.state} successLabel="Empresa guardada" />

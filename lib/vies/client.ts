@@ -11,8 +11,34 @@ const VIES_TIMEOUT_MS = 10_000;
 
 /** Two-letter EU country codes that VIES accepts. */
 const EU_COUNTRY_CODES = new Set([
-  "AT","BE","BG","CY","CZ","DE","DK","EE","EL","ES","FI","FR","HR","HU",
-  "IE","IT","LT","LU","LV","MT","NL","PL","PT","RO","SE","SI","SK","XI",
+  "AT",
+  "BE",
+  "BG",
+  "CY",
+  "CZ",
+  "DE",
+  "DK",
+  "EE",
+  "EL",
+  "ES",
+  "FI",
+  "FR",
+  "HR",
+  "HU",
+  "IE",
+  "IT",
+  "LT",
+  "LU",
+  "LV",
+  "MT",
+  "NL",
+  "PL",
+  "PT",
+  "RO",
+  "SE",
+  "SI",
+  "SK",
+  "XI",
 ]);
 
 export type ViesResult =
@@ -28,7 +54,10 @@ export type ViesResult =
  * - "DE123456789"  → { cc: "DE", num: "123456789" }
  */
 function parseVat(raw: string): { cc: string; num: string } | null {
-  const v = raw.trim().toUpperCase().replace(/[\s.-]/g, "");
+  const v = raw
+    .trim()
+    .toUpperCase()
+    .replace(/[\s.-]/g, "");
   if (v.length < 2) return null;
 
   const maybeCC = v.slice(0, 2);
@@ -50,6 +79,7 @@ interface ViesApiResponse {
 
 /**
  * Validates a VAT number via VIES.
+ * For Spanish NIFs/CIFs, runs an offline checksum first to avoid wasted requests.
  *
  * @param nif  Raw NIF/CIF/VAT string (e.g. "ESB12345678", "B12345678", "DE123456789")
  */
@@ -58,6 +88,16 @@ export async function validateVatVies(nif: string): Promise<ViesResult> {
   if (!parsed) {
     return { valid: false, reason: "invalid", message: "Formato de NIF/VAT no reconocido." };
   }
+
+  // Short-circuit: offline checksum for Spanish identifiers
+  if (parsed.cc === "ES") {
+    const { validateNifEs } = await import("./nif");
+    const local = validateNifEs(parsed.num);
+    if (!local.valid) {
+      return { valid: false, reason: "invalid", message: local.message };
+    }
+  }
+
   if (!EU_COUNTRY_CODES.has(parsed.cc)) {
     return {
       valid: false,

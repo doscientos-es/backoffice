@@ -132,6 +132,8 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
               id: invoice.id as string,
               status: invoice.status as string,
               verifactu_status: invoice.verifactu_status as string,
+              is_rectification: Boolean(invoice.is_rectification),
+              is_uncollectible: Boolean(invoice.is_uncollectible),
             }}
             clientEmail={client?.email ?? null}
           />

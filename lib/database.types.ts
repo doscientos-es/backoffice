@@ -59,7 +59,7 @@ export type Database = {
         | "policies"
         | "meetings"
         | "other";
-      invoice_status: "draft" | "issued" | "paid" | "overdue" | "cancelled";
+      invoice_status: "draft" | "issued" | "paid" | "overdue" | "cancelled" | "rectified";
       invoice_type: "F1" | "F2" | "F3" | "R1" | "R2" | "R3" | "R4" | "R5";
       lead_status:
         | "new"

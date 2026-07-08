@@ -13,6 +13,7 @@ import {
   findCompanySettings,
   findInvoiceForEdit,
   findInvoiceForEmail,
+  findInvoiceForRectification,
   findInvoiceForVerifactu,
   findInvoiceItemsForVat,
   findInvoiceSeries,
@@ -24,6 +25,7 @@ import {
   findProposalItems,
   findUnlinkedWorkLogsForMonth,
   insertInvoiceWithItems,
+  insertRectificationWithItems,
   linkWorkLogsToInvoice,
   patchInvoiceAfterVerifactu,
   patchInvoiceClientSnapshot,
@@ -40,6 +42,8 @@ import { uuidIdInput } from "@/lib/schemas/common";
 import {
   CreateInvoiceFromProposalInput,
   CreateMonthlyHourlyInvoiceInput,
+  CreateRectificationInput,
+  MarkUncollectibleInput,
   SendInvoiceEmailInput,
   SendInvoiceInput,
   UpdateInvoiceInput as UpdateInvoiceInputSchema,
@@ -85,6 +89,7 @@ export const updateInvoiceStatus = defineAction({
       status,
       updated_at: now,
       paid_at: status === "paid" ? now : null,
+      ...(status === "paid" && input.paymentMethod ? { payment_method: input.paymentMethod } : {}),
       ...(isFirstIssuance ? { issued_at: now } : {}),
       ...(clientSnapshot
         ? {
@@ -551,6 +556,109 @@ export async function updateInvoicePortalAccess(
   return { ok: true };
 }
 
+// ─── Rectification ───────────────────────────────────────────────────────────
+
+const RECTIFICATION_SERIES = "R";
+
+/**
+ * Creates a rectification invoice (factura rectificativa) from an issued invoice.
+ * Conforms to RD 1619/2012 art.15 and Verifactu RD 1007/2023.
+ *
+ * Flow:
+ *  1. Validates the original is issued/paid (not draft/cancelled/already-rectified).
+ *  2. Clones the line items onto a new draft with series R and the given type (R1/R4).
+ *  3. Marks the original as `rectified` so no further rectifications can be issued.
+ *
+ * The user can edit the draft (amounts, description) before issuing it to AEAT.
+ */
+export const createRectification = defineAction<typeof CreateRectificationInput, { id: string }>({
+  name: "invoices.createRectification",
+  schema: CreateRectificationInput,
+  roles: ["owner", "admin"],
+  revalidate: (_p, input) => [`/invoices/${input.originalInvoiceId}`, "/invoices"],
+  handler: async (input, { user }) => {
+    const { originalInvoiceId, rectificationType, reason } = input;
+
+    const original = await findInvoiceForRectification(originalInvoiceId);
+    if (!original) throw new Error("Factura original no encontrada");
+
+    const RECTIFIABLE_STATUSES = ["issued", "paid", "overdue"] as const;
+    if (!(RECTIFIABLE_STATUSES as readonly string[]).includes(original.status)) {
+      throw new Error(
+        "Solo pueden rectificarse facturas emitidas o pagadas. El estado actual es: " +
+          original.status,
+      );
+    }
+    if (original.is_rectification) {
+      throw new Error(
+        "No se puede rectificar una factura que ya es rectificativa. Rectifica la factura original.",
+      );
+    }
+
+    // Fetch original items to clone
+    const supabase = await createServerClient();
+    const { data: originalItems, error: itemsErr } = await supabase
+      .from("invoice_items")
+      .select("position, description, quantity, unit_price, vat_rate")
+      .eq("invoice_id", originalInvoiceId)
+      .order("position");
+    if (itemsErr) throw new Error(itemsErr.message);
+
+    const nextNumber = await findNextInvoiceNumberForSeries(RECTIFICATION_SERIES);
+
+    const { id } = await insertRectificationWithItems(
+      {
+        client_id: original.client_id,
+        project_id: original.project_id,
+        series: RECTIFICATION_SERIES,
+        number: nextNumber,
+        invoice_type: rectificationType,
+        status: "draft",
+        currency: "EUR",
+        subtotal: original.subtotal,
+        tax_amount: original.tax_amount,
+        total: original.total,
+        client_nif: original.client_nif,
+        client_name: original.client_name,
+        client_address_street: original.client_address_street,
+        client_address_zip: original.client_address_zip,
+        client_address_city: original.client_address_city,
+        client_address_province: original.client_address_province,
+        client_address_country: original.client_address_country,
+        notes: original.notes,
+        payment_terms: original.payment_terms,
+        created_by: user.id,
+        // Rectification metadata
+        is_rectification: true,
+        rectified_invoice_id: originalInvoiceId,
+        rectification_reason: reason,
+        rectification_type: rectificationType,
+      },
+      (originalItems ?? []).map((it, idx) => ({
+        position: idx,
+        description: (it.description as string | null) ?? null,
+        quantity: Number(it.quantity ?? 1),
+        unit_price: Number(it.unit_price ?? 0),
+        vat_rate: Number(it.vat_rate ?? 21),
+      })),
+    );
+
+    // Mark original invoice as rectified so it can't be rectified again.
+    await patchInvoiceStatus(originalInvoiceId, {
+      status: "rectified",
+      updated_at: new Date().toISOString(),
+      paid_at: null,
+    });
+
+    log.info(
+      { originalInvoiceId, rectificationId: id, rectificationType },
+      "rectification_created",
+    );
+
+    return { id };
+  },
+});
+
 // ─── Send email ───────────────────────────────────────────────────────────────
 
 /**
@@ -602,5 +710,51 @@ export const sendInvoiceEmail = defineAction<
     });
 
     return { portalUrl, mocked: result.mocked };
+  },
+});
+
+// ─── Incobrable (art. 80.Tres LIVA) ──────────────────────────────────────────
+
+/**
+ * Marks an invoice as uncollectible (crédito incobrable) per art. 80.Tres LIVA.
+ * Requires the invoice to be overdue (unpaid after due date).
+ * Sets is_uncollectible = true and uncollectible_at = now().
+ *
+ * After marking, the company must issue a rectificativa R4 to reclaim VAT.
+ * Use createRectification({ rectificationType: 'R4', ... }) for that step.
+ */
+export const markAsUncollectible = defineAction<typeof MarkUncollectibleInput, { id: string }>({
+  name: "invoices.markAsUncollectible",
+  schema: MarkUncollectibleInput,
+  roles: ["owner", "admin"],
+  revalidate: (_p, input) => [`/invoices/${input.id}`, "/invoices"],
+  handler: async (input) => {
+    const { id } = input;
+    const supabase = await createServerClient();
+
+    const { data: inv, error } = await supabase
+      .from("invoices")
+      .select("status, due_date, is_uncollectible")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (error || !inv) throw new Error("Factura no encontrada");
+    if (inv.is_uncollectible) throw new Error("La factura ya está marcada como incobrable");
+    if (!["issued", "overdue"].includes(inv.status as string)) {
+      throw new Error(
+        "Solo pueden marcarse como incobrables facturas emitidas o vencidas no cobradas",
+      );
+    }
+
+    const now = new Date().toISOString();
+    const { error: updateErr } = await supabase
+      .from("invoices")
+      .update({ is_uncollectible: true, uncollectible_at: now, updated_at: now })
+      .eq("id", id);
+
+    if (updateErr) throw new Error(updateErr.message);
+
+    log.info({ invoiceId: id }, "invoice_marked_uncollectible");
+    return { id };
   },
 });

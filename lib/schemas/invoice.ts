@@ -8,7 +8,14 @@ import { lineItemInput, uuidIdInput } from "./common";
  * `app/(app)/invoices/actions.ts`.
  */
 
-export const InvoiceStatus = z.enum(["draft", "issued", "paid", "overdue", "cancelled"]);
+export const InvoiceStatus = z.enum([
+  "draft",
+  "issued",
+  "paid",
+  "overdue",
+  "cancelled",
+  "rectified",
+]);
 export type InvoiceStatusType = z.infer<typeof InvoiceStatus>;
 
 export const InvoiceIdInput = uuidIdInput;
@@ -51,8 +58,40 @@ export const UpdateInvoiceInput = z.object({
 });
 export type UpdateInvoiceInputType = z.input<typeof UpdateInvoiceInput>;
 
+export const PaymentMethod = z.enum(["transfer", "card", "bizum", "cash", "other"]);
+export type PaymentMethodType = z.infer<typeof PaymentMethod>;
+
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethodType, string> = {
+  transfer: "Transferencia bancaria",
+  card: "Tarjeta (Redsys)",
+  bizum: "Bizum",
+  cash: "Efectivo",
+  other: "Otro",
+};
+
 export const UpdateInvoiceStatusInput = z.object({
   id: z.string().uuid(),
   status: InvoiceStatus,
+  paymentMethod: PaymentMethod.optional(),
 });
 export type UpdateInvoiceStatusInputType = z.infer<typeof UpdateInvoiceStatusInput>;
+
+export const MarkUncollectibleInput = z.object({
+  id: z.string().uuid(),
+});
+export type MarkUncollectibleInputType = z.infer<typeof MarkUncollectibleInput>;
+
+/**
+ * Input for creating a rectification invoice (factura rectificativa).
+ * Types R1/R4 are the most common for B2B invoices (RD 1619/2012 art.15).
+ * R1 = error/devolución; R4 = otras causas.
+ */
+export const RectificationType = z.enum(["R1", "R4"]);
+export type RectificationTypeType = z.infer<typeof RectificationType>;
+
+export const CreateRectificationInput = z.object({
+  originalInvoiceId: z.string().uuid(),
+  rectificationType: RectificationType,
+  reason: z.string().min(1, "El motivo es obligatorio").max(500),
+});
+export type CreateRectificationInputType = z.infer<typeof CreateRectificationInput>;

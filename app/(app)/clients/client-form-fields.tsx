@@ -2,6 +2,7 @@ import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { ZipInput } from "@/components/ui/zip-input";
 import { COUNTRY_OPTIONS } from "@/lib/address";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- used in JSX below
 import { NifInput } from "./nif-input";
@@ -131,36 +132,12 @@ export function ClientFormFields({
               autoComplete="street-address"
             />
           </FormRow>
-          <FormRow label="Código postal" htmlFor={`${idPrefix}-billing_address_zip`}>
-            <Input
-              id={`${idPrefix}-billing_address_zip`}
-              name="billing_address_zip"
-              maxLength={20}
-              defaultValue={d.billing_address_zip ?? ""}
-              placeholder="08001"
-              autoComplete="postal-code"
-            />
-          </FormRow>
-          <FormRow label="Ciudad" htmlFor={`${idPrefix}-billing_address_city`}>
-            <Input
-              id={`${idPrefix}-billing_address_city`}
-              name="billing_address_city"
-              maxLength={100}
-              defaultValue={d.billing_address_city ?? ""}
-              placeholder="Barcelona"
-              autoComplete="address-level2"
-            />
-          </FormRow>
-          <FormRow label="Provincia" htmlFor={`${idPrefix}-billing_address_province`}>
-            <Input
-              id={`${idPrefix}-billing_address_province`}
-              name="billing_address_province"
-              maxLength={100}
-              defaultValue={d.billing_address_province ?? ""}
-              placeholder="Barcelona"
-              autoComplete="address-level1"
-            />
-          </FormRow>
+          <ZipInput
+            namePrefix="billing_address"
+            defaultZip={d.billing_address_zip}
+            defaultCity={d.billing_address_city}
+            defaultProvince={d.billing_address_province}
+          />
           <FormRow label="País" htmlFor={`${idPrefix}-billing_address_country`}>
             <Select
               id={`${idPrefix}-billing_address_country`}

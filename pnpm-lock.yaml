@@ -30,8 +30,8 @@ importers:
         specifier: ^3.2.2
         version: 3.2.2(react@19.2.6)
       '@doscientos/verifactu':
-        specifier: ^0.1.7
-        version: 0.1.7(date-fns@4.3.0)
+        specifier: ^0.1.10
+        version: 0.1.10(date-fns@4.3.0)
       '@hcaptcha/react-hcaptcha':
         specifier: ^2.0.2
         version: 2.0.2
@@ -77,6 +77,9 @@ importers:
       google-auth-library:
         specifier: ^10.9.0
         version: 10.9.0
+      ibantools:
+        specifier: ^4.5.4
+        version: 4.5.4
       lru-cache:
         specifier: ^11.0.2
         version: 11.5.0
@@ -488,8 +491,8 @@ packages:
     peerDependencies:
       react: '>=16.8.0'
 
-  '@doscientos/verifactu@0.1.7':
-    resolution: {integrity: sha512-MnvGQmXl00xGrpvq/StR7xmT+pDaTJLimM1MhdSTDDkpgUb2p4VIBn9p4wl0Z1Q5lBYnxmaKhflwGa7Zlnyd1Q==}
+  '@doscientos/verifactu@0.1.10':
+    resolution: {integrity: sha512-o8awlivcRUENiuo8YvSOmuWCQ1s63mJh1QeXlNXHJqFhft7tMOYV7kFhVwgCrBqdaw/b7Bf8BvdUC78EggkgtA==}
     engines: {node: '>=20'}
 
   '@dotenvx/dotenvx@1.69.1':
@@ -3432,6 +3435,9 @@ packages:
   hyphen@1.14.1:
     resolution: {integrity: sha512-kvL8xYl5QMTh+LwohVN72ciOxC0OEV79IPdJSTwEXok9y9QHebXGdFgrED4sWfiax/ODx++CAMk3hMy4XPJPOw==}
 
+  ibantools@4.5.4:
+    resolution: {integrity: sha512-6jX1gh4aH6XH+o0ey+wtkMTzkcvsEta7DakIOZSng9voZYpMw3U+gK1+tZChk3aRcPcloEt0NOzksjaRZiqXbw==}
+
   iceberg-js@0.8.1:
     resolution: {integrity: sha512-1dhVQZXhcHje7798IVM+xoo/1ZdVfzOMIc8/rgVSijRK38EDqOJoGula9N/8ZI5RD8QTxNQtK/Gozpr+qUqRRA==}
     engines: {node: '>=20.0.0'}
@@ -5246,7 +5252,7 @@ snapshots:
       react: 19.2.6
       tslib: 2.8.1
 
-  '@doscientos/verifactu@0.1.7(date-fns@4.3.0)':
+  '@doscientos/verifactu@0.1.10(date-fns@4.3.0)':
     dependencies:
       date-fns-tz: 3.2.0(date-fns@4.3.0)
       fast-xml-parser: 4.5.6
@@ -8026,6 +8032,8 @@ snapshots:
   human-signals@8.0.1: {}
 
   hyphen@1.14.1: {}
+
+  ibantools@4.5.4: {}
 
   iceberg-js@0.8.1: {}
 

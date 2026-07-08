@@ -175,44 +175,23 @@ export async function updateMemberProfile(
 }
 
 // ---------- Company settings ----------
+const opt = (max: number) =>
+  z
+    .string()
+    .max(max)
+    .optional()
+    .or(z.literal("").transform(() => undefined));
+
 const CompanyInput = z.object({
   company_name: z.string().min(1).max(160),
-  company_nif: z
-    .string()
-    .max(20)
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-  company_address_street: z
-    .string()
-    .max(200)
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-  company_address_zip: z
-    .string()
-    .max(20)
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-  company_address_city: z
-    .string()
-    .max(100)
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-  company_address_province: z
-    .string()
-    .max(100)
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
+  company_nif: opt(20),
+  company_address_street: opt(200),
+  company_address_zip: opt(20),
+  company_address_city: opt(100),
+  company_address_province: opt(100),
   company_address_country: z.string().max(10).default("ES"),
-  iban: z
-    .string()
-    .max(40)
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-  payment_terms: z
-    .string()
-    .max(4000)
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
+  iban: opt(40),
+  payment_terms: opt(4000),
   default_vat_rate: z.coerce.number().min(0).max(100),
   invoice_series: z.string().min(1).max(10),
   internal_hourly_cost: z.coerce.number().min(0).max(100000),
@@ -241,6 +220,17 @@ export async function updateCompanySettings(
     return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
   }
 
+  // Compute the legacy freeform field so the PDF query keeps working without changes.
+  const { formatAddress } = await import("@/lib/address");
+  const company_address =
+    formatAddress({
+      street: parsed.data.company_address_street,
+      zip: parsed.data.company_address_zip,
+      city: parsed.data.company_address_city,
+      province: parsed.data.company_address_province,
+      country: parsed.data.company_address_country,
+    }) || null;
+
   const supabase = await createServerClient();
   const { error } = await supabase
     .from("settings")
@@ -251,7 +241,8 @@ export async function updateCompanySettings(
       company_address_zip: parsed.data.company_address_zip ?? null,
       company_address_city: parsed.data.company_address_city ?? null,
       company_address_province: parsed.data.company_address_province ?? null,
-      company_address_country: parsed.data.company_address_country ?? "ES",
+      company_address_country: parsed.data.company_address_country,
+      company_address,
       iban: parsed.data.iban ?? null,
       payment_terms: parsed.data.payment_terms ?? null,
       default_vat_rate: parsed.data.default_vat_rate,

@@ -77,11 +77,7 @@ export type InvoiceLineItem = {
 export type InvoiceSettings = {
   company_name: string | null;
   company_nif: string | null;
-  company_address_street: string | null;
-  company_address_zip: string | null;
-  company_address_city: string | null;
-  company_address_province: string | null;
-  company_address_country: string | null;
+  company_address: string | null;
   iban: string | null;
   payment_terms: string | null;
 };
@@ -219,11 +215,42 @@ export type InvoiceForEmail = {
 
 // ─── Query-level shapes (write) ───────────────────────────────────────────────
 
+/**
+ * All fields needed to read an invoice before creating a rectification.
+ * Includes items so the caller can clone them onto the new invoice.
+ */
+export type InvoiceForRectification = {
+  id: string;
+  status: string;
+  verifactu_status: string;
+  invoice_type: string;
+  full_number: string;
+  series: string;
+  number: number;
+  issue_date: string;
+  client_id: string;
+  project_id: string | null;
+  client_nif: string | null;
+  client_name: string | null;
+  client_address_street: string | null;
+  client_address_zip: string | null;
+  client_address_city: string | null;
+  client_address_province: string | null;
+  client_address_country: string | null;
+  notes: string | null;
+  payment_terms: string | null;
+  subtotal: number;
+  tax_amount: number;
+  total: number;
+  is_rectification: boolean;
+};
+
 /** Fields patched when an invoice's status changes. */
 export type InvoiceStatusPatch = {
   status: string;
   updated_at: string;
   paid_at: string | null;
+  payment_method?: string | null;
   issued_at?: string;
   // Client snapshot — refreshed on first issuance so draft edits to the client are captured.
   client_nif?: string | null;

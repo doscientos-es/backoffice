@@ -110,11 +110,7 @@ export async function GET(
       ? {
           company_name: (settings.company_name as string | null) ?? null,
           company_nif: (settings.company_nif as string | null) ?? null,
-          company_address_street: (settings.company_address_street as string | null) ?? null,
-          company_address_zip: (settings.company_address_zip as string | null) ?? null,
-          company_address_city: (settings.company_address_city as string | null) ?? null,
-          company_address_province: (settings.company_address_province as string | null) ?? null,
-          company_address_country: (settings.company_address_country as string | null) ?? null,
+          company_address: (settings.company_address as string | null) ?? null,
           iban: (settings.iban as string | null) ?? null,
           payment_terms: (settings.payment_terms as string | null) ?? null,
         }

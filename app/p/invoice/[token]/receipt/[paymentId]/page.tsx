@@ -1,5 +1,4 @@
 import { PaymentReceipt } from "@/components/portal/payment-receipt";
-import { formatAddress } from "@/lib/address";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate } from "@/lib/utils";
 import { notFound } from "next/navigation";
@@ -43,15 +42,7 @@ export default async function ReceiptPage({
       company={{
         name: settings?.company_name as string | null,
         nif: settings?.company_nif as string | null,
-        address: settings
-          ? formatAddress({
-            street: settings.company_address_street as string | null,
-            zip: settings.company_address_zip as string | null,
-            city: settings.company_address_city as string | null,
-            province: settings.company_address_province as string | null,
-            country: settings.company_address_country as string | null,
-          }) || null
-          : null,
+        address: (settings?.company_address as string | null) || null,
       }}
       recipientName={client?.name ?? "—"}
       recipientNif={invoice.client_nif as string | null}
