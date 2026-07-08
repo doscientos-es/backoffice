@@ -30,6 +30,9 @@ export default async function FinancePage({ searchParams }: { searchParams: Sear
         actions={
           <div className="flex items-center gap-2">
             <Button asChild variant="outline" size="sm">
+              <Link href="/finance/portfolio">Portfolio</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
               <Link href="/finance/expenses">Ver gastos</Link>
             </Button>
             <Button asChild size="sm">

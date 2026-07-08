@@ -8,7 +8,7 @@ import { DocPreview } from "@/components/ui/doc-preview";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { requireUser } from "@/lib/auth";
 import type { InternalDocCategory, InternalDocVisibility } from "@/lib/schemas/internal-doc";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getStorage } from "@/lib/storage";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 import { Download } from "lucide-react";
@@ -76,11 +76,8 @@ export default async function InternalDocDetailPage({
   const storagePath = doc.storage_path as string | null;
   let previewUrl: string | null = null;
   if (storagePath) {
-    const admin = createAdminClient();
-    const { data: signed } = await admin.storage
-      .from("internal-docs")
-      .createSignedUrl(storagePath, PREVIEW_TTL);
-    previewUrl = signed?.signedUrl ?? null;
+    const { url } = await getStorage().createSignedUrl("internal-docs", storagePath, PREVIEW_TTL);
+    previewUrl = url;
   }
 
   // Audit trail (most recent first). RLS mirrors the document's visibility.

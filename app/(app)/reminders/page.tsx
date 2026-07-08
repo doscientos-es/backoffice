@@ -5,7 +5,7 @@ import { formatDateTime } from "@/lib/utils";
 import type { Metadata } from "next";
 import { ReminderRowActions } from "./reminder-row-actions";
 
-export const metadata: Metadata = { title: "Avisos · doscientos" };
+export const metadata: Metadata = { title: "Recordatorios · doscientos" };
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 25;
@@ -47,8 +47,8 @@ export default async function RemindersPage({
 
   return (
     <ListPage
-      title="Avisos"
-      empty={q || status ? "Sin coincidencias." : "Aún no hay avisos."}
+      title="Recordatorios"
+      empty={q || status ? "Sin coincidencias." : "Aún no hay recordatorios."}
       error={error?.message}
       searchKey="q"
       searchPlaceholder="Buscar por título…"

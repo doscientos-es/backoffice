@@ -1,0 +1,84 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { CheckCircle, RefreshCw, XCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { syncComments, syncInsights } from "../actions";
+
+type Phase = "idle" | "loading" | "success" | "error";
+
+/**
+ * Pulls fresh insights or comments from every configured network. One button,
+ * two use-cases, selected by `kind` — keeps the sync UX identical everywhere.
+ */
+export function SyncButton({
+  kind,
+  label,
+}: {
+  kind: "insights" | "comments";
+  label?: string;
+}) {
+  const [phase, setPhase] = useState<Phase>("idle");
+  const [msg, setMsg] = useState<string | null>(null);
+  const router = useRouter();
+
+  async function handle() {
+    setPhase("loading");
+    setMsg(null);
+    const run = kind === "insights" ? syncInsights : syncComments;
+    let res: Awaited<ReturnType<typeof run>>;
+    try {
+      res = await run();
+    } catch (err) {
+      setPhase("error");
+      setMsg(err instanceof Error ? err.message : "Error inesperado");
+      return;
+    }
+    if (!res.ok) {
+      setPhase("error");
+      setMsg(res.error);
+      return;
+    }
+    setPhase("success");
+    setMsg(`${res.synced} actualizados`);
+    router.refresh();
+    setTimeout(() => setPhase("idle"), 2500);
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <Button
+        onClick={handle}
+        disabled={phase === "loading"}
+        variant="outline"
+        size="sm"
+        aria-busy={phase === "loading" || undefined}
+        className={cn(
+          phase === "success" && "border-success/50 text-success",
+          phase === "error" && "border-destructive/50 text-destructive",
+        )}
+      >
+        {phase === "success" ? (
+          <CheckCircle className="size-3.5 text-success" />
+        ) : phase === "error" ? (
+          <XCircle className="size-3.5 text-destructive" />
+        ) : (
+          <RefreshCw className={cn("size-3.5", phase === "loading" && "animate-spin")} />
+        )}
+        {phase === "loading" ? "Sincronizando…" : (label ?? "Sincronizar")}
+      </Button>
+      {phase !== "idle" && phase !== "loading" && msg && (
+        <p
+          className={cn(
+            "max-w-xs text-right text-xs",
+            phase === "error" ? "text-destructive" : "text-muted-foreground",
+          )}
+        >
+          {msg}
+        </p>
+      )}
+    </div>
+  );
+}

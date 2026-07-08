@@ -155,3 +155,34 @@ export const SUBSCRIPTION_BILLING_CYCLE: Record<SubscriptionBillingCycle, string
   quarterly: "Trimestral",
   yearly: "Anual",
 };
+
+// ---------------------------------------------------------------------------
+// Social Hub (post aggregate + per-network target lifecycle). Values mirror
+// lib/social/core `PostStatus` / `TargetStatus`; kept here so badges stay
+// consistent with the rest of the app.
+// ---------------------------------------------------------------------------
+export type SocialPostStatus =
+  | "draft"
+  | "scheduled"
+  | "publishing"
+  | "published"
+  | "partially_failed"
+  | "failed";
+
+export const SOCIAL_POST_STATUS: StatusMeta<SocialPostStatus> = {
+  draft: { label: "Borrador", variant: "neutral" },
+  scheduled: { label: "Programado", variant: "info" },
+  publishing: { label: "Publicando", variant: "warning" },
+  published: { label: "Publicado", variant: "success" },
+  partially_failed: { label: "Parcial", variant: "warning" },
+  failed: { label: "Fallido", variant: "danger" },
+};
+
+export type SocialTargetStatus = "pending" | "publishing" | "published" | "failed";
+
+export const SOCIAL_TARGET_STATUS: StatusMeta<SocialTargetStatus> = {
+  pending: { label: "Pendiente", variant: "neutral" },
+  publishing: { label: "Publicando", variant: "warning" },
+  published: { label: "Publicado", variant: "success" },
+  failed: { label: "Fallido", variant: "danger" },
+};

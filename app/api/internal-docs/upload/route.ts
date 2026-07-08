@@ -6,7 +6,7 @@ import {
   type InternalDocCategory,
   type InternalDocVisibility,
 } from "@/lib/schemas/internal-doc";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getStorage } from "@/lib/storage";
 import { createServerClient } from "@/lib/supabase/server";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -67,15 +67,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const safeFilename = sanitizeFilename(file.name || "archivo");
   const storagePath = `${category}/${docId}/${safeFilename}`;
 
-  const admin = createAdminClient();
+  const storage = getStorage();
   const bytes = await file.arrayBuffer();
 
-  const { error: storageError } = await admin.storage
-    .from("internal-docs")
-    .upload(storagePath, bytes, { contentType: file.type || "application/octet-stream" });
+  const { error: storageError } = await storage.upload("internal-docs", storagePath, bytes, {
+    contentType: file.type || "application/octet-stream",
+  });
 
   if (storageError) {
-    return NextResponse.json({ error: storageError.message }, { status: 500 });
+    return NextResponse.json({ error: storageError }, { status: 500 });
   }
 
   const supabase = await createServerClient();
@@ -99,7 +99,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   if (dbError || !data) {
     // Best-effort cleanup of orphaned storage object
-    await admin.storage.from("internal-docs").remove([storagePath]);
+    await storage.remove("internal-docs", [storagePath]);
     return NextResponse.json({ error: dbError?.message ?? "Error al guardar" }, { status: 500 });
   }
 

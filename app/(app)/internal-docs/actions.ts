@@ -3,7 +3,7 @@
 import { defineAction } from "@/lib/actions/define-action";
 import { requireRole } from "@/lib/auth";
 import { InternalDocIdInput, UpdateInternalDocInput } from "@/lib/schemas/internal-doc";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getStorage } from "@/lib/storage";
 import { createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -157,9 +157,8 @@ export async function deleteInternalDoc(formData: FormData): Promise<void> {
     payload: { name: doc.name as string },
   });
 
-  // Best-effort: remove file from Storage (admin client bypasses bucket policies)
-  const admin = createAdminClient();
-  await admin.storage.from("internal-docs").remove([doc.storage_path as string]);
+  // Best-effort: remove file from Storage
+  await getStorage().remove("internal-docs", [doc.storage_path as string]);
 
   revalidatePath("/internal-docs");
   redirect("/internal-docs");

@@ -65,6 +65,24 @@ export const ServerSchema = PublicSchema.extend({
   META_USER_ACCESS_TOKEN: z.string().optional().default(""), // Used for Marketing API (ads/insights)
   META_AD_ACCOUNT_ID: z.string().optional().default(""), // Format: act_xxxxxxxx
   META_GRAPH_API_VERSION: z.string().default("v25.0"),
+  // Social Hub publishing (reuses META_PAGE_ACCESS_TOKEN + META_GRAPH_API_VERSION).
+  // Instagram Business account id (ig user id) linked to the Facebook Page.
+  INSTAGRAM_BUSINESS_ACCOUNT_ID: z.string().optional().default(""),
+  // Facebook Page id to publish to as an independent target.
+  FACEBOOK_PAGE_ID: z.string().optional().default(""),
+  // LinkedIn (developers.linkedin.com) — OAuth 2.0. Empty = LinkedIn disabled.
+  // App credentials from the developer app (Auth tab). Used by the 3-legged
+  // OAuth flow that mints LINKEDIN_ACCESS_TOKEN. CLIENT_ID is semi-public;
+  // CLIENT_SECRET must stay server-only (never expose to the browser).
+  LINKEDIN_CLIENT_ID: z.string().optional().default(""),
+  LINKEDIN_CLIENT_SECRET: z.string().optional().default(""),
+  // Must match exactly one of the "Authorized redirect URLs" configured on the
+  // LinkedIn app. Defaults to the app's callback route.
+  LINKEDIN_REDIRECT_URI: z.string().optional().default(""),
+  LINKEDIN_ACCESS_TOKEN: z.string().optional().default(""),
+  // Organization URN numeric id (urn:li:organization:<id>) to post as a company.
+  LINKEDIN_ORGANIZATION_ID: z.string().optional().default(""),
+  LINKEDIN_API_VERSION: z.string().default("202405"),
   // GitHub App integration (bidirectional sync)
   GITHUB_APP_ID: z.string().optional().default(""),
   GITHUB_APP_PRIVATE_KEY_BASE64: z.string().optional().default(""), // RSA private key in base64

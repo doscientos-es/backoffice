@@ -1,14 +1,41 @@
 "use server";
 import { InvoiceEmail } from "@/components/email";
-import { requireRole, requireUser } from "@/lib/auth";
+import { defineAction } from "@/lib/actions/define-action";
+import { requireRole } from "@/lib/auth";
 import { promoteLeadFromClient } from "@/lib/crm/conversion";
 import { renderEmail } from "@/lib/email/render";
 import { sendEmail } from "@/lib/email/resend";
 import { publicEnv } from "@/lib/env";
 import { buildVatBreakdown, computeLineTotals } from "@/lib/finance";
 import { backupInvoiceToDrive } from "@/lib/google/backup";
+import {
+  findClientInfo,
+  findCompanySettings,
+  findInvoiceForEdit,
+  findInvoiceForEmail,
+  findInvoiceForVerifactu,
+  findInvoiceItemsForVat,
+  findInvoiceSeries,
+  findInvoiceTimestamps,
+  findLastVerifactuChainEntry,
+  findNextInvoiceNumberForSeries,
+  findProjectForHourlyBilling,
+  findProposalForInvoice,
+  findProposalItems,
+  findUnlinkedWorkLogsForMonth,
+  insertInvoiceWithItems,
+  linkWorkLogsToInvoice,
+  patchInvoiceAfterVerifactu,
+  patchInvoiceHeader,
+  patchInvoiceStatus,
+  replaceInvoiceItems,
+  restoreDeletedInvoice,
+  softDeleteInvoice,
+} from "@/lib/invoices/queries";
+import type { InvoiceHeaderPatch } from "@/lib/invoices/types";
 import { scopedLogger } from "@/lib/logger";
 import { buildPortalAccessPatch } from "@/lib/portal/access";
+import { uuidIdInput } from "@/lib/schemas/common";
 import {
   CreateInvoiceFromProposalInput,
   CreateMonthlyHourlyInvoiceInput,
@@ -24,218 +51,143 @@ import { formatDate, formatEUR } from "@/lib/utils";
 import { verifactuConfigFromEnv } from "@/lib/verifactu/config";
 import { createVerifactuClient } from "@doscientos/verifactu";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 
 const log = scopedLogger("invoices.actions");
 
 export type UpdateInvoiceInput = UpdateInvoiceInputType;
 
-type ActionResult = { ok: true; csv: string | null } | { ok: false; error: string };
-type FromProposalResult = { ok: true; id: string } | { ok: false; error: string };
+// ─── Status ───────────────────────────────────────────────────────────────────
 
 /**
  * Updates the status of an invoice. If moving to 'paid', we set 'paid_at'.
  * If moving to 'issued' from 'draft', we set 'issued_at'.
+ * Best-effort Drive backup fires on first issuance.
  */
-export async function updateInvoiceStatus(
-  input: unknown,
-): Promise<{ ok: true } | { ok: false; error: string }> {
-  const user = await requireRole(["owner", "admin"]);
-  const parsed = UpdateInvoiceStatusInput.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Datos no válidos" };
-  const { id, status } = parsed.data;
+export const updateInvoiceStatus = defineAction({
+  name: "invoices.updateStatus",
+  schema: UpdateInvoiceStatusInput,
+  roles: ["owner", "admin"],
+  revalidate: (_p, input) => [`/invoices/${input.id}`, "/invoices", "/inicio"],
+  handler: async (input, { user }) => {
+    const { id, status } = input;
+    const timestamps = await findInvoiceTimestamps(id);
+    const now = new Date().toISOString();
 
-  const supabase = await createServerClient();
+    await patchInvoiceStatus(id, {
+      status,
+      updated_at: now,
+      paid_at: status === "paid" ? now : null,
+      ...(status === "issued" && !timestamps?.issued_at ? { issued_at: now } : {}),
+    });
 
-  // Read current fiscal timestamps so we don't clobber the original issue date
-  // when transitioning between non-draft states (e.g. reverting paid → issued).
-  const { data: current } = await supabase
-    .from("invoices")
-    .select("issued_at")
-    .eq("id", id)
-    .maybeSingle();
+    // Best-effort Drive backup on first issuance — fires as the acting user.
+    if (status === "issued" && !timestamps?.issued_at) {
+      void backupInvoiceToDrive(id, user.email);
+    }
+  },
+});
 
-  const now = new Date().toISOString();
-  const updates: any = { status, updated_at: now };
+// ─── Soft-delete / restore ────────────────────────────────────────────────────
 
-  // `paid_at` reflects collection: set it when paid, clear it otherwise so a
-  // paid invoice can be marked back as "no cobrada" (used during testing).
-  updates.paid_at = status === "paid" ? now : null;
-
-  // Stamp `issued_at` only the first time the invoice leaves draft.
-  if (status === "issued" && !current?.issued_at) {
-    updates.issued_at = now;
-  }
-
-  const { error } = await supabase.from("invoices").update(updates).eq("id", id);
-  if (error) return { ok: false, error: error.message };
-
-  // Best-effort Drive backup on first issuance — fires as the acting user.
-  if (status === "issued" && !current?.issued_at) {
-    void backupInvoiceToDrive(id, user.email);
-  }
-
-  revalidatePath(`/invoices/${id}`);
-  revalidatePath("/invoices");
-  revalidatePath("/inicio");
-  return { ok: true };
-}
-
-export async function deleteInvoice(
-  formData: FormData,
-): Promise<{ ok: true } | { ok: false; error: string }> {
-  await requireRole(["owner", "admin"]);
-  const id = formData.get("id")?.toString() ?? "";
-  if (!z.string().uuid().safeParse(id).success) return { ok: false, error: "ID inválido" };
-
-  const supabase = await createServerClient();
-  const { error } = await supabase
-    .from("invoices")
-    .update({ deleted_at: new Date().toISOString() })
-    .eq("id", id);
-
-  if (error) return { ok: false, error: error.message };
-
-  revalidatePath("/invoices");
-  return { ok: true };
-}
+export const deleteInvoice = defineAction({
+  name: "invoices.delete",
+  schema: uuidIdInput,
+  roles: ["owner", "admin"],
+  revalidate: () => ["/invoices"],
+  handler: async (input) => {
+    await softDeleteInvoice(input.id);
+  },
+});
 
 /**
- * Reverses a soft-delete by clearing `deleted_at`. Backs the "Deshacer" toast
- * shown after `deleteInvoice`. Mirrors its FormData signature and role guard.
+ * Reverses a soft-delete. Backs the "Deshacer" toast shown after `deleteInvoice`.
  */
-export async function restoreInvoice(
-  formData: FormData,
-): Promise<{ ok: true } | { ok: false; error: string }> {
-  await requireRole(["owner", "admin"]);
-  const id = formData.get("id")?.toString() ?? "";
-  if (!z.string().uuid().safeParse(id).success) return { ok: false, error: "ID inválido" };
+export const restoreInvoice = defineAction({
+  name: "invoices.restore",
+  schema: uuidIdInput,
+  roles: ["owner", "admin"],
+  revalidate: (_p, input) => [`/invoices/${input.id}`, "/invoices"],
+  handler: async (input) => {
+    await restoreDeletedInvoice(input.id);
+  },
+});
 
-  const supabase = await createServerClient();
-  const { error } = await supabase.from("invoices").update({ deleted_at: null }).eq("id", id);
-
-  if (error) return { ok: false, error: error.message };
-
-  revalidatePath(`/invoices/${id}`);
-  revalidatePath("/invoices");
-  return { ok: true };
-}
+// ─── Verifactu (AEAT) ─────────────────────────────────────────────────────────
 
 /**
- * Sends an invoice to Verifactu (AEAT). Computes the SHA-256 hash chain entry
- * using the previous invoice in `chain_sequence` order, builds the IDFACT and
- * QR URL, submits via `submitToVerifactu`, and persists the result.
- *
- * Only `owner` and `admin` can trigger this. Idempotent on the row: if the
- * invoice is already `accepted`, the call short-circuits.
+ * Submits an invoice to Verifactu (AEAT). Computes the SHA-256 hash chain entry,
+ * builds the IDFACT and QR URL, persists the result.
+ * Idempotent: short-circuits when the invoice is already `accepted`.
  */
-export async function sendToAeat(formData: FormData): Promise<ActionResult> {
-  await requireRole(["owner", "admin"]);
-  const verifactu = createVerifactuClient(verifactuConfigFromEnv(), log);
+export const sendToAeat = defineAction<typeof SendInvoiceInput, { csv: string | null }>({
+  name: "invoices.sendToAeat",
+  schema: SendInvoiceInput,
+  roles: ["owner", "admin"],
+  revalidate: (_p, input) => [`/invoices/${input.id}`, "/invoices", "/inicio"],
+  handler: async (input) => {
+    const { id } = input;
+    const verifactu = createVerifactuClient(verifactuConfigFromEnv(), log);
 
-  const parsed = SendInvoiceInput.safeParse({ id: formData.get("id")?.toString() ?? "" });
-  if (!parsed.success) return { ok: false, error: "ID inválido" };
-  const { id } = parsed.data;
+    const [companySetting, invoice] = await Promise.all([
+      findCompanySettings(),
+      findInvoiceForVerifactu(id),
+    ]);
 
-  const supabase = await createServerClient();
+    if (!companySetting?.company_nif) throw new Error("Falta el NIF de la empresa en Ajustes");
+    if (!invoice) throw new Error("Factura no encontrada");
+    if (invoice.status === "draft") throw new Error("Emite la factura antes de enviarla a la AEAT");
+    if (invoice.verifactu_status === "accepted") return { csv: null };
+    if (invoice.verifactu_status === "excluded")
+      throw new Error("Esta factura está excluida de Verifactu");
 
-  const { data: settings } = await supabase
-    .from("settings")
-    .select("company_nif, company_name")
-    .eq("id", 1)
-    .maybeSingle();
+    const [prev, vatItems] = await Promise.all([
+      findLastVerifactuChainEntry(),
+      findInvoiceItemsForVat(id),
+    ]);
 
-  const emisorNif = (settings?.company_nif as string | null) ?? null;
-  const emisorName = (settings?.company_name as string | null) ?? "";
+    const vatLines = buildVatBreakdown(
+      vatItems.map((it) => ({ vat_rate: it.vat_rate, subtotal: it.subtotal })),
+    );
+    const descriptionOperacion =
+      vatItems
+        .map((it) => it.description)
+        .filter(Boolean)
+        .join(", ")
+        .slice(0, 250) || "Prestación de servicios profesionales";
 
-  if (!emisorNif) {
-    return { ok: false, error: "Falta el NIF de la empresa en Ajustes" };
-  }
+    const previousHash = prev?.current_hash ?? null;
+    const previousInvoiceNumber = prev?.full_number ?? null;
+    const previousIssueDate = prev?.issue_date ? new Date(prev.issue_date) : null;
+    const nextSequence = (prev?.chain_sequence ?? 0) + 1;
+    const generatedAt = new Date();
+    const issueDate = new Date(invoice.issue_date);
 
-  const { data: invoice, error: readError } = await supabase
-    .from("invoices")
-    .select(
-      "id, client_id, status, verifactu_status, full_number, invoice_type, issue_date, tax_amount, total, previous_hash, chain_sequence, client_nif, client_name",
-    )
-    .eq("id", id)
-    .is("deleted_at", null)
-    .maybeSingle();
+    const result = await verifactu.registerInvoice({
+      nif: companySetting.company_nif,
+      invoiceNumber: invoice.full_number,
+      invoiceType: invoice.invoice_type,
+      issueDate,
+      taxAmount: invoice.tax_amount,
+      total: invoice.total,
+      previousHash,
+      generatedAt,
+      emisorName: companySetting.company_name,
+      clientNif: invoice.client_nif,
+      clientName: invoice.client_name,
+      descriptionOperacion,
+      vatLines,
+      previousInvoiceNumber,
+      previousIssueDate,
+    });
 
-  if (readError || !invoice) {
-    return { ok: false, error: "Factura no encontrada" };
-  }
-  if (invoice.status === "draft") {
-    return { ok: false, error: "Emite la factura antes de enviarla a la AEAT" };
-  }
-  if (invoice.verifactu_status === "accepted") {
-    return { ok: true, csv: null };
-  }
-  if (invoice.verifactu_status === "excluded") {
-    return { ok: false, error: "Esta factura está excluida de Verifactu" };
-  }
+    const qrUrl = verifactu.buildQrUrl({
+      nif: companySetting.company_nif,
+      invoiceNumber: invoice.full_number,
+      issueDate,
+      total: invoice.total,
+    });
 
-  // Resolve previous hash + invoice ID from the latest accepted invoice in the chain.
-  const { data: prev } = await supabase
-    .from("invoices")
-    .select("current_hash, chain_sequence, full_number, issue_date")
-    .eq("verifactu_status", "accepted")
-    .not("current_hash", "is", null)
-    .order("chain_sequence", { ascending: false, nullsFirst: false })
-    .limit(1)
-    .maybeSingle();
-
-  // Fetch line items for Desglose (VAT breakdown) and DescripcionOperacion.
-  const { data: items } = await supabase
-    .from("invoice_items")
-    .select("description, vat_rate, subtotal")
-    .eq("invoice_id", id)
-    .order("position");
-
-  const vatLines = buildVatBreakdown(
-    (items ?? []).map((it) => ({ vat_rate: it.vat_rate, subtotal: it.subtotal })),
-  );
-  const descriptionOperacion =
-    (items ?? [])
-      .map((it) => it.description)
-      .filter(Boolean)
-      .join(", ")
-      .slice(0, 250) || "Prestación de servicios profesionales";
-
-  const previousHash = (prev?.current_hash as string | null) ?? null;
-  const previousInvoiceNumber = (prev?.full_number as string | null) ?? null;
-  const previousIssueDate = prev?.issue_date ? new Date(prev.issue_date as string) : null;
-  const nextSequence = ((prev?.chain_sequence as number | null) ?? 0) + 1;
-  const generatedAt = new Date();
-  const issueDate = new Date(invoice.issue_date as string);
-
-  const result = await verifactu.registerInvoice({
-    nif: emisorNif,
-    invoiceNumber: invoice.full_number as string,
-    invoiceType: invoice.invoice_type as string,
-    issueDate,
-    taxAmount: Number(invoice.tax_amount ?? 0),
-    total: Number(invoice.total ?? 0),
-    previousHash,
-    generatedAt,
-    emisorName,
-    clientNif: (invoice.client_nif as string | null) ?? null,
-    clientName: (invoice.client_name as string | null) ?? null,
-    descriptionOperacion,
-    vatLines,
-    previousInvoiceNumber,
-    previousIssueDate,
-  });
-
-  const qrUrl = verifactu.buildQrUrl({
-    nif: emisorNif,
-    invoiceNumber: invoice.full_number as string,
-    issueDate,
-    total: Number(invoice.total ?? 0),
-  });
-
-  const { error: updateError } = await supabase
-    .from("invoices")
-    .update({
+    await patchInvoiceAfterVerifactu(id, {
       idfact: result.idfact,
       previous_hash: previousHash,
       current_hash: result.hash,
@@ -246,370 +198,82 @@ export async function sendToAeat(formData: FormData): Promise<ActionResult> {
       verifactu_csv: result.csv,
       verifactu_response: result.response,
       qr_url: qrUrl,
-      issued_at: invoice.verifactu_status === "pending" ? generatedAt.toISOString() : undefined,
-    })
-    .eq("id", id);
+      ...(invoice.verifactu_status === "pending" ? { issued_at: generatedAt.toISOString() } : {}),
+    });
 
-  if (updateError) {
-    log.error({ err: updateError, invoiceId: id }, "verifactu_persist_failed");
-    return { ok: false, error: updateError.message };
-  }
+    log.info({ invoiceId: id, csv: result.csv, status: result.status }, "verifactu_submit_done");
 
-  log.info({ invoiceId: id, csv: result.csv, status: result.status }, "verifactu_submit_done");
-  revalidatePath(`/invoices/${id}`);
-  revalidatePath("/invoices");
-  revalidatePath("/inicio");
-
-  if (result.status !== "accepted") {
-    return { ok: false, error: result.errorMessage ?? "AEAT rechazó la factura" };
-  }
-
-  // Safety net: once the invoice is fiscally accepted, the originating lead
-  // is definitively won. Best-effort; never blocks the response.
-  if (invoice.client_id) {
-    await promoteLeadFromClient(supabase, invoice.client_id as string);
-  }
-
-  return { ok: true, csv: result.csv };
-}
-
-/**
- * Create a draft invoice cloning the line items, totals and client/project
- * references from an accepted proposal. The new invoice keeps `proposal_id`
- * pointing to the source so the relationship survives for reporting and
- * partial billing scenarios (multiple invoices per proposal are allowed —
- * e.g. monthly billing of an hourly engagement).
- */
-export async function createInvoiceFromProposal(input: unknown): Promise<FromProposalResult> {
-  const user = await requireUser();
-  const parsed = CreateInvoiceFromProposalInput.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "ID inválido" };
-  const { proposalId } = parsed.data;
-
-  const supabase = await createServerClient();
-
-  const { data: proposal, error: readError } = await supabase
-    .from("proposals")
-    .select("id, client_id, project_id, status, title, notes")
-    .eq("id", proposalId)
-    .is("deleted_at", null)
-    .maybeSingle();
-
-  if (readError || !proposal) return { ok: false, error: "Propuesta no encontrada" };
-  if (proposal.status !== "accepted") {
-    return { ok: false, error: "Solo se puede facturar una propuesta aceptada" };
-  }
-
-  const { data: allItems, error: itemsReadError } = await supabase
-    .from("proposal_items")
-    .select("position, description, quantity, unit_price, vat_rate, billing_cycle")
-    .eq("proposal_id", proposalId)
-    .order("position");
-
-  if (itemsReadError) return { ok: false, error: itemsReadError.message };
-  if (!allItems || allItems.length === 0) {
-    return { ok: false, error: "La propuesta no tiene líneas para facturar" };
-  }
-
-  // First invoice from a proposal only bills the one-time (non-recurring) lines.
-  // Recurring lines (mantenimiento, etc.) require dedicated periodic invoicing
-  // and would otherwise inflate the first invoice with future obligations.
-  const items = allItems.filter((it) => ((it.billing_cycle as string | null) ?? "none") === "none");
-  if (items.length === 0) {
-    return {
-      ok: false,
-      error: "Esta propuesta solo contiene líneas recurrentes; crea la factura manualmente",
-    };
-  }
-
-  const { data: client } = await supabase
-    .from("clients")
-    .select("name, nif, billing_address")
-    .eq("id", proposal.client_id as string)
-    .maybeSingle();
-
-  const { data: settings } = await supabase
-    .from("settings")
-    .select("invoice_series")
-    .eq("id", 1)
-    .maybeSingle();
-  const series = ((settings?.invoice_series as string | null) ?? "A").trim() || "A";
-
-  const { data: lastInSeries } = await supabase
-    .from("invoices")
-    .select("number")
-    .eq("series", series)
-    .order("number", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  const nextNumber = ((lastInSeries?.number as number | null) ?? 0) + 1;
-
-  const { subtotal, taxAmount, total } = computeLineTotals(
-    items.map((it) => ({
-      quantity: Number(it.quantity ?? 0),
-      unit_price: Number(it.unit_price ?? 0),
-      vat_rate: Number(it.vat_rate ?? 0),
-    })),
-  );
-
-  const { data: invoice, error: insertError } = await supabase
-    .from("invoices")
-    .insert({
-      client_id: proposal.client_id,
-      project_id: proposal.project_id ?? null,
-      proposal_id: proposal.id,
-      series,
-      number: nextNumber,
-      status: "draft",
-      currency: "EUR",
-      subtotal,
-      tax_amount: taxAmount,
-      total,
-      client_nif: (client?.nif as string | null) ?? null,
-      client_name: (client?.name as string | null) ?? null,
-      client_address: (client?.billing_address as string | null) ?? null,
-      notes: (proposal.notes as string | null) ?? null,
-      created_by: user.id,
-    })
-    .select("id")
-    .single();
-
-  if (insertError || !invoice) {
-    log.error({ err: insertError, proposalId }, "create_invoice_from_proposal_failed");
-    return { ok: false, error: insertError?.message ?? "No se pudo crear la factura" };
-  }
-
-  const { error: itemsInsertError } = await supabase.from("invoice_items").insert(
-    items.map((it, idx) => ({
-      invoice_id: invoice.id,
-      position: idx,
-      description: it.description,
-      quantity: it.quantity,
-      unit_price: it.unit_price,
-      vat_rate: it.vat_rate,
-    })),
-  );
-
-  if (itemsInsertError) {
-    log.error(
-      { err: itemsInsertError, invoiceId: invoice.id, proposalId },
-      "create_invoice_from_proposal_items_failed",
-    );
-    return { ok: false, error: itemsInsertError.message };
-  }
-
-  revalidatePath("/invoices");
-  revalidatePath(`/proposals/${proposalId}`);
-  return { ok: true, id: invoice.id as string };
-}
-
-/**
- * Generate a draft invoice for an hourly project from the hours logged in a
- * calendar month. Sums `work_logs.hours` for the month and bills them as a
- * single line at the project's `hourly_rate` / `hourly_vat_rate` (e.g. Palumba:
- * 40 €/h, 0 % VAT). Fixed-price projects are rejected.
- */
-export async function createHourlyInvoice(input: unknown): Promise<FromProposalResult> {
-  const user = await requireUser();
-  const parsed = CreateMonthlyHourlyInvoiceInput.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Datos no válidos" };
-  const { projectId, month } = parsed.data;
-
-  const supabase = await createServerClient();
-
-  const { data: project, error: projectError } = await supabase
-    .from("projects")
-    .select("id, client_id, name, billing_type, hourly_rate, hourly_vat_rate")
-    .eq("id", projectId)
-    .is("deleted_at", null)
-    .maybeSingle();
-
-  if (projectError || !project) return { ok: false, error: "Proyecto no encontrado" };
-  if (project.billing_type !== "hourly") {
-    return { ok: false, error: "El proyecto no factura por horas" };
-  }
-  const rate = Number(project.hourly_rate ?? 0);
-  if (!(rate > 0)) return { ok: false, error: "El proyecto no tiene un precio/hora válido" };
-  const vatRate = Number(project.hourly_vat_rate ?? 0);
-
-  // Month window: [YYYY-MM-01, first day of next month). The schema regex
-  // guarantees `YYYY-MM`, so the parsed parts are always valid integers.
-  const year = Number(month.slice(0, 4));
-  const mon = Number(month.slice(5, 7));
-  const monthStart = `${month}-01`;
-  const monthEnd = new Date(Date.UTC(year, mon, 1)).toISOString().slice(0, 10);
-
-  const { data: logs, error: logsError } = await supabase
-    .from("work_logs")
-    .select("id, hours, work_date, start_time, end_time, note")
-    .eq("project_id", projectId)
-    .is("deleted_at", null)
-    .is("invoice_id", null)
-    .gte("work_date", monthStart)
-    .lt("work_date", monthEnd)
-    .order("work_date", { ascending: true });
-
-  if (logsError) return { ok: false, error: logsError.message };
-  const hours = (logs ?? []).reduce((sum, l) => sum + Number(l.hours ?? 0), 0);
-  if (!(hours > 0)) {
-    return { ok: false, error: "No hay horas registradas en ese mes" };
-  }
-
-  const { data: client } = await supabase
-    .from("clients")
-    .select("name, nif, billing_address")
-    .eq("id", project.client_id as string)
-    .maybeSingle();
-
-  const { data: settings } = await supabase
-    .from("settings")
-    .select("invoice_series")
-    .eq("id", 1)
-    .maybeSingle();
-  const series = ((settings?.invoice_series as string | null) ?? "A").trim() || "A";
-
-  const { data: lastInSeries } = await supabase
-    .from("invoices")
-    .select("number")
-    .eq("series", series)
-    .order("number", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  const nextNumber = ((lastInSeries?.number as number | null) ?? 0) + 1;
-
-  const monthLabel = new Intl.DateTimeFormat("es-ES", {
-    month: "long",
-    year: "numeric",
-  }).format(new Date(`${monthStart}T00:00:00`));
-  const description = `Horas trabajadas — ${monthLabel}`;
-
-  const { subtotal, taxAmount, total } = computeLineTotals([
-    { quantity: hours, unit_price: rate, vat_rate: vatRate },
-  ]);
-
-  const { data: invoice, error: insertError } = await supabase
-    .from("invoices")
-    .insert({
-      client_id: project.client_id,
-      project_id: project.id,
-      series,
-      number: nextNumber,
-      status: "draft",
-      currency: "EUR",
-      subtotal,
-      tax_amount: taxAmount,
-      total,
-      client_nif: (client?.nif as string | null) ?? null,
-      client_name: (client?.name as string | null) ?? null,
-      client_address: (client?.billing_address as string | null) ?? null,
-      created_by: user.id,
-    })
-    .select("id")
-    .single();
-
-  if (insertError || !invoice) {
-    log.error({ err: insertError, projectId, month }, "create_hourly_invoice_failed");
-    return { ok: false, error: insertError?.message ?? "No se pudo crear la factura" };
-  }
-
-  const { error: itemsInsertError } = await supabase.from("invoice_items").insert({
-    invoice_id: invoice.id,
-    position: 0,
-    description,
-    quantity: hours,
-    unit_price: rate,
-    vat_rate: vatRate,
-  });
-
-  if (itemsInsertError) {
-    log.error(
-      { err: itemsInsertError, invoiceId: invoice.id, projectId, month },
-      "create_hourly_invoice_items_failed",
-    );
-    return { ok: false, error: itemsInsertError.message };
-  }
-
-  // Link each work log to this invoice so they appear in the portal breakdown
-  // and cannot be accidentally included in a future invoice.
-  const logIds = (logs ?? []).map((l) => l.id as string);
-  if (logIds.length > 0) {
-    const { error: linkError } = await supabase
-      .from("work_logs")
-      .update({ invoice_id: invoice.id })
-      .in("id", logIds);
-
-    if (linkError) {
-      log.error(
-        { err: linkError, invoiceId: invoice.id, logIds },
-        "create_hourly_invoice_link_logs_failed",
-      );
-      // Non-fatal: the invoice was created; the link failure is logged but we
-      // don't roll back the whole operation.
+    if (result.status !== "accepted") {
+      throw new Error(result.errorMessage ?? "AEAT rechazó la factura");
     }
-  }
 
-  revalidatePath("/invoices");
-  revalidatePath(`/projects/${projectId}`);
-  return { ok: true, id: invoice.id as string };
-}
+    // Once fiscally accepted, the originating lead is definitively won.
+    if (invoice.client_id) {
+      const supabase = await createServerClient();
+      await promoteLeadFromClient(supabase, invoice.client_id);
+    }
+
+    return { csv: result.csv };
+  },
+});
+
+// ─── Invoice creation ─────────────────────────────────────────────────────────
 
 /**
- * Patches an invoice in place. Accepts a partial payload; when `items` is
- * present the line items are replaced atomically (delete + insert) and
- * totals recomputed server-side.
- *
- * Locked once the invoice is `issued` or beyond (Verifactu compliance).
+ * Creates a draft invoice from an accepted proposal, cloning the one-time line
+ * items, totals, and client/project references.
  */
-export async function updateInvoice(
-  input: UpdateInvoiceInput,
-): Promise<{ ok: true } | { ok: false; error: string }> {
-  await requireRole(["owner", "admin"]);
-  const parsed = UpdateInvoiceInputSchema.safeParse(input);
-  if (!parsed.success) {
-    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
-  }
-  const data = parsed.data;
+export const createInvoiceFromProposal = defineAction<
+  typeof CreateInvoiceFromProposalInput,
+  { id: string }
+>({
+  name: "invoices.createFromProposal",
+  schema: CreateInvoiceFromProposalInput,
+  revalidate: (_p, input) => ["/invoices", `/proposals/${input.proposalId}`],
+  handler: async (input, { user }) => {
+    const { proposalId } = input;
+    const proposal = await findProposalForInvoice(proposalId);
+    if (!proposal) throw new Error("Propuesta no encontrada");
+    if (proposal.status !== "accepted")
+      throw new Error("Solo se puede facturar una propuesta aceptada");
 
-  const supabase = await createServerClient();
+    const allItems = await findProposalItems(proposalId);
+    if (allItems.length === 0) throw new Error("La propuesta no tiene líneas para facturar");
 
-  // Verify status is draft.
-  const { data: current } = await supabase
-    .from("invoices")
-    .select("status")
-    .eq("id", data.id)
-    .single();
+    // Only bill one-time lines; recurring lines are handled by periodic invoicing.
+    const items = allItems.filter((it) => (it.billing_cycle ?? "none") === "none");
+    if (items.length === 0) {
+      throw new Error(
+        "Esta propuesta solo contiene líneas recurrentes; crea la factura manualmente",
+      );
+    }
 
-  if (!current) return { ok: false, error: "Factura no encontrada" };
-  if (current.status !== "draft") {
-    return { ok: false, error: "No se puede editar una factura ya emitida" };
-  }
+    const [client, series] = await Promise.all([
+      findClientInfo(proposal.client_id),
+      findInvoiceSeries(),
+    ]);
+    const nextNumber = await findNextInvoiceNumberForSeries(series);
+    const { subtotal, taxAmount, total } = computeLineTotals(items);
 
-  const updates: any = { updated_at: new Date().toISOString() };
-  if (data.issue_date) updates.issue_date = data.issue_date;
-  if (data.due_date !== undefined) updates.due_date = data.due_date ?? null;
-  if (data.notes !== undefined) updates.notes = data.notes;
-
-  if (data.items) {
-    const totals = computeLineTotals(data.items);
-    updates.subtotal = totals.subtotal;
-    updates.tax_amount = totals.taxAmount;
-    updates.total = totals.total;
-  }
-
-  const { error: updateError } = await supabase.from("invoices").update(updates).eq("id", data.id);
-  if (updateError) return { ok: false, error: updateError.message };
-
-  if (data.items) {
-    // Replace items.
-    const { error: deleteError } = await supabase
-      .from("invoice_items")
-      .delete()
-      .eq("invoice_id", data.id);
-    if (deleteError) return { ok: false, error: deleteError.message };
-
-    const { error: itemsError } = await supabase.from("invoice_items").insert(
-      data.items.map((it, idx) => ({
-        invoice_id: data.id,
+    const { id } = await insertInvoiceWithItems(
+      {
+        client_id: proposal.client_id,
+        project_id: proposal.project_id,
+        proposal_id: proposal.id,
+        series,
+        number: nextNumber,
+        status: "draft",
+        currency: "EUR",
+        subtotal,
+        tax_amount: taxAmount,
+        total,
+        client_nif: client?.nif ?? null,
+        client_name: client?.name ?? null,
+        client_address: client?.billing_address ?? null,
+        notes: proposal.notes,
+        created_by: user.id,
+      },
+      items.map((it, idx) => ({
         position: idx,
         description: it.description,
         quantity: it.quantity,
@@ -617,28 +281,160 @@ export async function updateInvoice(
         vat_rate: it.vat_rate,
       })),
     );
-    if (itemsError) return { ok: false, error: itemsError.message };
-  }
 
-  revalidatePath(`/invoices/${data.id}`);
-  return { ok: true };
-}
-
-// ---------------- PORTAL ACCESS (visibility + password) ----------------
+    return { id };
+  },
+});
 
 /**
- * Updates the public-link access controls of an invoice: the
- * `is_client_visible` toggle and/or the optional password gate. Only touches
- * portal metadata, so it is allowed even after the invoice is issued (the
- * Verifactu immutability trigger guards only the fiscal columns).
+ * Generates a draft invoice for an hourly project from work logs in a given
+ * calendar month. Fixed-price projects are rejected.
+ */
+export const createHourlyInvoice = defineAction<
+  typeof CreateMonthlyHourlyInvoiceInput,
+  { id: string }
+>({
+  name: "invoices.createHourly",
+  schema: CreateMonthlyHourlyInvoiceInput,
+  revalidate: (_p, input) => ["/invoices", `/projects/${input.projectId}`],
+  handler: async (input, { user }) => {
+    const { projectId, month } = input;
+
+    const project = await findProjectForHourlyBilling(projectId);
+    if (!project) throw new Error("Proyecto no encontrado");
+    if (project.billing_type !== "hourly") throw new Error("El proyecto no factura por horas");
+    if (!(project.hourly_rate > 0)) throw new Error("El proyecto no tiene un precio/hora válido");
+
+    const year = Number(month.slice(0, 4));
+    const mon = Number(month.slice(5, 7));
+    const monthStart = `${month}-01`;
+    const monthEnd = new Date(Date.UTC(year, mon, 1)).toISOString().slice(0, 10);
+
+    const logs = await findUnlinkedWorkLogsForMonth(projectId, monthStart, monthEnd);
+    const hours = logs.reduce((sum, l) => sum + l.hours, 0);
+    if (!(hours > 0)) throw new Error("No hay horas registradas en ese mes");
+
+    const [client, series] = await Promise.all([
+      findClientInfo(project.client_id),
+      findInvoiceSeries(),
+    ]);
+    const nextNumber = await findNextInvoiceNumberForSeries(series);
+
+    const monthLabel = new Intl.DateTimeFormat("es-ES", { month: "long", year: "numeric" }).format(
+      new Date(`${monthStart}T00:00:00`),
+    );
+    const { subtotal, taxAmount, total } = computeLineTotals([
+      { quantity: hours, unit_price: project.hourly_rate, vat_rate: project.hourly_vat_rate },
+    ]);
+
+    const { id } = await insertInvoiceWithItems(
+      {
+        client_id: project.client_id,
+        project_id: project.id,
+        series,
+        number: nextNumber,
+        status: "draft",
+        currency: "EUR",
+        subtotal,
+        tax_amount: taxAmount,
+        total,
+        client_nif: client?.nif ?? null,
+        client_name: client?.name ?? null,
+        client_address: client?.billing_address ?? null,
+        created_by: user.id,
+      },
+      [
+        {
+          position: 0,
+          description: `Horas trabajadas — ${monthLabel}`,
+          quantity: hours,
+          unit_price: project.hourly_rate,
+          vat_rate: project.hourly_vat_rate,
+        },
+      ],
+    );
+
+    // Link logs to invoice so they can't be double-billed (best-effort).
+    try {
+      await linkWorkLogsToInvoice(
+        logs.map((l) => l.id),
+        id,
+      );
+    } catch (err) {
+      log.error({ err, invoiceId: id }, "link_work_logs_failed");
+    }
+
+    return { id };
+  },
+});
+
+// ─── Edit ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Patches a draft invoice in place. When `items` is present, line items are
+ * replaced and totals recomputed server-side.
+ * Locked once the invoice is `issued` or beyond (Verifactu compliance).
+ */
+export const updateInvoice = defineAction({
+  name: "invoices.update",
+  schema: UpdateInvoiceInputSchema,
+  roles: ["owner", "admin"],
+  revalidate: (_p, input) => [`/invoices/${input.id}`],
+  handler: async (input) => {
+    const current = await findInvoiceForEdit(input.id);
+    if (!current) throw new Error("Factura no encontrada");
+    if (current.status !== "draft") throw new Error("No se puede editar una factura ya emitida");
+
+    const headerPatch: InvoiceHeaderPatch = { updated_at: new Date().toISOString() };
+    if (input.issue_date) headerPatch.issue_date = input.issue_date;
+    if (input.due_date !== undefined) headerPatch.due_date = input.due_date ?? null;
+    if (input.notes !== undefined) headerPatch.notes = input.notes;
+
+    if (input.items) {
+      const { subtotal, taxAmount, total } = computeLineTotals(input.items);
+      headerPatch.subtotal = subtotal;
+      headerPatch.tax_amount = taxAmount;
+      headerPatch.total = total;
+    }
+
+    await patchInvoiceHeader(input.id, headerPatch);
+
+    if (input.items) {
+      await replaceInvoiceItems(
+        input.id,
+        input.items.map((it, idx) => ({
+          position: idx,
+          description: it.description,
+          quantity: it.quantity,
+          unit_price: it.unit_price,
+          vat_rate: it.vat_rate,
+        })),
+      );
+    }
+  },
+});
+
+// ─── Portal access ────────────────────────────────────────────────────────────
+
+/**
+ * Updates the public-link visibility and optional password gate of an invoice.
+ * Allowed even after issuance — only fiscal columns are immutable.
+ *
+ * Implemented as a plain async function (not `defineAction`) because it is
+ * consumed by the resource-agnostic `PortalAccessControls` component which
+ * expects `(input: unknown) => Promise<{ ok: true } | { ok: false; error }>`.
  */
 export async function updateInvoicePortalAccess(
   input: unknown,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  await requireRole(["owner", "admin"]);
+  try {
+    await requireRole(["owner", "admin"]);
+  } catch {
+    return { ok: false, error: "No autorizado" };
+  }
   const parsed = UpdatePortalAccessInput.safeParse(input);
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos no válidos" };
   }
   const patch = buildPortalAccessPatch(parsed.data);
   if (Object.keys(patch).length === 0) return { ok: true };
@@ -654,68 +450,46 @@ export async function updateInvoicePortalAccess(
   return { ok: true };
 }
 
-// ---------------- SEND INVOICE EMAIL (client portal) ----------------
-
-type SendInvoiceEmailResult =
-  | { ok: true; portalUrl: string; mocked: boolean }
-  | { ok: false; error: string };
+// ─── Send email ───────────────────────────────────────────────────────────────
 
 /**
- * Emails the public portal link of an invoice to the client via Resend so they
- * can view, download and pay it online. Requires the invoice to be issued and
- * client-visible. Idempotent: does not change the invoice status.
+ * Emails the public portal link to the client via Resend.
+ * Requires the invoice to be issued and client-visible.
  */
-export async function sendInvoiceEmail(input: unknown): Promise<SendInvoiceEmailResult> {
-  const user = await requireUser();
+export const sendInvoiceEmail = defineAction<
+  typeof SendInvoiceEmailInput,
+  { portalUrl: string; mocked: boolean }
+>({
+  name: "invoices.sendEmail",
+  schema: SendInvoiceEmailInput,
+  revalidate: (_p, input) => [`/invoices/${input.id}`],
+  handler: async (input, { user }) => {
+    const { id, to: overrideTo, message } = input;
 
-  const parsed = SendInvoiceEmailInput.safeParse(input);
-  if (!parsed.success) {
-    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
-  }
-  const { id, to: overrideTo, message } = parsed.data;
+    const invoice = await findInvoiceForEmail(id);
+    if (!invoice) throw new Error("Factura no encontrada");
+    if (invoice.status === "draft")
+      throw new Error("Emite la factura antes de enviarla al cliente");
+    if (!invoice.is_client_visible) throw new Error("La factura no es visible para el cliente");
 
-  const supabase = await createServerClient();
-  const { data: invoice, error: readError } = await supabase
-    .from("invoices")
-    .select(
-      "id, full_number, total, due_date, status, portal_token, is_client_visible, clients(name, email)",
-    )
-    .eq("id", id)
-    .is("deleted_at", null)
-    .maybeSingle();
-  if (readError || !invoice) return { ok: false, error: "Factura no encontrada" };
+    const recipient = overrideTo ?? invoice.client?.email ?? null;
+    if (!recipient) throw new Error("El cliente no tiene email registrado");
+    if (!invoice.portal_token) throw new Error("La factura no tiene token de portal");
 
-  if (invoice.status === "draft") {
-    return { ok: false, error: "Emite la factura antes de enviarla al cliente" };
-  }
-  if (!invoice.is_client_visible) {
-    return { ok: false, error: "La factura no es visible para el cliente" };
-  }
+    const invoiceNumber = invoice.full_number ?? "—";
+    const portalUrl = `${publicEnv.NEXT_PUBLIC_APP_URL}/p/invoice/${invoice.portal_token}`;
+    const html = await renderEmail(
+      InvoiceEmail({
+        clientName: invoice.client?.name ?? "Hola",
+        invoiceNumber,
+        total: formatEUR(invoice.total ?? 0),
+        dueDate: invoice.due_date ? formatDate(invoice.due_date) : "—",
+        portalUrl,
+        appUrl: publicEnv.NEXT_PUBLIC_APP_URL,
+        message,
+      }),
+    );
 
-  const client = (invoice as unknown as { clients: { name: string; email: string | null } | null })
-    .clients;
-  const recipient = overrideTo ?? client?.email ?? null;
-  if (!recipient) return { ok: false, error: "El cliente no tiene email registrado" };
-
-  const portalToken = invoice.portal_token as string | null;
-  if (!portalToken) return { ok: false, error: "La factura no tiene token de portal" };
-
-  const invoiceNumber = (invoice.full_number as string | null) ?? "—";
-  const portalUrl = `${publicEnv.NEXT_PUBLIC_APP_URL}/p/invoice/${portalToken}`;
-  const html = await renderEmail(
-    InvoiceEmail({
-      clientName: client?.name ?? "Hola",
-      invoiceNumber,
-      total: formatEUR(invoice.total as number),
-      dueDate: invoice.due_date ? formatDate(invoice.due_date as string) : "—",
-      portalUrl,
-      appUrl: publicEnv.NEXT_PUBLIC_APP_URL,
-      message,
-    }),
-  );
-
-  let mocked = false;
-  try {
     const result = await sendEmail({
       fromName: user.name,
       fromAlias: user.emailAlias ?? "facturacion",
@@ -725,12 +499,7 @@ export async function sendInvoiceEmail(input: unknown): Promise<SendInvoiceEmail
       html,
       tags: { invoice_id: id, kind: "invoice_link" },
     });
-    mocked = result.mocked;
-  } catch (err) {
-    log.error({ err, invoiceId: id }, "send_invoice_email_failed");
-    return { ok: false, error: err instanceof Error ? err.message : "No se pudo enviar el email" };
-  }
 
-  revalidatePath(`/invoices/${id}`);
-  return { ok: true, portalUrl, mocked };
-}
+    return { portalUrl, mocked: result.mocked };
+  },
+});

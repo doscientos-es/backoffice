@@ -1,0 +1,93 @@
+import { StatusBadge } from "@/components/ui/status-badge";
+import { SOCIAL_POST_STATUS, SOCIAL_TARGET_STATUS } from "@/lib/status";
+import type { PostListItem } from "@/lib/social/types";
+import { cn, relativeTime } from "@/lib/utils";
+import { CalendarClock, MessageSquareText } from "lucide-react";
+import Link from "next/link";
+import { MediaPreview } from "./media-thumb";
+import { PlatformIcon } from "./platform";
+import { PublishButton } from "./publish-button";
+
+/**
+ * One post in the dashboard list. Presentational (server) — shows the media
+ * preview, caption, aggregate status and a per-target status row. Draft /
+ * scheduled / failed posts expose a publish (or retry) action inline.
+ */
+export function PostCard({ post }: { post: PostListItem }) {
+  const canPublish =
+    post.status === "draft" ||
+    post.status === "scheduled" ||
+    post.status === "failed" ||
+    post.status === "partially_failed";
+  const isRetry = post.status === "failed" || post.status === "partially_failed";
+  const caption = post.caption.trim() || "Sin texto";
+
+  return (
+    <div className="group flex flex-col gap-3 rounded-xl border border-border bg-card p-3 transition-all hover:border-primary/30 hover:shadow-md">
+      <div className="flex gap-3">
+        <Link
+          href={`/social/${post.id}`}
+          className="shrink-0"
+          aria-label="Ver detalle del post"
+        >
+          <MediaPreview media={post.media} className="size-20" />
+        </Link>
+
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <div className="flex items-start justify-between gap-2">
+            <Link
+              href={`/social/${post.id}`}
+              className="line-clamp-2 text-sm font-medium text-foreground transition-colors group-hover:text-primary"
+            >
+              {caption}
+            </Link>
+            <StatusBadge meta={SOCIAL_POST_STATUS} value={post.status} />
+          </div>
+
+          {/* Per-target status pills */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {post.targets.map((t) => (
+              <span
+                key={t.id}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full border border-border/70 px-1.5 py-0.5 text-[10px]",
+                  t.status === "failed" && "border-destructive/40 text-destructive",
+                )}
+                title={t.error ?? undefined}
+              >
+                <PlatformIcon platform={t.platform} className="size-3" />
+                <StatusBadge
+                  meta={SOCIAL_TARGET_STATUS}
+                  value={t.status}
+                  className="border-0 bg-transparent px-0 py-0"
+                />
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-2 border-t border-border/60 pt-2">
+        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+          <span title={post.createdAt}>{relativeTime(post.createdAt)}</span>
+          {post.scheduledAt && (
+            <span className="inline-flex items-center gap-1">
+              <CalendarClock className="size-3" />
+              {relativeTime(post.scheduledAt)}
+            </span>
+          )}
+          <Link
+            href={`/social/${post.id}`}
+            className="inline-flex items-center gap-1 hover:text-foreground"
+          >
+            <MessageSquareText className="size-3" />
+            Detalle
+          </Link>
+        </div>
+        {canPublish && (
+          <PublishButton postId={post.id} retry={isRetry} label={isRetry ? undefined : "Publicar"} />
+        )}
+      </div>
+    </div>
+  );
+}

@@ -22,13 +22,14 @@ vi.mock("@/lib/auth", () => ({
   }),
 }));
 
-vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: () => ({
-    storage: {
-      from: (_bucket: string) => ({
-        createSignedUrl: async () => state.signedUrlResult,
-      }),
-    },
+vi.mock("@/lib/storage", () => ({
+  getStorage: () => ({
+    upload: async () => ({ error: null }),
+    remove: async () => ({ error: null }),
+    createSignedUrl: async () => ({
+      url: state.signedUrlResult.data?.signedUrl ?? null,
+      error: state.signedUrlResult.error?.message ?? null,
+    }),
   }),
 }));
 
@@ -46,8 +47,8 @@ vi.mock("@/lib/supabase/server", () => ({
   })),
 }));
 
-import { NextRequest } from "next/server";
 import { GET } from "@/app/api/documents/[id]/download/route";
+import { NextRequest } from "next/server";
 
 function downloadRequest(id: string): NextRequest {
   return new NextRequest(`http://localhost/api/documents/${id}/download`);
@@ -88,7 +89,10 @@ describe("GET /api/documents/[id]/download", () => {
   });
 
   it("returns 400 when the DB row has no storage_path", async () => {
-    state.dbFetchResult = { data: { id: "att-1", storage_path: "", name: "file.pdf" }, error: null };
+    state.dbFetchResult = {
+      data: { id: "att-1", storage_path: "", name: "file.pdf" },
+      error: null,
+    };
     const res = await GET(downloadRequest("att-1"), { params: Promise.resolve({ id: "att-1" }) });
     expect(res.status).toBe(400);
   });

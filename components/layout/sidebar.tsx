@@ -10,11 +10,11 @@ import type { CurrentUser, MemberRole } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import {
   Archive,
+  BarChart3,
   Bell,
   CheckSquare,
   ChevronDown,
   FileSignature,
-  FileText,
   FolderKanban,
   Globe,
   Home,
@@ -24,6 +24,7 @@ import {
   Receipt,
   Repeat,
   Settings,
+  Share2,
   Users,
   Wallet,
 } from "lucide-react";
@@ -40,42 +41,135 @@ type NavItem = {
   allowedRoles?: MemberRole[];
 };
 
+type NavGroup = {
+  /** Etiqueta de sección. undefined = sin cabecera (p.ej. Inicio). */
+  label?: string;
+  items: NavItem[];
+};
+
 const ADMIN_ROLES: MemberRole[] = ["owner", "admin"];
 
-const NAV_PRIMARY: NavItem[] = [
-  { href: "/inicio", label: "Inicio", icon: Home },
-  { href: "/leads", label: "Leads", icon: Inbox },
-  { href: "/clients", label: "Clientes", icon: Users },
-  { href: "/projects", label: "Proyectos", icon: FolderKanban },
-  { href: "/proposals", label: "Propuestas", icon: FileSignature },
-  { href: "/invoices", label: "Facturas", icon: Receipt, allowedRoles: ADMIN_ROLES },
-  { href: "/subscriptions", label: "Suscripciones", icon: Repeat, allowedRoles: ADMIN_ROLES },
-  { href: "/finance", label: "Finanzas", icon: Wallet, allowedRoles: ADMIN_ROLES },
-  { href: "/internal-docs", label: "Docs internos", icon: Archive },
-  { href: "/marketing", label: "Anuncios", icon: Megaphone, allowedRoles: ADMIN_ROLES },
-  { href: "/webs", label: "Webs", icon: Globe, allowedRoles: ADMIN_ROLES },
-  { href: "/settings", label: "Ajustes", icon: Settings },
+/**
+ * Navegación principal agrupada por flujo de negocio.
+ * Orden: Inicio → Ventas → Entrega → Finanzas → Growth → Empresa.
+ */
+const NAV_GROUPS: NavGroup[] = [
+  {
+    items: [{ href: "/inicio", label: "Inicio", icon: Home }],
+  },
+  {
+    label: "Ventas",
+    items: [
+      { href: "/leads", label: "Leads", icon: Inbox },
+      { href: "/clients", label: "Clientes", icon: Users },
+      { href: "/proposals", label: "Propuestas", icon: FileSignature },
+    ],
+  },
+  {
+    label: "Entrega",
+    items: [
+      { href: "/projects", label: "Proyectos", icon: FolderKanban },
+      { href: "/tasks", label: "Tareas", icon: CheckSquare },
+      { href: "/webs", label: "Webs", icon: Globe, allowedRoles: ADMIN_ROLES },
+    ],
+  },
+  {
+    label: "Finanzas",
+    items: [
+      { href: "/invoices", label: "Facturas", icon: Receipt, allowedRoles: ADMIN_ROLES },
+      { href: "/subscriptions", label: "Suscripciones", icon: Repeat, allowedRoles: ADMIN_ROLES },
+      { href: "/finance", label: "Finanzas", icon: Wallet, allowedRoles: ADMIN_ROLES },
+      {
+        href: "/finance/portfolio",
+        label: "Portfolio",
+        icon: BarChart3,
+        allowedRoles: ADMIN_ROLES,
+      },
+    ],
+  },
+  {
+    label: "Growth",
+    items: [
+      // "Anuncios" → "Publicidad" para evitar colisión con "Avisos/Recordatorios"
+      { href: "/marketing", label: "Publicidad", icon: Megaphone, allowedRoles: ADMIN_ROLES },
+      { href: "/social", label: "Social", icon: Share2, allowedRoles: ADMIN_ROLES },
+    ],
+  },
+  {
+    label: "Empresa",
+    items: [
+      { href: "/internal-docs", label: "Docs internos", icon: Archive },
+      { href: "/settings", label: "Ajustes", icon: Settings },
+    ],
+  },
 ];
 
-const NAV_SECONDARY: NavItem[] = [
+/**
+ * Sección "Más" — herramientas de uso poco frecuente.
+ * "Avisos" → "Recordatorios" elimina la colisión con "Publicidad" (Anuncios).
+ * "Documentos" (browser de adjuntos genérico) se ha retirado: los adjuntos
+ * son accesibles desde la entidad a la que pertenecen (proyecto, cliente, etc.).
+ */
+const NAV_MORE: NavItem[] = [
   { href: "/vault", label: "Bóveda", icon: KeyRound, allowedRoles: ADMIN_ROLES },
-  { href: "/reminders", label: "Avisos", icon: Bell },
-  { href: "/tasks", label: "Tareas", icon: CheckSquare },
-  { href: "/documents", label: "Documentos", icon: FileText },
+  { href: "/reminders", label: "Recordatorios", icon: Bell },
 ];
+
+function NavLink({
+  href,
+  label,
+  icon: Icon,
+  active,
+  indented = false,
+}: {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  active: boolean;
+  indented?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "group relative flex items-center gap-2.5 rounded-md text-sm transition-colors",
+        "before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-r-full before:bg-primary before:transition-opacity",
+        indented ? "py-2 pl-9 pr-2.5" : "px-2.5 py-2",
+        active
+          ? "bg-secondary text-foreground font-medium before:opacity-100"
+          : "text-muted-foreground before:opacity-0 hover:bg-secondary/60 hover:text-foreground",
+      )}
+    >
+      <Icon
+        className={cn(
+          "h-4 w-4 shrink-0 transition-colors",
+          active ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
+        )}
+      />
+      <span className="truncate">{label}</span>
+    </Link>
+  );
+}
 
 export function Sidebar({ user }: { user: CurrentUser; verifactuMode: string }) {
   const pathname = usePathname();
-  const visiblePrimary = NAV_PRIMARY.filter(
+
+  const visibleGroups = NAV_GROUPS.map((g) => ({
+    ...g,
+    items: g.items.filter((item) => !item.allowedRoles || item.allowedRoles.includes(user.role)),
+  })).filter((g) => g.items.length > 0);
+
+  const visibleMore = NAV_MORE.filter(
     (item) => !item.allowedRoles || item.allowedRoles.includes(user.role),
   );
-  const visibleSecondary = NAV_SECONDARY.filter(
-    (item) => !item.allowedRoles || item.allowedRoles.includes(user.role),
-  );
-  const hasSecondaryActive = visibleSecondary.some(
+
+  const hasMoreActive = visibleMore.some(
     ({ href }) => pathname === href || pathname.startsWith(`${href}/`),
   );
-  const [moreOpen, setMoreOpen] = useState(hasSecondaryActive);
+  const [moreOpen, setMoreOpen] = useState(hasMoreActive);
+
+  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   return (
     <aside className="hidden w-56 shrink-0 border-r border-border bg-card md:flex md:flex-col">
@@ -92,80 +186,62 @@ export function Sidebar({ user }: { user: CurrentUser; verifactuMode: string }) 
         <CommandPaletteTrigger />
       </div>
       <nav
-        className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-1"
+        className="flex flex-1 flex-col overflow-y-auto px-2 py-1"
         aria-label="Navegación principal"
       >
-        {visiblePrimary.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || pathname.startsWith(`${href}/`);
-          return (
-            <Link
-              key={href}
-              href={href}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
-                "before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-r-full before:bg-primary before:transition-opacity",
-                active
-                  ? "bg-secondary text-foreground font-medium before:opacity-100"
-                  : "text-muted-foreground before:opacity-0 hover:bg-secondary/60 hover:text-foreground",
-              )}
-            >
-              <Icon
-                className={cn(
-                  "h-4 w-4 shrink-0 transition-colors",
-                  active ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
-                )}
-              />
-              <span className="truncate">{label}</span>
-            </Link>
-          );
-        })}
-
-        {/* Low-frequency section */}
-        <button
-          type="button"
-          onClick={() => setMoreOpen((v) => !v)}
-          aria-expanded={moreOpen}
-          className={cn(
-            "group relative mt-1 flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
-            "text-muted-foreground hover:bg-secondary/60 hover:text-foreground",
-            hasSecondaryActive && !moreOpen && "text-foreground",
-          )}
-        >
-          <ChevronDown
-            className={cn(
-              "h-4 w-4 shrink-0 transition-transform",
-              moreOpen ? "rotate-0" : "-rotate-90",
+        {visibleGroups.map((group, gi) => (
+          <div key={group.label ?? "__home"} className={cn("flex flex-col gap-0.5", gi > 0 && "mt-3")}>
+            {group.label && (
+              <p className="px-2.5 pb-0.5 pt-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 select-none">
+                {group.label}
+              </p>
             )}
-          />
-          <span className="truncate">Más</span>
-        </button>
-        {moreOpen &&
-          visibleSecondary.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href || pathname.startsWith(`${href}/`);
-            return (
-              <Link
+            {group.items.map(({ href, label, icon }) => (
+              <NavLink
                 key={href}
                 href={href}
-                aria-current={active ? "page" : undefined}
+                label={label}
+                icon={icon}
+                active={isActive(href)}
+              />
+            ))}
+          </div>
+        ))}
+
+        {/* Herramientas de uso poco frecuente */}
+        {visibleMore.length > 0 && (
+          <div className="mt-3 flex flex-col gap-0.5">
+            <button
+              type="button"
+              onClick={() => setMoreOpen((v) => !v)}
+              aria-expanded={moreOpen}
+              className={cn(
+                "group relative flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
+                "text-muted-foreground hover:bg-secondary/60 hover:text-foreground",
+                hasMoreActive && !moreOpen && "text-foreground",
+              )}
+            >
+              <ChevronDown
                 className={cn(
-                  "group relative flex items-center gap-2.5 rounded-md py-2 pl-9 pr-2.5 text-sm transition-colors",
-                  "before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-r-full before:bg-primary before:transition-opacity",
-                  active
-                    ? "bg-secondary text-foreground font-medium before:opacity-100"
-                    : "text-muted-foreground before:opacity-0 hover:bg-secondary/60 hover:text-foreground",
+                  "h-4 w-4 shrink-0 transition-transform",
+                  moreOpen ? "rotate-0" : "-rotate-90",
                 )}
-              >
-                <Icon
-                  className={cn(
-                    "h-4 w-4 shrink-0 transition-colors",
-                    active ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
-                  )}
+              />
+              <span className="truncate">Más</span>
+            </button>
+            {moreOpen &&
+              visibleMore.map(({ href, label, icon }) => (
+                <NavLink
+                  key={href}
+                  href={href}
+                  label={label}
+                  icon={icon}
+                  active={isActive(href)}
+                  indented
                 />
-                <span className="truncate">{label}</span>
-              </Link>
-            );
-          })}
+              ))}
+          </div>
+        )}
       </nav>
 
       <footer className="flex flex-col border-t border-border p-2 gap-2">

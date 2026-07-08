@@ -1,5 +1,5 @@
 import { requireUser } from "@/lib/auth";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getStorage } from "@/lib/storage";
 import { createServerClient } from "@/lib/supabase/server";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -37,15 +37,16 @@ export async function GET(
     return NextResponse.json({ error: "Sin permiso" }, { status: 403 });
   }
 
-  // Generate signed URL via admin client (bypasses JWT expiry issues in Storage)
-  const admin = createAdminClient();
-  const { data: signed, error: signError } = await admin.storage
-    .from("internal-docs")
-    .createSignedUrl(doc.storage_path as string, SIGNED_URL_TTL);
+  // Generate signed URL (admin-level access bypasses JWT expiry issues in Storage)
+  const { url, error: signError } = await getStorage().createSignedUrl(
+    "internal-docs",
+    doc.storage_path as string,
+    SIGNED_URL_TTL,
+  );
 
-  if (signError || !signed?.signedUrl) {
+  if (signError || !url) {
     return NextResponse.json({ error: "No se pudo generar la URL de descarga" }, { status: 500 });
   }
 
-  return NextResponse.redirect(signed.signedUrl);
+  return NextResponse.redirect(url);
 }

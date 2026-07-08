@@ -18,9 +18,7 @@ const root = resolve(__dirname, "..");
 
 // Dynamic import avoids compile-time path-alias issues.
 // Use pathToFileURL so Windows absolute paths are valid ESM URLs.
-const { ServerSchema } = (await import(
-  pathToFileURL(resolve(root, "lib/env.schema.ts")).href
-)) as {
+const { ServerSchema } = (await import(pathToFileURL(resolve(root, "lib/env.schema.ts")).href)) as {
   ServerSchema: z.ZodObject<z.ZodRawShape>;
 };
 
@@ -83,7 +81,8 @@ const GROUPS: Array<{ label: string; prefixes: string[] }> = [
   { label: "AI — OpenAI", prefixes: ["OPENAI_"] },
   { label: "Verifactu (AEAT)", prefixes: ["VERIFACTU_"] },
   { label: "CRM / Landing", prefixes: ["LEAD_", "LANDING_", "CAL_"] },
-  { label: "Meta Marketing", prefixes: ["META_"] },
+  { label: "Meta Marketing", prefixes: ["META_", "INSTAGRAM_", "FACEBOOK_"] },
+  { label: "LinkedIn", prefixes: ["LINKEDIN_"] },
   { label: "GitHub App", prefixes: ["GITHUB_"] },
   { label: "n8n Automation", prefixes: ["N8N_"] },
   { label: "File Browser / Backups", prefixes: ["FILEBROWSER_", "BACKUP_"] },

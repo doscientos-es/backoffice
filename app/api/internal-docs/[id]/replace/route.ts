@@ -1,6 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { INTERNAL_DOC_MAX_SIZE_BYTES } from "@/lib/schemas/internal-doc";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getStorage } from "@/lib/storage";
 import { createServerClient } from "@/lib/supabase/server";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -69,15 +69,15 @@ export async function POST(
   const safeFilename = sanitizeFilename(file.name || "archivo");
   const newPath = `${doc.category}/${id}/v${nextVersion}-${safeFilename}`;
 
-  const admin = createAdminClient();
+  const storage = getStorage();
   const bytes = await file.arrayBuffer();
 
-  const { error: storageError } = await admin.storage
-    .from("internal-docs")
-    .upload(newPath, bytes, { contentType: file.type || "application/octet-stream" });
+  const { error: storageError } = await storage.upload("internal-docs", newPath, bytes, {
+    contentType: file.type || "application/octet-stream",
+  });
 
   if (storageError) {
-    return NextResponse.json({ error: storageError.message }, { status: 500 });
+    return NextResponse.json({ error: storageError }, { status: 500 });
   }
 
   const { error: dbError } = await supabase
@@ -93,13 +93,13 @@ export async function POST(
 
   if (dbError) {
     // Roll back the newly uploaded object so we don't orphan it.
-    await admin.storage.from("internal-docs").remove([newPath]);
+    await storage.remove("internal-docs", [newPath]);
     return NextResponse.json({ error: dbError.message }, { status: 500 });
   }
 
   // Best-effort: drop the previous file now that the row points elsewhere.
   if (oldPath && oldPath !== newPath) {
-    await admin.storage.from("internal-docs").remove([oldPath]);
+    await storage.remove("internal-docs", [oldPath]);
   }
 
   // Audit trail (best-effort).

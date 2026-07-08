@@ -1,5 +1,5 @@
 import { requireUser } from "@/lib/auth";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getStorage } from "@/lib/storage";
 import { createServerClient } from "@/lib/supabase/server";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -36,14 +36,15 @@ export async function GET(
     return NextResponse.json({ error: "Este documento no tiene archivo adjunto" }, { status: 400 });
   }
 
-  const admin = createAdminClient();
-  const { data: signed, error: signError } = await admin.storage
-    .from("documents")
-    .createSignedUrl(doc.storage_path as string, SIGNED_URL_TTL);
+  const { url, error: signError } = await getStorage().createSignedUrl(
+    "documents",
+    doc.storage_path as string,
+    SIGNED_URL_TTL,
+  );
 
-  if (signError || !signed?.signedUrl) {
+  if (signError || !url) {
     return NextResponse.json({ error: "No se pudo generar la URL de descarga" }, { status: 500 });
   }
 
-  return NextResponse.redirect(signed.signedUrl);
+  return NextResponse.redirect(url);
 }

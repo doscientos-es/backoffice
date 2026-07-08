@@ -21,20 +21,21 @@ export function buildSignatureHtml(
   appUrl = "",
 ): string {
   const base = appUrl.replace(/\/$/, "");
-  const logoSrc = `${base}/brand/logo.svg`;
+  // Use PNG: SVG is not supported by most email clients (Gmail, Outlook, Apple
+  // Mail strip or fail to render SVGs). The PNG is generated from logo.svg at
+  // build time and lives at public/brand/logo.png.
+  const logoSrc = `${base}/brand/logo.png`;
 
   const lines: string[] = [];
   lines.push(`<strong style="color:#111">${opts.name}</strong>`);
   if (opts.jobTitle) lines.push(`<span style="color:#555">${opts.jobTitle}</span>`);
-  lines.push("");
   lines.push('<strong style="color:#2A4227">doscientos.es</strong>');
-  lines.push("");
   if (opts.contactEmail)
     lines.push(
-      `📩 <a href="mailto:${opts.contactEmail}" style="color:inherit">${opts.contactEmail}</a>`,
+      `<a href="mailto:${opts.contactEmail}" style="color:inherit">${opts.contactEmail}</a>`,
     );
-  lines.push('🌐 <a href="https://doscientos.es" style="color:inherit">https://doscientos.es</a>');
-  if (opts.phone) lines.push(`📱 ${opts.phone}`);
+  lines.push('<a href="https://doscientos.es" style="color:inherit">https://doscientos.es</a>');
+  if (opts.phone) lines.push(`<a href="tel:${opts.phone}" style="color:inherit">${opts.phone}</a>`);
 
   const text = lines.join("<br/>");
   return (

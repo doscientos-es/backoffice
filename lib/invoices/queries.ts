@@ -3,10 +3,26 @@ import { notDeleted } from "@/lib/supabase/filters";
 import { createServerClient } from "@/lib/supabase/server";
 import { escapeIlike } from "@/lib/utils/search-params";
 import {
+  type ClientInfo,
+  type CompanySettings,
   INVOICE_LIST_PAGE_SIZE,
   type InvoiceDetailResult,
+  type InvoiceForEmail,
+  type InvoiceForVerifactu,
+  type InvoiceHeaderPatch,
+  type InvoiceItemInsert,
   type InvoiceListParams,
   type InvoiceListResult,
+  type InvoiceStatusPatch,
+  type InvoiceTimestamps,
+  type NewInvoiceData,
+  type ProjectForHourlyBilling,
+  type ProposalForInvoice,
+  type ProposalItem,
+  type VatLineItem,
+  type VerifactuChainEntry,
+  type VerifactuPatch,
+  type WorkLogEntry,
 } from "./types";
 
 const log = scopedLogger("invoices.queries");
@@ -155,5 +171,402 @@ export async function getInvoiceDetail(id: string): Promise<InvoiceDetailResult>
           iban: (settings.iban as string | null) ?? null,
         }
       : null,
+  };
+}
+
+// ─── Status / soft-delete mutations ──────────────────────────────────────────
+
+/**
+ * Returns `issued_at` for the invoice so the caller can decide whether
+ * to stamp it. Returns `null` when the invoice does not exist.
+ */
+export async function findInvoiceTimestamps(id: string): Promise<InvoiceTimestamps | null> {
+  const supabase = await createServerClient();
+  const { data } = await supabase.from("invoices").select("issued_at").eq("id", id).maybeSingle();
+  return data ? { issued_at: (data.issued_at as string | null) ?? null } : null;
+}
+
+/** Applies a status/timestamp patch to an invoice row. Throws on DB error. */
+export async function patchInvoiceStatus(id: string, patch: InvoiceStatusPatch): Promise<void> {
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("invoices").update(patch).eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+/** Soft-deletes an invoice by stamping `deleted_at`. Throws on DB error. */
+export async function softDeleteInvoice(id: string): Promise<void> {
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("invoices")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+/** Clears `deleted_at`, reversing a soft-delete. Throws on DB error. */
+export async function restoreDeletedInvoice(id: string): Promise<void> {
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("invoices").update({ deleted_at: null }).eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+// ─── Verifactu queries ────────────────────────────────────────────────────────
+
+/**
+ * Fetches the invoice columns required for Verifactu submission.
+ * Returns `null` when the invoice is deleted or does not exist.
+ */
+export async function findInvoiceForVerifactu(id: string): Promise<InvoiceForVerifactu | null> {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("invoices")
+    .select(
+      "id, client_id, status, verifactu_status, full_number, invoice_type, issue_date, tax_amount, total, previous_hash, chain_sequence, client_nif, client_name",
+    )
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (error) log.error({ invoiceId: id, err: error.message }, "find_invoice_for_verifactu_failed");
+  if (!data) return null;
+  return {
+    id: data.id as string,
+    client_id: (data.client_id as string | null) ?? null,
+    status: data.status as string,
+    verifactu_status: data.verifactu_status as string,
+    full_number: data.full_number as string,
+    invoice_type: data.invoice_type as string,
+    issue_date: data.issue_date as string,
+    tax_amount: Number(data.tax_amount ?? 0),
+    total: Number(data.total ?? 0),
+    previous_hash: (data.previous_hash as string | null) ?? null,
+    chain_sequence: (data.chain_sequence as number | null) ?? null,
+    client_nif: (data.client_nif as string | null) ?? null,
+    client_name: (data.client_name as string | null) ?? null,
+  };
+}
+
+/**
+ * Returns the most recently accepted invoice in the Verifactu hash chain,
+ * or `null` when no accepted invoices exist yet.
+ */
+export async function findLastVerifactuChainEntry(): Promise<VerifactuChainEntry | null> {
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("invoices")
+    .select("current_hash, chain_sequence, full_number, issue_date")
+    .eq("verifactu_status", "accepted")
+    .not("current_hash", "is", null)
+    .order("chain_sequence", { ascending: false, nullsFirst: false })
+    .limit(1)
+    .maybeSingle();
+  if (!data) return null;
+  return {
+    current_hash: data.current_hash as string,
+    chain_sequence: data.chain_sequence as number,
+    full_number: data.full_number as string,
+    issue_date: data.issue_date as string,
+  };
+}
+
+/** Returns the line items needed to build the Verifactu VAT breakdown. */
+export async function findInvoiceItemsForVat(id: string): Promise<VatLineItem[]> {
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("invoice_items")
+    .select("description, vat_rate, subtotal")
+    .eq("invoice_id", id)
+    .order("position");
+  return (data ?? []).map((it) => ({
+    description: (it.description as string | null) ?? null,
+    vat_rate: Number(it.vat_rate ?? 0),
+    subtotal: Number(it.subtotal ?? 0),
+  }));
+}
+
+/** Returns company-level Verifactu settings (NIF + name). */
+export async function findCompanySettings(): Promise<CompanySettings | null> {
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("settings")
+    .select("company_nif, company_name")
+    .eq("id", 1)
+    .maybeSingle();
+  if (!data) return null;
+  return {
+    company_nif: (data.company_nif as string | null) ?? null,
+    company_name: (data.company_name as string | null) ?? "",
+  };
+}
+
+/** Persists the Verifactu submission result on the invoice row. Throws on DB error. */
+export async function patchInvoiceAfterVerifactu(id: string, patch: VerifactuPatch): Promise<void> {
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("invoices").update(patch).eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+// ─── Invoice creation helpers ─────────────────────────────────────────────────
+
+/** Returns the proposal header needed to create a derived invoice. */
+export async function findProposalForInvoice(
+  proposalId: string,
+): Promise<ProposalForInvoice | null> {
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("proposals")
+    .select("id, client_id, project_id, status, title, notes")
+    .eq("id", proposalId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!data) return null;
+  return {
+    id: data.id as string,
+    client_id: data.client_id as string,
+    project_id: (data.project_id as string | null) ?? null,
+    status: data.status as string,
+    title: (data.title as string | null) ?? null,
+    notes: (data.notes as string | null) ?? null,
+  };
+}
+
+/** Returns all line items for a proposal, ordered by position. */
+export async function findProposalItems(proposalId: string): Promise<ProposalItem[]> {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("proposal_items")
+    .select("position, description, quantity, unit_price, vat_rate, billing_cycle")
+    .eq("proposal_id", proposalId)
+    .order("position");
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((it) => ({
+    position: it.position as number,
+    description: (it.description as string | null) ?? null,
+    quantity: Number(it.quantity ?? 0),
+    unit_price: Number(it.unit_price ?? 0),
+    vat_rate: Number(it.vat_rate ?? 0),
+    billing_cycle: (it.billing_cycle as string | null) ?? null,
+  }));
+}
+
+/** Returns client snapshot fields denormalized onto invoices. */
+export async function findClientInfo(clientId: string): Promise<ClientInfo | null> {
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("clients")
+    .select("name, nif, billing_address")
+    .eq("id", clientId)
+    .maybeSingle();
+  if (!data) return null;
+  return {
+    name: (data.name as string | null) ?? null,
+    nif: (data.nif as string | null) ?? null,
+    billing_address: (data.billing_address as string | null) ?? null,
+  };
+}
+
+/**
+ * Returns the configured invoice series from the singleton settings row,
+ * defaulting to `"A"` when absent or blank.
+ */
+export async function findInvoiceSeries(): Promise<string> {
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("settings")
+    .select("invoice_series")
+    .eq("id", 1)
+    .maybeSingle();
+  return ((data?.invoice_series as string | null) ?? "A").trim() || "A";
+}
+
+/**
+ * Returns the next available invoice number for a given series.
+ * Reads the current maximum and adds 1.
+ */
+export async function findNextInvoiceNumberForSeries(series: string): Promise<number> {
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("invoices")
+    .select("number")
+    .eq("series", series)
+    .order("number", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return ((data?.number as number | null) ?? 0) + 1;
+}
+
+/**
+ * Inserts a new invoice row and its line items.
+ * Returns the new invoice `id`. Throws on any DB error.
+ *
+ * Note: Supabase JS does not expose explicit transactions; items are inserted
+ * after the invoice. A failure on items is logged but does not roll back the
+ * invoice — the caller is responsible for cleanup if needed.
+ */
+export async function insertInvoiceWithItems(
+  invoiceData: NewInvoiceData,
+  items: InvoiceItemInsert[],
+): Promise<{ id: string }> {
+  const supabase = await createServerClient();
+  const { data: invoice, error: invoiceError } = await supabase
+    .from("invoices")
+    .insert(invoiceData)
+    .select("id")
+    .single();
+  if (invoiceError || !invoice)
+    throw new Error(invoiceError?.message ?? "No se pudo crear la factura");
+
+  const { error: itemsError } = await supabase
+    .from("invoice_items")
+    .insert(items.map((it) => ({ ...it, invoice_id: invoice.id as string })));
+  if (itemsError) {
+    log.error({ err: itemsError, invoiceId: invoice.id }, "insert_invoice_items_failed");
+    throw new Error(itemsError.message);
+  }
+
+  return { id: invoice.id as string };
+}
+
+// ─── Hourly invoice helpers ───────────────────────────────────────────────────
+
+/** Returns project billing data for generating a monthly hourly invoice. */
+export async function findProjectForHourlyBilling(
+  projectId: string,
+): Promise<ProjectForHourlyBilling | null> {
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("projects")
+    .select("id, client_id, name, billing_type, hourly_rate, hourly_vat_rate")
+    .eq("id", projectId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!data) return null;
+  return {
+    id: data.id as string,
+    client_id: data.client_id as string,
+    name: data.name as string,
+    billing_type: data.billing_type as string,
+    hourly_rate: Number(data.hourly_rate ?? 0),
+    hourly_vat_rate: Number(data.hourly_vat_rate ?? 0),
+  };
+}
+
+/**
+ * Returns work logs for a project in the given month window that are not
+ * yet linked to any invoice.
+ */
+export async function findUnlinkedWorkLogsForMonth(
+  projectId: string,
+  monthStart: string,
+  monthEnd: string,
+): Promise<WorkLogEntry[]> {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("work_logs")
+    .select("id, hours")
+    .eq("project_id", projectId)
+    .is("deleted_at", null)
+    .is("invoice_id", null)
+    .gte("work_date", monthStart)
+    .lt("work_date", monthEnd)
+    .order("work_date", { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((l) => ({ id: l.id as string, hours: Number(l.hours ?? 0) }));
+}
+
+/** Links a set of work-log rows to an invoice so they can't be double-billed. */
+export async function linkWorkLogsToInvoice(logIds: string[], invoiceId: string): Promise<void> {
+  if (logIds.length === 0) return;
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("work_logs")
+    .update({ invoice_id: invoiceId })
+    .in("id", logIds);
+  if (error) throw new Error(error.message);
+}
+
+// ─── Invoice edit helpers ─────────────────────────────────────────────────────
+
+/**
+ * Returns the current status of an invoice so the caller can guard edits.
+ * Returns `null` when the invoice does not exist.
+ */
+export async function findInvoiceForEdit(id: string): Promise<{ status: string } | null> {
+  const supabase = await createServerClient();
+  const { data } = await supabase.from("invoices").select("status").eq("id", id).single();
+  if (!data) return null;
+  return { status: data.status as string };
+}
+
+/** Applies a partial header patch to a draft invoice. Throws on DB error. */
+export async function patchInvoiceHeader(id: string, patch: InvoiceHeaderPatch): Promise<void> {
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("invoices").update(patch).eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * Replaces all line items for an invoice atomically:
+ * deletes existing rows and inserts the new set.
+ * Throws on any DB error.
+ */
+export async function replaceInvoiceItems(
+  invoiceId: string,
+  items: InvoiceItemInsert[],
+): Promise<void> {
+  const supabase = await createServerClient();
+  const { error: deleteError } = await supabase
+    .from("invoice_items")
+    .delete()
+    .eq("invoice_id", invoiceId);
+  if (deleteError) throw new Error(deleteError.message);
+
+  const { error: insertError } = await supabase
+    .from("invoice_items")
+    .insert(items.map((it, idx) => ({ ...it, position: idx, invoice_id: invoiceId })));
+  if (insertError) throw new Error(insertError.message);
+}
+
+// ─── Portal access ────────────────────────────────────────────────────────────
+
+/** Applies a portal-access patch (visibility + password) to an invoice. Throws on DB error. */
+export async function patchInvoicePortal(
+  id: string,
+  patch: Record<string, unknown>,
+): Promise<void> {
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("invoices").update(patch).eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+// ─── Email helpers ────────────────────────────────────────────────────────────
+
+/**
+ * Returns the invoice fields needed to compose and send the client portal email.
+ * Returns `null` when the invoice is deleted or does not exist.
+ */
+export async function findInvoiceForEmail(id: string): Promise<InvoiceForEmail | null> {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("invoices")
+    .select(
+      "id, full_number, total, due_date, status, portal_token, is_client_visible, clients(name, email)",
+    )
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (error) log.error({ invoiceId: id, err: error.message }, "find_invoice_for_email_failed");
+  if (!data) return null;
+
+  const rawClient = (data as unknown as { clients: { name: string; email: string | null } | null })
+    .clients;
+  return {
+    id: data.id as string,
+    full_number: (data.full_number as string | null) ?? null,
+    total: data.total == null ? null : Number(data.total),
+    due_date: (data.due_date as string | null) ?? null,
+    status: data.status as string,
+    portal_token: (data.portal_token as string | null) ?? null,
+    is_client_visible: Boolean(data.is_client_visible),
+    client: rawClient ?? null,
   };
 }

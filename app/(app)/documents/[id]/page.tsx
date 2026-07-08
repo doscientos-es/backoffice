@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DocPreview } from "@/components/ui/doc-preview";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getStorage } from "@/lib/storage";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 import { Download } from "lucide-react";
@@ -44,11 +44,8 @@ export default async function DocumentDetailPage({
   // Generate preview URL server-side so it's ready when the page renders.
   let previewUrl: string | null = null;
   if (storagePath) {
-    const admin = createAdminClient();
-    const { data: signed } = await admin.storage
-      .from("documents")
-      .createSignedUrl(storagePath, PREVIEW_TTL);
-    previewUrl = signed?.signedUrl ?? null;
+    const { url } = await getStorage().createSignedUrl("documents", storagePath, PREVIEW_TTL);
+    previewUrl = url;
   }
 
   return (
