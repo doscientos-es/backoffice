@@ -14,6 +14,8 @@
  * The helper is a thin pass-through that returns the same builder, so it
  * composes naturally with `.eq`, `.order`, `.range`, etc.
  */
-export function notDeleted<T extends { is: (col: string, val: null) => T }>(builder: T): T {
-  return builder.is("deleted_at", null);
+export function notDeleted<B extends { is(column: string, value: null): unknown }>(
+  builder: B,
+): ReturnType<B["is"]> {
+  return builder.is("deleted_at", null) as ReturnType<B["is"]>;
 }
