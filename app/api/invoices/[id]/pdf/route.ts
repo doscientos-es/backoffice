@@ -1,7 +1,7 @@
 import { requireUser } from "@/lib/auth";
 import { renderInvoicePdf } from "@/lib/invoices/invoice-pdf-document";
 import { buildInvoicePdfData, invoicePdfFilename } from "@/lib/invoices/pdf-data";
-import { getInvoiceDetail } from "@/lib/invoices/queries";
+import { findWorkLogsForInvoice, getInvoiceDetail } from "@/lib/invoices/queries";
 import { type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -27,11 +27,13 @@ export async function GET(
   }
 
   const { invoice, items, settings } = detail;
+  const workLogs = await findWorkLogsForInvoice(invoice.id);
   const data = await buildInvoicePdfData({
     invoice,
     clientName: invoice.client?.name ?? null,
     items,
     settings,
+    workLogs,
   });
 
   const pdf = await renderInvoicePdf(data);

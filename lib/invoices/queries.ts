@@ -2,6 +2,7 @@ import { scopedLogger } from "@/lib/logger";
 import { notDeleted } from "@/lib/supabase/filters";
 import { createServerClient } from "@/lib/supabase/server";
 import { escapeIlike } from "@/lib/utils/search-params";
+import type { InvoicePdfWorkLogInput } from "./pdf-data";
 import {
   type ClientInfo,
   type CompanySettings,
@@ -482,6 +483,35 @@ export async function linkWorkLogsToInvoice(logIds: string[], invoiceId: string)
     .update({ invoice_id: invoiceId })
     .in("id", logIds);
   if (error) throw new Error(error.message);
+}
+
+/**
+ * Returns the work logs linked to an invoice, with member name, ordered by
+ * date. Used to render the tracked-hours breakdown page of the invoice PDF.
+ */
+export async function findWorkLogsForInvoice(invoiceId: string): Promise<InvoicePdfWorkLogInput[]> {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("work_logs")
+    .select("work_date, hours, start_time, end_time, note, team_members:member_id(name)")
+    .eq("invoice_id", invoiceId)
+    .is("deleted_at", null)
+    .order("work_date", { ascending: true });
+  if (error) {
+    log.error({ invoiceId, err: error.message }, "find_work_logs_for_invoice_failed");
+    return [];
+  }
+  return (data ?? []).map((w) => {
+    const member = w.team_members as unknown as { name: string } | null;
+    return {
+      work_date: (w.work_date as string | null) ?? null,
+      member_name: member?.name ?? null,
+      start_time: ((w.start_time as string | null) ?? null)?.slice(0, 5) ?? null,
+      end_time: ((w.end_time as string | null) ?? null)?.slice(0, 5) ?? null,
+      hours: Number(w.hours ?? 0),
+      note: (w.note as string | null) ?? null,
+    };
+  });
 }
 
 // ─── Invoice edit helpers ─────────────────────────────────────────────────────

@@ -18,6 +18,26 @@ export type InvoicePdfItem = {
   subtotal: number;
 };
 
+/** Render-ready work-log entry shown on the PDF activity page. */
+export type InvoicePdfWorkLog = {
+  workDate: string | null;
+  memberName: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  hours: number;
+  note: string | null;
+};
+
+/** Raw work-log row both callers can shape from their own queries. */
+export type InvoicePdfWorkLogInput = {
+  work_date: string | null;
+  member_name: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  hours: number | null;
+  note: string | null;
+};
+
 export type InvoicePdfData = {
   fullNumber: string;
   invoiceType: string | null;
@@ -28,6 +48,7 @@ export type InvoicePdfData = {
   verifactuCsv: string | null;
   clientName: string | null;
   clientNif: string | null;
+  clientAddress: string | null;
   company: {
     name: string | null;
     nif: string | null;
@@ -39,6 +60,8 @@ export type InvoicePdfData = {
   total: number;
   vatBreakdown: VatBreakdownRow[];
   qrDataUrl: string | null;
+  /** Tracked hours linked to this invoice, rendered on a second page. */
+  workLogs: InvoicePdfWorkLog[];
 };
 
 /** Raw pieces both callers can shape from their own queries. */
@@ -54,6 +77,7 @@ export type BuildInvoicePdfInput = {
     subtotal: number | null;
     total: number | null;
     client_nif: string | null;
+    client_address: string | null;
   };
   clientName: string | null;
   items: ReadonlyArray<{
@@ -69,6 +93,7 @@ export type BuildInvoicePdfInput = {
     company_address: string | null;
     iban: string | null;
   } | null;
+  workLogs?: ReadonlyArray<InvoicePdfWorkLogInput>;
 };
 
 /**
@@ -113,6 +138,15 @@ export async function buildInvoicePdfData(input: BuildInvoicePdfInput): Promise<
     subtotal: Number(item.subtotal ?? 0),
   }));
 
+  const normalisedWorkLogs: InvoicePdfWorkLog[] = (input.workLogs ?? []).map((log) => ({
+    workDate: log.work_date,
+    memberName: log.member_name,
+    startTime: log.start_time,
+    endTime: log.end_time,
+    hours: Number(log.hours ?? 0),
+    note: log.note,
+  }));
+
   return {
     fullNumber: invoice.full_number ?? "",
     invoiceType: invoice.invoice_type,
@@ -123,6 +157,7 @@ export async function buildInvoicePdfData(input: BuildInvoicePdfInput): Promise<
     verifactuCsv: invoice.verifactu_csv,
     clientName: input.clientName,
     clientNif: invoice.client_nif,
+    clientAddress: invoice.client_address,
     company: settings
       ? {
           name: settings.company_name,
@@ -138,6 +173,7 @@ export async function buildInvoicePdfData(input: BuildInvoicePdfInput): Promise<
       normalisedItems.map((i) => ({ vat_rate: i.vatRate, subtotal: i.subtotal })),
     ),
     qrDataUrl: await buildInvoiceQr(invoice, process.env.VERIFACTU_NIF_EMISOR || null),
+    workLogs: normalisedWorkLogs,
   };
 }
 

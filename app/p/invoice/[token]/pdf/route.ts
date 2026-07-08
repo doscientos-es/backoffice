@@ -19,6 +19,10 @@ export async function GET(
   const { token } = await params;
   const admin = createAdminClient();
 
+  // Resolve auth first so team members can preview drafts.
+  const auth = await getCurrentUser();
+  const isTeam = auth.ok;
+
   const { data: invoice } = await admin
     .from("invoices")
     .select("*, clients(name)")
@@ -26,12 +30,12 @@ export async function GET(
     .is("deleted_at", null)
     .maybeSingle();
 
-  if (!invoice || invoice.status === "draft") {
+  // Drafts are only accessible to authenticated team members.
+  if (!invoice || (invoice.status === "draft" && !isTeam)) {
     return NextResponse.json({ error: "Factura no encontrada" }, { status: 404 });
   }
 
-  const auth = await getCurrentUser();
-  if (!auth.ok) {
+  if (!isTeam) {
     if ((invoice.is_client_visible as boolean | null) === false) {
       return NextResponse.json({ error: "Factura no disponible" }, { status: 404 });
     }
@@ -44,17 +48,35 @@ export async function GET(
     }
   }
 
-  const [{ data: items }, { data: settings }] = await Promise.all([
+  const [{ data: items }, { data: workLogsData }, { data: settings }] = await Promise.all([
     admin
       .from("invoice_items")
       .select("description, quantity, unit_price, vat_rate, subtotal")
       .eq("invoice_id", invoice.id as string)
       .order("position"),
+    admin
+      .from("work_logs")
+      .select("work_date, hours, start_time, end_time, note, team_members:member_id(name)")
+      .eq("invoice_id", invoice.id as string)
+      .is("deleted_at", null)
+      .order("work_date", { ascending: true }),
     admin.from("settings").select("*").eq("id", 1).maybeSingle(),
   ]);
 
   const clientName =
     (invoice as unknown as { clients: { name: string } | null }).clients?.name ?? null;
+
+  const workLogs = ((workLogsData ?? []) as Array<Record<string, unknown>>).map((w) => {
+    const member = w.team_members as unknown as { name: string } | null;
+    return {
+      work_date: (w.work_date as string | null) ?? null,
+      member_name: member?.name ?? null,
+      start_time: ((w.start_time as string | null) ?? null)?.slice(0, 5) ?? null,
+      end_time: ((w.end_time as string | null) ?? null)?.slice(0, 5) ?? null,
+      hours: Number(w.hours ?? 0),
+      note: (w.note as string | null) ?? null,
+    };
+  });
 
   const data = await buildInvoicePdfData({
     invoice: {
@@ -68,6 +90,7 @@ export async function GET(
       subtotal: invoice.subtotal == null ? null : Number(invoice.subtotal),
       total: invoice.total == null ? null : Number(invoice.total),
       client_nif: (invoice.client_nif as string | null) ?? null,
+      client_address: (invoice.client_address as string | null) ?? null,
     },
     clientName,
     items: (items ?? []) as Array<{
@@ -85,6 +108,7 @@ export async function GET(
           iban: (settings.iban as string | null) ?? null,
         }
       : null,
+    workLogs,
   });
 
   const pdf = await renderInvoicePdf(data);

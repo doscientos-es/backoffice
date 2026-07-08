@@ -4,14 +4,17 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
 import { type MemberRole, requireRole } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
-import { formatDate, memberAvatarUrl } from "@/lib/utils";
+import { formatDate, memberAvatarUrl, relativeTime } from "@/lib/utils";
 import { InviteForm } from "./invite-form";
 import { MemberProfileDialog } from "./member-profile-dialog";
 import { MemberRowActions } from "./member-row-actions";
 
 export const metadata = { title: "Equipo · doscientos" };
 export const dynamic = "force-dynamic";
+
+const INACTIVE_THRESHOLD_MS = 30 * 24 * 60 * 60 * 1000;
 
 const ROLE_LABELS: Record<MemberRole, string> = {
   owner: "Propietario",
@@ -52,21 +55,32 @@ type MemberRow = {
   contact_email: string | null;
   email_alias: string | null;
   email_send_enabled: boolean;
+  last_sign_in_at: string | null;
 };
 
 export default async function TeamSettingsPage() {
   const actor = await requireRole(["owner", "admin"]);
-  const supabase = await createServerClient();
+  const [supabase, admin] = await Promise.all([createServerClient(), Promise.resolve(createAdminClient())]);
 
-  const { data, error } = await supabase
-    .from("team_members")
-    .select(
-      "id, name, email, role, created_at, deleted_at, avatar_url, github_handle, job_title, phone, contact_email, email_alias, email_send_enabled",
-    )
-    .order("deleted_at", { ascending: true, nullsFirst: true })
-    .order("created_at", { ascending: true });
+  const [{ data, error }, { data: authData }] = await Promise.all([
+    supabase
+      .from("team_members")
+      .select(
+        "id, name, email, role, created_at, deleted_at, avatar_url, github_handle, job_title, phone, contact_email, email_alias, email_send_enabled",
+      )
+      .order("deleted_at", { ascending: true, nullsFirst: true })
+      .order("created_at", { ascending: true }),
+    admin.auth.admin.listUsers({ perPage: 1000 }),
+  ]);
 
-  const members = (data ?? []) as MemberRow[];
+  const lastSignInMap = new Map(
+    (authData?.users ?? []).map((u) => [u.id, u.last_sign_in_at ?? null]),
+  );
+
+  const members: MemberRow[] = (data ?? []).map((m) => ({
+    ...(m as Omit<MemberRow, "last_sign_in_at">),
+    last_sign_in_at: lastSignInMap.get(m.id as string) ?? null,
+  }));
 
   return (
     <div className="flex flex-col gap-6">
@@ -79,7 +93,8 @@ export default async function TeamSettingsPage() {
         <CardHeader>
           <CardTitle>Invitar miembro</CardTitle>
           <CardDescription>
-            Le enviaremos un email con un enlace de acceso. Entrará directamente sin necesidad de contraseña.
+            Le enviaremos un email con un enlace de acceso. Entrará directamente sin necesidad de
+            contraseña.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -112,6 +127,7 @@ export default async function TeamSettingsPage() {
                     <th className="px-5 py-2 font-medium">Rol</th>
                     <th className="px-5 py-2 font-medium">Estado</th>
                     <th className="px-5 py-2 font-medium">Alta</th>
+                    <th className="px-5 py-2 font-medium">Último acceso</th>
                     <th className="px-5 py-2 font-medium text-right">Acciones</th>
                   </tr>
                 </thead>
@@ -127,9 +143,17 @@ export default async function TeamSettingsPage() {
                         <td className="px-5 py-2.5 align-middle">
                           <div className="flex items-center gap-3">
                             <Avatar className="size-7 shrink-0">
-                              {memberAvatarUrl({ avatarUrl: m.avatar_url, githubHandle: m.github_handle }) ? (
+                              {memberAvatarUrl({
+                                avatarUrl: m.avatar_url,
+                                githubHandle: m.github_handle,
+                              }) ? (
                                 <AvatarImage
-                                  src={memberAvatarUrl({ avatarUrl: m.avatar_url, githubHandle: m.github_handle })!}
+                                  src={
+                                    memberAvatarUrl({
+                                      avatarUrl: m.avatar_url,
+                                      githubHandle: m.github_handle,
+                                    })!
+                                  }
                                   alt={m.name}
                                 />
                               ) : null}
@@ -178,6 +202,23 @@ export default async function TeamSettingsPage() {
                         </td>
                         <td className="px-5 py-2.5 align-middle text-[color:var(--text-secondary)]">
                           {formatDate(m.created_at)}
+                        </td>
+                        <td className="px-5 py-2.5 align-middle">
+                          {m.last_sign_in_at ? (
+                            <span
+                              className={
+                                Date.now() - new Date(m.last_sign_in_at).getTime() >
+                                  INACTIVE_THRESHOLD_MS
+                                  ? "text-[color:var(--warning)] font-medium"
+                                  : "text-[color:var(--text-secondary)]"
+                              }
+                              title={formatDate(m.last_sign_in_at)}
+                            >
+                              {relativeTime(m.last_sign_in_at)}
+                            </span>
+                          ) : (
+                            <span className="text-[color:var(--text-muted)]">Nunca</span>
+                          )}
                         </td>
                         <td className="px-5 py-2.5 align-middle">
                           <MemberRowActions

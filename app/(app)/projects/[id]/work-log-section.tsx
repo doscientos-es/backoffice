@@ -7,10 +7,45 @@ import { type AvatarMember, MemberLabel } from "@/components/ui/member-avatar";
 import { useOptimisticRemoval } from "@/lib/hooks/use-optimistic-removal";
 import { computeHoursFromRange } from "@/lib/schemas/work-log";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardCopy, Download, Pencil, Trash2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { sileo } from "sileo";
 import { addWorkLog, deleteWorkLog, updateWorkLog } from "./work-log-actions";
+
+function escapeCsvField(value: string): string {
+  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+function buildCsvContent(logs: WorkLogRow[]): string {
+  const header = ["Fecha", "Miembro", "Horas", "Inicio", "Fin", "Nota"].join(",");
+  const rows = logs.map((it) =>
+    [
+      escapeCsvField(it.work_date),
+      escapeCsvField(it.member?.name ?? ""),
+      escapeCsvField(String(it.hours)),
+      escapeCsvField(it.start_time ?? ""),
+      escapeCsvField(it.end_time ?? ""),
+      escapeCsvField(it.note ?? ""),
+    ].join(","),
+  );
+  return [header, ...rows].join("\n");
+}
+
+function buildClipboardText(logs: WorkLogRow[]): string {
+  const header = ["Fecha", "Miembro", "Horas", "Rango", "Nota"].join("\t");
+  const rows = logs.map((it) => {
+    const range = it.start_time && it.end_time ? `${it.start_time}–${it.end_time}` : "";
+    const totalMin = Math.round(it.hours * 60);
+    const hrs = Math.floor(totalMin / 60);
+    const mins = totalMin % 60;
+    const hoursLabel = hrs === 0 ? `${mins} min` : mins === 0 ? `${hrs} h` : `${hrs} h ${mins} min`;
+    return [it.work_date, it.member?.name ?? "", hoursLabel, range, it.note ?? ""].join("\t");
+  });
+  return [header, ...rows].join("\n");
+}
 
 export type WorkLogRow = {
   id: string;
@@ -89,6 +124,26 @@ export function WorkLogSection({
   const addDuration = startTime && endTime ? computeHoursFromRange(startTime, endTime) : null;
   const editDuration = editStart && editEnd ? computeHoursFromRange(editStart, editEnd) : null;
 
+  function onCopy() {
+    if (items.length === 0) return;
+    navigator.clipboard
+      .writeText(buildClipboardText(items))
+      .then(() => sileo.success({ title: "Registro copiado al portapapeles." }))
+      .catch(() => sileo.error({ title: "No se pudo copiar." }));
+  }
+
+  function onDownload() {
+    if (items.length === 0) return;
+    const csv = buildCsvContent(items);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `registro-horas-${projectId}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   function onAdd() {
     if (addDuration === null) {
       sileo.error({ title: "La hora de fin debe ser posterior a la de inicio." });
@@ -147,8 +202,30 @@ export function WorkLogSection({
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between gap-2">
         <CardTitle>Registro de horas</CardTitle>
+        {items.length > 0 && (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={onCopy}
+              aria-label="Copiar registro al portapapeles"
+              title="Copiar al portapapeles"
+              className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <ClipboardCopy className="size-3.5" aria-hidden />
+            </button>
+            <button
+              type="button"
+              onClick={onDownload}
+              aria-label="Descargar registro como CSV"
+              title="Descargar CSV"
+              className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <Download className="size-3.5" aria-hidden />
+            </button>
+          </div>
+        )}
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {canEdit ? (

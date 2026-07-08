@@ -43,6 +43,10 @@ export default async function PortalInvoicePage({
   const { success, error: paymentError } = await searchParams;
   const admin = createAdminClient();
 
+  // Resolve auth first so team members can preview drafts.
+  const auth = await getCurrentUser();
+  const isTeam = auth.ok;
+
   const { data: invoice } = await admin
     .from("invoices")
     .select("*, clients(name)")
@@ -50,13 +54,13 @@ export default async function PortalInvoicePage({
     .is("deleted_at", null)
     .maybeSingle();
 
-  if (!invoice || invoice.status === "draft") notFound();
+  // Drafts are only accessible to authenticated team members.
+  if (!invoice || (invoice.status === "draft" && !isTeam)) notFound();
 
   // Client-facing access gate: hidden invoices 404 and password-protected ones
-  // show the unlock form until the visitor presents a valid cookie. Logged-in
-  // team members always bypass so they can preview the link.
-  const auth = await getCurrentUser();
-  if (!auth.ok) {
+  // show the unlock form until the visitor presents a valid cookie. Team
+  // members always bypass so they can preview the link.
+  if (!isTeam) {
     if ((invoice.is_client_visible as boolean | null) === false) notFound();
     const unlocked = await isPortalUnlocked(
       token,

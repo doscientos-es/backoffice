@@ -85,7 +85,24 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   footerText: { fontSize: 7, color: FAINT, lineHeight: 1.5 },
+  pageTitle: { fontSize: 13, fontFamily: "Helvetica-Bold", color: INK },
+  pageSubtitle: { marginTop: 2, fontSize: 8, color: MUTED },
+  wlDate: { width: 62 },
+  wlMember: { flex: 1, paddingRight: 8 },
+  wlRange: { width: 76 },
+  wlHours: { width: 56, textAlign: "right" },
+  wlNote: { flex: 1.4, paddingLeft: 8 },
 });
+
+/** Compact "4 h 30 min" style duration used across the work-log views. */
+function formatWorkLogHours(hours: number): string {
+  const totalMin = Math.round(hours * 60);
+  const hrs = Math.floor(totalMin / 60);
+  const mins = totalMin % 60;
+  if (hrs === 0) return `${mins} min`;
+  if (mins === 0) return `${hrs} h`;
+  return `${hrs} h ${mins} min`;
+}
 
 /** Brand mark recreated with react-pdf SVG primitives (matches LogoMark). */
 function BrandMark() {
@@ -145,6 +162,9 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
             <Text style={styles.label}>Facturado a</Text>
             <Text style={styles.partyName}>{data.clientName ?? "—"}</Text>
             {data.clientNif ? <Text style={styles.partyLine}>NIF: {data.clientNif}</Text> : null}
+            {data.clientAddress ? (
+              <Text style={styles.partyLine}>{data.clientAddress}</Text>
+            ) : null}
           </View>
         </View>
 
@@ -220,7 +240,65 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
           </Text>
         </View>
       </Page>
+
+      {data.workLogs.length > 0 ? <WorkLogPage data={data} /> : null}
     </Document>
+  );
+}
+
+/** Second PDF page detailing the tracked hours linked to the invoice. */
+function WorkLogPage({ data }: { data: InvoicePdfData }) {
+  const totalHours = data.workLogs.reduce((sum, log) => sum + log.hours, 0);
+  return (
+    <Page size="A4" style={styles.page}>
+      <View style={styles.header}>
+        <View>
+          <View style={styles.brandRow}>
+            <BrandMark />
+            <Text style={styles.brandName}>doscientos</Text>
+          </View>
+          <Text style={styles.pageTitle}>Detalle de horas</Text>
+          <Text style={styles.pageSubtitle}>Factura {data.fullNumber}</Text>
+        </View>
+      </View>
+
+      <View style={styles.table}>
+        <View style={styles.thead}>
+          <Text style={[styles.th, styles.wlDate]}>Fecha</Text>
+          <Text style={[styles.th, styles.wlMember]}>Miembro</Text>
+          <Text style={[styles.th, styles.wlRange]}>Horario</Text>
+          <Text style={[styles.th, styles.wlHours]}>Horas</Text>
+          <Text style={[styles.th, styles.wlNote]}>Nota</Text>
+        </View>
+        {data.workLogs.map((log, i) => (
+          <View key={i} style={styles.row} wrap={false}>
+            <Text style={styles.wlDate}>{log.workDate ? formatDate(log.workDate) : "—"}</Text>
+            <Text style={styles.wlMember}>{log.memberName ?? "—"}</Text>
+            <Text style={styles.wlRange}>
+              {log.startTime && log.endTime ? `${log.startTime}–${log.endTime}` : "—"}
+            </Text>
+            <Text style={[styles.wlHours, { fontFamily: "Helvetica-Bold" }]}>
+              {formatWorkLogHours(log.hours)}
+            </Text>
+            <Text style={[styles.wlNote, { color: MUTED }]}>{log.note ?? ""}</Text>
+          </View>
+        ))}
+      </View>
+
+      <View style={styles.totals}>
+        <View style={styles.grandRow}>
+          <Text style={styles.grandLabel}>Total horas</Text>
+          <Text style={styles.grandLabel}>{formatWorkLogHours(totalHours)}</Text>
+        </View>
+      </View>
+
+      <View style={styles.footer} fixed>
+        <Text style={styles.footerText}>
+          Desglose de horas registradas asociadas a esta factura. Documento informativo, sin valor
+          fiscal.
+        </Text>
+      </View>
+    </Page>
   );
 }
 

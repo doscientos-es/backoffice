@@ -346,7 +346,7 @@ export const createHourlyInvoice = defineAction<
       [
         {
           position: 0,
-          description: `Horas trabajadas — ${monthLabel}`,
+          description: `Horas trabajadas: ${monthLabel}`,
           quantity: hours,
           unit_price: project.hourly_rate,
           vat_rate: project.hourly_vat_rate,

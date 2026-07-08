@@ -94,6 +94,7 @@ export type InvoiceDetail = {
   issue_date: string | null;
   due_date: string | null;
   client_nif: string | null;
+  client_address: string | null;
   client: InvoiceDetailClient | null;
   project: InvoiceDetailProject | null;
 };
