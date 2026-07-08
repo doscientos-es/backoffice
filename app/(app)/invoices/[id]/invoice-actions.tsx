@@ -150,10 +150,10 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
         rectificationType: rectType,
         reason: rectReason.trim(),
       });
-      if (res.ok && res.data) {
+      if (res.ok) {
         setShowRectification(false);
         setRectReason("");
-        router.push(`/invoices/${res.data.id}`);
+        router.push(`/invoices/${res.id}`);
       } else {
         feedback.setError(res.error);
       }

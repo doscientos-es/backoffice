@@ -26,11 +26,7 @@ function makeInput(overrides: Partial<BuildInvoicePdfInput["invoice"]> = {}): Bu
     settings: {
       company_name: "Doscientos",
       company_nif: "B00000000",
-      company_address_street: "C/ Falsa 1",
-      company_address_zip: "08001",
-      company_address_city: "Barcelona",
-      company_address_province: "Barcelona",
-      company_address_country: "ES",
+      company_address: "C/ Falsa 1, 08001 Barcelona, Barcelona, ES",
       iban: "ES000",
     },
   };
