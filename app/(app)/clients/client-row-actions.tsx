@@ -16,7 +16,11 @@ type Client = {
   email: string | null;
   phone: string | null;
   contact_person: string | null;
-  billing_address: string | null;
+  billing_address_street: string | null;
+  billing_address_zip: string | null;
+  billing_address_city: string | null;
+  billing_address_province: string | null;
+  billing_address_country: string | null;
   notes: string | null;
 };
 

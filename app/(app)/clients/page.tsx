@@ -87,7 +87,11 @@ export default async function ClientsPage({
                 email: c.email,
                 phone: c.phone,
                 contact_person: c.contact_person,
-                billing_address: c.billing_address,
+                billing_address_street: c.billing_address_street,
+                billing_address_zip: c.billing_address_zip,
+                billing_address_city: c.billing_address_city,
+                billing_address_province: c.billing_address_province,
+                billing_address_country: c.billing_address_country,
                 notes: c.notes,
               }}
             />
