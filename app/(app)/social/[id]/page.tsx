@@ -144,14 +144,14 @@ async function PostDetail({ id }: { id: string }) {
                   <PublishButton postId={post.id} label="Publicar ahora" size="default" className="w-full" />
                 </div>
               )}
-              {post.status === "failed" || post.status === "partially_failed" && (
+              {(post.status === "failed" || post.status === "partially_failed") && (
                 <div className="mt-6 border-t border-border pt-4">
                   <PublishButton postId={post.id} retry size="default" className="w-full" />
                 </div>
               )}
             </CardContent>
           </Card>
-          
+
           <Card className="bg-muted/30">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm font-medium">
@@ -160,21 +160,21 @@ async function PostDetail({ id }: { id: string }) {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-               {/* Simplified aggregate stats if published */}
-               <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-[10px] uppercase text-muted-foreground">Reach Total</span>
-                    <span className="text-xl font-bold tabular-nums">
-                      {post.targets.reduce((acc, t) => acc + (t.insights?.reach ?? 0), 0).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-[10px] uppercase text-muted-foreground">Eng. Medio</span>
-                    <span className="text-xl font-bold tabular-nums">
-                      {((post.targets.reduce((acc, t) => acc + (t.insights?.engagementRate ?? 0), 0) / (post.targets.filter(t => t.insights).length || 1)) * 100).toFixed(1)}%
-                    </span>
-                  </div>
-               </div>
+              {/* Simplified aggregate stats if published */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] uppercase text-muted-foreground">Reach Total</span>
+                  <span className="text-xl font-bold tabular-nums">
+                    {post.targets.reduce((acc, t) => acc + (t.insights?.reach ?? 0), 0).toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] uppercase text-muted-foreground">Eng. Medio</span>
+                  <span className="text-xl font-bold tabular-nums">
+                    {((post.targets.reduce((acc, t) => acc + (t.insights?.engagementRate ?? 0), 0) / (post.targets.filter(t => t.insights).length || 1)) * 100).toFixed(1)}%
+                  </span>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>

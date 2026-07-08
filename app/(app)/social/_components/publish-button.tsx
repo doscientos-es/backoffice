@@ -19,12 +19,14 @@ export function PublishButton({
   retry = false,
   size = "sm",
   variant,
+  className,
 }: {
   postId: string;
   label?: string;
   retry?: boolean;
   size?: React.ComponentProps<typeof Button>["size"];
   variant?: React.ComponentProps<typeof Button>["variant"];
+  className?: string;
 }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +64,7 @@ export function PublishButton({
         className={cn(
           phase === "success" && "border-success/50 text-success",
           phase === "error" && "border-destructive/50 text-destructive",
+          className,
         )}
       >
         {phase === "success" ? (

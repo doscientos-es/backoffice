@@ -77,7 +77,7 @@ const NAV_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
 const EXTRA_LINKS = [
   { href: "/subscriptions", label: "Suscripciones" },
   { href: "/finance", label: "Finanzas" },
-  { href: "/reminders", label: "Avisos" },
+  { href: "/reminders", label: "Recordatorios" },
   { href: "/documents", label: "Documentos" },
   { href: "/internal-docs", label: "Docs internos" },
   { href: "/settings", label: "Ajustes" },

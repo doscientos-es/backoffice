@@ -21,7 +21,7 @@ export type Shortcut = {
 export const NAV_SHORTCUTS: Shortcut[] = [
   { href: "/inicio", label: "Inicio", key: "i" },
   { href: "/leads", label: "Leads", key: "l" },
-  { href: "/marketing", label: "Anuncios", key: "m" },
+  { href: "/marketing", label: "Publicidad", key: "m" },
   { href: "/clients", label: "Clientes", key: "c" },
   { href: "/projects", label: "Proyectos", key: "p" },
   { href: "/webs", label: "Webs", key: "w" },
@@ -30,7 +30,7 @@ export const NAV_SHORTCUTS: Shortcut[] = [
   { href: "/subscriptions", label: "Suscripciones", key: "s" },
   { href: "/finance/expenses", label: "Gastos", key: "x" },
   { href: "/tasks", label: "Tareas", key: "t" },
-  { href: "/reminders", label: "Avisos", key: "a" },
+  { href: "/reminders", label: "Recordatorios", key: "a" },
   { href: "/vault", label: "Bóveda", key: "v" },
 ];
 
