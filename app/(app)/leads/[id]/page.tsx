@@ -4,6 +4,7 @@ import { type AttachmentItem, AttachmentSection } from "@/components/ui/attachme
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CopySummaryButton } from "@/components/ui/copy-summary-button";
 import { SectionBoundary } from "@/components/ui/error-boundary";
 import { MemberLabel } from "@/components/ui/member-avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -92,6 +93,33 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         ]}
         actions={
           <>
+            <CopySummaryButton
+              lines={(() => {
+                const parts: string[] = [];
+                parts.push(
+                  [`🎯 ${lead.name}`, lead.company && `— ${lead.company}`]
+                    .filter(Boolean)
+                    .join(" "),
+                );
+                parts.push(
+                  [
+                    `Estado: ${LEAD_STATUS[lead.status]?.label ?? lead.status}`,
+                    lead.estimated_value != null &&
+                    `Valor: ${formatEUR(lead.estimated_value)}`,
+                  ]
+                    .filter(Boolean)
+                    .join(" · "),
+                );
+                const contact = [
+                  lead.email && `Email: ${lead.email}`,
+                  lead.phone && `Tel: ${lead.phone}`,
+                ].filter(Boolean);
+                if (contact.length) parts.push(contact.join(" · "));
+                if (lead.assignee?.name) parts.push(`Responsable: ${lead.assignee.name}`);
+                return parts;
+              })()}
+              urlPath={`/leads/${lead.id as string}`}
+            />
             {canEdit ? (
               <LeadEditDialog
                 members={members}

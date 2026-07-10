@@ -5,6 +5,7 @@ import { PortalAccessControls } from "@/components/portal/portal-access-controls
 import { AttachmentSection } from "@/components/ui/attachment-section";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CopySummaryButton } from "@/components/ui/copy-summary-button";
 import { SectionBoundary } from "@/components/ui/error-boundary";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
@@ -98,6 +99,17 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
+  // Projects available to link: same client, active (not deleted).
+  const clientId = (proposal.client_id as string | null) ?? null;
+  const { data: availableProjects } = clientId
+    ? await supabase
+      .from("projects")
+      .select("id, name")
+      .eq("client_id", clientId)
+      .is("deleted_at", null)
+      .order("name")
+    : { data: [] };
+
   // Deposit payments made from the proposal portal
   const { data: depositPayments } = await supabase
     .from("invoice_payments")
@@ -158,6 +170,24 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
         back={<BackLink href="/proposals" label="Volver a propuestas" />}
         actions={
           <div className="flex items-center gap-2">
+            <CopySummaryButton
+              lines={(() => {
+                const parts: string[] = [];
+                parts.push(`📋 ${proposalNumber} — ${proposal.title as string}`);
+                parts.push(
+                  [
+                    client ? `Cliente: ${client.name}` : lead ? `Lead: ${lead.name}` : null,
+                    `Estado: ${PROPOSAL_STATUS[status]?.label ?? status}`,
+                    Number(proposal.total ?? 0) > 0 &&
+                    `Total: ${formatEUR(Number(proposal.total))}`,
+                  ]
+                    .filter(Boolean)
+                    .join(" · "),
+                );
+                return parts;
+              })()}
+              urlPath={`/proposals/${id}`}
+            />
             <StatusBadge meta={PROPOSAL_STATUS} value={status} />
             <DuplicateProposalButton proposalId={id} />
             {status === "accepted" ? (
@@ -266,13 +296,13 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
                   "—"
                 )}
               </DetailRow>
-              {project ? (
-                <DetailRow label="Proyecto">
-                  <Link href={`/projects/${project.id}`} className="hover:underline">
-                    {project.name}
-                  </Link>
-                </DetailRow>
-              ) : null}
+              <DetailRow label="Proyecto">
+                <LinkProjectButton
+                  proposalId={id}
+                  currentProject={project}
+                  availableProjects={(availableProjects ?? []) as { id: string; name: string }[]}
+                />
+              </DetailRow>
               <DetailRow label="Enviada">{formatDate(proposal.sent_at as string | null)}</DetailRow>
               <DetailRow label="Vista">{formatDate(proposal.viewed_at as string | null)}</DetailRow>
               <DetailRow label="Respondida">

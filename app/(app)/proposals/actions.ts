@@ -328,6 +328,42 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
   return { ok: true };
 }
 
+// ---------------- LINK PROJECT ----------------
+
+/**
+ * Sets or clears the `project_id` on a proposal. Passing `project_id: null`
+ * unlinks the proposal from any project. Works on any proposal status so the
+ * team can connect proposals created before the project existed.
+ */
+export async function linkProposalToProject(
+  input: unknown,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireUser();
+
+  const parsed = z
+    .object({ proposal_id: z.string().uuid(), project_id: z.string().uuid().nullable() })
+    .safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Datos no válidos" };
+
+  const { proposal_id, project_id } = parsed.data;
+  const supabase = await createServerClient();
+
+  const { error } = await supabase
+    .from("proposals")
+    .update({ project_id })
+    .eq("id", proposal_id)
+    .is("deleted_at", null);
+
+  if (error) {
+    log.error({ err: error, proposal_id }, "link_proposal_to_project_failed");
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath(`/proposals/${proposal_id}`);
+  if (project_id) revalidatePath(`/projects/${project_id}`);
+  return { ok: true };
+}
+
 // ---------------- DELETE (soft) ----------------
 
 /**

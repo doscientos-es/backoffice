@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { AttachmentSection } from "@/components/ui/attachment-section";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CopySummaryButton } from "@/components/ui/copy-summary-button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
 import { githubDefaultInstallationId } from "@/lib/env";
@@ -65,6 +66,7 @@ export default async function ProjectDetailPage({
     { data: expenseTotals },
     { data: settings },
     { data: checklistData },
+    { data: unlinkdProposals },
   ] = await Promise.all([
     isBoard
       ? supabase
@@ -125,6 +127,16 @@ export default async function ProjectDetailPage({
       .eq("project_id", id)
       .is("deleted_at", null)
       .order("position"),
+    // Proposals from the same client that are not yet linked to any project.
+    client
+      ? supabase
+        .from("proposals")
+        .select("id, number, title")
+        .eq("client_id", client.id)
+        .is("project_id", null)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] }),
   ]);
 
   const workLogs: WorkLogRow[] = ((workLogsData ?? []) as Array<Record<string, unknown>>).map(
@@ -189,6 +201,34 @@ export default async function ProjectDetailPage({
         ]}
         actions={
           <div className="flex items-center gap-2">
+            <CopySummaryButton
+              lines={(() => {
+                const parts: string[] = [];
+                parts.push(
+                  [`🗂️ ${project.name as string}`, client && `— ${client.name}`]
+                    .filter(Boolean)
+                    .join(" "),
+                );
+                parts.push(
+                  [
+                    `Estado: ${PROJECT_STATUS[project.status as keyof typeof PROJECT_STATUS]?.label ?? project.status}`,
+                    (project.billing_type as string | null) &&
+                    `Facturación: ${project.billing_type as string}`,
+                  ]
+                    .filter(Boolean)
+                    .join(" · "),
+                );
+                const dates = [
+                  (project.starts_at as string | null) &&
+                  `Inicio: ${formatDate(project.starts_at as string)}`,
+                  (project.ends_at as string | null) &&
+                  `Fin: ${formatDate(project.ends_at as string)}`,
+                ].filter(Boolean);
+                if (dates.length) parts.push(dates.join(" · "));
+                return parts;
+              })()}
+              urlPath={`/projects/${id}`}
+            />
             <GitHubModeBadge mode={(project.github_sync_mode as GitHubSyncMode | null) ?? "none"} />
             <StatusBadge meta={PROJECT_STATUS} value={project.status as string} />
             {canEdit ? (
@@ -407,11 +447,23 @@ export default async function ProjectDetailPage({
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Propuestas</CardTitle>
-            {client ? (
-              <Button asChild size="sm">
-                <Link href={`/proposals/new?client_id=${client.id}&project_id=${id}`}>Nueva</Link>
-              </Button>
-            ) : null}
+            <div className="flex items-center gap-2">
+              <LinkProposalButton
+                projectId={id}
+                unlinkdProposals={
+                  (unlinkdProposals ?? []) as {
+                    id: string;
+                    number: string | null;
+                    title: string | null;
+                  }[]
+                }
+              />
+              {client ? (
+                <Button asChild size="sm">
+                  <Link href={`/proposals/new?client_id=${client.id}&project_id=${id}`}>Nueva</Link>
+                </Button>
+              ) : null}
+            </div>
           </CardHeader>
           <CardContent className="px-0">
             {!proposals || proposals.length === 0 ? (

@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CopyButton } from "@/components/ui/copy-button";
+import { CopySummaryButton } from "@/components/ui/copy-summary-button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatAddress } from "@/lib/address";
 import { requireUser } from "@/lib/auth";

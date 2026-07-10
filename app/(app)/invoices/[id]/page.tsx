@@ -9,8 +9,10 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CopySummaryButton } from "@/components/ui/copy-summary-button";
 import { requireUser } from "@/lib/auth";
 import { buildVatBreakdown } from "@/lib/finance";
+import { INVOICE_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { verifactuConfigFromEnv } from "@/lib/verifactu/config";
@@ -127,16 +129,43 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           { label: invoice.full_number as string },
         ]}
         actions={
-          <InvoiceActions
-            invoice={{
-              id: invoice.id as string,
-              status: invoice.status as string,
-              verifactu_status: invoice.verifactu_status as string,
-              is_rectification: Boolean(invoice.is_rectification),
-              is_uncollectible: Boolean(invoice.is_uncollectible),
-            }}
-            clientEmail={client?.email ?? null}
-          />
+          <div className="flex items-center gap-2">
+            <CopySummaryButton
+              lines={(() => {
+                const parts: string[] = [];
+                parts.push(
+                  [`🧾 Factura ${invoice.full_number as string}`, client && `— ${client.name}`]
+                    .filter(Boolean)
+                    .join(" "),
+                );
+                parts.push(
+                  [
+                    `Estado: ${INVOICE_STATUS[invoice.status as keyof typeof INVOICE_STATUS]?.label ?? invoice.status}`,
+                    invoice.total != null && `Total: ${formatEUR(Number(invoice.total))}`,
+                  ]
+                    .filter(Boolean)
+                    .join(" · "),
+                );
+                const dates = [
+                  invoice.issue_date && `Emisión: ${formatDate(invoice.issue_date as string)}`,
+                  invoice.due_date && `Vence: ${formatDate(invoice.due_date as string)}`,
+                ].filter(Boolean);
+                if (dates.length) parts.push(dates.join(" · "));
+                return parts;
+              })()}
+              urlPath={`/invoices/${id}`}
+            />
+            <InvoiceActions
+              invoice={{
+                id: invoice.id as string,
+                status: invoice.status as string,
+                verifactu_status: invoice.verifactu_status as string,
+                is_rectification: Boolean(invoice.is_rectification),
+                is_uncollectible: Boolean(invoice.is_uncollectible),
+              }}
+              clientEmail={client?.email ?? null}
+            />
+          </div>
         }
       />
 
