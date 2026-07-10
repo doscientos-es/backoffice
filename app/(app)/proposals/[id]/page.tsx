@@ -21,6 +21,7 @@ import { updateProposalPortalAccess } from "../actions";
 import { DeleteProposalButton } from "./delete-proposal-button";
 import { DuplicateProposalButton } from "./duplicate-proposal-button";
 import { GenerateInvoiceButton } from "./generate-invoice-button";
+import { LinkProjectButton } from "./link-project-button";
 import { MarkAcceptedButton } from "./mark-accepted-button";
 import { type EditableItem, ProposalEditor } from "./proposal-editor";
 import { type ProposalSpec, ProposalSpecs } from "./proposal-specs";

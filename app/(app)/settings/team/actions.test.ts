@@ -89,7 +89,7 @@ describe("inviteTeamMember", () => {
     expect(res).toEqual({ ok: true });
     expect(state.inviteCalls).toHaveLength(1);
     const opts = state.inviteCalls[0]?.opts;
-    expect(opts?.redirectTo).toMatch(/\/auth\/callback\?next=%2Fonboarding$/);
+    expect(opts?.redirectTo).toMatch(/\/auth\/confirm$/);
     // Google-first: it must NOT force a password step on the invitee.
     expect(opts?.redirectTo).not.toMatch(/update-password/);
   });
@@ -141,7 +141,10 @@ describe("inviteTeamMember", () => {
       error: { message: "rate limited" },
     };
     const res = await inviteTeamMember(form("ada@doscientos.es"));
-    expect(res).toEqual({ ok: false, error: "rate limited" });
+    expect(res).toEqual({
+      ok: false,
+      error: "Límite de emails alcanzado. Espera unos minutos antes de reintentar.",
+    });
     expect(state.upsertCalls).toHaveLength(0);
   });
 });

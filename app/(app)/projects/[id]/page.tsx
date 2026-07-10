@@ -18,6 +18,7 @@ import { GitHubModeBadge } from "../github-mode-badge";
 import type { GitHubSyncMode } from "../github-sync-section";
 import { type ChecklistItemRow, ChecklistSection } from "./checklist-section";
 import { DeleteProjectButton } from "./delete-project-button";
+import { LinkProposalButton } from "./link-proposal-button";
 import { MonthlyInvoiceSection } from "./monthly-invoice-section";
 import { ProjectEditDialog } from "./project-edit-dialog";
 import { ProjectTasksViewToggle } from "./project-tasks-view-toggle";
