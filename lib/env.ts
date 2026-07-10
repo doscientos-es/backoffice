@@ -8,10 +8,17 @@ export const publicEnv = PublicSchema.parse({
   NEXT_PUBLIC_HCAPTCHA_SITE_KEY: process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY,
 });
 
+/** Strip leading/trailing whitespace (incl. \r from CRLF .env files) from all values. */
+function trimEnv(env: NodeJS.ProcessEnv): Record<string, string | undefined> {
+  return Object.fromEntries(
+    Object.entries(env).map(([k, v]) => [k, typeof v === "string" ? v.trim() : v]),
+  );
+}
+
 let cachedServerEnv: z.infer<typeof ServerSchema> | null = null;
 export function serverEnv() {
   if (cachedServerEnv) return cachedServerEnv;
-  cachedServerEnv = ServerSchema.parse(process.env);
+  cachedServerEnv = ServerSchema.parse(trimEnv(process.env));
   return cachedServerEnv;
 }
 
