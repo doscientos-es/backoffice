@@ -93,6 +93,7 @@ export default async function ClientsPage({
                 billing_address_province: c.billing_address_province,
                 billing_address_country: c.billing_address_country,
                 notes: c.notes,
+                logo_url: c.logo_url,
               }}
             />
           ),
