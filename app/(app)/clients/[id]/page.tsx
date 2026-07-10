@@ -44,6 +44,50 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         actions={
           user.role !== "viewer" ? (
             <div className="flex items-center gap-2">
+              <CopySummaryButton
+                lines={[
+                  [
+                    `👤 ${(client.label as string | null)?.trim() || (client.name as string)}`,
+                    (client.nif as string | null) ? `(${client.nif as string})` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" "),
+                  ...(
+                    [
+                      (client.email as string | null) ? `Email: ${client.email as string}` : null,
+                      (client.phone as string | null) ? `Tel: ${client.phone as string}` : null,
+                    ].filter(Boolean) as string[]
+                  ).length > 0
+                    ? [
+                      [
+                        (client.email as string | null) && `Email: ${client.email as string}`,
+                        (client.phone as string | null) && `Tel: ${client.phone as string}`,
+                      ]
+                        .filter(Boolean)
+                        .join(" · "),
+                    ]
+                    : [],
+                  (client.contact_person as string | null)
+                    ? `Contacto: ${client.contact_person as string}`
+                    : null,
+                  formatAddress({
+                    street: client.billing_address_street as string | null,
+                    zip: client.billing_address_zip as string | null,
+                    city: client.billing_address_city as string | null,
+                    province: client.billing_address_province as string | null,
+                    country: client.billing_address_country as string | null,
+                  })
+                    ? `Dirección: ${formatAddress({
+                      street: client.billing_address_street as string | null,
+                      zip: client.billing_address_zip as string | null,
+                      city: client.billing_address_city as string | null,
+                      province: client.billing_address_province as string | null,
+                      country: client.billing_address_country as string | null,
+                    }).replace(/\n/g, ", ")}`
+                    : null,
+                ].filter((x): x is string => Boolean(x))}
+                urlPath={`/clients/${client.id as string}`}
+              />
               <ClientEditDialog
                 client={{
                   id: client.id as string,
