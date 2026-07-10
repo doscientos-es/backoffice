@@ -23,11 +23,7 @@ const LINKEDIN_AUTH_URL = "https://www.linkedin.com/oauth/v2/authorization";
 const STATE_COOKIE = "li_oauth_state";
 const STATE_TTL_S = 600; // 10 minutes
 
-const SCOPES = [
-  "r_organization_social",
-  "w_organization_social",
-  "rw_organization_admin", // needed for analytics; omit if denied
-].join(" ");
+const SCOPES = ["r_organization_social", "w_organization_social"].join(" ");
 
 export async function GET(req: NextRequest) {
   const env = serverEnv();
