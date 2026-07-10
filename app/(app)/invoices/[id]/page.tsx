@@ -47,7 +47,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
     .eq("invoice_id", id)
     .order("position");
 
-  const { data: settings } = await supabase.from("settings").select("*").eq("id", 1).single();
+  const { data: settings } = await supabase.from("settings").select("*").eq("id", 1).maybeSingle();
 
   const { data: payments } = await supabase
     .from("invoice_payments")
@@ -88,16 +88,20 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
     invoice.issue_date &&
     invoice.total != null
   ) {
-    const qrUrl = buildQrUrl(
-      {
-        nif: emisorNif,
-        invoiceNumber: invoice.full_number as string,
-        issueDate: new Date(invoice.issue_date as string),
-        total: invoice.total as number,
-      },
-      verifactuConfigFromEnv(),
-    );
-    qrDataUrl = await buildQrDataUrl(qrUrl);
+    try {
+      const qrUrl = buildQrUrl(
+        {
+          nif: emisorNif,
+          invoiceNumber: invoice.full_number as string,
+          issueDate: new Date(`${invoice.issue_date as string}T00:00:00`),
+          total: invoice.total as number,
+        },
+        verifactuConfigFromEnv(),
+      );
+      qrDataUrl = await buildQrDataUrl(qrUrl);
+    } catch {
+      // QR generation is non-critical; degrade silently
+    }
   }
 
   return (
@@ -120,13 +124,13 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
       )}
 
       <PageHeader
-        title={`Factura ${invoice.full_number as string}`}
+        title={`Factura ${(invoice.full_number as string | null) ?? "Borrador"}`}
         description={client?.name}
         breadcrumbs={[
           { label: "Facturas", href: "/invoices" },
           ...(client ? [{ label: client.name, href: `/clients/${client.id}` }] : []),
           ...(project ? [{ label: project.name, href: `/projects/${project.id}` }] : []),
-          { label: invoice.full_number as string },
+          { label: (invoice.full_number as string | null) ?? "Borrador" },
         ]}
         actions={
           <div className="flex items-center gap-2">
@@ -134,7 +138,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
               lines={(() => {
                 const parts: string[] = [];
                 parts.push(
-                  [`🧾 Factura ${invoice.full_number as string}`, client && `— ${client.name}`]
+                  [`🧾 Factura ${(invoice.full_number as string | null) ?? "Borrador"}`, client && `— ${client.name}`]
                     .filter(Boolean)
                     .join(" "),
                 );

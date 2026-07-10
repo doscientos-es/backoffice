@@ -20,17 +20,27 @@ export function computeAggregateStatus(targets: TargetResult[]): PostStatus {
 }
 
 /**
+ * Per-platform caption overrides. A platform absent from the map (or mapped to
+ * `undefined`) inherits the post's shared caption, preserving single-copy posts.
+ */
+export type CaptionByPlatform = Partial<Record<SocialPlatform, string>>;
+
+/**
  * Publish `post` to `platforms`, resolving each Publisher from `registry`.
  * Targets run concurrently; each result is isolated. Missing/misconfigured
  * adapters or capability rejections surface as a failed target, not a throw.
+ *
+ * `captions` lets each network receive a tailored copy; platforms without an
+ * override fall back to `post.caption`.
  */
 export async function fanOutPublish(
   post: ComposedPost,
   platforms: SocialPlatform[],
   registry: PublisherRegistry,
+  captions: CaptionByPlatform = {},
 ): Promise<FanOutResult> {
   const targets = await Promise.all(
-    platforms.map((platform) => publishOne(post, platform, registry)),
+    platforms.map((platform) => publishOne(post, platform, registry, captions[platform])),
   );
   return { status: computeAggregateStatus(targets), targets };
 }
@@ -39,16 +49,19 @@ async function publishOne(
   post: ComposedPost,
   platform: SocialPlatform,
   registry: PublisherRegistry,
+  captionOverride?: string,
 ): Promise<TargetResult> {
   try {
     const publisher = registry.get(platform);
+    const forPlatform: ComposedPost =
+      captionOverride === undefined ? post : { ...post, caption: captionOverride };
 
-    const support = publisher.supports(post);
+    const support = publisher.supports(forPlatform);
     if (!support.ok) {
       return { platform, ok: false, error: support.reason };
     }
 
-    const outcome = await publisher.publish(post);
+    const outcome = await publisher.publish(forPlatform);
     return {
       platform,
       ok: true,

@@ -10,8 +10,9 @@ export * from "./errors";
 export * from "./publisher";
 export { PublisherRegistry } from "./registry";
 export { fanOutPublish, computeAggregateStatus } from "./orchestrator";
+export type { CaptionByPlatform } from "./orchestrator";
 
-import type { ComposedPost, MediaKind, MediaItem } from "./types";
+import type { ComposedPost, MediaItem, MediaKind } from "./types";
 
 /** Infer the composition kind from its media set (single source of truth). */
 export function deriveMediaKind(media: MediaItem[]): MediaKind {

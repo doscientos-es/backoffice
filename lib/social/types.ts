@@ -18,6 +18,8 @@ export interface TargetView {
   id: string;
   platform: SocialPlatform;
   status: TargetStatus;
+  /** Per-network copy override. `null` means it inherits the post caption. */
+  caption: string | null;
   remoteId: string | null;
   remoteUrl: string | null;
   error: string | null;
@@ -77,9 +79,15 @@ export interface CommentView {
 
 /** Input to create a composed post (already-uploaded media + target set). */
 export interface CreatePostInput {
+  /** Shared copy, used as the default for every target. */
   caption: string;
   media: MediaItem[];
   platforms: SocialPlatform[];
+  /**
+   * Optional per-network copy overrides. Any platform omitted here inherits
+   * {@link caption}; provided values are stored on that platform's target.
+   */
+  captions?: Partial<Record<SocialPlatform, string>>;
   scheduledAt: string | null;
   createdBy: string | null;
 }

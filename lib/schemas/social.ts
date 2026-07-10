@@ -23,11 +23,15 @@ export const MediaItemInput = z.object({
 /**
  * Compose payload. `mode` decides the lifecycle: publish immediately, schedule
  * for `scheduledAt`, or keep as a draft. Caption may be empty for media-only
- * posts; a post must target at least one network.
+ * posts; a post must target at least one network. `captions` is an optional map
+ * of per-network copy overrides — any platform omitted inherits `caption`.
  */
 export const CreatePostSchema = z
   .object({
     caption: z.string().max(3000, "El texto no puede superar 3000 caracteres").default(""),
+    captions: z
+      .record(platformEnum, z.string().max(3000, "El texto no puede superar 3000 caracteres"))
+      .optional(),
     media: z.array(MediaItemInput).max(10, "Máximo 10 archivos").default([]),
     platforms: z.array(platformEnum).min(1, "Selecciona al menos una red"),
     mode: z.enum(["now", "schedule", "draft"]).default("draft"),

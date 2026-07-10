@@ -29,6 +29,7 @@ export const createPost = defineAction({
   handler: async (input, { user }) => {
     const postId = await repo.createPost({
       caption: input.caption,
+      captions: input.captions as Partial<Record<SocialPlatform, string>> | undefined,
       media: input.media.map((m) => ({ ...m })),
       platforms: input.platforms as SocialPlatform[],
       scheduledAt: input.scheduledAt,

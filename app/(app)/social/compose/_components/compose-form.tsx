@@ -7,6 +7,7 @@ import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { FormRow } from "@/components/ui/form-row";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { PLATFORM_LABELS, SOCIAL_PLATFORMS } from "@/lib/social/core";
 import type { MediaItem, SocialPlatform } from "@/lib/social/core";
@@ -15,8 +16,8 @@ import { CalendarClock, FileText, Send } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import { createPost } from "../../actions";
 import { PlatformIcon } from "../../_components/platform";
+import { createPost } from "../../actions";
 import { MediaPicker } from "./media-picker";
 
 type Mode = "draft" | "now" | "schedule";
@@ -43,6 +44,11 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
   const [platforms, setPlatforms] = useState<Set<SocialPlatform>>(() => new Set(available));
   const [mode, setMode] = useState<Mode>(available.length > 0 ? "now" : "draft");
   const [scheduledLocal, setScheduledLocal] = useState("");
+  const [perPlatform, setPerPlatform] = useState(false);
+  const [perCaptions, setPerCaptions] = useState<Partial<Record<SocialPlatform, string>>>({});
+
+  // Selected networks in a stable display order (drives the per-network fields).
+  const selectedList = useMemo(() => SOCIAL_PLATFORMS.filter((p) => platforms.has(p)), [platforms]);
 
   const canSubmit = useMemo(() => {
     if (platforms.size === 0) return false;
@@ -59,6 +65,21 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
     });
   }
 
+  function setPlatformCaption(p: SocialPlatform, value: string) {
+    setPerCaptions((prev) => ({ ...prev, [p]: value }));
+  }
+
+  /**
+   * Collect per-network overrides for the submit payload: only selected networks
+   * with a non-empty copy are sent; the rest inherit the shared caption.
+   */
+  function buildCaptions(): Partial<Record<SocialPlatform, string>> | undefined {
+    const entries = selectedList
+      .filter((p) => (perCaptions[p] ?? "").trim().length > 0)
+      .map((p) => [p, perCaptions[p] as string] as const);
+    return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+  }
+
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!canSubmit || pending) {
@@ -67,10 +88,12 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
     }
     const scheduledAt =
       mode === "schedule" && scheduledLocal ? new Date(scheduledLocal).toISOString() : null;
+    const captions = perPlatform ? buildCaptions() : undefined;
     feedback.setPending();
     startTransition(async () => {
       const res = await createPost({
         caption,
+        captions,
         media,
         platforms: [...platforms],
         mode,
@@ -90,7 +113,16 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <Card>
         <CardContent className="flex flex-col gap-5 pt-6">
-          <FormRow label="Texto" htmlFor="caption" hint="Se usa el mismo texto en todas las redes.">
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between gap-3">
+              <Label htmlFor="caption" className="text-xs font-medium">
+                {perPlatform ? "Texto por defecto" : "Texto"}
+              </Label>
+              <label className="flex cursor-pointer items-center gap-2 text-[11px] font-medium text-muted-foreground">
+                Personalizar por red
+                <Switch checked={perPlatform} onCheckedChange={setPerPlatform} />
+              </label>
+            </div>
             <Textarea
               id="caption"
               rows={5}
@@ -100,10 +132,47 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
               onChange={(e) => setCaption(e.target.value)}
               autoFocus
             />
-            <span className="self-end text-[11px] tabular-nums text-muted-foreground">
-              {caption.length}/3000
-            </span>
-          </FormRow>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[11px] text-muted-foreground">
+                {perPlatform
+                  ? "Se usa en las redes que no tengan un texto propio."
+                  : "Se usa el mismo texto en todas las redes."}
+              </span>
+              <span className="text-[11px] tabular-nums text-muted-foreground">
+                {caption.length}/3000
+              </span>
+            </div>
+
+            {perPlatform && selectedList.length > 0 && (
+              <div className="mt-2 flex flex-col gap-4 border-t border-border pt-4">
+                {selectedList.map((p) => {
+                  const value = perCaptions[p] ?? "";
+                  return (
+                    <div key={p} className="flex flex-col gap-1.5">
+                      <Label
+                        htmlFor={`caption-${p}`}
+                        className="flex items-center gap-1.5 text-xs font-medium"
+                      >
+                        <PlatformIcon platform={p} className="size-3.5" />
+                        {PLATFORM_LABELS[p]}
+                      </Label>
+                      <Textarea
+                        id={`caption-${p}`}
+                        rows={3}
+                        maxLength={3000}
+                        placeholder={caption || "Usa el texto por defecto"}
+                        value={value}
+                        onChange={(e) => setPlatformCaption(p, e.target.value)}
+                      />
+                      <span className="self-end text-[11px] tabular-nums text-muted-foreground">
+                        {value.length}/3000
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
           <FormRow label="Media" htmlFor="media" hint="Imágenes o vídeo. Máximo 10 archivos.">
             <div id="media">

@@ -26,6 +26,7 @@ interface TargetRow {
   id: string;
   platform: string;
   status: string;
+  caption: string | null;
   remote_id: string | null;
   remote_url: string | null;
   error: string | null;
@@ -44,11 +45,22 @@ interface PostRow {
   social_post_targets?: TargetRow[];
 }
 
+/**
+ * Decide the value stored in `social_post_targets.caption`: `null` when the
+ * override is absent or identical to the shared caption (so the target simply
+ * inherits it), otherwise the trimmed-preserving override string.
+ */
+function resolveOverride(override: string | undefined, shared: string): string | null {
+  if (override === undefined || override === shared) return null;
+  return override;
+}
+
 function mapTarget(row: TargetRow): TargetView {
   return {
     id: row.id,
     platform: row.platform as SocialPlatform,
     status: row.status as TargetStatus,
+    caption: row.caption,
     remoteId: row.remote_id,
     remoteUrl: row.remote_url,
     error: row.error,
@@ -72,7 +84,7 @@ function mapPost(row: PostRow): PostListItem {
 
 const POST_SELECT =
   "id, caption, media_kind, media, status, scheduled_at, published_at, created_at, " +
-  "social_post_targets(id, platform, status, remote_id, remote_url, error, published_at)";
+  "social_post_targets(id, platform, status, caption, remote_id, remote_url, error, published_at)";
 
 /** Insert a composed post plus one pending target per selected platform. */
 export async function createPost(input: CreatePostInput): Promise<string> {
@@ -95,7 +107,13 @@ export async function createPost(input: CreatePostInput): Promise<string> {
   if (error || !data) throw new Error(`No se pudo crear el post: ${error?.message}`);
 
   const postId = data.id as string;
-  const targets = input.platforms.map((platform) => ({ post_id: postId, platform }));
+  const targets = input.platforms.map((platform) => ({
+    post_id: postId,
+    platform,
+    // Store an override only when it differs from the shared caption; otherwise
+    // leave NULL so the target inherits `social_posts.caption` at publish time.
+    caption: resolveOverride(input.captions?.[platform], input.caption),
+  }));
   const { error: targetErr } = await supabase.from("social_post_targets").insert(targets);
   if (targetErr) throw new Error(`No se pudieron crear los destinos: ${targetErr.message}`);
 

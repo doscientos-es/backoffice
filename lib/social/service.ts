@@ -14,7 +14,7 @@ import {
   composePost,
   fanOutPublish,
 } from "@/lib/social/core";
-import type { FanOutResult, SocialPlatform } from "@/lib/social/core";
+import type { CaptionByPlatform, FanOutResult, SocialPlatform } from "@/lib/social/core";
 import { socialRegistry } from "@/lib/social/registry";
 import * as repo from "@/lib/social/repo";
 import type { PostDetail, TargetWithInsights } from "@/lib/social/types";
@@ -38,9 +38,19 @@ export async function publishPost(postId: string): Promise<FanOutResult> {
 
   await repo.markPublishing(postId);
   const composed = composePost(post.id, post.caption, post.media);
-  const result = await fanOutPublish(composed, platforms, socialRegistry());
+  const captions = captionOverrides(post.targets);
+  const result = await fanOutPublish(composed, platforms, socialRegistry(), captions);
   await repo.applyFanOut(postId, result);
   return result;
+}
+
+/** Collect the per-network copy overrides stored on the post's targets. */
+function captionOverrides(targets: { platform: SocialPlatform; caption: string | null }[]) {
+  const captions: CaptionByPlatform = {};
+  for (const t of targets) {
+    if (t.caption !== null) captions[t.platform] = t.caption;
+  }
+  return captions;
 }
 
 /** Fetch a post with its per-target insights merged in for the analytics view. */
