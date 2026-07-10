@@ -118,10 +118,19 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
               <Label htmlFor="caption" className="text-xs font-medium">
                 {perPlatform ? "Texto por defecto" : "Texto"}
               </Label>
-              <label className="flex cursor-pointer items-center gap-2 text-[11px] font-medium text-muted-foreground">
-                Personalizar por red
-                <Switch checked={perPlatform} onCheckedChange={setPerPlatform} />
-              </label>
+              <div className="flex items-center gap-2">
+                <Label
+                  htmlFor="per-platform-copy"
+                  className="cursor-pointer text-[11px] font-medium text-muted-foreground"
+                >
+                  Personalizar por red
+                </Label>
+                <Switch
+                  id="per-platform-copy"
+                  checked={perPlatform}
+                  onCheckedChange={setPerPlatform}
+                />
+              </div>
             </div>
             <Textarea
               id="caption"
