@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- client component, used in JSX
+import { ClientLogoUpload } from "@/components/ui/client-logo-upload";
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -169,6 +171,7 @@ export function ClientFormFields({
           placeholder="Condiciones de pago, observaciones…"
         />
       </FormRow>
+      <ClientLogoUpload defaultLogoUrl={d.logo_url} />
     </>
   );
 }

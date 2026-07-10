@@ -63,7 +63,14 @@ export default async function PortalProposalPage({
     .maybeSingle();
 
   // Drafts are only accessible to authenticated team members.
-  if (!proposal || (proposal.status === "draft" && !isTeam)) notFound();
+  if (!proposal) {
+    log.error({ token }, "portal_proposal_not_found — query returned null");
+    notFound();
+  }
+  if (proposal.status === "draft" && !isTeam) {
+    log.warn({ proposalId: proposal.id, status: proposal.status }, "portal_draft_blocked_non_team");
+    notFound();
+  }
 
   const isDraft = proposal.status === "draft";
 
@@ -71,7 +78,10 @@ export default async function PortalProposalPage({
   // ones show the unlock form until the visitor presents a valid cookie. Team
   // members always bypass so they can preview the link.
   if (!isTeam) {
-    if ((proposal.is_client_visible as boolean | null) === false) notFound();
+    if ((proposal.is_client_visible as boolean | null) === false) {
+      log.warn({ proposalId: proposal.id }, "portal_proposal_hidden_from_client");
+      notFound();
+    }
     const unlocked = await isPortalUnlocked(
       token,
       (proposal.portal_password_hash as string | null) ?? null,

@@ -23,6 +23,7 @@ import { GenerateInvoiceButton } from "./generate-invoice-button";
 import { MarkAcceptedButton } from "./mark-accepted-button";
 import { type EditableItem, ProposalEditor } from "./proposal-editor";
 import { type ProposalSpec, ProposalSpecs } from "./proposal-specs";
+import { ReopenProposalButton } from "./reopen-proposal-button";
 import { SendPreviewButton } from "./send-preview-button";
 import { ShareLinks } from "./share-links";
 
@@ -163,6 +164,7 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
             ) : status !== "rejected" ? (
               <MarkAcceptedButton proposalId={id} />
             ) : null}
+            {locked && <ReopenProposalButton proposalId={id} />}
             <DeleteProposalButton proposalId={id} />
           </div>
         }

@@ -31,6 +31,7 @@ type Client = {
   billing_address_province: string | null;
   billing_address_country: string | null;
   notes: string | null;
+  logo_url: string | null;
 };
 
 export function ClientEditDialog({
@@ -63,6 +64,7 @@ export function ClientEditDialog({
       billing_address_country: fd.get("billing_address_country")?.toString() ?? "ES",
       contact_person: fd.get("contact_person")?.toString() ?? "",
       notes: fd.get("notes")?.toString() ?? "",
+      logo_url: fd.get("logo_url")?.toString() ?? "",
     });
     if (!res.ok) return feedback.setError(res.error);
     feedback.setSuccess("Guardado");
@@ -108,6 +110,7 @@ export function ClientEditDialog({
                 billing_address_province: client.billing_address_province,
                 billing_address_country: client.billing_address_country,
                 notes: client.notes,
+                logo_url: client.logo_url,
               }}
             />
           </div>

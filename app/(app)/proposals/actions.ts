@@ -625,3 +625,56 @@ export async function markProposalAsAccepted(
   revalidatePath("/proposals");
   return { ok: true };
 }
+
+/**
+ * Reopens an accepted or rejected proposal so the team can make adjustments
+ * (e.g. a discount agreed in a follow-up meeting) and resend it for
+ * re-acceptance. Only owners and admins can reopen.
+ *
+ * Clears the response fields (responded_at, signature_data, accepted_fiscal_data)
+ * and reverts the status to `sent`, keeping the original number and portal token
+ * intact so the client link remains valid.
+ */
+export async function reopenProposal(
+  input: unknown,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const user = await requireRole(["owner", "admin"]);
+
+  const parsed = z.object({ id: z.string().uuid() }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: "ID inválido" };
+  const { id } = parsed.data;
+
+  const supabase = await createServerClient();
+  const { data: proposal, error: readError } = await supabase
+    .from("proposals")
+    .select("id, status, number")
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (readError || !proposal) return { ok: false, error: "Propuesta no encontrada" };
+  if (proposal.status !== "accepted" && proposal.status !== "rejected") {
+    return { ok: false, error: "Solo se pueden reabrir propuestas aceptadas o rechazadas" };
+  }
+
+  const { error } = await supabase
+    .from("proposals")
+    .update({
+      status: "sent",
+      responded_at: null,
+      signature_data: null,
+      accepted_fiscal_data: null,
+    })
+    .eq("id", id);
+
+  if (error) {
+    log.error({ err: error, id }, "reopen_proposal_failed");
+    return { ok: false, error: error.message };
+  }
+
+  log.info({ id, number: proposal.number, by: user.email }, "proposal_reopened");
+
+  revalidatePath(`/proposals/${id}`);
+  revalidatePath("/proposals");
+  return { ok: true };
+}

@@ -28,6 +28,7 @@ export async function createClient(formData: FormData): Promise<void> {
     billing_address_country: formData.get("billing_address_country")?.toString() ?? "ES",
     contact_person: formData.get("contact_person")?.toString() ?? "",
     notes: formData.get("notes")?.toString() ?? "",
+    logo_url: formData.get("logo_url")?.toString() ?? "",
   };
   const parsed = CreateClientInput.safeParse(raw);
   if (!parsed.success) throw new Error(parsed.error.errors[0]?.message ?? "Datos no válidos");
@@ -48,6 +49,7 @@ export async function createClient(formData: FormData): Promise<void> {
       billing_address_country: parsed.data.billing_address_country ?? "ES",
       contact_person: parsed.data.contact_person ?? null,
       notes: parsed.data.notes ?? null,
+      logo_url: parsed.data.logo_url ?? null,
     })
     .select("id")
     .single();
@@ -97,6 +99,7 @@ export const updateClient = defineAction({
         billing_address_country: input.billing_address_country ?? "ES",
         contact_person: input.contact_person ?? null,
         notes: input.notes ?? null,
+        logo_url: input.logo_url ?? null,
         updated_at: new Date().toISOString(),
       })
       .eq("id", input.id);
