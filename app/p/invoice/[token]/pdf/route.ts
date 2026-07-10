@@ -25,7 +25,7 @@ export async function GET(
 
   const { data: invoice } = await admin
     .from("invoices")
-    .select("*, clients(name)")
+    .select("*, clients(name, logo_url)")
     .eq("portal_token", token)
     .is("deleted_at", null)
     .maybeSingle();
@@ -63,8 +63,11 @@ export async function GET(
     admin.from("settings").select("*").eq("id", 1).maybeSingle(),
   ]);
 
-  const clientName =
-    (invoice as unknown as { clients: { name: string } | null }).clients?.name ?? null;
+  const clientData = (
+    invoice as unknown as { clients: { name: string; logo_url: string | null } | null }
+  ).clients;
+  const clientName = clientData?.name ?? null;
+  const clientLogoUrl = clientData?.logo_url ?? null;
 
   const workLogs = ((workLogsData ?? []) as Array<Record<string, unknown>>).map((w) => {
     const member = w.team_members as unknown as { name: string } | null;
@@ -99,6 +102,7 @@ export async function GET(
       payment_terms: (invoice.payment_terms as string | null) ?? null,
     },
     clientName,
+    clientLogoUrl,
     items: (items ?? []) as Array<{
       description: string | null;
       quantity: number | null;

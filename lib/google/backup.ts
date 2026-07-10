@@ -41,7 +41,7 @@ export async function backupInvoiceToDrive(invoiceId: string, actorEmail?: strin
     const [{ data: invoice }, { data: items }, { data: settings }] = await Promise.all([
       admin
         .from("invoices")
-        .select("*, clients(id, name)")
+        .select("*, clients(id, name, logo_url)")
         .eq("id", invoiceId)
         .is("deleted_at", null)
         .maybeSingle(),
@@ -58,8 +58,11 @@ export async function backupInvoiceToDrive(invoiceId: string, actorEmail?: strin
       return;
     }
 
-    const clientName =
-      (invoice as unknown as { clients?: { name?: string } }).clients?.name ?? "Sin-Cliente";
+    const clientData = (
+      invoice as unknown as { clients?: { name?: string; logo_url?: string | null } }
+    ).clients;
+    const clientName = clientData?.name ?? "Sin-Cliente";
+    const clientLogoUrl = clientData?.logo_url ?? null;
     const clientFolderId = await findOrCreateClientFolder({
       subject: sub,
       parentFolderId: rootFolderId,
@@ -69,6 +72,7 @@ export async function backupInvoiceToDrive(invoiceId: string, actorEmail?: strin
     const pdfData = await buildInvoicePdfData({
       invoice: invoice as Parameters<typeof buildInvoicePdfData>[0]["invoice"],
       clientName,
+      clientLogoUrl,
       items: items ?? [],
       settings: settings ?? null,
     });

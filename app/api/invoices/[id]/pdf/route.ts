@@ -31,6 +31,7 @@ export async function GET(
   const data = await buildInvoicePdfData({
     invoice,
     clientName: invoice.client?.name ?? null,
+    clientLogoUrl: invoice.client?.logo_url ?? null,
     items,
     settings,
     workLogs,

@@ -115,7 +115,10 @@ export async function getInvoiceDetail(id: string): Promise<InvoiceDetailResult>
   const supabase = await createServerClient();
 
   const { data: invoice, error } = await notDeleted(
-    supabase.from("invoices").select("*, clients(id, name), projects(id, name)").eq("id", id),
+    supabase
+      .from("invoices")
+      .select("*, clients(id, name, logo_url), projects(id, name)")
+      .eq("id", id),
   ).maybeSingle();
 
   if (error) log.error({ invoiceId: id, err: error.message }, "get_invoice_detail_failed");
@@ -135,7 +138,11 @@ export async function getInvoiceDetail(id: string): Promise<InvoiceDetailResult>
   ]);
 
   const client =
-    (invoice as unknown as { clients: { id: string; name: string } | null }).clients ?? null;
+    (
+      invoice as unknown as {
+        clients: { id: string; name: string; logo_url: string | null } | null;
+      }
+    ).clients ?? null;
   const project =
     (invoice as unknown as { projects: { id: string; name: string } | null }).projects ?? null;
 

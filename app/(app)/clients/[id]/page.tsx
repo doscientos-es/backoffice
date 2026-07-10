@@ -2,6 +2,7 @@ import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CopyButton } from "@/components/ui/copy-button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatAddress } from "@/lib/address";
 import { requireUser } from "@/lib/auth";
@@ -36,7 +37,10 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
       <PageHeader
         title={(client.label as string | null)?.trim() || (client.name as string)}
         description={(client.nif as string | null) ?? undefined}
-        breadcrumbs={[{ label: "Clientes", href: "/clients" }, { label: (client.label as string | null)?.trim() || (client.name as string) }]}
+        breadcrumbs={[
+          { label: "Clientes", href: "/clients" },
+          { label: (client.label as string | null)?.trim() || (client.name as string) },
+        ]}
         actions={
           user.role !== "viewer" ? (
             <div className="flex items-center gap-2">
@@ -87,9 +91,22 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
             country: client.billing_address_country as string | null,
           }) ? (
             <div className="mt-4 border-t border-border pt-3">
-              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Dirección
-              </p>
+              <div className="mb-1 flex items-center gap-1.5">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Dirección
+                </p>
+                <CopyButton
+                  text={formatAddress({
+                    street: client.billing_address_street as string | null,
+                    zip: client.billing_address_zip as string | null,
+                    city: client.billing_address_city as string | null,
+                    province: client.billing_address_province as string | null,
+                    country: client.billing_address_country as string | null,
+                  }).replace(/\n/g, ", ")}
+                  successMessage="Dirección copiada"
+                  label="Copiar dirección completa"
+                />
+              </div>
               <p className="whitespace-pre-wrap text-sm">
                 {formatAddress({
                   street: client.billing_address_street as string | null,

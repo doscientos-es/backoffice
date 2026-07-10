@@ -57,6 +57,7 @@ export type InvoiceListResult = {
 export type InvoiceDetailClient = {
   id: string;
   name: string;
+  logo_url: string | null;
 };
 
 export type InvoiceDetailProject = {
