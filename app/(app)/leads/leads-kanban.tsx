@@ -251,7 +251,7 @@ export function LeadsKanban({
         </button>
         <FormFeedback state={feedback.state} pendingLabel="Actualizando…" />
       </div>
-      <div className="flex gap-3 overflow-x-auto pb-2 h-[calc(100dvh-11rem)] min-h-[28rem]">
+      <div className="flex gap-3 overflow-x-auto pb-2 h-[calc(100dvh-11rem)] min-h-[28rem] scroll-fade-x no-scrollbar">
         {COLUMNS.map((col) => (
           <Column
             key={col.id}
@@ -409,7 +409,7 @@ function Column({
       </header>
       <div
         className={cn(
-          "flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-2",
+          "flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-2 scroll-fade no-scrollbar",
           collapsed && "md:hidden md:group-hover/col:flex",
         )}
       >

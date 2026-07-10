@@ -88,7 +88,7 @@ function Body({ project, canEdit, onDeleteAction }: BodyProps) {
         </DrawerClose>
       </DrawerHeader>
 
-      <div className="flex flex-col gap-6 overflow-y-auto p-4">
+      <div className="flex flex-col gap-6 overflow-y-auto p-4 scroll-fade no-scrollbar">
         <section className="flex flex-col gap-2.5 text-xs">
           <Heading>Detalles</Heading>
           <Row icon={<Building2 className="size-3.5" />}>{project.client_name}</Row>

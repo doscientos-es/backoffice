@@ -104,7 +104,7 @@ export function ExpenseEditDialog({
         </DialogHeader>
         <form ref={formRef} onSubmit={onSubmit} className="flex flex-col max-h-[70vh]">
           <input type="hidden" name="id" value={expense.id} />
-          <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-5">
+          <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-5 scroll-fade no-scrollbar">
             <ExpenseFormFields
               idPrefix={`edit-${expense.id}`}
               projects={projects}

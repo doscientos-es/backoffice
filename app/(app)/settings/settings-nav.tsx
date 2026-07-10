@@ -34,7 +34,7 @@ export function SettingsNav({ canManageTeam }: { canManageTeam: boolean }) {
   return (
     <nav
       aria-label="Ajustes"
-      className="-mx-1 flex shrink-0 gap-1 overflow-x-auto px-1 md:sticky md:top-6 md:mx-0 md:w-48 md:self-start md:flex-col md:overflow-visible md:px-0"
+      className="-mx-1 flex shrink-0 gap-1 overflow-x-auto px-1 md:sticky md:top-6 md:mx-0 md:w-48 md:self-start md:flex-col md:overflow-visible md:px-0 scroll-fade-x no-scrollbar"
     >
       {items.map(({ href, label, icon: Icon }) => {
         const active = pathname === href || pathname.startsWith(`${href}/`);

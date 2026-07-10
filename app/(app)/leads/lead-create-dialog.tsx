@@ -81,7 +81,7 @@ export function LeadCreateDialog({ trigger, onCreated }: Props) {
           <DialogDescription>Registra una nueva oportunidad comercial.</DialogDescription>
         </DialogHeader>
         <form ref={formRef} onSubmit={onSubmit} className="flex flex-col max-h-[80vh]">
-          <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-5">
+          <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-5 scroll-fade no-scrollbar">
             <LeadFormFields idPrefix="create" includeEstimatedValue autoFocusName />
           </div>
           <div className="shrink-0 flex items-center justify-end gap-3 border-t border-border pt-3">

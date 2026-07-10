@@ -75,7 +75,7 @@ export function MemberProfileDialog({ member }: { member: MemberProfileData }) {
           <input type="hidden" name="member_id" value={member.id} />
 
           {/* Scrollable body */}
-          <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="flex-1 overflow-y-auto px-6 py-4 scroll-fade no-scrollbar">
             <div className="grid gap-4 sm:grid-cols-2">
               <Field>
                 <FieldLabel htmlFor="mp-name" className="text-xs font-medium">Nombre</FieldLabel>

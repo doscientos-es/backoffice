@@ -297,7 +297,9 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             </CardHeader>
             <CardContent>
               <DetailGrid>
-                <DetailRow label="Nº factura">{invoice.full_number as string}</DetailRow>
+                <DetailRow label="Nº factura">
+                  {(invoice.full_number as string | null) ?? "—"}
+                </DetailRow>
                 {(invoice.idfact as string | null) ? (
                   <DetailRow label="IDFACT">
                     <span className="break-all font-mono text-xs">{invoice.idfact as string}</span>

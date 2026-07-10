@@ -250,7 +250,7 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
             </EmptyHeader>
           </Empty>
         ) : (
-          <ul className="max-h-96 overflow-y-auto py-1">
+          <ul className="max-h-96 overflow-y-auto py-1 scroll-fade no-scrollbar">
             {groups.map((group) => (
               <li key={group.key}>
                 <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">

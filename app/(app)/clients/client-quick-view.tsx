@@ -59,7 +59,7 @@ function Body({ client }: { client: QuickClient }) {
         </DrawerClose>
       </DrawerHeader>
 
-      <div className="flex flex-col gap-6 overflow-y-auto p-4">
+      <div className="flex flex-col gap-6 overflow-y-auto p-4 scroll-fade no-scrollbar">
         <section className="flex flex-col gap-2.5 text-xs">
           <Heading>Información de contacto</Heading>
           {client.contact_person && (

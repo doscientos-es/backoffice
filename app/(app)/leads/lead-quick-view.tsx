@@ -113,7 +113,7 @@ function Body({
         </DrawerClose>
       </DrawerHeader>
 
-      <div className="flex flex-col gap-4 overflow-y-auto h-full flex-1 p-4">
+      <div className="flex flex-col gap-4 overflow-y-auto h-full flex-1 p-4 scroll-fade no-scrollbar">
         <section className="flex flex-col gap-1.5 text-xs">
           {lead.company && <Row icon={<Building2 className="size-3.5" />}>{lead.company}</Row>}
           {lead.email && (

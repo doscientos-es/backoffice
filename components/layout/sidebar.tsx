@@ -187,7 +187,7 @@ export function Sidebar({ user, verifactuMode }: { user: CurrentUser; verifactuM
         <CommandPaletteTrigger />
       </div>
       <nav
-        className="flex flex-1 flex-col overflow-y-auto px-2 py-1"
+        className="flex flex-1 flex-col overflow-y-auto px-2 py-1 scroll-fade no-scrollbar"
         aria-label="Navegación principal"
       >
         {visibleGroups.map((group, gi) => (

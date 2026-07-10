@@ -250,7 +250,7 @@ export function EmailTemplatesManager({ templates, signatureHtml }: Props) {
 
             <div className="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-2">
               {/* ── Columna de edición ── */}
-              <div className="flex flex-col gap-4 overflow-y-auto p-5">
+              <div className="flex flex-col gap-4 overflow-y-auto p-5 scroll-fade no-scrollbar">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
                     <Label htmlFor="tpl-name">Nombre</Label>
@@ -317,7 +317,7 @@ export function EmailTemplatesManager({ templates, signatureHtml }: Props) {
               </div>
 
               {/* ── Columna de vista previa en tiempo real ── */}
-              <div className="flex flex-col gap-3 overflow-y-auto border-t border-border bg-muted/30 p-5 lg:border-t-0 lg:border-l">
+              <div className="flex flex-col gap-3 overflow-y-auto border-t border-border bg-muted/30 p-5 lg:border-t-0 lg:border-l scroll-fade no-scrollbar">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-medium text-muted-foreground">
                     Vista previa en tiempo real
