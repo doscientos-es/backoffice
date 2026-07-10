@@ -33,7 +33,6 @@ export function DocPreview({ url, mimeType, name }: Props) {
       </div>
     );
   }
-
   return <Fallback mimeType={mimeType} reason="unsupported" />;
 }
 
