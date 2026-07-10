@@ -26,7 +26,7 @@ export async function listClients(params: ClientListParams): Promise<ClientListR
     supabase
       .from("clients")
       .select(
-        "id, name, label, nif, email, phone, contact_person, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country, notes, updated_at",
+        "id, name, label, nif, email, phone, contact_person, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country, notes, logo_url, updated_at",
         { count: "exact" },
       ),
   );
@@ -59,6 +59,7 @@ export async function listClients(params: ClientListParams): Promise<ClientListR
       billing_address_province: (c.billing_address_province as string | null) ?? null,
       billing_address_country: (c.billing_address_country as string | null) ?? null,
       notes: (c.notes as string | null) ?? null,
+      logo_url: (c.logo_url as string | null) ?? null,
       updated_at: (c.updated_at as string | null) ?? null,
     })),
     count: count ?? 0,
@@ -109,6 +110,7 @@ export async function getClientDetail(id: string): Promise<ClientDetailResult> {
       billing_address_province: (client.billing_address_province as string | null) ?? null,
       billing_address_country: (client.billing_address_country as string | null) ?? null,
       notes: (client.notes as string | null) ?? null,
+      logo_url: (client.logo_url as string | null) ?? null,
       created_at: (client.created_at as string | null) ?? null,
       updated_at: (client.updated_at as string | null) ?? null,
     },

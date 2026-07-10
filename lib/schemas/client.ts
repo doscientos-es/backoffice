@@ -24,6 +24,8 @@ export const CreateClientInput = z.object({
   billing_address_country: optionalText(10).default("ES"),
   contact_person: optionalText(160),
   notes: optionalText(4000),
+  /** Public URL of the client logo stored in Supabase Storage. Optional. */
+  logo_url: optionalText(500),
 });
 
 export type CreateClientInputType = z.infer<typeof CreateClientInput>;

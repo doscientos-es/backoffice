@@ -23,6 +23,7 @@ export type ClientListItem = {
   billing_address_province: string | null;
   billing_address_country: string | null;
   notes: string | null;
+  logo_url: string | null;
   updated_at: string | null;
 };
 
@@ -81,6 +82,7 @@ export type ClientDetail = {
   billing_address_province: string | null;
   billing_address_country: string | null;
   notes: string | null;
+  logo_url: string | null;
   created_at: string | null;
   updated_at: string | null;
 };

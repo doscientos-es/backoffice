@@ -20,6 +20,7 @@ export type ClientFormDefaults = {
   billing_address_province?: string | null;
   billing_address_country?: string | null;
   notes?: string | null;
+  logo_url?: string | null;
 };
 
 /**
