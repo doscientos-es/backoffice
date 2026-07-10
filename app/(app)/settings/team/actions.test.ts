@@ -7,7 +7,10 @@ const { state } = vi.hoisted(() => ({
     actorRole: "owner" as "owner" | "admin" | "member" | "viewer",
     inviteCalls: [] as Array<{ email: string; opts: InviteOpts }>,
     inviteResult: {
-      data: { user: { id: "11111111-1111-1111-1111-111111111111" } },
+      data: {
+        user: { id: "11111111-1111-1111-1111-111111111111" },
+        properties: { hashed_token: "mock-token" },
+      },
       error: null as null | { message: string },
     },
     upsertCalls: [] as Array<{ row: Record<string, unknown>; opts: unknown }>,
@@ -35,8 +38,8 @@ vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
     auth: {
       admin: {
-        inviteUserByEmail: async (email: string, opts: InviteOpts) => {
-          state.inviteCalls.push({ email, opts });
+        generateLink: async (params: { email: string; options: InviteOpts }) => {
+          state.inviteCalls.push({ email: params.email, opts: params.options });
           return state.inviteResult;
         },
       },
@@ -72,7 +75,10 @@ describe("inviteTeamMember", () => {
     state.inviteCalls = [];
     state.upsertCalls = [];
     state.inviteResult = {
-      data: { user: { id: "11111111-1111-1111-1111-111111111111" } },
+      data: {
+        user: { id: "11111111-1111-1111-1111-111111111111" },
+        properties: { hashed_token: "mock-token" },
+      },
       error: null,
     };
     state.upsertResult = { error: null };
@@ -128,7 +134,10 @@ describe("inviteTeamMember", () => {
 
   it("propagates Supabase invite errors", async () => {
     state.inviteResult = {
-      data: { user: null as unknown as { id: string } },
+      data: {
+        user: null as unknown as { id: string },
+        properties: null as unknown as { hashed_token: string },
+      },
       error: { message: "rate limited" },
     };
     const res = await inviteTeamMember(form("ada@doscientos.es"));

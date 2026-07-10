@@ -142,7 +142,7 @@ export function TasksKanban({ tasks }: { tasks: KanbanTask[] }) {
       <div className="flex justify-end pb-1 min-h-5">
         <FormFeedback state={feedback.state} pendingLabel="Actualizando…" />
       </div>
-      <div className="flex gap-3 overflow-x-auto pb-2">
+      <div className="flex gap-3 overflow-x-auto pb-2 scroll-fade-x no-scrollbar">
         {COLUMNS.map((c) => (
           <Column key={c.id} status={c.id} label={c.label} tone={c.tone} tasks={grouped[c.id]} />
         ))}

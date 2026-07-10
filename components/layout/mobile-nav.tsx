@@ -104,7 +104,7 @@ export function MobileNav({
 
             {/* Nav links */}
             <nav
-              className="flex flex-1 flex-col gap-0.5 px-2 py-3 overflow-y-auto"
+              className="flex flex-1 flex-col gap-0.5 px-2 py-3 overflow-y-auto scroll-fade no-scrollbar"
               aria-label="Navegación principal"
             >
               {visibleNav.map(({ href, label, icon: Icon }) => {

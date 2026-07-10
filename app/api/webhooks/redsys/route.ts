@@ -45,13 +45,36 @@ export async function POST(req: Request) {
       // Locate the pending payment record by Redsys order ID
       const { data: payment, error: paymentFindError } = await supabase
         .from("invoice_payments")
-        .select("id, invoice_id, proposal_id, amount")
+        .select("id, invoice_id, proposal_id, amount, status")
         .eq("redsys_order", orderId)
         .maybeSingle();
 
       if (paymentFindError || !payment) {
         log.error({ orderId, paymentFindError }, "payment_record_not_found");
         return new Response("Payment record not found", { status: 404 });
+      }
+
+      // Idempotency guard: Redsys retries notifications (and the browser return
+      // can overlap). Re-processing a confirmed payment would create a second
+      // deposit invoice and duplicate notifications/emails. Ack with 200 so
+      // Redsys stops retrying, then stop.
+      if (payment.status === "confirmed") {
+        log.info({ paymentId: payment.id, orderId }, "payment_already_confirmed_skip");
+        return new Response("OK", { status: 200 });
+      }
+
+      // Amount integrity guard: Ds_Amount is in cents; payment.amount is EUR.
+      // The HMAC already authenticates the payload, but a mismatch means the
+      // stored payment and the gateway disagree on the charged amount — never
+      // confirm it, alert instead so it can be investigated manually.
+      const expectedCents = Math.round(Number(payment.amount) * 100);
+      const reportedCents = Number(amount);
+      if (!Number.isFinite(reportedCents) || reportedCents !== expectedCents) {
+        log.error(
+          { paymentId: payment.id, orderId, reportedCents, expectedCents },
+          "payment_amount_mismatch",
+        );
+        return new Response("Amount mismatch", { status: 400 });
       }
 
       // Confirm the payment

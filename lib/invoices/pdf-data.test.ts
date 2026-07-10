@@ -71,7 +71,8 @@ describe("buildInvoicePdfData", () => {
 
   it("omits the QR when the emisor NIF is not configured", async () => {
     const { buildInvoicePdfData } = await importPdfData("");
-    const data = await buildInvoicePdfData(makeInput());
+    const input = { ...makeInput(), settings: { ...makeInput().settings!, company_nif: null } };
+    const data = await buildInvoicePdfData(input);
     expect(data.qrDataUrl).toBeNull();
   });
 

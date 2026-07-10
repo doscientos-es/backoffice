@@ -42,6 +42,7 @@ vi.mock("@/lib/supabase/admin", () => ({
           return chain;
         },
         is: () => chain,
+        in: () => chain,
         order: () => chain,
         limit: () => chain,
         maybeSingle: async () => (isPrimary ? state.fetchResult : empty),
