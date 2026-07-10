@@ -45,6 +45,7 @@ export type DeckProposal = {
   created_at: string | null;
   client_name: string | null;
   client_email: string | null;
+  client_logo_url: string | null;
 };
 
 export async function generateMetadata({
@@ -86,7 +87,7 @@ export default async function DeckPage({
 
   const { data: proposal } = await admin
     .from("proposals")
-    .select("*, clients(name, email)")
+    .select("*, clients(name, email, logo_url)")
     .eq("portal_token", token)
     .is("deleted_at", null)
     .maybeSingle();
@@ -140,8 +141,11 @@ export default async function DeckPage({
     }
   }
 
-  const client = (proposal as unknown as { clients: { name: string; email: string | null } | null })
-    .clients;
+  const client = (
+    proposal as unknown as {
+      clients: { name: string; email: string | null; logo_url: string | null } | null;
+    }
+  ).clients;
 
   const deckProposal: DeckProposal = {
     id: proposal.id as string,
@@ -159,6 +163,7 @@ export default async function DeckPage({
     created_at: (proposal.created_at as string | null) ?? null,
     client_name: client?.name ?? null,
     client_email: client?.email ?? null,
+    client_logo_url: client?.logo_url ?? null,
   };
 
   const deckItems = (items ?? []) as unknown as DeckProposalItem[];

@@ -56,7 +56,7 @@ export default async function PortalProposalPage({
   const { data: proposal } = await admin
     .from("proposals")
     .select(
-      "*, clients(name, nif, billing_address, email, phone, contact_person), leads(name, email, phone, company)",
+      "*, clients(name, nif, billing_address, email, phone, contact_person, logo_url), leads(name, email, phone, company)",
     )
     .eq("portal_token", token)
     .is("deleted_at", null)
@@ -143,6 +143,7 @@ export default async function PortalProposalPage({
         email: string | null;
         phone: string | null;
         contact_person: string | null;
+        logo_url: string | null;
       } | null;
     }
   ).clients;
@@ -281,10 +282,20 @@ export default async function PortalProposalPage({
 
         {/* Recipient */}
         <div className="px-8 py-5 border-b border-zinc-100 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-900/50">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-1">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-2">
             Dirigido a
           </p>
-          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{recipientName}</p>
+          <div className="flex items-center gap-3">
+            {client?.logo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={client.logo_url}
+                alt={`Logo ${recipientName}`}
+                className="size-8 rounded object-contain"
+              />
+            ) : null}
+            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{recipientName}</p>
+          </div>
         </div>
 
         {/* Narrative: Context → Problems → Solutions (always before price) */}

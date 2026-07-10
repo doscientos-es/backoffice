@@ -48,6 +48,7 @@ export type InvoicePdfData = {
   idfact: string | null;
   verifactuCsv: string | null;
   clientName: string | null;
+  clientLogoUrl: string | null;
   clientNif: string | null;
   clientAddress: string | null;
   company: {
@@ -93,6 +94,7 @@ export type BuildInvoicePdfInput = {
     payment_terms?: string | null;
   };
   clientName: string | null;
+  clientLogoUrl?: string | null;
   items: ReadonlyArray<{
     description: string | null;
     quantity: number | null;
@@ -183,6 +185,7 @@ export async function buildInvoicePdfData(input: BuildInvoicePdfInput): Promise<
     idfact: invoice.idfact,
     verifactuCsv: invoice.verifactu_csv,
     clientName: input.clientName,
+    clientLogoUrl: input.clientLogoUrl ?? null,
     clientNif: invoice.client_nif,
     clientAddress:
       formatAddress({

@@ -47,7 +47,7 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
 
   const { data: items } = await supabase
     .from("proposal_items")
-    .select("id, position, description, quantity, unit_price, vat_rate, subtotal")
+    .select("id, position, description, quantity, unit_price, vat_rate, subtotal, billing_cycle")
     .eq("proposal_id", id)
     .order("position");
 
@@ -135,6 +135,7 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
     quantity: Number(it.quantity) || 0,
     unit_price: Number(it.unit_price) || 0,
     vat_rate: Number(it.vat_rate) || 0,
+    billing_cycle: it.billing_cycle ?? "none",
   }));
 
   const viewRows = (views ?? []) as unknown as Array<{

@@ -57,6 +57,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                   billing_address_country:
                     (client.billing_address_country as string | null) ?? null,
                   notes: (client.notes as string | null) ?? null,
+                  logo_url: (client.logo_url as string | null) ?? null,
                 }}
               />
               <DeleteClientButton clientId={client.id as string} />

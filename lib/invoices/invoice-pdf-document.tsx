@@ -180,6 +180,12 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
           ) : null}
           <View style={styles.party}>
             <Text style={styles.label}>Facturado a</Text>
+            {data.clientLogoUrl ? (
+              <Image
+                src={data.clientLogoUrl}
+                style={{ width: 40, height: 20, objectFit: "contain", marginBottom: 4 }}
+              />
+            ) : null}
             <Text style={styles.partyName}>{data.clientName ?? "—"}</Text>
             {data.clientNif ? <Text style={styles.partyLine}>NIF: {data.clientNif}</Text> : null}
             {data.clientAddress ? (

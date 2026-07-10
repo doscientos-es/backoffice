@@ -1,11 +1,17 @@
 import { ListPage } from "@/components/layout/list-page";
 import { Button } from "@/components/ui/button";
+import { ClientAvatar } from "@/components/ui/client-avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { escapeIlike, parsePage, parseSortParam, parseStringParam } from "@/lib/utils/search-params";
+import {
+  escapeIlike,
+  parsePage,
+  parseSortParam,
+  parseStringParam,
+} from "@/lib/utils/search-params";
 import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -57,7 +63,7 @@ export default async function ProposalsPage({
   let query = supabase
     .from("proposals")
     .select(
-      "id, number, title, status, total, valid_until, client_id, clients(name), lead_id, leads(name), project_id, projects(name)",
+      "id, number, title, status, total, valid_until, client_id, clients(name, logo_url), lead_id, leads(name), project_id, projects(name)",
       { count: "exact" },
     )
     .is("deleted_at", null);
@@ -127,18 +133,26 @@ export default async function ProposalsPage({
       exportFilename="propuestas"
       rows={
         data?.map((p) => {
-          const clientName =
-            (p.clients as unknown as { name: string } | null)?.name ??
-            (p.leads as unknown as { name: string } | null)?.name ??
-            "—";
+          const clientRow = p.clients as unknown as { name: string; logo_url: string | null } | null;
+          const leadRow = p.leads as unknown as { name: string } | null;
+          const clientName = clientRow?.name ?? leadRow?.name ?? "—";
           const projectName = (p.projects as unknown as { name: string } | null)?.name ?? "—";
+          const clientCell = (
+            <span key="client" className="flex items-center gap-2">
+              {clientRow ? (
+                // eslint-disable-next-line @typescript-eslint/no-require-imports
+                <ClientAvatar name={clientRow.name} logoUrl={clientRow.logo_url} size="xs" />
+              ) : null}
+              {clientName}
+            </span>
+          );
           return {
             id: p.id as string,
             href: `/proposals/${p.id}`,
             cells: [
               (p.number as string | null) ?? "Borrador",
               p.title as string,
-              clientName,
+              clientCell,
               projectName,
               <StatusBadge key="status" meta={PROPOSAL_STATUS} value={p.status as string} />,
               formatEUR(p.total as number),

@@ -76,9 +76,19 @@ function CoverSlide({ proposal }: { proposal: DeckProposal }) {
       </Stagger>
       {proposal.client_name && (
         <Stagger i={3}>
-          <p className="text-base sm:text-xl md:text-2xl text-white/70 font-light px-2">
-            Preparado para <span className="text-white font-medium">{proposal.client_name}</span>
-          </p>
+          <div className="flex flex-col items-center gap-3">
+            {proposal.client_logo_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={proposal.client_logo_url}
+                alt={`Logo ${proposal.client_name}`}
+                className="h-10 sm:h-14 max-w-[160px] object-contain brightness-0 invert opacity-80"
+              />
+            )}
+            <p className="text-base sm:text-xl md:text-2xl text-white/70 font-light px-2">
+              Preparado para <span className="text-white font-medium">{proposal.client_name}</span>
+            </p>
+          </div>
         </Stagger>
       )}
       {proposal.valid_until && (

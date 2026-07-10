@@ -49,7 +49,7 @@ export default async function PortalInvoicePage({
 
   const { data: invoice } = await admin
     .from("invoices")
-    .select("*, clients(name)")
+    .select("*, clients(name, logo_url)")
     .eq("portal_token", token)
     .is("deleted_at", null)
     .maybeSingle();
@@ -86,7 +86,7 @@ export default async function PortalInvoicePage({
 
   const { data: settings } = await admin.from("settings").select("*").eq("id", 1).maybeSingle();
 
-  const client = (invoice as unknown as { clients: { name: string } | null }).clients;
+  const client = (invoice as unknown as { clients: { name: string; logo_url: string | null } | null }).clients;
   const safeItems = (items ?? []) as unknown as InvoiceItem[];
 
   // Group line items by VAT rate so we can show a proper desglose por tipo.
@@ -281,12 +281,22 @@ export default async function PortalInvoicePage({
             </div>
           ) : null}
           <div className="px-8 py-5">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-1">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-2">
               Facturado a
             </p>
-            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-              {client?.name ?? "—"}
-            </p>
+            <div className="flex items-center gap-3 mb-1">
+              {client?.logo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={client.logo_url}
+                  alt={`Logo ${client.name}`}
+                  className="size-8 rounded object-contain"
+                />
+              ) : null}
+              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                {client?.name ?? "—"}
+              </p>
+            </div>
             {(invoice.client_nif as string | null) ? (
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
                 NIF: {invoice.client_nif as string}
