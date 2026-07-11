@@ -19,7 +19,8 @@ export default async function ClientsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await requireUser();
+  const user = await requireUser();
+  const canEdit = user.role !== "viewer";
   const sp = await searchParams;
   const q = parseStringParam(sp, "q");
   const page = parsePage(sp);
@@ -29,6 +30,7 @@ export default async function ClientsPage({
 
   return (
     <ClientsList
+      canEdit={canEdit}
       title="Clientes"
       empty={q ? "Sin coincidencias para tu búsqueda." : "Aún no hay clientes."}
       error={undefined}
@@ -75,6 +77,12 @@ export default async function ClientsPage({
               contact_person: c.contact_person,
               updated_at: c.updated_at,
               logo_url: c.logo_url,
+              billing_address_street: c.billing_address_street,
+              billing_address_zip: c.billing_address_zip,
+              billing_address_city: c.billing_address_city,
+              billing_address_province: c.billing_address_province,
+              billing_address_country: c.billing_address_country,
+              notes: c.notes,
             },
             cells: [
               <div key="name" className="flex items-center gap-2">

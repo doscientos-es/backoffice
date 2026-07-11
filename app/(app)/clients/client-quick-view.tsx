@@ -3,6 +3,14 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   Drawer,
   DrawerClose,
   DrawerContent,
@@ -11,10 +19,12 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { EntityAvatar } from "@/components/ui/entity-avatar";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { relativeTime } from "@/lib/utils";
-import { ArrowUpRight, Mail, Phone, User, X } from "lucide-react";
+import { ArrowUpRight, Building2, FileText, Mail, MapPin, Phone, Trash2, User, X } from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
+import { ClientEditDialog } from "./[id]/client-edit-dialog";
 
 export type QuickClient = {
   id: string;
@@ -25,35 +35,68 @@ export type QuickClient = {
   phone: string | null;
   nif: string | null;
   contact_person: string | null;
+  billing_address_street: string | null;
+  billing_address_zip: string | null;
+  billing_address_city: string | null;
+  billing_address_province: string | null;
+  billing_address_country: string | null;
+  notes: string | null;
   updated_at: string;
 };
 
 export function ClientQuickView({
   client,
-  onClose,
-}: { client: QuickClient | null; onClose: () => void }) {
+  canEdit = false,
+  onDeleteAction,
+  onCloseAction,
+}: {
+  client: QuickClient | null;
+  canEdit?: boolean;
+  onDeleteAction?: (id: string) => void;
+  onCloseAction: () => void;
+}) {
   return (
-    <Drawer open={!!client} onOpenChange={(v) => !v && onClose()} direction="right">
+    <Drawer open={!!client} onOpenChange={(v) => !v && onCloseAction()} direction="right">
       <DrawerContent className="sm:max-w-sm">
-        {client ? <Body client={client} /> : null}
+        {client ? (
+          <ErrorBoundary>
+            <Body client={client} canEdit={canEdit} onDeleteAction={onDeleteAction} />
+          </ErrorBoundary>
+        ) : null}
       </DrawerContent>
     </Drawer>
   );
 }
 
-function Body({ client }: { client: QuickClient }) {
+function Body({
+  client,
+  canEdit,
+  onDeleteAction,
+}: {
+  client: QuickClient;
+  canEdit: boolean;
+  onDeleteAction?: (id: string) => void;
+}) {
   const displayName = client.label?.trim() || client.name;
+
+  const addressParts = [
+    client.billing_address_street,
+    [client.billing_address_zip, client.billing_address_city].filter(Boolean).join(" "),
+    client.billing_address_province,
+  ].filter(Boolean);
+  const hasAddress = addressParts.length > 0;
+
   return (
-    <>
+    <div className="grid h-full grid-rows-[auto_1fr_auto]">
       <DrawerHeader className="flex flex-row items-start justify-between gap-2 border-b border-border">
         <div className="flex min-w-0 items-start gap-3">
           <EntityAvatar name={displayName} logoUrl={client.logo_url} size="md" className="mt-0.5 shrink-0" />
           <div className="flex min-w-0 flex-col gap-1">
             <DrawerTitle className="truncate">{displayName}</DrawerTitle>
-            <DrawerDescription className="flex items-center gap-1.5">
+            <DrawerDescription className="flex flex-wrap items-center gap-1.5">
               {client.nif && <Badge variant="neutral">{client.nif}</Badge>}
               <span className="text-[11px] tabular-nums">
-                Actualizado {relativeTime(client.updated_at)}
+                {relativeTime(client.updated_at)}
               </span>
             </DrawerDescription>
           </div>
@@ -65,37 +108,143 @@ function Body({ client }: { client: QuickClient }) {
         </DrawerClose>
       </DrawerHeader>
 
-      <div className="flex flex-col gap-6 overflow-y-auto p-4 scroll-fade no-scrollbar">
-        <section className="flex flex-col gap-2.5 text-xs">
-          <Heading>Información de contacto</Heading>
+      <div className="flex flex-col gap-5 overflow-y-auto p-4 scroll-fade no-scrollbar">
+        {/* Contact */}
+        <section className="flex flex-col gap-2 text-xs">
+          <Heading>Contacto</Heading>
           {client.contact_person && (
             <Row icon={<User className="size-3.5" />}>{client.contact_person}</Row>
           )}
-          {client.email && (
+          {client.email ? (
             <Row icon={<Mail className="size-3.5" />} href={`mailto:${client.email}`}>
               {client.email}
             </Row>
+          ) : (
+            <Row icon={<Mail className="size-3.5" />}>
+              <span className="text-muted-foreground/50">Sin email</span>
+            </Row>
           )}
-          {client.phone && (
+          {client.phone ? (
             <Row icon={<Phone className="size-3.5" />} href={`tel:${client.phone}`}>
               {client.phone}
+            </Row>
+          ) : (
+            <Row icon={<Phone className="size-3.5" />}>
+              <span className="text-muted-foreground/50">Sin teléfono</span>
             </Row>
           )}
         </section>
 
-        {/* Aquí se podrían añadir más secciones como "Proyectos activos" o "Facturas pendientes" */}
-        {/* mediante fetching en un componente separado o pasando más data */}
+        {/* Billing address */}
+        {hasAddress && (
+          <section className="flex flex-col gap-2 text-xs">
+            <Heading>Dirección de facturación</Heading>
+            <Row icon={<MapPin className="size-3.5" />}>
+              <span className="whitespace-pre-line">{addressParts.join("\n")}</span>
+            </Row>
+          </section>
+        )}
+
+        {/* Fiscal */}
+        {client.nif && (
+          <section className="flex flex-col gap-2 text-xs">
+            <Heading>Fiscal</Heading>
+            <Row icon={<Building2 className="size-3.5" />}>{client.nif}</Row>
+          </section>
+        )}
+
+        {/* Notes */}
+        {client.notes && (
+          <section className="flex flex-col gap-2 text-xs">
+            <Heading>
+              <span className="flex items-center gap-1.5">
+                <FileText className="size-3" />
+                Notas
+              </span>
+            </Heading>
+            <p className="whitespace-pre-wrap rounded-md bg-muted/30 p-2 text-muted-foreground leading-relaxed">
+              {client.notes}
+            </p>
+          </section>
+        )}
       </div>
 
-      <div className="mt-auto border-t border-border p-3">
-        <Button asChild className="w-full" size="sm" variant="outline">
+      <footer className="flex items-center gap-2 border-t border-border p-3">
+        {canEdit && (
+          <>
+            {onDeleteAction && (
+              <DeleteClientInlineButton
+                clientId={client.id}
+                clientName={displayName}
+                onConfirmAction={onDeleteAction}
+              />
+            )}
+            <ClientEditDialog
+              client={client}
+              trigger={
+                <Button variant="outline" size="sm" className="gap-1.5">
+                  Editar
+                </Button>
+              }
+            />
+          </>
+        )}
+        <Button asChild className="flex-1" size="sm" variant="outline">
           <Link href={`/clients/${client.id}`}>
-            Ver detalle completo
+            Ver detalle
             <ArrowUpRight className="size-3.5" />
           </Link>
         </Button>
-      </div>
-    </>
+      </footer>
+    </div>
+  );
+}
+
+function DeleteClientInlineButton({
+  clientId,
+  clientName,
+  onConfirmAction,
+}: {
+  clientId: string;
+  clientName: string;
+  onConfirmAction: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  function onConfirm() {
+    setOpen(false);
+    onConfirmAction(clientId);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Eliminar cliente"
+          className="text-muted-foreground hover:text-destructive"
+        >
+          <Trash2 className="size-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Eliminar cliente</DialogTitle>
+          <DialogDescription>
+            ¿Eliminar <strong>{clientName}</strong>? Podrás restaurarlo desde la base de datos.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex justify-end gap-2 pt-1">
+          <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+            Cancelar
+          </Button>
+          <Button variant="destructive" size="sm" onClick={onConfirm}>
+            Eliminar
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

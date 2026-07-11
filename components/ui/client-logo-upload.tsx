@@ -135,7 +135,7 @@ export function ClientLogoUpload({
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 pb-2">
       {/* Hidden form field carrying the stored URL */}
       <input ref={hiddenInputRef} type="hidden" name="logo_url" value={logoUrl} />
 
