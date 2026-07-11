@@ -41,9 +41,44 @@ const EU_COUNTRY_CODES = new Set([
   "XI",
 ]);
 
+import type { OpenMercantilOfficer } from "../openmercantil/client";
+
 export type ViesResult =
-  | { valid: true; countryCode: string; vatNumber: string; name?: string; address?: string }
-  | { valid: false; reason: "invalid" | "not_eu" | "api_error" | "timeout"; message: string };
+  | {
+      valid: true;
+      countryCode: string;
+      vatNumber: string;
+      name?: string;
+      address?: string;
+      /** Where the positive match was found. */
+      source?: "vies" | "openmercantil";
+      /**
+       * Company lifecycle status from the Registro Mercantil.
+       * Only set when source is "openmercantil".
+       * Typical values: "ACTIVA" | "EXTINGUIDA" | "DISOLUCION" | "CONCURSO"
+       */
+      companyStatus?: string;
+      /** Province of the registered address (domicilio social). Only set when source is "openmercantil". */
+      province?: string;
+      /** Municipality of the registered address. Only set when source is "openmercantil". */
+      city?: string;
+      /** Legal form abbreviation (SA, SL, SLU…). Only set when source is "openmercantil". */
+      companyType?: string;
+      /** Current company officers (administrators, etc.) from Registro Mercantil. Only set when source is "openmercantil". */
+      officers?: OpenMercantilOfficer[];
+    }
+  | {
+      valid: false;
+      /**
+       * - "invalid"   → bad format / failed offline checksum
+       * - "not_found" → format OK but not registered in VIES (normal for domestic-only companies)
+       * - "not_eu"    → country code outside EU
+       * - "api_error" → VIES returned an HTTP error
+       * - "timeout"   → VIES did not respond in time
+       */
+      reason: "invalid" | "not_found" | "not_eu" | "api_error" | "timeout";
+      message: string;
+    };
 
 /**
  * Parses a raw NIF/CIF/VAT string into its country code and local number.
@@ -125,8 +160,9 @@ export async function validateVatVies(nif: string): Promise<ViesResult> {
     if (!json.valid) {
       return {
         valid: false,
-        reason: "invalid",
-        message: "El número de IVA no está registrado o no es válido en VIES.",
+        reason: "not_found",
+        message:
+          "No encontrado en VIES como operador intracomunitario. El formato es correcto, pero este número no está dado de alta para IVA europeo (normal si solo opera en España).",
       };
     }
 

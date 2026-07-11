@@ -1,4 +1,5 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- client component, used in JSX
+"use client";
+
 import { ClientLogoUpload } from "@/components/ui/client-logo-upload";
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
@@ -6,8 +7,10 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ZipInput } from "@/components/ui/zip-input";
 import { COUNTRY_OPTIONS } from "@/lib/address";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- used in JSX below
-import { NifInput } from "./nif-input";
+import { User } from "lucide-react";
+import { useCallback, useState } from "react";
+
+import { type AutofillData, NifInput } from "./nif-input";
 
 export type ClientFormDefaults = {
   name?: string | null;
@@ -28,6 +31,10 @@ export type ClientFormDefaults = {
 /**
  * Shared field block for the client create and edit forms. Keeps both flows
  * in sync so adding a column only requires touching one component.
+ *
+ * When the NIF/CIF is verified and the company is found in the Registro
+ * Mercantil, autofill pre-populates the name, city, and province fields.
+ * The user can still edit all values manually.
  */
 export function ClientFormFields({
   defaults,
@@ -39,6 +46,25 @@ export function ClientFormFields({
   autoFocusName?: boolean;
 }) {
   const d = defaults ?? {};
+
+  // Controlled state so autofill can update these fields
+  const [name, setName] = useState(d.name ?? "");
+  const [contactPerson, setContactPerson] = useState(d.contact_person ?? "");
+  const [autofillCity, setAutofillCity] = useState(d.billing_address_city ?? "");
+  const [autofillProvince, setAutofillProvince] = useState(d.billing_address_province ?? "");
+  const [suggestedOfficers, setSuggestedOfficers] = useState<AutofillData["officers"]>([]);
+  // Incrementing key forces ZipInput to remount with new defaults when autofill fires
+  const [zipKey, setZipKey] = useState(0);
+  const handleAutofill = useCallback((data: AutofillData) => {
+    if (data.name) setName(data.name);
+    if (data.city || data.province) {
+      setAutofillCity(data.city ?? "");
+      setAutofillProvince(data.province ?? "");
+      setZipKey((k) => k + 1); // remount ZipInput with new defaults
+    }
+    if (data.officers) setSuggestedOfficers(data.officers);
+  }, []);
+
   return (
     <>
       <div className="grid gap-5 sm:grid-cols-2">
@@ -54,7 +80,8 @@ export function ClientFormFields({
             required
             maxLength={160}
             autoFocus={autoFocusName}
-            defaultValue={d.name ?? ""}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             placeholder="Acme S.L."
             autoComplete="organization"
           />
@@ -75,9 +102,9 @@ export function ClientFormFields({
         <FormRow
           label="NIF / CIF"
           htmlFor={`${idPrefix}-nif`}
-          hint="Identificador fiscal. Pulsa VIES para validar IVA intracomunitario UE."
+          hint="Introduce el CIF y pulsa 'Verificar' para buscar en el Registro Mercantil."
         >
-          <NifInput id={`${idPrefix}-nif`} defaultValue={d.nif} />
+          <NifInput id={`${idPrefix}-nif`} defaultValue={d.nif} onAutofillAction={handleAutofill} />
         </FormRow>
         <FormRow label="Email" htmlFor={`${idPrefix}-email`}>
           <Input
@@ -104,14 +131,36 @@ export function ClientFormFields({
           />
         </FormRow>
         <FormRow label="Persona de contacto" htmlFor={`${idPrefix}-contact_person`}>
-          <Input
-            id={`${idPrefix}-contact_person`}
-            name="contact_person"
-            maxLength={160}
-            defaultValue={d.contact_person ?? ""}
-            placeholder="Nombre y apellidos"
-            autoComplete="name"
-          />
+          <div className="flex flex-col gap-2">
+            <Input
+              id={`${idPrefix}-contact_person`}
+              name="contact_person"
+              maxLength={160}
+              value={contactPerson}
+              onChange={(e) => setContactPerson(e.target.value)}
+              placeholder="Nombre y apellidos"
+              autoComplete="name"
+            />
+            {suggestedOfficers && suggestedOfficers.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                <p className="w-full text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+                  Sugerencias del Registro:
+                </p>
+                {suggestedOfficers.map((o) => (
+                  <button
+                    key={o.name}
+                    type="button"
+                    onClick={() => setContactPerson(o.name)}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full border bg-muted/50 text-[11px] hover:bg-accent transition-colors"
+                  >
+                    <User className="size-3" />
+                    {o.name}
+                    <span className="opacity-50 italic">({o.role})</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </FormRow>
       </div>
       <div className="col-span-full">
@@ -136,10 +185,11 @@ export function ClientFormFields({
             />
           </FormRow>
           <ZipInput
+            key={zipKey}
             namePrefix="billing_address"
             defaultZip={d.billing_address_zip}
-            defaultCity={d.billing_address_city}
-            defaultProvince={d.billing_address_province}
+            defaultCity={autofillCity || d.billing_address_city}
+            defaultProvince={autofillProvince || d.billing_address_province}
           />
           <FormRow label="País" htmlFor={`${idPrefix}-billing_address_country`}>
             <Select

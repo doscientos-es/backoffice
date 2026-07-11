@@ -1,27 +1,69 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
-import { CheckCircle, Loader2, Search, XCircle } from "lucide-react";
+import { validateNifEs } from "@/lib/vies/nif";
+import { AlertTriangle, Building2, CheckCircle, Loader2, Search, XCircle } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { validateVat } from "./actions";
+
+import type { OpenMercantilOfficer } from "@/lib/openmercantil/client";
+
+export type AutofillData = {
+  name?: string;
+  province?: string;
+  city?: string;
+  companyType?: string;
+  companyStatus?: string;
+  officers?: OpenMercantilOfficer[];
+};
 
 type VatState =
   | { status: "idle" }
   | { status: "loading" }
-  | { status: "valid"; name?: string; address?: string }
+  | {
+    status: "valid";
+    name?: string;
+    address?: string;
+    source?: "vies" | "openmercantil";
+    companyStatus?: string;
+    province?: string;
+    city?: string;
+    companyType?: string;
+    officers?: OpenMercantilOfficer[];
+  }
+  | { status: "not_found"; message: string }
   | { status: "invalid"; message: string };
 
+/** Returns offline NIF checksum result for ES numbers, null otherwise. */
+function offlineCheck(raw: string): { valid: boolean; message?: string } | null {
+  const v = raw
+    .trim()
+    .toUpperCase()
+    .replace(/[\s.-]/g, "");
+  if (v.length < 2) return null;
+  const cc = v.slice(0, 2);
+  const num = cc === "ES" ? v.slice(2) : /^[A-Z]{2}/.test(cc) ? null : v;
+  if (!num) return null;
+  if (num.length < 9) return null;
+  const r = validateNifEs(num);
+  return r.valid ? { valid: true } : { valid: false, message: r.message };
+}
+
 /**
- * NIF/CIF input with an inline VIES validation button.
- * Renders as a plain <Input> + button pair — drop-in replacement for the
- * static <Input name="nif" /> in ClientFormFields.
+ * NIF/CIF input with:
+ * - Instant offline checksum (Spanish NIF/NIE/CIF as you type)
+ * - "Verificar" button: queries Registro Mercantil (primary) then VIES (fallback)
+ * - `onAutofillAction` callback fired when company data is found — lets the parent
+ *   pre-populate name, city, and province fields.
  */
 export function NifInput({
   id,
   defaultValue = "",
+  onAutofillAction,
 }: {
   id: string;
   defaultValue?: string | null;
+  onAutofillAction?: (data: AutofillData) => void;
 }) {
   const [value, setValue] = useState(defaultValue ?? "");
   const [state, setState] = useState<VatState>({ status: "idle" });
@@ -36,19 +78,41 @@ export function NifInput({
     setState({ status: "loading" });
     const result = await validateVat(nif);
     if (result.valid) {
-      setState({ status: "valid", name: result.name, address: result.address });
+      setState({
+        status: "valid",
+        name: result.name,
+        address: result.address,
+        source: result.source,
+        companyStatus: result.companyStatus,
+        province: result.province,
+        city: result.city,
+        companyType: result.companyType,
+        officers: result.officers,
+      });
+      // Fire autofill callback when we have enriched company data
+      if (result.source === "openmercantil" && onAutofillAction) {
+        onAutofillAction({
+          name: result.name,
+          province: result.province,
+          city: result.city,
+          companyType: result.companyType,
+          companyStatus: result.companyStatus,
+          officers: result.officers,
+        });
+      }
+    } else if (result.reason === "not_found") {
+      setState({ status: "not_found", message: result.message });
     } else {
       setState({ status: "invalid", message: result.message });
     }
-  }, [value]);
+  }, [value, onAutofillAction]);
 
-  // Reset VIES state when the user starts typing again
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setValue(e.target.value);
-    if (state.status !== "idle") setState({ status: "idle" });
+    setState({ status: "idle" });
   };
 
-  const isEU = value.length >= 2 && /^[A-Za-z]{2}/.test(value.trim()) || /^[A-Za-z]/.test(value.trim());
+  const offline = state.status === "idle" ? offlineCheck(value) : null;
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -68,7 +132,7 @@ export function NifInput({
           type="button"
           onClick={verify}
           disabled={state.status === "loading" || !value.trim()}
-          title="Verificar número de IVA en VIES (UE)"
+          title="Buscar en Registro Mercantil y VIES"
           className="inline-flex items-center gap-1.5 px-3 rounded-md border border-input bg-background text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
         >
           {state.status === "loading" ? (
@@ -76,21 +140,55 @@ export function NifInput({
           ) : (
             <Search className="size-3.5" />
           )}
-          VIES
+          Verificar
         </button>
       </div>
 
+      {/* Offline checksum (instant, no network) */}
+      {state.status === "idle" && offline && (
+        <p
+          className={`flex items-start gap-1.5 text-xs ${offline.valid ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}
+        >
+          {offline.valid ? (
+            <CheckCircle className="size-3.5 mt-0.5 shrink-0" />
+          ) : (
+            <XCircle className="size-3.5 mt-0.5 shrink-0" />
+          )}
+          <span>{offline.valid ? "Formato correcto" : offline.message}</span>
+        </p>
+      )}
+
+      {/* Found in Registro Mercantil or VIES */}
       {state.status === "valid" && (
         <p className="flex items-start gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
           <CheckCircle className="size-3.5 mt-0.5 shrink-0" />
           <span>
-            Válido
+            {state.source === "openmercantil" ? (
+              <span className="font-medium">Registro Mercantil</span>
+            ) : (
+              <span className="font-medium">VIES</span>
+            )}
             {state.name ? ` · ${state.name}` : ""}
-            {state.address ? ` — ${state.address}` : ""}
+            {state.city ? `, ${state.city}` : ""}
+            {state.province && state.province !== state.city ? ` (${state.province})` : ""}
+            {state.companyStatus && state.companyStatus.toUpperCase() !== "ACTIVA" ? (
+              <span className="ml-1.5 font-semibold text-amber-600 dark:text-amber-400">
+                · {state.companyStatus}
+              </span>
+            ) : null}
           </span>
         </p>
       )}
 
+      {/* Not found in VIES (amber, not an error for domestic companies) */}
+      {state.status === "not_found" && (
+        <p className="flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+          <AlertTriangle className="size-3.5 mt-0.5 shrink-0" />
+          <span>{state.message}</span>
+        </p>
+      )}
+
+      {/* Truly invalid format */}
       {state.status === "invalid" && (
         <p className="flex items-start gap-1.5 text-xs text-destructive">
           <XCircle className="size-3.5 mt-0.5 shrink-0" />
@@ -98,9 +196,11 @@ export function NifInput({
         </p>
       )}
 
-      {state.status === "idle" && isEU && (
-        <p className="text-xs text-muted-foreground">
-          Pulsa VIES para verificar si está registrado como operador intracomunitario.
+      {/* Hint shown only when format is valid and we haven't verified yet */}
+      {state.status === "idle" && offline?.valid && (
+        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Building2 className="size-3 shrink-0" />
+          Pulsa &quot;Verificar&quot; para buscar la empresa en el Registro Mercantil.
         </p>
       )}
     </div>

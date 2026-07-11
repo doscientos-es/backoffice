@@ -1,11 +1,14 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use server";
 
 import { defineAction } from "@/lib/actions/define-action";
 import { requireUser } from "@/lib/auth";
+import { findCompanyByCif, getCompanyDetails, isCifNumber } from "@/lib/openmercantil/client";
 import { CreateClientInput, UpdateClientInput } from "@/lib/schemas/client";
 import { uuidIdInput } from "@/lib/schemas/common";
 import { createServerClient } from "@/lib/supabase/server";
 import { type ViesResult, validateVatVies } from "@/lib/vies/client";
+import { validateNifEs } from "@/lib/vies/nif";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -125,16 +128,65 @@ export const deleteClient = defineAction({
   },
 });
 
-// ---------- VIES VAT VALIDATION ----------
+// ---------- VAT / NIF VALIDATION ----------
 // Called client-side (via server action) from the NIF input field.
 // Returns a serialisable result — no throws — so the caller can render inline
 // feedback without an error boundary.
+//
+// Priority for Spanish companies (CIF):
+//   1. Offline checksum (instant, no network)
+//   2. OpenMercantil (Registro Mercantil / BORME) — primary for Spanish-only businesses
+//   3. VIES (EU intra-community registry) — fallback for EU operators
 export async function validateVat(nif: string): Promise<ViesResult> {
   await requireUser();
-  if (!nif.trim()) {
+  const raw = nif.trim();
+  if (!raw) {
     return { valid: false, reason: "invalid", message: "Introduce un NIF/CIF/VAT primero." };
   }
-  return validateVatVies(nif);
+
+  // Determine country code and local number (mirrors parseVat logic in lib/vies/client.ts)
+  const normalized = raw.toUpperCase().replace(/[\s.-]/g, "");
+  const hasEsPrefix = normalized.startsWith("ES");
+  const hasOtherEuPrefix = !hasEsPrefix && normalized.length >= 2 && /^[A-Z]{2}/.test(normalized);
+  const localNum = hasEsPrefix
+    ? normalized.slice(2)
+    : hasOtherEuPrefix
+      ? normalized.slice(2)
+      : normalized;
+  const isSpanish = hasEsPrefix || !hasOtherEuPrefix;
+
+  // For Spanish CIFs (empresa), run offline checksum then OpenMercantil before VIES.
+  if (isSpanish && isCifNumber(localNum)) {
+    // 1. Offline checksum — fail fast without any network request
+    const offlineCheck = validateNifEs(localNum);
+    if (!offlineCheck.valid) {
+      return { valid: false, reason: "invalid", message: offlineCheck.message };
+    }
+
+    // 2. OpenMercantil — Registro Mercantil lookup
+    const company = await findCompanyByCif(localNum);
+    if (company) {
+      // A single detail request already embeds province/status + the cleaned
+      // officer suggestions, so no separate /officers call is needed.
+      const details = await getCompanyDetails(company.slug);
+
+      return {
+        valid: true,
+        countryCode: "ES",
+        vatNumber: localNum,
+        name: details?.name ?? company.name,
+        source: "openmercantil",
+        companyStatus: details?.status ?? company.status,
+        province: details?.province,
+        city: details?.city,
+        companyType: details?.companyType,
+        officers: details?.officers?.length ? details.officers : undefined,
+      };
+    }
+  }
+
+  // Fallback: VIES (handles EU non-ES numbers and Spanish NIFs/NIEs)
+  return validateVatVies(raw);
 }
 
 // Reverses a soft-delete by clearing `deleted_at`. Backs the "Deshacer" toast
