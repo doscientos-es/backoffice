@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CopyButton } from "@/components/ui/copy-button";
 import { CopySummaryButton } from "@/components/ui/copy-summary-button";
+import { EntityAvatar } from "@/components/ui/entity-avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatAddress } from "@/lib/address";
 import { requireUser } from "@/lib/auth";
@@ -39,6 +40,13 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
       <PageHeader
         title={(client.label as string | null)?.trim() || (client.name as string)}
         description={(client.nif as string | null) ?? undefined}
+        icon={
+          <EntityAvatar
+            name={(client.label as string | null)?.trim() || (client.name as string)}
+            logoUrl={(client.logo_url as string | null) ?? null}
+            size="lg"
+          />
+        }
         breadcrumbs={[
           { label: "Clientes", href: "/clients" },
           { label: (client.label as string | null)?.trim() || (client.name as string) },

@@ -18,6 +18,8 @@ export type BreadcrumbEntry = {
 export type PageHeaderProps = {
   title: string;
   description?: string;
+  /** Optional icon/avatar rendered to the left of the title. */
+  icon?: ReactNode;
   back?: ReactNode;
   breadcrumbs?: BreadcrumbEntry[];
   actions?: ReactNode;
@@ -27,6 +29,7 @@ export type PageHeaderProps = {
 export function PageHeader({
   title,
   description,
+  icon,
   back,
   breadcrumbs,
   actions,
@@ -65,11 +68,14 @@ export function PageHeader({
         <div className="text-sm">{back}</div>
       ) : null}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground [overflow-wrap:break-word]">
-            {title}
-          </h1>
-          {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
+        <div className="flex min-w-0 items-center gap-3">
+          {icon ? <div className="shrink-0">{icon}</div> : null}
+          <div className="min-w-0">
+            <h1 className="wrap-break-word text-2xl font-semibold tracking-tight text-foreground">
+              {title}
+            </h1>
+            {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
+          </div>
         </div>
         {actions ? (
           <div className="flex shrink-0 flex-wrap items-center gap-2">

@@ -10,6 +10,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import { EntityAvatar } from "@/components/ui/entity-avatar";
 import { relativeTime } from "@/lib/utils";
 import { ArrowUpRight, Mail, Phone, User, X } from "lucide-react";
 import Link from "next/link";
@@ -19,6 +20,7 @@ export type QuickClient = {
   id: string;
   name: string;
   label: string | null;
+  logo_url: string | null;
   email: string | null;
   phone: string | null;
   nif: string | null;
@@ -40,17 +42,21 @@ export function ClientQuickView({
 }
 
 function Body({ client }: { client: QuickClient }) {
+  const displayName = client.label?.trim() || client.name;
   return (
     <>
       <DrawerHeader className="flex flex-row items-start justify-between gap-2 border-b border-border">
-        <div className="flex flex-col gap-1">
-          <DrawerTitle>{client.label?.trim() || client.name}</DrawerTitle>
-          <DrawerDescription className="flex items-center gap-1.5">
-            {client.nif && <Badge variant="neutral">{client.nif}</Badge>}
-            <span className="text-[11px] tabular-nums">
-              Actualizado {relativeTime(client.updated_at)}
-            </span>
-          </DrawerDescription>
+        <div className="flex min-w-0 items-start gap-3">
+          <EntityAvatar name={displayName} logoUrl={client.logo_url} size="md" className="mt-0.5 shrink-0" />
+          <div className="flex min-w-0 flex-col gap-1">
+            <DrawerTitle className="truncate">{displayName}</DrawerTitle>
+            <DrawerDescription className="flex items-center gap-1.5">
+              {client.nif && <Badge variant="neutral">{client.nif}</Badge>}
+              <span className="text-[11px] tabular-nums">
+                Actualizado {relativeTime(client.updated_at)}
+              </span>
+            </DrawerDescription>
+          </div>
         </div>
         <DrawerClose asChild>
           <Button variant="ghost" size="icon-sm" aria-label="Cerrar">
