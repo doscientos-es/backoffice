@@ -474,3 +474,76 @@ export async function getMarketingRoi(since: string, until: string): Promise<Mar
     currency,
   });
 }
+
+// ── Attribution funnel by channel ────────────────────────────────────────────
+
+export type LeadFunnelRow = {
+  /** Normalised source label: utm_source takes precedence over lead.source. */
+  source: string;
+  total: number;
+  qualified: number;
+  won: number;
+  /** won / total, null when total === 0. */
+  conversionRate: number | null;
+  /** Sum of estimated_value for won leads (proxy for pipeline revenue). */
+  pipelineValue: number;
+};
+
+/**
+ * Aggregates all leads created in [since, until] by acquisition channel.
+ * Covers every source (landing, meta_lead_ads, cal.com, orgánico…), not just Meta.
+ *
+ * Designed for a dashboard where "since" and "until" are ISO date strings such
+ * as "2025-01-01". Comparison against timestamptz columns uses Postgres implicit
+ * coercion — acceptable ±1 day precision for analytics.
+ */
+export async function getLeadFunnelBySource(
+  since: string,
+  until: string,
+): Promise<LeadFunnelRow[]> {
+  const supabase = await createServerClient();
+
+  const { data, error } = await supabase
+    .from("leads")
+    .select("utm_source, source, status, estimated_value")
+    .gte("created_at", since)
+    .lte("created_at", `${until}T23:59:59.999Z`)
+    .is("deleted_at", null);
+
+  if (error || !data?.length) return [];
+
+  const map = new Map<
+    string,
+    { total: number; qualified: number; won: number; pipelineValue: number }
+  >();
+
+  const QUALIFIED_STATUSES = new Set(["qualifying", "quoted", "won"]);
+
+  for (const row of data) {
+    const key =
+      (row.utm_source as string | null)?.trim() ||
+      (row.source as string | null)?.trim() ||
+      "directo";
+
+    const bucket = map.get(key) ?? { total: 0, qualified: 0, won: 0, pipelineValue: 0 };
+    bucket.total++;
+    if (QUALIFIED_STATUSES.has(row.status as string)) bucket.qualified++;
+    if (row.status === "won") {
+      bucket.won++;
+      bucket.pipelineValue += Number(row.estimated_value ?? 0);
+    }
+    map.set(key, bucket);
+  }
+
+  return Array.from(map.entries())
+    .map(([source, s]) => ({
+      source,
+      total: s.total,
+      qualified: s.qualified,
+      won: s.won,
+      pipelineValue: round2(s.pipelineValue),
+      conversionRate: s.total > 0 ? s.won / s.total : null,
+    }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 12);
+}
