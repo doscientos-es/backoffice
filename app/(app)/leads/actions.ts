@@ -7,6 +7,7 @@ import { isGoogleEnabled, serverEnv } from "@/lib/env";
 import { findConflicts, insertEvent } from "@/lib/google/calendar";
 import type { CalendarBusySlot } from "@/lib/google/calendar";
 import { resolveSubject } from "@/lib/google/client";
+import { pushMetaConversion } from "@/lib/integrations/meta-capi";
 import {
   AssignLeadOwnerInput,
   CheckMeetingSlotInput,
@@ -20,9 +21,11 @@ import {
   UpdateLeadInput,
   UpdateLeadStatusInput,
 } from "@/lib/schemas/lead";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { z } from "zod";
 
 /**
@@ -167,6 +170,30 @@ export const convertLeadToClient = defineAction({
     revalidatePath(`/leads/${data.leadId}`);
     revalidatePath("/leads");
     revalidatePath("/clients");
+
+    // Fire-and-forget: push conversion to Meta CAPI after response is sent.
+    // Uses adminClient to avoid relying on session context inside after().
+    const leadId = data.leadId;
+    after(async () => {
+      try {
+        const { data: lead } = await createAdminClient()
+          .from("leads")
+          .select("email, phone, estimated_value")
+          .eq("id", leadId)
+          .maybeSingle();
+        if (lead) {
+          await pushMetaConversion({
+            eventName: "Lead",
+            eventId: `convert-${leadId}`,
+            email: lead.email as string | null,
+            phone: lead.phone as string | null,
+            value: lead.estimated_value as number | null,
+          });
+        }
+      } catch {
+        // CAPI is best-effort — never block the conversion
+      }
+    });
 
     return { clientId: client.id as string };
   },

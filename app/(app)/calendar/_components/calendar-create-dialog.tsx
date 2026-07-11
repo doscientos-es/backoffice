@@ -62,6 +62,7 @@ export function CalendarCreateDialog({
   const [meetingTarget, setMeetingTarget] = useState<MeetingTarget>("lead");
   const [leadSearch, setLeadSearch] = useState("");
   const [selectedLeadId, setSelectedLeadId] = useState("");
+  const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
 
   // Reset on open
   useEffect(() => {
@@ -75,6 +76,7 @@ export function CalendarCreateDialog({
       setMeetingTarget("lead");
       setLeadSearch("");
       setSelectedLeadId("");
+      setSelectedMemberIds(new Set());
     }
   }, [open, initialDate, today]);
 
@@ -139,6 +141,14 @@ export function CalendarCreateDialog({
       }
 
       // ── Internal meeting / task / reminder ───────────────────────────────
+      // Collect attendee emails from selected members (excluding current user — Google adds them automatically)
+      const attendeeEmails =
+        kind === "google_meeting" && meetingTarget === "internal" && selectedMemberIds.size > 0
+          ? teamMembers
+            .filter((m) => selectedMemberIds.has(m.id) && m.email)
+            .map((m) => m.email as string)
+          : undefined;
+
       const res = await createCalendarEvent({
         kind,
         title,
@@ -148,6 +158,7 @@ export function CalendarCreateDialog({
         description: description || undefined,
         assigneeId: kind === "task" && assigneeId ? assigneeId : undefined,
         withMeet: kind === "google_meeting" ? withMeet : undefined,
+        attendeeEmails,
       });
       if (!res.ok) { setError(res.error); return; }
       onCreated(res.event);
@@ -271,6 +282,43 @@ export function CalendarCreateDialog({
                 <Users className="size-3.5" />
                 Interna
               </button>
+            </div>
+          )}
+
+          {/* Internal member selector */}
+          {kind === "google_meeting" && meetingTarget === "internal" && teamMembers.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <span className={LABEL_CLS}>Participantes</span>
+              <div className="flex flex-col gap-1 rounded-md border border-border bg-muted/30 p-2">
+                {teamMembers.map((m) => (
+                  <label
+                    key={m.id}
+                    className="flex cursor-pointer select-none items-center gap-2 rounded px-1 py-0.5 text-sm hover:bg-accent transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedMemberIds.has(m.id)}
+                      onChange={() =>
+                        setSelectedMemberIds((prev) => {
+                          const next = new Set(prev);
+                          next.has(m.id) ? next.delete(m.id) : next.add(m.id);
+                          return next;
+                        })
+                      }
+                      className="rounded"
+                    />
+                    <span className="flex-1">{m.name}</span>
+                    {m.email && (
+                      <span className="text-xs text-muted-foreground">{m.email}</span>
+                    )}
+                  </label>
+                ))}
+              </div>
+              {selectedMemberIds.size > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Se enviará invitación a {selectedMemberIds.size} compañero{selectedMemberIds.size > 1 ? "s" : ""}
+                </p>
+              )}
             </div>
           )}
 

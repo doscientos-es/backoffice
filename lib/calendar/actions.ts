@@ -73,6 +73,7 @@ export type CreateCalendarEventInput = {
   description?: string;
   assigneeId?: string; // tasks only
   withMeet?: boolean; // google_meeting only
+  attendeeEmails?: string[]; // google_meeting only — team member emails
 };
 
 export type CreateCalendarEventResult =
@@ -231,6 +232,7 @@ export async function createCalendarEvent(
         start: startDt,
         end: endDt,
         withMeet: input.withMeet,
+        attendees: input.attendeeEmails,
       });
       revalidatePath("/calendar");
       return {

@@ -65,6 +65,10 @@ export const ServerSchema = PublicSchema.extend({
   META_USER_ACCESS_TOKEN: z.string().optional().default(""), // Used for Marketing API (ads/insights)
   META_AD_ACCOUNT_ID: z.string().optional().default(""), // Format: act_xxxxxxxx
   META_GRAPH_API_VERSION: z.string().default("v25.0"),
+  // Meta Conversions API — server-side event upload (distinct from browser Pixel)
+  // Use a System User token with "ads_management" + "pixel" permissions.
+  META_PIXEL_ID: z.string().optional().default(""),
+  META_CAPI_ACCESS_TOKEN: z.string().optional().default(""),
   // Social Hub publishing (reuses META_PAGE_ACCESS_TOKEN + META_GRAPH_API_VERSION).
   // Instagram Business account id (ig user id) linked to the Facebook Page.
   INSTAGRAM_BUSINESS_ACCOUNT_ID: z.string().optional().default(""),
@@ -124,4 +128,7 @@ export const ServerSchema = PublicSchema.extend({
   REDSYS_SECRET_KEY: z.string().default("sq7HjrUOBfKmC576ILgskD5srU870gJ7"), // TEST KEY
   REDSYS_ENVIRONMENT: z.enum(["test", "prod"]).default("test"),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+  // Shared secret for cron/internal endpoints (n8n, Vercel Cron, etc.).
+  // Set to a random string (e.g. `openssl rand -hex 32`).
+  CRON_SECRET: z.string().optional().default(""),
 });
