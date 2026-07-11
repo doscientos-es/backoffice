@@ -28,7 +28,7 @@ const QUALIFICATION_COLUMNS = "company_size, solution_type, urgency, first_conta
 
 const LIST_COLUMNS = `id, name, company, email, phone, source, notes, status, created_at, updated_at, estimated_value, ${QUALIFICATION_COLUMNS}, ai_summary, ai_updated_at, assigned_to, ${ASSIGNEE_EMBED}`;
 
-const DETAIL_COLUMNS = `id, name, email, phone, company, source, status, notes, estimated_value, ${QUALIFICATION_COLUMNS}, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_temperature, ai_confidence, ai_updated_at, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`;
+const DETAIL_COLUMNS = `id, name, email, phone, company, source, status, notes, estimated_value, ${QUALIFICATION_COLUMNS}, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_temperature, ai_confidence, ai_updated_at, ai_tags, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`;
 
 const log = scopedLogger("leads.queries");
 
@@ -57,7 +57,9 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
 
   if (params.q.length > 0) {
     const pattern = `%${escapeIlike(params.q)}%`;
-    query = query.or(`name.ilike.${pattern},company.ilike.${pattern},email.ilike.${pattern},phone.ilike.${pattern}`);
+    query = query.or(
+      `name.ilike.${pattern},company.ilike.${pattern},email.ilike.${pattern},phone.ilike.${pattern}`,
+    );
   }
   if (params.status) query = query.eq("status", params.status);
   if (params.source) query = query.eq("source", params.source);
@@ -134,17 +136,28 @@ async function loadRecentInteractions(leadIds: string[]): Promise<Map<string, Le
 export async function getLeadDetail(id: string): Promise<LeadDetailResult | null> {
   const supabase = await createServerClient();
 
-  const [{ data: lead, error: leadErr }, { data: interactions }, { data: linkedClient }] =
-    await Promise.all([
-      notDeleted(supabase.from("leads").select(DETAIL_COLUMNS).eq("id", id)).maybeSingle(),
-      supabase
-        .from("lead_interactions")
-        .select(`id, type, subject, body, created_at, payload, ${PERFORMER_EMBED}`)
-        .eq("lead_id", id)
-        .order("created_at", { ascending: false })
-        .limit(50),
-      notDeleted(supabase.from("clients").select("id").eq("lead_id", id)).maybeSingle(),
-    ]);
+  const [
+    { data: lead, error: leadErr },
+    { data: interactions },
+    { data: linkedClient },
+    { data: reminders },
+  ] = await Promise.all([
+    notDeleted(supabase.from("leads").select(DETAIL_COLUMNS).eq("id", id)).maybeSingle(),
+    supabase
+      .from("lead_interactions")
+      .select(`id, type, subject, body, created_at, payload, ${PERFORMER_EMBED}`)
+      .eq("lead_id", id)
+      .order("created_at", { ascending: false })
+      .limit(50),
+    notDeleted(supabase.from("clients").select("id").eq("lead_id", id)).maybeSingle(),
+    supabase
+      .from("reminders")
+      .select("id, title, remind_at")
+      .eq("lead_id", id)
+      .is("completed_at", null)
+      .order("remind_at", { ascending: true })
+      .limit(LEAD_RELATED_LIMIT),
+  ]);
 
   if (leadErr) log.error({ leadId: id, err: leadErr.message }, "lead_query_failed");
   if (!lead) return null;
@@ -217,6 +230,11 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
       full_number: (i.full_number as string | null) ?? null,
       status: (i.status as string | null) ?? null,
       total: i.total == null ? null : Number(i.total),
+    })),
+    reminders: (reminders ?? []).map((r) => ({
+      id: r.id as string,
+      title: r.title as string,
+      remind_at: r.remind_at as string,
     })),
   };
 }

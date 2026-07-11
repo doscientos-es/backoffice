@@ -24,7 +24,10 @@ export const runtime = "nodejs";
 
 const log = scopedLogger("ai.summarize-lead");
 
-const BodySchema = z.object({ lead_id: z.string().uuid() });
+const BodySchema = z.object({
+  lead_id: z.string().uuid(),
+  force: z.boolean().optional().default(false),
+});
 
 const TEMPERATURES = ["hot", "warm", "cold"] as const;
 const ResultSchema = z.object({
@@ -32,6 +35,7 @@ const ResultSchema = z.object({
   suggested_next_step: z.string().min(1).max(500),
   temperature: z.enum(TEMPERATURES),
   confidence: z.number().min(0).max(1),
+  tags: z.array(z.string().max(40)).max(5).default([]),
 });
 type AIResult = z.infer<typeof ResultSchema>;
 
@@ -40,7 +44,11 @@ Analiza la información del lead y sus interacciones y devuelve:
 - "summary": resumen en 2-3 frases en español.
 - "suggested_next_step": acción concreta recomendada (1 frase).
 - "temperature": "hot" | "warm" | "cold".
-- "confidence": número entre 0.0 y 1.0.`;
+- "confidence": número entre 0.0 y 1.0.
+- "tags": array de 1-5 etiquetas cortas (máx 40 chars cada una) que categoricen al lead.
+  Ejemplos: "E-commerce", "Presupuesto alto", "Urgente", "Startup", "Legacy refactor",
+  "Interés en IA", "Sin contactar", "Empresa grande", "SaaS", "App móvil".
+  Usa solo etiquetas que puedas inferir con seguridad de los datos.`;
 
 export async function POST(req: NextRequest) {
   if (!isAIEnabled()) {
@@ -74,7 +82,9 @@ export async function POST(req: NextRequest) {
 
   const { data: lead, error: leadErr } = await supabase
     .from("leads")
-    .select("id, name, company, email, phone, source, status, notes")
+    .select(
+      "id, name, company, email, phone, source, status, notes, updated_at, ai_summary, ai_suggested_next_step, ai_temperature, ai_confidence, ai_updated_at, ai_tags",
+    )
     .eq("id", body.lead_id)
     .is("deleted_at", null)
     .maybeSingle();
@@ -88,7 +98,30 @@ export async function POST(req: NextRequest) {
     .select("type, subject, body, created_at")
     .eq("lead_id", body.lead_id)
     .order("created_at", { ascending: false })
-    .limit(20);
+    .limit(12); // Reducido de 20 a 12 para ahorrar tokens de entrada
+
+  // --- CACHE CHECK ---
+  if (!body.force && lead.ai_updated_at) {
+    const aiTs = new Date(lead.ai_updated_at).getTime();
+    const leadTs = new Date(lead.updated_at).getTime();
+    const lastInteraction = interactions?.[0];
+    const interactionTs = lastInteraction ? new Date(lastInteraction.created_at).getTime() : 0;
+
+    // Si el lead no ha cambiado (margen 1s) y no hay interacciones nuevas, devolvemos cache
+    if (aiTs >= leadTs - 1000 && aiTs >= interactionTs) {
+      log.info({ leadId: body.lead_id }, "ai_summarize_cache_hit");
+      return NextResponse.json({
+        ok: true,
+        cached: true,
+        summary: lead.ai_summary,
+        suggested_next_step: lead.ai_suggested_next_step,
+        temperature: lead.ai_temperature,
+        confidence: lead.ai_confidence,
+        tags: lead.ai_tags ?? [],
+        ai_updated_at: lead.ai_updated_at,
+      });
+    }
+  }
 
   const interactionsText = (interactions ?? [])
     .reverse()
@@ -118,7 +151,7 @@ ${interactionsText || "(sin interacciones registradas)"}`;
       system: SYSTEM_PROMPT,
       user: userPrompt,
       schema: ResultSchema,
-      maxOutputTokens: 800,
+      maxOutputTokens: 600,
     });
   } catch (err) {
     log.error(
@@ -128,6 +161,7 @@ ${interactionsText || "(sin interacciones registradas)"}`;
     return NextResponse.json({ error: "AI service unavailable" }, { status: 502 });
   }
 
+  const now = new Date().toISOString();
   const { error: updateErr } = await supabase
     .from("leads")
     .update({
@@ -135,7 +169,8 @@ ${interactionsText || "(sin interacciones registradas)"}`;
       ai_suggested_next_step: result.suggested_next_step,
       ai_temperature: result.temperature,
       ai_confidence: result.confidence,
-      ai_updated_at: new Date().toISOString(),
+      ai_tags: result.tags.length > 0 ? result.tags : null,
+      ai_updated_at: now,
     })
     .eq("id", body.lead_id);
 
@@ -143,9 +178,9 @@ ${interactionsText || "(sin interacciones registradas)"}`;
     log.error({ leadId: body.lead_id, err: updateErr.message }, "ai_summarize_persist_failed");
     // Devolvemos el resultado aunque la persistencia haya fallado — el cliente
     // puede mostrarlo y reintentar el guardado.
-    return NextResponse.json({ ok: true, persisted: false, ...result });
+    return NextResponse.json({ ok: true, persisted: false, ...result, ai_updated_at: now });
   }
 
   log.info({ leadId: body.lead_id, temperature: result.temperature }, "ai_summarize_ok");
-  return NextResponse.json({ ok: true, persisted: true, ...result });
+  return NextResponse.json({ ok: true, persisted: true, ...result, ai_updated_at: now });
 }

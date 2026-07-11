@@ -68,7 +68,7 @@ export async function getFinanceKpis(since: string, until: string): Promise<Fina
           .select("total")
           .gte("issue_date", since)
           .lte("issue_date", until)
-          .neq("status", "draft"),
+          .not("status", "in", '("draft","cancelled","rectified")'),
       ),
       getExpensesInRange(since, until),
       // Real cash collected through the gateway within the range (by confirmation date).
@@ -124,7 +124,7 @@ export async function getFinanceMonthlySeries(): Promise<MonthlyPoint[]> {
         .from("invoices")
         .select("issue_date, total")
         .gte("issue_date", sixMonthsAgoISO)
-        .neq("status", "draft"),
+        .not("status", "in", '("draft","cancelled","rectified")'),
     ),
     notDeleted(
       supabase

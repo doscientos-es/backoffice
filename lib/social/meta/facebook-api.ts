@@ -7,7 +7,7 @@
  */
 import { serverEnv } from "@/lib/env";
 import type { MediaItem, PlatformComment, PostInsights } from "@/lib/social/core";
-import { graphGet, graphGetList, graphPost } from "./graph-client";
+import { graphDelete, graphGet, graphGetList, graphPost } from "./graph-client";
 
 /** Facebook Page id. Empty when unset. */
 export function fbPageId(): string {
@@ -54,10 +54,7 @@ async function uploadUnpublishedPhoto(imageUrl: string): Promise<string> {
 }
 
 /** Publish a multi-photo feed story by attaching uploaded photos. */
-export async function publishPhotoCarousel(
-  media: MediaItem[],
-  message: string,
-): Promise<string> {
+export async function publishPhotoCarousel(media: MediaItem[], message: string): Promise<string> {
   const photos = media.filter((m) => m.type === "image");
   const ids = await Promise.all(photos.map((m) => uploadUnpublishedPhoto(m.publicUrl)));
   const attached: Record<string, string> = { message };
@@ -142,4 +139,9 @@ export async function getPostComments(postId: string): Promise<PlatformComment[]
 /** Reply to a comment on Facebook. */
 export async function replyToComment(commentId: string, message: string): Promise<void> {
   await graphPost(`${commentId}/comments`, { message });
+}
+
+/** Delete a published Page post (feed story, photo post, video…). */
+export async function deletePost(remoteId: string): Promise<void> {
+  await graphDelete(remoteId);
 }

@@ -2,7 +2,7 @@
 
 import type { MediaItem } from "@/lib/social/core";
 import { cn } from "@/lib/utils";
-import { Loader2, Upload, X } from "lucide-react";
+import { ImagePlus, Loader2, Upload, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { MediaThumb } from "../../_components/media-thumb";
 
@@ -10,6 +10,8 @@ import { MediaThumb } from "../../_components/media-thumb";
  * Controlled media picker. Uploads File bytes to /api/social/upload (which
  * returns public MediaItem[]), then hands the resulting items up to the form.
  * Raw bytes never touch the JSON server action — only the public URLs do.
+ *
+ * Supports both click-to-browse and drag-and-drop onto the whole zone.
  */
 export function MediaPicker({
   value,
@@ -25,8 +27,43 @@ export function MediaPicker({
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const dragCounter = useRef(0);
 
-  async function handleFiles(files: FileList | null) {
+  const isFull = value.length >= max;
+  const isDisabled = disabled || uploading || isFull;
+
+  /** Convert PNG/WebP to JPEG so Instagram accepts them. JPEG stays as-is. */
+  async function normalizeImage(file: File): Promise<File> {
+    if (file.type === "image/jpeg") return file;
+    if (!file.type.startsWith("image/")) return file; // videos pass through
+    return new Promise((resolve, reject) => {
+      const img = new window.Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("Canvas context error"));
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return reject(new Error("Canvas toBlob failed"));
+            const name = file.name.replace(/\.[^.]+$/, ".jpg");
+            resolve(new File([blob], name, { type: "image/jpeg" }));
+          },
+          "image/jpeg",
+          0.92,
+        );
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Image load error")); };
+      img.src = url;
+    });
+  }
+
+  async function handleFiles(files: FileList | File[] | null) {
     if (!files || files.length === 0) return;
     setError(null);
     const room = max - value.length;
@@ -34,8 +71,10 @@ export function MediaPicker({
       setError(`Máximo ${max} archivos`);
       return;
     }
+    const raw = Array.from(files).slice(0, room);
+    const normalized = await Promise.all(raw.map((f) => normalizeImage(f)));
     const body = new FormData();
-    for (const f of Array.from(files).slice(0, room)) body.append("files", f);
+    for (const f of normalized) body.append("files", f);
 
     setUploading(true);
     try {
@@ -54,47 +93,116 @@ export function MediaPicker({
     }
   }
 
+  function onDragEnter(e: React.DragEvent) {
+    e.preventDefault();
+    dragCounter.current += 1;
+    if (!isDisabled) setDragging(true);
+  }
+
+  function onDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    dragCounter.current -= 1;
+    if (dragCounter.current === 0) setDragging(false);
+  }
+
+  function onDragOver(e: React.DragEvent) {
+    e.preventDefault();
+  }
+
+  function onDrop(e: React.DragEvent) {
+    e.preventDefault();
+    dragCounter.current = 0;
+    setDragging(false);
+    if (isDisabled) return;
+    handleFiles(e.dataTransfer.files);
+  }
+
   return (
     <div className="flex flex-col gap-2">
-      <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-        {value.map((item) => (
-          <div key={item.storagePath} className="group relative">
-            <MediaThumb item={item} />
+      {/* Drop zone wrapper */}
+      <div
+        onDragEnter={onDragEnter}
+        onDragLeave={onDragLeave}
+        onDragOver={onDragOver}
+        onDrop={onDrop}
+        className={cn(
+          "relative rounded-xl border-2 border-dashed p-3 transition-colors duration-150",
+          dragging
+            ? "border-primary bg-primary/5"
+            : "border-border/60 hover:border-border",
+          isDisabled && !dragging && "opacity-60",
+        )}
+      >
+        {/* Drag overlay */}
+        {dragging && (
+          <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 rounded-xl bg-primary/10">
+            <Upload className="size-8 text-primary" />
+            <span className="text-sm font-medium text-primary">
+              Suelta {value.length < max - 1 ? "los archivos" : "el archivo"} aquí
+            </span>
+          </div>
+        )}
+
+        <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+          {value.map((item) => (
+            <div key={item.storagePath} className="group/thumb relative">
+              <MediaThumb item={item} />
+              <button
+                type="button"
+                onClick={() => onChange(value.filter((m) => m.storagePath !== item.storagePath))}
+                className="absolute -right-1.5 -top-1.5 grid size-5 place-content-center rounded-full bg-destructive text-white shadow ring-2 ring-card opacity-0 transition-opacity group-hover/thumb:opacity-100"
+                aria-label="Quitar archivo"
+              >
+                <X className="size-3" />
+              </button>
+            </div>
+          ))}
+
+          {/* Add button cell */}
+          {!isFull && (
             <button
               type="button"
-              onClick={() => onChange(value.filter((m) => m.storagePath !== item.storagePath))}
-              className="absolute -right-1.5 -top-1.5 grid size-5 place-content-center rounded-full bg-destructive text-white shadow ring-2 ring-card transition-opacity"
-              aria-label="Quitar archivo"
+              disabled={disabled || uploading}
+              onClick={() => inputRef.current?.click()}
+              className={cn(
+                "flex aspect-square flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-border bg-muted/30 text-muted-foreground transition-colors hover:border-primary/50 hover:bg-primary/5 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50",
+              )}
+              aria-label="Añadir archivos"
             >
-              <X className="size-3" />
+              {uploading ? (
+                <Loader2 className="size-5 animate-spin" />
+              ) : (
+                <>
+                  <ImagePlus className="size-5" />
+                  <span className="text-[10px] font-medium">Añadir</span>
+                </>
+              )}
             </button>
-          </div>
-        ))}
+          )}
+        </div>
 
-        {value.length < max && (
+        {/* Hint shown when no files yet */}
+        {value.length === 0 && !dragging && (
           <button
             type="button"
             disabled={disabled || uploading}
             onClick={() => inputRef.current?.click()}
-            className={cn(
-              "grid aspect-square place-content-center rounded-lg border border-dashed border-border text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:opacity-50",
-            )}
-            aria-label="Añadir archivos"
+            className="mt-3 flex w-full flex-col items-center gap-1 py-4 text-muted-foreground disabled:pointer-events-none"
           >
-            {uploading ? (
-              <Loader2 className="size-5 animate-spin" />
-            ) : (
-              <Upload className="size-5" />
-            )}
+            <Upload className="size-7" />
+            <span className="text-sm font-medium">Arrastra archivos o haz clic para seleccionar</span>
+            <span className="text-xs">Imágenes o vídeo · máximo {max} archivos</span>
           </button>
         )}
       </div>
-      <div className="flex items-center justify-between">
+
+      <div className="flex items-center justify-between px-1">
         <p className="text-xs text-muted-foreground">
           {value.length}/{max} archivos · imágenes o vídeo
         </p>
         {error && <p className="text-xs text-destructive">{error}</p>}
       </div>
+
       <input
         ref={inputRef}
         type="file"

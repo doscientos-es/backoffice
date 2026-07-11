@@ -48,7 +48,15 @@ export const publishPost = defineAction({
   revalidate: () => ["/social", "/social/dashboard"],
   handler: async (input) => {
     const result = await service.publishPost(input.postId);
-    return { status: result.status as string };
+    return {
+      status: result.status as string,
+      /** Per-network results so the client can show inline error toasts. */
+      targets: result.targets.map((t) => ({
+        platform: t.platform as string,
+        ok: t.ok,
+        error: t.ok ? null : (t.error ?? "Error desconocido"),
+      })),
+    };
   },
 });
 
@@ -71,6 +79,44 @@ export const syncComments = defineAction({
   handler: async () => {
     const { synced } = await service.syncComments();
     return { synced };
+  },
+});
+
+/** Delete a post from every social network, then soft-delete locally. */
+export const deletePost = defineAction({
+  name: "social.delete",
+  schema: PostIdInput,
+  roles: [...WRITE_ROLES],
+  revalidate: () => ["/social", "/social/feed"],
+  handler: async (input) => {
+    // Best-effort remote deletion — failures are logged but never block the local soft-delete.
+    await service.deletePostFromNetworks(input.postId);
+    await repo.deletePost(input.postId);
+  },
+});
+
+/**
+ * Soft-delete locally + remove media from Supabase storage.
+ * Does NOT touch the live posts on any social network.
+ */
+export const deletePostLocal = defineAction({
+  name: "social.delete_local",
+  schema: PostIdInput,
+  roles: [...WRITE_ROLES],
+  revalidate: () => ["/social", "/social/feed"],
+  handler: async (input) => {
+    await service.deletePostLocalWithMedia(input.postId);
+  },
+});
+
+/** Restore a soft-deleted post (clears deleted_at). */
+export const restorePost = defineAction({
+  name: "social.restore",
+  schema: PostIdInput,
+  roles: [...WRITE_ROLES],
+  revalidate: () => ["/social", "/social/feed"],
+  handler: async (input) => {
+    await repo.restorePost(input.postId);
   },
 });
 

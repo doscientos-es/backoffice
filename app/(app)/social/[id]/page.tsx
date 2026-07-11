@@ -78,7 +78,14 @@ async function PostDetail({ id }: { id: string }) {
                           <PlatformChip platform={t.platform} />
                         </td>
                         <td className="py-3 pr-4">
-                          <StatusBadge meta={SOCIAL_TARGET_STATUS} value={t.status} className="text-[10px]" />
+                          <div className="flex flex-col gap-0.5">
+                            <StatusBadge meta={SOCIAL_TARGET_STATUS} value={t.status} className="text-[10px]" />
+                            {t.status === "failed" && t.error && (
+                              <span className="max-w-50 text-[10px] text-destructive leading-tight" title={t.error}>
+                                {t.error.length > 80 ? `${t.error.slice(0, 80)}…` : t.error}
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="py-3 pr-4 text-right tabular-nums">
                           {t.insights?.reach.toLocaleString() ?? "—"}

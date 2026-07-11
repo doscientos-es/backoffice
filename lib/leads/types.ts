@@ -1,3 +1,4 @@
+import type { ReminderRow } from "@/lib/dashboard/types";
 import type { LeadStatus } from "@/lib/status";
 
 export const LEAD_LIST_PAGE_SIZE = 25;
@@ -101,6 +102,7 @@ export type LeadDetail = {
   ai_temperature: LeadDetailAiTemperature | null;
   ai_confidence: number | null;
   ai_updated_at: string | null;
+  ai_tags: string[] | null;
   lost_reason: string | null;
   lost_at: string | null;
   assigned_to: string | null;
@@ -140,6 +142,8 @@ export type LeadDetailResult = {
   proposals: LeadRelatedProposal[];
   projects: LeadRelatedProject[];
   invoices: LeadRelatedInvoice[];
+  /** Pending reminders scheduled against this lead, soonest first. */
+  reminders: ReminderRow[];
 };
 
 export type LeadConvertSeed = {

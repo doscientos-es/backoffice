@@ -11,18 +11,19 @@ import { scopedLogger } from "@/lib/logger";
 import type {
   ComposedPost,
   PlatformComment,
-  Publisher,
   PublishOutcome,
   PublishSupport,
+  Publisher,
   SocialPlatform,
 } from "@/lib/social/core";
 import { PublishError } from "@/lib/social/core";
-import { authorUrn, linkedinToken, organizationId } from "./client";
+import { linkedinToken, organizationId } from "./client";
 import {
   createMediaPost,
   createMultiImagePost,
   createTextPost,
   getPostComments,
+  deletePost as liDeletePost,
   permalinkFor,
   replyToComment,
   uploadImage,
@@ -47,7 +48,10 @@ export class LinkedInPublisher implements Publisher {
         return { ok: false, reason: "LinkedIn no admite carruseles con vídeo." };
       }
       if (post.media.length < MIN_CAROUSEL || post.media.length > MAX_CAROUSEL) {
-        return { ok: false, reason: `El carrusel admite entre ${MIN_CAROUSEL} y ${MAX_CAROUSEL} imágenes.` };
+        return {
+          ok: false,
+          reason: `El carrusel admite entre ${MIN_CAROUSEL} y ${MAX_CAROUSEL} imágenes.`,
+        };
       }
     }
     return { ok: true };
@@ -90,5 +94,9 @@ export class LinkedInPublisher implements Publisher {
 
   replyToComment(remoteCommentId: string, message: string): Promise<void> {
     return replyToComment(remoteCommentId, message);
+  }
+
+  deletePost(remoteId: string): Promise<void> {
+    return liDeletePost(remoteId);
   }
 }

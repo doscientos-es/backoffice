@@ -1,30 +1,21 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { FormRow } from "@/components/ui/form-row";
-import { Input } from "@/components/ui/input";
-import { SubmitButton } from "@/components/ui/submit-button";
-import { Textarea } from "@/components/ui/textarea";
-import { CalendarClock, Hand } from "lucide-react";
+import { CalendarClock, Hand, ListTodo } from "lucide-react";
 import { type ReactNode, useState, useTransition } from "react";
 import { sileo } from "sileo";
-import { createReminder } from "../../reminders/actions";
 import { claimLead } from "../actions";
 import {
+  type MeetMember,
   QCallDialog,
   QEmailDialog,
+  QMeetDialog,
+  QMeetNowDialog,
   QNoteDialog,
   QSendEmailDialog,
 } from "../lead-quick-action-dialogs";
+import { ExtractTasksDialog, type ExtractTasksDialogProps } from "./extract-tasks-dialog";
+import { ScheduleReminderDialog } from "./schedule-reminder-dialog";
 
 type Props = {
   leadId: string;
@@ -33,6 +24,10 @@ type Props = {
   leadPhone: string | null;
   claimable?: boolean;
   aiEnabled?: boolean;
+  googleEnabled?: boolean;
+  projects?: Array<{ id: string; name: string }>;
+  meetMembers?: MeetMember[];
+  createTaskAction?: ExtractTasksDialogProps["createTaskAction"];
 };
 
 export function LeadQuickActions({
@@ -42,6 +37,10 @@ export function LeadQuickActions({
   leadPhone,
   claimable,
   aiEnabled,
+  googleEnabled,
+  projects = [],
+  meetMembers = [],
+  createTaskAction,
 }: Props) {
   return (
     <div className="flex flex-col gap-2">
@@ -50,7 +49,31 @@ export function LeadQuickActions({
       <QSendEmailDialog leadId={leadId} leadEmail={leadEmail} aiEnabled={aiEnabled} />
       <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
       <QNoteDialog leadId={leadId} />
+      {googleEnabled && (
+        <>
+          <QMeetNowDialog
+            leadId={leadId}
+            leadName={leadName}
+            leadEmail={leadEmail}
+            meetMembers={meetMembers}
+          />
+          <QMeetDialog
+            leadId={leadId}
+            leadName={leadName}
+            leadEmail={leadEmail}
+            projects={projects}
+            meetMembers={meetMembers}
+          />
+        </>
+      )}
       <ScheduleDialog leadId={leadId} leadName={leadName} />
+      {aiEnabled && createTaskAction && (
+        <ExtractTasksDialog
+          leadId={leadId}
+          createTaskAction={createTaskAction}
+          trigger={<ActionTrigger icon={<ListTodo className="size-4" />} label="Extraer tareas IA" />}
+        />
+      )}
     </div>
   );
 }
@@ -88,154 +111,27 @@ function ClaimButton({ leadId }: { leadId: string }) {
   );
 }
 
-function ActionTrigger({ icon, label }: { icon: ReactNode; label: string }) {
+function ActionTrigger({
+  icon,
+  label,
+  ...rest
+}: { icon: ReactNode; label: string } & React.ComponentProps<typeof Button>) {
   return (
-    <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+    <Button variant="outline" size="sm" className="w-full justify-start gap-2" {...rest}>
       <span className="text-muted-foreground">{icon}</span>
       <span className="text-sm font-medium">{label}</span>
     </Button>
   );
 }
 
-function ActionDialog({
-  trigger,
-  title,
-  description,
-  open,
-  onOpenChange,
-  children,
-  wide,
-}: {
-  trigger: ReactNode;
-  title: string;
-  description?: string;
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  children: ReactNode;
-  wide?: boolean;
-}) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className={wide ? "sm:max-w-lg" : undefined}>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          {description ? <DialogDescription>{description}</DialogDescription> : null}
-        </DialogHeader>
-        {children}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ── Shared follow-up utilities ────────────────────────────────────────────────
-
-/** datetime-local needs `YYYY-MM-DDTHH:mm` in the user's local TZ. */
-function toLocalInputValue(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
-
-const SCHEDULE_PRESETS: { label: string; minutes: number }[] = [
-  { label: "En 1 h", minutes: 60 },
-  { label: "Mañana", minutes: 60 * 24 },
-  { label: "En 3 días", minutes: 60 * 24 * 3 },
-  { label: "En 1 semana", minutes: 60 * 24 * 7 },
-];
-
 // ---------------- SCHEDULE (reminder) ----------------
 
 function ScheduleDialog({ leadId, leadName }: { leadId: string; leadName: string }) {
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState(`Llamar a ${leadName}`);
-  const [remindAt, setRemindAt] = useState(() => {
-    const d = new Date();
-    d.setHours(d.getHours() + 1, 0, 0, 0);
-    return toLocalInputValue(d);
-  });
-  const [notes, setNotes] = useState("");
-  const feedback = useFormFeedback();
-
-  function applyPreset(minutes: number) {
-    const d = new Date(Date.now() + minutes * 60_000);
-    d.setSeconds(0, 0);
-    setRemindAt(toLocalInputValue(d));
-  }
-
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    feedback.setPending();
-    const res = await createReminder({
-      leadId,
-      title: title.trim(),
-      remindAt: new Date(remindAt).toISOString(),
-      notes: notes || undefined,
-    });
-    if (!res.ok) return feedback.setError(res.error);
-    feedback.setSuccess("Aviso programado");
-    setNotes("");
-    setTimeout(() => setOpen(false), 400);
-  }
-
   return (
-    <ActionDialog
+    <ScheduleReminderDialog
+      leadId={leadId}
+      defaultTitle={`Llamar a ${leadName}`}
       trigger={<ActionTrigger icon={<CalendarClock className="size-4" />} label="Agendar" />}
-      title="Agendar seguimiento"
-      description="Crea un aviso para esta lead (llamada, email, recordatorio…)."
-      open={open}
-      onOpenChange={setOpen}
-      wide
-    >
-      <form onSubmit={onSubmit} className="flex flex-col gap-3">
-        <FormRow label="Título" htmlFor="schedule-title" required>
-          <Input
-            id="schedule-title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            maxLength={200}
-          />
-        </FormRow>
-        <FormRow label="Fecha y hora" htmlFor="schedule-when" required>
-          <Input
-            id="schedule-when"
-            type="datetime-local"
-            value={remindAt}
-            onChange={(e) => setRemindAt(e.target.value)}
-            required
-          />
-          <div className="flex flex-wrap gap-1.5 pt-1">
-            {SCHEDULE_PRESETS.map((p) => (
-              <Button
-                key={p.label}
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-7 px-2 text-xs"
-                onClick={() => applyPreset(p.minutes)}
-              >
-                {p.label}
-              </Button>
-            ))}
-          </div>
-        </FormRow>
-        <FormRow label="Notas (opcional)" htmlFor="schedule-notes">
-          <Textarea
-            id="schedule-notes"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={3}
-            maxLength={4000}
-            placeholder="Contexto, qué tratar, próximos pasos…"
-          />
-        </FormRow>
-        <div className="flex items-center justify-end gap-3">
-          <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
-          <SubmitButton loading={feedback.pending} pendingLabel="Guardando…">
-            Agendar
-          </SubmitButton>
-        </div>
-      </form>
-    </ActionDialog>
+    />
   );
 }

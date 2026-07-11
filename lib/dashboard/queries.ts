@@ -114,14 +114,14 @@ export async function getDashboardKpis(range: DateRange): Promise<DashboardKpis>
       .from("invoices")
       .select("total")
       .gte("issue_date", monthStart)
-      .neq("status", "draft")
+      .not("status", "in", '("draft","cancelled","rectified")')
       .is("deleted_at", null),
     supabase
       .from("invoices")
       .select("total")
       .gte("issue_date", prevMonthStart)
       .lte("issue_date", prevMonthEnd)
-      .neq("status", "draft")
+      .not("status", "in", '("draft","cancelled","rectified")')
       .is("deleted_at", null),
   ]);
 

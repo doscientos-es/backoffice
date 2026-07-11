@@ -129,7 +129,7 @@ Remitente: ${user.name} (${user.email})`;
       user: userPrompt,
       schema: ResultSchema,
       temperature: 0.6, // un poco más de variedad para emails
-      maxOutputTokens: 1200,
+      maxOutputTokens: 1000,
     });
   } catch (err) {
     log.error(

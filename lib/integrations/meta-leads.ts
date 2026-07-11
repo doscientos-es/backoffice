@@ -139,27 +139,42 @@ function findField(fields: MetaLeadField[], candidates: ReadonlyArray<string>): 
 }
 
 /**
+ * Converts a snake_case field key or value to a human-readable string.
+ * Only modifies strings that contain underscores; already-clean values
+ * (e.g. "Sí", "Lo antes posible") are returned unchanged.
+ * Examples:
+ *   "tamaño_de_empresa"  → "Tamaño de empresa"
+ *   "lo_antes_posible"   → "Lo antes posible"
+ *   "10-50_empleados"    → "10-50 empleados"
+ *   "Sí"                 → "Sí" (unchanged)
+ */
+function prettifySnakeCase(text: string): string {
+  if (!text.includes("_")) return text;
+  const spaced = text.replace(/_/g, " ").replace(/\s+/g, " ").trim();
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+/**
  * Extracts custom form questions from Meta field_data as label/value pairs.
  * Any field that isn't a standard contact field counts as a qualifying answer,
- * regardless of whether Meta sends the raw Spanish question ("¿…?", when the
- * field ID is left as default) or a custom/snake_case field ID. The label is
- * only cosmetically cleaned for "¿…?" questions; either form still feeds the
- * keyword classifier (classifyFormAnswers) so urgency/solution/size are matched
- * whatever the field ID happens to be.
+ * regardless of whether Meta sends the raw Spanish question ("¿…?") or a
+ * snake_case field ID. Labels and values in snake_case are prettified so that
+ * both the notes block and the stored qualification columns are human-readable.
  */
 function extractMetaFormAnswers(fields: MetaLeadField[]): FormAnswer[] {
   const answers: FormAnswer[] = [];
   for (const field of fields) {
     const key = field.name.trim();
     if (CONTACT_FIELD_KEYS.has(key.toLowerCase())) continue;
-    const value = field.values?.[0]?.trim();
-    if (!value) continue;
+    const rawValue = field.values?.[0]?.trim();
+    if (!rawValue) continue;
     const label = key.startsWith("¿")
       ? key
           .replace(/^¿/, "")
           .replace(/\?\s*$/, "")
           .trim()
-      : key;
+      : prettifySnakeCase(key);
+    const value = prettifySnakeCase(rawValue);
     answers.push({ label, value });
   }
   return answers;

@@ -70,19 +70,100 @@ export type InsertEventInput = {
   attendees?: string[];
   /** Si true, adjunta un enlace de Google Meet al evento. */
   withMeet?: boolean;
+  /** Si true, crea un evento de día completo (usa date en lugar de dateTime). */
+  allDay?: boolean;
+  /** Propiedades privadas extendidas (k/v). Úsalas para taggear origen del evento. */
+  extendedProperties?: Record<string, string>;
 };
 
 export type InsertedEvent = { id: string; htmlLink: string | null; meetUrl: string | null };
 
+export type GoogleCalendarEvent = {
+  id: string;
+  summary: string | null;
+  description: string | null;
+  start: string | null;
+  end: string | null;
+  allDay: boolean;
+  htmlLink: string | null;
+  hangoutLink: string | null;
+};
+
+type FullEventsListResponse = {
+  items?: Array<{
+    id: string;
+    summary?: string;
+    description?: string;
+    status?: string;
+    htmlLink?: string;
+    hangoutLink?: string;
+    start?: { dateTime?: string; date?: string };
+    end?: { dateTime?: string; date?: string };
+    extendedProperties?: { private?: Record<string, string> };
+  }>;
+};
+
+/**
+ * Lists all non-cancelled events in a calendar within [timeMin, timeMax).
+ * Expands recurring events. Used for the calendar view's "Reuniones" layer.
+ */
+export async function listEvents(opts: {
+  subject: string;
+  calendarId: string;
+  timeMin: Date;
+  timeMax: Date;
+}): Promise<GoogleCalendarEvent[]> {
+  const params = new URLSearchParams({
+    timeMin: opts.timeMin.toISOString(),
+    timeMax: opts.timeMax.toISOString(),
+    singleEvents: "true",
+    orderBy: "startTime",
+    maxResults: "250",
+  });
+  const url = `${BASE}/${encodeURIComponent(opts.calendarId)}/events?${params}`;
+  const data = await googleFetch<FullEventsListResponse>(
+    opts.subject,
+    [GOOGLE_SCOPES.calendar],
+    url,
+  );
+  return (data.items ?? [])
+    .filter(
+      (e) => e.status !== "cancelled" && e.extendedProperties?.private?.source !== "backoffice",
+    )
+    .map((e) => ({
+      id: e.id,
+      summary: e.summary ?? null,
+      description: e.description ?? null,
+      start: e.start?.dateTime ?? e.start?.date ?? null,
+      end: e.end?.dateTime ?? e.end?.date ?? null,
+      allDay: !e.start?.dateTime,
+      htmlLink: e.htmlLink ?? null,
+      hangoutLink: e.hangoutLink ?? null,
+    }));
+}
+
 /** Crea un evento en el calendario indicado. Lanza si la API falla. */
 export async function insertEvent(input: InsertEventInput): Promise<InsertedEvent> {
   const tz = input.timeZone ?? "Europe/Madrid";
+
+  // All-day events use `date` (YYYY-MM-DD); timed events use `dateTime` + timeZone.
+  const startField = input.allDay
+    ? { date: input.start.toISOString().slice(0, 10) }
+    : { dateTime: input.start.toISOString(), timeZone: tz };
+  const endField = input.allDay
+    ? { date: new Date(input.end.getTime() + 86_400_000).toISOString().slice(0, 10) }
+    : { dateTime: input.end.toISOString(), timeZone: tz };
+
   const body: Record<string, unknown> = {
     summary: input.summary,
     description: input.description,
-    start: { dateTime: input.start.toISOString(), timeZone: tz },
-    end: { dateTime: input.end.toISOString(), timeZone: tz },
+    start: startField,
+    end: endField,
   };
+
+  if (input.extendedProperties && Object.keys(input.extendedProperties).length) {
+    body.extendedProperties = { private: input.extendedProperties };
+  }
   if (input.attendees?.length) {
     body.attendees = input.attendees.map((email) => ({ email }));
   }

@@ -76,24 +76,32 @@ export async function getClientDetail(id: string): Promise<ClientDetailResult> {
   if (error) log.error({ clientId: id, err: error.message }, "get_client_detail_failed");
   if (!client) return null;
 
-  const [{ data: projects }, { data: proposals }, { data: invoices }] = await Promise.all([
-    notDeleted(supabase.from("projects").select("id, name, status").eq("client_id", id))
-      .order("created_at", { ascending: false })
-      .limit(CLIENT_PROJECTS_LIMIT),
-    notDeleted(
-      supabase.from("proposals").select("id, number, title, status, total").eq("client_id", id),
-    )
-      .order("created_at", { ascending: false })
-      .limit(CLIENT_RELATED_LIMIT),
-    notDeleted(
+  const [{ data: projects }, { data: proposals }, { data: invoices }, { data: reminders }] =
+    await Promise.all([
+      notDeleted(supabase.from("projects").select("id, name, status").eq("client_id", id))
+        .order("created_at", { ascending: false })
+        .limit(CLIENT_PROJECTS_LIMIT),
+      notDeleted(
+        supabase.from("proposals").select("id, number, title, status, total").eq("client_id", id),
+      )
+        .order("created_at", { ascending: false })
+        .limit(CLIENT_RELATED_LIMIT),
+      notDeleted(
+        supabase
+          .from("invoices")
+          .select("id, full_number, status, total, issue_date")
+          .eq("client_id", id),
+      )
+        .order("issue_date", { ascending: false })
+        .limit(CLIENT_RELATED_LIMIT),
       supabase
-        .from("invoices")
-        .select("id, full_number, status, total, issue_date")
-        .eq("client_id", id),
-    )
-      .order("issue_date", { ascending: false })
-      .limit(CLIENT_RELATED_LIMIT),
-  ]);
+        .from("reminders")
+        .select("id, title, remind_at")
+        .eq("client_id", id)
+        .is("completed_at", null)
+        .order("remind_at", { ascending: true })
+        .limit(CLIENT_RELATED_LIMIT),
+    ]);
 
   return {
     client: {
@@ -132,6 +140,11 @@ export async function getClientDetail(id: string): Promise<ClientDetailResult> {
       status: (i.status as string | null) ?? null,
       total: i.total == null ? null : Number(i.total),
       issue_date: (i.issue_date as string | null) ?? null,
+    })),
+    reminders: (reminders ?? []).map((r) => ({
+      id: r.id as string,
+      title: r.title as string,
+      remind_at: r.remind_at as string,
     })),
   };
 }

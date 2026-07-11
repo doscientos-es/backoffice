@@ -1,3 +1,4 @@
+import { RemindersSection } from "@/app/(app)/inicio/_components/reminders-section";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -31,7 +32,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
   const result = await getClientDetail(id);
   if (!result) notFound();
 
-  const { client, projects, proposals, invoices } = result;
+  const { client, projects, proposals, invoices, reminders } = result;
 
   return (
     <div className="flex flex-col gap-6">
@@ -173,6 +174,17 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           ) : null}
         </CardContent>
       </Card>
+
+      {reminders.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Próximos avisos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RemindersSection reminders={reminders} />
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Projects */}

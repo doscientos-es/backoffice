@@ -1,3 +1,4 @@
+import { RemindersSection } from "@/app/(app)/inicio/_components/reminders-section";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { AttachmentSection } from "@/components/ui/attachment-section";
@@ -6,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CopySummaryButton } from "@/components/ui/copy-summary-button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
-import { githubDefaultInstallationId } from "@/lib/env";
+import { githubDefaultInstallationId, isAIEnabled } from "@/lib/env";
 import { computeProjectProfitability } from "@/lib/finance";
 import { INVOICE_STATUS, PROJECT_STATUS, PROPOSAL_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
@@ -17,6 +18,7 @@ import { TaskCreateDialog } from "../../tasks/task-create-dialog";
 import { GitHubModeBadge } from "../github-mode-badge";
 import type { GitHubSyncMode } from "../github-sync-section";
 import { type ChecklistItemRow, ChecklistSection } from "./checklist-section";
+import { ClientUpdatePanel } from "./client-update-panel";
 import { DeleteProjectButton } from "./delete-project-button";
 import { LinkProposalButton } from "./link-proposal-button";
 import { MonthlyInvoiceSection } from "./monthly-invoice-section";
@@ -68,6 +70,7 @@ export default async function ProjectDetailPage({
     { data: settings },
     { data: checklistData },
     { data: unlinkdProposals },
+    { data: reminders },
   ] = await Promise.all([
     isBoard
       ? supabase
@@ -138,7 +141,20 @@ export default async function ProjectDetailPage({
         .is("deleted_at", null)
         .order("created_at", { ascending: false })
       : Promise.resolve({ data: [] }),
+    supabase
+      .from("reminders")
+      .select("id, title, remind_at")
+      .eq("project_id", id)
+      .is("completed_at", null)
+      .order("remind_at", { ascending: true })
+      .limit(10),
   ]);
+
+  const pendingReminders = ((reminders ?? []) as Array<Record<string, unknown>>).map((r) => ({
+    id: r.id as string,
+    title: r.title as string,
+    remind_at: r.remind_at as string,
+  }));
 
   const workLogs: WorkLogRow[] = ((workLogsData ?? []) as Array<Record<string, unknown>>).map(
     (w) => {
@@ -304,6 +320,17 @@ export default async function ProjectDetailPage({
         </CardContent>
       </Card>
 
+      {pendingReminders.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Próximos avisos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RemindersSection reminders={pendingReminders} />
+          </CardContent>
+        </Card>
+      ) : null}
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Tareas</CardTitle>
@@ -355,6 +382,15 @@ export default async function ProjectDetailPage({
               ))}
             </ul>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Update para cliente</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ClientUpdatePanel projectId={id} aiEnabled={isAIEnabled()} />
         </CardContent>
       </Card>
 

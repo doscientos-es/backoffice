@@ -21,12 +21,353 @@ import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import type { CallOutcome } from "@/lib/schemas/lead";
-import { Mail, NotebookPen, Phone, Send } from "lucide-react";
+import { Mail, NotebookPen, Phone, Send, Video } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createReminder } from "../reminders/actions";
 import { EmailComposer } from "./[id]/email-composer";
-import { logLeadCall, logLeadEmail, logLeadNote } from "./actions";
+import { logLeadCall, logLeadEmail, logLeadNote, scheduleLeadMeeting } from "./actions";
+
+// ─── Meet helpers ─────────────────────────────────────────────────────────────
+
+/** Convert datetime-local value to ISO-8601 with the browser's local offset. */
+function localToIso(localValue: string): string {
+  const d = new Date(localValue);
+  const offset = -d.getTimezoneOffset();
+  const sign = offset >= 0 ? "+" : "-";
+  const absOffset = Math.abs(offset);
+  const hh = String(Math.floor(absOffset / 60)).padStart(2, "0");
+  const mm = String(absOffset % 60).padStart(2, "0");
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const hours = String(d.getHours()).padStart(2, "0");
+  const minutes = String(d.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}:00${sign}${hh}:${mm}`;
+}
+
+function defaultMeetStart(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(10, 0, 0, 0);
+  return toLocalInputValue(d);
+}
+
+function defaultMeetEnd(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(11, 0, 0, 0);
+  return toLocalInputValue(d);
+}
+
+// ─── QMeetDialog ──────────────────────────────────────────────────────────────
+
+/** Shape passed for Meet invitee selection — subset of team_members with email. */
+export type MeetMember = { id: string; name: string; email: string };
+
+// ─── Shared helper: member checkboxes ────────────────────────────────────────
+
+function MemberCheckboxes({
+  members,
+  selected,
+  onToggle,
+}: {
+  members: MeetMember[];
+  selected: Set<string>;
+  onToggle: (id: string) => void;
+}) {
+  if (members.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label className="text-xs font-medium">
+        Invitar compañeros <span className="text-muted-foreground/60">(opcional)</span>
+      </Label>
+      <div className="flex flex-col gap-1.5 rounded-md border border-border/60 bg-muted/30 p-2.5">
+        {members.map((m) => (
+          <label
+            key={m.id}
+            className="flex cursor-pointer select-none items-center gap-2 text-sm"
+          >
+            <Checkbox
+              checked={selected.has(m.id)}
+              onCheckedChange={() => onToggle(m.id)}
+            />
+            {m.name}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function useMemberToggle() {
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  function toggle(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+  function emails(members: MeetMember[]) {
+    return members.filter((m) => selected.has(m.id)).map((m) => m.email);
+  }
+  return { selected, toggle, emails };
+}
+
+// ─── QMeetDialog — scheduled meeting ─────────────────────────────────────────
+
+export function QMeetDialog({
+  leadId,
+  leadName,
+  leadEmail,
+  projects,
+  meetMembers = [],
+}: {
+  leadId: string;
+  leadName: string;
+  leadEmail: string | null;
+  projects: Array<{ id: string; name: string }>;
+  meetMembers?: MeetMember[];
+}) {
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState(`Reunión con ${leadName}`);
+  const [start, setStart] = useState(defaultMeetStart);
+  const [end, setEnd] = useState(defaultMeetEnd);
+  const [description, setDescription] = useState("");
+  const [projectId, setProjectId] = useState("");
+  const members = useMemberToggle();
+  const feedback = useFormFeedback();
+  const router = useRouter();
+
+  function handleStartChange(val: string) {
+    setStart(val);
+    const s = new Date(val);
+    const e = new Date(end);
+    if (e <= s) {
+      const next = new Date(s);
+      next.setHours(next.getHours() + 1);
+      setEnd(toLocalInputValue(next));
+    }
+  }
+
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    feedback.setPending();
+    const attendeeEmails = [
+      ...(leadEmail ? [leadEmail] : []),
+      ...members.emails(meetMembers),
+    ];
+    const res = await scheduleLeadMeeting({
+      leadId,
+      title,
+      description: description.trim() || undefined,
+      start: localToIso(start),
+      end: localToIso(end),
+      attendeeEmails: attendeeEmails.length > 0 ? attendeeEmails : undefined,
+      projectId: projectId || undefined,
+      withMeet: true,
+    });
+    if (!res.ok) return feedback.setError(res.error);
+    feedback.setSuccess("Reunión creada");
+    router.refresh();
+    if (res.meetUrl) window.open(res.meetUrl, "_blank");
+    setTimeout(() => setOpen(false), 600);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+          <Video className="size-3.5 text-muted-foreground" />
+          Agendar reunión Meet
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Agendar reunión Google Meet</DialogTitle>
+          <DialogDescription>
+            Se creará en el calendario compartido y se enviará invitación por email.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={onSubmit} className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor={`qa-meet-title-${leadId}`} className="text-xs font-medium">
+              Título <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id={`qa-meet-title-${leadId}`}
+              required
+              maxLength={200}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor={`qa-meet-start-${leadId}`} className="text-xs font-medium">
+                Inicio <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id={`qa-meet-start-${leadId}`}
+                type="datetime-local"
+                required
+                value={start}
+                onChange={(e) => handleStartChange(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor={`qa-meet-end-${leadId}`} className="text-xs font-medium">
+                Fin <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id={`qa-meet-end-${leadId}`}
+                type="datetime-local"
+                required
+                value={end}
+                onChange={(e) => setEnd(e.target.value)}
+              />
+            </div>
+          </div>
+          {projects.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor={`qa-meet-project-${leadId}`} className="text-xs font-medium">
+                Proyecto <span className="text-muted-foreground/60">(opcional)</span>
+              </Label>
+              <Select
+                id={`qa-meet-project-${leadId}`}
+                value={projectId}
+                onChange={(e) => setProjectId(e.target.value)}
+              >
+                <option value="">— Sin proyecto —</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          )}
+          <MemberCheckboxes
+            members={meetMembers}
+            selected={members.selected}
+            onToggle={members.toggle}
+          />
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor={`qa-meet-desc-${leadId}`} className="text-xs font-medium">
+              Descripción <span className="text-muted-foreground/60">(opcional)</span>
+            </Label>
+            <Textarea
+              id={`qa-meet-desc-${leadId}`}
+              rows={2}
+              maxLength={4000}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Agenda, puntos a tratar…"
+            />
+          </div>
+          <div className="flex items-center justify-end gap-3">
+            <FormFeedback state={feedback.state} pendingLabel="Creando…" />
+            <SubmitButton loading={feedback.pending} pendingLabel="Creando…">
+              Agendar reunión
+            </SubmitButton>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── QMeetNowDialog — instant Meet ───────────────────────────────────────────
+
+export function QMeetNowDialog({
+  leadId,
+  leadName,
+  leadEmail,
+  meetMembers = [],
+}: {
+  leadId: string;
+  leadName: string;
+  leadEmail: string | null;
+  meetMembers?: MeetMember[];
+}) {
+  const [open, setOpen] = useState(false);
+  const [description, setDescription] = useState("");
+  const members = useMemberToggle();
+  const feedback = useFormFeedback();
+  const router = useRouter();
+
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    feedback.setPending();
+    const now = new Date();
+    const endTime = new Date(now.getTime() + 60 * 60 * 1000);
+    const attendeeEmails = [
+      ...(leadEmail ? [leadEmail] : []),
+      ...members.emails(meetMembers),
+    ];
+    const res = await scheduleLeadMeeting({
+      leadId,
+      title: `Reunión con ${leadName}`,
+      description: description.trim() || undefined,
+      start: now.toISOString(),
+      end: endTime.toISOString(),
+      attendeeEmails: attendeeEmails.length > 0 ? attendeeEmails : undefined,
+      withMeet: true,
+    });
+    if (!res.ok) return feedback.setError(res.error);
+    feedback.setSuccess("¡Meet creado!");
+    router.refresh();
+    if (res.meetUrl) window.open(res.meetUrl, "_blank");
+    setTimeout(() => setOpen(false), 600);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+          <Video className="size-3.5 text-green-500" />
+          Meet ahora
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Iniciar Meet ahora</DialogTitle>
+          <DialogDescription>
+            Se crea el enlace Meet, se abre en una nueva pestaña y se envía invitación.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={onSubmit} className="flex flex-col gap-3">
+          <MemberCheckboxes
+            members={meetMembers}
+            selected={members.selected}
+            onToggle={members.toggle}
+          />
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor={`qa-now-desc-${leadId}`} className="text-xs font-medium">
+              Notas <span className="text-muted-foreground/60">(opcional)</span>
+            </Label>
+            <Textarea
+              id={`qa-now-desc-${leadId}`}
+              rows={2}
+              maxLength={4000}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Agenda, puntos a tratar…"
+            />
+          </div>
+          <div className="flex items-center justify-end gap-3">
+            <FormFeedback state={feedback.state} pendingLabel="Creando…" />
+            <SubmitButton loading={feedback.pending} pendingLabel="Creando…">
+              Crear y unirse
+            </SubmitButton>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

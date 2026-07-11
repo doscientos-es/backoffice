@@ -1,3 +1,5 @@
+import { RemindersSection } from "@/app/(app)/inicio/_components/reminders-section";
+import { createTask } from "@/app/(app)/tasks/actions";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { type AttachmentItem, AttachmentSection } from "@/components/ui/attachment-section";
@@ -10,6 +12,7 @@ import { MemberLabel } from "@/components/ui/member-avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { isAIEnabled } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
+import { isGoogleEnabled } from "@/lib/env";
 import { getLeadDetail } from "@/lib/leads/queries";
 import { listActiveMembers } from "@/lib/members/queries";
 import { LEAD_STATUS } from "@/lib/status";
@@ -63,19 +66,45 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
 
   const result = await getLeadDetail(id);
   if (!result) notFound();
-  const { lead, interactions, linkedClientId, proposals, projects, invoices } = result;
+  const { lead, interactions, linkedClientId, proposals, projects, invoices, reminders } = result;
 
   const aiEnabled = isAIEnabled();
+  const googleEnabled = isGoogleEnabled();
   const canEdit = user.role !== "viewer";
   const members = canEdit ? await listActiveMembers() : [];
 
   const supabase = await createServerClient();
-  const { data: attachments } = await supabase
-    .from("attachments")
-    .select("id, name, mime_type, size_bytes, created_at")
-    .eq("lead_id", id)
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false });
+  const [{ data: attachments }, { data: activeProjects }, { data: rawMeetMembers }] =
+    await Promise.all([
+      supabase
+        .from("attachments")
+        .select("id, name, mime_type, size_bytes, created_at")
+        .eq("lead_id", id)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false }),
+      googleEnabled
+        ? supabase
+          .from("projects")
+          .select("id, name")
+          .is("deleted_at", null)
+          .in("status", ["planned", "active", "on_hold"])
+          .order("name")
+        : Promise.resolve({ data: [] as Array<{ id: string; name: string }> | null }),
+      googleEnabled
+        ? supabase
+          .from("team_members")
+          .select("id, name, email")
+          .is("deleted_at", null)
+          .order("name")
+        : Promise.resolve({ data: [] as Array<{ id: string; name: string; email: string }> | null }),
+    ]);
+
+  const meetMembers = (rawMeetMembers ?? []).map((m) => ({
+    id: m.id as string,
+    name: (m.name as string) ?? "",
+    email: (m.email as string) ?? "",
+  }));
+
   const canConvert =
     !linkedClientId &&
     lead.status !== "won" &&
@@ -104,8 +133,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                 parts.push(
                   [
                     `Estado: ${LEAD_STATUS[lead.status]?.label ?? lead.status}`,
-                    lead.estimated_value != null &&
-                    `Valor: ${formatEUR(lead.estimated_value)}`,
+                    lead.estimated_value != null && `Valor: ${formatEUR(lead.estimated_value)}`,
                   ]
                     .filter(Boolean)
                     .join(" · "),
@@ -226,6 +254,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                     ai_temperature: (lead.ai_temperature as "hot" | "warm" | "cold" | null) ?? null,
                     ai_confidence: (lead.ai_confidence as number | null) ?? null,
                     ai_updated_at: (lead.ai_updated_at as string | null) ?? null,
+                    ai_tags: (lead.ai_tags as string[] | null) ?? null,
                   }}
                 />
               </CardContent>
@@ -301,9 +330,24 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                 leadPhone={(lead.phone as string | null) ?? null}
                 claimable={canEdit && !lead.assigned_to}
                 aiEnabled={aiEnabled}
+                googleEnabled={googleEnabled}
+                projects={(activeProjects ?? []) as Array<{ id: string; name: string }>}
+                meetMembers={meetMembers}
+                createTaskAction={createTask}
               />
             </CardContent>
           </Card>
+
+          {reminders.length > 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Próximos avisos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <RemindersSection reminders={reminders} />
+              </CardContent>
+            </Card>
+          ) : null}
         </div>
       </div>
     </div>

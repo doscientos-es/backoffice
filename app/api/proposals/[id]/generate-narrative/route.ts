@@ -125,7 +125,7 @@ Genera 3 pares problema→solución siguiendo el formato indicado.`;
       user: userPrompt,
       schema: ResultSchema,
       temperature: 0.5,
-      maxOutputTokens: 1800,
+      maxOutputTokens: 1000,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "AI call failed";

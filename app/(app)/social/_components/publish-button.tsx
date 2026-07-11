@@ -5,7 +5,14 @@ import { cn } from "@/lib/utils";
 import { CheckCircle, Send, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { sileo } from "sileo";
 import { publishPost } from "../actions";
+
+const PLATFORM_LABEL: Record<string, string> = {
+  instagram: "Instagram",
+  facebook: "Facebook",
+  linkedin: "LinkedIn",
+};
 
 type Phase = "idle" | "loading" | "success" | "error";
 
@@ -48,6 +55,24 @@ export function PublishButton({
       setError(res.error);
       return;
     }
+
+    // Show per-network toasts so the user knows exactly what happened.
+    const failed = res.targets.filter((t) => !t.ok);
+    const succeeded = res.targets.filter((t) => t.ok);
+    for (const t of failed) {
+      sileo.error({
+        title: `${PLATFORM_LABEL[t.platform] ?? t.platform}: publicación fallida`,
+        description: t.error ?? "Error desconocido",
+      });
+    }
+    if (succeeded.length > 0 && failed.length === 0) {
+      sileo.success({ title: "Publicado correctamente en todas las redes" });
+    } else if (succeeded.length > 0) {
+      sileo.success({
+        title: `Publicado en ${succeeded.map((t) => PLATFORM_LABEL[t.platform] ?? t.platform).join(", ")}`,
+      });
+    }
+
     setPhase("success");
     router.refresh();
     setTimeout(() => setPhase("idle"), 2500);

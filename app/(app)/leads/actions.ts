@@ -557,6 +557,7 @@ export const scheduleLeadMeeting = defineAction<
       subject: data.title,
       body: data.description ?? null,
       performed_by: user.id,
+      project_id: data.projectId ?? null,
       payload: {
         calendar_event_id: event.id,
         calendar_html_link: event.htmlLink,

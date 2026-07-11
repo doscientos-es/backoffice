@@ -8,7 +8,14 @@
  */
 import type { MediaItem, PlatformComment } from "@/lib/social/core";
 import { PublishError } from "@/lib/social/core";
-import { authorUrn, restGet, restPostForId, restPostJson, uploadBinary } from "./client";
+import {
+  authorUrn,
+  restDelete,
+  restGet,
+  restPostForId,
+  restPostJson,
+  uploadBinary,
+} from "./client";
 
 /** Standard MAIN_FEED distribution block shared by every post shape. */
 function distribution() {
@@ -62,7 +69,11 @@ export async function uploadVideo(item: MediaItem): Promise<string> {
 }
 
 /** Publish a post carrying a single image or video by its media URN. */
-export function createMediaPost(commentary: string, mediaUrn: string, altText: string): Promise<string> {
+export function createMediaPost(
+  commentary: string,
+  mediaUrn: string,
+  altText: string,
+): Promise<string> {
   return restPostForId("posts", {
     ...basePost(commentary),
     content: { media: { id: mediaUrn, altText } },
@@ -111,4 +122,10 @@ export async function replyToComment(shareUrn: string, message: string): Promise
     actor: authorUrn(),
     message: { text: message },
   });
+}
+
+/** Delete a published LinkedIn post by its share URN. */
+export async function deletePost(shareUrn: string): Promise<void> {
+  // LinkedIn REST: DELETE /posts/{urlEncodedShareUrn}
+  await restDelete(`posts/${encodeURIComponent(shareUrn)}`);
 }

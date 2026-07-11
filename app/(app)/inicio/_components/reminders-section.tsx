@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import type { ReminderRow } from "@/lib/dashboard/types";
 import { useOptimisticRemoval } from "@/lib/hooks/use-optimistic-removal";
 import { relativeTime } from "@/lib/utils";
-import Link from "next/link";
 import { ReminderCompleteButton } from "./reminder-complete-button";
 
 /**
@@ -22,9 +21,7 @@ export function RemindersSection({ reminders }: { reminders: ReminderRow[] }) {
         const overdue = new Date(r.remind_at) < new Date();
         return (
           <li key={r.id} className="flex items-center justify-between gap-2">
-            <Link href={`/reminders/${r.id}`} className="truncate text-sm hover:underline">
-              {r.title}
-            </Link>
+            <span className="truncate text-sm">{r.title}</span>
             <div className="flex shrink-0 items-center gap-1.5">
               <Badge variant={overdue ? "danger" : "info"}>{relativeTime(r.remind_at)}</Badge>
               <ReminderCompleteButton

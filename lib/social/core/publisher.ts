@@ -40,6 +40,9 @@ export interface Publisher {
 
   /** Reply to a comment by its remote id. */
   replyToComment?(remoteCommentId: string, message: string): Promise<void>;
+
+  /** Delete a previously published post/media from the network. */
+  deletePost?(remoteId: string): Promise<void>;
 }
 
 /** Type guard: does this Publisher expose insight fetching? */
@@ -61,4 +64,11 @@ export function canReply(
   p: Publisher,
 ): p is Publisher & Required<Pick<Publisher, "replyToComment">> {
   return typeof p.replyToComment === "function";
+}
+
+/** Type guard: can this Publisher delete a published post from the network? */
+export function canDeleteRemote(
+  p: Publisher,
+): p is Publisher & Required<Pick<Publisher, "deletePost">> {
+  return typeof p.deletePost === "function";
 }

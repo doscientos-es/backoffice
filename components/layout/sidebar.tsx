@@ -13,6 +13,7 @@ import {
   Archive,
   BarChart3,
   Bell,
+  CalendarDays,
   CheckSquare,
   ChevronDown,
   FileSignature,
@@ -46,6 +47,8 @@ type NavGroup = {
   /** Etiqueta de sección. undefined = sin cabecera (p.ej. Inicio). */
   label?: string;
   items: NavItem[];
+  /** Si false, el grupo empieza colapsado (a menos que haya un item activo). Default: true. */
+  defaultOpen?: boolean;
 };
 
 const ADMIN_ROLES: MemberRole[] = ["owner", "admin"];
@@ -56,7 +59,10 @@ const ADMIN_ROLES: MemberRole[] = ["owner", "admin"];
  */
 const NAV_GROUPS: NavGroup[] = [
   {
-    items: [{ href: "/inicio", label: "Inicio", icon: Home }],
+    items: [
+      { href: "/inicio", label: "Inicio", icon: Home },
+      { href: "/calendar", label: "Agenda", icon: CalendarDays },
+    ],
   },
   {
     label: "Ventas",
@@ -76,6 +82,7 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "Finanzas",
+    defaultOpen: false,
     items: [
       { href: "/invoices", label: "Facturas", icon: Receipt, allowedRoles: ADMIN_ROLES },
       { href: "/subscriptions", label: "Suscripciones", icon: Repeat, allowedRoles: ADMIN_ROLES },
@@ -90,30 +97,22 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "Growth",
+    defaultOpen: false,
     items: [
-      // "Anuncios" → "Publicidad" para evitar colisión con "Avisos/Recordatorios"
       { href: "/marketing", label: "Publicidad", icon: Megaphone, allowedRoles: ADMIN_ROLES },
       { href: "/social", label: "Social", icon: Share2, allowedRoles: ADMIN_ROLES },
     ],
   },
   {
     label: "Empresa",
+    defaultOpen: false,
     items: [
+      { href: "/reminders", label: "Recordatorios", icon: Bell },
       { href: "/internal-docs", label: "Docs internos", icon: Archive },
+      { href: "/vault", label: "Bóveda", icon: KeyRound, allowedRoles: ADMIN_ROLES },
       { href: "/settings", label: "Ajustes", icon: Settings },
     ],
   },
-];
-
-/**
- * Sección "Más" — herramientas de uso poco frecuente.
- * "Avisos" → "Recordatorios" elimina la colisión con "Publicidad" (Anuncios).
- * "Documentos" (browser de adjuntos genérico) se ha retirado: los adjuntos
- * son accesibles desde la entidad a la que pertenecen (proyecto, cliente, etc.).
- */
-const NAV_MORE: NavItem[] = [
-  { href: "/vault", label: "Bóveda", icon: KeyRound, allowedRoles: ADMIN_ROLES },
-  { href: "/reminders", label: "Recordatorios", icon: Bell },
 ];
 
 function NavLink({
@@ -153,6 +152,54 @@ function NavLink({
   );
 }
 
+function NavSection({
+  group,
+  isActive,
+}: {
+  group: NavGroup & { items: NavItem[] };
+  isActive: (href: string) => boolean;
+}) {
+  const hasActive = group.items.some((i) => isActive(i.href));
+  const fallback = group.defaultOpen ?? true;
+  const [open, setOpen] = useState(() => {
+    if (typeof window === "undefined") return fallback;
+    const stored = localStorage.getItem(`nav-section-${group.label}`);
+    if (hasActive) return true;
+    return stored === null ? fallback : stored === "1";
+  });
+
+  function toggle() {
+    const next = !open;
+    setOpen(next);
+    localStorage.setItem(`nav-section-${group.label}`, next ? "1" : "0");
+  }
+
+  return (
+    <div className="flex flex-col gap-0.5">
+      <button
+        type="button"
+        onClick={toggle}
+        aria-expanded={open}
+        className="group flex w-full items-center justify-between rounded-md px-2.5 py-1 transition-colors hover:bg-secondary/40"
+      >
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 select-none group-hover:text-muted-foreground transition-colors">
+          {group.label}
+        </span>
+        <ChevronDown
+          className={cn(
+            "h-3 w-3 text-muted-foreground/40 transition-transform group-hover:text-muted-foreground",
+            open ? "rotate-0" : "-rotate-90",
+          )}
+        />
+      </button>
+      {open &&
+        group.items.map(({ href, label, icon }) => (
+          <NavLink key={href} href={href} label={label} icon={icon} active={isActive(href)} />
+        ))}
+    </div>
+  );
+}
+
 export function Sidebar({ user, verifactuMode }: { user: CurrentUser; verifactuMode: string }) {
   const pathname = usePathname();
 
@@ -160,15 +207,6 @@ export function Sidebar({ user, verifactuMode }: { user: CurrentUser; verifactuM
     ...g,
     items: g.items.filter((item) => !item.allowedRoles || item.allowedRoles.includes(user.role)),
   })).filter((g) => g.items.length > 0);
-
-  const visibleMore = NAV_MORE.filter(
-    (item) => !item.allowedRoles || item.allowedRoles.includes(user.role),
-  );
-
-  const hasMoreActive = visibleMore.some(
-    ({ href }) => pathname === href || pathname.startsWith(`${href}/`),
-  );
-  const [moreOpen, setMoreOpen] = useState(hasMoreActive);
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
@@ -191,55 +229,20 @@ export function Sidebar({ user, verifactuMode }: { user: CurrentUser; verifactuM
         aria-label="Navegación principal"
       >
         {visibleGroups.map((group, gi) => (
-          <div
-            key={group.label ?? "__home"}
-            className={cn("flex flex-col gap-0.5", gi > 0 && "mt-3")}
-          >
-            {group.label && (
-              <p className="px-2.5 pb-0.5 pt-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 select-none">
-                {group.label}
-              </p>
+          <div key={group.label ?? "__home"} className={cn(gi > 0 && "mt-3")}>
+            {group.label ? (
+              <NavSection group={group} isActive={isActive} />
+            ) : (
+              <div className="flex flex-col gap-0.5">
+                {group.items.map(({ href, label, icon }) => (
+                  <NavLink key={href} href={href} label={label} icon={icon} active={isActive(href)} />
+                ))}
+              </div>
             )}
-            {group.items.map(({ href, label, icon }) => (
-              <NavLink key={href} href={href} label={label} icon={icon} active={isActive(href)} />
-            ))}
           </div>
         ))}
 
-        {/* Herramientas de uso poco frecuente */}
-        {visibleMore.length > 0 && (
-          <div className="mt-3 flex flex-col gap-0.5">
-            <button
-              type="button"
-              onClick={() => setMoreOpen((v) => !v)}
-              aria-expanded={moreOpen}
-              className={cn(
-                "group relative flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
-                "text-muted-foreground hover:bg-secondary/60 hover:text-foreground",
-                hasMoreActive && !moreOpen && "text-foreground",
-              )}
-            >
-              <ChevronDown
-                className={cn(
-                  "h-4 w-4 shrink-0 transition-transform",
-                  moreOpen ? "rotate-0" : "-rotate-90",
-                )}
-              />
-              <span className="truncate">Más</span>
-            </button>
-            {moreOpen &&
-              visibleMore.map(({ href, label, icon }) => (
-                <NavLink
-                  key={href}
-                  href={href}
-                  label={label}
-                  icon={icon}
-                  active={isActive(href)}
-                  indented
-                />
-              ))}
-          </div>
-        )}
+
       </nav>
 
       <footer className="flex flex-col border-t border-border p-2 gap-2">

@@ -165,9 +165,26 @@ describe("mapMetaLeadgenToIntake", () => {
     expect(out.estimatedValue).toBeNull();
   });
 
-  it("returns null notes when no ¿…? fields present", () => {
+  it("returns null notes when no custom form fields are present", () => {
     const out = mapMetaLeadgenToIntake(base);
     expect(out.notes).toBeNull();
+  });
+
+  it("prettifies snake_case field IDs and values into readable labels", () => {
+    const out = mapMetaLeadgenToIntake({
+      ...base,
+      field_data: [
+        { name: "full_name", values: ["Test"] },
+        { name: "tamaño_de_empresa", values: ["10-50_empleados"] },
+        { name: "qué_solución_necesitas_desarrollar", values: ["software_a_medida"] },
+        { name: "cuando_necesitarías_incorporar_la_solución", values: ["lo_antes_posible"] },
+      ],
+    });
+    expect(out.companySize).toBe("10-50 empleados");
+    expect(out.solutionType).toBe("Software a medida");
+    expect(out.urgency).toBe("Lo antes posible");
+    expect(out.notes).toContain("Tamaño de empresa: 10-50 empleados");
+    expect(out.notes).toContain("Lo antes posible");
   });
 
   it("extracts qualification fields using classifyFormAnswers keywords", () => {

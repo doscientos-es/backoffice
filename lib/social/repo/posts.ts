@@ -19,6 +19,7 @@ import { deriveMediaKind } from "@/lib/social/core";
 import type { CreatePostInput, PostListItem, TargetView } from "@/lib/social/types";
 import { notDeleted } from "@/lib/supabase/filters";
 import { createServerClient } from "@/lib/supabase/server";
+import { getInsightsByTarget } from "./insights";
 
 const log = scopedLogger("social-repo-posts");
 
@@ -68,7 +69,10 @@ function mapTarget(row: TargetRow): TargetView {
   };
 }
 
-function mapPost(row: PostRow): PostListItem {
+function mapPost(
+  row: PostRow,
+  metrics: { likes: number; comments: number } = { likes: 0, comments: 0 },
+): PostListItem {
   return {
     id: row.id,
     caption: row.caption,
@@ -79,6 +83,7 @@ function mapPost(row: PostRow): PostListItem {
     publishedAt: row.published_at,
     createdAt: row.created_at,
     targets: (row.social_post_targets ?? []).map(mapTarget),
+    metrics,
   };
 }
 
@@ -131,7 +136,26 @@ export async function listPosts(): Promise<PostListItem[]> {
     log.error({ err: error.message }, "list_posts_failed");
     return [];
   }
-  return (data as unknown as PostRow[]).map(mapPost);
+  const rows = data as unknown as PostRow[];
+
+  // Aggregate engagement per post from the already-synced insights snapshots.
+  // One batched read keyed by target id — no live calls to the social APIs.
+  const targetIds = rows.flatMap((r) => (r.social_post_targets ?? []).map((t) => t.id));
+  const insights = await getInsightsByTarget(targetIds);
+  return rows.map((row) => {
+    const metrics = (row.social_post_targets ?? []).reduce(
+      (acc, t) => {
+        const ins = insights.get(t.id);
+        if (ins) {
+          acc.likes += ins.likes;
+          acc.comments += ins.comments;
+        }
+        return acc;
+      },
+      { likes: 0, comments: 0 },
+    );
+    return mapPost(row, metrics);
+  });
 }
 
 /** Fetch one post with targets, or null. */
@@ -182,11 +206,51 @@ export async function applyFanOut(postId: string, result: FanOutResult): Promise
     .eq("id", postId);
 }
 
+/** Soft-delete a post (sets `deleted_at`). */
+export async function deletePost(postId: string): Promise<void> {
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("social_posts")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", postId);
+  if (error) throw new Error(`No se pudo eliminar el post: ${error.message}`);
+}
+
+/** Restore a soft-deleted post (clears `deleted_at`). */
+export async function restorePost(postId: string): Promise<void> {
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("social_posts")
+    .update({ deleted_at: null })
+    .eq("id", postId);
+  if (error) throw new Error(`No se pudo restaurar el post: ${error.message}`);
+}
+
 /** A published target with a remote id, ready for insight/comment sync. */
 export interface PublishedTarget {
   id: string;
   platform: SocialPlatform;
   remoteId: string;
+}
+
+/** Published targets for a specific post (used for remote deletion fan-out). */
+export async function getPublishedTargetsForPost(postId: string): Promise<PublishedTarget[]> {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("social_post_targets")
+    .select("id, platform, remote_id")
+    .eq("post_id", postId)
+    .eq("status", "published")
+    .not("remote_id", "is", null);
+  if (error) {
+    log.error({ err: error.message, postId }, "get_published_targets_for_post_failed");
+    return [];
+  }
+  return (data as { id: string; platform: string; remote_id: string }[]).map((r) => ({
+    id: r.id,
+    platform: r.platform as SocialPlatform,
+    remoteId: r.remote_id,
+  }));
 }
 
 /** Every target that published successfully and carries a remote id. */

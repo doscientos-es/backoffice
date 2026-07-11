@@ -1,9 +1,10 @@
 import { StatusBadge } from "@/components/ui/status-badge";
-import { SOCIAL_POST_STATUS, SOCIAL_TARGET_STATUS } from "@/lib/status";
 import type { PostListItem } from "@/lib/social/types";
+import { SOCIAL_POST_STATUS, SOCIAL_TARGET_STATUS } from "@/lib/status";
 import { cn, relativeTime } from "@/lib/utils";
-import { CalendarClock, MessageSquareText } from "lucide-react";
+import { CalendarClock, Heart, MessageCircle, MessageSquareText } from "lucide-react";
 import Link from "next/link";
+import { DeletePostButton } from "./delete-post-button";
 import { MediaPreview } from "./media-thumb";
 import { PlatformIcon } from "./platform";
 import { PublishButton } from "./publish-button";
@@ -21,15 +22,12 @@ export function PostCard({ post }: { post: PostListItem }) {
     post.status === "partially_failed";
   const isRetry = post.status === "failed" || post.status === "partially_failed";
   const caption = post.caption.trim() || "Sin texto";
+  const showMetrics = post.status === "published" || post.status === "partially_failed";
 
   return (
     <div className="group flex flex-col gap-3 rounded-xl border border-border bg-card p-3 transition-all hover:border-primary/30 hover:shadow-md">
       <div className="flex gap-3">
-        <Link
-          href={`/social/${post.id}`}
-          className="shrink-0"
-          aria-label="Ver detalle del post"
-        >
+        <Link href={`/social/${post.id}`} className="shrink-0" aria-label="Ver detalle del post">
           <MediaPreview media={post.media} className="size-20" />
         </Link>
 
@@ -41,7 +39,10 @@ export function PostCard({ post }: { post: PostListItem }) {
             >
               {caption}
             </Link>
-            <StatusBadge meta={SOCIAL_POST_STATUS} value={post.status} />
+            <div className="flex shrink-0 items-center gap-1">
+              <StatusBadge meta={SOCIAL_POST_STATUS} value={post.status} />
+              <DeletePostButton postId={post.id} />
+            </div>
           </div>
 
           {/* Per-target status pills */}
@@ -76,6 +77,18 @@ export function PostCard({ post }: { post: PostListItem }) {
               {relativeTime(post.scheduledAt)}
             </span>
           )}
+          {showMetrics && (
+            <span className="inline-flex items-center gap-2" title="Interacción sumada de todas las redes">
+              <span className="inline-flex items-center gap-1">
+                <Heart className="size-3" />
+                {post.metrics.likes}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <MessageCircle className="size-3" />
+                {post.metrics.comments}
+              </span>
+            </span>
+          )}
           <Link
             href={`/social/${post.id}`}
             className="inline-flex items-center gap-1 hover:text-foreground"
@@ -85,7 +98,11 @@ export function PostCard({ post }: { post: PostListItem }) {
           </Link>
         </div>
         {canPublish && (
-          <PublishButton postId={post.id} retry={isRetry} label={isRetry ? undefined : "Publicar"} />
+          <PublishButton
+            postId={post.id}
+            retry={isRetry}
+            label={isRetry ? undefined : "Publicar"}
+          />
         )}
       </div>
     </div>

@@ -37,6 +37,8 @@ export interface PostListItem {
   publishedAt: string | null;
   createdAt: string;
   targets: TargetView[];
+  /** Engagement summed across every target, from the latest insights sync. */
+  metrics: { likes: number; comments: number };
 }
 
 /** Insights snapshot as stored per target. */

@@ -2,6 +2,8 @@
  * Shared types and constants for the clients domain.
  */
 
+import type { ReminderRow } from "@/lib/dashboard/types";
+
 export const CLIENT_LIST_PAGE_SIZE = 25;
 export const CLIENT_PROJECTS_LIMIT = 20;
 export const CLIENT_RELATED_LIMIT = 10;
@@ -92,4 +94,6 @@ export type ClientDetailResult = {
   projects: ClientProjectItem[];
   proposals: ClientProposalItem[];
   invoices: ClientInvoiceItem[];
+  /** Pending reminders scheduled against this client, soonest first. */
+  reminders: ReminderRow[];
 } | null;

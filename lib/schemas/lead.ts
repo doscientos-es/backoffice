@@ -161,5 +161,7 @@ export const ScheduleLeadMeetingInput = z.object({
   attendeeEmails: z.array(z.string().email()).max(20).optional(),
   /** Attach a Google Meet link. Default true. */
   withMeet: z.boolean().default(true),
+  /** Optional project this meeting is linked to. */
+  projectId: z.string().uuid().optional(),
 });
 export type ScheduleLeadMeetingInputType = z.infer<typeof ScheduleLeadMeetingInput>;

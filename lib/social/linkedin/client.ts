@@ -144,13 +144,30 @@ export async function restPostJson<T>(
 }
 
 /** GET a REST resource as JSON. */
-export async function restGet<T>(resource: string, params: Record<string, string> = {}): Promise<T> {
+export async function restGet<T>(
+  resource: string,
+  params: Record<string, string> = {},
+): Promise<T> {
   const url = new URL(`${REST_BASE}/${resource}`);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
-  const res = await requestWithRetry(url.toString(), { method: "GET", headers: versionedHeaders() });
+  const res = await requestWithRetry(url.toString(), {
+    method: "GET",
+    headers: versionedHeaders(),
+  });
   await ensureOk(res);
   const text = await res.text();
   return (text ? JSON.parse(text) : {}) as T;
+}
+
+/** DELETE a REST resource (no body expected). */
+export async function restDelete(resource: string): Promise<void> {
+  const url = new URL(`${REST_BASE}/${resource}`);
+  const res = await requestWithRetry(url.toString(), {
+    method: "DELETE",
+    headers: versionedHeaders(),
+  });
+  // 204 No Content is success for DELETE; ensureOk also treats 2xx as ok.
+  await ensureOk(res);
 }
 
 /** Stream binary bytes from a public URL to a LinkedIn upload URL (PUT). */

@@ -52,7 +52,7 @@ export const ServerSchema = PublicSchema.extend({
   VERIFACTU_SOFTWARE_ID: z.string().max(2).default("D1"),
   VERIFACTU_SOFTWARE_VERSION: z.string().default("1.0.0"),
   VERIFACTU_INSTALLATION_NUMBER: z.string().default("00000001"),
-  // Generic lead-intake webhook (Recurrev / GHL / landing forms)
+  // Generic lead-intake webhook (landing forms and future integrations)
   LEAD_INTAKE_TOKEN: z.string().optional().default(""),
   // Comma-separated origins allowed to POST the public landing contact form.
   // Use "*" only for local development.

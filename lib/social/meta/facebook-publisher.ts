@@ -18,6 +18,7 @@ import type {
 } from "@/lib/social/core";
 import { PublishError } from "@/lib/social/core";
 import {
+  deletePost,
   fbPageId,
   getPermalink,
   getPostComments,
@@ -86,5 +87,9 @@ export class FacebookPublisher implements Publisher {
 
   replyToComment(remoteCommentId: string, message: string): Promise<void> {
     return replyToComment(remoteCommentId, message);
+  }
+
+  deletePost(remoteId: string): Promise<void> {
+    return deletePost(remoteId);
   }
 }

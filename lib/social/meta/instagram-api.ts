@@ -8,7 +8,7 @@
 import { serverEnv } from "@/lib/env";
 import { PublishError } from "@/lib/social/core";
 import type { MediaItem, PlatformComment, PostInsights } from "@/lib/social/core";
-import { graphGet, graphGetList, graphPost } from "./graph-client";
+import { graphDelete, graphGet, graphGetList, graphPost } from "./graph-client";
 
 /** IG Business account id (ig user id). Empty when unset. */
 export function igUserId(): string {
@@ -43,7 +43,10 @@ export function createCarouselChild(item: MediaItem): Promise<ContainerRef> {
 }
 
 /** Wrap N child ids into a CAROUSEL parent container. */
-export function createCarouselContainer(childIds: string[], caption: string): Promise<ContainerRef> {
+export function createCarouselContainer(
+  childIds: string[],
+  caption: string,
+): Promise<ContainerRef> {
   return graphPost<ContainerRef>(`${igUserId()}/media`, {
     media_type: "CAROUSEL",
     children: childIds.join(","),
@@ -151,4 +154,9 @@ export async function getMediaComments(mediaId: string): Promise<PlatformComment
 /** Reply to a comment on IG. */
 export async function replyToComment(commentId: string, message: string): Promise<void> {
   await graphPost(`${commentId}/replies`, { message });
+}
+
+/** Delete a published IG media (photo, reel, carousel). */
+export async function deleteMedia(mediaId: string): Promise<void> {
+  await graphDelete(mediaId);
 }

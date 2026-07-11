@@ -59,7 +59,6 @@ export default async function RemindersPage({
       rows={
         data?.map((r) => ({
           id: r.id as string,
-          href: `/reminders/${r.id}`,
           cells: [
             r.title as string,
             formatDateTime(r.remind_at as string),

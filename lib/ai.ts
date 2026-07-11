@@ -24,8 +24,8 @@ const log = scopedLogger("ai");
  */
 export const AI_MODELS = {
   default: "gemini-2.5-flash",
-  summarizer: "gemini-2.5-flash",
-  drafter: "gemini-2.5-flash",
+  summarizer: "gemini-2.5-flash-lite",
+  drafter: "gemini-2.5-flash-lite",
 } as const;
 
 /** Timeout máximo por llamada — 30s. */
@@ -123,6 +123,9 @@ export async function runAIChat(input: RunAIChatInput): Promise<string> {
       temperature: input.temperature ?? 0.3,
       ...(input.maxOutputTokens ? { maxOutputTokens: input.maxOutputTokens } : {}),
       abortSignal: AbortSignal.timeout(AI_TIMEOUT_MS),
+      providerOptions: {
+        vertex: { thinkingConfig: { thinkingBudget: 0 } },
+      },
     });
 
     logUsage(input.model, usage, Date.now() - startedAt);
@@ -176,6 +179,12 @@ export async function runAIObject<S extends z.ZodType>(
       temperature: input.temperature ?? 0.3,
       ...(input.maxOutputTokens ? { maxOutputTokens: input.maxOutputTokens } : {}),
       abortSignal: AbortSignal.timeout(AI_TIMEOUT_MS),
+      // Gemini 2.5 Flash tiene thinking habilitado por defecto. Con Output.object()
+      // el thinking budget debe ser 0: si el modelo genera solo tokens de razonamiento
+      // sin output estructurado el SDK lanza "No output generated."
+      providerOptions: {
+        vertex: { thinkingConfig: { thinkingBudget: 0 } },
+      },
     });
 
     logUsage(input.model, usage, Date.now() - startedAt);

@@ -8,6 +8,7 @@
  */
 import { scopedLogger } from "@/lib/logger";
 import {
+  canDeleteRemote,
   canFetchComments,
   canFetchInsights,
   canReply,
@@ -17,6 +18,7 @@ import {
 import type { CaptionByPlatform, FanOutResult, SocialPlatform } from "@/lib/social/core";
 import { socialRegistry } from "@/lib/social/registry";
 import * as repo from "@/lib/social/repo";
+import { removeMedia } from "@/lib/social/storage";
 import type { PostDetail, TargetWithInsights } from "@/lib/social/types";
 
 const log = scopedLogger("social-service");
@@ -109,6 +111,42 @@ export async function syncComments(): Promise<{ synced: number }> {
     }
   }
   return { synced };
+}
+
+/**
+ * Delete a post from every network where it was published successfully.
+ * Best-effort: failures on one target are logged but never block the local
+ * soft-delete or the other targets.
+ */
+export async function deletePostFromNetworks(postId: string): Promise<void> {
+  const registry = socialRegistry();
+  const targets = await repo.getPublishedTargetsForPost(postId);
+  await Promise.allSettled(
+    targets.map(async (target) => {
+      if (!registry.isAvailable(target.platform)) return;
+      const publisher = registry.get(target.platform);
+      if (!canDeleteRemote(publisher)) return;
+      try {
+        await publisher.deletePost(target.remoteId);
+        log.info({ postId, platform: target.platform }, "remote_post_deleted");
+      } catch (err) {
+        log.warn({ postId, platform: target.platform, err: String(err) }, "remote_delete_failed");
+      }
+    }),
+  );
+}
+
+/**
+ * Soft-delete a post locally and remove its Supabase media files.
+ * Does NOT touch the live posts on any social network.
+ */
+export async function deletePostLocalWithMedia(postId: string): Promise<void> {
+  const post = await repo.getPost(postId);
+  await repo.deletePost(postId);
+  if (post) {
+    const paths = post.media.map((m) => m.storagePath).filter(Boolean);
+    if (paths.length) removeMedia(paths).catch(() => {});
+  }
 }
 
 /** Reply to a comment via its Publisher, then flag it replied locally. */

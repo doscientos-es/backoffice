@@ -11,17 +11,19 @@ import type {
   ComposedPost,
   PlatformComment,
   PostInsights,
-  Publisher,
   PublishOutcome,
   PublishSupport,
+  Publisher,
   SocialPlatform,
 } from "@/lib/social/core";
 import { PublishError } from "@/lib/social/core";
+import { metaPageToken } from "./graph-client";
 import {
   createCarouselChild,
   createCarouselContainer,
   createPhotoContainer,
   createVideoContainer,
+  deleteMedia,
   getMediaComments,
   getMediaInsights,
   getPermalink,
@@ -30,7 +32,6 @@ import {
   replyToComment,
   waitForContainer,
 } from "./instagram-api";
-import { metaPageToken } from "./graph-client";
 
 const log = scopedLogger("social-instagram");
 
@@ -50,7 +51,10 @@ export class InstagramPublisher implements Publisher {
     }
     if (post.mediaKind === "carousel") {
       if (post.media.length < MIN_CAROUSEL || post.media.length > MAX_CAROUSEL) {
-        return { ok: false, reason: `El carrusel admite entre ${MIN_CAROUSEL} y ${MAX_CAROUSEL} elementos.` };
+        return {
+          ok: false,
+          reason: `El carrusel admite entre ${MIN_CAROUSEL} y ${MAX_CAROUSEL} elementos.`,
+        };
       }
     }
     return { ok: true };
@@ -70,6 +74,9 @@ export class InstagramPublisher implements Publisher {
         const item = post.media[0];
         if (!item) throw new PublishError("instagram", "Falta la imagen.");
         const container = await createPhotoContainer(item.publicUrl, post.caption);
+        // Photos are usually ready in <2 s but Instagram occasionally needs a moment
+        // even for images — skipping this poll causes "Media ID is not available".
+        await waitForContainer(container.id, { attempts: 15, intervalMs: 1_000 });
         return container.id;
       }
       case "video": {
@@ -81,11 +88,10 @@ export class InstagramPublisher implements Publisher {
       }
       case "carousel": {
         const children = await Promise.all(post.media.map((m) => createCarouselChild(m)));
-        // Video children still need processing before the parent can publish.
+        // All children (image and video) need to reach FINISHED before the parent
+        // can be created and published — poll all of them concurrently.
         await Promise.all(
-          post.media.map((m, i) =>
-            m.type === "video" ? waitForContainer(children[i]!.id) : Promise.resolve(),
-          ),
+          children.map((c) => waitForContainer(c.id, { attempts: 15, intervalMs: 1_000 })),
         );
         const parent = await createCarouselContainer(
           children.map((c) => c.id),
@@ -108,5 +114,9 @@ export class InstagramPublisher implements Publisher {
 
   replyToComment(remoteCommentId: string, message: string): Promise<void> {
     return replyToComment(remoteCommentId, message);
+  }
+
+  deletePost(remoteId: string): Promise<void> {
+    return deleteMedia(remoteId);
   }
 }
