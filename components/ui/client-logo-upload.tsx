@@ -2,9 +2,9 @@
 
 import { getBrowserClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
-import { ImagePlus, Loader2, X } from "lucide-react";
+import { Globe, ImagePlus, Loader2, Search, X } from "lucide-react";
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const BUCKET = "client-logos";
 const MAX_PX = 480;
@@ -46,7 +46,22 @@ export function ClientLogoUpload({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string>(defaultLogoUrl ?? "");
+  const [dragging, setDragging] = useState(false);
+  const [urlValue, setUrlValue] = useState("");
+  const [domainValue, setDomainValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const hiddenInputRef = useRef<HTMLInputElement>(null);
+
+  // Notify the parent form of changes so useFormDirty detects the logo update.
+  // React-controlled hidden inputs don't fire native DOM events when their value
+  // changes, so we dispatch one manually after every logoUrl state transition.
+  useEffect(() => {
+    // logoUrl is used here as the trigger; we also reference it to satisfy the
+    // exhaustive-deps rule even though the dispatched event is what we need.
+    if (logoUrl !== undefined) {
+      hiddenInputRef.current?.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+  }, [logoUrl]);
 
   async function handleFile(file: File) {
     setError(null);
@@ -76,58 +91,166 @@ export function ClientLogoUpload({
   function handleRemove() {
     setPreview(null);
     setLogoUrl("");
+    setUrlValue("");
+    setDomainValue("");
     if (inputRef.current) inputRef.current.value = "";
   }
 
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file?.type.startsWith("image/")) handleFile(file);
+  }
+
+  function handleUrlApply() {
+    const url = urlValue.trim();
+    if (!url) return;
+    setPreview(url);
+    setLogoUrl(url);
+    setError(null);
+  }
+
+  async function handleDomainSearch() {
+    const raw = domainValue.trim().replace(/^https?:\/\//, "").split("/")[0];
+    if (!raw) return;
+    const clearbitUrl = `https://logo.clearbit.com/${raw}`;
+    setUploading(true);
+    setError(null);
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const img = new window.Image();
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error("No se encontró logo"));
+        img.src = clearbitUrl;
+      });
+      setPreview(clearbitUrl);
+      setLogoUrl(clearbitUrl);
+      setDomainValue("");
+    } catch {
+      setError(`No se encontró logo para "${raw}". Prueba con el dominio exacto, ej: apple.com`);
+    } finally {
+      setUploading(false);
+    }
+  }
+
   return (
-    <div className="flex items-start gap-4">
+    <div className="flex flex-col gap-3">
       {/* Hidden form field carrying the stored URL */}
-      <input type="hidden" name="logo_url" value={logoUrl} />
+      <input ref={hiddenInputRef} type="hidden" name="logo_url" value={logoUrl} />
 
-      {/* Drop zone / preview */}
-      <button
-        type="button"
-        onClick={() => inputRef.current?.click()}
-        disabled={uploading}
-        className={cn(
-          "relative flex size-20 shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/40 transition-colors hover:border-primary/50 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          uploading && "cursor-wait opacity-60",
-        )}
-        aria-label="Subir logo"
-      >
-        {uploading ? (
-          <Loader2 className="size-5 animate-spin text-muted-foreground" />
-        ) : preview ? (
-          <Image
-            src={preview}
-            alt="Logo"
-            fill
-            className="rounded-xl object-contain p-1"
-            unoptimized
-          />
-        ) : (
-          <ImagePlus className="size-5 text-muted-foreground" />
-        )}
-      </button>
+      <div className="flex items-start gap-4">
+        {/* Drop zone / preview */}
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragging(true);
+          }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={handleDrop}
+          disabled={uploading}
+          className={cn(
+            "relative flex size-20 shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-border transition-colors hover:border-primary/50 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            dragging ? "border-primary bg-primary/5 scale-105" : "bg-muted/40",
+            uploading && "cursor-wait opacity-60",
+          )}
+          aria-label="Subir logo"
+        >
+          {uploading ? (
+            <Loader2 className="size-5 animate-spin text-muted-foreground" />
+          ) : preview ? (
+            <Image
+              src={preview}
+              alt="Logo"
+              fill
+              className="rounded-xl object-contain p-1"
+              unoptimized
+            />
+          ) : (
+            <ImagePlus className="size-5 text-muted-foreground" />
+          )}
+        </button>
 
-      <div className="flex flex-col gap-1.5 pt-1">
-        <p className="text-sm font-medium text-foreground">
-          Logo del cliente{" "}
-          <span className="text-muted-foreground font-normal">(opcional)</span>
-        </p>
-        <p className="text-xs text-muted-foreground">
-          PNG, JPG o WebP · Se redimensiona a 480 px automáticamente.
-        </p>
-        {preview && (
+        <div className="flex flex-col gap-1.5 pt-1">
+          <p className="text-sm font-medium text-foreground">
+            Logo del cliente{" "}
+            <span className="text-muted-foreground font-normal">(opcional)</span>
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Haz clic, arrastra una imagen, pega una URL o busca por dominio.
+          </p>
+          {preview && (
+            <button
+              type="button"
+              onClick={handleRemove}
+              className="flex w-fit items-center gap-1 text-xs text-destructive hover:underline"
+            >
+              <X className="size-3" /> Eliminar logo
+            </button>
+          )}
+          {error && <p className="text-xs text-destructive">{error}</p>}
+        </div>
+      </div>
+
+      {/* Secondary input options */}
+      <div className="flex flex-col gap-2 pl-24">
+        {/* Direct URL input */}
+        <div className="flex gap-1.5">
+          <div className="relative flex-1">
+            <Globe className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="url"
+              placeholder="https://empresa.com/logo.png"
+              value={urlValue}
+              onChange={(e) => setUrlValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleUrlApply();
+                }
+              }}
+              className="h-7 w-full rounded-md border border-input bg-background pl-7 pr-2 text-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            />
+          </div>
           <button
             type="button"
-            onClick={handleRemove}
-            className="flex w-fit items-center gap-1 text-xs text-destructive hover:underline"
+            onClick={handleUrlApply}
+            disabled={!urlValue.trim()}
+            className="h-7 rounded-md border border-input bg-background px-2.5 text-xs font-medium transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
           >
-            <X className="size-3" /> Eliminar logo
+            Usar URL
           </button>
-        )}
-        {error && <p className="text-xs text-destructive">{error}</p>}
+        </div>
+
+        {/* Domain search via Clearbit */}
+        <div className="flex gap-1.5">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="empresa.com · busca el logo automáticamente"
+              value={domainValue}
+              onChange={(e) => setDomainValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  void handleDomainSearch();
+                }
+              }}
+              className="h-7 w-full rounded-md border border-input bg-background pl-7 pr-2 text-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={handleDomainSearch}
+            disabled={!domainValue.trim() || uploading}
+            className="h-7 rounded-md border border-input bg-background px-2.5 text-xs font-medium transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
+          >
+            {uploading ? <Loader2 className="size-3 animate-spin" /> : "Buscar"}
+          </button>
+        </div>
       </div>
 
       <input

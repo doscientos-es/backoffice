@@ -26,15 +26,16 @@ export function DayCell({ day, events, isCurrentMonth, isToday }: DayCellProps) 
   return (
     <div
       ref={setNodeRef}
+      onClick={() => openCreate(isoDate)}
       className={cn(
-        "flex flex-col gap-1 p-1.5 min-h-22.5 transition-colors",
+        "flex flex-col gap-1 p-1.5 min-h-22.5 transition-colors cursor-pointer",
         isOver && "bg-secondary/60",
         !isCurrentMonth && "opacity-40",
       )}
     >
       <button
         type="button"
-        onClick={() => openCreate(isoDate)}
+        onClick={(e) => { e.stopPropagation(); openCreate(isoDate); }}
         aria-label={`Crear evento el ${isoDate}`}
         className={cn(
           "flex h-6 w-6 items-center justify-center self-end rounded-full text-xs font-medium transition-colors",
@@ -68,6 +69,7 @@ function DraggableChip({ event }: { event: CalendarEvent }) {
       ref={setNodeRef}
       {...listeners}
       {...attributes}
+      onClick={(e) => e.stopPropagation()}
       className={cn("touch-none cursor-grab active:cursor-grabbing", isDragging && "opacity-40")}
     >
       <EventChip event={event} />

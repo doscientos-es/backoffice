@@ -1,0 +1,32 @@
+name: SLA check — leads sin contactar
+
+on:
+  schedule:
+    # Cada hora de lunes a viernes, de 8:00 a 20:00 UTC+2 (6:00–18:00 UTC).
+    # GitHub Actions puede retrasarse hasta ~15 min; es suficiente para SLA de 4h.
+    - cron: "0 6-18 * * 1-5"
+  # Permite lanzarlo manualmente desde la pestaña Actions del repo.
+  workflow_dispatch:
+
+jobs:
+  sla-check:
+    name: Comprobar leads sin contactar
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Llamar al endpoint de follow-ups
+        run: |
+          STATUS=$(curl --silent --output /tmp/sla-response.json \
+                        --write-out "%{http_code}" \
+                        --max-time 30 \
+                        -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+                        "${{ secrets.APP_URL }}/api/crm/follow-ups")
+
+          echo "HTTP status: $STATUS"
+          cat /tmp/sla-response.json | python3 -m json.tool || true
+
+          if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 300 ]; then
+            echo "::error::El endpoint devolvió HTTP $STATUS"
+            exit 1
+          fi

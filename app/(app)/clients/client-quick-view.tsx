@@ -44,7 +44,7 @@ function Body({ client }: { client: QuickClient }) {
     <>
       <DrawerHeader className="flex flex-row items-start justify-between gap-2 border-b border-border">
         <div className="flex flex-col gap-1">
-          <DrawerTitle>{(client.label?.trim() || client.name)}</DrawerTitle>
+          <DrawerTitle>{client.label?.trim() || client.name}</DrawerTitle>
           <DrawerDescription className="flex items-center gap-1.5">
             {client.nif && <Badge variant="neutral">{client.nif}</Badge>}
             <span className="text-[11px] tabular-nums">

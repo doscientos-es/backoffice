@@ -1,5 +1,6 @@
 "use client";
 
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { rescheduleEvent } from "@/lib/calendar/actions";
 import {
   ALL_LAYERS,
@@ -197,7 +198,21 @@ export function CalendarGrid({
 
   // Shared dialogs + create button rendered once, shared across all views
   const sharedDialogs = (
-    <>
+    <ErrorBoundary
+      fallback={(err, reset) => (
+        <div className="fixed bottom-4 right-4 z-50 max-w-xs rounded-lg border border-destructive/30 bg-background p-4 shadow-lg">
+          <p className="text-sm font-medium text-destructive">Error en el diálogo</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{err.message}</p>
+          <button
+            type="button"
+            onClick={reset}
+            className="mt-2 text-xs underline text-muted-foreground hover:text-foreground"
+          >
+            Reintentar
+          </button>
+        </div>
+      )}
+    >
       <CalendarEventDialog event={selectedEvent} onClose={() => setSelectedEvent(null)} />
       <CalendarCreateDialog
         open={createOpen}
@@ -207,7 +222,7 @@ export function CalendarGrid({
         onClose={() => setCreateOpen(false)}
         onCreated={(ev) => setCreatedEvents((prev) => [...prev, ev])}
       />
-    </>
+    </ErrorBoundary>
   );
 
   if (view === "agenda") {
@@ -338,7 +353,10 @@ export function EventChip({ event }: { event: CalendarEvent }) {
   return (
     <button
       type="button"
-      onClick={() => openDialog(event)}
+      onClick={(e) => {
+        e.stopPropagation();
+        openDialog(event);
+      }}
       className={cn(
         "flex w-full items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium truncate transition-opacity text-left",
         "hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",

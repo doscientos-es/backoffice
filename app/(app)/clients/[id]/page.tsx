@@ -54,7 +54,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                   ]
                     .filter(Boolean)
                     .join(" "),
-                  ...(
+                  ...((
                     [
                       (client.email as string | null) ? `Email: ${client.email as string}` : null,
                       (client.phone as string | null) ? `Tel: ${client.phone as string}` : null,
@@ -68,7 +68,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                         .filter(Boolean)
                         .join(" · "),
                     ]
-                    : [],
+                    : []),
                   (client.contact_person as string | null)
                     ? `Contacto: ${client.contact_person as string}`
                     : null,

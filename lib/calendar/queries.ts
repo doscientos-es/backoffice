@@ -38,15 +38,18 @@ function taskToEvent(row: Record<string, unknown>): CalendarEvent {
     meta: {
       status,
       priority: row.priority as string,
-      projectName: project?.name ?? lead?.name ?? undefined,
+      projectId: project?.id,
+      projectName: project?.name,
+      leadId: lead?.id,
+      leadName: lead?.name,
     },
   };
 }
 
 function reminderToEvent(row: Record<string, unknown>): CalendarEvent {
-  const lead = row.leads as { id: string } | null;
-  const client = row.clients as { id: string } | null;
-  const project = row.projects as { id: string } | null;
+  const lead = row.leads as { id: string; name: string } | null;
+  const client = row.clients as { id: string; name: string } | null;
+  const project = row.projects as { id: string; name: string } | null;
   const creator = row.creator as { id: string; name: string } | null;
   const href = lead
     ? `/leads/${lead.id}`
@@ -68,7 +71,15 @@ function reminderToEvent(row: Record<string, unknown>): CalendarEvent {
     done: false,
     memberId: creator?.id ?? null,
     memberName: creator?.name ?? null,
-    meta: { description: (row.notes as string | null) ?? undefined },
+    meta: {
+      description: (row.notes as string | null) ?? undefined,
+      leadId: lead?.id,
+      leadName: lead?.name,
+      clientId: client?.id,
+      clientName: client?.name,
+      projectId: project?.id,
+      projectName: project?.name,
+    },
   };
 }
 
@@ -197,7 +208,7 @@ function milestoneToEvent(row: Record<string, unknown>): CalendarEvent {
     done: Boolean(row.completed_at),
     memberId: null,
     memberName: null,
-    meta: { projectName: project?.name },
+    meta: { projectId: project?.id, projectName: project?.name },
   };
 }
 
@@ -239,7 +250,7 @@ export async function getCalendarEvents(opts: CalendarFetchOptions): Promise<Cal
       ? supabase
           .from("reminders")
           .select(
-            "id, title, notes, remind_at, leads(id), clients(id), projects(id), creator:team_members!created_by(id,name)",
+            "id, title, notes, remind_at, leads(id,name), clients(id,name), projects(id,name), creator:team_members!created_by(id,name)",
           )
           .gte("remind_at", fromISO)
           .lte("remind_at", toISO)

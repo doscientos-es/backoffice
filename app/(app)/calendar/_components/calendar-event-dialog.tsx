@@ -12,10 +12,12 @@ import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import {
   ArrowUpRight,
+  Briefcase,
   CalendarDays,
   CheckCircle2,
   Circle,
   Clock,
+  Layers,
   MapPin,
   Tag,
   User,
@@ -114,15 +116,57 @@ function EventDialogContent({ event, onClose }: { event: CalendarEvent; onClose:
           </Row>
         )}
 
-        {/* Project / client */}
-        {(event.meta.projectName || event.meta.clientName) && (
-          <Row icon={<span className="size-3.5 text-center text-[10px] leading-none">📁</span>}>
-            <span className="text-foreground">
-              {event.meta.projectName ?? event.meta.clientName}
-              {event.meta.projectName && event.meta.clientName && (
-                <span className="ml-1 text-muted-foreground">· {event.meta.clientName}</span>
-              )}
-            </span>
+        {/* Project */}
+        {event.meta.projectName && (
+          <Row icon={<Layers className="size-3.5" />}>
+            {event.meta.projectId ? (
+              <Link
+                href={`/projects/${event.meta.projectId}`}
+                onClick={onClose}
+                className="text-foreground underline-offset-2 hover:underline"
+              >
+                {event.meta.projectName}
+                <ArrowUpRight className="ml-0.5 inline size-3 opacity-60" />
+              </Link>
+            ) : (
+              <span className="text-foreground">{event.meta.projectName}</span>
+            )}
+          </Row>
+        )}
+
+        {/* Lead */}
+        {event.meta.leadName && (
+          <Row icon={<User className="size-3.5" />}>
+            {event.meta.leadId ? (
+              <Link
+                href={`/leads/${event.meta.leadId}`}
+                onClick={onClose}
+                className="text-foreground underline-offset-2 hover:underline"
+              >
+                {event.meta.leadName}
+                <ArrowUpRight className="ml-0.5 inline size-3 opacity-60" />
+              </Link>
+            ) : (
+              <span className="text-foreground">{event.meta.leadName}</span>
+            )}
+          </Row>
+        )}
+
+        {/* Client */}
+        {event.meta.clientName && !event.meta.leadName && (
+          <Row icon={<Briefcase className="size-3.5" />}>
+            {event.meta.clientId ? (
+              <Link
+                href={`/clients/${event.meta.clientId}`}
+                onClick={onClose}
+                className="text-foreground underline-offset-2 hover:underline"
+              >
+                {event.meta.clientName}
+                <ArrowUpRight className="ml-0.5 inline size-3 opacity-60" />
+              </Link>
+            ) : (
+              <span className="text-foreground">{event.meta.clientName}</span>
+            )}
           </Row>
         )}
 
@@ -155,20 +199,44 @@ function EventDialogContent({ event, onClose }: { event: CalendarEvent; onClose:
         <Button variant="ghost" size="sm" onClick={onClose}>
           Cerrar
         </Button>
-        {event.href && (
-          <Button asChild size="sm" onClick={onClose}>
-            <Link href={event.href}>
-              Abrir página
-              <ArrowUpRight className="ml-1 size-3.5" />
-            </Link>
-          </Button>
-        )}
         {event.meta.meetUrl && (
           <Button asChild size="sm" variant="outline" onClick={onClose}>
             <a href={event.meta.meetUrl} target="_blank" rel="noopener noreferrer">
               Unirse
               <ArrowUpRight className="ml-1 size-3.5" />
             </a>
+          </Button>
+        )}
+        {event.meta.htmlLink && !event.meta.meetUrl && (
+          <Button asChild size="sm" variant="outline" onClick={onClose}>
+            <a href={event.meta.htmlLink} target="_blank" rel="noopener noreferrer">
+              Ver en Google
+              <ArrowUpRight className="ml-1 size-3.5" />
+            </a>
+          </Button>
+        )}
+        {event.meta.leadId && (
+          <Button asChild size="sm" variant="outline" onClick={onClose}>
+            <Link href={`/leads/${event.meta.leadId}`}>
+              Ver lead
+              <ArrowUpRight className="ml-1 size-3.5" />
+            </Link>
+          </Button>
+        )}
+        {event.meta.projectId && (
+          <Button asChild size="sm" onClick={onClose}>
+            <Link href={`/projects/${event.meta.projectId}`}>
+              Ver proyecto
+              <ArrowUpRight className="ml-1 size-3.5" />
+            </Link>
+          </Button>
+        )}
+        {event.href && !event.meta.projectId && !event.meta.leadId && (
+          <Button asChild size="sm" onClick={onClose}>
+            <Link href={event.href}>
+              Abrir
+              <ArrowUpRight className="ml-1 size-3.5" />
+            </Link>
           </Button>
         )}
       </div>

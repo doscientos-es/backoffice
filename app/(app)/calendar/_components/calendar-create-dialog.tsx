@@ -4,15 +4,15 @@ import { scheduleLeadMeeting } from "@/app/(app)/leads/actions";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EntityCombobox } from "@/components/ui/entity-combobox";
+import { EntityMultiCombobox } from "@/components/ui/entity-multi-combobox";
 import { createCalendarEvent } from "@/lib/calendar/actions";
 import type { CalendarEvent } from "@/lib/calendar/types";
 import { cn } from "@/lib/utils";
-import { Bell, CheckSquare, Presentation, Users, Video } from "lucide-react";
+import { Bell, CheckSquare, Presentation, Video } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import type { LeadOption, TeamMember } from "./calendar-grid";
 
 type Kind = "task" | "reminder" | "google_meeting" | "event";
-type MeetingTarget = "lead" | "internal";
 
 type Props = {
   open: boolean;
@@ -82,9 +82,8 @@ export function CalendarCreateDialog({
   const [isPending, startTransition] = useTransition();
 
   // Meeting-specific state
-  const [meetingTarget, setMeetingTarget] = useState<MeetingTarget>("lead");
   const [selectedLeadId, setSelectedLeadId] = useState("");
-  const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
 
   // Reset on open
   useEffect(() => {
@@ -96,9 +95,8 @@ export function CalendarCreateDialog({
       setAssigneeId("");
       setWithMeet(true);
       setLocation("");
-      setMeetingTarget("lead");
       setSelectedLeadId("");
-      setSelectedMemberIds(new Set());
+      setSelectedMemberIds([]);
     }
   }, [open, initialDate, today]);
 
@@ -110,84 +108,87 @@ export function CalendarCreateDialog({
     setError(null);
 
     startTransition(async () => {
-      // ── Lead meeting → scheduleLeadMeeting (logs as interaction) ──────────
-      if (kind === "google_meeting" && meetingTarget === "lead") {
-        if (!selectedLeadId) {
-          setError("Selecciona un lead");
+      try {
+        // Emails of the selected internal members (Google adds the organizer automatically).
+        const memberEmails = teamMembers
+          .filter((m) => selectedMemberIds.includes(m.id) && m.email)
+          .map((m) => m.email as string);
+
+        // ── Meeting with a lead → scheduleLeadMeeting (logs as interaction) ────
+        if (kind === "google_meeting" && selectedLeadId) {
+          const startISO = toISO(date, startTime);
+          const endISO = toISO(date, endTime);
+          const attendeeEmails = [
+            ...(selectedLead?.email ? [selectedLead.email] : []),
+            ...memberEmails,
+          ];
+
+          const res = await scheduleLeadMeeting({
+            leadId: selectedLeadId,
+            start: startISO,
+            end: endISO,
+            title: title.trim(),
+            description: description || undefined,
+            attendeeEmails: attendeeEmails.length > 0 ? attendeeEmails : undefined,
+            withMeet,
+          });
+          if (!res.ok) {
+            setError(res.error);
+            return;
+          }
+
+          onCreated({
+            id: `google_meeting:${res.eventId}`,
+            kind: "google_meeting",
+            title: title.trim(),
+            start: startISO,
+            end: endISO,
+            allDay: false,
+            href: res.htmlLink ?? null,
+            editable: false,
+            done: false,
+            memberId: null,
+            memberName: null,
+            meta: {
+              meetUrl: res.meetUrl ?? undefined,
+              htmlLink: res.htmlLink ?? undefined,
+              description: description || undefined,
+            },
+          });
+          onClose();
           return;
         }
-        const startISO = toISO(date, startTime);
-        const endISO = toISO(date, endTime);
-        const attendeeEmails = selectedLead?.email ? [selectedLead.email] : undefined;
 
-        const res = await scheduleLeadMeeting({
-          leadId: selectedLeadId,
-          start: startISO,
-          end: endISO,
-          title: title.trim(),
+        // ── Internal meeting / task / reminder ───────────────────────────────
+        const attendeeEmails =
+          kind === "google_meeting" && memberEmails.length > 0 ? memberEmails : undefined;
+
+        const res = await createCalendarEvent({
+          kind,
+          title,
+          date,
+          startTime: kind !== "task" ? startTime : undefined,
+          endTime: kind === "google_meeting" || kind === "event" ? endTime : undefined,
           description: description || undefined,
+          assigneeId: kind === "task" && assigneeId ? assigneeId : undefined,
+          withMeet: kind === "google_meeting" ? withMeet : undefined,
           attendeeEmails,
-          withMeet,
+          location: kind === "event" ? location.trim() || undefined : undefined,
+          attendeeMemberIds: kind === "event" ? selectedMemberIds : undefined,
         });
         if (!res.ok) {
           setError(res.error);
           return;
         }
-
-        onCreated({
-          id: `google_meeting:${res.eventId}`,
-          kind: "google_meeting",
-          title: title.trim(),
-          start: startISO,
-          end: endISO,
-          allDay: false,
-          href: res.htmlLink ?? null,
-          editable: false,
-          done: false,
-          memberId: null,
-          memberName: null,
-          meta: {
-            meetUrl: res.meetUrl ?? undefined,
-            htmlLink: res.htmlLink ?? undefined,
-            description: description || undefined,
-          },
-        });
+        onCreated(res.event);
         onClose();
-        return;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Ha ocurrido un error inesperado");
       }
-
-      // ── Internal meeting / task / reminder ───────────────────────────────
-      // Collect attendee emails from selected members (excluding current user — Google adds them automatically)
-      const attendeeEmails =
-        kind === "google_meeting" && meetingTarget === "internal" && selectedMemberIds.size > 0
-          ? teamMembers
-            .filter((m) => selectedMemberIds.has(m.id) && m.email)
-            .map((m) => m.email as string)
-          : undefined;
-
-      const res = await createCalendarEvent({
-        kind,
-        title,
-        date,
-        startTime: kind !== "task" ? startTime : undefined,
-        endTime: kind === "google_meeting" || kind === "event" ? endTime : undefined,
-        description: description || undefined,
-        assigneeId: kind === "task" && assigneeId ? assigneeId : undefined,
-        withMeet: kind === "google_meeting" ? withMeet : undefined,
-        attendeeEmails,
-        location: kind === "event" ? location.trim() || undefined : undefined,
-        attendeeMemberIds: kind === "event" ? Array.from(selectedMemberIds) : undefined,
-      });
-      if (!res.ok) {
-        setError(res.error);
-        return;
-      }
-      onCreated(res.event);
-      onClose();
     });
   }
 
-  const isLeadMeeting = kind === "google_meeting" && meetingTarget === "lead";
+  const hasLead = kind === "google_meeting" && !!selectedLeadId;
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -228,7 +229,7 @@ export function CalendarCreateDialog({
                   ? "¿De qué quieres acordarte?"
                   : kind === "event"
                     ? "Nombre de la charla o evento…"
-                    : isLeadMeeting && selectedLead
+                    : kind === "google_meeting" && selectedLead
                       ? `Reunión con ${selectedLead.name}`
                       : "Asunto de la reunión…"
             }
@@ -310,13 +311,13 @@ export function CalendarCreateDialog({
                   >
                     <input
                       type="checkbox"
-                      checked={selectedMemberIds.has(m.id)}
+                      checked={selectedMemberIds.includes(m.id)}
                       onChange={() =>
-                        setSelectedMemberIds((prev) => {
-                          const next = new Set(prev);
-                          next.has(m.id) ? next.delete(m.id) : next.add(m.id);
-                          return next;
-                        })
+                        setSelectedMemberIds((prev) =>
+                          prev.includes(m.id)
+                            ? prev.filter((x) => x !== m.id)
+                            : [...prev, m.id],
+                        )
                       }
                       className="rounded"
                     />
@@ -327,79 +328,31 @@ export function CalendarCreateDialog({
             </div>
           )}
 
-          {/* Meeting: lead vs internal toggle */}
-          {kind === "google_meeting" && (
-            <div className="flex rounded-md border border-border overflow-hidden text-xs font-medium">
-              <button
-                type="button"
-                onClick={() => setMeetingTarget("lead")}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-1.5 py-1.5 transition-colors",
-                  meetingTarget === "lead"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-secondary",
-                )}
-              >
-                <Video className="size-3.5" />
-                Con un lead
-              </button>
-              <button
-                type="button"
-                onClick={() => setMeetingTarget("internal")}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-1.5 py-1.5 transition-colors border-l border-border",
-                  meetingTarget === "internal"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-secondary",
-                )}
-              >
-                <Users className="size-3.5" />
-                Interna
-              </button>
-            </div>
-          )}
-
-          {/* Internal member selector */}
-          {kind === "google_meeting" && meetingTarget === "internal" && teamMembers.length > 0 && (
+          {/* Meeting: internal participants (multi-select) */}
+          {kind === "google_meeting" && teamMembers.length > 0 && (
             <div className="flex flex-col gap-1.5">
-              <span className={LABEL_CLS}>Participantes</span>
-              <div className="flex flex-col gap-1 rounded-md border border-border bg-muted/30 p-2">
-                {teamMembers.map((m) => (
-                  <label
-                    key={m.id}
-                    className="flex cursor-pointer select-none items-center gap-2 rounded px-1 py-0.5 text-sm hover:bg-accent transition-colors"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedMemberIds.has(m.id)}
-                      onChange={() =>
-                        setSelectedMemberIds((prev) => {
-                          const next = new Set(prev);
-                          next.has(m.id) ? next.delete(m.id) : next.add(m.id);
-                          return next;
-                        })
-                      }
-                      className="rounded"
-                    />
-                    <span className="flex-1">{m.name}</span>
-                    {m.email && <span className="text-xs text-muted-foreground">{m.email}</span>}
-                  </label>
-                ))}
-              </div>
-              {selectedMemberIds.size > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  Se enviará invitación a {selectedMemberIds.size} compañero
-                  {selectedMemberIds.size > 1 ? "s" : ""}
-                </p>
-              )}
+              <label htmlFor="ev-members" className={LABEL_CLS}>
+                Participantes internos
+              </label>
+              <EntityMultiCombobox
+                id="ev-members"
+                items={teamMembers.map((m) => ({
+                  id: m.id,
+                  label: m.name,
+                  sublabel: m.email,
+                }))}
+                value={selectedMemberIds}
+                onChange={setSelectedMemberIds}
+                placeholder="Añadir compañeros…"
+              />
             </div>
           )}
 
-          {/* Lead selector */}
-          {kind === "google_meeting" && meetingTarget === "lead" && (
+          {/* Meeting: optional lead */}
+          {kind === "google_meeting" && (
             <div className="flex flex-col gap-1.5">
               <label htmlFor="ev-lead" className={LABEL_CLS}>
-                Lead
+                Lead (opcional)
               </label>
               <EntityCombobox
                 id="ev-lead"
@@ -416,9 +369,17 @@ export function CalendarCreateDialog({
                 }}
                 placeholder="Buscar lead…"
               />
-              {selectedLead?.email && (
+              {selectedLead && (
                 <p className="text-xs text-muted-foreground">
-                  Se enviará invitación a <span className="font-medium">{selectedLead.email}</span>
+                  {selectedLead.email ? (
+                    <>
+                      Se le invitará automáticamente (
+                      <span className="font-medium">{selectedLead.email}</span>) y quedará
+                      registrada como interacción.
+                    </>
+                  ) : (
+                    "Quedará registrada como interacción en el lead."
+                  )}
                 </p>
               )}
             </div>
@@ -477,9 +438,9 @@ export function CalendarCreateDialog({
             <Button
               type="submit"
               size="sm"
-              disabled={isPending || !title.trim() || (isLeadMeeting && !selectedLeadId)}
+              disabled={isPending || !title.trim()}
             >
-              {isPending ? "Guardando…" : isLeadMeeting ? "Registrar reunión" : "Crear"}
+              {isPending ? "Guardando…" : hasLead ? "Registrar reunión" : "Crear"}
             </Button>
           </div>
         </form>

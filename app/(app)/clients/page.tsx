@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { EntityAvatar } from "@/components/ui/entity-avatar";
 import { requireUser } from "@/lib/auth";
 import { listClients } from "@/lib/clients/queries";
 import { CLIENT_LIST_PAGE_SIZE, CLIENT_SORT_COLUMNS } from "@/lib/clients/types";
@@ -59,45 +60,53 @@ export default async function ClientsPage({
       ]}
       exportFilename="clientes"
       rows={
-        data?.map((c) => ({
-          id: c.id as string,
-          href: `/clients/${c.id}`,
-          data: {
-            id: c.id,
-            name: c.name,
-            email: c.email,
-            phone: c.phone,
-            nif: c.nif,
-            contact_person: c.contact_person,
-            updated_at: c.updated_at,
-          },
-          cells: [
-            clientDisplayName(c),
-            (c.nif as string | null) ?? "—",
-            (c.email as string | null) ?? "—",
-          ],
-          csvValues: [clientDisplayName(c), c.nif ?? "", c.email ?? ""],
-          rowActions: (
-            <ClientRowActions
-              client={{
-                id: c.id,
-                name: c.name,
-                label: c.label,
-                nif: c.nif,
-                email: c.email,
-                phone: c.phone,
-                contact_person: c.contact_person,
-                billing_address_street: c.billing_address_street,
-                billing_address_zip: c.billing_address_zip,
-                billing_address_city: c.billing_address_city,
-                billing_address_province: c.billing_address_province,
-                billing_address_country: c.billing_address_country,
-                notes: c.notes,
-                logo_url: c.logo_url,
-              }}
-            />
-          ),
-        })) ?? []
+        data?.map((c) => {
+          const displayName = clientDisplayName(c);
+          return {
+            id: c.id as string,
+            href: `/clients/${c.id}`,
+            data: {
+              id: c.id,
+              name: c.name,
+              label: c.label,
+              email: c.email,
+              phone: c.phone,
+              nif: c.nif,
+              contact_person: c.contact_person,
+              updated_at: c.updated_at,
+              logo_url: c.logo_url,
+            },
+            cells: [
+              <div key="name" className="flex items-center gap-2">
+                <EntityAvatar name={displayName} logoUrl={c.logo_url} size="sm" />
+                <span className="truncate font-medium">{displayName}</span>
+              </div>,
+              (c.nif as string | null) ?? "—",
+              (c.email as string | null) ?? "—",
+            ],
+            csvValues: [displayName, c.nif ?? "", c.email ?? ""],
+            rowActions: (
+              <ClientRowActions
+                client={{
+                  id: c.id,
+                  name: c.name,
+                  label: c.label,
+                  nif: c.nif,
+                  email: c.email,
+                  phone: c.phone,
+                  contact_person: c.contact_person,
+                  billing_address_street: c.billing_address_street,
+                  billing_address_zip: c.billing_address_zip,
+                  billing_address_city: c.billing_address_city,
+                  billing_address_province: c.billing_address_province,
+                  billing_address_country: c.billing_address_country,
+                  notes: c.notes,
+                  logo_url: c.logo_url,
+                }}
+              />
+            ),
+          };
+        }) ?? []
       }
     />
   );
