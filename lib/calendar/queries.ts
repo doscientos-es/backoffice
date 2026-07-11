@@ -151,6 +151,37 @@ function proposalExpiryToEvent(row: Record<string, unknown>): CalendarEvent {
   };
 }
 
+function eventToEvent(row: Record<string, unknown>): CalendarEvent {
+  const attendees =
+    (row.event_attendees as { member: { id: string; name: string } | null }[]) ?? [];
+  const members = attendees
+    .map((a) => a.member)
+    .filter((m): m is { id: string; name: string } => !!m);
+  const allDay = Boolean(row.all_day);
+  const startRaw = row.start_at as string;
+  const endRaw = (row.end_at as string | null) ?? startRaw;
+  return {
+    id: `event:${row.id as string}`,
+    kind: "event",
+    title: row.title as string,
+    start: allDay ? startRaw.slice(0, 10) : startRaw,
+    end: allDay ? endRaw.slice(0, 10) : endRaw,
+    allDay,
+    href: null,
+    editable: true,
+    done: false,
+    memberId: null,
+    memberName: null,
+    memberIds: members.map((m) => m.id),
+    meta: {
+      description: (row.description as string | null) ?? undefined,
+      location: (row.location as string | null) ?? undefined,
+      htmlLink: (row.url as string | null) ?? undefined,
+      attendees: members.map((m) => m.name),
+    },
+  };
+}
+
 function milestoneToEvent(row: Record<string, unknown>): CalendarEvent {
   const project = row.projects as { id: string; name: string } | null;
   const date = row.due_date as string;
@@ -188,6 +219,7 @@ export async function getCalendarEvents(opts: CalendarFetchOptions): Promise<Cal
     invoicesPaidRes,
     proposalsRes,
     milestonesRes,
+    eventsRes,
   ] = await Promise.all([
     // Tasks — scoped to memberIds via assignee_id
     layers.includes("task")
@@ -270,6 +302,18 @@ export async function getCalendarEvents(opts: CalendarFetchOptions): Promise<Cal
           .not("status", "in", '("cancelled")')
           .not("due_date", "is", null)
       : Promise.resolve({ data: [] }),
+
+    // Events (charlas/eventos) — shared team-wide, like milestones
+    layers.includes("event")
+      ? supabase
+          .from("events")
+          .select(
+            "id, title, description, location, url, start_at, end_at, all_day, event_attendees(member:team_members(id,name))",
+          )
+          .gte("start_at", fromISO)
+          .lte("start_at", toISO)
+          .is("deleted_at", null)
+      : Promise.resolve({ data: [] }),
   ]);
 
   const events: CalendarEvent[] = [
@@ -280,6 +324,7 @@ export async function getCalendarEvents(opts: CalendarFetchOptions): Promise<Cal
     ...(invoicesPaidRes.data ?? []).map((r) => invoicePaidToEvent(r as Record<string, unknown>)),
     ...(proposalsRes.data ?? []).map((r) => proposalExpiryToEvent(r as Record<string, unknown>)),
     ...(milestonesRes.data ?? []).map((r) => milestoneToEvent(r as Record<string, unknown>)),
+    ...(eventsRes.data ?? []).map((r) => eventToEvent(r as Record<string, unknown>)),
   ];
 
   // Google Calendar — non-fatal: silently omit if unconfigured or failing

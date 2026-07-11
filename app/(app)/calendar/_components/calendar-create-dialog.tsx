@@ -3,14 +3,15 @@
 import { scheduleLeadMeeting } from "@/app/(app)/leads/actions";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { EntityCombobox } from "@/components/ui/entity-combobox";
 import { createCalendarEvent } from "@/lib/calendar/actions";
 import type { CalendarEvent } from "@/lib/calendar/types";
 import { cn } from "@/lib/utils";
-import { Bell, CheckSquare, Users, Video } from "lucide-react";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { Bell, CheckSquare, Presentation, Users, Video } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
 import type { LeadOption, TeamMember } from "./calendar-grid";
 
-type Kind = "task" | "reminder" | "google_meeting";
+type Kind = "task" | "reminder" | "google_meeting" | "event";
 type MeetingTarget = "lead" | "internal";
 
 type Props = {
@@ -23,9 +24,30 @@ type Props = {
 };
 
 const KINDS: { value: Kind; label: string; icon: React.ReactNode; desc: string }[] = [
-  { value: "task", label: "Tarea", icon: <CheckSquare className="size-5" />, desc: "Con fecha de entrega" },
-  { value: "reminder", label: "Recordatorio", icon: <Bell className="size-5" />, desc: "Con hora de aviso" },
-  { value: "google_meeting", label: "Reunión", icon: <Video className="size-5" />, desc: "En Google Calendar" },
+  {
+    value: "task",
+    label: "Tarea",
+    icon: <CheckSquare className="size-5" />,
+    desc: "Con fecha de entrega",
+  },
+  {
+    value: "reminder",
+    label: "Recordatorio",
+    icon: <Bell className="size-5" />,
+    desc: "Con hora de aviso",
+  },
+  {
+    value: "google_meeting",
+    label: "Reunión",
+    icon: <Video className="size-5" />,
+    desc: "En Google Calendar",
+  },
+  {
+    value: "event",
+    label: "Charla/Evento",
+    icon: <Presentation className="size-5" />,
+    desc: "Compartido con el equipo",
+  },
 ];
 
 const INPUT_CLS =
@@ -55,12 +77,12 @@ export function CalendarCreateDialog({
   const [description, setDescription] = useState("");
   const [assigneeId, setAssigneeId] = useState("");
   const [withMeet, setWithMeet] = useState(true);
+  const [location, setLocation] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   // Meeting-specific state
   const [meetingTarget, setMeetingTarget] = useState<MeetingTarget>("lead");
-  const [leadSearch, setLeadSearch] = useState("");
   const [selectedLeadId, setSelectedLeadId] = useState("");
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
 
@@ -73,23 +95,12 @@ export function CalendarCreateDialog({
       setError(null);
       setAssigneeId("");
       setWithMeet(true);
+      setLocation("");
       setMeetingTarget("lead");
-      setLeadSearch("");
       setSelectedLeadId("");
       setSelectedMemberIds(new Set());
     }
   }, [open, initialDate, today]);
-
-  // Filter leads by search text
-  const filteredLeads = useMemo(() => {
-    const q = leadSearch.toLowerCase();
-    if (!q) return leads;
-    return leads.filter(
-      (l) =>
-        l.name.toLowerCase().includes(q) ||
-        (l.company?.toLowerCase().includes(q) ?? false),
-    );
-  }, [leads, leadSearch]);
 
   const selectedLead = leads.find((l) => l.id === selectedLeadId) ?? null;
 
@@ -101,11 +112,13 @@ export function CalendarCreateDialog({
     startTransition(async () => {
       // ── Lead meeting → scheduleLeadMeeting (logs as interaction) ──────────
       if (kind === "google_meeting" && meetingTarget === "lead") {
-        if (!selectedLeadId) { setError("Selecciona un lead"); return; }
+        if (!selectedLeadId) {
+          setError("Selecciona un lead");
+          return;
+        }
         const startISO = toISO(date, startTime);
         const endISO = toISO(date, endTime);
-        const attendeeEmails =
-          selectedLead?.email ? [selectedLead.email] : undefined;
+        const attendeeEmails = selectedLead?.email ? [selectedLead.email] : undefined;
 
         const res = await scheduleLeadMeeting({
           leadId: selectedLeadId,
@@ -116,7 +129,10 @@ export function CalendarCreateDialog({
           attendeeEmails,
           withMeet,
         });
-        if (!res.ok) { setError(res.error); return; }
+        if (!res.ok) {
+          setError(res.error);
+          return;
+        }
 
         onCreated({
           id: `google_meeting:${res.eventId}`,
@@ -154,13 +170,18 @@ export function CalendarCreateDialog({
         title,
         date,
         startTime: kind !== "task" ? startTime : undefined,
-        endTime: kind === "google_meeting" ? endTime : undefined,
+        endTime: kind === "google_meeting" || kind === "event" ? endTime : undefined,
         description: description || undefined,
         assigneeId: kind === "task" && assigneeId ? assigneeId : undefined,
         withMeet: kind === "google_meeting" ? withMeet : undefined,
         attendeeEmails,
+        location: kind === "event" ? location.trim() || undefined : undefined,
+        attendeeMemberIds: kind === "event" ? Array.from(selectedMemberIds) : undefined,
       });
-      if (!res.ok) { setError(res.error); return; }
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
       onCreated(res.event);
       onClose();
     });
@@ -176,7 +197,7 @@ export function CalendarCreateDialog({
         </DialogHeader>
 
         {/* Type selector */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {KINDS.map((k) => (
             <button
               key={k.value}
@@ -205,9 +226,11 @@ export function CalendarCreateDialog({
                 ? "Nombre de la tarea…"
                 : kind === "reminder"
                   ? "¿De qué quieres acordarte?"
-                  : isLeadMeeting && selectedLead
-                    ? `Reunión con ${selectedLead.name}`
-                    : "Asunto de la reunión…"
+                  : kind === "event"
+                    ? "Nombre de la charla o evento…"
+                    : isLeadMeeting && selectedLead
+                      ? `Reunión con ${selectedLead.name}`
+                      : "Asunto de la reunión…"
             }
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -217,7 +240,9 @@ export function CalendarCreateDialog({
           {/* Date + time row */}
           <div className="flex gap-2">
             <div className="flex-1">
-              <label htmlFor="ev-date" className={LABEL_CLS}>Fecha</label>
+              <label htmlFor="ev-date" className={LABEL_CLS}>
+                Fecha
+              </label>
               <input
                 id="ev-date"
                 type="date"
@@ -229,7 +254,9 @@ export function CalendarCreateDialog({
             </div>
             {kind !== "task" && (
               <div>
-                <label htmlFor="ev-start" className={LABEL_CLS}>Hora</label>
+                <label htmlFor="ev-start" className={LABEL_CLS}>
+                  Hora
+                </label>
                 <input
                   id="ev-start"
                   type="time"
@@ -239,9 +266,11 @@ export function CalendarCreateDialog({
                 />
               </div>
             )}
-            {kind === "google_meeting" && (
+            {(kind === "google_meeting" || kind === "event") && (
               <div>
-                <label htmlFor="ev-end" className={LABEL_CLS}>Fin</label>
+                <label htmlFor="ev-end" className={LABEL_CLS}>
+                  Fin
+                </label>
                 <input
                   id="ev-end"
                   type="time"
@@ -252,6 +281,51 @@ export function CalendarCreateDialog({
               </div>
             )}
           </div>
+
+          {/* Event: location */}
+          {kind === "event" && (
+            <div>
+              <label htmlFor="ev-location" className={LABEL_CLS}>
+                Ubicación
+              </label>
+              <input
+                id="ev-location"
+                placeholder="Ej. Tecnocampus Mataró"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className={cn(INPUT_CLS, "mt-0.5")}
+              />
+            </div>
+          )}
+
+          {/* Event: attendee selector */}
+          {kind === "event" && teamMembers.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <span className={LABEL_CLS}>Asistentes</span>
+              <div className="flex flex-col gap-1 rounded-md border border-border bg-muted/30 p-2">
+                {teamMembers.map((m) => (
+                  <label
+                    key={m.id}
+                    className="flex cursor-pointer select-none items-center gap-2 rounded px-1 py-0.5 text-sm hover:bg-accent transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedMemberIds.has(m.id)}
+                      onChange={() =>
+                        setSelectedMemberIds((prev) => {
+                          const next = new Set(prev);
+                          next.has(m.id) ? next.delete(m.id) : next.add(m.id);
+                          return next;
+                        })
+                      }
+                      className="rounded"
+                    />
+                    <span className="flex-1">{m.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Meeting: lead vs internal toggle */}
           {kind === "google_meeting" && (
@@ -308,15 +382,14 @@ export function CalendarCreateDialog({
                       className="rounded"
                     />
                     <span className="flex-1">{m.name}</span>
-                    {m.email && (
-                      <span className="text-xs text-muted-foreground">{m.email}</span>
-                    )}
+                    {m.email && <span className="text-xs text-muted-foreground">{m.email}</span>}
                   </label>
                 ))}
               </div>
               {selectedMemberIds.size > 0 && (
                 <p className="text-xs text-muted-foreground">
-                  Se enviará invitación a {selectedMemberIds.size} compañero{selectedMemberIds.size > 1 ? "s" : ""}
+                  Se enviará invitación a {selectedMemberIds.size} compañero
+                  {selectedMemberIds.size > 1 ? "s" : ""}
                 </p>
               )}
             </div>
@@ -325,42 +398,27 @@ export function CalendarCreateDialog({
           {/* Lead selector */}
           {kind === "google_meeting" && meetingTarget === "lead" && (
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="ev-lead" className={LABEL_CLS}>Lead</label>
-              <input
+              <label htmlFor="ev-lead" className={LABEL_CLS}>
+                Lead
+              </label>
+              <EntityCombobox
                 id="ev-lead"
-                placeholder="Buscar lead…"
-                value={leadSearch}
-                onChange={(e) => {
-                  setLeadSearch(e.target.value);
-                  setSelectedLeadId("");
+                items={leads.map((l) => ({
+                  id: l.id,
+                  label: l.name,
+                  sublabel: l.company,
+                }))}
+                value={selectedLeadId}
+                onChange={(id) => {
+                  setSelectedLeadId(id);
+                  const lead = leads.find((l) => l.id === id);
+                  if (lead && !title) setTitle(`Reunión con ${lead.name}`);
                 }}
-                className={INPUT_CLS}
+                placeholder="Buscar lead…"
               />
-              {leadSearch && filteredLeads.length > 0 && !selectedLeadId && (
-                <div className="max-h-40 overflow-y-auto rounded-md border border-border bg-popover shadow-md">
-                  {filteredLeads.slice(0, 8).map((l) => (
-                    <button
-                      key={l.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedLeadId(l.id);
-                        setLeadSearch(l.name + (l.company ? ` · ${l.company}` : ""));
-                        if (!title) setTitle(`Reunión con ${l.name}`);
-                      }}
-                      className="w-full flex flex-col items-start px-3 py-2 text-left text-sm hover:bg-accent transition-colors"
-                    >
-                      <span className="font-medium">{l.name}</span>
-                      {l.company && (
-                        <span className="text-xs text-muted-foreground">{l.company}</span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
               {selectedLead?.email && (
                 <p className="text-xs text-muted-foreground">
-                  Se enviará invitación a{" "}
-                  <span className="font-medium">{selectedLead.email}</span>
+                  Se enviará invitación a <span className="font-medium">{selectedLead.email}</span>
                 </p>
               )}
             </div>
@@ -369,7 +427,9 @@ export function CalendarCreateDialog({
           {/* Assignee (tasks, multi-member teams) */}
           {kind === "task" && teamMembers.length > 1 && (
             <div>
-              <label htmlFor="ev-assignee" className={LABEL_CLS}>Asignado a</label>
+              <label htmlFor="ev-assignee" className={LABEL_CLS}>
+                Asignado a
+              </label>
               <select
                 id="ev-assignee"
                 value={assigneeId}
@@ -417,11 +477,7 @@ export function CalendarCreateDialog({
             <Button
               type="submit"
               size="sm"
-              disabled={
-                isPending ||
-                !title.trim() ||
-                (isLeadMeeting && !selectedLeadId)
-              }
+              disabled={isPending || !title.trim() || (isLeadMeeting && !selectedLeadId)}
             >
               {isPending ? "Guardando…" : isLeadMeeting ? "Registrar reunión" : "Crear"}
             </Button>

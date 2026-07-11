@@ -1,13 +1,12 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { CALENDAR_LAYER_COLORS, CALENDAR_LAYER_LABELS, type CalendarEvent } from "@/lib/calendar/types";
+  CALENDAR_LAYER_COLORS,
+  CALENDAR_LAYER_LABELS,
+  type CalendarEvent,
+} from "@/lib/calendar/types";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
@@ -17,8 +16,10 @@ import {
   CheckCircle2,
   Circle,
   Clock,
+  MapPin,
   Tag,
   User,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -46,7 +47,7 @@ function EventDialogContent({ event, onClose }: { event: CalendarEvent; onClose:
   const dateStr = event.allDay
     ? format(startDate, "EEEE, d MMMM yyyy", { locale: es })
     : format(startDate, "EEEE, d MMMM yyyy · HH:mm", { locale: es }) +
-      (!sameDay ? ` — ${format(endDate, "d MMM · HH:mm", { locale: es })}` : "");
+    (!sameDay ? ` — ${format(endDate, "d MMM · HH:mm", { locale: es })}` : "");
 
   return (
     <DialogContent className="sm:max-w-sm">
@@ -54,10 +55,7 @@ function EventDialogContent({ event, onClose }: { event: CalendarEvent; onClose:
         <div className="flex items-start gap-2.5 pr-6">
           <span className={cn("mt-0.5 h-3 w-3 shrink-0 rounded-full", colors.dot)} />
           <DialogTitle
-            className={cn(
-              "text-base leading-snug",
-              event.done && "line-through opacity-60",
-            )}
+            className={cn("text-base leading-snug", event.done && "line-through opacity-60")}
           >
             {event.title}
           </DialogTitle>
@@ -76,9 +74,7 @@ function EventDialogContent({ event, onClose }: { event: CalendarEvent; onClose:
           >
             {label}
           </span>
-          {event.done && (
-            <CheckCircle2 className="ml-1 size-3.5 text-muted-foreground" />
-          )}
+          {event.done && <CheckCircle2 className="ml-1 size-3.5 text-muted-foreground" />}
           {!event.done && <Circle className="ml-1 size-3.5 text-muted-foreground" />}
         </Row>
 
@@ -101,6 +97,20 @@ function EventDialogContent({ event, onClose }: { event: CalendarEvent; onClose:
         {event.memberName && (
           <Row icon={<User className="size-3.5" />}>
             <span>{event.memberName}</span>
+          </Row>
+        )}
+
+        {/* Location (events) */}
+        {event.meta.location && (
+          <Row icon={<MapPin className="size-3.5" />}>
+            <span className="text-foreground">{event.meta.location}</span>
+          </Row>
+        )}
+
+        {/* Attendees (events) */}
+        {event.meta.attendees && event.meta.attendees.length > 0 && (
+          <Row icon={<Users className="size-3.5" />}>
+            <span>{event.meta.attendees.join(", ")}</span>
           </Row>
         )}
 

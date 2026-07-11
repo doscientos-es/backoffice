@@ -10,10 +10,12 @@ import {
   rangeToDates,
 } from "@/lib/marketing/range";
 import type { Metadata } from "next";
+import { AttributionFunnel } from "./_components/attribution-funnel";
 import { MarketingInsights } from "./_components/marketing-insights";
 import { MarketingKpis } from "./_components/marketing-kpis";
 import { MarketingRoi } from "./_components/marketing-roi";
 import {
+  AttributionSkeleton,
   InsightsSkeleton,
   KpiSkeleton,
   RoiSkeleton,
@@ -106,6 +108,14 @@ export default async function MarketingPage({ searchParams }: { searchParams: Se
         label="No se pudo calcular el CAC / ROAS"
       >
         <MarketingRoi since={since} until={until} rangeLabel={rangeLabel} />
+      </SectionBoundary>
+
+      <SectionBoundary
+        key={`funnel-${since}-${until}`}
+        pending={<AttributionSkeleton />}
+        label="No se pudo cargar el embudo de atribución"
+      >
+        <AttributionFunnel since={since} until={until} />
       </SectionBoundary>
     </div>
   );

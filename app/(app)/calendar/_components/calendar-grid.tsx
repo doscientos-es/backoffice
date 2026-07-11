@@ -154,10 +154,15 @@ export function CalendarGrid({
   // Merge server events + locally-created optimistic events
   const allEvents = [...events, ...createdEvents];
 
-  // Filter: by active layer AND (no member assigned OR member is active)
-  const filtered = allEvents.filter(
-    (e) => activeLayers.has(e.kind) && (e.memberId === null || activeMembers.has(e.memberId)),
-  );
+  // Filter: by active layer AND member scope. Single-owner events use memberId;
+  // shared events (charlas/eventos) use memberIds — visible if any attendee is active.
+  const filtered = allEvents.filter((e) => {
+    if (!activeLayers.has(e.kind)) return false;
+    if (e.memberIds && e.memberIds.length > 0) {
+      return e.memberIds.some((id) => activeMembers.has(id));
+    }
+    return e.memberId === null || activeMembers.has(e.memberId);
+  });
 
   // ── Drag & drop ──────────────────────────────────────────────────────────
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));

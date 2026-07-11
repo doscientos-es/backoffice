@@ -51,6 +51,32 @@ export function InsightsSkeleton() {
   );
 }
 
+export function AttributionSkeleton() {
+  const COL_WIDTHS = [120, 60, 80, 70, 80, 90] as const;
+  const ROW_KEYS = ["af-a", "af-b", "af-c"] as const;
+  return (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-5 w-40 rounded" />
+      </CardHeader>
+      <CardContent className="flex flex-col gap-2">
+        <div className="flex gap-4 border-b border-border/60 pb-2">
+          {COL_WIDTHS.map((w, i) => (
+            <Skeleton key={`afh-${w}-${i}`} className="h-3 rounded" style={{ width: w }} />
+          ))}
+        </div>
+        {ROW_KEYS.map((key) => (
+          <div key={key} className="flex gap-4 py-1.5">
+            {COL_WIDTHS.map((w, j) => (
+              <Skeleton key={`${key}-${w}-${j}`} className="h-4 rounded" style={{ width: w }} />
+            ))}
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
 export function TableSkeleton() {
   return (
     <Card>

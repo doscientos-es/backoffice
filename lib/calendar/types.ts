@@ -6,7 +6,8 @@ export type CalendarEventKind =
   | "invoice_paid"
   | "proposal_expiry"
   | "milestone"
-  | "google_meeting";
+  | "google_meeting"
+  | "event";
 
 export const CALENDAR_LAYER_LABELS: Record<CalendarEventKind, string> = {
   task: "Tareas",
@@ -17,6 +18,7 @@ export const CALENDAR_LAYER_LABELS: Record<CalendarEventKind, string> = {
   proposal_expiry: "Propuestas",
   milestone: "Hitos",
   google_meeting: "Reuniones",
+  event: "Charlas y eventos",
 };
 
 export const CALENDAR_LAYER_COLORS: Record<
@@ -71,6 +73,12 @@ export const CALENDAR_LAYER_COLORS: Record<
     dot: "bg-emerald-500",
     ring: "ring-emerald-400",
   },
+  event: {
+    bg: "bg-fuchsia-500/10 border-fuchsia-400/40",
+    text: "text-fuchsia-700 dark:text-fuchsia-400",
+    dot: "bg-fuchsia-500",
+    ring: "ring-fuchsia-400",
+  },
 };
 
 export const ALL_LAYERS: CalendarEventKind[] = [
@@ -82,6 +90,7 @@ export const ALL_LAYERS: CalendarEventKind[] = [
   "proposal_expiry",
   "milestone",
   "google_meeting",
+  "event",
 ];
 
 export type CalendarEvent = {
@@ -101,15 +110,23 @@ export type CalendarEvent = {
   done: boolean;
   memberId: string | null;
   memberName: string | null;
+  /** Attendee member IDs for shared events (charlas/eventos). Used for member filtering. */
+  memberIds?: string[];
   meta: {
     status?: string;
     priority?: string;
+    projectId?: string;
     projectName?: string;
+    clientId?: string;
     clientName?: string;
+    leadId?: string;
+    leadName?: string;
     description?: string;
     htmlLink?: string;
     meetUrl?: string;
     amount?: number;
+    location?: string;
+    attendees?: string[];
   };
 };
 
