@@ -45,7 +45,10 @@ export async function rescheduleEvent(opts: {
     if (fetchError || !data) return { ok: false, error: fetchError?.message ?? "Not found" };
 
     const existing = new Date(data.remind_at as string);
-    const [year, month, day] = opts.newStart.split("-").map(Number);
+    const parts = opts.newStart.split("-").map(Number);
+    const year = parts[0] ?? 0;
+    const month = parts[1] ?? 1;
+    const day = parts[2] ?? 1;
     const newDate = new Date(existing);
     newDate.setFullYear(year, month - 1, day);
 

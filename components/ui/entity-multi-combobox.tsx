@@ -5,7 +5,6 @@ import {
   ComboboxChip,
   ComboboxChips,
   ComboboxChipsInput,
-  ComboboxCollection,
   ComboboxContent,
   ComboboxEmpty,
   ComboboxItem,
@@ -60,21 +59,15 @@ export function EntityMultiCombobox({
       </ComboboxChips>
       <ComboboxContent anchor={anchor}>
         <ComboboxList>
-          <ComboboxCollection>
-            <ComboboxEmpty>Sin resultados</ComboboxEmpty>
-            {items.map((item) => (
-              <ComboboxItem
-                key={item.id}
-                value={item.id}
-                label={item.sublabel ? `${item.label} ${item.sublabel}` : item.label}
-              >
-                <span className="flex-1">{item.label}</span>
-                {item.sublabel && (
-                  <span className="text-xs text-muted-foreground">{item.sublabel}</span>
-                )}
-              </ComboboxItem>
-            ))}
-          </ComboboxCollection>
+          <ComboboxEmpty>Sin resultados</ComboboxEmpty>
+          {items.map((item) => (
+            <ComboboxItem key={item.id} value={item.id}>
+              <span className="flex-1">{item.label}</span>
+              {item.sublabel && (
+                <span className="text-xs text-muted-foreground">{item.sublabel}</span>
+              )}
+            </ComboboxItem>
+          ))}
         </ComboboxList>
       </ComboboxContent>
     </Combobox>

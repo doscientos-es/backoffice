@@ -8,7 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getLeadFunnelBySource } from "@/lib/marketing/queries";
-import { formatCurrency } from "@/lib/utils";
+import { formatEUR } from "@/lib/utils";
 
 function pct(value: number | null): string {
   if (value === null) return "—";
@@ -63,11 +63,9 @@ export async function AttributionFunnel({
                 <TableCell className="text-right">{row.total}</TableCell>
                 <TableCell className="text-right">{row.qualified}</TableCell>
                 <TableCell className="text-right">{row.won}</TableCell>
+                <TableCell className="text-right tabular-nums">{pct(row.conversionRate)}</TableCell>
                 <TableCell className="text-right tabular-nums">
-                  {pct(row.conversionRate)}
-                </TableCell>
-                <TableCell className="text-right tabular-nums">
-                  {formatCurrency(row.pipelineValue)}
+                  {formatEUR(row.pipelineValue)}
                 </TableCell>
               </TableRow>
             ))}
