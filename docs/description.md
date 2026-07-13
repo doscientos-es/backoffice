@@ -20,18 +20,18 @@ Usuarios externos (clientes): acceso por URL con token UUID, sin login, sin cuen
 
 ### 2.1 Tecnologias principales
 
-| Capa | Tecnologia | Version |
-|---|---|---|
-| Framework | Next.js App Router | 16.2.x |
-| Bundler | Turbopack (default en Next 16) | — |
-| Runtime | Node.js | 22.x LTS |
-| Lenguaje | TypeScript strict | 5.7+ |
-| Base de datos | Supabase PostgreSQL 17 | latest |
-| Auth | Supabase Auth | - |
-| Storage | Supabase Storage | - |
-| Email | Resend + React Email | latest |
-| Hosting | Vercel | - |
-| Package manager | pnpm | 9.x |
+| Capa            | Tecnologia                     | Version  |
+| --------------- | ------------------------------ | -------- |
+| Framework       | Next.js App Router             | 16.2.x   |
+| Bundler         | Turbopack (default en Next 16) | —        |
+| Runtime         | Node.js                        | 22.x LTS |
+| Lenguaje        | TypeScript strict              | 5.7+     |
+| Base de datos   | Supabase PostgreSQL 17         | latest   |
+| Auth            | Supabase Auth                  | -        |
+| Storage         | Supabase Storage               | -        |
+| Email           | Resend + React Email           | latest   |
+| Hosting         | Vercel                         | -        |
+| Package manager | pnpm                           | 9.x      |
 
 ### 2.2 Dependencias npm completas
 
@@ -576,7 +576,6 @@ role          text NOT NULL DEFAULT 'member'
 -- 'viewer' -> solo lectura, sin crear ni editar nada
 avatar_url    text
 is_active     bool DEFAULT true
-email_send_enabled bool DEFAULT true -- permite al usuario enviar emails desde el CRM
 github_handle text UNIQUE           -- handle de GitHub para sincronización bidireccional
 deleted_at    timestamptz           -- soft delete: NULL = activo
 ```
@@ -1794,21 +1793,21 @@ Las plantillas viven en /emails/ en la raiz del proyecto.
 
 Emails del sistema (automaticos):
 
-| Template | Trigger | Destinatario |
-|---|---|---|
-| new-lead.tsx | Lead nuevo desde landing | Equipo |
-| proposal-sent.tsx | Equipo envia propuesta | Cliente |
-| proposal-accepted.tsx | Cliente acepta | Equipo |
-| proposal-rejected.tsx | Cliente rechaza | Equipo |
-| invoice-sent.tsx | Equipo envia factura | Cliente |
-| crm-email.tsx | Email manual desde CRM | Lead/Cliente |
+| Template              | Trigger                  | Destinatario |
+| --------------------- | ------------------------ | ------------ |
+| new-lead.tsx          | Lead nuevo desde landing | Equipo       |
+| proposal-sent.tsx     | Equipo envia propuesta   | Cliente      |
+| proposal-accepted.tsx | Cliente acepta           | Equipo       |
+| proposal-rejected.tsx | Cliente rechaza          | Equipo       |
+| invoice-sent.tsx      | Equipo envia factura     | Cliente      |
+| crm-email.tsx         | Email manual desde CRM   | Lead/Cliente |
 
 Emails diferidos a Phase 2 (requieren cron):
-| Template | Trigger | Destinatario |
-|---|---|---|
-| invoice-overdue.tsx | Recordatorio factura vencida al cliente | Cliente |
-| verifactu-alert.tsx | Factura rechazada por AEAT (alerta manual desde la UI) | Equipo |
-| recurring-invoice-* | Generación automática de facturas recurrentes | — |
+| Template            | Trigger                                                | Destinatario |
+| ------------------- | ------------------------------------------------------ | ------------ |
+| invoice-overdue.tsx | Recordatorio factura vencida al cliente                | Cliente      |
+| verifactu-alert.tsx | Factura rechazada por AEAT (alerta manual desde la UI) | Equipo       |
+| recurring-invoice-* | Generación automática de facturas recurrentes          | —            |
 
 Variables comunes disponibles en todos: nombre_cliente, empresa, url_documento, nombre_agente, fecha.
 
@@ -1820,10 +1819,10 @@ Estilo de los emails: mismo que la landing (fondo blanco, texto negro, acento ne
 
 ### 16.1 Buckets
 
-| Bucket | Acceso | Uso |
-|---|---|---|
+| Bucket    | Acceso  | Uso                                     |
+| --------- | ------- | --------------------------------------- |
 | documents | private | Archivos adjuntos a documentos internos |
-| avatars | public | Avatares de team_members |
+| avatars   | public  | Avatares de team_members                |
 
 ### 16.2 Naming convention
 
@@ -2141,19 +2140,19 @@ Endpoint: `POST /api/github/webhook` — valida el header `X-Hub-Signature-256` 
 
 Eventos que procesa:
 
-| Evento GitHub | Acción en el CRM |
-|---|---|
-| `issues.opened` | Si la URL del issue contiene el prefijo del CRM (creado desde CRM), no hace nada. Si es un issue nuevo creado directo en GitHub, crea tarea en el proyecto vinculado con `status='todo'`, `source='github'`. |
-| `issues.closed` | UPDATE task.status = 'done', task.completed_at = now() |
-| `issues.reopened` | UPDATE task.status = 'todo', task.completed_at = null |
-| `issues.assigned` | UPDATE task.assignee_id según github_handle del team_member |
-| `issues.labeled` | Sincroniza task.tags con los labels del issue |
-| `issue_comment.created` | INSERT task_comment con source='github', github_comment_id, body del comentario, author mapeado por github_handle |
-| `pull_request.opened` | UPDATE task.github_pr_number, github_pr_url. El parser de `Closes #N` en el body del PR es frágil y se omite en MVP: el equipo vincula la tarea manualmente desde el TaskSheet si el PR no viene de CRM. |
-| `pull_request.closed` + merged=true | UPDATE task.status='done' (si no lo estaba ya) |
-| `pull_request.closed` + merged=false | UPDATE task.status='todo' (PR rechazado) |
-| `milestone.created` | Si no existe en CRM: crear milestone en el proyecto vinculado |
-| `milestone.closed` | UPDATE milestone.status='completed' |
+| Evento GitHub                        | Acción en el CRM                                                                                                                                                                                             |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `issues.opened`                      | Si la URL del issue contiene el prefijo del CRM (creado desde CRM), no hace nada. Si es un issue nuevo creado directo en GitHub, crea tarea en el proyecto vinculado con `status='todo'`, `source='github'`. |
+| `issues.closed`                      | UPDATE task.status = 'done', task.completed_at = now()                                                                                                                                                       |
+| `issues.reopened`                    | UPDATE task.status = 'todo', task.completed_at = null                                                                                                                                                        |
+| `issues.assigned`                    | UPDATE task.assignee_id según github_handle del team_member                                                                                                                                                  |
+| `issues.labeled`                     | Sincroniza task.tags con los labels del issue                                                                                                                                                                |
+| `issue_comment.created`              | INSERT task_comment con source='github', github_comment_id, body del comentario, author mapeado por github_handle                                                                                            |
+| `pull_request.opened`                | UPDATE task.github_pr_number, github_pr_url. El parser de `Closes #N` en el body del PR es frágil y se omite en MVP: el equipo vincula la tarea manualmente desde el TaskSheet si el PR no viene de CRM.     |
+| `pull_request.closed` + merged=true  | UPDATE task.status='done' (si no lo estaba ya)                                                                                                                                                               |
+| `pull_request.closed` + merged=false | UPDATE task.status='todo' (PR rechazado)                                                                                                                                                                     |
+| `milestone.created`                  | Si no existe en CRM: crear milestone en el proyecto vinculado                                                                                                                                                |
+| `milestone.closed`                   | UPDATE milestone.status='completed'                                                                                                                                                                          |
 
 ### 19.4 Mapeo de usuarios GitHub ↔ team_members
 
@@ -2225,38 +2224,38 @@ Los endpoints `POST /api/crm/invoices` y `RPC create_recurring_invoice` aceptan 
 `invoices`), la API devuelve la factura existente con HTTP 200 sin crear duplicado.
 Crítico para evitar doble facturación si Vercel reintenta la request o el cron se ejecuta dos veces.
 
-| Trigger | Accion automatica |
-|---|---|
-| Lead nuevo desde landing | Supabase Realtime notifica al CRM + email al equipo |
-| Interaccion registrada | Trigger DB: actualiza last_interaction_at, incrementa interactions_count |
-| Reminder creado | Trigger DB: actualiza next_followup_at del lead |
-| Carga de /inicio | Panel "Avisos" (sec. 11.5) lista recordatorios proximos, Verifactu pendiente, facturas vencidas y aviso de certificado |
-| Reminder vencido sin resolver | Aparece resaltado en rojo en /reminders y en el panel "Avisos" |
-| Email enviado desde CRM | Registra en lead_interactions con resend_email_id |
-| Propuesta enviada | Email al cliente con el link. Registra en activities. |
-| Cliente abre propuesta | Incrementa view_count, registra 'viewed' en activities |
-| Cliente acepta propuesta | Email al equipo. Proyecto pasa a 'active'. Registra en activities. |
-| Cliente rechaza propuesta | Email al equipo con motivo. Registra en activities. |
-| Factura creada desde propuesta | Pre-rellena line items, cliente, totales. Asigna invoice_number. |
-| Factura enviada | Email al cliente con link. Registra en activities. |
-| Factura vencida (view `invoices_with_status`) | computed_status='overdue' en runtime. Aparece en el panel "Avisos" con CTA "Marcar pagada" o "Enviar recordatorio". |
-| Subscription (Phase 2) | Generacion automatica de facturas recurrentes diferida hasta que exista la primera suscripcion. |
-| Factura emitida (sale de draft) | Calcula current_hash, inserta chain_sequence, verifactu_status='pending'. INSERT invoice_events 'issued'. |
-| Pulsar "Enviar a AEAT" | Server Action sec. 18.2: firma XML, envia SOAP, UPDATE a 'accepted'/'rejected'/'error'. INSERT invoice_events. |
-| Factura rechazada por AEAT | Badge rojo en /invoices y entrada en panel "Avisos". El equipo crea rectificativa manualmente. |
-| Emision de factura rectificativa | Crea invoice con is_rectification=true. UPDATE factura original a status='rectified'. Botones "Enviar a AEAT" para ambas. |
-| Certificado a 30 dias de caducar | Banner amarillo en panel "Avisos" con link a settings (calculado al cargar /inicio comparando VERIFACTU_CERT_EXPIRES_AT con hoy). |
-| Tarea movida a 'done' | Trigger: recalcula milestone.completion_percentage. Si llega al 100% y is_payment_milestone: banner en proyecto. |
-| Comentario con @mencion | Trigger DB -> pg_notify -> email task-mention.tsx al mencionado (si inactivo >5 min). |
-| GitHub issue cerrado (webhook) | UPDATE task.status = 'done', completed_at = now(). Registra en activities. |
-| PR merged (webhook GitHub) | UPDATE task.status = 'done'. Si tarea no tenia PR vinculado: vincula PR. Registra en activities. |
-| PR abierto con 'Closes #N' (webhook GitHub) | UPDATE task.status = 'in_review', github_pr_number, github_pr_url. |
-| Issue nuevo en GitHub (no creado desde CRM) | INSERT tarea en proyecto vinculado con source='github', status='todo'. |
-| Milestone 100% completo con is_payment_milestone | Banner en /projects/[id] sugiriendo generar factura del hito. Registra en activities. |
-| Timer de tiempo iniciado | INSERT time_entry con ended_at=null. Valida que no haya otro timer abierto para el mismo miembro. |
-| Timer detenido | UPDATE time_entry.ended_at=now(). duration_minutes calculado por columna GENERATED. |
-| Botón "Importar horas no facturadas" | Lee time_entries WHERE invoiced_at IS NULL, genera line_items, UPDATE invoiced_at+invoice_id. Registra en activities. |
-| Notificación enviada (email/in_app) | Solo si notification_preferences.enabled=true para ese member+event_type+channel. |
+| Trigger                                          | Accion automatica                                                                                                                 |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| Lead nuevo desde landing                         | Supabase Realtime notifica al CRM + email al equipo                                                                               |
+| Interaccion registrada                           | Trigger DB: actualiza last_interaction_at, incrementa interactions_count                                                          |
+| Reminder creado                                  | Trigger DB: actualiza next_followup_at del lead                                                                                   |
+| Carga de /inicio                                 | Panel "Avisos" (sec. 11.5) lista recordatorios proximos, Verifactu pendiente, facturas vencidas y aviso de certificado            |
+| Reminder vencido sin resolver                    | Aparece resaltado en rojo en /reminders y en el panel "Avisos"                                                                    |
+| Email enviado desde CRM                          | Registra en lead_interactions con resend_email_id                                                                                 |
+| Propuesta enviada                                | Email al cliente con el link. Registra en activities.                                                                             |
+| Cliente abre propuesta                           | Incrementa view_count, registra 'viewed' en activities                                                                            |
+| Cliente acepta propuesta                         | Email al equipo. Proyecto pasa a 'active'. Registra en activities.                                                                |
+| Cliente rechaza propuesta                        | Email al equipo con motivo. Registra en activities.                                                                               |
+| Factura creada desde propuesta                   | Pre-rellena line items, cliente, totales. Asigna invoice_number.                                                                  |
+| Factura enviada                                  | Email al cliente con link. Registra en activities.                                                                                |
+| Factura vencida (view `invoices_with_status`)    | computed_status='overdue' en runtime. Aparece en el panel "Avisos" con CTA "Marcar pagada" o "Enviar recordatorio".               |
+| Subscription (Phase 2)                           | Generacion automatica de facturas recurrentes diferida hasta que exista la primera suscripcion.                                   |
+| Factura emitida (sale de draft)                  | Calcula current_hash, inserta chain_sequence, verifactu_status='pending'. INSERT invoice_events 'issued'.                         |
+| Pulsar "Enviar a AEAT"                           | Server Action sec. 18.2: firma XML, envia SOAP, UPDATE a 'accepted'/'rejected'/'error'. INSERT invoice_events.                    |
+| Factura rechazada por AEAT                       | Badge rojo en /invoices y entrada en panel "Avisos". El equipo crea rectificativa manualmente.                                    |
+| Emision de factura rectificativa                 | Crea invoice con is_rectification=true. UPDATE factura original a status='rectified'. Botones "Enviar a AEAT" para ambas.         |
+| Certificado a 30 dias de caducar                 | Banner amarillo en panel "Avisos" con link a settings (calculado al cargar /inicio comparando VERIFACTU_CERT_EXPIRES_AT con hoy). |
+| Tarea movida a 'done'                            | Trigger: recalcula milestone.completion_percentage. Si llega al 100% y is_payment_milestone: banner en proyecto.                  |
+| Comentario con @mencion                          | Trigger DB -> pg_notify -> email task-mention.tsx al mencionado (si inactivo >5 min).                                             |
+| GitHub issue cerrado (webhook)                   | UPDATE task.status = 'done', completed_at = now(). Registra en activities.                                                        |
+| PR merged (webhook GitHub)                       | UPDATE task.status = 'done'. Si tarea no tenia PR vinculado: vincula PR. Registra en activities.                                  |
+| PR abierto con 'Closes #N' (webhook GitHub)      | UPDATE task.status = 'in_review', github_pr_number, github_pr_url.                                                                |
+| Issue nuevo en GitHub (no creado desde CRM)      | INSERT tarea en proyecto vinculado con source='github', status='todo'.                                                            |
+| Milestone 100% completo con is_payment_milestone | Banner en /projects/[id] sugiriendo generar factura del hito. Registra en activities.                                             |
+| Timer de tiempo iniciado                         | INSERT time_entry con ended_at=null. Valida que no haya otro timer abierto para el mismo miembro.                                 |
+| Timer detenido                                   | UPDATE time_entry.ended_at=now(). duration_minutes calculado por columna GENERATED.                                               |
+| Botón "Importar horas no facturadas"             | Lee time_entries WHERE invoiced_at IS NULL, genera line_items, UPDATE invoiced_at+invoice_id. Registra en activities.             |
+| Notificación enviada (email/in_app)              | Solo si notification_preferences.enabled=true para ese member+event_type+channel.                                                 |
 
 ---
 
@@ -2431,10 +2430,10 @@ if (!success) return new Response('Too Many Requests', { status: 429 })
 ```
 
 Límites específicos por ruta:
-| Ruta | Límite |
-|---|---|
-| `/api/crm/*` | 100 req/min por usuario |
-| `/api/portal/*` | 30 req/min por IP |
+| Ruta                  | Límite                                             |
+| --------------------- | -------------------------------------------------- |
+| `/api/crm/*`          | 100 req/min por usuario                            |
+| `/api/portal/*`       | 30 req/min por IP                                  |
 | `/api/github/webhook` | Sin límite (fuente de confianza, valida por firma) |
 
 ---
@@ -2517,11 +2516,11 @@ Aprovechar el App Router de Next.js 16:
 
 Tres variantes obligatorias para cada tabla/lista:
 
-| Variante | Cuándo | Contenido |
-|---|---|---|
+| Variante       | Cuándo                               | Contenido                                                            |
+| -------------- | ------------------------------------ | -------------------------------------------------------------------- |
 | **First-time** | El usuario no ha creado nada todavía | Ilustración + texto motivador + CTA primaria ("Crea tu primer lead") |
-| **No results** | Filtros aplicados sin matches | Texto neutro + botón "Limpiar filtros" |
-| **Error** | Query falló | Mensaje claro + botón "Reintentar" |
+| **No results** | Filtros aplicados sin matches        | Texto neutro + botón "Limpiar filtros"                               |
+| **Error**      | Query falló                          | Mensaje claro + botón "Reintentar"                                   |
 
 Componente único `<EmptyState variant="first-time | no-results | error" />` con props
 para icono, título, descripción y CTA.
@@ -2538,14 +2537,14 @@ para icono, título, descripción y CTA.
 
 Aplicar `useOptimistic` de React 19 en toda acción cuya latencia perceptible afecte al flujo:
 
-| Acción | Update optimista |
-|---|---|
-| Drag-and-drop de lead en kanban | Cambio inmediato de columna |
-| Marcar reminder como hecho | Tachado inmediato |
-| Aceptar/rechazar propuesta en portal | UI cambia antes de la confirmación |
-| Toggle de "pagada" en factura | Badge cambia al instante |
-| Reordenar line_items | Posición actualizada en UI sin esperar al servidor |
-| Marcar task como done | Movida de columna kanban inmediatamente |
+| Acción                               | Update optimista                                   |
+| ------------------------------------ | -------------------------------------------------- |
+| Drag-and-drop de lead en kanban      | Cambio inmediato de columna                        |
+| Marcar reminder como hecho           | Tachado inmediato                                  |
+| Aceptar/rechazar propuesta en portal | UI cambia antes de la confirmación                 |
+| Toggle de "pagada" en factura        | Badge cambia al instante                           |
+| Reordenar line_items                 | Posición actualizada en UI sin esperar al servidor |
+| Marcar task como done                | Movida de columna kanban inmediatamente            |
 
 Si el Server Action falla, se revierte automáticamente y `toast.error()` con motivo.
 
@@ -2584,22 +2583,22 @@ enviar factura a AEAT, crear rectificativa.
 
 Documentados en un panel `?` (modal con todos los atajos) accesible desde Topbar:
 
-| Atajo | Acción |
-|---|---|
-| `Cmd/Ctrl + K` | Command palette (búsqueda + acciones) |
-| `Cmd/Ctrl + /` | Mostrar lista de atajos |
-| `g` luego `l` | Ir a Leads |
-| `g` luego `c` | Ir a Clientes |
-| `g` luego `p` | Ir a Proyectos |
-| `g` luego `f` | Ir a Facturas |
-| `g` luego `r` | Ir a Recordatorios |
-| `g` luego `h` | Ir a Inicio |
-| `n` | Nueva entidad en el contexto actual (nuevo lead en /leads, nueva factura en /invoices...) |
-| `e` | Editar entidad actual |
-| `/` | Focus en buscador global |
-| `Esc` | Cerrar modal/sheet/popover |
-| `Enter` en filas de tabla | Abrir entidad |
-| `j` / `k` | Navegar arriba/abajo en listas y tablas |
+| Atajo                     | Acción                                                                                    |
+| ------------------------- | ----------------------------------------------------------------------------------------- |
+| `Cmd/Ctrl + K`            | Command palette (búsqueda + acciones)                                                     |
+| `Cmd/Ctrl + /`            | Mostrar lista de atajos                                                                   |
+| `g` luego `l`             | Ir a Leads                                                                                |
+| `g` luego `c`             | Ir a Clientes                                                                             |
+| `g` luego `p`             | Ir a Proyectos                                                                            |
+| `g` luego `f`             | Ir a Facturas                                                                             |
+| `g` luego `r`             | Ir a Recordatorios                                                                        |
+| `g` luego `h`             | Ir a Inicio                                                                               |
+| `n`                       | Nueva entidad en el contexto actual (nuevo lead en /leads, nueva factura en /invoices...) |
+| `e`                       | Editar entidad actual                                                                     |
+| `/`                       | Focus en buscador global                                                                  |
+| `Esc`                     | Cerrar modal/sheet/popover                                                                |
+| `Enter` en filas de tabla | Abrir entidad                                                                             |
+| `j` / `k`                 | Navegar arriba/abajo en listas y tablas                                                   |
 
 Implementar con `react-hotkeys-hook` o el handler nativo en un provider raíz.
 
@@ -2789,14 +2788,14 @@ Simple y directo: sólo Vitest. Sin frameworks adicionales, sin overhead de setu
 
 ### 30.2 Qué se testea
 
-| Capa | Qué se verifica |
-|---|---|
-| `lib/verifactu/hash.ts` | Hash chain reproducible con vectores fijos |
-| `lib/verifactu/xml.ts` | XML generado contiene los campos obligatorios |
-| `lib/verifactu/client.ts` modo `mock` | Devuelve respuestas simuladas según el modo |
-| Server Action `sendToAeat` | Transiciones de estado correctas (mock client) |
-| `lib/format.ts` | Casos límite: negativos, NIF inválido, IBAN con espacios |
-| `lib/ratelimit.ts` | Respeta límites por IP y por user |
+| Capa                                  | Qué se verifica                                          |
+| ------------------------------------- | -------------------------------------------------------- |
+| `lib/verifactu/hash.ts`               | Hash chain reproducible con vectores fijos               |
+| `lib/verifactu/xml.ts`                | XML generado contiene los campos obligatorios            |
+| `lib/verifactu/client.ts` modo `mock` | Devuelve respuestas simuladas según el modo              |
+| Server Action `sendToAeat`            | Transiciones de estado correctas (mock client)           |
+| `lib/format.ts`                       | Casos límite: negativos, NIF inválido, IBAN con espacios |
+| `lib/ratelimit.ts`                    | Respeta límites por IP y por user                        |
 
 ### 30.3 Qué NO se testea
 
