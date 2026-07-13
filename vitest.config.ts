@@ -7,6 +7,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ["./tests/setup.ts"],
     include: [
+      "*.test.{ts,tsx}",
       "tests/**/*.test.{ts,tsx}",
       "lib/**/*.test.{ts,tsx}",
       "components/**/*.test.{ts,tsx}",
@@ -67,17 +68,17 @@ export default defineConfig({
       // Color thresholds in the HTML report: <50 % → red, 50–80 % → yellow, ≥80 % → green
       watermarks: {
         statements: [50, 80],
-        branches:   [50, 80],
-        functions:  [50, 80],
-        lines:      [50, 80],
+        branches: [50, 80],
+        functions: [50, 80],
+        lines: [50, 80],
       },
 
       // Enforced minimums – CI fails below 80 % global on every metric.
       thresholds: {
         statements: 80,
-        branches:   80,
-        functions:  80,
-        lines:      80,
+        branches: 80,
+        functions: 80,
+        lines: 80,
       },
     },
   },

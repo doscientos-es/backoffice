@@ -2,6 +2,7 @@
 
 import type { RevenuePoint } from "@/lib/dashboard/types";
 import { formatEUR } from "@/lib/utils";
+import { useEffect, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -21,6 +22,12 @@ const SERIES_LABEL: Record<string, string> = {
 };
 
 export function RevenueChart({ data }: { data: RevenuePoint[] }) {
+  // ResponsiveContainer reads DOM dimensions — skip SSR to prevent hydration mismatch.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) return <div className="h-56 w-full" />;
+
   return (
     <div className="h-56 w-full">
       <ResponsiveContainer width="100%" height="100%">

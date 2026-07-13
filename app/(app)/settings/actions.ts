@@ -78,7 +78,12 @@ export async function updateProfile(
     })
     .eq("id", user.id);
 
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    if (error.code === "23505" && error.message.includes("github_handle")) {
+      return { ok: false, error: "Ese handle de GitHub ya lo usa otro miembro del equipo." };
+    }
+    return { ok: false, error: error.message };
+  }
   revalidatePath("/settings/profile");
   return { ok: true };
 }
@@ -169,7 +174,12 @@ export async function updateMemberProfile(
     })
     .eq("id", parsed.data.member_id);
 
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    if (error.code === "23505" && error.message.includes("github_handle")) {
+      return { ok: false, error: "Ese handle de GitHub ya lo usa otro miembro del equipo." };
+    }
+    return { ok: false, error: error.message };
+  }
   revalidatePath("/settings/team");
   return { ok: true };
 }

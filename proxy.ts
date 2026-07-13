@@ -5,6 +5,10 @@ import { type NextRequest, NextResponse } from "next/server";
 const PUBLIC_PATHS = [
   "/login",
   "/auth/callback",
+  // OTP confirmation for admin-generated tokens (team invitations). Must be
+  // public so unauthenticated users can reach it without losing the token_hash.
+  // Equivalent to /auth/callback in the PKCE flow.
+  "/auth/confirm",
   "/api/webhooks",
   "/api/email/webhook",
   "/api/public",

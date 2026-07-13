@@ -98,6 +98,8 @@ describe("proxy – public paths (always pass through)", () => {
     ["/login"],
     ["/login/forgot-password"],
     ["/auth/callback"],
+    ["/auth/confirm"],
+    ["/auth/confirm?token_hash=abc&type=invite&next=/onboarding"],
     ["/api/webhooks/stripe"],
     ["/api/email/webhook"],
     ["/api/public/status"],

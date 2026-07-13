@@ -4,7 +4,7 @@ import { TeamInviteEmail } from "@/components/email";
 import { type MemberRole, requireRole } from "@/lib/auth";
 import { renderEmail } from "@/lib/email/render";
 import { sendEmail } from "@/lib/email/resend";
-import { publicEnv } from "@/lib/env";
+import { serverEnv } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
@@ -106,7 +106,7 @@ export async function inviteTeamMember(formData: FormData): Promise<ActionResult
   const name = parsed.data.name || email.split("@")[0];
 
   const admin = createAdminClient();
-  const appUrl = publicEnv.NEXT_PUBLIC_APP_URL;
+  const appUrl = serverEnv().INVITE_BASE_URL;
   // Google-first onboarding: the invite link confirms the email + creates a
   // session, then lands the invitee straight on /onboarding — no password step.
   // Future sign-ins go through "Continuar con Google", which Supabase
@@ -205,7 +205,7 @@ export async function resendInvite(input: unknown): Promise<ActionResult> {
   if (!member) return { ok: false, error: "Miembro no encontrado." };
   if (member.deleted_at) return { ok: false, error: "El miembro está desactivado." };
 
-  const appUrl = publicEnv.NEXT_PUBLIC_APP_URL;
+  const appUrl = serverEnv().INVITE_BASE_URL;
   const { data: linkData, error: inviteError } = await admin.auth.admin.generateLink({
     type: "invite",
     email: member.email,

@@ -18,6 +18,11 @@ export const PublicSchema = z.object({
 
 export const ServerSchema = PublicSchema.extend({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(20),
+  // Base URL used to build invite / confirm links sent by email.
+  // Always defaults to the production URL so that invitations sent from
+  // a local dev instance never contain a localhost link that the invitee
+  // cannot open. Override only when running a staging environment.
+  INVITE_BASE_URL: z.string().url().default("https://app.doscientos.es"),
   // Dedicated HMAC secret for portal unlock cookies. Set this to a random
   // 32-byte hex string (e.g. `openssl rand -hex 32`). Falls back to the
   // service-role key when not set; set it to reduce blast radius.
