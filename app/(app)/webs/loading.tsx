@@ -12,6 +12,7 @@ export default function WebsLoading() {
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: skeleton items are stable
           <div key={i} className="rounded-xl border border-border bg-card p-4 flex flex-col gap-3">
             <div className="flex items-start gap-3">
               <Skeleton className="h-10 w-10 rounded-lg shrink-0" />

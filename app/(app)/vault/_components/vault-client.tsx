@@ -162,6 +162,7 @@ export function VaultClient({
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   // Auto-reveal non-sensitive items on mount — no reason to hide them.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: items is used on mount to reveal non-sensitive secrets
   useEffect(() => {
     const nonSensitive = items.filter((i) => !i.is_sensitive);
     if (nonSensitive.length === 0) return;

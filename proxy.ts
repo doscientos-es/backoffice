@@ -40,7 +40,7 @@ export async function proxy(request: NextRequest) {
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) return NextResponse.next();
   if (pathname.startsWith("/_next") || pathname.startsWith("/favicon")) return NextResponse.next();
 
-  let response = NextResponse.next({ request });
+  let response = NextResponse.next();
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -54,7 +54,7 @@ export async function proxy(request: NextRequest) {
           for (const { name, value } of cookiesToSet) {
             request.cookies.set(name, value);
           }
-          response = NextResponse.next({ request });
+          response = NextResponse.next();
           for (const { name, value, options } of cookiesToSet) {
             response.cookies.set(name, value, options);
           }

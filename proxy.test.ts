@@ -43,8 +43,10 @@ import { proxy } from "@/proxy";
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 function req(path: string, ip = "1.2.3.4") {
+  const headers = new Headers();
+  headers.set("x-forwarded-for", ip);
   return new NextRequest(`http://localhost${path}`, {
-    headers: { "x-forwarded-for": ip },
+    headers,
   });
 }
 

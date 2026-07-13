@@ -89,7 +89,7 @@ describe("inviteTeamMember", () => {
     expect(res).toEqual({ ok: true });
     expect(state.inviteCalls).toHaveLength(1);
     const opts = state.inviteCalls[0]?.opts;
-    expect(opts?.redirectTo).toMatch(/\/auth\/confirm$/);
+    expect(opts?.redirectTo).toMatch(/\/auth\/callback/);
     // Google-first: it must NOT force a password step on the invitee.
     expect(opts?.redirectTo).not.toMatch(/update-password/);
   });
