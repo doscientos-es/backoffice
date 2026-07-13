@@ -17,9 +17,12 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Plus } from "lucide-react";
 import Link from "next/link";
+import type React from "react";
 import { useOptimistic, useState, useTransition } from "react";
 import { moveTask } from "../../../tasks/actions";
+import { TaskCreateDialog } from "../../../tasks/task-create-dialog";
 
 export type TaskStatus = "todo" | "in_progress" | "in_review" | "done" | "cancelled";
 
@@ -86,7 +89,14 @@ function applyMove(state: KanbanTask[], move: Move): KanbanTask[] {
   );
 }
 
-export function TasksKanban({ tasks }: { tasks: KanbanTask[] }) {
+interface TasksKanbanProps {
+  tasks: KanbanTask[];
+  projectId?: string;
+  members?: Array<{ id: string; name: string }>;
+  currentUserId?: string;
+}
+
+export function TasksKanban({ tasks, projectId, members = [], currentUserId }: TasksKanbanProps) {
   const [, startTransition] = useTransition();
   const [optimistic, applyOptimistic] = useOptimistic(tasks, applyMove);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -144,7 +154,28 @@ export function TasksKanban({ tasks }: { tasks: KanbanTask[] }) {
       </div>
       <div className="flex gap-3 overflow-x-auto pb-2 scroll-fade-x no-scrollbar">
         {COLUMNS.map((c) => (
-          <Column key={c.id} status={c.id} label={c.label} tone={c.tone} tasks={grouped[c.id]} />
+          <Column
+            key={c.id}
+            status={c.id}
+            label={c.label}
+            tone={c.tone}
+            tasks={grouped[c.id]}
+            addButton={
+              c.id === "todo" ? (
+                <TaskCreateDialog
+                  projectId={projectId}
+                  members={members}
+                  currentUserId={currentUserId}
+                  trigger={
+                    <button type="button" className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                      <Plus className="size-3.5" />
+                      Añadir tarea
+                    </button>
+                  }
+                />
+              ) : undefined
+            }
+          />
         ))}
       </div>
       <DragOverlay>{active ? <TaskCard task={active} isOverlay /> : null}</DragOverlay>
@@ -157,7 +188,8 @@ function Column({
   label,
   tone,
   tasks,
-}: { status: TaskStatus; label: string; tone: string; tasks: KanbanTask[] }) {
+  addButton,
+}: { status: TaskStatus; label: string; tone: string; tasks: KanbanTask[]; addButton?: React.ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   return (
     <div
@@ -181,6 +213,7 @@ function Column({
             tasks.map((t) => <SortableCard key={t.id} task={t} />)
           )}
         </SortableContext>
+        {addButton}
       </div>
     </div>
   );

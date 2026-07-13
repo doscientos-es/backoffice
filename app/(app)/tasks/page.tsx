@@ -8,7 +8,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { listTasksBoard, listTasksList } from "@/lib/tasks/queries";
 import { TASK_LIST_PAGE_SIZE, TASK_SORT_COLUMNS } from "@/lib/tasks/types";
 import { formatDate } from "@/lib/utils";
-import { parseStringParam, parsePage, parseSortParam } from "@/lib/utils/search-params";
+import { parsePage, parseSortParam, parseStringParam } from "@/lib/utils/search-params";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { TaskCreateDialog } from "./task-create-dialog";
@@ -35,7 +35,7 @@ export default async function TasksPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await requireUser();
+  const user = await requireUser();
   const sp = await searchParams;
   const view: "board" | "list" = parseStringParam(sp, "view") === "list" ? "list" : "board";
   const q = parseStringParam(sp, "q");
@@ -73,7 +73,7 @@ export default async function TasksPage({
           actions={
             <div className="flex items-center gap-2">
               <TasksViewToggle view={view} />
-              <TaskCreateDialog projects={projectsList} leads={leadsList} members={membersList} />
+              <TaskCreateDialog projects={projectsList} leads={leadsList} members={membersList} currentUserId={user.id} />
             </div>
           }
         />
@@ -91,7 +91,7 @@ export default async function TasksPage({
         {boardErr ? (
           <p className="text-sm text-destructive">{boardErr}</p>
         ) : (
-          <TasksKanban tasks={tasks} capped={capped} />
+          <TasksKanban tasks={tasks} capped={capped} projects={projectsList} leads={leadsList} members={membersList} currentUserId={user.id} />
         )}
       </div>
     );
@@ -144,11 +144,11 @@ export default async function TasksPage({
       actions={
         <div className="flex items-center gap-2">
           <TasksViewToggle view={view} />
-          <TaskCreateDialog projects={projectsList} leads={leadsList} members={membersList} />
+          <TaskCreateDialog projects={projectsList} leads={leadsList} members={membersList} currentUserId={user.id} />
         </div>
       }
       emptyAction={
-        <TaskCreateDialog projects={projectsList} leads={leadsList} members={membersList} />
+        <TaskCreateDialog projects={projectsList} leads={leadsList} members={membersList} currentUserId={user.id} />
       }
       addHref="/tasks/new"
       addLabel="Nueva tarea"

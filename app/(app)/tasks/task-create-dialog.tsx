@@ -25,6 +25,8 @@ interface Props {
   projects?: Array<{ id: string; name: string }>;
   leads?: Array<{ id: string; name: string }>;
   members?: Array<{ id: string; name: string }>;
+  /** Pre-selects the assignee. Defaults to the current user when provided. */
+  currentUserId?: string;
   /** Custom trigger. Falls back to a primary button labelled "Nueva tarea". */
   trigger?: ReactNode;
   /** Optional callback fired after a successful creation (e.g. router refresh). */
@@ -43,6 +45,7 @@ export function TaskCreateDialog({
   projects = [],
   leads = [],
   members = [],
+  currentUserId,
   trigger,
   onCreated,
 }: Props) {
@@ -105,7 +108,7 @@ export function TaskCreateDialog({
               projects={projects}
               leads={leads}
               members={members}
-              defaults={{ status: "todo", priority: "medium" }}
+              defaults={{ status: "todo", priority: "medium", assignee_id: currentUserId ?? "" }}
             />
           </div>
           <div className="shrink-0 flex items-center justify-end gap-3 border-t border-border pt-3">

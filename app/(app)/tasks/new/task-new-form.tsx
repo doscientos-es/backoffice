@@ -12,6 +12,8 @@ interface Props {
   leads: Array<{ id: string; name: string }>;
   members: Array<{ id: string; name: string }>;
   defaults: { project_id?: string; lead_id?: string };
+  /** Pre-selects the assignee. Defaults to the current user when provided. */
+  currentUserId?: string;
 }
 
 /**
@@ -20,7 +22,7 @@ interface Props {
  * wrapper handles client-side navigation to the new task's detail page on
  * success.
  */
-export function TaskNewForm({ projects, leads, members, defaults }: Props) {
+export function TaskNewForm({ projects, leads, members, defaults, currentUserId }: Props) {
   const router = useRouter();
   const feedback = useFormFeedback();
 
@@ -50,7 +52,11 @@ export function TaskNewForm({ projects, leads, members, defaults }: Props) {
         projects={projects}
         leads={leads}
         members={members}
-        defaults={{ project_id: defaults.project_id ?? "", lead_id: defaults.lead_id ?? "" }}
+        defaults={{
+          project_id: defaults.project_id ?? "",
+          lead_id: defaults.lead_id ?? "",
+          assignee_id: currentUserId ?? "",
+        }}
       />
       <div className="flex items-center justify-end gap-3 border-t border-border pt-5">
         <FormFeedback state={feedback.state} pendingLabel="Creando…" />

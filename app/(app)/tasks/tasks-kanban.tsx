@@ -16,10 +16,12 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { AlertTriangle, TriangleAlert } from "lucide-react";
+import { AlertTriangle, Plus, TriangleAlert } from "lucide-react";
 import Link from "next/link";
+import type React from "react";
 import { useOptimistic, useState, useTransition } from "react";
 import { updateTaskStatus } from "./actions";
+import { TaskCreateDialog } from "./task-create-dialog";
 
 type TaskStatus = "todo" | "in_progress" | "in_review" | "done" | "cancelled";
 type TaskPriority = SharedTaskPriority;
@@ -70,7 +72,16 @@ function isOverdue(task: KanbanTask): boolean {
   return new Date(task.due_date).getTime() < Date.now();
 }
 
-export function TasksKanban({ tasks, capped }: { tasks: KanbanTask[]; capped?: boolean }) {
+interface TasksKanbanProps {
+  tasks: KanbanTask[];
+  capped?: boolean;
+  projects?: Array<{ id: string; name: string }>;
+  leads?: Array<{ id: string; name: string }>;
+  members?: Array<{ id: string; name: string }>;
+  currentUserId?: string;
+}
+
+export function TasksKanban({ tasks, capped, projects = [], leads = [], members = [], currentUserId }: TasksKanbanProps) {
   const [, startTransition] = useTransition();
   const [optimistic, applyOptimistic] = useOptimistic(tasks, (state, { id, status }: Action) =>
     state.map((t) => (t.id === id ? { ...t, status } : t)),
@@ -133,6 +144,22 @@ export function TasksKanban({ tasks, capped }: { tasks: KanbanTask[]; capped?: b
             tone={col.tone}
             dot={col.dot}
             tasks={grouped[col.id]}
+            addButton={
+              col.id === "todo" ? (
+                <TaskCreateDialog
+                  projects={projects}
+                  leads={leads}
+                  members={members}
+                  currentUserId={currentUserId}
+                  trigger={
+                    <button type="button" className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                      <Plus className="size-3.5" />
+                      Añadir tarea
+                    </button>
+                  }
+                />
+              ) : undefined
+            }
           />
         ))}
       </div>
@@ -147,7 +174,8 @@ function Column({
   tone,
   dot,
   tasks,
-}: { status: TaskStatus; label: string; tone: string; dot: string; tasks: KanbanTask[] }) {
+  addButton,
+}: { status: TaskStatus; label: string; tone: string; dot: string; tasks: KanbanTask[]; addButton?: React.ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   return (
     <div
@@ -172,6 +200,7 @@ function Column({
         ) : (
           tasks.map((t) => <TaskCard key={t.id} task={t} />)
         )}
+        {addButton}
       </div>
     </div>
   );

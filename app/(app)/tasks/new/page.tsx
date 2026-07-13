@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function NewTaskPage({
   searchParams,
 }: { searchParams: Promise<{ project_id?: string; lead_id?: string }> }) {
-  await requireUser();
+  const user = await requireUser();
   const { project_id: presetProject, lead_id: presetLead } = await searchParams;
   const supabase = await createServerClient();
 
@@ -38,6 +38,7 @@ export default async function NewTaskPage({
             leads={(leads ?? []) as Array<{ id: string; name: string }>}
             members={(members ?? []) as Array<{ id: string; name: string }>}
             defaults={{ project_id: presetProject, lead_id: presetLead }}
+            currentUserId={user.id}
           />
         </CardContent>
       </Card>

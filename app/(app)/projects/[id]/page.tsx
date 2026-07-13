@@ -339,6 +339,7 @@ export default async function ProjectDetailPage({
             <TaskCreateDialog
               projectId={id}
               members={(members ?? []) as Array<{ id: string; name: string }>}
+              currentUserId={user.id}
             />
           </div>
         </CardHeader>
@@ -347,6 +348,9 @@ export default async function ProjectDetailPage({
             <p className="px-6 py-2 text-sm text-muted-foreground">Sin tareas.</p>
           ) : isBoard ? (
             <TasksKanban
+              projectId={id}
+              members={(members ?? []) as Array<{ id: string; name: string }>}
+              currentUserId={user.id}
               tasks={(
                 tasks as unknown as Array<{
                   id: string;
