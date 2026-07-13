@@ -19,6 +19,7 @@ export default async function ProfileSettingsPage() {
           <ProfileForm
             name={user.name}
             email={user.email}
+            avatarUrl={user.avatarUrl}
             emailAlias={user.emailAlias ?? null}
             emailSendEnabled={user.emailSendEnabled}
             githubHandle={user.githubHandle ?? null}

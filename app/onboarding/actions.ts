@@ -1,7 +1,8 @@
 "use server";
 
 import { requireUser } from "@/lib/auth";
-import { createServerClient } from "@/lib/supabase/server";
+import { buildSignatureHtml } from "@/lib/email/signature";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -30,11 +31,6 @@ const OnboardingInput = z.object({
     .optional()
     .or(z.literal("").transform(() => undefined)),
   email_send_enabled: z.enum(["on", "off"]).transform((v) => v === "on"),
-  signature_html: z
-    .string()
-    .max(8000, "La firma no puede superar 8.000 caracteres")
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
 });
 
 /**
@@ -50,14 +46,27 @@ export async function completeOnboarding(formData: FormData): Promise<ActionResu
     github_handle: formData.get("github_handle")?.toString() ?? "",
     email_alias: formData.get("email_alias")?.toString() ?? "",
     email_send_enabled: formData.get("email_send_enabled")?.toString() === "on" ? "on" : "off",
-    signature_html: formData.get("signature_html")?.toString() ?? "",
   });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
   }
 
-  const supabase = await createServerClient();
+  // Use the admin client (bypasses RLS) because the RLS UPDATE policy on
+  // team_members is restricted to owner/admin only. Members updating their
+  // own onboarding row must go through the service-role client; the requireUser
+  // guard above already ensures the caller is an authenticated team member.
+  const supabase = createAdminClient();
   const githubHandle = parsed.data.github_handle ?? null;
+
+  // Generate the signature from the available onboarding data. The user can
+  // refine it later from Settings once they add job title, phone, etc.
+  const signatureHtml = buildSignatureHtml(
+    {
+      name: parsed.data.name,
+      contactEmail: parsed.data.email_alias,
+    },
+    process.env.NEXT_PUBLIC_APP_URL ?? "https://app.doscientos.es",
+  );
 
   // We never write the GitHub avatar into `avatar_url`. Priority is
   // Google (synced to `avatar_url` in /auth/callback) → GitHub (derived from
@@ -70,7 +79,7 @@ export async function completeOnboarding(formData: FormData): Promise<ActionResu
       github_handle: githubHandle,
       email_alias: parsed.data.email_alias ?? null,
       email_send_enabled: parsed.data.email_send_enabled,
-      signature_html: parsed.data.signature_html ?? null,
+      signature_html: signatureHtml,
       onboarded_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
@@ -93,7 +102,9 @@ export async function completeOnboarding(formData: FormData): Promise<ActionResu
  */
 export async function skipOnboarding(): Promise<void> {
   const user = await requireUser({ allowUnonboarded: true });
-  const supabase = await createServerClient();
+  // Same rationale as completeOnboarding: admin client needed to bypass the
+  // owner/admin-only RLS UPDATE policy on team_members.
+  const supabase = createAdminClient();
   await supabase
     .from("team_members")
     .update({ onboarded_at: new Date().toISOString(), updated_at: new Date().toISOString() })

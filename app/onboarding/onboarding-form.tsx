@@ -7,7 +7,6 @@ import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { Textarea } from "@/components/ui/textarea";
 import { useMemo, useState, useTransition } from "react";
 import { completeOnboarding, skipOnboarding } from "./actions";
 
@@ -18,7 +17,6 @@ interface Props {
   defaultGithubHandle: string | null;
   defaultEmailAlias: string | null;
   defaultEmailSendEnabled: boolean;
-  defaultSignatureHtml: string | null;
 }
 
 const HANDLE_RE = /^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,38})$/;
@@ -30,7 +28,6 @@ export function OnboardingForm({
   defaultGithubHandle,
   defaultEmailAlias,
   defaultEmailSendEnabled,
-  defaultSignatureHtml,
 }: Props) {
   const feedback = useFormFeedback();
   const [skipPending, startSkip] = useTransition();
@@ -211,20 +208,6 @@ export function OnboardingForm({
           </FieldLabel>
         </Field>
       </div>
-
-      <Field>
-        <FieldLabel htmlFor="signature_html" className="text-xs font-medium">
-          Firma para tus emails <span className="text-muted-foreground">(opcional)</span>
-        </FieldLabel>
-        <Textarea
-          id="signature_html"
-          name="signature_html"
-          rows={4}
-          defaultValue={defaultSignatureHtml ?? ""}
-          placeholder="<p>Un saludo,<br/><strong>Tu Nombre</strong></p>"
-          className="font-mono text-xs"
-        />
-      </Field>
 
       <div className="flex items-center justify-between gap-3 border-t border-border pt-5">
         <Button

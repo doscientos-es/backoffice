@@ -15,6 +15,7 @@ import { updateProfile } from "./actions";
 interface Props {
   name: string;
   email: string;
+  avatarUrl: string | null;
   emailAlias: string | null;
   emailSendEnabled: boolean;
   githubHandle: string | null;
@@ -23,11 +24,10 @@ interface Props {
   contactEmail: string | null;
 }
 
-
-
 export function ProfileForm({
   name,
   email,
+  avatarUrl,
   emailAlias,
   emailSendEnabled,
   githubHandle,
@@ -166,8 +166,10 @@ export function ProfileForm({
           <Avatar size="default" className="shrink-0">
             {handleState.status === "valid" && handleState.avatarUrl ? (
               <AvatarImage src={handleState.avatarUrl} alt={handleState.displayName ?? handle} />
+            ) : avatarUrl ? (
+              <AvatarImage src={avatarUrl} alt={name} />
             ) : null}
-            <AvatarFallback>{handle.trim().slice(0, 1).toUpperCase() || "·"}</AvatarFallback>
+            <AvatarFallback>{handle.trim().slice(0, 1).toUpperCase() || name.slice(0, 1).toUpperCase() || "·"}</AvatarFallback>
           </Avatar>
           <div className="relative flex-1">
             <Input

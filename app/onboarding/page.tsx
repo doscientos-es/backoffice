@@ -23,7 +23,6 @@ export default async function OnboardingPage() {
         defaultGithubHandle={user.githubHandle}
         defaultEmailAlias={user.emailAlias}
         defaultEmailSendEnabled={user.emailSendEnabled}
-        defaultSignatureHtml={user.signatureHtml}
       />
     </div>
   );

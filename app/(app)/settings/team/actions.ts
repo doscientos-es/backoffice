@@ -124,7 +124,13 @@ export async function inviteTeamMember(formData: FormData): Promise<ActionResult
   const { data: linkData, error: inviteError } = await admin.auth.admin.generateLink({
     type: "invite",
     email,
-    options: { data: { name }, redirectTo: `${appUrl}/auth/confirm` },
+    // redirectTo is used by Supabase as the OAuth callback destination after
+    // the Google sign-in that follows invite confirmation. It must point to
+    // /auth/callback (PKCE code handler), NOT /auth/confirm (OTP token handler):
+    // Supabase appends ?code= here, which /auth/callback exchanges for a
+    // session. Pointing it to /auth/confirm causes `confirm_invalid_link`
+    // because that route expects token_hash+type, not a PKCE code.
+    options: { data: { name }, redirectTo: `${appUrl}/auth/callback?next=/onboarding` },
   });
   if (inviteError || !linkData?.user) {
     console.error("[inviteTeamMember] generateLink failed", {
@@ -209,7 +215,10 @@ export async function resendInvite(input: unknown): Promise<ActionResult> {
   const { data: linkData, error: inviteError } = await admin.auth.admin.generateLink({
     type: "invite",
     email: member.email,
-    options: { data: { name: member.name }, redirectTo: `${appUrl}/auth/confirm` },
+    options: {
+      data: { name: member.name },
+      redirectTo: `${appUrl}/auth/callback?next=/onboarding`,
+    },
   });
 
   if (inviteError || !linkData?.user) {
