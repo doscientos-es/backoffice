@@ -54,6 +54,7 @@ type MemberRow = {
   phone: string | null;
   contact_email: string | null;
   email_alias: string | null;
+  leads_assignable: boolean;
   last_sign_in_at: string | null;
   /** null = invite not yet accepted (token not confirmed) */
   confirmed_at: string | null;
@@ -70,7 +71,7 @@ export default async function TeamSettingsPage() {
     supabase
       .from("team_members")
       .select(
-        "id, name, email, role, created_at, deleted_at, avatar_url, github_handle, job_title, phone, contact_email, email_alias",
+        "id, name, email, role, created_at, deleted_at, avatar_url, github_handle, job_title, phone, contact_email, email_alias, leads_assignable",
       )
       .order("deleted_at", { ascending: true, nullsFirst: true })
       .order("created_at", { ascending: true }),
@@ -212,7 +213,7 @@ export default async function TeamSettingsPage() {
                             <span
                               className={
                                 Date.now() - new Date(m.last_sign_in_at).getTime() >
-                                INACTIVE_THRESHOLD_MS
+                                  INACTIVE_THRESHOLD_MS
                                   ? "text-warning font-medium"
                                   : "text-(--text-secondary)"
                               }
@@ -233,6 +234,7 @@ export default async function TeamSettingsPage() {
                             isDeactivated={isDeactivated}
                             isPending={isPending}
                             actorRole={actor.role}
+                            leadsAssignable={m.leads_assignable}
                           />
                         </td>
                       </tr>

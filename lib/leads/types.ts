@@ -40,12 +40,17 @@ export type LeadListItem = {
   created_at: string;
   updated_at: string;
   estimated_value: number | null;
+  score: number | null;
   /** Firmographic + intent signals parsed from the lead form. */
   company_size: string | null;
   solution_type: string | null;
   urgency: string | null;
   /** Speed-to-lead: first time a sales rep engaged the lead. */
   first_contacted_at: string | null;
+  landing_path: string | null;
+  landing_ref: string | null;
+  landing_subject: string | null;
+  conversion_step: string | null;
   ai_summary: string | null;
   ai_updated_at: string | null;
   assignee: LeadMemberRef | null;
@@ -59,6 +64,7 @@ export const LEAD_SORT_COLUMNS = [
   "company",
   "status",
   "estimated_value",
+  "score",
   "created_at",
 ] as const;
 
@@ -91,10 +97,32 @@ export type LeadDetail = {
   status: LeadStatus;
   notes: string | null;
   estimated_value: number | null;
+  score: number | null;
   company_size: string | null;
   solution_type: string | null;
   urgency: string | null;
   first_contacted_at: string | null;
+  landing_path: string | null;
+  landing_ref: string | null;
+  landing_subject: string | null;
+  event_id: string | null;
+  conversion_step: string | null;
+  first_landing_path: string | null;
+  first_referrer: string | null;
+  first_utm_source: string | null;
+  first_utm_medium: string | null;
+  first_utm_campaign: string | null;
+  first_utm_term: string | null;
+  first_utm_content: string | null;
+  last_landing_path: string | null;
+  last_referrer: string | null;
+  last_utm_source: string | null;
+  last_utm_medium: string | null;
+  last_utm_campaign: string | null;
+  last_utm_term: string | null;
+  last_utm_content: string | null;
+  calculator_cost: string | null;
+  calculator_hours: string | null;
   created_at: string;
   updated_at: string | null;
   ai_summary: string | null;

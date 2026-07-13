@@ -65,6 +65,7 @@ async function pickRoundRobinAssignee(
     .from("team_members")
     .select("id")
     .is("deleted_at", null)
+    .eq("leads_assignable", true)
     .order("created_at"); // oldest first → tie-break
 
   if (error || !members?.length) return null;

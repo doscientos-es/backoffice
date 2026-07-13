@@ -10,6 +10,7 @@
 
 import type { badgeVariants } from "@/components/ui/badge";
 import { EXPENSE_STATUS_LABELS, type ExpenseStatus } from "@/lib/finance";
+import type { RecoveryState } from "@/lib/recovery/types";
 import type { VariantProps } from "class-variance-authority";
 
 export type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>;
@@ -64,6 +65,17 @@ export const LEAD_STATUS: StatusMeta<LeadStatus> = {
   lost: { label: "Perdido", variant: "danger" },
   not_interested: { label: "No interesa", variant: "neutral" },
   archived: { label: "Archivado", variant: "neutral" },
+};
+
+// ---------------------------------------------------------------------------
+// Recovery (re-engagement funnel for lost leads). Ordered pending → engaged;
+// the type lives in `lib/recovery/types` and is mirrored here for the badge.
+// ---------------------------------------------------------------------------
+export const RECOVERY_STATE: StatusMeta<RecoveryState> = {
+  pending: { label: "Sin contactar", variant: "neutral" },
+  contacted: { label: "Contactado", variant: "info" },
+  opened: { label: "Abierto", variant: "warning" },
+  engaged: { label: "Interesado", variant: "success" },
 };
 
 // ---------------------------------------------------------------------------

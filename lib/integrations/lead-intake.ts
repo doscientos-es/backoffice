@@ -1,4 +1,9 @@
 import { scopedLogger } from "@/lib/logger";
+import {
+  normalizeCompanySize,
+  normalizeLeadSource,
+  normalizeUrgency,
+} from "@/lib/leads/constants";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { after } from "next/server";
 import { z } from "zod";
@@ -16,11 +21,32 @@ const utmSchema = z.object({
 });
 
 const contextSchema = z.object({
+  eventId: z.string().optional().nullable(),
+  conversionStep: z.string().optional().nullable(),
   referrer: z.string().optional().nullable(),
   ip: z.string().optional().nullable(),
   device: z.string().optional().nullable(),
   browser: z.string().optional().nullable(),
   language: z.string().optional().nullable(),
+  landingPath: z.string().optional().nullable(),
+  landingRef: z.string().optional().nullable(),
+  landingSubject: z.string().optional().nullable(),
+  calculatorCost: z.string().optional().nullable(),
+  calculatorHours: z.string().optional().nullable(),
+  firstLandingPath: z.string().optional().nullable(),
+  firstReferrer: z.string().optional().nullable(),
+  firstUtmSource: z.string().optional().nullable(),
+  firstUtmMedium: z.string().optional().nullable(),
+  firstUtmCampaign: z.string().optional().nullable(),
+  firstUtmTerm: z.string().optional().nullable(),
+  firstUtmContent: z.string().optional().nullable(),
+  lastLandingPath: z.string().optional().nullable(),
+  lastReferrer: z.string().optional().nullable(),
+  lastUtmSource: z.string().optional().nullable(),
+  lastUtmMedium: z.string().optional().nullable(),
+  lastUtmCampaign: z.string().optional().nullable(),
+  lastUtmTerm: z.string().optional().nullable(),
+  lastUtmContent: z.string().optional().nullable(),
 });
 
 /**
@@ -46,6 +72,8 @@ export const LeadIntakeSchema = z.object({
   externalId: z.string().optional().nullable(),
   /** Provider key. Must match externalId namespace, e.g. "Anuncios Meta". */
   externalSource: z.string().optional().nullable(),
+  /** Signed-webhook-only escape hatch to enrich a known existing lead. */
+  mergeIntoLeadId: z.string().uuid().optional().nullable(),
   utm: utmSchema.optional(),
   context: contextSchema.optional(),
   /** Raw provider payload for audit / debugging. Stored as jsonb. */
@@ -181,6 +209,9 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
     return { ok: false, error: firstError };
   }
   const norm = parsed.data;
+  const normalizedSource = normalizeLeadSource(norm.source) ?? norm.source.trim();
+  const normalizedCompanySize = normalizeCompanySize(norm.companySize);
+  const normalizedUrgency = normalizeUrgency(norm.urgency);
 
   const supabase = createAdminClient();
 
@@ -198,6 +229,31 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
       return { ok: false, error: lookupErr.message };
     }
     if (existing?.id) {
+      return { ok: true, leadId: existing.id as string, duplicate: true };
+    }
+  }
+
+  // Signed integrations such as Cal.com can carry the lead id created by the
+  // landing form. Prefer that deterministic link over soft matching by email.
+  if (norm.mergeIntoLeadId) {
+    const { data: existing, error: lookupErr } = await supabase
+      .from("leads")
+      .select("id")
+      .eq("id", norm.mergeIntoLeadId)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (lookupErr) {
+      log.error({ err: lookupErr, leadId: norm.mergeIntoLeadId }, "lead merge lookup failed");
+      return { ok: false, error: lookupErr.message };
+    }
+    if (existing?.id) {
+      await enrichLead(supabase, existing.id as string, {
+        ...norm,
+        source: normalizedSource,
+        companySize: normalizedCompanySize,
+        urgency: normalizedUrgency,
+      }).catch((e) => log.error({ err: e, leadId: existing.id }, "lead merge enrich failed"));
+      log.info({ leadId: existing.id, source: normalizedSource }, "lead merged by explicit id");
       return { ok: true, leadId: existing.id as string, duplicate: true };
     }
   }
@@ -251,10 +307,10 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
     company: norm.company?.trim() || null,
     notes: norm.notes?.trim() || null,
     estimated_value: norm.estimatedValue ?? null,
-    company_size: norm.companySize?.trim() || null,
+    company_size: normalizedCompanySize,
     solution_type: norm.solutionType?.trim() || null,
-    urgency: norm.urgency?.trim() || null,
-    source: norm.source.trim().slice(0, 80),
+    urgency: normalizedUrgency,
+    source: normalizedSource.slice(0, 80),
     external_id: norm.externalId ?? null,
     external_source: norm.externalSource ?? null,
     utm_source: norm.utm?.source ?? null,
@@ -267,6 +323,27 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
     device: norm.context?.device ?? null,
     browser: norm.context?.browser ?? null,
     language: norm.context?.language ?? null,
+    event_id: norm.context?.eventId ?? null,
+    conversion_step: norm.context?.conversionStep ?? null,
+    landing_path: norm.context?.landingPath ?? null,
+    landing_ref: norm.context?.landingRef ?? null,
+    landing_subject: norm.context?.landingSubject ?? null,
+    calculator_cost: norm.context?.calculatorCost ?? null,
+    calculator_hours: norm.context?.calculatorHours ?? null,
+    first_landing_path: norm.context?.firstLandingPath ?? norm.context?.landingPath ?? null,
+    first_referrer: norm.context?.firstReferrer ?? norm.context?.referrer ?? null,
+    first_utm_source: norm.context?.firstUtmSource ?? norm.utm?.source ?? null,
+    first_utm_medium: norm.context?.firstUtmMedium ?? norm.utm?.medium ?? null,
+    first_utm_campaign: norm.context?.firstUtmCampaign ?? norm.utm?.campaign ?? null,
+    first_utm_term: norm.context?.firstUtmTerm ?? norm.utm?.term ?? null,
+    first_utm_content: norm.context?.firstUtmContent ?? norm.utm?.content ?? null,
+    last_landing_path: norm.context?.lastLandingPath ?? norm.context?.landingPath ?? null,
+    last_referrer: norm.context?.lastReferrer ?? norm.context?.referrer ?? null,
+    last_utm_source: norm.context?.lastUtmSource ?? norm.utm?.source ?? null,
+    last_utm_medium: norm.context?.lastUtmMedium ?? norm.utm?.medium ?? null,
+    last_utm_campaign: norm.context?.lastUtmCampaign ?? norm.utm?.campaign ?? null,
+    last_utm_term: norm.context?.lastUtmTerm ?? norm.utm?.term ?? null,
+    last_utm_content: norm.context?.lastUtmContent ?? norm.utm?.content ?? null,
     raw_payload: (norm.rawPayload ?? null) as Record<string, unknown> | null,
   };
 
@@ -296,7 +373,12 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
   // Handler before it completes, which silently dropped notifications/emails.
   after(async () => {
     await Promise.allSettled([
-      runLeadPipeline(leadId, norm).catch((e) => log.error({ err: e }, "lead pipeline failed")),
+      runLeadPipeline(leadId, {
+        ...norm,
+        source: normalizedSource,
+        companySize: normalizedCompanySize,
+        urgency: normalizedUrgency,
+      }).catch((e) => log.error({ err: e }, "lead pipeline failed")),
       notifyNewLead({
         leadId,
         leadName: row.name,
@@ -309,10 +391,58 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
         leadCompanySize: row.company_size,
         leadUrgency: row.urgency,
       }).catch((e) => log.error({ err: e }, "notifyNewLead failed")),
+      logLeadCreatedInteraction(leadId, row).catch((e) =>
+        log.error({ err: e, leadId }, "lead intake interaction failed"),
+      ),
     ]);
   });
 
   return { ok: true, leadId, duplicate: false };
+}
+
+async function logLeadCreatedInteraction(
+  leadId: string,
+  row: Record<string, unknown>,
+): Promise<void> {
+  const supabase = createAdminClient();
+  const landingPath = (row.landing_path as string | null) ?? null;
+  const step = (row.conversion_step as string | null) ?? null;
+  const source = (row.source as string | null) ?? "Lead";
+  const subject = step
+    ? `Lead recibido · ${step}`
+    : landingPath
+      ? `Lead recibido desde ${landingPath}`
+      : `Lead recibido desde ${source}`;
+
+  await supabase.from("lead_interactions").insert({
+    lead_id: leadId,
+    type: "note",
+    subject,
+    body: [
+      landingPath ? `Landing: ${landingPath}` : null,
+      row.landing_ref ? `Ref: ${row.landing_ref as string}` : null,
+      row.landing_subject ? `Asunto: ${row.landing_subject as string}` : null,
+      row.utm_source ? `UTM source: ${row.utm_source as string}` : null,
+      row.utm_campaign ? `UTM campaign: ${row.utm_campaign as string}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+    payload: {
+      event_id: row.event_id ?? null,
+      conversion_step: row.conversion_step ?? null,
+      source: row.source ?? null,
+      landing_path: row.landing_path ?? null,
+      landing_ref: row.landing_ref ?? null,
+      landing_subject: row.landing_subject ?? null,
+      first_landing_path: row.first_landing_path ?? null,
+      last_landing_path: row.last_landing_path ?? null,
+      utm_source: row.utm_source ?? null,
+      utm_medium: row.utm_medium ?? null,
+      utm_campaign: row.utm_campaign ?? null,
+      calculator_cost: row.calculator_cost ?? null,
+      calculator_hours: row.calculator_hours ?? null,
+    },
+  });
 }
 
 /**
@@ -333,7 +463,7 @@ async function enrichLead(
   const { data: existing, error } = await supabase
     .from("leads")
     .select(
-      "email, phone, company, notes, estimated_value, company_size, solution_type, urgency, utm_source, utm_medium, utm_campaign, utm_term, utm_content, referrer, ip, device, browser, language",
+      "email, phone, company, notes, estimated_value, company_size, solution_type, urgency, utm_source, utm_medium, utm_campaign, utm_term, utm_content, referrer, ip, device, browser, language, event_id, conversion_step, landing_path, landing_ref, landing_subject, calculator_cost, calculator_hours, first_landing_path, first_referrer, first_utm_source, first_utm_medium, first_utm_campaign, first_utm_term, first_utm_content, last_landing_path, last_referrer, last_utm_source, last_utm_medium, last_utm_campaign, last_utm_term, last_utm_content",
     )
     .eq("id", leadId)
     .maybeSingle();
@@ -363,6 +493,32 @@ async function enrichLead(
   fillGap("device", existing.device, norm.context?.device);
   fillGap("browser", existing.browser, norm.context?.browser);
   fillGap("language", existing.language, norm.context?.language);
+  fillGap("event_id", existing.event_id, norm.context?.eventId);
+  fillGap("conversion_step", existing.conversion_step, norm.context?.conversionStep);
+  fillGap("landing_path", existing.landing_path, norm.context?.landingPath);
+  fillGap("landing_ref", existing.landing_ref, norm.context?.landingRef);
+  fillGap("landing_subject", existing.landing_subject, norm.context?.landingSubject);
+  fillGap("calculator_cost", existing.calculator_cost, norm.context?.calculatorCost);
+  fillGap("calculator_hours", existing.calculator_hours, norm.context?.calculatorHours);
+  fillGap("first_landing_path", existing.first_landing_path, norm.context?.firstLandingPath);
+  fillGap("first_referrer", existing.first_referrer, norm.context?.firstReferrer);
+  fillGap("first_utm_source", existing.first_utm_source, norm.context?.firstUtmSource);
+  fillGap("first_utm_medium", existing.first_utm_medium, norm.context?.firstUtmMedium);
+  fillGap("first_utm_campaign", existing.first_utm_campaign, norm.context?.firstUtmCampaign);
+  fillGap("first_utm_term", existing.first_utm_term, norm.context?.firstUtmTerm);
+  fillGap("first_utm_content", existing.first_utm_content, norm.context?.firstUtmContent);
+
+  const setLastTouch = (column: string, incoming: string | null | undefined) => {
+    const value = incoming?.trim();
+    if (value) updates[column] = value;
+  };
+  setLastTouch("last_landing_path", norm.context?.lastLandingPath ?? norm.context?.landingPath);
+  setLastTouch("last_referrer", norm.context?.lastReferrer ?? norm.context?.referrer);
+  setLastTouch("last_utm_source", norm.context?.lastUtmSource ?? norm.utm?.source);
+  setLastTouch("last_utm_medium", norm.context?.lastUtmMedium ?? norm.utm?.medium);
+  setLastTouch("last_utm_campaign", norm.context?.lastUtmCampaign ?? norm.utm?.campaign);
+  setLastTouch("last_utm_term", norm.context?.lastUtmTerm ?? norm.utm?.term);
+  setLastTouch("last_utm_content", norm.context?.lastUtmContent ?? norm.utm?.content);
 
   // Numeric gap: only set the parsed budget when no value has been assigned yet.
   if (norm.estimatedValue != null && existing.estimated_value == null) {

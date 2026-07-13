@@ -542,6 +542,11 @@ function Card({
       )}
       <div className="flex items-center justify-between gap-1.5 pl-8">
         <div className="flex items-center gap-1.5">
+          {lead.score != null && (
+            <Badge variant="neutral" className="tabular-nums text-[10px] h-4 px-1.5">
+              {lead.score}
+            </Badge>
+          )}
           {lead.estimated_value != null && lead.estimated_value > 0 && (
             <Badge variant="neutral" className="tabular-nums text-[10px] h-4 px-1.5">
               {formatEUR(lead.estimated_value)}

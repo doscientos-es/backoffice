@@ -46,9 +46,11 @@ export function mapCalToLeadIntake(payload: CalWebhookPayload): LeadIntake {
   return {
     name: guest?.name || "Guest",
     email: guest?.email || null,
-    source: "cal.com",
+    source: "Cal.com",
     externalId: booking.uid,
-    externalSource: "cal.com",
+    externalSource: "Cal.com",
+    mergeIntoLeadId:
+      typeof booking.metadata?.leadId === "string" ? booking.metadata.leadId : null,
     notes: `Meeting: ${booking.title}\nStatus: ${triggerEvent}\nNotes: ${booking.additionalNotes || "none"}`,
     rawPayload: payload,
   };

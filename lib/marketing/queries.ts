@@ -1,4 +1,5 @@
 import { META_LEAD_SOURCE } from "@/lib/integrations/meta-leads";
+import { normalizeLeadSource } from "@/lib/leads/constants";
 import { scopedLogger } from "@/lib/logger";
 import { notDeleted } from "@/lib/supabase/filters";
 import { createServerClient } from "@/lib/supabase/server";
@@ -520,10 +521,11 @@ export async function getLeadFunnelBySource(
   const QUALIFIED_STATUSES = new Set(["qualifying", "quoted", "won"]);
 
   for (const row of data) {
-    const key =
+    const rawKey =
       (row.utm_source as string | null)?.trim() ||
       (row.source as string | null)?.trim() ||
       "directo";
+    const key = normalizeLeadSource(rawKey) ?? rawKey;
 
     const bucket = map.get(key) ?? { total: 0, qualified: 0, won: 0, pipelineValue: 0 };
     bucket.total++;

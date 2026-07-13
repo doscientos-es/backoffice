@@ -19,15 +19,16 @@ interface Props {
   assets: BrandAsset[];
   tokens: BrandToken[];
   isAdmin: boolean;
+  className?: string;
 }
 
-export function BrandHub({ assets, tokens, isAdmin }: Props) {
+export function BrandHub({ assets, tokens, isAdmin, className }: Props) {
   const [active, setActive] = useState<Tab>("assets");
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className={cn("flex flex-col", className)}>
       {/* Tab bar */}
-      <div className="flex gap-0.5 border-b border-border">
+      <div className="shrink-0 flex gap-0.5 border-b border-border">
         {TABS.map((t) => (
           <button
             key={t.id}
@@ -45,8 +46,8 @@ export function BrandHub({ assets, tokens, isAdmin }: Props) {
         ))}
       </div>
 
-      {/* Content */}
-      <div className="pt-2">
+      {/* Content — scrollable */}
+      <div className="flex-1 min-h-0 overflow-y-auto pt-4">
         {active === "assets" &&
           (assets.length === 0 ? (
             <p className="text-sm text-muted-foreground py-10 text-center">

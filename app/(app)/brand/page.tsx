@@ -33,10 +33,11 @@ export default async function BrandPage() {
   const isAdmin = user.role === "owner" || user.role === "admin";
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col h-full gap-6">
       <PageHeader
         title="Marca"
         description="Assets visuales, tokens de diseño y exportación para nuevos proyectos."
+        className="shrink-0"
         actions={
           user.role !== "viewer" ? (
             <Button asChild size="sm">
@@ -58,6 +59,7 @@ export default async function BrandPage() {
           assets={(assetsResult.data ?? []) as BrandAsset[]}
           tokens={(tokensResult.data ?? []) as BrandToken[]}
           isAdmin={isAdmin}
+          className="flex-1 min-h-0"
         />
       )}
     </div>

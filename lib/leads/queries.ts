@@ -24,13 +24,23 @@ const ASSIGNEE_EMBED = "assignee:assigned_to(id, name, avatar_url, github_handle
 /** Embed of an interaction's author, via the `performed_by` FK column. */
 const PERFORMER_EMBED = "performer:performed_by(id, name, avatar_url, github_handle)";
 
-const QUALIFICATION_COLUMNS = "company_size, solution_type, urgency, first_contacted_at";
+const QUALIFICATION_COLUMNS =
+  "company_size, solution_type, urgency, first_contacted_at, landing_path, landing_ref, landing_subject, calculator_cost, calculator_hours, event_id, conversion_step, first_landing_path, first_referrer, first_utm_source, first_utm_medium, first_utm_campaign, first_utm_term, first_utm_content, last_landing_path, last_referrer, last_utm_source, last_utm_medium, last_utm_campaign, last_utm_term, last_utm_content";
 
-const LIST_COLUMNS = `id, name, company, email, phone, source, notes, status, created_at, updated_at, estimated_value, ${QUALIFICATION_COLUMNS}, ai_summary, ai_updated_at, assigned_to, ${ASSIGNEE_EMBED}`;
+const LIST_COLUMNS = `id, name, company, email, phone, source, notes, status, created_at, updated_at, estimated_value, score, ${QUALIFICATION_COLUMNS}, ai_summary, ai_updated_at, assigned_to, ${ASSIGNEE_EMBED}`;
 
-const DETAIL_COLUMNS = `id, name, email, phone, company, source, status, notes, estimated_value, ${QUALIFICATION_COLUMNS}, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_temperature, ai_confidence, ai_updated_at, ai_tags, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`;
+const DETAIL_COLUMNS = `id, name, email, phone, company, source, status, notes, estimated_value, score, ${QUALIFICATION_COLUMNS}, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_temperature, ai_confidence, ai_updated_at, ai_tags, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`;
 
 const log = scopedLogger("leads.queries");
+
+function sourceFilterValues(source: string): string[] {
+  const aliases: Record<string, string[]> = {
+    Landing: ["Landing", "landing", "landing_form"],
+    "Cal.com": ["Cal.com", "cal.com", "cal"],
+    "Anuncios Meta": ["Anuncios Meta", "meta", "meta_lead_ads"],
+  };
+  return aliases[source] ?? [source];
+}
 
 /**
  * Normalises an embedded `team_members` relation into a `LeadMemberRef`.
@@ -62,7 +72,7 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
     );
   }
   if (params.status) query = query.eq("status", params.status);
-  if (params.source) query = query.eq("source", params.source);
+  if (params.source) query = query.in("source", sourceFilterValues(params.source));
   if (params.assignee) query = query.eq("assigned_to", params.assignee);
 
   const from = (params.page - 1) * LEAD_LIST_PAGE_SIZE;
@@ -90,10 +100,15 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
     created_at: l.created_at as string,
     updated_at: (l.updated_at as string | null) ?? (l.created_at as string),
     estimated_value: l.estimated_value == null ? null : Number(l.estimated_value),
+    score: l.score == null ? null : Number(l.score),
     company_size: (l.company_size as string | null) ?? null,
     solution_type: (l.solution_type as string | null) ?? null,
     urgency: (l.urgency as string | null) ?? null,
     first_contacted_at: (l.first_contacted_at as string | null) ?? null,
+    landing_path: (l.landing_path as string | null) ?? null,
+    landing_ref: (l.landing_ref as string | null) ?? null,
+    landing_subject: (l.landing_subject as string | null) ?? null,
+    conversion_step: (l.conversion_step as string | null) ?? null,
     ai_summary: (l.ai_summary as string | null) ?? null,
     ai_updated_at: (l.ai_updated_at as string | null) ?? null,
     assignee: mapMemberRef(l.assignee),

@@ -60,7 +60,7 @@ export function ListControls({
 
   // Keep the latest router-related callbacks in a ref so the debounce effect
   // can depend only on `q` without re-creating the timeout on every render.
-  const commitRef = useRef<(value: string) => void>(() => {});
+  const commitRef = useRef<(value: string) => void>(() => { });
   commitRef.current = (value: string) => {
     const next = updateParams(params, { [searchKey]: value, page: null });
     router.replace(`${pathname}?${next.toString()}`, { scroll: false });
@@ -108,10 +108,11 @@ export function ListControls({
 
   return (
     <div className={cn("flex flex-col border-b border-border", className)}>
-      {/* ── Row 1: search + export + pagination ─────────────────────── */}
-      <div className="flex items-center gap-2 px-3 py-2">
+      {/* ── Single row: search + filters + export + pagination ───────── */}
+      {/* On large screens everything fits inline; on small it wraps.    */}
+      <div className="flex flex-wrap items-center gap-2 px-3 py-2">
         {searchKey ? (
-          <div className="relative min-w-0 flex-1">
+          <div className="relative w-full min-w-32 flex-1 sm:max-w-56">
             <Search className="absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={q}
@@ -121,6 +122,25 @@ export function ListControls({
             />
           </div>
         ) : null}
+
+        {/* Filters inline with the search on large screens */}
+        {filters.map((f) => (
+          <Select
+            key={f.key}
+            value={params.get(f.key) ?? ""}
+            onChange={(e) => setFilter(f.key, e.target.value)}
+            aria-label={f.label}
+            className="h-8 min-w-30 max-w-45 flex-1 text-xs sm:flex-none"
+          >
+            <option value="">{f.label}: todos</option>
+            {f.options.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+        ))}
+
         <div className="ml-auto flex shrink-0 items-center gap-1">
           {onExport ? (
             <Button
@@ -163,27 +183,6 @@ export function ListControls({
           ) : null}
         </div>
       </div>
-      {/* ── Row 2: filters (only if there are any) ───────────────────── */}
-      {filters.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-2 border-t border-border/60 px-3 py-2">
-          {filters.map((f) => (
-            <Select
-              key={f.key}
-              value={params.get(f.key) ?? ""}
-              onChange={(e) => setFilter(f.key, e.target.value)}
-              aria-label={f.label}
-              className="h-7 min-w-[120px] max-w-[200px] flex-1 text-xs sm:flex-none"
-            >
-              <option value="">{f.label}: todos</option>
-              {f.options.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </Select>
-          ))}
-        </div>
-      ) : null}
     </div>
   );
 }

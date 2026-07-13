@@ -1,0 +1,126 @@
+/**
+ * Reason-aware recovery email templates for Sara's re-engagement flow.
+ *
+ * Keys mirror the `lost_reason` presets defined in `close-reason-dialog.tsx`
+ * (lost + not_interested variants). Any custom / unknown reason falls back to
+ * `DEFAULT_TEMPLATE`. Bodies are Markdown and reuse the same `{{nombre}}` /
+ * `{{empresa}}` variables the EmailComposer already interpolates server-side,
+ * so no extra wiring is needed.
+ */
+
+export type RecoveryTemplate = {
+  subject: string;
+  /** Markdown body. Signature is appended by the send action. */
+  body: string;
+};
+
+const DEFAULT_TEMPLATE: RecoveryTemplate = {
+  subject: "¿Retomamos lo que dejamos pendiente, {{nombre}}?",
+  body: [
+    "Hola **{{nombre}}**,",
+    "",
+    "Hace un tiempo estuvimos en contacto y no llegamos a cerrar nada. Me gustaría",
+    "entender qué te frenó y ver si ahora encaja mejor.",
+    "",
+    "¿Te viene bien una llamada breve esta semana?",
+    "",
+    "Un saludo.",
+  ].join("\n"),
+};
+
+/**
+ * Templates keyed by the exact `lost_reason` preset strings. Kept as data (not
+ * logic) so adding a reason is a one-line change — Open/Closed friendly.
+ */
+const TEMPLATES: Record<string, RecoveryTemplate> = {
+  Precio: {
+    subject: "Una propuesta ajustada para {{empresa}}",
+    body: [
+      "Hola **{{nombre}}**,",
+      "",
+      "Sé que el presupuesto fue el punto que nos frenó. Hemos revisado opciones y",
+      "creo que puedo ofrecerte una alternativa que encaje mejor con lo que buscabais",
+      "en {{empresa}} sin renunciar a lo importante.",
+      "",
+      "¿Te parece si lo vemos en 15 minutos?",
+      "",
+      "Un saludo.",
+    ].join("\n"),
+  },
+  "Timing / Calendario": {
+    subject: "¿Es mejor momento ahora, {{nombre}}?",
+    body: [
+      "Hola **{{nombre}}**,",
+      "",
+      "Cuando hablamos no era el momento adecuado para {{empresa}}. Ha pasado un",
+      "tiempo y quería retomarlo por si ahora encaja mejor en vuestros planes.",
+      "",
+      "¿Lo comentamos brevemente?",
+      "",
+      "Un saludo.",
+    ].join("\n"),
+  },
+  "Eligió competencia": {
+    subject: "¿Cómo va todo por {{empresa}}?",
+    body: [
+      "Hola **{{nombre}}**,",
+      "",
+      "En su momento optasteis por otra opción, algo totalmente comprensible.",
+      "Quería saber cómo os está funcionando y si hay algo en lo que podamos ayudar",
+      "desde nuestro lado.",
+      "",
+      "Sigo a tu disposición.",
+      "",
+      "Un saludo.",
+    ].join("\n"),
+  },
+  "No es buen fit": {
+    subject: "Puede que ahora encajemos mejor, {{nombre}}",
+    body: [
+      "Hola **{{nombre}}**,",
+      "",
+      "Cuando hablamos concluimos que no era el encaje ideal. Hemos evolucionado",
+      "bastante desde entonces y quizá ahora tenga más sentido para {{empresa}}.",
+      "",
+      "¿Te cuento las novedades en una llamada corta?",
+      "",
+      "Un saludo.",
+    ].join("\n"),
+  },
+  "Sin respuesta": {
+    subject: "Sigo por aquí, {{nombre}}",
+    body: [
+      "Hola **{{nombre}}**,",
+      "",
+      "Te escribí hace un tiempo y no llegamos a coincidir. No quiero insistir de más,",
+      "solo confirmar si sigue teniendo interés para {{empresa}} o prefieres que lo",
+      "dejemos aquí.",
+      "",
+      "Cualquiera de las dos respuestas me ayuda.",
+      "",
+      "Un saludo.",
+    ].join("\n"),
+  },
+  "Sin presupuesto": {
+    subject: "Opciones más ligeras para {{empresa}}",
+    body: [
+      "Hola **{{nombre}}**,",
+      "",
+      "Entiendo que el presupuesto no daba en aquel momento. Tenemos formas de",
+      "empezar con un alcance más reducido y crecer poco a poco.",
+      "",
+      "¿Te enseño cómo sería?",
+      "",
+      "Un saludo.",
+    ].join("\n"),
+  },
+};
+
+/**
+ * Returns the best-matching template for a lost reason, falling back to a
+ * generic re-engagement message when the reason is empty or unmapped.
+ */
+export function getRecoveryTemplate(reason: string | null | undefined): RecoveryTemplate {
+  if (!reason) return DEFAULT_TEMPLATE;
+  return TEMPLATES[reason.trim()] ?? DEFAULT_TEMPLATE;
+}

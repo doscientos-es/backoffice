@@ -10,6 +10,11 @@ import type { CalendarBusySlot } from "@/lib/google/calendar";
 import { resolveSubject } from "@/lib/google/client";
 import { pushMetaConversion } from "@/lib/integrations/meta-capi";
 import {
+  normalizeCompanySize,
+  normalizeLeadSource,
+  normalizeUrgency,
+} from "@/lib/leads/constants";
+import {
   AssignLeadOwnerInput,
   CheckMeetingSlotInput,
   ConvertLeadInput,
@@ -58,6 +63,9 @@ export const createLead = defineAction({
       .from("leads")
       .insert({
         ...input,
+        source: normalizeLeadSource(input.source) ?? null,
+        company_size: normalizeCompanySize(input.company_size),
+        urgency: normalizeUrgency(input.urgency),
         created_by: user.id,
         updated_by: user.id,
       })
@@ -102,6 +110,9 @@ export const updateLead = defineAction({
       .from("leads")
       .update({
         ...input,
+        source: normalizeLeadSource(input.source) ?? null,
+        company_size: normalizeCompanySize(input.company_size),
+        urgency: normalizeUrgency(input.urgency),
         updated_at: new Date().toISOString(),
         updated_by: user.id,
       })

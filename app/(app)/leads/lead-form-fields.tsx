@@ -16,6 +16,7 @@ export const SOLUTION_TYPES = [
 export const LEAD_SOURCES = [
   "Landing",
   "Anuncios Meta",
+  "Cal.com",
   "Referencia",
   "Conocido",
   "LinkedIn",
@@ -186,10 +187,10 @@ export function LeadFormFields({
               defaultValue={d.company_size ?? ""}
             >
               <option value="">— Sin especificar —</option>
-              <option value="1-10">1–10 empleados</option>
-              <option value="10-50">10–50 empleados</option>
-              <option value="50-200">50–200 empleados</option>
-              <option value="200+">+200 empleados</option>
+              <option value="1-10 empleados">1–10 empleados</option>
+              <option value="10-50 empleados">10–50 empleados</option>
+              <option value="50-200 empleados">50–200 empleados</option>
+              <option value="Más de 200 empleados">+200 empleados</option>
             </Select>
           </FormRow>
         </div>

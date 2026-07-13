@@ -112,11 +112,12 @@ export default async function LeadsPage({
           { label: "Empresa", sortKey: "company" },
           "Email",
           { label: "Estado", sortKey: "status" },
+          { label: "Score", sortKey: "score" },
           "Responsable",
           { label: "Creado", sortKey: "created_at" },
           "Acciones",
         ]}
-        align={["left", "left", "left", "left", "left", "left", "right"]}
+        align={["left", "left", "left", "left", "right", "left", "left", "right"]}
         exportFilename="leads"
         addHref="/leads/new"
         addLabel="Añadir lead"

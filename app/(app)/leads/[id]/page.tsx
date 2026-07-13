@@ -60,6 +60,10 @@ function excerpt(body: string | null, max = 160): string | null {
   return text.length > max ? `${text.slice(0, max)}…` : text;
 }
 
+function compactParts(parts: Array<string | null | undefined>): string {
+  return parts.filter(Boolean).join(" · ") || "—";
+}
+
 export default async function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const user = await requireUser();
@@ -221,6 +225,9 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                 <DetailRow label="Responsable">
                   <MemberLabel member={lead.assignee} />
                 </DetailRow>
+                <DetailRow label="Score">
+                  {lead.score != null ? `${Number(lead.score)}/100` : "—"}
+                </DetailRow>
                 <DetailRow label="Valor estimado">
                   {lead.estimated_value != null ? formatEUR(Number(lead.estimated_value)) : "—"}
                 </DetailRow>
@@ -228,6 +235,33 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                 <DetailRow label="Tamaño">{lead.company_size ?? "—"}</DetailRow>
                 <DetailRow label="Urgencia">{lead.urgency ?? "—"}</DetailRow>
                 <DetailRow label="Solución">{lead.solution_type ?? "—"}</DetailRow>
+                <DetailRow label="Conversión">{lead.conversion_step ?? "—"}</DetailRow>
+                <DetailRow label="Event ID">{lead.event_id ?? "—"}</DetailRow>
+                <DetailRow label="Landing">{lead.landing_path ?? "—"}</DetailRow>
+                <DetailRow label="Ref">{lead.landing_ref ?? "—"}</DetailRow>
+                <DetailRow label="Asunto">{lead.landing_subject ?? "—"}</DetailRow>
+                <DetailRow label="First touch">
+                  {compactParts([
+                    lead.first_landing_path,
+                    lead.first_referrer,
+                    lead.first_utm_source,
+                    lead.first_utm_medium,
+                    lead.first_utm_campaign,
+                  ])}
+                </DetailRow>
+                <DetailRow label="Last touch">
+                  {compactParts([
+                    lead.last_landing_path,
+                    lead.last_referrer,
+                    lead.last_utm_source,
+                    lead.last_utm_medium,
+                    lead.last_utm_campaign,
+                  ])}
+                </DetailRow>
+                <DetailRow label="Calculadora">
+                  {[lead.calculator_cost, lead.calculator_hours].filter(Boolean).join(" · ") ||
+                    "—"}
+                </DetailRow>
               </DetailGrid>
 
               {lead.notes ? (

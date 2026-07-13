@@ -26,6 +26,7 @@ const { store } = vi.hoisted(() => ({
     existingByPhone: null as Record<string, unknown> | null,
     updatedRow: null as Record<string, unknown> | null,
     insertedRow: null as Record<string, unknown> | null,
+    insertedRows: [] as Record<string, unknown>[],
     enrichSelectResult: null as Record<string, unknown> | null,
   },
 }));
@@ -73,6 +74,7 @@ function buildChain(table: string) {
     insert(row: Record<string, unknown>) {
       op = "insert";
       store.insertedRow = { table, ...row };
+      store.insertedRows.push(store.insertedRow);
       return chain;
     },
     update(patch: Record<string, unknown>) {
@@ -153,6 +155,7 @@ beforeEach(() => {
   store.existingByPhone = null;
   store.updatedRow = null;
   store.insertedRow = null;
+  store.insertedRows = [];
   store.enrichSelectResult = null;
 });
 
@@ -162,7 +165,15 @@ describe("ingestLead – new lead", () => {
   it("inserts a row and returns duplicate: false", async () => {
     const result = await ingestLead(landingIntake);
     expect(result).toEqual({ ok: true, leadId: "new-lead-uuid", duplicate: false });
-    expect(store.insertedRow).toMatchObject({ name: "María López", email: "maria@example.com" });
+    expect(store.insertedRows.find((row) => row.table === "leads")).toMatchObject({
+      name: "María López",
+      email: "maria@example.com",
+    });
+    expect(store.insertedRows.find((row) => row.table === "lead_interactions")).toMatchObject({
+      lead_id: "new-lead-uuid",
+      type: "note",
+      subject: "Lead recibido desde Landing",
+    });
   });
 
   it("returns ok:false when validation fails", async () => {

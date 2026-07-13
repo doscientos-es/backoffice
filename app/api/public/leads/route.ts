@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json(
-    { ok: true, duplicate: result.duplicate },
+    { ok: true, duplicate: result.duplicate, leadId: result.leadId },
     { status: 201, headers: cors },
   );
 }

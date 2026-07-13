@@ -55,6 +55,7 @@ export function LeadsList({
       l.solution_type ?? "",
       l.urgency ?? "",
       l.source ?? "",
+      l.score?.toString() ?? "",
     ],
     cells: [
       <Link
@@ -81,6 +82,9 @@ export function LeadsList({
         </a>
       ) : null,
       <StatusBadge key="status" meta={LEAD_STATUS} value={l.status} />,
+      <span key="score" className="tabular-nums text-muted-foreground">
+        {l.score ?? "—"}
+      </span>,
       <MemberLabel key="assignee" member={l.assignee} size="sm" />,
       <span key="created" className="tabular-nums">
         {relativeTime(l.created_at)}

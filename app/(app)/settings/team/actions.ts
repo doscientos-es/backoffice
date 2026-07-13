@@ -381,3 +381,26 @@ export async function deleteMember(input: unknown): Promise<ActionResult> {
   revalidatePath("/settings/team");
   return { ok: true };
 }
+
+// ---------- Toggle leads_assignable ----------
+
+const LeadsAssignableInput = z.object({
+  memberId: z.string().uuid(),
+  leadsAssignable: z.boolean(),
+});
+
+export async function toggleLeadsAssignable(input: unknown): Promise<ActionResult> {
+  await requireRole(["owner", "admin"]);
+  const parsed = LeadsAssignableInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Datos no válidos" };
+
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("team_members")
+    .update({ leads_assignable: parsed.data.leadsAssignable, updated_at: new Date().toISOString() })
+    .eq("id", parsed.data.memberId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/settings/team");
+  return { ok: true };
+}

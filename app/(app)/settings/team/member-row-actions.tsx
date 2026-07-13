@@ -10,6 +10,7 @@ import {
   deleteMember,
   reactivateMember,
   resendInvite,
+  toggleLeadsAssignable,
   updateMemberRole,
 } from "./actions";
 
@@ -21,6 +22,7 @@ interface Props {
   isDeactivated: boolean;
   isPending: boolean;
   actorRole: MemberRole;
+  leadsAssignable: boolean;
 }
 
 export function MemberRowActions({
@@ -31,6 +33,7 @@ export function MemberRowActions({
   isDeactivated,
   isPending,
   actorRole,
+  leadsAssignable,
 }: Props) {
   const feedback = useFormFeedback();
   const router = useRouter();
@@ -38,6 +41,7 @@ export function MemberRowActions({
   const targetIsOwner = role === "owner";
   const disabledRoleSelect = isSelf || isDeactivated || (targetIsOwner && !canEditOwner);
   const canDelete = actorRole === "owner" && isDeactivated && !isSelf;
+  const canEditLeads = (actorRole === "owner" || actorRole === "admin") && !isDeactivated;
 
   async function onRoleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const next = e.target.value as MemberRole;
@@ -91,9 +95,32 @@ export function MemberRowActions({
     feedback.setSuccess("Invitación reenviada");
   }
 
+  async function onToggleLeadsAssignable() {
+    feedback.setPending();
+    const res = await toggleLeadsAssignable({ memberId, leadsAssignable: !leadsAssignable });
+    if (!res.ok) {
+      feedback.setError(res.error);
+      return;
+    }
+    feedback.setSuccess(leadsAssignable ? "Excluido de leads" : "Incluido en leads");
+    router.refresh();
+  }
+
   return (
     <div className="flex items-center justify-end gap-2">
       <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
+      {canEditLeads ? (
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={feedback.pending}
+          onClick={onToggleLeadsAssignable}
+          title={leadsAssignable ? "Excluir del reparto automático de leads" : "Incluir en el reparto automático de leads"}
+        >
+          {leadsAssignable ? "Leads: sí" : "Leads: no"}
+        </Button>
+      ) : null}
       {isPending ? (
         <Button
           type="button"

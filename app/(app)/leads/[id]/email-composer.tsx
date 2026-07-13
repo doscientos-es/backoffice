@@ -13,6 +13,10 @@ import { sendEmailToLead } from "../actions";
 export type EmailComposerProps = {
   leadId: string;
   defaultTo: string;
+  /** Pre-fills the subject line (e.g. a reason-based recovery template). */
+  defaultSubject?: string;
+  /** Pre-fills the Markdown body. */
+  defaultBody?: string;
   disabled?: boolean;
   disabledReason?: string;
   aiEnabled?: boolean;
@@ -22,14 +26,16 @@ export type EmailComposerProps = {
 export function EmailComposer({
   leadId,
   defaultTo,
+  defaultSubject,
+  defaultBody,
   disabled,
   disabledReason,
   aiEnabled,
   onSuccess,
 }: EmailComposerProps) {
   const [to, setTo] = useState(defaultTo);
-  const [subject, setSubject] = useState("");
-  const [body, setBody] = useState("");
+  const [subject, setSubject] = useState(defaultSubject ?? "");
+  const [body, setBody] = useState(defaultBody ?? "");
   const [drafting, setDrafting] = useState(false);
   const feedback = useFormFeedback();
 
