@@ -82,9 +82,7 @@ export function NavProgress() {
 
   return (
     <div
-      role="progressbar"
-      aria-hidden={!active}
-      aria-label="Cargando página"
+      aria-hidden
       className={cn(
         "pointer-events-none fixed left-0 top-0 z-[9999] h-[2px] bg-primary",
         "transition-[width] duration-100 ease-linear",

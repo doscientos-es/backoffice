@@ -122,6 +122,7 @@ export function VaultClient({
   }
 
   // Reset to page 1 whenever filters / sort change.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: filters/sort are intentional triggers; the effect only resets pagination
   useEffect(() => {
     setPage(1);
   }, [search, serviceFilter, sensitiveFilter, clientFilter, sortField, sortDir]);
