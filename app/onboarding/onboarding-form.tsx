@@ -16,7 +16,7 @@ interface Props {
   defaultAvatarUrl: string | null;
   defaultGithubHandle: string | null;
   defaultEmailAlias: string | null;
-  defaultEmailSendEnabled: boolean;
+  defaultPhone: string | null;
 }
 
 const HANDLE_RE = /^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,38})$/;
@@ -27,7 +27,7 @@ export function OnboardingForm({
   defaultAvatarUrl,
   defaultGithubHandle,
   defaultEmailAlias,
-  defaultEmailSendEnabled,
+  defaultPhone,
 }: Props) {
   const feedback = useFormFeedback();
   const [skipPending, startSkip] = useTransition();
@@ -194,18 +194,20 @@ export function OnboardingForm({
             </FieldDescription>
           )}
         </Field>
-        <Field orientation="horizontal" className="items-center pt-5">
-          <input
-            type="checkbox"
-            id="email_send_enabled"
-            name="email_send_enabled"
-            value="on"
-            defaultChecked={defaultEmailSendEnabled}
-            className="size-4 rounded border-border"
-          />
-          <FieldLabel htmlFor="email_send_enabled" className="text-sm font-normal">
-            Activar envío de emails
+        <Field>
+          <FieldLabel htmlFor="phone" className="text-xs font-medium">
+            Teléfono <span className="text-muted-foreground">(opcional)</span>
           </FieldLabel>
+          <Input
+            id="phone"
+            name="phone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            defaultValue={defaultPhone ?? ""}
+            placeholder="+34 600 000 000"
+            maxLength={30}
+          />
         </Field>
       </div>
 

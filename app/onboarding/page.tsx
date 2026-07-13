@@ -22,7 +22,7 @@ export default async function OnboardingPage() {
         defaultAvatarUrl={user.avatarUrl}
         defaultGithubHandle={user.githubHandle}
         defaultEmailAlias={user.emailAlias}
-        defaultEmailSendEnabled={user.emailSendEnabled}
+        defaultPhone={user.phone}
       />
     </div>
   );
