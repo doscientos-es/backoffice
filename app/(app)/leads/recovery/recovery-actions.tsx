@@ -11,12 +11,13 @@ import {
 } from "@/components/ui/dialog";
 import { getRecoveryTemplate } from "@/lib/recovery/templates";
 import type { RecoveryLead } from "@/lib/recovery/types";
-import { Mail, RotateCcw } from "lucide-react";
+import { Ban, Mail, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { sileo } from "sileo";
 import { EmailComposer } from "../[id]/email-composer";
 import { updateLeadStatus } from "../actions";
+import { CloseReasonDialog } from "../close-reason-dialog";
 import { ReopenConfirmDialog } from "../reopen-confirm-dialog";
 
 /**
@@ -30,6 +31,7 @@ export function RecoveryActions({ lead, aiEnabled }: { lead: RecoveryLead; aiEna
   const router = useRouter();
   const [emailOpen, setEmailOpen] = useState(false);
   const [pendingReopen, setPendingReopen] = useState(false);
+  const [pendingNotInterested, setPendingNotInterested] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const template = getRecoveryTemplate(lead.lost_reason);
@@ -48,6 +50,23 @@ export function RecoveryActions({ lead, aiEnabled }: { lead: RecoveryLead; aiEna
         return;
       }
       sileo.success({ title: `${lead.name} vuelve al pipeline` });
+      router.refresh();
+    });
+  }
+
+  function confirmNotInterested(reason: string) {
+    setPendingNotInterested(false);
+    startTransition(async () => {
+      const res = await updateLeadStatus({
+        leadId: lead.id,
+        status: "not_interested",
+        lostReason: reason,
+      });
+      if (res && !res.ok) {
+        sileo.error({ title: res.error });
+        return;
+      }
+      sileo.success({ title: `${lead.name} marcado como no interesado` });
       router.refresh();
     });
   }
@@ -79,6 +98,19 @@ export function RecoveryActions({ lead, aiEnabled }: { lead: RecoveryLead; aiEna
         </DialogContent>
       </Dialog>
 
+      {lead.status !== "not_interested" ? (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-1.5 text-muted-foreground"
+          disabled={isPending}
+          onClick={() => setPendingNotInterested(true)}
+        >
+          <Ban className="size-3.5" />
+          No interesa
+        </Button>
+      ) : null}
+
       <Button
         variant="ghost"
         size="sm"
@@ -102,6 +134,13 @@ export function RecoveryActions({ lead, aiEnabled }: { lead: RecoveryLead; aiEna
         confirmLabel="Sí, reabrir"
         onCancel={() => setPendingReopen(false)}
         onConfirm={confirmReopen}
+      />
+
+      <CloseReasonDialog
+        lead={pendingNotInterested ? { id: lead.id, name: lead.name } : null}
+        variant="not_interested"
+        onCancel={() => setPendingNotInterested(false)}
+        onConfirm={confirmNotInterested}
       />
     </div>
   );

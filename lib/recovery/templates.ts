@@ -14,6 +14,9 @@ export type RecoveryTemplate = {
   body: string;
 };
 
+const INFO_LINK =
+  "Te dejo también [esta página para revisar cómo trabajamos](https://www.doscientos.es).";
+
 const DEFAULT_TEMPLATE: RecoveryTemplate = {
   subject: "¿Retomamos lo que dejamos pendiente, {{nombre}}?",
   body: [
@@ -27,6 +30,17 @@ const DEFAULT_TEMPLATE: RecoveryTemplate = {
     "Un saludo.",
   ].join("\n"),
 };
+
+function withInfoLink(template: RecoveryTemplate): RecoveryTemplate {
+  if (template.body.includes("https://www.doscientos.es")) return template;
+  const lines = template.body.split("\n");
+  const signoffIndex = lines.findIndex((line) => line.trim().toLowerCase() === "un saludo.");
+  if (signoffIndex === -1) return { ...template, body: `${template.body}\n\n${INFO_LINK}` };
+  return {
+    ...template,
+    body: [...lines.slice(0, signoffIndex), INFO_LINK, "", ...lines.slice(signoffIndex)].join("\n"),
+  };
+}
 
 /**
  * Templates keyed by the exact `lost_reason` preset strings. Kept as data (not
@@ -121,6 +135,6 @@ const TEMPLATES: Record<string, RecoveryTemplate> = {
  * generic re-engagement message when the reason is empty or unmapped.
  */
 export function getRecoveryTemplate(reason: string | null | undefined): RecoveryTemplate {
-  if (!reason) return DEFAULT_TEMPLATE;
-  return TEMPLATES[reason.trim()] ?? DEFAULT_TEMPLATE;
+  if (!reason) return withInfoLink(DEFAULT_TEMPLATE);
+  return withInfoLink(TEMPLATES[reason.trim()] ?? DEFAULT_TEMPLATE);
 }

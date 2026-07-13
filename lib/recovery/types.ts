@@ -49,6 +49,12 @@ export type RecoveryLead = {
   lastContactedAt: string | null;
   /** Number of outbound recovery touches since the lead was lost. */
   outreachCount: number;
+  /** Tracked email opens across recovery sends. Best-effort because clients can block pixels. */
+  openCount: number;
+  /** Tracked link clicks across recovery sends. Stronger intent signal than opens. */
+  clickCount: number;
+  lastOpenedAt: string | null;
+  lastClickedAt: string | null;
 };
 
 export const RECOVERY_SORT_COLUMNS = [

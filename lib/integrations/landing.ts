@@ -27,6 +27,7 @@ export const LandingLeadInput = z.object({
   referrer: optionalText(500),
   language: optionalText(16),
   event_id: optionalText(120),
+  visitor_id: optionalText(120),
   conversion_step: optionalText(120),
   landing_path: optionalText(500),
   landing_ref: optionalText(200),
@@ -105,6 +106,7 @@ export function mapLandingToIntake(
     },
     context: {
       eventId: input.event_id ?? null,
+      visitorId: input.visitor_id ?? null,
       conversionStep: input.conversion_step ?? null,
       referrer: input.referrer ?? null,
       ip: ctx?.ip ?? null,

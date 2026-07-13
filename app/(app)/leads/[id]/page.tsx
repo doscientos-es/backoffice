@@ -12,12 +12,13 @@ import { MemberLabel } from "@/components/ui/member-avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { isAIEnabled } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
+import { listLeadConversionEvents } from "@/lib/conversion-events/queries";
 import { isGoogleEnabled } from "@/lib/env";
 import { getLeadDetail } from "@/lib/leads/queries";
 import { listActiveMembers } from "@/lib/members/queries";
 import { LEAD_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
-import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
+import { formatDate, formatDateTime, formatEUR, relativeTime } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LeadAiPanel } from "./lead-ai-panel";
@@ -71,6 +72,10 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   const result = await getLeadDetail(id);
   if (!result) notFound();
   const { lead, interactions, linkedClientId, proposals, projects, invoices, reminders } = result;
+  const conversionEvents = await listLeadConversionEvents({
+    id: lead.id,
+    event_id: lead.event_id,
+  }).catch(() => []);
 
   const aiEnabled = isAIEnabled();
   const googleEnabled = isGoogleEnabled();
@@ -271,6 +276,53 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                   <p className="whitespace-pre-wrap text-sm">{lead.notes as string}</p>
                 </div>
               ) : null}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Journey de conversión</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {conversionEvents.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Sin eventos de landing vinculados a este lead.
+                </p>
+              ) : (
+                <ol className="divide-y divide-border">
+                  {conversionEvents.map((event) => (
+                    <li key={event.id} className="grid gap-2 py-3 sm:grid-cols-[160px_1fr]">
+                      <div className="text-xs text-muted-foreground">
+                        {formatDateTime(event.created_at)}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge
+                            variant={event.event_name.includes("whatsapp") ? "success" : "neutral"}
+                          >
+                            {event.event_name}
+                          </Badge>
+                          {event.conversion_step && (
+                            <span className="text-xs text-muted-foreground">
+                              {event.conversion_step}
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-1 truncate text-sm">
+                          {event.landing_path ?? event.referrer ?? "Evento sin página"}
+                        </p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {[event.utm_source, event.utm_medium, event.utm_campaign]
+                            .filter(Boolean)
+                            .join(" · ") ||
+                            event.landing_ref ||
+                            "Sin UTM/ref"}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              )}
             </CardContent>
           </Card>
 

@@ -4,6 +4,7 @@ import { defineAction } from "@/lib/actions/define-action";
 import { sendEmail } from "@/lib/email/resend";
 import { buildSignatureHtml } from "@/lib/email/signature";
 import { appendSignature, markdownToHtml, renderTemplate } from "@/lib/email/templates";
+import { addEmailTracking } from "@/lib/email/tracking";
 import { isGoogleEnabled, publicEnv, serverEnv } from "@/lib/env";
 import { findConflicts, insertEvent } from "@/lib/google/calendar";
 import type { CalendarBusySlot } from "@/lib/google/calendar";
@@ -371,6 +372,45 @@ export const sendEmailToLead = defineAction({
         )
       : renderedHtml;
 
+    const renderedSubject = renderTemplate(data.subject, {
+      nombre: lead.name as string,
+      empresa: (lead.company as string | null) ?? "",
+    });
+
+    const { data: campaign, error: campaignErr } = await supabase
+      .from("lead_campaigns")
+      .insert({
+        name: `Email individual · ${lead.name as string}`,
+        subject: renderedSubject,
+        body_html: finalHtml,
+        status: "sending",
+        created_by: user.id,
+      })
+      .select("id")
+      .single();
+    if (campaignErr || !campaign) {
+      throw new Error(campaignErr?.message ?? "No se pudo preparar el tracking del email");
+    }
+
+    const { data: sendRow, error: sendErr } = await supabase
+      .from("lead_campaign_sends")
+      .insert({
+        campaign_id: campaign.id as string,
+        lead_id: data.leadId,
+        email: data.to,
+      })
+      .select("id, tracking_token")
+      .single();
+    if (sendErr || !sendRow) {
+      throw new Error(sendErr?.message ?? "No se pudo preparar el envío trackeado");
+    }
+
+    const trackedHtml = addEmailTracking(
+      finalHtml,
+      publicEnv.NEXT_PUBLIC_APP_URL || "https://app.doscientos.es",
+      sendRow.tracking_token as string,
+    );
+
     let resendId: string | null = null;
     let mocked = false;
     try {
@@ -379,32 +419,51 @@ export const sendEmailToLead = defineAction({
         fromAlias: user.emailAlias,
         to: data.to,
         replyTo: user.email,
-        subject: renderTemplate(data.subject, {
-          nombre: lead.name as string,
-          empresa: (lead.company as string | null) ?? "",
-        }),
-        html: finalHtml,
-        tags: { lead_id: data.leadId },
+        subject: renderedSubject,
+        html: trackedHtml,
+        tags: { lead_id: data.leadId, campaign_send_id: sendRow.id as string },
       });
       resendId = sent.id;
       mocked = sent.mocked;
     } catch (e) {
+      await supabase.from("lead_campaigns").update({ status: "paused" }).eq("id", campaign.id);
       throw new Error(e instanceof Error ? e.message : "Error enviando email");
     }
+
+    await Promise.all([
+      supabase
+        .from("lead_campaign_sends")
+        .update({
+          resend_email_id: resendId,
+          sent_at: new Date().toISOString(),
+        })
+        .eq("id", sendRow.id),
+      supabase
+        .from("lead_campaigns")
+        .update({ status: "sent", body_html: trackedHtml })
+        .eq("id", campaign.id),
+    ]);
 
     await supabase.from("lead_interactions").insert({
       lead_id: data.leadId,
       type: "email_sent",
-      subject: data.subject,
-      body: finalHtml,
+      subject: renderedSubject,
+      body: trackedHtml,
       resend_email_id: resendId,
       performed_by: user.id,
-      payload: { template_slug: data.templateSlug ?? null, mocked },
+      payload: {
+        template_slug: data.templateSlug ?? null,
+        mocked,
+        campaign_id: campaign.id,
+        campaign_send_id: sendRow.id,
+        tracking_token: sendRow.tracking_token,
+      },
     });
 
     await markFirstContacted(supabase, data.leadId);
 
     revalidatePath(`/leads/${data.leadId}`);
+    revalidatePath("/leads/recovery");
     return { emailId: resendId, mocked };
   },
 });

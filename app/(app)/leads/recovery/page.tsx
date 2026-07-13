@@ -94,13 +94,14 @@ export default async function RecoveryPage({
           { label: "Nombre", sortKey: "name" },
           { label: "Empresa", sortKey: "company" },
           "Motivo",
-          "Estado",
+          "Repesca",
+          "Señales",
           "Responsable",
           { label: "Perdido", sortKey: "lost_at" },
           { label: "Valor", sortKey: "estimated_value", align: "right" },
           { label: "Acciones", align: "right" },
         ]}
-        align={["left", "left", "left", "left", "left", "left", "right", "right"]}
+        align={["left", "left", "left", "left", "left", "left", "left", "right", "right"]}
         exportFilename="repesca-leads"
       />
     </div>

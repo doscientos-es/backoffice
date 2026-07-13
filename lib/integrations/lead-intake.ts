@@ -1,4 +1,5 @@
 import { normalizeCompanySize, normalizeLeadSource, normalizeUrgency } from "@/lib/leads/constants";
+import { linkConversionEventsToLead } from "@/lib/integrations/conversion-events";
 import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { after } from "next/server";
@@ -18,6 +19,7 @@ const utmSchema = z.object({
 
 const contextSchema = z.object({
   eventId: z.string().optional().nullable(),
+  visitorId: z.string().optional().nullable(),
   conversionStep: z.string().optional().nullable(),
   referrer: z.string().optional().nullable(),
   ip: z.string().optional().nullable(),
@@ -225,6 +227,11 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
       return { ok: false, error: lookupErr.message };
     }
     if (existing?.id) {
+      await linkConversionEventsToLead({
+        leadId: existing.id as string,
+        visitorId: norm.context?.visitorId,
+        eventId: norm.context?.eventId,
+      });
       return { ok: true, leadId: existing.id as string, duplicate: true };
     }
   }
@@ -249,6 +256,11 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
         companySize: normalizedCompanySize,
         urgency: normalizedUrgency,
       }).catch((e) => log.error({ err: e, leadId: existing.id }, "lead merge enrich failed"));
+      await linkConversionEventsToLead({
+        leadId: existing.id as string,
+        visitorId: norm.context?.visitorId,
+        eventId: norm.context?.eventId,
+      });
       log.info({ leadId: existing.id, source: normalizedSource }, "lead merged by explicit id");
       return { ok: true, leadId: existing.id as string, duplicate: true };
     }
@@ -290,6 +302,11 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
       await enrichLead(supabase, matchedId, norm).catch((e) =>
         log.error({ err: e, leadId: matchedId }, "lead enrich failed"),
       );
+      await linkConversionEventsToLead({
+        leadId: matchedId,
+        visitorId: norm.context?.visitorId,
+        eventId: norm.context?.eventId,
+      });
       log.info({ leadId: matchedId, source: norm.source }, "soft-dedupe hit, lead enriched");
       return { ok: true, leadId: matchedId, duplicate: true };
     }
@@ -390,6 +407,11 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
       logLeadCreatedInteraction(leadId, row).catch((e) =>
         log.error({ err: e, leadId }, "lead intake interaction failed"),
       ),
+      linkConversionEventsToLead({
+        leadId,
+        visitorId: norm.context?.visitorId,
+        eventId: norm.context?.eventId,
+      }).catch((e) => log.error({ err: e, leadId }, "conversion events link failed")),
     ]);
   });
 

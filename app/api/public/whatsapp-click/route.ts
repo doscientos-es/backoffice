@@ -1,4 +1,5 @@
 import { serverEnv } from "@/lib/env";
+import { clientIp } from "@/lib/integrations/conversion-events";
 import { scopedLogger } from "@/lib/logger";
 import { rateLimit } from "@/lib/ratelimit";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -31,14 +32,6 @@ function isAllowedOrigin(origin: string | null): boolean {
   );
 }
 
-function clientIp(request: NextRequest): string {
-  return (
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    request.headers.get("x-real-ip") ??
-    "unknown"
-  );
-}
-
 function safeText(value: string | null, max: number): string | null {
   const trimmed = value?.trim();
   return trimmed ? trimmed.slice(0, max) : null;
@@ -64,6 +57,7 @@ export async function GET(request: NextRequest) {
 
   const payload = {
     event_id: safeText(url.searchParams.get("event_id"), 120),
+    visitor_id: safeText(url.searchParams.get("visitor_id"), 120),
     event_name: "whatsapp_click",
     conversion_step: safeText(url.searchParams.get("conversion_step"), 120) ?? "whatsapp_click",
     landing_path: safeText(url.searchParams.get("landing_path"), 500),

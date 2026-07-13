@@ -6,7 +6,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import type { RecoveryLead } from "@/lib/recovery/types";
 import { RECOVERY_STATE } from "@/lib/status";
 import { formatEUR, relativeTime } from "@/lib/utils";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Eye, MousePointerClick, Send } from "lucide-react";
 import Link from "next/link";
 import { RecoveryActions } from "./recovery-actions";
 
@@ -26,6 +26,41 @@ function LeadInitials({ name }: { name: string }) {
   );
 }
 
+function EngagementCell({ lead }: { lead: RecoveryLead }) {
+  const lastSignal = lead.lastClickedAt ?? lead.lastOpenedAt ?? lead.lastContactedAt;
+
+  return (
+    <div className="flex min-w-36 flex-col gap-1">
+      <div className="flex items-center gap-2 text-xs tabular-nums">
+        <span
+          className="inline-flex items-center gap-1 text-foreground"
+          title="Clics en enlaces trackeados"
+        >
+          <MousePointerClick className="size-3.5 text-primary" />
+          {lead.clickCount}
+        </span>
+        <span
+          className="inline-flex items-center gap-1 text-muted-foreground"
+          title="Aperturas detectadas (aproximado)"
+        >
+          <Eye className="size-3.5" />
+          {lead.openCount}
+        </span>
+        <span
+          className="inline-flex items-center gap-1 text-muted-foreground"
+          title="Emails, llamadas o reuniones de repesca"
+        >
+          <Send className="size-3.5" />
+          {lead.outreachCount}
+        </span>
+      </div>
+      <span className="text-[11px] text-muted-foreground">
+        {lastSignal ? `Última señal ${relativeTime(lastSignal)}` : "Sin actividad"}
+      </span>
+    </div>
+  );
+}
+
 export function RecoveryList({ leads, aiEnabled = false, ...props }: RecoveryListProps) {
   const rows = leads.map((l) => ({
     id: l.id,
@@ -34,9 +69,11 @@ export function RecoveryList({ leads, aiEnabled = false, ...props }: RecoveryLis
       l.company ?? "",
       l.lost_reason ?? "",
       RECOVERY_STATE[l.recoveryState].label,
+      `clics:${l.clickCount} aperturas:${l.openCount} contactos:${l.outreachCount}`,
       l.assignee?.name ?? "",
       l.lost_at ?? "",
       l.estimated_value?.toString() ?? "",
+      "",
     ],
     cells: [
       <Link
@@ -55,6 +92,7 @@ export function RecoveryList({ leads, aiEnabled = false, ...props }: RecoveryLis
         {l.lost_reason ?? "—"}
       </span>,
       <StatusBadge key="state" meta={RECOVERY_STATE} value={l.recoveryState} />,
+      <EngagementCell key="engagement" lead={l} />,
       <MemberLabel key="assignee" member={l.assignee} size="sm" />,
       <span key="lost" className="tabular-nums text-muted-foreground">
         {relativeTime(l.lost_at)}

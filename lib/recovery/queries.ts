@@ -51,6 +51,10 @@ type RecoveryEnrichment = {
   signals: RecoverySignals;
   lastContactedAt: string | null;
   outreachCount: number;
+  openCount: number;
+  clickCount: number;
+  lastOpenedAt: string | null;
+  lastClickedAt: string | null;
 };
 
 /**
@@ -66,10 +70,13 @@ async function loadEnrichment(
 
   const supabase = await createServerClient();
   const [{ data: interactions }, { data: sends }] = await Promise.all([
-    supabase.from("lead_interactions").select("lead_id, type, created_at").in("lead_id", leadIds),
+    supabase
+      .from("lead_interactions")
+      .select("lead_id, type, created_at, payload")
+      .in("lead_id", leadIds),
     supabase
       .from("lead_campaign_sends")
-      .select("lead_id, sent_at, opened_at, clicked_at")
+      .select("lead_id, sent_at, opened_at, open_count, clicked_at, click_count")
       .in("lead_id", leadIds),
   ]);
 
@@ -80,6 +87,10 @@ async function loadEnrichment(
         signals: { hasOutbound: false, opened: false, clicked: false, replied: false },
         lastContactedAt: null,
         outreachCount: 0,
+        openCount: 0,
+        clickCount: 0,
+        lastOpenedAt: null,
+        lastClickedAt: null,
       };
       byLead.set(id, e);
     }
@@ -90,14 +101,16 @@ async function loadEnrichment(
     e.outreachCount += 1;
     if (at && (!e.lastContactedAt || at > e.lastContactedAt)) e.lastContactedAt = at;
   };
-
   for (const i of interactions ?? []) {
     const id = i.lead_id as string;
     const lostAt = lostAtById.get(id) ?? null;
     if (!afterLost(i.created_at as string, lostAt)) continue;
     const e = ensure(id);
     const type = i.type as string;
-    if (OUTBOUND_TYPES.has(type)) touch(e, i.created_at as string);
+    const payload = (i.payload as Record<string, unknown> | null) ?? null;
+    const alreadyTrackedSend =
+      type === "email_sent" && typeof payload?.campaign_send_id === "string";
+    if (OUTBOUND_TYPES.has(type) && !alreadyTrackedSend) touch(e, i.created_at as string);
     if (type === "email_opened") e.signals.opened = true;
     if (type === "email_clicked") e.signals.clicked = true;
     if (type === "email_received") e.signals.replied = true;
@@ -108,8 +121,20 @@ async function loadEnrichment(
     if (!id) continue;
     const e = ensure(id);
     touch(e, (s.sent_at as string | null) ?? null);
-    if (s.opened_at) e.signals.opened = true;
-    if (s.clicked_at) e.signals.clicked = true;
+    const openedAt = (s.opened_at as string | null) ?? null;
+    const clickedAt = (s.clicked_at as string | null) ?? null;
+    const opens = Number(s.open_count ?? 0);
+    const clicks = Number(s.click_count ?? 0);
+    e.openCount += Number.isFinite(opens) ? opens : 0;
+    e.clickCount += Number.isFinite(clicks) ? clicks : 0;
+    if (openedAt) {
+      e.signals.opened = true;
+      if (!e.lastOpenedAt || openedAt > e.lastOpenedAt) e.lastOpenedAt = openedAt;
+    }
+    if (clickedAt) {
+      e.signals.clicked = true;
+      if (!e.lastClickedAt || clickedAt > e.lastClickedAt) e.lastClickedAt = clickedAt;
+    }
   }
 
   return byLead;
@@ -172,6 +197,10 @@ export async function listLostLeads(params: RecoveryListParams): Promise<Recover
       recoveryState: state,
       lastContactedAt: e?.lastContactedAt ?? null,
       outreachCount: e?.outreachCount ?? 0,
+      openCount: e?.openCount ?? 0,
+      clickCount: e?.clickCount ?? 0,
+      lastOpenedAt: e?.lastOpenedAt ?? null,
+      lastClickedAt: e?.lastClickedAt ?? null,
     };
   });
 
