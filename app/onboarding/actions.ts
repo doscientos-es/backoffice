@@ -30,7 +30,12 @@ const OnboardingInput = z.object({
     .email("Introduce un email válido como alias de envío")
     .optional()
     .or(z.literal("").transform(() => undefined)),
-  email_send_enabled: z.enum(["on", "off"]).transform((v) => v === "on"),
+  phone: z
+    .string()
+    .trim()
+    .max(30, "El teléfono no puede superar 30 caracteres")
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
 });
 
 /**
@@ -45,7 +50,7 @@ export async function completeOnboarding(formData: FormData): Promise<ActionResu
     name: formData.get("name")?.toString() ?? "",
     github_handle: formData.get("github_handle")?.toString() ?? "",
     email_alias: formData.get("email_alias")?.toString() ?? "",
-    email_send_enabled: formData.get("email_send_enabled")?.toString() === "on" ? "on" : "off",
+    phone: formData.get("phone")?.toString() ?? "",
   });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
@@ -64,6 +69,7 @@ export async function completeOnboarding(formData: FormData): Promise<ActionResu
     {
       name: parsed.data.name,
       contactEmail: parsed.data.email_alias,
+      phone: parsed.data.phone,
     },
     process.env.NEXT_PUBLIC_APP_URL ?? "https://app.doscientos.es",
   );
@@ -78,7 +84,8 @@ export async function completeOnboarding(formData: FormData): Promise<ActionResu
       name: parsed.data.name,
       github_handle: githubHandle,
       email_alias: parsed.data.email_alias ?? null,
-      email_send_enabled: parsed.data.email_send_enabled,
+      email_send_enabled: true,
+      phone: parsed.data.phone ?? null,
       signature_html: signatureHtml,
       onboarded_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
