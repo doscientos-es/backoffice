@@ -1,4 +1,3 @@
-import { buildSignatureHtml } from "@/lib/email/signature";
 import { scopedLogger } from "@/lib/logger";
 import { createServerClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
@@ -14,7 +13,6 @@ export type CurrentUser = {
   role: MemberRole;
   avatarUrl: string | null;
   emailAlias: string | null;
-  signatureHtml: string | null;
   githubHandle: string | null;
   onboardedAt: string | null;
   jobTitle: string | null;
@@ -71,18 +69,6 @@ export async function getCurrentUser(): Promise<AuthResult> {
       role: member.role as MemberRole,
       avatarUrl: (member.avatar_url as string | null) ?? null,
       emailAlias: (member.email_alias as string | null) ?? null,
-      signatureHtml: buildSignatureHtml(
-        {
-          name: member.name as string,
-          jobTitle: (member.job_title as string | null) ?? undefined,
-          contactEmail:
-            (member.contact_email as string | null) ??
-            (member.email_alias as string | null) ??
-            undefined,
-          phone: (member.phone as string | null) ?? undefined,
-        },
-        process.env.NEXT_PUBLIC_APP_URL ?? "https://app.doscientos.es",
-      ),
       githubHandle: (member.github_handle as string | null) ?? null,
       onboardedAt: (member.onboarded_at as string | null) ?? null,
       jobTitle: (member.job_title as string | null) ?? null,

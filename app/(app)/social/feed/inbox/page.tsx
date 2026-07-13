@@ -49,6 +49,7 @@ function InboxSkeleton() {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
       {Array.from({ length: 6 }).map((_, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton
         <div key={i} className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
           <div className="flex flex-col gap-2">
             <Skeleton className="h-4 w-32" />

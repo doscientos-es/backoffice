@@ -205,28 +205,37 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
                 const configured = availableSet.has(p);
                 const checked = platforms.has(p);
                 return (
-                  <label
+                  <div
                     key={p}
                     className={cn(
                       "flex items-center gap-2.5 rounded-lg border border-border p-3 transition-colors",
                       configured
-                        ? "cursor-pointer hover:border-primary/40 has-data-checked:border-primary has-data-checked:bg-primary/5"
-                        : "cursor-not-allowed opacity-60",
+                        ? "hover:border-primary/40 has-data-checked:border-primary has-data-checked:bg-primary/5"
+                        : "opacity-60",
                     )}
                   >
                     <Checkbox
+                      id={`platform-${p}`}
                       checked={checked}
                       disabled={!configured}
                       onCheckedChange={(v) => togglePlatform(p, v === true)}
                     />
-                    <PlatformIcon platform={p} className="size-4" />
-                    <span className="flex flex-col">
-                      <span className="text-sm font-medium">{PLATFORM_LABELS[p]}</span>
-                      {!configured && (
-                        <span className="text-[11px] text-muted-foreground">Sin configurar</span>
+                    <Label
+                      htmlFor={`platform-${p}`}
+                      className={cn(
+                        "flex flex-1 items-center gap-2.5",
+                        configured && "cursor-pointer",
                       )}
-                    </span>
-                  </label>
+                    >
+                      <PlatformIcon platform={p} className="size-4" />
+                      <span className="flex flex-col">
+                        <span className="text-sm font-medium">{PLATFORM_LABELS[p]}</span>
+                        {!configured && (
+                          <span className="text-[11px] text-muted-foreground">Sin configurar</span>
+                        )}
+                      </span>
+                    </Label>
+                  </div>
                 );
               })}
             </div>

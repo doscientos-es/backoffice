@@ -2,8 +2,9 @@
 
 import { defineAction } from "@/lib/actions/define-action";
 import { sendEmail } from "@/lib/email/resend";
+import { buildSignatureHtml } from "@/lib/email/signature";
 import { appendSignature, markdownToHtml, renderTemplate } from "@/lib/email/templates";
-import { isGoogleEnabled, serverEnv } from "@/lib/env";
+import { isGoogleEnabled, publicEnv, serverEnv } from "@/lib/env";
 import { findConflicts, insertEvent } from "@/lib/google/calendar";
 import type { CalendarBusySlot } from "@/lib/google/calendar";
 import { resolveSubject } from "@/lib/google/client";
@@ -349,7 +350,18 @@ export const sendEmailToLead = defineAction({
     });
     const renderedHtml = markdownToHtml(renderedMarkdown);
     const finalHtml = data.includeSignature
-      ? appendSignature(renderedHtml, user.signatureHtml)
+      ? appendSignature(
+          renderedHtml,
+          buildSignatureHtml(
+            {
+              name: user.name,
+              jobTitle: user.jobTitle ?? undefined,
+              phone: user.phone ?? undefined,
+              contactEmail: user.contactEmail ?? user.emailAlias ?? undefined,
+            },
+            publicEnv.NEXT_PUBLIC_APP_URL || "https://app.doscientos.es",
+          ),
+        )
       : renderedHtml;
 
     let resendId: string | null = null;

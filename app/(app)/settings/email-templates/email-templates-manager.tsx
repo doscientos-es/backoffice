@@ -15,11 +15,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
+import { buildSignatureHtml } from "@/lib/email/signature";
 import { appendSignature, markdownToHtml, renderTemplate } from "@/lib/email/templates";
 import { formatDate } from "@/lib/utils";
 import { Copy, Pencil, Plus, Power, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { type FormEvent, useMemo, useState, useTransition } from "react";
 import {
   type EmailTemplate,
   type EmailTemplateInput,
@@ -29,7 +30,7 @@ import {
   updateEmailTemplate,
 } from "./actions";
 
-type Props = { templates: EmailTemplate[]; signatureHtml: string | null };
+type Props = { templates: EmailTemplate[] };
 
 const EMPTY_FORM: EmailTemplateInput = {
   name: "",
@@ -47,7 +48,15 @@ const SAMPLE_VARS: Record<string, string> = {
   sender_name: "Pol Gubau",
 };
 
-export function EmailTemplatesManager({ templates, signatureHtml }: Props) {
+/** Firma ficticia para la previsualización. */
+const SAMPLE_SIGNATURE = buildSignatureHtml({
+  name: "Pol Gubau",
+  jobTitle: "Diseño y Estrategia",
+  contactEmail: "pol@doscientos.es",
+  phone: "600 000 000",
+});
+
+export function EmailTemplatesManager({ templates }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<EmailTemplate | null>(null);
@@ -58,8 +67,8 @@ export function EmailTemplatesManager({ templates, signatureHtml }: Props) {
   const previewSubject = useMemo(() => renderTemplate(form.subject, SAMPLE_VARS), [form.subject]);
   const previewBody = useMemo(() => {
     const html = markdownToHtml(renderTemplate(form.body_html, SAMPLE_VARS));
-    return form.include_signature ? appendSignature(html, signatureHtml) : html;
-  }, [form.body_html, form.include_signature, signatureHtml]);
+    return form.include_signature ? appendSignature(html, SAMPLE_SIGNATURE) : html;
+  }, [form.body_html, form.include_signature]);
 
   function openCreate() {
     setEditing(null);
@@ -95,7 +104,7 @@ export function EmailTemplatesManager({ templates, signatureHtml }: Props) {
     setOpen(true);
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     startTransition(async () => {

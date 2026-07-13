@@ -58,8 +58,8 @@ create table if not exists public.team_members (
   role member_role not null default 'member',
   avatar_url text,
   email_alias text,
-  signature_html text,
-  email_send_enabled boolean not null default false,
+  -- signature_html text, (DEPRECATED: generated server-side)
+  -- email_send_enabled boolean not null default false, (DEPRECATED: always true)
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   deleted_at timestamptz

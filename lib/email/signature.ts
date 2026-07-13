@@ -2,7 +2,7 @@
  * Single source of truth for the HTML email signature used across the app.
  *
  * Imported by:
- *   - `lib/auth.ts`                         — generates signatureHtml on the fly for the session
+ *   - `app/(app)/leads/actions.ts`          — generates signature on the fly when sending emails
  *   - `app/(app)/settings/profile-form.tsx` — live client-side preview while editing profile
  *   - `app/(app)/settings/email-templates/page.tsx` — passes real signature to template manager
  *

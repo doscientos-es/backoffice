@@ -30,7 +30,6 @@ const { db, authUser } = vi.hoisted(() => ({
     role: "admin" as "owner" | "admin" | "member" | "viewer",
     avatarUrl: null,
     emailAlias: null,
-    signatureHtml: null,
     githubHandle: null,
     onboardedAt: "2024-01-01",
     jobTitle: null,
