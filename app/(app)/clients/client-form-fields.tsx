@@ -7,9 +7,8 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ZipInput } from "@/components/ui/zip-input";
 import { COUNTRY_OPTIONS } from "@/lib/address";
-import { User } from "lucide-react";
 import { useCallback, useState } from "react";
-
+import { type ApplySelection, EnrichmentDialog } from "./enrichment-dialog";
 import { type AutofillData, NifInput } from "./nif-input";
 
 export type ClientFormDefaults = {
@@ -47,26 +46,49 @@ export function ClientFormFields({
 }) {
   const d = defaults ?? {};
 
-  // Controlled state so autofill can update these fields
+  // Controlled state for fields that can be autofilled from the Registro Mercantil
   const [name, setName] = useState(d.name ?? "");
   const [contactPerson, setContactPerson] = useState(d.contact_person ?? "");
+  const [street, setStreet] = useState(d.billing_address_street ?? "");
   const [autofillCity, setAutofillCity] = useState(d.billing_address_city ?? "");
   const [autofillProvince, setAutofillProvince] = useState(d.billing_address_province ?? "");
-  const [suggestedOfficers, setSuggestedOfficers] = useState<AutofillData["officers"]>([]);
   // Incrementing key forces ZipInput to remount with new defaults when autofill fires
   const [zipKey, setZipKey] = useState(0);
+
+  // Enrichment dialog state
+  const [enrichmentData, setEnrichmentData] = useState<AutofillData | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Called by NifInput when OpenMercantil returns company data → open dialog
   const handleAutofill = useCallback((data: AutofillData) => {
-    if (data.name) setName(data.name);
-    if (data.city || data.province) {
-      setAutofillCity(data.city ?? "");
-      setAutofillProvince(data.province ?? "");
-      setZipKey((k) => k + 1); // remount ZipInput with new defaults
+    setEnrichmentData(data);
+    setDialogOpen(true);
+  }, []);
+
+  // Called by EnrichmentDialog when the user confirms selected fields
+  const handleApply = useCallback((selection: ApplySelection) => {
+    if (selection.name) setName(selection.name);
+    if (selection.contactPerson) setContactPerson(selection.contactPerson);
+    if (selection.address) setStreet(selection.address);
+    if (selection.city || selection.province) {
+      setAutofillCity(selection.city ?? "");
+      setAutofillProvince(selection.province ?? "");
+      setZipKey((k) => k + 1);
     }
-    if (data.officers) setSuggestedOfficers(data.officers);
   }, []);
 
   return (
     <>
+      {/* Enrichment dialog — opens automatically after a successful RM lookup */}
+      {enrichmentData && (
+        <EnrichmentDialog
+          open={dialogOpen}
+          data={enrichmentData}
+          onApplyAction={handleApply}
+          onCloseAction={() => setDialogOpen(false)}
+        />
+      )}
+
       <div className="grid gap-5 sm:grid-cols-2">
         <FormRow
           label="Nombre"
@@ -131,36 +153,15 @@ export function ClientFormFields({
           />
         </FormRow>
         <FormRow label="Persona de contacto" htmlFor={`${idPrefix}-contact_person`}>
-          <div className="flex flex-col gap-2">
-            <Input
-              id={`${idPrefix}-contact_person`}
-              name="contact_person"
-              maxLength={160}
-              value={contactPerson}
-              onChange={(e) => setContactPerson(e.target.value)}
-              placeholder="Nombre y apellidos"
-              autoComplete="name"
-            />
-            {suggestedOfficers && suggestedOfficers.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                <p className="w-full text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-                  Sugerencias del Registro:
-                </p>
-                {suggestedOfficers.map((o) => (
-                  <button
-                    key={o.name}
-                    type="button"
-                    onClick={() => setContactPerson(o.name)}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full border bg-muted/50 text-[11px] hover:bg-accent transition-colors"
-                  >
-                    <User className="size-3" />
-                    {o.name}
-                    <span className="opacity-50 italic">({o.role})</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <Input
+            id={`${idPrefix}-contact_person`}
+            name="contact_person"
+            maxLength={160}
+            value={contactPerson}
+            onChange={(e) => setContactPerson(e.target.value)}
+            placeholder="Nombre y apellidos"
+            autoComplete="name"
+          />
         </FormRow>
       </div>
       <div className="col-span-full">
@@ -179,7 +180,8 @@ export function ClientFormFields({
               id={`${idPrefix}-billing_address_street`}
               name="billing_address_street"
               maxLength={200}
-              defaultValue={d.billing_address_street ?? ""}
+              value={street}
+              onChange={(e) => setStreet(e.target.value)}
               placeholder="Calle Mayor, 1 - 3ª"
               autoComplete="street-address"
             />

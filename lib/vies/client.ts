@@ -51,7 +51,7 @@ export type ViesResult =
       name?: string;
       address?: string;
       /** Where the positive match was found. */
-      source?: "vies" | "openmercantil";
+      source?: "vies" | "openmercantil" | "es-checksum";
       /**
        * Company lifecycle status from the Registro Mercantil.
        * Only set when source is "openmercantil".

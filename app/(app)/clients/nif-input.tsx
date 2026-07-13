@@ -12,6 +12,7 @@ export type AutofillData = {
   name?: string;
   province?: string;
   city?: string;
+  address?: string;
   companyType?: string;
   companyStatus?: string;
   officers?: OpenMercantilOfficer[];
@@ -24,7 +25,7 @@ type VatState =
     status: "valid";
     name?: string;
     address?: string;
-    source?: "vies" | "openmercantil";
+    source?: "vies" | "openmercantil" | "es-checksum";
     companyStatus?: string;
     province?: string;
     city?: string;
@@ -95,6 +96,7 @@ export function NifInput({
           name: result.name,
           province: result.province,
           city: result.city,
+          address: result.address,
           companyType: result.companyType,
           companyStatus: result.companyStatus,
           officers: result.officers,
@@ -165,6 +167,8 @@ export function NifInput({
           <span>
             {state.source === "openmercantil" ? (
               <span className="font-medium">Registro Mercantil</span>
+            ) : state.source === "es-checksum" ? (
+              <span className="font-medium">NIF válido</span>
             ) : (
               <span className="font-medium">VIES</span>
             )}
