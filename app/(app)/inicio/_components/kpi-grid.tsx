@@ -1,5 +1,5 @@
 import { StatCard } from "@/components/layout/stat-card";
-import { getDashboardKpis } from "@/lib/dashboard/queries";
+import { getCompanyGoals, getDashboardKpis } from "@/lib/dashboard/queries";
 import type { DashboardRange } from "@/lib/dashboard/types";
 import { formatEUR } from "@/lib/utils";
 import { computeTrend, describeRange, resolveDateRange } from "@/lib/utils/date";
@@ -7,7 +7,7 @@ import { FileSignature, Inbox, LineChart, Target } from "lucide-react";
 
 export async function KpiGrid({ range }: { range: DashboardRange }) {
   const dateRange = resolveDateRange(range);
-  const kpis = await getDashboardKpis(dateRange);
+  const [kpis, goals] = await Promise.all([getDashboardKpis(dateRange), getCompanyGoals()]);
   const rangeLabel = describeRange(range);
 
   const conversionPct = Math.round(kpis.conversionRate * 1000) / 10;
@@ -21,7 +21,8 @@ export async function KpiGrid({ range }: { range: DashboardRange }) {
         icon={Inbox}
         href="/leads"
         hint={rangeLabel}
-        trend={computeTrend(kpis.leadsNew, kpis.leadsNewPrev)}
+        trend={goals.leads_new ? undefined : computeTrend(kpis.leadsNew, kpis.leadsNewPrev)}
+        goal={goals.leads_new ? { current: kpis.leadsNew, target: goals.leads_new } : undefined}
       />
       <StatCard
         label="Propuestas abiertas"
@@ -47,6 +48,11 @@ export async function KpiGrid({ range }: { range: DashboardRange }) {
         icon={Target}
         href="/leads"
         hint={`leads ganados · ${rangeLabel}`}
+        goal={
+          goals.conversion_rate
+            ? { current: kpis.conversionRate, target: goals.conversion_rate }
+            : undefined
+        }
         trend={computeTrend(kpis.conversionRate * 100, kpis.conversionRatePrev * 100)}
       />
     </div>

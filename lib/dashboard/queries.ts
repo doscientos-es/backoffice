@@ -7,8 +7,10 @@ import type {
   AccountsReceivable,
   ActionLeadRow,
   AvisosData,
+  CompanyGoals,
   DashboardKpis,
   DateRange,
+  GoalMetric,
   MonthFinanceSummary,
   MyDayData,
   MyTaskRow,
@@ -16,6 +18,7 @@ import type {
   ReminderRow,
   RevenuePoint,
   VerifactuPendingRow,
+  WeekStats,
 } from "./types";
 
 const AVISOS_LIMIT = 5;
@@ -388,45 +391,135 @@ export async function getMonthFinanceSummary(): Promise<MonthFinanceSummary> {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Company goals
+// ---------------------------------------------------------------------------
+
+/**
+ * Fetches the current company goals keyed by metric.
+ * Only metrics that have been configured appear in the result.
+ */
+export async function getCompanyGoals(): Promise<CompanyGoals> {
+  const supabase = await createServerClient();
+  const { data } = await supabase.from("company_goals").select("metric, target");
+  const goals: CompanyGoals = {};
+  for (const row of data ?? []) {
+    goals[row.metric as GoalMetric] = Number(row.target);
+  }
+  return goals;
+}
+
+// ---------------------------------------------------------------------------
+// "Tu día"
+// ---------------------------------------------------------------------------
+
+/** Returns the start of the current calendar week (Monday 00:00 local UTC). */
+function getWeekStart(): Date {
+  const now = new Date();
+  const dayOfWeek = now.getUTCDay(); // 0 = Sunday
+  const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  const monday = new Date(now);
+  monday.setUTCDate(now.getUTCDate() - daysFromMonday);
+  monday.setUTCHours(0, 0, 0, 0);
+  return monday;
+}
+
+/**
+ * Computes consecutive days (backwards from today) on which the user completed
+ * at least one task. Today counts if it already has a completion.
+ */
+function computeStreak(rows: { updated_at: string }[]): number {
+  const days = new Set(rows.map((r) => r.updated_at.slice(0, 10)));
+  const todayKey = new Date().toISOString().slice(0, 10);
+  // If nothing today yet, start streak check from yesterday
+  const startOffset = days.has(todayKey) ? 0 : 1;
+  let streak = 0;
+  for (let i = startOffset; i <= 30; i++) {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() - i);
+    if (days.has(d.toISOString().slice(0, 10))) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
 /**
  * "Tu día": the personal action queue for the logged-in member. Returns their
  * open tasks (soonest due first), the active leads they own (stalest first, so
- * nothing rots) and unassigned active leads they could claim (newest first).
+ * nothing rots), unassigned active leads they could claim (newest first), and
+ * weekly progress stats for the motivational summary strip.
  */
 export async function getMyDay(userId: string): Promise<MyDayData> {
   const supabase = await createServerClient();
   const leadFields = "id, name, company, phone, email, status";
+  const weekStart = getWeekStart().toISOString();
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000).toISOString();
 
-  const [tasksRes, myLeadsRes, unassignedRes] = await Promise.all([
-    supabase
-      .from("tasks")
-      .select("id, title, status, priority, due_date, projects(name), leads(name)")
-      .eq("assignee_id", userId)
-      .in("status", [...OPEN_TASK_STATUSES])
-      .is("deleted_at", null)
-      .order("due_date", { ascending: true, nullsFirst: false })
-      .limit(MY_DAY_LIMIT),
-    supabase
-      .from("leads")
-      .select(`${leadFields}, updated_at`)
-      .eq("assigned_to", userId)
-      .in("status", [...ACTIVE_LEAD_STATUSES])
-      .is("deleted_at", null)
-      .order("updated_at", { ascending: true })
-      .limit(MY_DAY_LIMIT),
-    supabase
-      .from("leads")
-      .select(`${leadFields}, created_at`)
-      .is("assigned_to", null)
-      .in("status", [...ACTIVE_LEAD_STATUSES])
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false })
-      .limit(MY_DAY_LIMIT),
-  ]);
+  const [tasksRes, myLeadsRes, unassignedRes, completedRes, attendedRes, streakRes] =
+    await Promise.all([
+      supabase
+        .from("tasks")
+        .select("id, title, status, priority, due_date, projects(name), leads(name)")
+        .eq("assignee_id", userId)
+        .in("status", [...OPEN_TASK_STATUSES])
+        .is("deleted_at", null)
+        .order("due_date", { ascending: true, nullsFirst: false })
+        .limit(MY_DAY_LIMIT),
+      supabase
+        .from("leads")
+        .select(`${leadFields}, updated_at`)
+        .eq("assigned_to", userId)
+        .in("status", [...ACTIVE_LEAD_STATUSES])
+        .is("deleted_at", null)
+        .order("updated_at", { ascending: true })
+        .limit(MY_DAY_LIMIT),
+      supabase
+        .from("leads")
+        .select(`${leadFields}, created_at`)
+        .is("assigned_to", null)
+        .in("status", [...ACTIVE_LEAD_STATUSES])
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(MY_DAY_LIMIT),
+      // Tasks completed this week
+      supabase
+        .from("tasks")
+        .select("id", { count: "exact", head: true })
+        .eq("assignee_id", userId)
+        .eq("status", "done")
+        .gte("updated_at", weekStart)
+        .is("deleted_at", null),
+      // My leads attended (updated) this week
+      supabase
+        .from("leads")
+        .select("id", { count: "exact", head: true })
+        .eq("assigned_to", userId)
+        .gte("updated_at", weekStart)
+        .is("deleted_at", null),
+      // Done tasks in last 30 days for streak computation
+      supabase
+        .from("tasks")
+        .select("updated_at")
+        .eq("assignee_id", userId)
+        .eq("status", "done")
+        .gte("updated_at", thirtyDaysAgo)
+        .is("deleted_at", null)
+        .order("updated_at", { ascending: false }),
+    ]);
+
+  const weekStats: WeekStats = {
+    tasksCompleted: completedRes.count ?? 0,
+    leadsAttended: attendedRes.count ?? 0,
+    streakDays: computeStreak(streakRes.data ?? []),
+  };
 
   return {
     tasks: (tasksRes.data ?? []).map(toMyTask),
     myLeads: (myLeadsRes.data ?? []).map((row) => toActionLead(row, "updated_at")),
     unassignedLeads: (unassignedRes.data ?? []).map((row) => toActionLead(row, "created_at")),
+    weekStats,
   };
 }

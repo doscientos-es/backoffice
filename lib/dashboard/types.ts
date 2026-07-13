@@ -52,6 +52,17 @@ export type RevenuePoint = {
   previous: number;
 };
 
+// ---------------------------------------------------------------------------
+// Company goals
+// ---------------------------------------------------------------------------
+
+export type GoalMetric = "leads_new" | "revenue" | "conversion_rate";
+
+/** Map of metric → raw numeric target. Only metrics with a set goal appear. */
+export type CompanyGoals = Partial<Record<GoalMetric, number>>;
+
+// ---------------------------------------------------------------------------
+
 export type DashboardKpis = {
   leadsNew: number;
   leadsNewPrev: number;
@@ -71,6 +82,21 @@ export type AvisosData = {
   overdueInvoices: OverdueInvoiceRow[];
   certExpiresAt: string | null;
 };
+
+// ---------------------------------------------------------------------------
+// Week stats (personal progress — shown in "Tu día")
+// ---------------------------------------------------------------------------
+
+export type WeekStats = {
+  /** Tasks marked as done this calendar week (Mon–Sun). */
+  tasksCompleted: number;
+  /** Active leads owned by the member that were updated this week. */
+  leadsAttended: number;
+  /** Consecutive days (looking back from today) with at least one task completed. */
+  streakDays: number;
+};
+
+// ---------------------------------------------------------------------------
 
 /**
  * "Tu día" — the personal, action-oriented layer of the dashboard. Surfaces
@@ -101,6 +127,7 @@ export type MyDayData = {
   tasks: MyTaskRow[];
   myLeads: ActionLeadRow[];
   unassignedLeads: ActionLeadRow[];
+  weekStats: WeekStats;
 };
 
 /**

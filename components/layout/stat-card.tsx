@@ -7,6 +7,13 @@ import Link from "next/link";
 
 export type StatTone = "default" | "success" | "danger" | "info" | "warning";
 
+export type GoalProp = {
+  /** Raw numeric current value (same unit as target). */
+  current: number;
+  /** Raw numeric target value. */
+  target: number;
+};
+
 export type StatCardProps = {
   label: string;
   value: number | string;
@@ -15,6 +22,8 @@ export type StatCardProps = {
   hint?: string;
   href?: string;
   trend?: Trend | null;
+  /** When provided, replaces the trend with a goal progress bar. */
+  goal?: GoalProp;
 };
 
 const TONE_VALUE: Record<StatTone, string> = {
@@ -45,6 +54,13 @@ const TREND_ICON = {
   flat: Minus,
 } as const;
 
+const GOAL_BAR_COLOR = (pct: number) => {
+  if (pct >= 100) return "bg-emerald-500";
+  if (pct >= 80) return "bg-sky-500";
+  if (pct >= 50) return "bg-amber-500";
+  return "bg-muted-foreground/40";
+};
+
 export function StatCard({
   label,
   value,
@@ -53,10 +69,13 @@ export function StatCard({
   hint,
   href,
   trend,
+  goal,
 }: StatCardProps) {
   const displayValue =
     typeof value === "number" ? new Intl.NumberFormat("es-ES").format(value) : value;
-  const TrendIcon = trend ? TREND_ICON[trend.direction] : null;
+  const TrendIcon = trend && !goal ? TREND_ICON[trend.direction] : null;
+
+  const goalPct = goal ? Math.min((goal.current / goal.target) * 100, 100) : null;
 
   const card = (
     <Card
@@ -78,7 +97,24 @@ export function StatCard({
           >
             {displayValue}
           </div>
-          {trend && TrendIcon ? (
+
+          {/* Goal progress bar — replaces trend when a goal is set */}
+          {goalPct !== null ? (
+            <div className="mt-2 space-y-1">
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className={cn("h-full rounded-full transition-all", GOAL_BAR_COLOR(goalPct))}
+                  style={{ width: `${goalPct}%` }}
+                />
+              </div>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground tabular-nums">
+                <span className={cn(goalPct >= 100 && "font-medium text-emerald-600 dark:text-emerald-400")}>
+                  {Math.round(goalPct)}% del objetivo
+                </span>
+                {hint ? <span>· {hint}</span> : null}
+              </div>
+            </div>
+          ) : trend && TrendIcon ? (
             <div
               className={cn(
                 "mt-1 flex items-center gap-1 text-xs font-medium tabular-nums",
