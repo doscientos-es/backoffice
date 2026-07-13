@@ -21,7 +21,6 @@ export default async function ProfileSettingsPage() {
             email={user.email}
             avatarUrl={user.avatarUrl}
             emailAlias={user.emailAlias ?? null}
-            emailSendEnabled={user.emailSendEnabled}
             githubHandle={user.githubHandle ?? null}
             jobTitle={user.jobTitle ?? null}
             phone={user.phone ?? null}

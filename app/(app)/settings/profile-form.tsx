@@ -1,7 +1,7 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Field, FieldContent, FieldDescription, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -136,24 +136,6 @@ export function ProfileForm({
             Dirección desde la que se envían los emails a tus clientes.
           </FieldDescription>
         </Field>
-        <Field orientation="horizontal" className="items-start pt-4">
-          <input
-            type="checkbox"
-            id="email_send_enabled"
-            name="email_send_enabled"
-            value="on"
-            defaultChecked={emailSendEnabled}
-            className="mt-0.5 size-4 rounded border-border"
-          />
-          <FieldContent>
-            <FieldLabel htmlFor="email_send_enabled" className="text-sm font-normal">
-              Activar envío de emails
-            </FieldLabel>
-            <FieldDescription>
-              Si está desactivado, los envíos quedan registrados pero no se entregan.
-            </FieldDescription>
-          </FieldContent>
-        </Field>
       </div>
 
       <Field>
@@ -167,7 +149,9 @@ export function ProfileForm({
             ) : avatarUrl ? (
               <AvatarImage src={avatarUrl} alt={name} />
             ) : null}
-            <AvatarFallback>{handle.trim().slice(0, 1).toUpperCase() || name.slice(0, 1).toUpperCase() || "·"}</AvatarFallback>
+            <AvatarFallback>
+              {handle.trim().slice(0, 1).toUpperCase() || name.slice(0, 1).toUpperCase() || "·"}
+            </AvatarFallback>
           </Avatar>
           <div className="relative flex-1">
             <Input
