@@ -154,6 +154,55 @@ function prettifySnakeCase(text: string): string {
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
 
+function normalize(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
+}
+
+function isCompanySizeLabel(label: string): boolean {
+  const key = normalize(label);
+  return key.includes("tamano") || key.includes("empleado");
+}
+
+function isUrgencyLabel(label: string): boolean {
+  const key = normalize(label);
+  return (
+    key.includes("cuando") ||
+    key.includes("plazo") ||
+    key.includes("urgen") ||
+    key.includes("empezar") ||
+    key.includes("inicio") ||
+    key.includes("solucionar") ||
+    key.includes("urgencia")
+  );
+}
+
+function isSolutionTypeLabel(label: string): boolean {
+  const key = normalize(label);
+  return key.includes("solucion") || key.includes("necesitas") || key.includes("proyecto");
+}
+
+function isBudgetLabel(label: string): boolean {
+  return normalize(label).includes("presupuesto");
+}
+
+function isUrgencyLikeValue(value: string): boolean {
+  const v = normalize(value);
+  return (
+    v.includes("lo antes posible") ||
+    v.includes("cuanto antes") ||
+    v.includes("inmediat") ||
+    v.includes("urgent") ||
+    v.includes("este mes") ||
+    v.includes("trimestre") ||
+    v.includes("sin prisa") ||
+    v.includes("explor") ||
+    v.includes("solo informacion")
+  );
+}
+
 /**
  * Extracts custom form questions from Meta field_data as label/value pairs.
  * Any field that isn't a standard contact field counts as a qualifying answer,
@@ -181,8 +230,40 @@ function extractMetaFormAnswers(fields: MetaLeadField[]): FormAnswer[] {
 }
 
 /** Renders extracted answers into the human-readable `notes` block. */
-function formAnswersToNotes(answers: FormAnswer[]): string | null {
-  return answers.length > 0 ? answers.map((a) => `${a.label}: ${a.value}`).join("\n") : null;
+function formAnswersToNotes(
+  answers: FormAnswer[],
+  structured: {
+    companySize: string | null;
+    solutionType: string | null;
+    urgency: string | null;
+    estimatedValue: number | null;
+  },
+): string | null {
+  const remaining = answers.filter((answer) => {
+    if (
+      structured.companySize &&
+      answer.value === structured.companySize &&
+      isCompanySizeLabel(answer.label)
+    ) {
+      return false;
+    }
+    if (
+      structured.solutionType &&
+      answer.value === structured.solutionType &&
+      isSolutionTypeLabel(answer.label)
+    ) {
+      return false;
+    }
+    if (structured.urgency && answer.value === structured.urgency && isUrgencyLabel(answer.label)) {
+      return false;
+    }
+    if (structured.estimatedValue !== null && isBudgetLabel(answer.label)) {
+      return false;
+    }
+    return true;
+  });
+
+  return remaining.length > 0 ? remaining.map((a) => `${a.label}: ${a.value}`).join("\n") : null;
 }
 
 /**
@@ -216,17 +297,25 @@ export function mapMetaLeadgenToIntake(
   const formAnswers = extractMetaFormAnswers(res.field_data);
   const qualification = classifyFormAnswers(formAnswers);
   const explicitUrgency = findField(res.field_data, FIELD_ALIASES.urgency);
+  const estimatedValue = parseMetaBudgetToEstimatedValue(res.field_data);
+  const inferredUrgencyFromValue = formAnswers.find((a) => isUrgencyLikeValue(a.value))?.value ?? null;
+  const urgency = explicitUrgency || qualification.urgency || inferredUrgencyFromValue;
 
   return {
     name: fullName,
     email: findField(res.field_data, FIELD_ALIASES.email),
     phone: findField(res.field_data, FIELD_ALIASES.phone),
     company: findField(res.field_data, FIELD_ALIASES.company),
-    notes: formAnswersToNotes(formAnswers),
-    estimatedValue: parseMetaBudgetToEstimatedValue(res.field_data),
+    notes: formAnswersToNotes(formAnswers, {
+      companySize: qualification.companySize,
+      solutionType: qualification.solutionType,
+      urgency,
+      estimatedValue,
+    }),
+    estimatedValue,
     companySize: qualification.companySize,
     solutionType: qualification.solutionType,
-    urgency: explicitUrgency || qualification.urgency,
+    urgency,
     source: META_LEAD_SOURCE,
     externalId: res.id,
     externalSource: META_LEAD_SOURCE,

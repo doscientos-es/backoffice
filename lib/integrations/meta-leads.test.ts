@@ -127,7 +127,7 @@ describe("mapMetaLeadgenToIntake", () => {
     });
   });
 
-  it("extracts ¿…? form questions as notes", () => {
+  it("keeps only non-structured answers in notes", () => {
     const out = mapMetaLeadgenToIntake({
       ...base,
       field_data: [
@@ -135,11 +135,10 @@ describe("mapMetaLeadgenToIntake", () => {
         { name: "¿Tamaño de empresa?", values: ["10-50 empleados"] },
         { name: "¿Qué solución necesitas desarrollar?", values: ["Software a Medida"] },
         { name: "¿Cuál es tu presupuesto estimado?", values: ["Más de 10.000€"] },
+        { name: "¿Algo más que debamos saber?", values: ["Necesitamos integración con ERP"] },
       ],
     });
-    expect(out.notes).toContain("Tamaño de empresa: 10-50 empleados");
-    expect(out.notes).toContain("Qué solución necesitas desarrollar: Software a Medida");
-    expect(out.notes).toContain("Cuál es tu presupuesto estimado: Más de 10.000€");
+    expect(out.notes).toBe("Algo más que debamos saber: Necesitamos integración con ERP");
   });
 
   it("parses budget into estimatedValue (lower bound of range)", () => {
@@ -183,8 +182,19 @@ describe("mapMetaLeadgenToIntake", () => {
     expect(out.companySize).toBe("10-50 empleados");
     expect(out.solutionType).toBe("Software a medida");
     expect(out.urgency).toBe("Lo antes posible");
-    expect(out.notes).toContain("Tamaño de empresa: 10-50 empleados");
-    expect(out.notes).toContain("Lo antes posible");
+    expect(out.notes).toBeNull();
+  });
+
+  it("infers urgency from answer value when label is not classifiable", () => {
+    const out = mapMetaLeadgenToIntake({
+      ...base,
+      field_data: [
+        { name: "full_name", values: ["Test"] },
+        { name: "comentario_libre", values: ["Lo antes posible"] },
+      ],
+    });
+    expect(out.urgency).toBe("Lo antes posible");
+    expect(out.notes).toBe("Comentario libre: Lo antes posible");
   });
 
   it("extracts qualification fields using classifyFormAnswers keywords", () => {

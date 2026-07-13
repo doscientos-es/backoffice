@@ -1,9 +1,5 @@
+import { normalizeCompanySize, normalizeLeadSource, normalizeUrgency } from "@/lib/leads/constants";
 import { scopedLogger } from "@/lib/logger";
-import {
-  normalizeCompanySize,
-  normalizeLeadSource,
-  normalizeUrgency,
-} from "@/lib/leads/constants";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { after } from "next/server";
 import { z } from "zod";

@@ -259,8 +259,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                   ])}
                 </DetailRow>
                 <DetailRow label="Calculadora">
-                  {[lead.calculator_cost, lead.calculator_hours].filter(Boolean).join(" · ") ||
-                    "—"}
+                  {[lead.calculator_cost, lead.calculator_hours].filter(Boolean).join(" · ") || "—"}
                 </DetailRow>
               </DetailGrid>
 

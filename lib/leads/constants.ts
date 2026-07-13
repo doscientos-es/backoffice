@@ -65,7 +65,11 @@ export function normalizeUrgency(value: string | null | undefined): string | nul
   const trimmed = value?.trim();
   if (!trimmed) return null;
   const compact = trimmed.toLowerCase();
-  if (compact === "sin urgencia" || compact === "solo informacion" || compact === "solo información") {
+  if (
+    compact === "sin urgencia" ||
+    compact === "solo informacion" ||
+    compact === "solo información"
+  ) {
     return "Explorando";
   }
   const known = URGENCY_OPTIONS.find((option) => option.toLowerCase() === compact);

@@ -165,14 +165,21 @@ function Body({
             {lead.urgency && <Row icon={<Clock className="size-3.5" />}>{lead.urgency}</Row>}
           </section>
         )}
-        {(lead.landing_path || lead.landing_ref || lead.landing_subject || lead.conversion_step) && (
+        {(lead.landing_path ||
+          lead.landing_ref ||
+          lead.landing_subject ||
+          lead.conversion_step) && (
           <section className="flex flex-col gap-1.5 text-xs">
             <Heading>AtribuciÃ³n</Heading>
             {lead.conversion_step && (
               <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.conversion_step}</Row>
             )}
-            {lead.landing_path && <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_path}</Row>}
-            {lead.landing_ref && <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_ref}</Row>}
+            {lead.landing_path && (
+              <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_path}</Row>
+            )}
+            {lead.landing_ref && (
+              <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_ref}</Row>
+            )}
             {lead.landing_subject && (
               <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_subject}</Row>
             )}

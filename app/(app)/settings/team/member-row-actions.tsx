@@ -116,7 +116,11 @@ export function MemberRowActions({
           variant="outline"
           disabled={feedback.pending}
           onClick={onToggleLeadsAssignable}
-          title={leadsAssignable ? "Excluir del reparto automático de leads" : "Incluir en el reparto automático de leads"}
+          title={
+            leadsAssignable
+              ? "Excluir del reparto automático de leads"
+              : "Incluir en el reparto automático de leads"
+          }
         >
           {leadsAssignable ? "Leads: sí" : "Leads: no"}
         </Button>

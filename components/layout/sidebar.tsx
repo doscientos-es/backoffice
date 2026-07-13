@@ -23,6 +23,7 @@ import {
   Images,
   Inbox,
   KeyRound,
+  LifeBuoy,
   Megaphone,
   Receipt,
   Repeat,
@@ -69,6 +70,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Ventas",
     items: [
       { href: "/leads", label: "Leads", icon: Inbox },
+      { href: "/leads/recovery", label: "Repesca", icon: LifeBuoy },
       { href: "/clients", label: "Clientes", icon: Users },
       { href: "/proposals", label: "Propuestas", icon: FileSignature },
     ],

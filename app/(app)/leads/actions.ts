@@ -9,11 +9,7 @@ import { findConflicts, insertEvent } from "@/lib/google/calendar";
 import type { CalendarBusySlot } from "@/lib/google/calendar";
 import { resolveSubject } from "@/lib/google/client";
 import { pushMetaConversion } from "@/lib/integrations/meta-capi";
-import {
-  normalizeCompanySize,
-  normalizeLeadSource,
-  normalizeUrgency,
-} from "@/lib/leads/constants";
+import { normalizeCompanySize, normalizeLeadSource, normalizeUrgency } from "@/lib/leads/constants";
 import {
   AssignLeadOwnerInput,
   CheckMeetingSlotInput,
