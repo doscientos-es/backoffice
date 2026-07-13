@@ -67,9 +67,9 @@ describe("SettingsNav – item visibility", () => {
     expect(screen.getAllByRole("link")).toHaveLength(2);
   });
 
-  it("renders exactly 6 links for admin", () => {
+  it("renders exactly 7 links for admin", () => {
     renderNav(true);
-    expect(screen.getAllByRole("link")).toHaveLength(6);
+    expect(screen.getAllByRole("link")).toHaveLength(7);
   });
 
   it("shows Plantillas email when canManageTeam is true", () => {

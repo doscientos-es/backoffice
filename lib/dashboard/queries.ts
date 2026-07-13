@@ -428,8 +428,8 @@ function getWeekStart(): Date {
  * Computes consecutive days (backwards from today) on which the user completed
  * at least one task. Today counts if it already has a completion.
  */
-function computeStreak(rows: { updated_at: string }[]): number {
-  const days = new Set(rows.map((r) => r.updated_at.slice(0, 10)));
+function computeStreak(rows: { updated_at: string | null | undefined }[]): number {
+  const days = new Set(rows.flatMap((r) => (r.updated_at ? [r.updated_at.slice(0, 10)] : [])));
   const todayKey = new Date().toISOString().slice(0, 10);
   // If nothing today yet, start streak check from yesterday
   const startOffset = days.has(todayKey) ? 0 : 1;

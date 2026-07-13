@@ -46,7 +46,7 @@ vi.mock("@/lib/supabase/server", () => ({
         },
         // Count queries (no .limit()) resolve here via Promise.all awaiting the chain.
         // Return count=0 and data=[] as defaults for test isolation.
-        // eslint-disable-next-line unicorn/no-then-property
+        // biome-ignore lint/suspicious/noThenProperty: intentional thenable mock for Supabase query chains
         then: (resolve: (v: unknown) => void) => {
           const result = isCountQuery
             ? { data: null, count: 0, error: null }
