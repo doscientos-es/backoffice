@@ -585,8 +585,7 @@ export const createRectification = defineAction<typeof CreateRectificationInput,
     const RECTIFIABLE_STATUSES = ["issued", "paid", "overdue"] as const;
     if (!(RECTIFIABLE_STATUSES as readonly string[]).includes(original.status)) {
       throw new Error(
-        "Solo pueden rectificarse facturas emitidas o pagadas. El estado actual es: " +
-          original.status,
+        `Solo pueden rectificarse facturas emitidas o pagadas. El estado actual es: ${original.status}`,
       );
     }
     if (original.is_rectification) {

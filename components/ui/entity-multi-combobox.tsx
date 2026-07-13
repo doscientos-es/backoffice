@@ -40,11 +40,7 @@ export function EntityMultiCombobox({
   const labelFor = (v: string) => items.find((i) => i.id === v)?.label ?? v;
 
   return (
-    <Combobox
-      multiple
-      value={value}
-      onValueChange={(v: string[]) => onChange(v ?? [])}
-    >
+    <Combobox multiple value={value} onValueChange={(v: string[]) => onChange(v ?? [])}>
       <ComboboxChips ref={anchor} className={className}>
         <ComboboxValue>
           {(selected: string[]) =>

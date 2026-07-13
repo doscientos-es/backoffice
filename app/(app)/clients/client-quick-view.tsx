@@ -21,7 +21,17 @@ import {
 import { EntityAvatar } from "@/components/ui/entity-avatar";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { relativeTime } from "@/lib/utils";
-import { ArrowUpRight, Building2, FileText, Mail, MapPin, Phone, Trash2, User, X } from "lucide-react";
+import {
+  ArrowUpRight,
+  Building2,
+  FileText,
+  Mail,
+  MapPin,
+  Phone,
+  Trash2,
+  User,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { type ReactNode, useState } from "react";
 import { ClientEditDialog } from "./[id]/client-edit-dialog";
@@ -90,14 +100,17 @@ function Body({
     <div className="grid h-full grid-rows-[auto_1fr_auto]">
       <DrawerHeader className="flex flex-row items-start justify-between gap-2 border-b border-border">
         <div className="flex min-w-0 items-start gap-3">
-          <EntityAvatar name={displayName} logoUrl={client.logo_url} size="md" className="mt-0.5 shrink-0" />
+          <EntityAvatar
+            name={displayName}
+            logoUrl={client.logo_url}
+            size="md"
+            className="mt-0.5 shrink-0"
+          />
           <div className="flex min-w-0 flex-col gap-1">
             <DrawerTitle className="truncate">{displayName}</DrawerTitle>
             <DrawerDescription className="flex flex-wrap items-center gap-1.5">
               {client.nif && <Badge variant="neutral">{client.nif}</Badge>}
-              <span className="text-[11px] tabular-nums">
-                {relativeTime(client.updated_at)}
-              </span>
+              <span className="text-[11px] tabular-nums">{relativeTime(client.updated_at)}</span>
             </DrawerDescription>
           </div>
         </div>

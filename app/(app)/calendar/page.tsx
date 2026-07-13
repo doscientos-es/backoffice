@@ -2,14 +2,7 @@ import { requireUser } from "@/lib/auth";
 import { getCalendarEvents } from "@/lib/calendar/queries";
 import { ALL_LAYERS } from "@/lib/calendar/types";
 import { createServerClient } from "@/lib/supabase/server";
-import {
-  addMonths,
-  endOfMonth,
-  endOfWeek,
-  startOfMonth,
-  startOfWeek,
-  subMonths,
-} from "date-fns";
+import { addMonths, endOfMonth, endOfWeek, startOfMonth, startOfWeek, subMonths } from "date-fns";
 import type { Metadata } from "next";
 import { CalendarGrid } from "./_components/calendar-grid";
 
@@ -57,14 +50,26 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
   // For admins: always fetch all members (member chips handle client-side filtering)
   const supabase = await createServerClient();
   let memberIds = [user.id];
-  let teamMembers: { id: string; name: string; email: string | null; avatar_url: string | null; github_handle: string | null }[] = [];
+  let teamMembers: {
+    id: string;
+    name: string;
+    email: string | null;
+    avatar_url: string | null;
+    github_handle: string | null;
+  }[] = [];
   if (isAdminOrOwner) {
     const { data } = await supabase
       .from("team_members")
       .select("id, name, email, avatar_url, github_handle")
       .is("deleted_at", null)
       .order("name");
-    const rows = (data ?? []) as { id: string; name: string; email: string | null; avatar_url: string | null; github_handle: string | null }[];
+    const rows = (data ?? []) as {
+      id: string;
+      name: string;
+      email: string | null;
+      avatar_url: string | null;
+      github_handle: string | null;
+    }[];
     memberIds = rows.map((m) => m.id);
     teamMembers = rows;
   }
@@ -85,7 +90,12 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
     .is("deleted_at", null)
     .order("updated_at", { ascending: false })
     .limit(150);
-  const leads = (leadsData ?? []) as { id: string; name: string; email: string | null; company: string | null }[];
+  const leads = (leadsData ?? []) as {
+    id: string;
+    name: string;
+    email: string | null;
+    company: string | null;
+  }[];
 
   const events = await getCalendarEvents({
     from,

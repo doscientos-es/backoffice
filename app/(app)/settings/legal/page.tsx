@@ -1,12 +1,6 @@
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { serverEnv } from "@/lib/env";
 import { ExternalLink, Shield } from "lucide-react";
 import type { Metadata } from "next";
@@ -87,44 +81,64 @@ export default async function LegalPage() {
         <CardContent className="prose prose-sm dark:prose-invert text-sm leading-relaxed">
           <p className="text-muted-foreground text-xs mb-4">Generado el {today}</p>
 
-          <h3 className="font-semibold text-base mb-2">
-            1. Identificación del productor del SIF
-          </h3>
+          <h3 className="font-semibold text-base mb-2">1. Identificación del productor del SIF</h3>
           <ul className="list-none space-y-1 pl-0 mb-4">
-            <li><span className="text-muted-foreground">Denominación social:</span> Doscientos Estudio S.L.</li>
-            <li><span className="text-muted-foreground">Sitio web:</span>{" "}
-              <a href="https://doscientos.es" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
+            <li>
+              <span className="text-muted-foreground">Denominación social:</span> Doscientos Estudio
+              S.L.
+            </li>
+            <li>
+              <span className="text-muted-foreground">Sitio web:</span>{" "}
+              <a
+                href="https://doscientos.es"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-primary hover:underline"
+              >
                 doscientos.es <ExternalLink className="h-3 w-3" />
               </a>
             </li>
-            <li><span className="text-muted-foreground">Email de contacto:</span> hola@doscientos.es</li>
+            <li>
+              <span className="text-muted-foreground">Email de contacto:</span> hola@doscientos.es
+            </li>
           </ul>
 
-          <h3 className="font-semibold text-base mb-2">
-            2. Identificación del SIF
-          </h3>
+          <h3 className="font-semibold text-base mb-2">2. Identificación del SIF</h3>
           <ul className="list-none space-y-1 pl-0 mb-4">
-            <li><span className="text-muted-foreground">Nombre:</span> {softwareName}</li>
-            <li><span className="text-muted-foreground">IdSistemaInformatico:</span> <code className="font-mono">{softwareId}</code></li>
-            <li><span className="text-muted-foreground">Versión:</span> {softwareVersion}</li>
-            <li><span className="text-muted-foreground">Modalidad:</span> VERI*FACTU (emisión de facturas verificables)</li>
+            <li>
+              <span className="text-muted-foreground">Nombre:</span> {softwareName}
+            </li>
+            <li>
+              <span className="text-muted-foreground">IdSistemaInformatico:</span>{" "}
+              <code className="font-mono">{softwareId}</code>
+            </li>
+            <li>
+              <span className="text-muted-foreground">Versión:</span> {softwareVersion}
+            </li>
+            <li>
+              <span className="text-muted-foreground">Modalidad:</span> VERI*FACTU (emisión de
+              facturas verificables)
+            </li>
           </ul>
 
           <h3 className="font-semibold text-base mb-2">3. Declaración de cumplimiento</h3>
           <p className="mb-4">
-            El productor declara, bajo su responsabilidad, que el sistema informático de
-            facturación identificado en el apartado 2 cumple las especificaciones técnicas
-            y funcionales contenidas en:
+            El productor declara, bajo su responsabilidad, que el sistema informático de facturación
+            identificado en el apartado 2 cumple las especificaciones técnicas y funcionales
+            contenidas en:
           </p>
           <ul className="list-disc pl-5 space-y-1 mb-4">
             <li>Real Decreto 1007/2023, de 5 de diciembre (RRSIF)</li>
             <li>Orden HAC/1177/2024, de 17 de octubre</li>
           </ul>
           <p className="mb-4">
-            En concreto, el sistema garantiza la <strong>integridad, inalterabilidad,
-              conservación, accesibilidad, legibilidad, trazabilidad e inalterabilidad</strong> de
-            los registros de facturación, mediante encadenamiento criptográfico (hash SHA-256)
-            y envío en tiempo real a la AEAT en modalidad VERI*FACTU.
+            En concreto, el sistema garantiza la{" "}
+            <strong>
+              integridad, inalterabilidad, conservación, accesibilidad, legibilidad, trazabilidad e
+              inalterabilidad
+            </strong>{" "}
+            de los registros de facturación, mediante encadenamiento criptográfico (hash SHA-256) y
+            envío en tiempo real a la AEAT en modalidad VERI*FACTU.
           </p>
 
           <h3 className="font-semibold text-base mb-2">4. Recursos adicionales</h3>

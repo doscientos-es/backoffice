@@ -30,19 +30,19 @@ export type ListAlign = "left" | "right";
 export type ListHeader =
   | string
   | {
-    label: string;
-    /** Activa la ordenación cliente (requiere `sortValues` en las filas). */
-    sortable?: boolean;
-    /**
-     * Clave de columna DB para ordenación en el servidor.
-     * Al hacer clic actualiza los URL params `sort` + `dir` y resetea `page`.
-     * Tiene preferencia sobre `sortable`.
-     */
-    sortKey?: string;
-    align?: ListAlign;
-    /** Ancho mínimo CSS para la columna (ej. "8rem"). Evita wrapping en celdas cortas. */
-    minWidth?: string;
-  };
+      label: string;
+      /** Activa la ordenación cliente (requiere `sortValues` en las filas). */
+      sortable?: boolean;
+      /**
+       * Clave de columna DB para ordenación en el servidor.
+       * Al hacer clic actualiza los URL params `sort` + `dir` y resetea `page`.
+       * Tiene preferencia sobre `sortable`.
+       */
+      sortKey?: string;
+      align?: ListAlign;
+      /** Ancho mínimo CSS para la columna (ej. "8rem"). Evita wrapping en celdas cortas. */
+      minWidth?: string;
+    };
 
 export type ListRow = {
   id: string;
@@ -119,7 +119,7 @@ function exportToCSV(headers: ListHeader[], rows: ListRow[], filename: string) {
     }),
   );
   const content = [labels.map(escape).join(","), ...csvRows.map((r) => r.join(","))].join("\r\n");
-  const blob = new Blob(["\uFEFF" + content], { type: "text/csv;charset=utf-8;" });
+  const blob = new Blob([`\uFEFF${content}`], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -187,66 +187,68 @@ export function ListPage({
   );
 
   // ── Column definitions ──────────────────────────────────────────────────
-  const columns = useMemo<ColumnDef<ListRow>[]>(() =>
-    headers.map((h, colIdx) => {
-      const sortable = headerSortable(h);
-      const sortKey = headerSortKey(h);
-      return {
-        id: `col_${colIdx}`,
-        accessorFn: (row) => row.sortValues?.[colIdx] ?? null,
-        header: ({ column }) => {
-          const label = headerLabel(h);
+  const columns = useMemo<ColumnDef<ListRow>[]>(
+    () =>
+      headers.map((h, colIdx) => {
+        const sortable = headerSortable(h);
+        const sortKey = headerSortKey(h);
+        return {
+          id: `col_${colIdx}`,
+          accessorFn: (row) => row.sortValues?.[colIdx] ?? null,
+          header: ({ column }) => {
+            const label = headerLabel(h);
 
-          // Server-side sort (via URL param)
-          if (sortKey) {
-            const isActive = serverSortKey === sortKey;
-            const isAsc = isActive && serverSortDir === "asc";
-            const isDesc = isActive && serverSortDir === "desc";
+            // Server-side sort (via URL param)
+            if (sortKey) {
+              const isActive = serverSortKey === sortKey;
+              const isAsc = isActive && serverSortDir === "asc";
+              const isDesc = isActive && serverSortDir === "desc";
+              return (
+                <button
+                  type="button"
+                  onClick={() => handleServerSort(sortKey)}
+                  className="inline-flex items-center gap-1 text-xs font-medium tracking-wide text-muted-foreground hover:text-foreground"
+                >
+                  {label}
+                  {isAsc ? (
+                    <ArrowUp className="size-3 text-primary" />
+                  ) : isDesc ? (
+                    <ArrowDown className="size-3 text-primary" />
+                  ) : (
+                    <ArrowUpDown className="size-3 opacity-40" />
+                  )}
+                </button>
+              );
+            }
+
+            // Client-side sort (TanStack, current page only)
+            if (!sortable) return label;
+            const sorted = column.getIsSorted();
             return (
               <button
                 type="button"
-                onClick={() => handleServerSort(sortKey)}
+                onClick={() => column.toggleSorting(sorted === "asc")}
                 className="inline-flex items-center gap-1 text-xs font-medium tracking-wide text-muted-foreground hover:text-foreground"
               >
                 {label}
-                {isAsc ? (
+                {sorted === "asc" ? (
                   <ArrowUp className="size-3 text-primary" />
-                ) : isDesc ? (
+                ) : sorted === "desc" ? (
                   <ArrowDown className="size-3 text-primary" />
                 ) : (
                   <ArrowUpDown className="size-3 opacity-40" />
                 )}
               </button>
             );
-          }
-
-          // Client-side sort (TanStack, current page only)
-          if (!sortable) return label;
-          const sorted = column.getIsSorted();
-          return (
-            <button
-              type="button"
-              onClick={() => column.toggleSorting(sorted === "asc")}
-              className="inline-flex items-center gap-1 text-xs font-medium tracking-wide text-muted-foreground hover:text-foreground"
-            >
-              {label}
-              {sorted === "asc" ? (
-                <ArrowUp className="size-3 text-primary" />
-              ) : sorted === "desc" ? (
-                <ArrowDown className="size-3 text-primary" />
-              ) : (
-                <ArrowUpDown className="size-3 opacity-40" />
-              )}
-            </button>
-          );
-        },
-        cell: ({ row }) => row.original.cells[colIdx],
-        enableSorting: sortable && !sortKey,
-        sortingFn: "alphanumeric",
-      };
-    }),
+          },
+          cell: ({ row }) => row.original.cells[colIdx],
+          enableSorting: sortable && !sortKey,
+          sortingFn: "alphanumeric",
+        };
+      }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [headers, serverSortKey, serverSortDir, handleServerSort]);
+    [headers, serverSortKey, serverSortDir, handleServerSort],
+  );
 
   const table = useReactTable({
     data: rows,
@@ -320,7 +322,11 @@ export function ListPage({
                       return (
                         <th
                           key={header.id}
-                          style={headerMinWidth(headers[colIdx] ?? "") ? { minWidth: headerMinWidth(headers[colIdx] ?? "") } : undefined}
+                          style={
+                            headerMinWidth(headers[colIdx] ?? "")
+                              ? { minWidth: headerMinWidth(headers[colIdx] ?? "") }
+                              : undefined
+                          }
                           className={cn(
                             "px-5 py-3 text-xs font-medium tracking-wide text-muted-foreground",
                             right ? "text-right" : "text-left",
@@ -359,9 +365,7 @@ export function ListPage({
                               key={cell.id}
                               className={cn(
                                 "px-5 py-3 align-middle",
-                                isFirst
-                                  ? "font-medium text-foreground"
-                                  : "text-muted-foreground",
+                                isFirst ? "font-medium text-foreground" : "text-muted-foreground",
                                 right && "text-right",
                               )}
                             >
@@ -371,7 +375,9 @@ export function ListPage({
                                   onClick={(e) => e.stopPropagation()}
                                   className="inline-flex items-center gap-1.5 underline-offset-2 transition-all hover:underline group-hover:text-primary"
                                 >
-                                  {row.cells[colIdx] ?? <span className="text-muted-foreground/40">—</span>}
+                                  {row.cells[colIdx] ?? (
+                                    <span className="text-muted-foreground/40">—</span>
+                                  )}
                                   <ArrowRight className="size-3.5 shrink-0 opacity-0 -translate-x-1 transition-all group-hover:opacity-60 group-hover:translate-x-0" />
                                 </Link>
                               ) : (

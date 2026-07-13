@@ -22,16 +22,16 @@ type VatState =
   | { status: "idle" }
   | { status: "loading" }
   | {
-    status: "valid";
-    name?: string;
-    address?: string;
-    source?: "vies" | "openmercantil" | "es-checksum";
-    companyStatus?: string;
-    province?: string;
-    city?: string;
-    companyType?: string;
-    officers?: OpenMercantilOfficer[];
-  }
+      status: "valid";
+      name?: string;
+      address?: string;
+      source?: "vies" | "openmercantil" | "es-checksum";
+      companyStatus?: string;
+      province?: string;
+      city?: string;
+      companyType?: string;
+      officers?: OpenMercantilOfficer[];
+    }
   | { status: "not_found"; message: string }
   | { status: "invalid"; message: string };
 

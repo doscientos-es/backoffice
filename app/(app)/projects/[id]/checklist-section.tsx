@@ -6,11 +6,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { CheckCircle2, Circle, Plus, Trash2 } from "lucide-react";
 import { useRef, useTransition } from "react";
-import {
-  addChecklistItem,
-  deleteChecklistItem,
-  toggleChecklistItem,
-} from "../checklist-actions";
+import { addChecklistItem, deleteChecklistItem, toggleChecklistItem } from "../checklist-actions";
 
 export type ChecklistItemRow = {
   id: string;
@@ -97,9 +93,7 @@ export function ChecklistSection({
           />
         ))}
 
-        {done.length > 0 && todo.length > 0 && (
-          <div className="mx-6 my-1 border-t border-border" />
-        )}
+        {done.length > 0 && todo.length > 0 && <div className="mx-6 my-1 border-t border-border" />}
 
         {done.map((item) => (
           <ItemRow
@@ -112,7 +106,10 @@ export function ChecklistSection({
         ))}
 
         {canEdit && (
-          <form onSubmit={handleAdd} className="flex items-center gap-2 px-6 pt-3 border-t border-border mt-2">
+          <form
+            onSubmit={handleAdd}
+            className="flex items-center gap-2 px-6 pt-3 border-t border-border mt-2"
+          >
             <Input
               ref={inputRef}
               name="label"
@@ -149,25 +146,14 @@ function ItemRow({
         disabled={!canEdit}
         className={cn(
           "shrink-0 transition-colors",
-          item.is_done
-            ? "text-emerald-500"
-            : "text-muted-foreground hover:text-foreground",
+          item.is_done ? "text-emerald-500" : "text-muted-foreground hover:text-foreground",
           !canEdit && "cursor-default",
         )}
         aria-label={item.is_done ? "Marcar pendiente" : "Marcar hecho"}
       >
-        {item.is_done ? (
-          <CheckCircle2 className="size-4" />
-        ) : (
-          <Circle className="size-4" />
-        )}
+        {item.is_done ? <CheckCircle2 className="size-4" /> : <Circle className="size-4" />}
       </button>
-      <span
-        className={cn(
-          "flex-1 text-sm",
-          item.is_done && "line-through text-muted-foreground",
-        )}
-      >
+      <span className={cn("flex-1 text-sm", item.is_done && "line-through text-muted-foreground")}>
         {item.label}
       </span>
       {canEdit && (

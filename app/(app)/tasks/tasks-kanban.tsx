@@ -81,7 +81,14 @@ interface TasksKanbanProps {
   currentUserId?: string;
 }
 
-export function TasksKanban({ tasks, capped, projects = [], leads = [], members = [], currentUserId }: TasksKanbanProps) {
+export function TasksKanban({
+  tasks,
+  capped,
+  projects = [],
+  leads = [],
+  members = [],
+  currentUserId,
+}: TasksKanbanProps) {
   const [, startTransition] = useTransition();
   const [optimistic, applyOptimistic] = useOptimistic(tasks, (state, { id, status }: Action) =>
     state.map((t) => (t.id === id ? { ...t, status } : t)),
@@ -152,7 +159,10 @@ export function TasksKanban({ tasks, capped, projects = [], leads = [], members 
                   members={members}
                   currentUserId={currentUserId}
                   trigger={
-                    <button type="button" className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                    >
                       <Plus className="size-3.5" />
                       Añadir tarea
                     </button>
@@ -175,7 +185,14 @@ function Column({
   dot,
   tasks,
   addButton,
-}: { status: TaskStatus; label: string; tone: string; dot: string; tasks: KanbanTask[]; addButton?: React.ReactNode }) {
+}: {
+  status: TaskStatus;
+  label: string;
+  tone: string;
+  dot: string;
+  tasks: KanbanTask[];
+  addButton?: React.ReactNode;
+}) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   return (
     <div

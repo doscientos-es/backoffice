@@ -19,7 +19,9 @@ export function ClientUpdatePanel({ projectId, aiEnabled }: Props) {
   const [copied, setCopied] = useState(false);
 
   if (!aiEnabled) {
-    return <AiNotice message="La IA no está disponible. Añade AI_PROVIDER a las variables de entorno para generar updates de cliente." />;
+    return (
+      <AiNotice message="La IA no está disponible. Añade AI_PROVIDER a las variables de entorno para generar updates de cliente." />
+    );
   }
 
   async function handleGenerate() {
@@ -27,7 +29,9 @@ export function ClientUpdatePanel({ projectId, aiEnabled }: Props) {
     setError(null);
     setUpdate(null);
     try {
-      const res = await fetch(`/api/projects/${projectId}/generate-client-update`, { method: "POST" });
+      const res = await fetch(`/api/projects/${projectId}/generate-client-update`, {
+        method: "POST",
+      });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Error al generar el update.");
       setUpdate(json.update as string);
@@ -67,7 +71,12 @@ export function ClientUpdatePanel({ projectId, aiEnabled }: Props) {
       {update && !loading && (
         <div className={cn("flex flex-col gap-2 animate-in fade-in duration-500")}>
           <div className="flex justify-end">
-            <Button size="sm" variant="ghost" className="h-6 gap-1 px-2 text-xs" onClick={handleCopy}>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 gap-1 px-2 text-xs"
+              onClick={handleCopy}
+            >
               {copied ? <Check className="size-3 text-emerald-600" /> : <Copy className="size-3" />}
               {copied ? "Copiado" : "Copiar"}
             </Button>
@@ -83,13 +92,16 @@ export function ClientUpdatePanel({ projectId, aiEnabled }: Props) {
 
       {!update && !loading && !error && (
         <p className="text-sm text-muted-foreground">
-          Genera un update profesional listo para enviar a tu cliente, basado en las tareas y registros de trabajo del proyecto.
+          Genera un update profesional listo para enviar a tu cliente, basado en las tareas y
+          registros de trabajo del proyecto.
         </p>
       )}
 
       <div className="flex items-center justify-between gap-2">
         {update && !loading && (
-          <span className="text-xs text-muted-foreground">Revisa el texto antes de enviarlo al cliente.</span>
+          <span className="text-xs text-muted-foreground">
+            Revisa el texto antes de enviarlo al cliente.
+          </span>
         )}
         <Button
           size="sm"

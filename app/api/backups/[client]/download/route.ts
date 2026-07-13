@@ -21,10 +21,7 @@ async function getAuthToken(): Promise<string> {
   return res.text();
 }
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ client: string }> },
-) {
+export async function GET(request: Request, { params }: { params: Promise<{ client: string }> }) {
   await requireUser();
 
   if (!isFileBrowserConfigured()) {

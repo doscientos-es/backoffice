@@ -314,9 +314,7 @@ export function CalendarCreateDialog({
                       checked={selectedMemberIds.includes(m.id)}
                       onChange={() =>
                         setSelectedMemberIds((prev) =>
-                          prev.includes(m.id)
-                            ? prev.filter((x) => x !== m.id)
-                            : [...prev, m.id],
+                          prev.includes(m.id) ? prev.filter((x) => x !== m.id) : [...prev, m.id],
                         )
                       }
                       className="rounded"
@@ -435,11 +433,7 @@ export function CalendarCreateDialog({
             <Button type="button" variant="ghost" size="sm" onClick={onClose}>
               Cancelar
             </Button>
-            <Button
-              type="submit"
-              size="sm"
-              disabled={isPending || !title.trim()}
-            >
+            <Button type="submit" size="sm" disabled={isPending || !title.trim()}>
               {isPending ? "Guardando…" : hasLead ? "Registrar reunión" : "Crear"}
             </Button>
           </div>

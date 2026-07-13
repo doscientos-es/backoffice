@@ -45,7 +45,8 @@ const fail = (msg: string, err?: unknown) => {
 
 async function getToken(): Promise<string> {
   const pem = Buffer.from(SA_KEY_B64, "base64").toString("utf8").trim();
-  if (!pem.includes("BEGIN PRIVATE KEY")) throw new Error("PEM inválido en GOOGLE_SA_PRIVATE_KEY_BASE64");
+  if (!pem.includes("BEGIN PRIVATE KEY"))
+    throw new Error("PEM inválido en GOOGLE_SA_PRIVATE_KEY_BASE64");
   const client = new JWT({ email: SA_EMAIL, key: pem, scopes: SCOPES, subject: SUBJECT });
   const { token } = await client.getAccessToken();
   if (!token) throw new Error("Token vacío");
@@ -55,10 +56,16 @@ async function getToken(): Promise<string> {
 async function apiFetch<T>(token: string, url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
     ...init,
-    headers: { Authorization: `Bearer ${token}`, ...((init?.headers ?? {}) as Record<string, string>) },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...((init?.headers ?? {}) as Record<string, string>),
+    },
   });
   const json = (await res.json()) as Record<string, unknown>;
-  if (!res.ok) throw new Error(((json.error as Record<string, unknown>)?.message as string) ?? `HTTP ${res.status}`);
+  if (!res.ok)
+    throw new Error(
+      ((json.error as Record<string, unknown>)?.message as string) ?? `HTTP ${res.status}`,
+    );
   return json as T;
 }
 
@@ -100,7 +107,11 @@ async function checkWrite(token: string, parentId: string, label: string): Promi
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: "_smoke-test_", mimeType: "application/vnd.google-apps.folder", parents: [parentId] }),
+        body: JSON.stringify({
+          name: "_smoke-test_",
+          mimeType: "application/vnd.google-apps.folder",
+          parents: [parentId],
+        }),
       },
     );
     subfolderId = folder.id;
@@ -113,13 +124,21 @@ async function checkWrite(token: string, parentId: string, label: string): Promi
   // 2. Upload tiny file
   try {
     const boundary = `smoke-${Date.now()}`;
-    const meta = JSON.stringify({ name: "smoke-test.json", mimeType: "application/json", parents: [subfolderId] });
+    const meta = JSON.stringify({
+      name: "smoke-test.json",
+      mimeType: "application/json",
+      parents: [subfolderId],
+    });
     const content = JSON.stringify({ test: true, ts: new Date().toISOString() });
     const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${content}\r\n--${boundary}--`;
     const uploaded = await apiFetch<{ id: string; name: string }>(
       token,
-      `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name&supportsAllDrives=true`,
-      { method: "POST", headers: { "Content-Type": `multipart/related; boundary=${boundary}` }, body },
+      "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name&supportsAllDrives=true",
+      {
+        method: "POST",
+        headers: { "Content-Type": `multipart/related; boundary=${boundary}` },
+        body,
+      },
     );
     fileId = uploaded.id;
     ok(`Fichero subido a ${label}/_smoke-test_`);
@@ -155,31 +174,44 @@ try {
   ok(`Token obtenido (impersonando ${SUBJECT})`);
 } catch (err) {
   fail("No se pudo obtener token JWT", err);
-  console.error("\n  → Verifica GOOGLE_SA_PRIVATE_KEY_BASE64, domain-wide delegation y scopes en Workspace Admin.\n");
+  console.error(
+    "\n  → Verifica GOOGLE_SA_PRIVATE_KEY_BASE64, domain-wide delegation y scopes en Workspace Admin.\n",
+  );
   process.exit(1);
 }
 
 // 2 & 3. Shared Drive
 console.log("\n2. Shared Drive — Invoices");
 if (INV_FOLDER) {
-  if (await checkFolder(token, INV_FOLDER, "invoices")) await checkWrite(token, INV_FOLDER, "invoices");
-} else { warn("GOOGLE_DRIVE_INVOICES_FOLDER_ID no configurado — saltando"); }
+  if (await checkFolder(token, INV_FOLDER, "invoices"))
+    await checkWrite(token, INV_FOLDER, "invoices");
+} else {
+  warn("GOOGLE_DRIVE_INVOICES_FOLDER_ID no configurado — saltando");
+}
 
 console.log("\n3. Shared Drive — Proposals");
 if (PROP_FOLDER) {
-  if (await checkFolder(token, PROP_FOLDER, "proposals")) await checkWrite(token, PROP_FOLDER, "proposals");
-} else { warn("GOOGLE_DRIVE_PROPOSALS_FOLDER_ID no configurado — saltando"); }
+  if (await checkFolder(token, PROP_FOLDER, "proposals"))
+    await checkWrite(token, PROP_FOLDER, "proposals");
+} else {
+  warn("GOOGLE_DRIVE_PROPOSALS_FOLDER_ID no configurado — saltando");
+}
 
 // 4. Calendar
 console.log("\n4. Google Calendar");
 if (CALENDAR_ID) {
   try {
-    const cal = await apiFetch<{ summary?: string }>(token, `${CALENDAR}/calendars/${encodeURIComponent(CALENDAR_ID)}`);
+    const cal = await apiFetch<{ summary?: string }>(
+      token,
+      `${CALENDAR}/calendars/${encodeURIComponent(CALENDAR_ID)}`,
+    );
     ok(`Calendario accesible: "${cal.summary ?? CALENDAR_ID}"`);
   } catch (err) {
     fail("No se puede acceder al calendario", err);
   }
-} else { warn("GOOGLE_CALENDAR_ID no configurado — saltando"); }
+} else {
+  warn("GOOGLE_CALENDAR_ID no configurado — saltando");
+}
 
 console.log("\n════════════════════════════════════");
 console.log("🏁 Smoke test completado.\n");

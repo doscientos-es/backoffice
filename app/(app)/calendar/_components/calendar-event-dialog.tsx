@@ -49,7 +49,7 @@ function EventDialogContent({ event, onClose }: { event: CalendarEvent; onClose:
   const dateStr = event.allDay
     ? format(startDate, "EEEE, d MMMM yyyy", { locale: es })
     : format(startDate, "EEEE, d MMMM yyyy · HH:mm", { locale: es }) +
-    (!sameDay ? ` — ${format(endDate, "d MMM · HH:mm", { locale: es })}` : "");
+      (!sameDay ? ` — ${format(endDate, "d MMM · HH:mm", { locale: es })}` : "");
 
   return (
     <DialogContent className="sm:max-w-sm">

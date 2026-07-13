@@ -82,11 +82,7 @@ export async function listTasksList(params: TaskListParams): Promise<TaskListRes
   if (params.projectId) query = query.eq("project_id", params.projectId);
 
   const sortCol = params.sort ?? "priority";
-  const ascending = params.sort
-    ? params.dir !== "desc"
-    : sortCol === "priority"
-      ? false
-      : true;
+  const ascending = params.sort ? params.dir !== "desc" : sortCol !== "priority";
   const { data, error, count } = await query
     .order(sortCol, { ascending, nullsFirst: false })
     .range(from, to);

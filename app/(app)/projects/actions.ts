@@ -71,7 +71,7 @@ export const createProject = defineAction({
 export const updateProject = defineAction({
   name: "projects.update",
   schema: UpdateProjectInput,
-  revalidate: (payload, input) => ["/projects", `/projects/${input.id}`],
+  revalidate: (_payload, input) => ["/projects", `/projects/${input.id}`],
   handler: async (input) => {
     const supabase = await createServerClient();
     const { error } = await supabase

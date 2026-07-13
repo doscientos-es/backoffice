@@ -31,7 +31,7 @@ El update debe:
 - Tono: profesional pero cercano, como el de una agencia española de confianza.
 - Longitud: 3-5 párrafos. No uses markdown, solo texto plano.`;
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!isAIEnabled()) {
     return NextResponse.json({ error: "ai_disabled" }, { status: 503 });
   }
@@ -92,7 +92,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     .join("\n");
 
   const workText = (workLogs ?? [])
-    .map((w) => `- ${w.work_date}: ${w.hours}h${w.note ? ` — ${(w.note as string).slice(0, 150)}` : ""}`)
+    .map(
+      (w) =>
+        `- ${w.work_date}: ${w.hours}h${w.note ? ` — ${(w.note as string).slice(0, 150)}` : ""}`,
+    )
     .join("\n");
 
   const userPrompt = `Proyecto: ${project.name}
@@ -119,7 +122,10 @@ ${workText || "(sin registros de trabajo)"}`;
     log.info({ projectId: id }, "ai_client_update_ok");
     return NextResponse.json({ ok: true, update });
   } catch (err) {
-    log.error({ projectId: id, err: err instanceof Error ? err.message : err }, "ai_client_update_failed");
+    log.error(
+      { projectId: id, err: err instanceof Error ? err.message : err },
+      "ai_client_update_failed",
+    );
     return NextResponse.json({ error: "AI service unavailable" }, { status: 502 });
   }
 }

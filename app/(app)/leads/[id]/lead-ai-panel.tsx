@@ -104,11 +104,11 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData }: Props) {
   const hasSummary = Boolean(data.ai_summary);
   const updatedAt = data.ai_updated_at
     ? new Date(data.ai_updated_at).toLocaleDateString("es-ES", {
-      day: "numeric",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
+        day: "numeric",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
     : null;
 
   return (

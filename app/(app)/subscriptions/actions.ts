@@ -123,7 +123,10 @@ export const restoreSubscription = defineAction({
 // ---------------------------------------------------------------------------
 const invoiceFromSubSchema = z.object({ id: z.string().uuid() });
 
-export const createInvoiceFromSubscription = defineAction<typeof invoiceFromSubSchema, { id: string }>({
+export const createInvoiceFromSubscription = defineAction<
+  typeof invoiceFromSubSchema,
+  { id: string }
+>({
   name: "subscriptions.create_invoice",
   schema: invoiceFromSubSchema,
   roles: ["owner", "admin", "member"],
@@ -133,7 +136,9 @@ export const createInvoiceFromSubscription = defineAction<typeof invoiceFromSubS
 
     const { data: sub } = await supabase
       .from("subscriptions")
-      .select("id, name, amount, vat_rate, billing_cycle, next_invoice_date, client_id, project_id, status")
+      .select(
+        "id, name, amount, vat_rate, billing_cycle, next_invoice_date, client_id, project_id, status",
+      )
       .eq("id", subscriptionId)
       .is("deleted_at", null)
       .maybeSingle();
@@ -202,7 +207,10 @@ export const createInvoiceFromSubscription = defineAction<typeof invoiceFromSubS
     });
 
     if (itemError) {
-      log.error({ err: itemError, invoiceId: invoice.id }, "create_invoice_from_subscription_items_failed");
+      log.error(
+        { err: itemError, invoiceId: invoice.id },
+        "create_invoice_from_subscription_items_failed",
+      );
       throw new Error(itemError.message);
     }
 

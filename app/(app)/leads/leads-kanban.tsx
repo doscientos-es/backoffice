@@ -35,12 +35,9 @@ const STALE_DAYS = 3;
 const STALE_MS = STALE_DAYS * 24 * 60 * 60 * 1000;
 
 const URGENCY_STYLE: Record<string, string> = {
-  Inmediata:
-    "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400",
-  "Este mes":
-    "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400",
-  "Este trimestre":
-    "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-400",
+  Inmediata: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400",
+  "Este mes": "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400",
+  "Este trimestre": "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-400",
   "Sin urgencia": "bg-muted text-muted-foreground",
 };
 const TERMINAL_STATUSES: ReadonlySet<LeadStatus> = new Set([
@@ -116,9 +113,7 @@ const COLUMNS: ColumnDef[] = [
   },
 ];
 
-type Action =
-  | { type: "move"; id: string; status: LeadStatus }
-  | { type: "remove"; id: string };
+type Action = { type: "move"; id: string; status: LeadStatus } | { type: "remove"; id: string };
 
 export function LeadsKanban({
   leads,
@@ -365,7 +360,7 @@ function Column({
           "flex shrink-0 flex-col gap-1 border-b border-border px-3 py-2.5 outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
           compact && "select-none",
           collapsed &&
-          "md:items-center md:gap-2 md:px-1.5 md:group-hover/col:flex-row md:group-hover/col:items-center md:group-hover/col:justify-between md:group-hover/col:gap-1 md:group-hover/col:px-3",
+            "md:items-center md:gap-2 md:px-1.5 md:group-hover/col:flex-row md:group-hover/col:items-center md:group-hover/col:justify-between md:group-hover/col:gap-1 md:group-hover/col:px-3",
         )}
       >
         <div
@@ -380,7 +375,7 @@ function Column({
               "truncate text-xs font-semibold tracking-wide",
               tone,
               collapsed &&
-              "md:rotate-180 md:[writing-mode:vertical-rl] md:group-hover/col:rotate-0 md:group-hover/col:[writing-mode:horizontal-tb]",
+                "md:rotate-180 md:[writing-mode:vertical-rl] md:group-hover/col:rotate-0 md:group-hover/col:[writing-mode:horizontal-tb]",
             )}
           >
             {label}
@@ -469,11 +464,11 @@ function Card({
       onKeyDown={
         onOpenQuickView
           ? (e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              onOpenQuickView(lead.id);
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onOpenQuickView(lead.id);
+              }
             }
-          }
           : undefined
       }
       role={onOpenQuickView ? "button" : undefined}

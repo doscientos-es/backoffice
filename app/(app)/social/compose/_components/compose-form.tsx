@@ -24,7 +24,12 @@ type Mode = "draft" | "now" | "schedule";
 
 const MODES: { value: Mode; label: string; hint: string; icon: typeof Send }[] = [
   { value: "now", label: "Publicar ahora", hint: "Se envía a las redes al instante.", icon: Send },
-  { value: "schedule", label: "Programar", hint: "Se guarda para publicar más tarde.", icon: CalendarClock },
+  {
+    value: "schedule",
+    label: "Programar",
+    hint: "Se guarda para publicar más tarde.",
+    icon: CalendarClock,
+  },
   { value: "draft", label: "Borrador", hint: "Se guarda sin publicar.", icon: FileText },
 ];
 

@@ -20,7 +20,6 @@ export default async function EmailTemplatesPage() {
         description="Gestiona las plantillas reutilizables para enviar emails a leads desde el CRM."
       />
       <EmailTemplatesManager templates={templates} signatureHtml={user.signatureHtml} />
-
     </div>
   );
 }

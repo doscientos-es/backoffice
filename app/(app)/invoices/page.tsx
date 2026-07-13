@@ -44,10 +44,23 @@ export default async function InvoicesPage({
   const page = parsePage(sp);
   const { sort, dir } = parseSortParam(sp, INVOICE_SORT_COLUMNS, "issue_date", "desc");
 
-  const { data, count, stats, error } = await listInvoices({ q, status, verifactu, page, sort, dir });
+  const { data, count, stats, error } = await listInvoices({
+    q,
+    status,
+    verifactu,
+    page,
+    sort,
+    dir,
+  });
 
-  const { pendingTotal, pendingCount, overdueTotal, overdueCount, paidMonthTotal, verifactuKoCount } =
-    stats;
+  const {
+    pendingTotal,
+    pendingCount,
+    overdueTotal,
+    overdueCount,
+    paidMonthTotal,
+    verifactuKoCount,
+  } = stats;
 
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
@@ -134,7 +147,11 @@ export default async function InvoicesPage({
             ) : null,
             i.idfact,
             <StatusBadge key="status" meta={INVOICE_STATUS} value={i.status ?? ""} />,
-            <StatusBadge key="verifactu" meta={VERIFACTU_STATUS} value={i.verifactu_status ?? ""} />,
+            <StatusBadge
+              key="verifactu"
+              meta={VERIFACTU_STATUS}
+              value={i.verifactu_status ?? ""}
+            />,
             formatEUR(i.total ?? 0),
             formatDate(i.issue_date),
             formatDate(i.due_date),

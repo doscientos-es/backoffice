@@ -110,7 +110,7 @@ export function DeckViewer({
           totalSlides: total,
           viewerType: "client",
         }),
-      }).catch(() => { });
+      }).catch(() => {});
     }, 800);
     return () => clearTimeout(t);
   }, [current, token, total, slides]);
@@ -136,8 +136,8 @@ export function DeckViewer({
   const prev = useCallback(() => setCurrent((i) => Math.max(0, i - 1)), []);
   const next = useCallback(() => setCurrent((i) => Math.min(total - 1, i + 1)), [total]);
   const toggleFullscreen = useCallback(() => {
-    if (document.fullscreenElement) document.exitFullscreen().catch(() => { });
-    else document.documentElement.requestFullscreen().catch(() => { });
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    else document.documentElement.requestFullscreen().catch(() => {});
   }, []);
 
   useEffect(() => {

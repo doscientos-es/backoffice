@@ -168,21 +168,21 @@ export default async function PortalProposalPage({
     !client || !client.nif?.trim() || !client.billing_address?.trim() || !client.name?.trim();
   const fiscalPrefill = client
     ? {
-      name: client.name ?? "",
-      nif: client.nif ?? "",
-      billing_address: client.billing_address ?? "",
-      contact_person: client.contact_person ?? "",
-      email: client.email ?? "",
-      phone: client.phone ?? "",
-    }
+        name: client.name ?? "",
+        nif: client.nif ?? "",
+        billing_address: client.billing_address ?? "",
+        contact_person: client.contact_person ?? "",
+        email: client.email ?? "",
+        phone: client.phone ?? "",
+      }
     : {
-      name: lead?.company ?? lead?.name ?? "",
-      nif: "",
-      billing_address: "",
-      contact_person: lead?.name ?? "",
-      email: lead?.email ?? "",
-      phone: lead?.phone ?? "",
-    };
+        name: lead?.company ?? lead?.name ?? "",
+        nif: "",
+        billing_address: "",
+        contact_person: lead?.name ?? "",
+        email: lead?.email ?? "",
+        phone: lead?.phone ?? "",
+      };
   const recipientName = client?.name ?? lead?.company ?? lead?.name ?? "—";
   const proposalNumber = (proposal.number as string | null) ?? "Borrador";
   const safeItems = (items ?? []) as unknown as ProposalItem[];
@@ -233,7 +233,9 @@ export default async function PortalProposalPage({
       {success && (
         <Alert className="border-emerald-500 bg-emerald-50 dark:bg-emerald-950/20">
           <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-          <AlertTitle className="text-emerald-800 dark:text-emerald-300">Pago confirmado</AlertTitle>
+          <AlertTitle className="text-emerald-800 dark:text-emerald-300">
+            Pago confirmado
+          </AlertTitle>
           <AlertDescription className="text-emerald-700 dark:text-emerald-400">
             Hemos recibido el pago de la señal. El proyecto se pondrá en marcha en breve.
           </AlertDescription>
@@ -294,7 +296,9 @@ export default async function PortalProposalPage({
                 className="size-8 rounded object-contain"
               />
             ) : null}
-            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{recipientName}</p>
+            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              {recipientName}
+            </p>
           </div>
         </div>
 

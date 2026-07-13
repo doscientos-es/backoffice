@@ -53,20 +53,37 @@ export function VaultItemForm({ item, clients, onClose }: Props) {
       {isEdit && <input type="hidden" name="id" value={item.id} />}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field className="sm:col-span-2">
-          <FieldLabel htmlFor="vi-name">Nombre <span className="text-destructive">*</span></FieldLabel>
-          <Input id="vi-name" name="name" required defaultValue={item?.name} placeholder="FTP Hostinger" autoFocus />
+          <FieldLabel htmlFor="vi-name">
+            Nombre <span className="text-destructive">*</span>
+          </FieldLabel>
+          <Input
+            id="vi-name"
+            name="name"
+            required
+            defaultValue={item?.name}
+            placeholder="FTP Hostinger"
+            autoFocus
+          />
         </Field>
         <Field>
           <FieldLabel htmlFor="vi-service">Servicio</FieldLabel>
           <Select id="vi-service" name="service" defaultValue={item?.service ?? "other"}>
             {VAULT_SERVICES.map((s) => (
-              <option key={s} value={s}>{VAULT_SERVICE_LABELS[s]}</option>
+              <option key={s} value={s}>
+                {VAULT_SERVICE_LABELS[s]}
+              </option>
             ))}
           </Select>
         </Field>
         <Field>
           <FieldLabel htmlFor="vi-username">Usuario / Email</FieldLabel>
-          <Input id="vi-username" name="username" defaultValue={item?.username ?? ""} placeholder="admin@dominio.com" autoComplete="off" />
+          <Input
+            id="vi-username"
+            name="username"
+            defaultValue={item?.username ?? ""}
+            placeholder="admin@dominio.com"
+            autoComplete="off"
+          />
         </Field>
         <Field className="sm:col-span-2">
           <FieldLabel htmlFor="vi-secret">
@@ -95,18 +112,33 @@ export function VaultItemForm({ item, clients, onClose }: Props) {
         </Field>
         <Field>
           <FieldLabel htmlFor="vi-expires">Caduca</FieldLabel>
-          <Input id="vi-expires" name="expires_at" type="date" defaultValue={item?.expires_at ?? ""} />
+          <Input
+            id="vi-expires"
+            name="expires_at"
+            type="date"
+            defaultValue={item?.expires_at ?? ""}
+          />
         </Field>
         <Field>
           <FieldLabel htmlFor="vi-client">Cliente (opcional)</FieldLabel>
           <Select id="vi-client" name="client_id" defaultValue={item?.client_id ?? ""}>
             <option value="">— Sin cliente —</option>
-            {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            {clients.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
           </Select>
         </Field>
         <Field className="sm:col-span-2">
           <FieldLabel htmlFor="vi-notes">Notas</FieldLabel>
-          <Textarea id="vi-notes" name="notes" rows={2} defaultValue={item?.notes ?? ""} placeholder="Notas adicionales…" />
+          <Textarea
+            id="vi-notes"
+            name="notes"
+            rows={2}
+            defaultValue={item?.notes ?? ""}
+            placeholder="Notas adicionales…"
+          />
         </Field>
         <Field className="sm:col-span-2">
           <label className="flex items-center gap-2 cursor-pointer text-sm">

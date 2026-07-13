@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { LeadIntake } from "./lead-intake";
+import type { LeadIntake } from "./lead-intake";
 
 export type CalWebhookPayload = {
   triggerEvent: string;
@@ -24,7 +24,11 @@ export type CalWebhookPayload = {
   };
 };
 
-export function verifyCalSignature(secret: string, body: string, signature: string | null): boolean {
+export function verifyCalSignature(
+  secret: string,
+  body: string,
+  signature: string | null,
+): boolean {
   if (!signature) return false;
   const hmac = createHmac("sha256", secret);
   const digest = hmac.update(body).digest("hex");

@@ -8,13 +8,7 @@ export const dynamic = "force-dynamic";
 const MAX_SIZE_BYTES = 20_971_520; // 20 MB
 const BUCKET = "brand-assets";
 
-const ALLOWED_MIME_TYPES = [
-  "image/png",
-  "image/jpeg",
-  "image/webp",
-  "image/svg+xml",
-  "image/gif",
-];
+const ALLOWED_MIME_TYPES = ["image/png", "image/jpeg", "image/webp", "image/svg+xml", "image/gif"];
 
 const ALLOWED_CATEGORIES = ["logo", "isotipo", "background", "banner", "other"] as const;
 type AssetCategory = (typeof ALLOWED_CATEGORIES)[number];

@@ -9,7 +9,12 @@ import {
 } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { parseEnumParam, parsePage, parseSortParam, parseStringParam } from "@/lib/utils/search-params";
+import {
+  parseEnumParam,
+  parsePage,
+  parseSortParam,
+  parseStringParam,
+} from "@/lib/utils/search-params";
 import { Plus } from "lucide-react";
 
 const SUBSCRIPTION_SORT_COLUMNS = ["name", "status", "amount", "next_invoice_date"] as const;
@@ -39,7 +44,11 @@ export default async function SubscriptionsPage({
   const sp = await searchParams;
 
   const q = parseStringParam(sp, "q");
-  const status = parseEnumParam(sp, "status", Object.keys(SUBSCRIPTION_STATUS) as SubscriptionStatus[]);
+  const status = parseEnumParam(
+    sp,
+    "status",
+    Object.keys(SUBSCRIPTION_STATUS) as SubscriptionStatus[],
+  );
   const billingCycle = parseEnumParam(
     sp,
     "billing_cycle",
@@ -54,9 +63,12 @@ export default async function SubscriptionsPage({
 
   let query = supabase
     .from("subscriptions")
-    .select("id, name, status, billing_cycle, amount, vat_rate, next_invoice_date, clients(id, name)", {
-      count: "exact",
-    })
+    .select(
+      "id, name, status, billing_cycle, amount, vat_rate, next_invoice_date, clients(id, name)",
+      {
+        count: "exact",
+      },
+    )
     .is("deleted_at", null);
 
   if (q) query = query.ilike("name", `%${q}%`);
@@ -93,7 +105,14 @@ export default async function SubscriptionsPage({
       formatEUR(s.amount),
       formatDate(s.next_invoice_date),
     ],
-    sortValues: [s.name, s.clients?.name ?? "", s.status, s.billing_cycle, s.amount, s.next_invoice_date ?? ""],
+    sortValues: [
+      s.name,
+      s.clients?.name ?? "",
+      s.status,
+      s.billing_cycle,
+      s.amount,
+      s.next_invoice_date ?? "",
+    ],
     csvValues: [
       s.name,
       s.clients?.name ?? "",

@@ -58,7 +58,10 @@ export function MediaPicker({
           0.92,
         );
       };
-      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Image load error")); };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error("Image load error"));
+      };
       img.src = url;
     });
   }
@@ -127,9 +130,7 @@ export function MediaPicker({
         onDrop={onDrop}
         className={cn(
           "relative rounded-xl border-2 border-dashed p-3 transition-colors duration-150",
-          dragging
-            ? "border-primary bg-primary/5"
-            : "border-border/60 hover:border-border",
+          dragging ? "border-primary bg-primary/5" : "border-border/60 hover:border-border",
           isDisabled && !dragging && "opacity-60",
         )}
       >
@@ -190,7 +191,9 @@ export function MediaPicker({
             className="mt-3 flex w-full flex-col items-center gap-1 py-4 text-muted-foreground disabled:pointer-events-none"
           >
             <Upload className="size-7" />
-            <span className="text-sm font-medium">Arrastra archivos o haz clic para seleccionar</span>
+            <span className="text-sm font-medium">
+              Arrastra archivos o haz clic para seleccionar
+            </span>
             <span className="text-xs">Imágenes o vídeo · máximo {max} archivos</span>
           </button>
         )}

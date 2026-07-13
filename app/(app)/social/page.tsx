@@ -1,6 +1,13 @@
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty-state";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty-state";
 import { SectionBoundary } from "@/components/ui/error-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireUser } from "@/lib/auth";
@@ -38,7 +45,9 @@ function Connections() {
           >
             <PlatformIcon platform={p} className="size-3.5" />
             {PLATFORM_LABELS[p]}
-            <span className={cn("size-1.5 rounded-full", on ? "bg-success" : "bg-muted-foreground/40")} />
+            <span
+              className={cn("size-1.5 rounded-full", on ? "bg-success" : "bg-muted-foreground/40")}
+            />
           </span>
         );
       })}

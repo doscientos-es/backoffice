@@ -64,7 +64,7 @@ export const createTask = defineAction<
 export const updateTask = defineAction({
   name: "tasks.update",
   schema: UpdateTaskInput,
-  revalidate: (payload, input) => ["/tasks", `/tasks/${input.id}`],
+  revalidate: (_payload, input) => ["/tasks", `/tasks/${input.id}`],
   handler: async (input) => {
     const supabase = await createServerClient();
 
@@ -88,7 +88,7 @@ export const updateTask = defineAction({
 export const updateTaskStatus = defineAction({
   name: "tasks.updateStatus",
   schema: UpdateTaskStatusInput,
-  revalidate: (payload, input) => ["/tasks", `/tasks/${input.taskId}`],
+  revalidate: (_payload, input) => ["/tasks", `/tasks/${input.taskId}`],
   handler: async (data) => {
     const supabase = await createServerClient();
     const updates: Record<string, any> = { status: data.status };

@@ -1,11 +1,17 @@
 import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty-state";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty-state";
 import { SectionBoundary } from "@/components/ui/error-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireUser } from "@/lib/auth";
 import { listComments } from "@/lib/social/repo";
-import { Inbox, MessageSquare } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import type { Metadata } from "next";
 import { CommentCard } from "../../_components/comment-card";
 import { SyncButton } from "../../_components/sync-button";

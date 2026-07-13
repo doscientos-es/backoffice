@@ -1,6 +1,6 @@
 import { notDeleted } from "@/lib/supabase/filters";
 import { createServerClient } from "@/lib/supabase/server";
-import { computeProjectProfitability, type ProjectProfitability } from "./helpers";
+import { type ProjectProfitability, computeProjectProfitability } from "./helpers";
 
 export type PortfolioRow = ProjectProfitability & {
   id: string;
@@ -79,7 +79,10 @@ export async function getProjectPortfolio(): Promise<PortfolioRow[]> {
 
   return (projects ?? []).map((p) => {
     const pid = p.id as string;
-    const rawClient = p.clients as { id: string; name: string } | { id: string; name: string }[] | null;
+    const rawClient = p.clients as
+      | { id: string; name: string }
+      | { id: string; name: string }[]
+      | null;
     const client = Array.isArray(rawClient) ? (rawClient[0] ?? null) : rawClient;
 
     const profitability = computeProjectProfitability({

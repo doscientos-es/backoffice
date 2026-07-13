@@ -60,7 +60,13 @@ describe("empty state with canEdit", () => {
 // ── attachment list ───────────────────────────────────────────────────────────
 describe("attachment list", () => {
   const items = [
-    { id: "a1", name: "report.pdf", mime_type: "application/pdf", size_bytes: 2048, created_at: "2024-01-01" },
+    {
+      id: "a1",
+      name: "report.pdf",
+      mime_type: "application/pdf",
+      size_bytes: 2048,
+      created_at: "2024-01-01",
+    },
   ];
 
   it("renders attachment names with download links", () => {
@@ -145,7 +151,9 @@ describe("button upload", () => {
 describe("drag-and-drop", () => {
   it("shows overlay on dragenter and hides on dragleave", () => {
     render(<AttachmentSection {...BASE_PROPS} />);
-    const card = document.querySelector("[data-slot=card]") ?? screen.getByText("Adjuntos").closest("[class]")!;
+    const card =
+      document.querySelector("[data-slot=card]") ??
+      screen.getByText("Adjuntos").closest("[class]")!;
 
     fireEvent.dragEnter(card, { dataTransfer: { files: [] } });
     expect(screen.getByText(/suelta los archivos/i)).toBeDefined();
@@ -161,7 +169,9 @@ describe("drag-and-drop", () => {
     });
 
     render(<AttachmentSection {...BASE_PROPS} />);
-    const card = document.querySelector("[data-slot=card]") ?? screen.getByText("Adjuntos").closest("[class]")!;
+    const card =
+      document.querySelector("[data-slot=card]") ??
+      screen.getByText("Adjuntos").closest("[class]")!;
 
     const file = makeFile("dropped.pdf");
     fireEvent.drop(card, { dataTransfer: { files: [file] } });
@@ -171,7 +181,9 @@ describe("drag-and-drop", () => {
 
   it("ignores drag events when canEdit is false", () => {
     render(<AttachmentSection {...BASE_PROPS} canEdit={false} />);
-    const card = document.querySelector("[data-slot=card]") ?? screen.getByText("Sin adjuntos.").closest("[class]")!;
+    const card =
+      document.querySelector("[data-slot=card]") ??
+      screen.getByText("Sin adjuntos.").closest("[class]")!;
     fireEvent.dragEnter(card);
     expect(screen.queryByText(/suelta los archivos/i)).toBeNull();
   });

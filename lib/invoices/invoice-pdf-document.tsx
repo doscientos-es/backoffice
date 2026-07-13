@@ -188,9 +188,7 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
             ) : null}
             <Text style={styles.partyName}>{data.clientName ?? "—"}</Text>
             {data.clientNif ? <Text style={styles.partyLine}>NIF: {data.clientNif}</Text> : null}
-            {data.clientAddress ? (
-              <Text style={styles.partyLine}>{data.clientAddress}</Text>
-            ) : null}
+            {data.clientAddress ? <Text style={styles.partyLine}>{data.clientAddress}</Text> : null}
           </View>
         </View>
 
@@ -241,7 +239,7 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
         </View>
 
         {(data.company?.iban || data.dueDate || data.portalUrl || data.paymentTerms) &&
-          data.status !== "cancelled" ? (
+        data.status !== "cancelled" ? (
           <View style={styles.payment}>
             <Text style={styles.paymentTitle}>Instrucciones de pago</Text>
 
@@ -275,13 +273,12 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
 
             {data.portalUrl ? (
               <Text style={styles.paymentNote}>
-                También puede abonar esta factura online mediante tarjeta o Bizum en: {data.portalUrl}
+                También puede abonar esta factura online mediante tarjeta o Bizum en:{" "}
+                {data.portalUrl}
               </Text>
             ) : null}
 
-            {data.paymentTerms ? (
-              <Text style={styles.paymentNote}>{data.paymentTerms}</Text>
-            ) : null}
+            {data.paymentTerms ? <Text style={styles.paymentNote}>{data.paymentTerms}</Text> : null}
           </View>
         ) : null}
 

@@ -3,10 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 const FALLBACK_URL = "https://doscientos.es";
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ token: string }> },
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
 
   // The real destination is passed as `?url=<encoded>` so we don't need a

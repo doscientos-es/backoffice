@@ -63,10 +63,7 @@ export const upsertToken = defineAction({
     };
 
     if (input.id) {
-      const { error } = await supabase
-        .from("brand_tokens")
-        .update(payload)
-        .eq("id", input.id);
+      const { error } = await supabase.from("brand_tokens").update(payload).eq("id", input.id);
       if (error) throw new Error(error.message);
     } else {
       const { error } = await supabase.from("brand_tokens").insert(payload);

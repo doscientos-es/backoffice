@@ -95,9 +95,7 @@ export function DiagnosticsPanel({ config }: { config: DiagnosticsConfig }) {
       description: "Envía un lead de ejemplo directamente al chat vía API de Telegram.",
       run: testTelegramLeadMessage,
       disabled: !config.telegramBot || !config.telegramChat,
-      disabledHint: !config.telegramBot
-        ? "Falta TELEGRAM_BOT_TOKEN"
-        : "Falta TELEGRAM_CHAT_ID",
+      disabledHint: !config.telegramBot ? "Falta TELEGRAM_BOT_TOKEN" : "Falta TELEGRAM_CHAT_ID",
     },
     {
       title: "Bot de Telegram (token)",

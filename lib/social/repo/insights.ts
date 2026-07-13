@@ -7,9 +7,9 @@
  */
 import { scopedLogger } from "@/lib/logger";
 import type { PostInsights } from "@/lib/social/core";
+import type { InsightsView } from "@/lib/social/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
-import type { InsightsView } from "@/lib/social/types";
 
 const log = scopedLogger("social-repo-insights");
 
@@ -68,7 +68,9 @@ export async function getInsightsByTarget(targetIds: string[]): Promise<Map<stri
   const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("social_post_insights")
-    .select("target_id, impressions, reach, likes, comments, shares, saves, video_views, engagement_rate, fetched_at")
+    .select(
+      "target_id, impressions, reach, likes, comments, shares, saves, video_views, engagement_rate, fetched_at",
+    )
     .in("target_id", targetIds);
   if (error) {
     log.error({ err: error.message }, "get_insights_failed");

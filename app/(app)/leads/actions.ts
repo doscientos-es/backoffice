@@ -94,7 +94,7 @@ export const updateLead = defineAction({
   name: "leads.update",
   schema: UpdateLeadInput,
   roles: ["owner", "admin", "member"],
-  revalidate: (payload, input) => ["/leads", `/leads/${input.id}`],
+  revalidate: (_payload, input) => ["/leads", `/leads/${input.id}`],
   handler: async (input, { user }) => {
     const supabase = await createServerClient();
     const { error } = await supabase
@@ -220,7 +220,7 @@ const isClosureStatus = (s: string): s is ClosureStatus =>
 export const updateLeadStatus = defineAction({
   name: "leads.updateStatus",
   schema: UpdateLeadStatusInput,
-  revalidate: (payload, input) => ["/leads", `/leads/${input.leadId}`],
+  revalidate: (_payload, input) => ["/leads", `/leads/${input.leadId}`],
   handler: async (data, { user }) => {
     const supabase = await createServerClient();
 
@@ -268,7 +268,7 @@ export const updateLeadEstimatedValue = defineAction({
     leadId: z.string().uuid(),
     value: z.number().min(0).max(99_999_999.99).nullable(),
   }),
-  revalidate: (payload, input) => ["/leads", `/leads/${input.leadId}`],
+  revalidate: (_payload, input) => ["/leads", `/leads/${input.leadId}`],
   handler: async (data, { user }) => {
     const supabase = await createServerClient();
     const { error } = await supabase
@@ -327,9 +327,6 @@ export const sendEmailToLead = defineAction({
   name: "leads.sendEmail",
   schema: SendEmailToLeadInput,
   handler: async (data, { user }) => {
-    if (!user.emailSendEnabled) {
-      throw new Error("Tu cuenta no tiene activado el envío de emails.");
-    }
     if (!user.emailAlias) {
       throw new Error("No tienes un alias configurado en tu perfil.");
     }
@@ -406,7 +403,7 @@ const CALL_OUTCOME_LABEL: Record<string, string> = {
 export const logLeadCall = defineAction({
   name: "leads.logCall",
   schema: LogCallInput,
-  revalidate: (payload, input) => [`/leads/${input.leadId}`],
+  revalidate: (_payload, input) => [`/leads/${input.leadId}`],
   handler: async (data, { user }) => {
     const { leadId, notes, transcript, durationMinutes, outcome } = data;
 
@@ -432,7 +429,7 @@ export const logLeadCall = defineAction({
 export const logLeadEmail = defineAction({
   name: "leads.logEmail",
   schema: LogEmailInput,
-  revalidate: (payload, input) => [`/leads/${input.leadId}`],
+  revalidate: (_payload, input) => [`/leads/${input.leadId}`],
   handler: async (data, { user }) => {
     const { leadId, direction, subject, bodyHtml, counterparty } = data;
 
@@ -454,7 +451,7 @@ export const logLeadEmail = defineAction({
 export const logLeadNote = defineAction({
   name: "leads.logNote",
   schema: LogNoteInput,
-  revalidate: (payload, input) => [`/leads/${input.leadId}`],
+  revalidate: (_payload, input) => [`/leads/${input.leadId}`],
   handler: async (data, { user }) => {
     const { leadId, content } = data;
 
@@ -480,7 +477,7 @@ export const assignLeadOwner = defineAction({
   name: "leads.assignOwner",
   schema: AssignLeadOwnerInput,
   roles: ["owner", "admin", "member"],
-  revalidate: (payload, input) => ["/leads", `/leads/${input.leadId}`],
+  revalidate: (_payload, input) => ["/leads", `/leads/${input.leadId}`],
   handler: async (data, { user }) => {
     const supabase = await createServerClient();
 

@@ -7,8 +7,8 @@ import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { createWebProject } from "../actions";
 import { WebFormFields } from "../_components/web-form-fields";
+import { createWebProject } from "../actions";
 
 export const metadata: Metadata = { title: "Nueva web · doscientos" };
 export const dynamic = "force-dynamic";
@@ -24,10 +24,7 @@ export default async function NewWebPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Nueva web"
-        back={<BackLink href="/webs" label="Volver a webs" />}
-      />
+      <PageHeader title="Nueva web" back={<BackLink href="/webs" label="Volver a webs" />} />
       <Card>
         <CardContent className="pt-6">
           <form action={createWebProject} className="flex flex-col gap-5">

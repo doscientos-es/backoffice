@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { getFollowUps } from "./follow-ups";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getFollowUps } from "./follow-ups";
 
 // Mock admin client
 const mockChain: any = {
@@ -23,7 +23,6 @@ vi.mock("@/lib/supabase/admin", () => {
     createAdminClient: vi.fn(() => mockSupabase),
   };
 });
-
 
 // Mock env
 vi.mock("@/lib/env", () => ({
@@ -55,15 +54,19 @@ describe("getFollowUps logic", () => {
       lt: vi.fn(() => leadChain),
       is: vi.fn(() => leadChain),
       order: vi.fn(() => leadChain),
-      limit: vi.fn(() => Promise.resolve({
-        data: [{
-          id: "lead-1",
-          name: "John Doe",
-          company: "Doe Inc",
-          status: "new",
-          updated_at: staleDate
-        }]
-      })),
+      limit: vi.fn(() =>
+        Promise.resolve({
+          data: [
+            {
+              id: "lead-1",
+              name: "John Doe",
+              company: "Doe Inc",
+              status: "new",
+              updated_at: staleDate,
+            },
+          ],
+        }),
+      ),
     };
 
     const propChain: any = {
@@ -114,17 +117,21 @@ describe("getFollowUps logic", () => {
       not: vi.fn(() => propChain),
       lt: vi.fn(() => propChain),
       order: vi.fn(() => propChain),
-      limit: vi.fn(() => Promise.resolve({
-        data: [{
-          id: "prop-1",
-          number: "P-2026-01",
-          title: "Project X",
-          status: "sent",
-          sent_at: sentDate,
-          clients: { name: "Acme Corp" },
-          leads: null
-        }]
-      })),
+      limit: vi.fn(() =>
+        Promise.resolve({
+          data: [
+            {
+              id: "prop-1",
+              number: "P-2026-01",
+              title: "Project X",
+              status: "sent",
+              sent_at: sentDate,
+              clients: { name: "Acme Corp" },
+              leads: null,
+            },
+          ],
+        }),
+      ),
     };
 
     mockSupabase.from.mockReturnValueOnce(leadChain).mockReturnValueOnce(propChain);

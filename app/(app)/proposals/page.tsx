@@ -133,7 +133,10 @@ export default async function ProposalsPage({
       exportFilename="propuestas"
       rows={
         data?.map((p) => {
-          const clientRow = p.clients as unknown as { name: string; logo_url: string | null } | null;
+          const clientRow = p.clients as unknown as {
+            name: string;
+            logo_url: string | null;
+          } | null;
           const leadRow = p.leads as unknown as { name: string } | null;
           const clientName = clientRow?.name ?? leadRow?.name ?? "—";
           const projectName = (p.projects as unknown as { name: string } | null)?.name ?? "—";

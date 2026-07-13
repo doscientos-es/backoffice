@@ -50,7 +50,6 @@ export function LinkProposalButton({ projectId, unlinkdProposals }: Props) {
           className="h-7 rounded-md border border-input bg-background px-2 text-xs"
           value={selectedId}
           onChange={(e) => setSelectedId(e.target.value)}
-          autoFocus
         >
           <option value="">— Selecciona —</option>
           {unlinkdProposals.map((p) => (

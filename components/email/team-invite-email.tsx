@@ -23,7 +23,12 @@ export type TeamInviteEmailProps = {
  *   const html = await renderEmail(<TeamInviteEmail {...props} />);
  *   await sendEmail({ fromName: "doscientos", fromAlias: "hola", subject: "...", html });
  */
-export function TeamInviteEmail({ inviteeName, inviteUrl, roleLabel, appUrl }: TeamInviteEmailProps) {
+export function TeamInviteEmail({
+  inviteeName,
+  inviteUrl,
+  roleLabel,
+  appUrl,
+}: TeamInviteEmailProps) {
   const greeting = inviteeName ? `Hola, ${inviteeName.split(" ")[0]}` : "Hola";
 
   return (
@@ -38,9 +43,7 @@ export function TeamInviteEmail({ inviteeName, inviteUrl, roleLabel, appUrl }: T
           textAlign: "center",
         }}
       >
-        <Text style={{ fontFamily: FONT, fontSize: 36, margin: "0 0 8px", lineHeight: 1 }}>
-          👋
-        </Text>
+        <Text style={{ fontFamily: FONT, fontSize: 36, margin: "0 0 8px", lineHeight: 1 }}>👋</Text>
         <Text
           style={{
             fontFamily: FONT,
@@ -63,8 +66,8 @@ export function TeamInviteEmail({ inviteeName, inviteUrl, roleLabel, appUrl }: T
         <strong>{roleLabel}</strong>.
       </Text>
       <Text style={bodyStyle}>
-        Haz clic en el botón para activar tu cuenta. Una vez dentro, podrás iniciar sesión con
-        tu cuenta de Google.
+        Haz clic en el botón para activar tu cuenta. Una vez dentro, podrás iniciar sesión con tu
+        cuenta de Google.
       </Text>
 
       {/* CTA */}
@@ -99,8 +102,8 @@ export function TeamInviteEmail({ inviteeName, inviteUrl, roleLabel, appUrl }: T
         }}
       >
         <Text style={{ ...bodyStyle, color: "#3d6b39", margin: 0, fontSize: 13 }}>
-          🔒 Este enlace es de un solo uso y caduca en{" "}
-          <strong>72 horas</strong>. Si no esperabas esta invitación, puedes ignorar este email.
+          🔒 Este enlace es de un solo uso y caduca en <strong>72 horas</strong>. Si no esperabas
+          esta invitación, puedes ignorar este email.
         </Text>
       </Section>
 
@@ -108,7 +111,15 @@ export function TeamInviteEmail({ inviteeName, inviteUrl, roleLabel, appUrl }: T
       <Text style={{ ...bodyStyle, color: "#a1a1aa", fontSize: 12, margin: 0 }}>
         Si el botón no funciona, copia y pega este enlace en tu navegador:
       </Text>
-      <Text style={{ ...bodyStyle, color: "#a1a1aa", fontSize: 11, wordBreak: "break-all", marginTop: 4 }}>
+      <Text
+        style={{
+          ...bodyStyle,
+          color: "#a1a1aa",
+          fontSize: 11,
+          wordBreak: "break-all",
+          marginTop: 4,
+        }}
+      >
         {inviteUrl}
       </Text>
     </EmailLayout>

@@ -48,7 +48,9 @@ function TokenRow({
         <code className="text-xs font-mono text-foreground shrink-0">--{token.key}</code>
         <span className="text-xs text-muted-foreground truncate">{token.value}</span>
         {token.value_dark && (
-          <Badge variant="neutral" className="text-[10px] shrink-0">dark: {token.value_dark}</Badge>
+          <Badge variant="neutral" className="text-[10px] shrink-0">
+            dark: {token.value_dark}
+          </Badge>
         )}
       </div>
       {token.description && (
@@ -62,13 +64,16 @@ function TokenRow({
             <Pencil className="size-3.5" />
           </Button>
           <Button
-            variant="ghost" size="icon-sm"
+            variant="ghost"
+            size="icon-sm"
             className="text-destructive hover:text-destructive"
             disabled={pending}
             title="Eliminar"
             onClick={() => {
               if (!confirm(`¿Eliminar el token --${token.key}?`)) return;
-              startTransition(async () => { await deleteToken({ id: token.id }); });
+              startTransition(async () => {
+                await deleteToken({ id: token.id });
+              });
             }}
           >
             <Trash2 className="size-3.5" />
@@ -135,7 +140,9 @@ export function TokensPanel({
         <TokenEditDialog
           open
           token={editTarget}
-          onOpenChange={(v) => { if (!v) setEditTarget(undefined); }}
+          onOpenChange={(v) => {
+            if (!v) setEditTarget(undefined);
+          }}
         />
       )}
     </>

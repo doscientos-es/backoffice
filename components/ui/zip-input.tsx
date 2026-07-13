@@ -76,7 +76,9 @@ export function ZipInput({
   return (
     <>
       <div className={cn(FIELD_CLASS, className)}>
-        <label htmlFor={zipId} className={LABEL_CLASS}>{zipLabel}</label>
+        <label htmlFor={zipId} className={LABEL_CLASS}>
+          {zipLabel}
+        </label>
         <Input
           id={zipId}
           name={`${namePrefix}_zip`}
@@ -107,7 +109,10 @@ export function ZipInput({
         />
       </div>
       <div className={cn(FIELD_CLASS, className)}>
-        <label htmlFor={provinceId} className={cn(LABEL_CLASS, resolving && "text-muted-foreground")}>
+        <label
+          htmlFor={provinceId}
+          className={cn(LABEL_CLASS, resolving && "text-muted-foreground")}
+        >
           {provinceLabel}
           {resolving && <Loader2 className="ml-1 inline-block h-3 w-3 animate-spin" />}
         </label>

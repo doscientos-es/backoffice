@@ -60,7 +60,7 @@ export function CommentCard({ comment }: { comment: CommentView }) {
       </CardHeader>
       <CardContent className="p-4 pt-0">
         <p className="text-sm leading-relaxed whitespace-pre-wrap">{comment.text}</p>
-        
+
         {/* Post Context */}
         <div className="mt-3 flex items-center gap-1.5 rounded-lg border border-border/50 bg-muted/20 px-2 py-1.5 text-[11px] text-muted-foreground">
           <MessageSquare className="size-3 shrink-0" />
@@ -110,11 +110,7 @@ export function CommentCard({ comment }: { comment: CommentView }) {
                 >
                   Cancelar
                 </Button>
-                <Button
-                  size="sm"
-                  onClick={handleReply}
-                  disabled={pending || !replyText.trim()}
-                >
+                <Button size="sm" onClick={handleReply} disabled={pending || !replyText.trim()}>
                   {pending ? "Enviando..." : "Enviar"}
                 </Button>
               </div>

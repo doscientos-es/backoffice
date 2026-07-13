@@ -14,7 +14,6 @@ export type CurrentUser = {
   avatarUrl: string | null;
   emailAlias: string | null;
   signatureHtml: string | null;
-  emailSendEnabled: boolean;
   githubHandle: string | null;
   onboardedAt: string | null;
   jobTitle: string | null;
@@ -45,7 +44,7 @@ export async function getCurrentUser(): Promise<AuthResult> {
   const { data: member, error } = await supabase
     .from("team_members")
     .select(
-      "id, name, email, role, avatar_url, email_alias, signature_html, email_send_enabled, github_handle, onboarded_at, deleted_at, job_title, phone, contact_email",
+      "id, name, email, role, avatar_url, email_alias, signature_html, github_handle, onboarded_at, deleted_at, job_title, phone, contact_email",
     )
     .eq("id", user.id)
     .maybeSingle();
@@ -72,7 +71,6 @@ export async function getCurrentUser(): Promise<AuthResult> {
       avatarUrl: (member.avatar_url as string | null) ?? null,
       emailAlias: (member.email_alias as string | null) ?? null,
       signatureHtml: (member.signature_html as string | null) ?? null,
-      emailSendEnabled: (member.email_send_enabled as boolean | null) ?? false,
       githubHandle: (member.github_handle as string | null) ?? null,
       onboardedAt: (member.onboarded_at as string | null) ?? null,
       jobTitle: (member.job_title as string | null) ?? null,

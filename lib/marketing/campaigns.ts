@@ -75,7 +75,8 @@ export async function listCampaigns(): Promise<LeadCampaign[]> {
   }
 
   return (data ?? []).map((c) => {
-    const sends = (c.sends as { id: string; opened_at: string | null; clicked_at: string | null }[]) ?? [];
+    const sends =
+      (c.sends as { id: string; opened_at: string | null; clicked_at: string | null }[]) ?? [];
     return {
       id: c.id as string,
       name: c.name as string,
@@ -106,7 +107,9 @@ export async function getCampaignWithSends(
       .maybeSingle(),
     supabase
       .from("lead_campaign_sends")
-      .select("id, campaign_id, lead_id, email, tracking_token, resend_email_id, sent_at, opened_at, open_count, clicked_at, click_count, bounced_at, unsubscribed_at, created_at, lead:lead_id(name)")
+      .select(
+        "id, campaign_id, lead_id, email, tracking_token, resend_email_id, sent_at, opened_at, open_count, clicked_at, click_count, bounced_at, unsubscribed_at, created_at, lead:lead_id(name)",
+      )
       .eq("campaign_id", id)
       .order("created_at", { ascending: false }),
   ]);
@@ -153,7 +156,10 @@ export async function getCampaignWithSends(
 
   return {
     campaign: {
-      ...(campaign as unknown as Omit<LeadCampaign, "total_sends" | "total_opens" | "total_clicks">),
+      ...(campaign as unknown as Omit<
+        LeadCampaign,
+        "total_sends" | "total_opens" | "total_clicks"
+      >),
       total_sends: total,
       total_opens: opened,
       total_clicks: clicked,

@@ -43,7 +43,12 @@ export async function uploadMedia(files: File[]): Promise<MediaItem[]> {
         .upload(path, file, { contentType: mime, upsert: false });
       if (error) throw new PublishError("instagram", `Error subiendo media: ${error.message}`);
       const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
-      uploaded.push({ storagePath: path, publicUrl: data.publicUrl, type: mediaTypeFor(mime), mime });
+      uploaded.push({
+        storagePath: path,
+        publicUrl: data.publicUrl,
+        type: mediaTypeFor(mime),
+        mime,
+      });
     }
     return uploaded;
   } catch (err) {

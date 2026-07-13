@@ -15,9 +15,7 @@ const log = scopedLogger("telegram");
 const API_BASE = "https://api.telegram.org";
 const DEFAULT_TIMEOUT_MS = 5000;
 
-export type TelegramResult<T = unknown> =
-  | { ok: true; result: T }
-  | { ok: false; error: string };
+export type TelegramResult<T = unknown> = { ok: true; result: T } | { ok: false; error: string };
 
 export type TelegramBotInfo = { id: number; username?: string; first_name?: string };
 

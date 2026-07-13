@@ -46,7 +46,13 @@ type Recipient = { kind: "client"; id: string } | { kind: "lead"; id: string } |
  * The recipient is either an existing client OR an open lead: the proposal
  * never targets a project (projects are auto-generated on acceptance).
  */
-export function NewProposalForm({ clients, leads, projects, initialClientId, initialLeadId }: Props) {
+export function NewProposalForm({
+  clients,
+  leads,
+  projects,
+  initialClientId,
+  initialLeadId,
+}: Props) {
   const router = useRouter();
   const feedback = useFormFeedback({ successResetMs: 4000 });
   const [pending, startTransition] = useTransition();
@@ -65,9 +71,7 @@ export function NewProposalForm({ clients, leads, projects, initialClientId, ini
   // Projects available for the selected client
   const clientProjects = useMemo(
     () =>
-      recipient?.kind === "client"
-        ? projects.filter((p) => p.client_id === recipient.id)
-        : [],
+      recipient?.kind === "client" ? projects.filter((p) => p.client_id === recipient.id) : [],
     [projects, recipient],
   );
   const [items, setItems] = useState<LineItem[]>([{ ...EMPTY_LINE_ITEM, id: crypto.randomUUID() }]);

@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { CreateReminderInput, ReminderIdInput } from "@/lib/schemas/reminder";
+import { describe, expect, it } from "vitest";
 
 const uuid = "11111111-1111-1111-1111-111111111111";
 
@@ -10,8 +10,14 @@ describe("CreateReminderInput", () => {
     expect(CreateReminderInput.safeParse(base).success).toBe(true);
   });
   it("accepts links to client or project", () => {
-    expect(CreateReminderInput.safeParse({ title: "X", remindAt: base.remindAt, clientId: uuid }).success).toBe(true);
-    expect(CreateReminderInput.safeParse({ title: "X", remindAt: base.remindAt, projectId: uuid }).success).toBe(true);
+    expect(
+      CreateReminderInput.safeParse({ title: "X", remindAt: base.remindAt, clientId: uuid })
+        .success,
+    ).toBe(true);
+    expect(
+      CreateReminderInput.safeParse({ title: "X", remindAt: base.remindAt, projectId: uuid })
+        .success,
+    ).toBe(true);
   });
   it("requires at least one relation", () => {
     expect(CreateReminderInput.safeParse({ title: "X", remindAt: base.remindAt }).success).toBe(

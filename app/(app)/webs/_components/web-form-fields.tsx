@@ -18,7 +18,12 @@ interface Props {
 /**
  * Shared field block for web project create and edit forms.
  */
-export function WebFormFields({ clients, defaults: d = {}, idPrefix = "web", autoFocusName = false }: Props) {
+export function WebFormFields({
+  clients,
+  defaults: d = {},
+  idPrefix = "web",
+  autoFocusName = false,
+}: Props) {
   return (
     <>
       <div className="grid gap-5 sm:grid-cols-2">
@@ -72,7 +77,11 @@ export function WebFormFields({ clients, defaults: d = {}, idPrefix = "web", aut
           </Select>
         </FormRow>
 
-        <FormRow label="URL del hosting" htmlFor={`${idPrefix}-hosting_url`} hint="Link al dashboard.">
+        <FormRow
+          label="URL del hosting"
+          htmlFor={`${idPrefix}-hosting_url`}
+          hint="Link al dashboard."
+        >
           <Input
             id={`${idPrefix}-hosting_url`}
             name="hosting_url"
@@ -101,11 +110,7 @@ export function WebFormFields({ clients, defaults: d = {}, idPrefix = "web", aut
           />
         </FormRow>
 
-        <FormRow
-          label="Tech stack"
-          htmlFor={`${idPrefix}-tech_stack`}
-          hint="Separado por comas."
-        >
+        <FormRow label="Tech stack" htmlFor={`${idPrefix}-tech_stack`} hint="Separado por comas.">
           <Input
             id={`${idPrefix}-tech_stack`}
             name="tech_stack"

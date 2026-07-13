@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import {
   PASSWORD_COMPLEXITY_MESSAGE,
   PASSWORD_COMPLEXITY_REGEX,
@@ -7,6 +6,7 @@ import {
   passwordField,
   validatePassword,
 } from "@/lib/schemas/password";
+import { describe, expect, it } from "vitest";
 
 // ─── constants ───────────────────────────────────────────────────────────────
 
@@ -20,7 +20,7 @@ describe("constants", () => {
     expect(PASSWORD_COMPLEXITY_REGEX.test("abcdefg1!")).toBe(false); // no uppercase
     expect(PASSWORD_COMPLEXITY_REGEX.test("ABCDEFG1!")).toBe(false); // no lowercase
     expect(PASSWORD_COMPLEXITY_REGEX.test("Abcdefg!!")).toBe(false); // no digit
-    expect(PASSWORD_COMPLEXITY_REGEX.test("Abcdefg1")).toBe(false);  // no symbol
+    expect(PASSWORD_COMPLEXITY_REGEX.test("Abcdefg1")).toBe(false); // no symbol
   });
 });
 

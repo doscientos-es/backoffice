@@ -137,9 +137,7 @@ export function ListControls({
           {pagination ? (
             <>
               <span className="text-xs tabular-nums text-muted-foreground">
-                {pagination.total === 0
-                  ? "Sin resultados"
-                  : `${from}–${to} de ${pagination.total}`}
+                {pagination.total === 0 ? "Sin resultados" : `${from}–${to} de ${pagination.total}`}
               </span>
               <Button
                 type="button"

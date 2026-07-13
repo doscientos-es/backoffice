@@ -1,11 +1,17 @@
 import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty-state";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty-state";
 import { SectionBoundary } from "@/components/ui/error-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireUser } from "@/lib/auth";
 import { listPosts } from "@/lib/social/repo";
-import { MessageSquare, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import type { Metadata } from "next";
 import { PostCard } from "../_components/post-card";
 import { SyncButton } from "../_components/sync-button";
@@ -15,8 +21,10 @@ export const dynamic = "force-dynamic";
 
 async function FeedList() {
   const allPosts = await listPosts();
-  const published = allPosts.filter(p => p.status === "published" || p.status === "partially_failed");
-  
+  const published = allPosts.filter(
+    (p) => p.status === "published" || p.status === "partially_failed",
+  );
+
   if (published.length === 0) {
     return (
       <Empty className="mt-12">
@@ -69,11 +77,7 @@ export default async function FeedPage() {
       <PageHeader
         title="Feed publicado"
         description="Vista unificada de todo lo que has compartido en tus redes sociales."
-        actions={
-          <>
-            <SyncButton kind="comments" label="Sincronizar comentarios" />
-          </>
-        }
+        actions=<SyncButton kind="comments" label="Sincronizar comentarios" />
       />
       <SectionBoundary pending={<ListSkeleton />} label="No se pudo cargar el feed">
         <FeedList />

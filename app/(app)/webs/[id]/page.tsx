@@ -203,10 +203,10 @@ export default async function WebDetailPage({ params }: { params: Promise<{ id: 
                 <DetailRow label="Vence dominio">
                   {site.domain_expires_at
                     ? new Date(site.domain_expires_at).toLocaleDateString("es-ES", {
-                      day: "2-digit",
-                      month: "long",
-                      year: "numeric",
-                    })
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric",
+                      })
                     : "—"}
                 </DetailRow>
                 <DetailRow label="Tech stack">

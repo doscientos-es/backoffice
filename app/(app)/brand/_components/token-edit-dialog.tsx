@@ -34,8 +34,7 @@ function hexToOklch(hex: string): string {
   const g = Number.parseInt(clean.slice(2, 4), 16) / 255;
   const b = Number.parseInt(clean.slice(4, 6), 16) / 255;
 
-  const toLinear = (c: number) =>
-    c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  const toLinear = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
   const rl = toLinear(r);
   const gl = toLinear(g);
   const bl = toLinear(b);
@@ -46,11 +45,11 @@ function hexToOklch(hex: string): string {
 
   const l_ = Math.cbrt(0.8189330101 * x + 0.3618667424 * y - 0.1288597137 * z);
   const m_ = Math.cbrt(0.0329845436 * x + 0.9293118715 * y + 0.0361456387 * z);
-  const s_ = Math.cbrt(0.0482003018 * x + 0.2643662691 * y + 0.6338517070 * z);
+  const s_ = Math.cbrt(0.0482003018 * x + 0.2643662691 * y + 0.633851707 * z);
 
-  const L = 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_;
-  const a = 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_;
-  const bval = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_;
+  const L = 0.2104542553 * l_ + 0.793617785 * m_ - 0.0040720468 * s_;
+  const a = 1.9779984951 * l_ - 2.428592205 * m_ + 0.4505937099 * s_;
+  const bval = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.808675766 * s_;
 
   const C = Math.sqrt(a * a + bval * bval);
   let H = Math.atan2(bval, a) * (180 / Math.PI);
@@ -124,14 +123,22 @@ export function TokenEditDialog({ open, onOpenChange, token }: Props) {
               onChange={(e) => setGroup(e.target.value as BrandToken["token_group"])}
             >
               {Object.entries(GROUP_LABELS).map(([v, l]) => (
-                <option key={v} value={v}>{l}</option>
+                <option key={v} value={v}>
+                  {l}
+                </option>
               ))}
             </Select>
           </FormRow>
 
           <FormRow label="Nombre del token" htmlFor="key" required>
-            <Input id="key" name="key" required maxLength={80} placeholder="primary"
-              defaultValue={token?.key ?? ""} />
+            <Input
+              id="key"
+              name="key"
+              required
+              maxLength={80}
+              placeholder="primary"
+              defaultValue={token?.key ?? ""}
+            />
           </FormRow>
 
           <FormRow label="Valor (light)" htmlFor="value" required>
@@ -208,8 +215,14 @@ export function TokenEditDialog({ open, onOpenChange, token }: Props) {
           )}
 
           <FormRow label="Descripción" htmlFor="description">
-            <Textarea id="description" name="description" maxLength={300} rows={2}
-              placeholder="Uso de este token…" defaultValue={token?.description ?? ""} />
+            <Textarea
+              id="description"
+              name="description"
+              maxLength={300}
+              rows={2}
+              placeholder="Uso de este token…"
+              defaultValue={token?.description ?? ""}
+            />
           </FormRow>
 
           <div className="flex justify-end gap-2 pt-2 border-t border-border">

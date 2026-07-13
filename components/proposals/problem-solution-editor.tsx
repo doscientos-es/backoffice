@@ -2,11 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  type EditablePair,
-  KEY_POINTS_LIMITS,
-  createEmptyPair,
-} from "@/lib/proposals/key-points";
+import { type EditablePair, KEY_POINTS_LIMITS, createEmptyPair } from "@/lib/proposals/key-points";
 import { ChevronDown, ChevronUp, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
 
 export type ProblemSolutionEditorProps = {

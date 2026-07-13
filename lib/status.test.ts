@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import {
   EXPENSE_STATUS,
   INVOICE_STATUS,
@@ -10,6 +9,7 @@ import {
   VERIFACTU_ALERT_STATUS,
   VERIFACTU_STATUS,
 } from "@/lib/status";
+import { describe, expect, it } from "vitest";
 
 const VALID_VARIANTS = new Set(["neutral", "info", "success", "warning", "danger"]);
 

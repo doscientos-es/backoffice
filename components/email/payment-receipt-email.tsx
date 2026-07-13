@@ -42,10 +42,7 @@ export function PaymentReceiptEmail({
   appUrl,
 }: PaymentReceiptEmailProps) {
   return (
-    <EmailLayout
-      preview={`Pago confirmado · ${amount} · ${proposalNumber}`}
-      appUrl={appUrl}
-    >
+    <EmailLayout preview={`Pago confirmado · ${amount} · ${proposalNumber}`} appUrl={appUrl}>
       {/* Greeting */}
       <Text style={headingStyle}>Hola, {clientName}</Text>
       <Text style={bodyStyle}>

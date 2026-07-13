@@ -3,11 +3,11 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { SectionBoundary } from "@/components/ui/error-boundary";
 import { requireRole } from "@/lib/auth";
-import { getProjectPortfolio, type PortfolioRow } from "@/lib/finance/portfolio";
+import { getProjectPortfolio } from "@/lib/finance/portfolio";
 import { formatEUR } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = { title: "Portfolio · doscientos" };
 export const dynamic = "force-dynamic";
@@ -70,7 +70,7 @@ async function PortfolioTable() {
                     {row.clientName ?? "—"}
                   </Link>
                 ) : (
-                  row.clientName ?? "—"
+                  (row.clientName ?? "—")
                 )}
               </td>
               <td className="px-4 py-3 text-right tabular-nums">{formatEUR(row.revenue)}</td>
@@ -94,7 +94,9 @@ async function PortfolioTable() {
         </tbody>
         <tfoot>
           <tr className="border-t-2 border-border bg-muted/20 font-semibold text-sm">
-            <td className="px-4 py-3" colSpan={2}>Total ({sorted.length} proyectos)</td>
+            <td className="px-4 py-3" colSpan={2}>
+              Total ({sorted.length} proyectos)
+            </td>
             <td className="px-4 py-3 text-right tabular-nums">{formatEUR(totalRevenue)}</td>
             <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
               {totalHours > 0 ? `${totalHours.toFixed(1)} h` : "—"}
@@ -110,7 +112,9 @@ async function PortfolioTable() {
             </td>
             <td className="px-4 py-3 text-right">
               <MarginBadge
-                pct={totalRevenue > 0 ? Math.round(((totalMargin / totalRevenue) * 100) * 10) / 10 : null}
+                pct={
+                  totalRevenue > 0 ? Math.round((totalMargin / totalRevenue) * 100 * 10) / 10 : null
+                }
               />
             </td>
           </tr>

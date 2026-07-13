@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  type PaymentMode,
-  initiatePayment,
-} from "@/app/p/invoice/[token]/actions";
+import { type PaymentMode, initiatePayment } from "@/app/p/invoice/[token]/actions";
 import { Button } from "@/components/ui/button";
 import { formatEUR } from "@/lib/utils";
 import { CreditCard, Loader2 } from "lucide-react";
@@ -62,11 +59,9 @@ export function RedsysPaymentButton({
     <div className="flex flex-col gap-4 w-full sm:w-auto">
       {hasPartial ? (
         <p className="text-sm text-zinc-400">
-          Pagado:{" "}
-          <strong className="text-emerald-400">{formatEUR(amountPaid)}</strong>
+          Pagado: <strong className="text-emerald-400">{formatEUR(amountPaid)}</strong>
           {" · "}
-          Pendiente:{" "}
-          <strong className="text-white">{formatEUR(amountDue)}</strong>
+          Pendiente: <strong className="text-white">{formatEUR(amountDue)}</strong>
         </p>
       ) : (
         <div className="flex flex-col gap-2.5">
@@ -80,8 +75,7 @@ export function RedsysPaymentButton({
               className="accent-white"
             />
             <span className="text-sm text-zinc-200">
-              Pagar total{" "}
-              <strong className="text-white">{formatEUR(total)}</strong>
+              Pagar total <strong className="text-white">{formatEUR(total)}</strong>
             </span>
           </label>
           <label className="flex items-center gap-3 cursor-pointer">

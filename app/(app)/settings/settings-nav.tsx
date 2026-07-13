@@ -7,13 +7,13 @@ import { usePathname } from "next/navigation";
 
 type Item = {
   href:
-  | "/settings/profile"
-  | "/settings/company"
-  | "/settings/team"
-  | "/settings/goals"
-  | "/settings/email-templates"
-  | "/settings/diagnostics"
-  | "/settings/legal";
+    | "/settings/profile"
+    | "/settings/company"
+    | "/settings/team"
+    | "/settings/goals"
+    | "/settings/email-templates"
+    | "/settings/diagnostics"
+    | "/settings/legal";
   label: string;
   icon: typeof User;
   requiresAdmin: boolean;

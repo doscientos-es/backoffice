@@ -167,7 +167,10 @@ export function TasksKanban({ tasks, projectId, members = [], currentUserId }: T
                   members={members}
                   currentUserId={currentUserId}
                   trigger={
-                    <button type="button" className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                    >
                       <Plus className="size-3.5" />
                       Añadir tarea
                     </button>
@@ -189,7 +192,13 @@ function Column({
   tone,
   tasks,
   addButton,
-}: { status: TaskStatus; label: string; tone: string; tasks: KanbanTask[]; addButton?: React.ReactNode }) {
+}: {
+  status: TaskStatus;
+  label: string;
+  tone: string;
+  tasks: KanbanTask[];
+  addButton?: React.ReactNode;
+}) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   return (
     <div

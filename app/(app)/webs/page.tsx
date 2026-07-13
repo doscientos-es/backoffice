@@ -63,15 +63,11 @@ type PageProps = {
 
 export default async function WebsPage({ searchParams }: PageProps) {
   await requireUser();
-  const [sites, { q = "", type = "all" }] = await Promise.all([
-    listWebProjects(),
-    searchParams,
-  ]);
+  const [sites, { q = "", type = "all" }] = await Promise.all([listWebProjects(), searchParams]);
 
   const query = q.trim().toLowerCase();
   const filtered = sites.filter((s) => {
-    const matchesType =
-      type === "own" ? s.is_own : type === "clients" ? !s.is_own : true;
+    const matchesType = type === "own" ? s.is_own : type === "clients" ? !s.is_own : true;
     const matchesQuery =
       !query ||
       s.name.toLowerCase().includes(query) ||
@@ -101,9 +97,7 @@ export default async function WebsPage({ searchParams }: PageProps) {
 
       {/* WebFilters uses useSearchParams → needs Suspense */}
       <Suspense
-        fallback={
-          <div className="h-8 w-full max-w-xs animate-pulse rounded-md bg-muted" />
-        }
+        fallback={<div className="h-8 w-full max-w-xs animate-pulse rounded-md bg-muted" />}
       >
         <WebFilters q={q} type={type} total={sites.length} />
       </Suspense>

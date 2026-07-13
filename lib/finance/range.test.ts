@@ -1,10 +1,10 @@
-import { describe, expect, it } from "vitest";
 import {
   FINANCE_RANGE_OPTIONS,
   type FinanceRange,
   financeRangeToDates,
   parseFinanceRange,
 } from "@/lib/finance/range";
+import { describe, expect, it } from "vitest";
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 

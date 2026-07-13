@@ -142,7 +142,9 @@ export function PaymentReceipt({
           </div>
 
           <div className="mt-12 pt-8 border-t border-zinc-100 dark:border-zinc-800 text-center">
-            <p className="text-[10px] text-zinc-400 max-w-md mx-auto leading-relaxed">{footerNote}</p>
+            <p className="text-[10px] text-zinc-400 max-w-md mx-auto leading-relaxed">
+              {footerNote}
+            </p>
           </div>
         </article>
       </div>

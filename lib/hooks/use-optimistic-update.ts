@@ -19,7 +19,7 @@ export function useOptimisticUpdate<T>(initial: T) {
   const [value, setValue] = useState<T>(initial);
   const [, startTransition] = useTransition();
 
-  const commit = (next: T, action: () => Promise<ActionResult | void>) => {
+  const commit = (next: T, action: () => Promise<ActionResult | undefined>) => {
     const prev = value;
     setValue(next); // optimistic
     startTransition(async () => {

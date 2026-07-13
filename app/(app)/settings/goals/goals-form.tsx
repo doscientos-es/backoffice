@@ -12,9 +12,7 @@ export function GoalsForm({ goals }: { goals: CompanyGoals }) {
   const [leadsNew, setLeadsNew] = useState(
     goals.leads_new ? String(Math.round(goals.leads_new)) : "",
   );
-  const [revenue, setRevenue] = useState(
-    goals.revenue ? String(Math.round(goals.revenue)) : "",
-  );
+  const [revenue, setRevenue] = useState(goals.revenue ? String(Math.round(goals.revenue)) : "");
   const [conversionRate, setConversionRate] = useState(
     goals.conversion_rate ? String(Math.round(goals.conversion_rate * 100)) : "",
   );

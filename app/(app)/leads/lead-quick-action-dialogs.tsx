@@ -84,14 +84,8 @@ function MemberCheckboxes({
       </Label>
       <div className="flex flex-col gap-1.5 rounded-md border border-border/60 bg-muted/30 p-2.5">
         {members.map((m) => (
-          <label
-            key={m.id}
-            className="flex cursor-pointer select-none items-center gap-2 text-sm"
-          >
-            <Checkbox
-              checked={selected.has(m.id)}
-              onCheckedChange={() => onToggle(m.id)}
-            />
+          <label key={m.id} className="flex cursor-pointer select-none items-center gap-2 text-sm">
+            <Checkbox checked={selected.has(m.id)} onCheckedChange={() => onToggle(m.id)} />
             {m.name}
           </label>
         ))}
@@ -155,10 +149,7 @@ export function QMeetDialog({
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     feedback.setPending();
-    const attendeeEmails = [
-      ...(leadEmail ? [leadEmail] : []),
-      ...members.emails(meetMembers),
-    ];
+    const attendeeEmails = [...(leadEmail ? [leadEmail] : []), ...members.emails(meetMembers)];
     const res = await scheduleLeadMeeting({
       leadId,
       title,
@@ -303,10 +294,7 @@ export function QMeetNowDialog({
     feedback.setPending();
     const now = new Date();
     const endTime = new Date(now.getTime() + 60 * 60 * 1000);
-    const attendeeEmails = [
-      ...(leadEmail ? [leadEmail] : []),
-      ...members.emails(meetMembers),
-    ];
+    const attendeeEmails = [...(leadEmail ? [leadEmail] : []), ...members.emails(meetMembers)];
     const res = await scheduleLeadMeeting({
       leadId,
       title: `Reunión con ${leadName}`,
@@ -368,7 +356,6 @@ export function QMeetNowDialog({
     </Dialog>
   );
 }
-
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

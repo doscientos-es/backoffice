@@ -52,7 +52,7 @@ vi.mock("@/lib/supabase/server", () => ({
           }),
         };
       },
-    })
+    }),
   ),
 }));
 

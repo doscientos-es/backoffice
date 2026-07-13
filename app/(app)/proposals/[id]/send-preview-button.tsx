@@ -75,7 +75,12 @@ export function SendPreviewButton({ id, defaultEmail, alreadySent }: Props) {
             <CheckCheck aria-hidden /> Marcar como enviada
           </Button>
         )}
-        <Button type="button" size="sm" onClick={() => setOpen(true)} disabled={pending || markPending}>
+        <Button
+          type="button"
+          size="sm"
+          onClick={() => setOpen(true)}
+          disabled={pending || markPending}
+        >
           <Send aria-hidden /> {alreadySent ? "Reenviar preview" : "Enviar preview al cliente"}
         </Button>
       </div>

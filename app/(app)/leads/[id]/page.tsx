@@ -84,19 +84,21 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         .order("created_at", { ascending: false }),
       googleEnabled
         ? supabase
-          .from("projects")
-          .select("id, name")
-          .is("deleted_at", null)
-          .in("status", ["planned", "active", "on_hold"])
-          .order("name")
+            .from("projects")
+            .select("id, name")
+            .is("deleted_at", null)
+            .in("status", ["planned", "active", "on_hold"])
+            .order("name")
         : Promise.resolve({ data: [] as Array<{ id: string; name: string }> | null }),
       googleEnabled
         ? supabase
-          .from("team_members")
-          .select("id, name, email")
-          .is("deleted_at", null)
-          .order("name")
-        : Promise.resolve({ data: [] as Array<{ id: string; name: string; email: string }> | null }),
+            .from("team_members")
+            .select("id, name, email")
+            .is("deleted_at", null)
+            .order("name")
+        : Promise.resolve({
+            data: [] as Array<{ id: string; name: string; email: string }> | null,
+          }),
     ]);
 
   const meetMembers = (rawMeetMembers ?? []).map((m) => ({

@@ -31,7 +31,6 @@ const { db, authUser } = vi.hoisted(() => ({
     avatarUrl: null,
     emailAlias: null,
     signatureHtml: null,
-    emailSendEnabled: false,
     githubHandle: null,
     onboardedAt: "2024-01-01",
     jobTitle: null,

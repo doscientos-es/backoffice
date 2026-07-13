@@ -3,8 +3,8 @@
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { useActionForm } from "@/lib/hooks/use-action-form";
-import { SubscriptionFormFields, type SubscriptionFormValues } from "../subscription-form-fields";
 import { updateSubscription } from "../actions";
+import { SubscriptionFormFields, type SubscriptionFormValues } from "../subscription-form-fields";
 
 type Props = {
   id: string;

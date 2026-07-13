@@ -33,7 +33,7 @@ export default async function EditInvoicePage({ params }: { params: Promise<{ id
     .order("position");
 
   const client = (invoice as any).clients;
-  const project = (invoice as any).projects;
+  const _project = (invoice as any).projects;
 
   return (
     <div className="flex flex-col gap-6">

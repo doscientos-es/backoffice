@@ -9,7 +9,7 @@ import type { FormEvent } from "react";
  * `FormData` and either returns an {@link ActionResult} (validation / domain
  * outcome) or never resolves normally because it `redirect()`s.
  */
-type ActionFn = (formData: FormData) => Promise<ActionResult | void>;
+type ActionFn = (formData: FormData) => Promise<ActionResult | undefined>;
 
 interface UseActionFormOptions {
   /**
@@ -56,17 +56,13 @@ export function useActionForm(
     // returns, and we read it again after the `await`.
     const form = e.currentTarget;
     feedback.setPending();
-    try {
-      const res = await action(new FormData(form));
-      if (res && !res.ok) {
-        feedback.setError(res.error);
-        return;
-      }
-      feedback.setSuccess(options.successMessage);
-      options.onSuccess?.(form);
-    } catch (err) {
-      throw err;
+    const res = await action(new FormData(form));
+    if (res && !res.ok) {
+      feedback.setError(res.error);
+      return;
     }
+    feedback.setSuccess(options.successMessage);
+    options.onSuccess?.(form);
   }
 
   return {

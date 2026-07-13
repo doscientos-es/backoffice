@@ -11,8 +11,7 @@ import { z } from "zod";
 export const PASSWORD_MIN_LENGTH = 8;
 
 /** Requires lowercase, uppercase, a digit and a non-alphanumeric symbol. */
-export const PASSWORD_COMPLEXITY_REGEX =
-  /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^a-zA-Z0-9])/;
+export const PASSWORD_COMPLEXITY_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^a-zA-Z0-9])/;
 
 export const PASSWORD_MIN_LENGTH_MESSAGE = `Mínimo ${PASSWORD_MIN_LENGTH} caracteres`;
 export const PASSWORD_COMPLEXITY_MESSAGE =
@@ -29,7 +28,7 @@ export const passwordField = z
  * message when the password is invalid, or `null` when it satisfies the policy.
  */
 export function validatePassword(password: string): string | null {
-  if (password.length < PASSWORD_MIN_LENGTH) return PASSWORD_MIN_LENGTH_MESSAGE + ".";
-  if (!PASSWORD_COMPLEXITY_REGEX.test(password)) return PASSWORD_COMPLEXITY_MESSAGE + ".";
+  if (password.length < PASSWORD_MIN_LENGTH) return `${PASSWORD_MIN_LENGTH_MESSAGE}.`;
+  if (!PASSWORD_COMPLEXITY_REGEX.test(password)) return `${PASSWORD_COMPLEXITY_MESSAGE}.`;
   return null;
 }

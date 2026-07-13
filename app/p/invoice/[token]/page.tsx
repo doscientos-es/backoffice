@@ -86,7 +86,9 @@ export default async function PortalInvoicePage({
 
   const { data: settings } = await admin.from("settings").select("*").eq("id", 1).maybeSingle();
 
-  const client = (invoice as unknown as { clients: { name: string; logo_url: string | null } | null }).clients;
+  const client = (
+    invoice as unknown as { clients: { name: string; logo_url: string | null } | null }
+  ).clients;
   const safeItems = (items ?? []) as unknown as InvoiceItem[];
 
   // Group line items by VAT rate so we can show a proper desglose por tipo.
@@ -125,13 +127,13 @@ export default async function PortalInvoicePage({
 
   const payments = canPay
     ? ((
-      await admin
-        .from("invoice_payments")
-        .select("id, amount, ds_authorisation_code, confirmed_at")
-        .eq("invoice_id", invoice.id as string)
-        .eq("status", "confirmed")
-        .order("confirmed_at", { ascending: false })
-    ).data ?? [])
+        await admin
+          .from("invoice_payments")
+          .select("id, amount, ds_authorisation_code, confirmed_at")
+          .eq("invoice_id", invoice.id as string)
+          .eq("status", "confirmed")
+          .order("confirmed_at", { ascending: false })
+      ).data ?? [])
     : [];
 
   return (
@@ -303,7 +305,7 @@ export default async function PortalInvoicePage({
               </p>
             ) : null}
             {(invoice.client_address_street as string | null) ||
-              (invoice.client_address_city as string | null) ? (
+            (invoice.client_address_city as string | null) ? (
               <p className="text-xs text-zinc-500 dark:text-zinc-400 whitespace-pre-wrap">
                 {[
                   invoice.client_address_street,
@@ -406,8 +408,8 @@ export default async function PortalInvoicePage({
 
         {/* Fiscal info + QR */}
         {(invoice.idfact as string | null) ||
-          (invoice.verifactu_csv as string | null) ||
-          qrDataUrl ? (
+        (invoice.verifactu_csv as string | null) ||
+        qrDataUrl ? (
           <div className="border-t border-zinc-100 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-900/50 px-8 py-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex flex-col gap-1.5">
               <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-0.5">

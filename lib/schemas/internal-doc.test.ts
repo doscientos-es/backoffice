@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import {
   INTERNAL_DOC_ACTIONS,
   INTERNAL_DOC_CATEGORIES,
@@ -11,6 +10,7 @@ import {
   InternalDocVisibilitySchema,
   UpdateInternalDocInput,
 } from "@/lib/schemas/internal-doc";
+import { describe, expect, it } from "vitest";
 
 const uuid = "11111111-1111-1111-1111-111111111111";
 

@@ -53,12 +53,12 @@ export default async function ProposalReceiptPage({
         nif: settings?.company_nif as string | null,
         address: settings
           ? formatAddress({
-            street: settings.company_address_street as string | null,
-            zip: settings.company_address_zip as string | null,
-            city: settings.company_address_city as string | null,
-            province: settings.company_address_province as string | null,
-            country: settings.company_address_country as string | null,
-          }) || null
+              street: settings.company_address_street as string | null,
+              zip: settings.company_address_zip as string | null,
+              city: settings.company_address_city as string | null,
+              province: settings.company_address_province as string | null,
+              country: settings.company_address_country as string | null,
+            }) || null
           : null,
       }}
       recipientName={recipientName}

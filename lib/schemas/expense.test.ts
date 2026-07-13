@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import {
   EXPENSE_CATEGORIES,
   EXPENSE_STATUSES,
@@ -10,6 +9,7 @@ import {
   ExpenseStatus,
   UpdateExpenseInput,
 } from "@/lib/schemas/expense";
+import { describe, expect, it } from "vitest";
 
 const uuid = "11111111-1111-1111-1111-111111111111";
 

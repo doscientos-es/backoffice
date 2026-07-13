@@ -3,7 +3,7 @@
 const CACHE_NAME = "doscientos-bo-v1";
 
 // Only pre-cache the app shell assets listed by Next.js
-self.addEventListener("install", (event) => {
+self.addEventListener("install", (_event) => {
   // Skip waiting so the SW activates immediately
   self.skipWaiting();
 });
@@ -14,11 +14,7 @@ self.addEventListener("activate", (event) => {
     caches
       .keys()
       .then((keys) =>
-        Promise.all(
-          keys
-            .filter((key) => key !== CACHE_NAME)
-            .map((key) => caches.delete(key)),
-        ),
+        Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))),
       )
       .then(() => self.clients.claim()),
   );

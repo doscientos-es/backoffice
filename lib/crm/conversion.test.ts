@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 
 describe("hasCompleteFiscalData", () => {
   it("is true only when name, nif and billing_address are all present", () => {
-    expect(
-      hasCompleteFiscalData({ name: "Acme", nif: "B1", billing_address: "Calle 1" }),
-    ).toBe(true);
+    expect(hasCompleteFiscalData({ name: "Acme", nif: "B1", billing_address: "Calle 1" })).toBe(
+      true,
+    );
   });
 
   it("is false when any field is missing or blank", () => {

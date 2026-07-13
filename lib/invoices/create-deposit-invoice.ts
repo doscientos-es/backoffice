@@ -1,9 +1,7 @@
 import { computeLineTotals } from "@/lib/finance";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-type DepositInvoiceResult =
-  | { ok: true; invoiceId: string }
-  | { ok: false; error: string };
+type DepositInvoiceResult = { ok: true; invoiceId: string } | { ok: false; error: string };
 
 /**
  * Creates a draft invoice for a proposal deposit (señal/anticipo).

@@ -66,10 +66,18 @@ export default async function NewProjectPage({
                 <div className="grid gap-2 sm:grid-cols-2">
                   {/* Empty option */}
                   <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-muted/40 has-checked:border-primary has-checked:bg-primary/5 transition-colors">
-                    <input type="radio" name="template_id" value="" defaultChecked className="mt-0.5 accent-primary" />
+                    <input
+                      type="radio"
+                      name="template_id"
+                      value=""
+                      defaultChecked
+                      className="mt-0.5 accent-primary"
+                    />
                     <span className="text-sm">
                       <span className="font-medium">Sin plantilla</span>
-                      <span className="block text-xs text-muted-foreground">Empezar con checklist vacío</span>
+                      <span className="block text-xs text-muted-foreground">
+                        Empezar con checklist vacío
+                      </span>
                     </span>
                   </label>
                   {(templates as Template[]).map((t) => (
@@ -77,11 +85,18 @@ export default async function NewProjectPage({
                       key={t.id}
                       className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-muted/40 has-checked:border-primary has-checked:bg-primary/5 transition-colors"
                     >
-                      <input type="radio" name="template_id" value={t.id} className="mt-0.5 accent-primary" />
+                      <input
+                        type="radio"
+                        name="template_id"
+                        value={t.id}
+                        className="mt-0.5 accent-primary"
+                      />
                       <span className="text-sm">
                         <span className="font-medium">{t.name}</span>
                         {t.description ? (
-                          <span className="block text-xs text-muted-foreground">{t.description}</span>
+                          <span className="block text-xs text-muted-foreground">
+                            {t.description}
+                          </span>
                         ) : null}
                       </span>
                     </label>

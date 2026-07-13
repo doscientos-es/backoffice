@@ -71,7 +71,9 @@ export function LeadQuickActions({
         <ExtractTasksDialog
           leadId={leadId}
           createTaskAction={createTaskAction}
-          trigger={<ActionTrigger icon={<ListTodo className="size-4" />} label="Extraer tareas IA" />}
+          trigger={
+            <ActionTrigger icon={<ListTodo className="size-4" />} label="Extraer tareas IA" />
+          }
         />
       )}
     </div>

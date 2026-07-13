@@ -30,7 +30,10 @@ const PRIORITY_LABEL: Record<SuggestedTask["priority"], string> = {
   urgent: "Urgente",
 };
 
-const PRIORITY_VARIANT: Record<SuggestedTask["priority"], "neutral" | "info" | "warning" | "danger"> = {
+const PRIORITY_VARIANT: Record<
+  SuggestedTask["priority"],
+  "neutral" | "info" | "warning" | "danger"
+> = {
   low: "neutral",
   medium: "info",
   high: "warning",
@@ -106,7 +109,9 @@ export function ExtractTasksDialog({ leadId, trigger, createTaskAction }: Extrac
       if (res.ok) created++;
     }
     setCreating(false);
-    sileo.success({ title: `${created} tarea${created !== 1 ? "s" : ""} creada${created !== 1 ? "s" : ""}` });
+    sileo.success({
+      title: `${created} tarea${created !== 1 ? "s" : ""} creada${created !== 1 ? "s" : ""}`,
+    });
     setOpen(false);
   }
 
@@ -154,7 +159,9 @@ export function ExtractTasksDialog({ leadId, trigger, createTaskAction }: Extrac
                   key={i}
                   className={cn(
                     "flex items-start gap-3 rounded-md border p-3 cursor-pointer transition-colors",
-                    selected.has(i) ? "border-primary/40 bg-primary/5" : "border-border bg-muted/20",
+                    selected.has(i)
+                      ? "border-primary/40 bg-primary/5"
+                      : "border-border bg-muted/20",
                   )}
                   onClick={() => toggleTask(i)}
                 >
@@ -167,7 +174,9 @@ export function ExtractTasksDialog({ leadId, trigger, createTaskAction }: Extrac
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium leading-snug">{task.title}</p>
                     {task.description && (
-                      <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{task.description}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">
+                        {task.description}
+                      </p>
                     )}
                   </div>
                   <Badge variant={PRIORITY_VARIANT[task.priority]} className="shrink-0 text-[10px]">
@@ -181,10 +190,14 @@ export function ExtractTasksDialog({ leadId, trigger, createTaskAction }: Extrac
 
         {!loading && tasks.length > 0 && (
           <div className="flex items-center justify-between gap-3 border-t pt-4">
-            <span className="text-xs text-muted-foreground">{selected.size} de {tasks.length} seleccionadas</span>
+            <span className="text-xs text-muted-foreground">
+              {selected.size} de {tasks.length} seleccionadas
+            </span>
             <Button onClick={handleCreate} disabled={selected.size === 0 || creating} size="sm">
               <CheckCheck className="size-3.5" />
-              {creating ? "Creando…" : `Crear ${selected.size > 0 ? selected.size : ""} tarea${selected.size !== 1 ? "s" : ""}`}
+              {creating
+                ? "Creando…"
+                : `Crear ${selected.size > 0 ? selected.size : ""} tarea${selected.size !== 1 ? "s" : ""}`}
             </Button>
           </div>
         )}

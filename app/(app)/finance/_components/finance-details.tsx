@@ -153,7 +153,6 @@ export async function FinanceDetails({ since, until, rangeLabel }: Props) {
                 </li>
               ))}
             </ul>
-
           </CardContent>
         </Card>
       )}

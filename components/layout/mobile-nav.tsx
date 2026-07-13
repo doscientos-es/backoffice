@@ -83,7 +83,12 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/invoices", label: "Facturas", icon: Receipt, allowedRoles: ADMIN_ROLES },
       { href: "/subscriptions", label: "Suscripciones", icon: Repeat, allowedRoles: ADMIN_ROLES },
       { href: "/finance", label: "Finanzas", icon: Wallet, allowedRoles: ADMIN_ROLES },
-      { href: "/finance/portfolio", label: "Portfolio", icon: BarChart3, allowedRoles: ADMIN_ROLES },
+      {
+        href: "/finance/portfolio",
+        label: "Portfolio",
+        icon: BarChart3,
+        allowedRoles: ADMIN_ROLES,
+      },
     ],
   },
   {
@@ -267,7 +272,11 @@ export function MobileNav({
               {visibleGroups.map((group, gi) => (
                 <div key={group.label ?? "__home"} className={cn(gi > 0 && "mt-3")}>
                   {group.label ? (
-                    <NavSection group={group} isActive={isActive} onNavClick={() => setOpen(false)} />
+                    <NavSection
+                      group={group}
+                      isActive={isActive}
+                      onNavClick={() => setOpen(false)}
+                    />
                   ) : (
                     <div className="flex flex-col gap-0.5">
                       {group.items.map(({ href, label, icon }) => (

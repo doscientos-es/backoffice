@@ -67,7 +67,6 @@ export async function updateProfile(
     .update({
       email_alias: parsed.data.email_alias ?? null,
       signature_html: signatureHtml,
-      email_send_enabled: true,
       github_handle: parsed.data.github_handle ?? null,
       job_title: parsed.data.job_title ?? null,
       phone: parsed.data.phone ?? null,
@@ -161,7 +160,6 @@ export async function updateMemberProfile(
       avatar_url: parsed.data.avatar_url ?? null,
       email_alias: parsed.data.email_alias ?? null,
       signature_html: signatureHtml,
-      email_send_enabled: true,
       github_handle: parsed.data.github_handle ?? null,
       job_title: parsed.data.job_title ?? null,
       phone: parsed.data.phone ?? null,

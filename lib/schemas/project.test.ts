@@ -1,10 +1,10 @@
-import { describe, expect, it } from "vitest";
 import {
   GithubSyncMode,
   ProjectInput,
   ProjectStatus,
   UpdateProjectInput,
 } from "@/lib/schemas/project";
+import { describe, expect, it } from "vitest";
 
 const uuid = "11111111-1111-1111-1111-111111111111";
 

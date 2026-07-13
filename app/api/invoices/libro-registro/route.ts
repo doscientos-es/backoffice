@@ -71,29 +71,31 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         "Tipo IVA (%)": effectiveVatRate.toFixed(2),
         "Cuota IVA": taxAmount.toFixed(2),
         "Total Factura": Number(inv.total ?? 0).toFixed(2),
-        "Estado": inv.status ?? "",
+        Estado: inv.status ?? "",
         "Estado Verifactu": inv.verifactu_status ?? "",
         "CSV Verifactu": inv.verifactu_csv ?? "",
         "Medio de Cobro": inv.payment_method ?? "",
       };
     });
 
-    const headers = Object.keys(rows[0] ?? {
-      "Número Factura": "",
-      "Fecha Expedición": "",
-      "Fecha Vencimiento": "",
-      "NIF Destinatario": "",
-      "Nombre/Razón Social": "",
-      "Tipo Factura": "",
-      "Base Imponible": "",
-      "Tipo IVA (%)": "",
-      "Cuota IVA": "",
-      "Total Factura": "",
-      "Estado": "",
-      "Estado Verifactu": "",
-      "CSV Verifactu": "",
-      "Medio de Cobro": "",
-    });
+    const headers = Object.keys(
+      rows[0] ?? {
+        "Número Factura": "",
+        "Fecha Expedición": "",
+        "Fecha Vencimiento": "",
+        "NIF Destinatario": "",
+        "Nombre/Razón Social": "",
+        "Tipo Factura": "",
+        "Base Imponible": "",
+        "Tipo IVA (%)": "",
+        "Cuota IVA": "",
+        "Total Factura": "",
+        Estado: "",
+        "Estado Verifactu": "",
+        "CSV Verifactu": "",
+        "Medio de Cobro": "",
+      },
+    );
 
     const csvEscape = (value: string) =>
       value.includes(",") || value.includes('"') || value.includes("\n")

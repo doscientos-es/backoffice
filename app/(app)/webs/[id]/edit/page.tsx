@@ -10,12 +10,14 @@ import { getWebProject } from "@/lib/webs/queries";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { deleteWebProject, updateWebProject } from "../../actions";
 import { WebFormFields } from "../../_components/web-form-fields";
+import { deleteWebProject, updateWebProject } from "../../actions";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const site = await getWebProject(id);
   return { title: site ? `Editar ${site.name} · doscientos` : "Editar web · doscientos" };

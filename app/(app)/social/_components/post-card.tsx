@@ -78,7 +78,10 @@ export function PostCard({ post }: { post: PostListItem }) {
             </span>
           )}
           {showMetrics && (
-            <span className="inline-flex items-center gap-2" title="Interacción sumada de todas las redes">
+            <span
+              className="inline-flex items-center gap-2"
+              title="Interacción sumada de todas las redes"
+            >
               <span className="inline-flex items-center gap-1">
                 <Heart className="size-3" />
                 {post.metrics.likes}

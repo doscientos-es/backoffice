@@ -84,7 +84,6 @@ export async function completeOnboarding(formData: FormData): Promise<ActionResu
       name: parsed.data.name,
       github_handle: githubHandle,
       email_alias: parsed.data.email_alias ?? null,
-      email_send_enabled: true,
       phone: parsed.data.phone ?? null,
       signature_html: signatureHtml,
       onboarded_at: new Date().toISOString(),

@@ -63,7 +63,8 @@ function WeekStatsStrip({ weekStats }: { weekStats: WeekStats }) {
  * bottom — open tasks, the leads they own, and unassigned leads to grab.
  */
 export function MyDayPanel({ tasks, myLeads, unassignedLeads, weekStats }: MyDayPanelProps) {
-  const { items: visibleUnassigned, remove: claimOptimistic } = useOptimisticRemoval(unassignedLeads);
+  const { items: visibleUnassigned, remove: claimOptimistic } =
+    useOptimisticRemoval(unassignedLeads);
 
   return (
     <div className="flex flex-col gap-3">

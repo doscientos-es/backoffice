@@ -79,7 +79,11 @@ export function SubscriptionFormFields({ clients, projects, defaults }: Props) {
       </FormRow>
 
       <FormRow label="Ciclo de facturación" htmlFor="sub-billing">
-        <Select id="sub-billing" name="billing_cycle" defaultValue={defaults?.billing_cycle ?? "monthly"}>
+        <Select
+          id="sub-billing"
+          name="billing_cycle"
+          defaultValue={defaults?.billing_cycle ?? "monthly"}
+        >
           {Object.entries(SUBSCRIPTION_BILLING_CYCLE).map(([v, label]) => (
             <option key={v} value={v}>
               {label}

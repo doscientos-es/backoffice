@@ -20,7 +20,9 @@ function metaContent(html: string, attr: "property" | "name", value: string): st
 
 function linkHref(html: string, rel: string): string | null {
   const re = new RegExp(`<link[^>]+rel=["']${rel}["'][^>]+href=["']([^"'<>]+)["']`, "i");
-  const m = html.match(re) ?? html.match(new RegExp(`<link[^>]+href=["']([^"'<>]+)["'][^>]+rel=["']${rel}["']`, "i"));
+  const m =
+    html.match(re) ??
+    html.match(new RegExp(`<link[^>]+href=["']([^"'<>]+)["'][^>]+rel=["']${rel}["']`, "i"));
   return m?.[1]?.trim() ?? null;
 }
 
@@ -55,8 +57,7 @@ export async function fetchOgMetadata(url: string): Promise<OgMetadata> {
     return {
       title: metaContent(html, "property", "og:title") ?? pageTitle(html),
       description:
-        metaContent(html, "property", "og:description") ??
-        metaContent(html, "name", "description"),
+        metaContent(html, "property", "og:description") ?? metaContent(html, "name", "description"),
       image: metaContent(html, "property", "og:image"),
       siteName: metaContent(html, "property", "og:site_name"),
       type: metaContent(html, "property", "og:type"),

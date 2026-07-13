@@ -54,7 +54,6 @@ type MemberRow = {
   phone: string | null;
   contact_email: string | null;
   email_alias: string | null;
-  email_send_enabled: boolean;
   last_sign_in_at: string | null;
   /** null = invite not yet accepted (token not confirmed) */
   confirmed_at: string | null;
@@ -62,7 +61,10 @@ type MemberRow = {
 
 export default async function TeamSettingsPage() {
   const actor = await requireRole(["owner", "admin"]);
-  const [supabase, admin] = await Promise.all([createServerClient(), Promise.resolve(createAdminClient())]);
+  const [supabase, admin] = await Promise.all([
+    createServerClient(),
+    Promise.resolve(createAdminClient()),
+  ]);
 
   const [{ data, error }, { data: authData }] = await Promise.all([
     supabase
@@ -117,7 +119,7 @@ export default async function TeamSettingsPage() {
         </CardHeader>
         <CardContent className="px-0">
           {error ? (
-            <p className="px-5 py-6 text-sm text-[color:var(--danger)]">{error.message}</p>
+            <p className="px-5 py-6 text-sm text-danger">{error.message}</p>
           ) : members.length === 0 ? (
             <Empty className="border-0 py-10">
               <EmptyHeader>
@@ -127,7 +129,7 @@ export default async function TeamSettingsPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-surface text-left text-xs uppercase tracking-wide text-[color:var(--text-muted)]">
+                <thead className="bg-surface text-left text-xs uppercase tracking-wide text-(--text-muted)">
                   <tr>
                     <th className="px-5 py-2 font-medium">Miembro</th>
                     <th className="px-5 py-2 font-medium">Rol</th>
@@ -143,10 +145,7 @@ export default async function TeamSettingsPage() {
                     const isDeactivated = m.deleted_at !== null;
                     const isPending = !isDeactivated && !m.confirmed_at;
                     return (
-                      <tr
-                        key={m.id}
-                        className="border-t border-[color:var(--border)] hover:bg-[color:var(--surface-hover)]"
-                      >
+                      <tr key={m.id} className="border-t border-border hover:bg-(--surface-hover)">
                         <td className="px-5 py-2.5 align-middle">
                           <div className="flex items-center gap-3">
                             <Avatar className="size-7 shrink-0">
@@ -170,14 +169,10 @@ export default async function TeamSettingsPage() {
                               <div className="truncate font-medium">
                                 {m.name}
                                 {isSelf ? (
-                                  <span className="ml-2 text-xs text-[color:var(--text-muted)]">
-                                    (tú)
-                                  </span>
+                                  <span className="ml-2 text-xs text-(--text-muted)">(tú)</span>
                                 ) : null}
                               </div>
-                              <div className="truncate text-xs text-[color:var(--text-muted)]">
-                                {m.email}
-                              </div>
+                              <div className="truncate text-xs text-(--text-muted)">{m.email}</div>
                             </div>
                             {actor.role === "owner" ? (
                               <MemberProfileDialog
@@ -208,7 +203,7 @@ export default async function TeamSettingsPage() {
                             <Badge variant="success">Activo</Badge>
                           )}
                         </td>
-                        <td className="px-5 py-2.5 align-middle text-[color:var(--text-secondary)]">
+                        <td className="px-5 py-2.5 align-middle text-(--text-secondary)">
                           {formatDate(m.created_at)}
                         </td>
                         <td className="px-5 py-2.5 align-middle">
@@ -216,16 +211,16 @@ export default async function TeamSettingsPage() {
                             <span
                               className={
                                 Date.now() - new Date(m.last_sign_in_at).getTime() >
-                                  INACTIVE_THRESHOLD_MS
-                                  ? "text-[color:var(--warning)] font-medium"
-                                  : "text-[color:var(--text-secondary)]"
+                                INACTIVE_THRESHOLD_MS
+                                  ? "text-warning font-medium"
+                                  : "text-(--text-secondary)"
                               }
                               title={formatDate(m.last_sign_in_at)}
                             >
                               {relativeTime(m.last_sign_in_at)}
                             </span>
                           ) : (
-                            <span className="text-[color:var(--text-muted)]">Nunca</span>
+                            <span className="text-(--text-muted)">Nunca</span>
                           )}
                         </td>
                         <td className="px-5 py-2.5 align-middle">

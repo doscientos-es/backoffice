@@ -83,7 +83,6 @@ export function LinkProjectButton({ proposalId, currentProject, availableProject
           className="h-7 rounded-md border border-input bg-background px-2 text-xs"
           value={selectedId}
           onChange={(e) => setSelectedId(e.target.value)}
-          autoFocus
         >
           <option value="">— Selecciona —</option>
           {availableProjects.map((p) => (
@@ -107,7 +106,12 @@ export function LinkProjectButton({ proposalId, currentProject, availableProject
     <div className="flex items-center gap-2">
       <span className="text-muted-foreground">—</span>
       {availableProjects.length > 0 ? (
-        <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => setPicking(true)}>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-6 px-2 text-xs"
+          onClick={() => setPicking(true)}
+        >
           <Link2 className="size-3" />
           Vincular
         </Button>

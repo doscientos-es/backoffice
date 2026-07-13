@@ -23,8 +23,8 @@ export default async function VaultPage() {
   ]);
 
   const passwordHash =
-    (settingsResult.data as { vault_password_hash: string | null } | null)
-      ?.vault_password_hash ?? null;
+    (settingsResult.data as { vault_password_hash: string | null } | null)?.vault_password_hash ??
+    null;
 
   const unlocked = await isVaultUnlocked(passwordHash);
 
@@ -47,9 +47,7 @@ export default async function VaultPage() {
       items={(itemsResult.data as VaultItemRow[] | null) ?? []}
       passwordSet={!!passwordHash}
       unlocked={unlocked}
-      clients={
-        (clientsResult.data as Array<{ id: string; name: string }> | null) ?? []
-      }
+      clients={(clientsResult.data as Array<{ id: string; name: string }> | null) ?? []}
       isAdmin={isAdmin}
     />
   );

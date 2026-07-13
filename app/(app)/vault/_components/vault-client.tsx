@@ -114,12 +114,17 @@ export function VaultClient({
 
   function handleSort(field: SortField) {
     if (sortField === field) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else { setSortField(field); setSortDir("asc"); }
+    else {
+      setSortField(field);
+      setSortDir("asc");
+    }
     setPage(1);
   }
 
   // Reset to page 1 whenever filters / sort change.
-  useEffect(() => { setPage(1); }, [search, serviceFilter, sensitiveFilter, clientFilter, sortField, sortDir]);
+  useEffect(() => {
+    setPage(1);
+  }, [search, serviceFilter, sensitiveFilter, clientFilter, sortField, sortDir]);
 
   const filtered = useMemo(() => {
     let result = [...items];
@@ -320,7 +325,11 @@ export function VaultClient({
           <Lock className="size-4 shrink-0" />
           <span>
             Los secretos sensibles están ocultos.{" "}
-            <button type="button" className="underline hover:no-underline" onClick={() => setDialog("unlock")}>
+            <button
+              type="button"
+              className="underline hover:no-underline"
+              onClick={() => setDialog("unlock")}
+            >
               Desbloquear bóveda
             </button>
           </span>
@@ -358,7 +367,9 @@ export function VaultClient({
             >
               <option value="">Servicio: todos</option>
               {VAULT_SERVICES.map((s) => (
-                <option key={s} value={s}>{VAULT_SERVICE_LABELS[s]}</option>
+                <option key={s} value={s}>
+                  {VAULT_SERVICE_LABELS[s]}
+                </option>
               ))}
             </Select>
             <Select
@@ -380,12 +391,19 @@ export function VaultClient({
               >
                 <option value="">Cliente: todos</option>
                 {clients.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
                 ))}
               </Select>
             )}
             {hasActiveFilters && (
-              <Button variant="ghost" size="sm" className="h-8 text-muted-foreground" onClick={clearFilters}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-muted-foreground"
+                onClick={clearFilters}
+              >
                 <X className="size-3.5" /> Limpiar
               </Button>
             )}
@@ -397,7 +415,9 @@ export function VaultClient({
           {/* ── Table ── */}
           {items.length === 0 ? (
             <Empty className="border-0 py-10">
-              <EmptyHeader><EmptyTitle>Sin credenciales aún</EmptyTitle></EmptyHeader>
+              <EmptyHeader>
+                <EmptyTitle>Sin credenciales aún</EmptyTitle>
+              </EmptyHeader>
               <EmptyContent>
                 <Button size="sm" onClick={() => setDialog("add")}>
                   <Plus className="size-3.5" /> Añadir primera credencial
@@ -406,9 +426,13 @@ export function VaultClient({
             </Empty>
           ) : paged.length === 0 ? (
             <Empty className="border-0 py-10">
-              <EmptyHeader><EmptyTitle>Sin coincidencias</EmptyTitle></EmptyHeader>
+              <EmptyHeader>
+                <EmptyTitle>Sin coincidencias</EmptyTitle>
+              </EmptyHeader>
               <EmptyContent>
-                <Button variant="outline" size="sm" onClick={clearFilters}>Limpiar filtros</Button>
+                <Button variant="outline" size="sm" onClick={clearFilters}>
+                  Limpiar filtros
+                </Button>
               </EmptyContent>
             </Empty>
           ) : (
@@ -416,11 +440,29 @@ export function VaultClient({
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-muted/30 text-xs text-muted-foreground">
-                    <SortTh field="name" label="Nombre" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
-                    <SortTh field="service" label="Servicio" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
+                    <SortTh
+                      field="name"
+                      label="Nombre"
+                      sortField={sortField}
+                      sortDir={sortDir}
+                      onSort={handleSort}
+                    />
+                    <SortTh
+                      field="service"
+                      label="Servicio"
+                      sortField={sortField}
+                      sortDir={sortDir}
+                      onSort={handleSort}
+                    />
                     <th className="px-5 py-3 font-medium tracking-wide text-left">Usuario</th>
                     <th className="px-5 py-3 font-medium tracking-wide text-left">Secreto</th>
-                    <SortTh field="expires_at" label="Caduca" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
+                    <SortTh
+                      field="expires_at"
+                      label="Caduca"
+                      sortField={sortField}
+                      sortDir={sortDir}
+                      onSort={handleSort}
+                    />
                     <th className="w-20 px-5 py-3" aria-label="Acciones" />
                   </tr>
                 </thead>
@@ -434,11 +476,18 @@ export function VaultClient({
                         <td className="px-5 py-3 font-medium text-foreground">
                           <span className="flex items-center gap-1.5">
                             {item.name}
-                            {item.is_sensitive && <Lock className="size-3 shrink-0 text-muted-foreground/60" />}
+                            {item.is_sensitive && (
+                              <Lock className="size-3 shrink-0 text-muted-foreground/60" />
+                            )}
                           </span>
                         </td>
                         <td className="px-5 py-3">
-                          <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", SERVICE_COLORS[item.service] ?? SERVICE_COLORS.other)}>
+                          <span
+                            className={cn(
+                              "rounded-full px-2 py-0.5 text-xs font-medium",
+                              SERVICE_COLORS[item.service] ?? SERVICE_COLORS.other,
+                            )}
+                          >
                             {VAULT_SERVICE_LABELS[item.service as VaultService] ?? item.service}
                           </span>
                         </td>
@@ -447,7 +496,14 @@ export function VaultClient({
                         </td>
                         <td className="px-5 py-3">
                           <div className="flex items-center gap-2">
-                            <span className={cn("font-mono text-xs", isRevealed ? "select-all text-foreground" : "tracking-widest text-muted-foreground")}>
+                            <span
+                              className={cn(
+                                "font-mono text-xs",
+                                isRevealed
+                                  ? "select-all text-foreground"
+                                  : "tracking-widest text-muted-foreground",
+                              )}
+                            >
                               {isRevealed ? revealed[item.id] : "••••••••"}
                             </span>
                             <button
@@ -456,7 +512,9 @@ export function VaultClient({
                               disabled={isRevealing}
                               aria-busy={isRevealing}
                               className="text-muted-foreground transition-colors hover:text-foreground"
-                              aria-label={isRevealing ? "Revelando…" : isRevealed ? "Ocultar" : "Revelar"}
+                              aria-label={
+                                isRevealing ? "Revelando…" : isRevealed ? "Ocultar" : "Revelar"
+                              }
                             >
                               {isRevealing ? (
                                 <Loader2 className="size-3.5 animate-spin" />
@@ -486,10 +544,21 @@ export function VaultClient({
                         <td className="px-5 py-3">
                           {isAdmin && (
                             <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                              <Button variant="ghost" size="icon-xs" onClick={() => openEdit(item)} aria-label="Editar">
+                              <Button
+                                variant="ghost"
+                                size="icon-xs"
+                                onClick={() => openEdit(item)}
+                                aria-label="Editar"
+                              >
                                 <Pencil className="size-3.5" />
                               </Button>
-                              <Button variant="ghost" size="icon-xs" onClick={() => handleDelete(item.id)} aria-label="Eliminar" className="text-destructive hover:bg-destructive/10 hover:text-destructive">
+                              <Button
+                                variant="ghost"
+                                size="icon-xs"
+                                onClick={() => handleDelete(item.id)}
+                                aria-label="Eliminar"
+                                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              >
                                 <Trash2 className="size-3.5" />
                               </Button>
                             </div>
@@ -507,14 +576,29 @@ export function VaultClient({
           {totalPages > 1 && (
             <div className="flex items-center justify-between border-t border-border px-5 py-3">
               <span className="text-xs text-muted-foreground">
-                {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} de {filtered.length}
+                {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} de{" "}
+                {filtered.length}
               </span>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon-xs" onClick={() => setPage((p) => p - 1)} disabled={page === 1} aria-label="Página anterior">
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => setPage((p) => p - 1)}
+                  disabled={page === 1}
+                  aria-label="Página anterior"
+                >
                   <ChevronLeft className="size-3.5" />
                 </Button>
-                <span className="px-1 text-xs text-muted-foreground">{page} / {totalPages}</span>
-                <Button variant="ghost" size="icon-xs" onClick={() => setPage((p) => p + 1)} disabled={page === totalPages} aria-label="Página siguiente">
+                <span className="px-1 text-xs text-muted-foreground">
+                  {page} / {totalPages}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={page === totalPages}
+                  aria-label="Página siguiente"
+                >
                   <ChevronRight className="size-3.5" />
                 </Button>
               </div>
@@ -524,13 +608,24 @@ export function VaultClient({
       </Card>
 
       {/* Add / Edit */}
-      <Dialog open={dialog === "add" || dialog === "edit"} onOpenChange={(o) => !o && setDialog(null)}>
+      <Dialog
+        open={dialog === "add" || dialog === "edit"}
+        onOpenChange={(o) => !o && setDialog(null)}
+      >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{dialog === "edit" ? "Editar credencial" : "Nueva credencial"}</DialogTitle>
-            <DialogDescription>Los secretos se cifran con AES-256-GCM antes de guardarse.</DialogDescription>
+            <DialogTitle>
+              {dialog === "edit" ? "Editar credencial" : "Nueva credencial"}
+            </DialogTitle>
+            <DialogDescription>
+              Los secretos se cifran con AES-256-GCM antes de guardarse.
+            </DialogDescription>
           </DialogHeader>
-          <VaultItemForm item={editItem ?? undefined} clients={clients} onClose={() => setDialog(null)} />
+          <VaultItemForm
+            item={editItem ?? undefined}
+            clients={clients}
+            onClose={() => setDialog(null)}
+          />
         </DialogContent>
       </Dialog>
 
@@ -539,12 +634,12 @@ export function VaultClient({
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Desbloquear bóveda</DialogTitle>
-            <DialogDescription>Introduce la contraseña maestra para acceder a los secretos sensibles. La sesión dura 4 horas.</DialogDescription>
+            <DialogDescription>
+              Introduce la contraseña maestra para acceder a los secretos sensibles. La sesión dura
+              4 horas.
+            </DialogDescription>
           </DialogHeader>
-          <UnlockForm
-            onClose={() => setDialog(null)}
-            onSuccess={handleUnlockSuccess}
-          />
+          <UnlockForm onClose={() => setDialog(null)} onSuccess={handleUnlockSuccess} />
         </DialogContent>
       </Dialog>
 
@@ -552,7 +647,9 @@ export function VaultClient({
       <Dialog open={dialog === "setPassword"} onOpenChange={(o) => !o && setDialog(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>{passwordSet ? "Cambiar contraseña maestra" : "Activar protección maestra"}</DialogTitle>
+            <DialogTitle>
+              {passwordSet ? "Cambiar contraseña maestra" : "Activar protección maestra"}
+            </DialogTitle>
             <DialogDescription>
               {passwordSet
                 ? "Verifica la contraseña actual antes de cambiarla."
@@ -586,14 +683,21 @@ function SortTh({
       <button
         type="button"
         onClick={() => onSort(field)}
-        className={cn("flex items-center gap-1 transition-colors hover:text-foreground", active && "text-foreground")}
+        className={cn(
+          "flex items-center gap-1 transition-colors hover:text-foreground",
+          active && "text-foreground",
+        )}
       >
         {label}
-        {active
-          ? sortDir === "asc"
-            ? <ChevronUp className="size-3" />
-            : <ChevronDown className="size-3" />
-          : <ChevronsUpDown className="size-3 opacity-40" />}
+        {active ? (
+          sortDir === "asc" ? (
+            <ChevronUp className="size-3" />
+          ) : (
+            <ChevronDown className="size-3" />
+          )
+        ) : (
+          <ChevronsUpDown className="size-3 opacity-40" />
+        )}
       </button>
     </th>
   );

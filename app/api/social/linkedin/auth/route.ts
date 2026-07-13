@@ -25,7 +25,7 @@ const STATE_TTL_S = 600; // 10 minutes
 
 const SCOPES = ["r_organization_social", "w_organization_social"].join(" ");
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   const env = serverEnv();
 
   if (!env.LINKEDIN_CLIENT_ID || !env.LINKEDIN_REDIRECT_URI) {

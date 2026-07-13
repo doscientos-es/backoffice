@@ -47,7 +47,6 @@ export default async function BrandPage() {
             </Button>
           ) : undefined
         }
-
       />
 
       {assetsResult.error || tokensResult.error ? (

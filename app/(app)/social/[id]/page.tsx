@@ -79,9 +79,16 @@ async function PostDetail({ id }: { id: string }) {
                         </td>
                         <td className="py-3 pr-4">
                           <div className="flex flex-col gap-0.5">
-                            <StatusBadge meta={SOCIAL_TARGET_STATUS} value={t.status} className="text-[10px]" />
+                            <StatusBadge
+                              meta={SOCIAL_TARGET_STATUS}
+                              value={t.status}
+                              className="text-[10px]"
+                            />
                             {t.status === "failed" && t.error && (
-                              <span className="max-w-50 text-[10px] text-destructive leading-tight" title={t.error}>
+                              <span
+                                className="max-w-50 text-[10px] text-destructive leading-tight"
+                                title={t.error}
+                              >
                                 {t.error.length > 80 ? `${t.error.slice(0, 80)}…` : t.error}
                               </span>
                             )}
@@ -106,7 +113,9 @@ async function PostDetail({ id }: { id: string }) {
                             >
                               Ver <ExternalLink className="size-3" />
                             </a>
-                          ) : "—"}
+                          ) : (
+                            "—"
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -131,7 +140,9 @@ async function PostDetail({ id }: { id: string }) {
                 <DetailRow label="Creado">
                   <div className="flex flex-col">
                     <span>{formatDateTime(post.createdAt)}</span>
-                    <span className="text-[10px] text-muted-foreground">{relativeTime(post.createdAt)}</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {relativeTime(post.createdAt)}
+                    </span>
                   </div>
                 </DetailRow>
                 {post.publishedAt && (
@@ -148,7 +159,12 @@ async function PostDetail({ id }: { id: string }) {
 
               {post.status === "draft" && (
                 <div className="mt-6 border-t border-border pt-4">
-                  <PublishButton postId={post.id} label="Publicar ahora" size="default" className="w-full" />
+                  <PublishButton
+                    postId={post.id}
+                    label="Publicar ahora"
+                    size="default"
+                    className="w-full"
+                  />
                 </div>
               )}
               {(post.status === "failed" || post.status === "partially_failed") && (
@@ -172,13 +188,20 @@ async function PostDetail({ id }: { id: string }) {
                 <div className="flex flex-col gap-0.5">
                   <span className="text-[10px] uppercase text-muted-foreground">Reach Total</span>
                   <span className="text-xl font-bold tabular-nums">
-                    {post.targets.reduce((acc, t) => acc + (t.insights?.reach ?? 0), 0).toLocaleString()}
+                    {post.targets
+                      .reduce((acc, t) => acc + (t.insights?.reach ?? 0), 0)
+                      .toLocaleString()}
                   </span>
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <span className="text-[10px] uppercase text-muted-foreground">Eng. Medio</span>
                   <span className="text-xl font-bold tabular-nums">
-                    {((post.targets.reduce((acc, t) => acc + (t.insights?.engagementRate ?? 0), 0) / (post.targets.filter(t => t.insights).length || 1)) * 100).toFixed(1)}%
+                    {(
+                      (post.targets.reduce((acc, t) => acc + (t.insights?.engagementRate ?? 0), 0) /
+                        (post.targets.filter((t) => t.insights).length || 1)) *
+                      100
+                    ).toFixed(1)}
+                    %
                   </span>
                 </div>
               </div>
@@ -213,7 +236,10 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
   return (
     <div className="flex flex-col gap-6">
       <BackLink href="/social" label="Social" />
-      <PageHeader title="Detalle de publicación" description="Métricas y estado de publicación en tiempo real." />
+      <PageHeader
+        title="Detalle de publicación"
+        description="Métricas y estado de publicación en tiempo real."
+      />
       <SectionBoundary pending={<DetailSkeleton />} label="No se pudo cargar el detalle">
         <PostDetail id={id} />
       </SectionBoundary>

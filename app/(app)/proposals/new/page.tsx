@@ -28,11 +28,7 @@ export default async function NewProposalPage({
       .is("deleted_at", null)
       .not("status", "in", "(won,lost,not_interested,archived)")
       .order("name"),
-    supabase
-      .from("projects")
-      .select("id, name, client_id")
-      .is("deleted_at", null)
-      .order("name"),
+    supabase.from("projects").select("id, name, client_id").is("deleted_at", null).order("name"),
   ]);
 
   return (
@@ -51,9 +47,7 @@ export default async function NewProposalPage({
             status: string;
           }>
         }
-        projects={
-          (projects ?? []) as Array<{ id: string; name: string; client_id: string }>
-        }
+        projects={(projects ?? []) as Array<{ id: string; name: string; client_id: string }>}
         initialClientId={client_id}
         initialLeadId={lead_id}
       />

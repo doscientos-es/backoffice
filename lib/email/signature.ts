@@ -38,14 +38,5 @@ export function buildSignatureHtml(
   if (opts.phone) lines.push(`<a href="tel:${opts.phone}" style="color:inherit">${opts.phone}</a>`);
 
   const text = lines.join("<br/>");
-  return (
-    `<table cellpadding="0" cellspacing="0" border="0" ` +
-    `style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#333;margin:0">` +
-    `<tr>` +
-    `<td style="padding-right:14px;vertical-align:middle;border-right:2px solid #2A4227">` +
-    `<img src="${logoSrc}" width="36" height="36" alt="doscientos" style="display:block"/>` +
-    `</td>` +
-    `<td style="padding-left:14px;vertical-align:top">${text}</td>` +
-    `</tr></table>`
-  );
+  return `<table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#333;margin:0"><tr><td style="padding-right:14px;vertical-align:middle;border-right:2px solid #2A4227"><img src="${logoSrc}" width="36" height="36" alt="doscientos" style="display:block"/></td><td style="padding-left:14px;vertical-align:top">${text}</td></tr></table>`;
 }

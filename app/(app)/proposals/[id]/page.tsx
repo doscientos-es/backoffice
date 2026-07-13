@@ -104,11 +104,11 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
   const clientId = (proposal.client_id as string | null) ?? null;
   const { data: availableProjects } = clientId
     ? await supabase
-      .from("projects")
-      .select("id, name")
-      .eq("client_id", clientId)
-      .is("deleted_at", null)
-      .order("name")
+        .from("projects")
+        .select("id, name")
+        .eq("client_id", clientId)
+        .is("deleted_at", null)
+        .order("name")
     : { data: [] };
 
   // Deposit payments made from the proposal portal
@@ -180,7 +180,7 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
                     client ? `Cliente: ${client.name}` : lead ? `Lead: ${lead.name}` : null,
                     `Estado: ${PROPOSAL_STATUS[status]?.label ?? status}`,
                     Number(proposal.total ?? 0) > 0 &&
-                    `Total: ${formatEUR(Number(proposal.total))}`,
+                      `Total: ${formatEUR(Number(proposal.total))}`,
                   ]
                     .filter(Boolean)
                     .join(" · "),

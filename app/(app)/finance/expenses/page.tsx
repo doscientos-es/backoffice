@@ -117,7 +117,7 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Sea
       rows={expenses.map((e) => {
         const payer =
           e.payment_source === "member" && e.paid_by_member_id
-            ? memberMap.get(e.paid_by_member_id) ?? null
+            ? (memberMap.get(e.paid_by_member_id) ?? null)
             : null;
 
         return {

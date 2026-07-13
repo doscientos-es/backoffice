@@ -30,25 +30,25 @@ const OPTIONS: Array<{
   description: string;
   icon: ReactNode;
 }> = [
-    {
-      value: "none",
-      title: "Sin GitHub",
-      description: "El proyecto vive sólo en el backoffice.",
-      icon: <Github className="size-4" />,
-    },
-    {
-      value: "link_only",
-      title: "Solo enlace",
-      description: "Repo externo: enlazamos pero nunca escribimos en GitHub.",
-      icon: <Link2 className="size-4" />,
-    },
-    {
-      value: "bidirectional",
-      title: "Sincronización completa",
-      description: "Las tareas crean y reciben issues automáticamente.",
-      icon: <RefreshCw className="size-4" />,
-    },
-  ];
+  {
+    value: "none",
+    title: "Sin GitHub",
+    description: "El proyecto vive sólo en el backoffice.",
+    icon: <Github className="size-4" />,
+  },
+  {
+    value: "link_only",
+    title: "Solo enlace",
+    description: "Repo externo: enlazamos pero nunca escribimos en GitHub.",
+    icon: <Link2 className="size-4" />,
+  },
+  {
+    value: "bidirectional",
+    title: "Sincronización completa",
+    description: "Las tareas crean y reciben issues automáticamente.",
+    icon: <RefreshCw className="size-4" />,
+  },
+];
 
 export function GitHubSyncSection({
   idPrefix,

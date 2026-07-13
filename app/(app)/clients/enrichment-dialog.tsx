@@ -72,7 +72,12 @@ export function EnrichmentDialog({
 
   // Reset selections whenever a new company is loaded
   useEffect(() => {
-    setFields({ name: !!data.name, province: !!data.province, city: !!data.city, address: !!data.address });
+    setFields({
+      name: !!data.name,
+      province: !!data.province,
+      city: !!data.city,
+      address: !!data.address,
+    });
     setOfficer(null);
   }, [data]);
 
@@ -90,11 +95,15 @@ export function EnrichmentDialog({
     onCloseAction();
   };
 
-  const statusVariant =
-    data.companyStatus?.toUpperCase() === "ACTIVA" ? "success" : "warning";
+  const statusVariant = data.companyStatus?.toUpperCase() === "ACTIVA" ? "success" : "warning";
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onCloseAction(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) onCloseAction();
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Datos del Registro Mercantil</DialogTitle>
@@ -107,32 +116,93 @@ export function EnrichmentDialog({
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">{data.name}</p>
             <div className="mt-1 flex flex-wrap gap-1">
-              {data.companyType && <Badge variant="neutral" className="text-[10px]">{data.companyType}</Badge>}
-              {data.companyStatus && <Badge variant={statusVariant} className="text-[10px]">{data.companyStatus}</Badge>}
+              {data.companyType && (
+                <Badge variant="neutral" className="text-[10px]">
+                  {data.companyType}
+                </Badge>
+              )}
+              {data.companyStatus && (
+                <Badge variant={statusVariant} className="text-[10px]">
+                  {data.companyStatus}
+                </Badge>
+              )}
             </div>
           </div>
         </div>
 
         {/* Field checkboxes */}
         <div className="flex flex-col gap-0.5">
-          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Campos disponibles</p>
-          {data.name && <FieldRow icon={<Building2 className="size-3.5" />} label="Nombre" value={data.name} checked={fields.name} onCheckedChange={() => toggle("name")} />}
-          {data.province && <FieldRow icon={<MapPin className="size-3.5" />} label="Provincia" value={data.province} checked={fields.province} onCheckedChange={() => toggle("province")} />}
-          {data.city && <FieldRow icon={<MapPin className="size-3.5" />} label="Ciudad" value={data.city} checked={fields.city} onCheckedChange={() => toggle("city")} />}
-          {data.address && <FieldRow icon={<FileText className="size-3.5" />} label="Dirección" value={data.address} checked={fields.address} onCheckedChange={() => toggle("address")} />}
+          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Campos disponibles
+          </p>
+          {data.name && (
+            <FieldRow
+              icon={<Building2 className="size-3.5" />}
+              label="Nombre"
+              value={data.name}
+              checked={fields.name}
+              onCheckedChange={() => toggle("name")}
+            />
+          )}
+          {data.province && (
+            <FieldRow
+              icon={<MapPin className="size-3.5" />}
+              label="Provincia"
+              value={data.province}
+              checked={fields.province}
+              onCheckedChange={() => toggle("province")}
+            />
+          )}
+          {data.city && (
+            <FieldRow
+              icon={<MapPin className="size-3.5" />}
+              label="Ciudad"
+              value={data.city}
+              checked={fields.city}
+              onCheckedChange={() => toggle("city")}
+            />
+          )}
+          {data.address && (
+            <FieldRow
+              icon={<FileText className="size-3.5" />}
+              label="Dirección"
+              value={data.address}
+              checked={fields.address}
+              onCheckedChange={() => toggle("address")}
+            />
+          )}
         </div>
 
         {/* Officer radio selection */}
         {!!data.officers?.length && (
           <div className="flex flex-col gap-0.5">
-            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Persona de contacto</p>
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Persona de contacto
+            </p>
             <label className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 hover:bg-muted/50">
-              <input type="radio" name="enrich-officer" value="" checked={officer === null} onChange={() => setOfficer(null)} className="size-3.5 accent-primary" />
+              <input
+                type="radio"
+                name="enrich-officer"
+                value=""
+                checked={officer === null}
+                onChange={() => setOfficer(null)}
+                className="size-3.5 accent-primary"
+              />
               <span className="text-sm italic text-muted-foreground">No asignar</span>
             </label>
             {data.officers.map((o) => (
-              <label key={o.name} className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 hover:bg-muted/50">
-                <input type="radio" name="enrich-officer" value={o.name} checked={officer === o.name} onChange={() => setOfficer(o.name)} className="size-3.5 accent-primary" />
+              <label
+                key={o.name}
+                className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 hover:bg-muted/50"
+              >
+                <input
+                  type="radio"
+                  name="enrich-officer"
+                  value={o.name}
+                  checked={officer === o.name}
+                  onChange={() => setOfficer(o.name)}
+                  className="size-3.5 accent-primary"
+                />
                 <User className="size-3.5 shrink-0 text-muted-foreground" />
                 <span className="min-w-0 text-sm">
                   <span className="font-medium">{o.name}</span>
@@ -144,8 +214,12 @@ export function EnrichmentDialog({
         )}
 
         <DialogFooter>
-          <Button variant="outline" onClick={onCloseAction}>Cancelar</Button>
-          <Button onClick={handleApply} disabled={!anySelected}>Aplicar selección</Button>
+          <Button variant="outline" onClick={onCloseAction}>
+            Cancelar
+          </Button>
+          <Button onClick={handleApply} disabled={!anySelected}>
+            Aplicar selección
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

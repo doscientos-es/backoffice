@@ -1,6 +1,6 @@
 "use client";
 
-import { type ListPageProps, ListPage } from "@/components/layout/list-page";
+import { ListPage, type ListPageProps } from "@/components/layout/list-page";
 import { MemberLabel } from "@/components/ui/member-avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { LeadListItem } from "@/lib/leads/types";
@@ -24,9 +24,7 @@ type LeadsListProps = Omit<ListPageProps, "rows"> & {
 function LeadInitials({ name }: { name: string }) {
   const parts = (name ?? "").trim().split(/\s+/);
   const letters =
-    parts.length >= 2
-      ? (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")
-      : (parts[0]?.[0] ?? "?");
+    parts.length >= 2 ? (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "") : (parts[0]?.[0] ?? "?");
   return (
     <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold uppercase text-primary">
       {letters}

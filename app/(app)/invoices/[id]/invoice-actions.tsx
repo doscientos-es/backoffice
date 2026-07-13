@@ -20,10 +20,7 @@ import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useUndoableDelete } from "@/lib/hooks/use-undoable-delete";
-import {
-  PAYMENT_METHOD_LABELS,
-  type PaymentMethodType,
-} from "@/lib/schemas/invoice";
+import { PAYMENT_METHOD_LABELS, type PaymentMethodType } from "@/lib/schemas/invoice";
 import { INVOICE_STATUS, VERIFACTU_STATUS } from "@/lib/status";
 import {
   AlertTriangle,
@@ -40,7 +37,13 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { createRectification, deleteInvoice, markAsUncollectible, restoreInvoice, updateInvoiceStatus } from "../actions";
+import {
+  createRectification,
+  deleteInvoice,
+  markAsUncollectible,
+  restoreInvoice,
+  updateInvoiceStatus,
+} from "../actions";
 import { SendAeatButton } from "./send-aeat-button";
 import { SendInvoiceButton } from "./send-invoice-button";
 
@@ -116,11 +119,11 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
       if (res.ok) {
         feedback.setSuccess(
           opts?.successLabel ??
-          (status === "issued"
-            ? "Factura emitida"
-            : status === "paid"
-              ? "Factura pagada"
-              : "Factura anulada"),
+            (status === "issued"
+              ? "Factura emitida"
+              : status === "paid"
+                ? "Factura pagada"
+                : "Factura anulada"),
         );
       } else {
         feedback.setError(res.error);
@@ -351,7 +354,9 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
                   disabled={pending}
                   onClick={() => {
                     setConfirmUncollected(false);
-                    handleStatusUpdate("issued", { successLabel: "Factura marcada como no cobrada" });
+                    handleStatusUpdate("issued", {
+                      successLabel: "Factura marcada como no cobrada",
+                    });
                   }}
                 >
                   Confirmar reversión
@@ -364,8 +369,8 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
 
       {/* AEAT Button if already issued */}
       {!isDraft &&
-        invoice.verifactu_status !== "accepted" &&
-        invoice.verifactu_status !== "excluded" ? (
+      invoice.verifactu_status !== "accepted" &&
+      invoice.verifactu_status !== "excluded" ? (
         <SendAeatButton
           invoiceId={invoice.id}
           label={invoice.verifactu_status === "rejected" ? "Reintentar AEAT" : "Enviar a AEAT"}

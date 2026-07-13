@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import {
   CreateTaskInput,
   MoveTaskInput,
@@ -7,6 +6,7 @@ import {
   UpdateTaskInput,
   UpdateTaskStatusInput,
 } from "@/lib/schemas/task";
+import { describe, expect, it } from "vitest";
 
 const uuid = "11111111-1111-1111-1111-111111111111";
 const uuid2 = "22222222-2222-2222-2222-222222222222";

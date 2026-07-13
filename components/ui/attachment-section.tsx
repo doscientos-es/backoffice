@@ -123,10 +123,7 @@ export function AttachmentSection({ entityType, entityId, attachments, canEdit }
 
   return (
     <Card
-      className={cn(
-        "relative",
-        dragActive && "ring-2 ring-primary ring-offset-2",
-      )}
+      className={cn("relative", dragActive && "ring-2 ring-primary ring-offset-2")}
       onDragEnter={canEdit ? handleDragEnter : undefined}
       onDragOver={canEdit ? handleDragOver : undefined}
       onDragLeave={canEdit ? handleDragLeave : undefined}
@@ -185,7 +182,9 @@ export function AttachmentSection({ entityType, entityId, attachments, canEdit }
         )}
         {attachments.length === 0 ? (
           <p className="px-6 py-2 text-sm text-muted-foreground">
-            {canEdit ? "Sin adjuntos. Arrastra archivos aquí o usa «Añadir archivos»." : "Sin adjuntos."}
+            {canEdit
+              ? "Sin adjuntos. Arrastra archivos aquí o usa «Añadir archivos»."
+              : "Sin adjuntos."}
           </p>
         ) : (
           <ul className="divide-y divide-border">

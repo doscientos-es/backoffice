@@ -119,7 +119,10 @@ ${interactionsText || "(sin interacciones)"}`;
     log.info({ leadId: body.lead_id, count: result.tasks.length }, "ai_extract_tasks_ok");
     return NextResponse.json({ ok: true, tasks: result.tasks });
   } catch (err) {
-    log.error({ leadId: body.lead_id, err: err instanceof Error ? err.message : err }, "ai_extract_tasks_failed");
+    log.error(
+      { leadId: body.lead_id, err: err instanceof Error ? err.message : err },
+      "ai_extract_tasks_failed",
+    );
     return NextResponse.json({ error: "AI service unavailable" }, { status: 502 });
   }
 }

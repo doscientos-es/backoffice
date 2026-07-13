@@ -138,7 +138,10 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
               lines={(() => {
                 const parts: string[] = [];
                 parts.push(
-                  [`🧾 Factura ${(invoice.full_number as string | null) ?? "Borrador"}`, client && `— ${client.name}`]
+                  [
+                    `🧾 Factura ${(invoice.full_number as string | null) ?? "Borrador"}`,
+                    client && `— ${client.name}`,
+                  ]
                     .filter(Boolean)
                     .join(" "),
                 );

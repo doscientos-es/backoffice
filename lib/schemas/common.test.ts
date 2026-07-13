@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import {
   assignableUuid,
   emptyToUndef,
@@ -11,6 +10,7 @@ import {
   requiredText,
   uuidIdInput,
 } from "@/lib/schemas/common";
+import { describe, expect, it } from "vitest";
 
 const uuid = "11111111-1111-1111-1111-111111111111";
 
@@ -75,8 +75,8 @@ describe("shared object schemas", () => {
     expect(out.quantity).toBe(2);
     expect(out.vat_rate).toBe(21);
     expect(out.billing_cycle).toBe("none");
-    expect(lineItemInput.safeParse({ description: "", quantity: "0", unit_price: "1" }).success).toBe(
-      false,
-    );
+    expect(
+      lineItemInput.safeParse({ description: "", quantity: "0", unit_price: "1" }).success,
+    ).toBe(false);
   });
 });

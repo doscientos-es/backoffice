@@ -69,12 +69,7 @@ export function LeadFormFields({
           Contacto
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
-          <FormRow
-            label="Nombre"
-            htmlFor={`${idPrefix}-name`}
-            required
-            className="sm:col-span-2"
-          >
+          <FormRow label="Nombre" htmlFor={`${idPrefix}-name`} required className="sm:col-span-2">
             <Input
               id={`${idPrefix}-name`}
               name="name"
@@ -172,11 +167,7 @@ export function LeadFormFields({
             htmlFor={`${idPrefix}-urgency`}
             hint="Cuándo necesitan empezar."
           >
-            <Select
-              id={`${idPrefix}-urgency`}
-              name="urgency"
-              defaultValue={d.urgency ?? ""}
-            >
+            <Select id={`${idPrefix}-urgency`} name="urgency" defaultValue={d.urgency ?? ""}>
               <option value="">— Sin especificar —</option>
               <option value="Inmediata">Inmediata</option>
               <option value="Este mes">Este mes</option>

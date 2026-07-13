@@ -1,9 +1,9 @@
 import {
   CREATE_SHORTCUTS,
   NAV_SHORTCUTS,
+  type RecentItem,
   findShortcut,
   mergeRecentItems,
-  type RecentItem,
 } from "@/lib/navigation/shortcuts";
 import { describe, expect, it } from "vitest";
 

@@ -35,7 +35,10 @@ export function DayCell({ day, events, isCurrentMonth, isToday }: DayCellProps) 
     >
       <button
         type="button"
-        onClick={(e) => { e.stopPropagation(); openCreate(isoDate); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          openCreate(isoDate);
+        }}
         aria-label={`Crear evento el ${isoDate}`}
         className={cn(
           "flex h-6 w-6 items-center justify-center self-end rounded-full text-xs font-medium transition-colors",
@@ -48,11 +51,7 @@ export function DayCell({ day, events, isCurrentMonth, isToday }: DayCellProps) 
       </button>
       <div className="flex flex-col gap-0.5 overflow-hidden">
         {visible.map((e) =>
-          e.editable ? (
-            <DraggableChip key={e.id} event={e} />
-          ) : (
-            <EventChip key={e.id} event={e} />
-          ),
+          e.editable ? <DraggableChip key={e.id} event={e} /> : <EventChip key={e.id} event={e} />,
         )}
         {overflow > 0 && (
           <span className="pl-1 text-[10px] text-muted-foreground">+{overflow} más</span>

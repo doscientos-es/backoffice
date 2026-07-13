@@ -99,10 +99,7 @@ export async function pushMetaConversion(input: CapiConversionInput): Promise<vo
       return;
     }
 
-    log.info(
-      { events_received: body.events_received, eventId: input.eventId },
-      "meta_capi_sent",
-    );
+    log.info({ events_received: body.events_received, eventId: input.eventId }, "meta_capi_sent");
   } catch (e) {
     log.warn({ err: e }, "meta_capi_fetch_failed");
   }

@@ -112,7 +112,10 @@ export function ClientLogoUpload({
   }
 
   async function handleDomainSearch() {
-    const raw = domainValue.trim().replace(/^https?:\/\//, "").split("/")[0];
+    const raw = domainValue
+      .trim()
+      .replace(/^https?:\/\//, "")
+      .split("/")[0];
     if (!raw) return;
     const clearbitUrl = `https://logo.clearbit.com/${raw}`;
     setUploading(true);
@@ -175,8 +178,7 @@ export function ClientLogoUpload({
 
         <div className="flex flex-col gap-1.5 pt-1">
           <p className="text-sm font-medium text-foreground">
-            Logo del cliente{" "}
-            <span className="text-muted-foreground font-normal">(opcional)</span>
+            Logo del cliente <span className="text-muted-foreground font-normal">(opcional)</span>
           </p>
           <p className="text-xs text-muted-foreground">
             Haz clic, arrastra una imagen, pega una URL o busca por dominio.

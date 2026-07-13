@@ -2,10 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { type NextRequest, NextResponse } from "next/server";
 
 /** 1×1 transparent GIF – minimal byte payload. */
-const PIXEL_GIF = Buffer.from(
-  "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
-  "base64",
-);
+const PIXEL_GIF = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64");
 
 const PIXEL_RESPONSE = new NextResponse(PIXEL_GIF, {
   status: 200,
@@ -19,10 +16,7 @@ const PIXEL_RESPONSE = new NextResponse(PIXEL_GIF, {
   },
 });
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ token: string }> },
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
 
   // Fire-and-forget: record the open without blocking the response.

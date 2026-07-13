@@ -46,12 +46,16 @@ function DeleteButton({ id, isAdmin }: { id: string; isAdmin: boolean }) {
   if (!isAdmin) return null;
   return (
     <Button
-      variant="ghost" size="icon-sm"
+      variant="ghost"
+      size="icon-sm"
       onClick={() => {
         if (!confirm("¿Eliminar este asset?")) return;
-        startTransition(async () => { await deleteAsset(id); });
+        startTransition(async () => {
+          await deleteAsset(id);
+        });
       }}
-      disabled={pending} title="Eliminar"
+      disabled={pending}
+      title="Eliminar"
       className="text-destructive hover:text-destructive"
     >
       <Trash2 className="size-3.5" />
@@ -68,7 +72,8 @@ function AssetCard({ asset, isAdmin }: { asset: BrandAsset; isAdmin: boolean }) 
         {isImage ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={asset.public_url} alt={asset.name}
+            src={asset.public_url}
+            alt={asset.name}
             className={cn("max-h-full max-w-full object-contain p-4", isSvg && "w-full h-full")}
           />
         ) : (
@@ -104,14 +109,17 @@ function AssetCard({ asset, isAdmin }: { asset: BrandAsset; isAdmin: boolean }) 
 export function AssetsGrid({ assets, isAdmin }: { assets: BrandAsset[]; isAdmin: boolean }) {
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const usedCategories = ALL_CATEGORIES.filter((c) => assets.some((a) => a.category === c));
-  const visible = activeCategory === "all" ? assets : assets.filter((a) => a.category === activeCategory);
+  const visible =
+    activeCategory === "all" ? assets : assets.filter((a) => a.category === activeCategory);
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-1.5">
         {(["all", ...usedCategories] as const).map((cat) => (
           <button
-            key={cat} type="button" onClick={() => setActiveCategory(cat)}
+            key={cat}
+            type="button"
+            onClick={() => setActiveCategory(cat)}
             className={cn(
               "rounded-md px-3 py-1 text-xs font-medium transition-colors",
               activeCategory === cat
@@ -124,10 +132,14 @@ export function AssetsGrid({ assets, isAdmin }: { assets: BrandAsset[]; isAdmin:
         ))}
       </div>
       {visible.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-10 text-center">No hay assets en esta categoría.</p>
+        <p className="text-sm text-muted-foreground py-10 text-center">
+          No hay assets en esta categoría.
+        </p>
       ) : (
         <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {visible.map((a) => <AssetCard key={a.id} asset={a} isAdmin={isAdmin} />)}
+          {visible.map((a) => (
+            <AssetCard key={a.id} asset={a} isAdmin={isAdmin} />
+          ))}
         </div>
       )}
     </div>

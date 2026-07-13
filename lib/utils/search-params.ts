@@ -13,11 +13,7 @@ export function escapeIlike(value: string): string {
 type RawParams = Record<string, string | string[] | undefined>;
 
 /** Lee un param como string normalizado (trim). Devuelve `""` si no existe. */
-export function parseStringParam(
-  params: RawParams,
-  key: string,
-  fallback = "",
-): string {
+export function parseStringParam(params: RawParams, key: string, fallback = ""): string {
   const raw = params[key];
   if (!raw) return fallback;
   return (Array.isArray(raw) ? raw[0] : raw)?.trim() ?? fallback;
@@ -27,11 +23,7 @@ export function parseStringParam(
  * Lee un param como entero positivo.
  * Si el valor no es un entero válido ≥ 1, devuelve `fallback`.
  */
-export function parseIntParam(
-  params: RawParams,
-  key: string,
-  fallback = 1,
-): number {
+export function parseIntParam(params: RawParams, key: string, fallback = 1): number {
   const raw = parseStringParam(params, key);
   const n = Number.parseInt(raw, 10);
   return Number.isFinite(n) && n >= 1 ? n : fallback;

@@ -38,17 +38,12 @@ export async function upsertCompanyGoals(input: unknown): Promise<ActionResult> 
   if (!conversionRate) clearedMetrics.push("conversion_rate");
 
   if (clearedMetrics.length > 0) {
-    const { error } = await supabase
-      .from("company_goals")
-      .delete()
-      .in("metric", clearedMetrics);
+    const { error } = await supabase.from("company_goals").delete().in("metric", clearedMetrics);
     if (error) return { ok: false, error: error.message };
   }
 
   if (rows.length > 0) {
-    const { error } = await supabase
-      .from("company_goals")
-      .upsert(rows, { onConflict: "metric" });
+    const { error } = await supabase.from("company_goals").upsert(rows, { onConflict: "metric" });
     if (error) return { ok: false, error: error.message };
   }
 

@@ -12,7 +12,8 @@ export default async function DiagnosticsSettingsPage() {
   await requireRole(["owner", "admin"]);
   const status = getSystemStatus();
 
-  const byKey = (key: string) => status.integrations.find((i) => i.key === key)?.configured ?? false;
+  const byKey = (key: string) =>
+    status.integrations.find((i) => i.key === key)?.configured ?? false;
   const config = {
     telegramBot: byKey("telegram_bot"),
     telegramChat: byKey("telegram_chat"),

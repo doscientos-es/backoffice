@@ -30,7 +30,8 @@ export function BrandHub({ assets, tokens, isAdmin }: Props) {
       <div className="flex gap-0.5 border-b border-border">
         {TABS.map((t) => (
           <button
-            key={t.id} type="button"
+            key={t.id}
+            type="button"
             onClick={() => setActive(t.id)}
             className={cn(
               "px-4 py-2 text-sm font-medium transition-colors -mb-px border-b-2",
@@ -46,15 +47,14 @@ export function BrandHub({ assets, tokens, isAdmin }: Props) {
 
       {/* Content */}
       <div className="pt-2">
-        {active === "assets" && (
-          assets.length === 0 ? (
+        {active === "assets" &&
+          (assets.length === 0 ? (
             <p className="text-sm text-muted-foreground py-10 text-center">
               Aún no hay assets. Sube el primer logo o recurso visual.
             </p>
           ) : (
             <AssetsGrid assets={assets} isAdmin={isAdmin} />
-          )
-        )}
+          ))}
         {active === "tokens" && <TokensPanel tokens={tokens} isAdmin={isAdmin} />}
         {active === "export" && <BrandExport tokens={tokens} assets={assets} />}
       </div>

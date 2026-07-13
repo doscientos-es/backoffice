@@ -73,7 +73,12 @@ export default async function TasksPage({
           actions={
             <div className="flex items-center gap-2">
               <TasksViewToggle view={view} />
-              <TaskCreateDialog projects={projectsList} leads={leadsList} members={membersList} currentUserId={user.id} />
+              <TaskCreateDialog
+                projects={projectsList}
+                leads={leadsList}
+                members={membersList}
+                currentUserId={user.id}
+              />
             </div>
           }
         />
@@ -91,13 +96,28 @@ export default async function TasksPage({
         {boardErr ? (
           <p className="text-sm text-destructive">{boardErr}</p>
         ) : (
-          <TasksKanban tasks={tasks} capped={capped} projects={projectsList} leads={leadsList} members={membersList} currentUserId={user.id} />
+          <TasksKanban
+            tasks={tasks}
+            capped={capped}
+            projects={projectsList}
+            leads={leadsList}
+            members={membersList}
+            currentUserId={user.id}
+          />
         )}
       </div>
     );
   }
 
-  const { data, count, error } = await listTasksList({ q, status, priority, projectId, page, sort, dir });
+  const { data, count, error } = await listTasksList({
+    q,
+    status,
+    priority,
+    projectId,
+    page,
+    sort,
+    dir,
+  });
 
   const rows = data.map((t) => ({
     id: t.id,
@@ -144,11 +164,21 @@ export default async function TasksPage({
       actions={
         <div className="flex items-center gap-2">
           <TasksViewToggle view={view} />
-          <TaskCreateDialog projects={projectsList} leads={leadsList} members={membersList} currentUserId={user.id} />
+          <TaskCreateDialog
+            projects={projectsList}
+            leads={leadsList}
+            members={membersList}
+            currentUserId={user.id}
+          />
         </div>
       }
       emptyAction={
-        <TaskCreateDialog projects={projectsList} leads={leadsList} members={membersList} currentUserId={user.id} />
+        <TaskCreateDialog
+          projects={projectsList}
+          leads={leadsList}
+          members={membersList}
+          currentUserId={user.id}
+        />
       }
       addHref="/tasks/new"
       addLabel="Nueva tarea"

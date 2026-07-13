@@ -63,10 +63,7 @@ export function LeadEditDialog({ lead, members = [] }: { lead: Lead; members?: M
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={setOpen}
-    >
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Pencil className="size-4" aria-hidden />

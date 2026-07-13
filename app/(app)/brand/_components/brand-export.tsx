@@ -83,12 +83,16 @@ function buildAiBrief(tokens: BrandToken[], assets: BrandAsset[]) {
     .map((a) => `- **${a.name}** (${a.category}): ${a.public_url}`)
     .join("\n");
 
-  const radiusScale = radii.map(t => `  --radius: var(--${t.key});
+  const radiusScale = radii
+    .map(
+      (t) => `  --radius: var(--${t.key});
   --radius-sm: calc(var(--${t.key}) * 0.6);
   --radius-md: calc(var(--${t.key}) * 0.8);
   --radius-lg: var(--${t.key});
   --radius-xl: calc(var(--${t.key}) * 1.4);
-  --radius-2xl: calc(var(--${t.key}) * 1.8);`).join("\n");
+  --radius-2xl: calc(var(--${t.key}) * 1.8);`,
+    )
+    .join("\n");
 
   return `# Guía de marca – doscientos
 
@@ -142,7 +146,11 @@ export function BrandExport({ tokens, assets }: { tokens: BrandToken[]; assets: 
       <CopyBlock label="CSS custom properties (:root)" content={buildCssVars(tokens)} lang="css" />
       <CopyBlock label="Tailwind v4 @theme" content={buildTheme(tokens)} lang="css" />
       <CopyBlock label="JSON Design Tokens" content={buildJson(tokens)} lang="json" />
-      <CopyBlock label="Brief de marca para agentes IA (Markdown)" content={buildAiBrief(tokens, assets)} lang="markdown" />
+      <CopyBlock
+        label="Brief de marca para agentes IA (Markdown)"
+        content={buildAiBrief(tokens, assets)}
+        lang="markdown"
+      />
     </div>
   );
 }

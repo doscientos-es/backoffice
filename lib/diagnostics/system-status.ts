@@ -24,7 +24,7 @@ export type SystemStatus = {
   runtime: RuntimeInfo[];
 };
 
-const has = (v?: string | null): boolean => Boolean(v && v.trim());
+const has = (v?: string | null): boolean => Boolean(v?.trim());
 
 export function getSystemStatus(): SystemStatus {
   const env = serverEnv();

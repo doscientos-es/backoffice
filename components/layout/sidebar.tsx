@@ -249,14 +249,18 @@ export function Sidebar({ user, verifactuMode }: { user: CurrentUser; verifactuM
             ) : (
               <div className="flex flex-col gap-0.5">
                 {group.items.map(({ href, label, icon }) => (
-                  <NavLink key={href} href={href} label={label} icon={icon} active={isActive(href)} />
+                  <NavLink
+                    key={href}
+                    href={href}
+                    label={label}
+                    icon={icon}
+                    active={isActive(href)}
+                  />
                 ))}
               </div>
             )}
           </div>
         ))}
-
-
       </nav>
 
       <footer className="flex flex-col border-t border-border p-2 gap-2">
