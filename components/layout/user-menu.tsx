@@ -73,7 +73,9 @@ export function UserMenu({ user }: { user: CurrentUser }) {
           aria-label="Menú de usuario"
         >
           <Avatar size="sm">
-            {avatarSrc ? <AvatarImage src={avatarSrc} alt={user.name} /> : null}
+            {avatarSrc ? (
+              <AvatarImage src={avatarSrc} alt={user.name} referrerPolicy="no-referrer" />
+            ) : null}
             <AvatarFallback>{initials(user.name)}</AvatarFallback>
           </Avatar>
           <span className="hidden text-xs font-medium text-primary md:inline">{user.name}</span>

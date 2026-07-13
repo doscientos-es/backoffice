@@ -8,6 +8,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+// biome-ignore lint/suspicious/noExplicitAny: complex dynamic payload from form
 function buildDbPayload(p: any) {
   const repo = p.github_repo ? parseGithubRepoUrl(p.github_repo) : null;
   const isHourly = p.billing_type === "hourly";

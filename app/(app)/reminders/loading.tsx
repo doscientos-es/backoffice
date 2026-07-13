@@ -6,6 +6,7 @@ export default function RemindersLoading() {
       <Skeleton className="h-7 w-36" />
       <div className="flex flex-col gap-3">
         {Array.from({ length: 6 }).map((_, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton
           <div key={i} className="flex items-center gap-3 rounded-lg border px-4 py-3">
             <Skeleton className="size-8 rounded-full" />
             <div className="flex flex-1 flex-col gap-1">

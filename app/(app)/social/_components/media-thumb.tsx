@@ -21,7 +21,6 @@ export function MediaThumb({ item, className }: { item: MediaItem; className?: s
   }
   return (
     <div className={base}>
-      {/* biome-ignore lint/a11y/useAltText: decorative post thumbnail */}
       <img src={item.publicUrl} alt="" className="size-full object-cover" loading="lazy" />
     </div>
   );

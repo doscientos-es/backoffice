@@ -110,7 +110,6 @@ function AdsTable({
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
                         {ad.preview_url && (
-                          // biome-ignore lint/performance/noImgElement: external Meta CDN, no Next image loader configured for it
                           <img
                             src={ad.preview_url}
                             className="h-8 w-8 rounded object-cover"

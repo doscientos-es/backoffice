@@ -567,7 +567,6 @@ created_at    timestamptz
 name          text NOT NULL
 email         text NOT NULL UNIQUE
 email_alias   text          -- email visible al lead (ej: pol@doscientos.es)
-signature_html text         -- firma HTML/markdown para emails
 role          text NOT NULL DEFAULT 'member'
 -- Roles (jerarquía):
 -- 'owner'  -> acceso total + billing + borrar empresa + Verifactu cert
@@ -577,6 +576,8 @@ role          text NOT NULL DEFAULT 'member'
 avatar_url    text
 is_active     bool DEFAULT true
 github_handle text UNIQUE           -- handle de GitHub para sincronización bidireccional
+phone         text                  -- teléfono de contacto
+contact_email text                  -- email de contacto para la firma
 deleted_at    timestamptz           -- soft delete: NULL = activo
 ```
 
@@ -1423,7 +1424,7 @@ Cada usuario del equipo configura su identidad en `/settings/profile`:
 Ubicación: `app/actions/email.ts`.
 Flujo:
 1. Valida sesión del `team_member` y permisos.
-2. Carga datos del remitente (`email_alias`, `signature_html`).
+2. Carga datos del remitente (`email_alias`). La firma se genera dinámicamente.
 3. Procesa el template usando el `lib/templates/render.ts` (sec. 29) inyectando variables del lead/cliente.
 4. Si `include_signature` es true, appendea la firma al cuerpo del email.
 5. Envía vía Resend SDK:

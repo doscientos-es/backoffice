@@ -11,6 +11,7 @@ export default function AppLoading() {
       {/* Content skeleton */}
       <div className="flex flex-col gap-3">
         {Array.from({ length: 6 }).map((_, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list
           <Skeleton key={i} className="h-14 w-full rounded-lg" />
         ))}
       </div>

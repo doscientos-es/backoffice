@@ -31,9 +31,10 @@ export function OptionsToolbar({ sort, showPaused, hidePaused = false }: Props) 
 
   return (
     <div className={cn("flex flex-wrap items-center gap-3 text-xs", pending && "opacity-70")}>
-      <label className="flex items-center gap-2 text-muted-foreground">
+      <label htmlFor="sort-select" className="flex items-center gap-2 text-muted-foreground">
         <span className="font-medium">Ordenar por</span>
         <Select
+          id="sort-select"
           value={sort}
           onChange={(e) =>
             updateParam("sort", e.target.value === "spend_desc" ? null : e.target.value)
@@ -54,7 +55,7 @@ export function OptionsToolbar({ sort, showPaused, hidePaused = false }: Props) 
             type="checkbox"
             checked={showPaused}
             onChange={(e) => updateParam("paused", e.target.checked ? "1" : null)}
-            className="size-4 rounded border-[color:var(--border-strong)] accent-foreground"
+            className="size-4 rounded border-(--border-strong) accent-foreground"
           />
           <span className="font-medium">Incluir pausados</span>
         </label>

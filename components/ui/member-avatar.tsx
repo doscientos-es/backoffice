@@ -42,7 +42,7 @@ export function MemberAvatar({
 
   return (
     <Avatar size={size} className={className}>
-      {src ? <AvatarImage src={src} alt={member.name} /> : null}
+      {src ? <AvatarImage src={src} alt={member.name} referrerPolicy="no-referrer" /> : null}
       <AvatarFallback>{initials(member.name)}</AvatarFallback>
     </Avatar>
   );

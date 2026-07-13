@@ -9,7 +9,7 @@ import { buildSignatureHtml } from "@/lib/email/signature";
 import { useGithubHandle } from "@/lib/hooks/use-github-handle";
 import { cn } from "@/lib/utils";
 import { AlertCircle, CheckCircle2, Loader2, XCircle } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { updateProfile } from "./actions";
 
 interface Props {
@@ -41,6 +41,28 @@ export function ProfileForm({
   });
   const [handle, setHandle] = useState(githubHandle ?? "");
   const handleState = useGithubHandle(handle);
+
+  const initials = useMemo(() => {
+    const source = name.trim() || email;
+    return source
+      .split(/\s+/)
+      .map((part) => part[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join("")
+      .toUpperCase();
+  }, [name, email]);
+
+  // Priority: Google avatar (synced on login) → GitHub avatar from handle → null
+  const avatarSrc = useMemo(() => {
+    if (avatarUrl) return avatarUrl;
+    const trimmed = handle.trim();
+    // Synchronous regex check for immediate preview
+    if (/^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,38})$/.test(trimmed)) {
+      return `https://github.com/${trimmed}.png?size=200`;
+    }
+    return handleState.avatarUrl ?? undefined;
+  }, [avatarUrl, handle, handleState.avatarUrl]);
 
   const signaturePreview = buildSignatureHtml({
     name,
@@ -144,14 +166,10 @@ export function ProfileForm({
         </FieldLabel>
         <div className="flex items-center gap-3">
           <Avatar size="default" className="shrink-0">
-            {handleState.status === "valid" && handleState.avatarUrl ? (
-              <AvatarImage src={handleState.avatarUrl} alt={handleState.displayName ?? handle} />
-            ) : avatarUrl ? (
-              <AvatarImage src={avatarUrl} alt={name} />
+            {avatarSrc ? (
+              <AvatarImage src={avatarSrc} alt={name} referrerPolicy="no-referrer" />
             ) : null}
-            <AvatarFallback>
-              {handle.trim().slice(0, 1).toUpperCase() || name.slice(0, 1).toUpperCase() || "·"}
-            </AvatarFallback>
+            <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
           <div className="relative flex-1">
             <Input

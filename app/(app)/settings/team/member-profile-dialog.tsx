@@ -14,9 +14,9 @@ import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { useGithubHandle } from "@/lib/hooks/use-github-handle";
-import { cn, memberAvatarUrl } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { AlertCircle, CheckCircle2, Loader2, Pencil, XCircle } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { updateMemberProfile } from "../actions";
 
 export interface MemberProfileData {
@@ -37,6 +37,26 @@ export function MemberProfileDialog({ member }: { member: MemberProfileData }) {
   const [handle, setHandle] = useState(member.githubHandle ?? "");
   const handleState = useGithubHandle(handle);
 
+  const initials = useMemo(() => {
+    const source = member.name.trim() || member.email;
+    return source
+      .split(/\s+/)
+      .map((part) => part[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join("")
+      .toUpperCase();
+  }, [member.name, member.email]);
+
+  const avatarSrc = useMemo(() => {
+    if (member.avatarUrl) return member.avatarUrl;
+    const trimmed = handle.trim();
+    if (/^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,38})$/.test(trimmed)) {
+      return `https://github.com/${trimmed}.png?size=200`;
+    }
+    return handleState.avatarUrl ?? undefined;
+  }, [member.avatarUrl, handle, handleState.avatarUrl]);
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
@@ -49,11 +69,6 @@ export function MemberProfileDialog({ member }: { member: MemberProfileData }) {
       feedback.setError(result.error);
     }
   }
-
-  const derivedAvatar = memberAvatarUrl({
-    avatarUrl: member.avatarUrl,
-    githubHandle: handle || member.githubHandle,
-  });
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -159,14 +174,10 @@ export function MemberProfileDialog({ member }: { member: MemberProfileData }) {
                 </FieldLabel>
                 <div className="flex items-center gap-3">
                   <Avatar size="default" className="shrink-0">
-                    {handleState.status === "valid" && handleState.avatarUrl ? (
-                      <AvatarImage src={handleState.avatarUrl} alt={handle} />
-                    ) : derivedAvatar ? (
-                      <AvatarImage src={derivedAvatar} alt={member.name} />
+                    {avatarSrc ? (
+                      <AvatarImage src={avatarSrc} alt={member.name} referrerPolicy="no-referrer" />
                     ) : null}
-                    <AvatarFallback>
-                      {(handle || member.name).slice(0, 1).toUpperCase()}
-                    </AvatarFallback>
+                    <AvatarFallback>{initials}</AvatarFallback>
                   </Avatar>
                   <div className="relative flex-1">
                     <Input

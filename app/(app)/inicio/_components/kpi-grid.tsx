@@ -1,11 +1,13 @@
 import { StatCard } from "@/components/layout/stat-card";
 import { getCompanyGoals, getDashboardKpis } from "@/lib/dashboard/queries";
 import type { DashboardRange } from "@/lib/dashboard/types";
-import { formatEUR } from "@/lib/utils";
+import { cn, formatEUR } from "@/lib/utils";
 import { computeTrend, describeRange, resolveDateRange } from "@/lib/utils/date";
 import { FileSignature, Inbox, Target, TrendingUp } from "lucide-react";
 
-export async function KpiGrid({ range }: { range: DashboardRange }) {
+type KpiGridProps = { range: DashboardRange; showFinance: boolean };
+
+export async function KpiGrid({ range, showFinance }: KpiGridProps) {
   const dateRange = resolveDateRange(range);
   const [kpis, goals] = await Promise.all([getDashboardKpis(dateRange), getCompanyGoals()]);
   const rangeLabel = describeRange(range);
@@ -13,7 +15,9 @@ export async function KpiGrid({ range }: { range: DashboardRange }) {
   const conversionPct = Math.round(kpis.conversionRate * 1000) / 10;
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div
+      className={cn("grid gap-4 sm:grid-cols-2", showFinance ? "lg:grid-cols-4" : "lg:grid-cols-3")}
+    >
       <StatCard
         label="Leads nuevos"
         value={kpis.leadsNew}
@@ -33,16 +37,18 @@ export async function KpiGrid({ range }: { range: DashboardRange }) {
         hint={rangeLabel}
         trend={computeTrend(kpis.proposalsOpen, kpis.proposalsOpenPrev)}
       />
-      <StatCard
-        label="Facturación del mes"
-        value={formatEUR(kpis.monthRevenue)}
-        tone="success"
-        icon={TrendingUp}
-        href="/finance"
-        hint={rangeLabel}
-        trend={goals.revenue ? undefined : computeTrend(kpis.monthRevenue, kpis.monthRevenuePrev)}
-        goal={goals.revenue ? { current: kpis.monthRevenue, target: goals.revenue } : undefined}
-      />
+      {showFinance ? (
+        <StatCard
+          label="Facturación del mes"
+          value={formatEUR(kpis.monthRevenue)}
+          tone="success"
+          icon={TrendingUp}
+          href="/finance"
+          hint={rangeLabel}
+          trend={goals.revenue ? undefined : computeTrend(kpis.monthRevenue, kpis.monthRevenuePrev)}
+          goal={goals.revenue ? { current: kpis.monthRevenue, target: goals.revenue } : undefined}
+        />
+      ) : null}
       <StatCard
         label="Conversión"
         value={`${conversionPct.toFixed(1)}%`}

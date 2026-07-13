@@ -60,6 +60,7 @@ export function InvoiceEditor({
   const [dirty, setDirty] = useState(false);
   const isFirstRender = useRef(true);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: react to any change in these fields
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;

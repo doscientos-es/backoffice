@@ -14,19 +14,24 @@ import { RemindersSection } from "./_components/reminders-section";
 
 export type { AvisosData, OverdueInvoiceRow, ReminderRow, VerifactuPendingRow };
 
-export type AvisosPanelProps = AvisosData;
+export type AvisosPanelProps = AvisosData & { showFinance?: boolean };
 
 export function AvisosPanel({
   reminders,
   verifactuPending,
   overdueInvoices,
   certExpiresAt,
+  showFinance = true,
 }: AvisosPanelProps) {
+  const visibleVerifactu = showFinance ? verifactuPending : [];
+  const visibleOverdue = showFinance ? overdueInvoices : [];
+  const visibleCertExpiry = showFinance ? certExpiresAt : null;
+
   const empty =
     reminders.length === 0 &&
-    verifactuPending.length === 0 &&
-    overdueInvoices.length === 0 &&
-    !certExpiresAt;
+    visibleVerifactu.length === 0 &&
+    visibleOverdue.length === 0 &&
+    !visibleCertExpiry;
 
   if (empty) {
     return (
@@ -51,13 +56,13 @@ export function AvisosPanel({
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col divide-y divide-border [&>div]:py-3 first:[&>div]:pt-0 last:[&>div]:pb-0">
-        {certExpiresAt ? (
+        {visibleCertExpiry ? (
           <div className="flex items-start gap-3">
             <ShieldAlert className="mt-0.5 size-4 shrink-0 text-amber-500" />
             <div className="flex-1">
               <p className="text-sm font-medium">Certificado Verifactu por caducar</p>
               <p className="text-xs text-muted-foreground">
-                Caduca el {formatDate(certExpiresAt)} ({relativeTime(certExpiresAt)}).{" "}
+                Caduca el {formatDate(visibleCertExpiry)} ({relativeTime(visibleCertExpiry)}).{" "}
                 <Link href="/settings" className="underline">
                   Renovar
                 </Link>
@@ -76,13 +81,13 @@ export function AvisosPanel({
           </Section>
         ) : null}
 
-        {verifactuPending.length > 0 ? (
+        {visibleVerifactu.length > 0 ? (
           <Section
             icon={<AlertTriangle className="size-4 text-amber-500" />}
-            title={`Verifactu pendiente (${verifactuPending.length})`}
+            title={`Verifactu pendiente (${visibleVerifactu.length})`}
           >
             <ul className="space-y-1.5">
-              {verifactuPending.map((v) => (
+              {visibleVerifactu.map((v) => (
                 <li key={v.id} className="flex items-center justify-between gap-2">
                   <Link href={`/invoices/${v.id}`} className="truncate text-sm hover:underline">
                     {v.full_number ?? v.id.slice(0, 8)}
@@ -97,13 +102,13 @@ export function AvisosPanel({
           </Section>
         ) : null}
 
-        {overdueInvoices.length > 0 ? (
+        {visibleOverdue.length > 0 ? (
           <Section
             icon={<FileWarning className="size-4 text-red-500" />}
-            title={`Facturas vencidas (${overdueInvoices.length})`}
+            title={`Facturas vencidas (${visibleOverdue.length})`}
           >
             <ul className="space-y-1.5">
-              {overdueInvoices.map((inv) => (
+              {visibleOverdue.map((inv) => (
                 <li key={inv.id} className="flex items-center justify-between gap-2">
                   <Link href={`/invoices/${inv.id}`} className="truncate text-sm hover:underline">
                     {inv.full_number ?? inv.id.slice(0, 8)}

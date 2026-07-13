@@ -95,9 +95,9 @@ export function AdPreviewDialog({ adId, adName, campaignName, adsManagerUrl }: P
             <p className="px-4 text-center text-sm text-destructive">{error}</p>
           ) : body ? (
             // Meta returns a self-contained `<iframe src="...">` snippet.
-            // biome-ignore lint/security/noDangerouslySetInnerHtml: trusted Meta-hosted iframe
             <div
               className="w-full [&_iframe]:h-[420px] [&_iframe]:w-full [&_iframe]:border-0"
+              // biome-ignore lint/security/noDangerouslySetInnerHtml: trusted Meta-hosted iframe
               dangerouslySetInnerHTML={{ __html: body }}
             />
           ) : (

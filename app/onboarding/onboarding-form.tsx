@@ -108,7 +108,9 @@ export function OnboardingForm({
       <Card>
         <CardContent className="flex items-center gap-4 py-4">
           <Avatar size="lg" className="size-14">
-            {avatarSrc ? <AvatarImage src={avatarSrc} alt={name || email} /> : null}
+            {avatarSrc ? (
+              <AvatarImage src={avatarSrc} alt={name || email} referrerPolicy="no-referrer" />
+            ) : null}
             <AvatarFallback>{initials || "·"}</AvatarFallback>
           </Avatar>
           <div className="flex flex-col gap-0.5">

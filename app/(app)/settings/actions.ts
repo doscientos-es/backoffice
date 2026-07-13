@@ -1,7 +1,6 @@
 "use server";
 
 import { requireRole, requireUser } from "@/lib/auth";
-import { buildSignatureHtml } from "@/lib/email/signature";
 import { createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -51,22 +50,11 @@ export async function updateProfile(
     return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
   }
 
-  const signatureHtml = buildSignatureHtml(
-    {
-      name: user.name,
-      jobTitle: parsed.data.job_title,
-      contactEmail: parsed.data.contact_email ?? parsed.data.email_alias,
-      phone: parsed.data.phone,
-    },
-    process.env.NEXT_PUBLIC_APP_URL ?? "https://app.doscientos.es",
-  );
-
   const supabase = await createServerClient();
   const { error } = await supabase
     .from("team_members")
     .update({
       email_alias: parsed.data.email_alias ?? null,
-      signature_html: signatureHtml,
       github_handle: parsed.data.github_handle ?? null,
       job_title: parsed.data.job_title ?? null,
       phone: parsed.data.phone ?? null,
@@ -142,16 +130,6 @@ export async function updateMemberProfile(
     return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
   }
 
-  const signatureHtml = buildSignatureHtml(
-    {
-      name: parsed.data.name,
-      jobTitle: parsed.data.job_title,
-      contactEmail: parsed.data.contact_email ?? parsed.data.email_alias,
-      phone: parsed.data.phone,
-    },
-    process.env.NEXT_PUBLIC_APP_URL ?? "https://app.doscientos.es",
-  );
-
   const supabase = await createServerClient();
   const { error } = await supabase
     .from("team_members")
@@ -159,7 +137,6 @@ export async function updateMemberProfile(
       name: parsed.data.name,
       avatar_url: parsed.data.avatar_url ?? null,
       email_alias: parsed.data.email_alias ?? null,
-      signature_html: signatureHtml,
       github_handle: parsed.data.github_handle ?? null,
       job_title: parsed.data.job_title ?? null,
       phone: parsed.data.phone ?? null,

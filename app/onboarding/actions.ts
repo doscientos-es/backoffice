@@ -1,7 +1,6 @@
 "use server";
 
 import { requireUser } from "@/lib/auth";
-import { buildSignatureHtml } from "@/lib/email/signature";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -63,17 +62,6 @@ export async function completeOnboarding(formData: FormData): Promise<ActionResu
   const supabase = createAdminClient();
   const githubHandle = parsed.data.github_handle ?? null;
 
-  // Generate the signature from the available onboarding data. The user can
-  // refine it later from Settings once they add job title, phone, etc.
-  const signatureHtml = buildSignatureHtml(
-    {
-      name: parsed.data.name,
-      contactEmail: parsed.data.email_alias,
-      phone: parsed.data.phone,
-    },
-    process.env.NEXT_PUBLIC_APP_URL ?? "https://app.doscientos.es",
-  );
-
   // We never write the GitHub avatar into `avatar_url`. Priority is
   // Google (synced to `avatar_url` in /auth/callback) → GitHub (derived from
   // `github_handle` at render via `memberAvatarUrl`) → none. Persisting the
@@ -85,7 +73,6 @@ export async function completeOnboarding(formData: FormData): Promise<ActionResu
       github_handle: githubHandle,
       email_alias: parsed.data.email_alias ?? null,
       phone: parsed.data.phone ?? null,
-      signature_html: signatureHtml,
       onboarded_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })

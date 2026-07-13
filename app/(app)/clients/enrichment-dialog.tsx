@@ -39,9 +39,13 @@ function FieldRow({
   checked: boolean;
   onCheckedChange: () => void;
 }) {
+  const id = `field-${label}-${value}`;
   return (
-    <label className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 hover:bg-muted/50">
-      <Checkbox checked={checked} onCheckedChange={onCheckedChange} />
+    <label
+      htmlFor={id}
+      className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 hover:bg-muted/50"
+    >
+      <Checkbox id={id} checked={checked} onCheckedChange={onCheckedChange} />
       <span className="shrink-0 text-muted-foreground">{icon}</span>
       <span className="min-w-0 text-sm">
         <span className="font-medium text-muted-foreground">{label}: </span>

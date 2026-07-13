@@ -32,8 +32,8 @@ export default async function EditInvoicePage({ params }: { params: Promise<{ id
     .eq("invoice_id", id)
     .order("position");
 
+  // biome-ignore lint/suspicious/noExplicitAny: joined tables from Supabase query
   const client = (invoice as any).clients;
-  const _project = (invoice as any).projects;
 
   return (
     <div className="flex flex-col gap-6">

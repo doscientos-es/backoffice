@@ -161,6 +161,7 @@ export default async function TeamSettingsPage() {
                                     })!
                                   }
                                   alt={m.name}
+                                  referrerPolicy="no-referrer"
                                 />
                               ) : null}
                               <AvatarFallback>{initials(m.name)}</AvatarFallback>

@@ -156,7 +156,7 @@ export function ExtractTasksDialog({ leadId, trigger, createTaskAction }: Extrac
             <ul className="flex flex-col gap-2 max-h-80 overflow-y-auto pr-1">
               {tasks.map((task, i) => (
                 <li
-                  key={i}
+                  key={`${task.title}-${i}`}
                   className={cn(
                     "flex items-start gap-3 rounded-md border p-3 cursor-pointer transition-colors",
                     selected.has(i)

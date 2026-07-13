@@ -62,12 +62,14 @@ export function AttributionSkeleton() {
       <CardContent className="flex flex-col gap-2">
         <div className="flex gap-4 border-b border-border/60 pb-2">
           {COL_WIDTHS.map((w, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton
             <Skeleton key={`afh-${w}-${i}`} className="h-3 rounded" style={{ width: w }} />
           ))}
         </div>
         {ROW_KEYS.map((key) => (
           <div key={key} className="flex gap-4 py-1.5">
             {COL_WIDTHS.map((w, j) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton
               <Skeleton key={`${key}-${w}-${j}`} className="h-4 rounded" style={{ width: w }} />
             ))}
           </div>
@@ -86,12 +88,14 @@ export function TableSkeleton() {
       <CardContent className="flex flex-col gap-2">
         <div className="flex gap-4 border-b border-border/60 pb-2">
           {TABLE_COL_WIDTHS.map((w, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton
             <Skeleton key={`head-${w}-${i}`} className="h-3 rounded" style={{ width: w }} />
           ))}
         </div>
         {TABLE_ROW_KEYS.map((key) => (
           <div key={key} className="flex gap-4 py-1.5">
             {TABLE_COL_WIDTHS.map((w, j) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton
               <Skeleton key={`${key}-${w}-${j}`} className="h-4 rounded" style={{ width: w }} />
             ))}
           </div>

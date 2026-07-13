@@ -23,7 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { CallOutcome } from "@/lib/schemas/lead";
 import { Mail, NotebookPen, Phone, Send, Video } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { type FormEvent, useState } from "react";
 import { createReminder } from "../reminders/actions";
 import { EmailComposer } from "./[id]/email-composer";
 import { logLeadCall, logLeadEmail, logLeadNote, scheduleLeadMeeting } from "./actions";
@@ -84,10 +84,19 @@ function MemberCheckboxes({
       </Label>
       <div className="flex flex-col gap-1.5 rounded-md border border-border/60 bg-muted/30 p-2.5">
         {members.map((m) => (
-          <label key={m.id} className="flex cursor-pointer select-none items-center gap-2 text-sm">
-            <Checkbox checked={selected.has(m.id)} onCheckedChange={() => onToggle(m.id)} />
-            {m.name}
-          </label>
+          <div key={m.id} className="flex items-center gap-2">
+            <Checkbox
+              id={`member-${m.id}`}
+              checked={selected.has(m.id)}
+              onCheckedChange={() => onToggle(m.id)}
+            />
+            <label
+              htmlFor={`member-${m.id}`}
+              className="flex-1 cursor-pointer select-none py-0.5 text-sm"
+            >
+              {m.name}
+            </label>
+          </div>
         ))}
       </div>
     </div>
@@ -146,7 +155,7 @@ export function QMeetDialog({
     }
   }
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     feedback.setPending();
     const attendeeEmails = [...(leadEmail ? [leadEmail] : []), ...members.emails(meetMembers)];
@@ -289,7 +298,7 @@ export function QMeetNowDialog({
   const feedback = useFormFeedback();
   const router = useRouter();
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     feedback.setPending();
     const now = new Date();
@@ -429,7 +438,7 @@ export function QCallDialog({
   const feedback = useFormFeedback();
   const router = useRouter();
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     feedback.setPending();
     const res = await logLeadCall({
@@ -555,7 +564,7 @@ export function QEmailDialog({ leadId, leadEmail }: { leadId: string; leadEmail:
   const feedback = useFormFeedback();
   const router = useRouter();
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     feedback.setPending();
     const res = await logLeadEmail({
@@ -643,7 +652,7 @@ export function QNoteDialog({ leadId }: { leadId: string }) {
   const feedback = useFormFeedback();
   const router = useRouter();
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     feedback.setPending();
     const res = await logLeadNote({ leadId, content });

@@ -7,7 +7,7 @@ import {
   MonthExpensesWidget,
 } from "@/components/finance/month-expenses-card";
 import { SectionBoundary } from "@/components/ui/error-boundary";
-import { requireUser } from "@/lib/auth";
+import { canViewFinance, requireUser } from "@/lib/auth";
 import { getGreeting, parseDashboardRange } from "@/lib/utils/date";
 import type { Metadata } from "next";
 import { AvisosWidget } from "./_components/avisos-widget";
@@ -35,6 +35,7 @@ export default async function InicioPage({ searchParams }: PageProps) {
   const range = parseDashboardRange(params.range);
   const greeting = getGreeting();
   const firstName = user.name.split(" ")[0];
+  const showFinance = canViewFinance(user.role);
 
   return (
     <div className="flex flex-col gap-8">
@@ -56,11 +57,11 @@ export default async function InicioPage({ searchParams }: PageProps) {
           pending={<AvisosWidgetSkeleton />}
           label="No se pudieron cargar los avisos"
         >
-          <AvisosWidget />
+          <AvisosWidget showFinance={showFinance} />
         </SectionBoundary>
       </div>
 
-      {/* La empresa de un vistazo: KPIs comerciales, salud financiera e ingresos */}
+      {/* La empresa de un vistazo: KPIs comerciales + financieros (solo owner/admin) */}
       <section className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-sm font-medium text-muted-foreground">La empresa de un vistazo</h2>
@@ -77,30 +78,34 @@ export default async function InicioPage({ searchParams }: PageProps) {
           pending={<KpiGridSkeleton />}
           label="No se pudieron cargar los KPIs"
         >
-          <KpiGrid range={range} />
+          <KpiGrid range={range} showFinance={showFinance} />
         </SectionBoundary>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <SectionBoundary
-            pending={<AccountsReceivableSkeleton />}
-            label="No se pudo cargar el cobro pendiente"
-          >
-            <AccountsReceivableWidget />
-          </SectionBoundary>
-          <SectionBoundary
-            pending={<MonthExpensesSkeleton />}
-            label="No se pudo cargar el gasto del mes"
-          >
-            <MonthExpensesWidget />
-          </SectionBoundary>
-        </div>
+        {showFinance ? (
+          <>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <SectionBoundary
+                pending={<AccountsReceivableSkeleton />}
+                label="No se pudo cargar el cobro pendiente"
+              >
+                <AccountsReceivableWidget />
+              </SectionBoundary>
+              <SectionBoundary
+                pending={<MonthExpensesSkeleton />}
+                label="No se pudo cargar el gasto del mes"
+              >
+                <MonthExpensesWidget />
+              </SectionBoundary>
+            </div>
 
-        <SectionBoundary
-          pending={<RevenueWidgetSkeleton />}
-          label="No se pudieron cargar los ingresos"
-        >
-          <RevenueWidget />
-        </SectionBoundary>
+            <SectionBoundary
+              pending={<RevenueWidgetSkeleton />}
+              label="No se pudieron cargar los ingresos"
+            >
+              <RevenueWidget />
+            </SectionBoundary>
+          </>
+        ) : null}
       </section>
     </div>
   );
