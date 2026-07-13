@@ -13,10 +13,7 @@ export default async function NewAssetPage() {
   if (user.role === "viewer") {
     return (
       <div className="flex flex-col gap-6">
-        <PageHeader
-          title="Subir asset"
-          back={<BackLink href="/assets" label="Volver" />}
-        />
+        <PageHeader title="Subir asset" back={<BackLink href="/brand" label="Volver" />} />
         <p className="text-sm text-muted-foreground">No tienes permiso para subir assets.</p>
       </div>
     );
@@ -27,7 +24,7 @@ export default async function NewAssetPage() {
       <PageHeader
         title="Subir asset de marca"
         description="Añade logos, isotipos, backgrounds u otros recursos visuales de la empresa."
-        back={<BackLink href="/assets" label="Volver a assets" />}
+        back={<BackLink href="/brand" label="Volver a marca" />}
       />
       <Card className="max-w-2xl">
         <CardContent className="pt-6">

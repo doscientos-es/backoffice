@@ -110,7 +110,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/reminders", label: "Recordatorios", icon: Bell },
       { href: "/internal-docs", label: "Docs internos", icon: Archive },
-      { href: "/assets", label: "Assets", icon: Images },
+      { href: "/brand", label: "Marca", icon: Images },
       { href: "/vault", label: "Bóveda", icon: KeyRound, allowedRoles: ADMIN_ROLES },
       { href: "/settings", label: "Ajustes", icon: Settings },
     ],
@@ -210,7 +210,19 @@ export function Sidebar({ user, verifactuMode }: { user: CurrentUser; verifactuM
     items: g.items.filter((item) => !item.allowedRoles || item.allowedRoles.includes(user.role)),
   })).filter((g) => g.items.length > 0);
 
-  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const isActive = (href: string) => {
+    if (pathname === href) return true;
+    if (!pathname.startsWith(`${href}/`)) return false;
+    // Don't activate parent if a more specific sibling item already matches
+    return !visibleGroups.some((g) =>
+      g.items.some(
+        (i) =>
+          i.href !== href &&
+          i.href.startsWith(`${href}/`) &&
+          (pathname === i.href || pathname.startsWith(`${i.href}/`)),
+      ),
+    );
+  };
 
   return (
     <aside className="hidden w-56 shrink-0 border-r border-border bg-card md:flex md:flex-col">
