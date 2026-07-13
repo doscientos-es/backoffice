@@ -298,7 +298,8 @@ export function mapMetaLeadgenToIntake(
   const qualification = classifyFormAnswers(formAnswers);
   const explicitUrgency = findField(res.field_data, FIELD_ALIASES.urgency);
   const estimatedValue = parseMetaBudgetToEstimatedValue(res.field_data);
-  const inferredUrgencyFromValue = formAnswers.find((a) => isUrgencyLikeValue(a.value))?.value ?? null;
+  const inferredUrgencyFromValue =
+    formAnswers.find((a) => isUrgencyLikeValue(a.value))?.value ?? null;
   const urgency = explicitUrgency || qualification.urgency || inferredUrgencyFromValue;
 
   return {
