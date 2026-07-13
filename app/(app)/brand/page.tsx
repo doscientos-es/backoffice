@@ -2,11 +2,11 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
+import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Plus } from "lucide-react";
-import { BrandHub } from "./_components/brand-hub";
 import type { BrandAsset } from "./_components/assets-grid";
+import { BrandHub } from "./_components/brand-hub";
 import type { BrandToken } from "./_components/token-edit-dialog";
 
 export const metadata: Metadata = { title: "Marca · doscientos" };
@@ -37,7 +37,7 @@ export default async function BrandPage() {
       <PageHeader
         title="Marca"
         description="Assets visuales, tokens de diseño y exportación para nuevos proyectos."
-        action={
+        actions={
           user.role !== "viewer" ? (
             <Button asChild size="sm">
               <Link href="/brand/new">
@@ -47,6 +47,7 @@ export default async function BrandPage() {
             </Button>
           ) : undefined
         }
+
       />
 
       {assetsResult.error || tokensResult.error ? (

@@ -40,10 +40,21 @@ function buildCssVars(tokens: BrandToken[]) {
 }
 
 function buildTheme(tokens: BrandToken[]) {
-  const lines = tokens.map((t) => {
-    if (t.token_group === "color") return `  --color-${t.key}: var(--${t.key});`;
-    if (t.token_group === "radius") return `  --radius-lg: var(--${t.key});`;
-    return `  --${t.key}: ${t.value};`;
+  const lines = tokens.flatMap((t) => {
+    if (t.token_group === "color") return [`  --color-${t.key}: var(--${t.key});`];
+    if (t.token_group === "radius") {
+      return [
+        `  --radius: var(--${t.key});`,
+        `  --radius-sm: calc(var(--${t.key}) * 0.6);`,
+        `  --radius-md: calc(var(--${t.key}) * 0.8);`,
+        `  --radius-lg: var(--${t.key});`,
+        `  --radius-xl: calc(var(--${t.key}) * 1.4);`,
+        `  --radius-2xl: calc(var(--${t.key}) * 1.8);`,
+        `  --radius-3xl: calc(var(--${t.key}) * 2.2);`,
+        `  --radius-4xl: calc(var(--${t.key}) * 2.6);`,
+      ];
+    }
+    return [`  --${t.key}: ${t.value};`];
   });
   return `@theme inline {\n${lines.join("\n")}\n}`;
 }
@@ -52,7 +63,7 @@ function buildJson(tokens: BrandToken[]) {
   const obj: Record<string, Record<string, string>> = {};
   for (const t of tokens) {
     if (!obj[t.token_group]) obj[t.token_group] = {};
-    obj[t.token_group][t.key] = t.value;
+    obj[t.token_group]![t.key] = t.value;
   }
   return JSON.stringify(obj, null, 2);
 }
@@ -71,6 +82,13 @@ function buildAiBrief(tokens: BrandToken[], assets: BrandAsset[]) {
   const assetRows = logoAssets
     .map((a) => `- **${a.name}** (${a.category}): ${a.public_url}`)
     .join("\n");
+
+  const radiusScale = radii.map(t => `  --radius: var(--${t.key});
+  --radius-sm: calc(var(--${t.key}) * 0.6);
+  --radius-md: calc(var(--${t.key}) * 0.8);
+  --radius-lg: var(--${t.key});
+  --radius-xl: calc(var(--${t.key}) * 1.4);
+  --radius-2xl: calc(var(--${t.key}) * 1.8);`).join("\n");
 
   return `# Guía de marca – doscientos
 
@@ -101,6 +119,7 @@ Añade en \`globals.css\`:
 \`\`\`css
 @theme inline {
 ${colors.map((t) => `  --color-${t.key}: var(--${t.key});`).join("\n")}
+${radiusScale}
 }
 \`\`\`
 
@@ -108,7 +127,7 @@ ${colors.map((t) => `  --color-${t.key}: var(--${t.key});`).join("\n")}
 
 \`\`\`css
 :root {
-${colors.map((t) => `  --${t.key}: ${t.value};`).join("\n")}
+${tokens.map((t) => `  --${t.key}: ${t.value};`).join("\n")}
 }
 \`\`\`
 `;

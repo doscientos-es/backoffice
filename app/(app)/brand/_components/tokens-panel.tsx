@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { deleteToken } from "../actions";
-import { TokenEditDialog, type BrandToken } from "./token-edit-dialog";
+import { type BrandToken, TokenEditDialog } from "./token-edit-dialog";
 
 const GROUP_LABELS: Record<BrandToken["token_group"], string> = {
   color: "Colores",
@@ -87,9 +87,14 @@ export function TokensPanel({
   isAdmin: boolean;
 }) {
   const [editTarget, setEditTarget] = useState<BrandToken | null | undefined>(undefined);
-  const grouped = Object.groupBy(tokens, (t) => t.token_group) as Partial<
-    Record<BrandToken["token_group"], BrandToken[]>
-  >;
+  const grouped = tokens.reduce<Partial<Record<BrandToken["token_group"], BrandToken[]>>>(
+    (acc, t) => {
+      if (!acc[t.token_group]) acc[t.token_group] = [];
+      acc[t.token_group]!.push(t);
+      return acc;
+    },
+    {},
+  );
   const orderedGroups = (
     ["color", "typography", "spacing", "radius", "shadow"] as BrandToken["token_group"][]
   ).filter((g) => grouped[g]?.length);
