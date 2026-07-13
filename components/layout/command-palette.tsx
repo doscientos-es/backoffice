@@ -21,19 +21,25 @@ import {
 } from "@/lib/navigation/shortcuts";
 import {
   Archive,
+  BarChart3,
   Bell,
+  CalendarDays,
   CheckSquare,
   Clock,
   FileSignature,
   FileText,
   FolderKanban,
+  Globe,
   Home,
   Inbox,
+  KeyRound,
+  Loader2,
   Megaphone,
   Plus,
   Receipt,
   Repeat,
   Settings,
+  Share2,
   Users,
   Wallet,
 } from "lucide-react";
@@ -58,30 +64,41 @@ const TYPE_LABEL: Record<SearchResultItem["type"], string> = {
 
 const NAV_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
   "/inicio": Home,
+  "/calendar": CalendarDays,
   "/leads": Inbox,
-  "/marketing": Megaphone,
   "/clients": Users,
   "/projects": FolderKanban,
   "/proposals": FileSignature,
   "/invoices": Receipt,
   "/subscriptions": Repeat,
-  "/tasks": CheckSquare,
   "/finance": Wallet,
+  "/finance/expenses": Wallet,
+  "/finance/portfolio": BarChart3,
+  "/tasks": CheckSquare,
   "/reminders": Bell,
+  "/marketing": Megaphone,
+  "/social": Share2,
   "/documents": FileText,
   "/internal-docs": Archive,
   "/settings": Settings,
+  "/webs": Globe,
+  "/vault": KeyRound,
 };
 
-/** Secciones sin chord dedicado (cubiertas solo por el palette). */
-const EXTRA_LINKS = [
-  { href: "/subscriptions", label: "Suscripciones" },
+/**
+ * Lista unificada de navegación: NAV_SHORTCUTS (con chord) + páginas extra.
+ * Sin duplicados, sin EXTRA_LINKS separado.
+ */
+const ALL_NAV: Array<{ href: string; label: string; key?: string }> = [
+  ...NAV_SHORTCUTS,
+  { href: "/calendar", label: "Agenda" },
+  { href: "/social", label: "Social" },
   { href: "/finance", label: "Finanzas" },
-  { href: "/reminders", label: "Recordatorios" },
+  { href: "/finance/portfolio", label: "Portfolio" },
   { href: "/documents", label: "Documentos" },
   { href: "/internal-docs", label: "Docs internos" },
   { href: "/settings", label: "Ajustes" },
-] as const;
+];
 
 function loadRecents(): RecentItem[] {
   if (typeof window === "undefined") return [];
@@ -185,17 +202,43 @@ export function CommandPalette() {
     [go],
   );
 
+  const hasResults = results.length > 0;
+  const isSearching = query.trim().length > 0;
+
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
       <CommandInput
-        placeholder="Buscar leads, clientes, proyectos, facturas, tareas…"
+        placeholder="Buscar clientes, proyectos, leads…"
         value={query}
         onValueChange={setQuery}
       />
       <CommandList>
+        {/* Estado vacío / buscando */}
         <CommandEmpty>
-          {loading ? "Buscando…" : query ? "Sin resultados" : "Empieza a escribir para buscar."}
+          {loading ? (
+            <span className="flex items-center justify-center gap-2 text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" />
+              Buscando…
+            </span>
+          ) : isSearching ? (
+            <span className="flex flex-col items-center gap-0.5">
+              <span className="font-medium">Sin resultados</span>
+              <span className="text-xs text-muted-foreground">
+                No hay nada que coincida con "{query}"
+              </span>
+            </span>
+          ) : null}
         </CommandEmpty>
+
+        {/* Indicador de carga mientras hay resultados previos */}
+        {loading && hasResults && (
+          <div className="flex items-center gap-1.5 px-3 py-1 text-[10px] text-muted-foreground/60">
+            <Loader2 className="size-2.5 animate-spin" />
+            Actualizando…
+          </div>
+        )}
+
+        {/* Resultados de búsqueda agrupados por tipo */}
         {Array.from(groups.entries()).map(([type, items]) => {
           const Icon = TYPE_ICON[type];
           return (
@@ -206,10 +249,10 @@ export function CommandPalette() {
                   value={`${r.label} ${r.sublabel ?? ""} ${type}`}
                   onSelect={() => selectResult({ href: r.href, label: r.label, type })}
                 >
-                  <Icon className="size-4" />
+                  <Icon className="size-4 shrink-0 text-muted-foreground" />
                   <span className="truncate">{r.label}</span>
                   {r.sublabel ? (
-                    <span className="ml-2 truncate text-xs text-muted-foreground">
+                    <span className="ml-auto shrink-0 truncate text-xs text-muted-foreground max-w-[40%]">
                       {r.sublabel}
                     </span>
                   ) : null}
@@ -218,7 +261,9 @@ export function CommandPalette() {
             </CommandGroup>
           );
         })}
-        {query.trim().length === 0 ? (
+
+        {/* Estado vacío: recientes + navegación + acciones */}
+        {!isSearching ? (
           <>
             {recents.length > 0 ? (
               <>
@@ -233,7 +278,7 @@ export function CommandPalette() {
                         value={`reciente ${r.label}`}
                         onSelect={() => selectResult(r)}
                       >
-                        <Icon className="size-4" />
+                        <Icon className="size-4 shrink-0 text-muted-foreground" />
                         <span className="truncate">{r.label}</span>
                       </CommandItem>
                     );
@@ -242,34 +287,38 @@ export function CommandPalette() {
                 <CommandSeparator />
               </>
             ) : null}
-            <CommandGroup heading="Navegación">
-              {NAV_SHORTCUTS.map((l) => {
+
+            <CommandGroup heading="Ir a…">
+              {ALL_NAV.map((l) => {
                 const Icon = NAV_ICON[l.href] ?? Home;
                 return (
-                  <CommandItem key={l.href} value={`ir a ${l.label}`} onSelect={() => go(l.href)}>
-                    <Icon className="size-4" />
+                  <CommandItem
+                    key={l.href}
+                    value={`ir a ${l.label}`}
+                    onSelect={() => go(l.href)}
+                  >
+                    <Icon className="size-4 shrink-0 text-muted-foreground" />
                     {l.label}
-                    <CommandShortcut>G {l.key.toUpperCase()}</CommandShortcut>
-                  </CommandItem>
-                );
-              })}
-              {EXTRA_LINKS.map((l) => {
-                const Icon = NAV_ICON[l.href] ?? Home;
-                return (
-                  <CommandItem key={l.href} value={`ir a ${l.label}`} onSelect={() => go(l.href)}>
-                    <Icon className="size-4" />
-                    {l.label}
+                    {l.key ? (
+                      <CommandShortcut className="hidden sm:inline">
+                        G {l.key.toUpperCase()}
+                      </CommandShortcut>
+                    ) : null}
                   </CommandItem>
                 );
               })}
             </CommandGroup>
+
             <CommandSeparator />
-            <CommandGroup heading="Acciones">
+
+            <CommandGroup heading="Crear">
               {CREATE_SHORTCUTS.map((a) => (
-                <CommandItem key={a.href} value={a.label} onSelect={() => go(a.href)}>
-                  <Plus className="size-4" />
+                <CommandItem key={a.href} value={`crear ${a.label}`} onSelect={() => go(a.href)}>
+                  <Plus className="size-4 shrink-0 text-muted-foreground" />
                   {a.label}
-                  <CommandShortcut>C {a.key.toUpperCase()}</CommandShortcut>
+                  <CommandShortcut className="hidden sm:inline">
+                    C {a.key.toUpperCase()}
+                  </CommandShortcut>
                 </CommandItem>
               ))}
             </CommandGroup>

@@ -43,7 +43,13 @@ function CommandDialog({
   return (
     <Dialog {...props}>
       <DialogContent
-        className={cn("top-1/3 translate-y-0 overflow-hidden rounded-xl! p-0", className)}
+        className={cn(
+          // Desktop: centrado, 1/3 desde arriba, redondeado
+          "top-1/3 translate-y-0 overflow-hidden rounded-xl! p-0",
+          // Mobile: anclado arriba, ancho completo, solo redondeado abajo
+          "max-sm:top-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:max-w-none max-sm:rounded-t-none! max-sm:rounded-b-2xl!",
+          className,
+        )}
         showCloseButton={showCloseButton}
       >
         <DialogHeader className="sr-only">
@@ -61,18 +67,18 @@ function CommandInput({
   ...props
 }: React.ComponentProps<typeof CommandPrimitive.Input>) {
   return (
-    <div data-slot="command-border-wrapper" className="p-1 pb-0">
-      <InputGroup className="h-8! rounded-lg! border-border/30 bg-border/30 shadow-none! *:data-[slot=input-group-addon]:pl-2!">
+    <div data-slot="command-border-wrapper" className="p-1.5 pb-0">
+      <InputGroup className="h-8! max-sm:h-12! rounded-lg! border-border/30 bg-border/30 shadow-none! *:data-[slot=input-group-addon]:pl-2!">
         <CommandPrimitive.Input
           data-slot="command-border"
           className={cn(
-            "w-full text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
+            "w-full text-sm max-sm:text-base outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
             className,
           )}
           {...props}
         />
         <InputGroupAddon>
-          <SearchIcon className="size-4 shrink-0 opacity-50" />
+          <SearchIcon className="size-4 max-sm:size-5 shrink-0 opacity-50" />
         </InputGroupAddon>
       </InputGroup>
     </div>
@@ -84,7 +90,7 @@ function CommandList({ className, ...props }: React.ComponentProps<typeof Comman
     <CommandPrimitive.List
       data-slot="command-list"
       className={cn(
-        "no-scrollbar max-h-72 scroll-py-1 overflow-x-hidden overflow-y-auto outline-none scroll-fade",
+        "no-scrollbar max-h-80 max-sm:max-h-[50dvh] scroll-py-1 overflow-x-hidden overflow-y-auto outline-none scroll-fade",
         className,
       )}
       {...props}
@@ -143,7 +149,7 @@ function CommandItem({
     <CommandPrimitive.Item
       data-slot="command-item"
       className={cn(
-        "group/command-item relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none in-data-[slot=dialog-content]:rounded-lg! data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-selected:bg-muted data-selected:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-selected:*:[svg]:text-foreground",
+        "group/command-item relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 max-sm:py-3 text-sm outline-hidden select-none in-data-[slot=dialog-content]:rounded-lg! data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-selected:bg-muted data-selected:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-selected:*:[svg]:text-foreground",
         className,
       )}
       {...props}

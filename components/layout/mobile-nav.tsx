@@ -11,19 +11,23 @@ import type { CurrentUser, MemberRole } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import {
   Archive,
+  BarChart3,
   Bell,
+  CalendarDays,
   CheckSquare,
+  ChevronDown,
   FileSignature,
-  FileText,
   FolderKanban,
+  Globe,
   Home,
   Inbox,
   KeyRound,
-  Landmark,
   Megaphone,
   Menu,
   Receipt,
+  Repeat,
   Settings,
+  Share2,
   Users,
   Wallet,
   X,
@@ -31,6 +35,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { version } from "../../package.json";
 
 type NavItem = {
   href: string;
@@ -39,25 +44,160 @@ type NavItem = {
   allowedRoles?: MemberRole[];
 };
 
+type NavGroup = {
+  label?: string;
+  items: NavItem[];
+  defaultOpen?: boolean;
+};
+
 const ADMIN_ROLES: MemberRole[] = ["owner", "admin"];
 
-const NAV: NavItem[] = [
-  { href: "/inicio", label: "Inicio", icon: Home },
-  { href: "/leads", label: "Leads", icon: Inbox },
-  { href: "/clients", label: "Clientes", icon: Users },
-  { href: "/projects", label: "Proyectos", icon: FolderKanban },
-  { href: "/proposals", label: "Propuestas", icon: FileSignature },
-  { href: "/invoices", label: "Facturas", icon: Receipt, allowedRoles: ADMIN_ROLES },
-  { href: "/finance", label: "Finanzas", icon: Wallet, allowedRoles: ADMIN_ROLES },
-  { href: "/finance/expenses", label: "Gastos", icon: Landmark, allowedRoles: ADMIN_ROLES },
-  { href: "/marketing", label: "Anuncios", icon: Megaphone, allowedRoles: ADMIN_ROLES },
-  { href: "/internal-docs", label: "Docs internos", icon: Archive },
-  { href: "/tasks", label: "Tareas", icon: CheckSquare },
-  { href: "/reminders", label: "Avisos", icon: Bell },
-  { href: "/vault", label: "Bóveda", icon: KeyRound, allowedRoles: ADMIN_ROLES },
-  { href: "/documents", label: "Documentos", icon: FileText },
-  { href: "/settings", label: "Ajustes", icon: Settings },
+const NAV_GROUPS: NavGroup[] = [
+  {
+    items: [
+      { href: "/inicio", label: "Inicio", icon: Home },
+      { href: "/calendar", label: "Agenda", icon: CalendarDays },
+    ],
+  },
+  {
+    label: "Ventas",
+    items: [
+      { href: "/leads", label: "Leads", icon: Inbox },
+      { href: "/clients", label: "Clientes", icon: Users },
+      { href: "/proposals", label: "Propuestas", icon: FileSignature },
+    ],
+  },
+  {
+    label: "Entrega",
+    items: [
+      { href: "/projects", label: "Proyectos", icon: FolderKanban },
+      { href: "/tasks", label: "Tareas", icon: CheckSquare },
+      { href: "/webs", label: "Webs", icon: Globe, allowedRoles: ADMIN_ROLES },
+    ],
+  },
+  {
+    label: "Finanzas",
+    defaultOpen: false,
+    items: [
+      { href: "/invoices", label: "Facturas", icon: Receipt, allowedRoles: ADMIN_ROLES },
+      { href: "/subscriptions", label: "Suscripciones", icon: Repeat, allowedRoles: ADMIN_ROLES },
+      { href: "/finance", label: "Finanzas", icon: Wallet, allowedRoles: ADMIN_ROLES },
+      { href: "/finance/portfolio", label: "Portfolio", icon: BarChart3, allowedRoles: ADMIN_ROLES },
+    ],
+  },
+  {
+    label: "Growth",
+    defaultOpen: false,
+    items: [
+      { href: "/marketing", label: "Publicidad", icon: Megaphone, allowedRoles: ADMIN_ROLES },
+      { href: "/social", label: "Social", icon: Share2, allowedRoles: ADMIN_ROLES },
+    ],
+  },
+  {
+    label: "Empresa",
+    defaultOpen: false,
+    items: [
+      { href: "/reminders", label: "Recordatorios", icon: Bell },
+      { href: "/internal-docs", label: "Docs internos", icon: Archive },
+      { href: "/vault", label: "Bóveda", icon: KeyRound, allowedRoles: ADMIN_ROLES },
+      { href: "/settings", label: "Ajustes", icon: Settings },
+    ],
+  },
 ];
+
+function NavLink({
+  href,
+  label,
+  icon: Icon,
+  active,
+  onClick,
+}: {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
+        "before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-r-full before:bg-primary before:transition-opacity",
+        active
+          ? "bg-secondary text-foreground font-medium before:opacity-100"
+          : "text-muted-foreground before:opacity-0 hover:bg-secondary/60 hover:text-foreground",
+      )}
+    >
+      <Icon
+        className={cn(
+          "h-4 w-4 shrink-0 transition-colors",
+          active ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
+        )}
+      />
+      <span className="truncate">{label}</span>
+    </Link>
+  );
+}
+
+function NavSection({
+  group,
+  isActive,
+  onNavClick,
+}: {
+  group: NavGroup & { items: NavItem[] };
+  isActive: (href: string) => boolean;
+  onNavClick: () => void;
+}) {
+  const hasActive = group.items.some((i) => isActive(i.href));
+  const fallback = group.defaultOpen ?? true;
+  const [open, setOpen] = useState(() => {
+    if (typeof window === "undefined") return fallback;
+    const stored = localStorage.getItem(`nav-section-mobile-${group.label}`);
+    if (hasActive) return true;
+    return stored === null ? fallback : stored === "1";
+  });
+
+  function toggle() {
+    const next = !open;
+    setOpen(next);
+    localStorage.setItem(`nav-section-mobile-${group.label}`, next ? "1" : "0");
+  }
+
+  return (
+    <div className="flex flex-col gap-0.5">
+      <button
+        type="button"
+        onClick={toggle}
+        aria-expanded={open}
+        className="group flex w-full items-center justify-between rounded-md px-2.5 py-1 transition-colors hover:bg-secondary/40"
+      >
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 select-none group-hover:text-muted-foreground transition-colors">
+          {group.label}
+        </span>
+        <ChevronDown
+          className={cn(
+            "h-3 w-3 text-muted-foreground/40 transition-transform group-hover:text-muted-foreground",
+            open ? "rotate-0" : "-rotate-90",
+          )}
+        />
+      </button>
+      {open &&
+        group.items.map(({ href, label, icon }) => (
+          <NavLink
+            key={href}
+            href={href}
+            label={label}
+            icon={icon}
+            active={isActive(href)}
+            onClick={onNavClick}
+          />
+        ))}
+    </div>
+  );
+}
 
 export function MobileNav({
   user,
@@ -68,9 +208,13 @@ export function MobileNav({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const visibleNav = NAV.filter(
-    (item) => !item.allowedRoles || item.allowedRoles.includes(user.role),
-  );
+
+  const visibleGroups = NAV_GROUPS.map((g) => ({
+    ...g,
+    items: g.items.filter((item) => !item.allowedRoles || item.allowedRoles.includes(user.role)),
+  })).filter((g) => g.items.length > 0);
+
+  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   return (
     <div className="md:hidden">
@@ -104,54 +248,34 @@ export function MobileNav({
 
             {/* Nav links */}
             <nav
-              className="flex flex-1 flex-col gap-0.5 px-2 py-3 overflow-y-auto scroll-fade no-scrollbar"
+              className="flex flex-1 flex-col px-2 py-3 overflow-y-auto scroll-fade no-scrollbar"
               aria-label="Navegación principal"
             >
-              {visibleNav.map(({ href, label, icon: Icon }) => {
-                const active = pathname === href || pathname.startsWith(`${href}/`);
-                return (
-                  <Link
-                    key={href}
-                    href={href}
-                    onClick={() => setOpen(false)}
-                    aria-current={active ? "page" : undefined}
-                    className={cn(
-                      "group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
-                      "before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-r-full before:bg-primary before:transition-opacity",
-                      active
-                        ? "bg-secondary text-foreground font-medium before:opacity-100"
-                        : "text-muted-foreground before:opacity-0 hover:bg-secondary/60 hover:text-foreground",
-                    )}
-                  >
-                    <Icon
-                      className={cn(
-                        "h-4 w-4 shrink-0 transition-colors",
-                        active
-                          ? "text-primary"
-                          : "text-muted-foreground group-hover:text-foreground",
-                      )}
-                    />
-                    <span className="truncate">{label}</span>
-                  </Link>
-                );
-              })}
+              {visibleGroups.map((group, gi) => (
+                <div key={group.label ?? "__home"} className={cn(gi > 0 && "mt-3")}>
+                  {group.label ? (
+                    <NavSection group={group} isActive={isActive} onNavClick={() => setOpen(false)} />
+                  ) : (
+                    <div className="flex flex-col gap-0.5">
+                      {group.items.map(({ href, label, icon }) => (
+                        <NavLink
+                          key={href}
+                          href={href}
+                          label={label}
+                          icon={icon}
+                          active={isActive(href)}
+                          onClick={() => setOpen(false)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
             </nav>
 
-            {/* Footer Actions */}
-            <div className="flex flex-col gap-2 border-t border-border p-2 mt-auto">
-              <ErrorBoundary>
-                <div className="flex items-center justify-between px-2">
-                  <div className="flex items-center gap-1">
-                    <NotificationsBell memberId={user.id} />
-                  </div>
-                  <ThemeToggle />
-                </div>
-                <UserMenu user={user} />
-              </ErrorBoundary>
-              <div className="flex items-center justify-between px-2 pb-1">
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                  v0.1 · MVP
-                </div>
+            {/* Footer */}
+            <div className="flex flex-col border-t border-border p-2 gap-2">
+              <div className="flex items-center justify-between gap-1">
                 <Badge
                   variant={
                     verifactuMode === "PROD"
@@ -160,11 +284,21 @@ export function MobileNav({
                         ? "warning"
                         : "neutral"
                   }
-                  className="h-4 px-1 text-[9px] font-bold uppercase"
+                  className="h-4 px-1 text-[9px] font-bold uppercase ml-1"
                 >
-                  {verifactuMode}
+                  AEAT {verifactuMode}
                 </Badge>
+                <div className="flex items-center gap-1">
+                  <span className="px-2 text-xs text-muted-foreground -mr-1">v{version}</span>
+                  <ErrorBoundary fallback={() => null}>
+                    <NotificationsBell memberId={user.id} />
+                  </ErrorBoundary>
+                  <ThemeToggle />
+                </div>
               </div>
+              <ErrorBoundary fallback={() => null}>
+                <UserMenu user={user} />
+              </ErrorBoundary>
             </div>
           </div>
         </DrawerContent>
