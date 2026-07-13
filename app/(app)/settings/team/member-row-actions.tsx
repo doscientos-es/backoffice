@@ -13,6 +13,7 @@ interface Props {
   role: MemberRole;
   isSelf: boolean;
   isDeactivated: boolean;
+  isPending: boolean;
   actorRole: MemberRole;
 }
 

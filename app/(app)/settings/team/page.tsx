@@ -56,6 +56,8 @@ type MemberRow = {
   email_alias: string | null;
   email_send_enabled: boolean;
   last_sign_in_at: string | null;
+  /** null = invite not yet accepted (token not confirmed) */
+  confirmed_at: string | null;
 };
 
 export default async function TeamSettingsPage() {
@@ -76,10 +78,14 @@ export default async function TeamSettingsPage() {
   const lastSignInMap = new Map(
     (authData?.users ?? []).map((u) => [u.id, u.last_sign_in_at ?? null]),
   );
+  const confirmedAtMap = new Map(
+    (authData?.users ?? []).map((u) => [u.id, u.confirmed_at ?? null]),
+  );
 
   const members: MemberRow[] = (data ?? []).map((m) => ({
-    ...(m as Omit<MemberRow, "last_sign_in_at">),
+    ...(m as Omit<MemberRow, "last_sign_in_at" | "confirmed_at">),
     last_sign_in_at: lastSignInMap.get(m.id as string) ?? null,
+    confirmed_at: confirmedAtMap.get(m.id as string) ?? null,
   }));
 
   return (
@@ -135,6 +141,7 @@ export default async function TeamSettingsPage() {
                   {members.map((m) => {
                     const isSelf = m.id === actor.id;
                     const isDeactivated = m.deleted_at !== null;
+                    const isPending = !isDeactivated && !m.confirmed_at;
                     return (
                       <tr
                         key={m.id}
@@ -196,6 +203,8 @@ export default async function TeamSettingsPage() {
                         <td className="px-5 py-2.5 align-middle">
                           {isDeactivated ? (
                             <Badge variant="danger">Desactivado</Badge>
+                          ) : isPending ? (
+                            <Badge variant="warning">Pendiente</Badge>
                           ) : (
                             <Badge variant="success">Activo</Badge>
                           )}
@@ -227,6 +236,7 @@ export default async function TeamSettingsPage() {
                             role={m.role}
                             isSelf={isSelf}
                             isDeactivated={isDeactivated}
+                            isPending={isPending}
                             actorRole={actor.role}
                           />
                         </td>
