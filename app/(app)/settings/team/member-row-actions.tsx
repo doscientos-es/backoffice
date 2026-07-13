@@ -5,7 +5,7 @@ import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Select } from "@/components/ui/select";
 import type { MemberRole } from "@/lib/auth";
 import { useRouter } from "next/navigation";
-import { deactivateMember, deleteMember, reactivateMember, updateMemberRole } from "./actions";
+import { deactivateMember, deleteMember, reactivateMember, resendInvite, updateMemberRole } from "./actions";
 
 interface Props {
   memberId: string;
@@ -23,6 +23,7 @@ export function MemberRowActions({
   role,
   isSelf,
   isDeactivated,
+  isPending,
   actorRole,
 }: Props) {
   const feedback = useFormFeedback();
@@ -74,9 +75,30 @@ export function MemberRowActions({
     router.refresh();
   }
 
+  async function onResendInvite() {
+    feedback.setPending();
+    const res = await resendInvite({ memberId });
+    if (!res.ok) {
+      feedback.setError(res.error);
+      return;
+    }
+    feedback.setSuccess("Invitación reenviada");
+  }
+
   return (
     <div className="flex items-center justify-end gap-2">
       <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
+      {isPending ? (
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={feedback.pending}
+          onClick={onResendInvite}
+        >
+          Reenviar
+        </Button>
+      ) : null}
       <Select
         defaultValue={role}
         disabled={disabledRoleSelect || feedback.pending}
