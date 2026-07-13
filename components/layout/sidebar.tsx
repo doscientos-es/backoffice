@@ -20,6 +20,7 @@ import {
   FolderKanban,
   Globe,
   Home,
+  Images,
   Inbox,
   KeyRound,
   Megaphone,
@@ -109,6 +110,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/reminders", label: "Recordatorios", icon: Bell },
       { href: "/internal-docs", label: "Docs internos", icon: Archive },
+      { href: "/assets", label: "Assets", icon: Images },
       { href: "/vault", label: "Bóveda", icon: KeyRound, allowedRoles: ADMIN_ROLES },
       { href: "/settings", label: "Ajustes", icon: Settings },
     ],

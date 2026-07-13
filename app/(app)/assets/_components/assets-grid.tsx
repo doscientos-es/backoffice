@@ -47,7 +47,7 @@ function DeleteButton({ id, isAdmin }: { id: string; isAdmin: boolean }) {
   if (!isAdmin) return null;
   function handleDelete() {
     if (!confirm("¿Eliminar este asset permanentemente?")) return;
-    startTransition(() => deleteAsset(id));
+    startTransition(async () => { await deleteAsset(id); });
   }
   return (
     <Button
