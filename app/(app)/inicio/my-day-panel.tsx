@@ -4,7 +4,7 @@ import { claimLead } from "@/app/(app)/leads/actions";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
-import type { MyDayData, WeekStats } from "@/lib/dashboard/types";
+import type { ActionLeadRow, MyDayData, MyTaskRow, WeekStats } from "@/lib/dashboard/types";
 import { useOptimisticRemoval } from "@/lib/hooks/use-optimistic-removal";
 import { LEAD_STATUS, TASK_STATUS } from "@/lib/status";
 import { relativeTime } from "@/lib/utils";

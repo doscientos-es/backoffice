@@ -12,7 +12,6 @@ const ProfileInput = z.object({
     .email("Alias no válido")
     .optional()
     .or(z.literal("").transform(() => undefined)),
-  email_send_enabled: z.enum(["on", "off"]).transform((v) => v === "on"),
   github_handle: z
     .string()
     .max(39)
@@ -42,7 +41,6 @@ export async function updateProfile(
   const user = await requireUser();
   const raw = {
     email_alias: formData.get("email_alias")?.toString() ?? "",
-    email_send_enabled: formData.get("email_send_enabled")?.toString() === "on" ? "on" : "off",
     github_handle: formData.get("github_handle")?.toString() ?? "",
     job_title: formData.get("job_title")?.toString() ?? "",
     phone: formData.get("phone")?.toString() ?? "",
