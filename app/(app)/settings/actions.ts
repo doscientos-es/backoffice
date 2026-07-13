@@ -67,7 +67,7 @@ export async function updateProfile(
     .update({
       email_alias: parsed.data.email_alias ?? null,
       signature_html: signatureHtml,
-      email_send_enabled: parsed.data.email_send_enabled,
+      email_send_enabled: true,
       github_handle: parsed.data.github_handle ?? null,
       job_title: parsed.data.job_title ?? null,
       phone: parsed.data.phone ?? null,
@@ -117,7 +117,6 @@ const MemberProfileInput = z.object({
     .email("Alias no válido")
     .optional()
     .or(z.literal("").transform(() => undefined)),
-  email_send_enabled: z.enum(["on", "off"]).transform((v) => v === "on"),
   avatar_url: z
     .string()
     .url("URL de avatar no válida")
@@ -137,7 +136,6 @@ export async function updateMemberProfile(
     phone: formData.get("phone")?.toString() ?? "",
     contact_email: formData.get("contact_email")?.toString() ?? "",
     email_alias: formData.get("email_alias")?.toString() ?? "",
-    email_send_enabled: formData.get("email_send_enabled")?.toString() === "on" ? "on" : "off",
     avatar_url: formData.get("avatar_url")?.toString() ?? "",
   };
   const parsed = MemberProfileInput.safeParse(raw);
@@ -163,7 +161,7 @@ export async function updateMemberProfile(
       avatar_url: parsed.data.avatar_url ?? null,
       email_alias: parsed.data.email_alias ?? null,
       signature_html: signatureHtml,
-      email_send_enabled: parsed.data.email_send_enabled,
+      email_send_enabled: true,
       github_handle: parsed.data.github_handle ?? null,
       job_title: parsed.data.job_title ?? null,
       phone: parsed.data.phone ?? null,

@@ -17,7 +17,6 @@ interface Props {
   email: string;
   avatarUrl: string | null;
   emailAlias: string | null;
-  emailSendEnabled: boolean;
   githubHandle: string | null;
   jobTitle: string | null;
   phone: string | null;
@@ -29,7 +28,6 @@ export function ProfileForm({
   email,
   avatarUrl,
   emailAlias,
-  emailSendEnabled,
   githubHandle,
   jobTitle,
   phone,
