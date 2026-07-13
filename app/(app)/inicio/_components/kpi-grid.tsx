@@ -3,7 +3,7 @@ import { getCompanyGoals, getDashboardKpis } from "@/lib/dashboard/queries";
 import type { DashboardRange } from "@/lib/dashboard/types";
 import { formatEUR } from "@/lib/utils";
 import { computeTrend, describeRange, resolveDateRange } from "@/lib/utils/date";
-import { FileSignature, Inbox, LineChart, Target } from "lucide-react";
+import { FileSignature, Inbox, Target, TrendingUp } from "lucide-react";
 
 export async function KpiGrid({ range }: { range: DashboardRange }) {
   const dateRange = resolveDateRange(range);
@@ -34,12 +34,14 @@ export async function KpiGrid({ range }: { range: DashboardRange }) {
         trend={computeTrend(kpis.proposalsOpen, kpis.proposalsOpenPrev)}
       />
       <StatCard
-        label="Pipeline activo"
-        value={formatEUR(kpis.pipelineValue)}
-        tone="default"
-        icon={LineChart}
-        href="/proposals"
-        hint="propuestas sin cerrar"
+        label="Facturación del mes"
+        value={formatEUR(kpis.monthRevenue)}
+        tone="success"
+        icon={TrendingUp}
+        href="/finance"
+        hint={rangeLabel}
+        trend={goals.revenue ? undefined : computeTrend(kpis.monthRevenue, kpis.monthRevenuePrev)}
+        goal={goals.revenue ? { current: kpis.monthRevenue, target: goals.revenue } : undefined}
       />
       <StatCard
         label="Conversión"

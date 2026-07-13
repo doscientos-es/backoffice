@@ -1,4 +1,4 @@
-export type StorageBucket = "documents" | "internal-docs";
+export type StorageBucket = "documents" | "internal-docs" | "brand-assets";
 
 export interface StorageProvider {
   upload(
