@@ -19,9 +19,13 @@ vi.mock("@/lib/supabase/server", () => ({
   createServerClient: () => ({
     from: (table: string) => {
       let assignedToMode: "owned" | "unassigned" | null = null;
+      let isCountQuery = false;
 
       const chain: Record<string, unknown> = {
-        select: () => chain,
+        select: (_cols: unknown, opts?: { count?: string; head?: boolean }) => {
+          if (opts?.head) isCountQuery = true;
+          return chain;
+        },
         eq: (col: string) => {
           if (col === "assigned_to") assignedToMode = "owned";
           return chain;
@@ -31,11 +35,27 @@ vi.mock("@/lib/supabase/server", () => ({
           return chain;
         },
         in: () => chain,
+        gte: () => chain,
+        lte: () => chain,
         order: () => chain,
         limit: async () => {
+          if (isCountQuery) return { data: null, count: 0, error: null };
           if (table === "tasks") return { data: db.tasks, error: null };
           if (assignedToMode === "unassigned") return { data: db.unassigned, error: null };
           return { data: db.myLeads, error: null };
+        },
+        // Count queries (no .limit()) resolve here via Promise.all awaiting the chain.
+        // Return count=0 and data=[] as defaults for test isolation.
+        // eslint-disable-next-line unicorn/no-then-property
+        then: (resolve: (v: unknown) => void) => {
+          const result = isCountQuery
+            ? { data: null, count: 0, error: null }
+            : table === "tasks"
+              ? { data: db.tasks, error: null }
+              : assignedToMode === "unassigned"
+                ? { data: db.unassigned, error: null }
+                : { data: db.myLeads, error: null };
+          Promise.resolve(result).then(resolve);
         },
         update: () => chain,
         maybeSingle: async () => ({ data: null, error: null }),

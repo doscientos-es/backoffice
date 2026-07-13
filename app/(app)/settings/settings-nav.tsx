@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Activity, Building2, Mail, Shield, User, Users } from "lucide-react";
+import { Activity, Building2, Mail, Shield, Target, User, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -10,6 +10,7 @@ type Item = {
   | "/settings/profile"
   | "/settings/company"
   | "/settings/team"
+  | "/settings/goals"
   | "/settings/email-templates"
   | "/settings/diagnostics"
   | "/settings/legal";
@@ -22,6 +23,7 @@ const ITEMS: readonly Item[] = [
   { href: "/settings/profile", label: "Perfil", icon: User, requiresAdmin: false },
   { href: "/settings/company", label: "Empresa", icon: Building2, requiresAdmin: true },
   { href: "/settings/team", label: "Equipo", icon: Users, requiresAdmin: true },
+  { href: "/settings/goals", label: "Metas", icon: Target, requiresAdmin: true },
   { href: "/settings/email-templates", label: "Plantillas email", icon: Mail, requiresAdmin: true },
   { href: "/settings/diagnostics", label: "Diagnóstico", icon: Activity, requiresAdmin: true },
   { href: "/settings/legal", label: "Legal / Verifactu", icon: Shield, requiresAdmin: false },
