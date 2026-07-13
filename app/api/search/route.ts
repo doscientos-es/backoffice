@@ -7,6 +7,7 @@
  */
 
 import { requireUser } from "@/lib/auth";
+import { VAULT_SERVICE_LABELS, type VaultService } from "@/lib/schemas/vault";
 import { createServerClient } from "@/lib/supabase/server";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -14,10 +15,16 @@ export const dynamic = "force-dynamic";
 
 export type SearchResultItem = {
   id: string;
-  type: "lead" | "client" | "project" | "invoice" | "task";
+  type: "lead" | "client" | "project" | "invoice" | "task" | "vault";
   label: string;
   sublabel?: string | null;
   href: string;
+  /**
+   * Only present for vault items. Gates copy/reveal behind the master password
+   * on the client. The secret itself is never sent here — it is decrypted on
+   * demand via the `vault.reveal` server action.
+   */
+  isSensitive?: boolean;
 };
 
 const PER_GROUP = 5;
@@ -37,7 +44,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const supabase = await createServerClient();
   const pattern = `%${escapeIlike(q)}%`;
 
-  const [leadsRes, clientsRes, projectsRes, invoicesRes, tasksRes] = await Promise.all([
+  const [leadsRes, clientsRes, projectsRes, invoicesRes, tasksRes, vaultRes] = await Promise.all([
     supabase
       .from("leads")
       .select("id, name, company, email")
@@ -72,6 +79,13 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       .is("deleted_at", null)
       .ilike("title", pattern)
       .order("due_date", { ascending: true, nullsFirst: false })
+      .limit(PER_GROUP),
+    supabase
+      .from("vault_items")
+      .select("id, name, service, username, is_sensitive")
+      .is("deleted_at", null)
+      .or(`name.ilike.${pattern},service.ilike.${pattern},username.ilike.${pattern}`)
+      .order("name")
       .limit(PER_GROUP),
   ]);
 
@@ -120,6 +134,18 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       label: r.title as string,
       sublabel: (r.status as string | null) ?? null,
       href: `/tasks/${r.id as string}`,
+    });
+  }
+  for (const r of vaultRes.data ?? []) {
+    const service = r.service as string;
+    items.push({
+      id: `vault-${r.id as string}`,
+      type: "vault",
+      label: r.name as string,
+      sublabel:
+        VAULT_SERVICE_LABELS[service as VaultService] ?? (r.username as string | null) ?? service,
+      href: "/vault",
+      isSensitive: !!(r.is_sensitive as boolean),
     });
   }
 
