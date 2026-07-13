@@ -1,5 +1,4 @@
 "use client";
-
 import type { SearchResultItem } from "@/app/api/search/route";
 import { OPEN_COMMAND_PALETTE_EVENT } from "@/components/layout/command-palette-trigger";
 import {
@@ -52,6 +51,7 @@ const TYPE_ICON = {
   project: FolderKanban,
   invoice: Receipt,
   task: CheckSquare,
+  vault: KeyRound,
 } as const;
 
 const TYPE_LABEL: Record<SearchResultItem["type"], string> = {
@@ -60,6 +60,7 @@ const TYPE_LABEL: Record<SearchResultItem["type"], string> = {
   project: "Proyectos",
   invoice: "Facturas",
   task: "Tareas",
+  vault: "Bóveda",
 };
 
 const NAV_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -118,6 +119,19 @@ export function CommandPalette() {
   const [loading, setLoading] = useState(false);
   const [recents, setRecents] = useState<RecentItem[]>([]);
 
+  // ── Vault (secretos) ──────────────────────────────────────────────────────
+  // Secretos revelados en memoria mientras el palette está abierto (clave = uuid).
+  const [revealed, setRevealed] = useState<Record<string, string>>({});
+  const [vaultBusyId, setVaultBusyId] = useState<string | null>(null);
+  const [vaultCopiedId, setVaultCopiedId] = useState<string | null>(null);
+  // Diálogo de desbloqueo pendiente: qué secreto y qué acción reintentar tras unlock.
+  const [unlockOpen, setUnlockOpen] = useState(false);
+  const [pendingUnlock, setPendingUnlock] = useState<{
+    id: string;
+    name: string;
+    mode: "copy" | "reveal";
+  } | null>(null);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey)) {
@@ -138,6 +152,12 @@ export function CommandPalette() {
     if (!open) {
       setQuery("");
       setResults([]);
+      // No conservar secretos revelados ni estados de la bóveda al cerrar.
+      setRevealed({});
+      setVaultBusyId(null);
+      setVaultCopiedId(null);
+      setUnlockOpen(false);
+      setPendingUnlock(null);
       return;
     }
     setRecents(loadRecents());
@@ -292,11 +312,7 @@ export function CommandPalette() {
               {ALL_NAV.map((l) => {
                 const Icon = NAV_ICON[l.href] ?? Home;
                 return (
-                  <CommandItem
-                    key={l.href}
-                    value={`ir a ${l.label}`}
-                    onSelect={() => go(l.href)}
-                  >
+                  <CommandItem key={l.href} value={`ir a ${l.label}`} onSelect={() => go(l.href)}>
                     <Icon className="size-4 shrink-0 text-muted-foreground" />
                     {l.label}
                     {l.key ? (
