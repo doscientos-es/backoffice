@@ -61,8 +61,14 @@ function excerpt(body: string | null, max = 160): string | null {
   return text.length > max ? `${text.slice(0, max)}…` : text;
 }
 
-function compactParts(parts: Array<string | null | undefined>): string {
-  return parts.filter(Boolean).join(" · ") || "—";
+function hasValue(value: unknown): boolean {
+  if (value == null) return false;
+  return typeof value === "string" ? value.trim().length > 0 : true;
+}
+
+function compactParts(parts: Array<string | null | undefined>): string | null {
+  const value = parts.filter(hasValue).join(" · ");
+  return value || null;
 }
 
 export default async function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -223,49 +229,71 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                     )}
                   </div>
                 </DetailRow>
-                <DetailRow label="Email">{(lead.email as string | null) ?? "—"}</DetailRow>
-                <DetailRow label="Teléfono">{(lead.phone as string | null) ?? "—"}</DetailRow>
-                <DetailRow label="Empresa">{(lead.company as string | null) ?? "—"}</DetailRow>
-                <DetailRow label="Origen">{(lead.source as string | null) ?? "—"}</DetailRow>
+                {lead.email && <DetailRow label="Email">{lead.email}</DetailRow>}
+                {lead.phone && <DetailRow label="Teléfono">{lead.phone}</DetailRow>}
+                {lead.company && <DetailRow label="Empresa">{lead.company}</DetailRow>}
+                {lead.source && <DetailRow label="Origen">{lead.source}</DetailRow>}
                 <DetailRow label="Responsable">
                   <MemberLabel member={lead.assignee} />
                 </DetailRow>
-                <DetailRow label="Score">
-                  {lead.score != null ? `${Number(lead.score)}/100` : "—"}
-                </DetailRow>
-                <DetailRow label="Valor estimado">
-                  {lead.estimated_value != null ? formatEUR(Number(lead.estimated_value)) : "—"}
-                </DetailRow>
+                {lead.score != null && (
+                  <DetailRow label="Score">{`${Number(lead.score)}/100`}</DetailRow>
+                )}
+                {lead.estimated_value != null && (
+                  <DetailRow label="Valor estimado">
+                    {formatEUR(Number(lead.estimated_value))}
+                  </DetailRow>
+                )}
                 <DetailRow label="Creado">{formatDate(lead.created_at as string)}</DetailRow>
-                <DetailRow label="Tamaño">{lead.company_size ?? "—"}</DetailRow>
-                <DetailRow label="Urgencia">{lead.urgency ?? "—"}</DetailRow>
-                <DetailRow label="Solución">{lead.solution_type ?? "—"}</DetailRow>
-                <DetailRow label="Conversión">{lead.conversion_step ?? "—"}</DetailRow>
-                <DetailRow label="Event ID">{lead.event_id ?? "—"}</DetailRow>
-                <DetailRow label="Landing">{lead.landing_path ?? "—"}</DetailRow>
-                <DetailRow label="Ref">{lead.landing_ref ?? "—"}</DetailRow>
-                <DetailRow label="Asunto">{lead.landing_subject ?? "—"}</DetailRow>
-                <DetailRow label="First touch">
-                  {compactParts([
+                {lead.company_size && <DetailRow label="Tamaño">{lead.company_size}</DetailRow>}
+                {lead.urgency && <DetailRow label="Urgencia">{lead.urgency}</DetailRow>}
+                {lead.solution_type && <DetailRow label="Solución">{lead.solution_type}</DetailRow>}
+                {lead.conversion_step && (
+                  <DetailRow label="Conversión">{lead.conversion_step}</DetailRow>
+                )}
+                {lead.event_id && <DetailRow label="Event ID">{lead.event_id}</DetailRow>}
+                {lead.landing_path && <DetailRow label="Landing">{lead.landing_path}</DetailRow>}
+                {lead.landing_ref && <DetailRow label="Ref">{lead.landing_ref}</DetailRow>}
+                {lead.landing_subject && <DetailRow label="Asunto">{lead.landing_subject}</DetailRow>}
+                {compactParts([
                     lead.first_landing_path,
                     lead.first_referrer,
                     lead.first_utm_source,
                     lead.first_utm_medium,
                     lead.first_utm_campaign,
-                  ])}
-                </DetailRow>
-                <DetailRow label="Last touch">
-                  {compactParts([
+                  ]) && (
+                  <DetailRow label="First touch">
+                    {compactParts([
+                      lead.first_landing_path,
+                      lead.first_referrer,
+                      lead.first_utm_source,
+                      lead.first_utm_medium,
+                      lead.first_utm_campaign,
+                    ])}
+                  </DetailRow>
+                )}
+                {compactParts([
                     lead.last_landing_path,
                     lead.last_referrer,
                     lead.last_utm_source,
                     lead.last_utm_medium,
                     lead.last_utm_campaign,
-                  ])}
-                </DetailRow>
-                <DetailRow label="Calculadora">
-                  {[lead.calculator_cost, lead.calculator_hours].filter(Boolean).join(" · ") || "—"}
-                </DetailRow>
+                  ]) && (
+                  <DetailRow label="Last touch">
+                    {compactParts([
+                      lead.last_landing_path,
+                      lead.last_referrer,
+                      lead.last_utm_source,
+                      lead.last_utm_medium,
+                      lead.last_utm_campaign,
+                    ])}
+                  </DetailRow>
+                )}
+                {[lead.calculator_cost, lead.calculator_hours].some(hasValue) && (
+                  <DetailRow label="Resultado calculadora">
+                    {[lead.calculator_cost, lead.calculator_hours].filter(hasValue).join(" · ")}
+                  </DetailRow>
+                )}
               </DetailGrid>
 
               {lead.notes ? (
