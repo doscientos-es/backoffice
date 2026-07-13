@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Field, FieldContent, FieldDescription, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -29,7 +29,6 @@ export interface MemberProfileData {
   phone: string | null;
   contactEmail: string | null;
   emailAlias: string | null;
-  emailSendEnabled: boolean;
 }
 
 export function MemberProfileDialog({ member }: { member: MemberProfileData }) {
@@ -51,7 +50,10 @@ export function MemberProfileDialog({ member }: { member: MemberProfileData }) {
     }
   }
 
-  const derivedAvatar = memberAvatarUrl({ avatarUrl: member.avatarUrl, githubHandle: handle || member.githubHandle });
+  const derivedAvatar = memberAvatarUrl({
+    avatarUrl: member.avatarUrl,
+    githubHandle: handle || member.githubHandle,
+  });
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -78,8 +80,17 @@ export function MemberProfileDialog({ member }: { member: MemberProfileData }) {
           <div className="flex-1 overflow-y-auto px-6 py-4 scroll-fade no-scrollbar">
             <div className="grid gap-4 sm:grid-cols-2">
               <Field>
-                <FieldLabel htmlFor="mp-name" className="text-xs font-medium">Nombre</FieldLabel>
-                <Input id="mp-name" name="name" defaultValue={member.name} required maxLength={160} autoComplete="name" />
+                <FieldLabel htmlFor="mp-name" className="text-xs font-medium">
+                  Nombre
+                </FieldLabel>
+                <Input
+                  id="mp-name"
+                  name="name"
+                  defaultValue={member.name}
+                  required
+                  maxLength={160}
+                  autoComplete="name"
+                />
               </Field>
 
               <Field>
@@ -89,38 +100,63 @@ export function MemberProfileDialog({ member }: { member: MemberProfileData }) {
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="mp-job" className="text-xs font-medium">Cargo</FieldLabel>
-                <Input id="mp-job" name="job_title" defaultValue={member.jobTitle ?? ""} placeholder="Account Executive" maxLength={160} />
+                <FieldLabel htmlFor="mp-job" className="text-xs font-medium">
+                  Cargo
+                </FieldLabel>
+                <Input
+                  id="mp-job"
+                  name="job_title"
+                  defaultValue={member.jobTitle ?? ""}
+                  placeholder="Account Executive"
+                  maxLength={160}
+                />
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="mp-phone" className="text-xs font-medium">Teléfono</FieldLabel>
-                <Input id="mp-phone" name="phone" type="tel" defaultValue={member.phone ?? ""} placeholder="+34 600 000 000" maxLength={30} />
+                <FieldLabel htmlFor="mp-phone" className="text-xs font-medium">
+                  Teléfono
+                </FieldLabel>
+                <Input
+                  id="mp-phone"
+                  name="phone"
+                  type="tel"
+                  defaultValue={member.phone ?? ""}
+                  placeholder="+34 600 000 000"
+                  maxLength={30}
+                />
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="mp-contact" className="text-xs font-medium">Email de contacto</FieldLabel>
-                <Input id="mp-contact" name="contact_email" type="email" defaultValue={member.contactEmail ?? ""} />
+                <FieldLabel htmlFor="mp-contact" className="text-xs font-medium">
+                  Email de contacto
+                </FieldLabel>
+                <Input
+                  id="mp-contact"
+                  name="contact_email"
+                  type="email"
+                  defaultValue={member.contactEmail ?? ""}
+                />
                 <FieldDescription>Aparece en la firma.</FieldDescription>
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="mp-alias" className="text-xs font-medium">Alias de envío</FieldLabel>
-                <Input id="mp-alias" name="email_alias" type="email" defaultValue={member.emailAlias ?? ""} />
+                <FieldLabel htmlFor="mp-alias" className="text-xs font-medium">
+                  Alias de envío
+                </FieldLabel>
+                <Input
+                  id="mp-alias"
+                  name="email_alias"
+                  type="email"
+                  defaultValue={member.emailAlias ?? ""}
+                />
                 <FieldDescription>Dirección desde la que envía emails.</FieldDescription>
-              </Field>
-
-              <Field orientation="horizontal" className="items-start sm:col-span-2">
-                <input type="checkbox" id="mp-send" name="email_send_enabled" value="on" defaultChecked={member.emailSendEnabled} className="mt-0.5 size-4 rounded border-border" />
-                <FieldContent>
-                  <FieldLabel htmlFor="mp-send" className="text-sm font-normal">Activar envío de emails</FieldLabel>
-                  <FieldDescription>Si está desactivado, los envíos quedan registrados pero no se entregan.</FieldDescription>
-                </FieldContent>
               </Field>
 
               {/* GitHub handle + avatar preview */}
               <Field className="sm:col-span-2">
-                <FieldLabel htmlFor="mp-github" className="text-xs font-medium">GitHub handle</FieldLabel>
+                <FieldLabel htmlFor="mp-github" className="text-xs font-medium">
+                  GitHub handle
+                </FieldLabel>
                 <div className="flex items-center gap-3">
                   <Avatar size="default" className="shrink-0">
                     {handleState.status === "valid" && handleState.avatarUrl ? (
@@ -145,7 +181,10 @@ export function MemberProfileDialog({ member }: { member: MemberProfileData }) {
                       autoCapitalize="off"
                       className="pr-9"
                     />
-                    <span aria-hidden className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center">
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center"
+                    >
                       <GithubHandleIcon status={handleState.status} />
                     </span>
                   </div>
@@ -153,9 +192,19 @@ export function MemberProfileDialog({ member }: { member: MemberProfileData }) {
               </Field>
 
               <Field className="sm:col-span-2">
-                <FieldLabel htmlFor="mp-avatar" className="text-xs font-medium">URL de avatar personalizado</FieldLabel>
-                <Input id="mp-avatar" name="avatar_url" type="url" defaultValue={member.avatarUrl ?? ""} placeholder="https://..." />
-                <FieldDescription>Si está vacío y hay GitHub configurado, se usa la foto de GitHub.</FieldDescription>
+                <FieldLabel htmlFor="mp-avatar" className="text-xs font-medium">
+                  URL de avatar personalizado
+                </FieldLabel>
+                <Input
+                  id="mp-avatar"
+                  name="avatar_url"
+                  type="url"
+                  defaultValue={member.avatarUrl ?? ""}
+                  placeholder="https://..."
+                />
+                <FieldDescription>
+                  Si está vacío y hay GitHub configurado, se usa la foto de GitHub.
+                </FieldDescription>
               </Field>
             </div>
           </div>
@@ -164,7 +213,9 @@ export function MemberProfileDialog({ member }: { member: MemberProfileData }) {
           <div className="shrink-0 border-t border-border px-6 py-3">
             <div className="flex items-center justify-end gap-3">
               <FormFeedback state={feedback.state} successLabel="Perfil guardado" />
-              <SubmitButton pendingLabel="Guardando…" loading={feedback.pending}>Guardar</SubmitButton>
+              <SubmitButton pendingLabel="Guardando…" loading={feedback.pending}>
+                Guardar
+              </SubmitButton>
             </div>
           </div>
         </form>
@@ -175,9 +226,12 @@ export function MemberProfileDialog({ member }: { member: MemberProfileData }) {
 
 function GithubHandleIcon({ status }: { status: ReturnType<typeof useGithubHandle>["status"] }) {
   const cls = "size-4";
-  if (status === "checking") return <Loader2 className={cn(cls, "animate-spin text-muted-foreground")} aria-hidden />;
+  if (status === "checking")
+    return <Loader2 className={cn(cls, "animate-spin text-muted-foreground")} aria-hidden />;
   if (status === "valid") return <CheckCircle2 className={cn(cls, "text-success")} aria-hidden />;
-  if (status === "not_found" || status === "invalid") return <XCircle className={cn(cls, "text-destructive")} aria-hidden />;
-  if (status === "rate_limited" || status === "error") return <AlertCircle className={cn(cls, "text-muted-foreground")} aria-hidden />;
+  if (status === "not_found" || status === "invalid")
+    return <XCircle className={cn(cls, "text-destructive")} aria-hidden />;
+  if (status === "rate_limited" || status === "error")
+    return <AlertCircle className={cn(cls, "text-muted-foreground")} aria-hidden />;
   return null;
 }

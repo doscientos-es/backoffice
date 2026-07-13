@@ -68,7 +68,7 @@ export default async function TeamSettingsPage() {
     supabase
       .from("team_members")
       .select(
-        "id, name, email, role, created_at, deleted_at, avatar_url, github_handle, job_title, phone, contact_email, email_alias, email_send_enabled",
+        "id, name, email, role, created_at, deleted_at, avatar_url, github_handle, job_title, phone, contact_email, email_alias",
       )
       .order("deleted_at", { ascending: true, nullsFirst: true })
       .order("created_at", { ascending: true }),
@@ -191,7 +191,6 @@ export default async function TeamSettingsPage() {
                                   phone: m.phone,
                                   contactEmail: m.contact_email,
                                   emailAlias: m.email_alias,
-                                  emailSendEnabled: m.email_send_enabled,
                                 }}
                               />
                             ) : null}
