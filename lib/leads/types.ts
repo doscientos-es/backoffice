@@ -31,6 +31,8 @@ export type LeadInteraction = {
 export type LeadListItem = {
   id: string;
   name: string;
+  /** Optional short display name. Falls back to `name` when null. */
+  alias: string | null;
   company: string | null;
   email: string | null;
   phone: string | null;
@@ -92,6 +94,8 @@ export type LeadDetailAiTemperature = "hot" | "warm" | "cold";
 export type LeadDetail = {
   id: string;
   name: string;
+  /** Optional short display name. Falls back to `name` when null. */
+  alias: string | null;
   email: string | null;
   phone: string | null;
   company: string | null;
@@ -179,6 +183,7 @@ export type LeadDetailResult = {
 export type LeadConvertSeed = {
   id: string;
   name: string;
+  alias: string | null;
   email: string | null;
   phone: string | null;
   company: string | null;

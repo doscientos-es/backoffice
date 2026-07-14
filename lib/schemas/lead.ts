@@ -19,6 +19,8 @@ export type LeadStatusType = z.infer<typeof LeadStatus>;
 
 export const CreateLeadInput = z.object({
   name: requiredText(160, "El nombre es obligatorio"),
+  /** Short display name shown in lists. Falls back to `name` when absent. */
+  alias: optionalText(100),
   email: optionalEmail,
   phone: optionalText(40),
   company: optionalText(160),

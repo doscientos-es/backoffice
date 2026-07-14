@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { version } from "../../package.json";
 
 type NavItem = {
@@ -104,7 +104,12 @@ const NAV_GROUPS: NavGroup[] = [
     defaultOpen: false,
     items: [
       { href: "/marketing", label: "Publicidad", icon: Megaphone, allowedRoles: ADMIN_ROLES },
-      { href: "/marketing/events", label: "Eventos", icon: MousePointerClick, allowedRoles: ADMIN_ROLES },
+      {
+        href: "/marketing/events",
+        label: "Eventos",
+        icon: MousePointerClick,
+        allowedRoles: ADMIN_ROLES,
+      },
       { href: "/social", label: "Social", icon: Share2, allowedRoles: ADMIN_ROLES },
     ],
   },
@@ -167,12 +172,16 @@ function NavSection({
 }) {
   const hasActive = group.items.some((i) => isActive(i.href));
   const fallback = group.defaultOpen ?? true;
-  const [open, setOpen] = useState(() => {
-    if (typeof window === "undefined") return fallback;
+  // Deterministic from `pathname`/`defaultOpen` alone (same on server and
+  // client) to avoid a hydration mismatch. The persisted preference in
+  // localStorage is only browser-accessible, so it's applied after mount.
+  const [open, setOpen] = useState(hasActive || fallback);
+
+  useEffect(() => {
+    if (hasActive) return;
     const stored = localStorage.getItem(`nav-section-${group.label}`);
-    if (hasActive) return true;
-    return stored === null ? fallback : stored === "1";
-  });
+    if (stored !== null) setOpen(stored === "1");
+  }, [group.label, hasActive]);
 
   function toggle() {
     const next = !open;
