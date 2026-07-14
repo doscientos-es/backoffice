@@ -171,16 +171,16 @@ export const ScheduleLeadMeetingInput = z.object({
 export type ScheduleLeadMeetingInputType = z.infer<typeof ScheduleLeadMeetingInput>;
 
 /**
- * The 5 Mom Test signals used to spot a qualified lead: aware of the
- * problem, has searched for solutions, has budget, knows that budget, and
- * has already tried other things. Each is tri-state (null = unset).
+ * The 5 Mom Test signals used to spot a qualified lead: real problem,
+ * awareness, previous attempts to solve it, decision power or budget, and
+ * accessibility. Each is tri-state (null = unset).
  */
 export const MOM_TEST_SIGNALS = [
+  "real_problem",
   "aware_problem",
-  "searched_solutions",
-  "has_budget",
-  "knows_budget",
   "tried_solutions",
+  "decision_power_or_budget",
+  "accessible",
 ] as const;
 export type MomTestSignal = (typeof MOM_TEST_SIGNALS)[number];
 

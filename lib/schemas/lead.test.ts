@@ -7,8 +7,10 @@ import {
   LogCallInput,
   LogEmailInput,
   LogNoteInput,
+  MOM_TEST_SIGNALS,
   SendEmailToLeadInput,
   UpdateLeadInput,
+  UpdateLeadMomTestInput,
   UpdateLeadStatusInput,
 } from "@/lib/schemas/lead";
 import { describe, expect, it } from "vitest";
@@ -92,6 +94,25 @@ describe("UpdateLeadStatusInput refinements", () => {
   });
   it("allows non-closure states without a reason", () => {
     expect(UpdateLeadStatusInput.safeParse({ leadId: uuid, status: "won" }).success).toBe(true);
+  });
+});
+
+describe("UpdateLeadMomTestInput", () => {
+  it("supports the five Mom Test criteria with a tri-state value", () => {
+    expect(MOM_TEST_SIGNALS).toEqual([
+      "real_problem",
+      "aware_problem",
+      "tried_solutions",
+      "decision_power_or_budget",
+      "accessible",
+    ]);
+    expect(
+      UpdateLeadMomTestInput.parse({
+        leadId: uuid,
+        signal: "accessible",
+        value: null,
+      }).value,
+    ).toBeNull();
   });
 });
 

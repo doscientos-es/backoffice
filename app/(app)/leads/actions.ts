@@ -295,11 +295,11 @@ export const updateLeadEstimatedValue = defineAction({
 
 /** Maps a Mom Test signal key to its `leads` table column. */
 const MOM_TEST_COLUMN: Record<MomTestSignal, string> = {
+  real_problem: "mom_test_real_problem",
   aware_problem: "mom_test_aware_problem",
-  searched_solutions: "mom_test_searched_solutions",
-  has_budget: "mom_test_has_budget",
-  knows_budget: "mom_test_knows_budget",
   tried_solutions: "mom_test_tried_solutions",
+  decision_power_or_budget: "mom_test_decision_power_or_budget",
+  accessible: "mom_test_accessible",
 };
 
 export const updateLeadMomTestSignal = defineAction({

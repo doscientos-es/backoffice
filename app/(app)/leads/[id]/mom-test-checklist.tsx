@@ -10,11 +10,11 @@ import { sileo } from "sileo";
 import { updateLeadMomTestSignal } from "../actions";
 
 const SIGNALS = [
-  { key: "aware_problem", label: "Sabe que tiene el problema" },
-  { key: "searched_solutions", label: "Ha buscado soluciones" },
-  { key: "has_budget", label: "Tiene presupuesto" },
-  { key: "knows_budget", label: "Conoce el presupuesto" },
-  { key: "tried_solutions", label: "Ha probado otras cosas" },
+  { key: "real_problem", label: "Tiene el problema real" },
+  { key: "aware_problem", label: "Es consciente del problema" },
+  { key: "tried_solutions", label: "Ha intentado solucionarlo" },
+  { key: "decision_power_or_budget", label: "Tiene poder de decisión o presupuesto" },
+  { key: "accessible", label: "Es accesible" },
 ] as const;
 
 type SignalKey = (typeof SIGNALS)[number]["key"];

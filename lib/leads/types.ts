@@ -133,6 +133,7 @@ export type LeadDetail = {
   updated_at: string | null;
   ai_summary: string | null;
   ai_suggested_next_step: string | null;
+  ai_suggested_next_step_at: string | null;
   ai_temperature: LeadDetailAiTemperature | null;
   ai_confidence: number | null;
   ai_updated_at: string | null;
@@ -142,11 +143,11 @@ export type LeadDetail = {
   assigned_to: string | null;
   assignee: LeadMemberRef | null;
   /** Mom Test qualification signals — tri-state, null until marked. */
+  mom_test_real_problem: boolean | null;
   mom_test_aware_problem: boolean | null;
-  mom_test_searched_solutions: boolean | null;
-  mom_test_has_budget: boolean | null;
-  mom_test_knows_budget: boolean | null;
   mom_test_tried_solutions: boolean | null;
+  mom_test_decision_power_or_budget: boolean | null;
+  mom_test_accessible: boolean | null;
 };
 
 export type LeadDetailInteraction = LeadInteraction & {

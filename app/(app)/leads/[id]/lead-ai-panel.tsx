@@ -15,6 +15,7 @@ import {
 export type LeadAiData = {
   ai_summary: string | null;
   ai_suggested_next_step: string | null;
+  ai_suggested_next_step_at: string | null;
   ai_temperature: "hot" | "warm" | "cold" | null;
   ai_confidence: number | null;
   ai_updated_at: string | null;
@@ -92,6 +93,7 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData, members = [] }: Pr
       setData({
         ai_summary: json.summary,
         ai_suggested_next_step: json.suggested_next_step,
+        ai_suggested_next_step_at: json.suggested_next_step_at ?? null,
         ai_temperature: json.temperature,
         ai_confidence: json.confidence,
         ai_updated_at: json.ai_updated_at ?? new Date().toISOString(),
@@ -157,6 +159,7 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData, members = [] }: Pr
                   leadId={leadId}
                   defaultTitle={data.ai_suggested_next_step.slice(0, 200)}
                   defaultNotes={data.ai_suggested_next_step}
+                  defaultRemindAt={data.ai_suggested_next_step_at}
                   members={members}
                   trigger={
                     <Button size="xs" variant="ghost" className="h-6 gap-1 px-2 text-xs">
@@ -167,6 +170,11 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData, members = [] }: Pr
                 />
               </div>
               <p className="text-sm">{data.ai_suggested_next_step}</p>
+              {data.ai_suggested_next_step_at && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Fecha sugerida: {new Date(data.ai_suggested_next_step_at).toLocaleString("es-ES")}
+                </p>
+              )}
             </div>
           )}
         </div>

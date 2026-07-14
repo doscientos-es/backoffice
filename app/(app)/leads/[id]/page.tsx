@@ -22,6 +22,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatDateTime, formatEUR, relativeTime } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CallInteractionDetails } from "./call-interaction-details";
 import { LeadAiPanel } from "./lead-ai-panel";
 import { LeadCommercial } from "./lead-commercial";
 import { LeadEditDialog } from "./lead-edit-dialog";
@@ -334,11 +335,12 @@ export default async function LeadDetailPage({
                 leadId={lead.id as string}
                 canEdit={canEdit}
                 initialValues={{
+                  real_problem: (lead.mom_test_real_problem as boolean | null) ?? null,
                   aware_problem: (lead.mom_test_aware_problem as boolean | null) ?? null,
-                  searched_solutions: (lead.mom_test_searched_solutions as boolean | null) ?? null,
-                  has_budget: (lead.mom_test_has_budget as boolean | null) ?? null,
-                  knows_budget: (lead.mom_test_knows_budget as boolean | null) ?? null,
                   tried_solutions: (lead.mom_test_tried_solutions as boolean | null) ?? null,
+                  decision_power_or_budget:
+                    (lead.mom_test_decision_power_or_budget as boolean | null) ?? null,
+                  accessible: (lead.mom_test_accessible as boolean | null) ?? null,
                 }}
               />
             </CardContent>
@@ -404,6 +406,8 @@ export default async function LeadDetailPage({
                   initialData={{
                     ai_summary: (lead.ai_summary as string | null) ?? null,
                     ai_suggested_next_step: (lead.ai_suggested_next_step as string | null) ?? null,
+                    ai_suggested_next_step_at:
+                      (lead.ai_suggested_next_step_at as string | null) ?? null,
                     ai_temperature: (lead.ai_temperature as "hot" | "warm" | "cold" | null) ?? null,
                     ai_confidence: (lead.ai_confidence as number | null) ?? null,
                     ai_updated_at: (lead.ai_updated_at as string | null) ?? null,
@@ -453,6 +457,7 @@ export default async function LeadDetailPage({
                               className="gap-1 text-[11px] text-muted-foreground/70"
                             />
                           ) : null}
+                          {type === "call" ? <CallInteractionDetails interaction={i} /> : null}
                         </div>
                       </li>
                     );

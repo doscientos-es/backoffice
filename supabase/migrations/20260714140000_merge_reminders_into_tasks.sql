@@ -30,7 +30,7 @@ INSERT INTO public.tasks (
   lead_id, client_id, project_id,
   created_by, created_at, updated_at,
   -- required non-null defaults
-  status, priority, all_day, is_billable
+  status, priority, all_day
 )
 SELECT
   r.id,
@@ -47,7 +47,6 @@ SELECT
   r.created_at,         -- no updated_at on reminders, use created_at
   'todo',
   'medium',
-  false,
   false
 FROM public.reminders r
 WHERE NOT EXISTS (

@@ -24,10 +24,16 @@ function toLocalInputValue(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-function defaultRemindAt(): string {
+function defaultRemindAtValue(): string {
   const d = new Date();
   d.setHours(d.getHours() + 1, 0, 0, 0);
   return toLocalInputValue(d);
+}
+
+function suggestedRemindAtValue(value: string | null): string {
+  if (!value) return defaultRemindAtValue();
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? defaultRemindAtValue() : toLocalInputValue(date);
 }
 
 const SCHEDULE_PRESETS: { label: string; minutes: number }[] = [
@@ -49,6 +55,8 @@ type Props = {
   /** Prefilled reminder title (e.g. the AI suggested next step). */
   defaultTitle?: string;
   defaultNotes?: string;
+  /** ISO timestamp suggested by the AI; converted to the user's local timezone. */
+  defaultRemindAt?: string | null;
   /** Team members available for assignment. When provided, a member picker is shown. */
   members?: ScheduleMember[];
   onScheduled?: () => void;
@@ -67,12 +75,13 @@ export function ScheduleReminderDialog({
   trigger,
   defaultTitle = "",
   defaultNotes = "",
+  defaultRemindAt = null,
   members = [],
   onScheduled,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState(defaultTitle);
-  const [remindAt, setRemindAt] = useState(defaultRemindAt);
+  const [remindAt, setRemindAt] = useState(suggestedRemindAtValue(defaultRemindAt));
   const [notes, setNotes] = useState(defaultNotes);
   const [assigneeId, setAssigneeId] = useState<string>("");
   const feedback = useFormFeedback();
@@ -83,7 +92,7 @@ export function ScheduleReminderDialog({
     if (next) {
       setTitle(defaultTitle);
       setNotes(defaultNotes);
-      setRemindAt(defaultRemindAt());
+      setRemindAt(suggestedRemindAtValue(defaultRemindAt));
       setAssigneeId("");
       feedback.reset();
     }

@@ -51,7 +51,7 @@ CREATE POLICY task_members_delete ON public.task_members
 INSERT INTO public.tasks (
   id, kind, title, description, start_at, end_at, all_day, location,
   created_by, created_at, updated_at, deleted_at,
-  kanban_order, status, priority, is_billable
+  kanban_order, status, priority
 )
 SELECT
   e.id,
@@ -68,8 +68,7 @@ SELECT
   e.deleted_at,
   'a0',
   'todo',
-  'medium',
-  false
+  'medium'
 FROM public.events e
 WHERE NOT EXISTS (
   SELECT 1 FROM public.tasks t WHERE t.id = e.id
