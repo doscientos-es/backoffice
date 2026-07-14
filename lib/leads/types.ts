@@ -141,6 +141,12 @@ export type LeadDetail = {
   lost_at: string | null;
   assigned_to: string | null;
   assignee: LeadMemberRef | null;
+  /** Mom Test qualification signals — tri-state, null until marked. */
+  mom_test_aware_problem: boolean | null;
+  mom_test_searched_solutions: boolean | null;
+  mom_test_has_budget: boolean | null;
+  mom_test_knows_budget: boolean | null;
+  mom_test_tried_solutions: boolean | null;
 };
 
 export type LeadDetailInteraction = LeadInteraction & {

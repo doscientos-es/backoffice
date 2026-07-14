@@ -16,7 +16,7 @@ import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { type ReactNode, useState } from "react";
-import { createReminder } from "../../reminders/actions";
+import { createReminder } from "./actions";
 
 /** datetime-local needs `YYYY-MM-DDTHH:mm` in the user's local TZ. */
 function toLocalInputValue(date: Date): string {
@@ -40,11 +40,14 @@ const SCHEDULE_PRESETS: { label: string; minutes: number }[] = [
 export type ScheduleMember = { id: string; name: string };
 
 type Props = {
-  leadId: string;
+  /** Context the reminder is linked to. Provide at most one. */
+  leadId?: string;
+  projectId?: string;
+  clientId?: string;
   /** Element that opens the dialog (rendered via DialogTrigger asChild). */
   trigger: ReactNode;
   /** Prefilled reminder title (e.g. the AI suggested next step). */
-  defaultTitle: string;
+  defaultTitle?: string;
   defaultNotes?: string;
   /** Team members available for assignment. When provided, a member picker is shown. */
   members?: ScheduleMember[];
@@ -52,14 +55,17 @@ type Props = {
 };
 
 /**
- * Reminder scheduling dialog shared by the lead quick actions and the AI
- * panel. The trigger and prefilled title/notes are supplied by the caller so
- * the same form (datetime + presets + notes) backs every "Agendar" entry point.
+ * Universal reminder scheduling dialog — shared by lead quick actions, the AI
+ * panel, and the project/client "Próximos avisos" cards. The trigger and
+ * prefilled title/notes are supplied by the caller so the same form
+ * (datetime + presets + assignee + notes) backs every "Agendar" entry point.
  */
 export function ScheduleReminderDialog({
   leadId,
+  projectId,
+  clientId,
   trigger,
-  defaultTitle,
+  defaultTitle = "",
   defaultNotes = "",
   members = [],
   onScheduled,
@@ -70,6 +76,8 @@ export function ScheduleReminderDialog({
   const [notes, setNotes] = useState(defaultNotes);
   const [assigneeId, setAssigneeId] = useState<string>("");
   const feedback = useFormFeedback();
+
+  const contextLabel = leadId ? "esta lead" : projectId ? "este proyecto" : "este cliente";
 
   function handleOpenChange(next: boolean) {
     if (next) {
@@ -93,6 +101,8 @@ export function ScheduleReminderDialog({
     feedback.setPending();
     const res = await createReminder({
       leadId,
+      projectId,
+      clientId,
       title: title.trim(),
       remindAt: new Date(remindAt).toISOString(),
       notes: notes || undefined,
@@ -109,9 +119,9 @@ export function ScheduleReminderDialog({
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Agendar seguimiento</DialogTitle>
+          <DialogTitle>Agendar aviso</DialogTitle>
           <DialogDescription>
-            Crea un aviso para esta lead (llamada, email, recordatorio…).
+            Crea un aviso para {contextLabel} (llamada, email, recordatorio…).
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="flex flex-col gap-3">

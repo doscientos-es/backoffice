@@ -4,6 +4,10 @@ import { Button } from "@/components/ui/button";
 import { CalendarClock, Hand, ListTodo } from "lucide-react";
 import { type ReactNode, useState, useTransition } from "react";
 import { sileo } from "sileo";
+import {
+  type ScheduleMember,
+  ScheduleReminderDialog,
+} from "../../reminders/schedule-reminder-dialog";
 import { claimLead } from "../actions";
 import {
   type MeetMember,
@@ -15,7 +19,6 @@ import {
   QSendEmailDialog,
 } from "../lead-quick-action-dialogs";
 import { ExtractTasksDialog, type ExtractTasksDialogProps } from "./extract-tasks-dialog";
-import { type ScheduleMember, ScheduleReminderDialog } from "./schedule-reminder-dialog";
 
 type Props = {
   leadId: string;

@@ -14,6 +14,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ScheduleReminderDialog } from "../../reminders/schedule-reminder-dialog";
 import { TaskCreateDialog } from "../../tasks/task-create-dialog";
 import { GitHubModeBadge } from "../github-mode-badge";
 import type { GitHubSyncMode } from "../github-sync-section";
@@ -322,13 +323,28 @@ export default async function ProjectDetailPage({
         </CardContent>
       </Card>
 
-      {pendingReminders.length > 0 ? (
+      {canEdit || pendingReminders.length > 0 ? (
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Próximos avisos</CardTitle>
+            {canEdit && (
+              <ScheduleReminderDialog
+                projectId={id}
+                members={(members ?? []) as Array<{ id: string; name: string }>}
+                trigger={
+                  <Button size="sm" variant="outline">
+                    Agendar aviso
+                  </Button>
+                }
+              />
+            )}
           </CardHeader>
           <CardContent>
-            <RemindersSection reminders={pendingReminders} />
+            {pendingReminders.length > 0 ? (
+              <RemindersSection reminders={pendingReminders} />
+            ) : (
+              <p className="text-sm text-muted-foreground">Sin avisos programados.</p>
+            )}
           </CardContent>
         </Card>
       ) : null}

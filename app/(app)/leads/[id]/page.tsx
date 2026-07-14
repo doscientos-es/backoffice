@@ -25,6 +25,7 @@ import { notFound } from "next/navigation";
 import { LeadAiPanel } from "./lead-ai-panel";
 import { LeadCommercial } from "./lead-commercial";
 import { LeadEditDialog } from "./lead-edit-dialog";
+import { MomTestChecklist } from "./mom-test-checklist";
 import { PhoneQuickActions } from "./phone-actions";
 import { LeadQuickActions } from "./quick-actions";
 import { LeadStatusSelect } from "./status-select";
@@ -321,6 +322,25 @@ export default async function LeadDetailPage({
                   <p className="whitespace-pre-wrap text-sm">{lead.notes as string}</p>
                 </div>
               ) : null}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Mom Test</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <MomTestChecklist
+                leadId={lead.id as string}
+                canEdit={canEdit}
+                initialValues={{
+                  aware_problem: (lead.mom_test_aware_problem as boolean | null) ?? null,
+                  searched_solutions: (lead.mom_test_searched_solutions as boolean | null) ?? null,
+                  has_budget: (lead.mom_test_has_budget as boolean | null) ?? null,
+                  knows_budget: (lead.mom_test_knows_budget as boolean | null) ?? null,
+                  tried_solutions: (lead.mom_test_tried_solutions as boolean | null) ?? null,
+                }}
+              />
             </CardContent>
           </Card>
 

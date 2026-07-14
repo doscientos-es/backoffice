@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { formatAddress } from "@/lib/address";
 import { requireUser } from "@/lib/auth";
 import { getClientDetail } from "@/lib/clients/queries";
+import { listActiveMembers } from "@/lib/members/queries";
 import {
   INVOICE_STATUS,
   type InvoiceStatus,
@@ -21,6 +22,7 @@ import {
 import { formatDate, formatEUR } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ScheduleReminderDialog } from "../../reminders/schedule-reminder-dialog";
 import { ClientEditDialog } from "./client-edit-dialog";
 import { DeleteClientButton } from "./delete-client-button";
 
@@ -29,8 +31,12 @@ export const dynamic = "force-dynamic";
 export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const user = await requireUser();
+  const canEdit = user.role !== "viewer";
 
-  const result = await getClientDetail(id);
+  const [result, members] = await Promise.all([
+    getClientDetail(id),
+    canEdit ? listActiveMembers() : Promise.resolve([]),
+  ]);
   if (!result) notFound();
 
   const { client, projects, proposals, invoices, reminders } = result;
@@ -183,13 +189,28 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         </CardContent>
       </Card>
 
-      {reminders.length > 0 ? (
+      {canEdit || reminders.length > 0 ? (
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Próximos avisos</CardTitle>
+            {canEdit && (
+              <ScheduleReminderDialog
+                clientId={id}
+                members={members}
+                trigger={
+                  <Button size="sm" variant="outline">
+                    Agendar aviso
+                  </Button>
+                }
+              />
+            )}
           </CardHeader>
           <CardContent>
-            <RemindersSection reminders={reminders} />
+            {reminders.length > 0 ? (
+              <RemindersSection reminders={reminders} />
+            ) : (
+              <p className="text-sm text-muted-foreground">Sin avisos programados.</p>
+            )}
           </CardContent>
         </Card>
       ) : null}

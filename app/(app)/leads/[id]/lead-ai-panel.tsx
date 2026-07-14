@@ -7,7 +7,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { AlertCircle, CalendarClock, Sparkles } from "lucide-react";
 import { useState } from "react";
-import { type ScheduleMember, ScheduleReminderDialog } from "./schedule-reminder-dialog";
+import {
+  type ScheduleMember,
+  ScheduleReminderDialog,
+} from "../../reminders/schedule-reminder-dialog";
 
 export type LeadAiData = {
   ai_summary: string | null;

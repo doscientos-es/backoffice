@@ -19,9 +19,11 @@ import {
   LogCallInput,
   LogEmailInput,
   LogNoteInput,
+  type MomTestSignal,
   ScheduleLeadMeetingInput,
   SendEmailToLeadInput,
   UpdateLeadInput,
+  UpdateLeadMomTestInput,
   UpdateLeadStatusInput,
 } from "@/lib/schemas/lead";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -284,6 +286,33 @@ export const updateLeadEstimatedValue = defineAction({
     const { error } = await supabase
       .from("leads")
       .update({ estimated_value: data.value, updated_by: user.id })
+      .eq("id", data.leadId);
+    if (error) throw new Error(error.message);
+  },
+});
+
+// ---------------- UPDATE MOM TEST SIGNAL ----------------
+
+/** Maps a Mom Test signal key to its `leads` table column. */
+const MOM_TEST_COLUMN: Record<MomTestSignal, string> = {
+  aware_problem: "mom_test_aware_problem",
+  searched_solutions: "mom_test_searched_solutions",
+  has_budget: "mom_test_has_budget",
+  knows_budget: "mom_test_knows_budget",
+  tried_solutions: "mom_test_tried_solutions",
+};
+
+export const updateLeadMomTestSignal = defineAction({
+  name: "leads.updateMomTestSignal",
+  schema: UpdateLeadMomTestInput,
+  roles: ["owner", "admin", "member"],
+  revalidate: (_payload, input) => ["/leads", `/leads/${input.leadId}`],
+  handler: async (data, { user }) => {
+    const supabase = await createServerClient();
+    const column = MOM_TEST_COLUMN[data.signal];
+    const { error } = await supabase
+      .from("leads")
+      .update({ [column]: data.value, updated_by: user.id })
       .eq("id", data.leadId);
     if (error) throw new Error(error.message);
   },
