@@ -81,7 +81,12 @@ export function LeadsList({
           {l.email}
         </a>
       ) : null,
-      <StatusBadge key="status" meta={LEAD_STATUS} value={l.status} />,
+      <div key="status" className="flex flex-col gap-0.5">
+        <StatusBadge meta={LEAD_STATUS} value={l.status} />
+        {(l.status === "lost" || l.status === "not_interested") && l.lost_reason && (
+          <span className="text-[11px] text-destructive/80 truncate max-w-36">{l.lost_reason}</span>
+        )}
+      </div>,
       <span key="score" className="tabular-nums text-muted-foreground">
         {l.score ?? "—"}
       </span>,

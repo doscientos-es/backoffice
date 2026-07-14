@@ -33,6 +33,7 @@ import {
   Phone,
   Timer,
   Trash2,
+  TriangleAlert,
   UserRound,
   Users,
   Wallet,
@@ -114,6 +115,17 @@ function Body({
       </DrawerHeader>
 
       <div className="flex flex-col gap-4 overflow-y-auto h-full flex-1 p-4 scroll-fade no-scrollbar">
+        {(lead.status === "lost" || lead.status === "not_interested") && lead.lost_reason && (
+          <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/8 px-3 py-2.5 text-xs">
+            <TriangleAlert className="size-3.5 shrink-0 mt-0.5 text-destructive" />
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <span className="font-semibold text-destructive">
+                {lead.status === "lost" ? "Motivo de pérdida" : "Motivo de no interés"}
+              </span>
+              <span className="text-foreground">{lead.lost_reason}</span>
+            </div>
+          </div>
+        )}
         <section className="flex flex-col gap-1.5 text-xs">
           {lead.company && <Row icon={<Building2 className="size-3.5" />}>{lead.company}</Row>}
           {lead.email && (
@@ -169,22 +181,22 @@ function Body({
           lead.landing_ref ||
           lead.landing_subject ||
           lead.conversion_step) && (
-          <section className="flex flex-col gap-1.5 text-xs">
-            <Heading>AtribuciÃ³n</Heading>
-            {lead.conversion_step && (
-              <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.conversion_step}</Row>
-            )}
-            {lead.landing_path && (
-              <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_path}</Row>
-            )}
-            {lead.landing_ref && (
-              <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_ref}</Row>
-            )}
-            {lead.landing_subject && (
-              <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_subject}</Row>
-            )}
-          </section>
-        )}
+            <section className="flex flex-col gap-1.5 text-xs">
+              <Heading>AtribuciÃ³n</Heading>
+              {lead.conversion_step && (
+                <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.conversion_step}</Row>
+              )}
+              {lead.landing_path && (
+                <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_path}</Row>
+              )}
+              {lead.landing_ref && (
+                <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_ref}</Row>
+              )}
+              {lead.landing_subject && (
+                <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_subject}</Row>
+              )}
+            </section>
+          )}
         {lead.notes && (
           <section className="flex flex-col gap-1.5">
             <Heading>Notas</Heading>

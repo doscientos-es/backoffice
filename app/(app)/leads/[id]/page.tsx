@@ -99,21 +99,21 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         .order("created_at", { ascending: false }),
       googleEnabled
         ? supabase
-            .from("projects")
-            .select("id, name")
-            .is("deleted_at", null)
-            .in("status", ["planned", "active", "on_hold"])
-            .order("name")
+          .from("projects")
+          .select("id, name")
+          .is("deleted_at", null)
+          .in("status", ["planned", "active", "on_hold"])
+          .order("name")
         : Promise.resolve({ data: [] as Array<{ id: string; name: string }> | null }),
       googleEnabled
         ? supabase
-            .from("team_members")
-            .select("id, name, email")
-            .is("deleted_at", null)
-            .order("name")
+          .from("team_members")
+          .select("id, name, email")
+          .is("deleted_at", null)
+          .order("name")
         : Promise.resolve({
-            data: [] as Array<{ id: string; name: string; email: string }> | null,
-          }),
+          data: [] as Array<{ id: string; name: string; email: string }> | null,
+        }),
     ]);
 
   const meetMembers = (rawMeetMembers ?? []).map((m) => ({
@@ -220,15 +220,16 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             <CardContent>
               <DetailGrid>
                 <DetailRow label="Estado">
-                  <div className="flex items-center gap-2">
-                    <StatusBadge meta={LEAD_STATUS} value={lead.status as string} />
-                    {lead.status === "lost" && lead.lost_reason && (
-                      <Badge variant="outline" className="text-muted-foreground border-dashed">
-                        {lead.lost_reason as string}
-                      </Badge>
-                    )}
-                  </div>
+                  <StatusBadge meta={LEAD_STATUS} value={lead.status as string} />
                 </DetailRow>
+                {(lead.status === "lost" || lead.status === "not_interested") &&
+                  lead.lost_reason && (
+                    <DetailRow label={lead.status === "lost" ? "Motivo de pérdida" : "Motivo"}>
+                      <span className="font-medium text-destructive">
+                        {lead.lost_reason as string}
+                      </span>
+                    </DetailRow>
+                  )}
                 {lead.email && <DetailRow label="Email">{lead.email}</DetailRow>}
                 {lead.phone && <DetailRow label="Teléfono">{lead.phone}</DetailRow>}
                 {lead.company && <DetailRow label="Empresa">{lead.company}</DetailRow>}
@@ -256,39 +257,39 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                 {lead.landing_ref && <DetailRow label="Ref">{lead.landing_ref}</DetailRow>}
                 {lead.landing_subject && <DetailRow label="Asunto">{lead.landing_subject}</DetailRow>}
                 {compactParts([
-                    lead.first_landing_path,
-                    lead.first_referrer,
-                    lead.first_utm_source,
-                    lead.first_utm_medium,
-                    lead.first_utm_campaign,
-                  ]) && (
-                  <DetailRow label="First touch">
-                    {compactParts([
-                      lead.first_landing_path,
-                      lead.first_referrer,
-                      lead.first_utm_source,
-                      lead.first_utm_medium,
-                      lead.first_utm_campaign,
-                    ])}
-                  </DetailRow>
-                )}
+                  lead.first_landing_path,
+                  lead.first_referrer,
+                  lead.first_utm_source,
+                  lead.first_utm_medium,
+                  lead.first_utm_campaign,
+                ]) && (
+                    <DetailRow label="First touch">
+                      {compactParts([
+                        lead.first_landing_path,
+                        lead.first_referrer,
+                        lead.first_utm_source,
+                        lead.first_utm_medium,
+                        lead.first_utm_campaign,
+                      ])}
+                    </DetailRow>
+                  )}
                 {compactParts([
-                    lead.last_landing_path,
-                    lead.last_referrer,
-                    lead.last_utm_source,
-                    lead.last_utm_medium,
-                    lead.last_utm_campaign,
-                  ]) && (
-                  <DetailRow label="Last touch">
-                    {compactParts([
-                      lead.last_landing_path,
-                      lead.last_referrer,
-                      lead.last_utm_source,
-                      lead.last_utm_medium,
-                      lead.last_utm_campaign,
-                    ])}
-                  </DetailRow>
-                )}
+                  lead.last_landing_path,
+                  lead.last_referrer,
+                  lead.last_utm_source,
+                  lead.last_utm_medium,
+                  lead.last_utm_campaign,
+                ]) && (
+                    <DetailRow label="Last touch">
+                      {compactParts([
+                        lead.last_landing_path,
+                        lead.last_referrer,
+                        lead.last_utm_source,
+                        lead.last_utm_medium,
+                        lead.last_utm_campaign,
+                      ])}
+                    </DetailRow>
+                  )}
                 {[lead.calculator_cost, lead.calculator_hours].some(hasValue) && (
                   <DetailRow label="Resultado calculadora">
                     {[lead.calculator_cost, lead.calculator_hours].filter(hasValue).join(" · ")}

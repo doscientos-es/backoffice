@@ -27,7 +27,7 @@ const PERFORMER_EMBED = "performer:performed_by(id, name, avatar_url, github_han
 const QUALIFICATION_COLUMNS =
   "company_size, solution_type, urgency, first_contacted_at, landing_path, landing_ref, landing_subject, calculator_cost, calculator_hours, event_id, conversion_step, first_landing_path, first_referrer, first_utm_source, first_utm_medium, first_utm_campaign, first_utm_term, first_utm_content, last_landing_path, last_referrer, last_utm_source, last_utm_medium, last_utm_campaign, last_utm_term, last_utm_content";
 
-const LIST_COLUMNS = `id, name, company, email, phone, source, notes, status, created_at, updated_at, estimated_value, score, ${QUALIFICATION_COLUMNS}, ai_summary, ai_updated_at, assigned_to, ${ASSIGNEE_EMBED}`;
+const LIST_COLUMNS = `id, name, company, email, phone, source, notes, status, created_at, updated_at, estimated_value, score, ${QUALIFICATION_COLUMNS}, ai_summary, ai_updated_at, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`;
 
 const DETAIL_COLUMNS = `id, name, email, phone, company, source, status, notes, estimated_value, score, ${QUALIFICATION_COLUMNS}, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_temperature, ai_confidence, ai_updated_at, ai_tags, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`;
 
@@ -111,6 +111,8 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
     conversion_step: (l.conversion_step as string | null) ?? null,
     ai_summary: (l.ai_summary as string | null) ?? null,
     ai_updated_at: (l.ai_updated_at as string | null) ?? null,
+    lost_reason: (l.lost_reason as string | null) ?? null,
+    lost_at: (l.lost_at as string | null) ?? null,
     assignee: mapMemberRef(l.assignee),
     recent_interactions: interactionsByLead.get(l.id as string) ?? [],
   }));

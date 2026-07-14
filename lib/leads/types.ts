@@ -53,6 +53,8 @@ export type LeadListItem = {
   conversion_step: string | null;
   ai_summary: string | null;
   ai_updated_at: string | null;
+  lost_reason: string | null;
+  lost_at: string | null;
   assignee: LeadMemberRef | null;
   recent_interactions: LeadInteraction[];
 };
