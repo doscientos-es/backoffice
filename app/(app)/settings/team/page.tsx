@@ -135,8 +135,13 @@ export default async function TeamSettingsPage() {
                     <th className="px-5 py-2 font-medium">Miembro</th>
                     <th className="px-5 py-2 font-medium">Rol</th>
                     <th className="px-5 py-2 font-medium">Estado</th>
-                    <th className="px-5 py-2 font-medium">Alta</th>
-                    <th className="px-5 py-2 font-medium">Último acceso</th>
+                    <th className="px-5 py-2 font-medium whitespace-nowrap">Incorporación</th>
+                    <th
+                      className="px-5 py-2 font-medium whitespace-nowrap"
+                      title="Fecha del último inicio de sesión explícito (clic en magic link). Las renovaciones automáticas de sesión no actualizan este valor."
+                    >
+                      Último inicio de sesión
+                    </th>
                     <th className="px-5 py-2 font-medium text-right">Acciones</th>
                   </tr>
                 </thead>
@@ -205,15 +210,15 @@ export default async function TeamSettingsPage() {
                             <Badge variant="success">Activo</Badge>
                           )}
                         </td>
-                        <td className="px-5 py-2.5 align-middle text-(--text-secondary)">
+                        <td className="px-5 py-2.5 align-middle whitespace-nowrap text-(--text-secondary)">
                           {formatDate(m.created_at)}
                         </td>
-                        <td className="px-5 py-2.5 align-middle">
+                        <td className="px-5 py-2.5 align-middle whitespace-nowrap">
                           {m.last_sign_in_at ? (
                             <span
                               className={
                                 Date.now() - new Date(m.last_sign_in_at).getTime() >
-                                INACTIVE_THRESHOLD_MS
+                                  INACTIVE_THRESHOLD_MS
                                   ? "text-warning font-medium"
                                   : "text-(--text-secondary)"
                               }
