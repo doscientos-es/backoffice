@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { ActionLeadRow, MyDayData, MyTaskRow, WeekStats } from "@/lib/dashboard/types";
 import { useOptimisticRemoval } from "@/lib/hooks/use-optimistic-removal";
+import { leadDisplayName } from "@/lib/leads/utils";
 import { LEAD_STATUS, TASK_STATUS } from "@/lib/status";
 import { relativeTime } from "@/lib/utils";
 import { ChevronRight, Inbox, ListTodo, Phone, UserRound } from "lucide-react";
@@ -182,10 +183,11 @@ function LeadItem({
   lead: ActionLeadRow;
   onClaimAction?: (id: string) => void;
 }) {
+  const displayName = leadDisplayName(lead);
   return (
     <li className="flex items-center justify-between gap-2">
       <Link href={`/leads/${lead.id}`} className="min-w-0 flex-1 hover:underline">
-        <span className="block truncate text-sm">{lead.name}</span>
+        <span className="block truncate text-sm">{displayName}</span>
         <span className="block truncate text-xs text-muted-foreground">
           {lead.company ?? "Sin empresa"} · {relativeTime(lead.since)}
         </span>
@@ -197,8 +199,8 @@ function LeadItem({
         ) : lead.phone ? (
           <a
             href={`tel:${lead.phone}`}
-            title={`Llamar a ${lead.name}`}
-            aria-label={`Llamar a ${lead.name}`}
+            title={`Llamar a ${displayName}`}
+            aria-label={`Llamar a ${displayName}`}
             className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
           >
             <Phone className="size-3.5" />

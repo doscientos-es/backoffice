@@ -3,6 +3,7 @@
 import { ListPage, type ListPageProps } from "@/components/layout/list-page";
 import { MemberLabel } from "@/components/ui/member-avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { getLeadInitials, leadDisplayName } from "@/lib/leads/utils";
 import type { RecoveryLead } from "@/lib/recovery/types";
 import { RECOVERY_STATE } from "@/lib/status";
 import { formatEUR, relativeTime } from "@/lib/utils";
@@ -15,13 +16,10 @@ type RecoveryListProps = Omit<ListPageProps, "rows"> & {
   aiEnabled?: boolean;
 };
 
-function LeadInitials({ name }: { name: string }) {
-  const parts = (name ?? "").trim().split(/\s+/);
-  const letters =
-    parts.length >= 2 ? (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "") : (parts[0]?.[0] ?? "?");
+function LeadInitials({ lead }: { lead: RecoveryLead }) {
   return (
     <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold uppercase text-primary">
-      {letters}
+      {getLeadInitials(lead)}
     </span>
   );
 }
@@ -65,7 +63,7 @@ export function RecoveryList({ leads, aiEnabled = false, ...props }: RecoveryLis
   const rows = leads.map((l) => ({
     id: l.id,
     csvValues: [
-      l.name,
+      leadDisplayName(l),
       l.company ?? "",
       l.lost_reason ?? "",
       RECOVERY_STATE[l.recoveryState].label,
@@ -81,9 +79,9 @@ export function RecoveryList({ leads, aiEnabled = false, ...props }: RecoveryLis
         href={`/leads/${l.id}`}
         className="group/leadname inline-flex items-center gap-2.5"
       >
-        <LeadInitials name={l.name} />
+        <LeadInitials lead={l} />
         <span className="font-medium truncate max-w-40 underline-offset-2 group-hover/leadname:underline group-hover/leadname:text-primary transition-colors">
-          {l.name}
+          {leadDisplayName(l)}
         </span>
         <ArrowRight className="size-3.5 shrink-0 opacity-0 -translate-x-1 transition-all group-hover/leadname:opacity-60 group-hover/leadname:translate-x-0" />
       </Link>,

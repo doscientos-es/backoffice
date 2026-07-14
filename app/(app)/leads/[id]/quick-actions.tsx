@@ -15,7 +15,7 @@ import {
   QSendEmailDialog,
 } from "../lead-quick-action-dialogs";
 import { ExtractTasksDialog, type ExtractTasksDialogProps } from "./extract-tasks-dialog";
-import { ScheduleReminderDialog } from "./schedule-reminder-dialog";
+import { type ScheduleMember, ScheduleReminderDialog } from "./schedule-reminder-dialog";
 
 type Props = {
   leadId: string;
@@ -27,6 +27,8 @@ type Props = {
   googleEnabled?: boolean;
   projects?: Array<{ id: string; name: string }>;
   meetMembers?: MeetMember[];
+  /** Team members for the "Agendar" assignee picker. */
+  scheduleMembers?: ScheduleMember[];
   createTaskAction?: ExtractTasksDialogProps["createTaskAction"];
 };
 
@@ -40,6 +42,7 @@ export function LeadQuickActions({
   googleEnabled,
   projects = [],
   meetMembers = [],
+  scheduleMembers = [],
   createTaskAction,
 }: Props) {
   return (
@@ -66,7 +69,7 @@ export function LeadQuickActions({
           />
         </>
       )}
-      <ScheduleDialog leadId={leadId} leadName={leadName} />
+      <ScheduleDialog leadId={leadId} leadName={leadName} members={scheduleMembers} />
       {aiEnabled && createTaskAction && (
         <ExtractTasksDialog
           leadId={leadId}
@@ -128,11 +131,20 @@ function ActionTrigger({
 
 // ---------------- SCHEDULE (reminder) ----------------
 
-function ScheduleDialog({ leadId, leadName }: { leadId: string; leadName: string }) {
+function ScheduleDialog({
+  leadId,
+  leadName,
+  members,
+}: {
+  leadId: string;
+  leadName: string;
+  members?: ScheduleMember[];
+}) {
   return (
     <ScheduleReminderDialog
       leadId={leadId}
       defaultTitle={`Llamar a ${leadName}`}
+      members={members}
       trigger={<ActionTrigger icon={<CalendarClock className="size-4" />} label="Agendar" />}
     />
   );

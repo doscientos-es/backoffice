@@ -44,7 +44,7 @@ export async function createReminder(input: unknown): Promise<CreateReminderResu
   if (!parsed.success) {
     return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
   }
-  const { title, remindAt, notes, leadId, clientId, projectId } = parsed.data;
+  const { title, remindAt, notes, leadId, clientId, projectId, assigneeId } = parsed.data;
 
   const supabase = await createServerClient();
   const { data, error } = await supabase
@@ -58,7 +58,7 @@ export async function createReminder(input: unknown): Promise<CreateReminderResu
       client_id: clientId ?? null,
       project_id: projectId ?? null,
       created_by: user.id,
-      assignee_id: user.id,
+      assignee_id: assigneeId ?? user.id,
       status: "todo",
       priority: "medium",
     })

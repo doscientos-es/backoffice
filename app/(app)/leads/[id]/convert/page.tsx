@@ -29,6 +29,7 @@ export default async function ConvertLeadPage({
   if (existingClientId) redirect(`/clients/${existingClientId}`);
 
   const defaultName = lead.company || lead.name;
+  const defaultAlias = lead.company ? "" : (lead.alias ?? "");
 
   return (
     <div className="flex flex-col gap-6">
@@ -58,6 +59,13 @@ export default async function ConvertLeadPage({
                   defaultValue={defaultName}
                   autoFocus
                 />
+              </FormRow>
+              <FormRow
+                label="Alias / Label"
+                htmlFor="alias"
+                hint="Nombre corto para listas. Si está vacío se usa la razón social."
+              >
+                <Input id="alias" name="alias" maxLength={100} defaultValue={defaultAlias} />
               </FormRow>
               <FormRow label="NIF / CIF" htmlFor="nif" required>
                 <Input id="nif" name="nif" required maxLength={20} placeholder="B12345678" />

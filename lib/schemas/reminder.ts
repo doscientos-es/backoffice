@@ -11,20 +11,17 @@ import { uuidIdInput } from "./common";
 
 export const ReminderIdInput = uuidIdInput;
 
-export const CreateReminderInput = z
-  .object({
-    title: z.string().trim().min(1, "El título es obligatorio").max(200),
-    remindAt: z
-      .string()
-      .min(1, "Indica fecha y hora")
-      .refine((v) => !Number.isNaN(Date.parse(v)), { message: "Fecha no válida" }),
-    notes: z.string().trim().max(4000).optional(),
-    leadId: z.string().uuid().optional(),
-    clientId: z.string().uuid().optional(),
-    projectId: z.string().uuid().optional(),
-  })
-  .refine((v) => !!(v.leadId || v.clientId || v.projectId), {
-    message: "Vincula el aviso a un lead, cliente o proyecto",
-    path: ["leadId"],
-  });
+export const CreateReminderInput = z.object({
+  title: z.string().trim().min(1, "El título es obligatorio").max(200),
+  remindAt: z
+    .string()
+    .min(1, "Indica fecha y hora")
+    .refine((v) => !Number.isNaN(Date.parse(v)), { message: "Fecha no válida" }),
+  notes: z.string().trim().max(4000).optional(),
+  leadId: z.string().uuid().optional(),
+  clientId: z.string().uuid().optional(),
+  projectId: z.string().uuid().optional(),
+  /** ID of the team member to assign this reminder to. Defaults to the current user. */
+  assigneeId: z.string().uuid().optional(),
+});
 export type CreateReminderInputType = z.infer<typeof CreateReminderInput>;

@@ -5,6 +5,7 @@ import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { MemberAvatar } from "@/components/ui/member-avatar";
 import type { LeadListItem } from "@/lib/leads/types";
+import { getLeadInitials, leadDisplayName } from "@/lib/leads/utils";
 import type { MemberOption } from "@/lib/members/queries";
 import type { LeadStatus } from "@/lib/status";
 import { cn, formatEUR, relativeTime } from "@/lib/utils";
@@ -195,13 +196,13 @@ export function LeadsKanban({
     if (!current || current.status === to) return;
 
     if (to === "lost" || to === "not_interested") {
-      setPendingClosure({ id, name: current.name, variant: to });
+      setPendingClosure({ id, name: leadDisplayName(current), variant: to });
       return;
     }
 
     // Reopening a won lead: ask for confirmation before committing
     if (current.status === "won" && REOPEN_INTO.has(to)) {
-      setPendingReopen({ id, name: current.name, to });
+      setPendingReopen({ id, name: leadDisplayName(current), to });
       return;
     }
 
@@ -209,7 +210,7 @@ export function LeadsKanban({
 
     // After moving to quoted: suggest creating a proposal
     if (to === "quoted") {
-      setPendingSuggestion({ id, name: current.name });
+      setPendingSuggestion({ id, name: leadDisplayName(current) });
     }
   };
 
@@ -433,10 +434,8 @@ function AddLeadCard() {
   );
 }
 
-function LeadInitials({ name }: { name: string }) {
-  const parts = name.trim().split(/\s+/);
-  const letters =
-    parts.length >= 2 ? (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "") : (parts[0]?.[0] ?? "?");
+function LeadInitials({ lead }: { lead: KanbanLead }) {
+  const letters = getLeadInitials(lead);
   return (
     <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold uppercase text-primary">
       {letters}
@@ -483,8 +482,10 @@ function Card({
       )}
     >
       <div className="flex items-start gap-2">
-        <LeadInitials name={lead.name} />
-        <span className="flex-1 truncate text-sm font-medium leading-tight">{lead.name}</span>
+        <LeadInitials lead={lead} />
+        <span className="flex-1 truncate text-sm font-medium leading-tight">
+          {leadDisplayName(lead)}
+        </span>
         {stale && !isOverlay && (
           <HoverCard openDelay={300} closeDelay={100}>
             <HoverCardTrigger asChild>

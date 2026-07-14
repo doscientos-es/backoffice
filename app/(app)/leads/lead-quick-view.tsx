@@ -20,6 +20,7 @@ import {
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { MemberLabel } from "@/components/ui/member-avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { leadDisplayName } from "@/lib/leads/utils";
 import type { MemberOption } from "@/lib/members/queries";
 import { LEAD_STATUS } from "@/lib/status";
 import { formatEUR, relativeTime } from "@/lib/utils";
@@ -97,11 +98,12 @@ function Body({
   onDeleteAction?: (id: string) => void;
 }) {
   const hasEstimated = lead.estimated_value != null && lead.estimated_value > 0;
+  const displayName = leadDisplayName(lead);
   return (
     <div className="grid h-full grid-rows-[auto_1fr_auto_auto]">
       <DrawerHeader className="flex flex-row items-start justify-between gap-2 border-b border-border">
         <div className="flex flex-col gap-1">
-          <DrawerTitle>{lead.name}</DrawerTitle>
+          <DrawerTitle>{displayName}</DrawerTitle>
           <DrawerDescription className="flex items-center gap-1.5">
             <StatusBadge meta={LEAD_STATUS} value={lead.status} />
             <span className="text-[11px] tabular-nums">{relativeTime(lead.updated_at)}</span>
@@ -181,22 +183,22 @@ function Body({
           lead.landing_ref ||
           lead.landing_subject ||
           lead.conversion_step) && (
-            <section className="flex flex-col gap-1.5 text-xs">
-              <Heading>AtribuciÃ³n</Heading>
-              {lead.conversion_step && (
-                <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.conversion_step}</Row>
-              )}
-              {lead.landing_path && (
-                <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_path}</Row>
-              )}
-              {lead.landing_ref && (
-                <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_ref}</Row>
-              )}
-              {lead.landing_subject && (
-                <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_subject}</Row>
-              )}
-            </section>
-          )}
+          <section className="flex flex-col gap-1.5 text-xs">
+            <Heading>AtribuciÃ³n</Heading>
+            {lead.conversion_step && (
+              <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.conversion_step}</Row>
+            )}
+            {lead.landing_path && (
+              <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_path}</Row>
+            )}
+            {lead.landing_ref && (
+              <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_ref}</Row>
+            )}
+            {lead.landing_subject && (
+              <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_subject}</Row>
+            )}
+          </section>
+        )}
         {lead.notes && (
           <section className="flex flex-col gap-1.5">
             <Heading>Notas</Heading>
@@ -217,7 +219,7 @@ function Body({
       <div className="shrink-0 border-t border-border px-4 py-3">
         <QuickActions
           leadId={lead.id}
-          leadName={lead.name}
+          leadName={displayName}
           leadPhone={lead.phone}
           leadEmail={lead.email}
         />
@@ -229,7 +231,7 @@ function Body({
             {onDeleteAction && (
               <DeleteLeadButton
                 leadId={lead.id}
-                leadName={lead.name}
+                leadName={displayName}
                 onConfirmAction={onDeleteAction}
               />
             )}
@@ -238,6 +240,7 @@ function Body({
               lead={{
                 id: lead.id,
                 name: lead.name,
+                alias: lead.alias,
                 company: lead.company,
                 email: lead.email,
                 phone: lead.phone,

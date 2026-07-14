@@ -12,6 +12,7 @@ import {
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { type ReactNode, useState } from "react";
@@ -36,6 +37,8 @@ const SCHEDULE_PRESETS: { label: string; minutes: number }[] = [
   { label: "En 1 semana", minutes: 60 * 24 * 7 },
 ];
 
+export type ScheduleMember = { id: string; name: string };
+
 type Props = {
   leadId: string;
   /** Element that opens the dialog (rendered via DialogTrigger asChild). */
@@ -43,6 +46,8 @@ type Props = {
   /** Prefilled reminder title (e.g. the AI suggested next step). */
   defaultTitle: string;
   defaultNotes?: string;
+  /** Team members available for assignment. When provided, a member picker is shown. */
+  members?: ScheduleMember[];
   onScheduled?: () => void;
 };
 
@@ -56,21 +61,22 @@ export function ScheduleReminderDialog({
   trigger,
   defaultTitle,
   defaultNotes = "",
+  members = [],
   onScheduled,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState(defaultTitle);
   const [remindAt, setRemindAt] = useState(defaultRemindAt);
   const [notes, setNotes] = useState(defaultNotes);
+  const [assigneeId, setAssigneeId] = useState<string>("");
   const feedback = useFormFeedback();
 
   function handleOpenChange(next: boolean) {
-    // Re-seed from the (possibly updated) defaults each time it opens so a
-    // re-generated next step prefills correctly.
     if (next) {
       setTitle(defaultTitle);
       setNotes(defaultNotes);
       setRemindAt(defaultRemindAt());
+      setAssigneeId("");
       feedback.reset();
     }
     setOpen(next);
@@ -90,6 +96,7 @@ export function ScheduleReminderDialog({
       title: title.trim(),
       remindAt: new Date(remindAt).toISOString(),
       notes: notes || undefined,
+      assigneeId: assigneeId || undefined,
     });
     if (!res.ok) return feedback.setError(res.error);
     feedback.setSuccess("Aviso programado");
@@ -140,6 +147,22 @@ export function ScheduleReminderDialog({
               ))}
             </div>
           </FormRow>
+          {members.length > 0 && (
+            <FormRow label="Asignar a" htmlFor="schedule-assignee">
+              <Select
+                id="schedule-assignee"
+                value={assigneeId}
+                onChange={(e) => setAssigneeId(e.target.value)}
+              >
+                <option value="">Yo mismo</option>
+                {members.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
+                ))}
+              </Select>
+            </FormRow>
+          )}
           <FormRow label="Notas (opcional)" htmlFor="schedule-notes">
             <Textarea
               id="schedule-notes"

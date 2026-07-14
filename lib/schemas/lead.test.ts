@@ -61,6 +61,17 @@ describe("ConvertLeadInput", () => {
       }).nif,
     ).toBe("B12345678");
   });
+  it("carries an optional alias through to the client label", () => {
+    expect(
+      ConvertLeadInput.parse({
+        leadId: uuid,
+        name: "X",
+        alias: "Pepito",
+        nif: "B12345678",
+        billing_address: "C/ Falsa 1",
+      }).alias,
+    ).toBe("Pepito");
+  });
 });
 
 describe("UpdateLeadStatusInput refinements", () => {

@@ -169,11 +169,13 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
       .limit(50),
     notDeleted(supabase.from("clients").select("id").eq("lead_id", id)).maybeSingle(),
     supabase
-      .from("reminders")
-      .select("id, title, remind_at")
+      .from("tasks")
+      .select("id, title, start_at")
+      .eq("kind", "reminder")
       .eq("lead_id", id)
       .is("completed_at", null)
-      .order("remind_at", { ascending: true })
+      .is("deleted_at", null)
+      .order("start_at", { ascending: true })
       .limit(LEAD_RELATED_LIMIT),
   ]);
 
@@ -252,7 +254,7 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
     reminders: (reminders ?? []).map((r) => ({
       id: r.id as string,
       title: r.title as string,
-      remind_at: r.remind_at as string,
+      remind_at: r.start_at as string,
     })),
   };
 }

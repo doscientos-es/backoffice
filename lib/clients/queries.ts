@@ -95,11 +95,13 @@ export async function getClientDetail(id: string): Promise<ClientDetailResult> {
         .order("issue_date", { ascending: false })
         .limit(CLIENT_RELATED_LIMIT),
       supabase
-        .from("reminders")
-        .select("id, title, remind_at")
+        .from("tasks")
+        .select("id, title, start_at")
+        .eq("kind", "reminder")
         .eq("client_id", id)
         .is("completed_at", null)
-        .order("remind_at", { ascending: true })
+        .is("deleted_at", null)
+        .order("start_at", { ascending: true })
         .limit(CLIENT_RELATED_LIMIT),
     ]);
 
@@ -144,7 +146,7 @@ export async function getClientDetail(id: string): Promise<ClientDetailResult> {
     reminders: (reminders ?? []).map((r) => ({
       id: r.id as string,
       title: r.title as string,
-      remind_at: r.remind_at as string,
+      remind_at: r.start_at as string,
     })),
   };
 }

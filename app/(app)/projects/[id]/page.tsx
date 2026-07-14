@@ -142,18 +142,20 @@ export default async function ProjectDetailPage({
           .order("created_at", { ascending: false })
       : Promise.resolve({ data: [] }),
     supabase
-      .from("reminders")
-      .select("id, title, remind_at")
+      .from("tasks")
+      .select("id, title, start_at")
+      .eq("kind", "reminder")
       .eq("project_id", id)
       .is("completed_at", null)
-      .order("remind_at", { ascending: true })
+      .is("deleted_at", null)
+      .order("start_at", { ascending: true })
       .limit(10),
   ]);
 
   const pendingReminders = ((reminders ?? []) as Array<Record<string, unknown>>).map((r) => ({
     id: r.id as string,
     title: r.title as string,
-    remind_at: r.remind_at as string,
+    remind_at: r.start_at as string,
   }));
 
   const workLogs: WorkLogRow[] = ((workLogsData ?? []) as Array<Record<string, unknown>>).map(

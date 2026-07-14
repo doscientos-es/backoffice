@@ -15,6 +15,7 @@ import { requireUser } from "@/lib/auth";
 import { listLeadConversionEvents } from "@/lib/conversion-events/queries";
 import { isGoogleEnabled } from "@/lib/env";
 import { getLeadDetail } from "@/lib/leads/queries";
+import { leadDisplayName } from "@/lib/leads/utils";
 import { listActiveMembers } from "@/lib/members/queries";
 import { LEAD_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
@@ -134,14 +135,15 @@ export default async function LeadDetailPage({
     lead.status !== "won" &&
     lead.status !== "lost" &&
     lead.status !== "archived";
+  const displayName = leadDisplayName(lead);
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title={lead.name as string}
+        title={displayName}
         description={(lead.company as string | null) ?? undefined}
         breadcrumbs={[
           { label: "Leads", href: "/leads" },
-          { label: lead.name as string },
+          { label: displayName },
           ...(linkedClientId ? [{ label: "Cliente", href: `/clients/${linkedClientId}` }] : []),
         ]}
         actions={
@@ -150,7 +152,7 @@ export default async function LeadDetailPage({
               lines={(() => {
                 const parts: string[] = [];
                 parts.push(
-                  [`🎯 ${lead.name}`, lead.company && `— ${lead.company}`]
+                  [`🎯 ${displayName}`, lead.company && `— ${lead.company}`]
                     .filter(Boolean)
                     .join(" "),
                 );
@@ -378,6 +380,7 @@ export default async function LeadDetailPage({
                 <LeadAiPanel
                   leadId={lead.id as string}
                   aiEnabled={aiEnabled}
+                  members={members}
                   initialData={{
                     ai_summary: (lead.ai_summary as string | null) ?? null,
                     ai_suggested_next_step: (lead.ai_suggested_next_step as string | null) ?? null,
@@ -463,6 +466,7 @@ export default async function LeadDetailPage({
                 googleEnabled={googleEnabled}
                 projects={(activeProjects ?? []) as Array<{ id: string; name: string }>}
                 meetMembers={meetMembers}
+                scheduleMembers={members}
                 createTaskAction={createTask}
               />
             </CardContent>

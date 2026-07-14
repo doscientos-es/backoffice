@@ -9,6 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { leadDisplayName } from "@/lib/leads/utils";
 import { getRecoveryTemplate } from "@/lib/recovery/templates";
 import type { RecoveryLead } from "@/lib/recovery/types";
 import { Ban, Mail, RotateCcw } from "lucide-react";
@@ -35,6 +36,7 @@ export function RecoveryActions({ lead, aiEnabled }: { lead: RecoveryLead; aiEna
   const [isPending, startTransition] = useTransition();
 
   const template = getRecoveryTemplate(lead.lost_reason);
+  const displayName = leadDisplayName(lead);
 
   function handleEmailSuccess() {
     router.refresh();
@@ -49,7 +51,7 @@ export function RecoveryActions({ lead, aiEnabled }: { lead: RecoveryLead; aiEna
         sileo.error({ title: res.error });
         return;
       }
-      sileo.success({ title: `${lead.name} vuelve al pipeline` });
+      sileo.success({ title: `${displayName} vuelve al pipeline` });
       router.refresh();
     });
   }
@@ -66,7 +68,7 @@ export function RecoveryActions({ lead, aiEnabled }: { lead: RecoveryLead; aiEna
         sileo.error({ title: res.error });
         return;
       }
-      sileo.success({ title: `${lead.name} marcado como no interesado` });
+      sileo.success({ title: `${displayName} marcado como no interesado` });
       router.refresh();
     });
   }
@@ -82,7 +84,7 @@ export function RecoveryActions({ lead, aiEnabled }: { lead: RecoveryLead; aiEna
         </DialogTrigger>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Repescar a {lead.name}</DialogTitle>
+            <DialogTitle>Repescar a {displayName}</DialogTitle>
             {lead.email ? <DialogDescription>{lead.email}</DialogDescription> : null}
           </DialogHeader>
           <EmailComposer
@@ -123,7 +125,7 @@ export function RecoveryActions({ lead, aiEnabled }: { lead: RecoveryLead; aiEna
       </Button>
 
       <ReopenConfirmDialog
-        lead={pendingReopen ? { id: lead.id, name: lead.name } : null}
+        lead={pendingReopen ? { id: lead.id, name: displayName } : null}
         title="Reabrir lead"
         description={(name) => (
           <>
@@ -137,7 +139,7 @@ export function RecoveryActions({ lead, aiEnabled }: { lead: RecoveryLead; aiEna
       />
 
       <CloseReasonDialog
-        lead={pendingNotInterested ? { id: lead.id, name: lead.name } : null}
+        lead={pendingNotInterested ? { id: lead.id, name: displayName } : null}
         variant="not_interested"
         onCancel={() => setPendingNotInterested(false)}
         onConfirm={confirmNotInterested}

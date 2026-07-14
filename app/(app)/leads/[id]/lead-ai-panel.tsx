@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { AlertCircle, CalendarClock, Sparkles } from "lucide-react";
 import { useState } from "react";
-import { ScheduleReminderDialog } from "./schedule-reminder-dialog";
+import { type ScheduleMember, ScheduleReminderDialog } from "./schedule-reminder-dialog";
 
 export type LeadAiData = {
   ai_summary: string | null;
@@ -22,6 +22,7 @@ type Props = {
   leadId: string;
   aiEnabled: boolean;
   initialData: LeadAiData;
+  members?: ScheduleMember[];
 };
 
 const TEMPERATURE_VARIANT = {
@@ -61,7 +62,7 @@ function AiSkeleton() {
   );
 }
 
-export function LeadAiPanel({ leadId, aiEnabled, initialData }: Props) {
+export function LeadAiPanel({ leadId, aiEnabled, initialData, members = [] }: Props) {
   const [data, setData] = useState<LeadAiData>(initialData);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -153,6 +154,7 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData }: Props) {
                   leadId={leadId}
                   defaultTitle={data.ai_suggested_next_step.slice(0, 200)}
                   defaultNotes={data.ai_suggested_next_step}
+                  members={members}
                   trigger={
                     <Button size="xs" variant="ghost" className="h-6 gap-1 px-2 text-xs">
                       <CalendarClock className="size-3" />
