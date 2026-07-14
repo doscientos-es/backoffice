@@ -1,5 +1,9 @@
 "use server";
 
+// NOTE: Reminders are now stored as tasks with kind='reminder'.
+// start_at = remind_at, description = notes. The reminders table is kept for
+// legacy data until the migration has run on all environments.
+
 import { requireUser } from "@/lib/auth";
 import { CreateReminderInput, ReminderIdInput } from "@/lib/schemas/reminder";
 import { createServerClient } from "@/lib/supabase/server";
@@ -9,7 +13,7 @@ type ActionResult = { ok: true } | { ok: false; error: string };
 type CreateReminderResult = { ok: true; id: string } | { ok: false; error: string };
 
 /**
- * Permanently deletes a reminder (no soft-delete, the table has no deleted_at).
+ * Deletes a reminder — stored as a task with kind='reminder'.
  */
 export async function deleteReminder(input: unknown): Promise<ActionResult> {
   await requireUser();
@@ -17,7 +21,11 @@ export async function deleteReminder(input: unknown): Promise<ActionResult> {
   if (!parsed.success) return { ok: false, error: "ID inválido" };
 
   const supabase = await createServerClient();
-  const { error } = await supabase.from("reminders").delete().eq("id", parsed.data.id);
+  const { error } = await supabase
+    .from("tasks")
+    .delete()
+    .eq("id", parsed.data.id)
+    .eq("kind", "reminder");
 
   if (error) return { ok: false, error: error.message };
 
@@ -27,9 +35,8 @@ export async function deleteReminder(input: unknown): Promise<ActionResult> {
 }
 
 /**
- * Creates a reminder linked to a lead, client or project. Used from the
- * lead detail page (quick action "Agendar") so the user can schedule a
- * follow-up call right after contacting a lead.
+ * Creates a reminder stored as a task with kind='reminder'.
+ * start_at = remind_at so it appears in the calendar for the assignee.
  */
 export async function createReminder(input: unknown): Promise<CreateReminderResult> {
   const user = await requireUser();
@@ -41,15 +48,19 @@ export async function createReminder(input: unknown): Promise<CreateReminderResu
 
   const supabase = await createServerClient();
   const { data, error } = await supabase
-    .from("reminders")
+    .from("tasks")
     .insert({
+      kind: "reminder",
       title,
-      remind_at: new Date(remindAt).toISOString(),
-      notes: notes?.trim() || null,
+      description: notes?.trim() || null,
+      start_at: new Date(remindAt).toISOString(),
       lead_id: leadId ?? null,
       client_id: clientId ?? null,
       project_id: projectId ?? null,
       created_by: user.id,
+      assignee_id: user.id,
+      status: "todo",
+      priority: "medium",
     })
     .select("id")
     .single();
@@ -65,8 +76,7 @@ export async function createReminder(input: unknown): Promise<CreateReminderResu
 }
 
 /**
- * Marks a reminder as completed (sets `completed_at = now()`).
- * Invoked from quick-action buttons (e.g. AvisosPanel on /inicio).
+ * Marks a reminder as completed.
  */
 export async function completeReminder(input: unknown): Promise<ActionResult> {
   await requireUser();
@@ -75,9 +85,10 @@ export async function completeReminder(input: unknown): Promise<ActionResult> {
 
   const supabase = await createServerClient();
   const { error } = await supabase
-    .from("reminders")
-    .update({ completed_at: new Date().toISOString() })
+    .from("tasks")
+    .update({ completed_at: new Date().toISOString(), status: "done" })
     .eq("id", parsed.data.id)
+    .eq("kind", "reminder")
     .is("completed_at", null);
 
   if (error) return { ok: false, error: error.message };
@@ -88,7 +99,7 @@ export async function completeReminder(input: unknown): Promise<ActionResult> {
 }
 
 /**
- * Reopens a previously completed reminder (sets `completed_at = null`).
+ * Reopens a previously completed reminder.
  */
 export async function uncompleteReminder(input: unknown): Promise<ActionResult> {
   await requireUser();
@@ -97,9 +108,10 @@ export async function uncompleteReminder(input: unknown): Promise<ActionResult> 
 
   const supabase = await createServerClient();
   const { error } = await supabase
-    .from("reminders")
-    .update({ completed_at: null })
-    .eq("id", parsed.data.id);
+    .from("tasks")
+    .update({ completed_at: null, status: "todo" })
+    .eq("id", parsed.data.id)
+    .eq("kind", "reminder");
 
   if (error) return { ok: false, error: error.message };
 

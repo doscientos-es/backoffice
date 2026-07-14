@@ -34,15 +34,16 @@ export default async function RemindersPage({
 
   const supabase = await createServerClient();
   let query = supabase
-    .from("reminders")
-    .select("id, title, remind_at, completed_at", { count: "exact" });
+    .from("tasks")
+    .select("id, title, start_at, completed_at", { count: "exact" })
+    .eq("kind", "reminder");
 
   if (q.length > 0) query = query.ilike("title", `%${escapeIlike(q)}%`);
   if (status === "pending") query = query.is("completed_at", null);
   else if (status === "completed") query = query.not("completed_at", "is", null);
 
   const { data, error, count } = await query
-    .order("remind_at", { ascending: true })
+    .order("start_at", { ascending: true })
     .range(from, to);
 
   return (
@@ -61,7 +62,7 @@ export default async function RemindersPage({
           id: r.id as string,
           cells: [
             r.title as string,
-            formatDateTime(r.remind_at as string),
+            formatDateTime(r.start_at as string),
             r.completed_at ? formatDateTime(r.completed_at as string) : "—",
             <ReminderRowActions
               key={r.id}

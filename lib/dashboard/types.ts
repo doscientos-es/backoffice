@@ -115,6 +115,8 @@ export type MyTaskRow = {
 export type ActionLeadRow = {
   id: string;
   name: string;
+  /** Optional short display name. Falls back to `name` when null. */
+  alias: string | null;
   company: string | null;
   phone: string | null;
   email: string | null;

@@ -27,6 +27,8 @@ export const LEAD_SOURCES = [
 
 export type LeadFormDefaults = {
   name?: string;
+  /** Optional short display name. Falls back to `name` when empty. */
+  alias?: string | null;
   company?: string | null;
   email?: string | null;
   phone?: string | null;
@@ -70,7 +72,7 @@ export function LeadFormFields({
           Contacto
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
-          <FormRow label="Nombre" htmlFor={`${idPrefix}-name`} required className="sm:col-span-2">
+          <FormRow label="Nombre" htmlFor={`${idPrefix}-name`} required>
             <Input
               id={`${idPrefix}-name`}
               name="name"
@@ -80,6 +82,19 @@ export function LeadFormFields({
               defaultValue={d.name ?? ""}
               placeholder="Nombre y apellidos"
               autoComplete="name"
+            />
+          </FormRow>
+          <FormRow
+            label="Alias / Apodo"
+            htmlFor={`${idPrefix}-alias`}
+            hint="Nombre corto para listas. Si está vacío se usa el nombre."
+          >
+            <Input
+              id={`${idPrefix}-alias`}
+              name="alias"
+              maxLength={100}
+              defaultValue={d.alias ?? ""}
+              placeholder="Pepito"
             />
           </FormRow>
           <FormRow label="Empresa" htmlFor={`${idPrefix}-company`}>

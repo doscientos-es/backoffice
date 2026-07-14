@@ -50,7 +50,7 @@ function reminderToEvent(row: Record<string, unknown>): CalendarEvent {
   const lead = row.leads as { id: string; name: string } | null;
   const client = row.clients as { id: string; name: string } | null;
   const project = row.projects as { id: string; name: string } | null;
-  const creator = row.creator as { id: string; name: string } | null;
+  const assignee = row.assignee as { id: string; name: string } | null;
   const href = lead
     ? `/leads/${lead.id}`
     : client
@@ -58,7 +58,7 @@ function reminderToEvent(row: Record<string, unknown>): CalendarEvent {
       : project
         ? `/projects/${project.id}`
         : null;
-  const start = row.remind_at as string;
+  const start = row.start_at as string;
   return {
     id: `reminder:${row.id as string}`,
     kind: "reminder",
@@ -68,11 +68,11 @@ function reminderToEvent(row: Record<string, unknown>): CalendarEvent {
     allDay: false,
     href,
     editable: true,
-    done: false,
-    memberId: creator?.id ?? null,
-    memberName: creator?.name ?? null,
+    done: Boolean(row.completed_at),
+    memberId: assignee?.id ?? null,
+    memberName: assignee?.name ?? null,
     meta: {
-      description: (row.notes as string | null) ?? undefined,
+      description: (row.description as string | null) ?? undefined,
       leadId: lead?.id,
       leadName: lead?.name,
       clientId: client?.id,
@@ -245,17 +245,19 @@ export async function getCalendarEvents(opts: CalendarFetchOptions): Promise<Cal
           .is("deleted_at", null)
       : Promise.resolve({ data: [] }),
 
-    // Reminders — scoped to memberIds via created_by
+    // Reminders — stored as tasks with kind='reminder', scoped via assignee_id
     layers.includes("reminder")
       ? supabase
-          .from("reminders")
+          .from("tasks")
           .select(
-            "id, title, notes, remind_at, leads(id,name), clients(id,name), projects(id,name), creator:team_members!created_by(id,name)",
+            "id, title, description, start_at, completed_at, leads(id,name), clients(id,name), projects(id,name), assignee:team_members!assignee_id(id,name)",
           )
-          .gte("remind_at", fromISO)
-          .lte("remind_at", toISO)
+          .eq("kind", "reminder")
+          .gte("start_at", fromISO)
+          .lte("start_at", toISO)
           .is("completed_at", null)
-          .in("created_by", memberIds)
+          .in("assignee_id", memberIds)
+          .is("deleted_at", null)
       : Promise.resolve({ data: [] }),
 
     // Subscriptions — admin only (finance layer)

@@ -33,6 +33,8 @@ export type RecoverySignals = {
 export type RecoveryLead = {
   id: string;
   name: string;
+  /** Optional short display name. Falls back to `name` when null. */
+  alias: string | null;
   company: string | null;
   email: string | null;
   phone: string | null;

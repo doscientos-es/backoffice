@@ -2,10 +2,7 @@ import { RemindersSection } from "@/app/(app)/inicio/_components/reminders-secti
 import { createTask } from "@/app/(app)/tasks/actions";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
-import {
-  type AttachmentItem,
-  AttachmentSection,
-} from "@/components/ui/attachment-section";
+import { type AttachmentItem, AttachmentSection } from "@/components/ui/attachment-section";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,12 +18,7 @@ import { getLeadDetail } from "@/lib/leads/queries";
 import { listActiveMembers } from "@/lib/members/queries";
 import { LEAD_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
-import {
-  formatDate,
-  formatDateTime,
-  formatEUR,
-  relativeTime,
-} from "@/lib/utils";
+import { formatDate, formatDateTime, formatEUR, relativeTime } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LeadAiPanel } from "./lead-ai-panel";
@@ -90,15 +82,7 @@ export default async function LeadDetailPage({
 
   const result = await getLeadDetail(id);
   if (!result) notFound();
-  const {
-    lead,
-    interactions,
-    linkedClientId,
-    proposals,
-    projects,
-    invoices,
-    reminders,
-  } = result;
+  const { lead, interactions, linkedClientId, proposals, projects, invoices, reminders } = result;
   const conversionEvents = await listLeadConversionEvents({
     id: lead.id,
     event_id: lead.event_id,
@@ -110,37 +94,34 @@ export default async function LeadDetailPage({
   const members = canEdit ? await listActiveMembers() : [];
 
   const supabase = await createServerClient();
-  const [
-    { data: attachments },
-    { data: activeProjects },
-    { data: rawMeetMembers },
-  ] = await Promise.all([
-    supabase
-      .from("attachments")
-      .select("id, name, mime_type, size_bytes, created_at")
-      .eq("lead_id", id)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false }),
-    googleEnabled
-      ? supabase
-          .from("projects")
-          .select("id, name")
-          .is("deleted_at", null)
-          .in("status", ["planned", "active", "on_hold"])
-          .order("name")
-      : Promise.resolve({
-          data: [] as Array<{ id: string; name: string }> | null,
-        }),
-    googleEnabled
-      ? supabase
-          .from("team_members")
-          .select("id, name, email")
-          .is("deleted_at", null)
-          .order("name")
-      : Promise.resolve({
-          data: [] as Array<{ id: string; name: string; email: string }> | null,
-        }),
-  ]);
+  const [{ data: attachments }, { data: activeProjects }, { data: rawMeetMembers }] =
+    await Promise.all([
+      supabase
+        .from("attachments")
+        .select("id, name, mime_type, size_bytes, created_at")
+        .eq("lead_id", id)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false }),
+      googleEnabled
+        ? supabase
+            .from("projects")
+            .select("id, name")
+            .is("deleted_at", null)
+            .in("status", ["planned", "active", "on_hold"])
+            .order("name")
+        : Promise.resolve({
+            data: [] as Array<{ id: string; name: string }> | null,
+          }),
+      googleEnabled
+        ? supabase
+            .from("team_members")
+            .select("id, name, email")
+            .is("deleted_at", null)
+            .order("name")
+        : Promise.resolve({
+            data: [] as Array<{ id: string; name: string; email: string }> | null,
+          }),
+    ]);
 
   const meetMembers = (rawMeetMembers ?? []).map((m) => ({
     id: m.id as string,
@@ -161,9 +142,7 @@ export default async function LeadDetailPage({
         breadcrumbs={[
           { label: "Leads", href: "/leads" },
           { label: lead.name as string },
-          ...(linkedClientId
-            ? [{ label: "Cliente", href: `/clients/${linkedClientId}` }]
-            : []),
+          ...(linkedClientId ? [{ label: "Cliente", href: `/clients/${linkedClientId}` }] : []),
         ]}
         actions={
           <>
@@ -178,8 +157,7 @@ export default async function LeadDetailPage({
                 parts.push(
                   [
                     `Estado: ${LEAD_STATUS[lead.status]?.label ?? lead.status}`,
-                    lead.estimated_value != null &&
-                      `Valor: ${formatEUR(lead.estimated_value)}`,
+                    lead.estimated_value != null && `Valor: ${formatEUR(lead.estimated_value)}`,
                   ]
                     .filter(Boolean)
                     .join(" · "),
@@ -189,8 +167,7 @@ export default async function LeadDetailPage({
                   lead.phone && `Tel: ${lead.phone}`,
                 ].filter(Boolean);
                 if (contact.length) parts.push(contact.join(" · "));
-                if (lead.assignee?.name)
-                  parts.push(`Responsable: ${lead.assignee.name}`);
+                if (lead.assignee?.name) parts.push(`Responsable: ${lead.assignee.name}`);
                 return parts;
               })()}
               urlPath={`/leads/${lead.id as string}`}
@@ -201,15 +178,14 @@ export default async function LeadDetailPage({
                 lead={{
                   id: lead.id as string,
                   name: lead.name as string,
+                  alias: (lead.alias as string | null) ?? null,
                   company: (lead.company as string | null) ?? null,
                   email: (lead.email as string | null) ?? null,
                   phone: (lead.phone as string | null) ?? null,
                   source: (lead.source as string | null) ?? null,
                   notes: (lead.notes as string | null) ?? null,
                   estimated_value:
-                    lead.estimated_value != null
-                      ? Number(lead.estimated_value)
-                      : null,
+                    lead.estimated_value != null ? Number(lead.estimated_value) : null,
                   company_size: (lead.company_size as string | null) ?? null,
                   solution_type: (lead.solution_type as string | null) ?? null,
                   urgency: (lead.urgency as string | null) ?? null,
@@ -219,9 +195,7 @@ export default async function LeadDetailPage({
             ) : null}
             {canConvert ? (
               <Button asChild size="sm">
-                <Link href={`/leads/${lead.id}/convert`}>
-                  Convertir a cliente
-                </Link>
+                <Link href={`/leads/${lead.id}/convert`}>Convertir a cliente</Link>
               </Button>
             ) : linkedClientId ? (
               <Button asChild variant="outline" size="sm">
@@ -231,7 +205,7 @@ export default async function LeadDetailPage({
             <LeadStatusSelect
               leadId={lead.id as string}
               status={lead.status as string}
-              leadName={lead.name as string}
+              leadName={displayName}
             />
           </>
         }
@@ -254,37 +228,24 @@ export default async function LeadDetailPage({
             <CardContent>
               <DetailGrid>
                 <DetailRow label="Estado">
-                  <StatusBadge
-                    meta={LEAD_STATUS}
-                    value={lead.status as string}
-                  />
+                  <StatusBadge meta={LEAD_STATUS} value={lead.status as string} />
                 </DetailRow>
                 {(lead.status === "lost" || lead.status === "not_interested") &&
                   lead.lost_reason && (
-                    <DetailRow
-                      label={
-                        lead.status === "lost" ? "Motivo de pérdida" : "Motivo"
-                      }
-                    >
+                    <DetailRow label={lead.status === "lost" ? "Motivo de pérdida" : "Motivo"}>
                       <span className="font-medium text-destructive">
                         {lead.lost_reason as string}
                       </span>
                     </DetailRow>
                   )}
-                {lead.email && (
-                  <DetailRow label="Email">{lead.email}</DetailRow>
-                )}
+                {lead.email && <DetailRow label="Email">{lead.email}</DetailRow>}
                 {lead.phone && (
                   <DetailRow label="Teléfono">
                     <PhoneQuickActions phone={lead.phone as string} />
                   </DetailRow>
                 )}
-                {lead.company && (
-                  <DetailRow label="Empresa">{lead.company}</DetailRow>
-                )}
-                {lead.source && (
-                  <DetailRow label="Origen">{lead.source}</DetailRow>
-                )}
+                {lead.company && <DetailRow label="Empresa">{lead.company}</DetailRow>}
+                {lead.source && <DetailRow label="Origen">{lead.source}</DetailRow>}
                 <DetailRow label="Responsable">
                   <MemberLabel member={lead.assignee} />
                 </DetailRow>
@@ -296,32 +257,16 @@ export default async function LeadDetailPage({
                     {formatEUR(Number(lead.estimated_value))}
                   </DetailRow>
                 )}
-                <DetailRow label="Creado">
-                  {formatDate(lead.created_at as string)}
-                </DetailRow>
-                {lead.company_size && (
-                  <DetailRow label="Tamaño">{lead.company_size}</DetailRow>
-                )}
-                {lead.urgency && (
-                  <DetailRow label="Urgencia">{lead.urgency}</DetailRow>
-                )}
-                {lead.solution_type && (
-                  <DetailRow label="Solución">{lead.solution_type}</DetailRow>
-                )}
+                <DetailRow label="Creado">{formatDate(lead.created_at as string)}</DetailRow>
+                {lead.company_size && <DetailRow label="Tamaño">{lead.company_size}</DetailRow>}
+                {lead.urgency && <DetailRow label="Urgencia">{lead.urgency}</DetailRow>}
+                {lead.solution_type && <DetailRow label="Solución">{lead.solution_type}</DetailRow>}
                 {lead.conversion_step && (
-                  <DetailRow label="Conversión">
-                    {lead.conversion_step}
-                  </DetailRow>
+                  <DetailRow label="Conversión">{lead.conversion_step}</DetailRow>
                 )}
-                {lead.event_id && (
-                  <DetailRow label="Event ID">{lead.event_id}</DetailRow>
-                )}
-                {lead.landing_path && (
-                  <DetailRow label="Landing">{lead.landing_path}</DetailRow>
-                )}
-                {lead.landing_ref && (
-                  <DetailRow label="Ref">{lead.landing_ref}</DetailRow>
-                )}
+                {lead.event_id && <DetailRow label="Event ID">{lead.event_id}</DetailRow>}
+                {lead.landing_path && <DetailRow label="Landing">{lead.landing_path}</DetailRow>}
+                {lead.landing_ref && <DetailRow label="Ref">{lead.landing_ref}</DetailRow>}
                 {lead.landing_subject && (
                   <DetailRow label="Asunto">{lead.landing_subject}</DetailRow>
                 )}
@@ -359,13 +304,9 @@ export default async function LeadDetailPage({
                     ])}
                   </DetailRow>
                 )}
-                {[lead.calculator_cost, lead.calculator_hours].some(
-                  hasValue,
-                ) && (
+                {[lead.calculator_cost, lead.calculator_hours].some(hasValue) && (
                   <DetailRow label="Resultado calculadora">
-                    {[lead.calculator_cost, lead.calculator_hours]
-                      .filter(hasValue)
-                      .join(" · ")}
+                    {[lead.calculator_cost, lead.calculator_hours].filter(hasValue).join(" · ")}
                   </DetailRow>
                 )}
               </DetailGrid>
@@ -375,9 +316,7 @@ export default async function LeadDetailPage({
                   <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Notas
                   </h3>
-                  <p className="whitespace-pre-wrap text-sm">
-                    {lead.notes as string}
-                  </p>
+                  <p className="whitespace-pre-wrap text-sm">{lead.notes as string}</p>
                 </div>
               ) : null}
             </CardContent>
@@ -395,21 +334,14 @@ export default async function LeadDetailPage({
               ) : (
                 <ol className="divide-y divide-border">
                   {conversionEvents.map((event) => (
-                    <li
-                      key={event.id}
-                      className="grid gap-2 py-3 sm:grid-cols-[160px_1fr]"
-                    >
+                    <li key={event.id} className="grid gap-2 py-3 sm:grid-cols-[160px_1fr]">
                       <div className="text-xs text-muted-foreground">
                         {formatDateTime(event.created_at)}
                       </div>
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <Badge
-                            variant={
-                              event.event_name.includes("whatsapp")
-                                ? "success"
-                                : "neutral"
-                            }
+                            variant={event.event_name.includes("whatsapp") ? "success" : "neutral"}
                           >
                             {event.event_name}
                           </Badge>
@@ -420,16 +352,10 @@ export default async function LeadDetailPage({
                           )}
                         </div>
                         <p className="mt-1 truncate text-sm">
-                          {event.landing_path ??
-                            event.referrer ??
-                            "Evento sin página"}
+                          {event.landing_path ?? event.referrer ?? "Evento sin página"}
                         </p>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                          {[
-                            event.utm_source,
-                            event.utm_medium,
-                            event.utm_campaign,
-                          ]
+                          {[event.utm_source, event.utm_medium, event.utm_campaign]
                             .filter(Boolean)
                             .join(" · ") ||
                             event.landing_ref ||
@@ -446,9 +372,7 @@ export default async function LeadDetailPage({
           <SectionBoundary label="No se pudo cargar el análisis IA">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  Análisis IA
-                </CardTitle>
+                <CardTitle className="flex items-center gap-2">Análisis IA</CardTitle>
               </CardHeader>
               <CardContent>
                 <LeadAiPanel
@@ -456,15 +380,10 @@ export default async function LeadDetailPage({
                   aiEnabled={aiEnabled}
                   initialData={{
                     ai_summary: (lead.ai_summary as string | null) ?? null,
-                    ai_suggested_next_step:
-                      (lead.ai_suggested_next_step as string | null) ?? null,
-                    ai_temperature:
-                      (lead.ai_temperature as "hot" | "warm" | "cold" | null) ??
-                      null,
-                    ai_confidence:
-                      (lead.ai_confidence as number | null) ?? null,
-                    ai_updated_at:
-                      (lead.ai_updated_at as string | null) ?? null,
+                    ai_suggested_next_step: (lead.ai_suggested_next_step as string | null) ?? null,
+                    ai_temperature: (lead.ai_temperature as "hot" | "warm" | "cold" | null) ?? null,
+                    ai_confidence: (lead.ai_confidence as number | null) ?? null,
+                    ai_updated_at: (lead.ai_updated_at as string | null) ?? null,
                     ai_tags: (lead.ai_tags as string[] | null) ?? null,
                   }}
                 />
@@ -488,18 +407,11 @@ export default async function LeadDetailPage({
                     const subject = i.subject as string | null;
                     const snippet = excerpt(i.body as string | null);
                     return (
-                      <li
-                        key={i.id as string}
-                        className="flex items-start gap-3 px-6 py-3"
-                      >
+                      <li key={i.id as string} className="flex items-start gap-3 px-6 py-3">
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium">
-                            {INTERACTION_LABEL[type] ?? type}
-                          </p>
+                          <p className="text-sm font-medium">{INTERACTION_LABEL[type] ?? type}</p>
                           {subject ? (
-                            <p className="truncate text-xs text-muted-foreground">
-                              {subject}
-                            </p>
+                            <p className="truncate text-xs text-muted-foreground">{subject}</p>
                           ) : null}
                           {snippet ? (
                             <p className="mt-1 line-clamp-2 text-xs text-muted-foreground/90">
@@ -549,9 +461,7 @@ export default async function LeadDetailPage({
                 claimable={canEdit && !lead.assigned_to}
                 aiEnabled={aiEnabled}
                 googleEnabled={googleEnabled}
-                projects={
-                  (activeProjects ?? []) as Array<{ id: string; name: string }>
-                }
+                projects={(activeProjects ?? []) as Array<{ id: string; name: string }>}
                 meetMembers={meetMembers}
                 createTaskAction={createTask}
               />

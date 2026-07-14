@@ -21,6 +21,7 @@ import { LeadFormFields } from "../lead-form-fields";
 type Lead = {
   id: string;
   name: string;
+  alias: string | null;
   company: string | null;
   email: string | null;
   phone: string | null;
@@ -44,6 +45,7 @@ export function LeadEditDialog({ lead, members = [] }: { lead: Lead; members?: M
     const payload = {
       id: lead.id,
       name: fd.get("name")?.toString() ?? "",
+      alias: fd.get("alias")?.toString() ?? "",
       email: fd.get("email")?.toString() ?? "",
       phone: fd.get("phone")?.toString() ?? "",
       company: fd.get("company")?.toString() ?? "",
@@ -83,6 +85,7 @@ export function LeadEditDialog({ lead, members = [] }: { lead: Lead; members?: M
               members={members}
               defaults={{
                 name: lead.name,
+                alias: lead.alias,
                 company: lead.company,
                 email: lead.email,
                 phone: lead.phone,

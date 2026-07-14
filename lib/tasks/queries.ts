@@ -35,7 +35,7 @@ export async function listTasksBoard(params: TaskBoardParams): Promise<TaskBoard
       .select(
         "id, title, status, due_date, priority, projects(id, name), team_members:assignee_id(id, name)",
       ),
-  );
+  ).eq("kind", "task");
 
   if (params.q && params.q.length > 0) query = query.ilike("title", `%${escapeIlike(params.q)}%`);
   if (params.priority) query = query.eq("priority", params.priority);
@@ -74,7 +74,7 @@ export async function listTasksList(params: TaskListParams): Promise<TaskListRes
         "id, title, status, due_date, priority, projects(id, name), team_members:assignee_id(id, name)",
         { count: "exact" },
       ),
-  );
+  ).eq("kind", "task");
 
   if (params.q && params.q.length > 0) query = query.ilike("title", `%${escapeIlike(params.q)}%`);
   if (params.status) query = query.eq("status", params.status);

@@ -149,6 +149,7 @@ export const convertLeadToClient = defineAction({
       .insert({
         lead_id: data.leadId,
         name: data.name,
+        label: data.alias || null,
         nif: data.nif,
         billing_address: data.billing_address,
         email: data.email ?? null,

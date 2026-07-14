@@ -45,6 +45,8 @@ export type UpdateLeadInputType = z.infer<typeof UpdateLeadInput>;
 export const ConvertLeadInput = z.object({
   leadId: z.string().uuid(),
   name: requiredText(160, "El nombre es obligatorio"),
+  /** Carried over from the lead's alias and stored as `clients.label`. */
+  alias: optionalText(100),
   nif: requiredText(20, "El NIF es obligatorio"),
   billing_address: requiredText(400, "La dirección es obligatoria"),
   email: optionalEmail,

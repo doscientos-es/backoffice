@@ -17,7 +17,7 @@ import {
 import { getRecoveryState } from "./utils";
 
 const ASSIGNEE_EMBED = "assignee:assigned_to(id, name, avatar_url, github_handle)";
-const LIST_COLUMNS = `id, name, company, email, phone, source, status, created_at, estimated_value, score, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`;
+const LIST_COLUMNS = `id, name, alias, company, email, phone, source, status, created_at, estimated_value, score, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`;
 
 /** The two closable statuses that make up the recovery pipeline. */
 const CLOSURE_STATUSES: readonly RecoveryClosureStatus[] = ["lost", "not_interested"];
@@ -183,6 +183,7 @@ export async function listLostLeads(params: RecoveryListParams): Promise<Recover
     return {
       id: r.id as string,
       name: r.name as string,
+      alias: (r.alias as string | null) ?? null,
       company: (r.company as string | null) ?? null,
       email: (r.email as string | null) ?? null,
       phone: (r.phone as string | null) ?? null,

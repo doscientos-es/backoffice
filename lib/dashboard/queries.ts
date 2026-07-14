@@ -34,6 +34,7 @@ type ClientNameJoin = { clients: { name: string } | null };
 type LeadActionRecord = {
   id: string;
   name: string;
+  alias: string | null;
   company: string | null;
   phone: string | null;
   email: string | null;
@@ -45,6 +46,7 @@ function toActionLead(row: Record<string, unknown>, sinceField: string): ActionL
   return {
     id: r.id,
     name: r.name,
+    alias: r.alias ?? null,
     company: r.company ?? null,
     phone: r.phone ?? null,
     email: r.email ?? null,
@@ -188,11 +190,13 @@ export async function getAvisos(): Promise<AvisosData> {
 
   const [remindersRes, verifactuRes, overdueRes] = await Promise.all([
     supabase
-      .from("reminders")
-      .select("id, title, remind_at")
+      .from("tasks")
+      .select("id, title, start_at")
+      .eq("kind", "reminder")
       .is("completed_at", null)
-      .lte("remind_at", in7Days.toISOString())
-      .order("remind_at", { ascending: true })
+      .is("deleted_at", null)
+      .lte("start_at", in7Days.toISOString())
+      .order("start_at", { ascending: true })
       .limit(AVISOS_LIMIT),
     supabase
       .from("invoices")
@@ -214,7 +218,7 @@ export async function getAvisos(): Promise<AvisosData> {
   const reminders: ReminderRow[] = (remindersRes.data ?? []).map((r) => ({
     id: r.id as string,
     title: r.title as string,
-    remind_at: r.remind_at as string,
+    remind_at: r.start_at as string,
   }));
 
   const verifactuPending: VerifactuPendingRow[] = (verifactuRes.data ?? []).map((v) => {
@@ -454,7 +458,7 @@ function computeStreak(rows: { updated_at: string | null | undefined }[]): numbe
  */
 export async function getMyDay(userId: string): Promise<MyDayData> {
   const supabase = await createServerClient();
-  const leadFields = "id, name, company, phone, email, status";
+  const leadFields = "id, name, alias, company, phone, email, status";
   const weekStart = getWeekStart().toISOString();
   const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000).toISOString();
 

@@ -22,6 +22,7 @@ export function LeadNewForm() {
 
     const res = await createLead({
       name: fd.get("name")?.toString() ?? "",
+      alias: fd.get("alias")?.toString() ?? "",
       company: fd.get("company")?.toString() ?? "",
       email: fd.get("email")?.toString() ?? "",
       phone: fd.get("phone")?.toString() ?? "",

@@ -27,9 +27,9 @@ const PERFORMER_EMBED = "performer:performed_by(id, name, avatar_url, github_han
 const QUALIFICATION_COLUMNS =
   "company_size, solution_type, urgency, first_contacted_at, landing_path, landing_ref, landing_subject, calculator_cost, calculator_hours, event_id, conversion_step, first_landing_path, first_referrer, first_utm_source, first_utm_medium, first_utm_campaign, first_utm_term, first_utm_content, last_landing_path, last_referrer, last_utm_source, last_utm_medium, last_utm_campaign, last_utm_term, last_utm_content";
 
-const LIST_COLUMNS = `id, name, company, email, phone, source, notes, status, created_at, updated_at, estimated_value, score, ${QUALIFICATION_COLUMNS}, ai_summary, ai_updated_at, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`;
+const LIST_COLUMNS = `id, name, alias, company, email, phone, source, notes, status, created_at, updated_at, estimated_value, score, ${QUALIFICATION_COLUMNS}, ai_summary, ai_updated_at, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`;
 
-const DETAIL_COLUMNS = `id, name, email, phone, company, source, status, notes, estimated_value, score, ${QUALIFICATION_COLUMNS}, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_temperature, ai_confidence, ai_updated_at, ai_tags, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`;
+const DETAIL_COLUMNS = `id, name, alias, email, phone, company, source, status, notes, estimated_value, score, ${QUALIFICATION_COLUMNS}, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_temperature, ai_confidence, ai_updated_at, ai_tags, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`;
 
 const log = scopedLogger("leads.queries");
 
@@ -91,6 +91,7 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
   const leads: LeadListItem[] = rows.map((l) => ({
     id: l.id as string,
     name: l.name as string,
+    alias: (l.alias as string | null) ?? null,
     company: (l.company as string | null) ?? null,
     email: (l.email as string | null) ?? null,
     phone: (l.phone as string | null) ?? null,
@@ -261,7 +262,7 @@ export async function getLeadForConvert(id: string): Promise<LeadConvertResult |
 
   const [{ data: lead }, { data: existing }] = await Promise.all([
     notDeleted(
-      supabase.from("leads").select("id, name, email, phone, company, notes").eq("id", id),
+      supabase.from("leads").select("id, name, alias, email, phone, company, notes").eq("id", id),
     ).maybeSingle(),
     notDeleted(supabase.from("clients").select("id").eq("lead_id", id)).maybeSingle(),
   ]);
