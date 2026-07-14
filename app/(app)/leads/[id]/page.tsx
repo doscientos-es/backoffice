@@ -138,6 +138,7 @@ export default async function LeadDetailPage({
     lead.status !== "lost" &&
     lead.status !== "archived";
   const displayName = leadDisplayName(lead);
+  const alias = (lead.alias as string | null)?.trim() || null;
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -231,6 +232,8 @@ export default async function LeadDetailPage({
             </CardHeader>
             <CardContent>
               <DetailGrid>
+                <DetailRow label="Nombre">{lead.name as string}</DetailRow>
+                {alias && <DetailRow label="Alias">{alias}</DetailRow>}
                 <DetailRow label="Estado">
                   <StatusBadge meta={LEAD_STATUS} value={lead.status as string} />
                 </DetailRow>

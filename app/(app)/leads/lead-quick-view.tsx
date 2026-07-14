@@ -99,11 +99,15 @@ function Body({
 }) {
   const hasEstimated = lead.estimated_value != null && lead.estimated_value > 0;
   const displayName = leadDisplayName(lead);
+  const alias = lead.alias?.trim();
   return (
     <div className="grid h-full grid-rows-[auto_1fr_auto_auto]">
       <DrawerHeader className="flex flex-row items-start justify-between gap-2 border-b border-border">
         <div className="flex flex-col gap-1">
           <DrawerTitle>{displayName}</DrawerTitle>
+          {alias && alias !== lead.name ? (
+            <span className="text-xs text-muted-foreground">Nombre: {lead.name}</span>
+          ) : null}
           <DrawerDescription className="flex items-center gap-1.5">
             <StatusBadge meta={LEAD_STATUS} value={lead.status} />
             <span className="text-[11px] tabular-nums">{relativeTime(lead.updated_at)}</span>
