@@ -14,6 +14,10 @@ export const PublicSchema = z.object({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(20),
   NEXT_PUBLIC_APP_URL: z.string().url().default("https://app.doscientos.es"),
   NEXT_PUBLIC_HCAPTCHA_SITE_KEY: z.string().optional(),
+  // Public Cal.com event link for lead self-service booking (e.g.
+  // "https://cal.com/doscientos/repesca"). Recovery emails append a personalized
+  // booking link built on top of this; empty = self-booking disabled.
+  NEXT_PUBLIC_CAL_LINK: z.string().url().or(z.literal("")).optional().default(""),
 });
 
 export const ServerSchema = PublicSchema.extend({

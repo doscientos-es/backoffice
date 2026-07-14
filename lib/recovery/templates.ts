@@ -31,15 +31,27 @@ const DEFAULT_TEMPLATE: RecoveryTemplate = {
   ].join("\n"),
 };
 
+/** Inserts `snippet` just before the "Un saludo." sign-off, or appends it. */
+function insertBeforeSignoff(body: string, snippet: string): string {
+  const lines = body.split("\n");
+  const signoffIndex = lines.findIndex((line) => line.trim().toLowerCase() === "un saludo.");
+  if (signoffIndex === -1) return `${body}\n\n${snippet}`;
+  return [...lines.slice(0, signoffIndex), snippet, "", ...lines.slice(signoffIndex)].join("\n");
+}
+
 function withInfoLink(template: RecoveryTemplate): RecoveryTemplate {
   if (template.body.includes("https://www.doscientos.es")) return template;
-  const lines = template.body.split("\n");
-  const signoffIndex = lines.findIndex((line) => line.trim().toLowerCase() === "un saludo.");
-  if (signoffIndex === -1) return { ...template, body: `${template.body}\n\n${INFO_LINK}` };
-  return {
-    ...template,
-    body: [...lines.slice(0, signoffIndex), INFO_LINK, "", ...lines.slice(signoffIndex)].join("\n"),
-  };
+  return { ...template, body: insertBeforeSignoff(template.body, INFO_LINK) };
+}
+
+/**
+ * Appends a personalized self-service booking link so the lead can grab a slot
+ * without back-and-forth. The URL is built per-lead (see `buildBookingUrl`) and
+ * is click-tracked by the send pipeline.
+ */
+function withBookingLink(template: RecoveryTemplate, bookingUrl: string): RecoveryTemplate {
+  const snippet = `¿Prefieres ir al grano? [Reserva una reunión cuando mejor te venga](${bookingUrl}).`;
+  return { ...template, body: insertBeforeSignoff(template.body, snippet) };
 }
 
 /**
@@ -132,9 +144,16 @@ const TEMPLATES: Record<string, RecoveryTemplate> = {
 
 /**
  * Returns the best-matching template for a lost reason, falling back to a
- * generic re-engagement message when the reason is empty or unmapped.
+ * generic re-engagement message when the reason is empty or unmapped. When a
+ * `bookingUrl` is provided, a self-service scheduling link is appended so the
+ * lead can book a meeting directly.
  */
-export function getRecoveryTemplate(reason: string | null | undefined): RecoveryTemplate {
-  if (!reason) return withInfoLink(DEFAULT_TEMPLATE);
-  return withInfoLink(TEMPLATES[reason.trim()] ?? DEFAULT_TEMPLATE);
+export function getRecoveryTemplate(
+  reason: string | null | undefined,
+  opts?: { bookingUrl?: string | null },
+): RecoveryTemplate {
+  const base = reason ? (TEMPLATES[reason.trim()] ?? DEFAULT_TEMPLATE) : DEFAULT_TEMPLATE;
+  const withInfo = withInfoLink(base);
+  const bookingUrl = opts?.bookingUrl?.trim();
+  return bookingUrl ? withBookingLink(withInfo, bookingUrl) : withInfo;
 }

@@ -9,9 +9,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { publicEnv } from "@/lib/env";
 import { leadDisplayName } from "@/lib/leads/utils";
 import { getRecoveryTemplate } from "@/lib/recovery/templates";
 import type { RecoveryLead } from "@/lib/recovery/types";
+import { buildBookingUrl } from "@/lib/recovery/utils";
 import { Ban, Mail, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -35,8 +37,13 @@ export function RecoveryActions({ lead, aiEnabled }: { lead: RecoveryLead; aiEna
   const [pendingNotInterested, setPendingNotInterested] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  const template = getRecoveryTemplate(lead.lost_reason);
   const displayName = leadDisplayName(lead);
+  const bookingUrl = buildBookingUrl(publicEnv.NEXT_PUBLIC_CAL_LINK, {
+    id: lead.id,
+    name: displayName,
+    email: lead.email,
+  });
+  const template = getRecoveryTemplate(lead.lost_reason, { bookingUrl });
 
   function handleEmailSuccess() {
     router.refresh();
