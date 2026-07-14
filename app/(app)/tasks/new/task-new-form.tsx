@@ -35,7 +35,7 @@ export function TaskNewForm({ projects, leads, members, defaults, currentUserId 
       description: fd.get("description")?.toString() ?? "",
       project_id: fd.get("project_id")?.toString() ?? "",
       lead_id: fd.get("lead_id")?.toString() ?? "",
-      assignee_id: fd.get("assignee_id")?.toString() ?? "",
+      member_ids: fd.getAll("member_ids").map((v) => v.toString()).filter(Boolean),
       status: (fd.get("status")?.toString() ?? "todo") as TaskStatusType,
       priority: (fd.get("priority")?.toString() ?? "medium") as TaskPriorityType,
       due_date: fd.get("due_date")?.toString() ?? "",
@@ -55,7 +55,7 @@ export function TaskNewForm({ projects, leads, members, defaults, currentUserId 
         defaults={{
           project_id: defaults.project_id ?? "",
           lead_id: defaults.lead_id ?? "",
-          assignee_id: currentUserId ?? "",
+          member_ids: currentUserId ? [currentUserId] : [],
         }}
       />
       <div className="flex items-center justify-end gap-3 border-t border-border pt-5">

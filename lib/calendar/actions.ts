@@ -65,9 +65,10 @@ export async function rescheduleEvent(opts: {
   if (opts.kind === "event") {
     // Preserve time-of-day and duration; shift only the date.
     const { data, error: fetchError } = await supabase
-      .from("events")
+      .from("tasks")
       .select("start_at, end_at")
       .eq("id", opts.sourceId)
+      .eq("kind", "event")
       .single();
     if (fetchError || !data) return { ok: false, error: fetchError?.message ?? "Not found" };
 
@@ -82,7 +83,7 @@ export async function rescheduleEvent(opts: {
       : null;
 
     const { error } = await supabase
-      .from("events")
+      .from("tasks")
       .update({ start_at: newStart.toISOString(), end_at: newEnd?.toISOString() ?? null })
       .eq("id", opts.sourceId);
     if (error) return { ok: false, error: error.message };
@@ -107,6 +108,8 @@ export type CreateCalendarEventInput = {
   attendeeEmails?: string[]; // google_meeting only — team member emails
   location?: string; // event only
   attendeeMemberIds?: string[]; // event only — team_members.id list
+  projectId?: string; // event only — optional project association
+  leadId?: string; // event only — optional lead association
 };
 
 export type CreateCalendarEventResult =
@@ -293,21 +296,27 @@ export async function createCalendarEvent(
     }
   }
 
-  // ── Event (charla/evento) ────────────────────────────────────────────────────
+  // ── Event (charla/evento) — stored as tasks with kind='event' ──────────────
   if (input.kind === "event") {
     const allDay = !input.startTime;
     const startAt = allDay ? `${input.date}T00:00:00` : `${input.date}T${input.startTime}:00`;
     const endAt = input.endTime ? `${input.date}T${input.endTime}:00` : null;
 
     const { data, error } = await supabase
-      .from("events")
+      .from("tasks")
       .insert({
+        kind: "event",
         title: input.title.trim(),
         description: input.description?.trim() || null,
         location: input.location?.trim() || null,
         start_at: new Date(startAt).toISOString(),
         end_at: endAt ? new Date(endAt).toISOString() : null,
         all_day: allDay,
+        project_id: input.projectId || null,
+        lead_id: input.leadId || null,
+        status: "todo",
+        priority: "medium",
+        kanban_order: "m",
         created_by: user.id,
       })
       .select("id")
@@ -318,10 +327,8 @@ export async function createCalendarEvent(
     let attendeeNames: string[] = [];
     if (memberIds.length > 0) {
       await supabase
-        .from("event_attendees")
-        .insert(
-          memberIds.map((memberId) => ({ event_id: data.id as string, member_id: memberId })),
-        );
+        .from("task_members")
+        .insert(memberIds.map((memberId) => ({ task_id: data.id as string, member_id: memberId })));
       const { data: members } = await supabase
         .from("team_members")
         .select("id, name")

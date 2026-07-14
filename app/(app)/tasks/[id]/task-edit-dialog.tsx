@@ -24,7 +24,7 @@ type Task = {
   description: string | null;
   status: string;
   priority: string;
-  assignee_id: string | null;
+  member_ids: string[];
   due_date: string | null;
 };
 
@@ -46,7 +46,7 @@ export function TaskEditDialog({ task, members }: Props) {
       id: task.id,
       title: fd.get("title")?.toString() ?? "",
       description: fd.get("description")?.toString() ?? "",
-      assignee_id: fd.get("assignee_id")?.toString() ?? "",
+      member_ids: fd.getAll("member_ids").map((v) => v.toString()).filter(Boolean),
       status: (fd.get("status")?.toString() ?? "todo") as TaskStatusType,
       priority: (fd.get("priority")?.toString() ?? "medium") as TaskPriorityType,
       due_date: fd.get("due_date")?.toString() ?? "",
@@ -84,7 +84,7 @@ export function TaskEditDialog({ task, members }: Props) {
               defaults={{
                 title: task.title,
                 description: task.description,
-                assignee_id: task.assignee_id,
+                member_ids: task.member_ids,
                 status: task.status,
                 priority: task.priority,
                 due_date: task.due_date,

@@ -56,14 +56,16 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
   const creator = (task as unknown as { creator: { id: string; name: string } | null }).creator;
   const client = project?.clients ?? null;
 
-  const [{ data: members }, { data: commentsData }] = await Promise.all([
+  const [{ data: members }, { data: commentsData }, { data: taskMembersData }] = await Promise.all([
     supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
     supabase
       .from("task_comments")
       .select("id, body, created_at, author:author_id(id, name)")
       .eq("task_id", id)
       .order("created_at", { ascending: true }),
+    supabase.from("task_members").select("member_id").eq("task_id", id),
   ]);
+  const taskMemberIds = (taskMembersData ?? []).map((m) => m.member_id as string);
 
   const backHref = project ? `/projects/${project.id}/tasks` : "/tasks";
   const backLabel = project ? `Volver a ${project.name}` : "Volver a tareas";
@@ -90,7 +92,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
                   description: (task.description as string | null) ?? null,
                   status: task.status as string,
                   priority: task.priority as string,
-                  assignee_id: (assignee?.id as string | undefined) ?? null,
+                  member_ids: taskMemberIds,
                   due_date: (task.due_date as string | null) ?? null,
                 }}
                 members={(members ?? []) as Array<{ id: string; name: string }>}

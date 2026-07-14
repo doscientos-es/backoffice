@@ -56,12 +56,18 @@ export type LeadOption = {
   company: string | null;
 };
 
+export type ProjectOption = {
+  id: string;
+  name: string;
+};
+
 type Props = {
   events: CalendarEvent[];
   view: CalendarView;
   anchor: string;
   teamMembers: TeamMember[];
   leads: LeadOption[];
+  projects: ProjectOption[];
   prevMonth: string;
   nextMonth: string;
   calendarToken: string | null;
@@ -103,6 +109,7 @@ export function CalendarGrid({
   anchor,
   teamMembers,
   leads,
+  projects,
   prevMonth,
   nextMonth,
   calendarToken,
@@ -219,6 +226,7 @@ export function CalendarGrid({
         initialDate={createDate}
         teamMembers={teamMembers}
         leads={leads}
+        projects={projects}
         onClose={() => setCreateOpen(false)}
         onCreated={(ev) => setCreatedEvents((prev) => [...prev, ev])}
       />

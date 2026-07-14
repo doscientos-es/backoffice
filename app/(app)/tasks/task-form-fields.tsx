@@ -1,8 +1,12 @@
+"use client";
+
 import { DateField } from "@/components/ui/date-field";
+import { EntityMultiCombobox } from "@/components/ui/entity-multi-combobox";
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useState } from "react";
 
 export const TASK_STATUS_OPTIONS = [
   { value: "todo", label: "Por hacer" },
@@ -24,7 +28,8 @@ export type TaskFormDefaults = {
   description?: string | null;
   project_id?: string | null;
   lead_id?: string | null;
-  assignee_id?: string | null;
+  /** Pre-selected member IDs. Replaces the legacy single assignee_id. */
+  member_ids?: string[];
   status?: string | null;
   priority?: string | null;
   due_date?: string | null;
@@ -56,6 +61,8 @@ export function TaskFormFields({
   members = [],
 }: Props) {
   const d = defaults ?? {};
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>(d.member_ids ?? []);
+
   return (
     <>
       <FormRow label="Título" htmlFor={`${idPrefix}-title`} required>
@@ -106,19 +113,18 @@ export function TaskFormFields({
             </FormRow>
           </>
         ) : null}
-        <FormRow label="Asignada a" htmlFor={`${idPrefix}-assignee_id`}>
-          <Select
-            id={`${idPrefix}-assignee_id`}
-            name="assignee_id"
-            defaultValue={d.assignee_id ?? ""}
-          >
-            <option value="">—</option>
-            {members.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name}
-              </option>
-            ))}
-          </Select>
+        <FormRow label="Asignada a" htmlFor={`${idPrefix}-member_ids`}>
+          {/* Hidden inputs carry selected IDs for FormData / fd.getAll("member_ids") */}
+          {selectedMemberIds.map((mid) => (
+            <input key={mid} type="hidden" name="member_ids" value={mid} />
+          ))}
+          <EntityMultiCombobox
+            id={`${idPrefix}-member_ids`}
+            items={members.map((m) => ({ id: m.id, label: m.name }))}
+            value={selectedMemberIds}
+            onChange={setSelectedMemberIds}
+            placeholder="Asignar miembros…"
+          />
         </FormRow>
         <FormRow label="Estado" htmlFor={`${idPrefix}-status`}>
           <Select id={`${idPrefix}-status`} name="status" defaultValue={d.status ?? "todo"}>

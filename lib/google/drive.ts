@@ -7,7 +7,7 @@
  */
 import { isGoogleEnabled } from "@/lib/env";
 import { scopedLogger } from "@/lib/logger";
-import { GOOGLE_SCOPES, getGoogleClient, googleFetch } from "./client";
+import { GOOGLE_SCOPES, GOOGLE_TIMEOUT_MS, getGoogleClient, googleFetch } from "./client";
 
 const log = scopedLogger("google.drive");
 
@@ -148,5 +148,48 @@ export async function uploadBackupSafe(
   } catch (err) {
     log.error({ err, name: input.name }, "drive_backup_failed");
     return null;
+  }
+}
+
+/**
+ * Exports a Google Doc (or any Drive file with text/plain export support) as
+ * plain text. Useful to read AI-generated meeting notes that Google Meet saves
+ * in Drive after a call.
+ *
+ * Lanza si la API falla — envuelve en try/catch en el call-site.
+ */
+export async function readDocumentText(subject: string, fileId: string): Promise<string> {
+  const client = getGoogleClient(subject, [GOOGLE_SCOPES.drive]);
+  const { token } = await client.getAccessToken();
+  if (!token) throw new Error("No se pudo obtener el token de acceso de Google.");
+
+  const url = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}/export?mimeType=text%2Fplain&supportsAllDrives=true`;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), GOOGLE_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      let message = `Drive API ${res.status}`;
+      try {
+        const json = JSON.parse(text) as { error?: { message?: string } };
+        message = json.error?.message ?? message;
+      } catch {
+        // keep default message
+      }
+      throw new Error(message);
+    }
+    return await res.text();
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error("La API de Google tardó demasiado en responder (timeout 20s).");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
   }
 }

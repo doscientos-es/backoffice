@@ -10,7 +10,7 @@ import type { CalendarEvent } from "@/lib/calendar/types";
 import { cn } from "@/lib/utils";
 import { Bell, CheckSquare, Presentation, Video } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
-import type { LeadOption, TeamMember } from "./calendar-grid";
+import type { LeadOption, ProjectOption, TeamMember } from "./calendar-grid";
 
 type Kind = "task" | "reminder" | "google_meeting" | "event";
 
@@ -19,6 +19,7 @@ type Props = {
   initialDate?: string;
   teamMembers: TeamMember[];
   leads: LeadOption[];
+  projects: ProjectOption[];
   onClose: () => void;
   onCreated: (event: CalendarEvent) => void;
 };
@@ -64,6 +65,7 @@ export function CalendarCreateDialog({
   initialDate,
   teamMembers,
   leads,
+  projects,
   onClose,
   onCreated,
 }: Props) {
@@ -81,8 +83,9 @@ export function CalendarCreateDialog({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  // Meeting-specific state
+  // Meeting/Event state
   const [selectedLeadId, setSelectedLeadId] = useState("");
+  const [selectedProjectId, setSelectedProjectId] = useState("");
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
 
   // Reset on open
@@ -96,6 +99,7 @@ export function CalendarCreateDialog({
       setWithMeet(true);
       setLocation("");
       setSelectedLeadId("");
+      setSelectedProjectId("");
       setSelectedMemberIds([]);
     }
   }, [open, initialDate, today]);
@@ -175,6 +179,8 @@ export function CalendarCreateDialog({
           attendeeEmails,
           location: kind === "event" ? location.trim() || undefined : undefined,
           attendeeMemberIds: kind === "event" ? selectedMemberIds : undefined,
+          projectId: kind === "event" ? selectedProjectId || undefined : undefined,
+          leadId: kind === "event" ? selectedLeadId || undefined : undefined,
         });
         if (!res.ok) {
           setError(res.error);
@@ -299,30 +305,53 @@ export function CalendarCreateDialog({
             </div>
           )}
 
-          {/* Event: attendee selector */}
+          {/* Event: optional project/lead */}
+          {kind === "event" && (
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label htmlFor="ev-project" className={LABEL_CLS}>
+                  Proyecto (opcional)
+                </label>
+                <EntityCombobox
+                  id="ev-project"
+                  items={projects.map((p) => ({ id: p.id, label: p.name }))}
+                  value={selectedProjectId}
+                  onChange={(id) => {
+                    setSelectedProjectId(id);
+                    if (id) setSelectedLeadId("");
+                  }}
+                  placeholder="Proyecto…"
+                />
+              </div>
+              <div>
+                <label htmlFor="ev-event-lead" className={LABEL_CLS}>
+                  Lead (opcional)
+                </label>
+                <EntityCombobox
+                  id="ev-event-lead"
+                  items={leads.map((l) => ({ id: l.id, label: l.name, sublabel: l.company }))}
+                  value={selectedLeadId}
+                  onChange={(id) => {
+                    setSelectedLeadId(id);
+                    if (id) setSelectedProjectId("");
+                  }}
+                  placeholder="Lead…"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Event: attendee selector via EntityMultiCombobox */}
           {kind === "event" && teamMembers.length > 0 && (
             <div className="flex flex-col gap-1.5">
               <span className={LABEL_CLS}>Asistentes</span>
-              <div className="flex flex-col gap-1 rounded-md border border-border bg-muted/30 p-2">
-                {teamMembers.map((m) => (
-                  <label
-                    key={m.id}
-                    className="flex cursor-pointer select-none items-center gap-2 rounded px-1 py-0.5 text-sm hover:bg-accent transition-colors"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedMemberIds.includes(m.id)}
-                      onChange={() =>
-                        setSelectedMemberIds((prev) =>
-                          prev.includes(m.id) ? prev.filter((x) => x !== m.id) : [...prev, m.id],
-                        )
-                      }
-                      className="rounded"
-                    />
-                    <span className="flex-1">{m.name}</span>
-                  </label>
-                ))}
-              </div>
+              <EntityMultiCombobox
+                id="ev-attendees"
+                items={teamMembers.map((m) => ({ id: m.id, label: m.name, sublabel: m.email }))}
+                value={selectedMemberIds}
+                onChange={setSelectedMemberIds}
+                placeholder="Añadir asistentes…"
+              />
             </div>
           )}
 

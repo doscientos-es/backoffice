@@ -163,8 +163,7 @@ function proposalExpiryToEvent(row: Record<string, unknown>): CalendarEvent {
 }
 
 function eventToEvent(row: Record<string, unknown>): CalendarEvent {
-  const attendees =
-    (row.event_attendees as { member: { id: string; name: string } | null }[]) ?? [];
+  const attendees = (row.task_members as { member: { id: string; name: string } | null }[]) ?? [];
   const members = attendees
     .map((a) => a.member)
     .filter((m): m is { id: string; name: string } => !!m);
@@ -232,13 +231,14 @@ export async function getCalendarEvents(opts: CalendarFetchOptions): Promise<Cal
     milestonesRes,
     eventsRes,
   ] = await Promise.all([
-    // Tasks — scoped to memberIds via assignee_id
+    // Tasks — scoped to memberIds via assignee_id, exclude calendar events
     layers.includes("task")
       ? supabase
           .from("tasks")
           .select(
             "id, title, status, priority, due_date, projects(id,name), leads(id,name), assignee:team_members!assignee_id(id,name)",
           )
+          .eq("kind", "task")
           .gte("due_date", fromDate)
           .lte("due_date", toDate)
           .in("assignee_id", memberIds)
@@ -314,13 +314,14 @@ export async function getCalendarEvents(opts: CalendarFetchOptions): Promise<Cal
           .not("due_date", "is", null)
       : Promise.resolve({ data: [] }),
 
-    // Events (charlas/eventos) — shared team-wide, like milestones
+    // Events (charlas/eventos) — stored in tasks with kind='event', shared team-wide
     layers.includes("event")
       ? supabase
-          .from("events")
+          .from("tasks")
           .select(
-            "id, title, description, location, url, start_at, end_at, all_day, event_attendees(member:team_members(id,name))",
+            "id, title, description, location, start_at, end_at, all_day, task_members(member:team_members(id,name))",
           )
+          .eq("kind", "event")
           .gte("start_at", fromISO)
           .lte("start_at", toISO)
           .is("deleted_at", null)

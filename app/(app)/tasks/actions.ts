@@ -25,14 +25,17 @@ export const createTask = defineAction<
   handler: async (input, { user }) => {
     const supabase = await createServerClient();
 
+    const { member_ids = [], ...taskData } = input;
+    const assigneeId = member_ids[0] ?? null;
+
     // Compute kanban_order = rankAfter(max existing for same project+status).
     let kanbanOrder = "m";
-    if (input.project_id) {
+    if (taskData.project_id) {
       const { data: last } = await supabase
         .from("tasks")
         .select("kanban_order")
-        .eq("project_id", input.project_id)
-        .eq("status", input.status)
+        .eq("project_id", taskData.project_id)
+        .eq("status", taskData.status)
         .is("deleted_at", null)
         .order("kanban_order", { ascending: false })
         .limit(1)
@@ -43,7 +46,8 @@ export const createTask = defineAction<
     const { data, error } = await supabase
       .from("tasks")
       .insert({
-        ...input,
+        ...taskData,
+        assignee_id: assigneeId,
         kanban_order: kanbanOrder,
         created_by: user.id,
       })
@@ -51,6 +55,13 @@ export const createTask = defineAction<
       .single();
 
     if (error || !data) throw new Error(error?.message ?? "No se pudo crear la tarea");
+
+    // Sync task_members
+    if (member_ids.length > 0) {
+      await supabase
+        .from("task_members")
+        .insert(member_ids.map((mid) => ({ task_id: data.id as string, member_id: mid })));
+    }
 
     // Fire-and-forget GitHub sync
     if (data.project_id) {
@@ -68,20 +79,32 @@ export const updateTask = defineAction({
   handler: async (input) => {
     const supabase = await createServerClient();
 
-    const updates: Record<string, any> = {
-      title: input.title,
-      description: input.description ?? null,
-      assignee_id: input.assignee_id ?? null,
-      status: input.status,
-      priority: input.priority,
-      due_date: input.due_date ?? null,
-    };
-    if (input.status === "done") updates.completed_at = new Date().toISOString();
-    if (input.status === "in_progress") updates.started_at = new Date().toISOString();
+    const { id, member_ids = [], ...rest } = input;
+    const assigneeId = member_ids[0] ?? null;
 
-    const { error } = await supabase.from("tasks").update(updates).eq("id", input.id);
+    const updates: Record<string, unknown> = {
+      title: rest.title,
+      description: rest.description ?? null,
+      assignee_id: assigneeId,
+      status: rest.status,
+      priority: rest.priority,
+      due_date: rest.due_date ?? null,
+    };
+    if (rest.status === "done") updates.completed_at = new Date().toISOString();
+    if (rest.status === "in_progress") updates.started_at = new Date().toISOString();
+
+    const { error } = await supabase.from("tasks").update(updates).eq("id", id);
     if (error) throw new Error(error.message);
-    void syncTaskStatusToGitHub(input.id, input.status);
+
+    // Sync task_members: replace all existing entries
+    await supabase.from("task_members").delete().eq("task_id", id);
+    if (member_ids.length > 0) {
+      await supabase
+        .from("task_members")
+        .insert(member_ids.map((mid) => ({ task_id: id, member_id: mid })));
+    }
+
+    void syncTaskStatusToGitHub(id, rest.status);
   },
 });
 
@@ -91,7 +114,7 @@ export const updateTaskStatus = defineAction({
   revalidate: (_payload, input) => ["/tasks", `/tasks/${input.taskId}`],
   handler: async (data) => {
     const supabase = await createServerClient();
-    const updates: Record<string, any> = { status: data.status };
+    const updates: Record<string, unknown> = { status: data.status };
     if (data.status === "done") updates.completed_at = new Date().toISOString();
     if (data.status === "in_progress") updates.started_at = new Date().toISOString();
 

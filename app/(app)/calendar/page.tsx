@@ -82,20 +82,28 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
     .maybeSingle();
   const calendarToken = (memberRow?.calendar_token as string | null) ?? null;
 
-  // Fetch active leads for the meeting creation dialog
-  const { data: leadsData } = await supabase
-    .from("leads")
-    .select("id, name, email, company")
-    .not("status", "in", '("won","lost")')
-    .is("deleted_at", null)
-    .order("updated_at", { ascending: false })
-    .limit(150);
+  // Fetch active leads and projects for the create dialog
+  const [{ data: leadsData }, { data: projectsData }] = await Promise.all([
+    supabase
+      .from("leads")
+      .select("id, name, email, company")
+      .not("status", "in", '("won","lost")')
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false })
+      .limit(150),
+    supabase
+      .from("projects")
+      .select("id, name")
+      .is("deleted_at", null)
+      .order("name"),
+  ]);
   const leads = (leadsData ?? []) as {
     id: string;
     name: string;
     email: string | null;
     company: string | null;
   }[];
+  const projects = (projectsData ?? []) as { id: string; name: string }[];
 
   const events = await getCalendarEvents({
     from,
@@ -112,6 +120,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
       anchor={anchor.toISOString()}
       teamMembers={teamMembers}
       leads={leads}
+      projects={projects}
       prevMonth={subMonths(anchor, 1).toISOString()}
       nextMonth={addMonths(anchor, 1).toISOString()}
       calendarToken={calendarToken}
