@@ -70,12 +70,12 @@ export function LeadEditDialog({ lead, members = [] }: { lead: Lead; members?: M
           Editar
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="flex max-h-[85vh] flex-col overflow-hidden sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Editar lead</DialogTitle>
           <DialogDescription>Actualiza los datos del lead.</DialogDescription>
         </DialogHeader>
-        <form ref={formRef} onSubmit={onSubmit} className="flex flex-col max-h-[80vh]">
+        <form ref={formRef} onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
           <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 flex flex-col gap-5 scroll-fade no-scrollbar">
             <LeadFormFields
               idPrefix={`edit-${lead.id}`}
