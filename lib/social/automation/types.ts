@@ -36,3 +36,32 @@ export interface MetaCommentEvent {
 }
 
 export type AutomationRunStatus = "pending" | "sending" | "sent" | "failed";
+
+export type AutomationEventOutcome =
+  | "received"
+  | "ignored_self"
+  | "ignored_no_target"
+  | "ignored_no_rule"
+  | "matched"
+  | "completed"
+  | "failed";
+
+export interface AutomationAuditEvent {
+  id: string;
+  platform: MetaPlatform;
+  remotePostId: string;
+  remoteCommentId: string;
+  targetId: string | null;
+  postId: string | null;
+  ruleId: string | null;
+  runId: string | null;
+  authorId: string | null;
+  authorName: string;
+  commentText: string;
+  outcome: AutomationEventOutcome;
+  error: string | null;
+  privateStatus: AutomationRunStatus | null;
+  publicStatus: AutomationRunStatus | null;
+  createdAt: string;
+  updatedAt: string;
+}

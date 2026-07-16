@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { AutomationRule, MetaPlatform } from "@/lib/social/automation/types";
-import { Facebook, Instagram, MessageCircle, Trash2 } from "lucide-react";
+import { Activity, Facebook, Instagram, MessageCircle, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import {
@@ -88,13 +89,23 @@ export function AutomationManager({ initialRules }: { initialRules: AutomationRu
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-sm font-medium">
-            <MessageCircle className="size-4" />
-            Nueva regla global
-          </CardTitle>
-          <p className="text-xs text-muted-foreground">
-            Se usa cuando la publicación no tiene una regla específica.
-          </p>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-sm font-medium">
+                <MessageCircle className="size-4" />
+                Nueva regla global
+              </CardTitle>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Se usa cuando la publicación no tiene una regla específica.
+              </p>
+            </div>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/social/automation/runs">
+                <Activity className="size-3.5" />
+                Actividad
+              </Link>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={submit} className="flex flex-col gap-4">
