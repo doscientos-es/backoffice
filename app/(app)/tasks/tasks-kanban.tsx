@@ -33,6 +33,8 @@ export type KanbanTask = {
   priority: TaskPriority;
   due_date: string | null;
   project: { id: string; name: string } | null;
+  lead: { id: string; name: string } | null;
+  client: { id: string; name: string } | null;
   assignee_name: string | null;
 };
 
@@ -258,9 +260,13 @@ function TaskCard({ task, isOverlay = false }: { task: KanbanTask; isOverlay?: b
         />
       </div>
 
-      {task.project ? (
-        <div className="mt-1.5 truncate text-[11px] text-muted-foreground">{task.project.name}</div>
-      ) : null}
+      {task.project || task.lead || task.client ? (
+        <div className="mt-1.5 truncate text-[11px] text-muted-foreground">
+          {[task.project?.name, task.lead?.name, task.client?.name].filter(Boolean).join(" · ")}
+        </div>
+      ) : (
+        <div className="mt-1.5 text-[11px] text-muted-foreground">Personal</div>
+      )}
 
       <div className="mt-2 flex items-center justify-between gap-2 text-[11px]">
         <span className="truncate text-muted-foreground">

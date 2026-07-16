@@ -128,7 +128,7 @@ export default async function TasksPage({
     href: `/tasks/${t.id}`,
     csvValues: [
       t.title,
-      t.projects?.name ?? "",
+      [t.projects?.name, t.leads?.name, t.clients?.name].filter(Boolean).join(" · "),
       t.status,
       t.priority,
       t.team_members?.name ?? "",
@@ -136,12 +136,28 @@ export default async function TasksPage({
     ],
     cells: [
       t.title,
-      t.projects ? (
-        <Link key={`p-${t.id}`} href={`/projects/${t.projects.id}`} className="hover:underline">
-          {t.projects.name}
-        </Link>
+      t.projects || t.leads || t.clients ? (
+        <div key={`context-${t.id}`} className="flex flex-wrap gap-x-2 gap-y-0.5">
+          {t.projects ? (
+            <Link href={`/projects/${t.projects.id}`} className="hover:underline">
+              {t.projects.name}
+            </Link>
+          ) : null}
+          {t.leads ? (
+            <Link href={`/leads/${t.leads.id}`} className="hover:underline">
+              {t.leads.name}
+            </Link>
+          ) : null}
+          {t.clients ? (
+            <Link href={`/clients/${t.clients.id}`} className="hover:underline">
+              {t.clients.name}
+            </Link>
+          ) : null}
+        </div>
       ) : (
-        "—"
+        <span key={`context-${t.id}`} className="text-muted-foreground">
+          Personal
+        </span>
       ),
       <StatusBadge key={`s-${t.id}`} meta={TASK_STATUS} value={t.status} />,
       <StatusBadge key={`pr-${t.id}`} meta={TASK_PRIORITY} value={t.priority} />,
@@ -190,7 +206,7 @@ export default async function TasksPage({
       addLabel="Nueva tarea"
       headers={[
         { label: "Título", sortKey: "title" },
-        "Proyecto",
+        "Contexto",
         { label: "Estado", sortKey: "status" },
         { label: "Prioridad", sortKey: "priority" },
         "Asignada",

@@ -67,6 +67,13 @@ export type ClientInvoiceItem = {
   issue_date: string | null;
 };
 
+export type ClientTaskItem = {
+  id: string;
+  title: string;
+  status: string;
+  due_date: string | null;
+};
+
 // ─── Full client record ────────────────────────────────────────────────────────
 
 export type ClientDetail = {
@@ -94,6 +101,8 @@ export type ClientDetailResult = {
   projects: ClientProjectItem[];
   proposals: ClientProposalItem[];
   invoices: ClientInvoiceItem[];
+  /** Tasks directly associated with this client, newest first. */
+  tasks: ClientTaskItem[];
   /** Pending reminders scheduled against this client, soonest first. */
   reminders: ReminderRow[];
 } | null;

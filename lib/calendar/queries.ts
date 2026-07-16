@@ -21,6 +21,7 @@ const TASK_DONE_STATUSES = new Set(["done", "completed", "cancelled"]);
 function taskToEvent(row: Record<string, unknown>): CalendarEvent {
   const project = row.projects as { id: string; name: string } | null;
   const lead = row.leads as { id: string; name: string } | null;
+  const client = row.clients as { id: string; name: string } | null;
   const assignee = row.assignee as { id: string; name: string } | null;
   const status = row.status as string;
   return {
@@ -30,7 +31,13 @@ function taskToEvent(row: Record<string, unknown>): CalendarEvent {
     start: row.due_date as string,
     end: row.due_date as string,
     allDay: true,
-    href: project ? `/projects/${project.id}` : lead ? `/leads/${lead.id}` : "/tasks",
+    href: project
+      ? `/projects/${project.id}`
+      : lead
+        ? `/leads/${lead.id}`
+        : client
+          ? `/clients/${client.id}`
+          : "/tasks",
     editable: !TASK_DONE_STATUSES.has(status),
     done: TASK_DONE_STATUSES.has(status),
     memberId: assignee?.id ?? null,
@@ -42,6 +49,8 @@ function taskToEvent(row: Record<string, unknown>): CalendarEvent {
       projectName: project?.name,
       leadId: lead?.id,
       leadName: lead?.name,
+      clientId: client?.id,
+      clientName: client?.name,
     },
   };
 }
@@ -236,7 +245,7 @@ export async function getCalendarEvents(opts: CalendarFetchOptions): Promise<Cal
       ? supabase
           .from("tasks")
           .select(
-            "id, title, status, priority, due_date, projects(id,name), leads(id,name), assignee:team_members!assignee_id(id,name)",
+            "id, title, status, priority, due_date, projects(id,name), leads(id,name), clients(id,name), assignee:team_members!assignee_id(id,name)",
           )
           .eq("kind", "task")
           .gte("due_date", fromDate)

@@ -23,6 +23,8 @@ type TaskRow = {
   priority: string;
   due_date: string | null;
   projects: { id: string; name: string } | null;
+  leads: { id: string; name: string } | null;
+  clients: { id: string; name: string } | null;
   team_members: { id: string; name: string } | null;
 };
 
@@ -33,7 +35,7 @@ export async function listTasksBoard(params: TaskBoardParams): Promise<TaskBoard
     supabase
       .from("tasks")
       .select(
-        "id, title, status, due_date, priority, projects(id, name), team_members:assignee_id(id, name)",
+        "id, title, status, due_date, priority, projects(id, name), leads(id, name), clients(id, name), team_members:assignee_id(id, name)",
       ),
   ).eq("kind", "task");
 
@@ -55,6 +57,8 @@ export async function listTasksBoard(params: TaskBoardParams): Promise<TaskBoard
     priority: t.priority,
     due_date: t.due_date,
     project: t.projects ? { id: t.projects.id, name: t.projects.name } : null,
+    lead: t.leads ? { id: t.leads.id, name: t.leads.name } : null,
+    client: t.clients ? { id: t.clients.id, name: t.clients.name } : null,
     assignee_name: t.team_members?.name ?? null,
   }));
 
@@ -71,7 +75,7 @@ export async function listTasksList(params: TaskListParams): Promise<TaskListRes
     supabase
       .from("tasks")
       .select(
-        "id, title, status, due_date, priority, projects(id, name), team_members:assignee_id(id, name)",
+        "id, title, status, due_date, priority, projects(id, name), leads(id, name), clients(id, name), team_members:assignee_id(id, name)",
         { count: "exact" },
       ),
   ).eq("kind", "task");

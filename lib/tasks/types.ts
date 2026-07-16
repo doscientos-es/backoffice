@@ -14,6 +14,8 @@ export type TaskBoardItem = {
   priority: string;
   due_date: string | null;
   project: { id: string; name: string } | null;
+  lead: { id: string; name: string } | null;
+  client: { id: string; name: string } | null;
   assignee_name: string | null;
 };
 
@@ -38,6 +40,8 @@ export type TaskListItem = {
   priority: string;
   due_date: string | null;
   projects: { id: string; name: string } | null;
+  leads: { id: string; name: string } | null;
+  clients: { id: string; name: string } | null;
   team_members: { id: string; name: string } | null;
 };
 

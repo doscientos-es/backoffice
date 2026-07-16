@@ -23,6 +23,7 @@ import { formatDate, formatEUR } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ScheduleReminderDialog } from "../../reminders/schedule-reminder-dialog";
+import { TaskCreateDialog } from "../../tasks/task-create-dialog";
 import { ClientEditDialog } from "./client-edit-dialog";
 import { DeleteClientButton } from "./delete-client-button";
 
@@ -39,7 +40,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
   ]);
   if (!result) notFound();
 
-  const { client, projects, proposals, invoices, reminders } = result;
+  const { client, projects, proposals, invoices, tasks, reminders } = result;
 
   return (
     <div className="flex flex-col gap-6">
@@ -210,6 +211,44 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
               <RemindersSection reminders={reminders} />
             ) : (
               <p className="text-sm text-muted-foreground">Sin avisos programados.</p>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {canEdit || tasks.length > 0 ? (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Tareas</CardTitle>
+            {canEdit ? (
+              <TaskCreateDialog
+                clientId={id}
+                members={members}
+                currentUserId={user.id}
+                trigger={<Button size="sm">Nueva tarea</Button>}
+              />
+            ) : null}
+          </CardHeader>
+          <CardContent className="px-0">
+            {tasks.length > 0 ? (
+              <ul className="divide-y divide-border">
+                {tasks.map((task) => (
+                  <li
+                    key={task.id}
+                    className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm"
+                  >
+                    <Link href={`/tasks/${task.id}`} className="truncate font-medium hover:underline">
+                      {task.title}
+                    </Link>
+                    <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
+                      <StatusBadge meta={PROJECT_STATUS} value={task.status as ProjectStatus} />
+                      {task.due_date ? <span>{formatDate(task.due_date)}</span> : null}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="px-6 py-2 text-sm text-muted-foreground">Sin tareas.</p>
             )}
           </CardContent>
         </Card>

@@ -76,7 +76,7 @@ export async function getClientDetail(id: string): Promise<ClientDetailResult> {
   if (error) log.error({ clientId: id, err: error.message }, "get_client_detail_failed");
   if (!client) return null;
 
-  const [{ data: projects }, { data: proposals }, { data: invoices }, { data: reminders }] =
+  const [{ data: projects }, { data: proposals }, { data: invoices }, { data: tasks }, { data: reminders }] =
     await Promise.all([
       notDeleted(supabase.from("projects").select("id, name, status").eq("client_id", id))
         .order("created_at", { ascending: false })
@@ -93,6 +93,15 @@ export async function getClientDetail(id: string): Promise<ClientDetailResult> {
           .eq("client_id", id),
       )
         .order("issue_date", { ascending: false })
+        .limit(CLIENT_RELATED_LIMIT),
+      notDeleted(
+        supabase
+          .from("tasks")
+          .select("id, title, status, due_date")
+          .eq("kind", "task")
+          .eq("client_id", id),
+      )
+        .order("created_at", { ascending: false })
         .limit(CLIENT_RELATED_LIMIT),
       supabase
         .from("tasks")
@@ -142,6 +151,12 @@ export async function getClientDetail(id: string): Promise<ClientDetailResult> {
       status: (i.status as string | null) ?? null,
       total: i.total == null ? null : Number(i.total),
       issue_date: (i.issue_date as string | null) ?? null,
+    })),
+    tasks: (tasks ?? []).map((t) => ({
+      id: t.id as string,
+      title: t.title as string,
+      status: t.status as string,
+      due_date: (t.due_date as string | null) ?? null,
     })),
     reminders: (reminders ?? []).map((r) => ({
       id: r.id as string,
