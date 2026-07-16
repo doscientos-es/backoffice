@@ -17,15 +17,12 @@ export const CreateTaskInput = z
     description: optionalText(8000),
     project_id: optionalUuid,
     lead_id: optionalUuid,
+    client_id: optionalUuid,
     /** Multi-member assignment. First entry becomes the primary assignee_id. */
     member_ids: z.array(z.string().uuid()).optional().default([]),
     status: TaskStatus.default("todo"),
     priority: TaskPriority.default("medium"),
     due_date: optionalDate,
-  })
-  .refine((d) => d.project_id || d.lead_id, {
-    message: "La tarea debe pertenecer a un proyecto o lead",
-    path: ["project_id"],
   });
 
 export type CreateTaskInputType = z.infer<typeof CreateTaskInput>;

@@ -22,8 +22,11 @@ interface Props {
   projectId?: string;
   /** Pre-fills `lead_id`. Renders as a hidden input so parent stays fixed. */
   leadId?: string;
+  /** Pre-fills `client_id`. Renders as a hidden input so context stays fixed. */
+  clientId?: string;
   projects?: Array<{ id: string; name: string }>;
   leads?: Array<{ id: string; name: string }>;
+  clients?: Array<{ id: string; name: string }>;
   members?: Array<{ id: string; name: string }>;
   /** Pre-selects the assignee. Defaults to the current user when provided. */
   currentUserId?: string;
@@ -42,8 +45,10 @@ interface Props {
 export function TaskCreateDialog({
   projectId,
   leadId,
+  clientId,
   projects = [],
   leads = [],
+  clients = [],
   members = [],
   currentUserId,
   trigger,
@@ -62,6 +67,7 @@ export function TaskCreateDialog({
       description: fd.get("description")?.toString() ?? "",
       project_id: projectId ?? fd.get("project_id")?.toString() ?? "",
       lead_id: leadId ?? fd.get("lead_id")?.toString() ?? "",
+      client_id: clientId ?? fd.get("client_id")?.toString() ?? "",
       member_ids: fd
         .getAll("member_ids")
         .map((v) => v.toString())
@@ -97,19 +103,21 @@ export function TaskCreateDialog({
         <DialogHeader>
           <DialogTitle>Crear tarea</DialogTitle>
           <DialogDescription>
-            Las tareas se asocian al proyecto actual y aparecen en el Kanban.
+            Puedes crear una tarea personal y asociarla opcionalmente a un proyecto, lead o cliente.
           </DialogDescription>
         </DialogHeader>
         <form ref={formRef} onSubmit={onSubmit} className="flex flex-col max-h-[70vh]">
           <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-5 scroll-fade no-scrollbar">
             {projectId ? <input type="hidden" name="project_id" value={projectId} /> : null}
             {leadId ? <input type="hidden" name="lead_id" value={leadId} /> : null}
+            {clientId ? <input type="hidden" name="client_id" value={clientId} /> : null}
             <TaskFormFields
               idPrefix="create"
               autoFocusTitle
-              includeParentSelectors={!projectId && !leadId}
+              includeParentSelectors={!projectId && !leadId && !clientId}
               projects={projects}
               leads={leads}
+              clients={clients}
               members={members}
               defaults={{
                 status: "todo",

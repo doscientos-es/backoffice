@@ -32,7 +32,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
   const { data: task } = await supabase
     .from("tasks")
     .select(
-      "*, projects(id, name, github_sync_mode, github_repo, github_repo_owner, github_repo_name, clients(id, name)), leads(id, name), team_members:assignee_id(id, name), creator:created_by(id, name)",
+      "*, projects(id, name, github_sync_mode, github_repo, github_repo_owner, github_repo_name, clients(id, name)), client:client_id(id, name), leads(id, name), team_members:assignee_id(id, name), creator:created_by(id, name)",
     )
     .eq("id", id)
     .is("deleted_at", null)
@@ -52,10 +52,11 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
   const project = (task as unknown as { projects: ProjectMeta | null }).projects;
   const ghMode: GitHubSyncMode = project?.github_sync_mode ?? "none";
   const lead = (task as unknown as { leads: { id: string; name: string } | null }).leads;
+  const directClient = (task as unknown as { client: { id: string; name: string } | null }).client;
   const assignee = (task as unknown as { team_members: { id: string; name: string } | null })
     .team_members;
   const creator = (task as unknown as { creator: { id: string; name: string } | null }).creator;
-  const client = project?.clients ?? null;
+  const client = directClient ?? project?.clients ?? null;
 
   const [{ data: members }, { data: commentsData }, { data: taskMembersData }] = await Promise.all([
     supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
@@ -117,34 +118,27 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
           </CardHeader>
           <CardContent>
             <DetailGrid>
+              {client ? (
+                <DetailRow label="Cliente">
+                  <Link href={`/clients/${client.id}`} className="hover:underline">
+                    {client.name}
+                  </Link>
+                </DetailRow>
+              ) : null}
               {project ? (
-                <>
-                  <DetailRow label="Cliente">
-                    {client ? (
-                      <Link href={`/clients/${client.id}`} className="hover:underline">
-                        {client.name}
-                      </Link>
-                    ) : (
-                      "—"
-                    )}
-                  </DetailRow>
                   <DetailRow label="Proyecto">
                     <Link href={`/projects/${project.id}`} className="hover:underline">
                       {project.name}
                     </Link>
                   </DetailRow>
-                </>
-              ) : (
+              ) : null}
+              {lead ? (
                 <DetailRow label="Lead">
-                  {lead ? (
-                    <Link href={`/leads/${lead.id}`} className="hover:underline">
-                      {lead.name}
-                    </Link>
-                  ) : (
-                    "—"
-                  )}
+                  <Link href={`/leads/${lead.id}`} className="hover:underline">
+                    {lead.name}
+                  </Link>
                 </DetailRow>
-              )}
+              ) : null}
               <DetailRow label="Asignada">
                 {assignedMemberNames.length > 0 ? assignedMemberNames.join(", ") : "—"}
               </DetailRow>

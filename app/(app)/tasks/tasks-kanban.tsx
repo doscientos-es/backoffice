@@ -77,6 +77,7 @@ interface TasksKanbanProps {
   capped?: boolean;
   projects?: Array<{ id: string; name: string }>;
   leads?: Array<{ id: string; name: string }>;
+  clients?: Array<{ id: string; name: string }>;
   members?: Array<{ id: string; name: string }>;
   currentUserId?: string;
 }
@@ -86,6 +87,7 @@ export function TasksKanban({
   capped,
   projects = [],
   leads = [],
+  clients = [],
   members = [],
   currentUserId,
 }: TasksKanbanProps) {
@@ -156,6 +158,7 @@ export function TasksKanban({
                 <TaskCreateDialog
                   projects={projects}
                   leads={leads}
+                  clients={clients}
                   members={members}
                   currentUserId={currentUserId}
                   trigger={

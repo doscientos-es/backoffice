@@ -29,6 +29,7 @@ export type TaskFormDefaults = {
   description?: string | null;
   project_id?: string | null;
   lead_id?: string | null;
+  client_id?: string | null;
   /** Pre-selected member IDs. Replaces the legacy single assignee_id. */
   member_ids?: string[];
   status?: string | null;
@@ -41,12 +42,13 @@ interface Props {
   /** Avoids `id` collisions when create and edit forms coexist on the page. */
   idPrefix?: string;
   autoFocusTitle?: boolean;
-  /** Show project + lead selectors (create-only). Edit flow keeps the parent fixed. */
+  /** Show project, lead and client selectors (create-only). Edit keeps context fixed. */
   includeParentSelectors?: boolean;
   /** Notifies dirty-form tracking when the custom member picker changes. */
   onMemberIdsChange?: () => void;
   projects?: Array<{ id: string; name: string }>;
   leads?: Array<{ id: string; name: string }>;
+  clients?: Array<{ id: string; name: string }>;
   members?: Array<{ id: string; name: string }>;
 }
 
@@ -62,11 +64,13 @@ export function TaskFormFields({
   onMemberIdsChange,
   projects = [],
   leads = [],
+  clients = [],
   members = [],
 }: Props) {
   const d = defaults ?? {};
   const [projectId, setProjectId] = useState(d.project_id ?? "");
   const [leadId, setLeadId] = useState(d.lead_id ?? "");
+  const [clientId, setClientId] = useState(d.client_id ?? "");
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>(d.member_ids ?? []);
 
   return (
@@ -111,6 +115,16 @@ export function TaskFormFields({
                 value={leadId}
                 onChange={setLeadId}
                 placeholder="Buscar lead…"
+              />
+            </FormRow>
+            <FormRow label="Cliente" htmlFor={`${idPrefix}-client_id`}>
+              <EntityCombobox
+                id={`${idPrefix}-client_id`}
+                name="client_id"
+                items={clients.map((c) => ({ id: c.id, label: c.name }))}
+                value={clientId}
+                onChange={setClientId}
+                placeholder="Buscar cliente…"
               />
             </FormRow>
           </>

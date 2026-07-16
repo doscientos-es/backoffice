@@ -10,8 +10,9 @@ import { TaskFormFields } from "../task-form-fields";
 interface Props {
   projects: Array<{ id: string; name: string }>;
   leads: Array<{ id: string; name: string }>;
+  clients: Array<{ id: string; name: string }>;
   members: Array<{ id: string; name: string }>;
-  defaults: { project_id?: string; lead_id?: string };
+  defaults: { project_id?: string; lead_id?: string; client_id?: string };
   /** Pre-selects the assignee. Defaults to the current user when provided. */
   currentUserId?: string;
 }
@@ -22,7 +23,7 @@ interface Props {
  * wrapper handles client-side navigation to the new task's detail page on
  * success.
  */
-export function TaskNewForm({ projects, leads, members, defaults, currentUserId }: Props) {
+export function TaskNewForm({ projects, leads, clients, members, defaults, currentUserId }: Props) {
   const router = useRouter();
   const feedback = useFormFeedback();
 
@@ -35,6 +36,7 @@ export function TaskNewForm({ projects, leads, members, defaults, currentUserId 
       description: fd.get("description")?.toString() ?? "",
       project_id: fd.get("project_id")?.toString() ?? "",
       lead_id: fd.get("lead_id")?.toString() ?? "",
+      client_id: fd.get("client_id")?.toString() ?? "",
       member_ids: fd
         .getAll("member_ids")
         .map((v) => v.toString())
@@ -54,10 +56,12 @@ export function TaskNewForm({ projects, leads, members, defaults, currentUserId 
         includeParentSelectors
         projects={projects}
         leads={leads}
+        clients={clients}
         members={members}
         defaults={{
           project_id: defaults.project_id ?? "",
           lead_id: defaults.lead_id ?? "",
+          client_id: defaults.client_id ?? "",
           member_ids: currentUserId ? [currentUserId] : [],
         }}
       />

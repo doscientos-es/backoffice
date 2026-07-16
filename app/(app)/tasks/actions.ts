@@ -21,12 +21,20 @@ export const createTask = defineAction<
   name: "tasks.create",
   schema: CreateTaskInput,
   revalidate: (payload) =>
-    payload.projectId ? ["/tasks", `/projects/${payload.projectId}`] : ["/tasks"],
+    [
+      "/tasks",
+      ...(payload.project_id ? [`/projects/${payload.project_id}`] : []),
+      ...(payload.lead_id ? [`/leads/${payload.lead_id}`] : []),
+      ...(payload.client_id ? [`/clients/${payload.client_id}`] : []),
+    ],
   handler: async (input, { user }) => {
     const supabase = await createServerClient();
 
     const { member_ids = [], ...taskData } = input;
-    const assigneeId = member_ids[0] ?? null;
+    // The creator is the primary assignee by default. Selecting any members
+    // explicitly lets the creator replace that primary assignment.
+    const assignedMemberIds = Array.from(new Set(member_ids.length > 0 ? member_ids : [user.id]));
+    const assigneeId = assignedMemberIds[0] ?? null;
 
     // Compute kanban_order = rankAfter(max existing for same project+status).
     let kanbanOrder = "m";
@@ -57,10 +65,10 @@ export const createTask = defineAction<
     if (error || !data) throw new Error(error?.message ?? "No se pudo crear la tarea");
 
     // Sync task_members
-    if (member_ids.length > 0) {
+    if (assignedMemberIds.length > 0) {
       const { error: membersError } = await supabase
         .from("task_members")
-        .insert(member_ids.map((mid) => ({ task_id: data.id as string, member_id: mid })));
+        .insert(assignedMemberIds.map((mid) => ({ task_id: data.id as string, member_id: mid })));
       if (membersError) throw new Error(membersError.message);
     }
 

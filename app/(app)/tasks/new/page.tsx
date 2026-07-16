@@ -10,16 +10,21 @@ export const dynamic = "force-dynamic";
 
 export default async function NewTaskPage({
   searchParams,
-}: { searchParams: Promise<{ project_id?: string; lead_id?: string }> }) {
+}: { searchParams: Promise<{ project_id?: string; lead_id?: string; client_id?: string }> }) {
   const user = await requireUser();
-  const { project_id: presetProject, lead_id: presetLead } = await searchParams;
+  const {
+    project_id: presetProject,
+    lead_id: presetLead,
+    client_id: presetClient,
+  } = await searchParams;
   const supabase = await createServerClient();
 
-  const [{ data: projects }, { data: leads }, { data: members }] = await Promise.all([
+  const [{ data: projects }, { data: leads }, { data: clients }, { data: members }] = await Promise.all([
     supabase.from("projects").select("id, name").is("deleted_at", null).order("name"),
     supabase.from("leads").select("id, name").is("deleted_at", null).order("created_at", {
       ascending: false,
     }),
+    supabase.from("clients").select("id, name").is("deleted_at", null).order("name"),
     supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
   ]);
 
@@ -36,8 +41,9 @@ export default async function NewTaskPage({
           <TaskNewForm
             projects={(projects ?? []) as Array<{ id: string; name: string }>}
             leads={(leads ?? []) as Array<{ id: string; name: string }>}
+            clients={(clients ?? []) as Array<{ id: string; name: string }>}
             members={(members ?? []) as Array<{ id: string; name: string }>}
-            defaults={{ project_id: presetProject, lead_id: presetLead }}
+            defaults={{ project_id: presetProject, lead_id: presetLead, client_id: presetClient }}
             currentUserId={user.id}
           />
         </CardContent>
