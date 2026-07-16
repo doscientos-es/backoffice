@@ -47,14 +47,15 @@ export default async function TasksPage({
 
   const supabase = await createServerClient();
 
-  const [{ data: projects }, { data: leads }, { data: clients }, { data: members }] = await Promise.all([
-    supabase.from("projects").select("id, name").is("deleted_at", null).order("name"),
-    supabase.from("leads").select("id, name").is("deleted_at", null).order("created_at", {
-      ascending: false,
-    }),
-    supabase.from("clients").select("id, name").is("deleted_at", null).order("name"),
-    supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
-  ]);
+  const [{ data: projects }, { data: leads }, { data: clients }, { data: members }] =
+    await Promise.all([
+      supabase.from("projects").select("id, name").is("deleted_at", null).order("name"),
+      supabase.from("leads").select("id, name").is("deleted_at", null).order("created_at", {
+        ascending: false,
+      }),
+      supabase.from("clients").select("id, name").is("deleted_at", null).order("name"),
+      supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
+    ]);
 
   const projectsList = (projects ?? []) as Array<{ id: string; name: string }>;
   const leadsList = (leads ?? []) as Array<{ id: string; name: string }>;
@@ -71,7 +72,7 @@ export default async function TasksPage({
       <div className="flex flex-col gap-5">
         <PageHeader
           title="Tareas"
-          description="Trabajo asignado al equipo, agrupado por proyecto y prioridad."
+          description="Organiza el trabajo del equipo y relaciónalo opcionalmente con proyectos, leads o clientes."
           actions={
             <div className="flex items-center gap-2">
               <TasksViewToggle view={view} />
@@ -170,7 +171,7 @@ export default async function TasksPage({
   return (
     <ListPage
       title="Tareas"
-      description="Trabajo asignado al equipo, agrupado por proyecto y prioridad."
+      description="Organiza el trabajo del equipo y relaciónalo opcionalmente con proyectos, leads o clientes."
       empty={q || status || priority || projectId ? "Sin coincidencias." : "Aún no hay tareas."}
       error={error ?? undefined}
       searchKey="q"

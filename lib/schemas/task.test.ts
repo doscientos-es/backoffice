@@ -20,13 +20,14 @@ describe("TaskStatus / TaskPriority", () => {
 });
 
 describe("CreateTaskInput", () => {
-  it("requires a project or lead", () => {
-    expect(CreateTaskInput.safeParse({ title: "T" }).success).toBe(false);
+  it("allows a personal task without project, lead or client", () => {
+    expect(CreateTaskInput.safeParse({ title: "T" }).success).toBe(true);
     expect(CreateTaskInput.safeParse({ title: "T", project_id: uuid }).success).toBe(true);
     expect(CreateTaskInput.safeParse({ title: "T", lead_id: uuid }).success).toBe(true);
+    expect(CreateTaskInput.safeParse({ title: "T", client_id: uuid }).success).toBe(true);
   });
   it("applies status/priority defaults", () => {
-    const out = CreateTaskInput.parse({ title: "T", project_id: uuid });
+    const out = CreateTaskInput.parse({ title: "T" });
     expect(out.status).toBe("todo");
     expect(out.priority).toBe("medium");
   });

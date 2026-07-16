@@ -10,6 +10,7 @@ import {
   UpdateTaskStatusInput,
 } from "@/lib/schemas/task";
 import { createServerClient } from "@/lib/supabase/server";
+import { normalizeTaskMemberIds } from "@/lib/tasks/assignments";
 import { rankAfter, rankBetween } from "@/lib/utils/ranking";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -20,20 +21,19 @@ export const createTask = defineAction<
 >({
   name: "tasks.create",
   schema: CreateTaskInput,
-  revalidate: (payload) =>
-    [
-      "/tasks",
-      ...(payload.project_id ? [`/projects/${payload.project_id}`] : []),
-      ...(payload.lead_id ? [`/leads/${payload.lead_id}`] : []),
-      ...(payload.client_id ? [`/clients/${payload.client_id}`] : []),
-    ],
+  revalidate: (_payload, input) => [
+    "/tasks",
+    ...(input.project_id ? [`/projects/${input.project_id}`] : []),
+    ...(input.lead_id ? [`/leads/${input.lead_id}`] : []),
+    ...(input.client_id ? [`/clients/${input.client_id}`] : []),
+  ],
   handler: async (input, { user }) => {
     const supabase = await createServerClient();
 
     const { member_ids = [], ...taskData } = input;
     // The creator is the primary assignee by default. Selecting any members
     // explicitly lets the creator replace that primary assignment.
-    const assignedMemberIds = Array.from(new Set(member_ids.length > 0 ? member_ids : [user.id]));
+    const assignedMemberIds = normalizeTaskMemberIds(user.id, member_ids);
     const assigneeId = assignedMemberIds[0] ?? null;
 
     // Compute kanban_order = rankAfter(max existing for same project+status).

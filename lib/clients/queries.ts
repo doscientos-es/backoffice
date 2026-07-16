@@ -76,43 +76,48 @@ export async function getClientDetail(id: string): Promise<ClientDetailResult> {
   if (error) log.error({ clientId: id, err: error.message }, "get_client_detail_failed");
   if (!client) return null;
 
-  const [{ data: projects }, { data: proposals }, { data: invoices }, { data: tasks }, { data: reminders }] =
-    await Promise.all([
-      notDeleted(supabase.from("projects").select("id, name, status").eq("client_id", id))
-        .order("created_at", { ascending: false })
-        .limit(CLIENT_PROJECTS_LIMIT),
-      notDeleted(
-        supabase.from("proposals").select("id, number, title, status, total").eq("client_id", id),
-      )
-        .order("created_at", { ascending: false })
-        .limit(CLIENT_RELATED_LIMIT),
-      notDeleted(
-        supabase
-          .from("invoices")
-          .select("id, full_number, status, total, issue_date")
-          .eq("client_id", id),
-      )
-        .order("issue_date", { ascending: false })
-        .limit(CLIENT_RELATED_LIMIT),
-      notDeleted(
-        supabase
-          .from("tasks")
-          .select("id, title, status, due_date")
-          .eq("kind", "task")
-          .eq("client_id", id),
-      )
-        .order("created_at", { ascending: false })
-        .limit(CLIENT_RELATED_LIMIT),
+  const [
+    { data: projects },
+    { data: proposals },
+    { data: invoices },
+    { data: tasks },
+    { data: reminders },
+  ] = await Promise.all([
+    notDeleted(supabase.from("projects").select("id, name, status").eq("client_id", id))
+      .order("created_at", { ascending: false })
+      .limit(CLIENT_PROJECTS_LIMIT),
+    notDeleted(
+      supabase.from("proposals").select("id, number, title, status, total").eq("client_id", id),
+    )
+      .order("created_at", { ascending: false })
+      .limit(CLIENT_RELATED_LIMIT),
+    notDeleted(
+      supabase
+        .from("invoices")
+        .select("id, full_number, status, total, issue_date")
+        .eq("client_id", id),
+    )
+      .order("issue_date", { ascending: false })
+      .limit(CLIENT_RELATED_LIMIT),
+    notDeleted(
       supabase
         .from("tasks")
-        .select("id, title, start_at")
-        .eq("kind", "reminder")
-        .eq("client_id", id)
-        .is("completed_at", null)
-        .is("deleted_at", null)
-        .order("start_at", { ascending: true })
-        .limit(CLIENT_RELATED_LIMIT),
-    ]);
+        .select("id, title, status, due_date")
+        .eq("kind", "task")
+        .eq("client_id", id),
+    )
+      .order("created_at", { ascending: false })
+      .limit(CLIENT_RELATED_LIMIT),
+    supabase
+      .from("tasks")
+      .select("id, title, start_at")
+      .eq("kind", "reminder")
+      .eq("client_id", id)
+      .is("completed_at", null)
+      .is("deleted_at", null)
+      .order("start_at", { ascending: true })
+      .limit(CLIENT_RELATED_LIMIT),
+  ]);
 
   return {
     client: {

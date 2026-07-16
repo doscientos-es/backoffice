@@ -16,10 +16,10 @@ import {
   type InvoiceStatus,
   PROJECT_STATUS,
   PROPOSAL_STATUS,
-  TASK_STATUS,
-  type TaskStatus,
   type ProjectStatus,
   type ProposalStatus,
+  TASK_STATUS,
+  type TaskStatus,
 } from "@/lib/status";
 import { formatDate, formatEUR } from "@/lib/utils";
 import Link from "next/link";
@@ -239,7 +239,10 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                     key={task.id}
                     className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm"
                   >
-                    <Link href={`/tasks/${task.id}`} className="truncate font-medium hover:underline">
+                    <Link
+                      href={`/tasks/${task.id}`}
+                      className="truncate font-medium hover:underline"
+                    >
                       {task.title}
                     </Link>
                     <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">

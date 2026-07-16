@@ -19,9 +19,9 @@ describe("CreateReminderInput", () => {
         .success,
     ).toBe(true);
   });
-  it("requires at least one relation", () => {
+  it("allows a personal reminder without a relation", () => {
     expect(CreateReminderInput.safeParse({ title: "X", remindAt: base.remindAt }).success).toBe(
-      false,
+      true,
     );
   });
   it("requires a non-empty title", () => {

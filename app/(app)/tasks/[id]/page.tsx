@@ -6,9 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SectionBoundary } from "@/components/ui/error-boundary";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
-import { mergeTaskMemberIds } from "@/lib/tasks/assignments";
 import { TASK_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
+import { mergeTaskMemberIds } from "@/lib/tasks/assignments";
 import { formatDate } from "@/lib/utils";
 import { ArrowUpRight, ExternalLink } from "lucide-react";
 import Link from "next/link";
@@ -32,7 +32,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
   const { data: task } = await supabase
     .from("tasks")
     .select(
-      "*, projects(id, name, github_sync_mode, github_repo, github_repo_owner, github_repo_name, clients(id, name)), client:client_id(id, name), leads(id, name), team_members:assignee_id(id, name), creator:created_by(id, name)",
+      "*, projects(id, name, github_sync_mode, github_repo, github_repo_owner, github_repo_name, clients(id, name)), client:clients!client_id(id, name), leads(id, name), team_members:assignee_id(id, name), creator:created_by(id, name)",
     )
     .eq("id", id)
     .is("deleted_at", null)
@@ -83,7 +83,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
     <div className="flex flex-col gap-6">
       <PageHeader
         title={task.title as string}
-        description={project?.name ?? lead?.name ?? undefined}
+        description={project?.name ?? lead?.name ?? client?.name ?? undefined}
         back={<BackLink href={backHref} label={backLabel} />}
         actions={
           <div className="flex items-center gap-2">
@@ -126,11 +126,11 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
                 </DetailRow>
               ) : null}
               {project ? (
-                  <DetailRow label="Proyecto">
-                    <Link href={`/projects/${project.id}`} className="hover:underline">
-                      {project.name}
-                    </Link>
-                  </DetailRow>
+                <DetailRow label="Proyecto">
+                  <Link href={`/projects/${project.id}`} className="hover:underline">
+                    {project.name}
+                  </Link>
+                </DetailRow>
               ) : null}
               {lead ? (
                 <DetailRow label="Lead">

@@ -194,8 +194,9 @@ export async function createCalendarEvent(
       .insert({
         title: input.title.trim(),
         description: input.description?.trim() || null,
+        kind: "task",
         status: "todo",
-        priority: 0,
+        priority: "medium",
         due_date: input.date,
         assignee_id: assigneeId,
         created_by: user.id,

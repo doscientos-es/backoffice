@@ -7,11 +7,16 @@ import {
   mapMetaLeadgenToIntake,
   verifyMetaSignature,
 } from "@/lib/integrations/meta-leads";
+import { scopedLogger } from "@/lib/logger";
+import { processMetaCommentEvent } from "@/lib/social/automation/service";
+import { parseMetaCommentEvents } from "@/lib/social/meta/webhook";
 import { type NextRequest, NextResponse } from "next/server";
 
 // Webhooks must never be cached or pre-rendered.
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+
+const socialLog = scopedLogger("meta-social-webhook");
 
 /**
  * GET handshake — Meta calls this once when subscribing the webhook.
@@ -58,8 +63,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "invalid json" }, { status: 400 });
   }
 
+  const socialEvents = parseMetaCommentEvents(payload);
+  const socialResults = await Promise.allSettled(socialEvents.map(processMetaCommentEvent));
+  const socialFailed = socialResults.filter((result) => result.status === "rejected").length;
+  if (socialFailed > 0) {
+    socialLog.error(
+      { failed: socialFailed, total: socialEvents.length },
+      "meta_social_webhook_partial_failure",
+    );
+  }
+
   if (payload.object !== "page" || !Array.isArray(payload.entry)) {
-    return NextResponse.json({ ok: true, ignored: true });
+    return NextResponse.json({ ok: true, socialReceived: socialEvents.length, socialFailed });
   }
 
   let processed = 0;
@@ -103,6 +118,8 @@ export async function POST(request: NextRequest) {
     processed,
     duplicates,
     failed,
+    socialReceived: socialEvents.length,
+    socialFailed,
     partial: failed > 0,
   });
 }

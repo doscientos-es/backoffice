@@ -79,6 +79,11 @@ export type TaskDetailLead = {
   name: string;
 };
 
+export type TaskDetailClient = {
+  id: string;
+  name: string;
+};
+
 export type TaskDetailMember = {
   id: string;
   name: string;
@@ -108,6 +113,7 @@ export type TaskDetailResult = {
   task: TaskDetail;
   project: TaskDetailProject | null;
   lead: TaskDetailLead | null;
+  client: TaskDetailClient | null;
   assignee: TaskDetailMember | null;
   creator: TaskDetailMember | null;
   members: TaskDetailMember[];

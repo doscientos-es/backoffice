@@ -19,14 +19,15 @@ export default async function NewTaskPage({
   } = await searchParams;
   const supabase = await createServerClient();
 
-  const [{ data: projects }, { data: leads }, { data: clients }, { data: members }] = await Promise.all([
-    supabase.from("projects").select("id, name").is("deleted_at", null).order("name"),
-    supabase.from("leads").select("id, name").is("deleted_at", null).order("created_at", {
-      ascending: false,
-    }),
-    supabase.from("clients").select("id, name").is("deleted_at", null).order("name"),
-    supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
-  ]);
+  const [{ data: projects }, { data: leads }, { data: clients }, { data: members }] =
+    await Promise.all([
+      supabase.from("projects").select("id, name").is("deleted_at", null).order("name"),
+      supabase.from("leads").select("id, name").is("deleted_at", null).order("created_at", {
+        ascending: false,
+      }),
+      supabase.from("clients").select("id, name").is("deleted_at", null).order("name"),
+      supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
+    ]);
 
   return (
     <div className="flex flex-col gap-6">

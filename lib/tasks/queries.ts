@@ -107,7 +107,7 @@ export async function getTaskDetail(id: string): Promise<TaskDetailResult> {
     supabase
       .from("tasks")
       .select(
-        "*, projects(id, name, github_sync_mode, github_repo, github_repo_owner, github_repo_name), client:client_id(id, name), leads(id, name), team_members:assignee_id(id, name), creator:created_by(id, name)",
+        "*, projects(id, name, github_sync_mode, github_repo, github_repo_owner, github_repo_name), client:clients!client_id(id, name), leads(id, name), team_members:assignee_id(id, name), creator:created_by(id, name)",
       )
       .eq("id", id),
   ).maybeSingle();
