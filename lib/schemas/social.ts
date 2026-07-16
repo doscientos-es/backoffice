@@ -36,6 +36,14 @@ export const CreatePostSchema = z
     platforms: z.array(platformEnum).min(1, "Selecciona al menos una red"),
     mode: z.enum(["now", "schedule", "draft"]).default("draft"),
     scheduledAt: z.string().datetime().nullable().default(null),
+    automation: z
+      .object({
+        keyword: z.string().trim().min(1).max(80),
+        publicReply: z.string().trim().min(1).max(3000),
+        privateMessage: z.string().trim().min(1).max(3000),
+        platforms: z.array(z.enum(["instagram", "facebook"])).min(1),
+      })
+      .optional(),
   })
   .refine((v) => v.mode !== "schedule" || Boolean(v.scheduledAt), {
     message: "Indica la fecha de programación",
@@ -52,3 +60,18 @@ export const ReplyCommentInput = z.object({
   commentId: z.string().uuid(),
   message: z.string().trim().min(1, "El mensaje no puede estar vacío").max(3000),
 });
+
+const metaPlatformEnum = z.enum(["instagram", "facebook"]);
+
+export const AutomationInput = z.object({
+  keyword: z.string().trim().min(1, "Indica la palabra clave").max(80),
+  publicReply: z.string().trim().min(1, "Indica la respuesta pública").max(3000),
+  privateMessage: z.string().trim().min(1, "Indica el mensaje privado").max(3000),
+  platforms: z.array(metaPlatformEnum).min(1, "Selecciona Instagram o Facebook"),
+});
+
+export const AutomationRuleIdInput = z.object({ ruleId: z.string().uuid() });
+
+export const AutomationActiveInput = AutomationRuleIdInput.extend({ active: z.boolean() });
+
+export const GlobalAutomationInput = AutomationInput;

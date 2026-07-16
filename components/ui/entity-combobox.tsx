@@ -22,6 +22,10 @@ interface EntityComboboxProps {
   onChange: (id: string) => void;
   placeholder?: string;
   className?: string;
+  name?: string;
+  disabled?: boolean;
+  required?: boolean;
+  "aria-label"?: string;
 }
 
 /**
@@ -35,11 +39,16 @@ export function EntityCombobox({
   onChange,
   placeholder = "— Selecciona —",
   className,
+  name,
+  disabled = false,
+  required = false,
+  "aria-label": ariaLabel,
 }: EntityComboboxProps) {
   return (
     <Combobox
       value={value}
       onValueChange={(v) => onChange(v ?? "")}
+      disabled={disabled}
       itemToStringLabel={(v: string) => {
         const item = items.find((i) => i.id === v);
         if (!item) return v ?? "";
@@ -50,8 +59,12 @@ export function EntityCombobox({
         id={id}
         placeholder={placeholder}
         showClear={!!value}
+        disabled={disabled}
+        required={required}
+        aria-label={ariaLabel}
         className={className ?? "w-full"}
       />
+      {name ? <input type="hidden" name={name} value={value} readOnly /> : null}
       <ComboboxContent>
         <ComboboxList>
           <ComboboxEmpty>Sin resultados</ComboboxEmpty>

@@ -11,10 +11,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { EntityCombobox } from "@/components/ui/entity-combobox";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { EMPTY_LINE_ITEM, type LineItem } from "@/lib/finance";
@@ -160,34 +160,21 @@ export function NewProposalForm({
                 required
                 hint="Cliente existente o lead. Si es lead, le pediremos sus datos fiscales al aceptar."
               >
-                <Select
+                <EntityCombobox
                   id="recipient"
+                  items={[
+                    ...clients.map((c) => ({ id: `client:${c.id}`, label: c.name })),
+                    ...leads.map((l) => ({
+                      id: `lead:${l.id}`,
+                      label: l.name,
+                      sublabel: l.company,
+                    })),
+                  ]}
                   value={recipientValue}
-                  onChange={(e) => onRecipientChange(e.target.value)}
+                  onChange={onRecipientChange}
+                  placeholder="Buscar cliente o lead…"
                   required
-                >
-                  <option value="" disabled>
-                    — Selecciona destinatario —
-                  </option>
-                  {clients.length > 0 ? (
-                    <optgroup label="Clientes">
-                      {clients.map((c) => (
-                        <option key={`client-${c.id}`} value={`client:${c.id}`}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ) : null}
-                  {leads.length > 0 ? (
-                    <optgroup label="Leads abiertos">
-                      {leads.map((l) => (
-                        <option key={`lead-${l.id}`} value={`lead:${l.id}`}>
-                          {l.company ? `${l.name} · ${l.company}` : l.name}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ) : null}
-                </Select>
+                />
               </FormRow>
               <FormRow label="Título" htmlFor="title" required>
                 <Input
@@ -213,18 +200,13 @@ export function NewProposalForm({
                   htmlFor="project_id"
                   hint="Opcional. Vincula esta propuesta a un proyecto existente."
                 >
-                  <Select
+                  <EntityCombobox
                     id="project_id"
+                    items={clientProjects.map((p) => ({ id: p.id, label: p.name }))}
                     value={projectId}
-                    onChange={(e) => setProjectId(e.target.value)}
-                  >
-                    <option value="">— Sin proyecto —</option>
-                    {clientProjects.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </Select>
+                    onChange={setProjectId}
+                    placeholder="Buscar proyecto…"
+                  />
                 </FormRow>
               )}
             </div>

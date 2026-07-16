@@ -7,6 +7,7 @@
  * since publishing is always triggered from an authenticated action.
  */
 import { scopedLogger } from "@/lib/logger";
+import { normalizeAutomationText } from "@/lib/social/automation/matcher";
 import type {
   FanOutResult,
   MediaItem,
@@ -17,6 +18,7 @@ import type {
 } from "@/lib/social/core";
 import { deriveMediaKind } from "@/lib/social/core";
 import type { CreatePostInput, PostListItem, TargetView } from "@/lib/social/types";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { notDeleted } from "@/lib/supabase/filters";
 import { createServerClient } from "@/lib/supabase/server";
 import { getInsightsByTarget } from "./insights";
@@ -122,7 +124,90 @@ export async function createPost(input: CreatePostInput): Promise<string> {
   const { error: targetErr } = await supabase.from("social_post_targets").insert(targets);
   if (targetErr) throw new Error(`No se pudieron crear los destinos: ${targetErr.message}`);
 
+  if (input.automation) {
+    const metaPlatforms = input.automation.platforms.filter((platform) =>
+      input.platforms.includes(platform),
+    );
+    if (metaPlatforms.length > 0) {
+      const { error: automationError } = await supabase.from("social_automation_rules").insert(
+        metaPlatforms.map((platform) => ({
+          post_id: postId,
+          platform,
+          keyword: input.automation?.keyword.trim(),
+          keyword_normalized: normalizeAutomationText(input.automation?.keyword ?? ""),
+          public_reply: input.automation?.publicReply.trim(),
+          private_message: input.automation?.privateMessage.trim(),
+          created_by: input.createdBy,
+        })),
+      );
+      if (automationError) {
+        throw new Error(`No se pudo guardar la automatización: ${automationError.message}`);
+      }
+    }
+  }
+
   return postId;
+}
+
+export interface ImportedInstagramPost {
+  remoteId: string;
+  remoteUrl: string | null;
+  caption: string;
+  media: MediaItem[];
+  publishedAt: string | null;
+}
+
+/**
+ * Insert an Instagram post that already exists remotely. Existing targets are
+ * left untouched so this operation is safe to repeat after a partial import.
+ */
+export async function importInstagramPost(
+  input: ImportedInstagramPost,
+): Promise<"imported" | "skipped"> {
+  const supabase = createAdminClient();
+  const { data: existing, error: lookupError } = await supabase
+    .from("social_post_targets")
+    .select("id")
+    .eq("platform", "instagram")
+    .eq("remote_id", input.remoteId)
+    .maybeSingle();
+  if (lookupError) {
+    throw new Error(`No se pudo comprobar el post de Instagram: ${lookupError.message}`);
+  }
+  if (existing) return "skipped";
+
+  const { data: post, error: postError } = await supabase
+    .from("social_posts")
+    .insert({
+      caption: input.caption,
+      media_kind: deriveMediaKind(input.media),
+      media: input.media,
+      status: "published",
+      published_at: input.publishedAt,
+      created_by: null,
+      ...(input.publishedAt ? { created_at: input.publishedAt } : {}),
+    })
+    .select("id")
+    .single();
+  if (postError || !post) {
+    throw new Error(`No se pudo importar el post de Instagram: ${postError?.message ?? "sin id"}`);
+  }
+
+  const { error: targetError } = await supabase.from("social_post_targets").insert({
+    post_id: post.id,
+    platform: "instagram",
+    status: "published",
+    remote_id: input.remoteId,
+    remote_url: input.remoteUrl,
+    published_at: input.publishedAt,
+  });
+  if (targetError) {
+    await supabase.from("social_posts").delete().eq("id", post.id);
+    if (targetError.code === "23505") return "skipped";
+    throw new Error(`No se pudo importar el destino de Instagram: ${targetError.message}`);
+  }
+
+  return "imported";
 }
 
 /** List non-deleted posts newest-first with their targets. */

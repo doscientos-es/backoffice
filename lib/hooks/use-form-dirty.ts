@@ -28,6 +28,8 @@ export interface UseFormDirtyResult<T extends HTMLFormElement = HTMLFormElement>
    */
   formRef: RefCallback<T | null>;
   isDirty: boolean;
+  /** Marks the form dirty for controlled fields that do not emit DOM events. */
+  markDirty: () => void;
   /** Re-snapshot the current state as the new baseline (e.g. after a save). */
   reset: () => void;
 }
@@ -48,6 +50,8 @@ export function useFormDirty<T extends HTMLFormElement = HTMLFormElement>(): Use
   const formEl = useRef<T | null>(null);
   const baseline = useRef<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
+
+  const markDirty = useCallback(() => setIsDirty(true), []);
 
   const recompute = useCallback(() => {
     const form = formEl.current;
@@ -87,5 +91,5 @@ export function useFormDirty<T extends HTMLFormElement = HTMLFormElement>(): Use
     [recompute],
   );
 
-  return { formRef, isDirty, reset };
+  return { formRef, isDirty, reset, markDirty };
 }

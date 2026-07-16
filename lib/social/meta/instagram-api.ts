@@ -19,6 +19,25 @@ interface ContainerRef {
   id: string;
 }
 
+export interface InstagramMedia {
+  id: string;
+  caption?: string;
+  media_type?: "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM" | string;
+  media_url?: string;
+  thumbnail_url?: string;
+  permalink?: string;
+  timestamp?: string;
+  children?: { data?: InstagramMedia[] };
+}
+
+/** Fetch every media item currently available for the connected IG account. */
+export function getAccountMedia(): Promise<InstagramMedia[]> {
+  return graphGetList<InstagramMedia>(`${igUserId()}/media`, {
+    fields:
+      "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,children{media_type,media_url,thumbnail_url}",
+  });
+}
+
 /** Create a single-photo container. */
 export function createPhotoContainer(imageUrl: string, caption: string): Promise<ContainerRef> {
   return graphPost<ContainerRef>(`${igUserId()}/media`, { image_url: imageUrl, caption });
@@ -102,7 +121,9 @@ export async function getMediaInsights(mediaId: string): Promise<PostInsights> {
   const fields = await graphGet<IgMediaFields>(mediaId, {
     fields: "like_count,comments_count,media_product_type",
   });
-  const metrics = "reach,saved,shares,total_interactions,views";
+  // Keep this list to metrics supported for feed media. Requesting a metric
+  // unavailable for one media type makes Meta reject the whole insights call.
+  const metrics = "reach,saved";
   const insights = await graphGet<{ data?: IgInsightValue[] }>(`${mediaId}/insights`, {
     metric: metrics,
   }).catch(() => ({ data: [] as IgInsightValue[] }));

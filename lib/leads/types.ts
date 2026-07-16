@@ -19,6 +19,12 @@ export type LeadMemberRef = {
   github_handle: string | null;
 };
 
+/** Minimal client reference used to show a converted lead's logo. */
+export type LeadClientRef = {
+  name: string;
+  logo_url: string | null;
+};
+
 export type LeadInteraction = {
   id: string;
   type: string;
@@ -57,6 +63,7 @@ export type LeadListItem = {
   ai_updated_at: string | null;
   lost_reason: string | null;
   lost_at: string | null;
+  client: LeadClientRef | null;
   assignee: LeadMemberRef | null;
   recent_interactions: LeadInteraction[];
 };

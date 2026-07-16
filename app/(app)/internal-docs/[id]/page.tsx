@@ -140,9 +140,9 @@ export default async function InternalDocDetailPage({
         }
       />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,28rem)_1fr] items-start">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]">
         {/* Left column: metadata + danger zone */}
-        <div className="flex flex-col gap-6">
+        <div className="flex min-w-0 flex-col gap-6">
           <Card>
             <CardHeader>
               <CardTitle>Detalles</CardTitle>
@@ -220,7 +220,7 @@ export default async function InternalDocDetailPage({
         </div>
 
         {/* Right column: preview */}
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Preview</CardTitle>
           </CardHeader>

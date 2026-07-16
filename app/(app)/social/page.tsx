@@ -15,9 +15,10 @@ import { PLATFORM_LABELS, SOCIAL_PLATFORMS } from "@/lib/social/core";
 import { listPosts } from "@/lib/social/repo";
 import { availablePlatforms } from "@/lib/social/service";
 import { cn } from "@/lib/utils";
-import { Inbox, Plus, Send } from "lucide-react";
+import { Inbox, Plus, Send, Settings } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ImportInstagramButton } from "./_components/import-instagram-button";
 import { PlatformIcon } from "./_components/platform";
 import { PostCard } from "./_components/post-card";
 import { SyncButton } from "./_components/sync-button";
@@ -111,6 +112,7 @@ function ListSkeleton() {
 
 export default async function SocialPage() {
   await requireUser();
+  const instagramConnected = availablePlatforms().includes("instagram");
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -118,6 +120,7 @@ export default async function SocialPage() {
         description="Publica en Instagram, Facebook y LinkedIn desde un único sitio."
         actions={
           <>
+            {instagramConnected && <ImportInstagramButton />}
             <SyncButton kind="insights" label="Sincronizar métricas" />
             <Button asChild variant="outline" size="sm">
               <Link href="/social/feed">
@@ -129,6 +132,12 @@ export default async function SocialPage() {
               <Link href="/social/feed/inbox">
                 <Inbox className="size-4" />
                 Comentarios
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/social/automation">
+                <Settings className="size-4" />
+                Automatizaciones
               </Link>
             </Button>
             <Button asChild size="sm">

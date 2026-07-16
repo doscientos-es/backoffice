@@ -1,6 +1,7 @@
 "use client";
 
 import { DateField } from "@/components/ui/date-field";
+import { EntityCombobox } from "@/components/ui/entity-combobox";
 import { EntityMultiCombobox } from "@/components/ui/entity-multi-combobox";
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
@@ -42,6 +43,8 @@ interface Props {
   autoFocusTitle?: boolean;
   /** Show project + lead selectors (create-only). Edit flow keeps the parent fixed. */
   includeParentSelectors?: boolean;
+  /** Notifies dirty-form tracking when the custom member picker changes. */
+  onMemberIdsChange?: () => void;
   projects?: Array<{ id: string; name: string }>;
   leads?: Array<{ id: string; name: string }>;
   members?: Array<{ id: string; name: string }>;
@@ -56,11 +59,14 @@ export function TaskFormFields({
   idPrefix = "task",
   autoFocusTitle = false,
   includeParentSelectors = false,
+  onMemberIdsChange,
   projects = [],
   leads = [],
   members = [],
 }: Props) {
   const d = defaults ?? {};
+  const [projectId, setProjectId] = useState(d.project_id ?? "");
+  const [leadId, setLeadId] = useState(d.lead_id ?? "");
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>(d.member_ids ?? []);
 
   return (
@@ -88,28 +94,24 @@ export function TaskFormFields({
         {includeParentSelectors ? (
           <>
             <FormRow label="Proyecto" htmlFor={`${idPrefix}-project_id`}>
-              <Select
+              <EntityCombobox
                 id={`${idPrefix}-project_id`}
                 name="project_id"
-                defaultValue={d.project_id ?? ""}
-              >
-                <option value="">—</option>
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </Select>
+                items={projects.map((p) => ({ id: p.id, label: p.name }))}
+                value={projectId}
+                onChange={setProjectId}
+                placeholder="Buscar proyecto…"
+              />
             </FormRow>
             <FormRow label="Lead" htmlFor={`${idPrefix}-lead_id`}>
-              <Select id={`${idPrefix}-lead_id`} name="lead_id" defaultValue={d.lead_id ?? ""}>
-                <option value="">—</option>
-                {leads.map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {l.name}
-                  </option>
-                ))}
-              </Select>
+              <EntityCombobox
+                id={`${idPrefix}-lead_id`}
+                name="lead_id"
+                items={leads.map((l) => ({ id: l.id, label: l.name }))}
+                value={leadId}
+                onChange={setLeadId}
+                placeholder="Buscar lead…"
+              />
             </FormRow>
           </>
         ) : null}
@@ -122,7 +124,10 @@ export function TaskFormFields({
             id={`${idPrefix}-member_ids`}
             items={members.map((m) => ({ id: m.id, label: m.name }))}
             value={selectedMemberIds}
-            onChange={setSelectedMemberIds}
+            onChange={(ids) => {
+              setSelectedMemberIds(ids);
+              onMemberIdsChange?.();
+            }}
             placeholder="Asignar miembros…"
           />
         </FormRow>

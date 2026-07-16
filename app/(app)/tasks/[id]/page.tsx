@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SectionBoundary } from "@/components/ui/error-boundary";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
+import { mergeTaskMemberIds } from "@/lib/tasks/assignments";
 import { TASK_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
@@ -65,7 +66,13 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
       .order("created_at", { ascending: true }),
     supabase.from("task_members").select("member_id").eq("task_id", id),
   ]);
-  const taskMemberIds = (taskMembersData ?? []).map((m) => m.member_id as string);
+  const taskMemberIds = mergeTaskMemberIds(
+    assignee?.id ?? null,
+    (taskMembersData ?? []).map((m) => m.member_id as string),
+  );
+  const assignedMemberNames = taskMemberIds
+    .map((memberId) => (members ?? []).find((member) => member.id === memberId)?.name)
+    .filter((name): name is string => Boolean(name));
 
   const backHref = project ? `/projects/${project.id}/tasks` : "/tasks";
   const backLabel = project ? `Volver a ${project.name}` : "Volver a tareas";
@@ -138,7 +145,9 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
                   )}
                 </DetailRow>
               )}
-              <DetailRow label="Asignada">{assignee?.name ?? "—"}</DetailRow>
+              <DetailRow label="Asignada">
+                {assignedMemberNames.length > 0 ? assignedMemberNames.join(", ") : "—"}
+              </DetailRow>
               <DetailRow label="Creada por">{creator?.name ?? "—"}</DetailRow>
               <DetailRow label="Vence">{formatDate(task.due_date as string | null)}</DetailRow>
               <DetailRow label="Iniciada">{formatDate(task.started_at as string | null)}</DetailRow>

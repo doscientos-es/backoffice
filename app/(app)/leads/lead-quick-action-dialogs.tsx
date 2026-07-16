@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { EntityCombobox } from "@/components/ui/entity-combobox";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -235,18 +236,13 @@ export function QMeetDialog({
               <Label htmlFor={`qa-meet-project-${leadId}`} className="text-xs font-medium">
                 Proyecto <span className="text-muted-foreground/60">(opcional)</span>
               </Label>
-              <Select
+              <EntityCombobox
                 id={`qa-meet-project-${leadId}`}
+                items={projects.map((p) => ({ id: p.id, label: p.name }))}
                 value={projectId}
-                onChange={(e) => setProjectId(e.target.value)}
-              >
-                <option value="">— Sin proyecto —</option>
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </Select>
+                onChange={setProjectId}
+                placeholder="Buscar proyecto…"
+              />
             </div>
           )}
           <MemberCheckboxes

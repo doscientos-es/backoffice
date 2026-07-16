@@ -85,6 +85,23 @@ export async function listComments(): Promise<CommentView[]> {
   return (data as unknown as CommentRow[]).map(mapComment);
 }
 
+/** List comments belonging to the given post targets, newest-first. */
+export async function listCommentsForTargets(targetIds: string[]): Promise<CommentView[]> {
+  if (targetIds.length === 0) return [];
+
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("social_comments")
+    .select(COMMENT_SELECT)
+    .in("target_id", targetIds)
+    .order("published_at", { ascending: false });
+  if (error) {
+    log.error({ err: error.message }, "list_comments_for_targets_failed");
+    return [];
+  }
+  return (data as unknown as CommentRow[]).map(mapComment);
+}
+
 /** A comment resolved to the fields a reply needs (platform + remote id). */
 export interface CommentRef {
   id: string;

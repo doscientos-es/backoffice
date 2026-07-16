@@ -241,8 +241,8 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
         </Card>
       </SectionBoundary>
 
-      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <Card>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Compartir con el cliente</CardTitle>
           </CardHeader>
@@ -275,7 +275,7 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Información</CardTitle>
           </CardHeader>

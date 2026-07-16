@@ -1,10 +1,11 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { EntityAvatar } from "@/components/ui/entity-avatar";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { MemberAvatar } from "@/components/ui/member-avatar";
 import type { LeadListItem } from "@/lib/leads/types";
-import { getLeadInitials, leadDisplayName } from "@/lib/leads/utils";
+import { leadDisplayName } from "@/lib/leads/utils";
 import type { MemberOption } from "@/lib/members/queries";
 import type { LeadStatus } from "@/lib/status";
 import { cn, formatEUR, relativeTime } from "@/lib/utils";
@@ -303,23 +304,6 @@ export function LeadsKanban({
       onDragEnd={onDragEnd}
       onDragCancel={() => setActiveId(null)}
     >
-      <div className="flex items-center justify-between pb-1 min-h-5">
-        <button
-          type="button"
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-          title="Actualizar leads"
-        >
-          <RefreshCw className={cn("size-3", isRefreshing && "animate-spin")} />
-          <span>
-            {isRefreshing
-              ? "Actualizando…"
-              : `Actualizado ${relativeTime(lastRefresh.toISOString())}`}
-          </span>
-        </button>
-        <FormFeedback state={feedback.state} pendingLabel="Actualizando…" />
-      </div>
       <div className="flex gap-3 overflow-x-auto pb-2 h-[calc(100dvh-11rem)] min-h-[28rem] scroll-fade-x no-scrollbar">
         {COLUMNS.map((col) => (
           <Column
@@ -336,6 +320,23 @@ export function LeadsKanban({
             onToggleCompact={() => toggleColumnCompact(col.id)}
           />
         ))}
+      </div>
+      <div className="flex min-h-5 items-center justify-between pt-1">
+        <FormFeedback state={feedback.state} pendingLabel="Actualizando…" />
+        <button
+          type="button"
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+          title="Actualizar leads"
+        >
+          <RefreshCw className={cn("size-3", isRefreshing && "animate-spin")} />
+          <span>
+            {isRefreshing
+              ? "Actualizando…"
+              : `Actualizado ${relativeTime(lastRefresh.toISOString())}`}
+          </span>
+        </button>
       </div>
       <DragOverlay>
         {active ? <Card lead={active} isOverlay canEdit={canEdit} /> : null}
@@ -511,12 +512,15 @@ function AddLeadCard() {
   );
 }
 
-function LeadInitials({ lead }: { lead: KanbanLead }) {
-  const letters = getLeadInitials(lead);
+function LeadAvatar({ lead }: { lead: KanbanLead }) {
+  const name = lead.client?.name ?? leadDisplayName(lead);
   return (
-    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold uppercase text-primary">
-      {letters}
-    </span>
+    <EntityAvatar
+      name={name}
+      logoUrl={lead.client?.logo_url}
+      size="sm"
+      className="size-6 rounded-full"
+    />
   );
 }
 
@@ -560,7 +564,7 @@ function Card({
             <GripVertical className="size-3.5" aria-hidden />
           </button>
         ) : null}
-        <LeadInitials lead={lead} />
+        <LeadAvatar lead={lead} />
         <div className="min-w-0 flex-1">
           {onOpenQuickView ? (
             <button

@@ -22,6 +22,18 @@ function renderInForm(ui: React.ReactElement): HTMLFormElement {
 }
 
 describe("ExpenseFormFields — optional fields survive collapse", () => {
+  it("submits the selected project id from the searchable combobox", () => {
+    const form = renderInForm(
+      <ExpenseFormFields
+        projects={[{ id: "project-1", name: "Web corporativa", clientName: "Acme" }]}
+        defaults={{ project_id: "project-1" }}
+      />,
+    );
+
+    expect(new FormData(form).get("project_id")).toBe("project-1");
+    expect(screen.getByPlaceholderText("Buscar proyecto…")).toBeDefined();
+  });
+
   it("keeps optional values in FormData after the user collapses the section", () => {
     const form = renderInForm(
       <ExpenseFormFields

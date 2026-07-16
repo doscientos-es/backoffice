@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { EntityCombobox } from "@/components/ui/entity-combobox";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
@@ -14,6 +15,7 @@ export type FilterConfig = {
   key: string;
   label: string;
   options: FilterOption[];
+  searchable?: boolean;
 };
 
 export type ListControlsProps = {
@@ -135,22 +137,34 @@ export function ListControls({
         ) : null}
 
         {/* Filters inline with the search on large screens */}
-        {filters.map((f) => (
-          <Select
-            key={f.key}
-            value={params.get(f.key) ?? ""}
-            onChange={(e) => setFilter(f.key, e.target.value)}
-            aria-label={f.label}
-            className="h-8 min-w-30 max-w-45 flex-1 text-xs sm:flex-none"
-          >
-            <option value="">{f.label}: todos</option>
-            {f.options.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </Select>
-        ))}
+        {filters.map((f) =>
+          f.searchable ? (
+            <EntityCombobox
+              key={f.key}
+              items={f.options.map((o) => ({ id: o.value, label: o.label }))}
+              value={params.get(f.key) ?? ""}
+              onChange={(value) => setFilter(f.key, value)}
+              placeholder={`${f.label}: todos`}
+              aria-label={f.label}
+              className="h-8 min-w-30 max-w-45 flex-1 text-xs sm:flex-none"
+            />
+          ) : (
+            <Select
+              key={f.key}
+              value={params.get(f.key) ?? ""}
+              onChange={(e) => setFilter(f.key, e.target.value)}
+              aria-label={f.label}
+              className="h-8 min-w-30 max-w-45 flex-1 text-xs sm:flex-none"
+            >
+              <option value="">{f.label}: todos</option>
+              {f.options.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </Select>
+          ),
+        )}
 
         <div className="ml-auto flex shrink-0 items-center gap-1">
           {hasActiveFilters ? (

@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { CheckCircle, RefreshCw, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { syncComments, syncInsights } from "../actions";
+import { syncComments, syncInsights, syncSocial } from "../actions";
 
 type Phase = "idle" | "loading" | "success" | "error";
 
@@ -17,7 +17,7 @@ export function SyncButton({
   kind,
   label,
 }: {
-  kind: "insights" | "comments";
+  kind: "insights" | "comments" | "social";
   label?: string;
 }) {
   const [phase, setPhase] = useState<Phase>("idle");
@@ -27,22 +27,32 @@ export function SyncButton({
   async function handle() {
     setPhase("loading");
     setMsg(null);
-    const run = kind === "insights" ? syncInsights : syncComments;
-    let res: Awaited<ReturnType<typeof run>>;
+    let result: Awaited<ReturnType<typeof syncInsights>> | Awaited<ReturnType<typeof syncSocial>>;
+    let resultMessage = "";
     try {
-      res = await run();
+      if (kind === "social") {
+        const socialResult = await syncSocial();
+        result = socialResult;
+        if (socialResult.ok) {
+          resultMessage = `${socialResult.insightsSynced} métricas · ${socialResult.commentsSynced} comentarios`;
+        }
+      } else {
+        const basicResult = await (kind === "insights" ? syncInsights() : syncComments());
+        result = basicResult;
+        if (basicResult.ok) resultMessage = `${basicResult.synced} actualizados`;
+      }
     } catch (err) {
       setPhase("error");
       setMsg(err instanceof Error ? err.message : "Error inesperado");
       return;
     }
-    if (!res.ok) {
+    if (!result.ok) {
       setPhase("error");
-      setMsg(res.error);
+      setMsg(result.error);
       return;
     }
     setPhase("success");
-    setMsg(`${res.synced} actualizados`);
+    setMsg(resultMessage);
     router.refresh();
     setTimeout(() => setPhase("idle"), 2500);
   }

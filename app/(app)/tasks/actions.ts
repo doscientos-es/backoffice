@@ -58,9 +58,10 @@ export const createTask = defineAction<
 
     // Sync task_members
     if (member_ids.length > 0) {
-      await supabase
+      const { error: membersError } = await supabase
         .from("task_members")
         .insert(member_ids.map((mid) => ({ task_id: data.id as string, member_id: mid })));
+      if (membersError) throw new Error(membersError.message);
     }
 
     // Fire-and-forget GitHub sync
@@ -97,11 +98,16 @@ export const updateTask = defineAction({
     if (error) throw new Error(error.message);
 
     // Sync task_members: replace all existing entries
-    await supabase.from("task_members").delete().eq("task_id", id);
+    const { error: deleteMembersError } = await supabase
+      .from("task_members")
+      .delete()
+      .eq("task_id", id);
+    if (deleteMembersError) throw new Error(deleteMembersError.message);
     if (member_ids.length > 0) {
-      await supabase
+      const { error: insertMembersError } = await supabase
         .from("task_members")
         .insert(member_ids.map((mid) => ({ task_id: id, member_id: mid })));
+      if (insertMembersError) throw new Error(insertMembersError.message);
     }
 
     void syncTaskStatusToGitHub(id, rest.status);

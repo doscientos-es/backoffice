@@ -1,5 +1,6 @@
 "use client";
 import { DateField } from "@/components/ui/date-field";
+import { EntityCombobox } from "@/components/ui/entity-combobox";
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -53,6 +54,7 @@ interface Props {
   teamMembers?: Array<{ id: string; name: string }>;
   /** Previously used vendors to power the vendor/NIF autocomplete. */
   vendorSuggestions?: VendorSuggestion[];
+  onProjectIdChange?: () => void;
 }
 
 /**
@@ -66,6 +68,7 @@ export function ExpenseFormFields({
   projects = [],
   teamMembers = [],
   vendorSuggestions = [],
+  onProjectIdChange,
 }: Props) {
   const d = defaults ?? {};
   const [paymentSource, setPaymentSource] = useState(
@@ -74,6 +77,7 @@ export function ExpenseFormFields({
   const [vendor, setVendor] = useState(d.vendor ?? "");
   const [vendorNif, setVendorNif] = useState(d.vendor_nif ?? "");
   const [category, setCategory] = useState(d.category ?? EXPENSE_FORM_DEFAULTS.category);
+  const [projectId, setProjectId] = useState(d.project_id ?? "");
   const [autofilled, setAutofilled] = useState(false);
 
   // Lookup of known vendors (case-insensitive) and the list of distinct NIFs
@@ -349,19 +353,21 @@ export function ExpenseFormFields({
             />
           </FormRow>
           <FormRow label="Proyecto" htmlFor={`${idPrefix}-project_id`}>
-            <Select
+            <EntityCombobox
               id={`${idPrefix}-project_id`}
               name="project_id"
-              defaultValue={d.project_id ?? ""}
-            >
-              <option value="">— Ninguno —</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                  {p.clientName ? ` · ${p.clientName}` : ""}
-                </option>
-              ))}
-            </Select>
+              items={projects.map((p) => ({
+                id: p.id,
+                label: p.name,
+                sublabel: p.clientName,
+              }))}
+              value={projectId}
+              onChange={(id) => {
+                setProjectId(id);
+                onProjectIdChange?.();
+              }}
+              placeholder="Buscar proyecto…"
+            />
           </FormRow>
           <FormRow label="Moneda" htmlFor={`${idPrefix}-currency`} className="sm:col-span-1">
             <Input

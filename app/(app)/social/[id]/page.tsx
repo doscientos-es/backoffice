@@ -9,9 +9,10 @@ import { requireUser } from "@/lib/auth";
 import { getPostDetail } from "@/lib/social/service";
 import { SOCIAL_POST_STATUS, SOCIAL_TARGET_STATUS } from "@/lib/status";
 import { formatDateTime, relativeTime } from "@/lib/utils";
-import { BarChart3, ExternalLink } from "lucide-react";
+import { BarChart3, ExternalLink, MessageSquare } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { CommentCard } from "../_components/comment-card";
 import { MediaThumb } from "../_components/media-thumb";
 import { PlatformChip } from "../_components/platform";
 import { PublishButton } from "../_components/publish-button";
@@ -29,34 +30,70 @@ async function PostDetail({ id }: { id: string }) {
   const post = await getPostDetail(id);
   if (!post) notFound();
 
-  const isPublished = post.status === "published" || post.status === "partially_failed";
+  const totalReach = post.targets.reduce((acc, t) => acc + (t.insights?.reach ?? 0), 0);
+  const totalLikes = post.targets.reduce((acc, t) => acc + (t.insights?.likes ?? 0), 0);
+  const totalComments = Math.max(
+    post.targets.reduce((acc, t) => acc + (t.insights?.comments ?? 0), 0),
+    post.comments.length,
+  );
+  const totalShares = post.targets.reduce((acc, t) => acc + (t.insights?.shares ?? 0), 0);
+  const totalSaves = post.targets.reduce((acc, t) => acc + (t.insights?.saves ?? 0), 0);
+  const totalInteractions = totalLikes + totalComments + totalShares + totalSaves;
+  const engagementRate = totalReach > 0 ? (totalInteractions / totalReach) * 100 : null;
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         {/* Main Content */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
+        <div className="flex min-w-0 flex-col gap-6">
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium">Contenido</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-6">
-              <div className="text-sm leading-relaxed whitespace-pre-wrap">{post.caption}</div>
+              <div className="wrap-break-word whitespace-pre-wrap text-sm leading-relaxed">
+                {post.caption}
+              </div>
               {post.media.length > 0 && (
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {post.media.map((item, i) => (
-                    <MediaThumb key={item.storagePath + i} item={item} />
+                <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3">
+                  {post.media.map((item) => (
+                    <MediaThumb key={item.storagePath} item={item} />
                   ))}
                 </div>
               )}
             </CardContent>
           </Card>
 
+          {/* Synced comments */}
+          <section className="flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="flex items-center gap-2 text-sm font-medium">
+                <MessageSquare className="size-4" />
+                Comentarios
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs tabular-nums text-muted-foreground">
+                  {post.comments.length}
+                </span>
+              </h2>
+            </div>
+            {post.comments.length > 0 ? (
+              <div className="flex flex-col gap-4">
+                {post.comments.map((comment) => (
+                  <CommentCard key={comment.id} comment={comment} showPostContext={false} />
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                  No hay comentarios sincronizados para esta publicación.
+                </CardContent>
+              </Card>
+            )}
+          </section>
+
           {/* Insights / Targets */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardHeader className="flex min-w-0 flex-col items-start gap-3 space-y-0 sm:flex-row sm:items-center sm:justify-between">
               <CardTitle className="text-sm font-medium">Resultados por red</CardTitle>
-              {isPublished && <SyncButton kind="insights" label="Sincronizar métricas" />}
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
@@ -86,7 +123,7 @@ async function PostDetail({ id }: { id: string }) {
                             />
                             {t.status === "failed" && t.error && (
                               <span
-                                className="max-w-50 text-[10px] text-destructive leading-tight"
+                                className="max-w-50 wrap-break-word text-[10px] leading-tight text-destructive"
                                 title={t.error}
                               >
                                 {t.error.length > 80 ? `${t.error.slice(0, 80)}…` : t.error}
@@ -127,7 +164,7 @@ async function PostDetail({ id }: { id: string }) {
         </div>
 
         {/* Sidebar info */}
-        <div className="flex flex-col gap-6">
+        <div className="flex min-w-0 flex-col gap-6">
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium">Información</CardTitle>
@@ -183,27 +220,43 @@ async function PostDetail({ id }: { id: string }) {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Simplified aggregate stats if published */}
+              {/* Aggregate stats from the latest successful sync. */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-0.5">
                   <span className="text-[10px] uppercase text-muted-foreground">Reach Total</span>
                   <span className="text-xl font-bold tabular-nums">
-                    {post.targets
-                      .reduce((acc, t) => acc + (t.insights?.reach ?? 0), 0)
-                      .toLocaleString()}
+                    {totalReach > 0 ? totalReach.toLocaleString() : "—"}
                   </span>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] uppercase text-muted-foreground">Eng. Medio</span>
+                  <span className="text-[10px] uppercase text-muted-foreground">Interacciones</span>
                   <span className="text-xl font-bold tabular-nums">
-                    {(
-                      (post.targets.reduce((acc, t) => acc + (t.insights?.engagementRate ?? 0), 0) /
-                        (post.targets.filter((t) => t.insights).length || 1)) *
-                      100
-                    ).toFixed(1)}
-                    %
+                    {totalInteractions.toLocaleString()}
                   </span>
                 </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] uppercase text-muted-foreground">Me gusta</span>
+                  <span className="text-xl font-bold tabular-nums">{totalLikes.toLocaleString()}</span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] uppercase text-muted-foreground">Comentarios</span>
+                  <span className="text-xl font-bold tabular-nums">
+                    {totalComments.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+              <div className="border-t border-border/60 pt-3">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs text-muted-foreground">Engagement medio</span>
+                  <span className="font-semibold tabular-nums">
+                    {engagementRate === null ? "—" : `${engagementRate.toFixed(1)}%`}
+                  </span>
+                </div>
+                {engagementRate === null && (
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    La red todavía no ha devuelto datos de alcance.
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -216,12 +269,12 @@ async function PostDetail({ id }: { id: string }) {
 function DetailSkeleton() {
   return (
     <div className="flex flex-col gap-8">
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 flex flex-col gap-6">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div className="flex min-w-0 flex-col gap-6">
           <Skeleton className="h-[200px] w-full" />
           <Skeleton className="h-[300px] w-full" />
         </div>
-        <div className="flex flex-col gap-6">
+        <div className="flex min-w-0 flex-col gap-6">
           <Skeleton className="h-[200px] w-full" />
           <Skeleton className="h-[150px] w-full" />
         </div>
@@ -239,6 +292,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
       <PageHeader
         title="Detalle de publicación"
         description="Métricas y estado de publicación en tiempo real."
+        actions={<SyncButton kind="social" label="Sincronizar datos" />}
       />
       <SectionBoundary pending={<DetailSkeleton />} label="No se pudo cargar el detalle">
         <PostDetail id={id} />

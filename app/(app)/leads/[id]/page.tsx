@@ -224,8 +224,8 @@ export default async function LeadDetailPage({
         invoices={invoices}
       />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
-        <div className="flex flex-col gap-6">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="flex min-w-0 flex-col gap-6">
           <Card>
             <CardHeader>
               <CardTitle>Detalles</CardTitle>
@@ -478,7 +478,7 @@ export default async function LeadDetailPage({
         </div>
 
         {/* Sidebar */}
-        <div className="flex flex-col gap-6">
+        <div className="flex min-w-0 flex-col gap-6">
           <Card className="lg:sticky lg:top-6">
             <CardHeader>
               <CardTitle>Acciones rápidas</CardTitle>

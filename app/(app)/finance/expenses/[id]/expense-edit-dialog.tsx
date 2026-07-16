@@ -67,7 +67,7 @@ export function ExpenseEditDialog({
     if (!isControlled) setInternalOpen(v);
     onOpenChange?.(v);
   };
-  const { formRef, isDirty, reset: resetDirty } = useFormDirty<HTMLFormElement>();
+  const { formRef, isDirty, markDirty, reset: resetDirty } = useFormDirty<HTMLFormElement>();
   const {
     state,
     pending,
@@ -110,6 +110,7 @@ export function ExpenseEditDialog({
               projects={projects}
               teamMembers={teamMembers}
               vendorSuggestions={vendorSuggestions}
+              onProjectIdChange={markDirty}
               defaults={{
                 vendor: expense.vendor,
                 description: expense.description,

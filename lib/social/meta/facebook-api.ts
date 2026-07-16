@@ -90,18 +90,20 @@ export async function getPostInsights(postId: string): Promise<PostInsights> {
     fields: "likes.summary(true),comments.summary(true),shares",
   });
   const insights = await graphGet<{ data?: FbInsightValue[] }>(`${postId}/insights`, {
-    metric: "post_impressions,post_impressions_unique",
+    // `post_impressions*` was deprecated above Graph API v25. `post_media_view`
+    // is the supported replacement for the number of times the post was viewed.
+    metric: "post_media_view",
   }).catch(() => ({ data: [] as FbInsightValue[] }));
 
   const byName = new Map((insights.data ?? []).map((m) => [m.name, m.values[0]?.value ?? 0]));
   const likes = engagement.likes?.summary?.total_count ?? 0;
   const comments = engagement.comments?.summary?.total_count ?? 0;
   const shares = engagement.shares?.count ?? 0;
-  const reach = byName.get("post_impressions_unique") ?? 0;
+  const reach = byName.get("post_media_view") ?? 0;
   const engagementRate = reach > 0 ? (likes + comments + shares) / reach : 0;
 
   return {
-    impressions: byName.get("post_impressions") ?? 0,
+    impressions: byName.get("post_media_view") ?? 0,
     reach,
     likes,
     comments,

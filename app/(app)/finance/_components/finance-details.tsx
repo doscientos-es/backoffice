@@ -48,8 +48,8 @@ export async function FinanceDetails({ since, until, rangeLabel }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-        <Card>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Top categorías · {rangeLabel.toLowerCase()}</CardTitle>
           </CardHeader>
@@ -62,7 +62,7 @@ export async function FinanceDetails({ since, until, rangeLabel }: Props) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Últimas facturas emitidas</CardTitle>
           </CardHeader>

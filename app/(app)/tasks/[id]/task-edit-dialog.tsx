@@ -36,7 +36,7 @@ interface Props {
 export function TaskEditDialog({ task, members }: Props) {
   const [open, setOpen] = useState(false);
   const feedback = useFormFeedback();
-  const { formRef, isDirty, reset } = useFormDirty<HTMLFormElement>();
+  const { formRef, isDirty, reset, markDirty } = useFormDirty<HTMLFormElement>();
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -84,6 +84,7 @@ export function TaskEditDialog({ task, members }: Props) {
             <TaskFormFields
               idPrefix={`edit-${task.id}`}
               members={members}
+              onMemberIdsChange={markDirty}
               defaults={{
                 title: task.title,
                 description: task.description,

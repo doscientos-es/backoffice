@@ -87,7 +87,7 @@ export default async function TasksPage({
             searchKey="q"
             searchPlaceholder="Buscar por título…"
             filters={[
-              { key: "project", label: "Proyecto", options: PROJECT_OPTIONS },
+              { key: "project", label: "Proyecto", options: PROJECT_OPTIONS, searchable: true },
               { key: "priority", label: "Prioridad", options: PRIORITY_OPTIONS },
             ]}
             className="border-b-0"

@@ -1,10 +1,12 @@
 "use client";
 
+import { EntityCombobox } from "@/components/ui/entity-combobox";
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { SUBSCRIPTION_BILLING_CYCLE, SUBSCRIPTION_STATUS } from "@/lib/status";
+import { useState } from "react";
 
 type ClientOption = { id: string; name: string };
 type ProjectOption = { id: string; name: string };
@@ -33,6 +35,7 @@ type Props = {
 
 export function SubscriptionFormFields({ clients, projects, defaults }: Props) {
   const today = new Date().toISOString().slice(0, 10);
+  const [projectId, setProjectId] = useState(defaults?.project_id ?? "");
 
   return (
     <div className="grid gap-4 sm:grid-cols-2">
@@ -58,14 +61,14 @@ export function SubscriptionFormFields({ clients, projects, defaults }: Props) {
       </FormRow>
 
       <FormRow label="Proyecto" htmlFor="sub-project">
-        <Select id="sub-project" name="project_id" defaultValue={defaults?.project_id ?? ""}>
-          <option value="">— Sin proyecto —</option>
-          {projects.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </Select>
+        <EntityCombobox
+          id="sub-project"
+          name="project_id"
+          items={projects.map((p) => ({ id: p.id, label: p.name }))}
+          value={projectId}
+          onChange={setProjectId}
+          placeholder="Buscar proyecto…"
+        />
       </FormRow>
 
       <FormRow label="Estado" htmlFor="sub-status">

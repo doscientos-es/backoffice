@@ -104,8 +104,8 @@ export function InvoiceEditor({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <Card>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Líneas</CardTitle>
           </CardHeader>
@@ -114,7 +114,7 @@ export function InvoiceEditor({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Detalles</CardTitle>
           </CardHeader>

@@ -8,8 +8,8 @@ export default function LeadDetailLoading() {
     <div className="flex flex-col gap-6">
       <PageHeaderSkeleton breadcrumbs={[60, 140]} titleWidth={180} actions={[96, 110]} />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-        <div className="flex flex-col gap-6">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="flex min-w-0 flex-col gap-6">
           <DetailCardSkeleton
             titleWidth={96}
             labelWidth={80}

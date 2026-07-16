@@ -8,6 +8,7 @@ import type { CommentView } from "@/lib/social/types";
 import { cn } from "@/lib/utils";
 import { formatDateTime, relativeTime } from "@/lib/utils";
 import { Heart, MessageSquare, Reply } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { replyToComment } from "../actions";
 import { PlatformChip } from "./platform";
@@ -16,7 +17,13 @@ import { PlatformChip } from "./platform";
  * Unified comment inbox item. Shows the original comment, platform info,
  * the post it belongs to, and an expandable reply form.
  */
-export function CommentCard({ comment }: { comment: CommentView }) {
+export function CommentCard({
+  comment,
+  showPostContext = true,
+}: {
+  comment: CommentView;
+  showPostContext?: boolean;
+}) {
   const [showReply, setShowReply] = useState(false);
   const [replyText, setReplyText] = useState("");
   const { state, setPending, setSuccess, setError, pending } = useFormFeedback();
@@ -40,9 +47,9 @@ export function CommentCard({ comment }: { comment: CommentView }) {
   return (
     <Card className={cn("overflow-hidden", comment.replied && "bg-muted/30 opacity-80")}>
       <CardHeader className="flex flex-row items-start justify-between space-y-0 p-4 pb-2">
-        <div className="flex flex-col gap-0.5">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold">{comment.authorName}</span>
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="min-w-0 break-words text-sm font-semibold">{comment.authorName}</span>
             <PlatformChip platform={comment.platform} />
           </div>
           <time
@@ -58,15 +65,10 @@ export function CommentCard({ comment }: { comment: CommentView }) {
           </span>
         )}
       </CardHeader>
-      <CardContent className="p-4 pt-0">
-        <p className="text-sm leading-relaxed whitespace-pre-wrap">{comment.text}</p>
+      <CardContent className="min-w-0 p-4 pt-0">
+        <p className="break-words whitespace-pre-wrap text-sm leading-relaxed">{comment.text}</p>
 
-        {/* Post Context */}
-        <div className="mt-3 flex items-center gap-1.5 rounded-lg border border-border/50 bg-muted/20 px-2 py-1.5 text-[11px] text-muted-foreground">
-          <MessageSquare className="size-3 shrink-0" />
-          <span className="font-medium">En post:</span>
-          <span className="truncate italic">"{comment.postCaption || "(Sin texto)"}"</span>
-        </div>
+        {showPostContext ? <PostContext comment={comment} /> : null}
       </CardContent>
       <CardFooter className="flex flex-col items-stretch border-t border-border/50 bg-muted/5 p-2 px-4">
         <div className="flex items-center justify-between py-1">
@@ -119,5 +121,32 @@ export function CommentCard({ comment }: { comment: CommentView }) {
         )}
       </CardFooter>
     </Card>
+  );
+}
+
+function PostContext({ comment }: { comment: CommentView }) {
+  const content = (
+    <>
+      <MessageSquare className="mt-0.5 size-3 shrink-0" />
+      <span className="shrink-0 font-medium">En post:</span>
+      <span
+        className="line-clamp-2 min-w-0 flex-1 break-words italic"
+        title={comment.postCaption || "(Sin texto)"}
+      >
+        "{comment.postCaption || "(Sin texto)"}"
+      </span>
+    </>
+  );
+  const className =
+    "mt-3 flex min-w-0 items-start gap-1.5 rounded-lg border border-border/50 bg-muted/20 px-2 py-1.5 text-[11px] text-muted-foreground";
+
+  if (!comment.postId) return <div className={className}>{content}</div>;
+  return (
+    <Link
+      href={`/social/${comment.postId}`}
+      className={cn(className, "hover:border-border hover:bg-muted/40")}
+    >
+      {content}
+    </Link>
   );
 }

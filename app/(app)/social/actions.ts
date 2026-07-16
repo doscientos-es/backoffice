@@ -1,7 +1,14 @@
 "use server";
 
 import { defineAction } from "@/lib/actions/define-action";
-import { CreatePostSchema, PostIdInput, ReplyCommentInput } from "@/lib/schemas/social";
+import {
+  AutomationActiveInput,
+  AutomationRuleIdInput,
+  CreatePostSchema,
+  GlobalAutomationInput,
+  PostIdInput,
+  ReplyCommentInput,
+} from "@/lib/schemas/social";
 import type { SocialPlatform } from "@/lib/social/core";
 import * as repo from "@/lib/social/repo";
 import * as service from "@/lib/social/service";
@@ -34,6 +41,7 @@ export const createPost = defineAction({
       platforms: input.platforms as SocialPlatform[],
       scheduledAt: input.scheduledAt,
       createdBy: user.id,
+      automation: input.automation,
     });
     if (input.mode === "now") await service.publishPost(postId);
     return { id: postId };
@@ -75,11 +83,27 @@ export const syncInsights = defineAction({
 export const syncComments = defineAction({
   name: "social.sync-comments",
   roles: [...WRITE_ROLES],
-  revalidate: () => ["/social/feed"],
+  revalidate: () => ["/social/feed", "/social/feed/inbox"],
   handler: async () => {
     const { synced } = await service.syncComments();
     return { synced };
   },
+});
+
+/** Refresh insights and comments for the Social detail view. */
+export const syncSocial = defineAction({
+  name: "social.sync-all",
+  roles: [...WRITE_ROLES],
+  revalidate: () => ["/social", "/social/feed/inbox"],
+  handler: async () => service.syncSocial(),
+});
+
+/** Import media that already exists on the connected Instagram account. */
+export const importHistoricalInstagram = defineAction({
+  name: "social.import-instagram-history",
+  roles: [...WRITE_ROLES],
+  revalidate: () => ["/social", "/social/feed", "/social/feed/inbox"],
+  handler: async () => service.importHistoricalInstagramPosts(),
 });
 
 /** Delete a post from every social network, then soft-delete locally. */
@@ -128,5 +152,36 @@ export const replyToComment = defineAction({
   revalidate: () => ["/social/feed"],
   handler: async (input) => {
     await service.replyToComment(input.commentId, input.message);
+  },
+});
+
+/** Create a global fallback automation for Instagram and/or Facebook. */
+export const createGlobalAutomationRule = defineAction({
+  name: "social.automation.create-global",
+  schema: GlobalAutomationInput,
+  roles: [...WRITE_ROLES],
+  revalidate: ["/social/automation"],
+  handler: async (input, { user }) => {
+    await repo.createAutomationRules({ ...input, postId: null, createdBy: user.id });
+  },
+});
+
+export const setAutomationRuleActive = defineAction({
+  name: "social.automation.toggle",
+  schema: AutomationActiveInput,
+  roles: [...WRITE_ROLES],
+  revalidate: ["/social/automation"],
+  handler: async (input) => {
+    await repo.setAutomationRuleActive(input.ruleId, input.active);
+  },
+});
+
+export const deleteAutomationRule = defineAction({
+  name: "social.automation.delete",
+  schema: AutomationRuleIdInput,
+  roles: ["owner", "admin"],
+  revalidate: ["/social/automation"],
+  handler: async (input) => {
+    await repo.deleteAutomationRule(input.ruleId);
   },
 });

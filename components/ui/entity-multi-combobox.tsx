@@ -13,14 +13,17 @@ import {
   useComboboxAnchor,
 } from "@/components/ui/combobox";
 import type { EntityOption } from "@/components/ui/entity-combobox";
+import { cn } from "@/lib/utils";
 
-interface EntityMultiComboboxProps {
+export interface EntityMultiComboboxProps {
   id?: string;
   items: EntityOption[];
   value: string[];
   onChange: (ids: string[]) => void;
   placeholder?: string;
   className?: string;
+  disabled?: boolean;
+  "aria-label"?: string;
 }
 
 /**
@@ -35,13 +38,25 @@ export function EntityMultiCombobox({
   onChange,
   placeholder = "Buscar…",
   className,
+  disabled = false,
+  "aria-label": ariaLabel,
 }: EntityMultiComboboxProps) {
   const anchor = useComboboxAnchor();
-  const labelFor = (v: string) => items.find((i) => i.id === v)?.label ?? v;
+  const labelFor = (v: string) => {
+    const item = items.find((i) => i.id === v);
+    if (!item) return v;
+    return item.sublabel ? `${item.label} · ${item.sublabel}` : item.label;
+  };
 
   return (
-    <Combobox multiple value={value} onValueChange={(v: string[]) => onChange(v ?? [])}>
-      <ComboboxChips ref={anchor} className={className}>
+    <Combobox
+      multiple
+      value={value}
+      onValueChange={(v: string[]) => onChange(v ?? [])}
+      itemToStringLabel={labelFor}
+      disabled={disabled}
+    >
+      <ComboboxChips ref={anchor} className={cn("w-full", className)}>
         <ComboboxValue>
           {(selected: string[]) =>
             selected.map((v) => (
@@ -51,7 +66,12 @@ export function EntityMultiCombobox({
             ))
           }
         </ComboboxValue>
-        <ComboboxChipsInput id={id} placeholder={value.length ? "" : placeholder} />
+        <ComboboxChipsInput
+          id={id}
+          placeholder={value.length ? "" : placeholder}
+          disabled={disabled}
+          aria-label={ariaLabel}
+        />
       </ComboboxChips>
       <ComboboxContent anchor={anchor}>
         <ComboboxList>

@@ -15,7 +15,15 @@ import {
   composePost,
   fanOutPublish,
 } from "@/lib/social/core";
-import type { CaptionByPlatform, FanOutResult, SocialPlatform } from "@/lib/social/core";
+import type {
+  CaptionByPlatform,
+  FanOutResult,
+  MediaItem,
+  PublisherRegistry,
+  SocialPlatform,
+} from "@/lib/social/core";
+import { metaPageToken } from "@/lib/social/meta/graph-client";
+import { type InstagramMedia, getAccountMedia, igUserId } from "@/lib/social/meta/instagram-api";
 import { socialRegistry } from "@/lib/social/registry";
 import * as repo from "@/lib/social/repo";
 import { removeMedia } from "@/lib/social/storage";
@@ -26,6 +34,61 @@ const log = scopedLogger("social-service");
 /** Networks with a registered adapter that is configured (safe to target). */
 export function availablePlatforms(): SocialPlatform[] {
   return socialRegistry().available();
+}
+
+function toMediaItem(media: InstagramMedia): MediaItem | null {
+  const publicUrl = media.media_url ?? media.thumbnail_url;
+  if (!publicUrl) return null;
+  const type = media.media_type === "VIDEO" || media.media_type === "REELS" ? "video" : "image";
+  return {
+    storagePath: "",
+    publicUrl,
+    type,
+    mime: type === "video" ? "video/mp4" : "image/jpeg",
+  };
+}
+
+/** Map a Graph media object to the local post shape without making network calls. */
+export function mapInstagramMedia(media: InstagramMedia): repo.ImportedInstagramPost {
+  const source =
+    media.media_type === "CAROUSEL_ALBUM" && media.children?.data?.length
+      ? media.children.data
+      : [media];
+  return {
+    remoteId: media.id,
+    remoteUrl: media.permalink ?? null,
+    caption: media.caption ?? "",
+    media: source.map(toMediaItem).filter((item): item is MediaItem => item !== null),
+    publishedAt: media.timestamp ?? null,
+  };
+}
+
+/** Import all media available from Instagram, preserving existing remote posts. */
+export async function importHistoricalInstagramPosts(): Promise<{
+  total: number;
+  imported: number;
+  skipped: number;
+  failed: number;
+}> {
+  if (!metaPageToken() || !igUserId()) {
+    throw new Error("Instagram no está configurado.");
+  }
+
+  const media = await getAccountMedia();
+  let imported = 0;
+  let skipped = 0;
+  let failed = 0;
+  for (const item of media) {
+    try {
+      const result = await repo.importInstagramPost(mapInstagramMedia(item));
+      if (result === "imported") imported += 1;
+      else skipped += 1;
+    } catch (err) {
+      failed += 1;
+      log.warn({ remoteId: item.id, err: String(err) }, "instagram_historical_import_failed");
+    }
+  }
+  return { total: media.length, imported, skipped, failed };
 }
 
 /**
@@ -59,12 +122,16 @@ function captionOverrides(targets: { platform: SocialPlatform; caption: string |
 export async function getPostDetail(postId: string): Promise<PostDetail | null> {
   const post = await repo.getPost(postId);
   if (!post) return null;
-  const insightsByTarget = await repo.getInsightsByTarget(post.targets.map((t) => t.id));
+  const targetIds = post.targets.map((t) => t.id);
+  const [insightsByTarget, comments] = await Promise.all([
+    repo.getInsightsByTarget(targetIds),
+    repo.listCommentsForTargets(targetIds),
+  ]);
   const targets: TargetWithInsights[] = post.targets.map((t) => ({
     ...t,
     insights: insightsByTarget.get(t.id) ?? null,
   }));
-  return { ...post, targets };
+  return { ...post, targets, comments };
 }
 
 /**
@@ -74,20 +141,8 @@ export async function getPostDetail(postId: string): Promise<PostDetail | null> 
 export async function syncInsights(): Promise<{ synced: number }> {
   const registry = socialRegistry();
   const targets = await repo.listPublishedTargets();
-  let synced = 0;
-  for (const target of targets) {
-    if (!registry.isAvailable(target.platform)) continue;
-    const publisher = registry.get(target.platform);
-    if (!canFetchInsights(publisher)) continue;
-    try {
-      const insights = await publisher.fetchInsights(target.remoteId);
-      await repo.upsertInsights(target.id, insights);
-      synced += 1;
-    } catch (err) {
-      log.warn({ target: target.id, err: String(err) }, "sync_insights_target_failed");
-    }
-  }
-  return { synced };
+  const results = await Promise.all(targets.map((target) => syncTargetInsights(target, registry)));
+  return { synced: results.filter(Boolean).length };
 }
 
 /**
@@ -97,20 +152,64 @@ export async function syncInsights(): Promise<{ synced: number }> {
 export async function syncComments(): Promise<{ synced: number }> {
   const registry = socialRegistry();
   const targets = await repo.listPublishedTargets();
-  let synced = 0;
-  for (const target of targets) {
-    if (!registry.isAvailable(target.platform)) continue;
-    const publisher = registry.get(target.platform);
-    if (!canFetchComments(publisher)) continue;
-    try {
-      const comments = await publisher.fetchComments(target.remoteId);
-      await repo.upsertComments(target.id, target.platform, comments);
-      synced += 1;
-    } catch (err) {
-      log.warn({ target: target.id, err: String(err) }, "sync_comments_target_failed");
-    }
+  const results = await Promise.all(targets.map((target) => syncTargetComments(target, registry)));
+  return { synced: results.filter(Boolean).length };
+}
+
+/** Refresh both analytics and comments in one pass for the Social detail view. */
+export async function syncSocial(): Promise<{
+  insightsSynced: number;
+  commentsSynced: number;
+}> {
+  const registry = socialRegistry();
+  const targets = await repo.listPublishedTargets();
+  const results = await Promise.all(
+    targets.map(async (target) => {
+      const [insights, comments] = await Promise.all([
+        syncTargetInsights(target, registry),
+        syncTargetComments(target, registry),
+      ]);
+      return { insights, comments };
+    }),
+  );
+  return {
+    insightsSynced: results.filter((result) => result.insights).length,
+    commentsSynced: results.filter((result) => result.comments).length,
+  };
+}
+
+async function syncTargetInsights(
+  target: repo.PublishedTarget,
+  registry: PublisherRegistry,
+): Promise<boolean> {
+  if (!registry.isAvailable(target.platform)) return false;
+  const publisher = registry.get(target.platform);
+  if (!canFetchInsights(publisher)) return false;
+  try {
+    const insights = await publisher.fetchInsights(target.remoteId);
+    await repo.upsertInsights(target.id, insights);
+    return true;
+  } catch (err) {
+    log.warn({ target: target.id, err: String(err) }, "sync_insights_target_failed");
+    return false;
   }
-  return { synced };
+}
+
+async function syncTargetComments(
+  target: repo.PublishedTarget,
+  registry: PublisherRegistry,
+): Promise<boolean> {
+  if (!registry.isAvailable(target.platform)) return false;
+  const publisher = registry.get(target.platform);
+  if (!canFetchComments(publisher)) return false;
+  try {
+    const comments = await publisher.fetchComments(target.remoteId);
+    await repo.upsertComments(target.id, target.platform, comments);
+    return true;
+  } catch (err) {
+    log.warn({ target: target.id, err: String(err) }, "sync_comments_target_failed");
+    return false;
+  }
 }
 
 /**

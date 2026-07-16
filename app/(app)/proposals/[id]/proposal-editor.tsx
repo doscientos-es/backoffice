@@ -150,12 +150,12 @@ export function ProposalEditor({
         )}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
-        <div className="overflow-hidden rounded-lg border border-border">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div className="min-w-0 overflow-hidden rounded-lg border border-border">
           <LineItemsTable items={items} onChange={setItems} locked={locked} showBillingCycle />
         </div>
 
-        <aside className="flex flex-col gap-3">
+        <aside className="flex min-w-0 flex-col gap-3">
           <FormRow label="Válida hasta" htmlFor="valid-until">
             <Input
               id="valid-until"

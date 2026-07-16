@@ -59,9 +59,10 @@ export interface TargetWithInsights extends TargetView {
   insights: InsightsView | null;
 }
 
-/** Full detail of one composed post. */
+/** Full detail of one composed post, including synced comments. */
 export interface PostDetail extends PostListItem {
   targets: TargetWithInsights[];
+  comments: CommentView[];
 }
 
 /** A comment in the unified inbox, joined with its post caption. */
@@ -92,4 +93,10 @@ export interface CreatePostInput {
   captions?: Partial<Record<SocialPlatform, string>>;
   scheduledAt: string | null;
   createdBy: string | null;
+  automation?: {
+    keyword: string;
+    publicReply: string;
+    privateMessage: string;
+    platforms: Extract<SocialPlatform, "instagram" | "facebook">[];
+  };
 }

@@ -5,19 +5,22 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { FormRow } from "@/components/ui/form-row";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import type { SocialPostSuggestion } from "@/lib/social/ai-suggestion";
 import { PLATFORM_LABELS, SOCIAL_PLATFORMS } from "@/lib/social/core";
 import type { MediaItem, SocialPlatform } from "@/lib/social/core";
 import { cn } from "@/lib/utils";
-import { CalendarClock, FileText, Send } from "lucide-react";
+import { CalendarClock, FileText, MessageCircle, Send } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { PlatformIcon } from "../../_components/platform";
 import { createPost } from "../../actions";
+import { AIPostSuggester } from "./ai-post-suggester";
 import { MediaPicker } from "./media-picker";
 
 type Mode = "draft" | "now" | "schedule";
@@ -51,6 +54,12 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
   const [scheduledLocal, setScheduledLocal] = useState("");
   const [perPlatform, setPerPlatform] = useState(false);
   const [perCaptions, setPerCaptions] = useState<Partial<Record<SocialPlatform, string>>>({});
+  const [automationEnabled, setAutomationEnabled] = useState(false);
+  const [automationKeyword, setAutomationKeyword] = useState("");
+  const [automationPublicReply, setAutomationPublicReply] = useState(
+    "¡Gracias! Te hemos escrito por privado.",
+  );
+  const [automationPrivateMessage, setAutomationPrivateMessage] = useState("");
 
   // Selected networks in a stable display order (drives the per-network fields).
   const selectedList = useMemo(() => SOCIAL_PLATFORMS.filter((p) => platforms.has(p)), [platforms]);
@@ -58,8 +67,26 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
   const canSubmit = useMemo(() => {
     if (platforms.size === 0) return false;
     if (mode === "schedule" && !scheduledLocal) return false;
+    if (
+      automationEnabled &&
+      (selectedList.every((platform) => platform === "linkedin") ||
+        !automationKeyword.trim() ||
+        !automationPublicReply.trim() ||
+        !automationPrivateMessage.trim())
+    ) {
+      return false;
+    }
     return true;
-  }, [platforms, mode, scheduledLocal]);
+  }, [
+    platforms,
+    mode,
+    scheduledLocal,
+    automationEnabled,
+    automationKeyword,
+    automationPublicReply,
+    automationPrivateMessage,
+    selectedList,
+  ]);
 
   function togglePlatform(p: SocialPlatform, on: boolean) {
     setPlatforms((prev) => {
@@ -72,6 +99,12 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
 
   function setPlatformCaption(p: SocialPlatform, value: string) {
     setPerCaptions((prev) => ({ ...prev, [p]: value }));
+  }
+
+  function applySuggestion(suggestion: SocialPostSuggestion) {
+    const hashtags = suggestion.hashtags.join(" ");
+    setCaption(hashtags ? `${suggestion.caption}\n\n${hashtags}` : suggestion.caption);
+    setPerCaptions({});
   }
 
   /**
@@ -94,6 +127,19 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
     const scheduledAt =
       mode === "schedule" && scheduledLocal ? new Date(scheduledLocal).toISOString() : null;
     const captions = perPlatform ? buildCaptions() : undefined;
+    const automationPlatforms = selectedList.filter(
+      (platform): platform is "instagram" | "facebook" =>
+        platform === "instagram" || platform === "facebook",
+    );
+    const automation =
+      automationEnabled && automationPlatforms.length > 0
+        ? {
+            keyword: automationKeyword,
+            publicReply: automationPublicReply,
+            privateMessage: automationPrivateMessage,
+            platforms: automationPlatforms,
+          }
+        : undefined;
     feedback.setPending();
     startTransition(async () => {
       const res = await createPost({
@@ -103,6 +149,7 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
         platforms: [...platforms],
         mode,
         scheduledAt,
+        automation,
       });
       if (!res.ok) {
         feedback.setError(res.error);
@@ -116,6 +163,8 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <AIPostSuggester disabled={pending} onSuggestion={applySuggestion} />
+
       <Card>
         <CardContent className="flex flex-col gap-5 pt-6">
           <div className="flex flex-col gap-1.5">
@@ -193,6 +242,82 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
               <MediaPicker value={media} onChange={setMedia} disabled={pending} />
             </div>
           </FormRow>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="flex flex-col gap-4 pt-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-2.5">
+              <MessageCircle className="mt-0.5 size-4 text-primary" />
+              <div className="flex flex-col gap-1">
+                <Label htmlFor="comment-automation" className="text-xs font-medium">
+                  Automatizar comentarios
+                </Label>
+                <p className="text-[11px] text-muted-foreground">
+                  Si alguien escribe una palabra clave, recibirá un mensaje privado y una respuesta
+                  pública.
+                </p>
+              </div>
+            </div>
+            <Switch
+              id="comment-automation"
+              checked={automationEnabled}
+              onCheckedChange={setAutomationEnabled}
+            />
+          </div>
+
+          {automationEnabled && (
+            <div className="flex flex-col gap-4 border-t border-border pt-4">
+              <FormRow
+                label="Palabra o frase clave"
+                htmlFor="automation-keyword"
+                hint="Se ignoran mayúsculas y acentos. Se busca la palabra completa."
+                required
+              >
+                <Input
+                  id="automation-keyword"
+                  maxLength={80}
+                  placeholder="doscientos"
+                  value={automationKeyword}
+                  onChange={(event) => setAutomationKeyword(event.target.value)}
+                />
+              </FormRow>
+              <FormRow
+                label="Respuesta pública"
+                htmlFor="automation-public-reply"
+                hint="Se publica como respuesta al comentario."
+                required
+              >
+                <Textarea
+                  id="automation-public-reply"
+                  rows={2}
+                  maxLength={3000}
+                  value={automationPublicReply}
+                  onChange={(event) => setAutomationPublicReply(event.target.value)}
+                />
+              </FormRow>
+              <FormRow
+                label="Mensaje privado"
+                htmlFor="automation-private-message"
+                hint="Mejor enviar el recurso prometido aquí; añade la landing solo como apoyo."
+                required
+              >
+                <Textarea
+                  id="automation-private-message"
+                  rows={4}
+                  maxLength={3000}
+                  placeholder="¡Gracias por escribirnos! Aquí tienes la información que pedías: https://..."
+                  value={automationPrivateMessage}
+                  onChange={(event) => setAutomationPrivateMessage(event.target.value)}
+                />
+              </FormRow>
+              <p className="text-[11px] text-muted-foreground">
+                Se aplicará en Instagram y Facebook seleccionados. Las reglas de esta publicación
+                tienen prioridad sobre las globales.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

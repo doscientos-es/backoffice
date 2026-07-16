@@ -17,11 +17,16 @@ export function DetailGridSkeleton({
   className,
 }: DetailGridSkeletonProps) {
   return (
-    <dl className={cn("grid grid-cols-[140px_1fr] gap-x-4 gap-y-2.5 text-sm", className)}>
-      {rowWidths.map((w, i) => (
-        <div key={`${w}-${i}`} className="contents">
-          <Skeleton className="h-4 rounded" style={{ width: labelWidth }} />
-          <Skeleton className="h-4 rounded" style={{ width: w }} />
+    <dl
+      className={cn(
+        "grid min-w-0 grid-cols-[140px_minmax(0,1fr)] gap-x-4 gap-y-2.5 text-sm",
+        className,
+      )}
+    >
+      {rowWidths.map((w) => (
+        <div key={w} className="contents">
+          <Skeleton className="h-4 max-w-full rounded" style={{ width: labelWidth }} />
+          <Skeleton className="h-4 max-w-full rounded" style={{ width: w }} />
         </div>
       ))}
     </dl>

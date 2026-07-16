@@ -83,6 +83,8 @@ export const ServerSchema = PublicSchema.extend({
   INSTAGRAM_BUSINESS_ACCOUNT_ID: z.string().optional().default(""),
   // Facebook Page id to publish to as an independent target.
   FACEBOOK_PAGE_ID: z.string().optional().default(""),
+  // Page id used by Meta Messenger Private Replies. Falls back to FACEBOOK_PAGE_ID.
+  META_MESSAGING_PAGE_ID: z.string().optional().default(""),
   // LinkedIn (developers.linkedin.com) — OAuth 2.0. Empty = LinkedIn disabled.
   // App credentials from the developer app (Auth tab). Used by the 3-legged
   // OAuth flow that mints LINKEDIN_ACCESS_TOKEN. CLIENT_ID is semi-public;

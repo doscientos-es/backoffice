@@ -80,7 +80,7 @@ function DonutCardSkeleton() {
 export function DetailsSkeleton() {
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <DonutCardSkeleton />
         <ListCardSkeleton />
       </div>

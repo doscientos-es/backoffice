@@ -3,7 +3,12 @@ import type { ReactNode } from "react";
 
 export function DetailGrid({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <dl className={cn("grid grid-cols-[140px_1fr] gap-x-4 gap-y-2.5 text-sm", className)}>
+    <dl
+      className={cn(
+        "grid min-w-0 grid-cols-[140px_minmax(0,1fr)] gap-x-4 gap-y-2.5 text-sm",
+        className,
+      )}
+    >
       {children}
     </dl>
   );
@@ -19,7 +24,7 @@ export function DetailRow({
   return (
     <>
       <dt className="text-muted-foreground">{label}</dt>
-      <dd className="min-w-0 text-primary">{children ?? "—"}</dd>
+      <dd className="min-w-0 wrap-break-word text-primary">{children ?? "—"}</dd>
     </>
   );
 }
