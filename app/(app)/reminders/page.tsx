@@ -42,9 +42,7 @@ export default async function RemindersPage({
   if (status === "pending") query = query.is("completed_at", null);
   else if (status === "completed") query = query.not("completed_at", "is", null);
 
-  const { data, error, count } = await query
-    .order("start_at", { ascending: true })
-    .range(from, to);
+  const { data, error, count } = await query.order("start_at", { ascending: true }).range(from, to);
 
   return (
     <ListPage

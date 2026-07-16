@@ -78,6 +78,14 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
   if (params.status) query = query.eq("status", params.status);
   if (params.source) query = query.in("source", sourceFilterValues(params.source));
   if (params.assignee) query = query.eq("assigned_to", params.assignee);
+  if (params.attention === "unassigned") query = query.is("assigned_to", null);
+  if (params.attention === "urgent") query = query.eq("urgency", "Inmediata");
+  if (params.attention === "stale") {
+    const staleBefore = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+    query = query
+      .lt("updated_at", staleBefore)
+      .not("status", "in", "(won,lost,not_interested,archived)");
+  }
 
   const from = (params.page - 1) * LEAD_LIST_PAGE_SIZE;
   const to = from + LEAD_LIST_PAGE_SIZE - 1;

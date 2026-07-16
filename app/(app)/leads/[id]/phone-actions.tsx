@@ -1,16 +1,12 @@
 "use client";
 
 import { CopyButton } from "@/components/ui/copy-button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { QrCode } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
 import { toDataURL } from "qrcode";
+import { useEffect, useState } from "react";
 
 /**
  * Renders a phone number as a clickable `tel:` link plus quick actions to
@@ -22,17 +18,10 @@ import { toDataURL } from "qrcode";
 export function PhoneQuickActions({ phone }: { phone: string }) {
   return (
     <div className="flex items-center gap-1.5">
-      <a
-        href={`tel:${phone}`}
-        className="truncate text-primary underline-offset-2 hover:underline"
-      >
+      <a href={`tel:${phone}`} className="truncate text-primary underline-offset-2 hover:underline">
         {phone}
       </a>
-      <CopyButton
-        text={phone}
-        successMessage="Teléfono copiado"
-        label="Copiar teléfono"
-      />
+      <CopyButton text={phone} successMessage="Teléfono copiado" label="Copiar teléfono" />
       <PhoneQrPopover phone={phone} />
     </div>
   );

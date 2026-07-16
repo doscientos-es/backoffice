@@ -218,7 +218,7 @@ export default async function TeamSettingsPage() {
                             <span
                               className={
                                 Date.now() - new Date(m.last_sign_in_at).getTime() >
-                                  INACTIVE_THRESHOLD_MS
+                                INACTIVE_THRESHOLD_MS
                                   ? "text-warning font-medium"
                                   : "text-(--text-secondary)"
                               }

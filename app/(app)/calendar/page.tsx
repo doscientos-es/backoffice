@@ -91,11 +91,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
       .is("deleted_at", null)
       .order("updated_at", { ascending: false })
       .limit(150),
-    supabase
-      .from("projects")
-      .select("id, name")
-      .is("deleted_at", null)
-      .order("name"),
+    supabase.from("projects").select("id, name").is("deleted_at", null).order("name"),
   ]);
   const leads = (leadsData ?? []) as {
     id: string;

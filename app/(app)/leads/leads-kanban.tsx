@@ -2,7 +2,6 @@
 
 import { Badge } from "@/components/ui/badge";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { MemberAvatar } from "@/components/ui/member-avatar";
 import type { LeadListItem } from "@/lib/leads/types";
 import { getLeadInitials, leadDisplayName } from "@/lib/leads/utils";
@@ -14,6 +13,7 @@ import {
   type DragEndEvent,
   DragOverlay,
   type DragStartEvent,
+  KeyboardSensor,
   PointerSensor,
   useDraggable,
   useDroppable,
@@ -22,9 +22,10 @@ import {
 } from "@dnd-kit/core";
 import {
   AlertTriangle,
+  GripVertical,
+  Mail,
   Maximize2,
   Minimize2,
-  PanelRightOpen,
   Phone,
   Plus,
   RefreshCw,
@@ -219,7 +220,10 @@ export function LeadsKanban({
   const [quickViewId, setQuickViewId] = useState<string | null>(null);
   const feedback = useFormFeedback();
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor),
+  );
 
   const onDragStart = (e: DragStartEvent) => setActiveId(String(e.active.id));
 
@@ -293,7 +297,12 @@ export function LeadsKanban({
   const isDragging = activeId !== null;
 
   return (
-    <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
+    <DndContext
+      sensors={sensors}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragCancel={() => setActiveId(null)}
+    >
       <div className="flex items-center justify-between pb-1 min-h-5">
         <button
           type="button"
@@ -322,12 +331,15 @@ export function LeadsKanban({
             compact={compactColumns.has(col.id)}
             isDragging={isDragging}
             leads={grouped[col.id]}
+            canEdit={canEdit}
             onOpenQuickView={setQuickViewId}
             onToggleCompact={() => toggleColumnCompact(col.id)}
           />
         ))}
       </div>
-      <DragOverlay>{active ? <Card lead={active} isOverlay /> : null}</DragOverlay>
+      <DragOverlay>
+        {active ? <Card lead={active} isOverlay canEdit={canEdit} /> : null}
+      </DragOverlay>
       <CloseReasonDialog
         lead={pendingClosure ? { id: pendingClosure.id, name: pendingClosure.name } : null}
         variant={pendingClosure?.variant ?? "lost"}
@@ -367,6 +379,7 @@ function Column({
   tone,
   dot,
   leads,
+  canEdit = false,
   onOpenQuickView,
   compact = false,
   isDragging = false,
@@ -377,6 +390,7 @@ function Column({
   tone: string;
   dot: string;
   leads: KanbanLead[];
+  canEdit?: boolean;
   onOpenQuickView: (id: string) => void;
   compact?: boolean;
   isDragging?: boolean;
@@ -477,7 +491,7 @@ function Column({
             {dropHint ? "Soltar aquí" : "Sin leads"}
           </p>
         ) : (
-          leads.map((l) => <Card key={l.id} lead={l} onOpenQuickView={onOpenQuickView} />)
+          leads.map((l) => <Card key={l.id} lead={l} canEdit={canEdit} onOpenQuickView={onOpenQuickView} />)
         )}
         {status === "new" && <AddLeadCard />}
       </div>
@@ -509,89 +523,96 @@ function LeadInitials({ lead }: { lead: KanbanLead }) {
 function Card({
   lead,
   isOverlay = false,
+  canEdit = false,
   onOpenQuickView,
 }: {
   lead: KanbanLead;
   isOverlay?: boolean;
+  canEdit?: boolean;
   onOpenQuickView?: (id: string) => void;
 }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+  const { attributes, listeners, setActivatorNodeRef, setNodeRef, isDragging } = useDraggable({
     id: lead.id,
+    disabled: !canEdit || isOverlay,
   });
   const stale = isStale(lead);
   return (
-    <div
+    <article
       ref={setNodeRef}
-      {...attributes}
-      {...listeners}
-      onClick={onOpenQuickView ? () => onOpenQuickView(lead.id) : undefined}
-      onKeyDown={
-        onOpenQuickView
-          ? (e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onOpenQuickView(lead.id);
-              }
-            }
-          : undefined
-      }
-      role={onOpenQuickView ? "button" : undefined}
-      tabIndex={onOpenQuickView ? 0 : undefined}
-      aria-label={onOpenQuickView ? `Abrir panel rápido de ${lead.name}` : undefined}
-      title={onOpenQuickView ? "Abrir panel rápido" : undefined}
       className={cn(
-        "group flex cursor-grab flex-col gap-2 rounded-lg bg-background p-3 text-left ring-1 ring-border transition-all hover:shadow-sm hover:ring-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+        "group flex flex-col gap-2 rounded-lg bg-background p-3 text-left ring-1 ring-border transition-all hover:shadow-sm hover:ring-foreground/20",
         isDragging && "opacity-30",
         isOverlay && "cursor-grabbing shadow-lg ring-foreground/30",
         stale && !isOverlay && "ring-amber-400/60 dark:ring-amber-500/40",
       )}
     >
       <div className="flex items-start gap-2">
+        {canEdit ? (
+          <button
+            ref={setActivatorNodeRef}
+            type="button"
+            {...attributes}
+            {...listeners}
+            aria-label={`Arrastrar ${leadDisplayName(lead)}`}
+            title="Arrastrar lead"
+            className="mt-0.5 shrink-0 cursor-grab touch-none rounded text-muted-foreground/45 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 active:cursor-grabbing"
+          >
+            <GripVertical className="size-3.5" aria-hidden />
+          </button>
+        ) : null}
         <LeadInitials lead={lead} />
-        <span className="flex-1 truncate text-sm font-medium leading-tight">
-          {leadDisplayName(lead)}
-        </span>
+        <div className="min-w-0 flex-1">
+          {onOpenQuickView ? (
+            <button
+              type="button"
+              onClick={() => onOpenQuickView(lead.id)}
+              className="block max-w-full truncate text-left text-sm font-medium leading-tight underline-offset-2 hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+              title="Abrir panel rápido"
+            >
+              {leadDisplayName(lead)}
+            </button>
+          ) : (
+            <span className="block truncate text-sm font-medium leading-tight">
+              {leadDisplayName(lead)}
+            </span>
+          )}
+          {lead.alias?.trim() && lead.alias.trim() !== lead.name ? (
+            <p className="truncate text-[11px] leading-tight text-muted-foreground">{lead.name}</p>
+          ) : null}
+        </div>
         {stale && !isOverlay && (
-          <HoverCard openDelay={300} closeDelay={100}>
-            <HoverCardTrigger asChild>
-              <span
-                aria-label="Lead estancado"
-                className="inline-flex size-4 shrink-0 cursor-default items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"
-              >
-                <AlertTriangle className="size-2.5" aria-hidden />
-              </span>
-            </HoverCardTrigger>
-            <HoverCardContent side="top" align="end" className="w-auto px-2.5 py-1.5">
-              <p className="text-xs text-muted-foreground">
-                Sin cambios{" "}
-                <span className="font-medium text-foreground tabular-nums">
-                  {relativeTime(lead.updated_at)}
-                </span>
-              </p>
-            </HoverCardContent>
-          </HoverCard>
-        )}
-        {!isOverlay && onOpenQuickView && (
-          <PanelRightOpen
-            aria-hidden
-            className="size-3.5 shrink-0 text-muted-foreground/40 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
-          />
+          <span
+            aria-label="Lead estancado: necesita seguimiento"
+            title={`Sin cambios ${relativeTime(lead.updated_at)}`}
+            className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"
+          >
+            <AlertTriangle className="size-2.5" aria-hidden />
+          </span>
         )}
       </div>
-      {(lead.company || lead.email || lead.phone) && (
-        <div className="flex flex-col gap-0.5 pl-8">
-          {lead.company && <p className="truncate text-xs text-muted-foreground">{lead.company}</p>}
-          {lead.email && <p className="truncate text-xs text-muted-foreground">{lead.email}</p>}
-          {lead.phone && (
+      {(lead.company || lead.phone || lead.email) && (
+        <div className="flex min-w-0 flex-col gap-0.5 pl-8 text-xs">
+          {lead.company ? <p className="truncate text-muted-foreground">{lead.company}</p> : null}
+          {lead.phone ? (
             <a
               href={`tel:${lead.phone}`}
-              onClick={(e) => e.stopPropagation()}
-              className="flex items-center gap-1 truncate text-xs text-muted-foreground hover:text-foreground transition-colors"
+              aria-label={`Llamar a ${leadDisplayName(lead)}`}
+              className="inline-flex min-w-0 items-center gap-1 truncate text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             >
-              <Phone className="size-2.5 shrink-0" />
-              {lead.phone}
+              <Phone className="size-3 shrink-0" aria-hidden />
+              <span className="truncate">{lead.phone}</span>
             </a>
-          )}
+          ) : null}
+          {lead.email ? (
+            <a
+              href={`mailto:${lead.email}`}
+              aria-label={`Enviar email a ${leadDisplayName(lead)}`}
+              className="inline-flex min-w-0 items-center gap-1 truncate text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+            >
+              <Mail className="size-3 shrink-0" aria-hidden />
+              <span className="truncate">{lead.email}</span>
+            </a>
+          ) : null}
         </div>
       )}
       {lead.urgency && (
@@ -606,9 +627,14 @@ function Card({
           </span>
         </div>
       )}
-      {(lead.status === "lost" || lead.status === "not_interested") && lead.lost_reason && (
-        <p className="truncate pl-8 text-[11px] text-destructive/80">{lead.lost_reason}</p>
-      )}
+      {lead.status === "lost" && lead.lost_reason ? (
+        <p
+          className="truncate pl-8 text-[11px] text-destructive/75"
+          title={`Motivo de pérdida: ${lead.lost_reason}`}
+        >
+          <span className="font-medium">Pérdida:</span> {lead.lost_reason}
+        </p>
+      ) : null}
       <div className="flex items-center justify-between gap-1.5 pl-8">
         <div className="flex items-center gap-1.5">
           {lead.score != null && (
@@ -626,6 +652,6 @@ function Card({
           <MemberAvatar member={lead.assignee} size="sm" className="size-5 shrink-0" />
         ) : null}
       </div>
-    </div>
+    </article>
   );
 }

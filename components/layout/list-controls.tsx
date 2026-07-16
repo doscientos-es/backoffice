@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, Download, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Search, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -94,6 +94,17 @@ export function ListControls({
     [params, pathname, router],
   );
 
+  const clearFilters = useCallback(() => {
+    const keys = [searchKey, ...filters.map((filter) => filter.key), "page"];
+    const next = new URLSearchParams(params.toString());
+    for (const key of keys) next.delete(key);
+    const query = next.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }, [filters, params, pathname, router, searchKey]);
+
+  const hasActiveFilters =
+    Boolean(params.get(searchKey)) || filters.some((filter) => Boolean(params.get(filter.key)));
+
   const hasControls = searchKey || filters.length > 0;
   const hasPagination =
     pagination && pagination.total > 0 && pagination.total > pagination.pageSize;
@@ -142,6 +153,18 @@ export function ListControls({
         ))}
 
         <div className="ml-auto flex shrink-0 items-center gap-1">
+          {hasActiveFilters ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-8 text-xs text-muted-foreground"
+              onClick={clearFilters}
+            >
+              <X className="size-3.5" />
+              Limpiar
+            </Button>
+          ) : null}
           {onExport ? (
             <Button
               type="button"

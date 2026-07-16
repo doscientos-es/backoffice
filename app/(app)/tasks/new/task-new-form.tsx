@@ -35,7 +35,10 @@ export function TaskNewForm({ projects, leads, members, defaults, currentUserId 
       description: fd.get("description")?.toString() ?? "",
       project_id: fd.get("project_id")?.toString() ?? "",
       lead_id: fd.get("lead_id")?.toString() ?? "",
-      member_ids: fd.getAll("member_ids").map((v) => v.toString()).filter(Boolean),
+      member_ids: fd
+        .getAll("member_ids")
+        .map((v) => v.toString())
+        .filter(Boolean),
       status: (fd.get("status")?.toString() ?? "todo") as TaskStatusType,
       priority: (fd.get("priority")?.toString() ?? "medium") as TaskPriorityType,
       due_date: fd.get("due_date")?.toString() ?? "",

@@ -63,6 +63,8 @@ export type LeadListItem = {
 
 export type LeadListView = "board" | "list";
 
+export type LeadAttentionFilter = "stale" | "unassigned" | "urgent";
+
 export const LEAD_SORT_COLUMNS = [
   "name",
   "company",
@@ -78,6 +80,7 @@ export type LeadListParams = {
   status: LeadStatus | null;
   source: string | null;
   assignee: string | null;
+  attention: LeadAttentionFilter | null;
   page: number;
   sort?: string;
   dir?: "asc" | "desc";

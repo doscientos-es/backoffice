@@ -575,11 +575,7 @@ export function QCallDialog({
                     onClick={handleImportNotes}
                     disabled={importing || !importUrl.trim()}
                   >
-                    {importing ? (
-                      <Loader2 className="size-3 animate-spin" />
-                    ) : (
-                      "Importar"
-                    )}
+                    {importing ? <Loader2 className="size-3 animate-spin" /> : "Importar"}
                   </Button>
                 </div>
                 {importError && <p className="text-xs text-destructive">{importError}</p>}

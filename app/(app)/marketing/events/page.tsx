@@ -45,7 +45,9 @@ function EventBadge({ name }: { name: string }) {
   return <Badge variant={variant}>{eventLabel(name)}</Badge>;
 }
 
-export default async function ConversionEventsPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function ConversionEventsPage({
+  searchParams,
+}: { searchParams: SearchParams }) {
   await requireRole(["owner", "admin"]);
   const sp = await searchParams;
   const eventName = param(sp.event);

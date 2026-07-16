@@ -62,7 +62,10 @@ export function TaskCreateDialog({
       description: fd.get("description")?.toString() ?? "",
       project_id: projectId ?? fd.get("project_id")?.toString() ?? "",
       lead_id: leadId ?? fd.get("lead_id")?.toString() ?? "",
-      member_ids: fd.getAll("member_ids").map((v) => v.toString()).filter(Boolean),
+      member_ids: fd
+        .getAll("member_ids")
+        .map((v) => v.toString())
+        .filter(Boolean),
       status: (fd.get("status")?.toString() ?? "todo") as TaskStatusType,
       priority: (fd.get("priority")?.toString() ?? "medium") as TaskPriorityType,
       due_date: fd.get("due_date")?.toString() ?? "",
@@ -108,7 +111,11 @@ export function TaskCreateDialog({
               projects={projects}
               leads={leads}
               members={members}
-              defaults={{ status: "todo", priority: "medium", member_ids: currentUserId ? [currentUserId] : [] }}
+              defaults={{
+                status: "todo",
+                priority: "medium",
+                member_ids: currentUserId ? [currentUserId] : [],
+              }}
             />
           </div>
           <div className="shrink-0 flex items-center justify-end gap-3 border-t border-border pt-3">

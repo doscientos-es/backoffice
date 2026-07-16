@@ -46,7 +46,10 @@ export function TaskEditDialog({ task, members }: Props) {
       id: task.id,
       title: fd.get("title")?.toString() ?? "",
       description: fd.get("description")?.toString() ?? "",
-      member_ids: fd.getAll("member_ids").map((v) => v.toString()).filter(Boolean),
+      member_ids: fd
+        .getAll("member_ids")
+        .map((v) => v.toString())
+        .filter(Boolean),
       status: (fd.get("status")?.toString() ?? "todo") as TaskStatusType,
       priority: (fd.get("priority")?.toString() ?? "medium") as TaskPriorityType,
       due_date: fd.get("due_date")?.toString() ?? "",

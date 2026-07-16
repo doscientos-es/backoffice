@@ -5,7 +5,12 @@ import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/em
 import { isAIEnabled } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { listLeads } from "@/lib/leads/queries";
-import { LEAD_BOARD_LIMIT, LEAD_LIST_PAGE_SIZE, LEAD_SORT_COLUMNS } from "@/lib/leads/types";
+import {
+  LEAD_BOARD_LIMIT,
+  LEAD_LIST_PAGE_SIZE,
+  LEAD_SORT_COLUMNS,
+  type LeadAttentionFilter,
+} from "@/lib/leads/types";
 import { listActiveMembers } from "@/lib/members/queries";
 import { LEAD_STATUS, type LeadStatus } from "@/lib/status";
 import { parseSortParam } from "@/lib/utils/search-params";
@@ -27,6 +32,12 @@ const STATUS_FILTER_OPTIONS = (Object.keys(LEAD_STATUS) as LeadStatus[]).map((va
 
 const SOURCE_FILTER_OPTIONS = LEAD_SOURCES.map((s) => ({ value: s, label: s }));
 
+const ATTENTION_FILTER_OPTIONS: { value: LeadAttentionFilter; label: string }[] = [
+  { value: "stale", label: "Estancados" },
+  { value: "unassigned", label: "Sin responsable" },
+  { value: "urgent", label: "Urgencia inmediata" },
+];
+
 export default async function LeadsPage({
   searchParams,
 }: {
@@ -36,6 +47,7 @@ export default async function LeadsPage({
     status?: string;
     source?: string;
     assignee?: string;
+    attention?: string;
     page?: string;
   }>;
 }) {
@@ -58,6 +70,9 @@ export default async function LeadsPage({
   const members = await listActiveMembers();
   const memberIds = new Set(members.map((m) => m.id));
   const assignee = memberIds.has(sp.assignee ?? "") ? (sp.assignee as string) : null;
+  const attention = ATTENTION_FILTER_OPTIONS.some((option) => option.value === sp.attention)
+    ? (sp.attention as LeadAttentionFilter)
+    : null;
 
   const {
     leads: enrichedLeads,
@@ -69,6 +84,7 @@ export default async function LeadsPage({
     status,
     source,
     assignee,
+    attention,
     page,
     sort,
     dir,
@@ -86,7 +102,7 @@ export default async function LeadsPage({
   );
 
   if (view === "list") {
-    const hasFilters = q.length > 0 || !!status || !!source || !!assignee;
+    const hasFilters = q.length > 0 || !!status || !!source || !!assignee || !!attention;
     return (
       <LeadsList
         leads={enrichedLeads}
@@ -105,6 +121,7 @@ export default async function LeadsPage({
           { key: "status", label: "Estado", options: STATUS_FILTER_OPTIONS },
           { key: "source", label: "Origen", options: SOURCE_FILTER_OPTIONS },
           { key: "assignee", label: "Responsable", options: ASSIGNEE_FILTER_OPTIONS },
+          { key: "attention", label: "Atención", options: ATTENTION_FILTER_OPTIONS },
         ]}
         pagination={{ page, pageSize: LEAD_LIST_PAGE_SIZE, total: count }}
         headers={[
@@ -139,6 +156,7 @@ export default async function LeadsPage({
         filters={[
           { key: "source", label: "Origen", options: SOURCE_FILTER_OPTIONS },
           { key: "assignee", label: "Responsable", options: ASSIGNEE_FILTER_OPTIONS },
+          { key: "attention", label: "Atención", options: ATTENTION_FILTER_OPTIONS },
         ]}
         className="rounded-xl border border-border bg-card px-4"
       />
