@@ -16,6 +16,8 @@ import {
   type InvoiceStatus,
   PROJECT_STATUS,
   PROPOSAL_STATUS,
+  TASK_STATUS,
+  type TaskStatus,
   type ProjectStatus,
   type ProposalStatus,
 } from "@/lib/status";
@@ -241,7 +243,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                       {task.title}
                     </Link>
                     <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
-                      <StatusBadge meta={PROJECT_STATUS} value={task.status as ProjectStatus} />
+                      <StatusBadge meta={TASK_STATUS} value={task.status as TaskStatus} />
                       {task.due_date ? <span>{formatDate(task.due_date)}</span> : null}
                     </div>
                   </li>

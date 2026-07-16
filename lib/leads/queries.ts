@@ -187,6 +187,7 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
     { data: lead, error: leadErr },
     { data: interactions },
     { data: linkedClient },
+    { data: tasks },
     { data: reminders },
   ] = await Promise.all([
     notDeleted(supabase.from("leads").select(DETAIL_COLUMNS).eq("id", id)).maybeSingle(),
@@ -197,6 +198,15 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
       .order("created_at", { ascending: false })
       .limit(50),
     notDeleted(supabase.from("clients").select("id").eq("lead_id", id)).maybeSingle(),
+    notDeleted(
+      supabase
+        .from("tasks")
+        .select("id, title, status, due_date")
+        .eq("kind", "task")
+        .eq("lead_id", id),
+    )
+      .order("created_at", { ascending: false })
+      .limit(LEAD_RELATED_LIMIT),
     supabase
       .from("tasks")
       .select("id, title, start_at")
@@ -279,6 +289,12 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
       full_number: (i.full_number as string | null) ?? null,
       status: (i.status as string | null) ?? null,
       total: i.total == null ? null : Number(i.total),
+    })),
+    tasks: (tasks ?? []).map((t) => ({
+      id: t.id as string,
+      title: t.title as string,
+      status: t.status as string,
+      due_date: (t.due_date as string | null) ?? null,
     })),
     reminders: (reminders ?? []).map((r) => ({
       id: r.id as string,

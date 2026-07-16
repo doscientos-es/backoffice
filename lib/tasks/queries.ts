@@ -107,7 +107,7 @@ export async function getTaskDetail(id: string): Promise<TaskDetailResult> {
     supabase
       .from("tasks")
       .select(
-        "*, projects(id, name, github_sync_mode, github_repo, github_repo_owner, github_repo_name), leads(id, name), team_members:assignee_id(id, name), creator:created_by(id, name)",
+        "*, projects(id, name, github_sync_mode, github_repo, github_repo_owner, github_repo_name), client:client_id(id, name), leads(id, name), team_members:assignee_id(id, name), creator:created_by(id, name)",
       )
       .eq("id", id),
   ).maybeSingle();
@@ -136,6 +136,7 @@ export async function getTaskDetail(id: string): Promise<TaskDetailResult> {
       github_repo_name: string | null;
     } | null) ?? null;
   const lead = (raw.leads as { id: string; name: string } | null) ?? null;
+  const directClient = (raw.client as { id: string; name: string } | null) ?? null;
   const assignee = (raw.team_members as { id: string; name: string } | null) ?? null;
   const creator = (raw.creator as { id: string; name: string } | null) ?? null;
 
@@ -154,6 +155,7 @@ export async function getTaskDetail(id: string): Promise<TaskDetailResult> {
     },
     project,
     lead,
+    client: directClient ?? null,
     assignee,
     creator,
     members: (members ?? []) as Array<{ id: string; name: string }>,

@@ -17,12 +17,13 @@ import { isGoogleEnabled } from "@/lib/env";
 import { getLeadDetail } from "@/lib/leads/queries";
 import { leadDisplayName } from "@/lib/leads/utils";
 import { listActiveMembers } from "@/lib/members/queries";
-import { LEAD_STATUS } from "@/lib/status";
+import { LEAD_STATUS, TASK_STATUS, type TaskStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatDateTime, formatEUR, relativeTime } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CallInteractionDetails } from "./call-interaction-details";
+import { TaskCreateDialog } from "../../tasks/task-create-dialog";
 import { LeadAiPanel } from "./lead-ai-panel";
 import { LeadCommercial } from "./lead-commercial";
 import { LeadEditDialog } from "./lead-edit-dialog";
@@ -85,7 +86,8 @@ export default async function LeadDetailPage({
 
   const result = await getLeadDetail(id);
   if (!result) notFound();
-  const { lead, interactions, linkedClientId, proposals, projects, invoices, reminders } = result;
+  const { lead, interactions, linkedClientId, proposals, projects, invoices, tasks, reminders } =
+    result;
   const conversionEvents = await listLeadConversionEvents({
     id: lead.id,
     event_id: lead.event_id,
@@ -507,6 +509,46 @@ export default async function LeadDetailPage({
               </CardHeader>
               <CardContent>
                 <RemindersSection reminders={reminders} />
+              </CardContent>
+            </Card>
+          ) : null}
+          {canEdit || tasks.length > 0 ? (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Tareas</CardTitle>
+                {canEdit ? (
+                  <TaskCreateDialog
+                    leadId={id}
+                    members={members}
+                    currentUserId={user.id}
+                    trigger={<Button size="sm">Nueva tarea</Button>}
+                  />
+                ) : null}
+              </CardHeader>
+              <CardContent className="px-0">
+                {tasks.length > 0 ? (
+                  <ul className="divide-y divide-border">
+                    {tasks.map((task) => (
+                      <li
+                        key={task.id}
+                        className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm"
+                      >
+                        <Link
+                          href={`/tasks/${task.id}`}
+                          className="truncate font-medium hover:underline"
+                        >
+                          {task.title}
+                        </Link>
+                        <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
+                          <StatusBadge meta={TASK_STATUS} value={task.status as TaskStatus} />
+                          {task.due_date ? <span>{formatDate(task.due_date)}</span> : null}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="px-6 py-2 text-sm text-muted-foreground">Sin tareas.</p>
+                )}
               </CardContent>
             </Card>
           ) : null}

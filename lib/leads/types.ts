@@ -186,6 +186,13 @@ export type LeadRelatedInvoice = {
   total: number | null;
 };
 
+export type LeadRelatedTask = {
+  id: string;
+  title: string;
+  status: string;
+  due_date: string | null;
+};
+
 export type LeadDetailResult = {
   lead: LeadDetail;
   interactions: LeadDetailInteraction[];
@@ -193,6 +200,8 @@ export type LeadDetailResult = {
   proposals: LeadRelatedProposal[];
   projects: LeadRelatedProject[];
   invoices: LeadRelatedInvoice[];
+  /** Tasks directly associated with this lead, newest first. */
+  tasks: LeadRelatedTask[];
   /** Pending reminders scheduled against this lead, soonest first. */
   reminders: ReminderRow[];
 };
