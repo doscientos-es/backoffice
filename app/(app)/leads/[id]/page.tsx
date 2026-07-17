@@ -53,6 +53,31 @@ const INTERACTION_LABEL: Record<string, string> = {
 };
 
 /**
+ * Eventos de atribución que la landing sigue registrando (ver
+ * internal/landing/src/shared/lib/attribution.ts). Deliberadamente pocos:
+ * clic en WhatsApp antes de convertir, y el envío/creación del lead. Nombres
+ * antiguos (page_view, whatsapp_cta_click, contact_cta_click) pueden seguir
+ * apareciendo en leads históricos y se muestran con su nombre crudo.
+ */
+const CONVERSION_EVENT_LABEL: Record<string, string> = {
+  whatsapp_click: "Clic en WhatsApp",
+  form_submit: "Envió el formulario",
+  lead_created: "Lead creado",
+};
+
+const CONVERSION_STEP_LABEL: Record<string, string> = {
+  whatsapp_contact: "Contacto por WhatsApp",
+  whatsapp_footer: "WhatsApp desde el pie",
+  whatsapp_click: "Contacto por WhatsApp",
+  diagnostic_form: "Formulario de diagnóstico",
+  contact_form: "Formulario de contacto",
+  landing_form: "Formulario de landing",
+  blog_cta: "CTA del blog",
+  calculator: "Calculadora",
+  pack_cta: "CTA de packs",
+};
+
+/**
  * Recorta el cuerpo de la interacción para mostrarlo en el timeline.
  * Acepta HTML (emails) y texto plano (notas, transcripciones).
  */
@@ -271,9 +296,10 @@ export default async function LeadDetailPage({
                 {lead.urgency && <DetailRow label="Urgencia">{lead.urgency}</DetailRow>}
                 {lead.solution_type && <DetailRow label="Solución">{lead.solution_type}</DetailRow>}
                 {lead.conversion_step && (
-                  <DetailRow label="Conversión">{lead.conversion_step}</DetailRow>
+                  <DetailRow label="Conversión">
+                    {CONVERSION_STEP_LABEL[lead.conversion_step as string] ?? lead.conversion_step}
+                  </DetailRow>
                 )}
-                {lead.event_id && <DetailRow label="Event ID">{lead.event_id}</DetailRow>}
                 {lead.landing_path && <DetailRow label="Landing">{lead.landing_path}</DetailRow>}
                 {lead.landing_ref && <DetailRow label="Ref">{lead.landing_ref}</DetailRow>}
                 {lead.landing_subject && (
@@ -372,11 +398,11 @@ export default async function LeadDetailPage({
                           <Badge
                             variant={event.event_name.includes("whatsapp") ? "success" : "neutral"}
                           >
-                            {event.event_name}
+                            {CONVERSION_EVENT_LABEL[event.event_name] ?? event.event_name}
                           </Badge>
                           {event.conversion_step && (
                             <span className="text-xs text-muted-foreground">
-                              {event.conversion_step}
+                              {CONVERSION_STEP_LABEL[event.conversion_step] ?? event.conversion_step}
                             </span>
                           )}
                         </div>

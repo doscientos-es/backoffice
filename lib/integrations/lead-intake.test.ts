@@ -174,6 +174,10 @@ describe("ingestLead – new lead", () => {
       type: "note",
       subject: "Lead recibido desde Landing",
     });
+    expect(store.insertedRows.find((row) => row.table === "conversion_events")).toMatchObject({
+      lead_id: "new-lead-uuid",
+      event_name: "lead_created",
+    });
   });
 
   it("returns ok:false when validation fails", async () => {

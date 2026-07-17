@@ -183,17 +183,33 @@ function Body({
             {lead.urgency && <Row icon={<Clock className="size-3.5" />}>{lead.urgency}</Row>}
           </section>
         )}
-        {(lead.landing_path ||
+		{(lead.source ||
+			lead.landing_path ||
           lead.landing_ref ||
           lead.landing_subject ||
-          lead.conversion_step) && (
+          lead.conversion_step ||
+          lead.first_landing_path ||
+          lead.last_utm_source ||
+          lead.last_utm_campaign) && (
           <section className="flex flex-col gap-1.5 text-xs">
-            <Heading>AtribuciÃ³n</Heading>
+            <Heading>Atribución</Heading>
+            {(lead.last_utm_source || lead.source) && (
+              <Row icon={<ArrowUpRight className="size-3.5" />}>
+                Fuente: {lead.last_utm_source || lead.source}
+              </Row>
+            )}
+            {lead.last_utm_campaign && (
+              <Row icon={<ArrowUpRight className="size-3.5" />}>
+                Campaña: {lead.last_utm_campaign}
+              </Row>
+            )}
+            {(lead.first_landing_path || lead.landing_path) && (
+              <Row icon={<ArrowUpRight className="size-3.5" />}>
+                Entrada: {lead.first_landing_path || lead.landing_path}
+              </Row>
+            )}
             {lead.conversion_step && (
               <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.conversion_step}</Row>
-            )}
-            {lead.landing_path && (
-              <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_path}</Row>
             )}
             {lead.landing_ref && (
               <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_ref}</Row>

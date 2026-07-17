@@ -1,4 +1,7 @@
-import { linkConversionEventsToLead } from "@/lib/integrations/conversion-events";
+import {
+  linkConversionEventsToLead,
+  recordConversionEvent,
+} from "@/lib/integrations/conversion-events";
 import { normalizeCompanySize, normalizeLeadSource, normalizeUrgency } from "@/lib/leads/constants";
 import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -371,7 +374,14 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
         .eq("external_source", norm.externalSource)
         .eq("external_id", norm.externalId)
         .maybeSingle();
-      if (dup?.id) return { ok: true, leadId: dup.id as string, duplicate: true };
+      if (dup?.id) {
+        await linkConversionEventsToLead({
+          leadId: dup.id as string,
+          visitorId: norm.context?.visitorId,
+          eventId: norm.context?.eventId,
+        });
+        return { ok: true, leadId: dup.id as string, duplicate: true };
+      }
     }
     log.error({ err: error }, "lead insert failed");
     return { ok: false, error: error?.message ?? "insert failed" };
@@ -407,6 +417,9 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
       logLeadCreatedInteraction(leadId, row).catch((e) =>
         log.error({ err: e, leadId }, "lead intake interaction failed"),
       ),
+      recordLeadCreatedEvent(leadId, row, norm.context?.visitorId).catch((e) =>
+        log.error({ err: e, leadId }, "lead conversion event failed"),
+      ),
       linkConversionEventsToLead({
         leadId,
         visitorId: norm.context?.visitorId,
@@ -416,6 +429,34 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
   });
 
   return { ok: true, leadId, duplicate: false };
+}
+
+async function recordLeadCreatedEvent(
+  leadId: string,
+  row: Record<string, unknown>,
+  visitorId?: string | null,
+): Promise<void> {
+  await recordConversionEvent({
+    event_id: (row.event_id as string | null) ?? null,
+    visitor_id: visitorId ?? null,
+    lead_id: leadId,
+    event_name: "lead_created",
+    conversion_step: (row.conversion_step as string | null) ?? null,
+    landing_path: (row.landing_path as string | null) ?? null,
+    landing_ref: (row.landing_ref as string | null) ?? null,
+    referrer: (row.referrer as string | null) ?? null,
+    utm_source: (row.utm_source as string | null) ?? null,
+    utm_medium: (row.utm_medium as string | null) ?? null,
+    utm_campaign: (row.utm_campaign as string | null) ?? null,
+    utm_term: (row.utm_term as string | null) ?? null,
+    utm_content: (row.utm_content as string | null) ?? null,
+    payload: {
+      source: row.source ?? null,
+      landing_subject: row.landing_subject ?? null,
+      calculator_cost: row.calculator_cost ?? null,
+      calculator_hours: row.calculator_hours ?? null,
+    },
+  });
 }
 
 async function logLeadCreatedInteraction(

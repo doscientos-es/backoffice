@@ -59,6 +59,9 @@ export type LeadListItem = {
   landing_ref: string | null;
   landing_subject: string | null;
   conversion_step: string | null;
+  first_landing_path: string | null;
+  last_utm_source: string | null;
+  last_utm_campaign: string | null;
   ai_summary: string | null;
   ai_updated_at: string | null;
   lost_reason: string | null;
