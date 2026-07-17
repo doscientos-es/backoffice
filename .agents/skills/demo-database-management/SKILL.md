@@ -32,6 +32,41 @@ La regla principal es: una migracion, dos destinos independientes.
 
 Nunca mezclar credenciales, URLs, datos o tokens entre los dos entornos. No guardar secretos en el repositorio.
 
+## Acceso SSH automatizado
+
+El acceso recurrente a la demo se hace con una clave Ed25519 local, no con password.
+
+- Host SSH: `doscientos-demo` o `185.250.36.170`.
+- Usuario: `pol`.
+- Clave privada local: `C:\Users\pol.gubau\.ssh\doscientos-demo_ed25519`.
+- Configuracion SSH local: `C:\Users\pol.gubau\.ssh\config`.
+- El usuario `pol` pertenece al grupo `docker`.
+- La clave privada nunca se copia al repositorio ni se incluye en prompts, logs o commits.
+
+Antes de aplicar una migracion, comprobar desde el entorno del agente:
+
+```bash
+ssh -o BatchMode=yes 185.250.36.170 "id -un && docker ps --format '{{.Names}}' | grep -q '^supabase-db$' && echo DOCKER_OK"
+```
+
+La salida esperada contiene `pol` y `DOCKER_OK`. Si falla con `Permission denied (publickey,password)`, no pedir ni escribir secretos en el repo: revisar que el agente usa el SSH del mismo equipo y que carga `C:\Users\pol.gubau\.ssh\config`.
+
+## Aplicacion recurrente con SSH
+
+Para una migracion nueva, Augment/Codex puede ejecutar:
+
+```bash
+scp supabase/migrations/<migration>.sql 185.250.36.170:/tmp/<migration>.sql
+
+ssh 185.250.36.170 \
+  "docker exec -i supabase-db psql -v ON_ERROR_STOP=1 -U postgres -d postgres < /tmp/<migration>.sql"
+
+ssh 185.250.36.170 \
+  "docker exec supabase-db psql -U postgres -d postgres -c \"NOTIFY pgrst, 'reload schema';\""
+```
+
+Despues debe comprobar la tabla, columnas y politicas RLS afectadas mediante SQL o una consulta autenticada a `/rest/v1`.
+
 ## Flujo obligatorio para una migracion
 
 1. Crear una migracion nueva en `supabase/migrations/` con timestamp y nombre descriptivo.
