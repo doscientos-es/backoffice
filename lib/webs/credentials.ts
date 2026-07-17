@@ -12,12 +12,26 @@ export type WebProjectDbCredentials = {
   password: string;
 };
 
+/** Backup target ready to be sent to the runner. */
+export type WebProjectBackupTarget = {
+  id: string;
+  name: string;
+  backupSlug: string;
+  credentials: WebProjectDbCredentials;
+};
+
 type CredentialRow = {
   db_host: string | null;
   db_port: number | null;
   db_name: string | null;
   db_user: string | null;
   db_pass_encrypted: string | null;
+};
+
+type BackupTargetRow = CredentialRow & {
+  id: string;
+  name: string;
+  backup_slug: string | null;
 };
 
 /**
@@ -55,4 +69,33 @@ export async function getWebProjectDbCredentials(
     .maybeSingle();
 
   return data ? rowToCredentials(data as CredentialRow) : null;
+}
+
+/**
+ * Reads all active web projects that have a backup slug and complete DB
+ * credentials. Used by the weekly cron endpoint so scheduled backups follow
+ * the Webs configuration in the backoffice.
+ */
+export async function getConfiguredWebBackupTargets(): Promise<WebProjectBackupTarget[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("web_projects")
+    .select("id, name, backup_slug, db_host, db_port, db_name, db_user, db_pass_encrypted")
+    .is("deleted_at", null)
+    .not("backup_slug", "is", null);
+
+  if (error) throw new Error(error.message);
+
+  return ((data ?? []) as BackupTargetRow[]).flatMap((row) => {
+    const credentials = rowToCredentials(row);
+    if (!row.backup_slug || !credentials) return [];
+    return [
+      {
+        id: row.id,
+        name: row.name,
+        backupSlug: row.backup_slug,
+        credentials,
+      },
+    ];
+  });
 }
