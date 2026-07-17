@@ -35,7 +35,9 @@ function authenticate(request: NextRequest): boolean {
   return token === CRON_SECRET;
 }
 
-async function runBackup(target: Awaited<ReturnType<typeof getConfiguredWebBackupTargets>>[number]) {
+async function runBackup(
+  target: Awaited<ReturnType<typeof getConfiguredWebBackupTargets>>[number],
+) {
   const env = serverEnv();
   const res = await fetch(env.BACKUP_RUNNER_URL, {
     method: "POST",
