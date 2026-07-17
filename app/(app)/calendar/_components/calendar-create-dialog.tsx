@@ -397,12 +397,12 @@ export function CalendarCreateDialog({
                 placeholder="Buscar lead…"
               />
               {selectedLead && (
-                <p className="text-xs text-muted-foreground">
+                <p className="rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-foreground">
                   {selectedLead.email ? (
                     <>
-                      Se le invitará automáticamente (
-                      <span className="font-medium">{selectedLead.email}</span>) y quedará
-                      registrada como interacción.
+                      Al crearla, se enviará una invitación real a{" "}
+                      <span className="font-medium">{selectedLead.email}</span> y quedará registrada
+                      como interacción.
                     </>
                   ) : (
                     "Quedará registrada como interacción en el lead."

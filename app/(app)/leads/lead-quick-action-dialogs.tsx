@@ -6,6 +6,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Dialog,
   DialogContent,
@@ -137,6 +138,7 @@ export function QMeetDialog({
   meetMembers?: MeetMember[];
 }) {
   const [open, setOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [title, setTitle] = useState(`Reunión con ${leadName}`);
   const [start, setStart] = useState(defaultMeetStart);
   const [end, setEnd] = useState(defaultMeetEnd);
@@ -159,6 +161,10 @@ export function QMeetDialog({
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setConfirmOpen(true);
+  }
+
+  async function handleConfirmSchedule() {
     feedback.setPending();
     const attendeeEmails = [...(leadEmail ? [leadEmail] : []), ...members.emails(meetMembers)];
     const res = await scheduleLeadMeeting({
@@ -171,7 +177,11 @@ export function QMeetDialog({
       projectId: projectId || undefined,
       withMeet: true,
     });
-    if (!res.ok) return feedback.setError(res.error);
+    if (!res.ok) {
+      setConfirmOpen(false);
+      return feedback.setError(res.error);
+    }
+    setConfirmOpen(false);
     feedback.setSuccess("Reunión creada");
     router.refresh();
     if (res.meetUrl) window.open(res.meetUrl, "_blank");
@@ -179,7 +189,8 @@ export function QMeetDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="w-full justify-start gap-2">
           <Video className="size-3.5 text-muted-foreground" />
@@ -271,8 +282,29 @@ export function QMeetDialog({
             </SubmitButton>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="¿Enviar invitación de reunión?"
+        description={
+          <>
+            <p>
+              Se enviará una invitación de Google Calendar a <strong>{leadEmail ?? "el lead"}</strong>.
+            </p>
+            <p className="mt-2">
+              <strong>{title}</strong> · {start.replace("T", " ")}.
+            </p>
+            <p className="mt-2">El lead recibirá la invitación en su calendario.</p>
+          </>
+        }
+        confirmLabel="Sí, enviar invitación"
+        cancelLabel="Volver a revisar"
+        pending={feedback.pending}
+        onConfirm={() => void handleConfirmSchedule()}
+      />
+    </>
   );
 }
 
@@ -290,6 +322,7 @@ export function QMeetNowDialog({
   meetMembers?: MeetMember[];
 }) {
   const [open, setOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [description, setDescription] = useState("");
   const members = useMemberToggle();
   const feedback = useFormFeedback();
@@ -297,6 +330,10 @@ export function QMeetNowDialog({
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setConfirmOpen(true);
+  }
+
+  async function handleConfirmCreate() {
     feedback.setPending();
     const now = new Date();
     const endTime = new Date(now.getTime() + 60 * 60 * 1000);
@@ -310,7 +347,11 @@ export function QMeetNowDialog({
       attendeeEmails: attendeeEmails.length > 0 ? attendeeEmails : undefined,
       withMeet: true,
     });
-    if (!res.ok) return feedback.setError(res.error);
+    if (!res.ok) {
+      setConfirmOpen(false);
+      return feedback.setError(res.error);
+    }
+    setConfirmOpen(false);
     feedback.setSuccess("¡Meet creado!");
     router.refresh();
     if (res.meetUrl) window.open(res.meetUrl, "_blank");
@@ -318,7 +359,8 @@ export function QMeetNowDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="w-full justify-start gap-2">
           <Video className="size-3.5 text-green-500" />
@@ -359,7 +401,25 @@ export function QMeetNowDialog({
           </div>
         </form>
       </DialogContent>
-    </Dialog>
+      </Dialog>
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="¿Enviar invitación y abrir Meet?"
+        description={
+          <>
+            <p>
+              Se enviará una invitación de Google Calendar a <strong>{leadEmail ?? "el lead"}</strong>.
+            </p>
+            <p className="mt-2">También se abrirá el enlace de Meet en una nueva pestaña.</p>
+          </>
+        }
+        confirmLabel="Sí, crear y enviar"
+        cancelLabel="Volver a revisar"
+        pending={feedback.pending}
+        onConfirm={() => void handleConfirmCreate()}
+      />
+    </>
   );
 }
 

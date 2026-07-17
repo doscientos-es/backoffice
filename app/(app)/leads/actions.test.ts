@@ -128,6 +128,7 @@ import {
   claimLead,
   createLead,
   deleteLead,
+  logLeadCall,
   updateLead,
   updateLeadStatus,
 } from "@/app/(app)/leads/actions";
@@ -246,5 +247,29 @@ describe("claimLead", () => {
   it("returns ok:true when lead has no owner", async () => {
     const result = await claimLead({ leadId: "00000000-0000-0000-0000-000000000001" });
     expect(result.ok).toBe(true);
+  });
+});
+
+describe("logLeadCall", () => {
+  it("stores notes, transcript and call metadata for the digest context", async () => {
+    const result = await logLeadCall({
+      leadId: "00000000-0000-0000-0000-000000000001",
+      notes: "Pide propuesta esta semana.",
+      transcript: "Comentamos alcance y presupuesto.",
+      durationMinutes: 25,
+      outcome: "connected",
+    });
+
+    expect(result.ok).toBe(true);
+    expect(db.insertedRows.find((row) => row.table === "lead_interactions")).toMatchObject({
+      lead_id: "00000000-0000-0000-0000-000000000001",
+      type: "call",
+      body: "Pide propuesta esta semana.",
+      payload: {
+        transcript: "Comentamos alcance y presupuesto.",
+        duration_minutes: 25,
+        outcome: "connected",
+      },
+    });
   });
 });

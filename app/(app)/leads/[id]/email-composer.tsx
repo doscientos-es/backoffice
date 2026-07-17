@@ -1,6 +1,7 @@
 "use client";
 
 import { AiNotice } from "@/components/ui/ai-notice";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,6 +43,7 @@ export function EmailComposer({
   const [subject, setSubject] = useState(defaultSubject ?? "");
   const [body, setBody] = useState(defaultBody ?? "");
   const [drafting, setDrafting] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const feedback = useFormFeedback();
 
   async function handleDraftWithAI() {
@@ -75,12 +77,16 @@ export function EmailComposer({
     );
   }
 
-  async function onSubmit(e: React.FormEvent) {
+  function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!to || !subject || !body) {
       feedback.setError("Completa destinatario, asunto y cuerpo.");
       return;
     }
+    setConfirmOpen(true);
+  }
+
+  async function handleConfirmSend() {
     feedback.setPending();
     const res = await sendEmailToLead({
       leadId,
@@ -90,17 +96,20 @@ export function EmailComposer({
       includeSignature: true,
     });
     if (res.ok) {
+      setConfirmOpen(false);
       feedback.setSuccess(res.mocked ? "Email simulado (modo dev)" : "Email enviado");
       setSubject("");
       setBody("");
       onSuccess?.();
     } else {
+      setConfirmOpen(false);
       feedback.setError(res.error);
     }
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-3">
+    <>
+      <form onSubmit={onSubmit} className="flex flex-col gap-3">
       {aiEnabled ? (
         <div className="flex justify-end">
           <button
@@ -165,16 +174,41 @@ export function EmailComposer({
           <code>{"{{empresa}}"}</code>, <code>{"{{email}}"}</code>. Tu firma se añade al final.
         </p>
       </div>
+      <p className="rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-foreground">
+        Este mensaje llegará a <strong>{to || "la dirección indicada"}</strong>. Antes de enviarlo
+        podrás revisar una confirmación final.
+      </p>
       <div className="flex items-center justify-end gap-3">
         <FormFeedback
           state={feedback.state}
           pendingLabel="Enviando…"
           successLabel="Email enviado"
         />
-        <SubmitButton pendingLabel="Enviando…" loading={feedback.pending}>
-          Enviar email
+        <SubmitButton pendingLabel="Preparando…" loading={feedback.pending}>
+          Revisar y enviar
         </SubmitButton>
       </div>
-    </form>
+      </form>
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="¿Enviar este email al lead?"
+        description={
+          <>
+            <p>
+              Se enviará un email real a <strong>{to}</strong>.
+            </p>
+            <p className="mt-2">
+              <strong>Asunto:</strong> {subject}
+            </p>
+            <p className="mt-2">El lead recibirá el contenido que acabas de revisar.</p>
+          </>
+        }
+        confirmLabel="Sí, enviar email"
+        cancelLabel="Volver a revisar"
+        pending={feedback.pending}
+        onConfirm={() => void handleConfirmSend()}
+      />
+    </>
   );
 }
