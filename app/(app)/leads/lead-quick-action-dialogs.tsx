@@ -28,6 +28,7 @@ import { type FormEvent, useState } from "react";
 import { createReminder } from "../reminders/actions";
 import { EmailComposer } from "./[id]/email-composer";
 import { logLeadCall, logLeadEmail, logLeadNote, scheduleLeadMeeting } from "./actions";
+import { CallDigestDialog } from "./call-digest-dialog";
 
 // ─── Meet helpers ─────────────────────────────────────────────────────────────
 
@@ -419,12 +420,18 @@ export function QCallDialog({
   leadId,
   leadName,
   leadPhone,
+  leadEmail,
+  aiEnabled,
 }: {
   leadId: string;
   leadName: string;
   leadPhone: string | null;
+  leadEmail: string | null;
+  aiEnabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [digestOpen, setDigestOpen] = useState(false);
+  const [digestKey, setDigestKey] = useState(0);
   const [outcome, setOutcome] = useState<CallOutcome>("connected");
   const [duration, setDuration] = useState("");
   const [notes, setNotes] = useState("");
@@ -483,136 +490,149 @@ export function QCallDialog({
     setTranscript("");
     setDuration("");
     setFollowUpEnabled(false);
+    setDigestKey((key) => key + 1);
     router.refresh();
-    setTimeout(() => setOpen(false), 400);
+    setOpen(false);
+    setDigestOpen(true);
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-          <Phone className="size-3.5 text-muted-foreground" />
-          Registrar llamada
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-lg">
-        <DialogHeader className="shrink-0">
-          <DialogTitle>Registrar llamada</DialogTitle>
-          {leadPhone && <DialogDescription>{leadPhone}</DialogDescription>}
-        </DialogHeader>
-        <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor={`qa-call-outcome-${leadId}`} className="text-xs font-medium">
-                Resultado
-              </Label>
-              <Select
-                id={`qa-call-outcome-${leadId}`}
-                value={outcome}
-                onChange={(e) => setOutcome(e.target.value as CallOutcome)}
-              >
-                <option value="connected">Contactado</option>
-                <option value="voicemail">Buzón de voz</option>
-                <option value="no_answer">Sin respuesta</option>
-                <option value="busy">Comunicando</option>
-                <option value="wrong_number">Número erróneo</option>
-              </Select>
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+            <Phone className="size-3.5 text-muted-foreground" />
+            Registrar llamada
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-lg">
+          <DialogHeader className="shrink-0">
+            <DialogTitle>Registrar llamada</DialogTitle>
+            {leadPhone && <DialogDescription>{leadPhone}</DialogDescription>}
+          </DialogHeader>
+          <form className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto" onSubmit={onSubmit}>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor={`qa-call-outcome-${leadId}`} className="text-xs font-medium">
+                  Resultado
+                </Label>
+                <Select
+                  id={`qa-call-outcome-${leadId}`}
+                  value={outcome}
+                  onChange={(e) => setOutcome(e.target.value as CallOutcome)}
+                >
+                  <option value="connected">Contactado</option>
+                  <option value="voicemail">Buzón de voz</option>
+                  <option value="no_answer">Sin respuesta</option>
+                  <option value="busy">Comunicando</option>
+                  <option value="wrong_number">Número erróneo</option>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor={`qa-call-duration-${leadId}`} className="text-xs font-medium">
+                  Duración (min)
+                </Label>
+                <Input
+                  id={`qa-call-duration-${leadId}`}
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={600}
+                  value={duration}
+                  onChange={(e) => setDuration(e.target.value)}
+                  placeholder="0"
+                />
+              </div>
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={`qa-call-duration-${leadId}`} className="text-xs font-medium">
-                Duración (min)
-              </Label>
-              <Input
-                id={`qa-call-duration-${leadId}`}
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={600}
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-                placeholder="0"
+              <div className="flex items-center justify-between">
+                <Label htmlFor={`qa-call-notes-${leadId}`} className="text-xs font-medium">
+                  Notas <span className="text-muted-foreground/60">(o transcripción)</span>
+                </Label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowImport(!showImport);
+                    setImportError(null);
+                  }}
+                  className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <FileText className="size-3" />
+                  Importar desde Meet
+                </button>
+              </div>
+              {showImport && (
+                <div className="flex flex-col gap-1.5 rounded-md border bg-muted/30 p-2">
+                  <p className="text-xs text-muted-foreground">
+                    Pega la URL del documento de notas de Google Meet
+                  </p>
+                  <div className="flex gap-2">
+                    <Input
+                      value={importUrl}
+                      onChange={(e) => setImportUrl(e.target.value)}
+                      placeholder="https://docs.google.com/document/d/…"
+                      className="h-8 text-xs"
+                      autoFocus
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-8 shrink-0"
+                      onClick={handleImportNotes}
+                      disabled={importing || !importUrl.trim()}
+                    >
+                      {importing ? <Loader2 className="size-3 animate-spin" /> : "Importar"}
+                    </Button>
+                  </div>
+                  {importError && <p className="text-xs text-destructive">{importError}</p>}
+                </div>
+              )}
+              <Textarea
+                id={`qa-call-notes-${leadId}`}
+                rows={5}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Puntos clave, próximos pasos…"
               />
             </div>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center justify-between">
-              <Label htmlFor={`qa-call-notes-${leadId}`} className="text-xs font-medium">
-                Notas <span className="text-muted-foreground/60">(o transcripción)</span>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor={`qa-call-transcript-${leadId}`} className="text-xs font-medium">
+                Transcripción <span className="text-muted-foreground/60">(opcional)</span>
               </Label>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowImport(!showImport);
-                  setImportError(null);
-                }}
-                className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <FileText className="size-3" />
-                Importar desde Meet
-              </button>
+              <Textarea
+                id={`qa-call-transcript-${leadId}`}
+                rows={4}
+                maxLength={50000}
+                value={transcript}
+                onChange={(e) => setTranscript(e.target.value)}
+                placeholder="Pega aquí la transcripción si la tienes…"
+                className="font-mono text-xs"
+              />
             </div>
-            {showImport && (
-              <div className="flex flex-col gap-1.5 rounded-md border bg-muted/30 p-2">
-                <p className="text-xs text-muted-foreground">
-                  Pega la URL del documento de notas de Google Meet
-                </p>
-                <div className="flex gap-2">
-                  <Input
-                    value={importUrl}
-                    onChange={(e) => setImportUrl(e.target.value)}
-                    placeholder="https://docs.google.com/document/d/…"
-                    className="h-8 text-xs"
-                    autoFocus
-                  />
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="h-8 shrink-0"
-                    onClick={handleImportNotes}
-                    disabled={importing || !importUrl.trim()}
-                  >
-                    {importing ? <Loader2 className="size-3 animate-spin" /> : "Importar"}
-                  </Button>
-                </div>
-                {importError && <p className="text-xs text-destructive">{importError}</p>}
-              </div>
-            )}
-            <Textarea
-              id={`qa-call-notes-${leadId}`}
-              rows={5}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Puntos clave, próximos pasos…"
+            <FollowUpSection
+              idPrefix={`qa-call-${leadId}`}
+              enabled={followUpEnabled}
+              onEnabledChange={setFollowUpEnabled}
+              remindAt={followUpAt}
+              onRemindAtChange={setFollowUpAt}
             />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor={`qa-call-transcript-${leadId}`} className="text-xs font-medium">
-              Transcripción <span className="text-muted-foreground/60">(opcional)</span>
-            </Label>
-            <Textarea
-              id={`qa-call-transcript-${leadId}`}
-              rows={4}
-              maxLength={50000}
-              value={transcript}
-              onChange={(e) => setTranscript(e.target.value)}
-              placeholder="Pega aquí la transcripción si la tienes…"
-              className="font-mono text-xs"
-            />
-          </div>
-          <FollowUpSection
-            idPrefix={`qa-call-${leadId}`}
-            enabled={followUpEnabled}
-            onEnabledChange={setFollowUpEnabled}
-            remindAt={followUpAt}
-            onRemindAtChange={setFollowUpAt}
-          />
-          <div className="flex shrink-0 items-center justify-end gap-3">
-            <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
-            <SubmitButton loading={feedback.pending}>Registrar</SubmitButton>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+            <div className="flex shrink-0 items-center justify-end gap-3">
+              <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
+              <SubmitButton loading={feedback.pending}>Registrar</SubmitButton>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <CallDigestDialog
+        leadId={leadId}
+        leadName={leadName}
+        leadEmail={leadEmail}
+        aiEnabled={aiEnabled}
+        open={digestOpen}
+        onOpenChange={setDigestOpen}
+        draftKey={digestKey}
+      />
+    </>
   );
 }
 

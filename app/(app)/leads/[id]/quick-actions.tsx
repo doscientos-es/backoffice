@@ -51,7 +51,13 @@ export function LeadQuickActions({
   return (
     <div className="flex flex-col gap-2">
       {claimable && <ClaimButton leadId={leadId} />}
-      <QCallDialog leadId={leadId} leadPhone={leadPhone} leadName={leadName} />
+      <QCallDialog
+        leadId={leadId}
+        leadPhone={leadPhone}
+        leadName={leadName}
+        leadEmail={leadEmail}
+        aiEnabled={aiEnabled}
+      />
       <QSendEmailDialog leadId={leadId} leadEmail={leadEmail} aiEnabled={aiEnabled} />
       <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
       <QNoteDialog leadId={leadId} />

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { normalizeHashtags, type SocialPostSuggestion } from "@/lib/social/ai-suggestion";
+import { type SocialPostSuggestion, normalizeHashtags } from "@/lib/social/ai-suggestion";
 import { cn } from "@/lib/utils";
 import { Loader2, Sparkles } from "lucide-react";
 import { useState } from "react";

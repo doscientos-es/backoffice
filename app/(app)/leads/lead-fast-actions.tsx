@@ -23,6 +23,7 @@ import { Brain, Mail, Phone, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useState } from "react";
 import { logLeadCall, logLeadEmail } from "./actions";
+import { CallDigestDialog } from "./call-digest-dialog";
 
 export type FastInteraction = LeadInteraction;
 
@@ -69,7 +70,13 @@ export function LeadFastActions({ lead, aiEnabled }: Props) {
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
-      <CallDialog leadId={lead.id} leadPhone={lead.phone} />
+      <CallDialog
+        leadId={lead.id}
+        leadName={lead.name}
+        leadEmail={lead.email}
+        leadPhone={lead.phone}
+        aiEnabled={aiEnabled}
+      />
       <EmailDialog leadId={lead.id} leadEmail={lead.email} />
       <MemoryHoverCard lead={lead} aiEnabled={aiEnabled} />
     </div>
@@ -122,8 +129,22 @@ function FastDialog({
 
 // ---------------- CALL ----------------
 
-function CallDialog({ leadId, leadPhone }: { leadId: string; leadPhone: string | null }) {
+function CallDialog({
+  leadId,
+  leadName,
+  leadEmail,
+  leadPhone,
+  aiEnabled,
+}: {
+  leadId: string;
+  leadName: string;
+  leadEmail: string | null;
+  leadPhone: string | null;
+  aiEnabled: boolean;
+}) {
   const [open, setOpen] = useState(false);
+  const [digestOpen, setDigestOpen] = useState(false);
+  const [digestKey, setDigestKey] = useState(0);
   const [notes, setNotes] = useState("");
   const [duration, setDuration] = useState("");
   const [outcome, setOutcome] = useState<CallOutcome>("connected");
@@ -143,77 +164,90 @@ function CallDialog({ leadId, leadPhone }: { leadId: string; leadPhone: string |
     feedback.setSuccess("Llamada registrada");
     setNotes("");
     setDuration("");
+    setDigestKey((key) => key + 1);
     router.refresh();
-    setTimeout(() => setOpen(false), 400);
+    setOpen(false);
+    setDigestOpen(true);
   }
 
   return (
-    <FastDialog
-      trigger={
-        <IconTrigger label="Registrar llamada">
-          <Phone className="size-3.5" />
-        </IconTrigger>
-      }
-      title="Registrar llamada"
-      description={leadPhone ? `Teléfono: ${leadPhone}` : "Sin teléfono guardado."}
-      open={open}
-      onOpenChange={setOpen}
-    >
-      <form onSubmit={onSubmit} className="flex flex-col gap-3">
-        <div className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor={`fast-call-outcome-${leadId}`} className="text-xs font-medium">
-              Resultado
-            </Label>
-            <Select
-              id={`fast-call-outcome-${leadId}`}
-              value={outcome}
-              onChange={(e) => setOutcome(e.target.value as CallOutcome)}
-            >
-              <option value="connected">Contactado</option>
-              <option value="voicemail">Buzón de voz</option>
-              <option value="no_answer">Sin respuesta</option>
-              <option value="busy">Comunicando</option>
-              <option value="wrong_number">Número erróneo</option>
-            </Select>
+    <>
+      <FastDialog
+        trigger={
+          <IconTrigger label="Registrar llamada">
+            <Phone className="size-3.5" />
+          </IconTrigger>
+        }
+        title="Registrar llamada"
+        description={leadPhone ? `Teléfono: ${leadPhone}` : "Sin teléfono guardado."}
+        open={open}
+        onOpenChange={setOpen}
+      >
+        <form onSubmit={onSubmit} className="flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor={`fast-call-outcome-${leadId}`} className="text-xs font-medium">
+                Resultado
+              </Label>
+              <Select
+                id={`fast-call-outcome-${leadId}`}
+                value={outcome}
+                onChange={(e) => setOutcome(e.target.value as CallOutcome)}
+              >
+                <option value="connected">Contactado</option>
+                <option value="voicemail">Buzón de voz</option>
+                <option value="no_answer">Sin respuesta</option>
+                <option value="busy">Comunicando</option>
+                <option value="wrong_number">Número erróneo</option>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor={`fast-call-duration-${leadId}`} className="text-xs font-medium">
+                Duración (min)
+              </Label>
+              <Input
+                id={`fast-call-duration-${leadId}`}
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={600}
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                placeholder="0"
+              />
+            </div>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor={`fast-call-duration-${leadId}`} className="text-xs font-medium">
-              Duración (min)
+            <Label htmlFor={`fast-call-notes-${leadId}`} className="text-xs font-medium">
+              Notas
             </Label>
-            <Input
-              id={`fast-call-duration-${leadId}`}
-              type="number"
-              inputMode="numeric"
-              min={0}
-              max={600}
-              value={duration}
-              onChange={(e) => setDuration(e.target.value)}
-              placeholder="0"
+            <Textarea
+              id={`fast-call-notes-${leadId}`}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={4}
+              required
+              placeholder="Puntos clave, próximos pasos…"
             />
           </div>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor={`fast-call-notes-${leadId}`} className="text-xs font-medium">
-            Notas
-          </Label>
-          <Textarea
-            id={`fast-call-notes-${leadId}`}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={4}
-            required
-            placeholder="Puntos clave, próximos pasos…"
-          />
-        </div>
-        <div className="flex items-center justify-end gap-3">
-          <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
-          <SubmitButton loading={feedback.pending} pendingLabel="Guardando…">
-            Registrar
-          </SubmitButton>
-        </div>
-      </form>
-    </FastDialog>
+          <div className="flex items-center justify-end gap-3">
+            <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
+            <SubmitButton loading={feedback.pending} pendingLabel="Guardando…">
+              Registrar
+            </SubmitButton>
+          </div>
+        </form>
+      </FastDialog>
+      <CallDigestDialog
+        leadId={leadId}
+        leadName={leadName}
+        leadEmail={leadEmail}
+        aiEnabled={aiEnabled}
+        open={digestOpen}
+        onOpenChange={setDigestOpen}
+        draftKey={digestKey}
+      />
+    </>
   );
 }
 

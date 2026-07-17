@@ -17,6 +17,9 @@ export type EmailComposerProps = {
   defaultSubject?: string;
   /** Pre-fills the Markdown body. */
   defaultBody?: string;
+  /** Kind and extra instructions sent to the optional AI drafting endpoint. */
+  draftKind?: string;
+  draftInstructions?: string;
   disabled?: boolean;
   disabledReason?: string;
   aiEnabled?: boolean;
@@ -28,6 +31,8 @@ export function EmailComposer({
   defaultTo,
   defaultSubject,
   defaultBody,
+  draftKind = "follow_up",
+  draftInstructions,
   disabled,
   disabledReason,
   aiEnabled,
@@ -45,7 +50,11 @@ export function EmailComposer({
       const res = await fetch("/api/crm/ai/draft-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lead_id: leadId, kind: "follow_up" }),
+        body: JSON.stringify({
+          lead_id: leadId,
+          kind: draftKind,
+          instructions: draftInstructions,
+        }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Error al generar el borrador.");

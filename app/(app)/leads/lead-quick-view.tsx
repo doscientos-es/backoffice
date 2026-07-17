@@ -459,7 +459,12 @@ function QuickActions({
         Acciones rápidas
       </p>
       <div className="flex flex-col gap-1.5">
-        <QCallDialog leadId={leadId} leadName={leadName} leadPhone={leadPhone} />
+        <QCallDialog
+          leadId={leadId}
+          leadName={leadName}
+          leadPhone={leadPhone}
+          leadEmail={leadEmail}
+        />
         <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
         <QNoteDialog leadId={leadId} />
       </div>

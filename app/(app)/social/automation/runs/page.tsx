@@ -86,7 +86,9 @@ function EventRow({ event }: { event: AutomationAuditItem }) {
         </span>
       </div>
 
-      <p className="rounded-lg bg-muted/50 px-3 py-2 text-xs text-foreground">“{event.commentText}”</p>
+      <p className="rounded-lg bg-muted/50 px-3 py-2 text-xs text-foreground">
+        “{event.commentText}”
+      </p>
 
       <div className="grid gap-2 text-xs sm:grid-cols-2">
         <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2">

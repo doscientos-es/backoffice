@@ -15,6 +15,7 @@
 
 import { AI_MODELS, isAIEnabled, runAIObject } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
+import { formatInteractionForAI } from "@/lib/leads/interaction-utils";
 import { scopedLogger } from "@/lib/logger";
 import { rateLimit } from "@/lib/ratelimit";
 import { createServerClient } from "@/lib/supabase/server";
@@ -80,7 +81,7 @@ export async function POST(req: NextRequest) {
 
   const { data: lead, error: leadErr } = await supabase
     .from("leads")
-    .select("id, name, company, email, source, status, notes")
+    .select("id, name, company, email, source, status, notes, ai_summary")
     .eq("id", body.lead_id)
     .is("deleted_at", null)
     .maybeSingle();
@@ -91,19 +92,22 @@ export async function POST(req: NextRequest) {
 
   const { data: interactions } = await supabase
     .from("lead_interactions")
-    .select("type, subject, body, created_at")
+    .select("type, subject, body, payload, created_at")
     .eq("lead_id", body.lead_id)
     .order("created_at", { ascending: false })
     .limit(5);
 
   const interactionsText = (interactions ?? [])
     .reverse()
-    .map((i) => {
-      const date = new Date(i.created_at as string).toISOString().slice(0, 10);
-      const subject = (i.subject as string | null)?.trim();
-      const txt = (i.body as string | null)?.trim()?.slice(0, 300);
-      return `- ${date} | ${i.type as string}${subject ? ` | "${subject}"` : ""}${txt ? ` | ${txt}` : ""}`;
-    })
+    .map((i) =>
+      formatInteractionForAI({
+        type: i.type as string,
+        subject: (i.subject as string | null) ?? null,
+        body: (i.body as string | null) ?? null,
+        payload: i.payload,
+        created_at: i.created_at as string,
+      }),
+    )
     .join("\n");
 
   const userPrompt = `Lead: ${lead.name}
@@ -112,6 +116,7 @@ Email: ${lead.email ?? "—"}
 Origen: ${lead.source ?? "—"}
 Estado actual: ${lead.status}
 Notas: ${(lead.notes as string | null) ?? "—"}
+Resumen IA actual: ${(lead.ai_summary as string | null) ?? "—"}
 
 Últimas 5 interacciones (cronológico):
 ${interactionsText || "(sin interacciones previas)"}
