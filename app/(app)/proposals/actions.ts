@@ -14,8 +14,8 @@ import {
   CreateProposalInput,
   DuplicateProposalInput,
   SendProposalPreviewInput,
-  UpdateProposalTeamInput,
   UpdateProposalInput,
+  UpdateProposalTeamInput,
 } from "@/lib/schemas/proposal";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
@@ -408,9 +408,9 @@ export async function setProposalTeamMembers(
   if (deleteError) return { ok: false, error: deleteError.message };
 
   if (member_ids.length > 0) {
-    const { error: insertError } = await supabase.from("proposal_team_members").insert(
-      member_ids.map((member_id, position) => ({ proposal_id, member_id, position })),
-    );
+    const { error: insertError } = await supabase
+      .from("proposal_team_members")
+      .insert(member_ids.map((member_id, position) => ({ proposal_id, member_id, position })));
     if (insertError) return { ok: false, error: insertError.message };
   }
 
