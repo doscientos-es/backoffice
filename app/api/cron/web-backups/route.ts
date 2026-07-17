@@ -4,7 +4,7 @@
  * Runs scheduled backups for every active web project with a backup slug and
  * complete DB credentials. Intended to be called weekly by the backup server.
  *
- * Auth: Authorization: Bearer <CRON_SECRET>
+ * Auth: Authorization: Bearer <CRON_SECRET | BACKUP_RUNNER_TOKEN>
  */
 
 import { serverEnv } from "@/lib/env";
@@ -27,12 +27,13 @@ type BackupResult = {
 };
 
 function authenticate(request: NextRequest): boolean {
-  const { CRON_SECRET } = serverEnv();
-  if (!CRON_SECRET) return true;
+  const { BACKUP_RUNNER_TOKEN, CRON_SECRET } = serverEnv();
+  const allowedTokens = [CRON_SECRET, BACKUP_RUNNER_TOKEN].filter(Boolean);
+  if (allowedTokens.length === 0) return true;
 
   const auth = request.headers.get("authorization") ?? "";
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : auth;
-  return token === CRON_SECRET;
+  return allowedTokens.includes(token);
 }
 
 async function runBackup(

@@ -102,7 +102,7 @@ export const updateWebProject = defineAction({
  * client slug — to the lightweight backup endpoint exposed on the server
  * (`BACKUP_RUNNER_URL`), authenticated with a shared Bearer token. That server
  * runs `backup-runner.sh` with the received parameters and replies with status.
- * The decrypted credentials only travel over the Tailscale network to the runner.
+ * The decrypted credentials only travel server-to-server to the backup runner.
  */
 export const triggerWebBackup = defineAction({
   name: "webs.backup",

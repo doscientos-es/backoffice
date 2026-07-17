@@ -12,6 +12,7 @@ const PUBLIC_PATHS = [
   "/api/webhooks",
   "/api/email/webhook",
   "/api/public",
+  "/api/cron",
   // Integration endpoints authenticate themselves via secrets; no session needed.
   "/api/integrations",
 ];

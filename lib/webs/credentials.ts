@@ -55,7 +55,7 @@ function rowToCredentials(row: CredentialRow): WebProjectDbCredentials | null {
  * Server-only: called by the auth-gated `triggerWebBackup` server action, which
  * forwards the decrypted credentials to the backup runner. Uses the admin client
  * so the read doesn't depend on RLS. The plaintext password must never be
- * returned to the browser — only handed to the runner over the Tailscale network.
+ * returned to the browser — only handed to the configured backup runner.
  */
 export async function getWebProjectDbCredentials(
   id: string,
