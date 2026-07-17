@@ -8,6 +8,8 @@ import { EntityMultiCombobox } from "@/components/ui/entity-multi-combobox";
 import { createCalendarEvent } from "@/lib/calendar/actions";
 import type { CalendarEvent } from "@/lib/calendar/types";
 import { cn } from "@/lib/utils";
+import { todayIsoLocal } from "@/lib/utils/date";
+import { dateAndTimeToIso } from "@/lib/utils/date-time";
 import { Bell, CheckSquare, Presentation, Video } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import type { LeadOption, ProjectOption, TeamMember } from "./calendar-grid";
@@ -55,11 +57,6 @@ const INPUT_CLS =
   "w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring";
 const LABEL_CLS = "text-[10px] font-medium uppercase tracking-wide text-muted-foreground";
 
-/** Combine a date string + HH:MM time → ISO 8601 UTC string */
-function toISO(date: string, time: string): string {
-  return new Date(`${date}T${time}:00`).toISOString();
-}
-
 export function CalendarCreateDialog({
   open,
   initialDate,
@@ -69,7 +66,7 @@ export function CalendarCreateDialog({
   onClose,
   onCreated,
 }: Props) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIsoLocal();
 
   const [kind, setKind] = useState<Kind>("task");
   const [title, setTitle] = useState("");
@@ -120,8 +117,8 @@ export function CalendarCreateDialog({
 
         // ── Meeting with a lead → scheduleLeadMeeting (logs as interaction) ────
         if (kind === "google_meeting" && selectedLeadId) {
-          const startISO = toISO(date, startTime);
-          const endISO = toISO(date, endTime);
+          const startISO = dateAndTimeToIso(date, startTime);
+          const endISO = dateAndTimeToIso(date, endTime);
           const attendeeEmails = [
             ...(selectedLead?.email ? [selectedLead.email] : []),
             ...memberEmails,

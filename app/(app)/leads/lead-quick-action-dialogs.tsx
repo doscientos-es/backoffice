@@ -22,7 +22,10 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
+import { defaultMeetingEnd, defaultMeetingStart } from "@/lib/calendar/date-presets";
+import { defaultFollowUpDateTime } from "@/lib/reminders/date-presets";
 import type { CallOutcome } from "@/lib/schemas/lead";
+import { addMinutesToDatetimeLocal, datetimeLocalToIso } from "@/lib/utils/date-time";
 import { FileText, Loader2, Mail, NotebookPen, Phone, Send, Video } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type SubmitEvent, useState } from "react";
@@ -30,38 +33,6 @@ import { createReminder } from "../reminders/actions";
 import { EmailComposer } from "./[id]/email-composer";
 import { logLeadCall, logLeadEmail, logLeadNote, scheduleLeadMeeting } from "./actions";
 import { CallDigestDialog } from "./call-digest-dialog";
-
-// ─── Meet helpers ─────────────────────────────────────────────────────────────
-
-/** Convert datetime-local value to ISO-8601 with the browser's local offset. */
-function localToIso(localValue: string): string {
-  const d = new Date(localValue);
-  const offset = -d.getTimezoneOffset();
-  const sign = offset >= 0 ? "+" : "-";
-  const absOffset = Math.abs(offset);
-  const hh = String(Math.floor(absOffset / 60)).padStart(2, "0");
-  const mm = String(absOffset % 60).padStart(2, "0");
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  const hours = String(d.getHours()).padStart(2, "0");
-  const minutes = String(d.getMinutes()).padStart(2, "0");
-  return `${year}-${month}-${day}T${hours}:${minutes}:00${sign}${hh}:${mm}`;
-}
-
-function defaultMeetStart(): string {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  d.setHours(10, 0, 0, 0);
-  return toLocalInputValue(d);
-}
-
-function defaultMeetEnd(): string {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  d.setHours(11, 0, 0, 0);
-  return toLocalInputValue(d);
-}
 
 // ─── QMeetDialog ──────────────────────────────────────────────────────────────
 
@@ -140,8 +111,8 @@ export function QMeetDialog({
   const [open, setOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [title, setTitle] = useState(`Reunión con ${leadName}`);
-  const [start, setStart] = useState(defaultMeetStart);
-  const [end, setEnd] = useState(defaultMeetEnd);
+  const [start, setStart] = useState(defaultMeetingStart);
+  const [end, setEnd] = useState(defaultMeetingEnd);
   const [description, setDescription] = useState("");
   const [projectId, setProjectId] = useState("");
   const members = useMemberToggle();
@@ -153,9 +124,7 @@ export function QMeetDialog({
     const s = new Date(val);
     const e = new Date(end);
     if (e <= s) {
-      const next = new Date(s);
-      next.setHours(next.getHours() + 1);
-      setEnd(toLocalInputValue(next));
+      setEnd(addMinutesToDatetimeLocal(val, 60));
     }
   }
 
@@ -171,8 +140,8 @@ export function QMeetDialog({
       leadId,
       title,
       description: description.trim() || undefined,
-      start: localToIso(start),
-      end: localToIso(end),
+      start: datetimeLocalToIso(start),
+      end: datetimeLocalToIso(end),
       attendeeEmails: attendeeEmails.length > 0 ? attendeeEmails : undefined,
       projectId: projectId || undefined,
       withMeet: true,
@@ -289,7 +258,7 @@ export function QMeetDialog({
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title="¿Enviar invitación de reunión?"
+        title={leadEmail ? "¿Enviar invitación de reunión?" : "¿Crear reunión sin invitar al lead?"}
         description={
           <>
             {leadEmail ? (
@@ -302,10 +271,14 @@ export function QMeetDialog({
             <p className="mt-2">
               <strong>{title}</strong> · {start.replace("T", " ")}.
             </p>
-            <p className="mt-2">El lead recibirá la invitación en su calendario.</p>
+            <p className="mt-2">
+              {leadEmail
+                ? "El lead recibirá la invitación en su calendario."
+                : "La reunión se creará sin invitación para el lead."}
+            </p>
           </>
         }
-        confirmLabel="Sí, enviar invitación"
+        confirmLabel={leadEmail ? "Sí, enviar invitación" : "Sí, crear reunión"}
         cancelLabel="Volver a revisar"
         pending={feedback.pending}
         onConfirm={() => void handleConfirmSchedule()}
@@ -413,7 +386,7 @@ export function QMeetNowDialog({
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title="¿Enviar invitación y abrir Meet?"
+        title={leadEmail ? "¿Enviar invitación y abrir Meet?" : "¿Crear Meet sin invitar al lead?"}
         description={
           <>
             {leadEmail ? (
@@ -426,27 +399,13 @@ export function QMeetNowDialog({
             <p className="mt-2">También se abrirá el enlace de Meet en una nueva pestaña.</p>
           </>
         }
-        confirmLabel="Sí, crear y enviar"
+        confirmLabel={leadEmail ? "Sí, crear y enviar" : "Sí, crear y abrir Meet"}
         cancelLabel="Volver a revisar"
         pending={feedback.pending}
         onConfirm={() => void handleConfirmCreate()}
       />
     </>
   );
-}
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function toLocalInputValue(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
-
-function defaultFollowUp(): string {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  d.setHours(9, 0, 0, 0);
-  return toLocalInputValue(d);
 }
 
 function FollowUpSection({
@@ -509,7 +468,7 @@ export function QCallDialog({
   const [notes, setNotes] = useState("");
   const [transcript, setTranscript] = useState("");
   const [followUpEnabled, setFollowUpEnabled] = useState(false);
-  const [followUpAt, setFollowUpAt] = useState(defaultFollowUp);
+  const [followUpAt, setFollowUpAt] = useState(defaultFollowUpDateTime);
   // Meet notes import
   const [showImport, setShowImport] = useState(false);
   const [importUrl, setImportUrl] = useState("");
@@ -554,7 +513,7 @@ export function QCallDialog({
       await createReminder({
         leadId,
         title: `Llamar a ${leadName}`,
-        remindAt: new Date(followUpAt).toISOString(),
+        remindAt: datetimeLocalToIso(followUpAt),
       });
     }
     feedback.setSuccess("Llamada registrada");

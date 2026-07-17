@@ -14,6 +14,7 @@ import type { SocialPostSuggestion } from "@/lib/social/ai-suggestion";
 import { PLATFORM_LABELS, SOCIAL_PLATFORMS } from "@/lib/social/core";
 import type { MediaItem, SocialPlatform } from "@/lib/social/core";
 import { cn } from "@/lib/utils";
+import { datetimeLocalToIso, toDatetimeLocalValue } from "@/lib/utils/date-time";
 import { CalendarClock, FileText, MessageCircle, Send } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -125,7 +126,7 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
       return;
     }
     const scheduledAt =
-      mode === "schedule" && scheduledLocal ? new Date(scheduledLocal).toISOString() : null;
+      mode === "schedule" && scheduledLocal ? datetimeLocalToIso(scheduledLocal) : null;
     const captions = perPlatform ? buildCaptions() : undefined;
     const automationPlatforms = selectedList.filter(
       (platform): platform is "instagram" | "facebook" =>
@@ -399,7 +400,7 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
                   id="scheduledAt"
                   type="datetime-local"
                   value={scheduledLocal}
-                  min={new Date().toISOString().slice(0, 16)}
+                  min={toDatetimeLocalValue(new Date())}
                   onChange={(e) => setScheduledLocal(e.target.value)}
                   className="w-full max-w-xs rounded-lg border border-border bg-transparent px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-border/30"
                 />

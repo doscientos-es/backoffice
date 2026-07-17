@@ -15,26 +15,10 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
+import { suggestedReminderDateTime } from "@/lib/reminders/date-presets";
+import { datetimeLocalToIso, toDatetimeLocalValue } from "@/lib/utils/date-time";
 import { type ReactNode, useState } from "react";
 import { createReminder } from "./actions";
-
-/** datetime-local needs `YYYY-MM-DDTHH:mm` in the user's local TZ. */
-function toLocalInputValue(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
-
-function defaultRemindAtValue(): string {
-  const d = new Date();
-  d.setHours(d.getHours() + 1, 0, 0, 0);
-  return toLocalInputValue(d);
-}
-
-function suggestedRemindAtValue(value: string | null): string {
-  if (!value) return defaultRemindAtValue();
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? defaultRemindAtValue() : toLocalInputValue(date);
-}
 
 const SCHEDULE_PRESETS: { label: string; minutes: number }[] = [
   { label: "En 1 h", minutes: 60 },
@@ -81,7 +65,7 @@ export function ScheduleReminderDialog({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState(defaultTitle);
-  const [remindAt, setRemindAt] = useState(suggestedRemindAtValue(defaultRemindAt));
+  const [remindAt, setRemindAt] = useState(suggestedReminderDateTime(defaultRemindAt));
   const [notes, setNotes] = useState(defaultNotes);
   const [assigneeId, setAssigneeId] = useState<string>("");
   const feedback = useFormFeedback();
@@ -92,7 +76,7 @@ export function ScheduleReminderDialog({
     if (next) {
       setTitle(defaultTitle);
       setNotes(defaultNotes);
-      setRemindAt(suggestedRemindAtValue(defaultRemindAt));
+      setRemindAt(suggestedReminderDateTime(defaultRemindAt));
       setAssigneeId("");
       feedback.reset();
     }
@@ -102,7 +86,7 @@ export function ScheduleReminderDialog({
   function applyPreset(minutes: number) {
     const d = new Date(Date.now() + minutes * 60_000);
     d.setSeconds(0, 0);
-    setRemindAt(toLocalInputValue(d));
+    setRemindAt(toDatetimeLocalValue(d));
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -113,7 +97,7 @@ export function ScheduleReminderDialog({
       projectId,
       clientId,
       title: title.trim(),
-      remindAt: new Date(remindAt).toISOString(),
+      remindAt: datetimeLocalToIso(remindAt),
       notes: notes || undefined,
       assigneeId: assigneeId || undefined,
     });
