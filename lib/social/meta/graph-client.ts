@@ -1,3 +1,4 @@
+import { isDemoMode } from "@/lib/demo";
 /**
  * Social Hub — shared Meta Graph client.
  *
@@ -95,6 +96,8 @@ async function parseOrThrow<T>(res: Response): Promise<T> {
 
 /** GET a single Graph object (fields via params). */
 export async function graphGet<T>(path: string, params: Record<string, string> = {}): Promise<T> {
+  if (isDemoMode()) throw new PublishError("facebook", "Meta está desactivado en modo demo.");
+
   const url = new URL(`${graphBase()}/${path}`);
   url.searchParams.set("access_token", metaPageToken());
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
@@ -104,6 +107,8 @@ export async function graphGet<T>(path: string, params: Record<string, string> =
 
 /** POST to a Graph edge with form-encoded params (token injected). */
 export async function graphPost<T>(path: string, params: Record<string, string> = {}): Promise<T> {
+  if (isDemoMode()) throw new PublishError("facebook", "Meta está desactivado en modo demo.");
+
   const body = new URLSearchParams();
   body.set("access_token", metaPageToken());
   for (const [k, v] of Object.entries(params)) body.set(k, v);
@@ -117,6 +122,8 @@ export async function graphPost<T>(path: string, params: Record<string, string> 
 
 /** DELETE a Graph object (post, media…). Throws PublishError on failure. */
 export async function graphDelete(path: string): Promise<void> {
+  if (isDemoMode()) throw new PublishError("facebook", "Meta está desactivado en modo demo.");
+
   const url = new URL(`${graphBase()}/${path}`);
   url.searchParams.set("access_token", metaPageToken());
   const res = await requestWithRetry(url.toString(), { method: "DELETE" });
@@ -128,6 +135,8 @@ export async function graphGetList<T>(
   path: string,
   params: Record<string, string> = {},
 ): Promise<T[]> {
+  if (isDemoMode()) throw new PublishError("facebook", "Meta está desactivado en modo demo.");
+
   const first = new URL(`${graphBase()}/${path}`);
   first.searchParams.set("access_token", metaPageToken());
   for (const [k, v] of Object.entries(params)) first.searchParams.set(k, v);

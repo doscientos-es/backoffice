@@ -97,19 +97,29 @@ export default async function DeckPage({
 
   const isDraft = proposal.status === "draft";
 
-  const [{ data: items }, { data: team }] = await Promise.all([
+  const [{ data: items }, { data: proposalTeam }] = await Promise.all([
     admin
       .from("proposal_items")
       .select("id, position, description, quantity, unit_price, vat_rate, subtotal, billing_cycle")
       .eq("proposal_id", proposal.id as string)
       .order("position"),
     admin
-      .from("team_members")
-      .select("id, name, job_title, avatar_url")
-      .is("deleted_at", null)
-      .order("created_at", { ascending: true })
-      .limit(6),
+      .from("proposal_team_members")
+      .select("member_id, position")
+      .eq("proposal_id", proposal.id as string)
+      .order("position"),
   ]);
+
+  const selectedTeam = (proposalTeam ?? []) as Array<{ member_id: string; position: number }>;
+  const selectedMemberIds = selectedTeam.map((member) => member.member_id);
+  const { data: team } =
+    selectedMemberIds.length > 0
+      ? await admin
+          .from("team_members")
+          .select("id, name, job_title, avatar_url")
+          .in("id", selectedMemberIds)
+          .is("deleted_at", null)
+      : { data: [] };
 
   // Bump status from 'sent' to 'viewed' on the first external (client) open
   // of the deck. Team previews and drafts never transition the status.
@@ -167,7 +177,12 @@ export default async function DeckPage({
   };
 
   const deckItems = (items ?? []) as unknown as DeckProposalItem[];
-  const deckTeam = (team ?? []) as unknown as DeckTeamMember[];
+  const teamById = new Map(
+    ((team ?? []) as unknown as DeckTeamMember[]).map((member) => [member.id, member]),
+  );
+  const deckTeam = selectedMemberIds
+    .map((memberId) => teamById.get(memberId))
+    .filter((member): member is DeckTeamMember => Boolean(member));
 
   return (
     <DeckViewer

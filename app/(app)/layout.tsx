@@ -8,18 +8,20 @@ import { QuickCreateButton } from "@/components/layout/quick-create-button";
 import { ShortcutsDialog } from "@/components/layout/shortcuts-dialog";
 import { Sidebar } from "@/components/layout/sidebar";
 import { requireUser } from "@/lib/auth";
+import { isPublicDemoMode } from "@/lib/demo";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
   const verifactuMode = (process.env.VERIFACTU_ENV ?? "mock").toUpperCase();
+  const demoMode = isPublicDemoMode();
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar user={user} verifactuMode={verifactuMode} />
+      <Sidebar user={user} verifactuMode={verifactuMode} demoMode={demoMode} />
       <div className="flex flex-1 flex-col min-h-0 min-w-0">
         {/* Mobile Header (Topbar replacement) */}
         <header className="flex h-12 items-center justify-between border-b border-border bg-card px-4 md:hidden">
-          <MobileNav user={user} verifactuMode={verifactuMode} />
+          <MobileNav user={user} verifactuMode={verifactuMode} demoMode={demoMode} />
           <Logo size="sm" />
           <CommandPaletteTrigger variant="icon" />
         </header>

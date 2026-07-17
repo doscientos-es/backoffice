@@ -13,6 +13,7 @@ import {
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getDeckTapDirection } from "./deck-navigation";
 import { buildSlides } from "./deck-slides";
 import { DECK_STYLES } from "./deck-styles";
 import type { DeckProposal, DeckProposalItem, DeckTeamMember } from "./page";
@@ -67,6 +68,7 @@ export function DeckViewer({
   const [showHelp, setShowHelp] = useState(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStartX = useRef<number | null>(null);
+  const touchMoved = useRef(false);
 
   // First-time help overlay
   useEffect(() => {
@@ -214,12 +216,29 @@ export function DeckViewer({
 
   function onTouchStart(e: React.TouchEvent) {
     touchStartX.current = e.touches[0]?.clientX ?? null;
+    touchMoved.current = false;
   }
   function onTouchEnd(e: React.TouchEvent) {
     if (touchStartX.current === null) return;
     const dx = (e.changedTouches[0]?.clientX ?? 0) - touchStartX.current;
-    if (Math.abs(dx) > SWIPE_THRESHOLD) (dx < 0 ? next : prev)();
+    touchMoved.current = Math.abs(dx) > SWIPE_THRESHOLD;
+    if (touchMoved.current) (dx < 0 ? next : prev)();
     touchStartX.current = null;
+  }
+
+  function onViewportClick(e: React.MouseEvent<HTMLDivElement>) {
+    if (touchMoved.current) {
+      touchMoved.current = false;
+      return;
+    }
+    if (window.matchMedia && !window.matchMedia("(max-width: 768px)").matches) return;
+    if (window.matchMedia === undefined && window.innerWidth > 768) return;
+
+    const target = e.target as HTMLElement;
+    if (target.closest("a,button,input,textarea,select,[role='button']")) return;
+    const viewport = e.currentTarget.getBoundingClientRect();
+    const direction = getDeckTapDirection(e.clientX, viewport.left, viewport.width);
+    (direction === "prev" ? prev : next)();
   }
 
   const progress = total > 1 ? ((current + 1) / total) * 100 : 100;
@@ -237,7 +256,12 @@ export function DeckViewer({
       <div className="deck-progress no-print" aria-hidden>
         <div className="deck-progress-bar" style={{ width: `${progress}%` }} />
       </div>
-      <div className="deck-viewport" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      <div
+        className="deck-viewport"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        onClick={onViewportClick}
+      >
         <div className="deck-stage" style={{ transform: `translateX(-${current * 100}%)` }}>
           {slides.map((slide, i) => (
             <div key={slide.key} className="deck-slide-wrapper" data-active={i === current}>

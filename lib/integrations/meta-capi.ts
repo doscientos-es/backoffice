@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { isDemoMode } from "@/lib/demo";
 import { serverEnv } from "@/lib/env";
 import { scopedLogger } from "@/lib/logger";
 
@@ -44,6 +45,11 @@ export type CapiConversionInput = {
  * No-ops silently when META_PIXEL_ID or META_CAPI_ACCESS_TOKEN is not set.
  */
 export async function pushMetaConversion(input: CapiConversionInput): Promise<void> {
+  if (isDemoMode()) {
+    log.debug({ eventId: input.eventId }, "meta capi mocked in demo mode");
+    return;
+  }
+
   const { META_PIXEL_ID, META_CAPI_ACCESS_TOKEN } = serverEnv();
 
   if (!META_PIXEL_ID || !META_CAPI_ACCESS_TOKEN) {

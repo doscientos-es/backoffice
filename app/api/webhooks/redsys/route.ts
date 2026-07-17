@@ -1,4 +1,5 @@
 import { PaymentReceiptEmail } from "@/components/email";
+import { isDemoMode } from "@/lib/demo";
 import { renderEmail } from "@/lib/email/render";
 import { sendEmail } from "@/lib/email/resend";
 import { publicEnv } from "@/lib/env";
@@ -15,6 +16,8 @@ import { formatDate, formatEUR } from "@/lib/utils";
 const log = scopedLogger("api.webhooks.redsys");
 
 export async function POST(req: Request) {
+  if (isDemoMode()) return new Response("Redsys disabled in demo mode", { status: 503 });
+
   try {
     const formData = await req.formData();
     const merchantParameters = formData.get("Ds_MerchantParameters") as string;

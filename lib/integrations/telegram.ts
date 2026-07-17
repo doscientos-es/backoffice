@@ -1,3 +1,4 @@
+import { isDemoMode } from "@/lib/demo";
 import { serverEnv } from "@/lib/env";
 import { scopedLogger } from "@/lib/logger";
 
@@ -41,6 +42,11 @@ export async function telegramRequest<T = unknown>(
   body: Record<string, unknown> = {},
   opts: { token?: string; timeoutMs?: number } = {},
 ): Promise<TelegramResult<T>> {
+  if (isDemoMode()) {
+    const result = method === "getMe" ? { id: 0, username: "demo_bot", first_name: "Demo" } : {};
+    return { ok: true, result: result as T };
+  }
+
   const token = opts.token ?? telegramToken();
   if (!token) return { ok: false, error: "TELEGRAM_BOT_TOKEN no configurado" };
 
@@ -86,6 +92,8 @@ export function telegramSendMessage(input: {
   inlineKeyboard?: InlineKeyboard;
   token?: string;
 }): Promise<TelegramResult> {
+  if (isDemoMode()) return Promise.resolve({ ok: true, result: { mocked: true } });
+
   const chatId = input.chatId ?? telegramChatId();
   if (!chatId) return Promise.resolve({ ok: false, error: "TELEGRAM_CHAT_ID no configurado" });
 

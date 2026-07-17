@@ -1,6 +1,7 @@
 "use server";
 
 import { defineAction } from "@/lib/actions/define-action";
+import { isDemoMode } from "@/lib/demo";
 import { serverEnv } from "@/lib/env";
 import { backupsCacheTag, ensureClientBackupDir, isFileBrowserConfigured } from "@/lib/filebrowser";
 import { uuidIdInput } from "@/lib/schemas/common";
@@ -108,6 +109,8 @@ export const triggerWebBackup = defineAction({
   name: "webs.backup",
   schema: z.object({ id: z.string().uuid(), slug: z.string().nullable().optional() }),
   handler: async (input) => {
+    if (isDemoMode()) return;
+
     const env = serverEnv();
     if (!env.BACKUP_RUNNER_URL || !env.BACKUP_RUNNER_TOKEN) {
       throw new Error("El servicio de backups no está configurado.");

@@ -6,6 +6,7 @@ import {
   hasCompleteFiscalData,
   promoteLeadFromClient,
 } from "@/lib/crm/conversion";
+import { isDemoMode } from "@/lib/demo";
 import { publicEnv, serverEnv } from "@/lib/env";
 import { backupProposalToDrive } from "@/lib/google/backup";
 import { createRedsysPayment, getRedsysUrl } from "@/lib/integrations/redsys";
@@ -27,6 +28,7 @@ type ActionResult = { ok: true } | { ok: false; error: string };
 export type PaymentInitResult =
   | {
       ok: true;
+      demo?: boolean;
       url: string;
       signatureVersion: string;
       merchantParameters: string;
@@ -230,6 +232,8 @@ export async function initiateProposalPayment(
   proposalId: string,
   token: string,
 ): Promise<PaymentInitResult> {
+  if (isDemoMode()) return { ok: false, error: "Los pagos están desactivados en modo demo" };
+
   const admin = createAdminClient();
 
   const { data: proposal } = await admin
@@ -266,6 +270,29 @@ export async function initiateProposalPayment(
 
   if (insertError || !payment?.redsys_order) {
     return { ok: false, error: "Error al crear el registro de pago" };
+  }
+
+  if (isDemoMode()) {
+    const { error: confirmError } = await admin
+      .from("invoice_payments")
+      .update({
+        status: "confirmed",
+        ds_response: "0000",
+        ds_authorisation_code: "DEMO-0001",
+        confirmed_at: new Date().toISOString(),
+      })
+      .eq("redsys_order", payment.redsys_order as string);
+
+    if (confirmError) return { ok: false, error: "Error al simular el pago" };
+
+    return {
+      ok: true,
+      demo: true,
+      url: `${publicEnv.NEXT_PUBLIC_APP_URL}/p/proposal/${token}?success=1`,
+      signatureVersion: "DEMO",
+      merchantParameters: "",
+      signature: "",
+    };
   }
 
   const env = serverEnv();

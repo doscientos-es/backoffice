@@ -216,9 +216,11 @@ function NavSection({
 export function MobileNav({
   user,
   verifactuMode,
+  demoMode,
 }: {
   user: CurrentUser;
   verifactuMode: string;
+  demoMode: boolean;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -242,7 +244,7 @@ export function MobileNav({
   };
 
   return (
-    <div className="md:hidden">
+    <div className="flex items-center gap-2 md:hidden">
       <Drawer direction="left" open={open} onOpenChange={setOpen}>
         <DrawerTrigger asChild>
           <button
@@ -305,6 +307,11 @@ export function MobileNav({
             {/* Footer */}
             <div className="flex flex-col border-t border-border p-2 gap-2">
               <div className="flex items-center justify-between gap-1">
+                {demoMode ? (
+                  <Badge variant="warning" className="h-4 px-1 text-[9px] font-bold uppercase ml-1">
+                    MODO DEMO
+                  </Badge>
+                ) : null}
                 <Badge
                   variant={
                     verifactuMode === "PROD"
@@ -332,6 +339,11 @@ export function MobileNav({
           </div>
         </DrawerContent>
       </Drawer>
+      {demoMode ? (
+        <Badge variant="warning" className="h-4 px-1 text-[9px] font-bold uppercase">
+          MODO DEMO
+        </Badge>
+      ) : null}
     </div>
   );
 }

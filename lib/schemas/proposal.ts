@@ -106,6 +106,12 @@ export const UpdateProposalInput = z.object({
 });
 export type UpdateProposalInputType = z.infer<typeof UpdateProposalInput>;
 
+export const UpdateProposalTeamInput = z.object({
+  proposal_id: z.string().uuid(),
+  member_ids: z.array(z.string().uuid()).max(20),
+});
+export type UpdateProposalTeamInputType = z.infer<typeof UpdateProposalTeamInput>;
+
 export const SendProposalPreviewInput = z.object({
   id: z.string().uuid(),
   to: z.string().email().optional(),

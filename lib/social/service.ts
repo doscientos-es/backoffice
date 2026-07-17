@@ -1,3 +1,4 @@
+import { isDemoMode } from "@/lib/demo";
 /**
  * Social Hub — application service.
  *
@@ -70,6 +71,8 @@ export async function importHistoricalInstagramPosts(): Promise<{
   skipped: number;
   failed: number;
 }> {
+  if (isDemoMode()) return { total: 0, imported: 0, skipped: 0, failed: 0 };
+
   if (!metaPageToken() || !igUserId()) {
     throw new Error("Instagram no está configurado.");
   }
@@ -102,6 +105,20 @@ export async function publishPost(postId: string): Promise<FanOutResult> {
   if (platforms.length === 0) throw new Error("El post no tiene ninguna red seleccionada.");
 
   await repo.markPublishing(postId);
+  if (isDemoMode()) {
+    const result: FanOutResult = {
+      status: "published",
+      targets: platforms.map((platform) => ({
+        platform,
+        ok: true,
+        remoteId: `demo-${postId}-${platform}`,
+        remoteUrl: null,
+      })),
+    };
+    await repo.applyFanOut(postId, result);
+    return result;
+  }
+
   const composed = composePost(post.id, post.caption, post.media);
   const captions = captionOverrides(post.targets);
   const result = await fanOutPublish(composed, platforms, socialRegistry(), captions);
@@ -139,6 +156,8 @@ export async function getPostDetail(postId: string): Promise<PostDetail | null> 
  * Errors on one target are logged and skipped so the sweep always completes.
  */
 export async function syncInsights(): Promise<{ synced: number }> {
+  if (isDemoMode()) return { synced: 0 };
+
   const registry = socialRegistry();
   const targets = await repo.listPublishedTargets();
   const results = await Promise.all(targets.map((target) => syncTargetInsights(target, registry)));
@@ -150,6 +169,8 @@ export async function syncInsights(): Promise<{ synced: number }> {
  * Same isolation guarantee as {@link syncInsights}.
  */
 export async function syncComments(): Promise<{ synced: number }> {
+  if (isDemoMode()) return { synced: 0 };
+
   const registry = socialRegistry();
   const targets = await repo.listPublishedTargets();
   const results = await Promise.all(targets.map((target) => syncTargetComments(target, registry)));
@@ -161,6 +182,8 @@ export async function syncSocial(): Promise<{
   insightsSynced: number;
   commentsSynced: number;
 }> {
+  if (isDemoMode()) return { insightsSynced: 0, commentsSynced: 0 };
+
   const registry = socialRegistry();
   const targets = await repo.listPublishedTargets();
   const results = await Promise.all(
@@ -218,6 +241,8 @@ async function syncTargetComments(
  * soft-delete or the other targets.
  */
 export async function deletePostFromNetworks(postId: string): Promise<void> {
+  if (isDemoMode()) return;
+
   const registry = socialRegistry();
   const targets = await repo.getPublishedTargetsForPost(postId);
   await Promise.allSettled(
@@ -252,6 +277,11 @@ export async function deletePostLocalWithMedia(postId: string): Promise<void> {
 export async function replyToComment(commentId: string, message: string): Promise<void> {
   const comment = await repo.getComment(commentId);
   if (!comment) throw new Error("El comentario no existe.");
+  if (isDemoMode()) {
+    await repo.markReplied(commentId);
+    return;
+  }
+
   const publisher = socialRegistry().get(comment.platform);
   if (!canReply(publisher)) throw new Error("Esta red no permite responder comentarios.");
   await publisher.replyToComment(comment.remoteCommentId, message);

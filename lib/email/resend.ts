@@ -1,9 +1,12 @@
+import { isDemoMode } from "@/lib/demo";
 import { serverEnv } from "@/lib/env";
 import { Resend } from "resend";
 
 let cached: Resend | null = null;
 
 export function getResend(): Resend | null {
+  if (isDemoMode()) return null;
+
   const env = serverEnv();
   if (!env.RESEND_API_KEY) return null;
   if (cached) return cached;
@@ -24,8 +27,10 @@ export type SendEmailInput = {
 export async function sendEmail(
   input: SendEmailInput,
 ): Promise<{ id: string | null; mocked: boolean }> {
-  const resend = getResend();
   const env = serverEnv();
+  if (isDemoMode()) return { id: null, mocked: true };
+
+  const resend = getResend();
   const safeName = input.fromName.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
   const address = input.fromAlias.includes("@")
     ? input.fromAlias

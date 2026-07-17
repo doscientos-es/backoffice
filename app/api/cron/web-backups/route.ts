@@ -7,6 +7,7 @@
  * Auth: Authorization: Bearer <CRON_SECRET | BACKUP_RUNNER_TOKEN>
  */
 
+import { isDemoMode } from "@/lib/demo";
 import { serverEnv } from "@/lib/env";
 import { scopedLogger } from "@/lib/logger";
 import { getConfiguredWebBackupTargets } from "@/lib/webs/credentials";
@@ -67,6 +68,10 @@ async function runBackup(
 async function handle(request: NextRequest): Promise<NextResponse> {
   if (!authenticate(request)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  if (isDemoMode()) {
+    return NextResponse.json({ total: 0, ok: 0, failed: 0, results: [], mocked: true });
   }
 
   const env = serverEnv();

@@ -1,3 +1,4 @@
+import { isDemoMode } from "@/lib/demo";
 import { serverEnv } from "@/lib/env";
 import { scopedLogger } from "@/lib/logger";
 
@@ -147,6 +148,8 @@ async function fetchMetaMarketing<T>(
   path: string,
   params: Record<string, string> = {},
 ): Promise<T[]> {
+  if (isDemoMode()) return [];
+
   const env = serverEnv();
   const token = env.META_USER_ACCESS_TOKEN || env.META_PAGE_ACCESS_TOKEN;
 
@@ -251,6 +254,8 @@ export async function getMetaAdPreview(
   adId: string,
   format: MetaAdPreviewFormat = "DESKTOP_FEED_STANDARD",
 ): Promise<string | null> {
+  if (isDemoMode()) return null;
+
   const env = serverEnv();
   const token = env.META_USER_ACCESS_TOKEN || env.META_PAGE_ACCESS_TOKEN;
   if (!token) throw new Error("Meta Access Token (User or Page) not configured");

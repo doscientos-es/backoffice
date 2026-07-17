@@ -34,6 +34,10 @@ export function RedsysPaymentButton({
         window.location.href = `/p/invoice/${token}?error=1`;
         return;
       }
+      if (result.demo) {
+        window.location.href = result.url;
+        return;
+      }
       // Dynamically build and submit the Redsys form
       const form = document.createElement("form");
       form.method = "POST";
@@ -57,6 +61,20 @@ export function RedsysPaymentButton({
 
   return (
     <div className="flex flex-col gap-4 w-full sm:w-auto">
+      {process.env.NEXT_PUBLIC_DEMO_MODE === "true" ? (
+        <div className="rounded-lg border border-amber-300/30 bg-amber-400/10 p-3 text-left text-xs text-amber-100 sm:max-w-xs">
+          <p className="font-semibold text-amber-200">Pago simulado de Redsys</p>
+          <p className="mt-1 text-amber-100/80">No se realiza ningún cargo ni llamada externa.</p>
+          <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 font-mono text-[11px]">
+            <dt className="font-sans text-amber-100/60">Tarjeta</dt>
+            <dd>4548 8100 0000 0003</dd>
+            <dt className="font-sans text-amber-100/60">Caducidad</dt>
+            <dd>12/49</dd>
+            <dt className="font-sans text-amber-100/60">CVV</dt>
+            <dd>123</dd>
+          </dl>
+        </div>
+      ) : null}
       {hasPartial ? (
         <p className="text-sm text-zinc-400">
           Pagado: <strong className="text-emerald-400">{formatEUR(amountPaid)}</strong>

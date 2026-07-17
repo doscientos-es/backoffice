@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { isDemoMode } from "@/lib/demo";
 import { serverEnv } from "@/lib/env";
 import {
   type FormAnswer,
@@ -78,6 +79,8 @@ export type MetaLeadgenResponse = {
  * AND fall back to fuzzy matching in mapMetaLeadgenToIntake().
  */
 export async function fetchMetaLeadgen(leadgenId: string): Promise<MetaLeadgenResponse> {
+  if (isDemoMode()) throw new Error("Meta lead lookup está desactivado en modo demo");
+
   const env = serverEnv();
   if (!env.META_PAGE_ACCESS_TOKEN) {
     throw new Error("META_PAGE_ACCESS_TOKEN not configured");

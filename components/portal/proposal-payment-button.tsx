@@ -26,6 +26,10 @@ export function ProposalPaymentButton({
         window.location.href = `/p/proposal/${token}?error=1`;
         return;
       }
+      if (result.demo) {
+        window.location.href = result.url;
+        return;
+      }
       // Dynamically build and submit the Redsys form
       const form = document.createElement("form");
       form.method = "POST";

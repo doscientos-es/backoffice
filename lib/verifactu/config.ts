@@ -1,3 +1,4 @@
+import { isDemoMode } from "@/lib/demo";
 import { serverEnv } from "@/lib/env";
 import type { VerifactuConfig } from "@doscientos/verifactu";
 
@@ -19,7 +20,7 @@ import type { VerifactuConfig } from "@doscientos/verifactu";
 export function verifactuConfigFromEnv(): VerifactuConfig {
   const env = serverEnv();
   return {
-    environment: env.VERIFACTU_ENV,
+    environment: isDemoMode() ? "mock" : env.VERIFACTU_ENV,
     certificate: {
       p12Base64: env.VERIFACTU_CERT_P12_BASE64,
       password: env.VERIFACTU_CERT_PASSWORD,

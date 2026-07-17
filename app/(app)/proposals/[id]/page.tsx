@@ -25,6 +25,7 @@ import { LinkProjectButton } from "./link-project-button";
 import { MarkAcceptedButton } from "./mark-accepted-button";
 import { type EditableItem, ProposalEditor } from "./proposal-editor";
 import { type ProposalSpec, ProposalSpecs } from "./proposal-specs";
+import { ProposalTeamSelector } from "./proposal-team-selector";
 import { ReopenProposalButton } from "./reopen-proposal-button";
 import { SendPreviewButton } from "./send-preview-button";
 import { ShareLinks } from "./share-links";
@@ -111,6 +112,19 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
         .order("name")
     : { data: [] };
 
+  const [{ data: teamMembers }, { data: proposalTeam }] = await Promise.all([
+    supabase
+      .from("team_members")
+      .select("id, name, job_title")
+      .is("deleted_at", null)
+      .order("name"),
+    supabase
+      .from("proposal_team_members")
+      .select("member_id, position")
+      .eq("proposal_id", id)
+      .order("position"),
+  ]);
+
   // Deposit payments made from the proposal portal
   const { data: depositPayments } = await supabase
     .from("invoice_payments")
@@ -162,6 +176,9 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
   const token = proposal.portal_token as string | null;
   const portalViewedAt = (lastPortalView?.viewed_at as string | null) ?? null;
   const deckViewedAt = (lastDeckView?.viewed_at as string | null) ?? null;
+  const selectedTeamIds = ((proposalTeam ?? []) as Array<{ member_id: string }>).map(
+    (member) => member.member_id,
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -242,6 +259,21 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
       </SectionBoundary>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <Card className="min-w-0">
+          <CardHeader>
+            <CardTitle>Equipo del proyecto</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ProposalTeamSelector
+              proposalId={id}
+              members={
+                (teamMembers ?? []) as Array<{ id: string; name: string; job_title: string | null }>
+              }
+              initialMemberIds={selectedTeamIds}
+              locked={locked}
+            />
+          </CardContent>
+        </Card>
         <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Compartir con el cliente</CardTitle>

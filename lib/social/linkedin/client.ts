@@ -1,3 +1,4 @@
+import { isDemoMode } from "@/lib/demo";
 /**
  * Social Hub — shared LinkedIn REST client.
  *
@@ -112,6 +113,8 @@ export async function restPostForId(
   body: unknown,
   params: Record<string, string> = {},
 ): Promise<string> {
+  if (isDemoMode()) throw new PublishError("linkedin", "LinkedIn está desactivado en modo demo.");
+
   const url = new URL(`${REST_BASE}/${resource}`);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
   const res = await requestWithRetry(url.toString(), {
@@ -131,6 +134,8 @@ export async function restPostJson<T>(
   body: unknown,
   params: Record<string, string> = {},
 ): Promise<T> {
+  if (isDemoMode()) throw new PublishError("linkedin", "LinkedIn está desactivado en modo demo.");
+
   const url = new URL(`${REST_BASE}/${resource}`);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
   const res = await requestWithRetry(url.toString(), {
@@ -148,6 +153,8 @@ export async function restGet<T>(
   resource: string,
   params: Record<string, string> = {},
 ): Promise<T> {
+  if (isDemoMode()) throw new PublishError("linkedin", "LinkedIn está desactivado en modo demo.");
+
   const url = new URL(`${REST_BASE}/${resource}`);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
   const res = await requestWithRetry(url.toString(), {
@@ -161,6 +168,8 @@ export async function restGet<T>(
 
 /** DELETE a REST resource (no body expected). */
 export async function restDelete(resource: string): Promise<void> {
+  if (isDemoMode()) throw new PublishError("linkedin", "LinkedIn está desactivado en modo demo.");
+
   const url = new URL(`${REST_BASE}/${resource}`);
   const res = await requestWithRetry(url.toString(), {
     method: "DELETE",
@@ -172,6 +181,8 @@ export async function restDelete(resource: string): Promise<void> {
 
 /** Stream binary bytes from a public URL to a LinkedIn upload URL (PUT). */
 export async function uploadBinary(uploadUrl: string, sourceUrl: string): Promise<void> {
+  if (isDemoMode()) throw new PublishError("linkedin", "LinkedIn está desactivado en modo demo.");
+
   const source = await fetch(sourceUrl, { cache: "no-store" });
   if (!source.ok) {
     throw new PublishError("linkedin", `No se pudo leer el media (${source.status}).`);

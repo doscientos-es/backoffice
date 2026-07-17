@@ -7,6 +7,7 @@
  * All calls happen server-side — credentials never reach the browser.
  */
 
+import { isDemoMode } from "@/lib/demo";
 import { scopedLogger } from "@/lib/logger";
 
 const log = scopedLogger("filebrowser");
@@ -21,7 +22,8 @@ function apiUrl(): string {
 
 export function isFileBrowserConfigured(): boolean {
   return Boolean(
-    process.env.FILEBROWSER_API_URL?.trim() &&
+    !isDemoMode() &&
+      process.env.FILEBROWSER_API_URL?.trim() &&
       process.env.FILEBROWSER_USER?.trim() &&
       process.env.FILEBROWSER_PASSWORD?.trim(),
   );

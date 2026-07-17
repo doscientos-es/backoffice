@@ -76,6 +76,7 @@ function formatLine(key: string, meta: FieldMeta): string {
 
 const GROUPS: Array<{ label: string; prefixes: string[] }> = [
   { label: "Public — exposed to browser", prefixes: ["NEXT_PUBLIC_"] },
+  { label: "Runtime environment", prefixes: ["DEMO_MODE"] },
   { label: "Supabase / Auth", prefixes: ["SUPABASE_", "PORTAL_"] },
   { label: "Email — Resend", prefixes: ["RESEND_"] },
   { label: "AI — OpenAI", prefixes: ["OPENAI_"] },

@@ -14,6 +14,7 @@ import {
   CreateProposalInput,
   DuplicateProposalInput,
   SendProposalPreviewInput,
+  UpdateProposalTeamInput,
   UpdateProposalInput,
 } from "@/lib/schemas/proposal";
 import { createServerClient } from "@/lib/supabase/server";
@@ -361,6 +362,59 @@ export async function linkProposalToProject(
 
   revalidatePath(`/proposals/${proposal_id}`);
   if (project_id) revalidatePath(`/projects/${project_id}`);
+  return { ok: true };
+}
+
+// ---------------- PROPOSAL TEAM ----------------
+
+/** Replaces the people shown as the project team in the client deck. */
+export async function setProposalTeamMembers(
+  input: unknown,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireUser();
+
+  const parsed = UpdateProposalTeamInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Datos no válidos" };
+
+  const { proposal_id, member_ids } = parsed.data;
+  const supabase = await createServerClient();
+  const { data: proposal, error: proposalError } = await supabase
+    .from("proposals")
+    .select("status")
+    .eq("id", proposal_id)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (proposalError || !proposal) return { ok: false, error: "Propuesta no encontrada" };
+  if (proposal.status === "accepted" || proposal.status === "rejected") {
+    return { ok: false, error: "La propuesta ya ha sido respondida y no se puede editar" };
+  }
+
+  if (member_ids.length > 0) {
+    const { data: members, error: membersError } = await supabase
+      .from("team_members")
+      .select("id")
+      .in("id", member_ids)
+      .is("deleted_at", null);
+    if (membersError || members?.length !== member_ids.length) {
+      return { ok: false, error: "Hay personas seleccionadas que ya no están disponibles" };
+    }
+  }
+
+  const { error: deleteError } = await supabase
+    .from("proposal_team_members")
+    .delete()
+    .eq("proposal_id", proposal_id);
+  if (deleteError) return { ok: false, error: deleteError.message };
+
+  if (member_ids.length > 0) {
+    const { error: insertError } = await supabase.from("proposal_team_members").insert(
+      member_ids.map((member_id, position) => ({ proposal_id, member_id, position })),
+    );
+    if (insertError) return { ok: false, error: insertError.message };
+  }
+
+  revalidatePath(`/proposals/${proposal_id}`);
   return { ok: true };
 }
 

@@ -11,6 +11,7 @@
  */
 
 import { createHmac, createSign } from "node:crypto";
+import { isDemoMode } from "@/lib/demo";
 import { serverEnv } from "@/lib/env";
 
 // ---------------------------------------------------------------------------
@@ -127,6 +128,8 @@ export interface GitHubRepo {
  * Uses the installation access token, so only repos the App can see are returned.
  */
 export async function listInstallationRepos(installationId: number): Promise<GitHubRepo[]> {
+  if (isDemoMode()) return [];
+
   const token = await getInstallationToken(installationId);
   const data = await ghFetch<{ repositories: GitHubRepo[] }>(
     token,
@@ -160,6 +163,17 @@ export interface CreateIssueParams {
 }
 
 export async function createGitHubIssue(params: CreateIssueParams): Promise<GitHubIssueResult> {
+  if (isDemoMode()) {
+    const number =
+      100000 +
+      (Array.from(params.title).reduce((sum, char) => sum + char.charCodeAt(0), 0) % 900000);
+    return {
+      number,
+      html_url: `https://demo.invalid/github/${params.owner}/${params.repo}/issues/${number}`,
+      state: "open",
+    };
+  }
+
   const token = await getInstallationToken(params.installationId);
   return ghFetch<GitHubIssueResult>(token, "POST", `/repos/${params.owner}/${params.repo}/issues`, {
     title: params.title,
@@ -202,6 +216,8 @@ export async function createGitHubBranchFromDefault(params: {
   repo: string;
   branchName: string;
 }): Promise<string> {
+  if (isDemoMode()) return params.branchName;
+
   const token = await getInstallationToken(params.installationId);
   const { default_branch } = await ghFetch<{ default_branch: string }>(
     token,
@@ -232,6 +248,8 @@ export async function updateGitHubIssueState(
   issueNumber: number,
   state: "open" | "closed",
 ): Promise<void> {
+  if (isDemoMode()) return;
+
   const token = await getInstallationToken(installationId);
   await ghFetch(token, "PATCH", `/repos/${owner}/${repo}/issues/${issueNumber}`, { state });
 }
@@ -242,6 +260,14 @@ export async function getGitHubIssue(
   repo: string,
   issueNumber: number,
 ): Promise<GitHubIssueResult> {
+  if (isDemoMode()) {
+    return {
+      number: issueNumber,
+      html_url: `https://demo.invalid/github/${owner}/${repo}/issues/${issueNumber}`,
+      state: "open",
+    };
+  }
+
   const token = await getInstallationToken(installationId);
   return ghFetch<GitHubIssueResult>(token, "GET", `/repos/${owner}/${repo}/issues/${issueNumber}`);
 }

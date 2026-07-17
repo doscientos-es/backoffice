@@ -215,7 +215,15 @@ function NavSection({
   );
 }
 
-export function Sidebar({ user, verifactuMode }: { user: CurrentUser; verifactuMode: string }) {
+export function Sidebar({
+  user,
+  verifactuMode,
+  demoMode,
+}: {
+  user: CurrentUser;
+  verifactuMode: string;
+  demoMode: boolean;
+}) {
   const pathname = usePathname();
 
   const visibleGroups = NAV_GROUPS.map((g) => ({
@@ -279,6 +287,11 @@ export function Sidebar({ user, verifactuMode }: { user: CurrentUser; verifactuM
       <footer className="flex flex-col border-t border-border p-2 gap-2">
         <ErrorBoundary>
           <div className="flex items-center justify-between gap-1">
+            {demoMode ? (
+              <Badge variant="warning" className="h-4 px-1 text-[9px] font-bold uppercase ml-1">
+                MODO DEMO
+              </Badge>
+            ) : null}
             <Badge
               variant={
                 verifactuMode === "PROD"

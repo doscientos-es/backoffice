@@ -15,8 +15,8 @@ export default function PortalNotFound() {
         </p>
         <h1 className="text-2xl font-semibold">Documento no disponible</h1>
         <p className="max-w-sm text-sm text-muted-foreground">
-          Este enlace ha caducado o ya no es válido. Ponte en contacto con quien te lo envió para
-          recibir uno nuevo.
+          Este enlace no es válido o ya no está disponible. Ponte en contacto con quien te lo envió
+          para recibir uno nuevo.
         </p>
       </div>
     </div>

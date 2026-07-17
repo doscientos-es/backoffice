@@ -13,6 +13,7 @@ export const PublicSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(20),
   NEXT_PUBLIC_APP_URL: z.string().url().default("https://app.doscientos.es"),
+  NEXT_PUBLIC_DEMO_MODE: z.enum(["true", "false"]).default("false"),
   NEXT_PUBLIC_HCAPTCHA_SITE_KEY: z.string().optional(),
   // Public Cal.com event link for lead self-service booking (e.g.
   // "https://cal.com/doscientos/repesca"). Recovery emails append a personalized
@@ -22,6 +23,7 @@ export const PublicSchema = z.object({
 
 export const ServerSchema = PublicSchema.extend({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(20),
+  DEMO_MODE: z.enum(["true", "false"]).default("false"),
   // Base URL used to build invite / confirm links sent by email.
   // Always defaults to the production URL so that invitations sent from
   // a local dev instance never contain a localhost link that the invitee
