@@ -25,7 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { CallOutcome } from "@/lib/schemas/lead";
 import { FileText, Loader2, Mail, NotebookPen, Phone, Send, Video } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import { type SubmitEvent, useState } from "react";
 import { createReminder } from "../reminders/actions";
 import { EmailComposer } from "./[id]/email-composer";
 import { logLeadCall, logLeadEmail, logLeadNote, scheduleLeadMeeting } from "./actions";
@@ -159,7 +159,7 @@ export function QMeetDialog({
     }
   }
 
-  async function onSubmit(e: FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setConfirmOpen(true);
   }
@@ -191,97 +191,99 @@ export function QMeetDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-          <Video className="size-3.5 text-muted-foreground" />
-          Agendar reunión Meet
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Agendar reunión Google Meet</DialogTitle>
-          <DialogDescription>
-            Se creará en el calendario compartido y se enviará invitación por email.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={onSubmit} className="flex flex-col gap-3">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor={`qa-meet-title-${leadId}`} className="text-xs font-medium">
-              Título <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id={`qa-meet-title-${leadId}`}
-              required
-              maxLength={200}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+            <Video className="size-3.5 text-muted-foreground" />
+            Agendar reunión Meet
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Agendar reunión Google Meet</DialogTitle>
+            <DialogDescription>
+              {leadEmail
+                ? "Se creará en el calendario compartido y se enviará una invitación por email."
+                : "Se creará en el calendario compartido. Este lead no tiene email registrado."}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={onSubmit} className="flex flex-col gap-3">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={`qa-meet-start-${leadId}`} className="text-xs font-medium">
-                Inicio <span className="text-destructive">*</span>
+              <Label htmlFor={`qa-meet-title-${leadId}`} className="text-xs font-medium">
+                Título <span className="text-destructive">*</span>
               </Label>
               <Input
-                id={`qa-meet-start-${leadId}`}
-                type="datetime-local"
+                id={`qa-meet-title-${leadId}`}
                 required
-                value={start}
-                onChange={(e) => handleStartChange(e.target.value)}
+                maxLength={200}
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
               />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor={`qa-meet-end-${leadId}`} className="text-xs font-medium">
-                Fin <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id={`qa-meet-end-${leadId}`}
-                type="datetime-local"
-                required
-                value={end}
-                onChange={(e) => setEnd(e.target.value)}
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor={`qa-meet-start-${leadId}`} className="text-xs font-medium">
+                  Inicio <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id={`qa-meet-start-${leadId}`}
+                  type="datetime-local"
+                  required
+                  value={start}
+                  onChange={(e) => handleStartChange(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor={`qa-meet-end-${leadId}`} className="text-xs font-medium">
+                  Fin <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id={`qa-meet-end-${leadId}`}
+                  type="datetime-local"
+                  required
+                  value={end}
+                  onChange={(e) => setEnd(e.target.value)}
+                />
+              </div>
             </div>
-          </div>
-          {projects.length > 0 && (
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor={`qa-meet-project-${leadId}`} className="text-xs font-medium">
-                Proyecto <span className="text-muted-foreground/60">(opcional)</span>
-              </Label>
-              <EntityCombobox
-                id={`qa-meet-project-${leadId}`}
-                items={projects.map((p) => ({ id: p.id, label: p.name }))}
-                value={projectId}
-                onChange={setProjectId}
-                placeholder="Buscar proyecto…"
-              />
-            </div>
-          )}
-          <MemberCheckboxes
-            members={meetMembers}
-            selected={members.selected}
-            onToggle={members.toggle}
-          />
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor={`qa-meet-desc-${leadId}`} className="text-xs font-medium">
-              Descripción <span className="text-muted-foreground/60">(opcional)</span>
-            </Label>
-            <Textarea
-              id={`qa-meet-desc-${leadId}`}
-              rows={2}
-              maxLength={4000}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Agenda, puntos a tratar…"
+            {projects.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor={`qa-meet-project-${leadId}`} className="text-xs font-medium">
+                  Proyecto <span className="text-muted-foreground/60">(opcional)</span>
+                </Label>
+                <EntityCombobox
+                  id={`qa-meet-project-${leadId}`}
+                  items={projects.map((p) => ({ id: p.id, label: p.name }))}
+                  value={projectId}
+                  onChange={setProjectId}
+                  placeholder="Buscar proyecto…"
+                />
+              </div>
+            )}
+            <MemberCheckboxes
+              members={meetMembers}
+              selected={members.selected}
+              onToggle={members.toggle}
             />
-          </div>
-          <div className="flex items-center justify-end gap-3">
-            <FormFeedback state={feedback.state} pendingLabel="Creando…" />
-            <SubmitButton loading={feedback.pending} pendingLabel="Creando…">
-              Agendar reunión
-            </SubmitButton>
-          </div>
-        </form>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor={`qa-meet-desc-${leadId}`} className="text-xs font-medium">
+                Descripción <span className="text-muted-foreground/60">(opcional)</span>
+              </Label>
+              <Textarea
+                id={`qa-meet-desc-${leadId}`}
+                rows={2}
+                maxLength={4000}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Agenda, puntos a tratar…"
+              />
+            </div>
+            <div className="flex items-center justify-end gap-3">
+              <FormFeedback state={feedback.state} pendingLabel="Creando…" />
+              <SubmitButton loading={feedback.pending} pendingLabel="Creando…">
+                Agendar reunión
+              </SubmitButton>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
       <ConfirmDialog
@@ -290,9 +292,13 @@ export function QMeetDialog({
         title="¿Enviar invitación de reunión?"
         description={
           <>
-            <p>
-              Se enviará una invitación de Google Calendar a <strong>{leadEmail ?? "el lead"}</strong>.
-            </p>
+            {leadEmail ? (
+              <p>
+                Se enviará una invitación real de Google Calendar a <strong>{leadEmail}</strong>.
+              </p>
+            ) : (
+              <p>Este lead no tiene email registrado y no recibirá una invitación.</p>
+            )}
             <p className="mt-2">
               <strong>{title}</strong> · {start.replace("T", " ")}.
             </p>
@@ -328,7 +334,7 @@ export function QMeetNowDialog({
   const feedback = useFormFeedback();
   const router = useRouter();
 
-  async function onSubmit(e: FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setConfirmOpen(true);
   }
@@ -361,46 +367,48 @@ export function QMeetNowDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-          <Video className="size-3.5 text-green-500" />
-          Meet ahora
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Iniciar Meet ahora</DialogTitle>
-          <DialogDescription>
-            Se crea el enlace Meet, se abre en una nueva pestaña y se envía invitación.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={onSubmit} className="flex flex-col gap-3">
-          <MemberCheckboxes
-            members={meetMembers}
-            selected={members.selected}
-            onToggle={members.toggle}
-          />
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor={`qa-now-desc-${leadId}`} className="text-xs font-medium">
-              Notas <span className="text-muted-foreground/60">(opcional)</span>
-            </Label>
-            <Textarea
-              id={`qa-now-desc-${leadId}`}
-              rows={2}
-              maxLength={4000}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Agenda, puntos a tratar…"
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+            <Video className="size-3.5 text-green-500" />
+            Meet ahora
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Iniciar Meet ahora</DialogTitle>
+            <DialogDescription>
+              {leadEmail
+                ? "Se crea el enlace Meet, se abre en una nueva pestaña y se envía invitación."
+                : "Se crea el enlace Meet y se abre en una nueva pestaña. Este lead no tiene email registrado."}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={onSubmit} className="flex flex-col gap-3">
+            <MemberCheckboxes
+              members={meetMembers}
+              selected={members.selected}
+              onToggle={members.toggle}
             />
-          </div>
-          <div className="flex items-center justify-end gap-3">
-            <FormFeedback state={feedback.state} pendingLabel="Creando…" />
-            <SubmitButton loading={feedback.pending} pendingLabel="Creando…">
-              Crear y unirse
-            </SubmitButton>
-          </div>
-        </form>
-      </DialogContent>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor={`qa-now-desc-${leadId}`} className="text-xs font-medium">
+                Notas <span className="text-muted-foreground/60">(opcional)</span>
+              </Label>
+              <Textarea
+                id={`qa-now-desc-${leadId}`}
+                rows={2}
+                maxLength={4000}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Agenda, puntos a tratar…"
+              />
+            </div>
+            <div className="flex items-center justify-end gap-3">
+              <FormFeedback state={feedback.state} pendingLabel="Creando…" />
+              <SubmitButton loading={feedback.pending} pendingLabel="Creando…">
+                Crear y unirse
+              </SubmitButton>
+            </div>
+          </form>
+        </DialogContent>
       </Dialog>
       <ConfirmDialog
         open={confirmOpen}
@@ -408,9 +416,13 @@ export function QMeetNowDialog({
         title="¿Enviar invitación y abrir Meet?"
         description={
           <>
-            <p>
-              Se enviará una invitación de Google Calendar a <strong>{leadEmail ?? "el lead"}</strong>.
-            </p>
+            {leadEmail ? (
+              <p>
+                Se enviará una invitación real de Google Calendar a <strong>{leadEmail}</strong>.
+              </p>
+            ) : (
+              <p>Este lead no tiene email registrado y no recibirá una invitación.</p>
+            )}
             <p className="mt-2">También se abrirá el enlace de Meet en una nueva pestaña.</p>
           </>
         }
@@ -527,7 +539,7 @@ export function QCallDialog({
     }
   }
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     feedback.setPending();
     const res = await logLeadCall({
@@ -704,7 +716,7 @@ export function QEmailDialog({ leadId, leadEmail }: { leadId: string; leadEmail:
   const feedback = useFormFeedback();
   const router = useRouter();
 
-  async function onSubmit(e: FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     feedback.setPending();
     const res = await logLeadEmail({
@@ -792,7 +804,7 @@ export function QNoteDialog({ leadId }: { leadId: string }) {
   const feedback = useFormFeedback();
   const router = useRouter();
 
-  async function onSubmit(e: FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     feedback.setPending();
     const res = await logLeadNote({ leadId, content });

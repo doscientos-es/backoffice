@@ -110,84 +110,84 @@ export function EmailComposer({
   return (
     <>
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
-      {aiEnabled ? (
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={handleDraftWithAI}
-            disabled={drafting}
-            className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground disabled:opacity-50"
-          >
-            <Sparkles className="h-3 w-3" />
-            {drafting ? "Generando…" : "Generar borrador con IA"}
-          </button>
+        {aiEnabled ? (
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handleDraftWithAI}
+              disabled={drafting}
+              className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground disabled:opacity-50"
+            >
+              <Sparkles className="h-3 w-3" />
+              {drafting ? "Generando…" : "Generar borrador con IA"}
+            </button>
+          </div>
+        ) : (
+          <div className="flex justify-end">
+            <AiNotice inline />
+          </div>
+        )}
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="to" className="text-xs font-medium">
+            Para <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="to"
+            type="email"
+            inputMode="email"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            required
+            placeholder="destinatario@empresa.com"
+            autoComplete="email"
+          />
         </div>
-      ) : (
-        <div className="flex justify-end">
-          <AiNotice inline />
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="subject" className="text-xs font-medium">
+            Asunto <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="subject"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            placeholder="Hola {{nombre}}, …"
+            required
+            maxLength={200}
+          />
         </div>
-      )}
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="to" className="text-xs font-medium">
-          Para <span className="text-destructive">*</span>
-        </Label>
-        <Input
-          id="to"
-          type="email"
-          inputMode="email"
-          value={to}
-          onChange={(e) => setTo(e.target.value)}
-          required
-          placeholder="destinatario@empresa.com"
-          autoComplete="email"
-        />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="subject" className="text-xs font-medium">
-          Asunto <span className="text-destructive">*</span>
-        </Label>
-        <Input
-          id="subject"
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          placeholder="Hola {{nombre}}, …"
-          required
-          maxLength={200}
-        />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="body" className="text-xs font-medium">
-          Mensaje (Markdown) <span className="text-destructive">*</span>
-        </Label>
-        <Textarea
-          id="body"
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          rows={8}
-          placeholder={"Hola **{{nombre}}**,\n\n…"}
-          required
-          className="font-mono text-xs"
-          aria-describedby="body-hint"
-        />
-        <p id="body-hint" className="text-[11px] text-muted-foreground">
-          Se escribe en Markdown. Variables disponibles: <code>{"{{nombre}}"}</code>,{" "}
-          <code>{"{{empresa}}"}</code>, <code>{"{{email}}"}</code>. Tu firma se añade al final.
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="body" className="text-xs font-medium">
+            Mensaje (Markdown) <span className="text-destructive">*</span>
+          </Label>
+          <Textarea
+            id="body"
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            rows={8}
+            placeholder={"Hola **{{nombre}}**,\n\n…"}
+            required
+            className="font-mono text-xs"
+            aria-describedby="body-hint"
+          />
+          <p id="body-hint" className="text-[11px] text-muted-foreground">
+            Se escribe en Markdown. Variables disponibles: <code>{"{{nombre}}"}</code>,{" "}
+            <code>{"{{empresa}}"}</code>, <code>{"{{email}}"}</code>. Tu firma se añade al final.
+          </p>
+        </div>
+        <p className="rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-foreground">
+          Este mensaje llegará a <strong>{to || "la dirección indicada"}</strong>. Antes de enviarlo
+          podrás revisar una confirmación final.
         </p>
-      </div>
-      <p className="rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-foreground">
-        Este mensaje llegará a <strong>{to || "la dirección indicada"}</strong>. Antes de enviarlo
-        podrás revisar una confirmación final.
-      </p>
-      <div className="flex items-center justify-end gap-3">
-        <FormFeedback
-          state={feedback.state}
-          pendingLabel="Enviando…"
-          successLabel="Email enviado"
-        />
-        <SubmitButton pendingLabel="Preparando…" loading={feedback.pending}>
-          Revisar y enviar
-        </SubmitButton>
-      </div>
+        <div className="flex items-center justify-end gap-3">
+          <FormFeedback
+            state={feedback.state}
+            pendingLabel="Enviando…"
+            successLabel="Email enviado"
+          />
+          <SubmitButton pendingLabel="Preparando…" loading={feedback.pending}>
+            Revisar y enviar
+          </SubmitButton>
+        </div>
       </form>
       <ConfirmDialog
         open={confirmOpen}
