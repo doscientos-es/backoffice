@@ -3,11 +3,18 @@
 import { Button } from "@/components/ui/button";
 import { EntityMultiCombobox } from "@/components/ui/entity-multi-combobox";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { MemberAvatar } from "@/components/ui/member-avatar";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { setProposalTeamMembers } from "../actions";
 
-type Member = { id: string; name: string; job_title: string | null };
+type Member = {
+  id: string;
+  name: string;
+  job_title: string | null;
+  avatar_url: string | null;
+  github_handle: string | null;
+};
 
 export function ProposalTeamSelector({
   proposalId,
@@ -53,6 +60,7 @@ export function ProposalTeamSelector({
           id: member.id,
           label: member.name,
           sublabel: member.job_title ?? undefined,
+          leading: <MemberAvatar member={member} size="xs" />,
         }))}
         value={selectedIds}
         onChange={setSelectedIds}

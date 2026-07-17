@@ -115,7 +115,7 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
   const [{ data: teamMembers }, { data: proposalTeam }] = await Promise.all([
     supabase
       .from("team_members")
-      .select("id, name, job_title")
+      .select("id, name, job_title, avatar_url, github_handle")
       .is("deleted_at", null)
       .order("name"),
     supabase
@@ -267,7 +267,13 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
             <ProposalTeamSelector
               proposalId={id}
               members={
-                (teamMembers ?? []) as Array<{ id: string; name: string; job_title: string | null }>
+                (teamMembers ?? []) as Array<{
+                  id: string;
+                  name: string;
+                  job_title: string | null;
+                  avatar_url: string | null;
+                  github_handle: string | null;
+                }>
               }
               initialMemberIds={selectedTeamIds}
               locked={locked}

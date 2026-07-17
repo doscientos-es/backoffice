@@ -47,10 +47,12 @@ export function EntityMultiCombobox({
     if (!item) return v;
     return item.sublabel ? `${item.label} · ${item.sublabel}` : item.label;
   };
+  const itemFor = (v: string) => items.find((item) => item.id === v);
 
   return (
     <Combobox
       multiple
+      items={items.map((item) => item.id)}
       value={value}
       onValueChange={(v: string[]) => onChange(v ?? [])}
       itemToStringLabel={labelFor}
@@ -59,11 +61,15 @@ export function EntityMultiCombobox({
       <ComboboxChips ref={anchor} className={cn("w-full", className)}>
         <ComboboxValue>
           {(selected: string[]) =>
-            selected.map((v) => (
-              <ComboboxChip key={v} aria-label={labelFor(v)}>
-                {labelFor(v)}
-              </ComboboxChip>
-            ))
+            selected.map((v) => {
+              const item = itemFor(v);
+              return (
+                <ComboboxChip key={v} aria-label={labelFor(v)}>
+                  {item?.leading ? <span className="shrink-0">{item.leading}</span> : null}
+                  <span className="max-w-[22ch] truncate">{item?.label ?? labelFor(v)}</span>
+                </ComboboxChip>
+              );
+            })
           }
         </ComboboxValue>
         <ComboboxChipsInput
@@ -74,16 +80,24 @@ export function EntityMultiCombobox({
         />
       </ComboboxChips>
       <ComboboxContent anchor={anchor}>
+        <ComboboxEmpty>No se encontraron coincidencias</ComboboxEmpty>
         <ComboboxList>
-          <ComboboxEmpty>Sin resultados</ComboboxEmpty>
-          {items.map((item) => (
-            <ComboboxItem key={item.id} value={item.id}>
-              <span className="flex-1">{item.label}</span>
-              {item.sublabel && (
-                <span className="text-xs text-muted-foreground">{item.sublabel}</span>
-              )}
-            </ComboboxItem>
-          ))}
+          {(id: string) => {
+            const item = items.find((option) => option.id === id);
+            if (!item) return null;
+
+            return (
+              <ComboboxItem key={item.id} value={item.id}>
+                {item.leading ? <span className="shrink-0">{item.leading}</span> : null}
+                <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                {item.sublabel && (
+                  <span className="max-w-[45%] truncate text-xs text-muted-foreground">
+                    {item.sublabel}
+                  </span>
+                )}
+              </ComboboxItem>
+            );
+          }}
         </ComboboxList>
       </ComboboxContent>
     </Combobox>
