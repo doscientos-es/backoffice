@@ -35,15 +35,18 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 vi.mock("@/lib/supabase/admin", () => ({
+  generateAuthLink: async (params: {
+    email: string;
+    data?: { name?: string };
+    redirectTo?: string;
+  }) => {
+    state.inviteCalls.push({
+      email: params.email,
+      opts: { data: params.data ?? {}, redirectTo: params.redirectTo ?? "" },
+    });
+    return state.inviteResult;
+  },
   createAdminClient: () => ({
-    auth: {
-      admin: {
-        generateLink: async (params: { email: string; options: InviteOpts }) => {
-          state.inviteCalls.push({ email: params.email, opts: params.options });
-          return state.inviteResult;
-        },
-      },
-    },
     from: () => ({
       upsert: async (row: Record<string, unknown>, opts: unknown) => {
         state.upsertCalls.push({ row, opts });

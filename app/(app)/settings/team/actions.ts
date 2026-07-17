@@ -5,7 +5,7 @@ import { type MemberRole, requireRole } from "@/lib/auth";
 import { renderEmail } from "@/lib/email/render";
 import { sendEmail } from "@/lib/email/resend";
 import { serverEnv } from "@/lib/env";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, generateAuthLink } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -121,7 +121,7 @@ export async function inviteTeamMember(formData: FormData): Promise<ActionResult
   // and redirects with the tokens in the URL hash (#access_token=…) instead of
   // `?code=`. Our server-side callback can't read the hash, so those links
   // always failed with `callback_no_code`.
-  const { data: linkData, error: inviteError } = await admin.auth.admin.generateLink({
+  const { data: linkData, error: inviteError } = await generateAuthLink({
     type: "invite",
     email,
     // redirectTo is used by Supabase as the OAuth callback destination after
@@ -130,9 +130,11 @@ export async function inviteTeamMember(formData: FormData): Promise<ActionResult
     // Supabase appends ?code= here, which /auth/callback exchanges for a
     // session. Pointing it to /auth/confirm causes `confirm_invalid_link`
     // because that route expects token_hash+type, not a PKCE code.
-    options: { data: { name }, redirectTo: `${appUrl}/auth/callback?next=/onboarding` },
+    data: { name },
+    redirectTo: `${appUrl}/auth/callback?next=/onboarding`,
   });
-  if (inviteError || !linkData?.user) {
+  const invitedUserId = linkData?.user?.id;
+  if (inviteError || !invitedUserId || !linkData?.properties?.hashed_token) {
     console.error("[inviteTeamMember] generateLink failed", {
       email,
       status: (inviteError as { status?: number } | null)?.status,
@@ -141,7 +143,6 @@ export async function inviteTeamMember(formData: FormData): Promise<ActionResult
     });
     return { ok: false, error: describeInviteError(inviteError) };
   }
-  const invited = linkData;
   const confirmParams = new URLSearchParams({
     token_hash: linkData.properties.hashed_token,
     type: "invite",
@@ -174,7 +175,7 @@ export async function inviteTeamMember(formData: FormData): Promise<ActionResult
 
   const { error: upsertError } = await admin.from("team_members").upsert(
     {
-      id: invited.user.id,
+      id: invitedUserId,
       email,
       name,
       role,
@@ -212,16 +213,14 @@ export async function resendInvite(input: unknown): Promise<ActionResult> {
   if (member.deleted_at) return { ok: false, error: "El miembro está desactivado." };
 
   const appUrl = serverEnv().INVITE_BASE_URL;
-  const { data: linkData, error: inviteError } = await admin.auth.admin.generateLink({
+  const { data: linkData, error: inviteError } = await generateAuthLink({
     type: "invite",
     email: member.email,
-    options: {
-      data: { name: member.name },
-      redirectTo: `${appUrl}/auth/callback?next=/onboarding`,
-    },
+    data: { name: member.name },
+    redirectTo: `${appUrl}/auth/callback?next=/onboarding`,
   });
 
-  if (inviteError || !linkData?.user) {
+  if (inviteError || !linkData?.user || !linkData.properties?.hashed_token) {
     console.error("[resendInvite] generateLink failed", {
       email: member.email,
       status: (inviteError as { status?: number } | null)?.status,
