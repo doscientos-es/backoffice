@@ -7,17 +7,19 @@
  * self-report `isConfigured()`, so an unconfigured network is simply skipped.
  */
 import { PublisherRegistry } from "@/lib/social/core";
+import { GoogleBusinessProfilePublisher } from "@/lib/social/google-business";
 import { LinkedInPublisher } from "@/lib/social/linkedin";
 import { FacebookPublisher, InstagramPublisher } from "@/lib/social/meta";
 
 let cached: PublisherRegistry | null = null;
 
-/** Shared registry with Instagram, Facebook and LinkedIn adapters registered. */
+/** Shared registry with all supported publishing adapters registered. */
 export function socialRegistry(): PublisherRegistry {
   if (cached) return cached;
   cached = new PublisherRegistry()
     .register(new InstagramPublisher())
     .register(new FacebookPublisher())
-    .register(new LinkedInPublisher());
+    .register(new LinkedInPublisher())
+    .register(new GoogleBusinessProfilePublisher());
   return cached;
 }

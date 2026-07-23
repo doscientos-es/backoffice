@@ -100,6 +100,16 @@ export const ServerSchema = PublicSchema.extend({
   // Organization URN numeric id (urn:li:organization:<id>) to post as a company.
   LINKEDIN_ORGANIZATION_ID: z.string().optional().default(""),
   LINKEDIN_API_VERSION: z.string().default("202405"),
+  // Google Business Profile — OAuth 2.0 and Local Posts API.
+  // The refresh token is obtained through /api/social/google-business/auth and
+  // must stay server-only. Account/location ids are non-secret selectors.
+  GOOGLE_BUSINESS_CLIENT_ID: z.string().optional().default(""),
+  GOOGLE_BUSINESS_CLIENT_SECRET: z.string().optional().default(""),
+  GOOGLE_BUSINESS_REDIRECT_URI: z.string().optional().default(""),
+  GOOGLE_BUSINESS_REFRESH_TOKEN: z.string().optional().default(""),
+  GOOGLE_BUSINESS_ACCOUNT_ID: z.string().optional().default(""),
+  GOOGLE_BUSINESS_LOCATION_ID: z.string().optional().default(""),
+  GOOGLE_BUSINESS_LANGUAGE_CODE: z.string().default("es-ES"),
   // GitHub App integration (bidirectional sync)
   GITHUB_APP_ID: z.string().optional().default(""),
   GITHUB_APP_PRIVATE_KEY_BASE64: z.string().optional().default(""), // RSA private key in base64

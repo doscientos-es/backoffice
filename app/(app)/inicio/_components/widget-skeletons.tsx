@@ -5,6 +5,7 @@ const KPI_SKELETON_KEYS = ["kpi-a", "kpi-b", "kpi-c", "kpi-d"] as const;
 const AVISOS_SKELETON_KEYS = ["aviso-a", "aviso-b", "aviso-c", "aviso-d"] as const;
 const MY_DAY_SKELETON_KEYS = ["my-day-a", "my-day-b", "my-day-c"] as const;
 const MY_DAY_ROW_KEYS = ["row-a", "row-b", "row-c"] as const;
+const MONEY_SKELETON_KEYS = ["money-a", "money-b", "money-c", "money-d"] as const;
 
 export function MyDayWidgetSkeleton() {
   return (
@@ -88,6 +89,34 @@ export function RevenueWidgetSkeleton() {
       </CardHeader>
       <CardContent>
         <Skeleton className="h-56 w-full rounded-md" />
+      </CardContent>
+    </Card>
+  );
+}
+
+export function MoneyOpportunitiesWidgetSkeleton() {
+  return (
+    <Card>
+      <CardHeader className="flex-row items-center justify-between gap-3 space-y-0">
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="h-7 w-20" />
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-4 xl:grid-cols-4">
+          {MONEY_SKELETON_KEYS.map((key) => (
+            <div key={key} className="rounded-lg border border-border bg-muted/20">
+              <div className="border-b border-border px-3 py-2.5">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="mt-2 h-3 w-20" />
+              </div>
+              <div className="space-y-3 px-3 py-3">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-3 w-3/4" />
+                <Skeleton className="h-4 w-2/3" />
+              </div>
+            </div>
+          ))}
+        </div>
       </CardContent>
     </Card>
   );

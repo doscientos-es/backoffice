@@ -3,16 +3,17 @@
  *
  * This layer is infrastructure-agnostic: no Supabase, no fetch, no env. It
  * defines the vocabulary every platform adapter and the orchestrator speak.
- * Adapters (Meta, LinkedIn) translate these types to/from their own APIs.
+ * Adapters translate these types to/from their own APIs.
  */
 
 /** Networks the hub can publish to. Add a new value + a Publisher to extend. */
-export type SocialPlatform = "instagram" | "facebook" | "linkedin";
+export type SocialPlatform = "instagram" | "facebook" | "linkedin" | "google_business_profile";
 
 export const SOCIAL_PLATFORMS: readonly SocialPlatform[] = [
   "instagram",
   "facebook",
   "linkedin",
+  "google_business_profile",
 ] as const;
 
 /** High-level shape of the composition, derived from its media. */
@@ -100,4 +101,5 @@ export const PLATFORM_LABELS: Record<SocialPlatform, string> = {
   instagram: "Instagram",
   facebook: "Facebook",
   linkedin: "LinkedIn",
+  google_business_profile: "Google Business Profile",
 };

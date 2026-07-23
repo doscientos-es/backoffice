@@ -84,6 +84,7 @@ const GROUPS: Array<{ label: string; prefixes: string[] }> = [
   { label: "CRM / Landing", prefixes: ["LEAD_", "LANDING_", "CAL_"] },
   { label: "Meta Marketing", prefixes: ["META_", "INSTAGRAM_", "FACEBOOK_"] },
   { label: "LinkedIn", prefixes: ["LINKEDIN_"] },
+  { label: "Google Business Profile", prefixes: ["GOOGLE_BUSINESS_"] },
   { label: "GitHub App", prefixes: ["GITHUB_"] },
   { label: "n8n Automation", prefixes: ["N8N_"] },
   { label: "File Browser / Backups", prefixes: ["FILEBROWSER_", "BACKUP_"] },

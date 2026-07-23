@@ -12,12 +12,14 @@ import { getGreeting, parseDashboardRange } from "@/lib/utils/date";
 import type { Metadata } from "next";
 import { AvisosWidget } from "./_components/avisos-widget";
 import { KpiGrid } from "./_components/kpi-grid";
+import { MoneyOpportunitiesWidget } from "./_components/money-opportunities-widget";
 import { MyDayWidget } from "./_components/my-day-widget";
 import { RangeSelector } from "./_components/range-selector";
 import { RevenueWidget } from "./_components/revenue-widget";
 import {
   AvisosWidgetSkeleton,
   KpiGridSkeleton,
+  MoneyOpportunitiesWidgetSkeleton,
   MyDayWidgetSkeleton,
   RangeSelectorSkeleton,
   RevenueWidgetSkeleton,
@@ -60,6 +62,13 @@ export default async function InicioPage({ searchParams }: PageProps) {
           <AvisosWidget showFinance={showFinance} />
         </SectionBoundary>
       </div>
+
+      <SectionBoundary
+        pending={<MoneyOpportunitiesWidgetSkeleton />}
+        label="No se pudieron cargar las oportunidades"
+      >
+        <MoneyOpportunitiesWidget />
+      </SectionBoundary>
 
       {/* La empresa de un vistazo: KPIs comerciales + financieros (solo owner/admin) */}
       <section className="flex flex-col gap-4">

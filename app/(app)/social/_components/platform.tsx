@@ -1,6 +1,6 @@
 import { PLATFORM_LABELS, type SocialPlatform } from "@/lib/social/core";
 import { cn } from "@/lib/utils";
-import { Facebook, Instagram, Linkedin } from "lucide-react";
+import { Facebook, Instagram, Linkedin, Store } from "lucide-react";
 import type { ComponentType } from "react";
 
 /**
@@ -15,6 +15,7 @@ const ICONS: Record<SocialPlatform, ComponentType<{ className?: string }>> = {
   instagram: Instagram,
   facebook: Facebook,
   linkedin: Linkedin,
+  google_business_profile: Store,
 };
 
 /** Brand-tinted chip classes per network (subtle, theme-aware). */
@@ -22,6 +23,7 @@ const TINTS: Record<SocialPlatform, string> = {
   instagram: "bg-pink-500/10 text-pink-600 dark:text-pink-300",
   facebook: "bg-blue-500/10 text-blue-600 dark:text-blue-300",
   linkedin: "bg-sky-500/10 text-sky-700 dark:text-sky-300",
+  google_business_profile: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
 };
 
 export function PlatformIcon({

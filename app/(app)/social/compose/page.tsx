@@ -26,7 +26,7 @@ export default async function ComposePage() {
           <TriangleAlert className="mt-0.5 size-4 shrink-0" />
           <p>
             No hay ninguna red conectada todavía. Puedes guardar borradores, pero para publicar
-            configura las credenciales de Instagram, Facebook o LinkedIn.
+            configura las credenciales de Instagram, Facebook, LinkedIn o Google Business Profile.
           </p>
         </div>
       )}

@@ -157,3 +157,65 @@ export type MonthFinanceSummary = {
   margin: number | null;
   topCategory: { category: string; label: string; total: number } | null;
 };
+
+// ---------------------------------------------------------------------------
+// Money opportunities
+// ---------------------------------------------------------------------------
+
+export type MoneyProposalRow = {
+  id: string;
+  number: string | null;
+  title: string;
+  status: "sent" | "viewed";
+  total: number;
+  client_name: string | null;
+  lead_name: string | null;
+  updated_at: string;
+};
+
+export type AcceptedUninvoicedRow = {
+  id: string;
+  number: string | null;
+  title: string;
+  total: number;
+  invoiced_total: number;
+  remaining_total: number;
+  client_name: string | null;
+  updated_at: string;
+};
+
+export type PriorityLeadRow = {
+  id: string;
+  name: string;
+  company: string | null;
+  status: Extract<LeadStatus, "new" | "qualifying" | "quoted">;
+  source: string | null;
+  score: number | null;
+  estimated_value: number | null;
+  urgency: string | null;
+  solution_type: string | null;
+  updated_at: string;
+  stale: boolean;
+  has_next_action: boolean;
+};
+
+export type RecoverableLeadRow = {
+  id: string;
+  name: string;
+  company: string | null;
+  source: string | null;
+  lost_reason: string | null;
+  signal: string;
+  updated_at: string;
+};
+
+export type MoneyOpportunities = {
+  openProposalsTotal: number;
+  acceptedUninvoicedTotal: number;
+  priorityPipelineTotal: number;
+  recoverableCount: number;
+  openProposals: MoneyProposalRow[];
+  acceptedUninvoiced: AcceptedUninvoicedRow[];
+  priorityLeads: PriorityLeadRow[];
+  recoverableLeads: RecoverableLeadRow[];
+};

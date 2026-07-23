@@ -326,7 +326,7 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
         <CardContent className="flex flex-col gap-4 pt-6">
           <div className="flex flex-col gap-2">
             <Label className="text-xs font-medium">Redes</Label>
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
               {SOCIAL_PLATFORMS.map((p) => {
                 const configured = availableSet.has(p);
                 const checked = platforms.has(p);

@@ -11,10 +11,14 @@ import type {
   DashboardKpis,
   DateRange,
   GoalMetric,
+  MoneyOpportunities,
+  MoneyProposalRow,
   MonthFinanceSummary,
   MyDayData,
   MyTaskRow,
   OverdueInvoiceRow,
+  PriorityLeadRow,
+  RecoverableLeadRow,
   ReminderRow,
   RevenuePoint,
   VerifactuPendingRow,
@@ -23,6 +27,7 @@ import type {
 
 const AVISOS_LIMIT = 5;
 const MY_DAY_LIMIT = 6;
+const MONEY_LIMIT = 5;
 
 /** Lead statuses that still require human follow-up (the rest are closed/parked). */
 const ACTIVE_LEAD_STATUSES = ["new", "qualifying", "quoted"] as const;
@@ -61,6 +66,18 @@ type NameRef = { name: string } | { name: string }[] | null;
 function refName(ref: NameRef): string | null {
   if (!ref) return null;
   return Array.isArray(ref) ? (ref[0]?.name ?? null) : ref.name;
+}
+
+type LeadRef =
+  | { name: string; company: string | null }
+  | { name: string; company: string | null }[]
+  | null;
+
+function leadRefName(ref: LeadRef): string | null {
+  if (!ref) return null;
+  const row = Array.isArray(ref) ? ref[0] : ref;
+  if (!row) return null;
+  return row.company ? `${row.name} · ${row.company}` : row.name;
 }
 
 function toMyTask(row: Record<string, unknown>): MyTaskRow {
@@ -392,6 +409,198 @@ export async function getMonthFinanceSummary(): Promise<MonthFinanceSummary> {
     netMonth: revenueMonth - expenseMonth,
     margin: profitMargin(revenueMonth, expenseMonth),
     topCategory,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Money opportunities
+// ---------------------------------------------------------------------------
+
+function recoverySignal(row: { notes?: unknown; ai_summary?: unknown; solution_type?: unknown }):
+  | string
+  | null {
+  const text =
+    `${row.notes ?? ""} ${row.ai_summary ?? ""} ${row.solution_type ?? ""}`.toLowerCase();
+  if (/(verifactu|factur|sii|iva)/i.test(text)) return "Facturación / Verifactu";
+  if (/(crm|erp|software a medida|excel)/i.test(text)) return "CRM / ERP";
+  if (/(stock|trazabilidad|almac[eé]n|inventario|flota|operaciones|control)/i.test(text)) {
+    return "Operaciones";
+  }
+  if (/(ia|automat|app|plataforma|motor)/i.test(text)) return "Automatización / IA";
+  return null;
+}
+
+/**
+ * Actionable money queue for Inicio. It separates already-sent commercial value,
+ * accepted value that has not fully become invoices, hot active leads, and lost
+ * leads with concrete buying signals.
+ */
+export async function getMoneyOpportunities(): Promise<MoneyOpportunities> {
+  const supabase = await createServerClient();
+  const staleBefore = new Date(Date.now() - 3 * 86_400_000).toISOString();
+
+  const [
+    openProposalsRes,
+    acceptedProposalsRes,
+    invoiceRowsRes,
+    priorityLeadsRes,
+    recoverableLeadsRes,
+  ] = await Promise.all([
+    supabase
+      .from("proposals")
+      .select("id, number, title, status, total, updated_at, clients(name), leads(name, company)")
+      .in("status", ["sent", "viewed"])
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: true })
+      .limit(MONEY_LIMIT),
+    supabase
+      .from("proposals")
+      .select("id, number, title, total, updated_at, clients(name)")
+      .eq("status", "accepted")
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false })
+      .limit(25),
+    supabase
+      .from("invoices")
+      .select("proposal_id, total, status")
+      .in("status", ["issued", "paid", "overdue"])
+      .is("deleted_at", null),
+    supabase
+      .from("leads")
+      .select(
+        "id, name, company, source, status, score, estimated_value, urgency, solution_type, updated_at",
+      )
+      .in("status", [...ACTIVE_LEAD_STATUSES])
+      .or(`score.gte.50,urgency.eq.Inmediata,updated_at.lt.${staleBefore}`)
+      .is("deleted_at", null)
+      .order("score", { ascending: false, nullsFirst: false })
+      .order("updated_at", { ascending: true })
+      .limit(25),
+    supabase
+      .from("leads")
+      .select(
+        "id, name, company, source, lost_reason, notes, ai_summary, solution_type, updated_at",
+      )
+      .eq("status", "lost")
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false })
+      .limit(50),
+  ]);
+
+  const openProposals = ((openProposalsRes.data ?? []) as Record<string, unknown>[]).map(
+    (p): MoneyProposalRow => ({
+      id: p.id as string,
+      number: (p.number as string | null) ?? null,
+      title: (p.title as string | null) ?? "Propuesta sin título",
+      status: p.status as MoneyProposalRow["status"],
+      total: Number(p.total ?? 0),
+      client_name: refName(p.clients as NameRef),
+      lead_name: leadRefName(p.leads as LeadRef),
+      updated_at: (p.updated_at as string | null) ?? new Date().toISOString(),
+    }),
+  );
+
+  const invoicedByProposal = new Map<string, number>();
+  for (const inv of invoiceRowsRes.data ?? []) {
+    const proposalId = inv.proposal_id as string | null;
+    if (!proposalId) continue;
+    invoicedByProposal.set(
+      proposalId,
+      (invoicedByProposal.get(proposalId) ?? 0) + Number(inv.total ?? 0),
+    );
+  }
+
+  const acceptedUninvoiced = ((acceptedProposalsRes.data ?? []) as Record<string, unknown>[])
+    .map((p) => {
+      const total = Number(p.total ?? 0);
+      const invoiced_total = invoicedByProposal.get(p.id as string) ?? 0;
+      return {
+        id: p.id as string,
+        number: (p.number as string | null) ?? null,
+        title: (p.title as string | null) ?? "Propuesta sin título",
+        total,
+        invoiced_total,
+        remaining_total: Math.max(0, total - invoiced_total),
+        client_name: refName(p.clients as NameRef),
+        updated_at: (p.updated_at as string | null) ?? new Date().toISOString(),
+      };
+    })
+    .filter((p) => p.remaining_total > 1)
+    .sort((a, b) => b.remaining_total - a.remaining_total)
+    .slice(0, MONEY_LIMIT);
+
+  const priorityLeadRows = ((priorityLeadsRes.data ?? []) as Record<string, unknown>[]).map(
+    (l): PriorityLeadRow => ({
+      id: l.id as string,
+      name: l.name as string,
+      company: (l.company as string | null) ?? null,
+      status: l.status as PriorityLeadRow["status"],
+      source: (l.source as string | null) ?? null,
+      score: l.score == null ? null : Number(l.score),
+      estimated_value: l.estimated_value == null ? null : Number(l.estimated_value),
+      urgency: (l.urgency as string | null) ?? null,
+      solution_type: (l.solution_type as string | null) ?? null,
+      updated_at: (l.updated_at as string | null) ?? new Date().toISOString(),
+      stale: (l.updated_at as string | null) ? (l.updated_at as string) < staleBefore : true,
+      has_next_action: false,
+    }),
+  );
+
+  const leadIds = priorityLeadRows.map((l) => l.id);
+  const { data: taskRows } =
+    leadIds.length > 0
+      ? await supabase
+          .from("tasks")
+          .select("lead_id, kind, status, completed_at")
+          .in("lead_id", leadIds)
+          .is("deleted_at", null)
+      : { data: [] };
+  const leadsWithNextAction = new Set<string>();
+  for (const task of taskRows ?? []) {
+    const leadId = task.lead_id as string | null;
+    if (!leadId) continue;
+    const isOpenTask =
+      task.kind === "task" && !["done", "cancelled"].includes(task.status as string);
+    const isOpenReminder = task.kind === "reminder" && !task.completed_at;
+    if (isOpenTask || isOpenReminder) leadsWithNextAction.add(leadId);
+  }
+
+  const priorityLeads = priorityLeadRows
+    .map((lead) => ({ ...lead, has_next_action: leadsWithNextAction.has(lead.id) }))
+    .sort((a, b) => {
+      if (a.has_next_action !== b.has_next_action) return a.has_next_action ? 1 : -1;
+      return (b.score ?? 0) - (a.score ?? 0);
+    })
+    .slice(0, MONEY_LIMIT);
+
+  const recoverableLeads: RecoverableLeadRow[] = [];
+  for (const lead of (recoverableLeadsRes.data ?? []) as Record<string, unknown>[]) {
+    const signal = recoverySignal(lead);
+    if (!signal) continue;
+    recoverableLeads.push({
+      id: lead.id as string,
+      name: lead.name as string,
+      company: (lead.company as string | null) ?? null,
+      source: (lead.source as string | null) ?? null,
+      lost_reason: (lead.lost_reason as string | null) ?? null,
+      signal,
+      updated_at: (lead.updated_at as string | null) ?? new Date().toISOString(),
+    });
+    if (recoverableLeads.length >= MONEY_LIMIT) break;
+  }
+
+  return {
+    openProposalsTotal: openProposals.reduce((sum, p) => sum + p.total, 0),
+    acceptedUninvoicedTotal: acceptedUninvoiced.reduce((sum, p) => sum + p.remaining_total, 0),
+    priorityPipelineTotal: priorityLeads.reduce(
+      (sum, lead) => sum + (lead.estimated_value ?? 0),
+      0,
+    ),
+    recoverableCount: recoverableLeads.length,
+    openProposals,
+    acceptedUninvoiced,
+    priorityLeads,
+    recoverableLeads,
   };
 }
 

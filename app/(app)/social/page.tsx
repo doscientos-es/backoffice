@@ -12,6 +12,7 @@ import { SectionBoundary } from "@/components/ui/error-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireUser } from "@/lib/auth";
 import { PLATFORM_LABELS, SOCIAL_PLATFORMS } from "@/lib/social/core";
+import { googleBusinessOAuthConfigured } from "@/lib/social/google-business";
 import { listPosts } from "@/lib/social/repo";
 import { availablePlatforms } from "@/lib/social/service";
 import { cn } from "@/lib/utils";
@@ -67,7 +68,7 @@ async function PostsList() {
           </EmptyMedia>
           <EmptyTitle>Aún no has creado ninguna publicación.</EmptyTitle>
           <EmptyDescription>
-            Redacta un post una vez y publícalo en Instagram, Facebook y LinkedIn a la vez.
+            Redacta un post una vez y publícalo en todas tus redes conectadas a la vez.
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
@@ -112,15 +113,23 @@ function ListSkeleton() {
 
 export default async function SocialPage() {
   await requireUser();
-  const instagramConnected = availablePlatforms().includes("instagram");
+  const available = availablePlatforms();
+  const instagramConnected = available.includes("instagram");
+  const googleBusinessNeedsSetup =
+    googleBusinessOAuthConfigured() && !available.includes("google_business_profile");
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Social"
-        description="Publica en Instagram, Facebook y LinkedIn desde un único sitio."
+        description="Publica en todas tus redes desde un único sitio."
         actions={
           <>
             {instagramConnected && <ImportInstagramButton />}
+            {googleBusinessNeedsSetup && (
+              <Button asChild variant="outline" size="sm">
+                <Link href="/api/social/google-business/auth">Conectar Google Business</Link>
+              </Button>
+            )}
             <SyncButton kind="insights" label="Sincronizar métricas" />
             <Button asChild variant="outline" size="sm">
               <Link href="/social/feed">
