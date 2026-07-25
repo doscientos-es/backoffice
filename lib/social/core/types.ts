@@ -80,6 +80,8 @@ export interface PostInsights {
   shares: number;
   saves: number;
   videoViews: number;
+  /** Platform-specific actions such as Google Local Post CTA clicks. */
+  actions?: number;
   /** 0..1 (likes+comments+shares+saves / reach). */
   engagementRate: number;
   raw: unknown;

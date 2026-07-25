@@ -1,6 +1,7 @@
 import { scopedLogger } from "@/lib/logger";
 import type {
   ComposedPost,
+  PostInsights,
   PublishOutcome,
   PublishSupport,
   Publisher,
@@ -14,6 +15,7 @@ import {
   googleBusinessProfileConfigured,
   googleBusinessRequest,
 } from "./client";
+import { getGoogleLocalPostInsights } from "./local-posts";
 
 const log = scopedLogger("social-google-business");
 const MAX_SUMMARY_LENGTH = 1_500;
@@ -68,6 +70,23 @@ export class GoogleBusinessProfilePublisher implements Publisher {
     }
     log.info({ postId: post.id, remoteId: created.name }, "Published to Google Business Profile");
     return { remoteId: created.name, remoteUrl: created.searchUrl ?? null };
+  }
+
+  async fetchInsights(remoteId: string): Promise<PostInsights> {
+    const insights = await getGoogleLocalPostInsights(remoteId);
+    const engagementRate = insights.views > 0 ? insights.actions / insights.views : 0;
+    return {
+      impressions: insights.views,
+      reach: insights.views,
+      likes: 0,
+      comments: 0,
+      shares: 0,
+      saves: 0,
+      videoViews: 0,
+      actions: insights.actions,
+      engagementRate: Number(engagementRate.toFixed(4)),
+      raw: insights.raw,
+    };
   }
 
   async deletePost(remoteId: string): Promise<void> {

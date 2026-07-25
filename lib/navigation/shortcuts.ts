@@ -22,6 +22,7 @@ export const NAV_SHORTCUTS: Shortcut[] = [
   { href: "/inicio", label: "Inicio", key: "i" },
   { href: "/leads", label: "Leads", key: "l" },
   { href: "/marketing", label: "Publicidad", key: "m" },
+  { href: "/marketing/newsletters", label: "Newsletters", key: "n" },
   { href: "/clients", label: "Clientes", key: "c" },
   { href: "/projects", label: "Proyectos", key: "p" },
   { href: "/webs", label: "Webs", key: "w" },

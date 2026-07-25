@@ -73,7 +73,11 @@ function mapTarget(row: TargetRow): TargetView {
 
 function mapPost(
   row: PostRow,
-  metrics: { likes: number; comments: number } = { likes: 0, comments: 0 },
+  metrics: { likes: number; comments: number; actions: number } = {
+    likes: 0,
+    comments: 0,
+    actions: 0,
+  },
 ): PostListItem {
   return {
     id: row.id,
@@ -234,10 +238,11 @@ export async function listPosts(): Promise<PostListItem[]> {
         if (ins) {
           acc.likes += ins.likes;
           acc.comments += ins.comments;
+          acc.actions += ins.actions;
         }
         return acc;
       },
-      { likes: 0, comments: 0 },
+      { likes: 0, comments: 0, actions: 0 },
     );
     return mapPost(row, metrics);
   });

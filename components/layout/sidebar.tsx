@@ -24,6 +24,7 @@ import {
   Inbox,
   KeyRound,
   LifeBuoy,
+  Mail,
   Megaphone,
   MousePointerClick,
   Receipt,
@@ -104,6 +105,12 @@ const NAV_GROUPS: NavGroup[] = [
     defaultOpen: false,
     items: [
       { href: "/marketing", label: "Publicidad", icon: Megaphone, allowedRoles: ADMIN_ROLES },
+      {
+        href: "/marketing/newsletters",
+        label: "Newsletters",
+        icon: Mail,
+        allowedRoles: ADMIN_ROLES,
+      },
       {
         href: "/marketing/events",
         label: "Eventos",

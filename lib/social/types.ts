@@ -38,7 +38,7 @@ export interface PostListItem {
   createdAt: string;
   targets: TargetView[];
   /** Engagement summed across every target, from the latest insights sync. */
-  metrics: { likes: number; comments: number };
+  metrics: { likes: number; comments: number; actions: number };
 }
 
 /** Insights snapshot as stored per target. */
@@ -50,6 +50,7 @@ export interface InsightsView {
   shares: number;
   saves: number;
   videoViews: number;
+  actions: number;
   engagementRate: number;
   fetchedAt: string;
 }
@@ -78,6 +79,32 @@ export interface CommentView {
   publishedAt: string | null;
   postId: string;
   postCaption: string;
+}
+
+/** Google Business Profile review, kept separate from post comments. */
+export interface GoogleReviewView {
+  id: string;
+  reviewName: string;
+  reviewerName: string;
+  reviewerPhotoUrl: string | null;
+  isAnonymous: boolean;
+  starRating: string;
+  comment: string;
+  createdAt: string | null;
+  updatedAt: string | null;
+  replyComment: string | null;
+  replyUpdatedAt: string | null;
+  replyState: string | null;
+  policyViolation: string | null;
+  replied: boolean;
+}
+
+/** Daily location metric from the Google Business Profile Performance API. */
+export interface GoogleBusinessMetricView {
+  metric: string;
+  date: string;
+  value: number;
+  fetchedAt: string;
 }
 
 /** Input to create a composed post (already-uploaded media + target set). */

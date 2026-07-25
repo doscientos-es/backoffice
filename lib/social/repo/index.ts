@@ -8,4 +8,6 @@
 export * from "./posts";
 export * from "./insights";
 export * from "./comments";
+export * from "./google-business-reviews";
+export * from "./google-business-performance";
 export * from "./automations";

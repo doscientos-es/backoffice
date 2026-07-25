@@ -38,6 +38,7 @@ async function PostDetail({ id }: { id: string }) {
   );
   const totalShares = post.targets.reduce((acc, t) => acc + (t.insights?.shares ?? 0), 0);
   const totalSaves = post.targets.reduce((acc, t) => acc + (t.insights?.saves ?? 0), 0);
+  const totalActions = post.targets.reduce((acc, t) => acc + (t.insights?.actions ?? 0), 0);
   const totalInteractions = totalLikes + totalComments + totalShares + totalSaves;
   const engagementRate = totalReach > 0 ? (totalInteractions / totalReach) * 100 : null;
 
@@ -105,6 +106,7 @@ async function PostDetail({ id }: { id: string }) {
                       <th className="pb-2 pr-4 font-medium text-right">Alcance</th>
                       <th className="pb-2 pr-4 font-medium text-right">Me gusta</th>
                       <th className="pb-2 pr-4 font-medium text-right">Coment.</th>
+                      <th className="pb-2 pr-4 font-medium text-right">Acciones</th>
                       <th className="pb-2 font-medium text-right">Enlace</th>
                     </tr>
                   </thead>
@@ -139,6 +141,9 @@ async function PostDetail({ id }: { id: string }) {
                         </td>
                         <td className="py-3 pr-4 text-right tabular-nums">
                           {t.insights?.comments.toLocaleString() ?? "—"}
+                        </td>
+                        <td className="py-3 pr-4 text-right tabular-nums">
+                          {t.insights?.actions.toLocaleString() ?? "—"}
                         </td>
                         <td className="py-3 text-right">
                           {t.remoteUrl ? (
@@ -243,6 +248,10 @@ async function PostDetail({ id }: { id: string }) {
                   <span className="text-xl font-bold tabular-nums">
                     {totalComments.toLocaleString()}
                   </span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] uppercase text-muted-foreground">Acciones</span>
+                  <span className="text-xl font-bold tabular-nums">{totalActions.toLocaleString()}</span>
                 </div>
               </div>
               <div className="border-t border-border/60 pt-3">

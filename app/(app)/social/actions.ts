@@ -5,6 +5,11 @@ import {
   AutomationActiveInput,
   AutomationRuleIdInput,
   CreatePostSchema,
+  GoogleBusinessPerformanceInput,
+  GoogleBusinessMediaDeleteInput,
+  GoogleBusinessMediaInput,
+  GoogleBusinessReviewIdInput,
+  GoogleBusinessReviewReplyInput,
   GlobalAutomationInput,
   PostIdInput,
   ReplyCommentInput,
@@ -12,6 +17,7 @@ import {
 import type { SocialPlatform } from "@/lib/social/core";
 import * as repo from "@/lib/social/repo";
 import * as service from "@/lib/social/service";
+import * as googleBusinessService from "@/lib/social/google-business/service";
 
 /**
  * Social Hub server actions — thin transport layer.
@@ -153,6 +159,63 @@ export const replyToComment = defineAction({
   handler: async (input) => {
     await service.replyToComment(input.commentId, input.message);
   },
+});
+
+/** Synchronize Google Business Profile reviews into the dedicated review inbox. */
+export const syncGoogleBusinessReviews = defineAction({
+  name: "social.google-business.sync-reviews",
+  roles: [...WRITE_ROLES],
+  revalidate: () => ["/social/reviews"],
+  handler: async () => googleBusinessService.syncGoogleBusinessReviews(),
+});
+
+/** Reply to a Google Business Profile review. */
+export const replyToGoogleBusinessReview = defineAction({
+  name: "social.google-business.reply-review",
+  schema: GoogleBusinessReviewReplyInput,
+  roles: [...WRITE_ROLES],
+  revalidate: () => ["/social/reviews"],
+  handler: async (input) =>
+    googleBusinessService.replyGoogleBusinessReview({
+      reviewId: input.reviewId,
+      comment: input.message,
+    }),
+});
+
+/** Remove the current reply from a Google Business Profile review. */
+export const removeGoogleBusinessReviewReply = defineAction({
+  name: "social.google-business.delete-review-reply",
+  schema: GoogleBusinessReviewIdInput,
+  roles: [...WRITE_ROLES],
+  revalidate: () => ["/social/reviews"],
+  handler: async (input) => googleBusinessService.removeGoogleBusinessReviewReply(input.reviewId),
+});
+
+/** Synchronize daily Google Business Profile performance metrics. */
+export const syncGoogleBusinessPerformance = defineAction({
+  name: "social.google-business.sync-performance",
+  schema: GoogleBusinessPerformanceInput,
+  roles: [...WRITE_ROLES],
+  revalidate: () => ["/social/google-business"],
+  handler: async (input) => googleBusinessService.syncGoogleBusinessPerformance(input.days),
+});
+
+/** Add a public photo to the connected Google Business Profile location. */
+export const addGoogleBusinessPhoto = defineAction({
+  name: "social.google-business.add-photo",
+  schema: GoogleBusinessMediaInput,
+  roles: [...WRITE_ROLES],
+  revalidate: () => ["/social/google-business"],
+  handler: async (input) => googleBusinessService.addGoogleBusinessPhoto(input),
+});
+
+/** Remove a photo from the connected Google Business Profile location. */
+export const removeGoogleBusinessPhoto = defineAction({
+  name: "social.google-business.delete-photo",
+  schema: GoogleBusinessMediaDeleteInput,
+  roles: ["owner", "admin"],
+  revalidate: () => ["/social/google-business"],
+  handler: async (input) => googleBusinessService.removeGoogleBusinessPhoto(input.mediaName),
 });
 
 /** Create a global fallback automation for Instagram and/or Facebook. */

@@ -1,21 +1,23 @@
 import { PublicSchema, ServerSchema } from "@/lib/env.schema";
 import type { z } from "zod";
 
-export const publicEnv = PublicSchema.parse({
-  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-  NEXT_PUBLIC_DEMO_MODE: process.env.NEXT_PUBLIC_DEMO_MODE,
-  NEXT_PUBLIC_HCAPTCHA_SITE_KEY: process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY,
-  NEXT_PUBLIC_CAL_LINK: process.env.NEXT_PUBLIC_CAL_LINK,
-});
-
 /** Strip leading/trailing whitespace (incl. \r from CRLF .env files) from all values. */
 function trimEnv(env: NodeJS.ProcessEnv): Record<string, string | undefined> {
   return Object.fromEntries(
     Object.entries(env).map(([k, v]) => [k, typeof v === "string" ? v.trim() : v]),
   );
 }
+
+const normalizedEnv = trimEnv(process.env);
+
+export const publicEnv = PublicSchema.parse({
+  NEXT_PUBLIC_SUPABASE_URL: normalizedEnv.NEXT_PUBLIC_SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: normalizedEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  NEXT_PUBLIC_APP_URL: normalizedEnv.NEXT_PUBLIC_APP_URL,
+  NEXT_PUBLIC_DEMO_MODE: normalizedEnv.NEXT_PUBLIC_DEMO_MODE,
+  NEXT_PUBLIC_HCAPTCHA_SITE_KEY: normalizedEnv.NEXT_PUBLIC_HCAPTCHA_SITE_KEY,
+  NEXT_PUBLIC_CAL_LINK: normalizedEnv.NEXT_PUBLIC_CAL_LINK,
+});
 
 let cachedServerEnv: z.infer<typeof ServerSchema> | null = null;
 export function serverEnv() {

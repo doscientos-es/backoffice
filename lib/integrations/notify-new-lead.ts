@@ -3,6 +3,7 @@ import { NewLeadEmail } from "@/components/email/new-lead-email";
 import { renderEmail } from "@/lib/email/render";
 import { sendEmail } from "@/lib/email/resend";
 import { publicEnv } from "@/lib/env";
+import { selectLeadResource } from "@/lib/integrations/lead-resources";
 import { telegramSendMessage } from "@/lib/integrations/telegram";
 import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -19,6 +20,11 @@ export type NotifyNewLeadInput = {
   leadEstimatedValue?: number | null;
   leadCompanySize?: string | null;
   leadUrgency?: string | null;
+  leadLandingRef?: string | null;
+  leadLandingSubject?: string | null;
+  leadResourceSlug?: string | null;
+  leadCalculatorCost?: string | null;
+  leadCalculatorHours?: string | null;
 };
 
 const eur = new Intl.NumberFormat("es-ES", {
@@ -43,6 +49,13 @@ export async function notifyNewLead(input: NotifyNewLeadInput): Promise<void> {
   const supabase = createAdminClient();
   const appUrl = publicEnv.NEXT_PUBLIC_APP_URL;
   const leadUrl = `${appUrl}/leads/${input.leadId}`;
+  const leadResource = selectLeadResource({
+    resourceSlug: input.leadResourceSlug,
+    landingRef: input.leadLandingRef,
+    landingSubject: input.leadLandingSubject,
+    calculatorCost: input.leadCalculatorCost,
+    calculatorHours: input.leadCalculatorHours,
+  });
 
   // ── 1. Fetch active owners and admins ────────────────────────────────────
   const { data: recipients, error: fetchError } = await supabase
@@ -180,13 +193,19 @@ export async function notifyNewLead(input: NotifyNewLeadInput): Promise<void> {
   if (input.leadEmail) {
     try {
       const confirmHtml = await renderEmail(
-        LeadConfirmationEmail({ leadName: input.leadName, appUrl }),
+        LeadConfirmationEmail({
+          leadName: input.leadName,
+          appUrl,
+          resource: leadResource,
+          calculatorCost: input.leadCalculatorCost,
+          calculatorHours: input.leadCalculatorHours,
+        }),
       );
       await sendEmail({
         fromName: "doscientos",
         fromAlias: "hola",
         to: input.leadEmail,
-        subject: "Hemos recibido tu solicitud ✓",
+        subject: "Hemos recibido tu solicitud y te dejamos un recurso",
         html: confirmHtml,
         tags: { lead_id: input.leadId, type: "lead_confirmation" },
       });

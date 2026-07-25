@@ -22,6 +22,7 @@ interface InsightsRow {
   shares: number;
   saves: number;
   video_views: number;
+  actions: number;
   engagement_rate: number;
   fetched_at: string;
 }
@@ -35,6 +36,7 @@ function mapInsights(row: InsightsRow): InsightsView {
     shares: row.shares,
     saves: row.saves,
     videoViews: row.video_views,
+    actions: row.actions ?? 0,
     engagementRate: Number(row.engagement_rate),
     fetchedAt: row.fetched_at,
   };
@@ -53,6 +55,7 @@ export async function upsertInsights(targetId: string, insights: PostInsights): 
       shares: insights.shares,
       saves: insights.saves,
       video_views: insights.videoViews,
+      actions: insights.actions ?? 0,
       engagement_rate: insights.engagementRate,
       raw: insights.raw ?? {},
       fetched_at: new Date().toISOString(),
@@ -69,7 +72,7 @@ export async function getInsightsByTarget(targetIds: string[]): Promise<Map<stri
   const { data, error } = await supabase
     .from("social_post_insights")
     .select(
-      "target_id, impressions, reach, likes, comments, shares, saves, video_views, engagement_rate, fetched_at",
+      "target_id, impressions, reach, likes, comments, shares, saves, video_views, actions, engagement_rate, fetched_at",
     )
     .in("target_id", targetIds);
   if (error) {

@@ -4,6 +4,8 @@ import { PublishError } from "@/lib/social/core";
 
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const API_BASE = "https://mybusiness.googleapis.com/v4";
+const BUSINESS_INFORMATION_API_BASE = "https://mybusinessbusinessinformation.googleapis.com/v1";
+const PERFORMANCE_API_BASE = "https://businessprofileperformance.googleapis.com/v1";
 const SCOPE = "https://www.googleapis.com/auth/business.manage";
 
 interface GoogleTokenResponse {
@@ -23,14 +25,19 @@ export function googleBusinessRedirectUri(): string {
 }
 
 export function googleBusinessProfileConfigured(): boolean {
+  return googleBusinessMissingConfig().length === 0;
+}
+
+export function googleBusinessMissingConfig(): string[] {
   const env = serverEnv();
-  return Boolean(
-    env.GOOGLE_BUSINESS_CLIENT_ID &&
-      env.GOOGLE_BUSINESS_CLIENT_SECRET &&
-      env.GOOGLE_BUSINESS_REFRESH_TOKEN &&
-      env.GOOGLE_BUSINESS_ACCOUNT_ID &&
-      env.GOOGLE_BUSINESS_LOCATION_ID,
-  );
+  const entries: [string, string][] = [
+    ["GOOGLE_BUSINESS_CLIENT_ID", env.GOOGLE_BUSINESS_CLIENT_ID],
+    ["GOOGLE_BUSINESS_CLIENT_SECRET", env.GOOGLE_BUSINESS_CLIENT_SECRET],
+    ["GOOGLE_BUSINESS_REFRESH_TOKEN", env.GOOGLE_BUSINESS_REFRESH_TOKEN],
+    ["GOOGLE_BUSINESS_ACCOUNT_ID", env.GOOGLE_BUSINESS_ACCOUNT_ID],
+    ["GOOGLE_BUSINESS_LOCATION_ID", env.GOOGLE_BUSINESS_LOCATION_ID],
+  ];
+  return entries.filter(([, value]) => !value).map(([name]) => name);
 }
 
 export function googleBusinessOAuthConfigured(): boolean {
@@ -44,6 +51,10 @@ export function googleBusinessAccountId(): string {
 
 export function googleBusinessLocationId(): string {
   return serverEnv().GOOGLE_BUSINESS_LOCATION_ID.replace(/^locations\//, "");
+}
+
+export function googleBusinessLocationName(): string {
+  return `accounts/${googleBusinessAccountId()}/locations/${googleBusinessLocationId()}`;
 }
 
 export function googleBusinessLanguageCode(): string {
@@ -116,7 +127,11 @@ async function accessToken(): Promise<string> {
   return data.access_token;
 }
 
-export async function googleBusinessRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function googleApiRequest<T>(
+  baseUrl: string,
+  path: string,
+  init: RequestInit = {},
+): Promise<T> {
   if (isDemoMode()) {
     throw new PublishError(
       "google_business_profile",
@@ -124,7 +139,7 @@ export async function googleBusinessRequest<T>(path: string, init: RequestInit =
     );
   }
   const token = await accessToken();
-  const res = await fetch(`${API_BASE}/${path.replace(/^\//, "")}`, {
+  const res = await fetch(`${baseUrl}/${path.replace(/^\//, "")}`, {
     ...init,
     headers: {
       Authorization: `Bearer ${token}`,
@@ -149,4 +164,22 @@ export async function googleBusinessRequest<T>(path: string, init: RequestInit =
     );
   }
   return (text ? JSON.parse(text) : {}) as T;
+}
+
+export function googleBusinessRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+  return googleApiRequest<T>(API_BASE, path, init);
+}
+
+export function googleBusinessPerformanceRequest<T>(
+  path: string,
+  init: RequestInit = {},
+): Promise<T> {
+  return googleApiRequest<T>(PERFORMANCE_API_BASE, path, init);
+}
+
+export function googleBusinessInformationRequest<T>(
+  path: string,
+  init: RequestInit = {},
+): Promise<T> {
+  return googleApiRequest<T>(BUSINESS_INFORMATION_API_BASE, path, init);
 }

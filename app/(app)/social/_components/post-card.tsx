@@ -2,7 +2,13 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import type { PostListItem } from "@/lib/social/types";
 import { SOCIAL_POST_STATUS, SOCIAL_TARGET_STATUS } from "@/lib/status";
 import { cn, relativeTime } from "@/lib/utils";
-import { CalendarClock, Heart, MessageCircle, MessageSquareText } from "lucide-react";
+import {
+  CalendarClock,
+  Heart,
+  MessageCircle,
+  MessageSquareText,
+  MousePointerClick,
+} from "lucide-react";
 import Link from "next/link";
 import { DeletePostButton } from "./delete-post-button";
 import { MediaPreview } from "./media-thumb";
@@ -90,6 +96,12 @@ export function PostCard({ post }: { post: PostListItem }) {
                 <MessageCircle className="size-3" />
                 {post.metrics.comments}
               </span>
+              {post.metrics.actions > 0 && (
+                <span className="inline-flex items-center gap-1">
+                  <MousePointerClick className="size-3" />
+                  {post.metrics.actions}
+                </span>
+              )}
             </span>
           )}
           <Link

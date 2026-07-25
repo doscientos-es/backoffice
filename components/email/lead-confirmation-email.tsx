@@ -1,4 +1,5 @@
-import { Hr, Section, Text } from "@react-email/components";
+import type { LeadResource } from "@/lib/integrations/lead-resources";
+import { Button, Hr, Section, Text } from "@react-email/components";
 import { EmailLayout } from "./email-layout";
 
 const BRAND = "#2A4227";
@@ -10,20 +11,34 @@ export type LeadConfirmationEmailProps = {
   leadName: string;
   /** Absolute base URL of the app (for logo resolution). */
   appUrl: string;
+  /** Contextual resource selected from the lead source/ref. */
+  resource: LeadResource;
+  calculatorCost?: string | null;
+  calculatorHours?: string | null;
 };
 
 /**
  * Confirmation email sent to the lead right after their request is received.
  *
  * Usage:
- *   const html = await renderEmail(LeadConfirmationEmail({ leadName, appUrl }));
+ *   const html = await renderEmail(LeadConfirmationEmail({ leadName, appUrl, resource }));
  *   await sendEmail({ fromName: "doscientos", fromAlias: "hola", subject: "...", html });
  */
-export function LeadConfirmationEmail({ leadName, appUrl }: LeadConfirmationEmailProps) {
+export function LeadConfirmationEmail({
+  leadName,
+  appUrl,
+  resource,
+  calculatorCost,
+  calculatorHours,
+}: LeadConfirmationEmailProps) {
   const firstName = leadName.split(" ")[0] ?? leadName;
+  const hasCalculatorSummary = Boolean(calculatorCost || calculatorHours);
 
   return (
-    <EmailLayout preview={`${firstName}, hemos recibido tu solicitud ✓`} appUrl={appUrl}>
+    <EmailLayout
+      preview={`${firstName}, hemos recibido tu solicitud y te dejamos un recurso`}
+      appUrl={appUrl}
+    >
       {/* Hero accent band */}
       <Section
         style={{
@@ -65,6 +80,57 @@ export function LeadConfirmationEmail({ leadName, appUrl }: LeadConfirmationEmai
         Hemos recibido tu mensaje y ya está en manos de nuestro equipo. Nos pondremos en contacto
         contigo en las próximas horas.
       </Text>
+
+      {hasCalculatorSummary ? (
+        <Section
+          style={{
+            backgroundColor: "#f4f4f5",
+            borderRadius: 8,
+            padding: "16px 20px",
+            margin: "20px 0 8px",
+          }}
+        >
+          <Text style={{ ...labelStyle, color: BRAND, marginBottom: 8 }}>
+            Resultado de tu calculadora
+          </Text>
+          {calculatorHours ? (
+            <Text style={stepBodyStyle}>Horas estimadas al ano: {calculatorHours} h</Text>
+          ) : null}
+          {calculatorCost ? (
+            <Text style={{ ...stepBodyStyle, marginTop: 4 }}>
+              Coste anual estimado: {calculatorCost} EUR
+            </Text>
+          ) : null}
+        </Section>
+      ) : null}
+
+      <Section
+        style={{
+          backgroundColor: BRAND_LIGHT,
+          borderRadius: 8,
+          padding: "18px 20px",
+          margin: "20px 0 24px",
+        }}
+      >
+        <Text style={{ ...labelStyle, color: BRAND, marginBottom: 8 }}>Recurso recomendado</Text>
+        <Text style={stepTitleStyle}>{resource.title}</Text>
+        <Text style={{ ...stepBodyStyle, marginBottom: 16 }}>{resource.description}</Text>
+        <Button
+          href={resource.href}
+          style={{
+            backgroundColor: BRAND,
+            color: "#ffffff",
+            borderRadius: 8,
+            fontFamily: FONT,
+            fontSize: 13,
+            fontWeight: 700,
+            padding: "10px 14px",
+            textDecoration: "none",
+          }}
+        >
+          {resource.cta}
+        </Button>
+      </Section>
 
       <Hr style={{ borderColor: "#e4e4e7", margin: "24px 0" }} />
 

@@ -55,6 +55,41 @@ export type CreatePostSchemaType = z.infer<typeof CreatePostSchema>;
 /** Publish an existing post now. */
 export const PostIdInput = z.object({ postId: z.string().uuid() });
 
+export const GoogleBusinessReviewReplyInput = z.object({
+  reviewId: z.string().uuid(),
+  message: z.string().trim().min(1).max(4096),
+});
+
+export const GoogleBusinessReviewIdInput = z.object({ reviewId: z.string().uuid() });
+
+export const GoogleBusinessPerformanceInput = z.object({
+  days: z.number().int().min(1).max(90).default(30),
+});
+
+export const GoogleBusinessMediaInput = z.object({
+  sourceUrl: z.string().url(),
+  category: z.enum([
+    "COVER",
+    "PROFILE",
+    "LOGO",
+    "EXTERIOR",
+    "INTERIOR",
+    "PRODUCT",
+    "AT_WORK",
+    "FOOD_AND_DRINK",
+    "MENU",
+    "COMMON_AREA",
+    "ROOMS",
+    "TEAMS",
+    "ADDITIONAL",
+  ]),
+  description: z.string().trim().max(1000).optional(),
+});
+
+export const GoogleBusinessMediaDeleteInput = z.object({
+  mediaName: z.string().regex(/^accounts\/[^/]+\/locations\/[^/]+\/media\/[^/]+$/),
+});
+
 /** Reply to a comment in the unified inbox. */
 export const ReplyCommentInput = z.object({
   commentId: z.string().uuid(),

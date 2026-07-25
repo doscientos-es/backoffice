@@ -32,6 +32,7 @@ export const LandingLeadInput = z.object({
   landing_path: optionalText(500),
   landing_ref: optionalText(200),
   landing_subject: optionalText(300),
+  resource: optionalText(200),
   calculator_cost: optionalText(80),
   calculator_hours: optionalText(80),
   first_landing_path: optionalText(500),
@@ -80,6 +81,7 @@ export function mapLandingToIntake(
     input.companySize ? `Tamaño de empresa: ${input.companySize}` : null,
     input.urgency ? `Urgencia: ${input.urgency}` : null,
     input.budget ? `Presupuesto: ${input.budget}` : null,
+    input.resource ? `Recurso solicitado: ${input.resource}` : null,
   ].filter((v): v is string => Boolean(v));
 
   const dedupeKey = input.dedupeKey ?? null;
@@ -116,6 +118,7 @@ export function mapLandingToIntake(
       landingPath: input.landing_path ?? null,
       landingRef: input.landing_ref ?? null,
       landingSubject: input.landing_subject ?? null,
+      resourceSlug: input.resource ?? null,
       calculatorCost: input.calculator_cost ?? null,
       calculatorHours: input.calculator_hours ?? null,
       firstLandingPath: input.first_landing_path ?? null,

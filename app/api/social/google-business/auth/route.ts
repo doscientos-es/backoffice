@@ -8,6 +8,7 @@ import { randomBytes } from "node:crypto";
 import { requireRole } from "@/lib/auth";
 import {
   googleBusinessAuthorizationUrl,
+  googleBusinessMissingConfig,
   googleBusinessOAuthConfigured,
 } from "@/lib/social/google-business";
 import { type NextRequest, NextResponse } from "next/server";
@@ -25,7 +26,15 @@ export async function GET(_req: NextRequest) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
   if (!googleBusinessOAuthConfigured()) {
-    return NextResponse.json({ error: "google_business_not_configured" }, { status: 503 });
+    return NextResponse.json(
+      {
+        error: "google_business_not_configured",
+        missing: googleBusinessMissingConfig().filter(
+          (key) => key === "GOOGLE_BUSINESS_CLIENT_ID" || key === "GOOGLE_BUSINESS_CLIENT_SECRET",
+        ),
+      },
+      { status: 503 },
+    );
   }
 
   const state = randomBytes(24).toString("hex");

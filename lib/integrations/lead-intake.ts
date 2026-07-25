@@ -32,6 +32,7 @@ const contextSchema = z.object({
   landingPath: z.string().optional().nullable(),
   landingRef: z.string().optional().nullable(),
   landingSubject: z.string().optional().nullable(),
+  resourceSlug: z.string().optional().nullable(),
   calculatorCost: z.string().optional().nullable(),
   calculatorHours: z.string().optional().nullable(),
   firstLandingPath: z.string().optional().nullable(),
@@ -413,13 +414,19 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
         leadEstimatedValue: row.estimated_value,
         leadCompanySize: row.company_size,
         leadUrgency: row.urgency,
+        leadLandingRef: row.landing_ref as string | null,
+        leadLandingSubject: row.landing_subject as string | null,
+        leadResourceSlug: norm.context?.resourceSlug ?? null,
+        leadCalculatorCost: row.calculator_cost as string | null,
+        leadCalculatorHours: row.calculator_hours as string | null,
       }).catch((e) => log.error({ err: e }, "notifyNewLead failed")),
       logLeadCreatedInteraction(leadId, row).catch((e) =>
         log.error({ err: e, leadId }, "lead intake interaction failed"),
       ),
-      recordLeadCreatedEvent(leadId, row, norm.context?.visitorId).catch((e) =>
-        log.error({ err: e, leadId }, "lead conversion event failed"),
-      ),
+      recordLeadCreatedEvent(leadId, row, {
+        visitorId: norm.context?.visitorId,
+        resourceSlug: norm.context?.resourceSlug,
+      }).catch((e) => log.error({ err: e, leadId }, "lead conversion event failed")),
       linkConversionEventsToLead({
         leadId,
         visitorId: norm.context?.visitorId,
@@ -434,11 +441,11 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
 async function recordLeadCreatedEvent(
   leadId: string,
   row: Record<string, unknown>,
-  visitorId?: string | null,
+  context?: { visitorId?: string | null; resourceSlug?: string | null },
 ): Promise<void> {
   await recordConversionEvent({
     event_id: (row.event_id as string | null) ?? null,
-    visitor_id: visitorId ?? null,
+    visitor_id: context?.visitorId ?? null,
     lead_id: leadId,
     event_name: "lead_created",
     conversion_step: (row.conversion_step as string | null) ?? null,
@@ -453,6 +460,7 @@ async function recordLeadCreatedEvent(
     payload: {
       source: row.source ?? null,
       landing_subject: row.landing_subject ?? null,
+      resource_slug: context?.resourceSlug ?? null,
       calculator_cost: row.calculator_cost ?? null,
       calculator_hours: row.calculator_hours ?? null,
     },
