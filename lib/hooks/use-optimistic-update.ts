@@ -1,35 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
 import { sileo } from "sileo";
-
-type ActionResult = { ok: true } | { ok: false; error: string };
+import { useOptimisticUpdate as base } from "@/primitives/hooks/use-optimistic-update";
 
 /**
- * Optimistic scalar-field update hook.
- *
- * `value` reflects the new state immediately. If the server action returns
- * `{ ok: false }` the previous value is restored and an error toast fires.
- *
- * @example
- * const { value, commit } = useOptimisticUpdate(serverStatus);
- * commit(next, () => updateStatus({ id, status: next }));
+ * App wrapper around the primitive `useOptimisticUpdate` that surfaces failures
+ * as a sileo error toast. Preserves the pre-extraction call signature.
  */
 export function useOptimisticUpdate<T>(initial: T) {
-  const [value, setValue] = useState<T>(initial);
-  const [, startTransition] = useTransition();
-
-  const commit = (next: T, action: () => Promise<ActionResult | undefined>) => {
-    const prev = value;
-    setValue(next); // optimistic
-    startTransition(async () => {
-      const res = await action();
-      if (res && !res.ok) {
-        setValue(prev); // revert
-        sileo.error({ title: res.error });
-      }
-    });
-  };
-
-  return { value, commit };
+  return base<T>(initial, (message) => sileo.error({ title: message }));
 }
