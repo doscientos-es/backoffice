@@ -8,15 +8,20 @@ function trimEnv(env: NodeJS.ProcessEnv): Record<string, string | undefined> {
   );
 }
 
-const normalizedEnv = trimEnv(process.env);
-
+// IMPORTANT: each `NEXT_PUBLIC_*` value below MUST be accessed via a literal
+// `process.env.NEXT_PUBLIC_X` member expression (not through `trimEnv`/an
+// intermediate object). Next.js inlines these into the browser bundle at
+// build time by statically replacing that exact textual pattern; reading it
+// through any indirection (e.g. `Object.entries(process.env)`) breaks the
+// replacement, so `publicEnv` parses to all-undefined client-side and throws
+// at module load, crashing the app for every visitor.
 export const publicEnv = PublicSchema.parse({
-  NEXT_PUBLIC_SUPABASE_URL: normalizedEnv.NEXT_PUBLIC_SUPABASE_URL,
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: normalizedEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  NEXT_PUBLIC_APP_URL: normalizedEnv.NEXT_PUBLIC_APP_URL,
-  NEXT_PUBLIC_DEMO_MODE: normalizedEnv.NEXT_PUBLIC_DEMO_MODE,
-  NEXT_PUBLIC_HCAPTCHA_SITE_KEY: normalizedEnv.NEXT_PUBLIC_HCAPTCHA_SITE_KEY,
-  NEXT_PUBLIC_CAL_LINK: normalizedEnv.NEXT_PUBLIC_CAL_LINK,
+  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL?.trim(),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim(),
+  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL?.trim(),
+  NEXT_PUBLIC_DEMO_MODE: process.env.NEXT_PUBLIC_DEMO_MODE?.trim(),
+  NEXT_PUBLIC_HCAPTCHA_SITE_KEY: process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY?.trim(),
+  NEXT_PUBLIC_CAL_LINK: process.env.NEXT_PUBLIC_CAL_LINK?.trim(),
 });
 
 let cachedServerEnv: z.infer<typeof ServerSchema> | null = null;
@@ -49,8 +54,8 @@ export function isGoogleEnabled(): boolean {
     process.env.NEXT_PUBLIC_DEMO_MODE?.trim() === "true";
   return Boolean(
     !demoMode &&
-      process.env.GOOGLE_SA_CLIENT_EMAIL?.trim() &&
-      process.env.GOOGLE_SA_PRIVATE_KEY_BASE64?.trim(),
+    process.env.GOOGLE_SA_CLIENT_EMAIL?.trim() &&
+    process.env.GOOGLE_SA_PRIVATE_KEY_BASE64?.trim(),
   );
 }
 
