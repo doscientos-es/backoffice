@@ -1,6 +1,6 @@
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getFinanceMonthlySeries } from "@/lib/finance/queries";
-import Link from "next/link";
 import { FinanceChart } from "../finance-chart";
 
 export async function FinanceOverviewChart() {

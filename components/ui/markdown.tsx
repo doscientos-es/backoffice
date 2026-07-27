@@ -11,6 +11,7 @@
  * surfaces — there is no other markdown renderer in the codebase so adding a
  * dependency would be overkill.
  */
+
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
@@ -156,6 +157,7 @@ export function Markdown({ source, className }: { source: string; className?: st
                     : "text-sm";
             const Tag = `h${b.level}` as "h1" | "h2" | "h3" | "h4";
             return (
+              // biome-ignore lint/suspicious/noArrayIndexKey: blocks are fully recomputed from source on every render
               <Tag
                 key={i}
                 className={cn("font-semibold tracking-tight", sz, b.level <= 2 && "mt-2")}

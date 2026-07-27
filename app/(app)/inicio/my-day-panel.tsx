@@ -1,5 +1,7 @@
 "use client";
 
+import { ChevronRight, Inbox, ListTodo, Phone, UserRound } from "lucide-react";
+import Link from "next/link";
 import { claimLead } from "@/app/(app)/leads/actions";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,8 +11,6 @@ import { useOptimisticRemoval } from "@/lib/hooks/use-optimistic-removal";
 import { leadDisplayName } from "@/lib/leads/utils";
 import { LEAD_STATUS, TASK_STATUS } from "@/lib/status";
 import { relativeTime } from "@/lib/utils";
-import { ChevronRight, Inbox, ListTodo, Phone, UserRound } from "lucide-react";
-import Link from "next/link";
 import { ClaimLeadButton } from "./_components/claim-lead-button";
 
 export type MyDayPanelProps = MyDayData;

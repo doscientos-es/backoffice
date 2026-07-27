@@ -8,10 +8,10 @@
  * and city (when known) via offline server action. Fields remain editable.
  */
 
-import { lookupSpanishPostalCode } from "@/lib/address/actions";
-import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { useRef, useState } from "react";
+import { lookupSpanishPostalCode } from "@/lib/address/actions";
+import { cn } from "@/lib/utils";
 import { Input } from "./input";
 
 interface ZipInputProps {

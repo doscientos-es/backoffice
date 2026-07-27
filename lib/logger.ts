@@ -1,5 +1,5 @@
-import { serverEnv } from "@/lib/env";
 import pino, { type Logger } from "pino";
+import { serverEnv } from "@/lib/env";
 
 let cached: Logger | null = null;
 

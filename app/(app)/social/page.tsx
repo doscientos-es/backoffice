@@ -1,3 +1,6 @@
+import { Inbox, Plus, Settings } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
 import { ListControls } from "@/components/layout/list-controls";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -21,18 +24,15 @@ import {
 } from "@/lib/social/core";
 import { googleBusinessOAuthConfigured } from "@/lib/social/google-business";
 import {
+  filterAndSortPosts,
   SOCIAL_POST_SORT_OPTIONS,
   type SocialPostSort,
-  filterAndSortPosts,
 } from "@/lib/social/list";
 import { listPosts } from "@/lib/social/repo";
 import { availablePlatforms } from "@/lib/social/service";
 import { SOCIAL_POST_STATUS } from "@/lib/status";
 import { cn } from "@/lib/utils";
 import { parseEnumParam, parseStringParam } from "@/lib/utils/search-params";
-import { Inbox, Plus, Settings } from "lucide-react";
-import type { Metadata } from "next";
-import Link from "next/link";
 import { ImportInstagramButton } from "./_components/import-instagram-button";
 import { PlatformIcon } from "./_components/platform";
 import { PostCard } from "./_components/post-card";
@@ -175,7 +175,11 @@ function ListSkeleton() {
   );
 }
 
-export default async function SocialPage({ searchParams }: { searchParams: SocialPageSearchParams }) {
+export default async function SocialPage({
+  searchParams,
+}: {
+  searchParams: SocialPageSearchParams;
+}) {
   await requireUser();
   const sp = await searchParams;
   const q = parseStringParam(sp, "q");

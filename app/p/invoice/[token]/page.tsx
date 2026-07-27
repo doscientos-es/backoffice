@@ -1,3 +1,8 @@
+import { buildQrDataUrl, buildQrUrl } from "@doscientos/verifactu";
+import { CheckCircle2, Download, XCircle } from "lucide-react";
+import type { Metadata } from "next";
+import Image from "next/image";
+import { notFound } from "next/navigation";
 import { LogoMark } from "@/components/branding";
 import { PortalPasswordGate } from "@/components/portal/password-gate";
 import { RedsysPaymentButton } from "@/components/portal/redsys-payment-button";
@@ -10,11 +15,6 @@ import { INVOICE_STATUS } from "@/lib/status";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { verifactuConfigFromEnv } from "@/lib/verifactu/config";
-import { buildQrDataUrl, buildQrUrl } from "@doscientos/verifactu";
-import { CheckCircle2, Download, XCircle } from "lucide-react";
-import type { Metadata } from "next";
-import Image from "next/image";
-import { notFound } from "next/navigation";
 import { unlockInvoicePortal } from "./actions";
 
 export const dynamic = "force-dynamic";

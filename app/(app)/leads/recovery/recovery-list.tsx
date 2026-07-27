@@ -1,5 +1,7 @@
 "use client";
 
+import { ArrowRight, Eye, MousePointerClick, Send } from "lucide-react";
+import Link from "next/link";
 import { ListPage, type ListPageProps } from "@/components/layout/list-page";
 import { MemberLabel } from "@/components/ui/member-avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -7,8 +9,6 @@ import { getLeadInitials, leadDisplayName } from "@/lib/leads/utils";
 import type { RecoveryLead } from "@/lib/recovery/types";
 import { RECOVERY_STATE } from "@/lib/status";
 import { formatEUR, relativeTime } from "@/lib/utils";
-import { ArrowRight, Eye, MousePointerClick, Send } from "lucide-react";
-import Link from "next/link";
 import { RecoveryActions } from "./recovery-actions";
 
 type RecoveryListProps = Omit<ListPageProps, "rows"> & {

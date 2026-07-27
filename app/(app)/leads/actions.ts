@@ -1,13 +1,17 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { after } from "next/server";
+import { z } from "zod";
 import { defineAction } from "@/lib/actions/define-action";
 import { sendEmail } from "@/lib/email/resend";
 import { buildSignatureHtml } from "@/lib/email/signature";
 import { appendSignature, markdownToHtml, renderTemplate } from "@/lib/email/templates";
 import { addEmailTracking } from "@/lib/email/tracking";
 import { isGoogleEnabled, publicEnv, serverEnv } from "@/lib/env";
-import { findConflicts, insertEvent } from "@/lib/google/calendar";
 import type { CalendarBusySlot } from "@/lib/google/calendar";
+import { findConflicts, insertEvent } from "@/lib/google/calendar";
 import { resolveSubject } from "@/lib/google/client";
 import { pushMetaConversion } from "@/lib/integrations/meta-capi";
 import { normalizeCompanySize, normalizeLeadSource, normalizeUrgency } from "@/lib/leads/constants";
@@ -28,10 +32,6 @@ import {
 } from "@/lib/schemas/lead";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { after } from "next/server";
-import { z } from "zod";
 
 /**
  * Speed-to-lead: stamps `first_contacted_at` on the first real outbound touch

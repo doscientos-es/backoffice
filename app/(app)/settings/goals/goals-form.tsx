@@ -1,11 +1,11 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
 import type { CompanyGoals } from "@/lib/dashboard/types";
-import { useState, useTransition } from "react";
 import { upsertCompanyGoals } from "./actions";
 
 export function GoalsForm({ goals }: { goals: CompanyGoals }) {

@@ -1,14 +1,14 @@
 "use client";
 
+import { ChevronLeft, Download, FolderOpen, HardDrive, RefreshCw, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useState, useTransition } from "react";
+import { sileo } from "sileo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { FileBrowserItem, FileBrowserListing } from "@/lib/filebrowser";
-import { ChevronLeft, Download, FolderOpen, HardDrive, RefreshCw, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useState, useTransition } from "react";
-import { sileo } from "sileo";
 import { ForceBackupButton } from "./force-backup-button";
 
 // Session-scoped stale-while-revalidate cache. Keyed by `slug:subPath`, it lets

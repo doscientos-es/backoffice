@@ -1,8 +1,8 @@
+import type { Metadata } from "next";
 import { ListPage } from "@/components/layout/list-page";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDateTime } from "@/lib/utils";
-import type { Metadata } from "next";
 import { ReminderRowActions } from "./reminder-row-actions";
 
 export const metadata: Metadata = { title: "Recordatorios · doscientos" };

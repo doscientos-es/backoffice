@@ -1,9 +1,9 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { sileo } from "sileo";
+import { cn } from "@/lib/utils";
 
 interface CopyButtonProps {
   /** Text that will be written to the clipboard. */

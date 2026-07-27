@@ -1,5 +1,5 @@
-import { requireUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { requireUser } from "@/lib/auth";
 import { OnboardingForm } from "./onboarding-form";
 
 export default async function OnboardingPage() {

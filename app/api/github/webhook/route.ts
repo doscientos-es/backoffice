@@ -10,9 +10,9 @@
  *   pull_request.opened / closed (with merged flag)
  */
 
+import { type NextRequest, NextResponse } from "next/server";
 import { verifyGitHubSignature } from "@/lib/integrations/github";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -252,7 +252,7 @@ async function handleIssueEvent(
   // --- issues.labeled ---
   if (action === "labeled") {
     const task = await taskByIssue(supabase, issueNumber);
-    if (!task || !task.project_id) return;
+    if (!task?.project_id) return;
     // Ensure all labels exist as task_tags in the project, then assign them.
     for (const label of issue.labels) {
       const { data: tag } = await supabase

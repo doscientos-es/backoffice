@@ -1,9 +1,9 @@
 "use client";
 
+import { ChevronDown, ChevronUp, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { type EditablePair, KEY_POINTS_LIMITS, createEmptyPair } from "@/lib/proposals/key-points";
-import { ChevronDown, ChevronUp, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
+import { createEmptyPair, type EditablePair, KEY_POINTS_LIMITS } from "@/lib/proposals/key-points";
 
 export type ProblemSolutionEditorProps = {
   items: EditablePair[];

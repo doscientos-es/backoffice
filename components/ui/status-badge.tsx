@@ -1,5 +1,5 @@
-import { Badge } from "@/components/ui/badge";
 import type { ComponentProps } from "react";
+import { Badge } from "@/components/ui/badge";
 
 import type { StatusMeta } from "@/lib/status";
 

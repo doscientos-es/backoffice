@@ -1,5 +1,8 @@
 "use client";
 
+import { ChevronLeft, ChevronRight, ClipboardCopy, Download, Pencil, Trash2 } from "lucide-react";
+import { useState, useTransition } from "react";
+import { sileo } from "sileo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,9 +10,6 @@ import { type AvatarMember, MemberLabel } from "@/components/ui/member-avatar";
 import { useOptimisticRemoval } from "@/lib/hooks/use-optimistic-removal";
 import { computeHoursFromRange } from "@/lib/schemas/work-log";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, ClipboardCopy, Download, Pencil, Trash2 } from "lucide-react";
-import { useState, useTransition } from "react";
-import { sileo } from "sileo";
 import { addWorkLog, deleteWorkLog, updateWorkLog } from "./work-log-actions";
 
 function escapeCsvField(value: string): string {

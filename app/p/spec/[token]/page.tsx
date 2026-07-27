@@ -1,8 +1,8 @@
+import { notFound } from "next/navigation";
 import { LogoMark } from "@/components/branding";
 import { Markdown } from "@/components/ui/markdown";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate } from "@/lib/utils";
-import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 export const metadata = {

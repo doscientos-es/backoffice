@@ -1,10 +1,10 @@
+import type { Metadata, Viewport } from "next";
 import { PwaRegister } from "@/components/pwa-register";
 import { ThemeProvider } from "@/components/theme-provider";
-import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { cn } from "@/lib/utils";
 import { Geist } from "next/font/google";
 import { Toaster } from "sileo";
+import { cn } from "@/lib/utils";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 

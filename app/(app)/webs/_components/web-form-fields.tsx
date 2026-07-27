@@ -3,7 +3,7 @@ import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { HOSTING_PROVIDERS, HOSTING_PROVIDER_LABELS } from "@/lib/schemas/web-project";
+import { HOSTING_PROVIDER_LABELS, HOSTING_PROVIDERS } from "@/lib/schemas/web-project";
 import type { WebProjectDetail } from "@/lib/webs/types";
 
 type Defaults = Partial<WebProjectDetail>;

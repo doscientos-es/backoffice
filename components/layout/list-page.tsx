@@ -1,28 +1,29 @@
 "use client";
 
 import {
-  type FilterConfig,
-  ListControls,
-  type ListControlsProps,
-} from "@/components/layout/list-controls";
-import { type BreadcrumbEntry, PageHeader } from "@/components/layout/page-header";
-export type { BreadcrumbEntry };
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
-import { cn } from "@/lib/utils";
-import {
   type ColumnDef,
-  type SortingState,
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
+  type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
 import { ArrowDown, ArrowRight, ArrowUp, ArrowUpDown, Download, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
+import {
+  type FilterConfig,
+  ListControls,
+  type ListControlsProps,
+} from "@/components/layout/list-controls";
+import { type BreadcrumbEntry, PageHeader } from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
+import { cn } from "@/lib/utils";
+
+export type { BreadcrumbEntry };
 
 export type ListCell = ReactNode | string | number | null | undefined;
 export type ListAlign = "left" | "right";
@@ -108,17 +109,19 @@ function headerMinWidth(h: ListHeader): string | undefined {
 
 function exportToCSV(headers: ListHeader[], rows: ListRow[], filename: string) {
   const labels = headers.map(headerLabel);
-  const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
+  const escapeCsv = (v: string) => `"${v.replace(/"/g, '""')}"`;
   const csvRows = rows.map((row) =>
     headers.map((_, i) => {
       const csv = row.csvValues?.[i];
-      if (csv !== undefined && csv !== null) return escape(String(csv));
+      if (csv !== undefined && csv !== null) return escapeCsv(String(csv));
       const cell = row.cells[i];
-      if (typeof cell === "string" || typeof cell === "number") return escape(String(cell));
+      if (typeof cell === "string" || typeof cell === "number") return escapeCsv(String(cell));
       return '""';
     }),
   );
-  const content = [labels.map(escape).join(","), ...csvRows.map((r) => r.join(","))].join("\r\n");
+  const content = [labels.map(escapeCsv).join(","), ...csvRows.map((r) => r.join(","))].join(
+    "\r\n",
+  );
   const blob = new Blob([`\uFEFF${content}`], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

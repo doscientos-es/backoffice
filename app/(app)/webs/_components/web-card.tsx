@@ -1,12 +1,12 @@
-import { HOSTING_PROVIDER_LABELS } from "@/lib/schemas/web-project";
-import { cn, relativeTime } from "@/lib/utils";
-import { domainExpiryDays, domainExpiryState } from "@/lib/webs/domain-expiry";
-import type { ExpiryState } from "@/lib/webs/domain-expiry";
-import { checkSiteStatus } from "@/lib/webs/og";
-import type { WebProjectListItem } from "@/lib/webs/types";
 import { AlertTriangle, Clock, Globe, Server, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
+import { HOSTING_PROVIDER_LABELS } from "@/lib/schemas/web-project";
+import { cn, relativeTime } from "@/lib/utils";
+import type { ExpiryState } from "@/lib/webs/domain-expiry";
+import { domainExpiryDays, domainExpiryState } from "@/lib/webs/domain-expiry";
+import { checkSiteStatus } from "@/lib/webs/og";
+import type { WebProjectListItem } from "@/lib/webs/types";
 import { WebCardExternalLink } from "./web-card-external-link";
 
 // ─── Status dot ──────────────────────────────────────────────────────────────

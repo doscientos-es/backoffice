@@ -1,3 +1,5 @@
+import { Star } from "lucide-react";
+import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,8 +9,6 @@ import {
   googleBusinessProfileConfigured,
 } from "@/lib/social/google-business";
 import { listGoogleBusinessReviewViews } from "@/lib/social/repo";
-import { Star } from "lucide-react";
-import Link from "next/link";
 import { GoogleBusinessSyncButton } from "../_components/google-business-sync-button";
 import { GoogleReviewCard } from "../_components/google-review-card";
 

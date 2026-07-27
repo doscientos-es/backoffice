@@ -1,7 +1,7 @@
-import { PLATFORM_LABELS, type SocialPlatform } from "@/lib/social/core";
-import { cn } from "@/lib/utils";
 import { Facebook, Instagram, Linkedin, Store } from "lucide-react";
 import type { ComponentType } from "react";
+import { PLATFORM_LABELS, type SocialPlatform } from "@/lib/social/core";
+import { cn } from "@/lib/utils";
 
 /**
  * Social Hub — platform presentation.

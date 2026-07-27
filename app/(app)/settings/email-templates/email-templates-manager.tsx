@@ -1,5 +1,8 @@
 "use client";
 
+import { Copy, Pencil, Plus, Power, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { type FormEvent, useMemo, useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -18,14 +21,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { buildSignatureHtml } from "@/lib/email/signature";
 import { appendSignature, markdownToHtml, renderTemplate } from "@/lib/email/templates";
 import { formatDate } from "@/lib/utils";
-import { Copy, Pencil, Plus, Power, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { type FormEvent, useMemo, useState, useTransition } from "react";
 import {
-  type EmailTemplate,
-  type EmailTemplateInput,
   createEmailTemplate,
   deleteEmailTemplate,
+  type EmailTemplate,
+  type EmailTemplateInput,
   toggleEmailTemplateActive,
   updateEmailTemplate,
 } from "./actions";

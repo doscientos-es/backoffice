@@ -4,7 +4,7 @@ const previousDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE;
 
 describe("public environment parsing", () => {
   afterEach(() => {
-    if (previousDemoMode === undefined) delete process.env.NEXT_PUBLIC_DEMO_MODE;
+    if (previousDemoMode === undefined) process.env.NEXT_PUBLIC_DEMO_MODE = undefined;
     else process.env.NEXT_PUBLIC_DEMO_MODE = previousDemoMode;
     vi.resetModules();
   });

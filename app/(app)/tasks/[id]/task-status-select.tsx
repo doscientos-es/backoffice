@@ -13,13 +13,7 @@ const OPTIONS: { value: TaskStatusType; label: string }[] = [
   { value: "cancelled", label: "Cancelada" },
 ];
 
-export function TaskStatusSelect({
-  taskId,
-  status,
-}: {
-  taskId: string;
-  status: string;
-}) {
+export function TaskStatusSelect({ taskId, status }: { taskId: string; status: string }) {
   const { value, commit } = useOptimisticUpdate<TaskStatusType>(status as TaskStatusType);
 
   return (

@@ -1,12 +1,29 @@
 "use client";
 
-import { CopyButton } from "@/components/ui/copy-button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
 import { QrCode } from "lucide-react";
 import Image from "next/image";
 import { toDataURL } from "qrcode";
 import { useEffect, useState } from "react";
+import { CopyButton } from "@/components/ui/copy-button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+
+/**
+ * Normalises a raw phone string into a clean `tel:` URI value.
+ *
+ * Rules (in order):
+ * 1. Strip everything except digits and `+`.
+ * 2. If `+` appears in the middle (e.g. `835+34…`), discard the prefix and
+ *    keep from the `+` onwards — this handles operator/country-code prefixes
+ *    that leads sometimes include when self-entering their number.
+ * 3. Otherwise return the cleaned string as-is.
+ */
+function normalizePhone(phone: string): string {
+  const cleaned = phone.replace(/[^\d+]/g, "");
+  const plusIndex = cleaned.indexOf("+");
+  if (plusIndex > 0) return cleaned.slice(plusIndex);
+  return cleaned;
+}
 
 /**
  * Renders a phone number as a clickable `tel:` link plus quick actions to
@@ -18,7 +35,10 @@ import { useEffect, useState } from "react";
 export function PhoneQuickActions({ phone }: { phone: string }) {
   return (
     <div className="flex items-center gap-1.5">
-      <a href={`tel:${phone}`} className="truncate text-primary underline-offset-2 hover:underline">
+      <a
+        href={`tel:${normalizePhone(phone)}`}
+        className="truncate text-primary underline-offset-2 hover:underline"
+      >
         {phone}
       </a>
       <CopyButton text={phone} successMessage="Teléfono copiado" label="Copiar teléfono" />
@@ -34,7 +54,7 @@ function PhoneQrPopover({ phone }: { phone: string }) {
   useEffect(() => {
     if (!open || qr) return;
     let cancelled = false;
-    toDataURL(`tel:${phone}`, { width: 220, margin: 1 })
+    toDataURL(`tel:${normalizePhone(phone)}`, { width: 220, margin: 1 })
       .then((url) => {
         if (!cancelled) setQr(url);
       })

@@ -1,32 +1,4 @@
 "use client";
-import { UnlockForm } from "@/app/(app)/vault/_components/vault-dialogs";
-import { revealVaultSecret } from "@/app/(app)/vault/actions";
-import type { SearchResultItem } from "@/app/api/search/route";
-import { OPEN_COMMAND_PALETTE_EVENT } from "@/components/layout/command-palette-trigger";
-import {
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-  CommandShortcut,
-} from "@/components/ui/command";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  CREATE_SHORTCUTS,
-  NAV_SHORTCUTS,
-  RECENTS_STORAGE_KEY,
-  type RecentItem,
-  mergeRecentItems,
-} from "@/lib/navigation/shortcuts";
 import {
   Archive,
   BarChart3,
@@ -59,6 +31,34 @@ import {
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { sileo } from "sileo";
+import { UnlockForm } from "@/app/(app)/vault/_components/vault-dialogs";
+import { revealVaultSecret } from "@/app/(app)/vault/actions";
+import type { SearchResultItem } from "@/app/api/search/route";
+import { OPEN_COMMAND_PALETTE_EVENT } from "@/components/layout/command-palette-trigger";
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+  CommandShortcut,
+} from "@/components/ui/command";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  CREATE_SHORTCUTS,
+  mergeRecentItems,
+  NAV_SHORTCUTS,
+  RECENTS_STORAGE_KEY,
+  type RecentItem,
+} from "@/lib/navigation/shortcuts";
 
 const TYPE_ICON = {
   lead: Inbox,

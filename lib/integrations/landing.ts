@@ -1,6 +1,6 @@
+import { z } from "zod";
 import { type LeadIntake, parseBudgetFloor } from "@/lib/integrations/lead-intake";
 import { optionalEmail, optionalText, requiredText } from "@/lib/schemas/common";
-import { z } from "zod";
 
 /**
  * Validation schema for the public landing contact form.

@@ -1,10 +1,10 @@
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
 import { EXPENSE_CATEGORY_LABELS } from "@/lib/finance";
 import { getExpenseVendorSuggestions, getFinanceDetails } from "@/lib/finance/queries";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
-import Link from "next/link";
 import { ExpenseListActions } from "../expenses/_components/expense-list-actions";
 import { FinanceCategoryChart } from "../finance-category-chart";
 

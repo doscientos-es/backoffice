@@ -1,4 +1,5 @@
 "use client";
+import { useMemo, useState } from "react";
 import { DateField } from "@/components/ui/date-field";
 import { EntityCombobox } from "@/components/ui/entity-combobox";
 import { FormRow } from "@/components/ui/form-row";
@@ -9,14 +10,13 @@ import {
   EXPENSE_CATEGORIES,
   EXPENSE_CATEGORY_LABELS,
   EXPENSE_FORM_DEFAULTS,
-  EXPENSE_PAYMENT_SOURCES,
   EXPENSE_PAYMENT_SOURCE_LABELS,
-  EXPENSE_RECURRENCES,
+  EXPENSE_PAYMENT_SOURCES,
   EXPENSE_RECURRENCE_LABELS,
-  EXPENSE_STATUSES,
+  EXPENSE_RECURRENCES,
   EXPENSE_STATUS_LABELS,
+  EXPENSE_STATUSES,
 } from "@/lib/finance";
-import { useMemo, useState } from "react";
 
 export type VendorSuggestion = {
   vendor: string;

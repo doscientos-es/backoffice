@@ -1,9 +1,9 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useState, useTransition } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { deleteToken } from "../actions";
 import { type BrandToken, TokenEditDialog } from "./token-edit-dialog";
 
@@ -84,13 +84,7 @@ function TokenRow({
   );
 }
 
-export function TokensPanel({
-  tokens,
-  isAdmin,
-}: {
-  tokens: BrandToken[];
-  isAdmin: boolean;
-}) {
+export function TokensPanel({ tokens, isAdmin }: { tokens: BrandToken[]; isAdmin: boolean }) {
   const [editTarget, setEditTarget] = useState<BrandToken | null | undefined>(undefined);
   const grouped = tokens.reduce<Partial<Record<BrandToken["token_group"], BrandToken[]>>>(
     (acc, t) => {

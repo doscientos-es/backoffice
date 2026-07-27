@@ -1,3 +1,7 @@
+import { CheckCircle2, FileText, Presentation, XCircle } from "lucide-react";
+import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 import { LogoMark } from "@/components/branding";
 import { PortalPasswordGate } from "@/components/portal/password-gate";
 import { ProposalPaymentButton } from "@/components/portal/proposal-payment-button";
@@ -12,10 +16,6 @@ import { parseKeyPoints } from "@/lib/proposals/key-points";
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { CheckCircle2, FileText, Presentation, XCircle } from "lucide-react";
-import type { Metadata } from "next";
-import { headers } from "next/headers";
-import { notFound } from "next/navigation";
 import { unlockProposalPortal } from "./actions";
 import { PortalKeyPointsList, PortalNarrativeBlock } from "./narrative";
 import { ProposalActions } from "./proposal-actions";
@@ -165,7 +165,7 @@ export default async function PortalProposalPage({
   // address) is missing — typically a placeholder client created by the
   // back-office for prospects that never went through onboarding.
   const needsFiscal =
-    !client || !client.nif?.trim() || !client.billing_address?.trim() || !client.name?.trim();
+    !client?.nif?.trim() || !client.billing_address?.trim() || !client.name?.trim();
   const fiscalPrefill = client
     ? {
         name: client.name ?? "",

@@ -1,5 +1,7 @@
 "use client";
 
+import { FileText } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,8 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { FileText } from "lucide-react";
-import Link from "next/link";
 
 export function QuotedSuggestionDialog({
   lead,

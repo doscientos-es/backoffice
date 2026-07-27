@@ -30,6 +30,7 @@ export function PageHeaderSkeleton({
       {breadcrumbs.length > 0 ? (
         <div className="flex items-center gap-2">
           {breadcrumbs.map((w, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: static breadcrumb widths, order never changes
             <div key={`${w}-${i}`} className="flex items-center gap-2">
               <Skeleton className="h-3 rounded" style={{ width: w }} />
               {i < breadcrumbs.length - 1 ? (
@@ -47,6 +48,7 @@ export function PageHeaderSkeleton({
         {actions.length > 0 ? (
           <div className="flex shrink-0 flex-wrap items-center gap-2">
             {actions.map((w, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: static action widths, order never changes
               <Skeleton key={`${w}-${i}`} className="h-8 rounded-md" style={{ width: w }} />
             ))}
           </div>

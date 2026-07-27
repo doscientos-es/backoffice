@@ -1,9 +1,9 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 
 const TYPES = [
   { value: "all", label: "Todas" },

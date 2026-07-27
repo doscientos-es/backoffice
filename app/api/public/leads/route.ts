@@ -1,9 +1,9 @@
+import { type NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { LandingLeadInput, mapLandingToIntake } from "@/lib/integrations/landing";
 import { ingestLead } from "@/lib/integrations/lead-intake";
 import { scopedLogger } from "@/lib/logger";
 import { rateLimit } from "@/lib/ratelimit";
-import { type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

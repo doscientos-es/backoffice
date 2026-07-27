@@ -1,5 +1,9 @@
 "use client";
 
+import { AlertCircle, LogOut, Settings, ShieldCheck, Users } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,10 +18,6 @@ import {
 import type { CurrentUser, MemberRole } from "@/lib/auth";
 import { getBrowserClient } from "@/lib/supabase/browser";
 import { memberAvatarUrl } from "@/lib/utils";
-import { AlertCircle, LogOut, Settings, ShieldCheck, Users } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 function initials(name: string): string {
   return (

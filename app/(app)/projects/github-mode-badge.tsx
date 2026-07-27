@@ -1,5 +1,5 @@
-import { Badge } from "@/components/ui/badge";
 import { Github, Link2, RefreshCw } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import type { GitHubSyncMode } from "./github-sync-section";
 
 const META: Record<
@@ -19,7 +19,10 @@ const META: Record<
 export function GitHubModeBadge({
   mode,
   showLabel = true,
-}: { mode: GitHubSyncMode | string | null | undefined; showLabel?: boolean }) {
+}: {
+  mode: GitHubSyncMode | string | null | undefined;
+  showLabel?: boolean;
+}) {
   const m = META[(mode ?? "none") as GitHubSyncMode] ?? META.none;
   const Icon = m.icon;
   return (

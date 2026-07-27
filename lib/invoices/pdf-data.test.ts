@@ -1,5 +1,5 @@
-import type { BuildInvoicePdfInput } from "@/lib/invoices/pdf-data";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { BuildInvoicePdfInput } from "@/lib/invoices/pdf-data";
 
 const ORIGINAL_NIF = process.env.VERIFACTU_NIF_EMISOR;
 

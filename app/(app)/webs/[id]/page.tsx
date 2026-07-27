@@ -1,3 +1,9 @@
+import { CheckCircle, Edit, ExternalLink, Globe, XCircle } from "lucide-react";
+import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { BackLink } from "@/components/layout/back-link";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
@@ -12,19 +18,15 @@ import { HOSTING_PROVIDER_LABELS } from "@/lib/schemas/web-project";
 import { checkSiteStatus, fetchOgMetadata } from "@/lib/webs/og";
 import { getWebProject } from "@/lib/webs/queries";
 import type { OgMetadata, SiteStatus, WebProjectDetail } from "@/lib/webs/types";
-import { CheckCircle, Edit, ExternalLink, Globe, XCircle } from "lucide-react";
-import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { Suspense } from "react";
 import { BackupsCard } from "../_components/backups-card";
 
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
-}: { params: Promise<{ id: string }> }): Promise<Metadata> {
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
   const { id } = await params;
   const site = await getWebProject(id);
   return { title: site ? `${site.name} · Webs · doscientos` : "Web · doscientos" };

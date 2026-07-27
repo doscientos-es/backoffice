@@ -1,10 +1,10 @@
+import { describe, expect, it } from "vitest";
 import {
   addMinutesToDatetimeLocal,
   dateAndTimeToIso,
   datetimeLocalToIso,
   toDatetimeLocalValue,
 } from "@/lib/utils/date-time";
-import { describe, expect, it } from "vitest";
 
 describe("toDatetimeLocalValue", () => {
   it("formats local date and time without seconds", () => {

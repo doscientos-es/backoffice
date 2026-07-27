@@ -1,9 +1,9 @@
+import { TriangleAlert } from "lucide-react";
+import type { Metadata } from "next";
 import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
 import { requireRole } from "@/lib/auth";
 import { availablePlatforms } from "@/lib/social/service";
-import { TriangleAlert } from "lucide-react";
-import type { Metadata } from "next";
 import { ComposeForm } from "./_components/compose-form";
 
 export const metadata: Metadata = { title: "Nueva publicación · Social" };

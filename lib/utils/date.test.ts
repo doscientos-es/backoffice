@@ -1,3 +1,4 @@
+import { describe, expect, it } from "vitest";
 import {
   addDaysIsoLocal,
   computeTrend,
@@ -6,10 +7,9 @@ import {
   parseDashboardRange,
   resolveDateRange,
   shortMonthEs,
-  toIsoDate,
   todayIsoLocal,
+  toIsoDate,
 } from "@/lib/utils/date";
-import { describe, expect, it } from "vitest";
 
 describe("shortMonthEs", () => {
   it("returns a localized short month without trailing period", () => {

@@ -5,8 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Textarea } from "@/components/ui/textarea";
 import type { GoogleReviewView } from "@/lib/social/types";
-import { cn } from "@/lib/utils";
-import { formatDateTime } from "@/lib/utils";
+import { cn, formatDateTime } from "@/lib/utils";
 import { Reply, Star, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -86,8 +85,12 @@ export function GoogleReviewCard({ review }: { review: GoogleReviewView }) {
             </time>
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-1" aria-label={RATING_LABELS[review.starRating]}>
+        <div
+          className="flex shrink-0 items-center gap-1"
+          aria-label={RATING_LABELS[review.starRating]}
+        >
           {Array.from({ length: 5 }, (_, index) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: fixed 5-star rating, order never changes
             <Star
               key={`star-${index}`}
               className={cn(
@@ -129,7 +132,12 @@ export function GoogleReviewCard({ review }: { review: GoogleReviewView }) {
               </Button>
             ) : null}
             {!showReply ? (
-              <Button variant="ghost" size="sm" className="text-xs" onClick={() => setShowReply(true)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs"
+                onClick={() => setShowReply(true)}
+              >
                 <Reply className="size-3.5" />
                 {review.replied ? "Editar respuesta" : "Responder"}
               </Button>
@@ -150,7 +158,12 @@ export function GoogleReviewCard({ review }: { review: GoogleReviewView }) {
             <div className="flex items-center justify-between gap-3">
               <span className="text-[10px] text-muted-foreground">{replyText.length}/4096</span>
               <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setShowReply(false)} disabled={pending}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowReply(false)}
+                  disabled={pending}
+                >
                   Cancelar
                 </Button>
                 <Button size="sm" onClick={handleReply} disabled={pending || !replyText.trim()}>

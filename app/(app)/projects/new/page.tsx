@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import Link from "next/link";
 import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -7,8 +9,6 @@ import { requireUser } from "@/lib/auth";
 import { githubDefaultInstallationId } from "@/lib/env";
 import { createServerClient } from "@/lib/supabase/server";
 import { addDaysIsoLocal, todayIsoLocal } from "@/lib/utils/date";
-import type { Metadata } from "next";
-import Link from "next/link";
 import { createProject } from "../actions";
 import { ProjectFormFields } from "../project-form-fields";
 

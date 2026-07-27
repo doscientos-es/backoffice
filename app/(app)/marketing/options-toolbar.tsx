@@ -1,10 +1,10 @@
 "use client";
 
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useTransition } from "react";
 import { Select } from "@/components/ui/select";
 import { type MarketingSort, SORT_OPTIONS } from "@/lib/marketing/range";
 import { cn } from "@/lib/utils";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
 
 type Props = {
   sort: MarketingSort;

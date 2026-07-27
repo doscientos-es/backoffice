@@ -1,13 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import {
-  CALENDAR_LAYER_COLORS,
-  CALENDAR_LAYER_LABELS,
-  type CalendarEvent,
-} from "@/lib/calendar/types";
-import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -24,6 +16,14 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  CALENDAR_LAYER_COLORS,
+  CALENDAR_LAYER_LABELS,
+  type CalendarEvent,
+} from "@/lib/calendar/types";
+import { cn } from "@/lib/utils";
 
 type Props = {
   event: CalendarEvent | null;

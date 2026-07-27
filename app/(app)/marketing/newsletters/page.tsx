@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,14 +9,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth";
 import {
-  NEWSLETTER_AUDIENCES,
-  type NewsletterIssue,
   countNewsletterAudience,
   getAudienceLabel,
   listNewsletterIssues,
+  NEWSLETTER_AUDIENCES,
+  type NewsletterIssue,
 } from "@/lib/marketing/newsletters";
-import type { Metadata } from "next";
-import Link from "next/link";
 import {
   createNewsletterIssueForm,
   publishNewsletterIssueForm,

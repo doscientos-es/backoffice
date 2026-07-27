@@ -1,6 +1,6 @@
-import { Logo } from "@/components/branding";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Logo } from "@/components/branding";
 
 export const metadata: Metadata = {
   title: "Bienvenido · doscientos",

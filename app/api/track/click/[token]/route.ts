@@ -1,5 +1,5 @@
-import { createAdminClient } from "@/lib/supabase/admin";
 import { type NextRequest, NextResponse } from "next/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const FALLBACK_URL = "https://doscientos.es";
 

@@ -1,5 +1,5 @@
-import { createAdminClient } from "@/lib/supabase/admin";
 import { type NextRequest, NextResponse } from "next/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;

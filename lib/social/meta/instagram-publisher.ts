@@ -11,9 +11,9 @@ import type {
   ComposedPost,
   PlatformComment,
   PostInsights,
+  Publisher,
   PublishOutcome,
   PublishSupport,
-  Publisher,
   SocialPlatform,
 } from "@/lib/social/core";
 import { PublishError } from "@/lib/social/core";

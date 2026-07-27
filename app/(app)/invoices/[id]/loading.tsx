@@ -19,12 +19,15 @@ export default function InvoiceDetailLoading() {
         <CardContent className="flex flex-col gap-2">
           <div className="flex gap-4 border-b border-border/60 pb-2">
             {LINE_WIDTHS.map((w, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton widths, order never changes
               <Skeleton key={`h-${w}-${i}`} className="h-3 rounded" style={{ width: w }} />
             ))}
           </div>
           {[0, 1, 2, 3].map((i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton rows, order never changes
             <div key={i} className="flex gap-4 py-1.5">
               {LINE_WIDTHS.map((w, j) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton widths, order never changes
                 <Skeleton key={`r-${w}-${j}`} className="h-4 rounded" style={{ width: w }} />
               ))}
             </div>

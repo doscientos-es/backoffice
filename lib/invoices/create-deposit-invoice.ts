@@ -1,5 +1,5 @@
-import { computeLineTotals } from "@/lib/finance";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { computeLineTotals } from "@/lib/finance";
 
 type DepositInvoiceResult = { ok: true; invoiceId: string } | { ok: false; error: string };
 

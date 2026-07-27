@@ -1,11 +1,11 @@
+import { Plus } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth";
 import { listProjects } from "@/lib/projects/queries";
 import { PROJECT_LIST_PAGE_SIZE, PROJECT_SORT_COLUMNS } from "@/lib/projects/types";
 import { parsePage, parseSortParam, parseStringParam } from "@/lib/utils/search-params";
-import { Plus } from "lucide-react";
-import type { Metadata } from "next";
-import Link from "next/link";
 import { GitHubModeBadge } from "./github-mode-badge";
 import type { GitHubSyncMode } from "./github-sync-section";
 import { ProjectsList } from "./projects-list";

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +10,6 @@ import {
 } from "@/components/ui/dialog";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { CREATE_SHORTCUTS, NAV_SHORTCUTS } from "@/lib/navigation/shortcuts";
-import { useEffect, useState } from "react";
 
 /** Evento global para abrir el diálogo desde un botón u otro componente. */
 export const OPEN_SHORTCUTS_DIALOG_EVENT = "open-shortcuts-dialog";
@@ -65,15 +65,7 @@ export function ShortcutsDialog() {
   );
 }
 
-function Section({
-  title,
-  rows,
-  className,
-}: {
-  title: string;
-  rows: Row[];
-  className?: string;
-}) {
+function Section({ title, rows, className }: { title: string; rows: Row[]; className?: string }) {
   return (
     <section className={className}>
       <h3 className="mb-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">

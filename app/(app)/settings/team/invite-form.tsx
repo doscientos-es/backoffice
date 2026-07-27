@@ -1,12 +1,12 @@
 "use client";
 
+import { useRef } from "react";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import type { MemberRole } from "@/lib/auth";
-import { useRef } from "react";
 import { inviteTeamMember } from "./actions";
 
 interface Props {

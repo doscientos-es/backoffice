@@ -20,7 +20,7 @@ export type CalWebhookPayload = {
       name: string;
     };
     additionalNotes?: string;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
   };
 };
 

@@ -1,3 +1,6 @@
+import { Plus } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
 import { ListPage } from "@/components/layout/list-page";
 import { Button } from "@/components/ui/button";
 import { ClientAvatar } from "@/components/ui/client-avatar";
@@ -12,9 +15,6 @@ import {
   parseSortParam,
   parseStringParam,
 } from "@/lib/utils/search-params";
-import { Plus } from "lucide-react";
-import type { Metadata } from "next";
-import Link from "next/link";
 
 export const metadata: Metadata = { title: "Propuestas · doscientos" };
 export const dynamic = "force-dynamic";

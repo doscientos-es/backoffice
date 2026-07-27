@@ -1,13 +1,12 @@
+import type { Metadata } from "next";
+import Link from "next/link";
 import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { SectionBoundary } from "@/components/ui/error-boundary";
 import { requireRole } from "@/lib/auth";
 import { getProjectPortfolio } from "@/lib/finance/portfolio";
-import { formatEUR } from "@/lib/utils";
-import { cn } from "@/lib/utils";
-import type { Metadata } from "next";
-import Link from "next/link";
+import { cn, formatEUR } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Portfolio · doscientos" };
 export const dynamic = "force-dynamic";

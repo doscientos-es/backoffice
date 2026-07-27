@@ -1,7 +1,7 @@
+import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import { isVaultUnlocked } from "@/lib/vault/access";
-import type { Metadata } from "next";
 import { VaultClient } from "./_components/vault-client";
 
 export const metadata: Metadata = { title: "Bóveda · doscientos" };

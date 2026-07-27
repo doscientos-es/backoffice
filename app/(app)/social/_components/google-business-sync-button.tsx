@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { syncGoogleBusinessPerformance, syncGoogleBusinessReviews } from "../actions";
 
 export function GoogleBusinessSyncButton({

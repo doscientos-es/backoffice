@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { isAIEnabled } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { listActiveMembers } from "@/lib/members/queries";
@@ -8,7 +9,6 @@ import {
   type RecoveryClosureStatus,
 } from "@/lib/recovery/types";
 import { parseSortParam } from "@/lib/utils/search-params";
-import type { Metadata } from "next";
 import { RecoveryKpis } from "./recovery-kpis";
 import { RecoveryList } from "./recovery-list";
 

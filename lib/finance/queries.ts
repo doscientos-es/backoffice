@@ -1,8 +1,9 @@
+import { cache } from "react";
 import { scopedLogger } from "@/lib/logger";
 import { notDeleted } from "@/lib/supabase/filters";
 import { createServerClient } from "@/lib/supabase/server";
-import { cache } from "react";
 import {
+  buildMonthlySeries,
   EXPENSE_CATEGORIES,
   EXPENSE_STATUSES,
   type ExpenseCategory,
@@ -10,7 +11,6 @@ import {
   type ExpenseRecurrence,
   type ExpenseStatus,
   type MonthlyPoint,
-  buildMonthlySeries,
   profitMargin,
 } from "./helpers";
 import {

@@ -1,6 +1,6 @@
-import { rateLimit } from "@/lib/ratelimit";
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { rateLimit } from "@/lib/ratelimit";
 
 const PUBLIC_PATHS = [
   "/login",

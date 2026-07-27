@@ -1,5 +1,5 @@
-import type { KeyPoint } from "@/lib/proposals/key-points";
 import type { ReactNode } from "react";
+import type { KeyPoint } from "@/lib/proposals/key-points";
 
 /**
  * Portal-side rendering primitives for the proposal narrative
@@ -8,13 +8,7 @@ import type { ReactNode } from "react";
  * shell and not reused on the deck or in the editor.
  */
 
-export function PortalNarrativeBlock({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
+export function PortalNarrativeBlock({ label, children }: { label: string; children: ReactNode }) {
   return (
     <section className="px-8 py-6">
       <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-3">

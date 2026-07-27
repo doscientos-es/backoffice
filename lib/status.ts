@@ -8,10 +8,10 @@
  * "Enviada" in one place and "Pendiente" in another).
  */
 
+import type { VariantProps } from "class-variance-authority";
 import type { badgeVariants } from "@/components/ui/badge";
 import { EXPENSE_STATUS_LABELS, type ExpenseStatus } from "@/lib/finance";
 import type { RecoveryState } from "@/lib/recovery/types";
-import type { VariantProps } from "class-variance-authority";
 
 export type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>;
 

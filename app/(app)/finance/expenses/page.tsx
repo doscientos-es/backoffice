@@ -1,3 +1,5 @@
+import { Building2 } from "lucide-react";
+import Link from "next/link";
 import { ListPage } from "@/components/layout/list-page";
 import { Button } from "@/components/ui/button";
 import { MemberLabel } from "@/components/ui/member-avatar";
@@ -6,20 +8,18 @@ import { requireRole } from "@/lib/auth";
 import {
   EXPENSE_CATEGORIES,
   EXPENSE_CATEGORY_LABELS,
-  EXPENSE_STATUSES,
   EXPENSE_STATUS_LABELS,
+  EXPENSE_STATUSES,
 } from "@/lib/finance";
 import {
-  getExpenseVendorSuggestions,
   getExpensesPage,
+  getExpenseVendorSuggestions,
   parseExpenseListSearchParams,
 } from "@/lib/finance/queries";
 import { EXPENSE_LIST_PAGE_SIZE } from "@/lib/finance/types";
 import { EXPENSE_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { Building2 } from "lucide-react";
-import Link from "next/link";
 import { ExpenseListActions } from "./_components/expense-list-actions";
 
 export const metadata = { title: "Gastos · doscientos" };

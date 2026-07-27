@@ -7,9 +7,9 @@ import {
 import { googleBusinessProfileConfigured } from "./client";
 import { fetchGoogleBusinessPerformance } from "./performance";
 import {
-  type GoogleBusinessMediaCategory,
   createGoogleBusinessMedia,
   deleteGoogleBusinessMedia,
+  type GoogleBusinessMediaCategory,
 } from "./profile";
 import {
   deleteGoogleBusinessReviewReply,

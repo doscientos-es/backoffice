@@ -1,3 +1,5 @@
+import { after } from "next/server";
+import { z } from "zod";
 import {
   linkConversionEventsToLead,
   recordConversionEvent,
@@ -5,8 +7,6 @@ import {
 import { normalizeCompanySize, normalizeLeadSource, normalizeUrgency } from "@/lib/leads/constants";
 import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { after } from "next/server";
-import { z } from "zod";
 import { runLeadPipeline } from "./lead-pipeline";
 import { notifyNewLead } from "./notify-new-lead";
 
@@ -100,7 +100,7 @@ export type LeadIntakeResult =
  * identical regardless of how the lead reached us.
  */
 export function parseBudgetFloor(text: string | null | undefined): number | null {
-  if (!text || !text.trim()) return null;
+  if (!text?.trim()) return null;
   const amounts = (text.match(/\d[\d.]*/g) ?? [])
     .map((m) => Number.parseInt(m.replace(/\./g, ""), 10))
     .filter((n) => Number.isFinite(n) && n > 0);
@@ -172,7 +172,7 @@ export function classifyFormAnswers(answers: FormAnswer[]): QualificationFields 
  * parseBudgetFloor: "10-50 empleados" → 10, "Más de 200" → 200, "1-10" → 1.
  */
 export function parseEmployeeFloor(text: string | null | undefined): number | null {
-  if (!text || !text.trim()) return null;
+  if (!text?.trim()) return null;
   const counts = (text.match(/\d[\d.]*/g) ?? [])
     .map((m) => Number.parseInt(m.replace(/\./g, ""), 10))
     .filter((n) => Number.isFinite(n) && n > 0);

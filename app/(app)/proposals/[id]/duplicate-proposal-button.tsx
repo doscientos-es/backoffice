@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { Button } from "@/components/ui/button";
 import { duplicateProposal } from "../actions";
 
 /**

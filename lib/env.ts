@@ -1,5 +1,5 @@
-import { PublicSchema, ServerSchema } from "@/lib/env.schema";
 import type { z } from "zod";
+import { PublicSchema, ServerSchema } from "@/lib/env.schema";
 
 /** Strip leading/trailing whitespace (incl. \r from CRLF .env files) from all values. */
 function trimEnv(env: NodeJS.ProcessEnv): Record<string, string | undefined> {
@@ -54,8 +54,8 @@ export function isGoogleEnabled(): boolean {
     process.env.NEXT_PUBLIC_DEMO_MODE?.trim() === "true";
   return Boolean(
     !demoMode &&
-    process.env.GOOGLE_SA_CLIENT_EMAIL?.trim() &&
-    process.env.GOOGLE_SA_PRIVATE_KEY_BASE64?.trim(),
+      process.env.GOOGLE_SA_CLIENT_EMAIL?.trim() &&
+      process.env.GOOGLE_SA_PRIVATE_KEY_BASE64?.trim(),
   );
 }
 

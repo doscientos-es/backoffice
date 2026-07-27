@@ -74,7 +74,7 @@ export function validateNifEs(raw: string): NifValidationResult {
   const v = raw
     .trim()
     .toUpperCase()
-    .replace(/[\s.\-]/g, "");
+    .replace(/[\s.-]/g, "");
   if (!v) return { valid: false, message: "El NIF/CIF está vacío." };
 
   if (validateNif(v)) return { valid: true, type: "nif" };

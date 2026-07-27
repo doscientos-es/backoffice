@@ -1,15 +1,15 @@
+import { ArrowRight } from "lucide-react";
+import type { ReactNode } from "react";
 import { LogoMark } from "@/components/branding";
 import { Markdown } from "@/components/ui/markdown";
 import {
   BILLING_CYCLE_LABELS,
   type BillingCycle,
-  type ProposalTotals,
   computeProposalTotals,
+  type ProposalTotals,
 } from "@/lib/finance";
 import type { KeyPoint } from "@/lib/proposals/key-points";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { ArrowRight } from "lucide-react";
-import type { ReactNode } from "react";
 import type { DeckProposal, DeckProposalItem, DeckTeamMember } from "./page";
 
 function buildTotals(items: DeckProposalItem[]): ProposalTotals {
@@ -50,7 +50,11 @@ function Stagger({
   i,
   children,
   className,
-}: { i: number; children: ReactNode; className?: string }) {
+}: {
+  i: number;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <div className={`deck-stagger ${className ?? ""}`} style={{ ["--i" as string]: i }}>
       {children}

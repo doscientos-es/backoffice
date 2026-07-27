@@ -1,12 +1,11 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import { validateNifEs } from "@/lib/vies/nif";
 import { AlertTriangle, Building2, CheckCircle, Loader2, Search, XCircle } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
-import { validateVat } from "./actions";
-
+import { Input } from "@/components/ui/input";
 import type { OpenMercantilOfficer } from "@/lib/openmercantil/client";
+import { validateNifEs } from "@/lib/vies/nif";
+import { validateVat } from "./actions";
 
 export type AutofillData = {
   name?: string;

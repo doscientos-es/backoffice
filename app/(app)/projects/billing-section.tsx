@@ -1,8 +1,8 @@
 "use client";
 
+import { type ReactNode, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { type ReactNode, useState } from "react";
 
 export type ProjectBillingType = "fixed" | "hourly";
 
@@ -103,7 +103,13 @@ function Field({
   required,
   hint,
   children,
-}: { label: string; htmlFor: string; required?: boolean; hint?: string; children: ReactNode }) {
+}: {
+  label: string;
+  htmlFor: string;
+  required?: boolean;
+  hint?: string;
+  children: ReactNode;
+}) {
   return (
     <div className="flex flex-col gap-1.5">
       <label

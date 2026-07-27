@@ -1,7 +1,7 @@
+import { type NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { getStorage } from "@/lib/storage";
 import { createServerClient } from "@/lib/supabase/server";
-import { type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +29,7 @@ const ENTITY_TYPE_MAP: Record<string, EntityField> = {
 };
 
 function sanitizeFilename(name: string): string {
-  return name.replace(/[^a-zA-Z0-9._\-]/g, "_").slice(0, 200);
+  return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 200);
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {

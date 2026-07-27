@@ -1,5 +1,5 @@
-import { KEY_POINTS_LIMITS } from "@/lib/proposals/key-points";
 import { z } from "zod";
+import { KEY_POINTS_LIMITS } from "@/lib/proposals/key-points";
 import {
   emptyToUndef,
   lineItemInput,

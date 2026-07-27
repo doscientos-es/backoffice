@@ -1,5 +1,7 @@
 "use client";
 
+import { Eye, FileText } from "lucide-react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,8 +15,6 @@ import {
 import { MemberLabel } from "@/components/ui/member-avatar";
 import { getCallInteractionDetails } from "@/lib/leads/interaction-utils";
 import type { LeadDetailInteraction } from "@/lib/leads/types";
-import { Eye, FileText } from "lucide-react";
-import { useState } from "react";
 
 const CALL_OUTCOME_LABEL: Record<string, string> = {
   connected: "Contactado",
@@ -24,11 +24,7 @@ const CALL_OUTCOME_LABEL: Record<string, string> = {
   wrong_number: "Número erróneo",
 };
 
-export function CallInteractionDetails({
-  interaction,
-}: {
-  interaction: LeadDetailInteraction;
-}) {
+export function CallInteractionDetails({ interaction }: { interaction: LeadDetailInteraction }) {
   const [open, setOpen] = useState(false);
   const details = getCallInteractionDetails(interaction.payload);
   const hasNotes = Boolean(interaction.body?.trim());

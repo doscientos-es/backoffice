@@ -1,5 +1,5 @@
-import { requireUser } from "@/lib/auth";
 import type { Metadata } from "next";
+import { requireUser } from "@/lib/auth";
 import { SettingsNav } from "./settings-nav";
 
 export const metadata: Metadata = { title: "Ajustes · doscientos" };

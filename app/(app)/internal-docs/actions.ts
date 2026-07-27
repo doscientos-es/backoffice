@@ -1,12 +1,12 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { defineAction } from "@/lib/actions/define-action";
 import { requireRole } from "@/lib/auth";
 import { InternalDocIdInput, UpdateInternalDocInput } from "@/lib/schemas/internal-doc";
 import { getStorage } from "@/lib/storage";
 import { createServerClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 /** Shape of an internal document used when diffing for the audit trail. */
 type InternalDocSnapshot = {

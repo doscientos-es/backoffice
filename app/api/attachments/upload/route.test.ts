@@ -43,8 +43,8 @@ vi.mock("@/lib/supabase/server", () => ({
   })),
 }));
 
-import { POST } from "@/app/api/attachments/upload/route";
 import { NextRequest } from "next/server";
+import { POST } from "@/app/api/attachments/upload/route";
 
 function makePdf(sizeBytes = 1024): File {
   return new File([new Uint8Array(sizeBytes)], "test.pdf", { type: "application/pdf" });

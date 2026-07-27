@@ -1,10 +1,10 @@
 "use client";
 
-import type { MarketingView } from "@/lib/marketing/range";
-import { cn } from "@/lib/utils";
 import { Megaphone, Target } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
+import type { MarketingView } from "@/lib/marketing/range";
+import { cn } from "@/lib/utils";
 
 const TABS: { value: MarketingView; label: string; icon: typeof Target }[] = [
   { value: "ads", label: "Por anuncio", icon: Target },

@@ -1,12 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
 import { acceptProposal, rejectProposal } from "./actions";
 
 type FiscalForm = {

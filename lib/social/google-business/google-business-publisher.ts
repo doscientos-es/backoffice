@@ -2,9 +2,9 @@ import { scopedLogger } from "@/lib/logger";
 import type {
   ComposedPost,
   PostInsights,
+  Publisher,
   PublishOutcome,
   PublishSupport,
-  Publisher,
   SocialPlatform,
 } from "@/lib/social/core";
 import { PublishError } from "@/lib/social/core";

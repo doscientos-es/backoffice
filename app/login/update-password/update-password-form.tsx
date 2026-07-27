@@ -1,5 +1,7 @@
 "use client";
 
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -7,8 +9,6 @@ import { Input } from "@/components/ui/input";
 import { PasswordStrength } from "@/components/ui/password-strength";
 import { PASSWORD_MIN_LENGTH, validatePassword } from "@/lib/schemas/password";
 import { getBrowserClient } from "@/lib/supabase/browser";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
 
 const MIN_LENGTH = PASSWORD_MIN_LENGTH;
 

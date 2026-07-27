@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { RemindersSection } from "@/app/(app)/inicio/_components/reminders-section";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
@@ -12,8 +14,6 @@ import { computeProjectProfitability } from "@/lib/finance";
 import { INVOICE_STATUS, PROJECT_STATUS, PROPOSAL_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
-import Link from "next/link";
-import { notFound } from "next/navigation";
 import { ScheduleReminderDialog } from "../../reminders/schedule-reminder-dialog";
 import { TaskCreateDialog } from "../../tasks/task-create-dialog";
 import { GitHubModeBadge } from "../github-mode-badge";

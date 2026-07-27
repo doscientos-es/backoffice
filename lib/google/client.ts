@@ -1,3 +1,4 @@
+import { JWT } from "google-auth-library";
 import { isDemoMode } from "@/lib/demo";
 /**
  * Cliente Google Workspace con service account (domain-wide delegation).
@@ -9,7 +10,6 @@ import { isDemoMode } from "@/lib/demo";
  * Nunca usar sin comprobar `isGoogleEnabled()` antes.
  */
 import { isGoogleEnabled, serverEnv } from "@/lib/env";
-import { JWT } from "google-auth-library";
 
 // Deben coincidir EXACTAMENTE con los scopes autorizados en la delegación de
 // todo el dominio (Workspace Admin → Seguridad → Controles de API). Si el código

@@ -1,3 +1,5 @@
+import { Banknote, ChevronRight, FilePlus2, FileSignature, Flame, RotateCcw } from "lucide-react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,8 +12,6 @@ import type {
   RecoverableLeadRow,
 } from "@/lib/dashboard/types";
 import { formatEUR, relativeTime } from "@/lib/utils";
-import { Banknote, ChevronRight, FilePlus2, FileSignature, Flame, RotateCcw } from "lucide-react";
-import Link from "next/link";
 
 export async function MoneyOpportunitiesWidget() {
   const data = await getMoneyOpportunities();

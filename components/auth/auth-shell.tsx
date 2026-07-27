@@ -1,6 +1,6 @@
-import { Logo } from "@/components/branding";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Logo } from "@/components/branding";
 
 export type AuthShellProps = {
   title: string;

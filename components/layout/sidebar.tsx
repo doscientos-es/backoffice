@@ -1,14 +1,5 @@
 "use client";
 
-import { Logo } from "@/components/branding";
-import { CommandPaletteTrigger } from "@/components/layout/command-palette-trigger";
-import { NotificationsBell } from "@/components/layout/notifications-bell";
-import { UserMenu } from "@/components/layout/user-menu";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { Badge } from "@/components/ui/badge";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
-import type { CurrentUser, MemberRole } from "@/lib/auth";
-import { cn } from "@/lib/utils";
 import {
   Archive,
   BarChart3,
@@ -37,6 +28,15 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Logo } from "@/components/branding";
+import { CommandPaletteTrigger } from "@/components/layout/command-palette-trigger";
+import { NotificationsBell } from "@/components/layout/notifications-bell";
+import { UserMenu } from "@/components/layout/user-menu";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Badge } from "@/components/ui/badge";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+import type { CurrentUser, MemberRole } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 import { version } from "../../package.json";
 
 type NavItem = {

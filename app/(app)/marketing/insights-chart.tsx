@@ -1,12 +1,5 @@
 "use client";
 
-import type {
-  InsightsBreakdown,
-  InsightsBreakdownPoint,
-  InsightsSeriesMeta,
-} from "@/lib/marketing/types";
-import { INSIGHTS_OTHERS_KEY } from "@/lib/marketing/types";
-import { formatEUR } from "@/lib/utils";
 import { useState } from "react";
 import {
   Bar,
@@ -18,6 +11,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import type {
+  InsightsBreakdown,
+  InsightsBreakdownPoint,
+  InsightsSeriesMeta,
+} from "@/lib/marketing/types";
+import { INSIGHTS_OTHERS_KEY } from "@/lib/marketing/types";
+import { formatEUR } from "@/lib/utils";
 
 /** Series key used for the leads line in the legend/visibility toggles. */
 const LEADS_KEY = "__leads__";

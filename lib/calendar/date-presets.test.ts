@@ -1,5 +1,5 @@
-import { defaultMeetingEnd, defaultMeetingStart } from "@/lib/calendar/date-presets";
 import { describe, expect, it } from "vitest";
+import { defaultMeetingEnd, defaultMeetingStart } from "@/lib/calendar/date-presets";
 
 describe("calendar date presets", () => {
   const now = new Date(2026, 0, 31, 15, 45);

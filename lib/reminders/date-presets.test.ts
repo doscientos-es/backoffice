@@ -1,10 +1,10 @@
+import { describe, expect, it } from "vitest";
 import {
   defaultFollowUpDateTime,
   defaultReminderDateTime,
   suggestedReminderDateTime,
 } from "@/lib/reminders/date-presets";
 import { toDatetimeLocalValue } from "@/lib/utils/date-time";
-import { describe, expect, it } from "vitest";
 
 describe("reminder date presets", () => {
   const now = new Date(2026, 0, 31, 15, 45, 30);

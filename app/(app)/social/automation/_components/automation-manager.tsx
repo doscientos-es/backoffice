@@ -1,5 +1,9 @@
 "use client";
 
+import { Activity, Facebook, Instagram, MessageCircle, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -10,10 +14,6 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { AutomationRule, MetaPlatform } from "@/lib/social/automation/types";
-import { Activity, Facebook, Instagram, MessageCircle, Trash2 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
 import {
   createGlobalAutomationRule,
   deleteAutomationRule,

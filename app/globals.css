@@ -216,7 +216,7 @@ table,
 /* Print: portal proposals/invoices PDF rendering */
 @media print {
   .no-print {
-    display: none !important;
+    display: none;
   }
   body {
     background: white;

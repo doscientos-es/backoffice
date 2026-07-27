@@ -1,11 +1,11 @@
 "use client";
 
+import { CheckCheck, Send } from "lucide-react";
+import { useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCheck, Send } from "lucide-react";
-import { useRef, useState, useTransition } from "react";
 import { markProposalAsSent, sendPreviewLink } from "../actions";
 
 type Props = {

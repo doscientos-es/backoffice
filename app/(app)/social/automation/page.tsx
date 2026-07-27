@@ -1,8 +1,8 @@
+import type { Metadata } from "next";
 import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
 import { requireUser } from "@/lib/auth";
 import { listAutomationRules } from "@/lib/social/repo";
-import type { Metadata } from "next";
 import { AutomationManager } from "./_components/automation-manager";
 
 export const metadata: Metadata = { title: "Automatizaciones · Social · doscientos" };

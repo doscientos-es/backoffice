@@ -1,10 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Select } from "@/components/ui/select";
 import type { MemberRole } from "@/lib/auth";
-import { useRouter } from "next/navigation";
 import {
   deactivateMember,
   deleteMember,

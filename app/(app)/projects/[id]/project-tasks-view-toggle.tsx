@@ -1,10 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { ButtonGroup } from "@/components/ui/button-group";
 import { LayoutGrid, List } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 
 export function ProjectTasksViewToggle({ view }: { view: "list" | "board" }) {
   const router = useRouter();

@@ -1,3 +1,4 @@
+import { type NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import {
   type CalWebhookPayload,
@@ -7,7 +8,6 @@ import {
 import { ingestLead } from "@/lib/integrations/lead-intake";
 import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

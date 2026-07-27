@@ -1,10 +1,10 @@
 "use client";
 
+import { Github, Link2, RefreshCw } from "lucide-react";
+import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { Github, Link2, RefreshCw } from "lucide-react";
-import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 
 interface OrgRepo {
   id: number;
@@ -301,7 +301,13 @@ function Field({
   required,
   hint,
   children,
-}: { label: string; htmlFor: string; required?: boolean; hint?: string; children: ReactNode }) {
+}: {
+  label: string;
+  htmlFor: string;
+  required?: boolean;
+  hint?: string;
+  children: ReactNode;
+}) {
   return (
     <div className="flex flex-col gap-1.5">
       <label

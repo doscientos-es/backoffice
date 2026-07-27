@@ -1,11 +1,11 @@
+import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import type { BillingCycle } from "@/lib/finance";
 import { scopedLogger } from "@/lib/logger";
 import { type KeyPoint, parseKeyPoints } from "@/lib/proposals/key-points";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { Metadata } from "next";
-import { headers } from "next/headers";
-import { notFound } from "next/navigation";
 import { DeckViewer } from "./deck-viewer-client";
 
 const log = scopedLogger("deck.page");
@@ -50,7 +50,9 @@ export type DeckProposal = {
 
 export async function generateMetadata({
   params,
-}: { params: Promise<{ token: string }> }): Promise<Metadata> {
+}: {
+  params: Promise<{ token: string }>;
+}): Promise<Metadata> {
   const { token } = await params;
   const admin = createAdminClient();
   const { data } = await admin
@@ -73,11 +75,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function DeckPage({
-  params,
-}: {
-  params: Promise<{ token: string }>;
-}) {
+export default async function DeckPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const admin = createAdminClient();
 

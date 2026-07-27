@@ -1,6 +1,6 @@
-import { publicEnv } from "@/lib/env";
 import { createServerClient as createSSRClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { publicEnv } from "@/lib/env";
 
 /**
  * Server Component / Server Action / Route Handler Supabase client.

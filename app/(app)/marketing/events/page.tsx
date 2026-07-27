@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +13,6 @@ import {
 import { requireRole } from "@/lib/auth";
 import { listConversionEvents } from "@/lib/conversion-events/queries";
 import { formatDateTime, truncate } from "@/lib/utils";
-import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +47,9 @@ function EventBadge({ name }: { name: string }) {
 
 export default async function ConversionEventsPage({
   searchParams,
-}: { searchParams: SearchParams }) {
+}: {
+  searchParams: SearchParams;
+}) {
   await requireRole(["owner", "admin"]);
   const sp = await searchParams;
   const eventName = param(sp.event);

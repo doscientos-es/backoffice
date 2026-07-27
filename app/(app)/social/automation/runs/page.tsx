@@ -1,3 +1,6 @@
+import { CircleAlert, Clock3, Instagram, MessageCircle } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
 import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -9,10 +12,7 @@ import type {
   AutomationRunStatus,
   MetaPlatform,
 } from "@/lib/social/automation/types";
-import { listAutomationAudit, type AutomationAuditItem } from "@/lib/social/repo";
-import { CircleAlert, Clock3, Instagram, MessageCircle } from "lucide-react";
-import type { Metadata } from "next";
-import Link from "next/link";
+import { type AutomationAuditItem, listAutomationAudit } from "@/lib/social/repo";
 
 export const metadata: Metadata = { title: "Actividad · Automatizaciones · doscientos" };
 export const dynamic = "force-dynamic";
@@ -53,7 +53,11 @@ function platformLabel(platform: MetaPlatform) {
 }
 
 function PlatformIcon({ platform }: { platform: MetaPlatform }) {
-  return platform === "instagram" ? <Instagram className="size-3.5" /> : <MessageCircle className="size-3.5" />;
+  return platform === "instagram" ? (
+    <Instagram className="size-3.5" />
+  ) : (
+    <MessageCircle className="size-3.5" />
+  );
 }
 
 function EventRow({ event }: { event: AutomationAuditItem }) {
@@ -117,15 +121,20 @@ function EventRow({ event }: { event: AutomationAuditItem }) {
 
 type SearchParams = Promise<{ outcome?: string; platform?: string }>;
 
-export default async function SocialAutomationRunsPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function SocialAutomationRunsPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
   await requireUser();
   const params = await searchParams;
   const outcome = OUTCOMES.some((item) => item.value === params.outcome)
     ? (params.outcome as AutomationEventOutcome)
     : undefined;
-  const platform = params.platform === "instagram" || params.platform === "facebook"
-    ? (params.platform as MetaPlatform)
-    : undefined;
+  const platform =
+    params.platform === "instagram" || params.platform === "facebook"
+      ? (params.platform as MetaPlatform)
+      : undefined;
   const events = await listAutomationAudit({ outcome, platform });
 
   return (

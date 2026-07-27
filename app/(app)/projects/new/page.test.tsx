@@ -1,6 +1,6 @@
-import NewProjectPage from "@/app/(app)/projects/new/page";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import NewProjectPage from "@/app/(app)/projects/new/page";
 
 const mockSupabase = {
   from: vi.fn().mockReturnThis(),

@@ -1,7 +1,7 @@
+import { CheckCircle2 } from "lucide-react";
 import { LogoMark } from "@/components/branding";
 import { ReceiptPrintButton } from "@/components/portal/receipt-print-button";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { CheckCircle2 } from "lucide-react";
 
 interface PaymentReceiptProps {
   /** Redsys order reference shown under the title. */

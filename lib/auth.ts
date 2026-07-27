@@ -1,6 +1,6 @@
+import { redirect } from "next/navigation";
 import { scopedLogger } from "@/lib/logger";
 import { createServerClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 
 const log = scopedLogger("auth");
 

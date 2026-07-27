@@ -1,8 +1,8 @@
+import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { requireRole } from "@/lib/auth";
 import { getCompanyGoals } from "@/lib/dashboard/queries";
-import type { Metadata } from "next";
 import { GoalsForm } from "./goals-form";
 
 export const metadata: Metadata = { title: "Metas · Ajustes · doscientos" };

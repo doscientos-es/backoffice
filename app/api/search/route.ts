@@ -6,10 +6,10 @@
  * Cada grupo se limita a 5 resultados para mantener la respuesta breve.
  */
 
+import { type NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { VAULT_SERVICE_LABELS, type VaultService } from "@/lib/schemas/vault";
 import { createServerClient } from "@/lib/supabase/server";
-import { type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 

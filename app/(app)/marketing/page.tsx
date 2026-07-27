@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionBoundary } from "@/components/ui/error-boundary";
 import { requireUser } from "@/lib/auth";
@@ -9,7 +10,6 @@ import {
   parseShowPaused,
   rangeToDates,
 } from "@/lib/marketing/range";
-import type { Metadata } from "next";
 import { AttributionFunnel } from "./_components/attribution-funnel";
 import { MarketingInsights } from "./_components/marketing-insights";
 import { MarketingKpis } from "./_components/marketing-kpis";

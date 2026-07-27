@@ -1,3 +1,4 @@
+import { describe, expect, it } from "vitest";
 import {
   PASSWORD_COMPLEXITY_MESSAGE,
   PASSWORD_COMPLEXITY_REGEX,
@@ -6,7 +7,6 @@ import {
   passwordField,
   validatePassword,
 } from "@/lib/schemas/password";
-import { describe, expect, it } from "vitest";
 
 // ─── constants ───────────────────────────────────────────────────────────────
 

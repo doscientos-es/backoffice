@@ -1,9 +1,9 @@
+import { ExternalLink, Shield } from "lucide-react";
+import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { serverEnv } from "@/lib/env";
-import { ExternalLink, Shield } from "lucide-react";
-import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Legal / Verifactu · doscientos" };
 

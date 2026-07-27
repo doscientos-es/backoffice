@@ -1,3 +1,6 @@
+import { Download } from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -6,9 +9,6 @@ import { DocPreview } from "@/components/ui/doc-preview";
 import { getStorage } from "@/lib/storage";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
-import { Download } from "lucide-react";
-import Link from "next/link";
-import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -22,11 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return { title: data?.name ? `${data.name as string} · doscientos` : "Documento · doscientos" };
 }
 
-export default async function DocumentDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function DocumentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createServerClient();
 

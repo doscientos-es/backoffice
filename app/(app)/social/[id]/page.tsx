@@ -1,3 +1,6 @@
+import { BarChart3, ExternalLink, MessageSquare } from "lucide-react";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { BackLink } from "@/components/layout/back-link";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
@@ -9,9 +12,6 @@ import { requireUser } from "@/lib/auth";
 import { getPostDetail } from "@/lib/social/service";
 import { SOCIAL_POST_STATUS, SOCIAL_TARGET_STATUS } from "@/lib/status";
 import { formatDateTime, relativeTime } from "@/lib/utils";
-import { BarChart3, ExternalLink, MessageSquare } from "lucide-react";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { CommentCard } from "../_components/comment-card";
 import { MediaThumb } from "../_components/media-thumb";
 import { PlatformChip } from "../_components/platform";
@@ -20,7 +20,9 @@ import { SyncButton } from "../_components/sync-button";
 
 export async function generateMetadata({
   params,
-}: { params: Promise<{ id: string }> }): Promise<Metadata> {
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
   const { id } = await params;
   const post = await getPostDetail(id);
   return { title: post ? `${post.caption.slice(0, 20)}... · Social` : "Post · Social" };
@@ -241,7 +243,9 @@ async function PostDetail({ id }: { id: string }) {
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <span className="text-[10px] uppercase text-muted-foreground">Me gusta</span>
-                  <span className="text-xl font-bold tabular-nums">{totalLikes.toLocaleString()}</span>
+                  <span className="text-xl font-bold tabular-nums">
+                    {totalLikes.toLocaleString()}
+                  </span>
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <span className="text-[10px] uppercase text-muted-foreground">Comentarios</span>
@@ -251,7 +255,9 @@ async function PostDetail({ id }: { id: string }) {
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <span className="text-[10px] uppercase text-muted-foreground">Acciones</span>
-                  <span className="text-xl font-bold tabular-nums">{totalActions.toLocaleString()}</span>
+                  <span className="text-xl font-bold tabular-nums">
+                    {totalActions.toLocaleString()}
+                  </span>
                 </div>
               </div>
               <div className="border-t border-border/60 pt-3">

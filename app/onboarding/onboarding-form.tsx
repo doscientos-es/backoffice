@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState, useTransition } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,7 +8,6 @@ import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { useMemo, useState, useTransition } from "react";
 import { completeOnboarding, skipOnboarding } from "./actions";
 
 interface Props {

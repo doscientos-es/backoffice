@@ -32,6 +32,7 @@ function fmtDate(iso: string) {
 function renderBody(body: string) {
   return body.split(/(@[\w.-]+)/g).map((part, i) =>
     part.startsWith("@") ? (
+      // biome-ignore lint/suspicious/noArrayIndexKey: parts are recomputed from the string on every render
       <span key={i} className="font-medium text-primary">
         {part}
       </span>

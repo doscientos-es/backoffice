@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { type NextRequest, NextResponse } from "next/server";
 /**
  * GET /api/social/google-business/auth
  *
@@ -11,7 +12,6 @@ import {
   googleBusinessMissingConfig,
   googleBusinessOAuthConfigured,
 } from "@/lib/social/google-business";
-import { type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

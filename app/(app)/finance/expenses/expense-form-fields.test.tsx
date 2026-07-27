@@ -10,9 +10,10 @@
  * Fix: keep the block always mounted and toggle visibility with CSS, so the
  * values are always present in FormData regardless of expand/collapse state.
  */
-import { ExpenseFormFields } from "@/app/(app)/finance/expenses/expense-form-fields";
+
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { ExpenseFormFields } from "@/app/(app)/finance/expenses/expense-form-fields";
 
 function renderInForm(ui: React.ReactElement): HTMLFormElement {
   const { container } = render(<form>{ui}</form>);

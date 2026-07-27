@@ -1,8 +1,8 @@
+import type { Metadata } from "next";
 import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
-import type { Metadata } from "next";
 import { NewProposalForm } from "./new-proposal-form";
 
 export const metadata: Metadata = { title: "Nueva propuesta · doscientos" };
@@ -15,7 +15,9 @@ export const dynamic = "force-dynamic";
  */
 export default async function NewProposalPage({
   searchParams,
-}: { searchParams: Promise<{ client_id?: string; lead_id?: string }> }) {
+}: {
+  searchParams: Promise<{ client_id?: string; lead_id?: string }>;
+}) {
   await requireUser();
   const { client_id, lead_id } = await searchParams;
 

@@ -1,5 +1,8 @@
 "use client";
 
+import { ArrowRight } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 import { ListPage, type ListPageProps } from "@/components/layout/list-page";
 import { MemberLabel } from "@/components/ui/member-avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -8,9 +11,6 @@ import { getLeadInitials, leadDisplayName } from "@/lib/leads/utils";
 import type { MemberOption } from "@/lib/members/queries";
 import { LEAD_STATUS } from "@/lib/status";
 import { relativeTime } from "@/lib/utils";
-import { ArrowRight } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
 import { LeadFastActions } from "./lead-fast-actions";
 import { LeadQuickView } from "./lead-quick-view";
 import type { KanbanLead } from "./leads-kanban";

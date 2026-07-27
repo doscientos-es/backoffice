@@ -8,6 +8,13 @@ import { isDemoMode } from "@/lib/demo";
  * actions stay thin and the domain stays pure.
  */
 import { scopedLogger } from "@/lib/logger";
+import type {
+  CaptionByPlatform,
+  FanOutResult,
+  MediaItem,
+  PublisherRegistry,
+  SocialPlatform,
+} from "@/lib/social/core";
 import {
   canDeleteRemote,
   canFetchComments,
@@ -16,15 +23,8 @@ import {
   composePost,
   fanOutPublish,
 } from "@/lib/social/core";
-import type {
-  CaptionByPlatform,
-  FanOutResult,
-  MediaItem,
-  PublisherRegistry,
-  SocialPlatform,
-} from "@/lib/social/core";
 import { metaPageToken } from "@/lib/social/meta/graph-client";
-import { type InstagramMedia, getAccountMedia, igUserId } from "@/lib/social/meta/instagram-api";
+import { getAccountMedia, type InstagramMedia, igUserId } from "@/lib/social/meta/instagram-api";
 import { socialRegistry } from "@/lib/social/registry";
 import * as repo from "@/lib/social/repo";
 import { removeMedia } from "@/lib/social/storage";

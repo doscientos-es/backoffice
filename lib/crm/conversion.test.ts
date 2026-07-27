@@ -1,5 +1,5 @@
-import { hasCompleteFiscalData, promoteLeadFromClient } from "@/lib/crm/conversion";
 import { describe, expect, it } from "vitest";
+import { hasCompleteFiscalData, promoteLeadFromClient } from "@/lib/crm/conversion";
 
 describe("hasCompleteFiscalData", () => {
   it("is true only when name, nif and billing_address are all present", () => {

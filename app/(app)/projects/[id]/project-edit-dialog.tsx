@@ -1,5 +1,7 @@
 "use client";
 
+import { Pencil } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,8 +15,6 @@ import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { useFormDirty } from "@/lib/hooks/use-form-dirty";
 import type { GithubSyncModeType, ProjectStatusType } from "@/lib/schemas/project";
-import { Pencil } from "lucide-react";
-import { useState } from "react";
 import { updateProject } from "../actions";
 import type { ProjectBillingType } from "../billing-section";
 import type { GitHubSyncMode } from "../github-sync-section";

@@ -1,9 +1,9 @@
+import { FileSignature, Inbox, Target, TrendingUp } from "lucide-react";
 import { StatCard } from "@/components/layout/stat-card";
 import { getCompanyGoals, getDashboardKpis } from "@/lib/dashboard/queries";
 import type { DashboardRange } from "@/lib/dashboard/types";
 import { cn, formatEUR } from "@/lib/utils";
 import { computeTrend, describeRange, resolveDateRange } from "@/lib/utils/date";
-import { FileSignature, Inbox, Target, TrendingUp } from "lucide-react";
 
 type KpiGridProps = { range: DashboardRange; showFinance: boolean };
 

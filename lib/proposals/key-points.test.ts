@@ -1,14 +1,14 @@
+import { describe, expect, it } from "vitest";
 import {
-  type EditablePair,
   createEmptyKeyPoint,
   createEmptyPair,
+  type EditablePair,
   parseKeyPoints,
   serializeKeyPoints,
   toEditableKeyPoints,
   unzipPairs,
   zipKeyPoints,
 } from "@/lib/proposals/key-points";
-import { describe, expect, it } from "vitest";
 
 describe("parseKeyPoints", () => {
   it("returns [] for non-array input", () => {

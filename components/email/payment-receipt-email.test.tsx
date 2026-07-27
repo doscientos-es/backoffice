@@ -1,5 +1,5 @@
-import { renderEmail } from "@/lib/email/render";
 import { describe, expect, it } from "vitest";
+import { renderEmail } from "@/lib/email/render";
 import { PaymentReceiptEmail } from "./payment-receipt-email";
 
 describe("PaymentReceiptEmail", () => {

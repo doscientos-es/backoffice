@@ -1,16 +1,15 @@
+import { AlertTriangle, CheckCircle2, Clock, Download, ShieldAlert } from "lucide-react";
+import type { Metadata } from "next";
 import { ListPage } from "@/components/layout/list-page";
 import { StatCard } from "@/components/layout/stat-card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
 import { listInvoices } from "@/lib/invoices/queries";
-import { INVOICE_LIST_PAGE_SIZE } from "@/lib/invoices/types";
-import { INVOICE_SORT_COLUMNS } from "@/lib/invoices/types";
+import { INVOICE_LIST_PAGE_SIZE, INVOICE_SORT_COLUMNS } from "@/lib/invoices/types";
 import { INVOICE_STATUS, VERIFACTU_STATUS } from "@/lib/status";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { parsePage, parseSortParam, parseStringParam } from "@/lib/utils/search-params";
-import { AlertTriangle, CheckCircle2, Clock, Download, ShieldAlert } from "lucide-react";
-import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Facturas · doscientos" };
 export const dynamic = "force-dynamic";

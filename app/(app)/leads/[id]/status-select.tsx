@@ -1,9 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { Select } from "@/components/ui/select";
 import { useOptimisticUpdate } from "@/lib/hooks/use-optimistic-update";
 import type { LeadStatusType } from "@/lib/schemas/lead";
-import { useState } from "react";
 import { updateLeadStatus } from "../actions";
 import { CloseReasonDialog, type CloseReasonVariant } from "../close-reason-dialog";
 import { QuotedSuggestionDialog } from "../quoted-suggestion-dialog";

@@ -1,10 +1,10 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { requireRole } from "@/lib/auth";
 import { extractVariables } from "@/lib/email/templates";
 import { createServerClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
-import { z } from "zod";
 
 const TemplateInput = z.object({
   name: z.string().min(1, "El nombre es obligatorio").max(120),

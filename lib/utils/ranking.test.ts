@@ -1,5 +1,5 @@
-import { rankAfter, rankBefore, rankBetween } from "@/lib/utils/ranking";
 import { describe, expect, it } from "vitest";
+import { rankAfter, rankBefore, rankBetween } from "@/lib/utils/ranking";
 
 describe("rankBetween", () => {
   it("returns a key strictly between two adjacent-gap keys", () => {

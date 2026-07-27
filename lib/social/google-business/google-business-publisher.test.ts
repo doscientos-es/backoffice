@@ -1,5 +1,5 @@
-import type { ComposedPost } from "@/lib/social/core";
 import { describe, expect, it, vi } from "vitest";
+import type { ComposedPost } from "@/lib/social/core";
 import { GoogleBusinessProfilePublisher } from "./google-business-publisher";
 
 const request = vi.hoisted(() => vi.fn());

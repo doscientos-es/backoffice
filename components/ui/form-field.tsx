@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils";
 import { type LabelHTMLAttributes, type ReactNode, useId } from "react";
+import { cn } from "@/lib/utils";
 
 export type FormFieldProps = {
   label: string;
@@ -42,6 +42,7 @@ export function FormField({
 
 function FormLabel({ className, children, ...props }: LabelHTMLAttributes<HTMLLabelElement>) {
   return (
+    // biome-ignore lint/a11y/noLabelWithoutControl: htmlFor is always passed via props by FormField
     <label
       className={cn("text-xs font-medium text-[color:var(--text-secondary)]", className)}
       {...props}

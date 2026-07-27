@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils";
 import type { HTMLAttributes } from "react";
+import { cn } from "@/lib/utils";
 import { LogoMark } from "./logo-mark";
 import { Wordmark } from "./wordmark";
 

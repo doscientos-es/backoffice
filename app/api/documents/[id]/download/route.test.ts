@@ -47,8 +47,8 @@ vi.mock("@/lib/supabase/server", () => ({
   })),
 }));
 
-import { GET } from "@/app/api/documents/[id]/download/route";
 import { NextRequest } from "next/server";
+import { GET } from "@/app/api/documents/[id]/download/route";
 
 function downloadRequest(id: string): NextRequest {
   return new NextRequest(`http://localhost/api/documents/${id}/download`);

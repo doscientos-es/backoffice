@@ -1,3 +1,4 @@
+import { describe, expect, it } from "vitest";
 import {
   buildVatBreakdown,
   computeLineSubtotal,
@@ -5,7 +6,6 @@ import {
   computeProjectProfitability,
   roundCurrency,
 } from "@/lib/finance";
-import { describe, expect, it } from "vitest";
 
 describe("roundCurrency", () => {
   it("rounds to 2 decimals", () => {

@@ -1,10 +1,10 @@
 import { timingSafeEqual } from "node:crypto";
+import { type NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { telegramRequest } from "@/lib/integrations/telegram";
 import { scopedLogger } from "@/lib/logger";
 import type { LeadStatusType } from "@/lib/schemas/lead";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

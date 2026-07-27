@@ -1,9 +1,9 @@
 "use server";
 
-import { requireRole, requireUser } from "@/lib/auth";
-import { createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { requireRole, requireUser } from "@/lib/auth";
+import { createServerClient } from "@/lib/supabase/server";
 
 const ProfileInput = z.object({
   email_alias: z

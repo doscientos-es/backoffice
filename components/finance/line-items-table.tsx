@@ -1,19 +1,19 @@
 "use client";
 
+import { Plus, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import {
-  BILLING_CYCLES,
   BILLING_CYCLE_LABELS,
+  BILLING_CYCLES,
   type BillingCycle,
-  EMPTY_LINE_ITEM,
-  type LineItem,
   computeLineSubtotal,
   computeLineTotals,
   computeProposalTotals,
+  EMPTY_LINE_ITEM,
+  type LineItem,
 } from "@/lib/finance";
 import { formatEUR } from "@/lib/utils";
-import { Plus, Trash2 } from "lucide-react";
 
 export type LineItemsTableProps = {
   items: LineItem[];

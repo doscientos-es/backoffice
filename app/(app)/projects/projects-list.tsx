@@ -1,9 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { ListPage, type ListPageProps } from "@/components/layout/list-page";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { useOptimisticRemoval } from "@/lib/hooks/use-optimistic-removal";
-import { useState } from "react";
 import { deleteProject } from "./actions";
 import { ProjectQuickView, type QuickProject } from "./project-quick-view";
 

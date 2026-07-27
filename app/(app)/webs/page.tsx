@@ -1,3 +1,7 @@
+import { Globe, Plus, ShieldAlert } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { Suspense } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
@@ -5,10 +9,6 @@ import { requireUser } from "@/lib/auth";
 import { domainExpiryDays, domainExpiryState } from "@/lib/webs/domain-expiry";
 import { listWebProjects } from "@/lib/webs/queries";
 import type { WebProjectListItem } from "@/lib/webs/types";
-import { Globe, Plus, ShieldAlert } from "lucide-react";
-import type { Metadata } from "next";
-import Link from "next/link";
-import { Suspense } from "react";
 import { WebCard } from "./_components/web-card";
 import { WebFilters } from "./_components/web-filters";
 

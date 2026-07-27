@@ -1,12 +1,12 @@
 "use client";
 
+import { useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useRef, useState, useTransition } from "react";
 import { upsertToken } from "../actions";
 
 export type BrandToken = {

@@ -1,3 +1,4 @@
+import { ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +14,6 @@ import { getMarketingOverview } from "@/lib/marketing/queries";
 import type { MarketingSort, MarketingView } from "@/lib/marketing/range";
 import type { ActiveAdRow, CampaignRow } from "@/lib/marketing/types";
 import { formatEUR, relativeTime } from "@/lib/utils";
-import { ExternalLink } from "lucide-react";
 import { AdPreviewDialog } from "../ad-preview-dialog";
 import {
   buildAdsManagerUrl,

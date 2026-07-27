@@ -1,5 +1,6 @@
 "use client";
 
+import { MoreHorizontal, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,7 +10,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useUndoableDelete } from "@/lib/hooks/use-undoable-delete";
-import { MoreHorizontal, Trash2 } from "lucide-react";
 import { deletePost, deletePostLocal, restorePost } from "../actions";
 
 /**

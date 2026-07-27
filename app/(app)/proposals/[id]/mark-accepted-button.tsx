@@ -1,5 +1,8 @@
 "use client";
 
+import { CheckCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,9 +14,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { CheckCheck } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
 import { markProposalAsAccepted } from "../actions";
 
 /**

@@ -1,6 +1,6 @@
-import { EntityMultiCombobox } from "@/components/ui/entity-multi-combobox";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { EntityMultiCombobox } from "@/components/ui/entity-multi-combobox";
 
 const ITEMS = [
   {

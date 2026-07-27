@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { RemindersSection } from "@/app/(app)/inicio/_components/reminders-section";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
@@ -22,8 +24,6 @@ import {
   type TaskStatus,
 } from "@/lib/status";
 import { formatDate, formatEUR } from "@/lib/utils";
-import Link from "next/link";
-import { notFound } from "next/navigation";
 import { ScheduleReminderDialog } from "../../reminders/schedule-reminder-dialog";
 import { TaskCreateDialog } from "../../tasks/task-create-dialog";
 import { ClientEditDialog } from "./client-edit-dialog";

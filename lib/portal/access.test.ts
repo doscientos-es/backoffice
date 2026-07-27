@@ -1,9 +1,9 @@
+import { describe, expect, it } from "vitest";
 import {
   buildPortalAccessPatch,
   hashPortalPassword,
   verifyPortalPassword,
 } from "@/lib/portal/access";
-import { describe, expect, it } from "vitest";
 
 describe("hashPortalPassword / verifyPortalPassword", () => {
   it("produces a self-describing scrypt string", () => {

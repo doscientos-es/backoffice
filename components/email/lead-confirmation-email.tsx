@@ -1,5 +1,5 @@
-import type { LeadResource } from "@/lib/integrations/lead-resources";
 import { Button, Hr, Section, Text } from "@react-email/components";
+import type { LeadResource } from "@/lib/integrations/lead-resources";
 import { EmailLayout } from "./email-layout";
 
 const BRAND = "#2A4227";

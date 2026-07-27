@@ -1,12 +1,12 @@
+import { Plus } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
 import { ListPage } from "@/components/layout/list-page";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
-import { Plus } from "lucide-react";
-import type { Metadata } from "next";
-import Link from "next/link";
 
 export const metadata: Metadata = { title: "Docs internos · doscientos" };
 export const dynamic = "force-dynamic";

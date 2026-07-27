@@ -1,7 +1,7 @@
 "use client";
 
-import { formatEUR } from "@/lib/utils";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { formatEUR } from "@/lib/utils";
 
 export type CategorySlice = { name: string; value: number };
 

@@ -1,9 +1,9 @@
+import { addMonths, endOfMonth, endOfWeek, startOfMonth, startOfWeek, subMonths } from "date-fns";
+import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
 import { getCalendarEvents } from "@/lib/calendar/queries";
 import { ALL_LAYERS } from "@/lib/calendar/types";
 import { createServerClient } from "@/lib/supabase/server";
-import { addMonths, endOfMonth, endOfWeek, startOfMonth, startOfWeek, subMonths } from "date-fns";
-import type { Metadata } from "next";
 import { CalendarGrid } from "./_components/calendar-grid";
 
 export const metadata: Metadata = { title: "Agenda · doscientos" };

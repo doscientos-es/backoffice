@@ -1,6 +1,6 @@
+import { z } from "zod";
 import { optionalDate, optionalText, optionalUuid, requiredText } from "@/lib/schemas/common";
 import { passwordField } from "@/lib/schemas/password";
-import { z } from "zod";
 
 export const VAULT_SERVICES = [
   "hosting",

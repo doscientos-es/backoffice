@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import {
   AccountsReceivableSkeleton,
   AccountsReceivableWidget,
@@ -9,7 +10,6 @@ import {
 import { SectionBoundary } from "@/components/ui/error-boundary";
 import { canViewFinance, requireUser } from "@/lib/auth";
 import { getGreeting, parseDashboardRange } from "@/lib/utils/date";
-import type { Metadata } from "next";
 import { AvisosWidget } from "./_components/avisos-widget";
 import { KpiGrid } from "./_components/kpi-grid";
 import { MoneyOpportunitiesWidget } from "./_components/money-opportunities-widget";

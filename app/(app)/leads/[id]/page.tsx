@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { RemindersSection } from "@/app/(app)/inicio/_components/reminders-section";
 import { createTask } from "@/app/(app)/tasks/actions";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
@@ -20,8 +22,6 @@ import { listActiveMembers } from "@/lib/members/queries";
 import { LEAD_STATUS, TASK_STATUS, type TaskStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatDateTime, formatEUR, relativeTime } from "@/lib/utils";
-import Link from "next/link";
-import { notFound } from "next/navigation";
 import { TaskCreateDialog } from "../../tasks/task-create-dialog";
 import { CallInteractionDetails } from "./call-interaction-details";
 import { LeadAiPanel } from "./lead-ai-panel";
@@ -101,11 +101,7 @@ function compactParts(parts: Array<string | null | undefined>): string | null {
   return value || null;
 }
 
-export default async function LeadDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const user = await requireUser();
 
@@ -402,7 +398,8 @@ export default async function LeadDetailPage({
                           </Badge>
                           {event.conversion_step && (
                             <span className="text-xs text-muted-foreground">
-                              {CONVERSION_STEP_LABEL[event.conversion_step] ?? event.conversion_step}
+                              {CONVERSION_STEP_LABEL[event.conversion_step] ??
+                                event.conversion_step}
                             </span>
                           )}
                         </div>

@@ -15,13 +15,7 @@ function pct(value: number | null): string {
   return `${Math.round(value * 100)} %`;
 }
 
-export async function AttributionFunnel({
-  since,
-  until,
-}: {
-  since: string;
-  until: string;
-}) {
+export async function AttributionFunnel({ since, until }: { since: string; until: string }) {
   const rows = await getLeadFunnelBySource(since, until);
 
   if (!rows.length) {

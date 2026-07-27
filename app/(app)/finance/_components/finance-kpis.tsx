@@ -1,7 +1,7 @@
+import { HandCoins, Hourglass, Percent, Receipt, TrendingDown, TrendingUp } from "lucide-react";
 import { StatCard } from "@/components/layout/stat-card";
 import { getFinanceKpis } from "@/lib/finance/queries";
 import { formatEUR } from "@/lib/utils";
-import { HandCoins, Hourglass, Percent, Receipt, TrendingDown, TrendingUp } from "lucide-react";
 
 type Props = { since: string; until: string; rangeLabel: string };
 

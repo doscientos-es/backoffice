@@ -12,9 +12,10 @@
  * The token is NOT stored anywhere automatically — it is displayed to the
  * authenticated admin only. This keeps the secret out of logs, DB, and code.
  */
+
+import { type NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { scopedLogger } from "@/lib/logger";
-import { type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

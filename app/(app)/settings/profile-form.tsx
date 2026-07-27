@@ -1,5 +1,7 @@
 "use client";
 
+import { AlertCircle, CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
@@ -8,8 +10,6 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { buildSignatureHtml } from "@/lib/email/signature";
 import { useGithubHandle } from "@/lib/hooks/use-github-handle";
 import { cn } from "@/lib/utils";
-import { AlertCircle, CheckCircle2, Loader2, XCircle } from "lucide-react";
-import { useMemo, useState } from "react";
 import { updateProfile } from "./actions";
 
 interface Props {
@@ -224,11 +224,7 @@ export function ProfileForm({
   );
 }
 
-function GithubHandleIcon({
-  status,
-}: {
-  status: ReturnType<typeof useGithubHandle>["status"];
-}) {
+function GithubHandleIcon({ status }: { status: ReturnType<typeof useGithubHandle>["status"] }) {
   const iconClass = "size-4";
   if (status === "checking")
     return <Loader2 className={cn(iconClass, "animate-spin text-muted-foreground")} aria-hidden />;
@@ -241,11 +237,7 @@ function GithubHandleIcon({
   return null;
 }
 
-function GithubHandleMessage({
-  state,
-}: {
-  state: ReturnType<typeof useGithubHandle>;
-}) {
+function GithubHandleMessage({ state }: { state: ReturnType<typeof useGithubHandle> }) {
   switch (state.status) {
     case "empty":
       return <>Se usa para sincronizar tareas con issues y PRs de GitHub.</>;

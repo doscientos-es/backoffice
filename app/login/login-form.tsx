@@ -1,5 +1,10 @@
 "use client";
 
+import HCaptcha from "@hcaptcha/react-hcaptcha";
+import { ChevronDown, Eye, EyeOff, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -8,11 +13,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { publicEnv } from "@/lib/env";
 import { getBrowserClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
-import HCaptcha from "@hcaptcha/react-hcaptcha";
-import { ChevronDown, Eye, EyeOff, Loader2 } from "lucide-react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
 
 export function LoginForm() {
   const search = useSearchParams();
@@ -240,7 +240,7 @@ export function LoginForm() {
  * protocol-relative URL like `//evil.com`).
  */
 function safeNext(raw: string | null): string {
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/inicio";
+  if (!raw?.startsWith("/") || raw.startsWith("//")) return "/inicio";
   return raw;
 }
 

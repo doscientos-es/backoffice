@@ -1,9 +1,9 @@
+import { Coins, HandCoins, Target, TrendingUp } from "lucide-react";
 import { StatCard } from "@/components/layout/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getMarketingRoi } from "@/lib/marketing/queries";
 import { roasTone } from "@/lib/marketing/roi";
 import { formatEUR } from "@/lib/utils";
-import { Coins, HandCoins, Target, TrendingUp } from "lucide-react";
 import { percentFmt } from "./marketing-format";
 
 type MarketingRoiProps = {

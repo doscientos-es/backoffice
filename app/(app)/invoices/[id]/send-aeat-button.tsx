@@ -1,15 +1,19 @@
 "use client";
 
+import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { Send } from "lucide-react";
 import { sendToAeat } from "../actions";
 
 export function SendAeatButton({
   invoiceId,
   disabled,
   label = "Enviar a AEAT",
-}: { invoiceId: string; disabled?: boolean; label?: string }) {
+}: {
+  invoiceId: string;
+  disabled?: boolean;
+  label?: string;
+}) {
   const feedback = useFormFeedback();
 
   async function onClick() {

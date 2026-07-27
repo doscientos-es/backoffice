@@ -1,9 +1,9 @@
-import { Card, CardContent } from "@/components/ui/card";
-import type { Trend } from "@/lib/dashboard/types";
-import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
+import type { Trend } from "@/lib/dashboard/types";
+import { cn } from "@/lib/utils";
 
 export type StatTone = "default" | "success" | "danger" | "info" | "warning";
 

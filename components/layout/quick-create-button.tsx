@@ -1,5 +1,8 @@
 "use client";
 
+import { Briefcase, FileText, ListChecks, Plus, User, Users } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,9 +14,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CREATE_SHORTCUTS } from "@/lib/navigation/shortcuts";
 import { cn } from "@/lib/utils";
-import { Briefcase, FileText, ListChecks, Plus, User, Users } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
 
 const ICON_BY_HREF: Record<string, React.ComponentType<{ className?: string }>> = {
   "/leads/new": User,

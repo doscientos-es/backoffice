@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils";
 import type { SVGProps } from "react";
+import { cn } from "@/lib/utils";
 
 export type LogoMarkProps = Omit<SVGProps<SVGSVGElement>, "viewBox" | "xmlns"> & {
   /** Pixel size applied to both width and height. */

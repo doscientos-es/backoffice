@@ -1,3 +1,6 @@
+import { CheckCircle2, Clock, FileText, Presentation, XCircle } from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { BackLink } from "@/components/layout/back-link";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
@@ -14,9 +17,6 @@ import { parseKeyPoints, toEditableKeyPoints } from "@/lib/proposals/key-points"
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { CheckCircle2, Clock, FileText, Presentation, XCircle } from "lucide-react";
-import Link from "next/link";
-import { notFound } from "next/navigation";
 import { updateProposalPortalAccess } from "../actions";
 import { DeleteProposalButton } from "./delete-proposal-button";
 import { DuplicateProposalButton } from "./duplicate-proposal-button";

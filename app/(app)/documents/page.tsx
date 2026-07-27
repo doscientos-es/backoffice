@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { ListPage } from "@/components/layout/list-page";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
@@ -8,7 +9,6 @@ import {
   parseSortParam,
   parseStringParam,
 } from "@/lib/utils/search-params";
-import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Documentos · doscientos" };
 export const dynamic = "force-dynamic";

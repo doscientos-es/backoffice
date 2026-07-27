@@ -1,10 +1,10 @@
+import { describe, expect, it } from "vitest";
 import {
   buildMonthlySeries,
   computeExpenseTotals,
   computeProposalTotals,
   profitMargin,
 } from "@/lib/finance";
-import { describe, expect, it } from "vitest";
 
 describe("computeExpenseTotals", () => {
   it("computes tax and total with 21% IVA", () => {

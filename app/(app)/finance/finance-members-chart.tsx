@@ -1,7 +1,7 @@
 "use client";
 
-import { formatEUR } from "@/lib/utils";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { formatEUR } from "@/lib/utils";
 
 export type MemberBar = { name: string; value: number };
 

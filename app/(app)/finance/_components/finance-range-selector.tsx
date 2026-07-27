@@ -1,10 +1,10 @@
 "use client";
 
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useTransition } from "react";
 import { Select } from "@/components/ui/select";
 import { FINANCE_RANGE_OPTIONS, type FinanceRange } from "@/lib/finance/range";
 import { cn } from "@/lib/utils";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
 
 export function FinanceRangeSelector({ current }: { current: FinanceRange }) {
   const router = useRouter();

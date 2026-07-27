@@ -5,12 +5,13 @@
  * token is shown only in the authenticated admin's browser and is never logged
  * or persisted by the application.
  */
+
+import { type NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import {
   exchangeGoogleBusinessCode,
   googleBusinessRedirectUri,
 } from "@/lib/social/google-business";
-import { type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

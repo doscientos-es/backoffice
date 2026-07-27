@@ -1,9 +1,9 @@
+import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { requireRole } from "@/lib/auth";
 import { getExpenseDetail, getExpenseVendorSuggestions } from "@/lib/finance/queries";
 import { createServerClient } from "@/lib/supabase/server";
-import type { Metadata } from "next";
 import { NewExpenseForm } from "./new-expense-form";
 
 export const metadata: Metadata = { title: "Nuevo gasto · doscientos" };

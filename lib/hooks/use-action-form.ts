@@ -1,8 +1,8 @@
 "use client";
 
+import type { FormEvent } from "react";
 import { type FormFeedbackState, useFormFeedback } from "@/components/ui/form-feedback";
 import type { ActionResult } from "@/lib/actions/types";
-import type { FormEvent } from "react";
 
 /**
  * A server action invoked from a client form. It receives the form's

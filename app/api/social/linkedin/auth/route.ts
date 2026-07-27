@@ -10,9 +10,9 @@
  *   w_organization_social  — create / manage posts & comments
  */
 import { randomBytes } from "node:crypto";
+import { type NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { scopedLogger } from "@/lib/logger";
-import { type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

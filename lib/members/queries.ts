@@ -1,6 +1,6 @@
+import { cache } from "react";
 import { notDeleted } from "@/lib/supabase/filters";
 import { createServerClient } from "@/lib/supabase/server";
-import { cache } from "react";
 
 /**
  * Minimal team member shape used to populate owner/assignee selectors and to

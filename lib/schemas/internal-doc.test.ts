@@ -1,16 +1,16 @@
+import { describe, expect, it } from "vitest";
 import {
   INTERNAL_DOC_ACTIONS,
   INTERNAL_DOC_CATEGORIES,
   INTERNAL_DOC_MAX_SIZE_BYTES,
-  INTERNAL_DOC_MAX_TAGS,
   INTERNAL_DOC_MAX_TAG_LENGTH,
+  INTERNAL_DOC_MAX_TAGS,
   INTERNAL_DOC_VISIBILITIES,
   InternalDocCategorySchema,
   InternalDocIdInput,
   InternalDocVisibilitySchema,
   UpdateInternalDocInput,
 } from "@/lib/schemas/internal-doc";
-import { describe, expect, it } from "vitest";
 
 const uuid = "11111111-1111-1111-1111-111111111111";
 

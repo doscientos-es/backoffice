@@ -1,10 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { Check, Copy, ExternalLink, Link2 } from "lucide-react";
 import { useState } from "react";
 import { sileo } from "sileo";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 /**
  * Renders a public portal link (e.g. an invoice payment page) with

@@ -12,6 +12,8 @@
  *   5. Log activity
  */
 
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import {
   createGitHubBranchFromDefault,
@@ -20,8 +22,6 @@ import {
 } from "@/lib/integrations/github";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
-import { type NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
     .eq("id", task.project_id as string)
     .maybeSingle();
 
-  if (!project || project.github_sync_mode !== "bidirectional") {
+  if (project?.github_sync_mode !== "bidirectional") {
     return NextResponse.json(
       {
         error:

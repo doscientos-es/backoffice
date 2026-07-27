@@ -1,5 +1,8 @@
 "use client";
 
+import { Eye, EyeOff, Pencil, Save, Sparkles, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { AiNotice } from "@/components/ui/ai-notice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,9 +11,6 @@ import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Markdown } from "@/components/ui/markdown";
 import { Textarea } from "@/components/ui/textarea";
-import { Eye, EyeOff, Pencil, Save, Sparkles, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
 import { deleteSpec, toggleSpecVisibility, updateSpec } from "./spec-actions";
 
 export type ProposalSpec = {

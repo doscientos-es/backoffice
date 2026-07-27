@@ -1,16 +1,16 @@
+import { type NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { ingestLead } from "@/lib/integrations/lead-intake";
 import {
-  type MetaWebhookPayload,
   fetchMetaLeadgen,
   logMetaError,
+  type MetaWebhookPayload,
   mapMetaLeadgenToIntake,
   verifyMetaSignature,
 } from "@/lib/integrations/meta-leads";
 import { scopedLogger } from "@/lib/logger";
 import { processMetaCommentEvent } from "@/lib/social/automation/service";
 import { parseMetaCommentEvents } from "@/lib/social/meta/webhook";
-import { type NextRequest, NextResponse } from "next/server";
 
 // Webhooks must never be cached or pre-rendered.
 export const dynamic = "force-dynamic";

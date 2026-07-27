@@ -1,15 +1,5 @@
 "use client";
 
-import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { rescheduleEvent } from "@/lib/calendar/actions";
-import {
-  ALL_LAYERS,
-  CALENDAR_LAYER_COLORS,
-  type CalendarEvent,
-  type CalendarEventKind,
-  type CalendarView,
-} from "@/lib/calendar/types";
-import { cn } from "@/lib/utils";
 import { DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import {
   addDays,
@@ -24,6 +14,16 @@ import {
 } from "date-fns";
 import { es } from "date-fns/locale";
 import { createContext, useContext, useOptimistic, useState, useTransition } from "react";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { rescheduleEvent } from "@/lib/calendar/actions";
+import {
+  ALL_LAYERS,
+  CALENDAR_LAYER_COLORS,
+  type CalendarEvent,
+  type CalendarEventKind,
+  type CalendarView,
+} from "@/lib/calendar/types";
+import { cn } from "@/lib/utils";
 import { CalendarCreateDialog } from "./calendar-create-dialog";
 import { CalendarEventDialog } from "./calendar-event-dialog";
 import { CalendarHeader } from "./calendar-header";

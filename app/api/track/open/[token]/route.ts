@@ -1,5 +1,5 @@
-import { createAdminClient } from "@/lib/supabase/admin";
 import { type NextRequest, NextResponse } from "next/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 /** 1×1 transparent GIF – minimal byte payload. */
 const PIXEL_GIF = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64");

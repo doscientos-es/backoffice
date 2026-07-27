@@ -1,6 +1,6 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { scopedLogger } from "@/lib/logger";
 import type { AcceptProposalFiscalDataType } from "@/lib/schemas/proposal";
-import type { SupabaseClient } from "@supabase/supabase-js";
 
 const log = scopedLogger("crm.conversion");
 

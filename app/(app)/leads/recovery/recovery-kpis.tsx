@@ -1,7 +1,7 @@
+import { HeartHandshake, MailX, TriangleAlert, Users } from "lucide-react";
 import { StatCard } from "@/components/layout/stat-card";
 import type { RecoveryKpis as RecoveryKpisData } from "@/lib/recovery/types";
 import { formatEUR } from "@/lib/utils";
-import { HeartHandshake, MailX, TriangleAlert, Users } from "lucide-react";
 
 /**
  * Funnel snapshot for the recovery hub. Reuses the shared `StatCard` primitive

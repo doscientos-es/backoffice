@@ -1,3 +1,4 @@
+import { describe, expect, it } from "vitest";
 import {
   META_INSIGHTS_MAX_MONTHS,
   metaHistoryFloor,
@@ -7,7 +8,6 @@ import {
   parseShowPaused,
   rangeToDates,
 } from "@/lib/marketing/range";
-import { describe, expect, it } from "vitest";
 
 // ---------------------------------------------------------------------------
 // parseMarketingRange

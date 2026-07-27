@@ -1,3 +1,4 @@
+import { Plus } from "lucide-react";
 import { ListPage } from "@/components/layout/list-page";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireRole } from "@/lib/auth";
@@ -15,9 +16,9 @@ import {
   parseSortParam,
   parseStringParam,
 } from "@/lib/utils/search-params";
-import { Plus } from "lucide-react";
 
 const SUBSCRIPTION_SORT_COLUMNS = ["name", "status", "amount", "next_invoice_date"] as const;
+
 import type { Metadata } from "next";
 import Link from "next/link";
 

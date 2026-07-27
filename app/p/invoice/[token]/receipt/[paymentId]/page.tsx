@@ -1,7 +1,7 @@
+import { notFound } from "next/navigation";
 import { PaymentReceipt } from "@/components/portal/payment-receipt";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate } from "@/lib/utils";
-import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 

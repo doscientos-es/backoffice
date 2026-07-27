@@ -1,7 +1,7 @@
+import { type NextRequest, NextResponse } from "next/server";
 import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
-import { type NextRequest, NextResponse } from "next/server";
 
 const log = scopedLogger("auth.callback");
 

@@ -9,11 +9,11 @@
  * (No-op when CRON_SECRET is not set — allows local dev without config.)
  */
 
+import { type NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { getFollowUps } from "@/lib/integrations/follow-ups";
 import { telegramSendMessage } from "@/lib/integrations/telegram";
 import { scopedLogger } from "@/lib/logger";
-import { type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

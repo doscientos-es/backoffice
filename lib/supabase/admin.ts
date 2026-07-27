@@ -1,6 +1,5 @@
-import { publicEnv } from "@/lib/env";
-import { serverEnv } from "@/lib/env";
 import { createClient } from "@supabase/supabase-js";
+import { publicEnv, serverEnv } from "@/lib/env";
 
 type GenerateAuthLinkOptions = {
   type: "invite" | "recovery" | "magiclink" | "signup";

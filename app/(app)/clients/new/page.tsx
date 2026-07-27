@@ -1,11 +1,11 @@
+import type { Metadata } from "next";
+import Link from "next/link";
 import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { requireUser } from "@/lib/auth";
-import type { Metadata } from "next";
-import Link from "next/link";
 import { createClient } from "../actions";
 import { ClientFormFields } from "../client-form-fields";
 

@@ -155,6 +155,7 @@ export function ExtractTasksDialog({ leadId, trigger, createTaskAction }: Extrac
           {!loading && !error && tasks.length > 0 && (
             <ul className="flex flex-col gap-2 max-h-80 overflow-y-auto pr-1">
               {tasks.map((task, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: task list is replaced wholesale, never reordered in place
                 <li
                   key={`${task.title}-${i}`}
                   className={cn(

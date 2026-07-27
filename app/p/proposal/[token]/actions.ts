@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import {
   ensureClientForProposal,
   ensureProjectForProposal,
@@ -19,7 +20,6 @@ import {
   ProposalRejectionReason,
 } from "@/lib/schemas/proposal";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { revalidatePath } from "next/cache";
 
 const log = scopedLogger("portal.proposal");
 
@@ -243,7 +243,7 @@ export async function initiateProposalPayment(
     .eq("portal_token", token)
     .maybeSingle();
 
-  if (!proposal || proposal.status !== "accepted") {
+  if (proposal?.status !== "accepted") {
     return { ok: false, error: "Propuesta no disponible para pago" };
   }
 

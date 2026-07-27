@@ -1,5 +1,9 @@
 "use client";
 
+import { ArrowUpRight, Building2, Clock, ExternalLink, Trash2, X } from "lucide-react";
+import Link from "next/link";
+import { type ReactNode, useState, useTransition } from "react";
+import { sileo } from "sileo";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,10 +27,6 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { computeHoursFromRange } from "@/lib/schemas/work-log";
 import { PROJECT_STATUS, type ProjectStatus } from "@/lib/status";
 import { relativeTime } from "@/lib/utils";
-import { ArrowUpRight, Building2, Clock, ExternalLink, Trash2, X } from "lucide-react";
-import Link from "next/link";
-import { type ReactNode, useState, useTransition } from "react";
-import { sileo } from "sileo";
 import { addWorkLog } from "./[id]/work-log-actions";
 import { GitHubModeBadge } from "./github-mode-badge";
 import type { GitHubSyncMode } from "./github-sync-section";

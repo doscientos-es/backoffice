@@ -1,6 +1,6 @@
+import { Resend } from "resend";
 import { isDemoMode } from "@/lib/demo";
 import { serverEnv } from "@/lib/env";
-import { Resend } from "resend";
 
 let cached: Resend | null = null;
 

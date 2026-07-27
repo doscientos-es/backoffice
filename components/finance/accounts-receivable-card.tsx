@@ -1,10 +1,10 @@
+import { AlertTriangle, HandCoins, Hourglass } from "lucide-react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getAccountsReceivable } from "@/lib/dashboard/queries";
 import type { AccountsReceivable } from "@/lib/dashboard/types";
 import { cn, formatEUR } from "@/lib/utils";
-import { AlertTriangle, HandCoins, Hourglass } from "lucide-react";
-import Link from "next/link";
 
 const numberFmt = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 0 });
 

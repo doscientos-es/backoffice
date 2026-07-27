@@ -1,11 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
 import { setVaultPassword, unlockVault } from "../actions";
 
 // ── Password strength ─────────────────────────────────────────────────────────

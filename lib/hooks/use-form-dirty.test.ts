@@ -5,8 +5,9 @@
  * once on component mount when formRef.current was still null, leaving
  * baseline unset and isDirty permanently false.
  */
-import { snapshot } from "@/lib/hooks/use-form-dirty";
+
 import { describe, expect, it } from "vitest";
+import { snapshot } from "@/lib/hooks/use-form-dirty";
 
 // ---------------------------------------------------------------------------
 // snapshot() unit tests
@@ -51,11 +52,11 @@ describe("snapshot()", () => {
   });
 });
 
-import { useFormDirty } from "@/lib/hooks/use-form-dirty";
 // ---------------------------------------------------------------------------
 // Regression: callback ref must work when form mounts AFTER hook init
 // ---------------------------------------------------------------------------
 import { act, renderHook } from "@testing-library/react";
+import { useFormDirty } from "@/lib/hooks/use-form-dirty";
 
 describe("useFormDirty — lazy form mount (dialog scenario)", () => {
   function makeForm(fields: Record<string, string> = {}): HTMLFormElement {

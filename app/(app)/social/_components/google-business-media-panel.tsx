@@ -1,11 +1,11 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import type { GoogleBusinessMediaItem } from "@/lib/social/google-business/profile";
 import { Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import type { GoogleBusinessMediaItem } from "@/lib/social/google-business/profile";
 import { addGoogleBusinessPhoto, removeGoogleBusinessPhoto } from "../actions";
 
 const CATEGORIES = [
@@ -39,8 +39,12 @@ export function GoogleBusinessMediaPanel({ media }: { media: GoogleBusinessMedia
       const formData = new FormData();
       formData.append("files", file);
       const upload = await fetch("/api/social/upload", { method: "POST", body: formData });
-      const payload = (await upload.json()) as { media?: Array<{ publicUrl: string }>; error?: string };
-      if (!upload.ok || !payload.media?.[0]?.publicUrl) throw new Error(payload.error ?? "No se pudo subir la foto.");
+      const payload = (await upload.json()) as {
+        media?: Array<{ publicUrl: string }>;
+        error?: string;
+      };
+      if (!upload.ok || !payload.media?.[0]?.publicUrl)
+        throw new Error(payload.error ?? "No se pudo subir la foto.");
       const result = await addGoogleBusinessPhoto({
         sourceUrl: payload.media[0].publicUrl,
         category,
@@ -77,7 +81,11 @@ export function GoogleBusinessMediaPanel({ media }: { media: GoogleBusinessMedia
             className="h-8 rounded-lg border border-border bg-background px-2 text-sm"
             disabled={pending}
           >
-            {CATEGORIES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+            {CATEGORIES.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
           </select>
         </label>
         <Textarea
@@ -92,7 +100,12 @@ export function GoogleBusinessMediaPanel({ media }: { media: GoogleBusinessMedia
           <label className="cursor-pointer">
             <Upload className="size-3.5" />
             {pending ? "Procesando…" : "Subir foto"}
-            <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={handleUpload} />
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="sr-only"
+              onChange={handleUpload}
+            />
           </label>
         </Button>
       </div>
@@ -100,8 +113,16 @@ export function GoogleBusinessMediaPanel({ media }: { media: GoogleBusinessMedia
       {media.length > 0 ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {media.map((item) => (
-            <div key={item.name} className="group relative overflow-hidden rounded-lg border border-border">
-              <img src={item.googleUrl ?? item.sourceUrl} alt={item.description ?? "Foto de la ficha"} className="aspect-square w-full object-cover" loading="lazy" />
+            <div
+              key={item.name}
+              className="group relative overflow-hidden rounded-lg border border-border"
+            >
+              <img
+                src={item.googleUrl ?? item.sourceUrl}
+                alt={item.description ?? "Foto de la ficha"}
+                className="aspect-square w-full object-cover"
+                loading="lazy"
+              />
               <button
                 type="button"
                 onClick={() => handleDelete(item.name)}

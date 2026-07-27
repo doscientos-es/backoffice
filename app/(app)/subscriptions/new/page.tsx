@@ -1,11 +1,11 @@
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
-import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { createSubscription } from "../actions";
 import { SubscriptionFormFields } from "../subscription-form-fields";
 

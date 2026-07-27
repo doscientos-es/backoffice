@@ -10,7 +10,9 @@ export const dynamic = "force-dynamic";
 
 export default async function NewTaskPage({
   searchParams,
-}: { searchParams: Promise<{ project_id?: string; lead_id?: string; client_id?: string }> }) {
+}: {
+  searchParams: Promise<{ project_id?: string; lead_id?: string; client_id?: string }>;
+}) {
   const user = await requireUser();
   const {
     project_id: presetProject,

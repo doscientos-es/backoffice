@@ -10,12 +10,12 @@
  * 503 si la IA no está configurada (isAIEnabled() falsy).
  */
 
+import { type NextRequest, NextResponse } from "next/server";
 import { AI_MODELS, isAIEnabled, runAIChat } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { scopedLogger } from "@/lib/logger";
 import { rateLimit } from "@/lib/ratelimit";
 import { createServerClient } from "@/lib/supabase/server";
-import { type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

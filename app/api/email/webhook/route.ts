@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { type NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { type NextRequest, NextResponse } from "next/server";
 
 const RESEND_TO_INTERACTION: Record<string, string> = {
   "email.delivered": "email_delivered",

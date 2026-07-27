@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useState } from "react";
 import { ClientLogoUpload } from "@/components/ui/client-logo-upload";
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
@@ -7,7 +8,6 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ZipInput } from "@/components/ui/zip-input";
 import { COUNTRY_OPTIONS } from "@/lib/address";
-import { useCallback, useState } from "react";
 import { type ApplySelection, EnrichmentDialog } from "./enrichment-dialog";
 import { type AutofillData, NifInput } from "./nif-input";
 

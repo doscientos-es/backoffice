@@ -1,11 +1,11 @@
+import { describe, expect, it } from "vitest";
 import {
   CREATE_SHORTCUTS,
-  NAV_SHORTCUTS,
-  type RecentItem,
   findShortcut,
   mergeRecentItems,
+  NAV_SHORTCUTS,
+  type RecentItem,
 } from "@/lib/navigation/shortcuts";
-import { describe, expect, it } from "vitest";
 
 describe("findShortcut", () => {
   it("matches by key case-insensitively", () => {

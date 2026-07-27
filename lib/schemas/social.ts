@@ -1,5 +1,5 @@
-import { SOCIAL_PLATFORMS } from "@/lib/social/core";
 import { z } from "zod";
+import { SOCIAL_PLATFORMS } from "@/lib/social/core";
 
 /**
  * Zod schemas for the Social Hub server actions.

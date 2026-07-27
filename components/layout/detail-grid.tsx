@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 export function DetailGrid({ children, className }: { children: ReactNode; className?: string }) {
   return (
@@ -14,13 +14,7 @@ export function DetailGrid({ children, className }: { children: ReactNode; class
   );
 }
 
-export function DetailRow({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
+export function DetailRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <>
       <dt className="text-muted-foreground">{label}</dt>

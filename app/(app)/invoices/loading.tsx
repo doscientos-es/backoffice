@@ -11,13 +11,16 @@ export default function InvoicesLoading() {
         {/* Table header */}
         <div className="flex gap-4 border-b px-4 py-3">
           {[120, 80, 80, 100, 80].map((w, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton widths, order never changes
             <Skeleton key={i} className="h-4 rounded" style={{ width: w }} />
           ))}
         </div>
         {/* Table rows */}
         {Array.from({ length: 8 }).map((_, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton rows, order never changes
           <div key={i} className="flex gap-4 border-b px-4 py-3 last:border-0">
             {[120, 80, 80, 100, 80].map((w, j) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton widths, order never changes
               <Skeleton key={j} className="h-4 rounded" style={{ width: w }} />
             ))}
           </div>

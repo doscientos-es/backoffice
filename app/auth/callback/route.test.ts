@@ -29,8 +29,8 @@ vi.mock("@/lib/logger", () => ({
   }),
 }));
 
-import { GET } from "@/app/auth/callback/route";
 import { NextRequest } from "next/server";
+import { GET } from "@/app/auth/callback/route";
 
 function call(path: string) {
   return GET(new NextRequest(`http://localhost${path}`));

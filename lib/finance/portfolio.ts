@@ -1,6 +1,6 @@
 import { notDeleted } from "@/lib/supabase/filters";
 import { createServerClient } from "@/lib/supabase/server";
-import { type ProjectProfitability, computeProjectProfitability } from "./helpers";
+import { computeProjectProfitability, type ProjectProfitability } from "./helpers";
 
 export type PortfolioRow = ProjectProfitability & {
   id: string;

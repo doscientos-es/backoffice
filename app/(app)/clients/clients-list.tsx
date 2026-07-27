@@ -1,8 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { ListPage, type ListPageProps } from "@/components/layout/list-page";
 import { useOptimisticRemoval } from "@/lib/hooks/use-optimistic-removal";
-import { useState } from "react";
 import { deleteClient } from "./actions";
 import { ClientQuickView, type QuickClient } from "./client-quick-view";
 

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,7 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { ReactNode } from "react";
 
 const DEFAULT_DESCRIPTION = (name: string): ReactNode => (
   <>

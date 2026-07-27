@@ -1,8 +1,8 @@
+import { MousePointerClick, TrendingUp, Users, Wallet } from "lucide-react";
 import { StatCard } from "@/components/layout/stat-card";
 import { getMarketingOverview } from "@/lib/marketing/queries";
 import type { MarketingSort, MarketingView } from "@/lib/marketing/range";
 import { formatEUR } from "@/lib/utils";
-import { MousePointerClick, TrendingUp, Users, Wallet } from "lucide-react";
 import { cplTone, numberFmt, percentFmt } from "./marketing-format";
 
 type MarketingKpisProps = {

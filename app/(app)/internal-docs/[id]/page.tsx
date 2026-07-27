@@ -1,3 +1,6 @@
+import { Download } from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -11,9 +14,6 @@ import type { InternalDocCategory, InternalDocVisibility } from "@/lib/schemas/i
 import { getStorage } from "@/lib/storage";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
-import { Download } from "lucide-react";
-import Link from "next/link";
-import { notFound } from "next/navigation";
 import { deleteInternalDoc } from "../actions";
 import { InternalDocEditDialog } from "./internal-doc-edit-dialog";
 import { type InternalDocEvent, InternalDocHistory } from "./internal-doc-history";

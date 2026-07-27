@@ -1,3 +1,6 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
 import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -8,18 +11,11 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth";
 import { getLeadForConvert } from "@/lib/leads/queries";
-import type { Metadata } from "next";
-import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
 import { convertLeadToClientForm } from "../../actions";
 
 export const metadata: Metadata = { title: "Convertir lead · doscientos" };
 
-export default async function ConvertLeadPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function ConvertLeadPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   await requireUser();
 

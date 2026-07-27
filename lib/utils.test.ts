@@ -1,3 +1,4 @@
+import { describe, expect, it } from "vitest";
 import {
   cn,
   formatDate,
@@ -7,7 +8,6 @@ import {
   relativeTime,
   truncate,
 } from "@/lib/utils";
-import { describe, expect, it } from "vitest";
 
 describe("cn", () => {
   it("merges Tailwind classes", () => {

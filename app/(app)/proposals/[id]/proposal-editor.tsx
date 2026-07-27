@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { LineItemsTable } from "@/components/finance/line-items-table";
 import { ProblemSolutionEditor } from "@/components/proposals/problem-solution-editor";
 import { AiNotice } from "@/components/ui/ai-notice";
@@ -13,14 +14,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { EMPTY_LINE_ITEM, type LineItem } from "@/lib/finance";
 import { useAutosave } from "@/lib/hooks/use-autosave";
 import {
+  createEmptyPair,
   type EditableKeyPoint,
   type EditablePair,
-  createEmptyPair,
   serializeKeyPoints,
   unzipPairs,
   zipKeyPoints,
 } from "@/lib/proposals/key-points";
-import { useMemo, useState } from "react";
 import { updateProposal } from "../actions";
 
 export type EditableItem = LineItem;

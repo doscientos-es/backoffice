@@ -1,5 +1,7 @@
 "use client";
 
+import { AlertCircle, CheckCircle2, Loader2, Pencil, XCircle } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,8 +17,6 @@ import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { useGithubHandle } from "@/lib/hooks/use-github-handle";
 import { cn } from "@/lib/utils";
-import { AlertCircle, CheckCircle2, Loader2, Pencil, XCircle } from "lucide-react";
-import { useMemo, useState } from "react";
 import { updateMemberProfile } from "../actions";
 
 export interface MemberProfileData {

@@ -1,11 +1,11 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { EntityMultiCombobox } from "@/components/ui/entity-multi-combobox";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { MemberAvatar } from "@/components/ui/member-avatar";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
 import { setProposalTeamMembers } from "../actions";
 
 type Member = {

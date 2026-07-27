@@ -5,12 +5,13 @@
  * so consumers never reach into individual files. Infrastructure (adapters,
  * repository, services) lives outside this folder and depends inward on it.
  */
-export * from "./types";
+
 export * from "./errors";
+export type { CaptionByPlatform } from "./orchestrator";
+export { computeAggregateStatus, fanOutPublish } from "./orchestrator";
 export * from "./publisher";
 export { PublisherRegistry } from "./registry";
-export { fanOutPublish, computeAggregateStatus } from "./orchestrator";
-export type { CaptionByPlatform } from "./orchestrator";
+export * from "./types";
 
 import type { ComposedPost, MediaItem, MediaKind } from "./types";
 

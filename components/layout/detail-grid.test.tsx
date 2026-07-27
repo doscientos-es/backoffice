@@ -1,6 +1,6 @@
-import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 
 describe("DetailGrid", () => {
   it("keeps detail values shrinkable and wraps long content", () => {

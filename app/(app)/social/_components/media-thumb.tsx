@@ -1,6 +1,6 @@
+import { ImageIcon, Play } from "lucide-react";
 import type { MediaItem } from "@/lib/social/core";
 import { cn } from "@/lib/utils";
-import { ImageIcon, Play } from "lucide-react";
 
 /**
  * Renders a single media asset as a square thumbnail. Uses a plain <img> (the

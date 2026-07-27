@@ -1,5 +1,8 @@
 "use client";
 
+import { Paperclip, Pencil, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,9 +24,6 @@ import {
   type InternalDocCategory,
   type InternalDocVisibility,
 } from "@/lib/schemas/internal-doc";
-import { Paperclip, Pencil, X } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
 import { updateInternalDoc } from "../actions";
 
 const CATEGORIES = [

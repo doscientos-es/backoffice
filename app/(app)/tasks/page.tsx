@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import Link from "next/link";
 import { ListControls } from "@/components/layout/list-controls";
 import { ListPage } from "@/components/layout/list-page";
 import { PageHeader } from "@/components/layout/page-header";
@@ -9,8 +11,6 @@ import { listTasksBoard, listTasksList } from "@/lib/tasks/queries";
 import { TASK_LIST_PAGE_SIZE, TASK_SORT_COLUMNS } from "@/lib/tasks/types";
 import { formatDate } from "@/lib/utils";
 import { parsePage, parseSortParam, parseStringParam } from "@/lib/utils/search-params";
-import type { Metadata } from "next";
-import Link from "next/link";
 import { TaskCreateDialog } from "./task-create-dialog";
 import { TaskRowActions } from "./task-row-actions";
 import { type KanbanTask, TasksKanban } from "./tasks-kanban";

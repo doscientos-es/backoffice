@@ -1,14 +1,14 @@
 "use client";
 
+import { Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
-import { VAULT_SERVICES, VAULT_SERVICE_LABELS } from "@/lib/schemas/vault";
-import { Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
+import { VAULT_SERVICE_LABELS, VAULT_SERVICES } from "@/lib/schemas/vault";
 import { createVaultItem, updateVaultItem } from "../actions";
 
 type Client = { id: string; name: string };

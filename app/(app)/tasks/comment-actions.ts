@@ -1,9 +1,9 @@
 "use server";
 
-import { requireUser } from "@/lib/auth";
-import { createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { requireUser } from "@/lib/auth";
+import { createServerClient } from "@/lib/supabase/server";
 
 // ── Parse @mentions from comment body ────────────────────────────────────────
 

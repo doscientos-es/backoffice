@@ -1,7 +1,3 @@
-import { StatusBadge } from "@/components/ui/status-badge";
-import type { PostListItem } from "@/lib/social/types";
-import { SOCIAL_POST_STATUS, SOCIAL_TARGET_STATUS } from "@/lib/status";
-import { cn, relativeTime } from "@/lib/utils";
 import {
   CalendarClock,
   Heart,
@@ -10,6 +6,10 @@ import {
   MousePointerClick,
 } from "lucide-react";
 import Link from "next/link";
+import { StatusBadge } from "@/components/ui/status-badge";
+import type { PostListItem } from "@/lib/social/types";
+import { SOCIAL_POST_STATUS, SOCIAL_TARGET_STATUS } from "@/lib/status";
+import { cn, relativeTime } from "@/lib/utils";
 import { DeletePostButton } from "./delete-post-button";
 import { MediaPreview } from "./media-thumb";
 import { PlatformIcon } from "./platform";

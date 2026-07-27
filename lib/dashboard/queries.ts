@@ -168,11 +168,7 @@ export async function getDashboardKpis(range: DateRange): Promise<DashboardKpis>
   };
 }
 
-async function countLeads(args: {
-  from: Date;
-  to: Date;
-  status?: "new" | "won";
-}): Promise<number> {
+async function countLeads(args: { from: Date; to: Date; status?: "new" | "won" }): Promise<number> {
   const supabase = await createServerClient();
   let q = supabase
     .from("leads")
@@ -416,9 +412,11 @@ export async function getMonthFinanceSummary(): Promise<MonthFinanceSummary> {
 // Money opportunities
 // ---------------------------------------------------------------------------
 
-function recoverySignal(row: { notes?: unknown; ai_summary?: unknown; solution_type?: unknown }):
-  | string
-  | null {
+function recoverySignal(row: {
+  notes?: unknown;
+  ai_summary?: unknown;
+  solution_type?: unknown;
+}): string | null {
   const text =
     `${row.notes ?? ""} ${row.ai_summary ?? ""} ${row.solution_type ?? ""}`.toLowerCase();
   if (/(verifactu|factur|sii|iva)/i.test(text)) return "Facturación / Verifactu";

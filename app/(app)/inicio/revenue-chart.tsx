@@ -1,7 +1,5 @@
 "use client";
 
-import type { RevenuePoint } from "@/lib/dashboard/types";
-import { formatEUR } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import {
   Bar,
@@ -13,6 +11,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import type { RevenuePoint } from "@/lib/dashboard/types";
+import { formatEUR } from "@/lib/utils";
 
 export type { RevenuePoint };
 

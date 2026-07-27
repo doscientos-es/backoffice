@@ -1,15 +1,15 @@
 "use client";
 
+import HCaptcha from "@hcaptcha/react-hcaptcha";
+import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { publicEnv } from "@/lib/env";
 import { getBrowserClient } from "@/lib/supabase/browser";
-import HCaptcha from "@hcaptcha/react-hcaptcha";
-import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
-import Link from "next/link";
-import { useRef, useState } from "react";
 
 function friendlyError(raw: string): string {
   const m = raw.toLowerCase();

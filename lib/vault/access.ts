@@ -1,8 +1,8 @@
 import "server-only";
 
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
-import { serverEnv } from "@/lib/env";
 import { cookies } from "next/headers";
+import { serverEnv } from "@/lib/env";
 
 /**
  * Master-password gate for the vault.

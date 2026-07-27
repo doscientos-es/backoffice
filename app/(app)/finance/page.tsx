@@ -1,10 +1,10 @@
+import type { Metadata } from "next";
+import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { SectionBoundary } from "@/components/ui/error-boundary";
 import { requireRole } from "@/lib/auth";
 import { financeRangeToDates, parseFinanceRange } from "@/lib/finance/range";
-import type { Metadata } from "next";
-import Link from "next/link";
 import { FinanceDetails } from "./_components/finance-details";
 import { FinanceKpis } from "./_components/finance-kpis";
 import { FinanceOverviewChart } from "./_components/finance-overview-chart";

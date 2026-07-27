@@ -1,14 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { EntityAvatar } from "@/components/ui/entity-avatar";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { MemberAvatar } from "@/components/ui/member-avatar";
-import type { LeadListItem } from "@/lib/leads/types";
-import { leadDisplayName } from "@/lib/leads/utils";
-import type { MemberOption } from "@/lib/members/queries";
-import type { LeadStatus } from "@/lib/status";
-import { cn, formatEUR, relativeTime } from "@/lib/utils";
 import {
   DndContext,
   type DragEndEvent,
@@ -34,6 +25,15 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useOptimistic, useState, useTransition } from "react";
+import { Badge } from "@/components/ui/badge";
+import { EntityAvatar } from "@/components/ui/entity-avatar";
+import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { MemberAvatar } from "@/components/ui/member-avatar";
+import type { LeadListItem } from "@/lib/leads/types";
+import { leadDisplayName } from "@/lib/leads/utils";
+import type { MemberOption } from "@/lib/members/queries";
+import type { LeadStatus } from "@/lib/status";
+import { cn, formatEUR, relativeTime } from "@/lib/utils";
 import { deleteLead, updateLeadStatus } from "./actions";
 import { CloseReasonDialog, type CloseReasonVariant } from "./close-reason-dialog";
 import { LeadQuickView } from "./lead-quick-view";
@@ -492,7 +492,9 @@ function Column({
             {dropHint ? "Soltar aquí" : "Sin leads"}
           </p>
         ) : (
-          leads.map((l) => <Card key={l.id} lead={l} canEdit={canEdit} onOpenQuickView={onOpenQuickView} />)
+          leads.map((l) => (
+            <Card key={l.id} lead={l} canEdit={canEdit} onOpenQuickView={onOpenQuickView} />
+          ))
         )}
         {status === "new" && <AddLeadCard />}
       </div>

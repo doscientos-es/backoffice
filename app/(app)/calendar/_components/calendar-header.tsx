@@ -1,16 +1,15 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ALL_LAYERS } from "@/lib/calendar/types";
-import type { CalendarEventKind, CalendarView } from "@/lib/calendar/types";
-import { CALENDAR_LAYER_COLORS, CALENDAR_LAYER_LABELS } from "@/lib/calendar/types";
-import { cn, memberAvatarUrl } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { Check, ChevronLeft, ChevronRight, Copy, Plus } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import type { CalendarEventKind, CalendarView } from "@/lib/calendar/types";
+import { ALL_LAYERS, CALENDAR_LAYER_COLORS, CALENDAR_LAYER_LABELS } from "@/lib/calendar/types";
+import { cn, memberAvatarUrl } from "@/lib/utils";
 import type { TeamMember } from "./calendar-grid";
 import { useCalendarCreate } from "./calendar-grid";
 

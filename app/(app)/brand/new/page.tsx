@@ -1,8 +1,8 @@
+import type { Metadata } from "next";
 import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
-import type { Metadata } from "next";
 import { UploadAssetForm } from "../upload-form";
 
 export const metadata: Metadata = { title: "Subir asset · doscientos" };

@@ -11,6 +11,8 @@
  * isAIEnabled() para que el frontend pueda detectarlo y mostrar <AiNotice/>.
  */
 
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { AI_MODELS, isAIEnabled, runAIObject } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { listLeadConversionEvents } from "@/lib/conversion-events/queries";
@@ -24,8 +26,6 @@ import { formatInteractionForAI } from "@/lib/leads/interaction-utils";
 import { scopedLogger } from "@/lib/logger";
 import { rateLimit } from "@/lib/ratelimit";
 import { createServerClient } from "@/lib/supabase/server";
-import { type NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

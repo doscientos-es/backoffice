@@ -1,6 +1,6 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { RawAdRow, RawInsightRow } from "@/lib/marketing/types";
 import { INSIGHTS_OTHERS_KEY } from "@/lib/marketing/types";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // State controlled per test
 const db: {

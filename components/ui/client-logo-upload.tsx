@@ -1,10 +1,10 @@
 "use client";
 
-import { getBrowserClient } from "@/lib/supabase/browser";
-import { cn } from "@/lib/utils";
 import { Globe, ImagePlus, Loader2, Search, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { getBrowserClient } from "@/lib/supabase/browser";
+import { cn } from "@/lib/utils";
 
 const BUCKET = "client-logos";
 const MAX_PX = 480;

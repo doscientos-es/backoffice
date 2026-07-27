@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  SocialPostSuggestionSchema,
   buildSocialSuggestionPrompt,
   finalizeSocialSuggestion,
   formatSocialContext,
   normalizeHashtags,
+  SocialPostSuggestionSchema,
 } from "./ai-suggestion";
 
 describe("social post AI context", () => {

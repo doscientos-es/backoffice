@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button";
 import { SearchX } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export const metadata = { title: "Página no encontrada · doscientos" };
 

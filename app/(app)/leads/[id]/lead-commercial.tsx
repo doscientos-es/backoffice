@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -15,7 +16,6 @@ import {
   type ProposalStatus,
 } from "@/lib/status";
 import { formatEUR } from "@/lib/utils";
-import Link from "next/link";
 
 type LeadCommercialProps = {
   leadId: string;

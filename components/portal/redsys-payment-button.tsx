@@ -1,10 +1,10 @@
 "use client";
 
-import { type PaymentMode, initiatePayment } from "@/app/p/invoice/[token]/actions";
-import { Button } from "@/components/ui/button";
-import { formatEUR } from "@/lib/utils";
 import { CreditCard, Loader2 } from "lucide-react";
 import { useState, useTransition } from "react";
+import { initiatePayment, type PaymentMode } from "@/app/p/invoice/[token]/actions";
+import { Button } from "@/components/ui/button";
+import { formatEUR } from "@/lib/utils";
 
 interface RedsysPaymentButtonProps {
   invoiceId: string;

@@ -1,3 +1,12 @@
+export {
+  exchangeGoogleBusinessCode,
+  googleBusinessAuthorizationUrl,
+  googleBusinessLanguageCode,
+  googleBusinessMissingConfig,
+  googleBusinessOAuthConfigured,
+  googleBusinessProfileConfigured,
+  googleBusinessRedirectUri,
+} from "./client";
 export { GoogleBusinessProfilePublisher } from "./google-business-publisher";
 export {
   getGoogleLocalPostInsights,
@@ -5,9 +14,15 @@ export {
   updateGoogleLocalPost,
 } from "./local-posts";
 export {
-  GOOGLE_BUSINESS_DAILY_METRICS,
   fetchGoogleBusinessPerformance,
+  GOOGLE_BUSINESS_DAILY_METRICS,
 } from "./performance";
+export {
+  createGoogleBusinessMedia,
+  deleteGoogleBusinessMedia,
+  getGoogleBusinessLocationProfile,
+  listGoogleBusinessMedia,
+} from "./profile";
 export {
   deleteGoogleBusinessReviewReply,
   listGoogleBusinessReviews,
@@ -19,18 +34,3 @@ export {
   syncGoogleBusinessPerformance,
   syncGoogleBusinessReviews,
 } from "./service";
-export {
-  createGoogleBusinessMedia,
-  deleteGoogleBusinessMedia,
-  getGoogleBusinessLocationProfile,
-  listGoogleBusinessMedia,
-} from "./profile";
-export {
-  exchangeGoogleBusinessCode,
-  googleBusinessAuthorizationUrl,
-  googleBusinessLanguageCode,
-  googleBusinessMissingConfig,
-  googleBusinessOAuthConfigured,
-  googleBusinessProfileConfigured,
-  googleBusinessRedirectUri,
-} from "./client";

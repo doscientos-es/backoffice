@@ -1,11 +1,11 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ButtonGroup } from "@/components/ui/button-group";
 import { LayoutGrid, List, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 
 /** Params that are meaningful in both views. */
 const SHARED_PARAMS = ["q", "project", "priority"] as const;

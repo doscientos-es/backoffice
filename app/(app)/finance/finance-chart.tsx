@@ -1,7 +1,5 @@
 "use client";
 
-import type { MonthlyPoint } from "@/lib/finance";
-import { formatEUR } from "@/lib/utils";
 import {
   Bar,
   CartesianGrid,
@@ -13,6 +11,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import type { MonthlyPoint } from "@/lib/finance";
+import { formatEUR } from "@/lib/utils";
 
 const SERIES_LABEL: Record<"revenue" | "expense" | "net", string> = {
   revenue: "Ingresos",

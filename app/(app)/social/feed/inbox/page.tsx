@@ -1,3 +1,5 @@
+import { MessageSquare } from "lucide-react";
+import type { Metadata } from "next";
 import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
 import {
@@ -11,8 +13,6 @@ import { SectionBoundary } from "@/components/ui/error-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireUser } from "@/lib/auth";
 import { listComments } from "@/lib/social/repo";
-import { MessageSquare } from "lucide-react";
-import type { Metadata } from "next";
 import { CommentCard } from "../../_components/comment-card";
 import { SyncButton } from "../../_components/sync-button";
 

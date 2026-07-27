@@ -1,5 +1,5 @@
-import { PageHeader } from "@/components/layout/page-header";
 import type { Metadata } from "next";
+import { PageHeader } from "@/components/layout/page-header";
 import { listEmailTemplates } from "./actions";
 import { EmailTemplatesManager } from "./email-templates-manager";
 

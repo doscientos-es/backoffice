@@ -28,6 +28,7 @@ export function FormCardSkeleton({
         <div className="flex flex-col gap-5">
           <div className={cn("grid gap-5", columns === 2 ? "sm:grid-cols-2" : "grid-cols-1")}>
             {Array.from({ length: rows }).map((_, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton rows, order never changes
               <FormRowSkeleton key={i} />
             ))}
           </div>

@@ -1,13 +1,13 @@
 "use client";
 
+import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  createEmptyKeyPoint,
   type EditableKeyPoint,
   KEY_POINTS_LIMITS,
-  createEmptyKeyPoint,
 } from "@/lib/proposals/key-points";
-import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
 
 export type KeyPointsEditorProps = {
   items: EditableKeyPoint[];

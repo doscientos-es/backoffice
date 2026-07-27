@@ -247,11 +247,7 @@ export async function updateAutomationEvent(
 }
 
 export async function listAutomationAudit(
-  input: {
-    limit?: number;
-    outcome?: AutomationEventOutcome;
-    platform?: MetaPlatform;
-  } = {},
+  input: { limit?: number; outcome?: AutomationEventOutcome; platform?: MetaPlatform } = {},
 ): Promise<AutomationAuditItem[]> {
   const supabase = await createServerClient();
   let query = supabase

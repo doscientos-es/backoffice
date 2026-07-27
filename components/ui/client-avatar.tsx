@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 const SIZE_MAP = {
   xs: { px: 24, text: "text-[9px]" },

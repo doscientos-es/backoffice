@@ -1,9 +1,9 @@
+import { PieChart, Receipt, Scale } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getMonthFinanceSummary } from "@/lib/dashboard/queries";
 import type { MonthFinanceSummary } from "@/lib/dashboard/types";
 import { cn, formatEUR } from "@/lib/utils";
-import { PieChart, Receipt, Scale } from "lucide-react";
 
 const percentFmt = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 1 });
 

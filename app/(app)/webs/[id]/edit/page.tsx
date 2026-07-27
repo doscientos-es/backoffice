@@ -1,3 +1,6 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -7,9 +10,6 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import { getWebProject } from "@/lib/webs/queries";
-import type { Metadata } from "next";
-import Link from "next/link";
-import { notFound } from "next/navigation";
 import { WebFormFields } from "../../_components/web-form-fields";
 import { deleteWebProject, updateWebProject } from "../../actions";
 
@@ -17,7 +17,9 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
-}: { params: Promise<{ id: string }> }): Promise<Metadata> {
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
   const { id } = await params;
   const site = await getWebProject(id);
   return { title: site ? `Editar ${site.name} · doscientos` : "Editar web · doscientos" };

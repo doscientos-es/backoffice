@@ -7,9 +7,9 @@
  * For EU VAT VIES verification (clients), see app/(app)/clients/nif-input.tsx.
  */
 
-import { validateNifEs } from "@/lib/vies/nif";
 import { CheckCircle, XCircle } from "lucide-react";
 import { useState } from "react";
+import { validateNifEs } from "@/lib/vies/nif";
 import { Input } from "./input";
 
 type State = "idle" | "valid" | "invalid";
@@ -22,7 +22,7 @@ interface NifInputOfflineProps {
 }
 
 function computeState(raw: string): { state: State; message: string } {
-  const cleaned = raw.trim().replace(/[\s.\-]/g, "");
+  const cleaned = raw.trim().replace(/[\s.-]/g, "");
   if (cleaned.length < 9) return { state: "idle", message: "" };
   const result = validateNifEs(raw);
   return result.valid

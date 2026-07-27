@@ -1,11 +1,11 @@
 "use client";
 
-import { OPEN_SHORTCUTS_DIALOG_EVENT } from "@/components/layout/shortcuts-dialog";
-import { CREATE_SHORTCUTS, NAV_SHORTCUTS, findShortcut } from "@/lib/navigation/shortcuts";
 import { ArrowRight, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
+import { OPEN_SHORTCUTS_DIALOG_EVENT } from "@/components/layout/shortcuts-dialog";
+import { CREATE_SHORTCUTS, findShortcut, NAV_SHORTCUTS } from "@/lib/navigation/shortcuts";
 
 type Prefix = "g" | "c";
 

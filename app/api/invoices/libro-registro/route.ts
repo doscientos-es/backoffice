@@ -1,8 +1,8 @@
+import { type NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { scopedLogger } from "@/lib/logger";
 import { notDeleted } from "@/lib/supabase/filters";
 import { createServerClient } from "@/lib/supabase/server";
-import { type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 

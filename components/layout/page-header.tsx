@@ -44,6 +44,7 @@ export function PageHeader({
             {breadcrumbs.map((entry, i) => {
               const isLast = i === breadcrumbs.length - 1;
               return (
+                // biome-ignore lint/suspicious/noArrayIndexKey: breadcrumbs are a static, ordered trail
                 <Fragment key={`${entry.label}:${i}`}>
                   <BreadcrumbItem>
                     {isLast || !entry.href ? (

@@ -1,7 +1,7 @@
-import { scopedLogger } from "@/lib/logger";
-import { createServerClient } from "@/lib/supabase/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
+import { scopedLogger } from "@/lib/logger";
+import { createServerClient } from "@/lib/supabase/server";
 
 const log = scopedLogger("auth.confirm");
 

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import {
   Combobox,
   ComboboxContent,
@@ -8,7 +9,6 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox";
-import type { ReactNode } from "react";
 
 export interface EntityOption {
   id: string;

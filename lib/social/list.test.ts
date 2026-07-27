@@ -1,5 +1,5 @@
-import type { PostListItem } from "@/lib/social/types";
 import { describe, expect, it } from "vitest";
+import type { PostListItem } from "@/lib/social/types";
 import { filterAndSortPosts } from "./list";
 
 const posts: PostListItem[] = [

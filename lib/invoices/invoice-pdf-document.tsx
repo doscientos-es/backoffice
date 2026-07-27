@@ -8,11 +8,11 @@ import {
   Image,
   Page,
   Path,
+  renderToBuffer,
   StyleSheet,
   Svg,
   Text,
   View,
-  renderToBuffer,
 } from "@react-pdf/renderer";
 import type { InvoicePdfData } from "./pdf-data";
 
@@ -206,6 +206,7 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
             </View>
           ) : (
             data.items.map((item, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: PDF is generated once from a fixed snapshot
               <View key={i} style={styles.row} wrap={false}>
                 <Text style={styles.cDesc}>{item.description}</Text>
                 <Text style={styles.cNum}>{item.quantity}</Text>
@@ -239,7 +240,7 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
         </View>
 
         {(data.company?.iban || data.dueDate || data.portalUrl || data.paymentTerms) &&
-        data.status !== "cancelled" ? (
+          data.status !== "cancelled" ? (
           <View style={styles.payment}>
             <Text style={styles.paymentTitle}>Instrucciones de pago</Text>
 
@@ -339,6 +340,7 @@ function WorkLogPage({ data }: { data: InvoicePdfData }) {
           <Text style={[styles.th, styles.wlNote]}>Nota</Text>
         </View>
         {data.workLogs.map((log, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: PDF is generated once from a fixed snapshot
           <View key={i} style={styles.row} wrap={false}>
             <Text style={styles.wlDate}>{log.workDate ? formatDate(log.workDate) : "—"}</Text>
             <Text style={styles.wlMember}>{log.memberName ?? "—"}</Text>

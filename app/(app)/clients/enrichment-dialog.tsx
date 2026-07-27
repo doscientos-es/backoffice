@@ -1,5 +1,8 @@
 "use client";
 
+import { Building2, FileText, MapPin, User } from "lucide-react";
+import type * as React from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -11,9 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Building2, FileText, MapPin, User } from "lucide-react";
-import type * as React from "react";
-import { useEffect, useState } from "react";
 import type { AutofillData } from "./nif-input";
 
 export type ApplySelection = {

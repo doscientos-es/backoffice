@@ -1,5 +1,8 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
 import { ProposalEmail } from "@/components/email";
 import { requireRole, requireUser } from "@/lib/auth";
 import { renderEmail } from "@/lib/email/render";
@@ -19,9 +22,6 @@ import {
 } from "@/lib/schemas/proposal";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { z } from "zod";
 
 const log = scopedLogger("proposals");
 

@@ -11,7 +11,7 @@ import { createVertex } from "@ai-sdk/google-vertex";
  *      · Vercel/prod → Service Account vía GOOGLE_SA_CLIENT_EMAIL + GOOGLE_SA_PRIVATE_KEY_BASE64
  *        (no hay ADC ni metadata server en serverless, hay que pasar las credenciales).
  */
-import { type LanguageModel, type LanguageModelUsage, Output, generateText } from "ai";
+import { generateText, type LanguageModel, type LanguageModelUsage, Output } from "ai";
 import type { z } from "zod";
 import { isAIEnabled } from "./env";
 import { scopedLogger } from "./logger";

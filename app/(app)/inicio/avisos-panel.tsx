@@ -1,3 +1,5 @@
+import { AlertTriangle, BellRing, FileWarning, ShieldAlert } from "lucide-react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type {
@@ -8,8 +10,6 @@ import type {
 } from "@/lib/dashboard/types";
 import { VERIFACTU_ALERT_STATUS } from "@/lib/status";
 import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
-import { AlertTriangle, BellRing, FileWarning, ShieldAlert } from "lucide-react";
-import Link from "next/link";
 import { RemindersSection } from "./_components/reminders-section";
 
 export type { AvisosData, OverdueInvoiceRow, ReminderRow, VerifactuPendingRow };
@@ -134,7 +134,11 @@ function Section({
   icon,
   title,
   children,
-}: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
+}: {
+  icon: React.ReactNode;
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
       <div className="mb-2 flex items-center gap-2">

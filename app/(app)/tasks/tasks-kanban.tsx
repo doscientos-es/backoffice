@@ -1,10 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { type TaskPriority as SharedTaskPriority, TASK_PRIORITY } from "@/lib/status";
-import { cn, formatDate, relativeTime } from "@/lib/utils";
 import {
   DndContext,
   type DragEndEvent,
@@ -20,6 +15,11 @@ import { AlertTriangle, Plus, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import type React from "react";
 import { useOptimistic, useState, useTransition } from "react";
+import { Badge } from "@/components/ui/badge";
+import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { type TaskPriority as SharedTaskPriority, TASK_PRIORITY } from "@/lib/status";
+import { cn, formatDate, relativeTime } from "@/lib/utils";
 import { updateTaskStatus } from "./actions";
 import { TaskCreateDialog } from "./task-create-dialog";
 

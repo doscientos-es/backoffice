@@ -1,5 +1,25 @@
 "use client";
 
+import {
+  ArrowUpRight,
+  Building2,
+  Clock,
+  Hand,
+  Loader2,
+  Mail,
+  Phone,
+  Timer,
+  Trash2,
+  TriangleAlert,
+  UserRound,
+  Users,
+  Wallet,
+  Wrench,
+  X,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { type ReactNode, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,26 +44,6 @@ import { leadDisplayName } from "@/lib/leads/utils";
 import type { MemberOption } from "@/lib/members/queries";
 import { LEAD_STATUS } from "@/lib/status";
 import { formatEUR, relativeTime } from "@/lib/utils";
-import {
-  ArrowUpRight,
-  Building2,
-  Clock,
-  Hand,
-  Loader2,
-  Mail,
-  Phone,
-  Timer,
-  Trash2,
-  TriangleAlert,
-  UserRound,
-  Users,
-  Wallet,
-  Wrench,
-  X,
-} from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { type ReactNode, useState, useTransition } from "react";
 import { LeadEditDialog } from "./[id]/lead-edit-dialog";
 import { assignLeadOwner, claimLead } from "./actions";
 import { QCallDialog, QEmailDialog, QNoteDialog } from "./lead-quick-action-dialogs";
@@ -183,8 +183,8 @@ function Body({
             {lead.urgency && <Row icon={<Clock className="size-3.5" />}>{lead.urgency}</Row>}
           </section>
         )}
-		{(lead.source ||
-			lead.landing_path ||
+        {(lead.source ||
+          lead.landing_path ||
           lead.landing_ref ||
           lead.landing_subject ||
           lead.conversion_step ||
