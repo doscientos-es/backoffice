@@ -1,6 +1,6 @@
-export * from "@/primitives/hooks/use-autosave";
-// biome-ignore-all: shim — real implementation lives in primitives/hooks/use-autosave.ts
+"use client";
 
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export type AutosaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -17,7 +17,7 @@ export type UseAutosaveOptions<T> = {
   data: T;
   /** Called once the debounce elapses. Must return a `{ error }` on failure or void/undefined on success. */
   onSaveAction: (data: T) => Promise<{ error?: string } | undefined>;
-  /** Debounce in ms before flushing the pending value. Defaults to 2000 ms (sec. 29.5). */
+  /** Debounce in ms before flushing the pending value. Defaults to 2000 ms. */
   debounceMs?: number;
   /** Disable autosave (e.g. while loading initial data). */
   enabled?: boolean;
@@ -28,9 +28,9 @@ export type UseAutosaveOptions<T> = {
 };
 
 /**
- * Debounced autosave (sec. 29.5 of description.md).
+ * Debounced autosave hook.
  *
- * - Triggers `onSave(data)` after `debounceMs` ms of inactivity.
+ * - Triggers `onSaveAction(data)` after `debounceMs` ms of inactivity.
  * - Skips identical snapshots so unchanged renders don't re-save.
  * - When `storageKey` is set, the pending snapshot is mirrored to localStorage
  *   and cleared on a successful save (so a hard refresh can recover edits).
@@ -74,7 +74,6 @@ export function useAutosave<T>({
   const flush = useCallback(
     async (snapshot: string, payload: T) => {
       if (inFlightRef.current) {
-        // A save is already running; remember the latest snapshot and retry once it finishes.
         pendingSnapshotRef.current = snapshot;
         pendingPayloadRef.current = { value: payload };
         return;
@@ -83,11 +82,7 @@ export function useAutosave<T>({
       setState((s) => ({ ...s, status: "saving", error: null }));
 
       if (storageKey && typeof window !== "undefined") {
-        try {
-          window.localStorage.setItem(storageKey, snapshot);
-        } catch {
-          // Quota exceeded or storage disabled — ignore, autosave still works in memory.
-        }
+        try { window.localStorage.setItem(storageKey, snapshot); } catch { /* ignore */ }
       }
 
       let errorMessage: string | null = null;
@@ -109,13 +104,9 @@ export function useAutosave<T>({
       lastSavedSnapshotRef.current = snapshot;
       setState({ status: "saved", savedAt: Date.now(), error: null });
       if (storageKey && typeof window !== "undefined") {
-        try {
-          window.localStorage.removeItem(storageKey);
-        } catch { }
+        try { window.localStorage.removeItem(storageKey); } catch { /* ignore */ }
       }
 
-      // If new edits arrived while we were saving, schedule another flush
-      // with the payload captured at that point (not the stale one we just saved).
       const next = pendingSnapshotRef.current;
       const nextPayload = pendingPayloadRef.current;
       pendingSnapshotRef.current = null;
@@ -137,13 +128,8 @@ export function useAutosave<T>({
     if (snapshot === lastSavedSnapshotRef.current) return;
 
     if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      void flush(snapshot, data);
-    }, debounceMs);
-
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
+    timerRef.current = setTimeout(() => { void flush(snapshot, data); }, debounceMs);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [data, enabled, debounceMs, flush]);
 
   const saveNow = useCallback(async () => {
