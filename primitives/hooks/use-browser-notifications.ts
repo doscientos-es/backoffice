@@ -9,6 +9,8 @@ export type BrowserNotifPayload = {
   body?: string;
   icon?: string;
   tag?: string;
+  /** Relative or absolute URL to navigate to when the notification is clicked. */
+  url?: string;
 };
 
 /**
@@ -40,11 +42,19 @@ export function useBrowserNotifications() {
   }, [supported]);
 
   const notify = useCallback(
-    ({ title, body, icon, tag }: BrowserNotifPayload) => {
+    ({ title, body, icon, tag, url }: BrowserNotifPayload) => {
       if (!supported || Notification.permission !== "granted") return;
       try {
         const n = new Notification(title, { body, icon, tag });
-        n.onclick = () => { window.focus(); n.close(); };
+        n.onclick = () => {
+          window.focus();
+          n.close();
+          if (url) {
+            // Use window.location for relative paths; absolute URLs work too.
+            const href = url.startsWith("http") ? url : window.location.origin + url;
+            window.open(href, "_self");
+          }
+        };
       } catch {
         // Some contexts (iframes, incognito with policy) may throw — ignore.
       }

@@ -1,6 +1,6 @@
+import { rateLimit } from "@/lib/ratelimit";
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
-import { rateLimit } from "@/lib/ratelimit";
 
 const PUBLIC_PATHS = [
   "/login",
@@ -41,7 +41,7 @@ export async function proxy(request: NextRequest) {
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) return NextResponse.next();
   if (pathname.startsWith("/_next") || pathname.startsWith("/favicon")) return NextResponse.next();
 
-  let response = NextResponse.next();
+  let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -52,10 +52,14 @@ export async function proxy(request: NextRequest) {
         setAll: (
           cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[],
         ) => {
+          // Update the request cookies so server components in this same
+          // request see the refreshed token immediately (not just on next load).
           for (const { name, value } of cookiesToSet) {
             request.cookies.set(name, value);
           }
-          response = NextResponse.next();
+          // Forward the mutated request so Next.js propagates the new cookies
+          // to server components running in this request.
+          response = NextResponse.next({ request });
           for (const { name, value, options } of cookiesToSet) {
             response.cookies.set(name, value, options);
           }

@@ -1,12 +1,12 @@
 "use client";
 
+import { CopyButton } from "@/components/ui/copy-button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { QrCode } from "lucide-react";
 import Image from "next/image";
 import { toDataURL } from "qrcode";
 import { useEffect, useState } from "react";
-import { CopyButton } from "@/components/ui/copy-button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
 
 /**
  * Normalises a raw phone string into a clean `tel:` URI value.
@@ -33,15 +33,16 @@ function normalizePhone(phone: string): string {
  *   number preloaded.
  */
 export function PhoneQuickActions({ phone }: { phone: string }) {
+  const normalized = normalizePhone(phone);
   return (
     <div className="flex items-center gap-1.5">
       <a
-        href={`tel:${normalizePhone(phone)}`}
+        href={`tel:${normalized}`}
         className="truncate text-primary underline-offset-2 hover:underline"
       >
         {phone}
       </a>
-      <CopyButton text={phone} successMessage="Teléfono copiado" label="Copiar teléfono" />
+      <CopyButton text={normalized} successMessage="Teléfono copiado" label="Copiar teléfono" />
       <PhoneQrPopover phone={phone} />
     </div>
   );
@@ -51,9 +52,12 @@ function PhoneQrPopover({ phone }: { phone: string }) {
   const [open, setOpen] = useState(false);
   const [qr, setQr] = useState<string | null>(null);
 
+  // Regenerate QR every time the popover opens or the phone changes.
+  // `qr` is intentionally excluded from deps to avoid an infinite loop.
   useEffect(() => {
-    if (!open || qr) return;
+    if (!open) return;
     let cancelled = false;
+    setQr(null);
     toDataURL(`tel:${normalizePhone(phone)}`, { width: 220, margin: 1 })
       .then((url) => {
         if (!cancelled) setQr(url);
@@ -64,7 +68,8 @@ function PhoneQrPopover({ phone }: { phone: string }) {
     return () => {
       cancelled = true;
     };
-  }, [open, qr, phone]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, phone]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -84,7 +89,7 @@ function PhoneQrPopover({ phone }: { phone: string }) {
         <p className="text-center text-xs text-muted-foreground">
           Escanea con el móvil para llamar a
           <br />
-          <span className="font-medium text-foreground">{phone}</span>
+          <span className="font-medium text-foreground">{normalizePhone(phone)}</span>
         </p>
         <div className="flex size-[220px] items-center justify-center rounded-md bg-muted">
           {qr ? (
