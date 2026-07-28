@@ -1,15 +1,23 @@
 "use client";
 
-import { format, parseISO } from "date-fns";
-import { es } from "date-fns/locale";
-import { Check, ChevronLeft, ChevronRight, Copy, Plus } from "lucide-react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { CalendarEventKind, CalendarView } from "@/lib/calendar/types";
 import { ALL_LAYERS, CALENDAR_LAYER_COLORS, CALENDAR_LAYER_LABELS } from "@/lib/calendar/types";
 import { cn, memberAvatarUrl } from "@/lib/utils";
+import { format, parseISO } from "date-fns";
+import { es } from "date-fns/locale";
+import { Check, ChevronLeft, ChevronRight, Copy, Plus, SlidersHorizontal } from "lucide-react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 import type { TeamMember } from "./calendar-grid";
 import { useCalendarCreate } from "./calendar-grid";
 
@@ -154,37 +162,16 @@ export function CalendarHeader({
         </div>
       </div>
 
-      {/* ── Row 2: scrollable filter chips ────────────────────── */}
-      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none px-4 py-1.5 bg-muted/30">
-        {ALL_LAYERS.map((layer) => {
-          const c = CALENDAR_LAYER_COLORS[layer];
-          const active = activeLayers.has(layer);
-          return (
-            <button
-              key={layer}
-              type="button"
-              onClick={() => onToggleLayer(layer)}
-              className={cn(
-                "flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-all",
-                active
-                  ? `${c.bg} ${c.text} border-transparent`
-                  : "border-border text-muted-foreground opacity-40 hover:opacity-70",
-              )}
-            >
-              <span
-                className={cn(
-                  "h-1.5 w-1.5 rounded-full shrink-0",
-                  active ? c.dot : "bg-muted-foreground",
-                )}
-              />
-              {CALENDAR_LAYER_LABELS[layer]}
-            </button>
-          );
-        })}
+      {/* ── Row 2: layer filter dropdown + member avatars ──────── */}
+      <div className="flex items-center gap-2 px-4 py-1.5 bg-muted/30">
+        <LayersDropdown
+          activeLayers={activeLayers}
+          onToggleLayer={onToggleLayer}
+        />
 
         {teamMembers.length > 1 && (
           <>
-            <span className="shrink-0 mx-1 h-3.5 w-px bg-border" />
+            <span className="mx-1 h-3.5 w-px bg-border" />
             {teamMembers.map((m) => {
               const active = activeMembers.has(m.id);
               const avatarSrc = memberAvatarUrl({
@@ -217,5 +204,53 @@ export function CalendarHeader({
         )}
       </div>
     </div>
+  );
+}
+
+// ─── LayersDropdown ───────────────────────────────────────────────────────────
+
+function LayersDropdown({
+  activeLayers,
+  onToggleLayer,
+}: {
+  activeLayers: Set<CalendarEventKind>;
+  onToggleLayer: (l: CalendarEventKind) => void;
+}) {
+  const hiddenCount = ALL_LAYERS.length - activeLayers.size;
+
+  return (
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-xs font-medium hover:bg-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <SlidersHorizontal className="h-3.5 w-3.5 shrink-0" />
+          Tipos
+          {hiddenCount > 0 && (
+            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
+              {hiddenCount}
+            </span>
+          )}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-44">
+        <DropdownMenuLabel>Tipos de evento</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {ALL_LAYERS.map((layer) => {
+          const c = CALENDAR_LAYER_COLORS[layer];
+          return (
+            <DropdownMenuCheckboxItem
+              key={layer}
+              checked={activeLayers.has(layer)}
+              onCheckedChange={() => onToggleLayer(layer)}
+            >
+              <span className={cn("h-2 w-2 rounded-full shrink-0", c.dot)} />
+              {CALENDAR_LAYER_LABELS[layer]}
+            </DropdownMenuCheckboxItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

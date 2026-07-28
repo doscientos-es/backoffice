@@ -1,5 +1,15 @@
 "use client";
 
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { rescheduleEvent } from "@/lib/calendar/actions";
+import {
+  ALL_LAYERS,
+  CALENDAR_LAYER_COLORS,
+  type CalendarEvent,
+  type CalendarEventKind,
+  type CalendarView,
+} from "@/lib/calendar/types";
+import { cn } from "@/lib/utils";
 import { DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import {
   addDays,
@@ -13,17 +23,16 @@ import {
   startOfWeek,
 } from "date-fns";
 import { es } from "date-fns/locale";
-import { createContext, useContext, useOptimistic, useState, useTransition } from "react";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { rescheduleEvent } from "@/lib/calendar/actions";
+import { ChevronDown, ChevronUp, Moon } from "lucide-react";
 import {
-  ALL_LAYERS,
-  CALENDAR_LAYER_COLORS,
-  type CalendarEvent,
-  type CalendarEventKind,
-  type CalendarView,
-} from "@/lib/calendar/types";
-import { cn } from "@/lib/utils";
+  createContext,
+  useContext,
+  useEffect,
+  useOptimistic,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { CalendarCreateDialog } from "./calendar-create-dialog";
 import { CalendarEventDialog } from "./calendar-event-dialog";
 import { CalendarHeader } from "./calendar-header";
@@ -54,6 +63,10 @@ export type LeadOption = {
   name: string;
   email: string | null;
   company: string | null;
+  /** Distinguishes between a pipeline lead and a converted client */
+  contactKind: "lead" | "client";
+  /** For leads: same as id. For clients: client.lead_id (may be null) */
+  leadId: string | null;
 };
 
 export type ProjectOption = {
@@ -159,8 +172,18 @@ export function CalendarGrid({
     });
   }
 
-  // Merge server events + locally-created optimistic events
-  const allEvents = [...events, ...createdEvents];
+  // Optimistically removed event ids (deleted google_meetings)
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+
+  // Merge server events + locally-created optimistic events.
+  // Deduplicate: once the server re-renders (after revalidatePath) the new
+  // event will already be in `events`, so drop any createdEvents whose id is
+  // already present to avoid duplicate React keys.
+  const serverIds = new Set(events.map((e) => e.id));
+  const allEvents = [
+    ...events,
+    ...createdEvents.filter((e) => !serverIds.has(e.id)),
+  ].filter((e) => !deletedIds.has(e.id));
 
   // Filter: by active layer AND member scope. Single-owner events use memberId;
   // shared events (charlas/eventos) use memberIds — visible if any attendee is active.
@@ -220,7 +243,14 @@ export function CalendarGrid({
         </div>
       )}
     >
-      <CalendarEventDialog event={selectedEvent} onClose={() => setSelectedEvent(null)} />
+      <CalendarEventDialog
+        event={selectedEvent}
+        onClose={() => setSelectedEvent(null)}
+        onDeleted={(id: string) => {
+          setDeletedIds((prev) => new Set(prev).add(id));
+          setSelectedEvent(null);
+        }}
+      />
       <CalendarCreateDialog
         open={createOpen}
         initialDate={createDate}
@@ -253,32 +283,10 @@ export function CalendarGrid({
       <CalendarDialogContext.Provider value={setSelectedEvent}>
         <CalendarCreateContext.Provider value={openCreate}>
           {sharedDialogs}
-          <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-            <div className="flex flex-col h-full">
-              <CalendarHeader {...headerProps} />
-              <div className="grid grid-cols-7 border-b border-border text-center">
-                {days.map((d) => (
-                  <div
-                    key={d.toISOString()}
-                    className="py-1.5 text-xs font-medium text-muted-foreground"
-                  >
-                    {format(d, "EEE d", { locale: es })}
-                  </div>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 flex-1 overflow-y-auto divide-x divide-border">
-                {days.map((d) => (
-                  <DayCell
-                    key={d.toISOString()}
-                    day={d}
-                    events={filtered.filter((e) => isSameDay(parseISO(e.start), d))}
-                    isCurrentMonth
-                    isToday={isToday(d)}
-                  />
-                ))}
-              </div>
-            </div>
-          </DndContext>
+          <div className="flex flex-col h-full min-h-0">
+            <CalendarHeader {...headerProps} />
+            <WeekTimeGrid days={days} events={filtered} />
+          </div>
         </CalendarCreateContext.Provider>
       </CalendarDialogContext.Provider>
     );
@@ -320,6 +328,301 @@ export function CalendarGrid({
         </DndContext>
       </CalendarCreateContext.Provider>
     </CalendarDialogContext.Provider>
+  );
+}
+
+// ─── WeekTimeGrid ─────────────────────────────────────────────────────────────
+
+const HOUR_HEIGHT = 60; // px per hour (60 px = 1 min per px)
+const TIME_COL_W = 48; // px, left column for hour labels
+const HOURS = Array.from({ length: 24 }, (_, i) => i);
+const NIGHT_MORNING_END = 8;    // hours 0–7 hidden by default
+const NIGHT_EVENING_START = 20; // hours 20–23 hidden by default
+const NIGHT_BAND_H = 28;        // px, height of the collapsed toggle bar
+
+// ─── NightBand ────────────────────────────────────────────────────────────────
+
+function NightBand({
+  expanded,
+  onToggle,
+  label,
+  position,
+}: {
+  expanded: boolean;
+  onToggle: () => void;
+  label: string;
+  position: "top" | "bottom";
+}) {
+  // Collapsed → ChevronDown ("show more"), expanded → ChevronUp ("hide")
+  const Chevron = expanded ? ChevronUp : ChevronDown;
+
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      style={{ height: NIGHT_BAND_H }}
+      className={cn(
+        "flex w-full items-center justify-center gap-1.5 select-none",
+        "text-[10px] text-muted-foreground hover:bg-secondary/60 transition-colors",
+        "border-border",
+        position === "top" ? "border-b" : "border-t",
+      )}
+    >
+      <Moon className="h-3 w-3 opacity-60" />
+      <span>{label}</span>
+      <Chevron className="h-3 w-3 opacity-60" />
+    </button>
+  );
+}
+
+// ─── WeekTimeGrid ─────────────────────────────────────────────────────────────
+
+function WeekTimeGrid({ days, events }: { days: Date[]; events: CalendarEvent[] }) {
+  const openDialog = useCalendarDialog();
+  const openCreate = useCalendarCreate();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [now, setNow] = useState(() => new Date());
+  const [showMorningNight, setShowMorningNight] = useState(false);
+  const [showEveningNight, setShowEveningNight] = useState(false);
+  const [hoveredSlot, setHoveredSlot] = useState<{ dayStr: string; hour: number } | null>(null);
+
+  // Scroll to 1 h before current time on mount; update clock every minute.
+  // When morning is collapsed the visible grid starts at NIGHT_MORNING_END,
+  // so we subtract those hours from the scroll offset.
+  useEffect(() => {
+    if (scrollRef.current) {
+      const morningOffset = NIGHT_MORNING_END * HOUR_HEIGHT; // collapsed by default
+      scrollRef.current.scrollTop = Math.max(0, (now.getHours() - 1) * HOUR_HEIGHT - morningOffset);
+    }
+    const timer = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(timer);
+    // intentionally omit `now` dep — we only want this to run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const todayStr = format(now, "yyyy-MM-dd");
+  const nowTop = ((now.getHours() * 60 + now.getMinutes()) / 60) * HOUR_HEIGHT;
+
+  const allDayByDay = days.map((d) =>
+    events.filter((e) => e.allDay && isSameDay(parseISO(e.start), d)),
+  );
+  const hasAnyAllDay = allDayByDay.some((g) => g.length > 0);
+
+  return (
+    <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
+      {/* ── Day name headers (sticky) ──────────────────────────────────────── */}
+      <div className="sticky top-0 z-30 flex bg-background border-b border-border">
+        <div style={{ width: TIME_COL_W }} className="shrink-0 border-r border-border" />
+        {days.map((d) => {
+          const isCurrentDay = format(d, "yyyy-MM-dd") === todayStr;
+          return (
+            <div
+              key={d.toISOString()}
+              className={cn(
+                "flex-1 border-r border-border py-1.5 text-center select-none",
+                isCurrentDay ? "text-primary" : "text-muted-foreground",
+              )}
+            >
+              <div className="text-[10px] font-medium uppercase tracking-wide">
+                {format(d, "EEE", { locale: es })}
+              </div>
+              <div
+                className={cn(
+                  "mx-auto mt-0.5 flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold",
+                  isCurrentDay && "bg-primary text-primary-foreground",
+                )}
+              >
+                {format(d, "d")}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── All-day strip (sticky below day headers, h-12 = 48 px) ────────── */}
+      <div
+        className={cn(
+          "sticky top-[84px] z-20 flex bg-background border-b border-border",
+          !hasAnyAllDay && "hidden",
+        )}
+      >
+        <div
+          style={{ width: TIME_COL_W }}
+          className="shrink-0 border-r border-border flex items-start justify-end pr-1.5 pt-1"
+        >
+          <span className="text-[9px] text-muted-foreground leading-tight text-right">
+            todo
+            <br />
+            el día
+          </span>
+        </div>
+        {days.map((d, i) => (
+          <div
+            key={d.toISOString()}
+            className="flex-1 border-r border-border px-0.5 py-0.5 flex flex-col gap-0.5 min-h-[28px]"
+          >
+            {(allDayByDay[i] ?? []).map((e) => (
+              <EventChip key={e.id} event={e} />
+            ))}
+          </div>
+        ))}
+      </div>
+
+      {/* ── Morning night band ────────────────────────────────────────────── */}
+      <NightBand
+        expanded={showMorningNight}
+        onToggle={() => setShowMorningNight((v) => !v)}
+        label="00:00 – 08:00"
+        position="top"
+      />
+
+      {/* ── Time grid (clipped to hide night hours when collapsed) ─────────── */}
+      <div
+        style={{
+          height:
+            24 * HOUR_HEIGHT
+            - (!showMorningNight ? NIGHT_MORNING_END * HOUR_HEIGHT : 0)
+            - (!showEveningNight ? (24 - NIGHT_EVENING_START) * HOUR_HEIGHT : 0),
+          overflow: "hidden",
+        }}
+      >
+        <div className="relative flex" style={{
+          height: 24 * HOUR_HEIGHT,
+          marginTop: showMorningNight ? 0 : -NIGHT_MORNING_END * HOUR_HEIGHT,
+        }}>
+          {/* Hour labels column */}
+          <div
+            style={{ width: TIME_COL_W }}
+            className="shrink-0 border-r border-border relative select-none"
+          >
+            {HOURS.map((h) => (
+              <div
+                key={h}
+                style={{ top: h * HOUR_HEIGHT, height: HOUR_HEIGHT }}
+                className="absolute inset-x-0 flex items-start justify-end pr-2 pt-0.5"
+              >
+                {h > 0 && (
+                  <span className="text-[10px] text-muted-foreground tabular-nums -translate-y-2">
+                    {String(h).padStart(2, "0")}:00
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Day columns */}
+          {days.map((d) => {
+            const dayStr = format(d, "yyyy-MM-dd");
+            const isCurrentDay = dayStr === todayStr;
+            const timedEvs = events.filter(
+              (e) => !e.allDay && e.start.length > 10 && isSameDay(parseISO(e.start), d),
+            );
+
+            return (
+              <div
+                key={d.toISOString()}
+                className={cn(
+                  "flex-1 border-r border-border relative",
+                  isCurrentDay && "bg-primary/[0.02]",
+                )}
+                onClick={() => openCreate(dayStr)}
+                role="presentation"
+                onMouseMove={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  // rect.top is in viewport coords and already reflects the negative
+                  // marginTop of the inner grid, so this gives the absolute hour (0–23).
+                  const absHour = Math.floor((e.clientY - rect.top) / HOUR_HEIGHT);
+                  setHoveredSlot({ dayStr, hour: Math.max(0, Math.min(23, absHour)) });
+                }}
+                onMouseLeave={() => setHoveredSlot(null)}
+              >
+                {/* Hover highlight */}
+                {hoveredSlot?.dayStr === dayStr && (
+                  <div
+                    style={{ top: hoveredSlot.hour * HOUR_HEIGHT, height: HOUR_HEIGHT }}
+                    className="absolute inset-x-0 bg-muted/80 pointer-events-none z-[5]"
+                  />
+                )}
+
+                {/* Hour grid lines */}
+                {HOURS.map((h) => (
+                  <div
+                    key={h}
+                    style={{ top: h * HOUR_HEIGHT }}
+                    className="absolute inset-x-0 border-t border-border/40 pointer-events-none"
+                  />
+                ))}
+                {/* Half-hour dotted lines */}
+                {HOURS.map((h) => (
+                  <div
+                    key={`${h}h`}
+                    style={{ top: h * HOUR_HEIGHT + HOUR_HEIGHT / 2 }}
+                    className="absolute inset-x-0 border-t border-border/20 border-dashed pointer-events-none"
+                  />
+                ))}
+
+                {/* Current time indicator */}
+                {isCurrentDay && (
+                  <div
+                    style={{ top: nowTop }}
+                    className="absolute inset-x-0 z-10 pointer-events-none flex items-center"
+                  >
+                    <div className="h-2.5 w-2.5 shrink-0 rounded-full bg-red-500 -translate-x-1/2" />
+                    <div className="flex-1 border-t-2 border-red-500" />
+                  </div>
+                )}
+
+                {/* Timed events */}
+                {timedEvs.map((e) => {
+                  const startDt = parseISO(e.start);
+                  const endDt = parseISO(e.end);
+                  const startMin = startDt.getHours() * 60 + startDt.getMinutes();
+                  const endMin = endDt.getHours() * 60 + endDt.getMinutes();
+                  const top = (startMin / 60) * HOUR_HEIGHT;
+                  const height = Math.max(((Math.max(endMin - startMin, 15)) / 60) * HOUR_HEIGHT, 20);
+                  const colors = CALENDAR_LAYER_COLORS[e.kind];
+                  return (
+                    <button
+                      key={e.id}
+                      type="button"
+                      style={{ top, height, position: "absolute", left: 2, right: 2 }}
+                      onClick={(ev) => {
+                        ev.stopPropagation();
+                        openDialog(e);
+                      }}
+                      className={cn(
+                        "rounded border px-1.5 py-0.5 text-xs font-medium text-left overflow-hidden z-10",
+                        "hover:brightness-95 focus-visible:outline-none focus-visible:ring-1",
+                        colors.bg,
+                        colors.text,
+                        e.done && "opacity-50",
+                      )}
+                    >
+                      <div className={cn("truncate leading-tight", e.done && "line-through")}>
+                        {e.title}
+                      </div>
+                      {height >= 36 && (
+                        <div className="text-[10px] opacity-70 truncate">
+                          {format(startDt, "HH:mm")} – {format(endDt, "HH:mm")}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Evening night band ────────────────────────────────────────────── */}
+      <NightBand
+        expanded={showEveningNight}
+        onToggle={() => setShowEveningNight((v) => !v)}
+        label="20:00 – 00:00"
+        position="bottom"
+      />
+    </div>
   );
 }
 

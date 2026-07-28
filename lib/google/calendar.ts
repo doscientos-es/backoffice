@@ -190,7 +190,10 @@ export async function insertEvent(input: InsertEventInput): Promise<InsertedEven
     };
   }
 
-  const params = new URLSearchParams({ sendUpdates: "all" });
+  // "externalOnly" → only external (non-Workspace-domain) attendees receive invite
+  // emails; internal @doscientos.es members already see the event on the shared
+  // group calendar, so "all" would send them a duplicate notification.
+  const params = new URLSearchParams({ sendUpdates: "externalOnly" });
   if (input.withMeet) params.set("conferenceDataVersion", "1");
   const url = `${BASE}/${encodeURIComponent(input.calendarId)}/events?${params}`;
 
@@ -209,4 +212,17 @@ export async function insertEvent(input: InsertEventInput): Promise<InsertedEven
     htmlLink: data.htmlLink ?? null,
     meetUrl: data.hangoutLink ?? null,
   };
+}
+
+/** Elimina un evento del calendario. Solo notifica a asistentes externos. */
+export async function deleteEvent(opts: {
+  subject: string;
+  calendarId: string;
+  eventId: string;
+}): Promise<void> {
+  if (isDemoMode()) return;
+
+  const params = new URLSearchParams({ sendUpdates: "externalOnly" });
+  const url = `${BASE}/${encodeURIComponent(opts.calendarId)}/events/${encodeURIComponent(opts.eventId)}?${params}`;
+  await googleFetch<null>(opts.subject, [GOOGLE_SCOPES.calendar], url, { method: "DELETE" });
 }

@@ -1,11 +1,11 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { isGoogleEnabled, serverEnv } from "@/lib/env";
 import { insertEvent } from "@/lib/google/calendar";
 import { resolveSubject } from "@/lib/google/client";
 import { createServerClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
 import type { CalendarEvent, CalendarEventKind } from "./types";
 
 export type RescheduleResult = { ok: true } | { ok: false; error: string };
@@ -367,4 +367,40 @@ export async function createCalendarEvent(
   }
 
   return { ok: false, error: "Tipo no válido" };
+}
+
+// ── Delete event ───────────────────────────────────────────────────────────────
+
+export type DeleteCalendarEventResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * Elimina una reunión de Google Calendar.
+ * Solo funciona con eventos de tipo `google_meeting:{googleEventId}`.
+ */
+export async function deleteCalendarEvent(
+  eventCompositeId: string,
+): Promise<DeleteCalendarEventResult> {
+  const user = await requireUser();
+
+  const [kind, ...rest] = eventCompositeId.split(":");
+  if (kind !== "google_meeting" || rest.length === 0) {
+    return { ok: false, error: "Solo se pueden eliminar reuniones de Google Calendar" };
+  }
+  const googleEventId = rest.join(":");
+
+  if (!isGoogleEnabled()) return { ok: false, error: "Google Workspace no configurado" };
+  const calendarId = serverEnv().GOOGLE_CALENDAR_ID;
+  if (!calendarId) return { ok: false, error: "GOOGLE_CALENDAR_ID no configurado" };
+
+  try {
+    await deleteEvent({
+      subject: resolveSubject(user.email),
+      calendarId,
+      eventId: googleEventId,
+    });
+    revalidatePath("/calendar");
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Error eliminando evento" };
+  }
 }

@@ -1,7 +1,5 @@
 "use client";
 
-import { Bell, CheckSquare, Presentation, Video } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
 import { scheduleLeadMeeting } from "@/app/(app)/leads/actions";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -12,6 +10,8 @@ import type { CalendarEvent } from "@/lib/calendar/types";
 import { cn } from "@/lib/utils";
 import { todayIsoLocal } from "@/lib/utils/date";
 import { dateAndTimeToIso } from "@/lib/utils/date-time";
+import { Bell, CheckSquare, Presentation, Video } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
 import type { LeadOption, ProjectOption, TeamMember } from "./calendar-grid";
 
 type Kind = "task" | "reminder" | "google_meeting" | "event";
@@ -101,7 +101,11 @@ export function CalendarCreateDialog({
     }
   }, [open, initialDate, today]);
 
-  const selectedLead = leads.find((l) => l.id === selectedLeadId) ?? null;
+  const selectedContact = leads.find((l) => l.id === selectedLeadId) ?? null;
+  // The actual lead ID to log interaction against (null for clients with no origin lead)
+  const selectedContactLeadId = selectedContact?.contactKind === "lead"
+    ? selectedContact.id
+    : (selectedContact?.leadId ?? null);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -115,17 +119,17 @@ export function CalendarCreateDialog({
           .filter((m) => selectedMemberIds.includes(m.id) && m.email)
           .map((m) => m.email as string);
 
-        // ── Meeting with a lead → scheduleLeadMeeting (logs as interaction) ────
-        if (kind === "google_meeting" && selectedLeadId) {
+        // ── Meeting with a contact that has a lead ID → scheduleLeadMeeting (logs as interaction) ────
+        if (kind === "google_meeting" && selectedLeadId && selectedContactLeadId) {
           const startISO = dateAndTimeToIso(date, startTime);
           const endISO = dateAndTimeToIso(date, endTime);
           const attendeeEmails = [
-            ...(selectedLead?.email ? [selectedLead.email] : []),
+            ...(selectedContact?.email ? [selectedContact.email] : []),
             ...memberEmails,
           ];
 
           const res = await scheduleLeadMeeting({
-            leadId: selectedLeadId,
+            leadId: selectedContactLeadId,
             start: startISO,
             end: endISO,
             title: title.trim(),
@@ -191,7 +195,7 @@ export function CalendarCreateDialog({
     });
   }
 
-  const hasLead = kind === "google_meeting" && !!selectedLeadId;
+  const hasLead = kind === "google_meeting" && !!selectedLeadId && !!selectedContactLeadId;
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -232,8 +236,8 @@ export function CalendarCreateDialog({
                   ? "¿De qué quieres acordarte?"
                   : kind === "event"
                     ? "Nombre de la charla o evento…"
-                    : kind === "google_meeting" && selectedLead
-                      ? `Reunión con ${selectedLead.name}`
+                    : kind === "google_meeting" && selectedContact
+                      ? `Reunión con ${selectedContact.name}`
                       : "Asunto de la reunión…"
             }
             value={title}
@@ -388,21 +392,23 @@ export function CalendarCreateDialog({
                 value={selectedLeadId}
                 onChange={(id) => {
                   setSelectedLeadId(id);
-                  const lead = leads.find((l) => l.id === id);
-                  if (lead && !title) setTitle(`Reunión con ${lead.name}`);
+                  const contact = leads.find((l) => l.id === id);
+                  if (contact && !title) setTitle(`Reunión con ${contact.name}`);
                 }}
-                placeholder="Buscar lead…"
+                placeholder="Buscar contacto…"
               />
-              {selectedLead && (
+              {selectedContact && (
                 <p className="rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-foreground">
-                  {selectedLead.email ? (
+                  {selectedContact.email ? (
                     <>
                       Al crearla, se enviará una invitación real a{" "}
-                      <span className="font-medium">{selectedLead.email}</span> y quedará registrada
-                      como interacción.
+                      <span className="font-medium">{selectedContact.email}</span>
+                      {selectedContactLeadId && " y quedará registrada como interacción."}
                     </>
-                  ) : (
+                  ) : selectedContactLeadId ? (
                     "Quedará registrada como interacción en el lead."
+                  ) : (
+                    "Se añadirá como asistente al evento."
                   )}
                 </p>
               )}

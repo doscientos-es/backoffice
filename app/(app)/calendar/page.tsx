@@ -1,9 +1,9 @@
-import { addMonths, endOfMonth, endOfWeek, startOfMonth, startOfWeek, subMonths } from "date-fns";
-import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
 import { getCalendarEvents } from "@/lib/calendar/queries";
 import { ALL_LAYERS } from "@/lib/calendar/types";
 import { createServerClient } from "@/lib/supabase/server";
+import { addMonths, endOfMonth, endOfWeek, startOfMonth, startOfWeek, subMonths } from "date-fns";
+import type { Metadata } from "next";
 import { CalendarGrid } from "./_components/calendar-grid";
 
 export const metadata: Metadata = { title: "Agenda · doscientos" };
@@ -82,23 +82,61 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
     .maybeSingle();
   const calendarToken = (memberRow?.calendar_token as string | null) ?? null;
 
-  // Fetch active leads and projects for the create dialog
-  const [{ data: leadsData }, { data: projectsData }] = await Promise.all([
+  // Fetch all leads (including won/lost) + clients for the create dialog contact picker
+  const [{ data: leadsData }, { data: clientsData }, { data: projectsData }] = await Promise.all([
     supabase
       .from("leads")
       .select("id, name, email, company")
-      .not("status", "in", '("won","lost")')
       .is("deleted_at", null)
-      .order("updated_at", { ascending: false })
-      .limit(150),
+      .order("name", { ascending: true })
+      .limit(500),
+    supabase
+      .from("clients")
+      .select("id, name, email, contact_person, lead_id")
+      .is("deleted_at", null)
+      .order("name", { ascending: true })
+      .limit(500),
     supabase.from("projects").select("id, name").is("deleted_at", null).order("name"),
   ]);
-  const leads = (leadsData ?? []) as {
+
+  const leadOptions = ((leadsData ?? []) as {
     id: string;
     name: string;
     email: string | null;
     company: string | null;
-  }[];
+  }[]).map((l) => ({
+    id: l.id,
+    name: l.name,
+    email: l.email,
+    company: l.company,
+    contactKind: "lead" as const,
+    leadId: l.id,
+  }));
+
+  // Build a set of lead_ids already covered by leadOptions so we don't duplicate
+  const leadIdsCovered = new Set(leadOptions.map((l) => l.id));
+
+  const clientOptions = ((clientsData ?? []) as {
+    id: string;
+    name: string;
+    email: string | null;
+    contact_person: string | null;
+    lead_id: string | null;
+  }[])
+    // Skip clients whose original lead is already in the list (avoids duplicates)
+    .filter((c) => !c.lead_id || !leadIdsCovered.has(c.lead_id))
+    .map((c) => ({
+      id: c.id,
+      name: c.name,
+      email: c.email,
+      company: c.contact_person ? `${c.contact_person} · Cliente` : "Cliente",
+      contactKind: "client" as const,
+      leadId: c.lead_id ?? null,
+    }));
+
+  const leads = [...leadOptions, ...clientOptions].sort((a, b) =>
+    a.name.localeCompare(b.name, "es"),
+  );
   const projects = (projectsData ?? []) as { id: string; name: string }[];
 
   const events = await getCalendarEvents({
