@@ -41,12 +41,11 @@ export const ServerSchema = PublicSchema.extend({
   // El resto quedan reservados para reactivar en el futuro (añadir su branch
   // en resolveModel() de lib/ai.ts):
   //   "gemini"  → GEMINI_API_KEY (Google AI Studio, key required)
-  //   "openai"  → OPENAI_API_KEY
+  //   "openai"  → (sin clave por ahora; reservado para el futuro)
   //   "deepseek"→ DEEPSEEK_API_KEY
   // Leave empty / unset to disable AI features.
   AI_PROVIDER: z.enum(["gemini", "vertex", "openai", "deepseek", ""]).default(""),
   GEMINI_API_KEY: z.string().optional().default(""),
-  OPENAI_API_KEY: z.string().optional().default(""),
   DEEPSEEK_API_KEY: z.string().optional().default(""),
   GOOGLE_CLOUD_PROJECT_ID: z.string().optional().default(""),
   // Región EU por defecto (GDPR): los datos del lead no salen de la UE.
