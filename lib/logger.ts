@@ -1,5 +1,5 @@
-import pino, { type Logger } from "pino";
 import { serverEnv } from "@/lib/env";
+import pino, { type Logger } from "pino";
 
 let cached: Logger | null = null;
 
@@ -20,7 +20,6 @@ export function logger(): Logger {
         "req.headers.cookie",
         "*.SUPABASE_SERVICE_ROLE_KEY",
         "*.RESEND_API_KEY",
-        "*.OPENAI_API_KEY",
         "*.VERIFACTU_CERT_PASSWORD",
         "*.VERIFACTU_CERT_P12_BASE64",
       ],

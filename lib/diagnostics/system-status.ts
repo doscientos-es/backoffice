@@ -53,9 +53,9 @@ export function getSystemStatus(): SystemStatus {
     { key: "calendar", label: "Google Calendar", configured: has(env.GOOGLE_CALENDAR_ID) },
     {
       key: "ai",
-      label: "IA (Gemini / OpenAI)",
+      label: "IA (Gemini / Vertex)",
       configured: aiEnabled,
-      detail: has(env.GEMINI_API_KEY) ? "Gemini" : has(env.OPENAI_API_KEY) ? "OpenAI" : undefined,
+      detail: has(env.GEMINI_API_KEY) ? "Gemini" : undefined,
     },
     {
       key: "github",
