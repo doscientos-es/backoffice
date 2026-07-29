@@ -1,15 +1,5 @@
 "use client";
 
-import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { rescheduleEvent } from "@/lib/calendar/actions";
-import {
-  ALL_LAYERS,
-  CALENDAR_LAYER_COLORS,
-  type CalendarEvent,
-  type CalendarEventKind,
-  type CalendarView,
-} from "@/lib/calendar/types";
-import { cn } from "@/lib/utils";
 import { DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import {
   addDays,
@@ -33,6 +23,16 @@ import {
   useState,
   useTransition,
 } from "react";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { rescheduleEvent } from "@/lib/calendar/actions";
+import {
+  ALL_LAYERS,
+  CALENDAR_LAYER_COLORS,
+  type CalendarEvent,
+  type CalendarEventKind,
+  type CalendarView,
+} from "@/lib/calendar/types";
+import { cn } from "@/lib/utils";
 import { CalendarCreateDialog } from "./calendar-create-dialog";
 import { CalendarEventDialog } from "./calendar-event-dialog";
 import { CalendarHeader } from "./calendar-header";
@@ -180,10 +180,9 @@ export function CalendarGrid({
   // event will already be in `events`, so drop any createdEvents whose id is
   // already present to avoid duplicate React keys.
   const serverIds = new Set(events.map((e) => e.id));
-  const allEvents = [
-    ...events,
-    ...createdEvents.filter((e) => !serverIds.has(e.id)),
-  ].filter((e) => !deletedIds.has(e.id));
+  const allEvents = [...events, ...createdEvents.filter((e) => !serverIds.has(e.id))].filter(
+    (e) => !deletedIds.has(e.id),
+  );
 
   // Filter: by active layer AND member scope. Single-owner events use memberId;
   // shared events (charlas/eventos) use memberIds — visible if any attendee is active.
@@ -336,9 +335,9 @@ export function CalendarGrid({
 const HOUR_HEIGHT = 60; // px per hour (60 px = 1 min per px)
 const TIME_COL_W = 48; // px, left column for hour labels
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
-const NIGHT_MORNING_END = 8;    // hours 0–7 hidden by default
+const NIGHT_MORNING_END = 8; // hours 0–7 hidden by default
 const NIGHT_EVENING_START = 20; // hours 20–23 hidden by default
-const NIGHT_BAND_H = 28;        // px, height of the collapsed toggle bar
+const NIGHT_BAND_H = 28; // px, height of the collapsed toggle bar
 
 // ─── NightBand ────────────────────────────────────────────────────────────────
 
@@ -389,6 +388,7 @@ function WeekTimeGrid({ days, events }: { days: Date[]; events: CalendarEvent[] 
   // Scroll to 1 h before current time on mount; update clock every minute.
   // When morning is collapsed the visible grid starts at NIGHT_MORNING_END,
   // so we subtract those hours from the scroll offset.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally runs once on mount only; re-running on every `now` tick would reset scroll position every minute
   useEffect(() => {
     if (scrollRef.current) {
       const morningOffset = NIGHT_MORNING_END * HOUR_HEIGHT; // collapsed by default
@@ -396,8 +396,6 @@ function WeekTimeGrid({ days, events }: { days: Date[]; events: CalendarEvent[] 
     }
     const timer = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(timer);
-    // intentionally omit `now` dep — we only want this to run on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const todayStr = format(now, "yyyy-MM-dd");
@@ -480,16 +478,19 @@ function WeekTimeGrid({ days, events }: { days: Date[]; events: CalendarEvent[] 
       <div
         style={{
           height:
-            24 * HOUR_HEIGHT
-            - (!showMorningNight ? NIGHT_MORNING_END * HOUR_HEIGHT : 0)
-            - (!showEveningNight ? (24 - NIGHT_EVENING_START) * HOUR_HEIGHT : 0),
+            24 * HOUR_HEIGHT -
+            (!showMorningNight ? NIGHT_MORNING_END * HOUR_HEIGHT : 0) -
+            (!showEveningNight ? (24 - NIGHT_EVENING_START) * HOUR_HEIGHT : 0),
           overflow: "hidden",
         }}
       >
-        <div className="relative flex" style={{
-          height: 24 * HOUR_HEIGHT,
-          marginTop: showMorningNight ? 0 : -NIGHT_MORNING_END * HOUR_HEIGHT,
-        }}>
+        <div
+          className="relative flex"
+          style={{
+            height: 24 * HOUR_HEIGHT,
+            marginTop: showMorningNight ? 0 : -NIGHT_MORNING_END * HOUR_HEIGHT,
+          }}
+        >
           {/* Hour labels column */}
           <div
             style={{ width: TIME_COL_W }}
@@ -580,7 +581,7 @@ function WeekTimeGrid({ days, events }: { days: Date[]; events: CalendarEvent[] 
                   const startMin = startDt.getHours() * 60 + startDt.getMinutes();
                   const endMin = endDt.getHours() * 60 + endDt.getMinutes();
                   const top = (startMin / 60) * HOUR_HEIGHT;
-                  const height = Math.max(((Math.max(endMin - startMin, 15)) / 60) * HOUR_HEIGHT, 20);
+                  const height = Math.max((Math.max(endMin - startMin, 15) / 60) * HOUR_HEIGHT, 20);
                   const colors = CALENDAR_LAYER_COLORS[e.kind];
                   return (
                     <button
