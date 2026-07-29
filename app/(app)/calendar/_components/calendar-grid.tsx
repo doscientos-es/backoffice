@@ -519,6 +519,7 @@ function WeekTimeGrid({ days, events }: { days: Date[]; events: CalendarEvent[] 
             );
 
             return (
+              // biome-ignore lint/a11y/noStaticElementInteractions: mouse-only shortcut to create an event by clicking a time slot; the "Nuevo" button in the header provides a fully keyboard-accessible equivalent
               <div
                 key={d.toISOString()}
                 className={cn(

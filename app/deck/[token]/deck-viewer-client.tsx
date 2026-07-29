@@ -112,7 +112,7 @@ export function DeckViewer({
           totalSlides: total,
           viewerType: "client",
         }),
-      }).catch(() => {});
+      }).catch(() => { });
     }, 800);
     return () => clearTimeout(t);
   }, [current, token, total, slides]);
@@ -138,8 +138,8 @@ export function DeckViewer({
   const prev = useCallback(() => setCurrent((i) => Math.max(0, i - 1)), []);
   const next = useCallback(() => setCurrent((i) => Math.min(total - 1, i + 1)), [total]);
   const toggleFullscreen = useCallback(() => {
-    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-    else document.documentElement.requestFullscreen().catch(() => {});
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => { });
+    else document.documentElement.requestFullscreen().catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -256,6 +256,7 @@ export function DeckViewer({
       <div className="deck-progress no-print" aria-hidden>
         <div className="deck-progress-bar" style={{ width: `${progress}%` }} />
       </div>
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: tap/click-to-advance is a touch/mouse convenience; full keyboard navigation (arrows, Home/End, digits) is handled by the window keydown listener below */}
       <div
         className="deck-viewport"
         onTouchStart={onTouchStart}
@@ -356,8 +357,8 @@ export function DeckViewer({
       {(showOverlay || showHelp) && (
         <div
           className="deck-overlay-help no-print"
-          role={showHelp ? "dialog" : undefined}
-          aria-modal={showHelp ? "true" : undefined}
+          role="dialog"
+          aria-modal="true"
           onClick={() => {
             setShowOverlay(false);
             setShowHelp(false);
@@ -370,6 +371,7 @@ export function DeckViewer({
             }
           }}
         >
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: click-boundary guard that stops the backdrop's dismiss handler from firing when interacting with the panel content */}
           <div className="deck-overlay-help-inner" onClick={(e) => e.stopPropagation()}>
             {showHelp ? (
               <div className="flex items-center justify-between mb-6">
