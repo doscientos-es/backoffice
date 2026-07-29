@@ -50,14 +50,23 @@ export type CapiConversionInput = {
    * for events captured from a public form submission — pair it with
    * `eventSourceUrl`/`clientIpAddress`/`clientUserAgent` for better match
    * quality and to dedup correctly against the browser Pixel event.
+   * Use `"system_generated"` for backend-only funnel-stage transitions with
+   * no direct user interaction (e.g. a CRM status change), per Meta's CRM
+   * Integration guidance.
    */
-  actionSource?: "website" | "crm";
+  actionSource?: "website" | "crm" | "system_generated";
   /** Full URL of the page where the event happened. Expected by Meta for `"website"` events. */
   eventSourceUrl?: string | null;
   /** Raw request IP — improves Advanced Matching. */
   clientIpAddress?: string | null;
   /** Raw `User-Agent` header — improves Advanced Matching. */
   clientUserAgent?: string | null;
+  /**
+   * Extra fields merged into Meta's `custom_data` object (e.g.
+   * `event_source: "crm"`, `lead_event_source`, `lead_status`). Combined
+   * with `value`/`currency` when both are provided.
+   */
+  custom_data?: Record<string, string | number | boolean | null | undefined>;
 };
 
 /**
@@ -109,8 +118,13 @@ export async function pushMetaConversion(input: CapiConversionInput): Promise<vo
         event_source_url: input.eventSourceUrl ?? undefined,
         user_data: userData,
         custom_data:
-          input.value != null
-            ? { value: input.value, currency: input.currency ?? "EUR" }
+          input.value != null || input.custom_data
+            ? {
+              ...(input.value != null
+                ? { value: input.value, currency: input.currency ?? "EUR" }
+                : {}),
+              ...input.custom_data,
+            }
             : undefined,
       },
     ],

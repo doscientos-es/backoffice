@@ -115,8 +115,25 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("next/server", () => ({
+  after: (fn: () => unknown) => fn(), // execute inline in tests
+}));
 vi.mock("@/lib/integrations/notify-new-lead", () => ({
   notifyNewLead: vi.fn().mockResolvedValue(undefined),
+}));
+vi.mock("@/lib/integrations/meta-capi", () => ({
+  pushMetaConversion: vi.fn().mockResolvedValue(undefined),
+}));
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: () => ({
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          maybeSingle: async () => ({ data: { email: "lead@test.com", phone: null }, error: null }),
+        }),
+      }),
+    }),
+  }),
 }));
 vi.mock("@/lib/logger", () => ({
   scopedLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),

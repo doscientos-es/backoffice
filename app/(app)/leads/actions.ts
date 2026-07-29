@@ -1,9 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { after } from "next/server";
-import { z } from "zod";
 import { defineAction } from "@/lib/actions/define-action";
 import { sendEmail } from "@/lib/email/resend";
 import { buildSignatureHtml } from "@/lib/email/signature";
@@ -15,6 +11,7 @@ import { findConflicts, insertEvent } from "@/lib/google/calendar";
 import { resolveSubject } from "@/lib/google/client";
 import { pushMetaConversion } from "@/lib/integrations/meta-capi";
 import { normalizeCompanySize, normalizeLeadSource, normalizeUrgency } from "@/lib/leads/constants";
+import { scopedLogger } from "@/lib/logger";
 import {
   AssignLeadOwnerInput,
   CheckMeetingSlotInput,
@@ -32,6 +29,12 @@ import {
 } from "@/lib/schemas/lead";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { after } from "next/server";
+import { z } from "zod";
+
+const log = scopedLogger("leads.actions");
 
 /**
  * Speed-to-lead: stamps `first_contacted_at` on the first real outbound touch
@@ -269,6 +272,36 @@ export const updateLeadStatus = defineAction({
         lost_reason: data.lostReason ?? null,
       },
     });
+
+    // Fire-and-forget: notify Meta CAPI of every funnel stage transition so
+    // the ad algorithm can optimise for lead quality, not just quantity.
+    const leadId = data.leadId;
+    const status = data.status;
+    after(async () => {
+      try {
+        const { data: lead } = await createAdminClient()
+          .from("leads")
+          .select("email, phone")
+          .eq("id", leadId)
+          .maybeSingle();
+        if (lead) {
+          await pushMetaConversion({
+            eventName: "Lead",
+            eventId: `lead-${leadId}-${status}`,
+            email: lead.email as string | null,
+            phone: lead.phone as string | null,
+            actionSource: "system_generated",
+            custom_data: {
+              event_source: "crm",
+              lead_event_source: "doscientos-backoffice",
+              lead_status: status,
+            },
+          });
+        }
+      } catch (e) {
+        log.warn({ err: e, leadId }, "meta_capi_status_failed");
+      }
+    });
   },
 });
 
@@ -389,17 +422,17 @@ export const sendEmailToLead = defineAction({
     const renderedHtml = markdownToHtml(renderedMarkdown);
     const finalHtml = data.includeSignature
       ? appendSignature(
-          renderedHtml,
-          buildSignatureHtml(
-            {
-              name: user.name,
-              jobTitle: user.jobTitle ?? undefined,
-              phone: user.phone ?? undefined,
-              contactEmail: user.contactEmail ?? user.emailAlias ?? undefined,
-            },
-            publicEnv.NEXT_PUBLIC_APP_URL || "https://app.doscientos.es",
-          ),
-        )
+        renderedHtml,
+        buildSignatureHtml(
+          {
+            name: user.name,
+            jobTitle: user.jobTitle ?? undefined,
+            phone: user.phone ?? undefined,
+            contactEmail: user.contactEmail ?? user.emailAlias ?? undefined,
+          },
+          publicEnv.NEXT_PUBLIC_APP_URL || "https://app.doscientos.es",
+        ),
+      )
       : renderedHtml;
 
     const renderedSubject = renderTemplate(data.subject, {

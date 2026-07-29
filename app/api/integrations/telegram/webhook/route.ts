@@ -1,10 +1,11 @@
-import { timingSafeEqual } from "node:crypto";
-import { type NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
+import { pushMetaConversion } from "@/lib/integrations/meta-capi";
 import { telegramRequest } from "@/lib/integrations/telegram";
 import { scopedLogger } from "@/lib/logger";
 import type { LeadStatusType } from "@/lib/schemas/lead";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { after, type NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "node:crypto";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
 
   const { data: current, error: readErr } = await supabase
     .from("leads")
-    .select("name, status")
+    .select("name, status, email, phone")
     .eq("id", leadId)
     .is("deleted_at", null)
     .single();
@@ -137,6 +138,26 @@ export async function POST(request: NextRequest) {
     });
 
     log.info({ leadId, leadName, from: fromStatus, to: nextStatus }, "status updated via Telegram");
+
+    // Fire-and-forget: notify Meta CAPI of the funnel stage transition.
+    after(async () => {
+      try {
+        await pushMetaConversion({
+          eventName: "Lead",
+          eventId: `lead-${leadId}-${nextStatus}`,
+          email: current.email as string | null,
+          phone: current.phone as string | null,
+          actionSource: "system_generated",
+          custom_data: {
+            event_source: "crm",
+            lead_event_source: "doscientos-backoffice",
+            lead_status: nextStatus,
+          },
+        });
+      } catch (e) {
+        log.warn({ err: e, leadId }, "meta_capi_status_failed");
+      }
+    });
   }
 
   // Dismiss the spinner in Telegram

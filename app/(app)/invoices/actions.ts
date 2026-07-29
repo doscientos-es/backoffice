@@ -1,6 +1,4 @@
 "use server";
-import { createVerifactuClient } from "@doscientos/verifactu";
-import { revalidatePath } from "next/cache";
 import { InvoiceEmail } from "@/components/email";
 import { defineAction } from "@/lib/actions/define-action";
 import { requireRole } from "@/lib/auth";
@@ -10,6 +8,7 @@ import { sendEmail } from "@/lib/email/resend";
 import { publicEnv } from "@/lib/env";
 import { buildVatBreakdown, computeLineTotals } from "@/lib/finance";
 import { backupInvoiceToDrive } from "@/lib/google/backup";
+import { pushMetaConversion } from "@/lib/integrations/meta-capi";
 import {
   findClientInfo,
   findCompanySettings,
@@ -56,6 +55,9 @@ import { UpdatePortalAccessInput } from "@/lib/schemas/portal";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { verifactuConfigFromEnv } from "@/lib/verifactu/config";
+import { createVerifactuClient } from "@doscientos/verifactu";
+import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 
 const log = scopedLogger("invoices.actions");
 
@@ -93,20 +95,46 @@ export const updateInvoiceStatus = defineAction({
       ...(isFirstIssuance ? { issued_at: now } : {}),
       ...(clientSnapshot
         ? {
-            client_name: clientSnapshot.name,
-            client_nif: clientSnapshot.nif,
-            client_address_street: clientSnapshot.billing_address_street,
-            client_address_zip: clientSnapshot.billing_address_zip,
-            client_address_city: clientSnapshot.billing_address_city,
-            client_address_province: clientSnapshot.billing_address_province,
-            client_address_country: clientSnapshot.billing_address_country,
-          }
+          client_name: clientSnapshot.name,
+          client_nif: clientSnapshot.nif,
+          client_address_street: clientSnapshot.billing_address_street,
+          client_address_zip: clientSnapshot.billing_address_zip,
+          client_address_city: clientSnapshot.billing_address_city,
+          client_address_province: clientSnapshot.billing_address_province,
+          client_address_country: clientSnapshot.billing_address_country,
+        }
         : {}),
     });
 
     // Best-effort Drive backup on first issuance — fires as the acting user.
     if (isFirstIssuance) {
       void backupInvoiceToDrive(id, user.email);
+    }
+
+    // Fire-and-forget: notify Meta CAPI when an invoice is paid — the
+    // highest-value signal for the ad algorithm to optimise towards.
+    if (status === "paid") {
+      after(async () => {
+        try {
+          const inv = await findInvoiceForEmail(id);
+          if (inv?.client?.email) {
+            await pushMetaConversion({
+              eventName: "Purchase",
+              eventId: `invoice-${id}-paid`,
+              email: inv.client.email,
+              value: inv.total,
+              currency: "EUR",
+              actionSource: "system_generated",
+              custom_data: {
+                event_source: "crm",
+                lead_event_source: "doscientos-backoffice",
+              },
+            });
+          }
+        } catch (e) {
+          log.warn({ err: e, invoiceId: id }, "meta_capi_purchase_failed");
+        }
+      });
     }
   },
 });

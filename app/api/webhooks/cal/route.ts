@@ -1,4 +1,3 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import {
   type CalWebhookPayload,
@@ -6,8 +5,10 @@ import {
   verifyCalSignature,
 } from "@/lib/integrations/cal";
 import { ingestLead } from "@/lib/integrations/lead-intake";
+import { pushMetaConversion } from "@/lib/integrations/meta-capi";
 import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { after, type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -51,11 +52,42 @@ export async function POST(request: NextRequest) {
 
   // Update lead status if it's a booking event
   if (triggerEvent === "BOOKING_CREATED" || triggerEvent === "BOOKING_RESCHEDULED") {
-    await supabase
+    const { data: updated } = await supabase
       .from("leads")
       .update({ status: "qualifying", updated_at: new Date().toISOString() })
       .eq("id", leadId)
-      .eq("status", "new"); // Only move from new to qualifying
+      .eq("status", "new") // Only move from new to qualifying
+      .select("id")
+      .maybeSingle();
+
+    // Fire-and-forget: notify Meta CAPI of the funnel stage transition.
+    if (updated) {
+      after(async () => {
+        try {
+          const { data: lead } = await createAdminClient()
+            .from("leads")
+            .select("email, phone")
+            .eq("id", leadId)
+            .maybeSingle();
+          if (lead) {
+            await pushMetaConversion({
+              eventName: "Lead",
+              eventId: `lead-${leadId}-qualifying`,
+              email: lead.email as string | null,
+              phone: lead.phone as string | null,
+              actionSource: "system_generated",
+              custom_data: {
+                event_source: "crm",
+                lead_event_source: "doscientos-backoffice",
+                lead_status: "qualifying",
+              },
+            });
+          }
+        } catch (e) {
+          log.warn({ err: e, leadId }, "meta_capi_status_failed");
+        }
+      });
+    }
   }
 
   // Log interaction
