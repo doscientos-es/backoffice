@@ -92,6 +92,7 @@ export function LeadsList({
       <span key="created" className="tabular-nums">
         {relativeTime(l.created_at)}
       </span>,
+      // biome-ignore lint/a11y/noStaticElementInteractions: wrapper only stops click propagation to the parent row; contains own interactive controls
       <div key="actions" className="flex justify-end" onClick={(e) => e.stopPropagation()}>
         <LeadFastActions lead={l} aiEnabled={aiEnabled} />
       </div>,

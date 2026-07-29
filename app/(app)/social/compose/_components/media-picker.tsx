@@ -1,9 +1,9 @@
 "use client";
 
-import { ImagePlus, Loader2, Upload, X } from "lucide-react";
-import { useRef, useState } from "react";
 import type { MediaItem } from "@/lib/social/core";
 import { cn } from "@/lib/utils";
+import { ImagePlus, Loader2, Upload, X } from "lucide-react";
+import { useRef, useState } from "react";
 import { MediaThumb } from "../../_components/media-thumb";
 
 /**
@@ -123,6 +123,7 @@ export function MediaPicker({
   return (
     <div className="flex flex-col gap-2">
       {/* Drop zone wrapper */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop zone; file selection is also available via the accessible input/button below */}
       <div
         onDragEnter={onDragEnter}
         onDragLeave={onDragLeave}

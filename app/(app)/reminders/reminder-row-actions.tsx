@@ -1,10 +1,10 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { CheckCircle2, Loader2, RotateCcw, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { sileo } from "sileo";
-import { Button } from "@/components/ui/button";
 import { completeReminder, deleteReminder, uncompleteReminder } from "./actions";
 
 type Props = {
@@ -45,6 +45,7 @@ export function ReminderRowActions({ reminderId, completedAt }: Props) {
   }
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: wrapper only stops click propagation to the parent row; contains own interactive controls
     <div
       className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
       onClick={(e) => e.stopPropagation()}

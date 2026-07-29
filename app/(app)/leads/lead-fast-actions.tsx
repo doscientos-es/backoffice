@@ -1,8 +1,5 @@
 "use client";
 
-import { Brain, Mail, Phone, Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { type ReactNode, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,6 +19,9 @@ import { Textarea } from "@/components/ui/textarea";
 import type { LeadInteraction, LeadListItem } from "@/lib/leads/types";
 import type { CallOutcome } from "@/lib/schemas/lead";
 import { relativeTime } from "@/lib/utils";
+import { Brain, Mail, Phone, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { type ReactNode, useState } from "react";
 import { logLeadCall, logLeadEmail } from "./actions";
 import { CallDigestDialog } from "./call-digest-dialog";
 
@@ -65,6 +65,7 @@ export function LeadFastActions({ lead, aiEnabled }: Props) {
   // Detenemos pointerdown para no activar el drag del kanban al pulsar
   // los iconos. En la vista lista es inocuo.
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: wrapper only stops click/drag propagation to the parent row/card; contains own interactive controls
     <div
       className="flex items-center gap-0.5"
       onPointerDown={(e) => e.stopPropagation()}

@@ -1,9 +1,9 @@
 "use client";
 
-import { useDraggable, useDroppable } from "@dnd-kit/core";
-import { format } from "date-fns";
 import type { CalendarEvent } from "@/lib/calendar/types";
 import { cn } from "@/lib/utils";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
+import { format } from "date-fns";
 import { EventChip, useCalendarCreate } from "./calendar-grid";
 
 type DayCellProps = {
@@ -24,6 +24,7 @@ export function DayCell({ day, events, isCurrentMonth, isToday }: DayCellProps) 
   const overflow = events.length - MAX_VISIBLE;
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: mouse-only quick-create convenience; the "+" button below is the accessible equivalent
     <div
       ref={setNodeRef}
       onClick={() => openCreate(isoDate)}
@@ -64,6 +65,7 @@ export function DayCell({ day, events, isCurrentMonth, isToday }: DayCellProps) 
 function DraggableChip({ event }: { event: CalendarEvent }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: event.id });
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: role/tabIndex/keyboard handling supplied by dnd-kit's {...attributes}/{...listeners}
     <div
       ref={setNodeRef}
       {...listeners}

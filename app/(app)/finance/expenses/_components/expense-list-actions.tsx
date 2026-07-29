@@ -1,9 +1,5 @@
 "use client";
 
-import { Copy, Pencil, Trash2 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,6 +11,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { ExpenseListItem, VendorSuggestion } from "@/lib/finance/types";
+import { Copy, Pencil, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { ExpenseEditDialog } from "../[id]/expense-edit-dialog";
 import { removeExpense } from "../actions";
 
@@ -55,6 +55,7 @@ export function ExpenseListActions({
   }
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: wrapper only stops click propagation to the parent row; contains own interactive controls
     <div
       className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100"
       onClick={(e) => e.stopPropagation()}

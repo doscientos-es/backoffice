@@ -1,9 +1,5 @@
 "use client";
 
-import { CalendarClock, FileText, MessageCircle, Send } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,6 +15,10 @@ import type { MediaItem, SocialPlatform } from "@/lib/social/core";
 import { PLATFORM_LABELS, SOCIAL_PLATFORMS } from "@/lib/social/core";
 import { cn } from "@/lib/utils";
 import { datetimeLocalToIso, toDatetimeLocalValue } from "@/lib/utils/date-time";
+import { CalendarClock, FileText, MessageCircle, Send } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useMemo, useState, useTransition } from "react";
 import { PlatformIcon } from "../../_components/platform";
 import { createPost } from "../../actions";
 import { AIPostSuggester } from "./ai-post-suggester";
@@ -46,6 +46,13 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
   const router = useRouter();
   const feedback = useFormFeedback({ successResetMs: 4000 });
   const [pending, startTransition] = useTransition();
+  // Synchronous re-entrancy guard: React's `pending` flag from useTransition
+  // can lag a tick behind rapid double clicks, so a ref (updated immediately,
+  // not on re-render) is what actually stops a second submit from firing.
+  const submitLockRef = useRef(false);
+  // Sticks once the post is created successfully so the button stays disabled
+  // while we navigate away, instead of allowing a second identical post.
+  const [submitted, setSubmitted] = useState(false);
 
   const availableSet = useMemo(() => new Set(available), [available]);
   const [caption, setCaption] = useState("");
@@ -121,10 +128,12 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitted || submitLockRef.current) return;
     if (!canSubmit || pending) {
       feedback.setError("Selecciona al menos una red y, si programas, indica la fecha");
       return;
     }
+    submitLockRef.current = true;
     const scheduledAt =
       mode === "schedule" && scheduledLocal ? datetimeLocalToIso(scheduledLocal) : null;
     const captions = perPlatform ? buildCaptions() : undefined;
@@ -135,11 +144,11 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
     const automation =
       automationEnabled && automationPlatforms.length > 0
         ? {
-            keyword: automationKeyword,
-            publicReply: automationPublicReply,
-            privateMessage: automationPrivateMessage,
-            platforms: automationPlatforms,
-          }
+          keyword: automationKeyword,
+          publicReply: automationPublicReply,
+          privateMessage: automationPrivateMessage,
+          platforms: automationPlatforms,
+        }
         : undefined;
     feedback.setPending();
     startTransition(async () => {
@@ -153,9 +162,11 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
         automation,
       });
       if (!res.ok) {
+        submitLockRef.current = false;
         feedback.setError(res.error);
         return;
       }
+      setSubmitted(true);
       feedback.setSuccess(mode === "now" ? "Publicando…" : "Guardado");
       router.push("/social");
       router.refresh();
@@ -415,7 +426,11 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
         <Button asChild variant="ghost" size="sm">
           <Link href="/social">Cancelar</Link>
         </Button>
-        <SubmitButton loading={pending} disabled={!canSubmit} pendingLabel="Guardando…">
+        <SubmitButton
+          loading={pending || submitted}
+          disabled={!canSubmit || submitted}
+          pendingLabel="Guardando…"
+        >
           {mode === "now" ? "Publicar" : mode === "schedule" ? "Programar" : "Guardar borrador"}
         </SubmitButton>
       </div>
