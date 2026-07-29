@@ -1,18 +1,13 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { PLATFORM_LABELS } from "@/lib/social/core";
+import { cn } from "@/lib/utils";
 import { CheckCircle, Send, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { sileo } from "sileo";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { publishPost } from "../actions";
-
-const PLATFORM_LABEL: Record<string, string> = {
-  instagram: "Instagram",
-  facebook: "Facebook",
-  linkedin: "LinkedIn",
-};
 
 type Phase = "idle" | "loading" | "success" | "error";
 
@@ -59,9 +54,10 @@ export function PublishButton({
     // Show per-network toasts so the user knows exactly what happened.
     const failed = res.targets.filter((t) => !t.ok);
     const succeeded = res.targets.filter((t) => t.ok);
+    const labels = PLATFORM_LABELS as Record<string, string>;
     for (const t of failed) {
       sileo.error({
-        title: `${PLATFORM_LABEL[t.platform] ?? t.platform}: publicación fallida`,
+        title: `${labels[t.platform] ?? t.platform}: publicación fallida`,
         description: t.error ?? "Error desconocido",
       });
     }
@@ -69,7 +65,7 @@ export function PublishButton({
       sileo.success({ title: "Publicado correctamente en todas las redes" });
     } else if (succeeded.length > 0) {
       sileo.success({
-        title: `Publicado en ${succeeded.map((t) => PLATFORM_LABEL[t.platform] ?? t.platform).join(", ")}`,
+        title: `Publicado en ${succeeded.map((t) => labels[t.platform] ?? t.platform).join(", ")}`,
       });
     }
 

@@ -258,17 +258,26 @@ export async function getPost(id: string): Promise<PostListItem | null> {
   return data ? mapPost(data as unknown as PostRow) : null;
 }
 
-/** Flip a post + all its targets into the `publishing` state. */
+/**
+ * Flip a post + its not-yet-published targets into the `publishing` state.
+ * Targets already `published` are left untouched so a retry (e.g. only
+ * Google Business Profile failed) never re-fires already-succeeded networks.
+ */
 export async function markPublishing(postId: string): Promise<void> {
   const supabase = await createServerClient();
   await supabase.from("social_posts").update({ status: "publishing" }).eq("id", postId);
   await supabase
     .from("social_post_targets")
     .update({ status: "publishing", error: null })
-    .eq("post_id", postId);
+    .eq("post_id", postId)
+    .neq("status", "published");
 }
 
-/** Persist a fan-out result: per-target status + rolled-up post status. */
+/**
+ * Persist a fan-out result: per-target status, then a post-level status
+ * recomputed from EVERY target (not just the ones just retried), so a
+ * selective retry correctly rolls up alongside previously-published targets.
+ */
 export async function applyFanOut(postId: string, result: FanOutResult): Promise<void> {
   const supabase = await createServerClient();
   const now = new Date().toISOString();
@@ -289,11 +298,23 @@ export async function applyFanOut(postId: string, result: FanOutResult): Promise
     ),
   );
 
-  const anyOk = result.targets.some((t) => t.ok);
-  await supabase
-    .from("social_posts")
-    .update({ status: result.status, published_at: anyOk ? now : null })
-    .eq("id", postId);
+  const [{ data: allTargets }, { data: postRow }] = await Promise.all([
+    supabase.from("social_post_targets").select("status").eq("post_id", postId),
+    supabase.from("social_posts").select("published_at").eq("id", postId).maybeSingle(),
+  ]);
+  const statuses = (allTargets ?? []).map((t) => t.status as TargetStatus);
+  const okCount = statuses.filter((s) => s === "published").length;
+  const status: PostStatus =
+    statuses.length === 0 || okCount === 0
+      ? "failed"
+      : okCount === statuses.length
+        ? "published"
+        : "partially_failed";
+  // Keep the original published_at once set, so a later retry (e.g. Google
+  // Business Profile approved days after the rest) doesn't move the date.
+  const publishedAt = (postRow?.published_at as string | null) ?? (okCount > 0 ? now : null);
+
+  await supabase.from("social_posts").update({ status, published_at: publishedAt }).eq("id", postId);
 }
 
 /** Soft-delete a post (sets `deleted_at`). */

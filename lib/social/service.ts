@@ -24,7 +24,7 @@ import {
   fanOutPublish,
 } from "@/lib/social/core";
 import { metaPageToken } from "@/lib/social/meta/graph-client";
-import { getAccountMedia, type InstagramMedia, igUserId } from "@/lib/social/meta/instagram-api";
+import { getAccountMedia, igUserId, type InstagramMedia } from "@/lib/social/meta/instagram-api";
 import { socialRegistry } from "@/lib/social/registry";
 import * as repo from "@/lib/social/repo";
 import { removeMedia } from "@/lib/social/storage";
@@ -95,13 +95,18 @@ export async function importHistoricalInstagramPosts(): Promise<{
 }
 
 /**
- * Publish an existing draft/scheduled post to every target it declares. Marks
- * the post `publishing`, fans out, then persists the per-target outcome.
+ * Publish an existing draft/scheduled post to its pending targets, or retry
+ * only the targets that previously failed. Targets already `published` are
+ * skipped so retrying a partially-failed post (e.g. only Google Business
+ * Profile pending approval) never republishes to networks that already
+ * succeeded. Marks the post `publishing`, fans out, then persists the
+ * per-target outcome.
  */
 export async function publishPost(postId: string): Promise<FanOutResult> {
   const post = await repo.getPost(postId);
   if (!post) throw new Error("El post no existe.");
-  const platforms = post.targets.map((t) => t.platform);
+  const pendingTargets = post.targets.filter((t) => t.status !== "published");
+  const platforms = pendingTargets.map((t) => t.platform);
   if (platforms.length === 0) throw new Error("El post no tiene ninguna red seleccionada.");
 
   await repo.markPublishing(postId);
@@ -269,7 +274,7 @@ export async function deletePostLocalWithMedia(postId: string): Promise<void> {
   await repo.deletePost(postId);
   if (post) {
     const paths = post.media.map((m) => m.storagePath).filter(Boolean);
-    if (paths.length) removeMedia(paths).catch(() => {});
+    if (paths.length) removeMedia(paths).catch(() => { });
   }
 }
 
