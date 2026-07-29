@@ -63,7 +63,7 @@ export function GoogleReviewCard({ review }: { review: GoogleReviewView }) {
       <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0 p-4 pb-2">
         <div className="flex min-w-0 items-center gap-3">
           {review.reviewerPhotoUrl ? (
-            // Google-hosted avatars can be unavailable in environments without remote image config.
+            // biome-ignore lint/performance/noImgElement: remote Google avatar, no next/image remote pattern configured for this host
             <img
               src={review.reviewerPhotoUrl}
               alt=""
@@ -87,11 +87,12 @@ export function GoogleReviewCard({ review }: { review: GoogleReviewView }) {
         </div>
         <div
           className="flex shrink-0 items-center gap-1"
+          role="img"
           aria-label={RATING_LABELS[review.starRating]}
         >
           {Array.from({ length: 5 }, (_, index) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: fixed 5-star rating, order never changes
             <Star
+              // biome-ignore lint/suspicious/noArrayIndexKey: fixed 5-star rating, order never changes
               key={`star-${index}`}
               className={cn(
                 "size-3.5",
