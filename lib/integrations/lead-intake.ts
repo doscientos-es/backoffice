@@ -1,12 +1,13 @@
-import { after } from "next/server";
-import { z } from "zod";
 import {
   linkConversionEventsToLead,
   recordConversionEvent,
 } from "@/lib/integrations/conversion-events";
+import { pushMetaConversion } from "@/lib/integrations/meta-capi";
 import { normalizeCompanySize, normalizeLeadSource, normalizeUrgency } from "@/lib/leads/constants";
 import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { after } from "next/server";
+import { z } from "zod";
 import { runLeadPipeline } from "./lead-pipeline";
 import { notifyNewLead } from "./notify-new-lead";
 
@@ -432,6 +433,21 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
         visitorId: norm.context?.visitorId,
         eventId: norm.context?.eventId,
       }).catch((e) => log.error({ err: e, leadId }, "conversion events link failed")),
+      // Server-side Meta CAPI: captures the lead even when the browser Pixel
+      // was blocked by cookie consent or an ad blocker. Reuses the session
+      // event_id so Meta dedupes against the browser-side fbq('track','Lead')
+      // call when the visitor did accept marketing cookies.
+      pushMetaConversion({
+        eventName: "Lead",
+        eventId: (row.event_id as string | null) ?? `lead-${leadId}`,
+        email: row.email,
+        phone: row.phone,
+        value: row.estimated_value,
+        actionSource: "website",
+        eventSourceUrl: row.landing_path ? `https://doscientos.es${row.landing_path}` : undefined,
+        clientIpAddress: row.ip as string | null,
+        clientUserAgent: row.browser as string | null,
+      }).catch((e) => log.error({ err: e, leadId }, "meta capi lead push failed")),
     ]);
   });
 

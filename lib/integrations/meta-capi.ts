@@ -1,7 +1,7 @@
-import crypto from "node:crypto";
 import { isDemoMode } from "@/lib/demo";
 import { serverEnv } from "@/lib/env";
 import { scopedLogger } from "@/lib/logger";
+import crypto from "node:crypto";
 
 /**
  * Meta Conversions API (server-side events).
@@ -31,13 +31,33 @@ export type CapiConversionInput = {
    * `Purchase` — fired when an invoice is marked paid (highest-value signal).
    */
   eventName: "Lead" | "Purchase";
-  /** Deduplication key. Use `${eventName}-${leadId}` to prevent double-counting. */
+  /**
+   * Deduplication key. Use `${eventName}-${leadId}` for backend-only events.
+   * For events that also fire client-side via the Pixel (e.g. a form submit
+   * tracked by both `fbq('track','Lead',...)` and this server call), reuse
+   * the same session `event_id` the browser sent so Meta merges the two into
+   * a single event instead of double-counting.
+   */
   eventId: string;
   email?: string | null;
   phone?: string | null;
   /** Estimated deal value in EUR for bid optimization. */
   value?: number | null;
   currency?: string;
+  /**
+   * Where the event originated. Defaults to `"crm"` for internal backoffice
+   * actions (e.g. manually converting a lead to a client). Use `"website"`
+   * for events captured from a public form submission — pair it with
+   * `eventSourceUrl`/`clientIpAddress`/`clientUserAgent` for better match
+   * quality and to dedup correctly against the browser Pixel event.
+   */
+  actionSource?: "website" | "crm";
+  /** Full URL of the page where the event happened. Expected by Meta for `"website"` events. */
+  eventSourceUrl?: string | null;
+  /** Raw request IP — improves Advanced Matching. */
+  clientIpAddress?: string | null;
+  /** Raw `User-Agent` header — improves Advanced Matching. */
+  clientUserAgent?: string | null;
 };
 
 /**
@@ -58,7 +78,7 @@ export async function pushMetaConversion(input: CapiConversionInput): Promise<vo
   }
 
   // Hashed user data — Meta requires lowercase, trimmed, SHA-256.
-  const userData: Record<string, string[]> = {};
+  const userData: Record<string, string | string[]> = {};
   if (input.email) {
     userData.em = [sha256hex(input.email)];
   }
@@ -67,11 +87,17 @@ export async function pushMetaConversion(input: CapiConversionInput): Promise<vo
     if (normalized) userData.ph = [sha256hex(normalized)];
   }
 
-  // Meta requires at least one user_data field.
-  if (!Object.keys(userData).length) {
+  // Meta requires at least one user_data field. em/ph are what actually let
+  // Meta match the event to a person, so we gate on those specifically —
+  // IP/UA alone are too weak a signal to justify sending the event.
+  if (!userData.em && !userData.ph) {
     log.debug({ eventId: input.eventId }, "meta capi: no user data available, skipping");
     return;
   }
+
+  // Not hashed — Meta uses these as-is for Advanced Matching.
+  if (input.clientIpAddress) userData.client_ip_address = input.clientIpAddress;
+  if (input.clientUserAgent) userData.client_user_agent = input.clientUserAgent;
 
   const payload = {
     data: [
@@ -79,7 +105,8 @@ export async function pushMetaConversion(input: CapiConversionInput): Promise<vo
         event_name: input.eventName,
         event_time: Math.floor(Date.now() / 1000),
         event_id: input.eventId,
-        action_source: "crm",
+        action_source: input.actionSource ?? "crm",
+        event_source_url: input.eventSourceUrl ?? undefined,
         user_data: userData,
         custom_data:
           input.value != null
