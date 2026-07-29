@@ -117,6 +117,7 @@ export function GoogleBusinessMediaPanel({ media }: { media: GoogleBusinessMedia
               key={item.name}
               className="group relative overflow-hidden rounded-lg border border-border"
             >
+              {/* biome-ignore lint/performance/noImgElement: URL externa de Google Business, no compatible con next/image */}
               <img
                 src={item.googleUrl ?? item.sourceUrl}
                 alt={item.description ?? "Foto de la ficha"}

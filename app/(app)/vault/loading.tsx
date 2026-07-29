@@ -10,7 +10,6 @@ export default function VaultLoading() {
       <Skeleton className="h-9 w-full max-w-sm rounded-md" />
       <div className="flex flex-col gap-2">
         {[0, 1, 2, 3, 4, 5].map((i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton rows, order never changes
           <Skeleton key={i} className="h-14 w-full rounded-lg" />
         ))}
       </div>

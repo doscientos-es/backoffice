@@ -21,6 +21,7 @@ export function MediaThumb({ item, className }: { item: MediaItem; className?: s
   }
   return (
     <div className={base}>
+      {/* biome-ignore lint/performance/noImgElement: URL externa de Supabase Storage, no compatible con next/image */}
       <img src={item.publicUrl} alt="" className="size-full object-cover" loading="lazy" />
     </div>
   );

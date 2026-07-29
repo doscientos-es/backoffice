@@ -24,7 +24,6 @@ export default function InvoiceDetailLoading() {
             ))}
           </div>
           {[0, 1, 2, 3].map((i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton rows, order never changes
             <div key={i} className="flex gap-4 py-1.5">
               {LINE_WIDTHS.map((w, j) => (
                 // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton widths, order never changes

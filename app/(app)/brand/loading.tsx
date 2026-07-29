@@ -13,13 +13,11 @@ export default function BrandLoading() {
       <div className="flex flex-col gap-4">
         <div className="flex gap-0.5 border-b border-border">
           {[0, 1, 2].map((i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton tabs, order never changes
             <Skeleton key={i} className="mb-2 h-5 w-20 rounded" />
           ))}
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton cards, order never changes
             <Skeleton key={i} className="h-40 w-full rounded-lg" />
           ))}
         </div>

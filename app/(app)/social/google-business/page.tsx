@@ -1,4 +1,4 @@
-import { ArrowUpRight, BarChart3, MapPin, Star } from "lucide-react";
+import { ArrowUpRight, BarChart3, MapPin, Star, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -135,6 +135,18 @@ export default async function GoogleBusinessPerformancePage() {
               <GoogleBusinessMediaPanel media={media} />
             </CardContent>
           </Card>
+          {metrics.length === 0 && (
+            <div className="flex items-start gap-2.5 rounded-lg border border-amber-300/60 bg-amber-500/10 p-3 text-sm text-amber-700 dark:border-amber-700/50 dark:text-amber-300">
+              <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+              <p>
+                Todavía no hay métricas guardadas: los números de abajo están a 0 porque nunca se
+                han sincronizado, no porque no haya actividad. Pulsa &quot;Sincronizar
+                métricas&quot; y revisa el mensaje que aparezca; si Google devuelve un error (por
+                ejemplo, la API de rendimiento sin activar), se mostrará ahí en lugar de guardarse
+                como cero.
+              </p>
+            </div>
+          )}
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {GOOGLE_BUSINESS_DAILY_METRICS.map((metric) => (
               <Card key={metric}>

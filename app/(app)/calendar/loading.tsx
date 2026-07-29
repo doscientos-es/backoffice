@@ -17,7 +17,6 @@ export default function CalendarLoading() {
       </div>
       <div className="grid grid-cols-7 gap-px overflow-hidden rounded-lg border border-border bg-border">
         {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: static weekday header, order never changes
           <Skeleton key={i} className="h-6 w-full rounded-none bg-muted" />
         ))}
         {Array.from({ length: 35 }, (_, i) => (

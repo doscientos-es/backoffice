@@ -52,6 +52,7 @@ function BreadcrumbLink({
 
 function BreadcrumbPage({ className, ...props }: React.ComponentProps<"span">) {
   return (
+    // biome-ignore lint/a11y/useSemanticElements: span deshabilitado intencionalmente, no debe ser un <a> navegable
     <span
       data-slot="breadcrumb-page"
       role="link"

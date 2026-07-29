@@ -36,7 +36,7 @@ export function EntityAvatar({
 }) {
   if (logoUrl) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
+      // biome-ignore lint/performance/noImgElement: URL externa de avatar, no compatible con next/image
       <img
         src={logoUrl}
         alt={name}

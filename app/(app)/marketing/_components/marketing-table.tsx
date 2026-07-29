@@ -110,6 +110,7 @@ function AdsTable({
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
                         {ad.preview_url && (
+                          // biome-ignore lint/performance/noImgElement: URL externa de preview del anuncio, no compatible con next/image
                           <img
                             src={ad.preview_url}
                             className="h-8 w-8 rounded object-cover"

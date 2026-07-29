@@ -28,7 +28,7 @@ export function DocPreview({ url, mimeType, name }: Props) {
   if (mimeType?.startsWith("image/")) {
     return (
       <div className="flex justify-center p-6 bg-muted/30 rounded-sm">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {/* biome-ignore lint/performance/noImgElement: URL arbitraria de documento, no compatible con next/image */}
         <img src={url} alt={name} className="max-w-full rounded object-contain max-h-[75vh]" />
       </div>
     );

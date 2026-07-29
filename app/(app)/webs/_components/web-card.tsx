@@ -18,6 +18,7 @@ async function SiteStatusDot({ url }: { url: string }) {
     : (s.error ?? `Error ${s.status ?? ""}`);
   return (
     <span
+      role="img"
       className={cn(
         "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-card",
         s.ok ? "bg-green-500" : "bg-destructive",
@@ -88,7 +89,7 @@ export function WebCard({ site }: { site: WebProjectListItem }) {
       {/* Header */}
       <div className="flex items-start gap-3 p-4 pb-3">
         <div className="relative mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted ring-1 ring-border/60">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {/* biome-ignore lint/performance/noImgElement: favicon externo de Google, no compatible con next/image */}
           <img
             src={`https://www.google.com/s2/favicons?domain=${hostname}&sz=64`}
             alt=""

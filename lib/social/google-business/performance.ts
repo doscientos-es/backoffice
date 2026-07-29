@@ -1,4 +1,8 @@
+import { scopedLogger } from "@/lib/logger";
+import { PublishError, toErrorMessage } from "@/lib/social/core";
 import { googleBusinessLocationId, googleBusinessPerformanceRequest } from "./client";
+
+const log = scopedLogger("google-business-performance");
 
 export const GOOGLE_BUSINESS_DAILY_METRICS = [
   "BUSINESS_IMPRESSIONS_DESKTOP_MAPS",
@@ -68,6 +72,14 @@ async function fetchMetric(
   });
 }
 
+/**
+ * Fetch every daily metric, tolerating individual failures (e.g. a metric
+ * deprecated for this account) so a partial sync still saves what it could.
+ * But if EVERY metric request fails — the telltale sign of the Performance
+ * API not being enabled/authorized yet — surface that as a thrown error
+ * instead of silently returning `[]`, which upstream would otherwise persist
+ * as "0 metrics synced" and look like a successful sync with zero traffic.
+ */
 export async function fetchGoogleBusinessPerformance(
   days = 30,
 ): Promise<GoogleBusinessDailyMetricValue[]> {
@@ -77,5 +89,27 @@ export async function fetchGoogleBusinessPerformance(
   const results = await Promise.allSettled(
     GOOGLE_BUSINESS_DAILY_METRICS.map((metric) => fetchMetric(metric, start, end)),
   );
+
+  const rejected = results.filter(
+    (result): result is PromiseRejectedResult => result.status === "rejected",
+  );
+  if (rejected.length === results.length) {
+    const reason = toErrorMessage(rejected[0]?.reason);
+    throw new PublishError(
+      "google_business_profile",
+      `No se pudieron obtener las métricas de Google Business Profile: ${reason}`,
+    );
+  }
+  if (rejected.length > 0) {
+    log.warn(
+      {
+        failed: rejected.length,
+        total: results.length,
+        reason: toErrorMessage(rejected[0]?.reason),
+      },
+      "some_google_business_metrics_failed",
+    );
+  }
+
   return results.flatMap((result) => (result.status === "fulfilled" ? result.value : []));
 }

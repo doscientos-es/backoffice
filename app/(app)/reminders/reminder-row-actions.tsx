@@ -1,10 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { CheckCircle2, Loader2, RotateCcw, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { sileo } from "sileo";
+import { Button } from "@/components/ui/button";
 import { completeReminder, deleteReminder, uncompleteReminder } from "./actions";
 
 type Props = {

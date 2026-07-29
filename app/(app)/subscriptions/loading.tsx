@@ -16,7 +16,6 @@ export default function SubscriptionsLoading() {
           ))}
         </div>
         {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton rows, order never changes
           <div key={i} className="flex gap-4 border-b px-4 py-3 last:border-0">
             {[120, 140, 90, 80, 110, 120].map((w, j) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton widths, order never changes

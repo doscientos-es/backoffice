@@ -1,9 +1,9 @@
 "use client";
 
-import type { MediaItem } from "@/lib/social/core";
-import { cn } from "@/lib/utils";
 import { ImagePlus, Loader2, Upload, X } from "lucide-react";
 import { useRef, useState } from "react";
+import type { MediaItem } from "@/lib/social/core";
+import { cn } from "@/lib/utils";
 import { MediaThumb } from "../../_components/media-thumb";
 
 /**

@@ -1,10 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { useUndoableDelete } from "@/lib/hooks/use-undoable-delete";
 import { CheckCircle2, Loader2, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { Button } from "@/components/ui/button";
+import { useUndoableDelete } from "@/lib/hooks/use-undoable-delete";
 import { deleteTask, restoreTask, updateTaskStatus } from "./actions";
 
 type Props = {

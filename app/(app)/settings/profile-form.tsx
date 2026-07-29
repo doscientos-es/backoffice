@@ -202,7 +202,9 @@ export function ProfileForm({
       {/* Signature preview — auto-generated */}
       <div className="space-y-1.5">
         <p className="text-xs font-medium text-muted-foreground">Vista previa de la firma</p>
+        {/* biome-ignore lint/a11y/useSemanticElements: <fieldset> introduciría estilos por defecto no deseados */}
         <div
+          role="group"
           className="min-h-12 rounded-lg border border-dashed border-border bg-white px-4 py-3 text-sm text-foreground"
           aria-label="Vista previa de la firma"
         >

@@ -82,7 +82,7 @@ function CoverSlide({ proposal }: { proposal: DeckProposal }) {
         <Stagger i={3}>
           <div className="flex flex-col items-center gap-3">
             {proposal.client_logo_url && (
-              // eslint-disable-next-line @next/next/no-img-element
+              // biome-ignore lint/performance/noImgElement: URL externa del logo del cliente, no compatible con next/image
               <img
                 src={proposal.client_logo_url}
                 alt={`Logo ${proposal.client_name}`}
@@ -373,7 +373,7 @@ function TeamSlide({ team }: { team: DeckTeamMember[] }) {
           >
             <div className="size-16 sm:w-20 sm:h-20 rounded-full overflow-hidden bg-zinc-200 ring-2 ring-[#2A4227]/10">
               {member.avatar_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
+                // biome-ignore lint/performance/noImgElement: URL externa de avatar, no compatible con next/image
                 <img
                   src={member.avatar_url}
                   alt={member.name}

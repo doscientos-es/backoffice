@@ -588,6 +588,7 @@ function Card({
         </div>
         {stale && !isOverlay && (
           <span
+            role="img"
             aria-label="Lead estancado: necesita seguimiento"
             title={`Sin cambios ${relativeTime(lead.updated_at)}`}
             className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"

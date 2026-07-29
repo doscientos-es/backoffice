@@ -10,14 +10,19 @@ import {
   Circle,
   Clock,
   Layers,
+  Loader2,
   MapPin,
   Tag,
+  Trash2,
   User,
   Users,
 } from "lucide-react";
 import Link from "next/link";
+import { useTransition } from "react";
+import { sileo } from "sileo";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { deleteCalendarEvent } from "@/lib/calendar/actions";
 import {
   CALENDAR_LAYER_COLORS,
   CALENDAR_LAYER_LABELS,
@@ -34,14 +39,35 @@ type Props = {
 export function CalendarEventDialog({ event, onClose, onDeleted }: Props) {
   return (
     <Dialog open={!!event} onOpenChange={(o) => !o && onClose()}>
-      {event && <EventDialogContent event={event} onClose={onClose} />}
+      {event && <EventDialogContent event={event} onClose={onClose} onDeleted={onDeleted} />}
     </Dialog>
   );
 }
 
-function EventDialogContent({ event, onClose }: { event: CalendarEvent; onClose: () => void }) {
+function EventDialogContent({
+  event,
+  onClose,
+  onDeleted,
+}: {
+  event: CalendarEvent;
+  onClose: () => void;
+  onDeleted?: (id: string) => void;
+}) {
   const colors = CALENDAR_LAYER_COLORS[event.kind];
   const label = CALENDAR_LAYER_LABELS[event.kind];
+  const [deletePending, startDelete] = useTransition();
+
+  function handleDelete() {
+    startDelete(async () => {
+      const res = await deleteCalendarEvent(event.id);
+      if (!res.ok) {
+        sileo.error({ title: res.error });
+        return;
+      }
+      sileo.success({ title: "Reunión eliminada" });
+      onDeleted?.(event.id);
+    });
+  }
 
   const startDate = parseISO(event.start);
   const endDate = parseISO(event.end);
@@ -197,6 +223,22 @@ function EventDialogContent({ event, onClose }: { event: CalendarEvent; onClose:
 
       {/* Footer */}
       <div className="-mx-4 -mb-4 flex items-center justify-end gap-2 rounded-b-xl border-t bg-muted/50 px-4 py-3">
+        {event.kind === "google_meeting" && (
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={deletePending}
+            onClick={handleDelete}
+            className="mr-auto text-muted-foreground hover:text-destructive"
+          >
+            {deletePending ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Trash2 className="size-3.5" />
+            )}
+            Eliminar
+          </Button>
+        )}
         <Button variant="ghost" size="sm" onClick={onClose}>
           Cerrar
         </Button>

@@ -70,7 +70,7 @@ function AssetCard({ asset, isAdmin }: { asset: BrandAsset; isAdmin: boolean }) 
     <div className="group flex flex-col rounded-lg border border-border bg-card overflow-hidden">
       <div className="relative flex items-center justify-center bg-secondary/40 h-36">
         {isImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
+          // biome-ignore lint/performance/noImgElement: URL externa de Supabase Storage, no compatible con next/image
           <img
             src={asset.public_url}
             alt={asset.name}

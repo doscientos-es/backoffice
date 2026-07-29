@@ -1,5 +1,9 @@
 "use client";
 
+import { CalendarClock, FileText, MessageCircle, Send } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -15,10 +19,6 @@ import type { MediaItem, SocialPlatform } from "@/lib/social/core";
 import { PLATFORM_LABELS, SOCIAL_PLATFORMS } from "@/lib/social/core";
 import { cn } from "@/lib/utils";
 import { datetimeLocalToIso, toDatetimeLocalValue } from "@/lib/utils/date-time";
-import { CalendarClock, FileText, MessageCircle, Send } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
 import { PlatformIcon } from "../../_components/platform";
 import { createPost } from "../../actions";
 import { AIPostSuggester } from "./ai-post-suggester";
@@ -144,11 +144,11 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
     const automation =
       automationEnabled && automationPlatforms.length > 0
         ? {
-          keyword: automationKeyword,
-          publicReply: automationPublicReply,
-          privateMessage: automationPrivateMessage,
-          platforms: automationPlatforms,
-        }
+            keyword: automationKeyword,
+            publicReply: automationPublicReply,
+            privateMessage: automationPrivateMessage,
+            platforms: automationPlatforms,
+          }
         : undefined;
     feedback.setPending();
     startTransition(async () => {

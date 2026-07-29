@@ -6,6 +6,7 @@ import { Separator } from "./separator";
 
 function ItemGroup({ className, ...props }: React.ComponentProps<"div">) {
   return (
+    // biome-ignore lint/a11y/useSemanticElements: <ul>/<ol> introducirían estilos de lista por defecto no deseados
     <div
       role="list"
       data-slot="item-group"

@@ -1,5 +1,9 @@
 "use client";
 
+import { Copy, Pencil, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,10 +15,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { ExpenseListItem, VendorSuggestion } from "@/lib/finance/types";
-import { Copy, Pencil, Trash2 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
 import { ExpenseEditDialog } from "../[id]/expense-edit-dialog";
 import { removeExpense } from "../actions";
 

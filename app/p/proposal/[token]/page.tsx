@@ -289,7 +289,7 @@ export default async function PortalProposalPage({
           </p>
           <div className="flex items-center gap-3">
             {client?.logo_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
+              // biome-ignore lint/performance/noImgElement: URL externa del logo del cliente, no compatible con next/image
               <img
                 src={client.logo_url}
                 alt={`Logo ${recipientName}`}

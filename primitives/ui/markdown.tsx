@@ -157,8 +157,8 @@ export function Markdown({ source, className }: { source: string; className?: st
                     : "text-sm";
             const Tag = `h${b.level}` as "h1" | "h2" | "h3" | "h4";
             return (
-              // biome-ignore lint/suspicious/noArrayIndexKey: blocks are fully recomputed from source on every render
               <Tag
+                // biome-ignore lint/suspicious/noArrayIndexKey: blocks are fully recomputed from source on every render
                 key={i}
                 className={cn("font-semibold tracking-tight", sz, b.level <= 2 && "mt-2")}
               >
@@ -168,16 +168,20 @@ export function Markdown({ source, className }: { source: string; className?: st
           }
           case "ul":
             return (
+              // biome-ignore lint/suspicious/noArrayIndexKey: blocks are fully recomputed from source on every render
               <ul key={i} className="ml-5 list-disc space-y-1">
                 {b.items.map((it, j) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: list items are fully recomputed from source on every render
                   <li key={j}>{renderInline(it)}</li>
                 ))}
               </ul>
             );
           case "ol":
             return (
+              // biome-ignore lint/suspicious/noArrayIndexKey: blocks are fully recomputed from source on every render
               <ol key={i} className="ml-5 list-decimal space-y-1">
                 {b.items.map((it, j) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: list items are fully recomputed from source on every render
                   <li key={j}>{renderInline(it)}</li>
                 ))}
               </ol>
@@ -185,17 +189,21 @@ export function Markdown({ source, className }: { source: string; className?: st
           case "quote":
             return (
               <blockquote
+                // biome-ignore lint/suspicious/noArrayIndexKey: blocks are fully recomputed from source on every render
                 key={i}
                 className="border-l-2 border-border pl-3 italic text-muted-foreground"
               >
                 {b.lines.map((l, j) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: quote lines are fully recomputed from source on every render
                   <p key={j}>{renderInline(l)}</p>
                 ))}
               </blockquote>
             );
           case "hr":
+            // biome-ignore lint/suspicious/noArrayIndexKey: blocks are fully recomputed from source on every render
             return <hr key={i} className="border-border" />;
           default:
+            // biome-ignore lint/suspicious/noArrayIndexKey: blocks are fully recomputed from source on every render
             return <p key={i}>{renderInline(b.text)}</p>;
         }
       })}
