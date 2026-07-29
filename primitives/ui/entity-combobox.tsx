@@ -51,7 +51,7 @@ function focusNextAfter(el: HTMLElement): void {
     ),
   );
   const idx = all.indexOf(el);
-  if (idx !== -1 && idx + 1 < all.length) all[idx + 1].focus();
+  if (idx !== -1 && idx + 1 < all.length) all[idx + 1]?.focus();
 }
 
 /**
