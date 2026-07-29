@@ -1,5 +1,9 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { after } from "next/server";
+import { z } from "zod";
 import { defineAction } from "@/lib/actions/define-action";
 import { sendEmail } from "@/lib/email/resend";
 import { buildSignatureHtml } from "@/lib/email/signature";
@@ -29,10 +33,6 @@ import {
 } from "@/lib/schemas/lead";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { after } from "next/server";
-import { z } from "zod";
 
 const log = scopedLogger("leads.actions");
 
@@ -422,17 +422,17 @@ export const sendEmailToLead = defineAction({
     const renderedHtml = markdownToHtml(renderedMarkdown);
     const finalHtml = data.includeSignature
       ? appendSignature(
-        renderedHtml,
-        buildSignatureHtml(
-          {
-            name: user.name,
-            jobTitle: user.jobTitle ?? undefined,
-            phone: user.phone ?? undefined,
-            contactEmail: user.contactEmail ?? user.emailAlias ?? undefined,
-          },
-          publicEnv.NEXT_PUBLIC_APP_URL || "https://app.doscientos.es",
-        ),
-      )
+          renderedHtml,
+          buildSignatureHtml(
+            {
+              name: user.name,
+              jobTitle: user.jobTitle ?? undefined,
+              phone: user.phone ?? undefined,
+              contactEmail: user.contactEmail ?? user.emailAlias ?? undefined,
+            },
+            publicEnv.NEXT_PUBLIC_APP_URL || "https://app.doscientos.es",
+          ),
+        )
       : renderedHtml;
 
     const renderedSubject = renderTemplate(data.subject, {

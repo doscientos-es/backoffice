@@ -1,7 +1,5 @@
 import "server-only";
 
-import { INVOICE_STATUS, type InvoiceStatus } from "@/lib/status";
-import { formatDate, formatEUR } from "@/lib/utils";
 import {
   Circle,
   Document,
@@ -14,6 +12,8 @@ import {
   Text,
   View,
 } from "@react-pdf/renderer";
+import { INVOICE_STATUS, type InvoiceStatus } from "@/lib/status";
+import { formatDate, formatEUR } from "@/lib/utils";
 import type { InvoicePdfData } from "./pdf-data";
 
 const BRAND = "#2A4227";
@@ -240,7 +240,7 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
         </View>
 
         {(data.company?.iban || data.dueDate || data.portalUrl || data.paymentTerms) &&
-          data.status !== "cancelled" ? (
+        data.status !== "cancelled" ? (
           <View style={styles.payment}>
             <Text style={styles.paymentTitle}>Instrucciones de pago</Text>
 

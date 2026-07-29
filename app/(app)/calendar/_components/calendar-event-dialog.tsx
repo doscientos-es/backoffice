@@ -1,13 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import {
-  CALENDAR_LAYER_COLORS,
-  CALENDAR_LAYER_LABELS,
-  type CalendarEvent,
-} from "@/lib/calendar/types";
-import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -24,6 +16,14 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  CALENDAR_LAYER_COLORS,
+  CALENDAR_LAYER_LABELS,
+  type CalendarEvent,
+} from "@/lib/calendar/types";
+import { cn } from "@/lib/utils";
 
 type Props = {
   event: CalendarEvent | null;
@@ -50,7 +50,7 @@ function EventDialogContent({ event, onClose }: { event: CalendarEvent; onClose:
   const dateStr = event.allDay
     ? format(startDate, "EEEE, d MMMM yyyy", { locale: es })
     : format(startDate, "EEEE, d MMMM yyyy · HH:mm", { locale: es }) +
-    (!sameDay ? ` — ${format(endDate, "d MMM · HH:mm", { locale: es })}` : "");
+      (!sameDay ? ` — ${format(endDate, "d MMM · HH:mm", { locale: es })}` : "");
 
   return (
     <DialogContent className="sm:max-w-sm">

@@ -16,10 +16,7 @@ import type { ActionResult } from "../lib/types";
  * const { value, commit } = useOptimisticUpdate(serverStatus, (msg) => toast.error(msg));
  * commit(next, () => updateStatus({ id, status: next }));
  */
-export function useOptimisticUpdate<T>(
-  initial: T,
-  onError?: (message: string) => void,
-) {
+export function useOptimisticUpdate<T>(initial: T, onError?: (message: string) => void) {
   const [value, setValue] = useState<T>(initial);
   const [, startTransition] = useTransition();
 

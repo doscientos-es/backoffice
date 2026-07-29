@@ -1,4 +1,7 @@
 "use server";
+import { createVerifactuClient } from "@doscientos/verifactu";
+import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { InvoiceEmail } from "@/components/email";
 import { defineAction } from "@/lib/actions/define-action";
 import { requireRole } from "@/lib/auth";
@@ -55,9 +58,6 @@ import { UpdatePortalAccessInput } from "@/lib/schemas/portal";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { verifactuConfigFromEnv } from "@/lib/verifactu/config";
-import { createVerifactuClient } from "@doscientos/verifactu";
-import { revalidatePath } from "next/cache";
-import { after } from "next/server";
 
 const log = scopedLogger("invoices.actions");
 
@@ -95,14 +95,14 @@ export const updateInvoiceStatus = defineAction({
       ...(isFirstIssuance ? { issued_at: now } : {}),
       ...(clientSnapshot
         ? {
-          client_name: clientSnapshot.name,
-          client_nif: clientSnapshot.nif,
-          client_address_street: clientSnapshot.billing_address_street,
-          client_address_zip: clientSnapshot.billing_address_zip,
-          client_address_city: clientSnapshot.billing_address_city,
-          client_address_province: clientSnapshot.billing_address_province,
-          client_address_country: clientSnapshot.billing_address_country,
-        }
+            client_name: clientSnapshot.name,
+            client_nif: clientSnapshot.nif,
+            client_address_street: clientSnapshot.billing_address_street,
+            client_address_zip: clientSnapshot.billing_address_zip,
+            client_address_city: clientSnapshot.billing_address_city,
+            client_address_province: clientSnapshot.billing_address_province,
+            client_address_country: clientSnapshot.billing_address_country,
+          }
         : {}),
     });
 

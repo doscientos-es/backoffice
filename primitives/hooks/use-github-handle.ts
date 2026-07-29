@@ -49,8 +49,14 @@ export function useGithubHandle(handle: string, options: Options = {}): GithubHa
 
   useEffect(() => {
     const trimmed = handle.trim();
-    if (abortRef.current) { abortRef.current.abort(); abortRef.current = null; }
-    if (trimmed.length === 0) { setState(INITIAL); return; }
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+    if (trimmed.length === 0) {
+      setState(INITIAL);
+      return;
+    }
     if (!HANDLE_RE.test(trimmed)) {
       setState({ status: "invalid", avatarUrl: null, displayName: null });
       return;
@@ -68,17 +74,37 @@ export function useGithubHandle(handle: string, options: Options = {}): GithubHa
           signal: controller.signal,
           headers: { Accept: "application/vnd.github+json" },
         });
-        if (res.status === 404) { setState({ status: "not_found", avatarUrl: null, displayName: null }); return; }
-        if (res.status === 403 || res.status === 429) { setState({ status: "rate_limited", avatarUrl: null, displayName: null }); return; }
-        if (!res.ok) { setState({ status: "error", avatarUrl: null, displayName: null }); return; }
-        const data = (await res.json()) as { login?: string; name?: string | null; avatar_url?: string };
-        setState({ status: "valid", avatarUrl: data.avatar_url ?? null, displayName: data.name ?? data.login ?? trimmed });
+        if (res.status === 404) {
+          setState({ status: "not_found", avatarUrl: null, displayName: null });
+          return;
+        }
+        if (res.status === 403 || res.status === 429) {
+          setState({ status: "rate_limited", avatarUrl: null, displayName: null });
+          return;
+        }
+        if (!res.ok) {
+          setState({ status: "error", avatarUrl: null, displayName: null });
+          return;
+        }
+        const data = (await res.json()) as {
+          login?: string;
+          name?: string | null;
+          avatar_url?: string;
+        };
+        setState({
+          status: "valid",
+          avatarUrl: data.avatar_url ?? null,
+          displayName: data.name ?? data.login ?? trimmed,
+        });
       } catch (err) {
         if ((err as { name?: string } | null)?.name === "AbortError") return;
         setState({ status: "error", avatarUrl: null, displayName: null });
       }
     }, debounceMs);
-    return () => { clearTimeout(timer); controller.abort(); };
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [handle, debounceMs]);
 
   return state;

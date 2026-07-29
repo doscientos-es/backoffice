@@ -314,7 +314,10 @@ export async function applyFanOut(postId: string, result: FanOutResult): Promise
   // Business Profile approved days after the rest) doesn't move the date.
   const publishedAt = (postRow?.published_at as string | null) ?? (okCount > 0 ? now : null);
 
-  await supabase.from("social_posts").update({ status, published_at: publishedAt }).eq("id", postId);
+  await supabase
+    .from("social_posts")
+    .update({ status, published_at: publishedAt })
+    .eq("id", postId);
 }
 
 /** Soft-delete a post (sets `deleted_at`). */

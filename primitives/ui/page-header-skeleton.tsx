@@ -1,5 +1,5 @@
-import { Skeleton } from "./skeleton";
 import { cn } from "../lib/utils";
+import { Skeleton } from "./skeleton";
 
 export type PageHeaderSkeletonProps = {
   /** Widths for breadcrumb pills, in px. Set to 0 to hide breadcrumbs. */

@@ -82,7 +82,11 @@ export function useAutosave<T>({
       setState((s) => ({ ...s, status: "saving", error: null }));
 
       if (storageKey && typeof window !== "undefined") {
-        try { window.localStorage.setItem(storageKey, snapshot); } catch { /* ignore */ }
+        try {
+          window.localStorage.setItem(storageKey, snapshot);
+        } catch {
+          /* ignore */
+        }
       }
 
       let errorMessage: string | null = null;
@@ -104,7 +108,11 @@ export function useAutosave<T>({
       lastSavedSnapshotRef.current = snapshot;
       setState({ status: "saved", savedAt: Date.now(), error: null });
       if (storageKey && typeof window !== "undefined") {
-        try { window.localStorage.removeItem(storageKey); } catch { /* ignore */ }
+        try {
+          window.localStorage.removeItem(storageKey);
+        } catch {
+          /* ignore */
+        }
       }
 
       const next = pendingSnapshotRef.current;
@@ -128,8 +136,12 @@ export function useAutosave<T>({
     if (snapshot === lastSavedSnapshotRef.current) return;
 
     if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => { void flush(snapshot, data); }, debounceMs);
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+    timerRef.current = setTimeout(() => {
+      void flush(snapshot, data);
+    }, debounceMs);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, [data, enabled, debounceMs, flush]);
 
   const saveNow = useCallback(async () => {

@@ -1,5 +1,7 @@
 "use client";
 
+import { Bell, CheckSquare, Presentation, Video } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
 import { scheduleLeadMeeting } from "@/app/(app)/leads/actions";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -10,8 +12,6 @@ import type { CalendarEvent } from "@/lib/calendar/types";
 import { cn } from "@/lib/utils";
 import { todayIsoLocal } from "@/lib/utils/date";
 import { dateAndTimeToIso } from "@/lib/utils/date-time";
-import { Bell, CheckSquare, Presentation, Video } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
 import type { LeadOption, ProjectOption, TeamMember } from "./calendar-grid";
 
 type Kind = "task" | "reminder" | "google_meeting" | "event";
@@ -103,9 +103,10 @@ export function CalendarCreateDialog({
 
   const selectedContact = leads.find((l) => l.id === selectedLeadId) ?? null;
   // The actual lead ID to log interaction against (null for clients with no origin lead)
-  const selectedContactLeadId = selectedContact?.contactKind === "lead"
-    ? selectedContact.id
-    : (selectedContact?.leadId ?? null);
+  const selectedContactLeadId =
+    selectedContact?.contactKind === "lead"
+      ? selectedContact.id
+      : (selectedContact?.leadId ?? null);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

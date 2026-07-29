@@ -1,5 +1,13 @@
+// @vitest-environment node
 /**
  * proxy.test.ts – Middleware / route-protection E2E
+ *
+ * Forced to the "node" environment (see above): happy-dom's `Headers` class
+ * is a different constructor than Node's global `Headers`, and Next.js's
+ * internal `NextResponse.next({ request })` does a strict `instanceof Headers`
+ * check that fails under happy-dom, throwing "request.headers must be an
+ * instance of Headers" for every authenticated request. This only affects
+ * the test runtime — real edge/node runtimes provide a genuine `Headers`.
  *
  * Strategy: call `proxy()` directly with a crafted NextRequest and assert on
  * the returned NextResponse (status, Location header). Supabase auth is mocked

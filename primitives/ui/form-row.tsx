@@ -1,5 +1,5 @@
-﻿import { Label } from "./label";
-import { cn } from "../lib/utils";
+﻿import { cn } from "../lib/utils";
+import { Label } from "./label";
 
 export interface FormRowProps {
   label: React.ReactNode;

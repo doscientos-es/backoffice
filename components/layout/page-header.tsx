@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { Fragment, type ReactNode } from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -7,8 +9,6 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
-import { Fragment, type ReactNode } from "react";
 
 export type BreadcrumbEntry = {
   label: string;

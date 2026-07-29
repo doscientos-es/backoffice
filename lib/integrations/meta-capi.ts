@@ -1,7 +1,7 @@
+import crypto from "node:crypto";
 import { isDemoMode } from "@/lib/demo";
 import { serverEnv } from "@/lib/env";
 import { scopedLogger } from "@/lib/logger";
-import crypto from "node:crypto";
 
 /**
  * Meta Conversions API (server-side events).
@@ -120,11 +120,11 @@ export async function pushMetaConversion(input: CapiConversionInput): Promise<vo
         custom_data:
           input.value != null || input.custom_data
             ? {
-              ...(input.value != null
-                ? { value: input.value, currency: input.currency ?? "EUR" }
-                : {}),
-              ...input.custom_data,
-            }
+                ...(input.value != null
+                  ? { value: input.value, currency: input.currency ?? "EUR" }
+                  : {}),
+                ...input.custom_data,
+              }
             : undefined,
       },
     ],

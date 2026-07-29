@@ -1,5 +1,11 @@
 "use client";
 
+import { format, parseISO } from "date-fns";
+import { es } from "date-fns/locale";
+import { Check, ChevronLeft, ChevronRight, Copy, Plus, SlidersHorizontal } from "lucide-react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -12,12 +18,6 @@ import {
 import type { CalendarEventKind, CalendarView } from "@/lib/calendar/types";
 import { ALL_LAYERS, CALENDAR_LAYER_COLORS, CALENDAR_LAYER_LABELS } from "@/lib/calendar/types";
 import { cn, memberAvatarUrl } from "@/lib/utils";
-import { format, parseISO } from "date-fns";
-import { es } from "date-fns/locale";
-import { Check, ChevronLeft, ChevronRight, Copy, Plus, SlidersHorizontal } from "lucide-react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useState } from "react";
 import type { TeamMember } from "./calendar-grid";
 import { useCalendarCreate } from "./calendar-grid";
 
@@ -164,10 +164,7 @@ export function CalendarHeader({
 
       {/* ── Row 2: layer filter dropdown + member avatars ──────── */}
       <div className="flex items-center gap-2 px-4 py-1.5 bg-muted/30">
-        <LayersDropdown
-          activeLayers={activeLayers}
-          onToggleLayer={onToggleLayer}
-        />
+        <LayersDropdown activeLayers={activeLayers} onToggleLayer={onToggleLayer} />
 
         {teamMembers.length > 1 && (
           <>

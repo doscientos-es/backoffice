@@ -22,10 +22,27 @@
 //   · components/ui/zip-input           — lib/address/actions server action
 //   · lib/hooks/use-undoable-delete     — next/navigation router + sileo
 
+// Hooks — framework-agnostic React logic.
+export * from "./hooks/use-action-form";
+export * from "./hooks/use-autosave";
+export * from "./hooks/use-browser-notifications";
+export * from "./hooks/use-form-dirty";
+export * from "./hooks/use-github-handle";
+export * from "./hooks/use-optimistic-removal";
+export * from "./hooks/use-optimistic-update";
+// Utilities & types — pure functions with no framework coupling.
+export * from "./lib/date-field";
+export * from "./lib/date-time";
+export * from "./lib/ranking";
+export * from "./lib/search-params";
+export * from "./lib/types";
+export * from "./lib/utils";
 export * from "./ui/accordion";
 export * from "./ui/ai-notice";
 export * from "./ui/alert";
 export * from "./ui/aspect-ratio";
+// Layout UI primitives (pure — depend only on other primitives + cn).
+export * from "./ui/autosave-indicator";
 export * from "./ui/avatar";
 export * from "./ui/badge";
 export * from "./ui/breadcrumb";
@@ -38,6 +55,8 @@ export * from "./ui/combobox";
 export * from "./ui/command";
 export * from "./ui/confirm-dialog";
 export * from "./ui/danger-zone";
+export * from "./ui/detail-grid";
+export * from "./ui/detail-grid-skeleton";
 export * from "./ui/dialog";
 export * from "./ui/doc-preview";
 export * from "./ui/drawer";
@@ -47,6 +66,7 @@ export * from "./ui/entity-avatar";
 export * from "./ui/entity-combobox";
 export * from "./ui/entity-multi-combobox";
 export * from "./ui/field";
+export * from "./ui/form-card-skeleton";
 export * from "./ui/form-feedback";
 export * from "./ui/form-field";
 export * from "./ui/form-row";
@@ -59,6 +79,7 @@ export * from "./ui/kbd";
 export * from "./ui/label";
 export * from "./ui/markdown";
 export * from "./ui/menubar";
+export * from "./ui/page-header-skeleton";
 export * from "./ui/password-strength";
 export * from "./ui/popover";
 export * from "./ui/select";
@@ -68,28 +89,3 @@ export * from "./ui/submit-button";
 export * from "./ui/switch";
 export * from "./ui/table";
 export * from "./ui/textarea";
-
-// Layout UI primitives (pure — depend only on other primitives + cn).
-export * from "./ui/autosave-indicator";
-export * from "./ui/detail-grid";
-export * from "./ui/detail-grid-skeleton";
-export * from "./ui/form-card-skeleton";
-export * from "./ui/page-header-skeleton";
-
-// Hooks — framework-agnostic React logic.
-export * from "./hooks/use-action-form";
-export * from "./hooks/use-autosave";
-export * from "./hooks/use-browser-notifications";
-export * from "./hooks/use-form-dirty";
-export * from "./hooks/use-github-handle";
-export * from "./hooks/use-optimistic-removal";
-export * from "./hooks/use-optimistic-update";
-
-// Utilities & types — pure functions with no framework coupling.
-export * from "./lib/date-field";
-export * from "./lib/date-time";
-export * from "./lib/ranking";
-export * from "./lib/search-params";
-export * from "./lib/types";
-export * from "./lib/utils";
-

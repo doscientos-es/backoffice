@@ -1,12 +1,12 @@
 "use client";
 
-import { CopyButton } from "@/components/ui/copy-button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
 import { QrCode } from "lucide-react";
 import Image from "next/image";
 import { toDataURL } from "qrcode";
 import { useEffect, useState } from "react";
+import { CopyButton } from "@/components/ui/copy-button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 /**
  * Normalises a raw phone string into a clean `tel:` URI value.

@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import { cn } from "../lib/utils";
 import {
   Combobox,
   ComboboxChip,
@@ -13,7 +14,6 @@ import {
   useComboboxAnchor,
 } from "./combobox";
 import type { EntityOption } from "./entity-combobox";
-import { cn } from "../lib/utils";
 
 export interface EntityMultiComboboxProps {
   id?: string;

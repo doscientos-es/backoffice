@@ -1,9 +1,9 @@
+import { addMonths, endOfMonth, endOfWeek, startOfMonth, startOfWeek, subMonths } from "date-fns";
+import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
 import { getCalendarEvents } from "@/lib/calendar/queries";
 import { ALL_LAYERS } from "@/lib/calendar/types";
 import { createServerClient } from "@/lib/supabase/server";
-import { addMonths, endOfMonth, endOfWeek, startOfMonth, startOfWeek, subMonths } from "date-fns";
-import type { Metadata } from "next";
 import { CalendarGrid } from "./_components/calendar-grid";
 
 export const metadata: Metadata = { title: "Agenda · doscientos" };
@@ -99,12 +99,14 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
     supabase.from("projects").select("id, name").is("deleted_at", null).order("name"),
   ]);
 
-  const leadOptions = ((leadsData ?? []) as {
-    id: string;
-    name: string;
-    email: string | null;
-    company: string | null;
-  }[]).map((l) => ({
+  const leadOptions = (
+    (leadsData ?? []) as {
+      id: string;
+      name: string;
+      email: string | null;
+      company: string | null;
+    }[]
+  ).map((l) => ({
     id: l.id,
     name: l.name,
     email: l.email,
@@ -116,13 +118,15 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
   // Build a set of lead_ids already covered by leadOptions so we don't duplicate
   const leadIdsCovered = new Set(leadOptions.map((l) => l.id));
 
-  const clientOptions = ((clientsData ?? []) as {
-    id: string;
-    name: string;
-    email: string | null;
-    contact_person: string | null;
-    lead_id: string | null;
-  }[])
+  const clientOptions = (
+    (clientsData ?? []) as {
+      id: string;
+      name: string;
+      email: string | null;
+      contact_person: string | null;
+      lead_id: string | null;
+    }[]
+  )
     // Skip clients whose original lead is already in the list (avoids duplicates)
     .filter((c) => !c.lead_id || !leadIdsCovered.has(c.lead_id))
     .map((c) => ({

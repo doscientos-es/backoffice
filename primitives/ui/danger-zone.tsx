@@ -2,10 +2,9 @@
 
 import { ChevronDown, ShieldAlert } from "lucide-react";
 import type * as React from "react";
-
+import { cn } from "../lib/utils";
 import { Card, CardContent } from "./card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./collapsible";
-import { cn } from "../lib/utils";
 
 /**
  * Collapsed-by-default container for destructive actions. Forces the user to

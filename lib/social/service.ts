@@ -24,7 +24,7 @@ import {
   fanOutPublish,
 } from "@/lib/social/core";
 import { metaPageToken } from "@/lib/social/meta/graph-client";
-import { getAccountMedia, igUserId, type InstagramMedia } from "@/lib/social/meta/instagram-api";
+import { getAccountMedia, type InstagramMedia, igUserId } from "@/lib/social/meta/instagram-api";
 import { socialRegistry } from "@/lib/social/registry";
 import * as repo from "@/lib/social/repo";
 import { removeMedia } from "@/lib/social/storage";
@@ -274,7 +274,7 @@ export async function deletePostLocalWithMedia(postId: string): Promise<void> {
   await repo.deletePost(postId);
   if (post) {
     const paths = post.media.map((m) => m.storagePath).filter(Boolean);
-    if (paths.length) removeMedia(paths).catch(() => { });
+    if (paths.length) removeMedia(paths).catch(() => {});
   }
 }
 
