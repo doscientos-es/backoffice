@@ -219,24 +219,37 @@ export const restoreInvoice = defineAction({
 // ─── Verifactu (AEAT) ─────────────────────────────────────────────────────────
 
 /**
- * Extracts the most descriptive error message from a Verifactu submission result.
- * Handles both AEAT application-level errors (with errorMessage) and SOAP Faults
- * (where errorMessage is generic but rawResponse contains the faultstring).
+ * Extracts the already-sanitized error message from the Verifactu package.
  */
-function extractVerifactuError(result: {
-  errorMessage?: string | null;
-  response?: unknown;
-}): string {
-  // If the package gives us a specific (non-generic) message, use it.
-  const msg = result.errorMessage;
-  if (msg && msg !== "AEAT rechazó el registro" && msg !== "AEAT rechazó la factura") {
-    return msg;
+function extractVerifactuError(result: { errorMessage?: string | null }): string {
+  return result.errorMessage ?? "AEAT rechazó la factura";
+}
+
+/**
+ * Persist only the small, operational subset of the AEAT result. Older
+ * package versions returned the full SOAP envelope as `rawResponse`; keeping
+ * it in the invoice row is unnecessary and may retain fiscal/personal data.
+ */
+function sanitizeVerifactuResponse(response: unknown): Record<string, unknown> {
+  if (!response || typeof response !== "object" || Array.isArray(response)) {
+    return { kind: "unknown_response" };
   }
-  // Fall back to parsing the faultstring from the SOAP Fault rawResponse.
-  const raw = (result.response as { rawResponse?: string } | undefined)?.rawResponse ?? "";
-  const match = raw.match(/<faultstring>([^<]+)<\/faultstring>/);
-  if (match?.[1]) return match[1].trim();
-  return msg ?? "AEAT rechazó la factura";
+
+  const value = response as Record<string, unknown>;
+  const allowed = [
+    "kind",
+    "httpStatus",
+    "csv",
+    "aeatCode",
+    "aeatDescription",
+    "soapFault",
+    "error",
+  ];
+  return Object.fromEntries(
+    allowed
+      .filter((key) => value[key] !== undefined && key !== "rawResponse")
+      .map((key) => [key, value[key]]),
+  );
 }
 
 /**
@@ -331,7 +344,7 @@ export const sendToAeat = defineAction<typeof SendInvoiceInput, { csv: string | 
       verifactu_status: persistedVerifactuStatus,
       verifactu_submitted_at: generatedAt.toISOString(),
       verifactu_csv: result.csv,
-      verifactu_response: result.response,
+      verifactu_response: sanitizeVerifactuResponse(result.response),
       verifactu_error: result.status === "accepted" ? null : extractVerifactuError(result),
       qr_url: qrUrl,
     });
