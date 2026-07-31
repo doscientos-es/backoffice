@@ -71,9 +71,9 @@ export async function listInvoices(params: InvoiceListParams): Promise<InvoiceLi
     notDeleted(supabase.from("invoices").select("total"))
       .eq("status", "paid")
       .gte("issue_date", monthStart),
-    notDeleted(supabase.from("invoices").select("id", { count: "exact", head: true })).eq(
+    notDeleted(supabase.from("invoices").select("id", { count: "exact", head: true })).in(
       "verifactu_status",
-      "rejected",
+      ["rejected", "error"],
     ),
   ]);
 

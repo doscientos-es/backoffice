@@ -85,6 +85,7 @@ export type Database = {
         | "submitted"
         | "accepted"
         | "rejected"
+        | "error"
         | "excluded";
     };
     CompositeTypes: { [_ in never]: never };

@@ -373,7 +373,13 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
       invoice.verifactu_status !== "excluded" ? (
         <SendAeatButton
           invoiceId={invoice.id}
-          label={invoice.verifactu_status === "rejected" ? "Reintentar AEAT" : "Enviar a AEAT"}
+          label={
+            invoice.verifactu_status === "rejected"
+              ? "Reintentar AEAT"
+              : invoice.verifactu_status === "error"
+                ? "Reintentar envío"
+                : "Enviar a AEAT"
+          }
         />
       ) : null}
 

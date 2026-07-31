@@ -312,13 +312,23 @@ export const sendToAeat = defineAction<typeof SendInvoiceInput, { csv: string | 
       total: invoice.total,
     });
 
+    // Keep technical failures separate from an AEAT fiscal rejection. This
+    // makes certificate/TLS/HTTP problems actionable and avoids suggesting a
+    // rectificative invoice when AEAT never parsed the record.
+    const persistedVerifactuStatus =
+      result.status === "accepted"
+        ? "accepted"
+        : result.status === "rejected"
+          ? "rejected"
+          : "error";
+
     await patchInvoiceAfterVerifactu(id, {
       idfact: result.idfact,
       previous_hash: previousHash,
       current_hash: result.hash,
       chain_sequence: result.status === "accepted" ? nextSequence : null,
       hash_generated_at: generatedAt.toISOString(),
-      verifactu_status: result.status === "accepted" ? "accepted" : "rejected",
+      verifactu_status: persistedVerifactuStatus,
       verifactu_submitted_at: generatedAt.toISOString(),
       verifactu_csv: result.csv,
       verifactu_response: result.response,

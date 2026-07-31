@@ -116,20 +116,26 @@ export const TASK_PRIORITY: StatusMeta<TaskPriority> = {
 // ---------------------------------------------------------------------------
 // Verifactu (AEAT submission state)
 // ---------------------------------------------------------------------------
-export type VerifactuStatus = "pending" | "submitted" | "accepted" | "rejected" | "excluded";
+export type VerifactuStatus =
+  | "pending"
+  | "submitted"
+  | "accepted"
+  | "rejected"
+  | "error"
+  | "excluded";
 
 export const VERIFACTU_STATUS: StatusMeta<VerifactuStatus> = {
   pending: { label: "Pendiente", variant: "warning" },
   submitted: { label: "Enviada", variant: "info" },
   accepted: { label: "Aceptada", variant: "success" },
   rejected: { label: "Rechazada", variant: "danger" },
+  error: { label: "Error técnico", variant: "danger" },
   excluded: { label: "Excluida", variant: "neutral" },
 };
 
 /**
  * Narrower set used by the dashboard `AvisosPanel` — only states that warrant
- * surfacing as a pending issue ("error" is not a persisted DB value but a
- * synthetic alert from `lib/dashboard`).
+ * surfacing as a pending issue.
  */
 export type VerifactuAlertStatus = "pending" | "error" | "rejected";
 

@@ -26,6 +26,7 @@ const VERIFACTU_FILTER_OPTIONS = [
   { value: "pending", label: "Pendiente" },
   { value: "submitted", label: "Enviada" },
   { value: "accepted", label: "Aceptada" },
+  { value: "error", label: "Error técnico" },
   { value: "rejected", label: "Rechazada" },
   { value: "excluded", label: "Excluida" },
 ];

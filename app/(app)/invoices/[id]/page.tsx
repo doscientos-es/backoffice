@@ -106,18 +106,24 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="flex flex-col gap-6">
-      {invoice.verifactu_status === "rejected" && (
+      {(invoice.verifactu_status === "rejected" || invoice.verifactu_status === "error") && (
         <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-800/40 dark:bg-red-950/30 dark:text-red-300">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" />
           <div className="min-w-0">
-            <p className="font-semibold">AEAT rechazó la factura</p>
+            <p className="font-semibold">
+              {invoice.verifactu_status === "error"
+                ? "Error técnico al enviar a VERI*FACTU"
+                : "AEAT rechazó la factura"}
+            </p>
             {(invoice.verifactu_error as string | null) ? (
               <p className="mt-1 wrap-break-word text-red-700 dark:text-red-400">
                 {invoice.verifactu_error as string}
               </p>
             ) : null}
             <p className="mt-1 text-xs text-red-600/80 dark:text-red-400/70">
-              Corrige el motivo y vuelve a enviar con "Reintentar AEAT".
+              {invoice.verifactu_status === "error"
+                ? "Corrige el certificado o la conexión y vuelve a enviar."
+                : 'Corrige el motivo y vuelve a enviar con "Reintentar AEAT".'}
             </p>
           </div>
         </div>
