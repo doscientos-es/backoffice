@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { LogoMark } from "@/components/branding";
 import { PwaRegister } from "@/components/pwa-register";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
@@ -19,14 +20,14 @@ export const metadata: Metadata = {
     title: "Doscientos",
   },
   icons: {
-    apple: "/brand/logo.png",
+    apple: "/brand/apple-touch-icon.png",
   },
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#09090b" },
+    { media: "(prefers-color-scheme: light)", color: "#fafafa" },
+    { media: "(prefers-color-scheme: dark)", color: "#2a4227" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -37,6 +38,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
       <body>
+        <div id="startup-splash" role="status" aria-label="Cargando Doscientos">
+          <LogoMark size={112} className="startup-splash-mark" />
+          <strong>doscientos</strong>
+          <span>BACKOFFICE</span>
+        </div>
         <ThemeProvider>{children}</ThemeProvider>
         <Toaster />
         <PwaRegister />

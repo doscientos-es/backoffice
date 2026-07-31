@@ -8,6 +8,10 @@ export function PwaRegister() {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").catch(() => {});
     }
+
+    window.setTimeout(() => {
+      document.getElementById("startup-splash")?.classList.add("is-hidden");
+    }, 450);
   }, []);
 
   return null;
