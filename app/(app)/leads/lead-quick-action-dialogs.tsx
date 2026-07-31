@@ -6,7 +6,7 @@
 
 import { FileText, Loader2, Mail, NotebookPen, Phone, Send, Video } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type SubmitEvent, useState } from "react";
+import { type SubmitEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -453,12 +453,14 @@ export function QCallDialog({
   leadPhone,
   leadEmail,
   aiEnabled,
+  openInitially = false,
 }: {
   leadId: string;
   leadName: string;
   leadPhone: string | null;
   leadEmail: string | null;
   aiEnabled?: boolean;
+  openInitially?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [digestOpen, setDigestOpen] = useState(false);
@@ -476,6 +478,10 @@ export function QCallDialog({
   const [importError, setImportError] = useState<string | null>(null);
   const feedback = useFormFeedback();
   const router = useRouter();
+
+  useEffect(() => {
+    if (openInitially) setOpen(true);
+  }, [openInitially]);
 
   async function handleImportNotes() {
     setImporting(true);

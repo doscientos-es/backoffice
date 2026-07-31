@@ -101,8 +101,15 @@ function compactParts(parts: Array<string | null | undefined>): string | null {
   return value || null;
 }
 
-export default async function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function LeadDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{ feedback?: string }>;
+}) {
   const { id } = await params;
+  const query = await searchParams;
   const user = await requireUser();
 
   const result = await getLeadDetail(id);
@@ -514,6 +521,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                 leadName={lead.name as string}
                 leadEmail={(lead.email as string | null) ?? null}
                 leadPhone={(lead.phone as string | null) ?? null}
+                openCallInitially={query?.feedback === "call"}
                 claimable={canEdit && !lead.assigned_to}
                 aiEnabled={aiEnabled}
                 googleEnabled={googleEnabled}

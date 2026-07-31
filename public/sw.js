@@ -17,7 +17,8 @@ self.addEventListener("push", (event) => {
         renotify: true,
         requireInteraction: true,
         vibrate: [250, 100, 250],
-        data: { url: payload.url || "/" },
+        actions: Array.isArray(payload.actions) ? payload.actions : [],
+        data: { url: payload.url || "/", ...(payload.data || {}) },
       });
     })(),
   );
@@ -25,10 +26,24 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
+  const data = event.notification.data || {};
+  const target =
+    event.action === "call"
+      ? data.callUrl || data.url || "/"
+      : event.action === "feedback"
+        ? data.feedbackUrl || data.url || "/"
+        : data.url || "/";
   event.waitUntil(
-    self.clients.openWindow(
-      new URL(event.notification.data?.url || "/", self.location.origin).href,
-    ),
+    (async () => {
+      try {
+        await self.clients.openWindow(
+          target.startsWith("tel:") ? target : new URL(target, self.location.origin).href,
+        );
+      } catch {
+        if (data.feedbackUrl)
+          await self.clients.openWindow(new URL(data.feedbackUrl, self.location.origin).href);
+      }
+    })(),
   );
 });
 

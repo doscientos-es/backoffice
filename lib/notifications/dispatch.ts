@@ -1,4 +1,4 @@
-import { sendWebPushToMembers } from "@/lib/push/web-push";
+import { type PushPayload, sendWebPushToMembers } from "@/lib/push/web-push";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type NotificationEvent =
@@ -40,6 +40,8 @@ type DispatchInput = {
   entityId: string;
   body: string;
   link?: string | null;
+  actions?: PushPayload["actions"];
+  data?: PushPayload["data"];
 };
 
 export async function dispatchNotifications(input: DispatchInput): Promise<void> {
@@ -73,6 +75,8 @@ export async function dispatchNotifications(input: DispatchInput): Promise<void>
         url: input.link ?? "/",
         tag: `${input.eventType}-${input.entityId}`,
         badge: count ?? 1,
+        actions: input.actions,
+        data: { url: input.link ?? "/", ...input.data },
       });
     }),
   );

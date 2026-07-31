@@ -8,6 +8,8 @@ export type PushPayload = {
   url: string;
   tag?: string;
   badge?: number;
+  actions?: Array<{ action: string; title: string }>;
+  data?: Record<string, string | null>;
 };
 type StoredSubscription = { id: string; endpoint: string; p256dh: string; auth: string };
 

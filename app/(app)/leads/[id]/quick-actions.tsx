@@ -25,6 +25,7 @@ type Props = {
   leadName: string;
   leadEmail: string | null;
   leadPhone: string | null;
+  openCallInitially?: boolean;
   claimable?: boolean;
   aiEnabled?: boolean;
   googleEnabled?: boolean;
@@ -40,6 +41,7 @@ export function LeadQuickActions({
   leadName,
   leadEmail,
   leadPhone,
+  openCallInitially,
   claimable,
   aiEnabled,
   googleEnabled,
@@ -57,6 +59,7 @@ export function LeadQuickActions({
         leadName={leadName}
         leadEmail={leadEmail}
         aiEnabled={aiEnabled}
+        openInitially={openCallInitially}
       />
       <QSendEmailDialog leadId={leadId} leadEmail={leadEmail} aiEnabled={aiEnabled} />
       <QEmailDialog leadId={leadId} leadEmail={leadEmail} />

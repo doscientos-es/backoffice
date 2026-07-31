@@ -143,6 +143,16 @@ async function dispatchLeadFollowUpNotifications(data: Awaited<ReturnType<typeof
       entityId: lead.id,
       body: lead.body,
       link: `/leads/${lead.id}`,
+      actions: lead.phone
+        ? [
+            { action: "call", title: "Llamar" },
+            { action: "feedback", title: "Registrar resultado" },
+          ]
+        : [{ action: "feedback", title: "Registrar resultado" }],
+      data: {
+        callUrl: lead.phone ? `tel:${lead.phone.replace(/[^\d+#*]/g, "")}` : null,
+        feedbackUrl: `/leads/${lead.id}?feedback=call`,
+      },
     });
   }
 }
