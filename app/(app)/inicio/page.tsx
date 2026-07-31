@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import {
   AccountsReceivableSkeleton,
   AccountsReceivableWidget,
@@ -10,7 +9,9 @@ import {
 import { SectionBoundary } from "@/components/ui/error-boundary";
 import { canViewFinance, requireUser } from "@/lib/auth";
 import { getGreeting, parseDashboardRange } from "@/lib/utils/date";
+import type { Metadata } from "next";
 import { AvisosWidget } from "./_components/avisos-widget";
+import { EnablePushBanner } from "./_components/enable-push-banner";
 import { KpiGrid } from "./_components/kpi-grid";
 import { MoneyOpportunitiesWidget } from "./_components/money-opportunities-widget";
 import { MyDayWidget } from "./_components/my-day-widget";
@@ -49,6 +50,8 @@ export default async function InicioPage({ searchParams }: PageProps) {
           Aquí tienes lo que requiere tu atención.
         </p>
       </div>
+
+      <EnablePushBanner />
 
       {/* Para hoy: tu cola de trabajo y los avisos que requieren acción */}
       <div className="flex flex-col gap-4">

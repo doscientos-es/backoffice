@@ -1,9 +1,9 @@
 "use client";
 
-import { Send } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { Send } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { sendToAeat } from "../actions";
 
 export function SendAeatButton({
@@ -27,7 +27,7 @@ export function SendAeatButton({
       feedback.setSuccess(result.csv ? `Aceptada · CSV ${result.csv}` : "Factura procesada");
       router.refresh();
     } else {
-      feedback.setError("No se pudo completar el envío");
+      feedback.setError(result.error);
       router.refresh();
     }
   }
