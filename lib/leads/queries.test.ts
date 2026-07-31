@@ -60,6 +60,7 @@ describe("listLeads client avatar enrichment", () => {
       q: "",
       status: null,
       source: null,
+      solutionType: null,
       assignee: null,
       attention: null,
       page: 1,

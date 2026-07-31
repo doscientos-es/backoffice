@@ -17,7 +17,7 @@ import { listActiveMembers } from "@/lib/members/queries";
 import { LEAD_STATUS, type LeadStatus } from "@/lib/status";
 import { parseSortParam } from "@/lib/utils/search-params";
 import { LeadCreateDialog } from "./lead-create-dialog";
-import { LEAD_SOURCES } from "./lead-form-fields";
+import { LEAD_SOURCES, SOLUTION_TYPES } from "./lead-form-fields";
 import { LeadsKanban } from "./leads-kanban";
 import { LeadsList } from "./leads-list";
 import { LeadsViewToggle } from "./view-toggle";
@@ -31,6 +31,7 @@ const STATUS_FILTER_OPTIONS = (Object.keys(LEAD_STATUS) as LeadStatus[]).map((va
 }));
 
 const SOURCE_FILTER_OPTIONS = LEAD_SOURCES.map((s) => ({ value: s, label: s }));
+const SOLUTION_FILTER_OPTIONS = SOLUTION_TYPES.map((s) => ({ value: s, label: s }));
 
 const ATTENTION_FILTER_OPTIONS: { value: LeadAttentionFilter; label: string }[] = [
   { value: "stale", label: "Estancados" },
@@ -46,6 +47,7 @@ export default async function LeadsPage({
     q?: string;
     status?: string;
     source?: string;
+    solution?: string;
     assignee?: string;
     attention?: string;
     page?: string;
@@ -59,6 +61,9 @@ export default async function LeadsPage({
     : null;
   const source = (LEAD_SOURCES as readonly string[]).includes(sp.source ?? "")
     ? (sp.source as string)
+    : null;
+  const solutionType = (SOLUTION_TYPES as readonly string[]).includes(sp.solution ?? "")
+    ? (sp.solution as string)
     : null;
   const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
   const { sort, dir } = parseSortParam(sp, LEAD_SORT_COLUMNS, "created_at", "desc");
@@ -83,6 +88,7 @@ export default async function LeadsPage({
     q,
     status,
     source,
+    solutionType,
     assignee,
     attention,
     page,
@@ -102,7 +108,7 @@ export default async function LeadsPage({
   );
 
   if (view === "list") {
-    const hasFilters = q.length > 0 || !!status || !!source || !!assignee || !!attention;
+    const hasFilters = q.length > 0 || !!status || !!source || !!solutionType || !!assignee || !!attention;
     return (
       <LeadsList
         leads={enrichedLeads}
@@ -120,6 +126,7 @@ export default async function LeadsPage({
         filters={[
           { key: "status", label: "Estado", options: STATUS_FILTER_OPTIONS },
           { key: "source", label: "Origen", options: SOURCE_FILTER_OPTIONS },
+          { key: "solution", label: "Necesidad", options: SOLUTION_FILTER_OPTIONS },
           { key: "assignee", label: "Responsable", options: ASSIGNEE_FILTER_OPTIONS },
           { key: "attention", label: "Atención", options: ATTENTION_FILTER_OPTIONS },
         ]}
@@ -155,6 +162,7 @@ export default async function LeadsPage({
         searchPlaceholder="Buscar por nombre, empresa, email o teléfono…"
         filters={[
           { key: "source", label: "Origen", options: SOURCE_FILTER_OPTIONS },
+          { key: "solution", label: "Necesidad", options: SOLUTION_FILTER_OPTIONS },
           { key: "assignee", label: "Responsable", options: ASSIGNEE_FILTER_OPTIONS },
           { key: "attention", label: "Atención", options: ATTENTION_FILTER_OPTIONS },
         ]}

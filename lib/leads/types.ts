@@ -89,6 +89,7 @@ export type LeadListParams = {
   q: string;
   status: LeadStatus | null;
   source: string | null;
+  solutionType: string | null;
   assignee: string | null;
   attention: LeadAttentionFilter | null;
   page: number;

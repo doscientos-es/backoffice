@@ -14,6 +14,7 @@ export const LandingLeadInput = z.object({
   email: optionalEmail,
   phone: optionalText(40),
   company: optionalText(160),
+  solutionType: optionalText(120),
   message: optionalText(4000),
   budget: optionalText(80),
   companySize: optionalText(80),
@@ -79,6 +80,7 @@ export function mapLandingToIntake(
   const notesParts = [
     input.message ?? null,
     input.companySize ? `Tamaño de empresa: ${input.companySize}` : null,
+    input.solutionType ? `Necesidad: ${input.solutionType}` : null,
     input.urgency ? `Urgencia: ${input.urgency}` : null,
     input.budget ? `Presupuesto: ${input.budget}` : null,
     input.resource ? `Recurso solicitado: ${input.resource}` : null,
@@ -95,6 +97,7 @@ export function mapLandingToIntake(
     notes: notesParts.length ? notesParts.join("\n") : null,
     estimatedValue: parseBudgetFloor(input.budget),
     companySize: input.companySize ?? null,
+    solutionType: input.solutionType ?? null,
     urgency: input.urgency ?? null,
     source: "Landing",
     externalId: dedupeKey,
