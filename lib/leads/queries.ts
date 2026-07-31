@@ -92,7 +92,7 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
       `name.ilike.${pattern},company.ilike.${pattern},email.ilike.${pattern},phone.ilike.${pattern}`,
     );
   }
-  if (params.status) query = query.eq("status", params.status);
+  if (params.status) query = query.in("status", statusFilterValues(params.status));
   if (params.source) query = query.in("source", sourceFilterValues(params.source));
   if (params.solutionType) query = query.eq("solution_type", params.solutionType);
   if (params.assignee) query = query.eq("assigned_to", params.assignee);

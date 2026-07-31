@@ -1,11 +1,10 @@
-import { TriangleAlert } from "lucide-react";
-import type { Metadata } from "next";
 import { ListControls } from "@/components/layout/list-controls";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
 import { isAIEnabled } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
+import { SELECTABLE_LEAD_STATUSES } from "@/lib/leads/pipeline";
 import { listLeads } from "@/lib/leads/queries";
 import {
   LEAD_BOARD_LIMIT,
@@ -14,8 +13,10 @@ import {
   type LeadAttentionFilter,
 } from "@/lib/leads/types";
 import { listActiveMembers } from "@/lib/members/queries";
-import { LEAD_STATUS, type LeadStatus } from "@/lib/status";
+import { LEAD_STATUS } from "@/lib/status";
 import { parseSortParam } from "@/lib/utils/search-params";
+import { TriangleAlert } from "lucide-react";
+import type { Metadata } from "next";
 import { LeadCreateDialog } from "./lead-create-dialog";
 import { LEAD_SOURCES, SOLUTION_TYPES } from "./lead-form-fields";
 import { LeadsKanban } from "./leads-kanban";
@@ -25,7 +26,8 @@ import { LeadsViewToggle } from "./view-toggle";
 export const metadata: Metadata = { title: "Leads · doscientos" };
 export const dynamic = "force-dynamic";
 
-const STATUS_FILTER_OPTIONS = (Object.keys(LEAD_STATUS) as LeadStatus[]).map((value) => ({
+/** `qualifying` is omitted: it is folded into `in_conversation` when filtering. */
+const STATUS_FILTER_OPTIONS = SELECTABLE_LEAD_STATUSES.map((value) => ({
   value,
   label: LEAD_STATUS[value].label,
 }));

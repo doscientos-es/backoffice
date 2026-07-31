@@ -136,8 +136,8 @@ export function RecoveryActions({ lead, aiEnabled }: { lead: RecoveryLead; aiEna
         title="Reabrir lead"
         description={(name) => (
           <>
-            Se moverá a <strong>{name}</strong> a <strong>Cualificando</strong> para retomar la
-            conversación. Podrás continuar el ciclo de ventas desde su ficha.
+            Se moverá a <strong>{name}</strong> a <strong>En conversación</strong> para retomar el
+            contacto. Podrás continuar el ciclo de ventas desde su ficha.
           </>
         )}
         confirmLabel="Sí, reabrir"

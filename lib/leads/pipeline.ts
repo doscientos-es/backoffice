@@ -46,6 +46,27 @@ export function boardColumnFor(status: LeadStatus): LeadStatus {
   return status === "qualifying" ? "in_conversation" : status;
 }
 
+/** Statuses offered in selects and filters: everything except the legacy one. */
+export const SELECTABLE_LEAD_STATUSES = [
+  "new",
+  "contacted",
+  "in_conversation",
+  "quoted",
+  "won",
+  "lost",
+  "not_interested",
+  "archived",
+] as const;
+
+/**
+ * Enum values a status filter has to match. Filtering by `in_conversation`
+ * must also return the legacy `qualifying` rows, since the board folds them
+ * into that column.
+ */
+export function statusFilterValues(status: LeadStatus): LeadStatus[] {
+  return status === "in_conversation" ? ["in_conversation", "qualifying"] : [status];
+}
+
 /**
  * Stage-specific rotting thresholds, in days without activity. A brand new
  * lead rots in a day (speed-to-lead), while a sent quote can reasonably sit
