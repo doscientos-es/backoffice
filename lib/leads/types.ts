@@ -1,4 +1,5 @@
 import type { ReminderRow } from "@/lib/dashboard/types";
+import type { LeadNextAction } from "@/lib/leads/pipeline";
 import type { LeadStatus } from "@/lib/status";
 
 export const LEAD_LIST_PAGE_SIZE = 25;
@@ -69,6 +70,8 @@ export type LeadListItem = {
   client: LeadClientRef | null;
   assignee: LeadMemberRef | null;
   recent_interactions: LeadInteraction[];
+  /** Soonest pending reminder; drives the "próxima acción" chip on the board. */
+  next_action: LeadNextAction | null;
 };
 
 export type LeadListView = "board" | "list";

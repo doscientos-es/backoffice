@@ -1,15 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { EntityAvatar } from "@/components/ui/entity-avatar";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { MemberAvatar } from "@/components/ui/member-avatar";
-import type { LeadListItem } from "@/lib/leads/types";
-import { leadDisplayName } from "@/lib/leads/utils";
-import type { MemberOption } from "@/lib/members/queries";
-import type { LeadStatus } from "@/lib/status";
-import { cn, formatEUR, relativeTime } from "@/lib/utils";
 import {
   DndContext,
   type DragEndEvent,
@@ -24,23 +14,98 @@ import {
 } from "@dnd-kit/core";
 import {
   AlertTriangle,
+  CalendarClock,
+  CalendarPlus,
+  Filter,
   GripVertical,
   History as HistoryIcon,
+  Hourglass,
   Mail,
   Maximize2,
   Minimize2,
   Phone,
   Plus,
   RefreshCw,
+  User,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useOptimistic, useState, useTransition } from "react";
+import { Badge } from "@/components/ui/badge";
+import { EntityAvatar } from "@/components/ui/entity-avatar";
+import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { MemberAvatar } from "@/components/ui/member-avatar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  boardColumnFor,
+  isRotting,
+  nextActionRank,
+  nextActionState,
+  STAGE_ROT_DAYS,
+  waitingForReplySince,
+} from "@/lib/leads/pipeline";
+import type { LeadListItem, LeadMemberRef } from "@/lib/leads/types";
+import { leadDisplayName } from "@/lib/leads/utils";
+import type { MemberOption } from "@/lib/members/queries";
+import type { LeadStatus } from "@/lib/status";
+import { cn, formatEUR, relativeTime } from "@/lib/utils";
+import { ScheduleReminderDialog } from "../reminders/schedule-reminder-dialog";
 import { deleteLead, updateLeadStatus } from "./actions";
 import { CloseReasonDialog, type CloseReasonVariant } from "./close-reason-dialog";
 import { LeadQuickView } from "./lead-quick-view";
 import { QuotedSuggestionDialog } from "./quoted-suggestion-dialog";
 import { ReopenConfirmDialog } from "./reopen-confirm-dialog";
+
+const URGENCY_STYLE: Record<string, string> = {
+  Inmediata: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400",
+  "Este mes": "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400",
+  "Este trimestre": "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-400",
+  "Sin urgencia": "bg-muted text-muted-foreground",
+};
+
+// Active stages a won lead can be reopened into (excludes terminal statuses)
+const REOPEN_INTO: ReadonlySet<LeadStatus> = new Set([
+  "new",
+  "contacted",
+  "in_conversation",
+  "quoted",
+]);
+
+/** Prefilled reminder title when a move leaves the lead without a next step. */
+const NEXT_ACTION_SUGGESTION: Partial<Record<LeadStatus, string>> = {
+  new: "Contactar con",
+  contacted: "Hacer seguimiento a",
+  in_conversation: "Continuar la conversación con",
+  quoted: "Seguimiento del presupuesto de",
+};
+
+function sumEstimated(leads: KanbanLead[]): number {
+  return leads.reduce((acc, l) => acc + (l.estimated_value ?? 0), 0);
+}
+
+/**
+ * Orders a column by risk: overdue first, then leads with nothing scheduled,
+ * then by due date. Ties fall back to the oldest update, so forgotten cards
+ * never hide at the bottom.
+ */
+function compareByUrgency(a: KanbanLead, b: KanbanLead): number {
+  const rankA = nextActionRank(nextActionState(a.status, a.next_action));
+  const rankB = nextActionRank(nextActionState(b.status, b.next_action));
+  if (rankA !== rankB) return rankA - rankB;
+  const dueA = a.next_action ? new Date(a.next_action.remind_at).getTime() : 0;
+  const dueB = b.next_action ? new Date(b.next_action.remind_at).getTime() : 0;
+  if (dueA !== dueB) return dueA - dueB;
+  return new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+}
+
+/** Cards a rep should act on right now: overdue or with no next step at all. */
+function countNeedingAttention(leads: KanbanLead[]): number {
+  return leads.filter((l) => {
+    const state = nextActionState(l.status, l.next_action);
+    return state === "overdue" || state === "missing";
+  }).length;
+}
 
 export type KanbanLead = LeadListItem;
 
@@ -53,34 +118,6 @@ const INTERACTION_LABEL: Record<string, string> = {
   owner_change: "Responsable cambiado",
   status_change: "Cambio de estado",
 };
-
-const STALE_DAYS = 3;
-const STALE_MS = STALE_DAYS * 24 * 60 * 60 * 1000;
-
-const URGENCY_STYLE: Record<string, string> = {
-  Inmediata: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400",
-  "Este mes": "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400",
-  "Este trimestre": "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-400",
-  "Sin urgencia": "bg-muted text-muted-foreground",
-};
-const TERMINAL_STATUSES: ReadonlySet<LeadStatus> = new Set([
-  "won",
-  "lost",
-  "not_interested",
-  "archived",
-]);
-
-// Active stages a won lead can be reopened into (excludes terminal statuses)
-const REOPEN_INTO: ReadonlySet<LeadStatus> = new Set(["new", "qualifying", "quoted"]);
-
-function isStale(lead: KanbanLead): boolean {
-  if (TERMINAL_STATUSES.has(lead.status)) return false;
-  return Date.now() - new Date(lead.updated_at).getTime() > STALE_MS;
-}
-
-function sumEstimated(leads: KanbanLead[]): number {
-  return leads.reduce((acc, l) => acc + (l.estimated_value ?? 0), 0);
-}
 
 // `compact` columns rinden estrechas por defecto y se expanden al pasar por
 // encima con un drag (o con el ratón). Útil para estados terminales o de
@@ -101,8 +138,14 @@ const COLUMNS: ColumnDef[] = [
     dot: "bg-sky-500",
   },
   {
-    id: "qualifying",
-    label: "Cualificando",
+    id: "contacted",
+    label: "Contactado",
+    tone: "text-indigo-700 dark:text-indigo-300",
+    dot: "bg-indigo-500",
+  },
+  {
+    id: "in_conversation",
+    label: "En conversación",
     tone: "text-amber-700 dark:text-amber-300",
     dot: "bg-amber-500",
   },
@@ -230,6 +273,13 @@ export function LeadsKanban({
     id: string;
     name: string;
   } | null>(null);
+  // Lead moved into an active stage with nothing scheduled: prompt for the
+  // next action instead of letting it sit in the column unattended.
+  const [pendingNextAction, setPendingNextAction] = useState<{
+    id: string;
+    name: string;
+    status: LeadStatus;
+  } | null>(null);
   const [quickViewId, setQuickViewId] = useState<string | null>(null);
   const feedback = useFormFeedback();
 
@@ -292,19 +342,19 @@ export function LeadsKanban({
     // After moving to quoted: suggest creating a proposal
     if (to === "quoted") {
       setPendingSuggestion({ id, name: leadDisplayName(current) });
+      return;
+    }
+
+    // Any other active stage: a lead without a scheduled next step is how
+    // deals quietly die, so the move itself asks for one.
+    if (NEXT_ACTION_SUGGESTION[to] && !current.next_action) {
+      setPendingNextAction({ id, name: leadDisplayName(current), status: to });
     }
   };
 
-  const grouped: Record<LeadStatus, KanbanLead[]> = {
-    new: [],
-    qualifying: [],
-    quoted: [],
-    won: [],
-    lost: [],
-    not_interested: [],
-    archived: [],
-  };
-  for (const l of optimistic) grouped[l.status]?.push(l);
+  const grouped = new Map<LeadStatus, KanbanLead[]>(COLUMNS.map((c) => [c.id, []]));
+  for (const l of optimistic) grouped.get(boardColumnFor(l.status))?.push(l);
+  for (const list of grouped.values()) list.sort(compareByUrgency);
 
   const active = activeId ? optimistic.find((l) => l.id === activeId) : null;
   const isDragging = activeId !== null;
@@ -326,7 +376,7 @@ export function LeadsKanban({
             dot={col.dot}
             compact={compactColumns.has(col.id)}
             isDragging={isDragging}
-            leads={grouped[col.id]}
+            leads={grouped.get(col.id) ?? []}
             canEdit={canEdit}
             onOpenQuickView={setQuickViewId}
             onToggleCompact={() => toggleColumnCompact(col.id)}
@@ -375,6 +425,21 @@ export function LeadsKanban({
         }}
       />
       <QuotedSuggestionDialog lead={pendingSuggestion} onClose={() => setPendingSuggestion(null)} />
+      <ScheduleReminderDialog
+        key={pendingNextAction?.id ?? "next-action"}
+        leadId={pendingNextAction?.id}
+        open={pendingNextAction !== null}
+        onOpenChange={(next) => {
+          if (!next) setPendingNextAction(null);
+        }}
+        defaultTitle={
+          pendingNextAction
+            ? `${NEXT_ACTION_SUGGESTION[pendingNextAction.status] ?? "Seguimiento de"} ${pendingNextAction.name}`
+            : ""
+        }
+        members={members}
+        onScheduled={() => router.refresh()}
+      />
       <LeadQuickView
         lead={quickViewId ? (optimistic.find((l) => l.id === quickViewId) ?? null) : null}
         canEdit={canEdit}
@@ -411,6 +476,7 @@ function Column({
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   const total = sumEstimated(leads);
+  const attention = countNeedingAttention(leads);
   // Las columnas compactas se expanden durante hover para facilitar la
   // revisión y vuelven a colapsarse al salir el cursor.
   // El comportamiento responsive se delega a Tailwind con prefijos `md:`,
@@ -434,7 +500,7 @@ function Column({
         className={cn(
           "flex shrink-0 flex-col gap-1 border-b border-border px-3 py-2.5",
           collapsed &&
-          "md:items-center md:gap-2 md:px-1.5 md:group-hover/col:flex-row md:group-hover/col:items-center md:group-hover/col:justify-between md:group-hover/col:gap-1 md:group-hover/col:px-3",
+            "md:items-center md:gap-2 md:px-1.5 md:group-hover/col:flex-row md:group-hover/col:items-center md:group-hover/col:justify-between md:group-hover/col:gap-1 md:group-hover/col:px-3",
         )}
       >
         <div
@@ -449,7 +515,7 @@ function Column({
               "truncate text-xs font-semibold tracking-wide",
               tone,
               collapsed &&
-              "md:rotate-180 md:[writing-mode:vertical-rl] md:group-hover/col:rotate-0 md:group-hover/col:[writing-mode:horizontal-tb]",
+                "md:rotate-180 md:[writing-mode:vertical-rl] md:group-hover/col:rotate-0 md:group-hover/col:[writing-mode:horizontal-tb]",
             )}
           >
             {label}
@@ -488,9 +554,21 @@ function Column({
           >
             {compact ? <Maximize2 className="size-3" /> : <Minimize2 className="size-3" />}
           </button>
-          <Badge variant="neutral" className="ml-auto h-5 text-[11px] tabular-nums">
-            {leads.length}
-          </Badge>
+          <div className="ml-auto flex shrink-0 items-center gap-1">
+            {attention > 0 && (
+              <Badge
+                variant="danger"
+                className="h-5 gap-1 text-[11px] tabular-nums"
+                title={`${attention} lead${attention === 1 ? "" : "s"} sin próxima acción o con el aviso vencido`}
+              >
+                <AlertTriangle className="size-2.5" aria-hidden />
+                {attention}
+              </Badge>
+            )}
+            <Badge variant="neutral" className="h-5 text-[11px] tabular-nums">
+              {leads.length}
+            </Badge>
+          </div>
         </div>
       </header>
       <div
@@ -553,7 +631,8 @@ function Card({
     id: lead.id,
     disabled: !canEdit || isOverlay,
   });
-  const stale = isStale(lead);
+  const rotting = isRotting(lead.status, lead.updated_at);
+  const rotDays = STAGE_ROT_DAYS[lead.status];
   return (
     <article
       ref={setNodeRef}
@@ -561,7 +640,7 @@ function Card({
         "group flex flex-col gap-2 rounded-lg bg-background p-3 text-left ring-1 ring-border transition-all hover:shadow-sm hover:ring-foreground/20",
         isDragging && "opacity-30",
         isOverlay && "cursor-grabbing shadow-lg ring-foreground/30",
-        stale && !isOverlay && "ring-amber-400/60 dark:ring-amber-500/40",
+        rotting && !isOverlay && "ring-amber-400/60 dark:ring-amber-500/40",
       )}
     >
       <div className="flex items-start gap-2">
@@ -598,17 +677,18 @@ function Card({
             <p className="truncate text-[11px] leading-tight text-muted-foreground">{lead.name}</p>
           ) : null}
         </div>
-        {stale && !isOverlay && (
+        {rotting && !isOverlay && (
           <span
             role="img"
             aria-label="Lead estancado: necesita seguimiento"
-            title={`Sin cambios ${relativeTime(lead.updated_at)}`}
+            title={`Sin movimiento ${relativeTime(lead.updated_at)} (esta etapa admite ${rotDays} d)`}
             className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"
           >
             <AlertTriangle className="size-2.5" aria-hidden />
           </span>
         )}
       </div>
+      {!isOverlay && <NextActionChip lead={lead} />}
       {(lead.company || lead.phone || lead.email) && (
         <div className="flex min-w-0 flex-col gap-0.5 pl-8 text-xs">
           {lead.company ? <p className="truncate text-muted-foreground">{lead.company}</p> : null}
@@ -668,11 +748,124 @@ function Card({
           )}
           {!isOverlay && <RecentActivity lead={lead} />}
         </div>
-        {lead.assignee ? (
-          <MemberAvatar member={lead.assignee} size="sm" className="size-5 shrink-0" />
-        ) : null}
+        {lead.assignee ? <MemberFilterPopover member={lead.assignee} /> : null}
       </div>
     </article>
+  );
+}
+
+/**
+ * The second axis of the board: what has to happen next on this lead and when.
+ * A missing next action is rendered as loudly as an overdue one — both mean
+ * nobody is driving the deal. When the ball is in the lead's court the chip
+ * also says since when we are waiting.
+ */
+function NextActionChip({ lead }: { lead: KanbanLead }) {
+  const state = nextActionState(lead.status, lead.next_action);
+  if (state === "none") return null;
+
+  const waitingSince = waitingForReplySince(lead.recent_interactions);
+  const waiting =
+    waitingSince && state !== "overdue" ? (
+      <span
+        className="inline-flex items-center gap-1 text-[10px] text-muted-foreground"
+        title={`Última salida nuestra ${relativeTime(waitingSince)}`}
+      >
+        <Hourglass className="size-2.5 shrink-0" aria-hidden />
+        <span className="truncate">Esperando respuesta {relativeTime(waitingSince)}</span>
+      </span>
+    ) : null;
+
+  if (state === "missing") {
+    return (
+      <div className="flex min-w-0 flex-col gap-0.5 pl-8">
+        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-red-600 dark:text-red-400">
+          <CalendarPlus className="size-2.5 shrink-0" aria-hidden />
+          Sin próxima acción
+        </span>
+        {waiting}
+      </div>
+    );
+  }
+
+  const next = lead.next_action;
+  if (!next) return null;
+  const tone =
+    state === "overdue"
+      ? "font-medium text-red-600 dark:text-red-400"
+      : state === "today"
+        ? "font-medium text-amber-700 dark:text-amber-400"
+        : "text-muted-foreground";
+
+  return (
+    <div className="flex min-w-0 flex-col gap-0.5 pl-8">
+      <span
+        className={cn("inline-flex min-w-0 items-center gap-1 text-[10px]", tone)}
+        title={`${next.title} · ${relativeTime(next.remind_at)}`}
+      >
+        <CalendarClock className="size-2.5 shrink-0" aria-hidden />
+        <span className="truncate">
+          {state === "overdue" ? "Vencido " : ""}
+          {relativeTime(next.remind_at)} · {next.title}
+        </span>
+      </span>
+      {waiting}
+    </div>
+  );
+}
+
+function MemberFilterPopover({ member }: { member: LeadMemberRef }) {
+  const [open, setOpen] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const filterByAssignee = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("assignee", member.id);
+    params.delete("page");
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    setOpen(false);
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label={`Opciones de ${member.name}`}
+          title={member.name}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+          className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+        >
+          <MemberAvatar member={member} size="sm" className="size-5 shrink-0" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="end"
+        className="w-52 p-1"
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <p className="truncate px-2 py-1.5 text-xs font-semibold text-foreground">{member.name}</p>
+        <Link
+          href="/settings/team"
+          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-foreground transition-colors hover:bg-muted"
+        >
+          <User className="size-3.5" aria-hidden />
+          Ver miembro
+        </Link>
+        <button
+          type="button"
+          onClick={filterByAssignee}
+          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs text-foreground transition-colors hover:bg-muted"
+        >
+          <Filter className="size-3.5" aria-hidden />
+          Filtrar sus tareas
+        </button>
+      </PopoverContent>
+    </Popover>
   );
 }
 

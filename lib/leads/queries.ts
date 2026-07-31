@@ -1,3 +1,4 @@
+import type { LeadNextAction } from "@/lib/leads/pipeline";
 import { scopedLogger } from "@/lib/logger";
 import type { LeadStatus } from "@/lib/status";
 import { notDeleted } from "@/lib/supabase/filters";
@@ -115,7 +116,10 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
 
   const rows = data ?? [];
   const leadIds = rows.map((r) => r.id as string);
-  const interactionsByLead = await loadRecentInteractions(leadIds);
+  const [interactionsByLead, nextActionByLead] = await Promise.all([
+    loadRecentInteractions(leadIds),
+    loadNextActions(leadIds),
+  ]);
 
   const leads: LeadListItem[] = rows.map((l) => ({
     id: l.id as string,
@@ -149,9 +153,41 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
     client: mapClientRef(l.client),
     assignee: mapMemberRef(l.assignee),
     recent_interactions: interactionsByLead.get(l.id as string) ?? [],
+    next_action: nextActionByLead.get(l.id as string) ?? null,
   }));
 
   return { leads, count: count ?? 0, error: error?.message ?? null };
+}
+
+/**
+ * Soonest pending reminder per lead. Reminders live in `tasks` under
+ * `kind = 'reminder'`; ordering ascending and keeping the first hit per lead
+ * gives the next action without a per-lead round trip.
+ */
+async function loadNextActions(leadIds: string[]): Promise<Map<string, LeadNextAction>> {
+  const byLead = new Map<string, LeadNextAction>();
+  if (leadIds.length === 0) return byLead;
+
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("tasks")
+    .select("id, lead_id, title, start_at")
+    .eq("kind", "reminder")
+    .in("lead_id", leadIds)
+    .is("completed_at", null)
+    .is("deleted_at", null)
+    .order("start_at", { ascending: true });
+
+  for (const r of data ?? []) {
+    const leadId = r.lead_id as string;
+    if (byLead.has(leadId)) continue;
+    byLead.set(leadId, {
+      id: r.id as string,
+      title: r.title as string,
+      remind_at: r.start_at as string,
+    });
+  }
+  return byLead;
 }
 
 async function loadRecentInteractions(leadIds: string[]): Promise<Map<string, LeadInteraction[]>> {

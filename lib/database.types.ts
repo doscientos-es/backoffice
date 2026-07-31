@@ -19,74 +19,76 @@ export type Database = {
     };
     Enums: {
       expense_category:
-        | "hosting"
-        | "domain"
-        | "service"
-        | "software"
-        | "hardware"
-        | "office"
-        | "marketing"
-        | "meta_ads"
-        | "professional"
-        | "travel"
-        | "taxes"
-        | "salary"
-        | "other";
+      | "hosting"
+      | "domain"
+      | "service"
+      | "software"
+      | "hardware"
+      | "office"
+      | "marketing"
+      | "meta_ads"
+      | "professional"
+      | "travel"
+      | "taxes"
+      | "salary"
+      | "other";
       expense_payment_source: "company" | "member";
       expense_recurrence: "none" | "monthly" | "quarterly" | "yearly";
       expense_status: "pending" | "paid" | "cancelled";
       interaction_type:
-        | "email_sent"
-        | "email_delivered"
-        | "email_opened"
-        | "email_clicked"
-        | "email_bounced"
-        | "email_complained"
-        | "call"
-        | "meeting"
-        | "note"
-        | "portal_view"
-        | "portal_accept"
-        | "portal_reject"
-        | "email_received"
-        | "status_change"
-        | "owner_change";
+      | "email_sent"
+      | "email_delivered"
+      | "email_opened"
+      | "email_clicked"
+      | "email_bounced"
+      | "email_complained"
+      | "call"
+      | "meeting"
+      | "note"
+      | "portal_view"
+      | "portal_accept"
+      | "portal_reject"
+      | "email_received"
+      | "status_change"
+      | "owner_change";
       internal_doc_category:
-        | "legal"
-        | "hr"
-        | "finance"
-        | "templates"
-        | "policies"
-        | "meetings"
-        | "other";
+      | "legal"
+      | "hr"
+      | "finance"
+      | "templates"
+      | "policies"
+      | "meetings"
+      | "other";
       invoice_status: "draft" | "issued" | "paid" | "overdue" | "cancelled" | "rectified";
       invoice_type: "F1" | "F2" | "F3" | "R1" | "R2" | "R3" | "R4" | "R5";
       lead_status:
-        | "new"
-        | "qualifying"
-        | "quoted"
-        | "won"
-        | "lost"
-        | "archived"
-        | "not_interested";
+      | "new"
+      | "qualifying"
+      | "quoted"
+      | "won"
+      | "lost"
+      | "archived"
+      | "not_interested"
+      | "contacted"
+      | "in_conversation";
       lead_temperature: "hot" | "warm" | "cold";
       member_role: "owner" | "admin" | "member" | "viewer";
       project_status: "planning" | "active" | "on_hold" | "done" | "cancelled";
       proposal_status:
-        | "draft"
-        | "sent"
-        | "viewed"
-        | "accepted"
-        | "rejected"
-        | "expired";
+      | "draft"
+      | "sent"
+      | "viewed"
+      | "accepted"
+      | "rejected"
+      | "expired";
       proposal_viewer_type: "team" | "client";
       verifactu_status:
-        | "pending"
-        | "submitted"
-        | "accepted"
-        | "rejected"
-        | "error"
-        | "excluded";
+      | "pending"
+      | "submitted"
+      | "accepted"
+      | "rejected"
+      | "error"
+      | "excluded";
     };
     CompositeTypes: { [_ in never]: never };
   };

@@ -1,5 +1,6 @@
 import { serverEnv } from "@/lib/env";
 import { EXPENSE_CATEGORY_LABELS, type ExpenseCategory, profitMargin } from "@/lib/finance/helpers";
+import { ACTIVE_LEAD_STATUSES } from "@/lib/leads/pipeline";
 import { notDeleted } from "@/lib/supabase/filters";
 import { createServerClient } from "@/lib/supabase/server";
 import { shortMonthEs, toIsoDate } from "@/lib/utils/date";
@@ -29,8 +30,6 @@ const AVISOS_LIMIT = 5;
 const MY_DAY_LIMIT = 6;
 const MONEY_LIMIT = 5;
 
-/** Lead statuses that still require human follow-up (the rest are closed/parked). */
-const ACTIVE_LEAD_STATUSES = ["new", "qualifying", "quoted"] as const;
 /** Task statuses that are still actionable (not done / cancelled). */
 const OPEN_TASK_STATUSES = ["todo", "in_progress", "in_review"] as const;
 
@@ -548,10 +547,10 @@ export async function getMoneyOpportunities(): Promise<MoneyOpportunities> {
   const { data: taskRows } =
     leadIds.length > 0
       ? await supabase
-          .from("tasks")
-          .select("lead_id, kind, status, completed_at")
-          .in("lead_id", leadIds)
-          .is("deleted_at", null)
+        .from("tasks")
+        .select("lead_id, kind, status, completed_at")
+        .in("lead_id", leadIds)
+        .is("deleted_at", null)
       : { data: [] };
   const leadsWithNextAction = new Set<string>();
   for (const task of taskRows ?? []) {

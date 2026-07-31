@@ -1,7 +1,6 @@
-import { type NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { AI_MODELS, isAIEnabled, runAIObject } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
+import { ACTIVE_LEAD_STATUSES } from "@/lib/leads/pipeline";
 import { scopedLogger } from "@/lib/logger";
 import { rateLimit } from "@/lib/ratelimit";
 import {
@@ -14,6 +13,8 @@ import {
   type SocialProjectContext,
 } from "@/lib/social/ai-suggestion";
 import { createServerClient } from "@/lib/supabase/server";
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -137,7 +138,7 @@ export async function POST(req: NextRequest) {
         "id, status, temperature, score, company_size, solution_type, urgency, notes, ai_summary, ai_tags, mom_test_real_problem, mom_test_aware_problem, mom_test_tried_solutions, mom_test_decision_power_or_budget, mom_test_accessible",
       )
       .is("deleted_at", null)
-      .in("status", ["new", "qualifying", "quoted", "won"])
+      .in("status", [...ACTIVE_LEAD_STATUSES, "won"])
       .order("updated_at", { ascending: false })
       .limit(40),
     supabase

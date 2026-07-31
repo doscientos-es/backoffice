@@ -1,9 +1,5 @@
 "use client";
 
-import { Ban, Mail, RotateCcw } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { sileo } from "sileo";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,6 +14,10 @@ import { leadDisplayName } from "@/lib/leads/utils";
 import { getRecoveryTemplate } from "@/lib/recovery/templates";
 import type { RecoveryLead } from "@/lib/recovery/types";
 import { buildBookingUrl } from "@/lib/recovery/utils";
+import { Ban, Mail, RotateCcw } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { sileo } from "sileo";
 import { EmailComposer } from "../[id]/email-composer";
 import { updateLeadStatus } from "../actions";
 import { CloseReasonDialog } from "../close-reason-dialog";
@@ -27,7 +27,7 @@ import { ReopenConfirmDialog } from "../reopen-confirm-dialog";
  * Per-row recovery actions for a lost lead:
  *  - "Enviar email": opens the shared `EmailComposer` pre-filled with the
  *    reason-aware template (`getRecoveryTemplate`).
- *  - "Reabrir": confirms and moves the lead back to `qualifying` so it
+ *  - "Reabrir": confirms and moves the lead back to `in_conversation` so it
  *    re-enters the active sales pipeline.
  */
 export function RecoveryActions({ lead, aiEnabled }: { lead: RecoveryLead; aiEnabled?: boolean }) {
@@ -53,7 +53,7 @@ export function RecoveryActions({ lead, aiEnabled }: { lead: RecoveryLead; aiEna
   function confirmReopen() {
     setPendingReopen(false);
     startTransition(async () => {
-      const res = await updateLeadStatus({ leadId: lead.id, status: "qualifying" });
+      const res = await updateLeadStatus({ leadId: lead.id, status: "in_conversation" });
       if (res && !res.ok) {
         sileo.error({ title: res.error });
         return;

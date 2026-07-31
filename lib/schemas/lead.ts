@@ -7,6 +7,9 @@ import { assignableUuid, optionalEmail, optionalText, requiredText } from "./com
 
 export const LeadStatus = z.enum([
   "new",
+  "contacted",
+  "in_conversation",
+  /** Legacy stage, replaced by `contacted` / `in_conversation`. */
   "qualifying",
   "quoted",
   "won",

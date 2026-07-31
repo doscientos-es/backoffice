@@ -8,10 +8,10 @@
  * "Enviada" in one place and "Pendiente" in another).
  */
 
-import type { VariantProps } from "class-variance-authority";
 import type { badgeVariants } from "@/components/ui/badge";
 import { EXPENSE_STATUS_LABELS, type ExpenseStatus } from "@/lib/finance";
 import type { RecoveryState } from "@/lib/recovery/types";
+import type { VariantProps } from "class-variance-authority";
 
 export type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>;
 
@@ -48,8 +48,15 @@ export const PROPOSAL_STATUS: StatusMeta<ProposalStatus> = {
 // ---------------------------------------------------------------------------
 // Leads
 // ---------------------------------------------------------------------------
+/**
+ * `qualifying` is legacy: it was split into the factual `contacted` /
+ * `in_conversation` stages. It stays in the union because the Postgres enum
+ * still carries the value and historical rows reference it.
+ */
 export type LeadStatus =
   | "new"
+  | "contacted"
+  | "in_conversation"
   | "qualifying"
   | "quoted"
   | "won"
@@ -59,7 +66,9 @@ export type LeadStatus =
 
 export const LEAD_STATUS: StatusMeta<LeadStatus> = {
   new: { label: "Nuevo", variant: "info" },
-  qualifying: { label: "Cualificando", variant: "warning" },
+  contacted: { label: "Contactado", variant: "info" },
+  in_conversation: { label: "En conversación", variant: "warning" },
+  qualifying: { label: "En conversación", variant: "warning" },
   quoted: { label: "Presupuestado", variant: "warning" },
   won: { label: "Ganado", variant: "success" },
   lost: { label: "Perdido", variant: "danger" },

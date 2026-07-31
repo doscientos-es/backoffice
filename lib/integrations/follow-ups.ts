@@ -1,4 +1,5 @@
 import { publicEnv } from "@/lib/env";
+import { ACTIVE_LEAD_STATUSES } from "@/lib/leads/pipeline";
 import { LEAD_STATUS, PROPOSAL_STATUS } from "@/lib/status";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -19,8 +20,6 @@ const DEFAULT_PROPOSAL_HOURS = 72;
 const DEFAULT_SLA_HOURS = 4;
 const LIST_LIMIT = 25;
 
-/** Lead statuses that still require human follow-up (mirrors dashboard). */
-const ACTIVE_LEAD_STATUSES = ["new", "qualifying", "quoted"] as const;
 /** Proposal statuses that are awaiting a client response. */
 const PENDING_PROPOSAL_STATUSES = ["sent", "viewed"] as const;
 

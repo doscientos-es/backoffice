@@ -188,7 +188,7 @@ export type PriorityLeadRow = {
   id: string;
   name: string;
   company: string | null;
-  status: Extract<LeadStatus, "new" | "qualifying" | "quoted">;
+  status: Extract<LeadStatus, "new" | "contacted" | "in_conversation" | "qualifying" | "quoted">;
   source: string | null;
   score: number | null;
   estimated_value: number | null;

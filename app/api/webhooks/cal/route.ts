@@ -1,4 +1,3 @@
-import { after, type NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import {
   type CalWebhookPayload,
@@ -9,6 +8,7 @@ import { ingestLead } from "@/lib/integrations/lead-intake";
 import { pushMetaConversion } from "@/lib/integrations/meta-capi";
 import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { after, type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -54,9 +54,9 @@ export async function POST(request: NextRequest) {
   if (triggerEvent === "BOOKING_CREATED" || triggerEvent === "BOOKING_RESCHEDULED") {
     const { data: updated } = await supabase
       .from("leads")
-      .update({ status: "qualifying", updated_at: new Date().toISOString() })
+      .update({ status: "in_conversation", updated_at: new Date().toISOString() })
       .eq("id", leadId)
-      .eq("status", "new") // Only move from new to qualifying
+      .eq("status", "new") // Booking a call is an inbound reply: the conversation is alive
       .select("id")
       .maybeSingle();
 
@@ -72,14 +72,14 @@ export async function POST(request: NextRequest) {
           if (lead) {
             await pushMetaConversion({
               eventName: "Lead",
-              eventId: `lead-${leadId}-qualifying`,
+              eventId: `lead-${leadId}-in_conversation`,
               email: lead.email as string | null,
               phone: lead.phone as string | null,
               actionSource: "system_generated",
               custom_data: {
                 event_source: "crm",
                 lead_event_source: "doscientos-backoffice",
-                lead_status: "qualifying",
+                lead_status: "in_conversation",
               },
             });
           }

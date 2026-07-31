@@ -1,3 +1,4 @@
+import { ACTIVE_LEAD_STATUSES } from "@/lib/leads/pipeline";
 import { scopedLogger } from "@/lib/logger";
 import { createServerClient } from "@/lib/supabase/server";
 
@@ -8,7 +9,7 @@ export const NEWSLETTER_AUDIENCES = [
   {
     key: "active_leads",
     label: "Leads activos",
-    description: "Leads nuevos, cualificando o con propuesta.",
+    description: "Leads nuevos, en conversación o con propuesta.",
   },
   {
     key: "calculator_leads",
@@ -143,7 +144,7 @@ export async function countNewsletterAudience(key: NewsletterAudienceKey): Promi
     .not("email", "is", null)
     .is("deleted_at", null);
 
-  if (key === "active_leads") query = query.in("status", ["new", "qualifying", "quoted"]);
+  if (key === "active_leads") query = query.in("status", [...ACTIVE_LEAD_STATUSES]);
   if (key === "calculator_leads") query = query.ilike("source", "%calcul%");
   if (key === "lost_leads") query = query.in("status", ["lost", "not_interested"]);
 
@@ -216,7 +217,7 @@ export async function listNewsletterRecipients(
     .order("created_at", { ascending: false })
     .limit(500);
 
-  if (key === "active_leads") query = query.in("status", ["new", "qualifying", "quoted"]);
+  if (key === "active_leads") query = query.in("status", [...ACTIVE_LEAD_STATUSES]);
   if (key === "calculator_leads") query = query.ilike("source", "%calcul%");
   if (key === "lost_leads") query = query.in("status", ["lost", "not_interested"]);
 

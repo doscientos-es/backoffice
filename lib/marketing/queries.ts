@@ -1,9 +1,9 @@
-import { cache } from "react";
 import { META_LEAD_SOURCE } from "@/lib/integrations/meta-leads";
 import { normalizeLeadSource } from "@/lib/leads/constants";
 import { scopedLogger } from "@/lib/logger";
 import { notDeleted } from "@/lib/supabase/filters";
 import { createServerClient } from "@/lib/supabase/server";
+import { cache } from "react";
 import type { MarketingSort, MarketingView } from "./range";
 import { computeMarketingRoi, type MarketingRoi } from "./roi";
 import type {
@@ -538,7 +538,13 @@ export async function getLeadFunnelBySource(
     { total: number; qualified: number; won: number; pipelineValue: number }
   >();
 
-  const QUALIFIED_STATUSES = new Set(["qualifying", "quoted", "won"]);
+  const QUALIFIED_STATUSES = new Set([
+    "contacted",
+    "in_conversation",
+    "qualifying",
+    "quoted",
+    "won",
+  ]);
 
   for (const row of data) {
     const rawKey =

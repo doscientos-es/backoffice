@@ -1,22 +1,29 @@
 "use client";
 
-import { useState } from "react";
 import { Select } from "@/components/ui/select";
 import { useOptimisticUpdate } from "@/lib/hooks/use-optimistic-update";
 import type { LeadStatusType } from "@/lib/schemas/lead";
+import { useState } from "react";
 import { updateLeadStatus } from "../actions";
 import { CloseReasonDialog, type CloseReasonVariant } from "../close-reason-dialog";
 import { QuotedSuggestionDialog } from "../quoted-suggestion-dialog";
 
 const OPTIONS = [
   { value: "new", label: "Nuevo" },
-  { value: "qualifying", label: "En cualificación" },
+  { value: "contacted", label: "Contactado" },
+  { value: "in_conversation", label: "En conversación" },
   { value: "quoted", label: "Presupuestado" },
   { value: "won", label: "Ganado" },
   { value: "lost", label: "Perdido" },
   { value: "not_interested", label: "No interesa" },
   { value: "archived", label: "Archivado" },
 ] as const;
+
+/**
+ * `qualifying` ya no se ofrece: solo se renderiza cuando el lead sigue en esa
+ * etapa legacy, para que el select no quede sin valor seleccionado.
+ */
+const LEGACY_OPTION = { value: "qualifying", label: "En conversación (legacy)" } as const;
 
 const CLOSURE_VARIANTS: Record<string, CloseReasonVariant> = {
   lost: "lost",
@@ -58,7 +65,7 @@ export function LeadStatusSelect({
           apply(next);
         }}
       >
-        {OPTIONS.map((o) => (
+        {(currentStatus === "qualifying" ? [LEGACY_OPTION, ...OPTIONS] : OPTIONS).map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
           </option>

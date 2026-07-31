@@ -1,11 +1,11 @@
-import { timingSafeEqual } from "node:crypto";
-import { after, type NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { pushMetaConversion } from "@/lib/integrations/meta-capi";
 import { telegramRequest } from "@/lib/integrations/telegram";
 import { scopedLogger } from "@/lib/logger";
 import type { LeadStatusType } from "@/lib/schemas/lead";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { after, type NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "node:crypto";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -21,14 +21,16 @@ function safeEqual(a: string, b: string): boolean {
 
 // Compact codes sent from the inline keyboard callback_data
 const ACTION_TO_STATUS: Record<string, LeadStatusType> = {
-  c: "qualifying", // Contactado
+  c: "contacted", // Contactado
   w: "won", // Ganado
   n: "not_interested", // No interesa
 };
 
 const STATUS_LABEL: Record<LeadStatusType, string> = {
   new: "Nuevo",
-  qualifying: "Contactado",
+  contacted: "Contactado",
+  in_conversation: "En conversación",
+  qualifying: "En conversación",
   quoted: "Presupuestado",
   won: "Ganado",
   lost: "Perdido",
