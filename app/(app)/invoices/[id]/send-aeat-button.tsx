@@ -27,14 +27,20 @@ export function SendAeatButton({
       feedback.setSuccess(result.csv ? `Aceptada · CSV ${result.csv}` : "Factura procesada");
       router.refresh();
     } else {
-      feedback.setError(result.error || "Error técnico al enviar a VERI*FACTU");
+      feedback.setError("No se pudo completar el envío");
       router.refresh();
     }
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <FormFeedback state={feedback.state} pendingLabel="Enviando…" />
+    <div className="col-span-2 flex min-w-0 w-full flex-col gap-1.5 sm:w-auto sm:flex-row sm:items-center">
+      {feedback.state.status !== "idle" ? (
+        <FormFeedback
+          state={feedback.state}
+          pendingLabel="Enviando…"
+          className="min-w-0 max-w-full"
+        />
+      ) : null}
       <Button
         type="button"
         size="sm"

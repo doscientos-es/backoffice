@@ -14,10 +14,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CopySummaryButton } from "@/components/ui/copy-summary-button";
 import { requireUser } from "@/lib/auth";
 import { buildVatBreakdown } from "@/lib/finance";
-import { INVOICE_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { verifactuConfigFromEnv } from "@/lib/verifactu/config";
@@ -122,7 +120,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             ) : null}
             <p className="mt-1 text-xs text-red-600/80 dark:text-red-400/70">
               {invoice.verifactu_status === "error"
-                ? "Corrige el certificado o la conexión y vuelve a enviar."
+                ? "Pulsa «Reintentar envío» para volver a intentarlo."
                 : 'Corrige el motivo y vuelve a enviar con "Reintentar AEAT".'}
             </p>
           </div>
@@ -139,37 +137,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           { label: (invoice.full_number as string | null) ?? "Borrador" },
         ]}
         actions={
-          <div className="flex w-full min-w-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-            <CopySummaryButton
-              lines={(() => {
-                const parts: string[] = [];
-                parts.push(
-                  [
-                    `🧾 Factura ${(invoice.full_number as string | null) ?? "Borrador"}`,
-                    client && `— ${client.name}`,
-                  ]
-                    .filter(Boolean)
-                    .join(" "),
-                );
-                parts.push(
-                  [
-                    `Estado: ${INVOICE_STATUS[invoice.status as keyof typeof INVOICE_STATUS]?.label ?? invoice.status}`,
-                    invoice.total != null && `Total: ${formatEUR(Number(invoice.total))}`,
-                  ]
-                    .filter(Boolean)
-                    .join(" · "),
-                );
-                const dates = [
-                  invoice.issue_date && `Emisión: ${formatDate(invoice.issue_date as string)}`,
-                  invoice.due_date && `Vence: ${formatDate(invoice.due_date as string)}`,
-                ].filter(Boolean);
-                if (dates.length) parts.push(dates.join(" · "));
-                return parts;
-              })()}
-              urlPath={`/invoices/${id}`}
-              label="Compartir"
-              className="h-9 w-full justify-start gap-2 rounded-lg border border-border px-3 text-sm sm:h-7 sm:w-auto sm:justify-center sm:gap-0 sm:border-0 sm:px-2"
-            />
+          <div className="w-full min-w-0 sm:w-auto">
             <InvoiceActions
               invoice={{
                 id: invoice.id as string,

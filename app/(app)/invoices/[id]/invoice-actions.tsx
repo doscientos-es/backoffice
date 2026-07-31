@@ -199,9 +199,11 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
       {/* Subtle vertical separator */}
       <div className="hidden h-7 w-px shrink-0 bg-border sm:block sm:mx-0.5" aria-hidden />
 
-      <div className="col-span-2 min-w-0 max-w-full sm:flex-1">
-        <FormFeedback state={feedback.state} />
-      </div>
+      {feedback.state.status !== "idle" ? (
+        <div className="col-span-2 min-w-0 max-w-full sm:flex-1">
+          <FormFeedback state={feedback.state} className="max-w-full min-w-0" />
+        </div>
+      ) : null}
 
       {/* Icon-only secondary actions */}
       <Button
