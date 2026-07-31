@@ -1,5 +1,15 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
+import { EntityAvatar } from "@/components/ui/entity-avatar";
+import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { MemberAvatar } from "@/components/ui/member-avatar";
+import type { LeadListItem } from "@/lib/leads/types";
+import { leadDisplayName } from "@/lib/leads/utils";
+import type { MemberOption } from "@/lib/members/queries";
+import type { LeadStatus } from "@/lib/status";
+import { cn, formatEUR, relativeTime } from "@/lib/utils";
 import {
   DndContext,
   type DragEndEvent,
@@ -15,6 +25,7 @@ import {
 import {
   AlertTriangle,
   GripVertical,
+  History as HistoryIcon,
   Mail,
   Maximize2,
   Minimize2,
@@ -25,15 +36,6 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useOptimistic, useState, useTransition } from "react";
-import { Badge } from "@/components/ui/badge";
-import { EntityAvatar } from "@/components/ui/entity-avatar";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { MemberAvatar } from "@/components/ui/member-avatar";
-import type { LeadListItem } from "@/lib/leads/types";
-import { leadDisplayName } from "@/lib/leads/utils";
-import type { MemberOption } from "@/lib/members/queries";
-import type { LeadStatus } from "@/lib/status";
-import { cn, formatEUR, relativeTime } from "@/lib/utils";
 import { deleteLead, updateLeadStatus } from "./actions";
 import { CloseReasonDialog, type CloseReasonVariant } from "./close-reason-dialog";
 import { LeadQuickView } from "./lead-quick-view";
@@ -41,6 +43,16 @@ import { QuotedSuggestionDialog } from "./quoted-suggestion-dialog";
 import { ReopenConfirmDialog } from "./reopen-confirm-dialog";
 
 export type KanbanLead = LeadListItem;
+
+const INTERACTION_LABEL: Record<string, string> = {
+  email_sent: "Email enviado",
+  email_received: "Email recibido",
+  call: "Llamada",
+  meeting: "Reunión",
+  note: "Nota",
+  owner_change: "Responsable cambiado",
+  status_change: "Cambio de estado",
+};
 
 const STALE_DAYS = 3;
 const STALE_MS = STALE_DAYS * 24 * 60 * 60 * 1000;
@@ -422,7 +434,7 @@ function Column({
         className={cn(
           "flex shrink-0 flex-col gap-1 border-b border-border px-3 py-2.5",
           collapsed &&
-            "md:items-center md:gap-2 md:px-1.5 md:group-hover/col:flex-row md:group-hover/col:items-center md:group-hover/col:justify-between md:group-hover/col:gap-1 md:group-hover/col:px-3",
+          "md:items-center md:gap-2 md:px-1.5 md:group-hover/col:flex-row md:group-hover/col:items-center md:group-hover/col:justify-between md:group-hover/col:gap-1 md:group-hover/col:px-3",
         )}
       >
         <div
@@ -437,7 +449,7 @@ function Column({
               "truncate text-xs font-semibold tracking-wide",
               tone,
               collapsed &&
-                "md:rotate-180 md:[writing-mode:vertical-rl] md:group-hover/col:rotate-0 md:group-hover/col:[writing-mode:horizontal-tb]",
+              "md:rotate-180 md:[writing-mode:vertical-rl] md:group-hover/col:rotate-0 md:group-hover/col:[writing-mode:horizontal-tb]",
             )}
           >
             {label}
@@ -654,11 +666,65 @@ function Card({
               {formatEUR(lead.estimated_value)}
             </Badge>
           )}
+          {!isOverlay && <RecentActivity lead={lead} />}
         </div>
         {lead.assignee ? (
           <MemberAvatar member={lead.assignee} size="sm" className="size-5 shrink-0" />
         ) : null}
       </div>
     </article>
+  );
+}
+
+function RecentActivity({ lead }: { lead: KanbanLead }) {
+  const [open, setOpen] = useState(false);
+  const interactions = lead.recent_interactions;
+  return (
+    <HoverCard open={open} onOpenChange={setOpen} openDelay={120} closeDelay={80}>
+      <HoverCardTrigger asChild>
+        <button
+          type="button"
+          aria-label="Últimas acciones"
+          title="Últimas acciones"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen((v) => !v);
+          }}
+          className="inline-flex size-4 shrink-0 items-center justify-center rounded text-muted-foreground/70 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+        >
+          <HistoryIcon className="size-3" aria-hidden />
+        </button>
+      </HoverCardTrigger>
+      <HoverCardContent
+        align="start"
+        className="w-72 p-2.5"
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <p className="mb-1.5 text-xs font-semibold text-foreground">Últimas acciones</p>
+        {interactions.length === 0 ? (
+          <p className="text-[11px] text-muted-foreground/80">Sin interacciones registradas.</p>
+        ) : (
+          <ul className="flex flex-col gap-1.5">
+            {interactions.slice(0, 3).map((i) => (
+              <li key={i.id} className="flex flex-col gap-0.5">
+                <div className="flex items-center justify-between gap-2 text-[11px]">
+                  <span className="font-medium text-foreground">
+                    {INTERACTION_LABEL[i.type] ?? i.type}
+                  </span>
+                  <span className="text-muted-foreground tabular-nums">
+                    {relativeTime(i.created_at)}
+                  </span>
+                </div>
+                {i.subject ? (
+                  <p className="line-clamp-2 text-[11px] text-muted-foreground">{i.subject}</p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </HoverCardContent>
+    </HoverCard>
   );
 }
