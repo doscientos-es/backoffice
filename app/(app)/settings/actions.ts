@@ -114,7 +114,7 @@ const MemberProfileInput = z.object({
 export async function updateMemberProfile(
   formData: FormData,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  await requireRole(["owner"]);
+  await requireRole(["owner", "admin"]);
   const raw = {
     member_id: formData.get("member_id")?.toString() ?? "",
     name: formData.get("name")?.toString() ?? "",

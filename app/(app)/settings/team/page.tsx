@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -173,15 +174,18 @@ export default async function TeamSettingsPage() {
                               <AvatarFallback>{initials(m.name)}</AvatarFallback>
                             </Avatar>
                             <div className="min-w-0 flex-1">
-                              <div className="truncate font-medium">
+                              <Link
+                                href={`/team/${m.id}`}
+                                className="block truncate font-medium transition-colors hover:text-primary"
+                              >
                                 {m.name}
                                 {isSelf ? (
                                   <span className="ml-2 text-xs text-(--text-muted)">(tú)</span>
                                 ) : null}
-                              </div>
+                              </Link>
                               <div className="truncate text-xs text-(--text-muted)">{m.email}</div>
                             </div>
-                            {actor.role === "owner" ? (
+                            {actor.role === "owner" || actor.role === "admin" ? (
                               <MemberProfileDialog
                                 member={{
                                   id: m.id,
