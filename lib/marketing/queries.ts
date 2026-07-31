@@ -431,6 +431,23 @@ export async function getMarketingRoi(since: string, until: string): Promise<Mar
   const leads = sum(insights.map((i) => i.total_leads));
   const currency = insights.find((i) => i.currency)?.currency ?? "EUR";
 
+  // Commercial outcome for every acquisition channel. This is intentionally
+  // separate from Meta's reported lead count: it reflects the CRM truth.
+  const { data: closedLeadRows, error: closedLeadsErr } = await notDeleted(
+    supabase
+      .from("leads")
+      .select("status, estimated_value")
+      .gte("created_at", since)
+      .lte("created_at", endOfDay(until)),
+  );
+  if (closedLeadsErr) log.error({ err: closedLeadsErr.message }, "roi_closed_leads_failed");
+  const periodLeads = (closedLeadRows ?? []) as Array<{
+    status: string | null;
+    estimated_value: number | null;
+  }>;
+  const closedLeads = periodLeads.filter((lead) => lead.status === "won");
+  const closedPipelineValue = sum(closedLeads.map((lead) => lead.estimated_value));
+
   // 2. Clients acquired in the window from a Meta-sourced lead.
   const { data: metaLeads, error: leadsErr } = await notDeleted(
     supabase.from("leads").select("id").eq("external_source", META_LEAD_SOURCE),
@@ -470,6 +487,9 @@ export async function getMarketingRoi(since: string, until: string): Promise<Mar
   return computeMarketingRoi({
     spend,
     leads,
+    totalLeads: periodLeads.length,
+    closedLeads: closedLeads.length,
+    closedPipelineValue,
     acquiredCustomers: acquiredClientIds.length,
     revenue,
     currency,

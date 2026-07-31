@@ -1,10 +1,10 @@
-import { Coins, HandCoins, Target, TrendingUp } from "lucide-react";
+import { BadgeCheck, Coins, HandCoins, Percent, Target, TrendingUp } from "lucide-react";
 import { StatCard } from "@/components/layout/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getMarketingRoi } from "@/lib/marketing/queries";
 import { roasTone } from "@/lib/marketing/roi";
 import { formatEUR } from "@/lib/utils";
-import { percentFmt } from "./marketing-format";
+import { numberFmt, percentFmt } from "./marketing-format";
 
 type MarketingRoiProps = {
   since: string;
@@ -24,23 +24,37 @@ export async function MarketingRoi({ since, until, rangeLabel }: MarketingRoiPro
 
   const cacValue = roi.cac !== null ? `${formatEUR(roi.cac)} / cliente` : "—";
   const roasValue = roi.roas !== null ? `${percentFmt.format(roi.roas)}×` : "—";
-  const acquiredHint =
-    roi.conversionRate !== null
-      ? `${roi.acquiredCustomers} clientes · ${percentFmt.format(roi.conversionRate * 100)}% de ${roi.leads} leads`
-      : `${roi.acquiredCustomers} clientes`;
+  const closedRateValue =
+    roi.closedLeadRate !== null ? percentFmt.format(roi.closedLeadRate * 100) : "—";
+  const averageClosedValue =
+    roi.averageClosedValue !== null ? formatEUR(roi.averageClosedValue) : "—";
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Rentabilidad de Ads (CAC / ROAS)</CardTitle>
+        <CardTitle className="text-base">Adquisición y cierres (CAC / ROAS)</CardTitle>
       </CardHeader>
-      <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <StatCard
-          label="CAC"
+          label="CAC Meta"
           value={cacValue}
           tone="default"
           icon={Target}
           hint={`${rangeLabel} · ${roi.acquiredCustomers} adquiridos`}
+        />
+        <StatCard
+          label="Leads ganados"
+          value={numberFmt.format(roi.closedLeads)}
+          tone={roi.closedLeads > 0 ? "success" : "default"}
+          icon={BadgeCheck}
+          hint={`${numberFmt.format(roi.totalLeads)} leads creados`}
+        />
+        <StatCard
+          label="Conversión a cierre"
+          value={closedRateValue}
+          tone={roi.closedLeadRate !== null && roi.closedLeadRate >= 0.1 ? "success" : "default"}
+          icon={Percent}
+          hint="ganados / leads"
         />
         <StatCard
           label="ROAS"
@@ -61,7 +75,14 @@ export async function MarketingRoi({ since, until, rangeLabel }: MarketingRoiPro
           value={formatEUR(roi.spend)}
           tone="default"
           icon={HandCoins}
-          hint={acquiredHint}
+          hint={`${roi.leads} leads atribuidos`}
+        />
+        <StatCard
+          label="Ticket estimado"
+          value={averageClosedValue}
+          tone="info"
+          icon={Coins}
+          hint="valor medio de ganados"
         />
       </CardContent>
     </Card>
