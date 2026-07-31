@@ -1,15 +1,23 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
-import { useState } from "react";
 import { AiNotice } from "@/components/ui/ai-notice";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
+import { Sparkles } from "lucide-react";
+import { useState } from "react";
 import { sendEmailToLead } from "../actions";
+
+/** Idiomas soportados para el borrador generado por IA. */
+const EMAIL_LANGUAGES = [
+  { value: "es", label: "Español" },
+  { value: "ca", label: "Català" },
+  { value: "en", label: "English" },
+] as const;
 
 export type EmailComposerProps = {
   leadId: string;
@@ -42,6 +50,7 @@ export function EmailComposer({
   const [to, setTo] = useState(defaultTo);
   const [subject, setSubject] = useState(defaultSubject ?? "");
   const [body, setBody] = useState(defaultBody ?? "");
+  const [language, setLanguage] = useState<string>("es");
   const [drafting, setDrafting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const feedback = useFormFeedback();
@@ -56,6 +65,7 @@ export function EmailComposer({
           lead_id: leadId,
           kind: draftKind,
           instructions: draftInstructions,
+          language,
         }),
       });
       const json = await res.json();
@@ -111,7 +121,24 @@ export function EmailComposer({
     <>
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
         {aiEnabled ? (
-          <div className="flex justify-end">
+          <div className="flex items-center justify-end gap-2">
+            <Label htmlFor="draft-language" className="sr-only">
+              Idioma del email
+            </Label>
+            <Select
+              id="draft-language"
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              disabled={drafting}
+              className="h-7 w-auto py-0 text-xs"
+              aria-label="Idioma del email"
+            >
+              {EMAIL_LANGUAGES.map((l) => (
+                <option key={l.value} value={l.value}>
+                  {l.label}
+                </option>
+              ))}
+            </Select>
             <button
               type="button"
               onClick={handleDraftWithAI}

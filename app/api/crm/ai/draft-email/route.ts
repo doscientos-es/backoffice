@@ -6,31 +6,35 @@
  * convierten a HTML con markdownToHtml. NO envía el email ni lo persiste — el
  * equipo SIEMPRE revisa antes de enviar (sec. 22.2 description.md).
  *
- * Body: { lead_id: string, kind?: string, instructions?: string }
+ * Body: { lead_id: string, kind?: string, instructions?: string, language?: string }
  *  - kind: tipo de email deseado (p.ej. "follow_up", "intro", "propuesta")
  *  - instructions: notas adicionales libres del usuario
+ *  - language: idioma del email ("es" | "ca" | "en"), por defecto "es"
  *
  * Auth: requireUser (viewer denegado). 503 si la IA no está configurada.
  */
 
-import { type NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { AI_MODELS, isAIEnabled, runAIObject } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { formatInteractionForAI } from "@/lib/leads/interaction-utils";
 import { scopedLogger } from "@/lib/logger";
 import { rateLimit } from "@/lib/ratelimit";
 import { createServerClient } from "@/lib/supabase/server";
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const log = scopedLogger("ai.draft-email");
 
+const EMAIL_LANGUAGES = ["es", "ca", "en"] as const;
+
 const BodySchema = z.object({
   lead_id: z.string().uuid(),
   kind: z.string().max(40).optional(),
   instructions: z.string().max(1000).optional(),
+  language: z.enum(EMAIL_LANGUAGES).optional(),
 });
 
 const ResultSchema = z.object({
@@ -39,15 +43,25 @@ const ResultSchema = z.object({
 });
 type AIResult = z.infer<typeof ResultSchema>;
 
-const SYSTEM_PROMPT = `Eres un asistente de CRM que redacta emails en español
+const LANGUAGE_NAMES: Record<(typeof EMAIL_LANGUAGES)[number], string> = {
+  es: "español",
+  ca: "catalán",
+  en: "inglés",
+};
+
+function buildSystemPrompt(language: (typeof EMAIL_LANGUAGES)[number]) {
+  return `Eres un asistente de CRM que redacta emails en ${LANGUAGE_NAMES[language]}
 para una agencia de desarrollo web. Tono profesional, cercano, sin tecnicismos
 innecesarios. Redacta el cuerpo en Markdown simple (párrafos, **negrita**,
-listas con "-"), sin encabezados ni HTML.
+listas con "-"), sin encabezados ni HTML. Redacta TODO el email (asunto y
+cuerpo) íntegramente en ${LANGUAGE_NAMES[language]}, con gramática y
+expresiones naturales de ese idioma, no una traducción literal del español.
 
 - "subject": asunto del email (máx. 100 caracteres).
 - "body": cuerpo del email en Markdown.
 
 La firma del usuario se añade aparte; no la incluyas en el body.`;
+}
 
 export async function POST(req: NextRequest) {
   if (!isAIEnabled()) {
@@ -130,7 +144,7 @@ Remitente: ${user.name} (${user.email})`;
   try {
     result = await runAIObject({
       model: AI_MODELS.drafter,
-      system: SYSTEM_PROMPT,
+      system: buildSystemPrompt(body.language ?? "es"),
       user: userPrompt,
       schema: ResultSchema,
       temperature: 0.6, // un poco más de variedad para emails
@@ -144,6 +158,9 @@ Remitente: ${user.name} (${user.email})`;
     return NextResponse.json({ error: "AI service unavailable" }, { status: 502 });
   }
 
-  log.info({ leadId: body.lead_id, kind: body.kind ?? "follow_up" }, "ai_draft_email_ok");
+  log.info(
+    { leadId: body.lead_id, kind: body.kind ?? "follow_up", language: body.language ?? "es" },
+    "ai_draft_email_ok",
+  );
   return NextResponse.json({ ok: true, ...result });
 }
