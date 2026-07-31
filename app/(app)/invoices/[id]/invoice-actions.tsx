@@ -184,9 +184,9 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
   const canRectify = (isIssued || isPaid || isOverdue) && !invoice.is_rectification;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
       {/* Status badges — lives here so the page header actions slot stays compact */}
-      <div className="flex flex-col items-end gap-1 mr-1">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 sm:mr-1 sm:flex-col sm:items-end sm:gap-1">
         <StatusBadge meta={INVOICE_STATUS} value={invoice.status} />
         <StatusBadge
           meta={VERIFACTU_STATUS}
@@ -197,15 +197,17 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
       </div>
 
       {/* Subtle vertical separator */}
-      <div className="w-px h-7 bg-border shrink-0 mx-0.5" aria-hidden />
+      <div className="hidden h-7 w-px shrink-0 bg-border sm:block sm:mx-0.5" aria-hidden />
 
-      <FormFeedback state={feedback.state} />
+      <div className="min-w-0 max-w-full sm:flex-1">
+        <FormFeedback state={feedback.state} />
+      </div>
 
       {/* Icon-only secondary actions */}
       <Button
         variant="outline"
         size="sm"
-        className="px-2"
+        className="shrink-0 px-2"
         title="Descargar PDF"
         aria-label="Descargar PDF"
         asChild
@@ -219,7 +221,7 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
         <Button
           variant="outline"
           size="sm"
-          className="px-2"
+          className="shrink-0 px-2"
           title="Editar factura"
           aria-label="Editar factura"
           asChild
@@ -236,7 +238,12 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
 
       {/* Primary CTA — keep text for clarity */}
       {canIssue && (
-        <Button size="sm" disabled={pending} onClick={() => handleStatusUpdate("issued")}>
+        <Button
+          className="shrink-0 whitespace-nowrap"
+          size="sm"
+          disabled={pending}
+          onClick={() => handleStatusUpdate("issued")}
+        >
           {pendingStatus === "issued" ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
@@ -253,7 +260,7 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
             size="sm"
             disabled={pending}
             onClick={() => setShowPaymentDialog(true)}
-            className="text-success-foreground hover:text-success-foreground"
+            className="shrink-0 whitespace-nowrap text-success-foreground hover:text-success-foreground"
           >
             {pendingStatus === "paid" ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -321,7 +328,7 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
           <Button
             variant="outline"
             size="sm"
-            className="px-2"
+            className="shrink-0 px-2"
             disabled={pending}
             title="Revertir cobro"
             aria-label="Revertir cobro"

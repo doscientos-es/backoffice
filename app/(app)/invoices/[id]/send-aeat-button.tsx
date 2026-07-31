@@ -1,6 +1,7 @@
 "use client";
 
 import { Send } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { sendToAeat } from "../actions";
@@ -14,6 +15,7 @@ export function SendAeatButton({
   disabled?: boolean;
   label?: string;
 }) {
+  const router = useRouter();
   const feedback = useFormFeedback();
 
   async function onClick() {
@@ -23,10 +25,10 @@ export function SendAeatButton({
     const result = await sendToAeat(fd);
     if (result.ok) {
       feedback.setSuccess(result.csv ? `Aceptada · CSV ${result.csv}` : "Factura procesada");
+      router.refresh();
     } else {
-      // Show a short inline indicator; the full AEAT error is displayed in the
-      // banner above (verifactu_error) after the page revalidates.
-      feedback.setError("Rechazada por AEAT");
+      feedback.setError(result.error || "Error técnico al enviar a VERI*FACTU");
+      router.refresh();
     }
   }
 
@@ -37,6 +39,7 @@ export function SendAeatButton({
         type="button"
         size="sm"
         variant="default"
+        className="shrink-0 whitespace-nowrap"
         disabled={disabled || feedback.pending}
         onClick={onClick}
       >

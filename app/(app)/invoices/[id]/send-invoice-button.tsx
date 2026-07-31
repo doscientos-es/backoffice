@@ -60,7 +60,7 @@ export function SendInvoiceButton({
           <Button
             variant="outline"
             size="sm"
-            className="px-2"
+            className="shrink-0 px-2"
             title="Enviar email al cliente"
             aria-label="Enviar email al cliente"
           >
