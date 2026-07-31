@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920">
+  <defs>
+    <linearGradient id="bg" x1="100" y1="0" x2="980" y2="1920" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2a4227"/><stop offset=".58" stop-color="#1d321c"/><stop offset="1" stop-color="#102010"/>
+    </linearGradient>
+  </defs>
+  <rect width="1080" height="1920" fill="url(#bg)"/>
+  <circle cx="930" cy="220" r="330" fill="#bdff7b" opacity=".14"/>
+  <circle cx="100" cy="1710" r="420" fill="#628b57" opacity=".18"/>
+  <g transform="translate(345 730) scale(1.55)">
+    <path d="M30 88.0355C40.3711 88.0355 50.3174 92.1554 57.6508 99.4889C64.9843 106.822 69.1041 116.769 69.1041 127.14C69.1041 137.511 64.9843 147.457 57.6508 154.79C50.3174 162.124 40.3711 166.244 30 166.244L30 88.0355Z" fill="#f8faf7"/>
+    <circle cx="115.632" cy="127.14" r="39.1041" fill="#f8faf7"/><circle cx="201.265" cy="127.14" r="39.1041" fill="#f8faf7"/>
+  </g>
+  <text x="540" y="1285" fill="#f8faf7" font-family="Arial, sans-serif" font-size="74" font-weight="700" letter-spacing="-2">doscientos</text>
+  <text x="540" y="1360" fill="#bdff7b" font-family="Arial, sans-serif" font-size="36" font-weight="700" letter-spacing="8">BACKOFFICE</text>
+</svg>
