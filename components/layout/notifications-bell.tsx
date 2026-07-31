@@ -1,20 +1,5 @@
 "use client";
 
-import { markNotificationsRead } from "@/app/(app)/tasks/comment-actions";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty-state";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useBrowserNotifications } from "@/lib/hooks/use-browser-notifications";
-import { useWebPush } from "@/lib/hooks/use-web-push";
-import { getBrowserClient } from "@/lib/supabase/browser";
-import { cn, relativeTime } from "@/lib/utils";
 import {
   AtSign,
   Bell,
@@ -39,6 +24,21 @@ import {
   useState,
   useTransition,
 } from "react";
+import { markNotificationsRead } from "@/app/(app)/tasks/comment-actions";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty-state";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useBrowserNotifications } from "@/lib/hooks/use-browser-notifications";
+import { useWebPush } from "@/lib/hooks/use-web-push";
+import { getBrowserClient } from "@/lib/supabase/browser";
+import { cn, relativeTime } from "@/lib/utils";
 
 type Notif = {
   id: string;

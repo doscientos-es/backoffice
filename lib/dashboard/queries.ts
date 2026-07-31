@@ -547,10 +547,10 @@ export async function getMoneyOpportunities(): Promise<MoneyOpportunities> {
   const { data: taskRows } =
     leadIds.length > 0
       ? await supabase
-        .from("tasks")
-        .select("lead_id, kind, status, completed_at")
-        .in("lead_id", leadIds)
-        .is("deleted_at", null)
+          .from("tasks")
+          .select("lead_id, kind, status, completed_at")
+          .in("lead_id", leadIds)
+          .is("deleted_at", null)
       : { data: [] };
   const leadsWithNextAction = new Set<string>();
   for (const task of taskRows ?? []) {

@@ -60,11 +60,7 @@ const payload = [
   `Huella=${input.previousHash ?? ""}`,
   `FechaHoraHusoGenRegistro=${stamp}`,
 ].join("&");
-const hash = crypto
-  .createHash("sha256")
-  .update(payload, "utf8")
-  .digest("hex")
-  .toUpperCase();
+const hash = crypto.createHash("sha256").update(payload, "utf8").digest("hex").toUpperCase();
 
 const xml = buildVerifactuXml(input, hash, software);
 const envelope = `<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"><soapenv:Header/><soapenv:Body>${xml}</soapenv:Body></soapenv:Envelope>`;

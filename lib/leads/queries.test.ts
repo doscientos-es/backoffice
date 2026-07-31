@@ -26,6 +26,7 @@ vi.mock("@/lib/supabase/server", () => ({
         order: () => builder,
         in: () => builder,
         limit: async () => result,
+        // biome-ignore lint/suspicious/noThenProperty: mock needs to be thenable to mimic Supabase query builder
         then: (resolve: (value: typeof result) => unknown) => resolve(result),
       };
       return builder;

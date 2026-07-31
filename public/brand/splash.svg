@@ -1,4 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920">
+  <title>Splash screen doscientos backoffice</title>
   <defs>
     <linearGradient id="bg" x1="100" y1="0" x2="980" y2="1920" gradientUnits="userSpaceOnUse">
       <stop stop-color="#2a4227"/><stop offset=".58" stop-color="#1d321c"/><stop offset="1" stop-color="#102010"/>

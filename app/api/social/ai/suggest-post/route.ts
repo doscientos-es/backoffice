@@ -1,3 +1,5 @@
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { AI_MODELS, isAIEnabled, runAIObject } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { ACTIVE_LEAD_STATUSES } from "@/lib/leads/pipeline";
@@ -13,8 +15,6 @@ import {
   type SocialProjectContext,
 } from "@/lib/social/ai-suggestion";
 import { createServerClient } from "@/lib/supabase/server";
-import { type NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
