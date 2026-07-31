@@ -136,7 +136,7 @@ export function DiagnosticsPanel({ config }: { config: DiagnosticsConfig }) {
     {
       title: "Push móvil",
       description:
-        "Solicita permiso, registra este móvil y envía una notificación grande de prueba.",
+        "Simula un nuevo lead con acciones directas para llamar y registrar el resultado.",
       run: runPushTest,
     },
     {

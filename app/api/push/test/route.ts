@@ -38,11 +38,22 @@ export async function POST() {
   }
 
   await sendWebPushToMembers([user.id], {
-    title: "✅ Push de prueba",
-    body: "Las notificaciones de nuevos leads están activas en este móvil.",
+    title: "🔔 Nuevo lead",
+    body: "María García · Estudio Ejemplo · +34 600 111 222",
     url: "/settings/diagnostics",
-    tag: "diagnostic-push",
+    tag: "diagnostic-lead-push",
     badge: 1,
+    actions: [
+      { action: "call", title: "Llamar" },
+      { action: "feedback", title: "Registrar resultado" },
+    ],
+    data: {
+      callUrl: "tel:+34600111222",
+      feedbackUrl: "/settings/diagnostics?push=feedback",
+    },
   });
-  return NextResponse.json({ ok: true, detail: "Push enviado a tus dispositivos registrados" });
+  return NextResponse.json({
+    ok: true,
+    detail: "Push de lead de prueba enviado con acciones Llamar y Registrar resultado",
+  });
 }
