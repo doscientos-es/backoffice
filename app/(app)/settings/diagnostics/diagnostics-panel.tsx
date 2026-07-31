@@ -14,7 +14,6 @@ import {
   testSupabaseConnection,
   testTelegramBot,
   testTelegramLeadMessage,
-  testWebPush,
 } from "./actions";
 
 export type DiagnosticsConfig = {
@@ -102,7 +101,11 @@ export function DiagnosticsPanel({ config }: { config: DiagnosticsConfig }) {
     const subscribed = await subscribe();
     if (!subscribed)
       return { ok: false, error: "No se pudo registrar este dispositivo para Push." };
-    return testWebPush();
+    const response = await fetch("/api/push/test", { method: "POST" });
+    const payload = (await response.json()) as { ok?: boolean; detail?: string; error?: string };
+    if (!response.ok || !payload.ok)
+      return { ok: false, error: payload.error ?? "No se pudo enviar el Push." };
+    return { ok: true, detail: payload.detail ?? "Push enviado" };
   }
 
   const tests: Test[] = [
