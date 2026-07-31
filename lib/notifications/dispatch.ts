@@ -4,6 +4,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export type NotificationEvent =
   | "lead_new"
   | "lead_assigned"
+  | "lead_uncontacted"
+  | "lead_stale"
+  | "lead_at_risk"
   | "task_comment"
   | "task_mention"
   | "task_assigned"
@@ -16,6 +19,9 @@ export type NotificationEvent =
 const TITLES: Record<NotificationEvent, string> = {
   lead_new: "🔔 Nuevo lead",
   lead_assigned: "👤 Lead asignado",
+  lead_uncontacted: "⏱️ Lead sin contactar",
+  lead_stale: "⚠️ Lead sin novedades",
+  lead_at_risk: "🚨 Lead en riesgo",
   task_comment: "💬 Nuevo comentario",
   task_mention: "💬 Te han mencionado",
   task_assigned: "✅ Tarea asignada",

@@ -14,11 +14,15 @@ import { serverEnv } from "@/lib/env";
 import { getFollowUps } from "@/lib/integrations/follow-ups";
 import { telegramSendMessage } from "@/lib/integrations/telegram";
 import { scopedLogger } from "@/lib/logger";
+import { dispatchNotifications } from "@/lib/notifications/dispatch";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const log = scopedLogger("crm.follow-ups");
+const STALE_HOURS = 24;
+const AT_RISK_HOURS = 72;
 
 function authenticate(request: NextRequest): boolean {
   const { CRON_SECRET } = serverEnv();
@@ -41,6 +45,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const proposalHours = Number(url.searchParams.get("proposal_hours") ?? "72");
 
   const data = await getFollowUps({ slaHours, leadHours, proposalHours });
+
+  try {
+    await dispatchLeadFollowUpNotifications(data);
+  } catch (error) {
+    log.error({ err: error }, "lead follow-up notifications failed");
+  }
 
   // ── Telegram SLA alert ──────────────────────────────────────────────────────
   if (data.uncontactedLeads.length > 0) {
@@ -74,4 +84,65 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   );
 
   return NextResponse.json(data);
+}
+
+async function dispatchLeadFollowUpNotifications(data: Awaited<ReturnType<typeof getFollowUps>>) {
+  const supabase = createAdminClient();
+  const leads = [
+    ...data.uncontactedLeads.map((lead) => ({
+      ...lead,
+      eventType: "lead_uncontacted" as const,
+      body: `El lead “${lead.name}” lleva ${lead.hoursUncontacted} h sin primer contacto`,
+    })),
+    ...data.staleLeads
+      .filter((lead) => lead.hoursSince >= STALE_HOURS)
+      .map((lead) => ({
+        ...lead,
+        eventType:
+          lead.hoursSince >= AT_RISK_HOURS ? ("lead_at_risk" as const) : ("lead_stale" as const),
+        body:
+          lead.hoursSince >= AT_RISK_HOURS
+            ? `El lead “${lead.name}” lleva ${lead.hoursSince} h sin novedades y está en riesgo`
+            : `El lead “${lead.name}” lleva ${lead.hoursSince} h sin novedades`,
+      })),
+  ];
+  if (!leads.length) return;
+
+  const leadIds = leads.map((lead) => lead.id);
+  const { data: recentNotifications } = await supabase
+    .from("notifications")
+    .select("entity_id, event_type")
+    .in("entity_id", leadIds)
+    .in("event_type", ["lead_uncontacted", "lead_stale", "lead_at_risk"])
+    .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+  const sent = new Set(
+    (recentNotifications ?? []).map(
+      (notification) => `${notification.event_type}:${notification.entity_id}`,
+    ),
+  );
+
+  const { data: admins } = await supabase
+    .from("team_members")
+    .select("id")
+    .in("role", ["owner", "admin"])
+    .is("deleted_at", null);
+  const adminIds = (admins ?? []).map((member) => member.id as string);
+
+  for (const lead of leads) {
+    const key = `${lead.eventType}:${lead.id}`;
+    if (sent.has(key)) continue;
+
+    const recipients =
+      lead.eventType === "lead_at_risk" || !lead.assignedTo
+        ? [...new Set([...(lead.assignedTo ? [lead.assignedTo] : []), ...adminIds])]
+        : [lead.assignedTo];
+    await dispatchNotifications({
+      recipientIds: recipients,
+      eventType: lead.eventType,
+      entityType: "lead",
+      entityId: lead.id,
+      body: lead.body,
+      link: `/leads/${lead.id}`,
+    });
+  }
 }

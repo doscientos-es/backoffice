@@ -32,6 +32,7 @@ export type StaleLead = {
   email: string | null;
   status: string;
   statusLabel: string;
+  assignedTo: string | null;
   since: string;
   hoursSince: number;
   url: string;
@@ -56,6 +57,7 @@ export type UncontactedLead = {
   phone: string | null;
   email: string | null;
   source: string | null;
+  assignedTo: string | null;
   createdAt: string;
   hoursUncontacted: number;
   url: string;
@@ -101,7 +103,7 @@ export async function getFollowUps(opts?: {
   const [leadsRes, proposalsRes, uncontactedRes] = await Promise.all([
     supabase
       .from("leads")
-      .select("id, name, company, phone, email, status, updated_at")
+      .select("id, name, company, phone, email, status, assigned_to, updated_at")
       .in("status", [...ACTIVE_LEAD_STATUSES])
       .lt("updated_at", leadCutoff)
       .is("deleted_at", null)
@@ -120,7 +122,7 @@ export async function getFollowUps(opts?: {
     // Speed-to-lead SLA: new leads without any first outbound contact
     supabase
       .from("leads")
-      .select("id, name, company, phone, email, source, created_at")
+      .select("id, name, company, phone, email, source, assigned_to, created_at")
       .in("status", ["new", "qualifying"])
       .is("first_contacted_at", null)
       .lt("created_at", slaCutoff)
@@ -140,6 +142,7 @@ export async function getFollowUps(opts?: {
       email: (r.email as string | null) ?? null,
       status,
       statusLabel: LEAD_STATUS[status]?.label ?? status,
+      assignedTo: (r.assigned_to as string | null) ?? null,
       since,
       hoursSince: hoursBetween(since, now),
       url: `${appUrl}/leads/${r.id}`,
@@ -171,6 +174,7 @@ export async function getFollowUps(opts?: {
       phone: (r.phone as string | null) ?? null,
       email: (r.email as string | null) ?? null,
       source: (r.source as string | null) ?? null,
+      assignedTo: (r.assigned_to as string | null) ?? null,
       createdAt,
       hoursUncontacted: hoursBetween(createdAt, now),
       url: `${appUrl}/leads/${r.id}`,
