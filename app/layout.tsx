@@ -39,9 +39,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
       <body>
         <div id="startup-splash" role="status" aria-label="Cargando Doscientos">
-          <LogoMark size={112} className="startup-splash-mark" />
-          <strong>doscientos</strong>
-          <span>BACKOFFICE</span>
+          <div className="startup-splash-mark-shell">
+            <LogoMark size={112} className="startup-splash-mark" />
+          </div>
+          <div className="startup-splash-copy">
+            <strong>doscientos</strong>
+            <span>BACKOFFICE</span>
+            <small>CRM interno</small>
+          </div>
+          <div className="startup-splash-progress" aria-hidden="true">
+            <i />
+          </div>
         </div>
         <ThemeProvider>{children}</ThemeProvider>
         <Toaster />

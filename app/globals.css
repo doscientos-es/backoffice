@@ -9,22 +9,36 @@
   display: grid;
   place-content: center;
   justify-items: center;
-  gap: 0.65rem;
-  background: radial-gradient(circle at 82% 12%, rgb(189 255 123 / 0.2), transparent 30%), linear-gradient(145deg, #2a4227 0%, #1d321c 58%, #102010 100%);
+  gap: 0.9rem;
+  overflow: hidden;
+  background: radial-gradient(circle at 76% 14%, rgb(189 255 123 / 0.16), transparent 25%), radial-gradient(circle at 18% 88%, rgb(82 125 72 / 0.2), transparent 34%), linear-gradient(145deg, #2a4227 0%, #1d321c 58%, #102010 100%);
   color: #f8faf7;
   opacity: 1;
   transition: opacity 220ms ease, visibility 220ms ease;
 }
 
-#startup-splash .startup-splash-mark {
+#startup-splash .startup-splash-mark-shell {
+  display: grid;
+  place-items: center;
   width: 7rem;
   height: 7rem;
-  margin-bottom: 0.8rem;
-  padding: 1.4rem;
+  margin-bottom: 0.7rem;
   border-radius: 2rem;
   background: #f8faf7;
-  box-shadow: 0 18px 38px rgb(0 0 0 / 0.24);
+  box-shadow: 0 18px 38px rgb(0 0 0 / 0.24), 0 0 0 1px rgb(255 255 255 / 0.16);
   animation: splash-pop 500ms cubic-bezier(.2,.8,.2,1) both;
+}
+
+#startup-splash .startup-splash-mark {
+  width: 4.5rem;
+  height: 4.5rem;
+  color: #2a4227;
+}
+
+#startup-splash .startup-splash-copy {
+  display: grid;
+  justify-items: center;
+  gap: 0.28rem;
 }
 
 #startup-splash strong {
@@ -41,6 +55,31 @@
   margin-right: -0.38em;
 }
 
+#startup-splash small {
+  margin-top: 0.35rem;
+  color: rgb(248 250 247 / 0.58);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+}
+
+#startup-splash .startup-splash-progress {
+  width: 4.5rem;
+  height: 0.18rem;
+  margin-top: 2.1rem;
+  overflow: hidden;
+  border-radius: 99px;
+  background: rgb(248 250 247 / 0.18);
+}
+
+#startup-splash .startup-splash-progress i {
+  display: block;
+  width: 45%;
+  height: 100%;
+  border-radius: inherit;
+  background: #bdff7b;
+  animation: splash-progress 700ms ease-in-out infinite alternate;
+}
+
 #startup-splash.is-hidden {
   opacity: 0;
   visibility: hidden;
@@ -50,6 +89,20 @@
 @keyframes splash-pop {
   from { opacity: 0; transform: scale(.9) translateY(8px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes splash-progress {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(250%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #startup-splash,
+  #startup-splash .startup-splash-mark-shell,
+  #startup-splash .startup-splash-progress i {
+    animation: none;
+    transition: none;
+  }
 }
 
 @custom-variant dark (&:is(.dark *));
