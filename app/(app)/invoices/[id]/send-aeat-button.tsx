@@ -39,7 +39,7 @@ export function SendAeatButton({
         type="button"
         size="sm"
         variant="default"
-        className="shrink-0 whitespace-nowrap"
+        className="w-full justify-center whitespace-nowrap sm:w-auto"
         disabled={disabled || feedback.pending}
         onClick={onClick}
       >

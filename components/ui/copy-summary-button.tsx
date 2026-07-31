@@ -13,6 +13,8 @@ interface CopySummaryButtonProps {
   lines: string[];
   /** App-relative path, e.g. "/clients/abc". Resolved to a full URL on click. */
   urlPath: string;
+  /** Optional compact label, shown on narrow screens. */
+  label?: string;
   className?: string;
 }
 
@@ -26,7 +28,7 @@ interface CopySummaryButtonProps {
  *   Dirección: Calle Mayor 1, 08001 Barcelona
  *   → https://backoffice.example.com/clients/…
  */
-export function CopySummaryButton({ lines, urlPath, className }: CopySummaryButtonProps) {
+export function CopySummaryButton({ lines, urlPath, label, className }: CopySummaryButtonProps) {
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -49,7 +51,7 @@ export function CopySummaryButton({ lines, urlPath, className }: CopySummaryButt
       aria-label="Copiar ficha"
       title="Copiar ficha al portapapeles"
       className={cn(
-        "inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+        "inline-flex h-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
         className,
       )}
     >
@@ -58,6 +60,7 @@ export function CopySummaryButton({ lines, urlPath, className }: CopySummaryButt
       ) : (
         <Share2 className="size-3.5" />
       )}
+      {label ? <span className="sm:hidden">{label}</span> : null}
     </button>
   );
 }

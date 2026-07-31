@@ -60,11 +60,12 @@ export function SendInvoiceButton({
           <Button
             variant="outline"
             size="sm"
-            className="shrink-0 px-2"
+            className="w-full justify-start gap-2 sm:w-auto sm:justify-center sm:gap-0 sm:px-2"
             title="Enviar email al cliente"
             aria-label="Enviar email al cliente"
           >
             <Mail className="h-4 w-4" />
+            <span className="sm:hidden">Compartir</span>
           </Button>
         ) : (
           <Button variant="outline" size="sm">

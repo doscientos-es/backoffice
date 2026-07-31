@@ -184,9 +184,9 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
   const canRectify = (isIssued || isPaid || isOverdue) && !invoice.is_rectification;
 
   return (
-    <div className="flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
+    <div className="grid w-full min-w-0 grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap sm:gap-2">
       {/* Status badges — lives here so the page header actions slot stays compact */}
-      <div className="flex shrink-0 flex-wrap items-center gap-2 sm:mr-1 sm:flex-col sm:items-end sm:gap-1">
+      <div className="col-span-2 flex shrink-0 flex-wrap items-center gap-2 sm:mr-1 sm:flex-col sm:items-end sm:gap-1">
         <StatusBadge meta={INVOICE_STATUS} value={invoice.status} />
         <StatusBadge
           meta={VERIFACTU_STATUS}
@@ -199,7 +199,7 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
       {/* Subtle vertical separator */}
       <div className="hidden h-7 w-px shrink-0 bg-border sm:block sm:mx-0.5" aria-hidden />
 
-      <div className="min-w-0 max-w-full sm:flex-1">
+      <div className="col-span-2 min-w-0 max-w-full sm:flex-1">
         <FormFeedback state={feedback.state} />
       </div>
 
@@ -207,13 +207,14 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
       <Button
         variant="outline"
         size="sm"
-        className="shrink-0 px-2"
+        className="w-full justify-start gap-2 sm:w-auto sm:justify-center sm:gap-0 sm:px-2"
         title="Descargar PDF"
         aria-label="Descargar PDF"
         asChild
       >
         <a href={`/api/invoices/${invoice.id}/pdf`}>
           <Download className="h-4 w-4" />
+          <span className="sm:hidden">Descargar PDF</span>
         </a>
       </Button>
 
@@ -221,13 +222,14 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
         <Button
           variant="outline"
           size="sm"
-          className="shrink-0 px-2"
+          className="w-full justify-start gap-2 sm:w-auto sm:justify-center sm:gap-0 sm:px-2"
           title="Editar factura"
           aria-label="Editar factura"
           asChild
         >
           <Link href={`/invoices/${invoice.id}/edit`}>
             <FileEdit className="h-4 w-4" />
+            <span className="sm:hidden">Editar</span>
           </Link>
         </Button>
       )}
@@ -239,7 +241,7 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
       {/* Primary CTA — keep text for clarity */}
       {canIssue && (
         <Button
-          className="shrink-0 whitespace-nowrap"
+          className="col-span-2 w-full justify-center whitespace-nowrap sm:w-auto"
           size="sm"
           disabled={pending}
           onClick={() => handleStatusUpdate("issued")}
@@ -260,7 +262,7 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
             size="sm"
             disabled={pending}
             onClick={() => setShowPaymentDialog(true)}
-            className="shrink-0 whitespace-nowrap text-success-foreground hover:text-success-foreground"
+            className="w-full justify-center whitespace-nowrap text-success-foreground hover:text-success-foreground sm:w-auto"
           >
             {pendingStatus === "paid" ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -328,7 +330,7 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
           <Button
             variant="outline"
             size="sm"
-            className="shrink-0 px-2"
+            className="w-full justify-start gap-2 sm:w-auto sm:justify-center sm:gap-0 sm:px-2"
             disabled={pending}
             title="Revertir cobro"
             aria-label="Revertir cobro"
@@ -393,7 +395,7 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
       {(canCancel || canDelete || canRectify || canMarkUncollectible) && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" className="justify-self-end sm:justify-self-auto">
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>

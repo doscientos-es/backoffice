@@ -139,7 +139,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           { label: (invoice.full_number as string | null) ?? "Borrador" },
         ]}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex w-full min-w-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
             <CopySummaryButton
               lines={(() => {
                 const parts: string[] = [];
@@ -167,6 +167,8 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                 return parts;
               })()}
               urlPath={`/invoices/${id}`}
+              label="Compartir"
+              className="h-9 w-full justify-start gap-2 rounded-lg border border-border px-3 text-sm sm:h-7 sm:w-auto sm:justify-center sm:gap-0 sm:border-0 sm:px-2"
             />
             <InvoiceActions
               invoice={{
