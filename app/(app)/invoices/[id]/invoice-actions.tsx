@@ -332,13 +332,14 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
           <Button
             variant="outline"
             size="sm"
-            className="w-full justify-start gap-2 sm:w-auto sm:justify-center sm:gap-0 sm:px-2"
+            className="col-span-2 w-full justify-start gap-2 sm:w-auto sm:justify-center sm:gap-0 sm:px-2"
             disabled={pending}
             title="Revertir cobro"
             aria-label="Revertir cobro"
             onClick={() => setConfirmUncollected(true)}
           >
             <XCircle className="h-4 w-4" />
+            <span className="sm:hidden">Revertir cobro</span>
           </Button>
           <Dialog open={confirmUncollected} onOpenChange={setConfirmUncollected}>
             <DialogContent className="sm:max-w-sm">
@@ -397,8 +398,13 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
       {(canCancel || canDelete || canRectify || canMarkUncollectible) && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="justify-self-end sm:justify-self-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              className="col-span-2 w-full justify-center gap-2 sm:w-auto sm:justify-self-auto sm:gap-0 sm:border-0"
+            >
               <MoreHorizontal className="h-4 w-4" />
+              <span className="sm:hidden">Más acciones</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
