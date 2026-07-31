@@ -6,7 +6,7 @@ import { publicEnv } from "@/lib/env";
 import { selectLeadResource } from "@/lib/integrations/lead-resources";
 import { telegramSendMessage } from "@/lib/integrations/telegram";
 import { scopedLogger } from "@/lib/logger";
-import { sendWebPushToMembers } from "@/lib/push/web-push";
+import { dispatchNotifications } from "@/lib/notifications/dispatch";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type NotifyNewLeadInput = {
@@ -79,45 +79,15 @@ export async function notifyNewLead(input: NotifyNewLeadInput): Promise<void> {
     .filter(Boolean)
     .join(" · ");
 
-  // ── 2. In-app notifications (bulk insert) ────────────────────────────────
-  const { error: notifError } = await supabase.from("notifications").insert(
-    recipients.map((r) => ({
-      recipient_id: r.id as string,
-      actor_id: null,
-      event_type: "lead_new",
-      entity_type: "lead",
-      entity_id: input.leadId,
-      body: notifBody,
-      link: `/leads/${input.leadId}`,
-    })),
-  );
-
-  if (notifError) {
-    log.error({ err: notifError }, "failed to insert lead_new notifications");
-    // Continue — email delivery is independent
-  }
-
-  const unreadCounts = await Promise.all(
-    recipients.map(async (recipient) => {
-      const { count } = await supabase
-        .from("notifications")
-        .select("id", { count: "exact", head: true })
-        .eq("recipient_id", recipient.id)
-        .is("read_at", null);
-      return { id: recipient.id as string, count: count ?? 1 };
-    }),
-  );
-  await Promise.all(
-    unreadCounts.map(({ id, count }) =>
-      sendWebPushToMembers([id], {
-        title: "🔔 Nuevo lead",
-        body: notifBody || "Ha entrado un nuevo lead",
-        url: `/leads/${input.leadId}`,
-        tag: `lead-${input.leadId}`,
-        badge: count,
-      }),
-    ),
-  );
+  // ── 2. In-app notification + background Push ─────────────────────────────
+  await dispatchNotifications({
+    recipientIds: recipients.map((r) => r.id as string),
+    eventType: "lead_new",
+    entityType: "lead",
+    entityId: input.leadId,
+    body: notifBody || "Ha entrado un nuevo lead",
+    link: `/leads/${input.leadId}`,
+  });
 
   // ── 3. Email (render once, send to all) ──────────────────────────────────
   let html: string;

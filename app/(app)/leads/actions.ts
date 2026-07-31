@@ -16,6 +16,7 @@ import { resolveSubject } from "@/lib/google/client";
 import { pushMetaConversion } from "@/lib/integrations/meta-capi";
 import { normalizeCompanySize, normalizeLeadSource, normalizeUrgency } from "@/lib/leads/constants";
 import { scopedLogger } from "@/lib/logger";
+import { dispatchNotifications } from "@/lib/notifications/dispatch";
 import {
   AssignLeadOwnerInput,
   CheckMeetingSlotInput,
@@ -624,7 +625,7 @@ export const assignLeadOwner = defineAction({
 
     const { data: current } = await supabase
       .from("leads")
-      .select("assigned_to")
+      .select("assigned_to, name")
       .eq("id", data.leadId)
       .single();
 
@@ -657,6 +658,18 @@ export const assignLeadOwner = defineAction({
       performed_by: user.id,
       payload: { from: previousId, to: nextId },
     });
+
+    if (nextId && nextId !== user.id) {
+      await dispatchNotifications({
+        recipientIds: [nextId],
+        actorId: user.id,
+        eventType: "lead_assigned",
+        entityType: "lead",
+        entityId: data.leadId,
+        body: `Te han asignado el lead “${(current?.name as string | null) ?? "Sin nombre"}”`,
+        link: `/leads/${data.leadId}`,
+      });
+    }
   },
 });
 

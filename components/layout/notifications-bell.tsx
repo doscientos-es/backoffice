@@ -7,6 +7,7 @@ import {
   BellRing,
   CheckCheck,
   CircleDollarSign,
+  Eye,
   FileCheck,
   FileX,
   MessageSquare,
@@ -56,15 +57,18 @@ const EVENT_META: Record<string, { icon: ComponentType<{ className?: string }>; 
   task_mention: { icon: AtSign, tint: "text-violet-500" },
   task_assigned: { icon: UserPlus, tint: "text-emerald-500" },
   lead_new: { icon: Zap, tint: "text-amber-500" },
+  lead_assigned: { icon: UserPlus, tint: "text-blue-500" },
   invoice_paid: { icon: CircleDollarSign, tint: "text-emerald-500" },
   invoice_payment: { icon: CircleDollarSign, tint: "text-emerald-500" },
   proposal_accepted: { icon: FileCheck, tint: "text-emerald-500" },
   proposal_rejected: { icon: FileX, tint: "text-destructive" },
+  proposal_deck_completed: { icon: Eye, tint: "text-violet-500" },
 };
 
 /** Human-readable titles for OS-level browser notifications. */
 const BROWSER_NOTIF_TITLE: Record<string, string> = {
   lead_new: "🔔 Nuevo lead",
+  lead_assigned: "👤 Lead asignado",
   task_comment: "💬 Nuevo comentario",
   task_mention: "💬 Te han mencionado",
   task_assigned: "✅ Tarea asignada",
@@ -72,6 +76,7 @@ const BROWSER_NOTIF_TITLE: Record<string, string> = {
   invoice_payment: "💰 Pago recibido",
   proposal_accepted: "✅ Propuesta aceptada",
   proposal_rejected: "❌ Propuesta rechazada",
+  proposal_deck_completed: "👀 Propuesta visualizada",
 };
 
 function getEventMeta(eventType: string) {

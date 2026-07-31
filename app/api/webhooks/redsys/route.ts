@@ -10,6 +10,7 @@ import {
 } from "@/lib/integrations/redsys";
 import { createDepositInvoice } from "@/lib/invoices/create-deposit-invoice";
 import { scopedLogger } from "@/lib/logger";
+import { dispatchNotifications } from "@/lib/notifications/dispatch";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
 
@@ -142,17 +143,14 @@ export async function POST(req: Request) {
               ? `Factura ${fullNumber} cobrada \u2014 ${formatEUR(totalPaid)}`
               : `Pago parcial de ${fullNumber} \u2014 ${formatEUR(Number(payment.amount))} (pendiente ${formatEUR(due)})`;
 
-            await supabase.from("notifications").insert(
-              recipients.map((r) => ({
-                recipient_id: r.id as string,
-                actor_id: null,
-                event_type: isFullyPaid ? "invoice_paid" : "invoice_payment",
-                entity_type: "invoice",
-                entity_id: invoice.id as string,
-                body,
-                link: `/invoices/${invoice.id}`,
-              })),
-            );
+            await dispatchNotifications({
+              recipientIds: recipients.map((r) => r.id as string),
+              eventType: isFullyPaid ? "invoice_paid" : "invoice_payment",
+              entityType: "invoice",
+              entityId: invoice.id as string,
+              body,
+              link: `/invoices/${invoice.id}`,
+            });
           }
         }
       }
@@ -201,17 +199,14 @@ export async function POST(req: Request) {
           if (recipients?.length) {
             const body = `Se\u00f1al recibida: ${proposal.number} \u2014 ${formatEUR(Number(payment.amount))}`;
 
-            await supabase.from("notifications").insert(
-              recipients.map((r) => ({
-                recipient_id: r.id as string,
-                actor_id: null,
-                event_type: "invoice_payment", // Reuse icon/tone
-                entity_type: "proposal",
-                entity_id: proposal.id as string,
-                body,
-                link: `/proposals/${proposal.id}`,
-              })),
-            );
+            await dispatchNotifications({
+              recipientIds: recipients.map((r) => r.id as string),
+              eventType: "invoice_payment",
+              entityType: "proposal",
+              entityId: proposal.id as string,
+              body,
+              link: `/proposals/${proposal.id}`,
+            });
           }
 
           // Email the client a link to the payment receipt (best-effort: a

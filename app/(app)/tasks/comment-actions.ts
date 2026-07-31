@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
+import { dispatchNotifications } from "@/lib/notifications/dispatch";
 import { createServerClient } from "@/lib/supabase/server";
 
 // ── Parse @mentions from comment body ────────────────────────────────────────
@@ -12,7 +13,6 @@ function parseMentions(body: string): string[] {
 }
 
 async function notifyRecipients({
-  supabase,
   actorId,
   recipientIds,
   taskId,
@@ -20,7 +20,6 @@ async function notifyRecipients({
   eventType,
   body,
 }: {
-  supabase: Awaited<ReturnType<typeof createServerClient>>;
   actorId: string;
   recipientIds: string[];
   taskId: string;
@@ -31,17 +30,15 @@ async function notifyRecipients({
   const unique = [...new Set(recipientIds)].filter((r) => r !== actorId);
   if (unique.length === 0) return;
 
-  await supabase.from("notifications").insert(
-    unique.map((rid) => ({
-      recipient_id: rid,
-      actor_id: actorId,
-      event_type: eventType,
-      entity_type: "task",
-      entity_id: taskId,
-      body: `${taskTitle}: ${body.slice(0, 120)}`,
-      link: `/tasks/${taskId}`,
-    })),
-  );
+  await dispatchNotifications({
+    recipientIds: unique,
+    actorId,
+    eventType,
+    entityType: "task",
+    entityId: taskId,
+    body: `${taskTitle}: ${body.slice(0, 120)}`,
+    link: `/tasks/${taskId}`,
+  });
 }
 
 // ── Add comment ───────────────────────────────────────────────────────────────
@@ -100,7 +97,6 @@ export async function addComment(
   }
 
   await notifyRecipients({
-    supabase,
     actorId: user.id,
     recipientIds: candidates,
     taskId: parsed.data.taskId,

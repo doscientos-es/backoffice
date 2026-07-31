@@ -12,6 +12,7 @@ import { publicEnv, serverEnv } from "@/lib/env";
 import { backupProposalToDrive } from "@/lib/google/backup";
 import { createRedsysPayment, getRedsysUrl } from "@/lib/integrations/redsys";
 import { scopedLogger } from "@/lib/logger";
+import { dispatchNotifications } from "@/lib/notifications/dispatch";
 import { unlockPortalResource } from "@/lib/portal/access";
 import {
   AcceptProposalFiscalData,
@@ -52,7 +53,7 @@ export type PaymentInitResult =
  * transaction across multiple tables — `ensureClientForProposal` re-points
  * the proposal to the new client_id before we mark it accepted.
  */
-/** Best-effort: inserts an in-app notification row for all owners/admins. */
+/** Best-effort: notifies all owners/admins in-app and by background Push. */
 async function notifyAdmins(
   admin: ReturnType<typeof createAdminClient>,
   eventType: string,
@@ -65,16 +66,14 @@ async function notifyAdmins(
     .in("role", ["owner", "admin"])
     .is("deleted_at", null);
   if (!recipients?.length) return;
-  await admin.from("notifications").insert(
-    recipients.map((r) => ({
-      recipient_id: r.id as string,
-      actor_id: null,
-      event_type: eventType,
-      entity_type: "proposal",
-      body,
-      link,
-    })),
-  );
+  await dispatchNotifications({
+    recipientIds: recipients.map((r) => r.id as string),
+    eventType: eventType as "proposal_accepted" | "proposal_rejected",
+    entityType: "proposal",
+    entityId: link.split("/").pop() ?? "unknown",
+    body,
+    link,
+  });
 }
 
 async function acceptWithFiscal(token: string, fiscalInput: unknown): Promise<ActionResult> {

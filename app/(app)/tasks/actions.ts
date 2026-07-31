@@ -5,6 +5,7 @@ import { z } from "zod";
 import { defineAction } from "@/lib/actions/define-action";
 import { requireUser } from "@/lib/auth";
 import { autoSyncTaskIssue, syncTaskStatusToGitHub } from "@/lib/integrations/github-sync";
+import { dispatchNotifications } from "@/lib/notifications/dispatch";
 import {
   CreateTaskInput,
   MoveTaskInput,
@@ -72,6 +73,16 @@ export const createTask = defineAction<
       if (membersError) throw new Error(membersError.message);
     }
 
+    await dispatchNotifications({
+      recipientIds: assignedMemberIds,
+      actorId: user.id,
+      eventType: "task_assigned",
+      entityType: "task",
+      entityId: data.id as string,
+      body: `Te han asignado la tarea “${taskData.title}”`,
+      link: `/tasks/${data.id}`,
+    });
+
     // Fire-and-forget GitHub sync
     if (data.project_id) {
       void autoSyncTaskIssue(data.id as string, data.project_id as string);
@@ -85,11 +96,19 @@ export const updateTask = defineAction({
   name: "tasks.update",
   schema: UpdateTaskInput,
   revalidate: (_payload, input) => ["/tasks", `/tasks/${input.id}`],
-  handler: async (input) => {
+  handler: async (input, { user }) => {
     const supabase = await createServerClient();
 
     const { id, member_ids = [], ...rest } = input;
     const assigneeId = member_ids[0] ?? null;
+
+    const { data: previousMembers } = await supabase
+      .from("task_members")
+      .select("member_id")
+      .eq("task_id", id);
+    const previousMemberIds = new Set(
+      (previousMembers ?? []).map((member) => member.member_id as string),
+    );
 
     const updates: Record<string, unknown> = {
       title: rest.title,
@@ -117,6 +136,19 @@ export const updateTask = defineAction({
         .insert(member_ids.map((mid) => ({ task_id: id, member_id: mid })));
       if (insertMembersError) throw new Error(insertMembersError.message);
     }
+
+    const newlyAssignedMemberIds = member_ids.filter(
+      (memberId) => !previousMemberIds.has(memberId),
+    );
+    await dispatchNotifications({
+      recipientIds: newlyAssignedMemberIds,
+      actorId: user.id,
+      eventType: "task_assigned",
+      entityType: "task",
+      entityId: id,
+      body: `Te han asignado la tarea “${rest.title}”`,
+      link: `/tasks/${id}`,
+    });
 
     void syncTaskStatusToGitHub(id, rest.status);
   },

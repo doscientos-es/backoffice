@@ -1,0 +1,73 @@
+import { sendWebPushToMembers } from "@/lib/push/web-push";
+import { createAdminClient } from "@/lib/supabase/admin";
+
+export type NotificationEvent =
+  | "lead_new"
+  | "lead_assigned"
+  | "task_comment"
+  | "task_mention"
+  | "task_assigned"
+  | "invoice_paid"
+  | "invoice_payment"
+  | "proposal_accepted"
+  | "proposal_rejected"
+  | "proposal_deck_completed";
+
+const TITLES: Record<NotificationEvent, string> = {
+  lead_new: "🔔 Nuevo lead",
+  lead_assigned: "👤 Lead asignado",
+  task_comment: "💬 Nuevo comentario",
+  task_mention: "💬 Te han mencionado",
+  task_assigned: "✅ Tarea asignada",
+  invoice_paid: "💰 Factura cobrada",
+  invoice_payment: "💰 Pago recibido",
+  proposal_accepted: "✅ Propuesta aceptada",
+  proposal_rejected: "❌ Propuesta rechazada",
+  proposal_deck_completed: "👀 Propuesta visualizada",
+};
+
+type DispatchInput = {
+  recipientIds: string[];
+  actorId?: string | null;
+  eventType: NotificationEvent;
+  entityType: string;
+  entityId: string;
+  body: string;
+  link?: string | null;
+};
+
+export async function dispatchNotifications(input: DispatchInput): Promise<void> {
+  const recipientIds = [...new Set(input.recipientIds)].filter((id) => id !== input.actorId);
+  if (!recipientIds.length) return;
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("notifications").insert(
+    recipientIds.map((recipientId) => ({
+      recipient_id: recipientId,
+      actor_id: input.actorId ?? null,
+      event_type: input.eventType,
+      entity_type: input.entityType,
+      entity_id: input.entityId,
+      body: input.body,
+      link: input.link ?? null,
+    })),
+  );
+  if (error) return;
+
+  await Promise.all(
+    recipientIds.map(async (recipientId) => {
+      const { count } = await admin
+        .from("notifications")
+        .select("id", { count: "exact", head: true })
+        .eq("recipient_id", recipientId)
+        .is("read_at", null);
+      await sendWebPushToMembers([recipientId], {
+        title: TITLES[input.eventType],
+        body: input.body,
+        url: input.link ?? "/",
+        tag: `${input.eventType}-${input.entityId}`,
+        badge: count ?? 1,
+      });
+    }),
+  );
+}

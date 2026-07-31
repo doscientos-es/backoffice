@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { scopedLogger } from "@/lib/logger";
+import { dispatchNotifications } from "@/lib/notifications/dispatch";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const log = scopedLogger("deck.track");
@@ -77,12 +78,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
     if (!existing) {
       const clientName =
         (proposal as unknown as { clients: { name: string } | null }).clients?.name ?? "Cliente";
-      await admin.from("notifications").insert({
-        recipient_id: proposal.created_by as string,
-        actor_id: null,
-        event_type: "proposal_deck_completed",
-        entity_type: "proposal",
-        entity_id: proposal.id as string,
+      await dispatchNotifications({
+        recipientIds: [proposal.created_by as string],
+        eventType: "proposal_deck_completed",
+        entityType: "proposal",
+        entityId: proposal.id as string,
         body: `${clientName} ha visto la presentación completa de ${proposal.number} [${parsed.data.sessionId}]`,
         link: `/proposals/${proposal.id as string}`,
       });
