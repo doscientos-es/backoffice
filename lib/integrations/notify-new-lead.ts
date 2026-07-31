@@ -6,6 +6,7 @@ import { publicEnv } from "@/lib/env";
 import { selectLeadResource } from "@/lib/integrations/lead-resources";
 import { telegramSendMessage } from "@/lib/integrations/telegram";
 import { scopedLogger } from "@/lib/logger";
+import { sendWebPushToMembers } from "@/lib/push/web-push";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type NotifyNewLeadInput = {
@@ -95,6 +96,28 @@ export async function notifyNewLead(input: NotifyNewLeadInput): Promise<void> {
     log.error({ err: notifError }, "failed to insert lead_new notifications");
     // Continue — email delivery is independent
   }
+
+  const unreadCounts = await Promise.all(
+    recipients.map(async (recipient) => {
+      const { count } = await supabase
+        .from("notifications")
+        .select("id", { count: "exact", head: true })
+        .eq("recipient_id", recipient.id)
+        .is("read_at", null);
+      return { id: recipient.id as string, count: count ?? 1 };
+    }),
+  );
+  await Promise.all(
+    unreadCounts.map(({ id, count }) =>
+      sendWebPushToMembers([id], {
+        title: "🔔 Nuevo lead",
+        body: notifBody || "Ha entrado un nuevo lead",
+        url: `/leads/${input.leadId}`,
+        tag: `lead-${input.leadId}`,
+        badge: count,
+      }),
+    ),
+  );
 
   // ── 3. Email (render once, send to all) ──────────────────────────────────
   let html: string;

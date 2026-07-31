@@ -4,6 +4,8 @@ import { AlertCircle, CheckCircle2, Loader2, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFormFeedback } from "@/components/ui/form-feedback";
+import { useBrowserNotifications } from "@/lib/hooks/use-browser-notifications";
+import { useWebPush } from "@/lib/hooks/use-web-push";
 import { cn } from "@/lib/utils";
 import {
   type TestResult,
@@ -12,6 +14,7 @@ import {
   testSupabaseConnection,
   testTelegramBot,
   testTelegramLeadMessage,
+  testWebPush,
 } from "./actions";
 
 export type DiagnosticsConfig = {
@@ -89,6 +92,19 @@ function TestRow({ test }: { test: Test }) {
 }
 
 export function DiagnosticsPanel({ config }: { config: DiagnosticsConfig }) {
+  const { permission, requestPermission } = useBrowserNotifications();
+  const { subscribe } = useWebPush();
+
+  async function runPushTest(): Promise<TestResult> {
+    const result = permission === "default" ? await requestPermission() : permission;
+    if (result !== "granted")
+      return { ok: false, error: "Permiso de notificaciones no concedido." };
+    const subscribed = await subscribe();
+    if (!subscribed)
+      return { ok: false, error: "No se pudo registrar este dispositivo para Push." };
+    return testWebPush();
+  }
+
   const tests: Test[] = [
     {
       title: "Lead → Telegram (envío directo)",
@@ -113,6 +129,12 @@ export function DiagnosticsPanel({ config }: { config: DiagnosticsConfig }) {
       title: "Conexión Supabase",
       description: "Ejecuta una consulta ligera contra la base de datos.",
       run: testSupabaseConnection,
+    },
+    {
+      title: "Push móvil",
+      description:
+        "Solicita permiso, registra este móvil y envía una notificación grande de prueba.",
+      run: runPushTest,
     },
     {
       title: "IA (Gemini / OpenAI)",

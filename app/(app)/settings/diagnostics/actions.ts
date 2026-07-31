@@ -3,8 +3,10 @@
 import { AI_MODELS, isAIEnabled, runAIChat } from "@/lib/ai";
 import { requireRole } from "@/lib/auth";
 import { sendEmail } from "@/lib/email/resend";
+import { serverEnv } from "@/lib/env";
 import { telegramGetMe, telegramSendMessage } from "@/lib/integrations/telegram";
 import { scopedLogger } from "@/lib/logger";
+import { sendWebPushToMembers } from "@/lib/push/web-push";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type TestResult = { ok: true; detail: string } | { ok: false; error: string };
@@ -86,6 +88,31 @@ export async function testSupabaseConnection(): Promise<TestResult> {
     log.error({ err: e }, "supabase test failed");
     return fail(msg);
   }
+}
+
+/** Sends a real push to the device currently registered for this member. */
+export async function testWebPush(): Promise<TestResult> {
+  const user = await requireRole([...ADMIN]);
+  const env = serverEnv();
+  if (!env.WEB_PUSH_VAPID_PUBLIC_KEY || !env.WEB_PUSH_VAPID_PRIVATE_KEY) {
+    return fail("Web Push no configurado: faltan las claves VAPID en producción");
+  }
+  const { count } = await createAdminClient()
+    .from("push_subscriptions")
+    .select("id", { count: "exact", head: true })
+    .eq("member_id", user.id);
+  if (!count)
+    return fail(
+      "Este dispositivo aún no está suscrito. Activa las notificaciones desde la campana.",
+    );
+  await sendWebPushToMembers([user.id], {
+    title: "✅ Push de prueba",
+    body: "Las notificaciones de nuevos leads están activas en este móvil.",
+    url: "/settings/diagnostics",
+    tag: "diagnostic-push",
+    badge: 1,
+  });
+  return { ok: true, detail: "Push enviado a tus dispositivos registrados" };
 }
 
 /** Pings the AI provider with a tiny prompt. */

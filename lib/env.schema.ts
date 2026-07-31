@@ -23,6 +23,9 @@ export const PublicSchema = z.object({
 
 export const ServerSchema = PublicSchema.extend({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(20),
+  WEB_PUSH_VAPID_PUBLIC_KEY: z.string().optional().default(""),
+  WEB_PUSH_VAPID_PRIVATE_KEY: z.string().optional().default(""),
+  WEB_PUSH_VAPID_SUBJECT: z.string().url().or(z.literal("")).default("mailto:hola@doscientos.es"),
   DEMO_MODE: z.enum(["true", "false"]).default("false"),
   // Base URL used to build invite / confirm links sent by email.
   // Always defaults to the production URL so that invitations sent from

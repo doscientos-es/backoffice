@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/empty-state";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useBrowserNotifications } from "@/lib/hooks/use-browser-notifications";
+import { useWebPush } from "@/lib/hooks/use-web-push";
 import { getBrowserClient } from "@/lib/supabase/browser";
 import { cn, relativeTime } from "@/lib/utils";
 
@@ -121,6 +122,7 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const { permission, requestPermission, notify } = useBrowserNotifications();
+  const { subscribed, subscribe } = useWebPush();
 
   const fetchNotifs = useCallback(async () => {
     const supabase = getBrowserClient();
@@ -155,21 +157,27 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
             body?: string | null;
             link?: string | null;
           };
-          notify({
-            title: getBrowserTitle(row.event_type ?? ""),
-            body: row.body ?? undefined,
-            tag: row.event_type,
-            url: row.link ?? undefined,
-          });
+          if (!subscribed) {
+            notify({
+              title: getBrowserTitle(row.event_type ?? ""),
+              body: row.body ?? undefined,
+              tag: row.event_type,
+              url: row.link ?? undefined,
+            });
+          }
         },
       )
       .subscribe();
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [memberId, fetchNotifs, notify]);
+  }, [memberId, fetchNotifs, notify, subscribed]);
 
   const unread = useMemo(() => notifs.filter((n) => !n.read_at), [notifs]);
+  useEffect(() => {
+    const badge = navigator as Navigator & { setAppBadge?: (value?: number) => Promise<void> };
+    if (badge.setAppBadge) void badge.setAppBadge(unread.length);
+  }, [unread.length]);
   const groups = useMemo(() => groupByDay(notifs), [notifs]);
 
   function markAllRead() {
@@ -217,17 +225,20 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
             )}
           </div>
           <div className="flex items-center gap-1">
-            {permission === "default" && (
+            {!subscribed && permission !== "denied" && (
               <Button
                 type="button"
                 variant="ghost"
                 size="xs"
-                onClick={requestPermission}
+                onClick={async () => {
+                  const result = permission === "default" ? await requestPermission() : permission;
+                  if (result === "granted") await subscribe();
+                }}
                 className="text-xs text-amber-600 hover:text-amber-700"
                 title="Activar notificaciones del navegador"
               >
                 <BellRing className="size-3" />
-                Activar
+                Activar móvil
               </Button>
             )}
             <Button

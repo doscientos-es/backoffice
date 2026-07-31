@@ -2,6 +2,36 @@
 // No aggressive caching: backoffice data must always be fresh.
 const CACHE_NAME = "doscientos-bo-v1";
 
+self.addEventListener("push", (event) => {
+  const payload = event.data?.json() ?? {};
+  event.waitUntil(
+    (async () => {
+      if ("setAppBadge" in self.navigator && typeof payload.badge === "number") {
+        await self.navigator.setAppBadge(payload.badge);
+      }
+      await self.registration.showNotification(payload.title || "Doscientos", {
+        body: payload.body || "Nueva actividad",
+        icon: "/brand/logo.png",
+        badge: "/brand/logo.png",
+        tag: payload.tag || "doscientos-notification",
+        renotify: true,
+        requireInteraction: true,
+        vibrate: [250, 100, 250],
+        data: { url: payload.url || "/" },
+      });
+    })(),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.openWindow(
+      new URL(event.notification.data?.url || "/", self.location.origin).href,
+    ),
+  );
+});
+
 // Only pre-cache the app shell assets listed by Next.js
 self.addEventListener("install", (_event) => {
   // Skip waiting so the SW activates immediately
