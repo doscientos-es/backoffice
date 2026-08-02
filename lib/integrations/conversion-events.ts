@@ -5,7 +5,14 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 const log = scopedLogger("conversion-events");
 
-export const CONVERSION_EVENT_NAMES = ["whatsapp_click", "lead_created"] as const;
+export const CONVERSION_EVENT_NAMES = [
+  "whatsapp_click",
+  "lead_created",
+  "diagnostic_started",
+  "diagnostic_completed",
+  "diagnostic_report_sent",
+  "diagnostic_report_opened",
+] as const;
 
 export const ConversionEventInput = z.object({
   event_id: z.string().trim().max(120).optional().nullable(),

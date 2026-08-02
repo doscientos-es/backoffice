@@ -22,6 +22,7 @@ export type SendEmailInput = {
   subject: string;
   html: string;
   tags?: Record<string, string>;
+  attachments?: Array<{ filename: string; content: Buffer | string }>;
 };
 
 export async function sendEmail(
@@ -45,6 +46,7 @@ export async function sendEmail(
     subject: input.subject,
     html: input.html,
     replyTo: input.replyTo,
+    attachments: input.attachments,
     tags: input.tags
       ? Object.entries(input.tags).map(([name, value]) => ({ name, value }))
       : undefined,

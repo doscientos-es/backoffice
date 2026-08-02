@@ -15,6 +15,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { isAIEnabled } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { listLeadConversionEvents } from "@/lib/conversion-events/queries";
+import { listLeadDiagnostics } from "@/lib/diagnostics/queries";
 import { isGoogleEnabled } from "@/lib/env";
 import { getLeadDetail } from "@/lib/leads/queries";
 import { leadDisplayName } from "@/lib/leads/utils";
@@ -63,6 +64,10 @@ const CONVERSION_EVENT_LABEL: Record<string, string> = {
   whatsapp_click: "Clic en WhatsApp",
   form_submit: "Envió el formulario",
   lead_created: "Lead creado",
+  diagnostic_started: "Diagnóstico iniciado",
+  diagnostic_completed: "Diagnóstico completado",
+  diagnostic_report_sent: "Diagnóstico enviado",
+  diagnostic_report_opened: "Diagnóstico abierto",
 };
 
 const CONVERSION_STEP_LABEL: Record<string, string> = {
@@ -116,10 +121,10 @@ export default async function LeadDetailPage({
   if (!result) notFound();
   const { lead, interactions, linkedClientId, proposals, projects, invoices, tasks, reminders } =
     result;
-  const conversionEvents = await listLeadConversionEvents({
+  const [conversionEvents, diagnostics] = await Promise.all([listLeadConversionEvents({
     id: lead.id,
     event_id: lead.event_id,
-  }).catch(() => []);
+  }).catch(() => []), listLeadDiagnostics(lead.id as string)]);
 
   const aiEnabled = isAIEnabled();
   const googleEnabled = isGoogleEnabled();
@@ -424,6 +429,34 @@ export default async function LeadDetailPage({
                     </li>
                   ))}
                 </ol>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Diagnósticos personalizados</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {diagnostics.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Todavía no hay un diagnóstico completado.</p>
+              ) : (
+                <div className="space-y-4">
+                  {diagnostics.map((diagnostic) => (
+                    <div key={diagnostic.id} className="rounded-lg border border-border p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-sm font-medium">{diagnostic.company || diagnostic.email}</p>
+                        <Badge variant={diagnostic.report_opened_at ? "success" : "neutral"}>
+                          {diagnostic.report_opened_at ? "Informe abierto" : diagnostic.report_sent_at ? "Informe enviado" : "Completado"}
+                        </Badge>
+                      </div>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {diagnostic.metrics.monthlyHours ?? "—"} h/mes · {diagnostic.metrics.yearlyHours ?? "—"} h/año · {diagnostic.metrics.risk ?? "—"}
+                      </p>
+                      {diagnostic.metrics.primaryOpportunity ? <p className="mt-2 text-xs text-muted-foreground">{diagnostic.metrics.primaryOpportunity}</p> : null}
+                    </div>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
