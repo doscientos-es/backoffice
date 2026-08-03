@@ -139,7 +139,7 @@ const COLUMNS: ColumnDef[] = [
   },
   {
     id: "contacted",
-    label: "Contactado",
+    label: "Esperando respuesta",
     tone: "text-indigo-700 dark:text-indigo-300",
     dot: "bg-indigo-500",
   },

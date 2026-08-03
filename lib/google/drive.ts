@@ -161,6 +161,63 @@ export async function uploadBackupSafe(
 }
 
 /**
+ * Extrae el file ID de una URL de Google Drive / Docs.
+ * Soporta:
+ *   https://docs.google.com/document/d/{id}/edit
+ *   https://drive.google.com/file/d/{id}/view
+ *   Un file ID puro (solo alfanumérico + guiones)
+ */
+export function extractDriveFileId(input: string): string | null {
+  const match = input.match(/\/d\/([a-zA-Z0-9_-]{20,})/);
+  if (match?.[1]) return match[1];
+  if (/^[a-zA-Z0-9_-]{20,}$/.test(input.trim())) return input.trim();
+  return null;
+}
+
+export type DriveFileMetadata = {
+  id: string;
+  name: string;
+  mimeType: string;
+  webViewLink: string | null;
+  iconLink: string | null;
+};
+
+/**
+ * Obtiene metadata de un fichero de Drive (nombre, mimeType, link) sin
+ * descargar contenido. Usado al vincular un documento existente como
+ * adjunto — solo se persiste la referencia, nunca una copia.
+ *
+ * Lanza si la API falla (404, sin permiso, etc.) — envuelve en try/catch en
+ * el call-site.
+ */
+export async function getFileMetadata(subject: string, fileId: string): Promise<DriveFileMetadata> {
+  const params = new URLSearchParams({
+    fields: "id,name,mimeType,webViewLink,iconLink,trashed",
+    supportsAllDrives: "true",
+  });
+  const result = await googleFetch<{
+    id: string;
+    name: string;
+    mimeType: string;
+    webViewLink?: string;
+    iconLink?: string;
+    trashed?: boolean;
+  }>(subject, [GOOGLE_SCOPES.drive], `${FILES_BASE}/${encodeURIComponent(fileId)}?${params}`);
+
+  if (result.trashed) {
+    throw new Error("El archivo está en la papelera de Drive.");
+  }
+
+  return {
+    id: result.id,
+    name: result.name,
+    mimeType: result.mimeType,
+    webViewLink: result.webViewLink ?? null,
+    iconLink: result.iconLink ?? null,
+  };
+}
+
+/**
  * Exports a Google Doc (or any Drive file with text/plain export support) as
  * plain text. Useful to read AI-generated meeting notes that Google Meet saves
  * in Drive after a call.

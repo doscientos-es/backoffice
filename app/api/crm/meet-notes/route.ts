@@ -9,13 +9,13 @@
  * Returns: { text: string }
  */
 
-import { type NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { isGoogleEnabled } from "@/lib/env";
 import { resolveSubject } from "@/lib/google/client";
-import { readDocumentText } from "@/lib/google/drive";
+import { extractDriveFileId, readDocumentText } from "@/lib/google/drive";
 import { scopedLogger } from "@/lib/logger";
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -25,20 +25,6 @@ const log = scopedLogger("crm.meet-notes");
 const BodySchema = z.object({
   drive_url: z.string().min(1),
 });
-
-/**
- * Extrae el file ID de una URL de Google Drive / Docs.
- * Soporta:
- *   https://docs.google.com/document/d/{id}/edit
- *   https://drive.google.com/file/d/{id}/view
- *   Un file ID puro (solo alfanumérico + guiones)
- */
-function extractFileId(input: string): string | null {
-  const match = input.match(/\/d\/([a-zA-Z0-9_-]{20,})/);
-  if (match?.[1]) return match[1];
-  if (/^[a-zA-Z0-9_-]{20,}$/.test(input.trim())) return input.trim();
-  return null;
-}
 
 export async function POST(req: NextRequest) {
   if (!isGoogleEnabled()) {
@@ -63,7 +49,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "drive_url is required" }, { status: 400 });
   }
 
-  const fileId = extractFileId(body.drive_url);
+  const fileId = extractDriveFileId(body.drive_url);
   if (!fileId) {
     return NextResponse.json(
       { error: "URL de Drive no válida. Pega la URL completa del documento." },
