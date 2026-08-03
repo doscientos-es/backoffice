@@ -1,6 +1,6 @@
-import { AttachmentSection } from "@/components/ui/attachment-section";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { AttachmentSection } from "@/components/ui/attachment-section";
 
 // ── router stub ──────────────────────────────────────────────────────────────
 const mockRefresh = vi.fn();

@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { RemindersSection } from "@/app/(app)/inicio/_components/reminders-section";
 import { createTask } from "@/app/(app)/tasks/actions";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
@@ -21,8 +23,6 @@ import { listActiveMembers } from "@/lib/members/queries";
 import { LEAD_STATUS, TASK_STATUS, type TaskStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatDateTime, formatEUR, relativeTime } from "@/lib/utils";
-import Link from "next/link";
-import { notFound } from "next/navigation";
 import { TaskCreateDialog } from "../../tasks/task-create-dialog";
 import { CallInteractionDetails } from "./call-interaction-details";
 import { LeadAiPanel } from "./lead-ai-panel";
@@ -121,10 +121,13 @@ export default async function LeadDetailPage({
   if (!result) notFound();
   const { lead, interactions, linkedClientId, proposals, projects, invoices, tasks, reminders } =
     result;
-  const [conversionEvents, diagnostics] = await Promise.all([listLeadConversionEvents({
-    id: lead.id,
-    event_id: lead.event_id,
-  }).catch(() => []), listLeadDiagnostics(lead.id as string)]);
+  const [conversionEvents, diagnostics] = await Promise.all([
+    listLeadConversionEvents({
+      id: lead.id,
+      event_id: lead.event_id,
+    }).catch(() => []),
+    listLeadDiagnostics(lead.id as string),
+  ]);
 
   const aiEnabled = isAIEnabled();
   const googleEnabled = isGoogleEnabled();
@@ -142,23 +145,23 @@ export default async function LeadDetailPage({
         .order("created_at", { ascending: false }),
       googleEnabled
         ? supabase
-          .from("projects")
-          .select("id, name")
-          .is("deleted_at", null)
-          .in("status", ["planned", "active", "on_hold"])
-          .order("name")
+            .from("projects")
+            .select("id, name")
+            .is("deleted_at", null)
+            .in("status", ["planned", "active", "on_hold"])
+            .order("name")
         : Promise.resolve({
-          data: [] as Array<{ id: string; name: string }> | null,
-        }),
+            data: [] as Array<{ id: string; name: string }> | null,
+          }),
       googleEnabled
         ? supabase
-          .from("team_members")
-          .select("id, name, email")
-          .is("deleted_at", null)
-          .order("name")
+            .from("team_members")
+            .select("id, name, email")
+            .is("deleted_at", null)
+            .order("name")
         : Promise.resolve({
-          data: [] as Array<{ id: string; name: string; email: string }> | null,
-        }),
+            data: [] as Array<{ id: string; name: string; email: string }> | null,
+          }),
     ]);
 
   const meetMembers = (rawMeetMembers ?? []).map((m) => ({
@@ -320,16 +323,16 @@ export default async function LeadDetailPage({
                   lead.first_utm_medium,
                   lead.first_utm_campaign,
                 ]) && (
-                    <DetailRow label="First touch">
-                      {compactParts([
-                        lead.first_landing_path,
-                        lead.first_referrer,
-                        lead.first_utm_source,
-                        lead.first_utm_medium,
-                        lead.first_utm_campaign,
-                      ])}
-                    </DetailRow>
-                  )}
+                  <DetailRow label="First touch">
+                    {compactParts([
+                      lead.first_landing_path,
+                      lead.first_referrer,
+                      lead.first_utm_source,
+                      lead.first_utm_medium,
+                      lead.first_utm_campaign,
+                    ])}
+                  </DetailRow>
+                )}
                 {compactParts([
                   lead.last_landing_path,
                   lead.last_referrer,
@@ -337,16 +340,16 @@ export default async function LeadDetailPage({
                   lead.last_utm_medium,
                   lead.last_utm_campaign,
                 ]) && (
-                    <DetailRow label="Last touch">
-                      {compactParts([
-                        lead.last_landing_path,
-                        lead.last_referrer,
-                        lead.last_utm_source,
-                        lead.last_utm_medium,
-                        lead.last_utm_campaign,
-                      ])}
-                    </DetailRow>
-                  )}
+                  <DetailRow label="Last touch">
+                    {compactParts([
+                      lead.last_landing_path,
+                      lead.last_referrer,
+                      lead.last_utm_source,
+                      lead.last_utm_medium,
+                      lead.last_utm_campaign,
+                    ])}
+                  </DetailRow>
+                )}
                 {[lead.calculator_cost, lead.calculator_hours].some(hasValue) && (
                   <DetailRow label="Resultado calculadora">
                     {[lead.calculator_cost, lead.calculator_hours].filter(hasValue).join(" · ")}
@@ -439,21 +442,35 @@ export default async function LeadDetailPage({
             </CardHeader>
             <CardContent>
               {diagnostics.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Todavía no hay un diagnóstico completado.</p>
+                <p className="text-sm text-muted-foreground">
+                  Todavía no hay un diagnóstico completado.
+                </p>
               ) : (
                 <div className="space-y-4">
                   {diagnostics.map((diagnostic) => (
                     <div key={diagnostic.id} className="rounded-lg border border-border p-4">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="text-sm font-medium">{diagnostic.company || diagnostic.email}</p>
+                        <p className="text-sm font-medium">
+                          {diagnostic.company || diagnostic.email}
+                        </p>
                         <Badge variant={diagnostic.report_opened_at ? "success" : "neutral"}>
-                          {diagnostic.report_opened_at ? "Informe abierto" : diagnostic.report_sent_at ? "Informe enviado" : "Completado"}
+                          {diagnostic.report_opened_at
+                            ? "Informe abierto"
+                            : diagnostic.report_sent_at
+                              ? "Informe enviado"
+                              : "Completado"}
                         </Badge>
                       </div>
                       <p className="mt-2 text-sm text-muted-foreground">
-                        {diagnostic.metrics.monthlyHours ?? "—"} h/mes · {diagnostic.metrics.yearlyHours ?? "—"} h/año · {diagnostic.metrics.risk ?? "—"}
+                        {diagnostic.metrics.monthlyHours ?? "—"} h/mes ·{" "}
+                        {diagnostic.metrics.yearlyHours ?? "—"} h/año ·{" "}
+                        {diagnostic.metrics.risk ?? "—"}
                       </p>
-                      {diagnostic.metrics.primaryOpportunity ? <p className="mt-2 text-xs text-muted-foreground">{diagnostic.metrics.primaryOpportunity}</p> : null}
+                      {diagnostic.metrics.primaryOpportunity ? (
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          {diagnostic.metrics.primaryOpportunity}
+                        </p>
+                      ) : null}
                     </div>
                   ))}
                 </div>

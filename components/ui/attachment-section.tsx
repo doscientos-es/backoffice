@@ -1,5 +1,16 @@
 "use client";
 
+import {
+  Download,
+  ExternalLink,
+  FolderSymlink,
+  Loader2,
+  Paperclip,
+  UploadCloud,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -13,17 +24,6 @@ import {
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import {
-  Download,
-  ExternalLink,
-  FolderSymlink,
-  Loader2,
-  Paperclip,
-  UploadCloud,
-} from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
 
 export type AttachmentItem = {
   id: string;
@@ -295,8 +295,8 @@ export function AttachmentSection({ entityType, entityId, attachments, canEdit }
             <DialogHeader>
               <DialogTitle>Vincular documento de Drive</DialogTitle>
               <DialogDescription>
-                Pega el enlace de un Google Doc, Sheet o carpeta. Se guardará solo una
-                referencia: el original sigue editándose en Drive.
+                Pega el enlace de un Google Doc, Sheet o carpeta. Se guardará solo una referencia:
+                el original sigue editándose en Drive.
               </DialogDescription>
             </DialogHeader>
             <FormRow label="Enlace de Drive" htmlFor="drive-url" error={driveError} required>

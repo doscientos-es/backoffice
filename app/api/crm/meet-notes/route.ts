@@ -9,13 +9,13 @@
  * Returns: { text: string }
  */
 
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { isGoogleEnabled } from "@/lib/env";
 import { resolveSubject } from "@/lib/google/client";
 import { extractDriveFileId, readDocumentText } from "@/lib/google/drive";
 import { scopedLogger } from "@/lib/logger";
-import { type NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
