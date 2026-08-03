@@ -35,6 +35,7 @@ vi.mock("@/lib/auth", () => ({
 
 vi.mock("@/lib/env", () => ({
   isGoogleEnabled: () => state.googleEnabled,
+  serverEnv: () => ({ LOG_LEVEL: "silent" }),
 }));
 
 vi.mock("@/lib/google/client", () => ({
@@ -66,8 +67,8 @@ vi.mock("@/lib/supabase/server", () => ({
   })),
 }));
 
-import { NextRequest } from "next/server";
 import { POST } from "@/app/api/attachments/drive-link/route";
+import { NextRequest } from "next/server";
 
 function driveLinkRequest(body: Record<string, unknown>): NextRequest {
   return new NextRequest("http://localhost/api/attachments/drive-link", {

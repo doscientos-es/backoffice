@@ -1,12 +1,12 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { Download, Loader2, Paperclip, UploadCloud } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 
 export type AttachmentItem = {
   id: string;
@@ -14,6 +14,8 @@ export type AttachmentItem = {
   mime_type: string | null;
   size_bytes: number | null;
   created_at: string;
+  source?: "storage" | "drive" | null;
+  web_view_link?: string | null;
 };
 
 type EntityType = "lead" | "project" | "proposal" | "client";
