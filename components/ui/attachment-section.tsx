@@ -13,7 +13,14 @@ import {
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { Download, ExternalLink, FolderSymlink, Loader2, Paperclip, UploadCloud } from "lucide-react";
+import {
+  Download,
+  ExternalLink,
+  FolderSymlink,
+  Loader2,
+  Paperclip,
+  UploadCloud,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
@@ -55,6 +62,10 @@ export function AttachmentSection({ entityType, entityId, attachments, canEdit }
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [dragActive, setDragActive] = useState(false);
+  const [driveDialogOpen, setDriveDialogOpen] = useState(false);
+  const [driveUrl, setDriveUrl] = useState("");
+  const [driveLinking, setDriveLinking] = useState(false);
+  const [driveError, setDriveError] = useState<string | null>(null);
 
   /** Uploads a single file; resolves to an error message or null on success. */
   async function uploadFile(file: File): Promise<string | null> {
@@ -133,6 +144,42 @@ export function AttachmentSection({ entityType, entityId, attachments, canEdit }
     void uploadFiles(e.dataTransfer?.files ? Array.from(e.dataTransfer.files) : []);
   }
 
+  function openDriveDialog() {
+    setDriveUrl("");
+    setDriveError(null);
+    setDriveDialogOpen(true);
+  }
+
+  /** Links an existing Drive file as a reference attachment (no copy is made). */
+  async function submitDriveLink(e: React.FormEvent) {
+    e.preventDefault();
+    if (driveLinking) return;
+
+    setDriveLinking(true);
+    setDriveError(null);
+    try {
+      const res = await fetch("/api/attachments/drive-link", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ drive_url: driveUrl, entityType, entityId }),
+      });
+      const json = (await res.json()) as { id?: string; error?: string };
+
+      if (!res.ok || !json.id) {
+        setDriveError(json.error ?? "Error al vincular el documento");
+        return;
+      }
+
+      setDriveDialogOpen(false);
+      setDriveUrl("");
+      router.refresh();
+    } catch {
+      setDriveError("Error de red");
+    } finally {
+      setDriveLinking(false);
+    }
+  }
+
   return (
     <Card
       className={cn("relative", dragActive && "ring-2 ring-primary ring-offset-2")}
@@ -179,6 +226,10 @@ export function AttachmentSection({ entityType, entityId, attachments, canEdit }
                 </>
               )}
             </Button>
+            <Button type="button" variant="outline" size="sm" onClick={openDriveDialog}>
+              <FolderSymlink className="size-3.5" />
+              Vincular de Drive
+            </Button>
           </>
         )}
       </CardHeader>
@@ -208,22 +259,72 @@ export function AttachmentSection({ entityType, entityId, attachments, canEdit }
                     <p className="text-xs text-muted-foreground">{formatSize(a.size_bytes)}</p>
                   ) : null}
                 </div>
-                <Button asChild variant="ghost" size="icon" className="shrink-0 size-7">
-                  <Link
-                    href={`/api/documents/${a.id}/download`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title="Descargar"
-                  >
-                    <Download className="size-3.5" />
-                    <span className="sr-only">Descargar</span>
-                  </Link>
-                </Button>
+                {a.source === "drive" && a.web_view_link ? (
+                  <Button asChild variant="ghost" size="icon" className="shrink-0 size-7">
+                    <Link
+                      href={a.web_view_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Abrir en Drive"
+                    >
+                      <ExternalLink className="size-3.5" />
+                      <span className="sr-only">Abrir en Drive</span>
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button asChild variant="ghost" size="icon" className="shrink-0 size-7">
+                    <Link
+                      href={`/api/documents/${a.id}/download`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Descargar"
+                    >
+                      <Download className="size-3.5" />
+                      <span className="sr-only">Descargar</span>
+                    </Link>
+                  </Button>
+                )}
               </li>
             ))}
           </ul>
         )}
       </CardContent>
+      <Dialog open={driveDialogOpen} onOpenChange={setDriveDialogOpen}>
+        <DialogContent>
+          <form onSubmit={submitDriveLink}>
+            <DialogHeader>
+              <DialogTitle>Vincular documento de Drive</DialogTitle>
+              <DialogDescription>
+                Pega el enlace de un Google Doc, Sheet o carpeta. Se guardará solo una
+                referencia: el original sigue editándose en Drive.
+              </DialogDescription>
+            </DialogHeader>
+            <FormRow label="Enlace de Drive" htmlFor="drive-url" error={driveError} required>
+              <Input
+                id="drive-url"
+                type="url"
+                placeholder="https://docs.google.com/document/d/…"
+                value={driveUrl}
+                onChange={(e) => setDriveUrl(e.target.value)}
+                disabled={driveLinking}
+                required
+              />
+            </FormRow>
+            <DialogFooter>
+              <Button type="submit" disabled={driveLinking || !driveUrl}>
+                {driveLinking ? (
+                  <>
+                    <Loader2 className="size-3.5 animate-spin" />
+                    Vinculando…
+                  </>
+                ) : (
+                  "Vincular"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

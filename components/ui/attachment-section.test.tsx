@@ -1,6 +1,6 @@
+import { AttachmentSection } from "@/components/ui/attachment-section";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { AttachmentSection } from "@/components/ui/attachment-section";
 
 // ── router stub ──────────────────────────────────────────────────────────────
 const mockRefresh = vi.fn();
@@ -74,6 +74,106 @@ describe("attachment list", () => {
     expect(screen.getByText("report.pdf")).toBeDefined();
     const link = screen.getByRole("link", { name: /descargar/i });
     expect(link.getAttribute("href")).toBe("/api/documents/a1/download");
+  });
+
+  it("renders drive attachments with an external link to web_view_link", () => {
+    const driveItems = [
+      {
+        id: "d1",
+        name: "Requisitos técnicos",
+        mime_type: "application/vnd.google-apps.document",
+        size_bytes: null,
+        created_at: "2024-01-01",
+        source: "drive" as const,
+        web_view_link: "https://docs.google.com/document/d/abc123/edit",
+      },
+    ];
+    render(<AttachmentSection {...BASE_PROPS} attachments={driveItems} />);
+    expect(screen.getByText("Requisitos técnicos")).toBeDefined();
+    const link = screen.getByRole("link", { name: /abrir en drive/i });
+    expect(link.getAttribute("href")).toBe("https://docs.google.com/document/d/abc123/edit");
+    expect(screen.queryByRole("link", { name: /descargar/i })).toBeNull();
+  });
+});
+
+// ── drive linking ─────────────────────────────────────────────────────────────
+describe("drive linking", () => {
+  it("hides the 'Vincular de Drive' button when canEdit is false", () => {
+    render(<AttachmentSection {...BASE_PROPS} canEdit={false} />);
+    expect(screen.queryByRole("button", { name: /vincular de drive/i })).toBeNull();
+  });
+
+  it("opens the dialog when clicking 'Vincular de Drive'", () => {
+    render(<AttachmentSection {...BASE_PROPS} />);
+    fireEvent.click(screen.getByRole("button", { name: /vincular de drive/i }));
+    expect(screen.getByText("Vincular documento de Drive")).toBeDefined();
+    expect(screen.getByLabelText(/enlace de drive/i)).toBeDefined();
+  });
+
+  it("submits the drive URL and refreshes on success", async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: "new-drive-id" }),
+    });
+
+    render(<AttachmentSection {...BASE_PROPS} />);
+    fireEvent.click(screen.getByRole("button", { name: /vincular de drive/i }));
+
+    const input = screen.getByLabelText(/enlace de drive/i);
+    fireEvent.change(input, {
+      target: { value: "https://docs.google.com/document/d/abc123/edit" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^vincular$/i }));
+
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalledOnce());
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/attachments/drive-link",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          drive_url: "https://docs.google.com/document/d/abc123/edit",
+          entityType: "lead",
+          entityId: "lead-1",
+        }),
+      }),
+    );
+    expect(screen.queryByText("Vincular documento de Drive")).toBeNull();
+  });
+
+  it("shows an error message when linking fails", async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: false,
+      json: async () => ({ error: "No se pudo acceder al documento" }),
+    });
+
+    render(<AttachmentSection {...BASE_PROPS} />);
+    fireEvent.click(screen.getByRole("button", { name: /vincular de drive/i }));
+
+    const input = screen.getByLabelText(/enlace de drive/i);
+    fireEvent.change(input, {
+      target: { value: "https://docs.google.com/document/d/abc123/edit" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^vincular$/i }));
+
+    await waitFor(() => screen.getByText("No se pudo acceder al documento"));
+    expect(mockRefresh).not.toHaveBeenCalled();
+    // dialog stays open so the user can fix the link
+    expect(screen.getByText("Vincular documento de Drive")).toBeDefined();
+  });
+
+  it("shows 'Error de red' on network failure", async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockRejectedValue(new Error("network"));
+
+    render(<AttachmentSection {...BASE_PROPS} />);
+    fireEvent.click(screen.getByRole("button", { name: /vincular de drive/i }));
+
+    const input = screen.getByLabelText(/enlace de drive/i);
+    fireEvent.change(input, {
+      target: { value: "https://docs.google.com/document/d/abc123/edit" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^vincular$/i }));
+
+    await waitFor(() => screen.getByText("Error de red"));
   });
 });
 

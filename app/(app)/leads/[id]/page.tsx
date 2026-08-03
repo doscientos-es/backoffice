@@ -1,5 +1,3 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
 import { RemindersSection } from "@/app/(app)/inicio/_components/reminders-section";
 import { createTask } from "@/app/(app)/tasks/actions";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
@@ -23,6 +21,8 @@ import { listActiveMembers } from "@/lib/members/queries";
 import { LEAD_STATUS, TASK_STATUS, type TaskStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatDateTime, formatEUR, relativeTime } from "@/lib/utils";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { TaskCreateDialog } from "../../tasks/task-create-dialog";
 import { CallInteractionDetails } from "./call-interaction-details";
 import { LeadAiPanel } from "./lead-ai-panel";
@@ -136,29 +136,29 @@ export default async function LeadDetailPage({
     await Promise.all([
       supabase
         .from("attachments")
-        .select("id, name, mime_type, size_bytes, created_at")
+        .select("id, name, mime_type, size_bytes, created_at, source, drive_file_id, web_view_link")
         .eq("lead_id", id)
         .is("deleted_at", null)
         .order("created_at", { ascending: false }),
       googleEnabled
         ? supabase
-            .from("projects")
-            .select("id, name")
-            .is("deleted_at", null)
-            .in("status", ["planned", "active", "on_hold"])
-            .order("name")
+          .from("projects")
+          .select("id, name")
+          .is("deleted_at", null)
+          .in("status", ["planned", "active", "on_hold"])
+          .order("name")
         : Promise.resolve({
-            data: [] as Array<{ id: string; name: string }> | null,
-          }),
+          data: [] as Array<{ id: string; name: string }> | null,
+        }),
       googleEnabled
         ? supabase
-            .from("team_members")
-            .select("id, name, email")
-            .is("deleted_at", null)
-            .order("name")
+          .from("team_members")
+          .select("id, name, email")
+          .is("deleted_at", null)
+          .order("name")
         : Promise.resolve({
-            data: [] as Array<{ id: string; name: string; email: string }> | null,
-          }),
+          data: [] as Array<{ id: string; name: string; email: string }> | null,
+        }),
     ]);
 
   const meetMembers = (rawMeetMembers ?? []).map((m) => ({
@@ -320,16 +320,16 @@ export default async function LeadDetailPage({
                   lead.first_utm_medium,
                   lead.first_utm_campaign,
                 ]) && (
-                  <DetailRow label="First touch">
-                    {compactParts([
-                      lead.first_landing_path,
-                      lead.first_referrer,
-                      lead.first_utm_source,
-                      lead.first_utm_medium,
-                      lead.first_utm_campaign,
-                    ])}
-                  </DetailRow>
-                )}
+                    <DetailRow label="First touch">
+                      {compactParts([
+                        lead.first_landing_path,
+                        lead.first_referrer,
+                        lead.first_utm_source,
+                        lead.first_utm_medium,
+                        lead.first_utm_campaign,
+                      ])}
+                    </DetailRow>
+                  )}
                 {compactParts([
                   lead.last_landing_path,
                   lead.last_referrer,
@@ -337,16 +337,16 @@ export default async function LeadDetailPage({
                   lead.last_utm_medium,
                   lead.last_utm_campaign,
                 ]) && (
-                  <DetailRow label="Last touch">
-                    {compactParts([
-                      lead.last_landing_path,
-                      lead.last_referrer,
-                      lead.last_utm_source,
-                      lead.last_utm_medium,
-                      lead.last_utm_campaign,
-                    ])}
-                  </DetailRow>
-                )}
+                    <DetailRow label="Last touch">
+                      {compactParts([
+                        lead.last_landing_path,
+                        lead.last_referrer,
+                        lead.last_utm_source,
+                        lead.last_utm_medium,
+                        lead.last_utm_campaign,
+                      ])}
+                    </DetailRow>
+                  )}
                 {[lead.calculator_cost, lead.calculator_hours].some(hasValue) && (
                   <DetailRow label="Resultado calculadora">
                     {[lead.calculator_cost, lead.calculator_hours].filter(hasValue).join(" · ")}

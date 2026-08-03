@@ -1,5 +1,3 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
 import { RemindersSection } from "@/app/(app)/inicio/_components/reminders-section";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
@@ -14,6 +12,8 @@ import { computeProjectProfitability } from "@/lib/finance";
 import { INVOICE_STATUS, PROJECT_STATUS, PROPOSAL_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { ScheduleReminderDialog } from "../../reminders/schedule-reminder-dialog";
 import { TaskCreateDialog } from "../../tasks/task-create-dialog";
 import { GitHubModeBadge } from "../github-mode-badge";
@@ -75,20 +75,20 @@ export default async function ProjectDetailPage({
   ] = await Promise.all([
     isBoard
       ? supabase
-          .from("tasks")
-          .select(
-            "id, title, status, priority, due_date, kanban_order, team_members:assignee_id(id, name)",
-          )
-          .eq("project_id", id)
-          .is("deleted_at", null)
-          .order("kanban_order", { ascending: true })
+        .from("tasks")
+        .select(
+          "id, title, status, priority, due_date, kanban_order, team_members:assignee_id(id, name)",
+        )
+        .eq("project_id", id)
+        .is("deleted_at", null)
+        .order("kanban_order", { ascending: true })
       : supabase
-          .from("tasks")
-          .select("id, title, status")
-          .eq("project_id", id)
-          .is("deleted_at", null)
-          .order("created_at", { ascending: false })
-          .limit(20),
+        .from("tasks")
+        .select("id, title, status")
+        .eq("project_id", id)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(20),
     supabase
       .from("proposals")
       .select("id, number, title, status, total")
@@ -106,7 +106,7 @@ export default async function ProjectDetailPage({
     supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
     supabase
       .from("attachments")
-      .select("id, name, mime_type, size_bytes, created_at")
+      .select("id, name, mime_type, size_bytes, created_at, source, drive_file_id, web_view_link")
       .eq("project_id", id)
       .is("deleted_at", null)
       .order("created_at", { ascending: false }),
@@ -135,12 +135,12 @@ export default async function ProjectDetailPage({
     // Proposals from the same client that are not yet linked to any project.
     client
       ? supabase
-          .from("proposals")
-          .select("id, number, title")
-          .eq("client_id", client.id)
-          .is("project_id", null)
-          .is("deleted_at", null)
-          .order("created_at", { ascending: false })
+        .from("proposals")
+        .select("id, number, title")
+        .eq("client_id", client.id)
+        .is("project_id", null)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
       : Promise.resolve({ data: [] }),
     supabase
       .from("tasks")
@@ -175,10 +175,10 @@ export default async function ProjectDetailPage({
         note: (w.note as string | null) ?? null,
         member: m
           ? {
-              name: m.name,
-              avatar_url: m.avatar_url ?? null,
-              github_handle: m.github_handle ?? null,
-            }
+            name: m.name,
+            avatar_url: m.avatar_url ?? null,
+            github_handle: m.github_handle ?? null,
+          }
           : null,
       };
     },
@@ -233,16 +233,16 @@ export default async function ProjectDetailPage({
                   [
                     `Estado: ${PROJECT_STATUS[project.status as keyof typeof PROJECT_STATUS]?.label ?? project.status}`,
                     (project.billing_type as string | null) &&
-                      `Facturación: ${project.billing_type as string}`,
+                    `Facturación: ${project.billing_type as string}`,
                   ]
                     .filter(Boolean)
                     .join(" · "),
                 );
                 const dates = [
                   (project.starts_at as string | null) &&
-                    `Inicio: ${formatDate(project.starts_at as string)}`,
+                  `Inicio: ${formatDate(project.starts_at as string)}`,
                   (project.ends_at as string | null) &&
-                    `Fin: ${formatDate(project.ends_at as string)}`,
+                  `Fin: ${formatDate(project.ends_at as string)}`,
                 ].filter(Boolean);
                 if (dates.length) parts.push(dates.join(" · "));
                 return parts;
@@ -465,11 +465,10 @@ export default async function ProjectDetailPage({
                 Margen
               </dt>
               <dd
-                className={`mt-1 text-2xl font-semibold tabular-nums ${
-                  profitability.margin >= 0
+                className={`mt-1 text-2xl font-semibold tabular-nums ${profitability.margin >= 0
                     ? "text-emerald-600 dark:text-emerald-400"
                     : "text-red-600 dark:text-red-400"
-                }`}
+                  }`}
               >
                 {formatEUR(profitability.margin)}
                 {profitability.marginPct !== null ? (
