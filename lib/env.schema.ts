@@ -89,6 +89,13 @@ export const ServerSchema = PublicSchema.extend({
   FACEBOOK_PAGE_ID: z.string().optional().default(""),
   // Page id used by Meta Messenger Private Replies. Falls back to FACEBOOK_PAGE_ID.
   META_MESSAGING_PAGE_ID: z.string().optional().default(""),
+  // Safety switch: Meta comment automations are opt-in in every environment.
+  // Keep false until private replies have been explicitly reviewed and enabled.
+  META_SOCIAL_AUTOMATION_ENABLED: z
+    .string()
+    .optional()
+    .default("false")
+    .transform((value) => value === "true" || value === "on"),
   // LinkedIn (developers.linkedin.com) — OAuth 2.0. Empty = LinkedIn disabled.
   // App credentials from the developer app (Auth tab). Used by the 3-legged
   // OAuth flow that mints LINKEDIN_ACCESS_TOKEN. CLIENT_ID is semi-public;

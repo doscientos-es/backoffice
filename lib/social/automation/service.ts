@@ -1,4 +1,5 @@
 import { scopedLogger } from "@/lib/logger";
+import { serverEnv } from "@/lib/env";
 import { canReply } from "@/lib/social/core";
 import { sendPrivateReply } from "@/lib/social/meta/messaging";
 import { socialRegistry } from "@/lib/social/registry";
@@ -14,6 +15,11 @@ export type AutomationProcessResult = "ignored" | "no_match" | "processed" | "du
 export async function processMetaCommentEvent(
   event: MetaCommentEvent,
 ): Promise<AutomationProcessResult> {
+  // Private replies are an external side effect. Keep the feature disabled by
+  // default so a database rule or webhook retry cannot send messages unless the
+  // deployment explicitly opts in through META_SOCIAL_AUTOMATION_ENABLED=true.
+  if (!serverEnv().META_SOCIAL_AUTOMATION_ENABLED) return "ignored";
+
   const audit = await repo.getOrCreateAutomationEvent({
     platform: event.platform,
     sourceId: event.sourceId,

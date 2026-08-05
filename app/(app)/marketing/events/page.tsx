@@ -11,7 +11,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { requireRole } from "@/lib/auth";
-import { listConversionEvents } from "@/lib/conversion-events/queries";
+import { eventLabel, stepLabel } from "@/lib/conversion-events/labels";
+import { type ConversionEventRow, listConversionEvents } from "@/lib/conversion-events/queries";
 import { formatDateTime, truncate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -23,26 +24,43 @@ function param(value: string | string[] | undefined): string | null {
   return value ?? null;
 }
 
-function eventLabel(name: string): string {
-  const labels: Record<string, string> = {
-    page_view: "Page view",
-    contact_cta_click: "CTA contacto",
-    whatsapp_cta_click: "CTA WhatsApp",
-    whatsapp_click: "WhatsApp",
-    form_submit: "Formulario enviado",
-    lead_created: "Lead creado",
-  };
-  return labels[name] ?? name;
-}
-
 function EventBadge({ name }: { name: string }) {
   const variant =
     name === "whatsapp_click" || name === "lead_created"
       ? "success"
-      : name.includes("click")
+      : name.includes("diagnostic")
         ? "info"
         : "neutral";
   return <Badge variant={variant}>{eventLabel(name)}</Badge>;
+}
+
+/** Dominio legible de una URL de referrer, o null si no se puede parsear. */
+function referrerHost(referrer: string): string | null {
+  try {
+    return new URL(referrer).hostname.replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Conclusión sobre de dónde viene el tráfico de este evento: prioriza UTMs
+ * (campañas activas), luego el referrer, y por defecto asume que es tráfico
+ * directo dentro de la propia web (típico de un clic en el pie o en el menú).
+ */
+function trafficSource(event: ConversionEventRow): string {
+  if (event.utm_source) {
+    const medium = event.utm_medium ? ` / ${event.utm_medium}` : "";
+    const campaign = event.utm_campaign ? ` · ${event.utm_campaign}` : "";
+    return `${event.utm_source}${medium}${campaign}`;
+  }
+  if (event.referrer) {
+    const host = referrerHost(event.referrer);
+    if (host?.includes("google")) return "Google (orgánico)";
+    if (host?.includes("facebook") || host?.includes("instagram")) return "Meta (orgánico)";
+    if (host) return `Referido: ${host}`;
+  }
+  return "Directo";
 }
 
 export default async function ConversionEventsPage({
@@ -67,6 +85,31 @@ export default async function ConversionEventsPage({
       <Card>
         <CardHeader>
           <CardTitle>Últimos eventos</CardTitle>
+          {(eventName || visitorId) && (
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <span>
+                Filtrando por
+                {eventName && (
+                  <>
+                    {" "}
+                    evento{" "}
+                    <span className="font-medium text-foreground">{eventLabel(eventName)}</span>
+                  </>
+                )}
+                {eventName && visitorId && " y"}
+                {visitorId && (
+                  <>
+                    {" "}
+                    visitante{" "}
+                    <span className="font-medium text-foreground">{truncate(visitorId, 14)}</span>
+                  </>
+                )}
+              </span>
+              <Link href="/marketing/events" className="text-primary hover:underline">
+                Quitar filtro
+              </Link>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {events.length === 0 ? (
@@ -77,9 +120,9 @@ export default async function ConversionEventsPage({
                 <TableRow>
                   <TableHead>Fecha</TableHead>
                   <TableHead>Evento</TableHead>
-                  <TableHead>Lead</TableHead>
                   <TableHead>Página</TableHead>
-                  <TableHead>Campaña</TableHead>
+                  <TableHead>Origen</TableHead>
+                  <TableHead>Lead</TableHead>
                   <TableHead>Visitor</TableHead>
                 </TableRow>
               </TableHeader>
@@ -94,10 +137,25 @@ export default async function ConversionEventsPage({
                         <EventBadge name={event.event_name} />
                         {event.conversion_step && (
                           <span className="text-xs text-muted-foreground">
-                            {event.conversion_step}
+                            {stepLabel(event.conversion_step)}
                           </span>
                         )}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex max-w-65 flex-col gap-1">
+                        <span className="truncate" title={event.landing_path ?? undefined}>
+                          {event.landing_path ?? "—"}
+                        </span>
+                        {event.landing_ref && (
+                          <span className="text-xs text-muted-foreground">
+                            ref: {event.landing_ref}
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {trafficSource(event)}
                     </TableCell>
                     <TableCell>
                       {event.lead ? (
@@ -111,21 +169,18 @@ export default async function ConversionEventsPage({
                         <span className="text-muted-foreground">Anónimo</span>
                       )}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex max-w-[260px] flex-col gap-1">
-                        <span className="truncate">{event.landing_path ?? "—"}</span>
-                        {event.landing_ref && (
-                          <span className="text-xs text-muted-foreground">{event.landing_ref}</span>
-                        )}
-                      </div>
-                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                      {[event.utm_source, event.utm_medium, event.utm_campaign]
-                        .filter(Boolean)
-                        .join(" · ") || "—"}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {event.visitor_id ? truncate(event.visitor_id, 14) : "—"}
+                      {event.visitor_id ? (
+                        <Link
+                          href={`/marketing/events?visitor=${event.visitor_id}`}
+                          className="hover:text-primary hover:underline"
+                          title={event.visitor_id}
+                        >
+                          {truncate(event.visitor_id, 14)}
+                        </Link>
+                      ) : (
+                        "—"
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

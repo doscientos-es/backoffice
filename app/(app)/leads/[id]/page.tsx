@@ -14,6 +14,7 @@ import { MemberLabel } from "@/components/ui/member-avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { isAIEnabled } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
+import { CONVERSION_EVENT_LABEL, CONVERSION_STEP_LABEL } from "@/lib/conversion-events/labels";
 import { listLeadConversionEvents } from "@/lib/conversion-events/queries";
 import { listLeadDiagnostics } from "@/lib/diagnostics/queries";
 import { isGoogleEnabled } from "@/lib/env";
@@ -51,35 +52,6 @@ const INTERACTION_LABEL: Record<string, string> = {
   portal_view: "Portal visto",
   portal_accept: "Propuesta aceptada",
   portal_reject: "Propuesta rechazada",
-};
-
-/**
- * Eventos de atribución que la landing sigue registrando (ver
- * internal/landing/src/shared/lib/attribution.ts). Deliberadamente pocos:
- * clic en WhatsApp antes de convertir, y el envío/creación del lead. Nombres
- * antiguos (page_view, whatsapp_cta_click, contact_cta_click) pueden seguir
- * apareciendo en leads históricos y se muestran con su nombre crudo.
- */
-const CONVERSION_EVENT_LABEL: Record<string, string> = {
-  whatsapp_click: "Clic en WhatsApp",
-  form_submit: "Envió el formulario",
-  lead_created: "Lead creado",
-  diagnostic_started: "Diagnóstico iniciado",
-  diagnostic_completed: "Diagnóstico completado",
-  diagnostic_report_sent: "Diagnóstico enviado",
-  diagnostic_report_opened: "Diagnóstico abierto",
-};
-
-const CONVERSION_STEP_LABEL: Record<string, string> = {
-  whatsapp_contact: "Contacto por WhatsApp",
-  whatsapp_footer: "WhatsApp desde el pie",
-  whatsapp_click: "Contacto por WhatsApp",
-  diagnostic_form: "Formulario de diagnóstico",
-  contact_form: "Formulario de contacto",
-  landing_form: "Formulario de landing",
-  blog_cta: "CTA del blog",
-  calculator: "Calculadora",
-  pack_cta: "CTA de packs",
 };
 
 /**
