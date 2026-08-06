@@ -82,6 +82,18 @@ vi.mock("@/lib/supabase/server", () => ({
         in() {
           return builder;
         },
+        not() {
+          return builder;
+        },
+        lte() {
+          return builder;
+        },
+        order() {
+          return builder;
+        },
+        limit() {
+          return builder;
+        },
         async single() {
           return resolve();
         },

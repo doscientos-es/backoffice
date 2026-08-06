@@ -4,7 +4,16 @@
 // Única fuente de verdad para las 3 fast actions (llamada, email, nota)
 // con opción de agendar follow-up. Todas refrescan el router tras éxito.
 
-import { FileText, Loader2, Mail, NotebookPen, Phone, Send, Video } from "lucide-react";
+import {
+  FileText,
+  Loader2,
+  Mail,
+  MessageCircle,
+  NotebookPen,
+  Phone,
+  Send,
+  Video,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type SubmitEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -26,6 +35,8 @@ import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { defaultMeetingEnd, defaultMeetingStart } from "@/lib/calendar/date-presets";
+import { publicEnv } from "@/lib/env";
+import { buildBookingUrl } from "@/lib/recovery/utils";
 import { defaultFollowUpDateTime } from "@/lib/reminders/date-presets";
 import type { CallOutcome } from "@/lib/schemas/lead";
 import { addMinutesToDatetimeLocal, datetimeLocalToIso } from "@/lib/utils/date-time";
@@ -38,6 +49,74 @@ import { CallDigestDialog } from "./call-digest-dialog";
 
 /** Shape passed for Meet invitee selection — subset of team_members with email. */
 export type MeetMember = { id: string; name: string; email: string };
+
+function whatsappPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  return digits.length === 9 ? `34${digits}` : digits;
+}
+
+function whatsappMessage(lead: { id: string; name: string; email: string | null }): string {
+  const bookingUrl = buildBookingUrl(publicEnv.NEXT_PUBLIC_CAL_LINK, lead);
+  return [
+    `Hola, ${lead.name.split(" ")[0] || lead.name}. Soy Pol, de Doscientos.`,
+    "He intentado llamarte porque rellenaste un formulario en uno de nuestros anuncios de Meta.",
+    "Me gustaría entender qué necesitas y ver si podemos ayudarte.",
+    bookingUrl
+      ? `Puedes contarme brevemente por aquí o, si lo prefieres, agendar una reunión: ${bookingUrl}`
+      : "Puedes contarme brevemente por aquí y te respondo en cuanto pueda.",
+    "¿Qué te resulta más cómodo?",
+  ].join("\n\n");
+}
+
+function WhatsAppFollowUp({
+  leadId,
+  leadName,
+  leadEmail,
+  leadPhone,
+  open,
+  onOpenChange,
+}: {
+  leadId: string;
+  leadName: string;
+  leadEmail: string | null;
+  leadPhone: string | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [message, setMessage] = useState(() =>
+    whatsappMessage({ id: leadId, name: leadName, email: leadEmail }),
+  );
+  if (!leadPhone) return null;
+  const href = `https://wa.me/${whatsappPhone(leadPhone)}?text=${encodeURIComponent(message)}`;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Preparar WhatsApp</DialogTitle>
+          <DialogDescription>
+            Has registrado 3 llamadas seguidas sin respuesta. Revisa el mensaje antes de abrir
+            WhatsApp.
+          </DialogDescription>
+        </DialogHeader>
+        <Textarea
+          value={message}
+          onChange={(event) => setMessage(event.target.value)}
+          rows={9}
+          aria-label="Mensaje de WhatsApp"
+        />
+        <div className="flex justify-end">
+          <Button asChild className="gap-2">
+            <a href={href} target="_blank" rel="noreferrer">
+              <MessageCircle className="size-4" />
+              Abrir WhatsApp
+            </a>
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 // ─── Shared helper: member checkboxes ────────────────────────────────────────
 
@@ -465,6 +544,7 @@ export function QCallDialog({
   const [open, setOpen] = useState(false);
   const [digestOpen, setDigestOpen] = useState(false);
   const [digestKey, setDigestKey] = useState(0);
+  const [whatsappOpen, setWhatsappOpen] = useState(false);
   const [outcome, setOutcome] = useState<CallOutcome>("connected");
   const [duration, setDuration] = useState("");
   const [notes, setNotes] = useState("");
@@ -509,7 +589,7 @@ export function QCallDialog({
     feedback.setPending();
     const res = await logLeadCall({
       leadId,
-      notes: notes || undefined,
+      notes: notes || (outcome === "no_answer" ? "No contesta." : undefined),
       transcript: transcript || undefined,
       durationMinutes: duration ? Number(duration) : undefined,
       outcome,
@@ -528,9 +608,10 @@ export function QCallDialog({
     setDuration("");
     setFollowUpEnabled(false);
     setDigestKey((key) => key + 1);
+    if (res.noAnswerStreak >= 3) setWhatsappOpen(true);
     router.refresh();
     setOpen(false);
-    setDigestOpen(true);
+    if (res.noAnswerStreak < 3) setDigestOpen(true);
   }
 
   return (
@@ -668,6 +749,14 @@ export function QCallDialog({
         open={digestOpen}
         onOpenChange={setDigestOpen}
         draftKey={digestKey}
+      />
+      <WhatsAppFollowUp
+        leadId={leadId}
+        leadName={leadName}
+        leadEmail={leadEmail}
+        leadPhone={leadPhone}
+        open={whatsappOpen}
+        onOpenChange={setWhatsappOpen}
       />
     </>
   );

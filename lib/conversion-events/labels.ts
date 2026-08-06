@@ -2,12 +2,15 @@
  * Etiquetas humanas para los eventos de atribución que la landing registra
  * (ver landing/src/shared/lib/attribution.ts). Compartidas entre la página de
  * detalle del lead y el listado de eventos de marketing para que ambas vistas
- * hablen el mismo idioma. Deliberadamente pocos nombres de evento: clic en
- * WhatsApp antes de convertir, envío/creación del lead, y el diagnóstico.
- * Nombres antiguos (page_view, whatsapp_cta_click, contact_cta_click) pueden
- * seguir apareciendo en leads históricos y se muestran con su nombre crudo.
+ * hablen el mismo idioma. Nombres antiguos (whatsapp_cta_click,
+ * contact_cta_click) pueden seguir apareciendo en leads históricos y se
+ * muestran con su nombre crudo.
  */
 export const CONVERSION_EVENT_LABEL: Record<string, string> = {
+  page_view: "Vio una página",
+  cta_click: "Clic en un CTA",
+  calculator_used: "Usó la calculadora",
+  form_started: "Empezó el formulario",
   whatsapp_click: "Clic en WhatsApp",
   form_submit: "Envió el formulario",
   lead_created: "Lead creado",

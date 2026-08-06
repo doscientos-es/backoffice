@@ -6,12 +6,30 @@ import { createAdminClient } from "@/lib/supabase/admin";
 const log = scopedLogger("conversion-events");
 
 export const CONVERSION_EVENT_NAMES = [
+  "page_view",
+  "cta_click",
+  "calculator_used",
+  "form_started",
   "whatsapp_click",
   "lead_created",
   "diagnostic_started",
   "diagnostic_completed",
   "diagnostic_report_sent",
   "diagnostic_report_opened",
+] as const;
+
+/**
+ * Eventos que la landing puede registrar por su cuenta desde el navegador
+ * (POST /api/public/track-event). Deja fuera los que solo debe escribir el
+ * servidor — lead_created, whatsapp_click y el diagnóstico completado — para
+ * que nadie pueda inventarse conversiones desde la consola del navegador.
+ */
+export const PUBLIC_TRACKABLE_EVENT_NAMES = [
+  "page_view",
+  "cta_click",
+  "calculator_used",
+  "form_started",
+  "diagnostic_started",
 ] as const;
 
 export const ConversionEventInput = z.object({
@@ -32,6 +50,11 @@ export const ConversionEventInput = z.object({
 });
 
 export type ConversionEventInputType = z.infer<typeof ConversionEventInput>;
+
+/** Lo que acepta el endpoint público: sin lead_id (lo decide el servidor). */
+export const PublicTrackEventInput = ConversionEventInput.omit({ lead_id: true }).extend({
+  event_name: z.enum(PUBLIC_TRACKABLE_EVENT_NAMES),
+});
 
 export function clientIp(request: NextRequest): string {
   return (

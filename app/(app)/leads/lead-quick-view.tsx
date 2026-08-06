@@ -45,6 +45,7 @@ import type { MemberOption } from "@/lib/members/queries";
 import { LEAD_STATUS } from "@/lib/status";
 import { formatEUR, relativeTime } from "@/lib/utils";
 import { LeadEditDialog } from "./[id]/lead-edit-dialog";
+import { LeadCallLink } from "./[id]/phone-actions";
 import { assignLeadOwner, claimLead } from "./actions";
 import { QCallDialog, QEmailDialog, QNoteDialog } from "./lead-quick-action-dialogs";
 import type { KanbanLead } from "./leads-kanban";
@@ -140,9 +141,14 @@ function Body({
             </Row>
           )}
           {lead.phone && (
-            <Row icon={<Phone className="size-3.5" />} href={`tel:${lead.phone}`}>
-              {lead.phone}
-            </Row>
+            <div className="flex items-center gap-2 hover:text-primary">
+              <span className="text-muted-foreground">
+                <Phone className="size-3.5" />
+              </span>
+              <LeadCallLink leadId={lead.id} phone={lead.phone} className="truncate">
+                {lead.phone}
+              </LeadCallLink>
+            </div>
           )}
           {hasEstimated && (
             <Row icon={<Wallet className="size-3.5" />}>

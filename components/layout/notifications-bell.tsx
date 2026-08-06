@@ -58,6 +58,7 @@ const EVENT_META: Record<string, { icon: ComponentType<{ className?: string }>; 
   task_assigned: { icon: UserPlus, tint: "text-emerald-500" },
   lead_new: { icon: Zap, tint: "text-amber-500" },
   lead_assigned: { icon: UserPlus, tint: "text-blue-500" },
+  call_pending: { icon: BellRing, tint: "text-amber-500" },
   invoice_paid: { icon: CircleDollarSign, tint: "text-emerald-500" },
   invoice_payment: { icon: CircleDollarSign, tint: "text-emerald-500" },
   proposal_accepted: { icon: FileCheck, tint: "text-emerald-500" },
@@ -69,6 +70,7 @@ const EVENT_META: Record<string, { icon: ComponentType<{ className?: string }>; 
 const BROWSER_NOTIF_TITLE: Record<string, string> = {
   lead_new: "🔔 Nuevo lead",
   lead_assigned: "👤 Lead asignado",
+  call_pending: "📞 Llamada pendiente",
   task_comment: "💬 Nuevo comentario",
   task_mention: "💬 Te han mencionado",
   task_assigned: "✅ Tarea asignada",

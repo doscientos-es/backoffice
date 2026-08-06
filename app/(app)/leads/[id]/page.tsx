@@ -258,7 +258,13 @@ export default async function LeadDetailPage({
                 {lead.email && <DetailRow label="Email">{lead.email}</DetailRow>}
                 {lead.phone && (
                   <DetailRow label="Teléfono">
-                    <PhoneQuickActions phone={lead.phone as string} />
+                    <PhoneQuickActions
+                      phone={lead.phone as string}
+                      leadId={lead.id as string}
+                      leadName={displayName}
+                      leadEmail={(lead.email as string | null) ?? null}
+                      firstContactedAt={(lead.first_contacted_at as string | null) ?? null}
+                    />
                   </DetailRow>
                 )}
                 {lead.company && <DetailRow label="Empresa">{lead.company}</DetailRow>}

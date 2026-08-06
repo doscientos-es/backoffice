@@ -83,6 +83,16 @@ function JourneyCard({ journey }: { journey: VisitorJourney }) {
               Entró por <span className="text-foreground">{journey.entryPath ?? "—"}</span> ·{" "}
               {journey.source}
             </p>
+            {journey.clarityUrl && (
+              <a
+                href={journey.clarityUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-1 inline-block text-xs text-primary hover:underline"
+              >
+                Ver grabación en Clarity
+              </a>
+            )}
           </div>
           <div className="shrink-0 text-right text-xs text-muted-foreground">
             <p>

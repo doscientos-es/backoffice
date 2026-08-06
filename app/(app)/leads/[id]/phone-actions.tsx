@@ -1,12 +1,15 @@
 "use client";
 
-import { QrCode } from "lucide-react";
+import { MessageCircle, QrCode } from "lucide-react";
 import Image from "next/image";
 import { toDataURL } from "qrcode";
 import { useEffect, useState } from "react";
 import { CopyButton } from "@/components/ui/copy-button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { publicEnv } from "@/lib/env";
+import { buildBookingUrl } from "@/lib/recovery/utils";
 import { cn } from "@/lib/utils";
+import { startLeadCall } from "../actions";
 
 /**
  * Normalises a raw phone string into a clean `tel:` URI value.
@@ -32,19 +35,126 @@ function normalizePhone(phone: string): string {
  * - Scan a QR code with the phone's camera, which opens the dialer with the
  *   number preloaded.
  */
-export function PhoneQuickActions({ phone }: { phone: string }) {
+export function LeadCallLink({
+  leadId,
+  phone,
+  children,
+  className,
+  ...props
+}: {
+  leadId: string;
+  phone: string;
+  children: React.ReactNode;
+  className?: string;
+} & React.AnchorHTMLAttributes<HTMLAnchorElement>) {
+  const normalized = normalizePhone(phone);
+  async function handleClick(event: React.MouseEvent<HTMLAnchorElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    try {
+      await startLeadCall({ leadId });
+    } finally {
+      window.location.href = `tel:${normalized}`;
+    }
+  }
+
+  return (
+    <a {...props} href={`tel:${normalized}`} onClick={handleClick} className={className}>
+      {children}
+    </a>
+  );
+}
+
+export function PhoneQuickActions({
+  phone,
+  leadId,
+  leadName,
+  leadEmail,
+  firstContactedAt,
+}: {
+  phone: string;
+  leadId?: string;
+  leadName?: string;
+  leadEmail?: string | null;
+  firstContactedAt?: string | null;
+}) {
   const normalized = normalizePhone(phone);
   return (
     <div className="flex items-center gap-1.5">
-      <a
-        href={`tel:${normalized}`}
-        className="truncate text-primary underline-offset-2 hover:underline"
-      >
-        {phone}
-      </a>
+      {leadId ? (
+        <LeadCallLink
+          leadId={leadId}
+          phone={phone}
+          className="truncate text-primary underline-offset-2 hover:underline"
+        >
+          {phone}
+        </LeadCallLink>
+      ) : (
+        <a
+          href={`tel:${normalized}`}
+          className="truncate text-primary underline-offset-2 hover:underline"
+        >
+          {phone}
+        </a>
+      )}
       <CopyButton text={normalized} successMessage="Teléfono copiado" label="Copiar teléfono" />
       <PhoneQrPopover phone={phone} />
+      {leadId && leadName && (
+        <LeadWhatsAppButton
+          leadId={leadId}
+          leadName={leadName}
+          leadEmail={leadEmail ?? null}
+          phone={phone}
+          firstContactedAt={firstContactedAt}
+        />
+      )}
     </div>
+  );
+}
+
+export function LeadWhatsAppButton({
+  leadId,
+  leadName,
+  leadEmail,
+  phone,
+  firstContactedAt,
+}: {
+  leadId: string;
+  leadName: string;
+  leadEmail: string | null;
+  phone: string;
+  firstContactedAt?: string | null;
+}) {
+  if (firstContactedAt) return null;
+  const bookingUrl = buildBookingUrl(publicEnv.NEXT_PUBLIC_CAL_LINK, {
+    id: leadId,
+    name: leadName,
+    email: leadEmail,
+  });
+  const message = [
+    `Hola, ${leadName.split(" ")[0] || leadName}. Soy Pol, de Doscientos.`,
+    "He intentado llamarte porque rellenaste un formulario en uno de nuestros anuncios de Meta.",
+    "Me gustaría entender qué necesitas y ver si podemos ayudarte.",
+    bookingUrl
+      ? `Puedes contarme brevemente por aquí o, si lo prefieres, agendar una reunión: ${bookingUrl}`
+      : "Puedes contarme brevemente por aquí y te respondo en cuanto pueda.",
+    "¿Qué te resulta más cómodo?",
+  ].join("\n\n");
+  const digits = phone.replace(/\D/g, "");
+  const whatsappNumber = digits.length === 9 ? `34${digits}` : digits;
+  const href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      aria-label="Preparar WhatsApp"
+      title="Preparar WhatsApp"
+      className="inline-flex size-6 items-center justify-center rounded-md text-emerald-600 transition-colors hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-500/10"
+    >
+      <MessageCircle className="size-3.5" />
+    </a>
   );
 }
 

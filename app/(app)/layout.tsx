@@ -1,4 +1,5 @@
 import { Logo } from "@/components/branding";
+import { CallReminderWatcher } from "@/components/layout/call-reminder-watcher";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { CommandPaletteTrigger } from "@/components/layout/command-palette-trigger";
 import { KeyboardShortcuts } from "@/components/layout/keyboard-shortcuts";
@@ -33,6 +34,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <KeyboardShortcuts />
       <ShortcutsDialog />
       <QuickCreateButton />
+      <CallReminderWatcher />
     </div>
   );
 }

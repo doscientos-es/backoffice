@@ -28,6 +28,7 @@ import {
   type MomTestSignal,
   ScheduleLeadMeetingInput,
   SendEmailToLeadInput,
+  StartLeadCallInput,
   UpdateLeadInput,
   UpdateLeadMomTestInput,
   UpdateLeadStatusInput,
@@ -542,7 +543,90 @@ const CALL_OUTCOME_LABEL: Record<string, string> = {
   wrong_number: "Número erróneo",
 };
 
-export const logLeadCall = defineAction({
+const CALL_REMINDER_DESCRIPTION = "CALL_PENDING";
+const CALL_REMINDER_NOTIFIED_DESCRIPTION = "CALL_PENDING_NOTIFIED";
+const CALL_REMINDER_DELAY_MS = 3 * 60 * 1000;
+
+/** Creates a durable, self-expiring reminder when the rep starts a call. */
+export const startLeadCall = defineAction<typeof StartLeadCallInput, { id: string }>({
+  name: "leads.startCall",
+  schema: StartLeadCallInput,
+  revalidate: (_payload, input) => [`/leads/${input.leadId}`],
+  handler: async (input, { user }) => {
+    const supabase = await createServerClient();
+    const { data: lead, error: leadError } = await supabase
+      .from("leads")
+      .select("id, name")
+      .eq("id", input.leadId)
+      .is("deleted_at", null)
+      .single();
+    if (leadError || !lead) throw new Error(leadError?.message ?? "Lead no encontrado");
+
+    const { data, error } = await supabase
+      .from("tasks")
+      .insert({
+        kind: "reminder",
+        title: `Registrar llamada · ${lead.name as string}`,
+        description: CALL_REMINDER_DESCRIPTION,
+        start_at: new Date(Date.now() + CALL_REMINDER_DELAY_MS).toISOString(),
+        lead_id: input.leadId,
+        created_by: user.id,
+        assignee_id: user.id,
+        status: "todo",
+        priority: "medium",
+      })
+      .select("id")
+      .single();
+    if (error || !data) throw new Error(error?.message ?? "No se pudo programar el aviso");
+    return { id: data.id as string };
+  },
+});
+
+/**
+ * Sends due call reminders without a cron. The app calls this on focus and
+ * periodically while open; the task remains durable so the next visit catches
+ * up if the browser was closed.
+ */
+export const notifyDueCallReminders = defineAction({
+  name: "leads.notifyDueCallReminders",
+  schema: z.object({}),
+  handler: async (_input, { user }) => {
+    const supabase = await createServerClient();
+    const { data: dueTasks } = await supabase
+      .from("tasks")
+      .select("id, lead_id, title")
+      .eq("kind", "reminder")
+      .eq("assignee_id", user.id)
+      .eq("status", "todo")
+      .eq("description", CALL_REMINDER_DESCRIPTION)
+      .lte("start_at", new Date().toISOString())
+      .not("lead_id", "is", null)
+      .limit(20);
+
+    for (const task of Array.isArray(dueTasks) ? dueTasks : []) {
+      const { data: claimed } = await supabase
+        .from("tasks")
+        .update({ description: CALL_REMINDER_NOTIFIED_DESCRIPTION })
+        .eq("id", task.id)
+        .eq("description", CALL_REMINDER_DESCRIPTION)
+        .select("id")
+        .maybeSingle();
+      if (!claimed || !task.lead_id) continue;
+
+      await dispatchNotifications({
+        recipientIds: [user.id],
+        eventType: "call_pending",
+        entityType: "lead",
+        entityId: task.lead_id as string,
+        body: `${task.title as string}. Registra el resultado o abre la ficha del lead.`,
+        link: `/leads/${task.lead_id as string}?feedback=call`,
+        data: { leadId: task.lead_id as string },
+      });
+    }
+  },
+});
+
+export const logLeadCall = defineAction<typeof LogCallInput, { noAnswerStreak: number }>({
   name: "leads.logCall",
   schema: LogCallInput,
   revalidate: (_payload, input) => [`/leads/${input.leadId}`],
@@ -564,7 +648,35 @@ export const logLeadCall = defineAction({
     });
     if (error) throw new Error(error.message);
 
-    await markFirstContacted(supabase, leadId);
+    // A missed call is an attempt, not a real first contact.
+    if (outcome === "connected") await markFirstContacted(supabase, leadId);
+
+    await supabase
+      .from("tasks")
+      .update({ completed_at: new Date().toISOString(), status: "done" })
+      .eq("kind", "reminder")
+      .eq("lead_id", leadId)
+      .in("description", [CALL_REMINDER_DESCRIPTION, CALL_REMINDER_NOTIFIED_DESCRIPTION])
+      .eq("status", "todo")
+      .is("completed_at", null);
+
+    // Count only the latest call outcomes. Other timeline events (notes,
+    // emails, etc.) must not break a run of unanswered calls.
+    const { data: recentCalls } = await supabase
+      .from("lead_interactions")
+      .select("payload")
+      .eq("lead_id", leadId)
+      .eq("type", "call")
+      .order("created_at", { ascending: false })
+      .limit(10);
+    let noAnswerStreak = 0;
+    for (const interaction of Array.isArray(recentCalls) ? recentCalls : []) {
+      const payload = interaction.payload as { outcome?: unknown } | null;
+      if (payload?.outcome !== "no_answer") break;
+      noAnswerStreak += 1;
+    }
+
+    return { noAnswerStreak };
   },
 });
 

@@ -98,6 +98,10 @@ export const CALL_OUTCOMES = [
 ] as const;
 export type CallOutcome = (typeof CALL_OUTCOMES)[number];
 
+export const StartLeadCallInput = z.object({
+  leadId: z.string().uuid(),
+});
+
 export const LogCallInput = z
   .object({
     leadId: z.string().uuid(),

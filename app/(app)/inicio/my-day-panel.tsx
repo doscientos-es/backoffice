@@ -11,6 +11,7 @@ import { useOptimisticRemoval } from "@/lib/hooks/use-optimistic-removal";
 import { leadDisplayName } from "@/lib/leads/utils";
 import { LEAD_STATUS, TASK_STATUS } from "@/lib/status";
 import { relativeTime } from "@/lib/utils";
+import { LeadCallLink } from "../leads/[id]/phone-actions";
 import { ClaimLeadButton } from "./_components/claim-lead-button";
 
 export type MyDayPanelProps = MyDayData;
@@ -197,14 +198,15 @@ function LeadItem({
         {onClaimAction ? (
           <ClaimLeadButton leadId={lead.id} onClaimAction={onClaimAction} />
         ) : lead.phone ? (
-          <a
-            href={`tel:${lead.phone}`}
+          <LeadCallLink
+            leadId={lead.id}
+            phone={lead.phone}
             title={`Llamar a ${displayName}`}
             aria-label={`Llamar a ${displayName}`}
             className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
           >
             <Phone className="size-3.5" />
-          </a>
+          </LeadCallLink>
         ) : null}
       </div>
     </li>

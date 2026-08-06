@@ -1,6 +1,6 @@
 "use client";
 
-import { Brain, Mail, Phone, Sparkles } from "lucide-react";
+import { Brain, Mail, MessageCircle, Phone, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,9 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
+import { publicEnv } from "@/lib/env";
 import type { LeadInteraction, LeadListItem } from "@/lib/leads/types";
+import { buildBookingUrl } from "@/lib/recovery/utils";
 import type { CallOutcome } from "@/lib/schemas/lead";
 import { relativeTime } from "@/lib/utils";
 import { logLeadCall, logLeadEmail } from "./actions";
@@ -59,6 +61,72 @@ function excerpt(body: string | null, max = 120): string | null {
     .trim();
   if (!text) return null;
   return text.length > max ? `${text.slice(0, max)}…` : text;
+}
+
+function WhatsAppFollowUp({
+  leadId,
+  leadName,
+  leadEmail,
+  leadPhone,
+  open,
+  onOpenChange,
+}: {
+  leadId: string;
+  leadName: string;
+  leadEmail: string | null;
+  leadPhone: string | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const firstName = leadName.split(" ")[0] || leadName;
+  const bookingUrl = buildBookingUrl(publicEnv.NEXT_PUBLIC_CAL_LINK, {
+    id: leadId,
+    name: leadName,
+    email: leadEmail,
+  });
+  const [message, setMessage] = useState(() =>
+    [
+      `Hola, ${firstName}. Soy Pol, de Doscientos.`,
+      "He intentado llamarte porque rellenaste un formulario en uno de nuestros anuncios de Meta.",
+      "Me gustaría entender qué necesitas y ver si podemos ayudarte.",
+      bookingUrl
+        ? `Puedes contarme brevemente por aquí o, si lo prefieres, agendar una reunión: ${bookingUrl}`
+        : "Puedes contarme brevemente por aquí y te respondo en cuanto pueda.",
+      "¿Qué te resulta más cómodo?",
+    ].join("\n\n"),
+  );
+  if (!leadPhone) return null;
+  const digits = leadPhone.replace(/\D/g, "");
+  const phone = digits.length === 9 ? `34${digits}` : digits;
+  const href = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Preparar WhatsApp</DialogTitle>
+          <DialogDescription>
+            Has registrado 3 llamadas seguidas sin respuesta. Revisa el mensaje antes de abrir
+            WhatsApp.
+          </DialogDescription>
+        </DialogHeader>
+        <Textarea
+          value={message}
+          onChange={(event) => setMessage(event.target.value)}
+          rows={9}
+          aria-label="Mensaje de WhatsApp"
+        />
+        <div className="flex justify-end">
+          <Button asChild className="gap-2">
+            <a href={href} target="_blank" rel="noreferrer">
+              <MessageCircle className="size-4" />
+              Abrir WhatsApp
+            </a>
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 export function LeadFastActions({ lead, aiEnabled }: Props) {
@@ -146,6 +214,7 @@ function CallDialog({
   const [open, setOpen] = useState(false);
   const [digestOpen, setDigestOpen] = useState(false);
   const [digestKey, setDigestKey] = useState(0);
+  const [whatsappOpen, setWhatsappOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const [duration, setDuration] = useState("");
   const [outcome, setOutcome] = useState<CallOutcome>("connected");
@@ -157,7 +226,7 @@ function CallDialog({
     feedback.setPending();
     const res = await logLeadCall({
       leadId,
-      notes: notes || undefined,
+      notes: notes || (outcome === "no_answer" ? "No contesta." : undefined),
       durationMinutes: duration ? Number(duration) : undefined,
       outcome,
     });
@@ -166,9 +235,10 @@ function CallDialog({
     setNotes("");
     setDuration("");
     setDigestKey((key) => key + 1);
+    if (res.noAnswerStreak >= 3) setWhatsappOpen(true);
     router.refresh();
     setOpen(false);
-    setDigestOpen(true);
+    if (res.noAnswerStreak < 3) setDigestOpen(true);
   }
 
   return (
@@ -227,7 +297,6 @@ function CallDialog({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={4}
-              required
               placeholder="Puntos clave, próximos pasos…"
             />
           </div>
@@ -247,6 +316,14 @@ function CallDialog({
         open={digestOpen}
         onOpenChange={setDigestOpen}
         draftKey={digestKey}
+      />
+      <WhatsAppFollowUp
+        leadId={leadId}
+        leadName={leadName}
+        leadEmail={leadEmail}
+        leadPhone={leadPhone}
+        open={whatsappOpen}
+        onOpenChange={setWhatsappOpen}
       />
     </>
   );

@@ -51,6 +51,7 @@ import type { MemberOption } from "@/lib/members/queries";
 import type { LeadStatus } from "@/lib/status";
 import { cn, formatEUR, relativeTime } from "@/lib/utils";
 import { ScheduleReminderDialog } from "../reminders/schedule-reminder-dialog";
+import { LeadCallLink } from "./[id]/phone-actions";
 import { deleteLead, updateLeadStatus } from "./actions";
 import { CloseReasonDialog, type CloseReasonVariant } from "./close-reason-dialog";
 import { LeadQuickView } from "./lead-quick-view";
@@ -693,14 +694,15 @@ function Card({
         <div className="flex min-w-0 flex-col gap-0.5 pl-8 text-xs">
           {lead.company ? <p className="truncate text-muted-foreground">{lead.company}</p> : null}
           {lead.phone ? (
-            <a
-              href={`tel:${lead.phone}`}
+            <LeadCallLink
+              leadId={lead.id}
+              phone={lead.phone}
               aria-label={`Llamar a ${leadDisplayName(lead)}`}
               className="inline-flex min-w-0 items-center gap-1 truncate text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             >
               <Phone className="size-3 shrink-0" aria-hidden />
               <span className="truncate">{lead.phone}</span>
-            </a>
+            </LeadCallLink>
           ) : null}
           {lead.email ? (
             <a
