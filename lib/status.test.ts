@@ -3,6 +3,7 @@ import {
   EXPENSE_STATUS,
   INVOICE_STATUS,
   LEAD_STATUS,
+  MEETING_PROJECT_STATUSES,
   PROJECT_STATUS,
   PROPOSAL_STATUS,
   TASK_PRIORITY,
@@ -52,6 +53,9 @@ describe("specific mappings", () => {
     expect(LEAD_STATUS.won.variant).toBe("success");
     expect(TASK_STATUS.done.variant).toBe("success");
     expect(TASK_PRIORITY.urgent.variant).toBe("danger");
+  });
+  it("uses only valid active project states when scheduling a meeting", () => {
+    expect(MEETING_PROJECT_STATUSES).toEqual(["planning", "active", "on_hold"]);
   });
   it("maps verifactu states (full + alert subset)", () => {
     expect(VERIFACTU_STATUS.accepted.variant).toBe("success");

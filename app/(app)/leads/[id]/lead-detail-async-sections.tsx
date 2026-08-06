@@ -7,6 +7,7 @@ import { listLeadConversionEvents } from "@/lib/conversion-events/queries";
 import { listLeadDiagnostics } from "@/lib/diagnostics/queries";
 import { isGoogleEnabled } from "@/lib/env";
 import type { MemberOption } from "@/lib/members/queries";
+import { MEETING_PROJECT_STATUSES } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDateTime } from "@/lib/utils";
 import { LeadQuickActions } from "./quick-actions";
@@ -161,22 +162,21 @@ export async function LeadQuickActionsSection({
 }) {
   const googleEnabled = isGoogleEnabled();
   const supabase = await createServerClient();
-  const [projectsResult, membersResult] = await Promise.all([
-    googleEnabled
-      ? supabase
-          .from("projects")
-          .select("id, name")
-          .is("deleted_at", null)
-          .in("status", ["planned", "active", "on_hold"])
-          .order("name")
-      : Promise.resolve({ data: [] as Array<{ id: string; name: string }>, error: null }),
-    googleEnabled
-      ? supabase.from("team_members").select("id, name, email").is("deleted_at", null).order("name")
-      : Promise.resolve({
-          data: [] as Array<{ id: string; name: string; email: string }>,
-          error: null,
-        }),
-  ]);
+  const projectsRequest = googleEnabled
+    ? supabase
+      .from("projects")
+      .select("id, name")
+      .is("deleted_at", null)
+      .in("status", MEETING_PROJECT_STATUSES)
+      .order("name")
+    : Promise.resolve({ data: [] as Array<{ id: string; name: string }>, error: null });
+  const membersRequest = googleEnabled
+    ? supabase.from("team_members").select("id, name, email").is("deleted_at", null).order("name")
+    : Promise.resolve({
+      data: [] as Array<{ id: string; name: string; email: string }>,
+      error: null,
+    });
+  const [projectsResult, membersResult] = await Promise.all([projectsRequest, membersRequest]);
 
   if (projectsResult.error) throw new Error(projectsResult.error.message);
   if (membersResult.error) throw new Error(membersResult.error.message);
