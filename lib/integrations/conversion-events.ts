@@ -41,6 +41,20 @@ export function clientIp(request: NextRequest): string {
   );
 }
 
+/**
+ * Crawlers/scanners that hit public tracking links (e.g. the WhatsApp footer
+ * CTA gets recrawled by every SEO/social bot that indexes the landing).
+ * A missing User-Agent is also treated as a bot: real browsers always send
+ * one, so its absence means a raw HTTP client rather than a person clicking.
+ */
+const BOT_USER_AGENT_RE =
+  /bot|crawl|spider|slurp|mediapartners|externalhit|meta-externalads|preview|headless|phantom|selenium|puppeteer|playwright|python-requests|python-urllib|curl\/|wget|go-http-client|okhttp|libwww-perl|node-fetch|axios\/|scrapy|ahrefs|semrush|mj12bot|dotbot|seranking|yandex|bingbot|googlebot|duckduckbot|baiduspider|sogou|exabot|petalbot|dataforseo|barkrowler|linkedinbot|redditbot|pinterest|slackbot|vkshare|w3c_validator|lighthouse|gtmetrix|pingdom|uptimerobot|site24x7|spillbot|gptbot|ccbot|bytespider|amazonbot|applebot/i;
+
+export function isLikelyBot(userAgent: string | null): boolean {
+  if (!userAgent?.trim()) return true;
+  return BOT_USER_AGENT_RE.test(userAgent);
+}
+
 export async function recordConversionEvent(
   input: ConversionEventInputType,
   ctx: { ip?: string | null; userAgent?: string | null } = {},
