@@ -59,7 +59,7 @@ vi.mock("@/lib/supabase/admin", () => ({
 import { NextRequest } from "next/server";
 import { OPTIONS, POST } from "./route";
 
-function request() {
+function request(origin = "https://landing.example") {
   const request = new NextRequest("http://localhost/api/public/diagnostics", {
     method: "POST",
     headers: { "x-forwarded-for": "203.0.113.10" },
@@ -75,7 +75,7 @@ function request() {
       },
     }),
   });
-  request.headers.set("origin", "https://landing.example");
+  request.headers.set("origin", origin);
   return request;
 }
 
@@ -94,8 +94,15 @@ describe("POST /api/public/diagnostics", () => {
 
   it("stores the request and responds before sending the report", async () => {
     const response = await POST(request());
+    const body = await response.json();
 
     expect(response.status).toBe(201);
+    expect(body.reportUrl).toMatch(
+      /^https:\/\/landing\.example\/diagnostico\/informe\?id=diagnostic-1&token=/,
+    );
+    expect(body.pdfUrl).toMatch(
+      /^https:\/\/app\.example\/api\/public\/diagnostics\/diagnostic-1\/pdf\?token=/,
+    );
     expect(response.headers.get("access-control-allow-origin")).toBe("https://landing.example");
     expect(mocks.insert).toHaveBeenCalledWith(expect.objectContaining({ status: "queued" }));
     expect(mocks.after).toHaveBeenCalledOnce();
@@ -106,14 +113,28 @@ describe("POST /api/public/diagnostics", () => {
     if (!scheduledWork) throw new Error("Expected diagnostic report work to be scheduled");
     await scheduledWork();
     expect(mocks.sendEmail).toHaveBeenCalledOnce();
+    expect(mocks.renderDiagnosticPdf).toHaveBeenCalledWith(
+      expect.objectContaining({ reportUrl: body.reportUrl }),
+    );
     expect(mocks.update).toHaveBeenCalledWith(expect.objectContaining({ status: "sent" }));
   });
 
   it("returns the required CORS preflight headers", () => {
-    const response = OPTIONS({ headers: new Headers({ origin: "https://landing.example" }) } as never);
+    const response = OPTIONS({
+      headers: new Headers({ origin: "https://landing.example" }),
+    } as never);
 
     expect(response.status).toBe(204);
     expect(response.headers.get("access-control-allow-origin")).toBe("https://landing.example");
     expect(response.headers.get("access-control-allow-methods")).toBe("POST, OPTIONS");
+  });
+
+  it("accepts a local landing origin outside production", async () => {
+    const response = await POST(request("http://localhost:4321"));
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(response.headers.get("access-control-allow-origin")).toBe("http://localhost:4321");
+    expect(body.reportUrl).toMatch(/^http:\/\/localhost:4321\/diagnostico\/informe\?id=/);
   });
 });

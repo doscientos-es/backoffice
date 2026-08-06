@@ -258,6 +258,7 @@ const styles = StyleSheet.create({
 export type DiagnosticPdfData = {
   name: string;
   company: string | null;
+  reportUrl?: string;
   answers: Record<string, unknown>;
   metrics: {
     yearlyHours: number;
@@ -366,6 +367,10 @@ function DiagnosticDocument({ data }: { data: DiagnosticPdfData }) {
   const process = printable(data.answers.proceso || data.metrics.primaryOpportunity);
   const impact = printable(data.answers.impact || "Evitar trabajo repetitivo y errores");
   const companyForTitle = company.length > 24 ? "tu empresa" : company;
+  const primaryActionUrl = data.reportUrl ?? CTA_URL;
+  const primaryActionLabel = data.reportUrl
+    ? "Ver mi diagnóstico online →"
+    : "Solicitar revisión del proceso →";
   const answers = Object.entries(data.answers)
     .filter(([, item]) => item != null && printable(item).trim())
     .slice(0, 6);
@@ -656,8 +661,8 @@ function DiagnosticDocument({ data }: { data: DiagnosticPdfData }) {
           <Text style={[styles.panelText, { color: ACCENT, marginTop: 20 }]}>
             Primer foco: {excerpt(process)}. Hoy está generando {impact.toLowerCase()}.
           </Text>
-          <Link src={CTA_URL} style={styles.cta}>
-            <Text style={styles.ctaText}>Solicitar revisión del proceso →</Text>
+          <Link src={primaryActionUrl} style={styles.cta}>
+            <Text style={styles.ctaText}>{primaryActionLabel}</Text>
           </Link>
           <Link src={BOOKING_URL} style={styles.secondaryLink}>
             <Text>Reservar 30 minutos</Text>

@@ -18,12 +18,31 @@ const Input = z.object({
   company: z.string().trim().max(160).optional().nullable(),
   name: z.string().trim().max(160).optional().nullable(),
   answers: z.record(z.unknown()).default({}),
-  metrics: z.object({ yearlyHours: z.number().nonnegative(), yearlyCost: z.number().nonnegative(), monthlyHours: z.number().nonnegative(), risk: z.string().max(40), primaryOpportunity: z.string().max(500) }),
+  metrics: z.object({
+    yearlyHours: z.number().nonnegative(),
+    yearlyCost: z.number().nonnegative(),
+    monthlyHours: z.number().nonnegative(),
+    risk: z.string().max(40),
+    primaryOpportunity: z.string().max(500),
+  }),
   attribution: z.record(z.unknown()).optional().default({}),
 });
 
 function normalizeOrigin(value: string): string {
-  return value.trim().replace(/^['"]+|['"]+$/g, "").replace(/\/+$/, "").toLowerCase();
+  return value
+    .trim()
+    .replace(/^['"]+|['"]+$/g, "")
+    .replace(/\/+$/, "")
+    .toLowerCase();
+}
+
+function isLocalOrigin(origin: string): boolean {
+  try {
+    const hostname = new URL(origin).hostname;
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+  } catch {
+    return false;
+  }
 }
 
 function allowedOrigins(): string[] {
@@ -32,7 +51,12 @@ function allowedOrigins(): string[] {
 
 function allowed(request: NextRequest): boolean {
   const origin = request.headers.get("origin");
-  return !origin || allowedOrigins().includes("*") || allowedOrigins().includes(normalizeOrigin(origin));
+  return (
+    !origin ||
+    allowedOrigins().includes("*") ||
+    allowedOrigins().includes(normalizeOrigin(origin)) ||
+    (process.env.NODE_ENV !== "production" && isLocalOrigin(origin))
+  );
 }
 
 function cors(request: NextRequest): Record<string, string> {
@@ -47,49 +71,161 @@ function cors(request: NextRequest): Record<string, string> {
   return headers;
 }
 
+function landingReportUrl(request: NextRequest, diagnosticId: string, accessToken: string): string {
+  const requestOrigin = request.headers.get("origin");
+  const baseUrl = requestOrigin && allowed(request) ? requestOrigin : serverEnv().LANDING_URL;
+  const url = new URL("/diagnostico/informe", baseUrl);
+  url.searchParams.set("id", diagnosticId);
+  url.searchParams.set("token", accessToken);
+  return url.toString();
+}
+
 export function OPTIONS(request: NextRequest) {
   return new NextResponse(null, { status: 204, headers: cors(request) });
 }
 
 export async function POST(request: NextRequest) {
-  if (!allowed(request)) return NextResponse.json({ error: "forbidden_origin" }, { status: 403, headers: cors(request) });
+  if (!allowed(request))
+    return NextResponse.json(
+      { error: "forbidden_origin" },
+      { status: 403, headers: cors(request) },
+    );
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (!rateLimit(`public-diagnostic:${ip}`, 5).success) return NextResponse.json({ error: "rate_limited" }, { status: 429, headers: cors(request) });
+  if (!rateLimit(`public-diagnostic:${ip}`, 5).success)
+    return NextResponse.json({ error: "rate_limited" }, { status: 429, headers: cors(request) });
   const parsed = Input.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "validation_error", issues: parsed.error.flatten() }, { status: 400, headers: cors(request) });
+  if (!parsed.success)
+    return NextResponse.json(
+      { error: "validation_error", issues: parsed.error.flatten() },
+      { status: 400, headers: cors(request) },
+    );
 
   const input = parsed.data;
   const supabase = createAdminClient();
   let leadId: string | null = null;
   if (input.leadId) {
-    const { data: linkedLead } = await supabase.from("leads").select("id").eq("id", input.leadId).ilike("email", input.email).is("deleted_at", null).maybeSingle();
+    const { data: linkedLead } = await supabase
+      .from("leads")
+      .select("id")
+      .eq("id", input.leadId)
+      .ilike("email", input.email)
+      .is("deleted_at", null)
+      .maybeSingle();
     leadId = (linkedLead?.id as string | undefined) ?? null;
   }
   if (!leadId) {
-    const { data: lead } = await supabase.from("leads").select("id, name, company").ilike("email", input.email).is("deleted_at", null).order("created_at", { ascending: false }).limit(1).maybeSingle();
+    const { data: lead } = await supabase
+      .from("leads")
+      .select("id, name, company")
+      .ilike("email", input.email)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
     leadId = (lead?.id as string | undefined) ?? null;
   }
   const accessToken = crypto.randomUUID() + crypto.randomUUID().replaceAll("-", "");
-  const { data: diagnostic, error } = await supabase.from("diagnostics").insert({ lead_id: leadId, email: input.email.toLowerCase(), company: input.company ?? null, answers: input.answers, metrics: input.metrics, access_token: accessToken, status: "queued" }).select("id").single();
-  if (error || !diagnostic) return NextResponse.json({ error: "diagnostic_failed" }, { status: 502, headers: cors(request) });
+  const { data: diagnostic, error } = await supabase
+    .from("diagnostics")
+    .insert({
+      lead_id: leadId,
+      email: input.email.toLowerCase(),
+      company: input.company ?? null,
+      answers: input.answers,
+      metrics: input.metrics,
+      access_token: accessToken,
+      status: "queued",
+    })
+    .select("id")
+    .single();
+  if (error || !diagnostic)
+    return NextResponse.json(
+      { error: "diagnostic_failed" },
+      { status: 502, headers: cors(request) },
+    );
 
   if (leadId) {
-    await supabase.from("leads").update({ latest_diagnostic_id: diagnostic.id, diagnostic_completed_at: new Date().toISOString(), calculator_cost: String(Math.round(input.metrics.yearlyCost)), calculator_hours: String(Math.round(input.metrics.yearlyHours)), conversion_step: "diagnostic_completed" }).eq("id", leadId);
+    await supabase
+      .from("leads")
+      .update({
+        latest_diagnostic_id: diagnostic.id,
+        diagnostic_completed_at: new Date().toISOString(),
+        calculator_cost: String(Math.round(input.metrics.yearlyCost)),
+        calculator_hours: String(Math.round(input.metrics.yearlyHours)),
+        conversion_step: "diagnostic_completed",
+      })
+      .eq("id", leadId);
   }
-  const reportUrl = `${publicEnv.NEXT_PUBLIC_APP_URL}/api/public/diagnostics/${diagnostic.id}/pdf?token=${encodeURIComponent(accessToken)}`;
+  const pdfUrl = `${publicEnv.NEXT_PUBLIC_APP_URL}/api/public/diagnostics/${diagnostic.id}/pdf?token=${encodeURIComponent(accessToken)}`;
+  const reportUrl = landingReportUrl(request, diagnostic.id, accessToken);
   const eventContext = { ip, userAgent: request.headers.get("user-agent") };
   after(async () => {
     try {
-      await recordConversionEvent({ event_id: typeof input.attribution.event_id === "string" ? input.attribution.event_id : null, visitor_id: typeof input.attribution.visitor_id === "string" ? input.attribution.visitor_id : null, lead_id: leadId, event_name: "diagnostic_completed", conversion_step: "diagnostic_completed", landing_path: "/diagnostico", payload: { diagnostic_id: diagnostic.id, email: input.email, answers: input.answers, metrics: input.metrics } }, eventContext);
-      const pdf = await renderDiagnosticPdf({ name: input.name ?? input.email, company: input.company ?? null, answers: input.answers, metrics: input.metrics });
-      const html = await renderEmail(DiagnosticReportEmail({ name: input.name ?? "", company: input.company, reportUrl, yearlyHours: input.metrics.yearlyHours, yearlyCost: input.metrics.yearlyCost }));
-      await sendEmail({ fromName: "doscientos", fromAlias: "hola", to: input.email, subject: `Tu diagnóstico personalizado${input.company ? ` · ${input.company}` : ""}`, html, attachments: [{ filename: "diagnostico-doscientos.pdf", content: pdf }], tags: { diagnostic_id: diagnostic.id, ...(leadId ? { lead_id: leadId } : {}) } });
-      await supabase.from("diagnostics").update({ report_sent_at: new Date().toISOString(), status: "sent" }).eq("id", diagnostic.id);
-      await recordConversionEvent({ event_name: "diagnostic_report_sent", conversion_step: "diagnostic_report_sent", lead_id: leadId, landing_path: "/diagnostico", payload: { diagnostic_id: diagnostic.id } }, eventContext);
+      await recordConversionEvent(
+        {
+          event_id:
+            typeof input.attribution.event_id === "string" ? input.attribution.event_id : null,
+          visitor_id:
+            typeof input.attribution.visitor_id === "string" ? input.attribution.visitor_id : null,
+          lead_id: leadId,
+          event_name: "diagnostic_completed",
+          conversion_step: "diagnostic_completed",
+          landing_path: "/diagnostico",
+          payload: {
+            diagnostic_id: diagnostic.id,
+            email: input.email,
+            answers: input.answers,
+            metrics: input.metrics,
+          },
+        },
+        eventContext,
+      );
+      const pdf = await renderDiagnosticPdf({
+        name: input.name ?? input.email,
+        company: input.company ?? null,
+        reportUrl,
+        answers: input.answers,
+        metrics: input.metrics,
+      });
+      const html = await renderEmail(
+        DiagnosticReportEmail({
+          name: input.name ?? "",
+          company: input.company,
+          reportUrl,
+          yearlyHours: input.metrics.yearlyHours,
+          yearlyCost: input.metrics.yearlyCost,
+        }),
+      );
+      await sendEmail({
+        fromName: "doscientos",
+        fromAlias: "hola",
+        to: input.email,
+        subject: `Tu diagnóstico personalizado${input.company ? ` · ${input.company}` : ""}`,
+        html,
+        attachments: [{ filename: "diagnostico-doscientos.pdf", content: pdf }],
+        tags: { diagnostic_id: diagnostic.id, ...(leadId ? { lead_id: leadId } : {}) },
+      });
+      await supabase
+        .from("diagnostics")
+        .update({ report_sent_at: new Date().toISOString(), status: "sent" })
+        .eq("id", diagnostic.id);
+      await recordConversionEvent(
+        {
+          event_name: "diagnostic_report_sent",
+          conversion_step: "diagnostic_report_sent",
+          lead_id: leadId,
+          landing_path: "/diagnostico",
+          payload: { diagnostic_id: diagnostic.id },
+        },
+        eventContext,
+      );
     } catch (sendError) {
       console.error("diagnostic_report_send_failed", sendError);
     }
   });
 
-  return NextResponse.json({ ok: true, diagnosticId: diagnostic.id, leadId, reportUrl }, { status: 201, headers: cors(request) });
+  return NextResponse.json(
+    { ok: true, diagnosticId: diagnostic.id, leadId, reportUrl, pdfUrl },
+    { status: 201, headers: cors(request) },
+  );
 }
