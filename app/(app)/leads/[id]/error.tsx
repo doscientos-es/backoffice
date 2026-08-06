@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 /** Catches errors thrown while rendering an individual lead detail page. */
 export default function LeadDetailError({
