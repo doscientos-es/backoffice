@@ -69,6 +69,16 @@ export async function notifyNewLead(input: NotifyNewLeadInput): Promise<void> {
   const notifBody = [input.leadName, input.leadCompany, input.leadEmail, input.leadPhone]
     .filter(Boolean)
     .join(" · ");
+  const phoneDigits = input.leadPhone?.replace(/\D/g, "") ?? "";
+  const callUrl = phoneDigits ? `tel:${phoneDigits}` : null;
+  const whatsappUrl = phoneDigits ? `https://wa.me/${phoneDigits}` : null;
+  const notificationActions = input.leadPhone
+    ? [
+        { action: "call", title: "Llamar" },
+        { action: "whatsapp", title: "WhatsApp" },
+        { action: "feedback", title: "Registrar" },
+      ]
+    : [{ action: "feedback", title: "Registrar" }];
 
   // ── 2. In-app notification + background Push ─────────────────────────────
   await dispatchNotifications({
@@ -78,6 +88,12 @@ export async function notifyNewLead(input: NotifyNewLeadInput): Promise<void> {
     entityId: input.leadId,
     body: notifBody || "Ha entrado un nuevo lead",
     link: `/leads/${input.leadId}`,
+    actions: notificationActions,
+    data: {
+      callUrl,
+      whatsappUrl,
+      feedbackUrl: `/leads/${input.leadId}?feedback=call`,
+    },
   });
 
   // ── 3. Email (render once, send to all) ──────────────────────────────────

@@ -60,10 +60,20 @@ async function createFirstTouchReminder(
     entityId: leadId,
     body: `Nuevo lead asignado. Primer contacto recomendado en ${delayMinutes} min.`,
     link: `/leads/${leadId}`,
+    actions: input.phone
+      ? [
+          { action: "call", title: "Llamar" },
+          { action: "whatsapp", title: "WhatsApp" },
+          { action: "feedback", title: "Registrar" },
+        ]
+      : [{ action: "feedback", title: "Registrar" }],
     data: {
       taskId: task.id as string,
       score: String(score),
       firstTouchInMinutes: String(delayMinutes),
+      callUrl: input.phone ? `tel:${input.phone.replace(/\D/g, "")}` : null,
+      whatsappUrl: input.phone ? `https://wa.me/${input.phone.replace(/\D/g, "")}` : null,
+      feedbackUrl: `/leads/${leadId}?feedback=call`,
     },
   });
 }

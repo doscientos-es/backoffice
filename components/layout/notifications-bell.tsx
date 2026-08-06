@@ -45,6 +45,8 @@ type Notif = {
   body: string | null;
   link: string | null;
   event_type: string;
+  entity_type: string;
+  entity_id: string;
   created_at: string;
   read_at: string | null;
   actor: { name: string | null; avatar_url: string | null } | null;
@@ -58,6 +60,9 @@ const EVENT_META: Record<string, { icon: ComponentType<{ className?: string }>; 
   task_assigned: { icon: UserPlus, tint: "text-emerald-500" },
   lead_new: { icon: Zap, tint: "text-amber-500" },
   lead_assigned: { icon: UserPlus, tint: "text-blue-500" },
+  lead_uncontacted: { icon: BellRing, tint: "text-amber-500" },
+  lead_stale: { icon: BellRing, tint: "text-orange-500" },
+  lead_at_risk: { icon: BellRing, tint: "text-destructive" },
   call_pending: { icon: BellRing, tint: "text-amber-500" },
   invoice_paid: { icon: CircleDollarSign, tint: "text-emerald-500" },
   invoice_payment: { icon: CircleDollarSign, tint: "text-emerald-500" },
@@ -70,6 +75,9 @@ const EVENT_META: Record<string, { icon: ComponentType<{ className?: string }>; 
 const BROWSER_NOTIF_TITLE: Record<string, string> = {
   lead_new: "🔔 Nuevo lead",
   lead_assigned: "👤 Lead asignado",
+  lead_uncontacted: "⏱️ Lead sin contactar",
+  lead_stale: "⚠️ Lead sin novedades",
+  lead_at_risk: "🚨 Lead en riesgo",
   call_pending: "📞 Llamada pendiente",
   task_comment: "💬 Nuevo comentario",
   task_mention: "💬 Te han mencionado",
@@ -87,6 +95,63 @@ function getEventMeta(eventType: string) {
 
 function getBrowserTitle(eventType: string) {
   return BROWSER_NOTIF_TITLE[eventType] ?? "Nueva notificación";
+}
+
+const LEAD_ACTION_EVENTS = new Set([
+  "lead_new",
+  "lead_assigned",
+  "lead_uncontacted",
+  "lead_stale",
+  "lead_at_risk",
+  "call_pending",
+]);
+
+function LeadNotificationActions({ notification }: { notification: Notif }) {
+  const [phone, setPhone] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  if (notification.entity_type !== "lead" || !LEAD_ACTION_EVENTS.has(notification.event_type)) {
+    return null;
+  }
+
+  async function loadPhone(): Promise<string | null> {
+    if (phone) return phone;
+    setLoading(true);
+    const { data } = await getBrowserClient()
+      .from("leads")
+      .select("phone")
+      .eq("id", notification.entity_id)
+      .maybeSingle();
+    const value = (data?.phone as string | null) ?? null;
+    setPhone(value);
+    setLoading(false);
+    return value;
+  }
+
+  async function callLead(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    const value = await loadPhone();
+    if (value) window.location.href = `tel:${value.replace(/[^\d+#*]/g, "")}`;
+  }
+
+  async function whatsappLead(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    const value = await loadPhone();
+    if (value)
+      window.open(`https://wa.me/${value.replace(/\D/g, "")}`, "_blank", "noopener,noreferrer");
+  }
+
+  return (
+    <div className="mt-1.5 flex gap-1.5">
+      <Button type="button" variant="outline" size="xs" onClick={callLead} disabled={loading}>
+        Llamar
+      </Button>
+      <Button type="button" variant="outline" size="xs" onClick={whatsappLead} disabled={loading}>
+        WhatsApp
+      </Button>
+    </div>
+  );
 }
 
 function initials(name: string | null | undefined): string {
@@ -136,7 +201,7 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
     const { data } = await supabase
       .from("notifications")
       .select(
-        "id, body, link, event_type, created_at, read_at, actor:team_members!actor_id(name, avatar_url)",
+        "id, body, link, event_type, entity_type, entity_id, created_at, read_at, actor:team_members!actor_id(name, avatar_url)",
       )
       .eq("recipient_id", memberId)
       .order("created_at", { ascending: false })
@@ -334,24 +399,30 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
                     return (
                       <li key={n.id} className="px-1">
                         {n.link ? (
-                          <Link
-                            href={n.link}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handleItemClick(n);
-                            }}
-                            className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
-                          >
-                            {content}
-                          </Link>
+                          <div>
+                            <Link
+                              href={n.link}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleItemClick(n);
+                              }}
+                              className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            >
+                              {content}
+                            </Link>
+                            <LeadNotificationActions notification={n} />
+                          </div>
                         ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleItemClick(n)}
-                            className="block w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
-                          >
-                            {content}
-                          </button>
+                          <div>
+                            <button
+                              type="button"
+                              onClick={() => handleItemClick(n)}
+                              className="block w-full rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            >
+                              {content}
+                            </button>
+                            <LeadNotificationActions notification={n} />
+                          </div>
                         )}
                       </li>
                     );

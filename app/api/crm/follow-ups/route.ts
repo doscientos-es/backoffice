@@ -146,11 +146,13 @@ async function dispatchLeadFollowUpNotifications(data: Awaited<ReturnType<typeof
       actions: lead.phone
         ? [
             { action: "call", title: "Llamar" },
+            { action: "whatsapp", title: "WhatsApp" },
             { action: "feedback", title: "Registrar resultado" },
           ]
         : [{ action: "feedback", title: "Registrar resultado" }],
       data: {
         callUrl: lead.phone ? `tel:${lead.phone.replace(/[^\d+#*]/g, "")}` : null,
+        whatsappUrl: lead.phone ? `https://wa.me/${lead.phone.replace(/\D/g, "")}` : null,
         feedbackUrl: `/leads/${lead.id}?feedback=call`,
       },
     });

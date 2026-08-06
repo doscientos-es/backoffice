@@ -595,7 +595,7 @@ export const notifyDueCallReminders = defineAction({
     const supabase = await createServerClient();
     const { data: dueTasks } = await supabase
       .from("tasks")
-      .select("id, lead_id, title")
+      .select("id, lead_id, title, leads(phone)")
       .eq("kind", "reminder")
       .eq("assignee_id", user.id)
       .eq("status", "todo")
@@ -621,7 +621,23 @@ export const notifyDueCallReminders = defineAction({
         entityId: task.lead_id as string,
         body: `${task.title as string}. Registra el resultado o abre la ficha del lead.`,
         link: `/leads/${task.lead_id as string}?feedback=call`,
-        data: { leadId: task.lead_id as string },
+        actions: (task.leads as { phone?: string | null } | null)?.phone
+          ? [
+              { action: "call", title: "Llamar" },
+              { action: "whatsapp", title: "WhatsApp" },
+              { action: "feedback", title: "Registrar" },
+            ]
+          : [{ action: "feedback", title: "Registrar" }],
+        data: {
+          leadId: task.lead_id as string,
+          callUrl: (task.leads as { phone?: string | null } | null)?.phone
+            ? `tel:${((task.leads as { phone?: string | null }).phone ?? "").replace(/\D/g, "")}`
+            : null,
+          whatsappUrl: (task.leads as { phone?: string | null } | null)?.phone
+            ? `https://wa.me/${((task.leads as { phone?: string | null }).phone ?? "").replace(/\D/g, "")}`
+            : null,
+          feedbackUrl: `/leads/${task.lead_id as string}?feedback=call`,
+        },
       });
     }
   },
@@ -756,7 +772,7 @@ export const assignLeadOwner = defineAction({
 
     const { data: current } = await supabase
       .from("leads")
-      .select("assigned_to, name")
+      .select("assigned_to, name, phone")
       .eq("id", data.leadId)
       .single();
 
@@ -799,6 +815,22 @@ export const assignLeadOwner = defineAction({
         entityId: data.leadId,
         body: `Te han asignado el lead “${(current?.name as string | null) ?? "Sin nombre"}”`,
         link: `/leads/${data.leadId}`,
+        actions: (current?.phone as string | null)
+          ? [
+              { action: "call", title: "Llamar" },
+              { action: "whatsapp", title: "WhatsApp" },
+              { action: "feedback", title: "Registrar" },
+            ]
+          : [{ action: "feedback", title: "Registrar" }],
+        data: {
+          callUrl: current?.phone
+            ? `tel:${(current.phone as string).replace(/[^\d+#*]/g, "")}`
+            : null,
+          whatsappUrl: current?.phone
+            ? `https://wa.me/${(current.phone as string).replace(/\D/g, "")}`
+            : null,
+          feedbackUrl: `/leads/${data.leadId}?feedback=call`,
+        },
       });
     }
   },

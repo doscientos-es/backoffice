@@ -32,7 +32,9 @@ self.addEventListener("notificationclick", (event) => {
       ? data.callUrl || data.url || "/"
       : event.action === "feedback"
         ? data.feedbackUrl || data.url || "/"
-        : data.url || "/";
+        : event.action === "whatsapp"
+          ? data.whatsappUrl || data.url || "/"
+          : data.url || "/";
   event.waitUntil(
     (async () => {
       try {
