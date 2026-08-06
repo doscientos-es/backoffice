@@ -546,6 +546,7 @@ const CALL_OUTCOME_LABEL: Record<string, string> = {
 const CALL_REMINDER_DESCRIPTION = "CALL_PENDING";
 const CALL_REMINDER_NOTIFIED_DESCRIPTION = "CALL_PENDING_NOTIFIED";
 const CALL_REMINDER_DELAY_MS = 3 * 60 * 1000;
+const CALL_AUTO_FOLLOW_UP = "CALL_AUTO_FOLLOW_UP";
 
 /** Creates a durable, self-expiring reminder when the rep starts a call. */
 export const startLeadCall = defineAction<typeof StartLeadCallInput, { id: string }>({
@@ -659,6 +660,24 @@ export const logLeadCall = defineAction<typeof LogCallInput, { noAnswerStreak: n
       .in("description", [CALL_REMINDER_DESCRIPTION, CALL_REMINDER_NOTIFIED_DESCRIPTION])
       .eq("status", "todo")
       .is("completed_at", null);
+
+    // Keep the next attempt alive even when the rep closes the backoffice.
+    // This is a durable reminder, not a cron: it becomes visible/pushable the
+    // next time the app is open, and never sends anything to the lead.
+    if (outcome === "no_answer" || outcome === "busy" || outcome === "voicemail") {
+      const followUpHours = outcome === "busy" ? 4 : outcome === "voicemail" ? 24 : 24;
+      await supabase.from("tasks").insert({
+        kind: "reminder",
+        title: `Reintentar llamada · lead`,
+        description: CALL_AUTO_FOLLOW_UP,
+        start_at: new Date(Date.now() + followUpHours * 60 * 60 * 1000).toISOString(),
+        lead_id: leadId,
+        created_by: user.id,
+        assignee_id: user.id,
+        status: "todo",
+        priority: "medium",
+      });
+    }
 
     // Count only the latest call outcomes. Other timeline events (notes,
     // emails, etc.) must not break a run of unanswered calls.

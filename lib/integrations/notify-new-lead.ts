@@ -1,9 +1,7 @@
-import { LeadConfirmationEmail } from "@/components/email/lead-confirmation-email";
 import { NewLeadEmail } from "@/components/email/new-lead-email";
 import { renderEmail } from "@/lib/email/render";
 import { sendEmail } from "@/lib/email/resend";
 import { publicEnv } from "@/lib/env";
-import { selectLeadResource } from "@/lib/integrations/lead-resources";
 import { telegramSendMessage } from "@/lib/integrations/telegram";
 import { scopedLogger } from "@/lib/logger";
 import { dispatchNotifications } from "@/lib/notifications/dispatch";
@@ -50,13 +48,6 @@ export async function notifyNewLead(input: NotifyNewLeadInput): Promise<void> {
   const supabase = createAdminClient();
   const appUrl = publicEnv.NEXT_PUBLIC_APP_URL;
   const leadUrl = `${appUrl}/leads/${input.leadId}`;
-  const leadResource = selectLeadResource({
-    resourceSlug: input.leadResourceSlug,
-    landingRef: input.leadLandingRef,
-    landingSubject: input.leadLandingSubject,
-    calculatorCost: input.leadCalculatorCost,
-    calculatorHours: input.leadCalculatorHours,
-  });
 
   // ── 1. Fetch active owners and admins ────────────────────────────────────
   const { data: recipients, error: fetchError } = await supabase
@@ -182,29 +173,8 @@ export async function notifyNewLead(input: NotifyNewLeadInput): Promise<void> {
     log.error({ leadId: input.leadId, err: tgRes.error }, "telegram lead notification failed");
   }
 
-  // ── 5. Confirmation email to the lead ────────────────────────────────────
-  if (input.leadEmail) {
-    try {
-      const confirmHtml = await renderEmail(
-        LeadConfirmationEmail({
-          leadName: input.leadName,
-          appUrl,
-          resource: leadResource,
-          calculatorCost: input.leadCalculatorCost,
-          calculatorHours: input.leadCalculatorHours,
-        }),
-      );
-      await sendEmail({
-        fromName: "doscientos",
-        fromAlias: "hola",
-        to: input.leadEmail,
-        subject: "Hemos recibido tu solicitud y te dejamos un recurso",
-        html: confirmHtml,
-        tags: { lead_id: input.leadId, type: "lead_confirmation" },
-      });
-      log.info({ leadId: input.leadId }, "lead confirmation email sent");
-    } catch (e) {
-      log.error({ err: e, leadId: input.leadId }, "failed to send lead confirmation email");
-    }
-  }
+  // Deliberately no automatic email is sent to the lead. The commercial team
+  // must review and confirm any external message first.
+  if (input.leadEmail)
+    log.info({ leadId: input.leadId }, "lead confirmation email skipped; manual approval required");
 }

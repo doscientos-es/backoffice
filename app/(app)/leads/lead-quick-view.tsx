@@ -64,12 +64,14 @@ export function LeadQuickView({
   lead,
   canEdit = false,
   members = [],
+  senderName = "",
   onDeleteAction,
   onCloseAction,
 }: {
   lead: KanbanLead | null;
   canEdit?: boolean;
   members?: MemberOption[];
+  senderName?: string;
   /** Optimistically removes the lead from the board and runs the delete. Optional — falls back to router.refresh(). */
   onDeleteAction?: (id: string) => void;
   onCloseAction: () => void;
@@ -79,7 +81,13 @@ export function LeadQuickView({
       <DrawerContent className="sm:max-w-sm">
         {lead ? (
           <ErrorBoundary>
-            <Body lead={lead} canEdit={canEdit} members={members} onDeleteAction={onDeleteAction} />
+            <Body
+              lead={lead}
+              canEdit={canEdit}
+              members={members}
+              senderName={senderName}
+              onDeleteAction={onDeleteAction}
+            />
           </ErrorBoundary>
         ) : null}
       </DrawerContent>
@@ -91,11 +99,13 @@ function Body({
   lead,
   canEdit,
   members,
+  senderName,
   onDeleteAction,
 }: {
   lead: KanbanLead;
   canEdit: boolean;
   members: MemberOption[];
+  senderName: string;
   onDeleteAction?: (id: string) => void;
 }) {
   const hasEstimated = lead.estimated_value != null && lead.estimated_value > 0;
@@ -248,6 +258,7 @@ function Body({
           leadName={displayName}
           leadPhone={lead.phone}
           leadEmail={lead.email}
+          senderName={senderName}
         />
       </div>
 
@@ -469,11 +480,13 @@ function QuickActions({
   leadName,
   leadPhone,
   leadEmail,
+  senderName,
 }: {
   leadId: string;
   leadName: string;
   leadPhone: string | null;
   leadEmail: string | null;
+  senderName: string;
 }) {
   return (
     <div className="flex flex-col gap-2">
@@ -486,6 +499,7 @@ function QuickActions({
           leadName={leadName}
           leadPhone={leadPhone}
           leadEmail={leadEmail}
+          senderName={senderName}
         />
         <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
         <QNoteDialog leadId={leadId} />

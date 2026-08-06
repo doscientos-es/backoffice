@@ -34,6 +34,7 @@ export type FastLead = LeadListItem;
 type Props = {
   lead: FastLead;
   aiEnabled: boolean;
+  senderName: string;
 };
 
 const INTERACTION_LABEL: Record<string, string> = {
@@ -68,6 +69,7 @@ function WhatsAppFollowUp({
   leadName,
   leadEmail,
   leadPhone,
+  senderName,
   open,
   onOpenChange,
 }: {
@@ -75,6 +77,7 @@ function WhatsAppFollowUp({
   leadName: string;
   leadEmail: string | null;
   leadPhone: string | null;
+  senderName: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -86,7 +89,7 @@ function WhatsAppFollowUp({
   });
   const [message, setMessage] = useState(() =>
     [
-      `Hola, ${firstName}. Soy Pol, de Doscientos.`,
+      `Hola, ${firstName}. Soy ${senderName || "el equipo"}, de Doscientos.`,
       "He intentado llamarte porque rellenaste un formulario en uno de nuestros anuncios de Meta.",
       "Me gustaría entender qué necesitas y ver si podemos ayudarte.",
       bookingUrl
@@ -129,7 +132,7 @@ function WhatsAppFollowUp({
   );
 }
 
-export function LeadFastActions({ lead, aiEnabled }: Props) {
+export function LeadFastActions({ lead, aiEnabled, senderName }: Props) {
   // Detenemos pointerdown para no activar el drag del kanban al pulsar
   // los iconos. En la vista lista es inocuo.
   return (
@@ -144,6 +147,7 @@ export function LeadFastActions({ lead, aiEnabled }: Props) {
         leadName={lead.name}
         leadEmail={lead.email}
         leadPhone={lead.phone}
+        senderName={senderName}
         aiEnabled={aiEnabled}
       />
       <EmailDialog leadId={lead.id} leadEmail={lead.email} />
@@ -203,12 +207,14 @@ function CallDialog({
   leadName,
   leadEmail,
   leadPhone,
+  senderName,
   aiEnabled,
 }: {
   leadId: string;
   leadName: string;
   leadEmail: string | null;
   leadPhone: string | null;
+  senderName: string;
   aiEnabled: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -322,6 +328,7 @@ function CallDialog({
         leadName={leadName}
         leadEmail={leadEmail}
         leadPhone={leadPhone}
+        senderName={senderName}
         open={whatsappOpen}
         onOpenChange={setWhatsappOpen}
       />

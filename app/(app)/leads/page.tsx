@@ -118,6 +118,7 @@ export default async function LeadsPage({
         aiEnabled={aiEnabled}
         canEdit={canEdit}
         members={members}
+        senderName={user.name}
         title="Leads"
         description="Oportunidades comerciales sin contrato firmado."
         actions={actions}

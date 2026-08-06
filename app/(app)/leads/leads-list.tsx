@@ -20,6 +20,7 @@ type LeadsListProps = Omit<ListPageProps, "rows"> & {
   aiEnabled?: boolean;
   canEdit?: boolean;
   members?: MemberOption[];
+  senderName?: string;
 };
 
 function LeadInitials({ lead }: { lead: KanbanLead }) {
@@ -35,6 +36,7 @@ export function LeadsList({
   aiEnabled = false,
   canEdit = false,
   members = [],
+  senderName = "",
   ...props
 }: LeadsListProps) {
   const [selectedLead, setSelectedLead] = useState<KanbanLead | null>(null);
@@ -94,7 +96,7 @@ export function LeadsList({
       </span>,
       // biome-ignore lint/a11y/noStaticElementInteractions: wrapper only stops click propagation to the parent row; contains own interactive controls
       <div key="actions" className="flex justify-end" onClick={(e) => e.stopPropagation()}>
-        <LeadFastActions lead={l} aiEnabled={aiEnabled} />
+        <LeadFastActions lead={l} aiEnabled={aiEnabled} senderName={senderName} />
       </div>,
     ],
   }));
@@ -110,6 +112,7 @@ export function LeadsList({
         lead={selectedLead}
         canEdit={canEdit}
         members={members}
+        senderName={senderName}
         onCloseAction={() => setSelectedLead(null)}
       />
     </>

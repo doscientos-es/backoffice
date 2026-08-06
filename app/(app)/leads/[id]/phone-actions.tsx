@@ -71,12 +71,14 @@ export function PhoneQuickActions({
   leadName,
   leadEmail,
   firstContactedAt,
+  senderName,
 }: {
   phone: string;
   leadId?: string;
   leadName?: string;
   leadEmail?: string | null;
   firstContactedAt?: string | null;
+  senderName: string;
 }) {
   const normalized = normalizePhone(phone);
   return (
@@ -106,6 +108,7 @@ export function PhoneQuickActions({
           leadEmail={leadEmail ?? null}
           phone={phone}
           firstContactedAt={firstContactedAt}
+          senderName={senderName}
         />
       )}
     </div>
@@ -118,12 +121,14 @@ export function LeadWhatsAppButton({
   leadEmail,
   phone,
   firstContactedAt,
+  senderName,
 }: {
   leadId: string;
   leadName: string;
   leadEmail: string | null;
   phone: string;
   firstContactedAt?: string | null;
+  senderName: string;
 }) {
   if (firstContactedAt) return null;
   const bookingUrl = buildBookingUrl(publicEnv.NEXT_PUBLIC_CAL_LINK, {
@@ -132,7 +137,7 @@ export function LeadWhatsAppButton({
     email: leadEmail,
   });
   const message = [
-    `Hola, ${leadName.split(" ")[0] || leadName}. Soy Pol, de Doscientos.`,
+    `Hola, ${leadName.split(" ")[0] || leadName}. Soy ${senderName || "el equipo"}, de Doscientos.`,
     "He intentado llamarte porque rellenaste un formulario en uno de nuestros anuncios de Meta.",
     "Me gustaría entender qué necesitas y ver si podemos ayudarte.",
     bookingUrl

@@ -10,14 +10,12 @@ import type {
 } from "@/lib/dashboard/types";
 import { VERIFACTU_ALERT_STATUS } from "@/lib/status";
 import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
-import { RemindersSection } from "./_components/reminders-section";
 
 export type { AvisosData, OverdueInvoiceRow, ReminderRow, VerifactuPendingRow };
 
 export type AvisosPanelProps = AvisosData & { showFinance?: boolean };
 
 export function AvisosPanel({
-  reminders,
   verifactuPending,
   overdueInvoices,
   certExpiresAt,
@@ -27,11 +25,7 @@ export function AvisosPanel({
   const visibleOverdue = showFinance ? overdueInvoices : [];
   const visibleCertExpiry = showFinance ? certExpiresAt : null;
 
-  const empty =
-    reminders.length === 0 &&
-    visibleVerifactu.length === 0 &&
-    visibleOverdue.length === 0 &&
-    !visibleCertExpiry;
+  const empty = visibleVerifactu.length === 0 && visibleOverdue.length === 0 && !visibleCertExpiry;
 
   if (empty) {
     return (
@@ -70,15 +64,6 @@ export function AvisosPanel({
               </p>
             </div>
           </div>
-        ) : null}
-
-        {reminders.length > 0 ? (
-          <Section
-            icon={<BellRing className="size-4 text-blue-500" />}
-            title={`Recordatorios próximos (${reminders.length})`}
-          >
-            <RemindersSection reminders={reminders} />
-          </Section>
         ) : null}
 
         {visibleVerifactu.length > 0 ? (

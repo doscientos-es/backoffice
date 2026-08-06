@@ -33,7 +33,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
 
   const { data: proposal } = await admin
     .from("proposals")
-    .select("id, number, title, status, created_by, clients(name)")
+    .select("id, number, title, status, created_by, lead_id, clients(name)")
     .eq("portal_token", token)
     .is("deleted_at", null)
     .maybeSingle();
@@ -86,6 +86,30 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
         body: `${clientName} ha visto la presentación completa de ${proposal.number} [${parsed.data.sessionId}]`,
         link: `/proposals/${proposal.id as string}`,
       });
+
+      // A completed view is a high-intent signal. Persist the follow-up so it
+      // survives a closed browser and does not depend on someone revisiting
+      // the proposal page manually.
+      const followUpMarker = `AUTO_PROPOSAL_VIEW_FOLLOW_UP:${parsed.data.sessionId}`;
+      const { data: existingFollowUp } = await admin
+        .from("tasks")
+        .select("id")
+        .eq("assignee_id", proposal.created_by as string)
+        .eq("description", followUpMarker)
+        .maybeSingle();
+      if (!existingFollowUp) {
+        await admin.from("tasks").insert({
+          kind: "reminder",
+          title: `Seguimiento propuesta · ${proposal.number as string}`,
+          description: followUpMarker,
+          start_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+          lead_id: (proposal.lead_id as string | null) ?? null,
+          created_by: proposal.created_by as string,
+          assignee_id: proposal.created_by as string,
+          status: "todo",
+          priority: "high",
+        });
+      }
     }
   }
 

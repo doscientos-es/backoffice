@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Inbox, ListTodo, Phone, UserRound } from "lucide-react";
+import { BellRing, ChevronRight, Inbox, ListTodo, Phone, UserRound } from "lucide-react";
 import Link from "next/link";
 import { claimLead } from "@/app/(app)/leads/actions";
 import { Badge } from "@/components/ui/badge";
@@ -74,10 +74,10 @@ export function MyDayPanel({ tasks, myLeads, unassignedLeads, weekStats }: MyDay
       <div className="grid gap-4 lg:grid-cols-3">
         <Column
           icon={<ListTodo className="size-4 text-blue-500" />}
-          title="Tus tareas"
+          title="Qué hacer ahora"
           count={tasks.length}
           href="/tasks"
-          empty="No tienes tareas abiertas. 🎉"
+          empty="No tienes acciones pendientes. 🎉"
         >
           {tasks.map((t) => (
             <TaskItem key={t.id} task={t} />
@@ -159,17 +159,24 @@ function Column({
 }
 
 function TaskItem({ task }: { task: MyTaskRow }) {
-  const overdue = task.due_date ? new Date(task.due_date) < new Date() : false;
+  const overdue = task.action_at ? new Date(task.action_at) < new Date() : false;
   return (
     <li className="flex items-center justify-between gap-2">
       <Link href={`/tasks/${task.id}`} className="min-w-0 flex-1 hover:underline">
-        <span className="block truncate text-sm">{task.title}</span>
+        <span className="flex items-center gap-1.5 truncate text-sm">
+          {task.kind === "reminder" ? (
+            <BellRing className="size-3 shrink-0 text-blue-500" />
+          ) : (
+            <ListTodo className="size-3 shrink-0 text-muted-foreground" />
+          )}
+          {task.title}
+        </span>
         {task.contextLabel ? (
           <span className="block truncate text-xs text-muted-foreground">{task.contextLabel}</span>
         ) : null}
       </Link>
-      {task.due_date ? (
-        <Badge variant={overdue ? "danger" : "info"}>{relativeTime(task.due_date)}</Badge>
+      {task.action_at ? (
+        <Badge variant={overdue ? "danger" : "info"}>{relativeTime(task.action_at)}</Badge>
       ) : (
         <StatusBadge meta={TASK_STATUS} value={task.status} />
       )}

@@ -80,12 +80,15 @@ function leadRefName(ref: LeadRef): string | null {
 }
 
 function toMyTask(row: Record<string, unknown>): MyTaskRow {
+  const kind = row.kind === "reminder" ? "reminder" : "task";
   return {
     id: row.id as string,
     title: row.title as string,
+    kind,
     status: row.status as MyTaskRow["status"],
     priority: row.priority as MyTaskRow["priority"],
     due_date: (row.due_date as string | null) ?? null,
+    action_at: (kind === "reminder" ? row.start_at : row.due_date) as string | null,
     contextLabel: refName(row.projects as NameRef) ?? refName(row.leads as NameRef) ?? null,
   };
 }
@@ -672,12 +675,13 @@ export async function getMyDay(userId: string): Promise<MyDayData> {
     await Promise.all([
       supabase
         .from("tasks")
-        .select("id, title, status, priority, due_date, projects(name), leads(name)")
+        .select(
+          "id, title, kind, status, priority, due_date, start_at, projects(name), leads(name)",
+        )
         .eq("assignee_id", userId)
         .in("status", [...OPEN_TASK_STATUSES])
         .is("deleted_at", null)
-        .order("due_date", { ascending: true, nullsFirst: false })
-        .limit(MY_DAY_LIMIT),
+        .limit(MY_DAY_LIMIT * 4),
       supabase
         .from("leads")
         .select(`${leadFields}, updated_at`)
@@ -727,7 +731,14 @@ export async function getMyDay(userId: string): Promise<MyDayData> {
   };
 
   return {
-    tasks: (tasksRes.data ?? []).map(toMyTask),
+    tasks: (tasksRes.data ?? [])
+      .map(toMyTask)
+      .sort((a, b) => {
+        if (!a.action_at) return 1;
+        if (!b.action_at) return -1;
+        return new Date(a.action_at).getTime() - new Date(b.action_at).getTime();
+      })
+      .slice(0, MY_DAY_LIMIT),
     myLeads: (myLeadsRes.data ?? []).map((row) => toActionLead(row, "updated_at")),
     unassignedLeads: (unassignedRes.data ?? []).map((row) => toActionLead(row, "created_at")),
     weekStats,

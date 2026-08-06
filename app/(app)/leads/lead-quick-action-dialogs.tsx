@@ -55,10 +55,13 @@ function whatsappPhone(phone: string): string {
   return digits.length === 9 ? `34${digits}` : digits;
 }
 
-function whatsappMessage(lead: { id: string; name: string; email: string | null }): string {
+function whatsappMessage(
+  lead: { id: string; name: string; email: string | null },
+  senderName: string,
+): string {
   const bookingUrl = buildBookingUrl(publicEnv.NEXT_PUBLIC_CAL_LINK, lead);
   return [
-    `Hola, ${lead.name.split(" ")[0] || lead.name}. Soy Pol, de Doscientos.`,
+    `Hola, ${lead.name.split(" ")[0] || lead.name}. Soy ${senderName || "el equipo"}, de Doscientos.`,
     "He intentado llamarte porque rellenaste un formulario en uno de nuestros anuncios de Meta.",
     "Me gustaría entender qué necesitas y ver si podemos ayudarte.",
     bookingUrl
@@ -73,6 +76,7 @@ function WhatsAppFollowUp({
   leadName,
   leadEmail,
   leadPhone,
+  senderName,
   open,
   onOpenChange,
 }: {
@@ -80,11 +84,12 @@ function WhatsAppFollowUp({
   leadName: string;
   leadEmail: string | null;
   leadPhone: string | null;
+  senderName: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const [message, setMessage] = useState(() =>
-    whatsappMessage({ id: leadId, name: leadName, email: leadEmail }),
+    whatsappMessage({ id: leadId, name: leadName, email: leadEmail }, senderName),
   );
   if (!leadPhone) return null;
   const href = `https://wa.me/${whatsappPhone(leadPhone)}?text=${encodeURIComponent(message)}`;
@@ -531,6 +536,7 @@ export function QCallDialog({
   leadName,
   leadPhone,
   leadEmail,
+  senderName,
   aiEnabled,
   openInitially = false,
 }: {
@@ -538,6 +544,7 @@ export function QCallDialog({
   leadName: string;
   leadPhone: string | null;
   leadEmail: string | null;
+  senderName: string;
   aiEnabled?: boolean;
   openInitially?: boolean;
 }) {
@@ -755,6 +762,7 @@ export function QCallDialog({
         leadName={leadName}
         leadEmail={leadEmail}
         leadPhone={leadPhone}
+        senderName={senderName}
         open={whatsappOpen}
         onOpenChange={setWhatsappOpen}
       />

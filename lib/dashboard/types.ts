@@ -106,9 +106,11 @@ export type WeekStats = {
 export type MyTaskRow = {
   id: string;
   title: string;
+  kind: "task" | "reminder";
   status: TaskStatus;
   priority: TaskPriority;
   due_date: string | null;
+  action_at: string | null;
   contextLabel: string | null; // project or lead name the task belongs to
 };
 

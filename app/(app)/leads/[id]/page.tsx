@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { RemindersSection } from "@/app/(app)/inicio/_components/reminders-section";
 import { createTask } from "@/app/(app)/tasks/actions";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
@@ -105,6 +104,26 @@ export default async function LeadDetailPage({
   const googleEnabled = isGoogleEnabled();
   const canEdit = user.role !== "viewer";
   const members = canEdit ? await listActiveMembers() : [];
+  const nextActions = [
+    ...tasks.map((task) => ({
+      id: task.id as string,
+      title: task.title as string,
+      kind: "task" as const,
+      when: (task.due_date as string | null) ?? null,
+      status: task.status as TaskStatus,
+    })),
+    ...reminders.map((reminder) => ({
+      id: reminder.id as string,
+      title: reminder.title as string,
+      kind: "reminder" as const,
+      when: reminder.remind_at,
+      status: "todo" as TaskStatus,
+    })),
+  ].sort((a, b) => {
+    if (!a.when) return 1;
+    if (!b.when) return -1;
+    return new Date(a.when).getTime() - new Date(b.when).getTime();
+  });
 
   const supabase = await createServerClient();
   const [{ data: attachments }, { data: activeProjects }, { data: rawMeetMembers }] =
@@ -264,6 +283,7 @@ export default async function LeadDetailPage({
                       leadName={displayName}
                       leadEmail={(lead.email as string | null) ?? null}
                       firstContactedAt={(lead.first_contacted_at as string | null) ?? null}
+                      senderName={user.name}
                     />
                   </DetailRow>
                 )}
@@ -549,6 +569,7 @@ export default async function LeadDetailPage({
                 leadName={lead.name as string}
                 leadEmail={(lead.email as string | null) ?? null}
                 leadPhone={(lead.phone as string | null) ?? null}
+                senderName={user.name}
                 openCallInitially={query?.feedback === "call"}
                 claimable={canEdit && !lead.assigned_to}
                 aiEnabled={aiEnabled}
@@ -561,20 +582,10 @@ export default async function LeadDetailPage({
             </CardContent>
           </Card>
 
-          {reminders.length > 0 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>Próximos avisos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <RemindersSection reminders={reminders} />
-              </CardContent>
-            </Card>
-          ) : null}
-          {canEdit || tasks.length > 0 ? (
+          {canEdit || nextActions.length > 0 ? (
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Tareas</CardTitle>
+                <CardTitle>Qué hacer ahora</CardTitle>
                 {canEdit ? (
                   <TaskCreateDialog
                     leadId={id}
@@ -585,28 +596,46 @@ export default async function LeadDetailPage({
                 ) : null}
               </CardHeader>
               <CardContent className="px-0">
-                {tasks.length > 0 ? (
+                {nextActions.length > 0 ? (
                   <ul className="divide-y divide-border">
-                    {tasks.map((task) => (
-                      <li
-                        key={task.id}
-                        className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm"
-                      >
-                        <Link
-                          href={`/tasks/${task.id}`}
-                          className="truncate font-medium hover:underline"
+                    {nextActions.map((action) => {
+                      const overdue = action.when ? new Date(action.when) < new Date() : false;
+                      return (
+                        <li
+                          key={`${action.kind}-${action.id}`}
+                          className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm"
                         >
-                          {task.title}
-                        </Link>
-                        <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
-                          <StatusBadge meta={TASK_STATUS} value={task.status as TaskStatus} />
-                          {task.due_date ? <span>{formatDate(task.due_date)}</span> : null}
-                        </div>
-                      </li>
-                    ))}
+                          <Link
+                            href={`/tasks/${action.id}`}
+                            className="min-w-0 truncate font-medium hover:underline"
+                          >
+                            <span className="mr-2 text-xs text-muted-foreground">
+                              {action.kind === "reminder" ? "Aviso" : "Tarea"}
+                            </span>
+                            {action.title}
+                          </Link>
+                          <div className="flex shrink-0 items-center gap-3 text-xs">
+                            {action.kind === "task" ? (
+                              <StatusBadge meta={TASK_STATUS} value={action.status} />
+                            ) : null}
+                            {action.when ? (
+                              <span
+                                className={
+                                  overdue ? "font-medium text-destructive" : "text-muted-foreground"
+                                }
+                              >
+                                {relativeTime(action.when)}
+                              </span>
+                            ) : null}
+                          </div>
+                        </li>
+                      );
+                    })}
                   </ul>
                 ) : (
-                  <p className="px-6 py-2 text-sm text-muted-foreground">Sin tareas.</p>
+                  <p className="px-6 py-2 text-sm text-muted-foreground">
+                    Sin acciones pendientes.
+                  </p>
                 )}
               </CardContent>
             </Card>

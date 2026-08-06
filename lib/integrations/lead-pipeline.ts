@@ -1,8 +1,72 @@
 import { scopedLogger } from "@/lib/logger";
+import { dispatchNotifications } from "@/lib/notifications/dispatch";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { type LeadIntake, parseEmployeeFloor, urgencyWeight } from "./lead-intake";
 
 const log = scopedLogger("lead-pipeline");
+const FIRST_TOUCH_MARKER = "AUTO_LEAD_FIRST_TOUCH";
+
+function firstTouchDelayMinutes(input: LeadIntake, score: number): number {
+  const urgency = input.urgency?.toLowerCase();
+  if (urgency === "inmediata" || urgency === "urgent" || urgency === "asap") return 5;
+  if (score >= 70) return 10;
+  if (score >= 45) return 20;
+  return 60;
+}
+
+async function createFirstTouchReminder(
+  supabase: ReturnType<typeof createAdminClient>,
+  leadId: string,
+  input: LeadIntake,
+  assignedTo: string,
+  score: number,
+): Promise<void> {
+  const { data: existing } = await supabase
+    .from("tasks")
+    .select("id")
+    .eq("lead_id", leadId)
+    .eq("kind", "reminder")
+    .eq("description", FIRST_TOUCH_MARKER)
+    .maybeSingle();
+  if (existing) return;
+
+  const delayMinutes = firstTouchDelayMinutes(input, score);
+  const startAt = new Date(Date.now() + delayMinutes * 60_000).toISOString();
+  const { data: task, error } = await supabase
+    .from("tasks")
+    .insert({
+      kind: "reminder",
+      title: `Primer contacto · ${input.name}`,
+      description: FIRST_TOUCH_MARKER,
+      start_at: startAt,
+      lead_id: leadId,
+      created_by: assignedTo,
+      assignee_id: assignedTo,
+      status: "todo",
+      priority: score >= 70 ? "high" : "medium",
+    })
+    .select("id")
+    .maybeSingle();
+
+  if (error || !task) {
+    log.error({ err: error, leadId }, "first touch reminder creation failed");
+    return;
+  }
+
+  await dispatchNotifications({
+    recipientIds: [assignedTo],
+    eventType: "lead_assigned",
+    entityType: "lead",
+    entityId: leadId,
+    body: `Nuevo lead asignado. Primer contacto recomendado en ${delayMinutes} min.`,
+    link: `/leads/${leadId}`,
+    data: {
+      taskId: task.id as string,
+      score: String(score),
+      firstTouchInMinutes: String(delayMinutes),
+    },
+  });
+}
 
 // ── Scoring ───────────────────────────────────────────────────────────────
 
@@ -107,7 +171,7 @@ async function pickRoundRobinAssignee(
  * Steps:
  *   1. Compute rule-based score (0–100).
  *   2. Pick round-robin assignee (fewest leads in last 30 days).
- *   3. Persist both on the lead row.
+ *   3. Create a durable first-touch reminder for the assignee.
  *
  * Errors are logged and never propagate — callers should invoke
  * with `.catch(() => {})` so lead creation is never blocked.
@@ -127,6 +191,7 @@ export async function runLeadPipeline(leadId: string, input: LeadIntake): Promis
     if (error) {
       log.error({ err: error, leadId }, "pipeline update failed");
     } else {
+      if (assignedTo) await createFirstTouchReminder(supabase, leadId, input, assignedTo, score);
       log.info({ leadId, score, assigned: Boolean(assignedTo) }, "lead pipeline applied");
     }
   } catch (e) {
