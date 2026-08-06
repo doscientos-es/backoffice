@@ -1,10 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { createTask } from "@/app/(app)/tasks/actions";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
-import { type AttachmentItem, AttachmentSection } from "@/components/ui/attachment-section";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CopySummaryButton } from "@/components/ui/copy-summary-button";
@@ -13,24 +10,25 @@ import { MemberLabel } from "@/components/ui/member-avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { isAIEnabled } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
-import { CONVERSION_EVENT_LABEL, CONVERSION_STEP_LABEL } from "@/lib/conversion-events/labels";
-import { listLeadConversionEvents } from "@/lib/conversion-events/queries";
-import { listLeadDiagnostics } from "@/lib/diagnostics/queries";
-import { isGoogleEnabled } from "@/lib/env";
+import { CONVERSION_STEP_LABEL } from "@/lib/conversion-events/labels";
 import { getLeadDetail } from "@/lib/leads/queries";
 import { leadDisplayName } from "@/lib/leads/utils";
 import { listActiveMembers } from "@/lib/members/queries";
 import { LEAD_STATUS, TASK_STATUS, type TaskStatus } from "@/lib/status";
-import { createServerClient } from "@/lib/supabase/server";
-import { formatDate, formatDateTime, formatEUR, relativeTime } from "@/lib/utils";
+import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
 import { TaskCreateDialog } from "../../tasks/task-create-dialog";
 import { CallInteractionDetails } from "./call-interaction-details";
 import { LeadAiPanel } from "./lead-ai-panel";
 import { LeadCommercial } from "./lead-commercial";
+import {
+  LeadAttachmentsSection,
+  LeadConversionJourneySection,
+  LeadDiagnosticsSection,
+  LeadQuickActionsSection,
+} from "./lead-detail-async-sections";
 import { LeadEditDialog } from "./lead-edit-dialog";
 import { MomTestChecklist } from "./mom-test-checklist";
 import { PhoneQuickActions } from "./phone-actions";
-import { LeadQuickActions } from "./quick-actions";
 import { LeadStatusSelect } from "./status-select";
 
 export const dynamic = "force-dynamic";
@@ -92,18 +90,10 @@ export default async function LeadDetailPage({
   if (!result) notFound();
   const { lead, interactions, linkedClientId, proposals, projects, invoices, tasks, reminders } =
     result;
-  const [conversionEvents, diagnostics] = await Promise.all([
-    listLeadConversionEvents({
-      id: lead.id,
-      event_id: lead.event_id,
-    }).catch(() => []),
-    listLeadDiagnostics(lead.id as string),
-  ]);
 
   const aiEnabled = isAIEnabled();
-  const googleEnabled = isGoogleEnabled();
   const canEdit = user.role !== "viewer";
-  const members = canEdit ? await listActiveMembers() : [];
+  const members = canEdit ? await listActiveMembers().catch(() => []) : [];
   const nextActions = [
     ...tasks.map((task) => ({
       id: task.id as string,
@@ -124,42 +114,6 @@ export default async function LeadDetailPage({
     if (!b.when) return -1;
     return new Date(a.when).getTime() - new Date(b.when).getTime();
   });
-
-  const supabase = await createServerClient();
-  const [{ data: attachments }, { data: activeProjects }, { data: rawMeetMembers }] =
-    await Promise.all([
-      supabase
-        .from("attachments")
-        .select("id, name, mime_type, size_bytes, created_at, source, drive_file_id, web_view_link")
-        .eq("lead_id", id)
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false }),
-      googleEnabled
-        ? supabase
-            .from("projects")
-            .select("id, name")
-            .is("deleted_at", null)
-            .in("status", ["planned", "active", "on_hold"])
-            .order("name")
-        : Promise.resolve({
-            data: [] as Array<{ id: string; name: string }> | null,
-          }),
-      googleEnabled
-        ? supabase
-            .from("team_members")
-            .select("id, name, email")
-            .is("deleted_at", null)
-            .order("name")
-        : Promise.resolve({
-            data: [] as Array<{ id: string; name: string; email: string }> | null,
-          }),
-    ]);
-
-  const meetMembers = (rawMeetMembers ?? []).map((m) => ({
-    id: m.id as string,
-    name: (m.name as string) ?? "",
-    email: (m.email as string) ?? "",
-  }));
 
   const canConvert =
     !linkedClientId &&
@@ -386,95 +340,13 @@ export default async function LeadDetailPage({
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Journey de conversión</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {conversionEvents.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Sin eventos de landing vinculados a este lead.
-                </p>
-              ) : (
-                <ol className="divide-y divide-border">
-                  {conversionEvents.map((event) => (
-                    <li key={event.id} className="grid gap-2 py-3 sm:grid-cols-[160px_1fr]">
-                      <div className="text-xs text-muted-foreground">
-                        {formatDateTime(event.created_at)}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge
-                            variant={event.event_name.includes("whatsapp") ? "success" : "neutral"}
-                          >
-                            {CONVERSION_EVENT_LABEL[event.event_name] ?? event.event_name}
-                          </Badge>
-                          {event.conversion_step && (
-                            <span className="text-xs text-muted-foreground">
-                              {CONVERSION_STEP_LABEL[event.conversion_step] ??
-                                event.conversion_step}
-                            </span>
-                          )}
-                        </div>
-                        <p className="mt-1 truncate text-sm">
-                          {event.landing_path ?? event.referrer ?? "Evento sin página"}
-                        </p>
-                        <p className="mt-0.5 text-xs text-muted-foreground">
-                          {[event.utm_source, event.utm_medium, event.utm_campaign]
-                            .filter(Boolean)
-                            .join(" · ") ||
-                            event.landing_ref ||
-                            "Sin UTM/ref"}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </CardContent>
-          </Card>
+          <SectionBoundary label="No se pudo cargar el journey de conversión">
+            <LeadConversionJourneySection leadId={lead.id} eventId={lead.event_id} />
+          </SectionBoundary>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Diagnósticos personalizados</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {diagnostics.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Todavía no hay un diagnóstico completado.
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {diagnostics.map((diagnostic) => (
-                    <div key={diagnostic.id} className="rounded-lg border border-border p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="text-sm font-medium">
-                          {diagnostic.company || diagnostic.email}
-                        </p>
-                        <Badge variant={diagnostic.report_opened_at ? "success" : "neutral"}>
-                          {diagnostic.report_opened_at
-                            ? "Informe abierto"
-                            : diagnostic.report_sent_at
-                              ? "Informe enviado"
-                              : "Completado"}
-                        </Badge>
-                      </div>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        {diagnostic.metrics.monthlyHours ?? "—"} h/mes ·{" "}
-                        {diagnostic.metrics.yearlyHours ?? "—"} h/año ·{" "}
-                        {diagnostic.metrics.risk ?? "—"}
-                      </p>
-                      {diagnostic.metrics.primaryOpportunity ? (
-                        <p className="mt-2 text-xs text-muted-foreground">
-                          {diagnostic.metrics.primaryOpportunity}
-                        </p>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <SectionBoundary label="No se pudieron cargar los diagnósticos personalizados">
+            <LeadDiagnosticsSection leadId={lead.id} />
+          </SectionBoundary>
 
           <SectionBoundary label="No se pudo cargar el análisis IA">
             <Card>
@@ -549,38 +421,29 @@ export default async function LeadDetailPage({
               )}
             </CardContent>
           </Card>
-          <AttachmentSection
-            entityType="lead"
-            entityId={lead.id as string}
-            attachments={(attachments ?? []) as AttachmentItem[]}
-            canEdit={canEdit}
-          />
+          <SectionBoundary label="No se pudieron cargar los adjuntos">
+            <LeadAttachmentsSection leadId={lead.id} canEdit={canEdit} />
+          </SectionBoundary>
         </div>
 
         {/* Sidebar */}
         <div className="flex min-w-0 flex-col gap-6">
-          <Card className="lg:sticky lg:top-6">
-            <CardHeader>
-              <CardTitle>Acciones rápidas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <LeadQuickActions
-                leadId={lead.id as string}
-                leadName={lead.name as string}
-                leadEmail={(lead.email as string | null) ?? null}
-                leadPhone={(lead.phone as string | null) ?? null}
-                senderName={user.name}
-                openCallInitially={query?.feedback === "call"}
-                claimable={canEdit && !lead.assigned_to}
-                aiEnabled={aiEnabled}
-                googleEnabled={googleEnabled}
-                projects={(activeProjects ?? []) as Array<{ id: string; name: string }>}
-                meetMembers={meetMembers}
-                scheduleMembers={members}
-                createTaskAction={createTask}
-              />
-            </CardContent>
-          </Card>
+          <SectionBoundary label="No se pudieron cargar las acciones rápidas">
+            <LeadQuickActionsSection
+              lead={{
+                id: lead.id,
+                name: lead.name,
+                email: lead.email,
+                phone: lead.phone,
+                assigned_to: lead.assigned_to,
+              }}
+              senderName={user.name}
+              canEdit={canEdit}
+              openCallInitially={query?.feedback === "call"}
+              aiEnabled={aiEnabled}
+              scheduleMembers={members}
+            />
+          </SectionBoundary>
 
           {canEdit || nextActions.length > 0 ? (
             <Card>
