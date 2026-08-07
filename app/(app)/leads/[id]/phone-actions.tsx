@@ -136,17 +136,18 @@ export function LeadWhatsAppButton({
     email: leadEmail,
   });
   const firstName = leadName.split(" ")[0] || leadName;
+  const initialMessage = [
+    `Hola, ${firstName}. Soy ${senderName || "el equipo"}, de Doscientos.`,
+    "He intentado llamarte porque rellenaste un formulario en uno de nuestros anuncios de Meta.",
+    "Me gustaría entender qué necesitas y ver si podemos ayudarte.",
+    bookingUrl
+      ? `Puedes contarme brevemente por aquí o, si lo prefieres, agendar una reunión: ${bookingUrl}`
+      : "Puedes contarme brevemente por aquí y te respondo en cuanto pueda.",
+    "¿Qué te resulta más cómodo?",
+  ].join("\n\n");
   const message = firstContactedAt
     ? `Hola, ${firstName}. Soy ${senderName || "el equipo"}, de Doscientos.`
-    : [
-      `Hola, ${firstName}. Soy ${senderName || "el equipo"}, de Doscientos.`,
-      "He intentado llamarte porque rellenaste un formulario en uno de nuestros anuncios de Meta.",
-      "Me gustaría entender qué necesitas y ver si podemos ayudarte.",
-      bookingUrl
-        ? `Puedes contarme brevemente por aquí o, si lo prefieres, agendar una reunión: ${bookingUrl}`
-        : "Puedes contarme brevemente por aquí y te respondo en cuanto pueda.",
-      "¿Qué te resulta más cómodo?",
-    ].join("\n\n");
+    : initialMessage;
   const digits = phone.replace(/\D/g, "");
   const whatsappNumber = digits.length === 9 ? `34${digits}` : digits;
   const href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
