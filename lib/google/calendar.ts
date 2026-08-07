@@ -201,6 +201,9 @@ export async function insertEvent(input: InsertEventInput): Promise<InsertedEven
     id: string;
     htmlLink?: string;
     hangoutLink?: string;
+    conferenceData?: {
+      entryPoints?: Array<{ entryPointType?: string; uri?: string }>;
+    };
   }>(input.subject, [GOOGLE_SCOPES.calendar], url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -210,7 +213,11 @@ export async function insertEvent(input: InsertEventInput): Promise<InsertedEven
   return {
     id: data.id,
     htmlLink: data.htmlLink ?? null,
-    meetUrl: data.hangoutLink ?? null,
+    meetUrl:
+      data.hangoutLink ??
+      data.conferenceData?.entryPoints?.find((entryPoint) => entryPoint.entryPointType === "video")
+        ?.uri ??
+      null,
   };
 }
 

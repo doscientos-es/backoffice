@@ -16,7 +16,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── shared DB state ───────────────────────────────────────────────────────────
 
-const { db, authUser } = vi.hoisted(() => ({
+const { db, authUser, googleCalendar } = vi.hoisted(() => ({
   db: {
     insertedRows: [] as Record<string, unknown>[],
     updatedRows: [] as Record<string, unknown>[],
@@ -35,6 +35,10 @@ const { db, authUser } = vi.hoisted(() => ({
     jobTitle: null,
     phone: null,
     contactEmail: null,
+  },
+  googleCalendar: {
+    findConflicts: vi.fn(),
+    insertEvent: vi.fn(),
   },
 }));
 
@@ -150,6 +154,13 @@ vi.mock("@/lib/supabase/admin", () => ({
 vi.mock("@/lib/logger", () => ({
   scopedLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),
 }));
+vi.mock("@/lib/env", () => ({
+  isGoogleEnabled: () => true,
+  publicEnv: { NEXT_PUBLIC_APP_URL: "https://app.example.com" },
+  serverEnv: () => ({ GOOGLE_CALENDAR_ID: "team-calendar" }),
+}));
+vi.mock("@/lib/google/calendar", () => googleCalendar);
+vi.mock("@/lib/google/client", () => ({ resolveSubject: () => "pol@doscientos.es" }));
 
 // ── SUT ───────────────────────────────────────────────────────────────────────
 
@@ -158,6 +169,7 @@ import {
   createLead,
   deleteLead,
   logLeadCall,
+  scheduleLeadMeeting,
   updateLead,
   updateLeadStatus,
 } from "@/app/(app)/leads/actions";
@@ -180,6 +192,11 @@ beforeEach(() => {
   db.queryError = null;
   db.leadStatus = "new";
   authUser.role = "admin";
+  googleCalendar.insertEvent.mockResolvedValue({
+    id: "calendar-event-1",
+    htmlLink: "https://calendar.google.com/event-1",
+    meetUrl: "https://meet.google.com/abc-defg-hij",
+  });
 });
 
 describe("createLead", () => {
@@ -300,5 +317,23 @@ describe("logLeadCall", () => {
         outcome: "connected",
       },
     });
+  });
+});
+
+describe("scheduleLeadMeeting", () => {
+  it("adds the member who schedules it as an attendee", async () => {
+    const result = await scheduleLeadMeeting({
+      leadId: "00000000-0000-0000-0000-000000000001",
+      title: "Reunión con Acme",
+      start: "2026-08-10T10:00:00.000Z",
+      end: "2026-08-10T11:00:00.000Z",
+      attendeeEmails: ["lead@example.com"],
+      withMeet: true,
+    });
+
+    expect(result).toMatchObject({ ok: true, meetUrl: "https://meet.google.com/abc-defg-hij" });
+    expect(googleCalendar.insertEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ attendees: ["lead@example.com", "pol@doscientos.es"] }),
+    );
   });
 });

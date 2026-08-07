@@ -1,9 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { after } from "next/server";
-import { z } from "zod";
 import { defineAction } from "@/lib/actions/define-action";
 import { sendEmail } from "@/lib/email/resend";
 import { buildSignatureHtml } from "@/lib/email/signature";
@@ -35,6 +31,10 @@ import {
 } from "@/lib/schemas/lead";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { after } from "next/server";
+import { z } from "zod";
 
 const log = scopedLogger("leads.actions");
 
@@ -424,17 +424,17 @@ export const sendEmailToLead = defineAction({
     const renderedHtml = markdownToHtml(renderedMarkdown);
     const finalHtml = data.includeSignature
       ? appendSignature(
-          renderedHtml,
-          buildSignatureHtml(
-            {
-              name: user.name,
-              jobTitle: user.jobTitle ?? undefined,
-              phone: user.phone ?? undefined,
-              contactEmail: user.contactEmail ?? user.emailAlias ?? undefined,
-            },
-            publicEnv.NEXT_PUBLIC_APP_URL || "https://app.doscientos.es",
-          ),
-        )
+        renderedHtml,
+        buildSignatureHtml(
+          {
+            name: user.name,
+            jobTitle: user.jobTitle ?? undefined,
+            phone: user.phone ?? undefined,
+            contactEmail: user.contactEmail ?? user.emailAlias ?? undefined,
+          },
+          publicEnv.NEXT_PUBLIC_APP_URL || "https://app.doscientos.es",
+        ),
+      )
       : renderedHtml;
 
     const renderedSubject = renderTemplate(data.subject, {
@@ -623,10 +623,10 @@ export const notifyDueCallReminders = defineAction({
         link: `/leads/${task.lead_id as string}?feedback=call`,
         actions: (task.leads as { phone?: string | null } | null)?.phone
           ? [
-              { action: "call", title: "Llamar" },
-              { action: "whatsapp", title: "WhatsApp" },
-              { action: "feedback", title: "Registrar" },
-            ]
+            { action: "call", title: "Llamar" },
+            { action: "whatsapp", title: "WhatsApp" },
+            { action: "feedback", title: "Registrar" },
+          ]
           : [{ action: "feedback", title: "Registrar" }],
         data: {
           leadId: task.lead_id as string,
@@ -817,10 +817,10 @@ export const assignLeadOwner = defineAction({
         link: `/leads/${data.leadId}`,
         actions: (current?.phone as string | null)
           ? [
-              { action: "call", title: "Llamar" },
-              { action: "whatsapp", title: "WhatsApp" },
-              { action: "feedback", title: "Registrar" },
-            ]
+            { action: "call", title: "Llamar" },
+            { action: "whatsapp", title: "WhatsApp" },
+            { action: "feedback", title: "Registrar" },
+          ]
           : [{ action: "feedback", title: "Registrar" }],
         data: {
           callUrl: current?.phone
@@ -879,6 +879,7 @@ export const scheduleLeadMeeting = defineAction<
     const calendarId = serverEnv().GOOGLE_CALENDAR_ID;
     if (!calendarId) throw new Error("GOOGLE_CALENDAR_ID no configurado");
     const subject = resolveSubject(user.email);
+    const attendeeEmails = [...new Set([...(data.attendeeEmails ?? []), user.email])];
 
     const event = await insertEvent({
       subject,
@@ -887,7 +888,7 @@ export const scheduleLeadMeeting = defineAction<
       description: data.description,
       start: new Date(data.start),
       end: new Date(data.end),
-      attendees: data.attendeeEmails,
+      attendees: attendeeEmails,
       withMeet: data.withMeet,
     });
 
@@ -905,7 +906,7 @@ export const scheduleLeadMeeting = defineAction<
         meet_url: event.meetUrl,
         start: data.start,
         end: data.end,
-        attendees: data.attendeeEmails ?? [],
+        attendees: attendeeEmails,
       },
     });
     if (error) throw new Error(error.message);
