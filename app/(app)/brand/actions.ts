@@ -45,6 +45,19 @@ const TokenInput = z.object({
   sort_order: z.number().int().min(0).max(9999).optional(),
 });
 
+const GuideInput = z.object({
+  id: z.string().uuid().optional(),
+  slug: z
+    .string()
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+    .max(80),
+  title: z.string().min(1).max(120),
+  description: z.string().max(300).optional(),
+  content: z.string().min(1).max(12000),
+  status: z.enum(["draft", "published", "archived"]),
+  sort_order: z.number().int().min(0).max(9999),
+});
+
 export const upsertToken = defineAction({
   name: "brand.tokens.upsert",
   schema: TokenInput,
@@ -80,6 +93,46 @@ export const deleteToken = defineAction({
   handler: async (input) => {
     const supabase = await createServerClient();
     const { error } = await supabase.from("brand_tokens").delete().eq("id", input.id);
+    if (error) throw new Error(error.message);
+  },
+});
+
+// ---- Editorial guides ----
+
+export const upsertGuide = defineAction({
+  name: "brand.guides.upsert",
+  schema: GuideInput,
+  roles: ["owner", "admin"],
+  revalidate: () => ["/brand"],
+  handler: async (input) => {
+    const supabase = await createServerClient();
+    const now = new Date().toISOString();
+    const payload = {
+      slug: input.slug,
+      title: input.title,
+      description: input.description ?? null,
+      content: input.content,
+      status: input.status,
+      sort_order: input.sort_order,
+      published_at: input.status === "published" ? now : null,
+      updated_at: now,
+    };
+    const query = input.id
+      ? supabase.from("brand_guides").update(payload).eq("id", input.id)
+      : supabase.from("brand_guides").insert(payload);
+    const { error } = await query;
+    if (error) throw new Error(error.message);
+  },
+});
+
+export const deleteGuide = defineAction({
+  name: "brand.guides.delete",
+  schema: z.object({ id: z.string().uuid() }),
+  roles: ["owner", "admin"],
+  revalidate: () => ["/brand"],
+  handler: async ({ id }) => {
+    const supabase = await createServerClient();
+    const { error } = await supabase.from("brand_guides").delete().eq("id", id);
     if (error) throw new Error(error.message);
   },
 });

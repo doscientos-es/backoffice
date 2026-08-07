@@ -98,6 +98,13 @@ export const CALL_OUTCOMES = [
 ] as const;
 export type CallOutcome = (typeof CALL_OUTCOMES)[number];
 
+const CALL_OUTCOMES_WITHOUT_DETAILS = new Set<CallOutcome>([
+  "voicemail",
+  "no_answer",
+  "busy",
+  "wrong_number",
+]);
+
 export const StartLeadCallInput = z.object({
   leadId: z.string().uuid(),
 });
@@ -110,10 +117,16 @@ export const LogCallInput = z
     durationMinutes: z.coerce.number().int().min(0).max(600).optional(),
     outcome: z.enum(CALL_OUTCOMES).optional(),
   })
-  .refine((v) => (v.notes?.trim().length ?? 0) > 0 || (v.transcript?.trim().length ?? 0) > 0, {
-    message: "Añade unas notas o la transcripción de la llamada",
-    path: ["notes"],
-  });
+  .refine(
+    (v) =>
+      (v.outcome !== undefined && CALL_OUTCOMES_WITHOUT_DETAILS.has(v.outcome)) ||
+      (v.notes?.trim().length ?? 0) > 0 ||
+      (v.transcript?.trim().length ?? 0) > 0,
+    {
+      message: "Añade unas notas o la transcripción de la llamada",
+      path: ["notes"],
+    },
+  );
 
 export type LogCallInputType = z.infer<typeof LogCallInput>;
 

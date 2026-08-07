@@ -4,25 +4,28 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { AssetsGrid, type BrandAsset } from "./assets-grid";
 import { BrandExport } from "./brand-export";
+import { type BrandGuide, GuidesPanel } from "./guides-panel";
 import type { BrandToken } from "./token-edit-dialog";
 import { TokensPanel } from "./tokens-panel";
 
-type Tab = "assets" | "tokens" | "export";
+type Tab = "assets" | "tokens" | "guides" | "export";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "assets", label: "Assets" },
   { id: "tokens", label: "Tokens" },
+  { id: "guides", label: "Guías" },
   { id: "export", label: "Exportar" },
 ];
 
 interface Props {
   assets: BrandAsset[];
   tokens: BrandToken[];
+  guides: BrandGuide[];
   isAdmin: boolean;
   className?: string;
 }
 
-export function BrandHub({ assets, tokens, isAdmin, className }: Props) {
+export function BrandHub({ assets, tokens, guides, isAdmin, className }: Props) {
   const [active, setActive] = useState<Tab>("assets");
 
   return (
@@ -57,6 +60,7 @@ export function BrandHub({ assets, tokens, isAdmin, className }: Props) {
             <AssetsGrid assets={assets} isAdmin={isAdmin} />
           ))}
         {active === "tokens" && <TokensPanel tokens={tokens} isAdmin={isAdmin} />}
+        {active === "guides" && <GuidesPanel guides={guides} isAdmin={isAdmin} />}
         {active === "export" && <BrandExport tokens={tokens} assets={assets} />}
       </div>
     </div>

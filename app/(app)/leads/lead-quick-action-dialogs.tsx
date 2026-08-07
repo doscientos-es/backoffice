@@ -4,18 +4,6 @@
 // Única fuente de verdad para las 3 fast actions (llamada, email, nota)
 // con opción de agendar follow-up. Todas refrescan el router tras éxito.
 
-import {
-  FileText,
-  Loader2,
-  Mail,
-  MessageCircle,
-  NotebookPen,
-  Phone,
-  Send,
-  Video,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
-import { type SubmitEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -40,6 +28,18 @@ import { buildBookingUrl } from "@/lib/recovery/utils";
 import { defaultFollowUpDateTime } from "@/lib/reminders/date-presets";
 import type { CallOutcome } from "@/lib/schemas/lead";
 import { addMinutesToDatetimeLocal, datetimeLocalToIso } from "@/lib/utils/date-time";
+import {
+  FileText,
+  Loader2,
+  Mail,
+  MessageCircle,
+  NotebookPen,
+  Phone,
+  Send,
+  Video,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { type SubmitEvent, useEffect, useState } from "react";
 import { createReminder } from "../reminders/actions";
 import { EmailComposer } from "./[id]/email-composer";
 import { logLeadCall, logLeadEmail, logLeadNote, scheduleLeadMeeting } from "./actions";
@@ -596,7 +596,7 @@ export function QCallDialog({
     feedback.setPending();
     const res = await logLeadCall({
       leadId,
-      notes: notes || (outcome === "no_answer" ? "No contesta." : undefined),
+      notes: notes || undefined,
       transcript: transcript || undefined,
       durationMinutes: duration ? Number(duration) : undefined,
       outcome,
@@ -647,9 +647,7 @@ export function QCallDialog({
                   onChange={(e) => setOutcome(e.target.value as CallOutcome)}
                 >
                   <option value="connected">Contactado</option>
-                  <option value="voicemail">Buzón de voz</option>
                   <option value="no_answer">Sin respuesta</option>
-                  <option value="busy">Comunicando</option>
                   <option value="wrong_number">Número erróneo</option>
                 </Select>
               </div>
@@ -672,7 +670,10 @@ export function QCallDialog({
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
                 <Label htmlFor={`qa-call-notes-${leadId}`} className="text-xs font-medium">
-                  Notas <span className="text-muted-foreground/60">(o transcripción)</span>
+                  Notas{" "}
+                  <span className="text-muted-foreground/60">
+                    (o transcripción; opcionales si no hubo contacto)
+                  </span>
                 </Label>
                 <button
                   type="button"

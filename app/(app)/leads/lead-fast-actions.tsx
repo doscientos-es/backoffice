@@ -1,8 +1,5 @@
 "use client";
 
-import { Brain, Mail, MessageCircle, Phone, Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { type ReactNode, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,6 +21,9 @@ import type { LeadInteraction, LeadListItem } from "@/lib/leads/types";
 import { buildBookingUrl } from "@/lib/recovery/utils";
 import type { CallOutcome } from "@/lib/schemas/lead";
 import { relativeTime } from "@/lib/utils";
+import { Brain, Mail, MessageCircle, Phone, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { type ReactNode, useState } from "react";
 import { logLeadCall, logLeadEmail } from "./actions";
 import { CallDigestDialog } from "./call-digest-dialog";
 
@@ -232,7 +232,7 @@ function CallDialog({
     feedback.setPending();
     const res = await logLeadCall({
       leadId,
-      notes: notes || (outcome === "no_answer" ? "No contesta." : undefined),
+      notes: notes || undefined,
       durationMinutes: duration ? Number(duration) : undefined,
       outcome,
     });
@@ -272,9 +272,7 @@ function CallDialog({
                 onChange={(e) => setOutcome(e.target.value as CallOutcome)}
               >
                 <option value="connected">Contactado</option>
-                <option value="voicemail">Buzón de voz</option>
                 <option value="no_answer">Sin respuesta</option>
-                <option value="busy">Comunicando</option>
                 <option value="wrong_number">Número erróneo</option>
               </Select>
             </div>
@@ -296,7 +294,8 @@ function CallDialog({
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor={`fast-call-notes-${leadId}`} className="text-xs font-medium">
-              Notas
+              Notas{" "}
+              <span className="text-muted-foreground/60">(opcionales si no hubo contacto)</span>
             </Label>
             <Textarea
               id={`fast-call-notes-${leadId}`}

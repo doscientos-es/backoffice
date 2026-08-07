@@ -7,6 +7,7 @@ import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import type { BrandAsset } from "./_components/assets-grid";
 import { BrandHub } from "./_components/brand-hub";
+import type { BrandGuide } from "./_components/guides-panel";
 import type { BrandToken } from "./_components/token-edit-dialog";
 
 export const metadata: Metadata = { title: "Marca · doscientos" };
@@ -16,7 +17,7 @@ export default async function BrandPage() {
   const user = await requireUser();
   const supabase = await createServerClient();
 
-  const [assetsResult, tokensResult] = await Promise.all([
+  const [assetsResult, tokensResult, guidesResult] = await Promise.all([
     supabase
       .from("brand_assets")
       .select("id, name, description, category, mime_type, size_bytes, public_url, created_at")
@@ -28,6 +29,11 @@ export default async function BrandPage() {
       .select("id, token_group, key, value, value_dark, description, sort_order")
       .order("token_group")
       .order("sort_order"),
+    supabase
+      .from("brand_guides")
+      .select("id, slug, title, description, content, status, sort_order, published_at")
+      .order("sort_order")
+      .order("created_at"),
   ]);
 
   const isAdmin = user.role === "owner" || user.role === "admin";
@@ -50,14 +56,17 @@ export default async function BrandPage() {
         }
       />
 
-      {assetsResult.error || tokensResult.error ? (
+      {assetsResult.error || tokensResult.error || guidesResult.error ? (
         <p className="text-sm text-destructive">
-          {assetsResult.error?.message ?? tokensResult.error?.message}
+          {assetsResult.error?.message ??
+            tokensResult.error?.message ??
+            guidesResult.error?.message}
         </p>
       ) : (
         <BrandHub
           assets={(assetsResult.data ?? []) as BrandAsset[]}
           tokens={(tokensResult.data ?? []) as BrandToken[]}
+          guides={(guidesResult.data ?? []) as BrandGuide[]}
           isAdmin={isAdmin}
           className="flex-1 min-h-0"
         />

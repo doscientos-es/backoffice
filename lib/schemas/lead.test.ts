@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import {
   AssignLeadOwnerInput,
   CALL_OUTCOMES,
@@ -14,6 +13,7 @@ import {
   UpdateLeadMomTestInput,
   UpdateLeadStatusInput,
 } from "@/lib/schemas/lead";
+import { describe, expect, it } from "vitest";
 
 const uuid = "11111111-1111-1111-1111-111111111111";
 
@@ -117,10 +117,17 @@ describe("UpdateLeadMomTestInput", () => {
 });
 
 describe("LogCallInput", () => {
-  it("requires notes or transcript", () => {
+  it("requires notes or transcript when the call was connected", () => {
     expect(LogCallInput.safeParse({ leadId: uuid }).success).toBe(false);
     expect(LogCallInput.safeParse({ leadId: uuid, notes: "Hablamos" }).success).toBe(true);
     expect(LogCallInput.safeParse({ leadId: uuid, transcript: "..." }).success).toBe(true);
+    expect(LogCallInput.safeParse({ leadId: uuid, outcome: "connected" }).success).toBe(false);
+  });
+  it("allows unanswered outcomes without notes or transcript", () => {
+    expect(LogCallInput.safeParse({ leadId: uuid, outcome: "no_answer" }).success).toBe(true);
+    expect(LogCallInput.safeParse({ leadId: uuid, outcome: "voicemail" }).success).toBe(true);
+    expect(LogCallInput.safeParse({ leadId: uuid, outcome: "busy" }).success).toBe(true);
+    expect(LogCallInput.safeParse({ leadId: uuid, outcome: "wrong_number" }).success).toBe(true);
   });
   it("coerces duration and validates outcome", () => {
     const out = LogCallInput.parse({ leadId: uuid, notes: "x", durationMinutes: "12" });
