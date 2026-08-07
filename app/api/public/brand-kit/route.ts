@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export const dynamic = "force-dynamic";
 
 /**
- * Public, cacheable feed consumed while building the marketing site's brand portal.
+ * Public feed consumed while building the marketing site's brand portal.
  * The admin client is intentional: public callers only receive the public brand catalog.
  */
 export async function GET() {
