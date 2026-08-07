@@ -133,6 +133,20 @@ export default async function LeadDetailPage({
     lead.status !== "archived";
   const displayName = leadDisplayName(lead);
   const alias = (lead.alias as string | null)?.trim() || null;
+  const firstTouch = compactParts([
+    lead.first_landing_path,
+    lead.first_referrer,
+    lead.first_utm_source,
+    lead.first_utm_medium,
+    lead.first_utm_campaign,
+  ]);
+  const lastTouch = compactParts([
+    lead.last_landing_path,
+    lead.last_referrer,
+    lead.last_utm_source,
+    lead.last_utm_medium,
+    lead.last_utm_campaign,
+  ]);
   const briefing = formatLeadBriefingForAI({
     lead,
     clientName: linkedClientName,
@@ -290,40 +304,8 @@ export default async function LeadDetailPage({
                 {lead.landing_subject && (
                   <DetailRow label="Asunto">{lead.landing_subject}</DetailRow>
                 )}
-                {compactParts([
-                  lead.first_landing_path,
-                  lead.first_referrer,
-                  lead.first_utm_source,
-                  lead.first_utm_medium,
-                  lead.first_utm_campaign,
-                ]) && (
-                    <DetailRow label="First touch">
-                      {compactParts([
-                        lead.first_landing_path,
-                        lead.first_referrer,
-                        lead.first_utm_source,
-                        lead.first_utm_medium,
-                        lead.first_utm_campaign,
-                      ])}
-                    </DetailRow>
-                  )}
-                {compactParts([
-                  lead.last_landing_path,
-                  lead.last_referrer,
-                  lead.last_utm_source,
-                  lead.last_utm_medium,
-                  lead.last_utm_campaign,
-                ]) && (
-                    <DetailRow label="Last touch">
-                      {compactParts([
-                        lead.last_landing_path,
-                        lead.last_referrer,
-                        lead.last_utm_source,
-                        lead.last_utm_medium,
-                        lead.last_utm_campaign,
-                      ])}
-                    </DetailRow>
-                  )}
+                {firstTouch ? <DetailRow label="First touch">{firstTouch}</DetailRow> : null}
+                {lastTouch ? <DetailRow label="Last touch">{lastTouch}</DetailRow> : null}
                 {[lead.calculator_cost, lead.calculator_hours].some(hasValue) && (
                   <DetailRow label="Resultado calculadora">
                     {[lead.calculator_cost, lead.calculator_hours].filter(hasValue).join(" · ")}

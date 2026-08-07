@@ -1,12 +1,12 @@
 "use client";
 
-import { AlertCircle, CalendarClock, Check, Copy, Sparkles } from "lucide-react";
-import { useState } from "react";
 import { AiNotice } from "@/components/ui/ai-notice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { AlertCircle, CalendarClock, Check, Copy, Sparkles } from "lucide-react";
+import { useState } from "react";
 import {
   type ScheduleMember,
   ScheduleReminderDialog,
@@ -67,6 +67,13 @@ function AiSkeleton() {
   );
 }
 
+function formatAiUpdatedAt(value: string): string {
+  return new Intl.DateTimeFormat("es-ES", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
 export function LeadAiPanel({ leadId, aiEnabled, initialData, briefing, members = [] }: Props) {
   const [data, setData] = useState<LeadAiData>(initialData);
   const [loading, setLoading] = useState(false);
@@ -114,14 +121,7 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData, briefing, members 
   }
 
   const hasSummary = Boolean(data.ai_summary);
-  const updatedAt = data.ai_updated_at
-    ? new Date(data.ai_updated_at).toLocaleDateString("es-ES", {
-      day: "numeric",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-    : null;
+  const updatedAt = data.ai_updated_at ? formatAiUpdatedAt(data.ai_updated_at) : null;
 
   return (
     <div className="flex flex-col gap-4">
