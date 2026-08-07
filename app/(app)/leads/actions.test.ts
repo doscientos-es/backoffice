@@ -317,6 +317,27 @@ describe("logLeadCall", () => {
         outcome: "connected",
       },
     });
+    expect(db.updatedRows).toContainEqual(
+      expect.objectContaining({ table: "leads", status: "contacted", updated_by: "member-1" }),
+    );
+    expect(db.insertedRows).toContainEqual(
+      expect.objectContaining({
+        table: "lead_interactions",
+        type: "status_change",
+        payload: { from: "new", to: "contacted" },
+      }),
+    );
+  });
+
+  it("keeps a new lead unchanged when the call is unanswered", async () => {
+    await logLeadCall({
+      leadId: "00000000-0000-0000-0000-000000000001",
+      outcome: "no_answer",
+    });
+
+    expect(db.updatedRows.some((row) => row.table === "leads" && row.status === "contacted")).toBe(
+      false,
+    );
   });
 });
 

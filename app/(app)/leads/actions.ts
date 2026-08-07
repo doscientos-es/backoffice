@@ -665,8 +665,29 @@ export const logLeadCall = defineAction<typeof LogCallInput, { noAnswerStreak: n
     });
     if (error) throw new Error(error.message);
 
-    // A missed call is an attempt, not a real first contact.
-    if (outcome === "connected") await markFirstContacted(supabase, leadId);
+    // A missed call is an attempt, not a real first contact. A real conversation
+    // advances new leads to "contacted" without overwriting later pipeline stages.
+    if (outcome === "connected") {
+      await markFirstContacted(supabase, leadId);
+      const { data: statusUpdated, error: statusError } = await supabase
+        .from("leads")
+        .update({ status: "contacted", updated_at: new Date().toISOString(), updated_by: user.id })
+        .eq("id", leadId)
+        .eq("status", "new")
+        .select("id")
+        .maybeSingle();
+      if (statusError) throw new Error(statusError.message);
+
+      if (statusUpdated) {
+        await supabase.from("lead_interactions").insert({
+          lead_id: leadId,
+          type: "status_change",
+          subject: "Estado: new → contacted",
+          performed_by: user.id,
+          payload: { from: "new", to: "contacted" },
+        });
+      }
+    }
 
     await supabase
       .from("tasks")
