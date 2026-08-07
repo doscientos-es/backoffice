@@ -1,21 +1,5 @@
 "use client";
 
-import { PageHeader } from "@/components/layout/page-header";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { VAULT_SERVICE_LABELS, VAULT_SERVICES, type VaultService } from "@/lib/schemas/vault";
-import { cn } from "@/lib/utils";
 import {
   Check,
   ChevronDown,
@@ -39,6 +23,22 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { sileo } from "sileo";
+import { PageHeader } from "@/components/layout/page-header";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { VAULT_SERVICE_LABELS, VAULT_SERVICES, type VaultService } from "@/lib/schemas/vault";
+import { cn } from "@/lib/utils";
 import { deleteVaultItem, lockVault, revealVaultSecret } from "../actions";
 import { EnrollPasskeyForm, SetPasswordForm, UnlockForm } from "./vault-dialogs";
 import { VaultItemForm } from "./vault-item-dialog";
@@ -656,7 +656,9 @@ export function VaultClient({
       <Dialog open={dialog === "unlock"} onOpenChange={(o) => !o && setDialog(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>{shouldSetUpPasskey ? "Verifica tu identidad" : "Desbloquear bóveda"}</DialogTitle>
+            <DialogTitle>
+              {shouldSetUpPasskey ? "Verifica tu identidad" : "Desbloquear bóveda"}
+            </DialogTitle>
             <DialogDescription>
               {shouldSetUpPasskey
                 ? "Introduce la contraseña maestra para continuar con la activación de biometría."

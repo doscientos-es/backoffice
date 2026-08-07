@@ -4,7 +4,10 @@ import { describe, expect, it, vi } from "vitest";
 import { PasskeyStatusCard } from "./passkey-status-card";
 
 vi.mock("next/link", () => ({
-  default: ({ children, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { children: ReactNode }) => (
+  default: ({
+    children,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & { children: ReactNode }) => (
     <a {...props}>{children}</a>
   ),
 }));

@@ -2,6 +2,7 @@
 
 import { Eye, EyeOff, Fingerprint } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
@@ -145,21 +146,32 @@ export function UnlockForm({
           </button>
         </div>
       </Field>
-      <div className="flex items-center justify-end gap-2 border-t border-border pt-3">
-        <FormFeedback state={feedback.state} successLabel="Desbloqueada" />
-        {passkeyConfigured && (
-          <button
-            type="button"
-            disabled={feedback.pending}
-            onClick={handlePasskeyUnlock}
-            className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
+      <div className="flex flex-col gap-2 border-t border-border pt-3">
+        {feedback.state.status !== "idle" ? (
+          <FormFeedback state={feedback.state} successLabel="Desbloqueada" className="w-full" />
+        ) : null}
+        <div className={passkeyConfigured ? "grid grid-cols-2 gap-2" : "flex justify-end"}>
+          {passkeyConfigured ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              disabled={feedback.pending}
+              onClick={handlePasskeyUnlock}
+              className="w-full"
+            >
+              <Fingerprint className="size-4" /> Usar biometría
+            </Button>
+          ) : null}
+          <SubmitButton
+            size="lg"
+            className={passkeyConfigured ? "w-full" : undefined}
+            loading={feedback.pending}
+            pendingLabel="Verificando…"
           >
-            <Fingerprint className="size-4" /> Usar biometría
-          </button>
-        )}
-        <SubmitButton loading={feedback.pending} pendingLabel="Verificando…">
-          Desbloquear
-        </SubmitButton>
+            Desbloquear
+          </SubmitButton>
+        </div>
       </div>
     </form>
   );

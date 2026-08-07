@@ -1,7 +1,6 @@
 import "server-only";
 
-import { publicEnv, serverEnv } from "@/lib/env";
-import { createServerClient } from "@/lib/supabase/server";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import type {
   AuthenticationResponseJSON,
   AuthenticatorTransportFuture,
@@ -14,7 +13,8 @@ import {
   verifyRegistrationResponse,
 } from "@simplewebauthn/server";
 import { cookies } from "next/headers";
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { publicEnv, serverEnv } from "@/lib/env";
+import { createServerClient } from "@/lib/supabase/server";
 import { grantUserVerification } from "./user-verification";
 import type { UserVerificationScope } from "./user-verification-scope";
 
