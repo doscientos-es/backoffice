@@ -8,6 +8,7 @@ const db: {
   myLeads: unknown[];
   unassigned: unknown[];
 } = { tasks: [], myLeads: [], unassigned: [] };
+const filters: Array<{ table: string; column: string; value: unknown }> = [];
 
 // ---------------------------------------------------------------------------
 // Supabase server mock
@@ -26,12 +27,17 @@ vi.mock("@/lib/supabase/server", () => ({
           if (opts?.head) isCountQuery = true;
           return chain;
         },
-        eq: (col: string) => {
+        eq: (col: string, value: unknown) => {
+          filters.push({ table, column: col, value });
           if (col === "assigned_to") assignedToMode = "owned";
           return chain;
         },
         is: (col: string, val: unknown) => {
           if (col === "assigned_to" && val === null) assignedToMode = "unassigned";
+          return chain;
+        },
+        not: (col: string, _operator: string, value: unknown) => {
+          filters.push({ table, column: col, value });
           return chain;
         },
         in: () => chain,
@@ -73,6 +79,7 @@ describe("getMyDay", () => {
     db.tasks = [];
     db.myLeads = [];
     db.unassigned = [];
+    filters.length = 0;
     vi.resetModules();
   });
 
@@ -82,7 +89,7 @@ describe("getMyDay", () => {
 
   it("returns empty arrays when there is no data", async () => {
     const { getMyDay } = await import("@/lib/dashboard/queries");
-    const result = await getMyDay("user-1");
+    const result = await getMyDay({ assigneeId: "user-1" });
 
     expect(result.tasks).toEqual([]);
     expect(result.myLeads).toEqual([]);
@@ -103,7 +110,7 @@ describe("getMyDay", () => {
     ];
 
     const { getMyDay } = await import("@/lib/dashboard/queries");
-    const { tasks } = await getMyDay("user-1");
+    const { tasks } = await getMyDay({ assigneeId: "user-1" });
 
     expect(tasks).toHaveLength(1);
     expect(tasks[0]).toMatchObject({
@@ -130,7 +137,7 @@ describe("getMyDay", () => {
     ];
 
     const { getMyDay } = await import("@/lib/dashboard/queries");
-    const { tasks } = await getMyDay("user-1");
+    const { tasks } = await getMyDay({ assigneeId: "user-1" });
 
     expect(tasks[0]?.contextLabel).toBe("García SL");
   });
@@ -149,7 +156,7 @@ describe("getMyDay", () => {
     ];
 
     const { getMyDay } = await import("@/lib/dashboard/queries");
-    const { tasks } = await getMyDay("user-1");
+    const { tasks } = await getMyDay({ assigneeId: "user-1" });
 
     expect(tasks[0]?.contextLabel).toBeNull();
   });
@@ -168,7 +175,7 @@ describe("getMyDay", () => {
     ];
 
     const { getMyDay } = await import("@/lib/dashboard/queries");
-    const { myLeads } = await getMyDay("user-1");
+    const { myLeads } = await getMyDay({ assigneeId: "user-1" });
 
     expect(myLeads).toHaveLength(1);
     expect(myLeads[0]).toMatchObject({
@@ -194,7 +201,7 @@ describe("getMyDay", () => {
     ];
 
     const { getMyDay } = await import("@/lib/dashboard/queries");
-    const { unassignedLeads } = await getMyDay("user-1");
+    const { unassignedLeads } = await getMyDay({ assigneeId: "user-1" });
 
     expect(unassignedLeads).toHaveLength(1);
     expect(unassignedLeads[0]).toMatchObject({
@@ -230,9 +237,17 @@ describe("getMyDay", () => {
     ];
 
     const { getMyDay } = await import("@/lib/dashboard/queries");
-    const result = await getMyDay("user-1");
+    const result = await getMyDay({ assigneeId: "user-1" });
 
     expect(result.myLeads.map((l) => l.id)).toEqual(["owned"]);
     expect(result.unassignedLeads.map((l) => l.id)).toEqual(["free"]);
+  });
+
+  it("does not constrain tasks or leads to a member for the team scope", async () => {
+    const { getMyDay } = await import("@/lib/dashboard/queries");
+    await getMyDay({ assigneeId: null });
+
+    expect(filters.some((filter) => filter.column === "assignee_id")).toBe(false);
+    expect(filters).toContainEqual({ table: "leads", column: "assigned_to", value: null });
   });
 });

@@ -1,6 +1,7 @@
 import "server-only";
 
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { publicEnv, serverEnv } from "@/lib/env";
+import { createServerClient } from "@/lib/supabase/server";
 import type {
   AuthenticationResponseJSON,
   AuthenticatorTransportFuture,
@@ -13,8 +14,7 @@ import {
   verifyRegistrationResponse,
 } from "@simplewebauthn/server";
 import { cookies } from "next/headers";
-import { publicEnv, serverEnv } from "@/lib/env";
-import { createServerClient } from "@/lib/supabase/server";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { grantUserVerification } from "./user-verification";
 import type { UserVerificationScope } from "./user-verification-scope";
 
@@ -118,6 +118,17 @@ async function credentialsFor(userId: string): Promise<CredentialRow[]> {
     .eq("user_id", userId);
   if (error) throw new Error("No se han podido consultar las credenciales biométricas");
   return (data as CredentialRow[] | null) ?? [];
+}
+
+/** Returns whether the current user has at least one registered passkey. */
+export async function hasRegisteredPasskey(userId: string): Promise<boolean> {
+  const supabase = await createServerClient();
+  const { count, error } = await supabase
+    .from("webauthn_credentials")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId);
+  if (error) throw new Error("No se han podido consultar las credenciales biométricas");
+  return (count ?? 0) > 0;
 }
 
 /** Creates an attestation challenge after the caller has applied its enrollment policy. */

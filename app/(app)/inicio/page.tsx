@@ -7,8 +7,10 @@ import {
   MonthExpensesSkeleton,
   MonthExpensesWidget,
 } from "@/components/finance/month-expenses-card";
+import { PasskeyStatusCard } from "@/components/security/passkey-status-card";
 import { SectionBoundary } from "@/components/ui/error-boundary";
 import { canViewFinance, requireUser } from "@/lib/auth";
+import { hasRegisteredPasskey } from "@/lib/security/webauthn";
 import { getGreeting, parseDashboardRange } from "@/lib/utils/date";
 import { AvisosWidget } from "./_components/avisos-widget";
 import { EnablePushBanner } from "./_components/enable-push-banner";
@@ -31,11 +33,12 @@ export const metadata: Metadata = { title: "Inicio · doscientos" };
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  searchParams: Promise<{ range?: string | string[] }>;
+  searchParams: Promise<{ range?: string | string[]; member?: string | string[] }>;
 };
 
 export default async function InicioPage({ searchParams }: PageProps) {
   const [user, params] = await Promise.all([requireUser(), searchParams]);
+  const passkeyConfigured = await hasRegisteredPasskey(user.id);
   const range = parseDashboardRange(params.range);
   const greeting = getGreeting();
   const firstName = user.name.split(" ")[0];
@@ -55,10 +58,12 @@ export default async function InicioPage({ searchParams }: PageProps) {
 
       <EnablePushBanner />
 
+      {!passkeyConfigured ? <PasskeyStatusCard configured={false} /> : null}
+
       {/* Para hoy: tu cola de trabajo y los avisos que requieren acción */}
       <div className="flex flex-col gap-4">
         <SectionBoundary pending={<MyDayWidgetSkeleton />} label="No se pudo cargar tu día">
-          <MyDayWidget />
+          <MyDayWidget member={params.member} />
         </SectionBoundary>
         <SectionBoundary
           pending={<AvisosWidgetSkeleton />}

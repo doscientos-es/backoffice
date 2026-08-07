@@ -2,9 +2,11 @@
 
 import { BellRing, ChevronRight, Inbox, ListTodo, Phone, UserRound } from "lucide-react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { claimLead } from "@/app/(app)/leads/actions";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select } from "@/components/ui/select";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { ActionLeadRow, MyDayData, MyTaskRow, WeekStats } from "@/lib/dashboard/types";
 import { useOptimisticRemoval } from "@/lib/hooks/use-optimistic-removal";
@@ -14,7 +16,14 @@ import { relativeTime } from "@/lib/utils";
 import { LeadCallLink } from "../leads/[id]/phone-actions";
 import { ClaimLeadButton } from "./_components/claim-lead-button";
 
-export type MyDayPanelProps = MyDayData;
+type MyDayScopeProps = {
+  canViewTeam: boolean;
+  value: string;
+  label: string;
+  members: Array<{ id: string; name: string }>;
+};
+
+export type MyDayPanelProps = MyDayData & { scope: MyDayScopeProps };
 
 function plural(n: number, singular: string, pluralForm: string): string {
   return n === 1 ? singular : pluralForm;
@@ -61,16 +70,29 @@ function WeekStatsStrip({ weekStats }: { weekStats: WeekStats }) {
 }
 
 /**
- * "Tu día": the personal action queue. Three columns the member works top to
- * bottom — open tasks, the leads they own, and unassigned leads to grab.
+ * "Tu día": a personal action queue, with an admin/owner scope selector.
  */
-export function MyDayPanel({ tasks, myLeads, unassignedLeads, weekStats }: MyDayPanelProps) {
+export function MyDayPanel({ tasks, myLeads, unassignedLeads, weekStats, scope }: MyDayPanelProps) {
   const { items: visibleUnassigned, remove: claimOptimistic } =
     useOptimisticRemoval(unassignedLeads);
+  const isTeamScope = scope.value === "team";
+  const leadsTitle = isTeamScope
+    ? "Leads del equipo"
+    : scope.value
+      ? `Leads de ${scope.label}`
+      : "Tus leads";
+  const leadsEmpty = isTeamScope
+    ? "El equipo no tiene leads activos asignados."
+    : scope.value
+      ? `${scope.label} no tiene leads activos asignados.`
+      : "No tienes leads activos asignados.";
 
   return (
     <div className="flex flex-col gap-3">
-      <WeekStatsStrip weekStats={weekStats} />
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <WeekStatsStrip weekStats={weekStats} />
+        {scope.canViewTeam ? <MyDayScopeSelector scope={scope} /> : null}
+      </div>
       <div className="grid gap-4 lg:grid-cols-3">
         <Column
           icon={<ListTodo className="size-4 text-blue-500" />}
@@ -80,19 +102,19 @@ export function MyDayPanel({ tasks, myLeads, unassignedLeads, weekStats }: MyDay
           empty="No tienes acciones pendientes. 🎉"
         >
           {tasks.map((t) => (
-            <TaskItem key={t.id} task={t} />
+            <TaskItem key={t.id} task={t} showAssignee={isTeamScope} />
           ))}
         </Column>
 
         <Column
           icon={<UserRound className="size-4 text-emerald-500" />}
-          title="Tus leads"
+          title={leadsTitle}
           count={myLeads.length}
           href="/leads"
-          empty="No tienes leads activos asignados."
+          empty={leadsEmpty}
         >
           {myLeads.map((l) => (
-            <LeadItem key={l.id} lead={l} />
+            <LeadItem key={l.id} lead={l} showAssignee={isTeamScope} />
           ))}
         </Column>
 
@@ -107,12 +129,44 @@ export function MyDayPanel({ tasks, myLeads, unassignedLeads, weekStats }: MyDay
             <LeadItem
               key={l.id}
               lead={l}
+              showAssignee={false}
               onClaimAction={(id) => claimOptimistic(id, () => claimLead({ leadId: id }))}
             />
           ))}
         </Column>
       </div>
     </div>
+  );
+}
+
+function MyDayScopeSelector({ scope }: { scope: MyDayScopeProps }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  function updateScope(value: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) params.set("member", value);
+    else params.delete("member");
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }
+
+  return (
+    <Select
+      value={scope.value}
+      onChange={(event) => updateScope(event.target.value)}
+      aria-label="Mostrar acciones de"
+      className="h-8 min-w-40 text-xs"
+    >
+      <option value="">Mis tareas</option>
+      <option value="team">Equipo completo</option>
+      {scope.members.map((member) => (
+        <option key={member.id} value={member.id}>
+          {member.name}
+        </option>
+      ))}
+    </Select>
   );
 }
 
@@ -158,7 +212,7 @@ function Column({
   );
 }
 
-function TaskItem({ task }: { task: MyTaskRow }) {
+function TaskItem({ task, showAssignee }: { task: MyTaskRow; showAssignee: boolean }) {
   const overdue = task.action_at ? new Date(task.action_at) < new Date() : false;
   return (
     <li className="flex items-center justify-between gap-2">
@@ -174,6 +228,9 @@ function TaskItem({ task }: { task: MyTaskRow }) {
         {task.contextLabel ? (
           <span className="block truncate text-xs text-muted-foreground">{task.contextLabel}</span>
         ) : null}
+        {showAssignee && task.assigneeName ? (
+          <span className="block truncate text-xs text-muted-foreground">{task.assigneeName}</span>
+        ) : null}
       </Link>
       {task.action_at ? (
         <Badge variant={overdue ? "danger" : "info"}>{relativeTime(task.action_at)}</Badge>
@@ -186,9 +243,11 @@ function TaskItem({ task }: { task: MyTaskRow }) {
 
 function LeadItem({
   lead,
+  showAssignee,
   onClaimAction,
 }: {
   lead: ActionLeadRow;
+  showAssignee: boolean;
   onClaimAction?: (id: string) => void;
 }) {
   const displayName = leadDisplayName(lead);
@@ -197,7 +256,9 @@ function LeadItem({
       <Link href={`/leads/${lead.id}`} className="min-w-0 flex-1 hover:underline">
         <span className="block truncate text-sm">{displayName}</span>
         <span className="block truncate text-xs text-muted-foreground">
-          {lead.company ?? "Sin empresa"} · {relativeTime(lead.since)}
+          {lead.company ?? "Sin empresa"}
+          {showAssignee && lead.assigneeName ? ` · ${lead.assigneeName}` : ""} ·{" "}
+          {relativeTime(lead.since)}
         </span>
       </Link>
       <div className="flex shrink-0 items-center gap-1.5">

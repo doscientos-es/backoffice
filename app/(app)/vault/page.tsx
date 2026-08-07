@@ -1,17 +1,22 @@
-import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
+import { hasRegisteredPasskey } from "@/lib/security/webauthn";
 import { createServerClient } from "@/lib/supabase/server";
 import { isVaultUnlocked } from "@/lib/vault/access";
+import type { Metadata } from "next";
 import { VaultClient } from "./_components/vault-client";
 
 export const metadata: Metadata = { title: "Bóveda · doscientos" };
 export const dynamic = "force-dynamic";
 
-export default async function VaultPage() {
-  const user = await requireUser();
+type PageProps = {
+  searchParams: Promise<{ setup?: string | string[] }>;
+};
+
+export default async function VaultPage({ searchParams }: PageProps) {
+  const [user, params] = await Promise.all([requireUser(), searchParams]);
   const supabase = await createServerClient();
 
-  const [itemsResult, settingsResult, clientsResult, passkeysResult] = await Promise.all([
+  const [itemsResult, settingsResult, clientsResult, passkeyConfigured] = await Promise.all([
     supabase
       .from("vault_items")
       .select("id, name, service, username, notes, is_sensitive, expires_at, client_id, created_at")
@@ -20,7 +25,7 @@ export default async function VaultPage() {
       .order("name"),
     supabase.from("settings").select("vault_password_hash").eq("id", 1).single(),
     supabase.from("clients").select("id, name").is("deleted_at", null).order("name"),
-    supabase.from("webauthn_credentials").select("id", { count: "exact", head: true }),
+    hasRegisteredPasskey(user.id),
   ]);
 
   const passwordHash =
@@ -48,7 +53,8 @@ export default async function VaultPage() {
       items={(itemsResult.data as VaultItemRow[] | null) ?? []}
       passwordSet={!!passwordHash}
       unlocked={unlocked}
-      passkeyConfigured={(passkeysResult.count ?? 0) > 0}
+      passkeyConfigured={passkeyConfigured}
+      startPasskeySetup={params.setup === "passkey"}
       clients={(clientsResult.data as Array<{ id: string; name: string }> | null) ?? []}
       isAdmin={isAdmin}
     />

@@ -1,16 +1,19 @@
 import { PageHeader } from "@/components/layout/page-header";
+import { PasskeyStatusCard } from "@/components/security/passkey-status-card";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireRole } from "@/lib/auth";
 import { getSystemStatus } from "@/lib/diagnostics/system-status";
+import { hasRegisteredPasskey } from "@/lib/security/webauthn";
 import { DiagnosticsPanel } from "./diagnostics-panel";
 
 export const metadata = { title: "Diagnóstico · Ajustes · doscientos" };
 export const dynamic = "force-dynamic";
 
 export default async function DiagnosticsSettingsPage() {
-  await requireRole(["owner", "admin"]);
+  const user = await requireRole(["owner", "admin"]);
   const status = getSystemStatus();
+  const passkeyConfigured = await hasRegisteredPasskey(user.id);
 
   const byKey = (key: string) =>
     status.integrations.find((i) => i.key === key)?.configured ?? false;
@@ -62,6 +65,8 @@ export default async function DiagnosticsSettingsPage() {
           </dl>
         </CardContent>
       </Card>
+
+      <PasskeyStatusCard configured={passkeyConfigured} />
 
       <DiagnosticsPanel config={config} />
     </div>

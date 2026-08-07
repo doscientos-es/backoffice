@@ -1,5 +1,21 @@
 "use client";
 
+import { PageHeader } from "@/components/layout/page-header";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { VAULT_SERVICE_LABELS, VAULT_SERVICES, type VaultService } from "@/lib/schemas/vault";
+import { cn } from "@/lib/utils";
 import {
   Check,
   ChevronDown,
@@ -23,22 +39,6 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { sileo } from "sileo";
-import { PageHeader } from "@/components/layout/page-header";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { VAULT_SERVICE_LABELS, VAULT_SERVICES, type VaultService } from "@/lib/schemas/vault";
-import { cn } from "@/lib/utils";
 import { deleteVaultItem, lockVault, revealVaultSecret } from "../actions";
 import { EnrollPasskeyForm, SetPasswordForm, UnlockForm } from "./vault-dialogs";
 import { VaultItemForm } from "./vault-item-dialog";
@@ -77,6 +77,7 @@ export function VaultClient({
   passwordSet,
   unlocked,
   passkeyConfigured,
+  startPasskeySetup = false,
   clients,
   isAdmin,
 }: {
@@ -84,6 +85,7 @@ export function VaultClient({
   passwordSet: boolean;
   unlocked: boolean;
   passkeyConfigured: boolean;
+  startPasskeySetup?: boolean;
   clients: Client[];
   isAdmin: boolean;
 }) {
@@ -96,6 +98,12 @@ export function VaultClient({
   const [revealingId, setRevealingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const shouldSetUpPasskey = startPasskeySetup && !passkeyConfigured;
+
+  useEffect(() => {
+    if (!shouldSetUpPasskey) return;
+    setDialog(localUnlocked ? "passkey" : passwordSet ? "unlock" : "setPassword");
+  }, [localUnlocked, passwordSet, shouldSetUpPasskey]);
 
   // ── filters / sort / pagination ────────────────────────────────────────────
   const [search, setSearch] = useState("");
@@ -198,6 +206,10 @@ export function VaultClient({
 
   function handleUnlockSuccess() {
     setLocalUnlocked(true);
+    if (shouldSetUpPasskey) {
+      setDialog("passkey");
+      return;
+    }
     if (pendingEditItem) {
       setEditItem(pendingEditItem);
       setPendingEditItem(null);
@@ -644,10 +656,11 @@ export function VaultClient({
       <Dialog open={dialog === "unlock"} onOpenChange={(o) => !o && setDialog(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Desbloquear bóveda</DialogTitle>
+            <DialogTitle>{shouldSetUpPasskey ? "Verifica tu identidad" : "Desbloquear bóveda"}</DialogTitle>
             <DialogDescription>
-              Introduce la contraseña maestra para acceder a los secretos sensibles. La sesión dura
-              4 horas.
+              {shouldSetUpPasskey
+                ? "Introduce la contraseña maestra para continuar con la activación de biometría."
+                : "Introduce la contraseña maestra para acceder a los secretos sensibles. La sesión dura 4 horas."}
             </DialogDescription>
           </DialogHeader>
           <UnlockForm

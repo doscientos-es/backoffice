@@ -112,6 +112,7 @@ export type MyTaskRow = {
   due_date: string | null;
   action_at: string | null;
   contextLabel: string | null; // project or lead name the task belongs to
+  assigneeName: string | null;
 };
 
 export type ActionLeadRow = {
@@ -125,6 +126,7 @@ export type ActionLeadRow = {
   status: LeadStatus;
   /** Timestamp used for relative time: last update (my leads) or creation (unassigned). */
   since: string;
+  assigneeName: string | null;
 };
 
 export type MyDayData = {

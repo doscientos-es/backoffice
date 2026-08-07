@@ -33,6 +33,9 @@ const MONEY_LIMIT = 5;
 /** Task statuses that are still actionable (not done / cancelled). */
 const OPEN_TASK_STATUSES = ["todo", "in_progress", "in_review"] as const;
 
+/** A null assignee intentionally represents the whole team's queue. */
+export type MyDayScope = { assigneeId: string | null };
+
 type ClientNameJoin = { clients: { name: string } | null };
 
 type LeadActionRecord = {
@@ -56,6 +59,7 @@ function toActionLead(row: Record<string, unknown>, sinceField: string): ActionL
     email: r.email ?? null,
     status: r.status,
     since: (row[sinceField] as string) ?? new Date().toISOString(),
+    assigneeName: refName(row.assignee as NameRef),
   };
 }
 
@@ -90,6 +94,7 @@ function toMyTask(row: Record<string, unknown>): MyTaskRow {
     due_date: (row.due_date as string | null) ?? null,
     action_at: (kind === "reminder" ? row.start_at : row.due_date) as string | null,
     contextLabel: refName(row.projects as NameRef) ?? refName(row.leads as NameRef) ?? null,
+    assigneeName: refName(row.assignee as NameRef),
   };
 }
 
@@ -547,16 +552,22 @@ export async function getMoneyOpportunities(): Promise<MoneyOpportunities> {
   );
 
   const leadIds = priorityLeadRows.map((l) => l.id);
-  const { data: taskRows } =
-    leadIds.length > 0
-      ? await supabase
-          .from("tasks")
-          .select("lead_id, kind, status, completed_at")
-          .in("lead_id", leadIds)
-          .is("deleted_at", null)
-      : { data: [] };
+  let taskRows: Array<{
+    lead_id: string | null;
+    kind: string;
+    status: string;
+    completed_at: string | null;
+  }> = [];
+  if (leadIds.length > 0) {
+    const { data } = await supabase
+      .from("tasks")
+      .select("lead_id, kind, status, completed_at")
+      .in("lead_id", leadIds)
+      .is("deleted_at", null);
+    taskRows = data ?? [];
+  }
   const leadsWithNextAction = new Set<string>();
-  for (const task of taskRows ?? []) {
+  for (const task of taskRows) {
     const leadId = task.lead_id as string | null;
     if (!leadId) continue;
     const isOpenTask =
@@ -660,74 +671,79 @@ function computeStreak(rows: { updated_at: string | null | undefined }[]): numbe
 }
 
 /**
- * "Tu día": the personal action queue for the logged-in member. Returns their
- * open tasks (soonest due first), the active leads they own (stalest first, so
- * nothing rots), unassigned active leads they could claim (newest first), and
- * weekly progress stats for the motivational summary strip.
+ * "Tu día": the personal action queue, or the whole team's queue when an
+ * admin/owner explicitly requests it. Returns open tasks (soonest due first),
+ * active owned leads (stalest first), unassigned leads, and weekly progress.
  */
-export async function getMyDay(userId: string): Promise<MyDayData> {
+export async function getMyDay({ assigneeId }: MyDayScope): Promise<MyDayData> {
   const supabase = await createServerClient();
   const leadFields = "id, name, alias, company, phone, email, status";
   const weekStart = getWeekStart().toISOString();
   const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000).toISOString();
 
+  let tasksQuery = supabase
+    .from("tasks")
+    .select(
+      "id, title, kind, status, priority, due_date, start_at, projects(name), leads(name), assignee:team_members!assignee_id(name)",
+    )
+    .in("status", [...OPEN_TASK_STATUSES])
+    .is("deleted_at", null);
+  let ownedLeadsQuery = supabase
+    .from("leads")
+    .select(`${leadFields}, updated_at, assignee:team_members!assigned_to(name)`)
+    .in("status", [...ACTIVE_LEAD_STATUSES])
+    .is("deleted_at", null)
+    .order("updated_at", { ascending: true });
+  let completedQuery = supabase
+    .from("tasks")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "done")
+    .gte("updated_at", weekStart)
+    .is("deleted_at", null);
+  let attendedQuery = supabase
+    .from("leads")
+    .select("id", { count: "exact", head: true })
+    .gte("updated_at", weekStart)
+    .is("deleted_at", null);
+  let streakQuery = supabase
+    .from("tasks")
+    .select("updated_at")
+    .eq("status", "done")
+    .gte("updated_at", thirtyDaysAgo)
+    .is("deleted_at", null);
+
+  if (assigneeId) {
+    tasksQuery = tasksQuery.eq("assignee_id", assigneeId);
+    ownedLeadsQuery = ownedLeadsQuery.eq("assigned_to", assigneeId);
+    completedQuery = completedQuery.eq("assignee_id", assigneeId);
+    attendedQuery = attendedQuery.eq("assigned_to", assigneeId);
+    streakQuery = streakQuery.eq("assignee_id", assigneeId);
+  } else {
+    ownedLeadsQuery = ownedLeadsQuery.not("assigned_to", "is", null);
+  }
+
   const [tasksRes, myLeadsRes, unassignedRes, completedRes, attendedRes, streakRes] =
     await Promise.all([
-      supabase
-        .from("tasks")
-        .select(
-          "id, title, kind, status, priority, due_date, start_at, projects(name), leads(name)",
-        )
-        .eq("assignee_id", userId)
-        .in("status", [...OPEN_TASK_STATUSES])
-        .is("deleted_at", null)
-        .limit(MY_DAY_LIMIT * 4),
+      tasksQuery.limit(MY_DAY_LIMIT * 4),
+      ownedLeadsQuery.limit(MY_DAY_LIMIT),
       supabase
         .from("leads")
-        .select(`${leadFields}, updated_at`)
-        .eq("assigned_to", userId)
-        .in("status", [...ACTIVE_LEAD_STATUSES])
-        .is("deleted_at", null)
-        .order("updated_at", { ascending: true })
-        .limit(MY_DAY_LIMIT),
-      supabase
-        .from("leads")
-        .select(`${leadFields}, created_at`)
+        .select(`${leadFields}, created_at, assignee:team_members!assigned_to(name)`)
         .is("assigned_to", null)
         .in("status", [...ACTIVE_LEAD_STATUSES])
         .is("deleted_at", null)
         .order("created_at", { ascending: false })
         .limit(MY_DAY_LIMIT),
-      // Tasks completed this week
-      supabase
-        .from("tasks")
-        .select("id", { count: "exact", head: true })
-        .eq("assignee_id", userId)
-        .eq("status", "done")
-        .gte("updated_at", weekStart)
-        .is("deleted_at", null),
-      // My leads attended (updated) this week
-      supabase
-        .from("leads")
-        .select("id", { count: "exact", head: true })
-        .eq("assigned_to", userId)
-        .gte("updated_at", weekStart)
-        .is("deleted_at", null),
-      // Done tasks in last 30 days for streak computation
-      supabase
-        .from("tasks")
-        .select("updated_at")
-        .eq("assignee_id", userId)
-        .eq("status", "done")
-        .gte("updated_at", thirtyDaysAgo)
-        .is("deleted_at", null)
-        .order("updated_at", { ascending: false }),
+      completedQuery,
+      attendedQuery,
+      streakQuery.order("updated_at", { ascending: false }),
     ]);
 
   const weekStats: WeekStats = {
     tasksCompleted: completedRes.count ?? 0,
     leadsAttended: attendedRes.count ?? 0,
-    streakDays: computeStreak(streakRes.data ?? []),
+    // A team-level streak would be misleading because it combines members.
+    streakDays: assigneeId ? computeStreak(streakRes.data ?? []) : 0,
   };
 
   return {
