@@ -82,7 +82,9 @@ describe("lead AI context", () => {
       ],
       proposals: [],
       projects: [{ name: "Portal de clientes", status: "active", description: "Fase dos." }],
-      invoices: [{ full_number: "F-2026-01", status: "sent", total: 1200, issue_date: "2026-07-01" }],
+      invoices: [
+        { full_number: "F-2026-01", status: "sent", total: 1200, issue_date: "2026-07-01" },
+      ],
       tasks: [
         {
           title: "Validar presupuesto",

@@ -279,7 +279,9 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
   const proposalsBuilder = notDeleted(
     supabase
       .from("proposals")
-      .select("id, number, title, status, total, valid_until, sent_at, viewed_at, responded_at, notes"),
+      .select(
+        "id, number, title, status, total, valid_until, sent_at, viewed_at, responded_at, notes",
+      ),
   );
   const { data: proposalRows } = await (linkedClientId
     ? proposalsBuilder.or(`lead_id.eq.${id},client_id.eq.${linkedClientId}`)

@@ -208,7 +208,11 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData, briefing, members 
             </p>
           </div>
           <Button size="sm" variant="outline" onClick={handleCopyBriefing}>
-            {copied ? <Check className="size-3.5 text-emerald-600" /> : <Copy className="size-3.5" />}
+            {copied ? (
+              <Check className="size-3.5 text-emerald-600" />
+            ) : (
+              <Copy className="size-3.5" />
+            )}
             {copied ? "Copiado" : "Copiar briefing"}
           </Button>
         </div>
