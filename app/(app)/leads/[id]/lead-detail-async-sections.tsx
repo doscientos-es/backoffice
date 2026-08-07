@@ -9,8 +9,17 @@ import { isGoogleEnabled } from "@/lib/env";
 import type { MemberOption } from "@/lib/members/queries";
 import { MEETING_PROJECT_STATUSES } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
-import { formatDateTime } from "@/lib/utils";
+import { ArrowRight, Clock3 } from "lucide-react";
 import { LeadQuickActions } from "./quick-actions";
+
+function formatJourneyTime(value: string): string {
+  return new Intl.DateTimeFormat("es-ES", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
 
 export async function LeadConversionJourneySection({
   leadId,
@@ -20,6 +29,7 @@ export async function LeadConversionJourneySection({
   eventId: string | null;
 }) {
   const events = await listLeadConversionEvents({ id: leadId, event_id: eventId });
+  const journeyEvents = [...events].reverse();
 
   return (
     <Card>
@@ -32,37 +42,55 @@ export async function LeadConversionJourneySection({
             Sin eventos de landing vinculados a este lead.
           </p>
         ) : (
-          <ol className="divide-y divide-border">
-            {events.map((event) => (
-              <li key={event.id} className="grid gap-2 py-3 sm:grid-cols-[160px_1fr]">
-                <div className="text-xs text-muted-foreground">
-                  {formatDateTime(event.created_at)}
-                </div>
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant={event.event_name.includes("whatsapp") ? "success" : "neutral"}>
-                      {CONVERSION_EVENT_LABEL[event.event_name] ?? event.event_name}
-                    </Badge>
-                    {event.conversion_step && (
-                      <span className="text-xs text-muted-foreground">
-                        {CONVERSION_STEP_LABEL[event.conversion_step] ?? event.conversion_step}
-                      </span>
+          <div className="-mx-1 overflow-x-auto px-1 pb-2">
+            <ol className="flex min-w-max items-center gap-3" aria-label="Pasos del journey">
+              {journeyEvents.map((event, index) => {
+                const isConversion = ["lead_created", "form_submit", "whatsapp_click"].includes(
+                  event.event_name,
+                );
+                const attribution = [event.utm_source, event.utm_medium, event.utm_campaign]
+                  .filter(Boolean)
+                  .join(" · ");
+                const detail =
+                  CONVERSION_STEP_LABEL[event.conversion_step ?? ""] ??
+                  (attribution || event.landing_ref || "Sin UTM/ref");
+
+                return (
+                  <li key={event.id} className="flex items-center gap-3">
+                    <article className="w-52 rounded-lg border border-border bg-muted/30 p-3 shadow-sm">
+                      <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1 whitespace-nowrap">
+                          <Clock3 className="size-3" aria-hidden="true" />
+                          <time dateTime={event.created_at}>
+                            {formatJourneyTime(event.created_at)}
+                          </time>
+                        </span>
+                        <span className="font-medium">{index + 1}</span>
+                      </div>
+                      <Badge
+                        className="mt-2 max-w-full"
+                        variant={isConversion ? "success" : "neutral"}
+                      >
+                        <span className="truncate">
+                          {CONVERSION_EVENT_LABEL[event.event_name] ?? event.event_name}
+                        </span>
+                      </Badge>
+                      <p className="mt-2 truncate text-sm font-medium">
+                        {event.landing_path ?? event.referrer ?? "Evento sin página"}
+                      </p>
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">{detail}</p>
+                    </article>
+                    {index < journeyEvents.length - 1 && (
+                      <ArrowRight
+                        className="size-4 shrink-0 text-muted-foreground/60"
+                        aria-hidden="true"
+                      />
                     )}
-                  </div>
-                  <p className="mt-1 truncate text-sm">
-                    {event.landing_path ?? event.referrer ?? "Evento sin página"}
-                  </p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {[event.utm_source, event.utm_medium, event.utm_campaign]
-                      .filter(Boolean)
-                      .join(" · ") ||
-                      event.landing_ref ||
-                      "Sin UTM/ref"}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
         )}
       </CardContent>
     </Card>
