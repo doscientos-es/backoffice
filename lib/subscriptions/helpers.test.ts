@@ -7,6 +7,18 @@ describe("advanceDate", () => {
       expect(advanceDate("2024-03-15", "monthly")).toBe("2024-04-15");
     });
 
+    it("produces a new monthly billing date after every generated invoice", () => {
+      const firstInvoiceDate = "2024-01-15";
+      const secondInvoiceDate = advanceDate(firstInvoiceDate, "monthly");
+      const thirdInvoiceDate = advanceDate(secondInvoiceDate, "monthly");
+
+      expect([firstInvoiceDate, secondInvoiceDate, thirdInvoiceDate]).toEqual([
+        "2024-01-15",
+        "2024-02-15",
+        "2024-03-15",
+      ]);
+    });
+
     it("clamps Jan 31 to Feb 28 on a non-leap year", () => {
       expect(advanceDate("2025-01-31", "monthly")).toBe("2025-02-28");
     });

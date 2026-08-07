@@ -1,5 +1,6 @@
 "use client";
 
+import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
@@ -71,6 +72,7 @@ export function UnlockForm({
   onSuccess?: () => void;
 }) {
   const feedback = useFormFeedback();
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -93,15 +95,26 @@ export function UnlockForm({
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <Field>
         <FieldLabel htmlFor="unlock-pw">Contraseña maestra</FieldLabel>
-        <Input
-          id="unlock-pw"
-          name="password"
-          type="password"
-          autoFocus
-          required
-          autoComplete="current-password"
-          placeholder="••••••••"
-        />
+        <div className="relative">
+          <Input
+            id="unlock-pw"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            autoFocus
+            required
+            autoComplete="current-password"
+            placeholder="••••••••"
+            className="pr-10"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((visible) => !visible)}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+            aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+          >
+            {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          </button>
+        </div>
       </Field>
       <div className="flex items-center justify-end gap-2 border-t border-border pt-3">
         <FormFeedback state={feedback.state} successLabel="Desbloqueada" />

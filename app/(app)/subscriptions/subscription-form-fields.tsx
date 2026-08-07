@@ -21,7 +21,6 @@ export type SubscriptionFormValues = {
   amount: number;
   vat_rate: number;
   start_date: string;
-  next_invoice_date: string;
   end_date: string;
   notes: string;
 };
@@ -119,22 +118,12 @@ export function SubscriptionFormFields({ clients, projects, defaults }: Props) {
         />
       </FormRow>
 
-      <FormRow label="Inicio" htmlFor="sub-start" required>
+      <FormRow label="Inicio (primera factura)" htmlFor="sub-start" required>
         <Input
           id="sub-start"
           name="start_date"
           type="date"
           defaultValue={defaults?.start_date ?? today}
-          required
-        />
-      </FormRow>
-
-      <FormRow label="Próxima factura" htmlFor="sub-next" required>
-        <Input
-          id="sub-next"
-          name="next_invoice_date"
-          type="date"
-          defaultValue={defaults?.next_invoice_date ?? today}
           required
         />
       </FormRow>

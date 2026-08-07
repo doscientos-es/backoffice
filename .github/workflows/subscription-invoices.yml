@@ -1,0 +1,30 @@
+name: Generate recurring subscription invoices
+
+on:
+  schedule:
+    # Daily at 06:10 UTC. The endpoint catches up safely if a run is delayed.
+    - cron: "10 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  generate:
+    name: Generate due draft invoices
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Call the recurring billing endpoint
+        run: |
+          STATUS=$(curl --silent --output /tmp/subscription-invoices.json \
+                        --write-out "%{http_code}" \
+                        --max-time 60 \
+                        -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+                        "${{ secrets.APP_URL }}/api/cron/subscription-invoices")
+
+          echo "HTTP status: $STATUS"
+          cat /tmp/subscription-invoices.json | python3 -m json.tool || true
+
+          if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 300 ]; then
+            echo "::error::El endpoint devolvió HTTP $STATUS"
+            exit 1
+          fi

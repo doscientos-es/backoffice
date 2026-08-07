@@ -12,7 +12,6 @@ import { SUBSCRIPTION_STATUS, type SubscriptionStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { deleteSubscription } from "../actions";
-import { GenerateInvoiceButton } from "./generate-invoice-button";
 import { SubscriptionEditForm } from "./subscription-edit-form";
 
 export const dynamic = "force-dynamic";
@@ -49,8 +48,6 @@ export default async function SubscriptionDetailPage({
     { quantity: 1, unit_price: Number(sub.amount), vat_rate: Number(sub.vat_rate) },
   ]);
 
-  const canGenerateInvoice = canEdit && sub.status === "active";
-
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -61,7 +58,6 @@ export default async function SubscriptionDetailPage({
           actions={
             <div className="flex items-center gap-2">
               <StatusBadge meta={SUBSCRIPTION_STATUS} value={sub.status as SubscriptionStatus} />
-              {canGenerateInvoice ? <GenerateInvoiceButton subscriptionId={id} /> : null}
             </div>
           }
         />
@@ -84,7 +80,6 @@ export default async function SubscriptionDetailPage({
                 amount: Number(sub.amount),
                 vat_rate: Number(sub.vat_rate),
                 start_date: sub.start_date as string,
-                next_invoice_date: sub.next_invoice_date as string,
                 end_date: (sub.end_date as string | null) ?? "",
                 notes: (sub.notes as string | null) ?? "",
               }}
