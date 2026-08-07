@@ -69,3 +69,6 @@ export type VaultPasswordInputType = z.infer<typeof VaultPasswordInput>;
 export const VaultUnlockInput = z.object({
   password: z.string().min(1, "Introduce la contraseña"),
 });
+
+/** Re-authenticates with the master password before enrolling a new passkey. */
+export const VaultPasskeyEnrollmentInput = VaultUnlockInput;

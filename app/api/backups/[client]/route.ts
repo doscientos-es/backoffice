@@ -7,6 +7,8 @@ import {
   getClientBackups,
   isFileBrowserConfigured,
 } from "@/lib/filebrowser";
+import { consumeUserVerification } from "@/lib/security/user-verification";
+import { userVerificationScope } from "@/lib/security/user-verification-scope";
 
 export async function GET(request: Request, { params }: { params: Promise<{ client: string }> }) {
   await requireUser();
@@ -59,6 +61,16 @@ export async function DELETE(
   // escape `{client}/` and delete arbitrary files on the FileBrowser server.
   if (filePath.includes("..") || filePath.startsWith("/")) {
     return NextResponse.json({ error: "Ruta no válida" }, { status: 400 });
+  }
+
+  try {
+    await consumeUserVerification(
+      user.id,
+      userVerificationScope("backup.delete", `backup:${client}:${filePath}`),
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Verificación requerida";
+    return NextResponse.json({ error: message }, { status: 403 });
   }
 
   const ok = await deleteClientBackup(client, filePath);

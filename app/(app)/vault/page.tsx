@@ -11,7 +11,7 @@ export default async function VaultPage() {
   const user = await requireUser();
   const supabase = await createServerClient();
 
-  const [itemsResult, settingsResult, clientsResult] = await Promise.all([
+  const [itemsResult, settingsResult, clientsResult, passkeysResult] = await Promise.all([
     supabase
       .from("vault_items")
       .select("id, name, service, username, notes, is_sensitive, expires_at, client_id, created_at")
@@ -20,6 +20,7 @@ export default async function VaultPage() {
       .order("name"),
     supabase.from("settings").select("vault_password_hash").eq("id", 1).single(),
     supabase.from("clients").select("id, name").is("deleted_at", null).order("name"),
+    supabase.from("webauthn_credentials").select("id", { count: "exact", head: true }),
   ]);
 
   const passwordHash =
@@ -47,6 +48,7 @@ export default async function VaultPage() {
       items={(itemsResult.data as VaultItemRow[] | null) ?? []}
       passwordSet={!!passwordHash}
       unlocked={unlocked}
+      passkeyConfigured={(passkeysResult.count ?? 0) > 0}
       clients={(clientsResult.data as Array<{ id: string; name: string }> | null) ?? []}
       isAdmin={isAdmin}
     />

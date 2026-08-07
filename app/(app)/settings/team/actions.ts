@@ -7,6 +7,8 @@ import { type MemberRole, requireRole } from "@/lib/auth";
 import { renderEmail } from "@/lib/email/render";
 import { sendEmail } from "@/lib/email/resend";
 import { serverEnv } from "@/lib/env";
+import { consumeUserVerification } from "@/lib/security/user-verification";
+import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { createAdminClient, generateAuthLink } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
 
@@ -282,6 +284,13 @@ export async function updateMemberRole(input: unknown): Promise<ActionResult> {
   if (target?.role === "owner" && actor.role !== "owner") {
     return { ok: false, error: "Solo un propietario puede modificar a otro propietario." };
   }
+  await consumeUserVerification(
+    actor.id,
+    userVerificationScope(
+      "team.member.role.update",
+      `member:${parsed.data.memberId}:role:${parsed.data.role}`,
+    ),
+  );
 
   const { error } = await supabase
     .from("team_members")
@@ -310,6 +319,10 @@ export async function deactivateMember(input: unknown): Promise<ActionResult> {
   if (target?.role === "owner" && actor.role !== "owner") {
     return { ok: false, error: "Solo un propietario puede desactivar a otro propietario." };
   }
+  await consumeUserVerification(
+    actor.id,
+    userVerificationScope("team.member.deactivate", `member:${parsed.data.memberId}`),
+  );
 
   const { error } = await supabase
     .from("team_members")
@@ -364,6 +377,10 @@ export async function deleteMember(input: unknown): Promise<ActionResult> {
   if (!target.deleted_at) {
     return { ok: false, error: "Desactiva el miembro antes de eliminarlo." };
   }
+  await consumeUserVerification(
+    actor.id,
+    userVerificationScope("team.member.delete", `member:${parsed.data.memberId}`),
+  );
 
   const { error: authError } = await admin.auth.admin.deleteUser(parsed.data.memberId);
   if (authError) {

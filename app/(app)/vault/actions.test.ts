@@ -64,6 +64,14 @@ vi.mock("@/lib/vault/access", () => ({
   verifyVaultPassword: vi.fn(() => true),
 }));
 
+vi.mock("@/lib/security/user-verification", () => ({
+  consumeUserVerification: vi.fn(),
+}));
+
+vi.mock("@/lib/security/webauthn", () => ({
+  createPasskeyRegistrationOptions: vi.fn(),
+}));
+
 vi.mock("@/lib/vault/crypto", () => ({
   encryptSecret: vi.fn((s: string) => `enc:${s}`),
   decryptSecret: vi.fn((s: string) => s.replace(/^enc:/, "")),
@@ -71,7 +79,8 @@ vi.mock("@/lib/vault/crypto", () => ({
 
 // ── import after mocks ────────────────────────────────────────────────────────
 
-import { revealVaultSecret } from "@/app/(app)/vault/actions";
+import { revealVaultSecret, unlockVaultWithPasskey } from "@/app/(app)/vault/actions";
+import { consumeUserVerification } from "@/lib/security/user-verification";
 
 const ITEM_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
 
@@ -130,5 +139,22 @@ describe("revealVaultSecret — IDOR regression", () => {
     const result = await revealVaultSecret({ id: ITEM_ID });
 
     expect(result).toEqual({ ok: true, secret: "open-secret" });
+  });
+});
+
+describe("unlockVaultWithPasskey", () => {
+  beforeEach(() => {
+    state.passwordHash = "scrypt$salt$hash";
+    vi.clearAllMocks();
+  });
+
+  it("consumes a vault-scoped WebAuthn verification before granting vault access", async () => {
+    const result = await unlockVaultWithPasskey();
+
+    expect(result).toEqual({ ok: true });
+    expect(consumeUserVerification).toHaveBeenCalledWith(
+      "user-1",
+      { intent: "vault.unlock", resource: "vault" },
+    );
   });
 });

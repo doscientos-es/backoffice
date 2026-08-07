@@ -10,6 +10,7 @@ import {
   Copy,
   Eye,
   EyeOff,
+  Fingerprint,
   Loader2,
   Lock,
   LockOpen,
@@ -39,7 +40,7 @@ import { Select } from "@/components/ui/select";
 import { VAULT_SERVICE_LABELS, VAULT_SERVICES, type VaultService } from "@/lib/schemas/vault";
 import { cn } from "@/lib/utils";
 import { deleteVaultItem, lockVault, revealVaultSecret } from "../actions";
-import { SetPasswordForm, UnlockForm } from "./vault-dialogs";
+import { EnrollPasskeyForm, SetPasswordForm, UnlockForm } from "./vault-dialogs";
 import { VaultItemForm } from "./vault-item-dialog";
 
 type VaultItem = {
@@ -54,7 +55,7 @@ type VaultItem = {
   created_at: string;
 };
 type Client = { id: string; name: string };
-type Dialog_ = "add" | "edit" | "unlock" | "setPassword" | null;
+type Dialog_ = "add" | "edit" | "unlock" | "setPassword" | "passkey" | null;
 type SortField = "name" | "service" | "expires_at";
 
 const PAGE_SIZE = 20;
@@ -75,12 +76,14 @@ export function VaultClient({
   items,
   passwordSet,
   unlocked,
+  passkeyConfigured,
   clients,
   isAdmin,
 }: {
   items: VaultItem[];
   passwordSet: boolean;
   unlocked: boolean;
+  passkeyConfigured: boolean;
   clients: Client[];
   isAdmin: boolean;
 }) {
@@ -311,6 +314,12 @@ export function VaultClient({
             ) : (
               <Button variant="outline" size="sm" onClick={() => setDialog("setPassword")}>
                 <ShieldAlert className="size-3.5" /> Activar contraseña
+              </Button>
+            )}
+            {passwordSet && localUnlocked && (
+              <Button variant="outline" size="sm" onClick={() => setDialog("passkey")}>
+                <Fingerprint className="size-3.5" />
+                {passkeyConfigured ? "Añadir passkey" : "Activar biometría"}
               </Button>
             )}
             {isAdmin && (
@@ -641,7 +650,25 @@ export function VaultClient({
               4 horas.
             </DialogDescription>
           </DialogHeader>
-          <UnlockForm onClose={() => setDialog(null)} onSuccess={handleUnlockSuccess} />
+          <UnlockForm
+            passkeyConfigured={passkeyConfigured}
+            onClose={() => setDialog(null)}
+            onSuccess={handleUnlockSuccess}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Passkey enrollment */}
+      <Dialog open={dialog === "passkey"} onOpenChange={(o) => !o && setDialog(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Activar biometría</DialogTitle>
+            <DialogDescription>
+              Confirma la contraseña maestra y después usa la biometría o el bloqueo del
+              dispositivo.
+            </DialogDescription>
+          </DialogHeader>
+          <EnrollPasskeyForm onClose={() => setDialog(null)} />
         </DialogContent>
       </Dialog>
 

@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Select } from "@/components/ui/select";
 import type { MemberRole } from "@/lib/auth";
+import { userVerificationScope } from "@/lib/security/user-verification-scope";
+import { verifyWithPasskey } from "@/lib/security/webauthn-client";
 import {
   deactivateMember,
   deleteMember,
@@ -47,6 +49,14 @@ export function MemberRowActions({
     const next = e.target.value as MemberRole;
     if (next === role) return;
     feedback.setPending();
+    const verification = await verifyWithPasskey(
+      userVerificationScope("team.member.role.update", `member:${memberId}:role:${next}`),
+    );
+    if (!verification.ok) {
+      feedback.setError(verification.error);
+      e.target.value = role;
+      return;
+    }
     const res = await updateMemberRole({ memberId, role: next });
     if (!res.ok) {
       feedback.setError(res.error);
@@ -59,6 +69,15 @@ export function MemberRowActions({
 
   async function onToggleActive() {
     feedback.setPending();
+    if (!isDeactivated) {
+      const verification = await verifyWithPasskey(
+        userVerificationScope("team.member.deactivate", `member:${memberId}`),
+      );
+      if (!verification.ok) {
+        feedback.setError(verification.error);
+        return;
+      }
+    }
     const res = isDeactivated
       ? await reactivateMember({ memberId })
       : await deactivateMember({ memberId });
@@ -76,6 +95,13 @@ export function MemberRowActions({
     );
     if (!confirmed) return;
     feedback.setPending();
+    const verification = await verifyWithPasskey(
+      userVerificationScope("team.member.delete", `member:${memberId}`),
+    );
+    if (!verification.ok) {
+      feedback.setError(verification.error);
+      return;
+    }
     const res = await deleteMember({ memberId });
     if (!res.ok) {
       feedback.setError(res.error);

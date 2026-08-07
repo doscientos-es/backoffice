@@ -1,4 +1,5 @@
 "use server";
+
 import { createVerifactuClient } from "@doscientos/verifactu";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
@@ -55,6 +56,8 @@ import {
   UpdateInvoiceStatusInput,
 } from "@/lib/schemas/invoice";
 import { UpdatePortalAccessInput } from "@/lib/schemas/portal";
+import { consumeUserVerification } from "@/lib/security/user-verification";
+import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { verifactuConfigFromEnv } from "@/lib/verifactu/config";
@@ -79,6 +82,10 @@ export const updateInvoiceStatus = defineAction({
   revalidate: (_p, input) => [`/invoices/${input.id}`, "/invoices", "/inicio"],
   handler: async (input, { user }) => {
     const { id, status } = input;
+    await consumeUserVerification(
+      user.id,
+      userVerificationScope("invoice.status.update", `invoice:${id}:status:${status}`),
+    );
     const timestamps = await findInvoiceTimestamps(id);
     const now = new Date().toISOString();
     const isFirstIssuance = status === "issued" && !timestamps?.issued_at;
@@ -262,8 +269,12 @@ export const sendToAeat = defineAction<typeof SendInvoiceInput, { csv: string | 
   schema: SendInvoiceInput,
   roles: ["owner", "admin"],
   revalidate: (_p, input) => [`/invoices/${input.id}`, "/invoices", "/inicio"],
-  handler: async (input) => {
+  handler: async (input, { user }) => {
     const { id } = input;
+    await consumeUserVerification(
+      user.id,
+      userVerificationScope("invoice.send_aeat", `invoice:${id}`),
+    );
     const verifactu = createVerifactuClient(verifactuConfigFromEnv(), log);
 
     const [companySetting, invoice] = await Promise.all([

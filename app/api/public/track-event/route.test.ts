@@ -30,29 +30,20 @@ vi.mock("@/lib/ratelimit", () => ({
 import { OPTIONS, POST } from "./route";
 
 function request(body: string, headers: Record<string, string> = {}) {
-  const requestHeaders = new Headers({
+  const requestHeaders = {
     origin: "https://landing.example",
     "user-agent": "Mozilla/5.0",
     "x-forwarded-for": "203.0.113.10",
-  });
-  for (const [name, value] of Object.entries(headers)) requestHeaders.set(name, value);
-  return new Request("http://localhost/api/public/track-event", {
-    method: "POST",
-    body,
-    headers: requestHeaders,
-  }) as never;
+    ...headers,
+  };
+  return {
+    headers: new Headers(requestHeaders),
+    text: async () => body,
+  } as never;
 }
 
 function requestWithUserAgent(body: string, userAgent: string) {
-  return new Request("http://localhost/api/public/track-event", {
-    method: "POST",
-    body,
-    headers: {
-      origin: "https://landing.example",
-      "user-agent": userAgent,
-      "x-forwarded-for": "203.0.113.10",
-    },
-  }) as never;
+  return request(body, { "user-agent": userAgent });
 }
 
 describe("POST /api/public/track-event", () => {

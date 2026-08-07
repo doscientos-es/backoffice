@@ -36,6 +36,8 @@ import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useUndoableDelete } from "@/lib/hooks/use-undoable-delete";
 import { PAYMENT_METHOD_LABELS, type PaymentMethodType } from "@/lib/schemas/invoice";
+import { userVerificationScope } from "@/lib/security/user-verification-scope";
+import { verifyWithPasskey } from "@/lib/security/webauthn-client";
 import { INVOICE_STATUS, VERIFACTU_STATUS } from "@/lib/status";
 import {
   createRectification,
@@ -103,13 +105,20 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
     redirectTo: "/invoices",
   });
 
-  const handleStatusUpdate = (
+  const handleStatusUpdate = async (
     status: "issued" | "paid" | "cancelled",
     opts?: { paymentMethod?: PaymentMethodType; successLabel?: string },
   ) => {
+    feedback.setPending();
+    const verification = await verifyWithPasskey(
+      userVerificationScope("invoice.status.update", `invoice:${invoice.id}:status:${status}`),
+    );
+    if (!verification.ok) {
+      feedback.setError(verification.error);
+      return;
+    }
     setPendingStatus(status);
     startTransition(async () => {
-      feedback.setPending();
       const res = await updateInvoiceStatus({
         id: invoice.id,
         status,

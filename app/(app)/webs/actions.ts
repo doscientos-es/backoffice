@@ -9,6 +9,8 @@ import { serverEnv } from "@/lib/env";
 import { backupsCacheTag, ensureClientBackupDir, isFileBrowserConfigured } from "@/lib/filebrowser";
 import { uuidIdInput } from "@/lib/schemas/common";
 import { UpdateWebProjectInput, WebProjectInput } from "@/lib/schemas/web-project";
+import { consumeUserVerification } from "@/lib/security/user-verification";
+import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { createServerClient } from "@/lib/supabase/server";
 import { encryptSecret } from "@/lib/vault/crypto";
 import { getWebProjectDbCredentials } from "@/lib/webs/credentials";
@@ -16,8 +18,13 @@ import { getWebProjectDbCredentials } from "@/lib/webs/credentials";
 export const createWebProject = defineAction({
   name: "webs.create",
   schema: WebProjectInput,
+  roles: ["owner", "admin"],
   revalidate: ["/webs"],
-  handler: async (input) => {
+  handler: async (input, { user }) => {
+    await consumeUserVerification(
+      user.id,
+      userVerificationScope("web.db_credentials.update", "web:create"),
+    );
     const supabase = await createServerClient();
     const { data, error } = await supabase
       .from("web_projects")
@@ -57,7 +64,12 @@ export const createWebProject = defineAction({
 export const updateWebProject = defineAction({
   name: "webs.update",
   schema: UpdateWebProjectInput,
-  handler: async (input) => {
+  roles: ["owner", "admin"],
+  handler: async (input, { user }) => {
+    await consumeUserVerification(
+      user.id,
+      userVerificationScope("web.db_credentials.update", `web:${input.id}`),
+    );
     const supabase = await createServerClient();
     const { error } = await supabase
       .from("web_projects")
@@ -108,7 +120,12 @@ export const updateWebProject = defineAction({
 export const triggerWebBackup = defineAction({
   name: "webs.backup",
   schema: z.object({ id: z.string().uuid(), slug: z.string().nullable().optional() }),
-  handler: async (input) => {
+  roles: ["owner", "admin"],
+  handler: async (input, { user }) => {
+    await consumeUserVerification(
+      user.id,
+      userVerificationScope("web.backup.run", `web:${input.id}`),
+    );
     if (isDemoMode()) return;
 
     const env = serverEnv();

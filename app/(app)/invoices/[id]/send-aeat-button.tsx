@@ -4,6 +4,8 @@ import { Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { userVerificationScope } from "@/lib/security/user-verification-scope";
+import { verifyWithPasskey } from "@/lib/security/webauthn-client";
 import { sendToAeat } from "../actions";
 
 export function SendAeatButton({
@@ -19,9 +21,16 @@ export function SendAeatButton({
   const feedback = useFormFeedback();
 
   async function onClick() {
+    feedback.setPending();
+    const verification = await verifyWithPasskey(
+      userVerificationScope("invoice.send_aeat", `invoice:${invoiceId}`),
+    );
+    if (!verification.ok) {
+      feedback.setError(verification.error);
+      return;
+    }
     const fd = new FormData();
     fd.set("id", invoiceId);
-    feedback.setPending();
     const result = await sendToAeat(fd);
     if (result.ok) {
       feedback.setSuccess(result.csv ? `Aceptada · CSV ${result.csv}` : "Factura procesada");

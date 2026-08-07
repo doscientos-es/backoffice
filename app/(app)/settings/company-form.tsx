@@ -10,6 +10,8 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { ZipInput } from "@/components/ui/zip-input";
 import { COUNTRY_OPTIONS } from "@/lib/address";
+import { userVerificationScope } from "@/lib/security/user-verification-scope";
+import { verifyWithPasskey } from "@/lib/security/webauthn-client";
 import { updateCompanySettings } from "./actions";
 
 interface Props {
@@ -47,6 +49,13 @@ export function CompanyForm({
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     feedback.setPending();
+    const verification = await verifyWithPasskey(
+      userVerificationScope("company.settings.update", "company:1"),
+    );
+    if (!verification.ok) {
+      feedback.setError(verification.error);
+      return;
+    }
     const result = await updateCompanySettings(fd);
     if (result.ok) feedback.setSuccess("Empresa guardada");
     else feedback.setError(result.error);

@@ -6,9 +6,13 @@ import { uuidIdInput } from "@/lib/schemas/common";
 import {
   CreateVaultItemInput,
   UpdateVaultItemInput,
+  VaultPasskeyEnrollmentInput,
   VaultPasswordInput,
   VaultUnlockInput,
 } from "@/lib/schemas/vault";
+import { consumeUserVerification } from "@/lib/security/user-verification";
+import { userVerificationScope } from "@/lib/security/user-verification-scope";
+import { createPasskeyRegistrationOptions } from "@/lib/security/webauthn";
 import { createServerClient } from "@/lib/supabase/server";
 import {
   grantVaultUnlock,
@@ -113,6 +117,30 @@ export const unlockVault = defineAction({
     const hash = await getVaultPasswordHash();
     if (!hash) return; // no password set
     if (!verifyVaultPassword(input.password, hash)) throw new Error("Contraseña incorrecta");
+    await grantVaultUnlock(hash);
+  },
+});
+
+/** Starts passkey enrollment only after an explicit master-password check. */
+export const beginVaultPasskeyRegistration = defineAction({
+  name: "vault.passkey.beginRegistration",
+  schema: VaultPasskeyEnrollmentInput,
+  handler: async (input, { user }) => {
+    const hash = await getVaultPasswordHash();
+    if (!hash || !verifyVaultPassword(input.password, hash)) {
+      throw new Error("Contraseña maestra incorrecta");
+    }
+    return { options: await createPasskeyRegistrationOptions(user) };
+  },
+});
+
+/** Consumes one WebAuthn proof and creates the normal four-hour vault grant. */
+export const unlockVaultWithPasskey = defineAction({
+  name: "vault.unlockWithPasskey",
+  handler: async (_input, { user }) => {
+    const hash = await getVaultPasswordHash();
+    if (!hash) throw new Error("Configura primero una contraseña maestra");
+    await consumeUserVerification(user.id, userVerificationScope("vault.unlock", "vault"));
     await grantVaultUnlock(hash);
   },
 });

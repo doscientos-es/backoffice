@@ -1,13 +1,20 @@
 "use client";
 
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Fingerprint } from "lucide-react";
 import { useState } from "react";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { userVerificationScope } from "@/lib/security/user-verification-scope";
+import { registerPasskey, verifyWithPasskey } from "@/lib/security/webauthn-client";
 import { cn } from "@/lib/utils";
-import { setVaultPassword, unlockVault } from "../actions";
+import {
+  beginVaultPasskeyRegistration,
+  setVaultPassword,
+  unlockVault,
+  unlockVaultWithPasskey,
+} from "../actions";
 
 // ── Password strength ─────────────────────────────────────────────────────────
 type StrengthLevel = 0 | 1 | 2 | 3 | 4;
@@ -64,15 +71,37 @@ function PasswordStrengthBar({ password }: { password: string }) {
 
 /** Dialog body: unlock the vault with master password */
 export function UnlockForm({
+  passkeyConfigured = false,
   onClose,
   onSuccess,
 }: {
+  passkeyConfigured?: boolean;
   onClose: () => void;
   /** Called after a successful unlock instead of reloading the page. */
   onSuccess?: () => void;
 }) {
   const feedback = useFormFeedback();
   const [showPassword, setShowPassword] = useState(false);
+
+  async function handlePasskeyUnlock() {
+    feedback.setPending();
+    const verification = await verifyWithPasskey(userVerificationScope("vault.unlock", "vault"));
+    if (!verification.ok) {
+      feedback.setError(verification.error);
+      return;
+    }
+    const result = await unlockVaultWithPasskey();
+    if (!result.ok) {
+      feedback.setError(result.error);
+      return;
+    }
+    feedback.setSuccess("Bóveda desbloqueada");
+    setTimeout(() => {
+      onClose();
+      if (onSuccess) onSuccess();
+      else window.location.reload();
+    }, 500);
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -118,8 +147,71 @@ export function UnlockForm({
       </Field>
       <div className="flex items-center justify-end gap-2 border-t border-border pt-3">
         <FormFeedback state={feedback.state} successLabel="Desbloqueada" />
+        {passkeyConfigured && (
+          <button
+            type="button"
+            disabled={feedback.pending}
+            onClick={handlePasskeyUnlock}
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
+          >
+            <Fingerprint className="size-4" /> Usar biometría
+          </button>
+        )}
         <SubmitButton loading={feedback.pending} pendingLabel="Verificando…">
           Desbloquear
+        </SubmitButton>
+      </div>
+    </form>
+  );
+}
+
+/** Enrolls an additional passkey after a master-password reauthentication. */
+export function EnrollPasskeyForm({ onClose }: { onClose: () => void }) {
+  const feedback = useFormFeedback();
+  const [password, setPassword] = useState("");
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    feedback.setPending();
+    const started = await beginVaultPasskeyRegistration({ password });
+    if (!started.ok) {
+      feedback.setError(started.error);
+      return;
+    }
+    const result = await registerPasskey(started.options);
+    if (!result.ok) {
+      feedback.setError(result.error);
+      return;
+    }
+    feedback.setSuccess("Biometría activada");
+    setTimeout(() => {
+      onClose();
+      window.location.reload();
+    }, 500);
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <Field>
+        <FieldLabel htmlFor="passkey-password">Contraseña maestra</FieldLabel>
+        <Input
+          id="passkey-password"
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          required
+          autoFocus
+        />
+      </Field>
+      <p className="text-xs text-muted-foreground">
+        No recibimos tu huella, rostro ni PIN: el dispositivo solo confirma tu identidad mediante
+        una clave criptográfica.
+      </p>
+      <div className="flex items-center justify-end gap-2 border-t border-border pt-3">
+        <FormFeedback state={feedback.state} successLabel="Activada" />
+        <SubmitButton loading={feedback.pending} pendingLabel="Abriendo biometría…">
+          Activar
         </SubmitButton>
       </div>
     </form>

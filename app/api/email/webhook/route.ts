@@ -1,18 +1,62 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
-import { type NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { type NextRequest, NextResponse } from "next/server";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 const RESEND_TO_INTERACTION: Record<string, string> = {
+  "email.sent": "email_sent",
+  "email.scheduled": "email_scheduled",
   "email.delivered": "email_delivered",
+  "email.delivery_delayed": "email_delivery_delayed",
+  "email.failed": "email_failed",
   "email.opened": "email_opened",
   "email.clicked": "email_clicked",
   "email.bounced": "email_bounced",
   "email.complained": "email_complained",
+  "email.suppressed": "email_suppressed",
+  "email.received": "email_received",
+};
+
+const RESEND_EVENT_SUBJECT: Record<string, string> = {
+  "email.sent": "Resend confirmó el envío",
+  "email.scheduled": "Email programado en Resend",
+  "email.delivered": "Email entregado por Resend",
+  "email.delivery_delayed": "Entrega de email retrasada",
+  "email.failed": "Error al enviar el email",
+  "email.opened": "Email abierto",
+  "email.clicked": "Enlace del email pulsado",
+  "email.bounced": "Email rebotado",
+  "email.complained": "Email marcado como spam",
+  "email.suppressed": "Email suprimido por Resend",
+  "email.received": "Email recibido mediante Resend",
+};
+
+type ResendWebhookPayload = {
+  type?: string;
+  data?: {
+    email_id?: string;
+    from?: string;
+    subject?: string;
+    to?: string | string[];
+    [key: string]: unknown;
+  };
 };
 
 /** Maximum age (seconds) accepted for a Svix timestamp to prevent replay attacks. */
 const SVIX_TIMESTAMP_TOLERANCE_S = 300;
+
+export const runtime = "nodejs";
+
+function extractEmailAddress(value: string | undefined): string | null {
+  if (!value) return null;
+  const address = (value.match(/<([^>]+)>/)?.[1] ?? value).trim().toLowerCase();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address) ? address : null;
+}
+
+function eventSubject(type: string, subject: string | undefined): string {
+  const label = RESEND_EVENT_SUBJECT[type] ?? type;
+  return subject?.trim() ? `${label} · ${subject.trim()}` : label;
+}
 
 /**
  * Verifies a Resend webhook using the Svix signing scheme.
@@ -71,16 +115,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
-  let payload: { type?: string; data?: { email_id?: string; to?: string | string[] } };
+  let payload: ResendWebhookPayload;
   try {
-    payload = JSON.parse(raw);
+    payload = JSON.parse(raw) as ResendWebhookPayload;
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
   const type = payload.type;
   const emailId = payload.data?.email_id;
-  if (!type || !emailId) return NextResponse.json({ ok: true });
+  const webhookId = request.headers.get("svix-id");
+  if (!type || !emailId || !webhookId) return NextResponse.json({ ok: true });
 
   const interactionType = RESEND_TO_INTERACTION[type];
   if (!interactionType) return NextResponse.json({ ok: true });
@@ -93,13 +138,37 @@ export async function POST(request: NextRequest) {
     .limit(1)
     .maybeSingle();
 
-  await supabase.from("lead_interactions").insert({
-    lead_id: prior?.lead_id ?? null,
-    client_id: prior?.client_id ?? null,
-    type: interactionType,
-    resend_email_id: emailId,
-    payload: payload.data as Record<string, unknown>,
-  });
+  let leadId = prior?.lead_id ?? null;
+  const clientId = prior?.client_id ?? null;
+
+  if (!leadId && !clientId && type === "email.received") {
+    const sender = extractEmailAddress(payload.data?.from);
+    if (sender) {
+      const { data: matchedLead, error: leadError } = await supabase
+        .from("leads")
+        .select("id")
+        .ilike("email", sender)
+        .is("deleted_at", null)
+        .limit(1)
+        .maybeSingle();
+      if (leadError) return NextResponse.json({ error: "Could not match incoming email" }, { status: 500 });
+      leadId = matchedLead?.id ?? null;
+    }
+  }
+
+  const { error } = await supabase.from("lead_interactions").upsert(
+    {
+      lead_id: leadId,
+      client_id: clientId,
+      type: interactionType,
+      subject: eventSubject(type, payload.data?.subject),
+      resend_email_id: emailId,
+      resend_webhook_id: webhookId,
+      payload: payload.data as Record<string, unknown>,
+    },
+    { onConflict: "resend_webhook_id", ignoreDuplicates: true },
+  );
+  if (error) return NextResponse.json({ error: "Could not record email event" }, { status: 500 });
 
   return NextResponse.json({ ok: true });
 }

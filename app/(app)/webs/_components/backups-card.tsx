@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { FileBrowserItem, FileBrowserListing } from "@/lib/filebrowser";
+import { userVerificationScope } from "@/lib/security/user-verification-scope";
+import { verifyWithPasskey } from "@/lib/security/webauthn-client";
 import { ForceBackupButton } from "./force-backup-button";
 
 // Session-scoped stale-while-revalidate cache. Keyed by `slug:subPath`, it lets
@@ -75,6 +77,13 @@ function FileRow({
   function onConfirmDelete() {
     startTransition(async () => {
       try {
+        const verification = await verifyWithPasskey(
+          userVerificationScope("backup.delete", `backup:${clientSlug}:${filePath}`),
+        );
+        if (!verification.ok) {
+          sileo.error({ title: verification.error });
+          return;
+        }
         const url = `/api/backups/${clientSlug}?path=${encodeURIComponent(filePath)}`;
         const res = await fetch(url, { method: "DELETE" });
         if (!res.ok) throw new Error();

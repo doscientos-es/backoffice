@@ -4,6 +4,8 @@ import { DatabaseBackup, Loader2 } from "lucide-react";
 import { useTransition } from "react";
 import { sileo } from "sileo";
 import { Button } from "@/components/ui/button";
+import { userVerificationScope } from "@/lib/security/user-verification-scope";
+import { verifyWithPasskey } from "@/lib/security/webauthn-client";
 import { triggerWebBackup } from "../actions";
 
 type Props = {
@@ -21,6 +23,13 @@ export function ForceBackupButton({ projectId, slug }: Props) {
 
   function onClick() {
     startTransition(async () => {
+      const verification = await verifyWithPasskey(
+        userVerificationScope("web.backup.run", `web:${projectId}`),
+      );
+      if (!verification.ok) {
+        sileo.error({ title: verification.error });
+        return;
+      }
       const res = await triggerWebBackup({ id: projectId, slug });
       if (res.ok) {
         sileo.success({ title: "Backup completado" });

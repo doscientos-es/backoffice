@@ -1,17 +1,15 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DangerZone } from "@/components/ui/danger-zone";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { requireUser } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import { getWebProject } from "@/lib/webs/queries";
-import { WebFormFields } from "../../_components/web-form-fields";
-import { deleteWebProject, updateWebProject } from "../../actions";
+import { VerifiedWebProjectForm } from "../../_components/verified-web-project-form";
+import { deleteWebProject } from "../../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +24,7 @@ export async function generateMetadata({
 }
 
 export default async function EditWebPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireUser();
+  await requireRole(["owner", "admin"]);
   const { id } = await params;
   const supabase = await createServerClient();
 
@@ -46,20 +44,12 @@ export default async function EditWebPage({ params }: { params: Promise<{ id: st
 
       <Card>
         <CardContent className="pt-6">
-          <form action={updateWebProject} className="flex flex-col gap-5">
-            <input type="hidden" name="id" value={id} />
-            <WebFormFields
-              idPrefix="edit"
-              clients={(clients as Array<{ id: string; name: string }> | null) ?? []}
-              defaults={site}
-            />
-            <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
-              <Button asChild variant="ghost" size="sm">
-                <Link href={`/webs/${id}`}>Cancelar</Link>
-              </Button>
-              <SubmitButton pendingLabel="Guardando…">Guardar cambios</SubmitButton>
-            </div>
-          </form>
+          <VerifiedWebProjectForm
+            clients={(clients as Array<{ id: string; name: string }> | null) ?? []}
+            defaults={site}
+            mode="edit"
+            projectId={id}
+          />
         </CardContent>
       </Card>
 

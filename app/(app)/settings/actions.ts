@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireRole, requireUser } from "@/lib/auth";
+import { consumeUserVerification } from "@/lib/security/user-verification";
+import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { createServerClient } from "@/lib/supabase/server";
 
 const ProfileInput = z.object({
@@ -181,7 +183,7 @@ const CompanyInput = z.object({
 export async function updateCompanySettings(
   formData: FormData,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  await requireUser();
+  const user = await requireRole(["owner", "admin"]);
   const raw = {
     company_name: formData.get("company_name")?.toString() ?? "",
     company_nif: formData.get("company_nif")?.toString() ?? "",
@@ -200,6 +202,10 @@ export async function updateCompanySettings(
   if (!parsed.success) {
     return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
   }
+  await consumeUserVerification(
+    user.id,
+    userVerificationScope("company.settings.update", "company:1"),
+  );
 
   // Compute the legacy freeform field so the PDF query keeps working without changes.
   const { formatAddress } = await import("@/lib/address");
