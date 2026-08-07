@@ -1,3 +1,5 @@
+import { formatInteractionForAI, type LeadInteractionForAI } from "./interaction-utils";
+
 type LeadContextRow = Record<string, unknown>;
 
 function display(value: unknown): string {
@@ -95,4 +97,103 @@ export function formatLeadConversionEventsForAI(events: LeadConversionEventForAI
         `- ${display(event.created_at)} | ${display(event.event_name)} | paso: ${display(event.conversion_step)} | landing: ${display(event.landing_path)} | ref: ${display(event.referrer)} | UTM: ${compact([event.utm_source, event.utm_campaign])}`,
     )
     .join("\n");
+}
+
+type LeadBriefingProject = {
+  name: string;
+  status: string | null;
+  description: string | null;
+};
+
+type LeadBriefingInvoice = {
+  full_number: string | null;
+  status: string | null;
+  total: number | null;
+  issue_date: string | null;
+};
+
+type LeadBriefingTask = {
+  title: string;
+  status: string;
+  due_date: string | null;
+  description: string | null;
+  priority: string | null;
+};
+
+type LeadBriefingReminder = {
+  title: string;
+  remind_at: string;
+};
+
+type LeadBriefingAttachment = {
+  name: string;
+  mime_type: string | null;
+};
+
+export type LeadBriefingForAI = {
+  lead: LeadContextRow;
+  clientName: string | null;
+  interactions: LeadInteractionForAI[];
+  proposals: LeadProposalForAI[];
+  projects: LeadBriefingProject[];
+  invoices: LeadBriefingInvoice[];
+  tasks: LeadBriefingTask[];
+  reminders: LeadBriefingReminder[];
+  attachments: LeadBriefingAttachment[];
+};
+
+/**
+ * Creates a portable CRM briefing for a third-party AI. It is deliberately
+ * deterministic: copying it does not send CRM data anywhere.
+ */
+export function formatLeadBriefingForAI(context: LeadBriefingForAI): string {
+  const interactions = context.interactions
+    .slice()
+    .reverse()
+    .map(formatInteractionForAI)
+    .join("\n");
+  const projects = context.projects
+    .map(
+      (project) =>
+        `- ${display(project.name)} | estado: ${display(project.status)}${project.description ? ` | ${project.description.slice(0, 1000)}` : ""}`,
+    )
+    .join("\n");
+  const invoices = context.invoices
+    .map(
+      (invoice) =>
+        `- ${display(invoice.full_number)} | estado: ${display(invoice.status)} | total: ${display(invoice.total)} | emitida: ${display(invoice.issue_date)}`,
+    )
+    .join("\n");
+  const tasks = context.tasks
+    .map(
+      (task) =>
+        `- ${display(task.due_date)} | ${display(task.title)} | estado: ${display(task.status)} | prioridad: ${display(task.priority)}${task.description ? ` | ${task.description.slice(0, 700)}` : ""}`,
+    )
+    .join("\n");
+  const reminders = context.reminders
+    .map((reminder) => `- ${display(reminder.remind_at)} | ${display(reminder.title)}`)
+    .join("\n");
+  const attachments = context.attachments
+    .map((attachment) => `- ${display(attachment.name)} | ${display(attachment.mime_type)}`)
+    .join("\n");
+
+  return [
+    "# Briefing CRM para IA",
+    "Usa únicamente estos datos como fuente de verdad. Si falta información, indícalo y no la inventes.",
+    "\n## Ficha y cualificación del lead",
+    formatLeadContextForAI(context.lead),
+    `Cliente vinculado: ${display(context.clientName)}`,
+    "\n## Historial de interacciones (cronológico)",
+    interactions || "(sin interacciones registradas)",
+    "\n## Actividad pendiente",
+    `Tareas:\n${tasks || "(sin tareas registradas)"}\n\nRecordatorios:\n${reminders || "(sin recordatorios pendientes)"}`,
+    "\n## Propuestas relacionadas",
+    formatLeadProposalsForAI(context.proposals) || "(sin propuestas relacionadas)",
+    "\n## Proyectos vinculados",
+    projects || "(sin proyectos vinculados)",
+    "\n## Facturación vinculada",
+    invoices || "(sin facturas vinculadas)",
+    "\n## Adjuntos registrados",
+    `${attachments || "(sin adjuntos)"}\nNota: solo se incluyen los nombres y tipos de los archivos; su contenido no se ha extraído.`,
+  ].join("\n");
 }

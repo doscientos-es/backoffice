@@ -178,12 +178,18 @@ export type LeadRelatedProposal = {
   title: string | null;
   status: string | null;
   total: number | null;
+  valid_until: string | null;
+  sent_at: string | null;
+  viewed_at: string | null;
+  responded_at: string | null;
+  notes: string | null;
 };
 
 export type LeadRelatedProject = {
   id: string;
   name: string;
   status: string | null;
+  description: string | null;
 };
 
 export type LeadRelatedInvoice = {
@@ -191,6 +197,7 @@ export type LeadRelatedInvoice = {
   full_number: string | null;
   status: string | null;
   total: number | null;
+  issue_date: string | null;
 };
 
 export type LeadRelatedTask = {
@@ -198,12 +205,20 @@ export type LeadRelatedTask = {
   title: string;
   status: string;
   due_date: string | null;
+  description: string | null;
+  priority: string | null;
+};
+
+export type LeadRelatedAttachment = {
+  name: string;
+  mime_type: string | null;
 };
 
 export type LeadDetailResult = {
   lead: LeadDetail;
   interactions: LeadDetailInteraction[];
   linkedClientId: string | null;
+  linkedClientName: string | null;
   proposals: LeadRelatedProposal[];
   projects: LeadRelatedProject[];
   invoices: LeadRelatedInvoice[];
@@ -211,6 +226,7 @@ export type LeadDetailResult = {
   tasks: LeadRelatedTask[];
   /** Pending reminders scheduled against this lead, soonest first. */
   reminders: ReminderRow[];
+  attachments: LeadRelatedAttachment[];
 };
 
 export type LeadConvertSeed = {

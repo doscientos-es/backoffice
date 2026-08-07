@@ -1,5 +1,3 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -11,11 +9,14 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { isAIEnabled } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { CONVERSION_STEP_LABEL } from "@/lib/conversion-events/labels";
+import { formatLeadBriefingForAI } from "@/lib/leads/ai-context";
 import { getLeadDetail } from "@/lib/leads/queries";
 import { leadDisplayName } from "@/lib/leads/utils";
 import { listActiveMembers } from "@/lib/members/queries";
 import { LEAD_STATUS, TASK_STATUS, type TaskStatus } from "@/lib/status";
 import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { TaskCreateDialog } from "../../tasks/task-create-dialog";
 import { CallInteractionDetails } from "./call-interaction-details";
 import { LeadAiPanel } from "./lead-ai-panel";
@@ -88,8 +89,18 @@ export default async function LeadDetailPage({
 
   const result = await getLeadDetail(id);
   if (!result) notFound();
-  const { lead, interactions, linkedClientId, proposals, projects, invoices, tasks, reminders } =
-    result;
+  const {
+    lead,
+    interactions,
+    linkedClientId,
+    linkedClientName,
+    proposals,
+    projects,
+    invoices,
+    tasks,
+    reminders,
+    attachments,
+  } = result;
 
   const aiEnabled = isAIEnabled();
   const canEdit = user.role !== "viewer";
@@ -122,6 +133,17 @@ export default async function LeadDetailPage({
     lead.status !== "archived";
   const displayName = leadDisplayName(lead);
   const alias = (lead.alias as string | null)?.trim() || null;
+  const briefing = formatLeadBriefingForAI({
+    lead,
+    clientName: linkedClientName,
+    interactions,
+    proposals,
+    projects,
+    invoices,
+    tasks,
+    reminders,
+    attachments,
+  });
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -275,16 +297,16 @@ export default async function LeadDetailPage({
                   lead.first_utm_medium,
                   lead.first_utm_campaign,
                 ]) && (
-                  <DetailRow label="First touch">
-                    {compactParts([
-                      lead.first_landing_path,
-                      lead.first_referrer,
-                      lead.first_utm_source,
-                      lead.first_utm_medium,
-                      lead.first_utm_campaign,
-                    ])}
-                  </DetailRow>
-                )}
+                    <DetailRow label="First touch">
+                      {compactParts([
+                        lead.first_landing_path,
+                        lead.first_referrer,
+                        lead.first_utm_source,
+                        lead.first_utm_medium,
+                        lead.first_utm_campaign,
+                      ])}
+                    </DetailRow>
+                  )}
                 {compactParts([
                   lead.last_landing_path,
                   lead.last_referrer,
@@ -292,16 +314,16 @@ export default async function LeadDetailPage({
                   lead.last_utm_medium,
                   lead.last_utm_campaign,
                 ]) && (
-                  <DetailRow label="Last touch">
-                    {compactParts([
-                      lead.last_landing_path,
-                      lead.last_referrer,
-                      lead.last_utm_source,
-                      lead.last_utm_medium,
-                      lead.last_utm_campaign,
-                    ])}
-                  </DetailRow>
-                )}
+                    <DetailRow label="Last touch">
+                      {compactParts([
+                        lead.last_landing_path,
+                        lead.last_referrer,
+                        lead.last_utm_source,
+                        lead.last_utm_medium,
+                        lead.last_utm_campaign,
+                      ])}
+                    </DetailRow>
+                  )}
                 {[lead.calculator_cost, lead.calculator_hours].some(hasValue) && (
                   <DetailRow label="Resultado calculadora">
                     {[lead.calculator_cost, lead.calculator_hours].filter(hasValue).join(" · ")}
@@ -358,6 +380,7 @@ export default async function LeadDetailPage({
                   leadId={lead.id as string}
                   aiEnabled={aiEnabled}
                   members={members}
+                  briefing={briefing}
                   initialData={{
                     ai_summary: (lead.ai_summary as string | null) ?? null,
                     ai_suggested_next_step: (lead.ai_suggested_next_step as string | null) ?? null,

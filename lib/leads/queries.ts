@@ -17,6 +17,7 @@ import {
   type LeadListParams,
   type LeadListResult,
   type LeadMemberRef,
+  type LeadRelatedAttachment,
   RECENT_INTERACTIONS_PER_LEAD,
 } from "./types";
 
@@ -229,6 +230,7 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
     { data: linkedClient },
     { data: tasks },
     { data: reminders },
+    { data: attachments },
   ] = await Promise.all([
     notDeleted(supabase.from("leads").select(DETAIL_COLUMNS).eq("id", id)).maybeSingle(),
     supabase
@@ -237,14 +239,21 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
       .eq("lead_id", id)
       .order("created_at", { ascending: false })
       .limit(50),
-    notDeleted(supabase.from("clients").select("id").eq("lead_id", id)).maybeSingle(),
+    notDeleted(supabase.from("clients").select("id, name").eq("lead_id", id)).maybeSingle(),
     notDeleted(
       supabase
         .from("tasks")
-        .select("id, title, status, due_date")
+        .select("id, title, status, due_date, description, priority")
         .eq("kind", "task")
         .eq("lead_id", id),
     )
+      .order("created_at", { ascending: false })
+      .limit(LEAD_RELATED_LIMIT),
+    supabase
+      .from("attachments")
+      .select("name, mime_type")
+      .eq("lead_id", id)
+      .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(LEAD_RELATED_LIMIT),
     supabase
@@ -262,12 +271,15 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
   if (!lead) return null;
 
   const linkedClientId = (linkedClient?.id as string | undefined) ?? null;
+  const linkedClientName = (linkedClient?.name as string | undefined) ?? null;
 
   // Commercial pipeline. Proposals may target the lead directly (lead-first
   // flow) or the linked client once converted; projects and invoices only
   // exist against a client, so we skip them until one is linked.
   const proposalsBuilder = notDeleted(
-    supabase.from("proposals").select("id, number, title, status, total"),
+    supabase
+      .from("proposals")
+      .select("id, number, title, status, total, valid_until, sent_at, viewed_at, responded_at, notes"),
   );
   const { data: proposalRows } = await (linkedClientId
     ? proposalsBuilder.or(`lead_id.eq.${id},client_id.eq.${linkedClientId}`)
@@ -281,7 +293,10 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
   if (linkedClientId) {
     const [{ data: projects }, { data: invoices }] = await Promise.all([
       notDeleted(
-        supabase.from("projects").select("id, name, status").eq("client_id", linkedClientId),
+        supabase
+          .from("projects")
+          .select("id, name, status, description")
+          .eq("client_id", linkedClientId),
       )
         .order("created_at", { ascending: false })
         .limit(LEAD_RELATED_LIMIT),
@@ -312,35 +327,46 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
     lead: lead as unknown as LeadDetailResult["lead"],
     interactions: detailInteractions,
     linkedClientId,
+    linkedClientName,
     proposals: (proposalRows ?? []).map((p) => ({
       id: p.id as string,
       number: (p.number as string | null) ?? null,
       title: (p.title as string | null) ?? null,
       status: (p.status as string | null) ?? null,
       total: p.total == null ? null : Number(p.total),
+      valid_until: (p.valid_until as string | null) ?? null,
+      sent_at: (p.sent_at as string | null) ?? null,
+      viewed_at: (p.viewed_at as string | null) ?? null,
+      responded_at: (p.responded_at as string | null) ?? null,
+      notes: (p.notes as string | null) ?? null,
     })),
     projects: projectRows.map((p) => ({
       id: p.id as string,
       name: p.name as string,
       status: (p.status as string | null) ?? null,
+      description: (p.description as string | null) ?? null,
     })),
     invoices: invoiceRows.map((i) => ({
       id: i.id as string,
       full_number: (i.full_number as string | null) ?? null,
       status: (i.status as string | null) ?? null,
       total: i.total == null ? null : Number(i.total),
+      issue_date: (i.issue_date as string | null) ?? null,
     })),
     tasks: (tasks ?? []).map((t) => ({
       id: t.id as string,
       title: t.title as string,
       status: t.status as string,
       due_date: (t.due_date as string | null) ?? null,
+      description: (t.description as string | null) ?? null,
+      priority: (t.priority as string | null) ?? null,
     })),
     reminders: (reminders ?? []).map((r) => ({
       id: r.id as string,
       title: r.title as string,
       remind_at: r.start_at as string,
     })),
+    attachments: (attachments ?? []) as LeadRelatedAttachment[],
   };
 }
 

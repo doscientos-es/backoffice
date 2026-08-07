@@ -1,12 +1,12 @@
 "use client";
 
-import { AlertCircle, CalendarClock, Sparkles } from "lucide-react";
-import { useState } from "react";
 import { AiNotice } from "@/components/ui/ai-notice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { AlertCircle, CalendarClock, Check, Copy, Sparkles } from "lucide-react";
+import { useState } from "react";
 import {
   type ScheduleMember,
   ScheduleReminderDialog,
@@ -26,6 +26,7 @@ type Props = {
   leadId: string;
   aiEnabled: boolean;
   initialData: LeadAiData;
+  briefing: string;
   members?: ScheduleMember[];
 };
 
@@ -66,16 +67,21 @@ function AiSkeleton() {
   );
 }
 
-export function LeadAiPanel({ leadId, aiEnabled, initialData, members = [] }: Props) {
+export function LeadAiPanel({ leadId, aiEnabled, initialData, briefing, members = [] }: Props) {
   const [data, setData] = useState<LeadAiData>(initialData);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fresh, setFresh] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  if (!aiEnabled) {
-    return (
-      <AiNotice message="El asistente de IA no está activo. Añade OPENAI_API_KEY a las variables de entorno para generar resúmenes de leads automáticamente." />
-    );
+  async function handleCopyBriefing() {
+    try {
+      await navigator.clipboard.writeText(briefing);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setError("No se pudo copiar el briefing al portapapeles.");
+    }
   }
 
   async function handleSummarize() {
@@ -110,16 +116,18 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData, members = [] }: Pr
   const hasSummary = Boolean(data.ai_summary);
   const updatedAt = data.ai_updated_at
     ? new Date(data.ai_updated_at).toLocaleDateString("es-ES", {
-        day: "numeric",
-        month: "short",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
     : null;
 
   return (
     <div className="flex flex-col gap-4">
-      {loading ? (
+      {!aiEnabled ? (
+        <AiNotice message="El asistente de IA interno no está activo. Aun así puedes copiar el briefing para consultarlo con la IA que prefieras." />
+      ) : loading ? (
         <AiSkeleton />
       ) : hasSummary ? (
         <div className={cn("flex flex-col gap-3", fresh && "animate-in fade-in duration-500")}>
@@ -191,12 +199,29 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData, members = [] }: Pr
         </div>
       )}
 
-      <div className="flex justify-end">
-        <Button size="sm" variant="outline" onClick={handleSummarize} disabled={loading}>
-          <Sparkles className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
-          {loading ? "Analizando…" : hasSummary ? "Actualizar análisis" : "Generar análisis"}
-        </Button>
+      <div className="rounded-md border border-border bg-muted/30 px-3 py-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p className="text-sm font-medium">Briefing para otra IA</p>
+            <p className="text-xs text-muted-foreground">
+              Incluye ficha, historial, actividad y contexto comercial registrado.
+            </p>
+          </div>
+          <Button size="sm" variant="outline" onClick={handleCopyBriefing}>
+            {copied ? <Check className="size-3.5 text-emerald-600" /> : <Copy className="size-3.5" />}
+            {copied ? "Copiado" : "Copiar briefing"}
+          </Button>
+        </div>
       </div>
+
+      {aiEnabled ? (
+        <div className="flex justify-end">
+          <Button size="sm" variant="outline" onClick={handleSummarize} disabled={loading}>
+            <Sparkles className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
+            {loading ? "Analizando…" : hasSummary ? "Actualizar análisis" : "Generar análisis"}
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }
