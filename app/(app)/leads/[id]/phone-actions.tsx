@@ -1,14 +1,14 @@
 "use client";
 
+import { MessageCircle, QrCode } from "lucide-react";
+import Image from "next/image";
+import { toDataURL } from "qrcode";
+import { useEffect, useState } from "react";
 import { CopyButton } from "@/components/ui/copy-button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { publicEnv } from "@/lib/env";
 import { buildBookingUrl } from "@/lib/recovery/utils";
 import { cn } from "@/lib/utils";
-import { MessageCircle, QrCode } from "lucide-react";
-import Image from "next/image";
-import { toDataURL } from "qrcode";
-import { useEffect, useState } from "react";
 import { startLeadCall } from "../actions";
 
 /**

@@ -20,9 +20,10 @@ describe("LeadWhatsAppButton", () => {
     render(<LeadWhatsAppButton {...props} firstContactedAt="2026-08-07T10:00:00.000Z" />);
 
     const link = screen.getByRole("link", { name: "Preparar WhatsApp" });
-    const message = new URL(link.getAttribute("href") ?? "", "https://example.com").searchParams.get(
-      "text",
-    );
+    const message = new URL(
+      link.getAttribute("href") ?? "",
+      "https://example.com",
+    ).searchParams.get("text");
     expect(message).toBe("Hola, María. Soy Ana, de Doscientos.");
   });
 
@@ -30,9 +31,10 @@ describe("LeadWhatsAppButton", () => {
     render(<LeadWhatsAppButton {...props} firstContactedAt={null} />);
 
     const link = screen.getByRole("link", { name: "Preparar WhatsApp" });
-    const message = new URL(link.getAttribute("href") ?? "", "https://example.com").searchParams.get(
-      "text",
-    );
+    const message = new URL(
+      link.getAttribute("href") ?? "",
+      "https://example.com",
+    ).searchParams.get("text");
     expect(message).toContain("He intentado llamarte porque rellenaste un formulario");
   });
 });
