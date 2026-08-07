@@ -250,13 +250,6 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
       .order("created_at", { ascending: false })
       .limit(LEAD_RELATED_LIMIT),
     supabase
-      .from("attachments")
-      .select("name, mime_type")
-      .eq("lead_id", id)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false })
-      .limit(LEAD_RELATED_LIMIT),
-    supabase
       .from("tasks")
       .select("id, title, start_at")
       .eq("kind", "reminder")
@@ -264,6 +257,13 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
       .is("completed_at", null)
       .is("deleted_at", null)
       .order("start_at", { ascending: true })
+      .limit(LEAD_RELATED_LIMIT),
+    supabase
+      .from("attachments")
+      .select("name, mime_type")
+      .eq("lead_id", id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
       .limit(LEAD_RELATED_LIMIT),
   ]);
 
