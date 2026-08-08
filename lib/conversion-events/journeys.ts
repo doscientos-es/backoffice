@@ -52,10 +52,15 @@ export type VisitorJourney = {
  * eventos que envía por beacon (ver captureClarityPlayback en la landing).
  * Vale con encontrarla una vez: apunta al visitante, no al evento concreto.
  */
-function clarityUrl(events: ConversionEventRow[]): string | null {
+export function findClarityPlaybackUrl(events: ConversionEventRow[]): string | null {
   for (const event of events) {
     const url = event.payload?.clarity_url;
-    if (typeof url === "string" && url.startsWith("https://clarity.microsoft.com/")) return url;
+    if (typeof url !== "string") continue;
+    try {
+      if (new URL(url).origin === "https://clarity.microsoft.com") return url;
+    } catch {
+      // Ignore malformed URLs received from the public tracking endpoint.
+    }
   }
   return null;
 }
@@ -144,7 +149,7 @@ export function groupIntoJourneys(events: ConversionEventRow[]): VisitorJourney[
       entryPath: entry.landing_path,
       source: trafficSource(entry),
       hasWhatsappClick: sorted.some((e) => e.event_name === "whatsapp_click"),
-      clarityUrl: clarityUrl(sorted),
+      clarityUrl: findClarityPlaybackUrl(sorted),
     });
   }
 

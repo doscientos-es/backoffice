@@ -1,23 +1,29 @@
 "use client";
 
-import { LayoutGrid, List, Loader2 } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { ChartNoAxesCombined, LayoutGrid, List, Loader2 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 
-export function LeadsViewToggle({ view }: { view: "board" | "list" }) {
+type LeadView = "board" | "list" | "analytics";
+
+export function LeadsViewToggle({ view }: { view: LeadView }) {
   const router = useRouter();
-  const pathname = usePathname();
   const params = useSearchParams();
   const [, startTransition] = useTransition();
-  const [pending, setPending] = useState<"board" | "list" | null>(null);
+  const [pending, setPending] = useState<LeadView | null>(null);
 
-  const navigate = (target: "board" | "list") => {
+  const navigate = (target: LeadView) => {
     if (target === view) return;
     setPending(target);
     startTransition(() => {
+      if (target === "analytics") {
+        router.push("/leads/analytics");
+        setPending(null);
+        return;
+      }
       const next = new URLSearchParams();
       for (const key of ["q", "source", "assignee", "attention"]) {
         const value = params.get(key);
@@ -29,7 +35,7 @@ export function LeadsViewToggle({ view }: { view: "board" | "list" }) {
         next.set("view", "list");
       }
       const query = next.toString();
-      router.push(query ? `${pathname}?${query}` : pathname);
+      router.push(query ? `/leads?${query}` : "/leads");
       setPending(null);
     });
   };
@@ -81,6 +87,20 @@ export function LeadsViewToggle({ view }: { view: "board" | "list" }) {
             <List className="size-3.5" />
           )}
           Lista
+        </Button>
+        <Button
+          size="sm"
+          variant={view === "analytics" ? "secondary" : "ghost"}
+          className={view !== "analytics" ? "text-muted-foreground hover:text-foreground" : ""}
+          disabled={pending !== null}
+          onClick={() => navigate("analytics")}
+        >
+          {pending === "analytics" ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
+            <ChartNoAxesCombined className="size-3.5" />
+          )}
+          Análisis
         </Button>
       </ButtonGroup>
     </div>

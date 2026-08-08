@@ -2,6 +2,7 @@ import { createTask } from "@/app/(app)/tasks/actions";
 import { type AttachmentItem, AttachmentSection } from "@/components/ui/attachment-section";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { findClarityPlaybackUrl } from "@/lib/conversion-events/journeys";
 import { CONVERSION_EVENT_LABEL, CONVERSION_STEP_LABEL } from "@/lib/conversion-events/labels";
 import { listLeadConversionEvents } from "@/lib/conversion-events/queries";
 import { listLeadDiagnostics } from "@/lib/diagnostics/queries";
@@ -9,7 +10,7 @@ import { isGoogleEnabled } from "@/lib/env";
 import type { MemberOption } from "@/lib/members/queries";
 import { MEETING_PROJECT_STATUSES } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
-import { ArrowRight, Clock3 } from "lucide-react";
+import { ArrowRight, Clock3, ExternalLink } from "lucide-react";
 import { LeadQuickActions } from "./quick-actions";
 
 function formatJourneyTime(value: string): string {
@@ -30,11 +31,22 @@ export async function LeadConversionJourneySection({
 }) {
   const events = await listLeadConversionEvents({ id: leadId, event_id: eventId });
   const journeyEvents = [...events].reverse();
+  const clarityUrl = findClarityPlaybackUrl(events);
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
         <CardTitle>Journey de conversión</CardTitle>
+        {clarityUrl ? (
+          <a
+            href={clarityUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-primary hover:underline"
+          >
+            Ver grabación <ExternalLink className="size-3" aria-hidden />
+          </a>
+        ) : null}
       </CardHeader>
       <CardContent>
         {events.length === 0 ? (

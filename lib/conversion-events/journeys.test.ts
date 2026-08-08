@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupIntoJourneys, trafficSource } from "./journeys";
+import { findClarityPlaybackUrl, groupIntoJourneys, trafficSource } from "./journeys";
 import type { ConversionEventRow } from "./queries";
 
 function event(overrides: Partial<ConversionEventRow> = {}): ConversionEventRow {
@@ -54,6 +54,14 @@ describe("groupIntoJourneys", () => {
     ]);
 
     expect(journey?.clarityUrl).toBeNull();
+  });
+
+  it("only accepts playback URLs from Clarity's domain", () => {
+    expect(
+      findClarityPlaybackUrl([
+        event({ payload: { clarity_url: "https://clarity.microsoft.com.evil.test/player" } }),
+      ]),
+    ).toBeNull();
   });
 });
 
