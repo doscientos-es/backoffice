@@ -1,29 +1,22 @@
 "use server";
 
-import { createVerifactuClient } from "@doscientos/verifactu";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { InvoiceEmail } from "@/components/email";
 import { defineAction } from "@/lib/actions/define-action";
 import { requireRole } from "@/lib/auth";
-import { promoteLeadFromClient } from "@/lib/crm/conversion";
 import { renderEmail } from "@/lib/email/render";
 import { sendEmail } from "@/lib/email/resend";
 import { publicEnv } from "@/lib/env";
-import { buildVatBreakdown, computeLineTotals } from "@/lib/finance";
+import { computeLineTotals } from "@/lib/finance";
 import { backupInvoiceToDrive } from "@/lib/google/backup";
 import { pushMetaConversion } from "@/lib/integrations/meta-capi";
 import {
   findClientInfo,
-  findCompanySettings,
   findInvoiceForEdit,
   findInvoiceForEmail,
   findInvoiceForRectification,
-  findInvoiceForVerifactu,
-  findInvoiceItemsForVat,
   findInvoiceSeries,
-  findInvoiceTimestamps,
-  findLastVerifactuChainEntry,
   findNextInvoiceNumberForSeries,
   findProjectForHourlyBilling,
   findProposalForInvoice,
@@ -32,7 +25,6 @@ import {
   insertInvoiceWithItems,
   insertRectificationWithItems,
   linkWorkLogsToInvoice,
-  patchInvoiceAfterVerifactu,
   patchInvoiceClientSnapshot,
   patchInvoiceHeader,
   patchInvoiceStatus,
@@ -60,11 +52,34 @@ import { consumeUserVerification } from "@/lib/security/user-verification";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { verifactuConfigFromEnv } from "@/lib/verifactu/config";
+import {
+  assertDurableVerifactuPackage,
+  deliverInvoiceVerifactu,
+  deliverVerifactuOutbox,
+  syncInvoiceQrFromLedger,
+} from "@/lib/verifactu/outbox";
 
 const log = scopedLogger("invoices.actions");
 
 export type UpdateInvoiceInput = UpdateInvoiceInputType;
+
+function outboxIdFromRpc(data: unknown): string {
+  const row = Array.isArray(data) ? data[0] : data;
+  const outboxId =
+    row && typeof row === "object" ? (row as { outbox_id?: unknown }).outbox_id : null;
+  if (typeof outboxId !== "string") throw new Error("No se pudo crear la cola de envío fiscal");
+  return outboxId;
+}
+
+async function enqueueFiscalRecord(invoiceId: string, cancellation = false): Promise<string> {
+  const supabase = await createServerClient();
+  const functionName = cancellation
+    ? "cancel_invoice_with_verifactu_outbox"
+    : "issue_invoice_with_verifactu_outbox";
+  const { data, error } = await supabase.rpc(functionName, { p_invoice_id: invoiceId });
+  if (error) throw new Error(error.message);
+  return outboxIdFromRpc(data);
+}
 
 // ─── Status ───────────────────────────────────────────────────────────────────
 
@@ -86,37 +101,29 @@ export const updateInvoiceStatus = defineAction({
       user.id,
       userVerificationScope("invoice.status.update", `invoice:${id}:status:${status}`),
     );
-    const timestamps = await findInvoiceTimestamps(id);
-    const now = new Date().toISOString();
-    const isFirstIssuance = status === "issued" && !timestamps?.issued_at;
+    if (status === "issued" || status === "cancelled") {
+      await assertDurableVerifactuPackage();
+      const outboxId = await enqueueFiscalRecord(id, status === "cancelled");
+      if (status === "issued") await syncInvoiceQrFromLedger(id);
+      const delivery = await deliverVerifactuOutbox(outboxId, `action:${crypto.randomUUID()}`);
+      if (delivery.status !== "accepted") {
+        log.warn(
+          { invoiceId: id, status: delivery.status },
+          "verifactu_immediate_delivery_deferred",
+        );
+      }
+      if (status === "issued") void backupInvoiceToDrive(id, user.email);
+      return;
+    }
 
-    // Refresh the client snapshot at the moment of issuance.
-    const clientSnapshot =
-      isFirstIssuance && timestamps?.client_id ? await findClientInfo(timestamps.client_id) : null;
+    const now = new Date().toISOString();
 
     await patchInvoiceStatus(id, {
       status,
       updated_at: now,
       paid_at: status === "paid" ? now : null,
       ...(status === "paid" && input.paymentMethod ? { payment_method: input.paymentMethod } : {}),
-      ...(isFirstIssuance ? { issued_at: now } : {}),
-      ...(clientSnapshot
-        ? {
-            client_name: clientSnapshot.name,
-            client_nif: clientSnapshot.nif,
-            client_address_street: clientSnapshot.billing_address_street,
-            client_address_zip: clientSnapshot.billing_address_zip,
-            client_address_city: clientSnapshot.billing_address_city,
-            client_address_province: clientSnapshot.billing_address_province,
-            client_address_country: clientSnapshot.billing_address_country,
-          }
-        : {}),
     });
-
-    // Best-effort Drive backup on first issuance — fires as the acting user.
-    if (isFirstIssuance) {
-      void backupInvoiceToDrive(id, user.email);
-    }
 
     // Fire-and-forget: notify Meta CAPI when an invoice is paid — the
     // highest-value signal for the ad algorithm to optimise towards.
@@ -226,43 +233,8 @@ export const restoreInvoice = defineAction({
 // ─── Verifactu (AEAT) ─────────────────────────────────────────────────────────
 
 /**
- * Extracts the already-sanitized error message from the Verifactu package.
- */
-function extractVerifactuError(result: { errorMessage?: string | null }): string {
-  return result.errorMessage ?? "AEAT rechazó la factura";
-}
-
-/**
- * Persist only the small, operational subset of the AEAT result. Older
- * package versions returned the full SOAP envelope as `rawResponse`; keeping
- * it in the invoice row is unnecessary and may retain fiscal/personal data.
- */
-function sanitizeVerifactuResponse(response: unknown): Record<string, unknown> {
-  if (!response || typeof response !== "object" || Array.isArray(response)) {
-    return { kind: "unknown_response" };
-  }
-
-  const value = response as Record<string, unknown>;
-  const allowed = [
-    "kind",
-    "httpStatus",
-    "csv",
-    "aeatCode",
-    "aeatDescription",
-    "soapFault",
-    "error",
-  ];
-  return Object.fromEntries(
-    allowed
-      .filter((key) => value[key] !== undefined && key !== "rawResponse")
-      .map((key) => [key, value[key]]),
-  );
-}
-
-/**
- * Submits an invoice to Verifactu (AEAT). Computes the SHA-256 hash chain entry,
- * builds the IDFACT and QR URL, persists the result.
- * Idempotent: short-circuits when the invoice is already `accepted`.
+ * Re-delivers the pre-generated RegistroAlta. It never recreates a hash or
+ * overwrites fiscal evidence; a non-due/accepted job simply returns no CSV.
  */
 export const sendToAeat = defineAction<typeof SendInvoiceInput, { csv: string | null }>({
   name: "invoices.sendToAeat",
@@ -275,104 +247,9 @@ export const sendToAeat = defineAction<typeof SendInvoiceInput, { csv: string | 
       user.id,
       userVerificationScope("invoice.send_aeat", `invoice:${id}`),
     );
-    const verifactu = createVerifactuClient(verifactuConfigFromEnv(), log);
-
-    const [companySetting, invoice] = await Promise.all([
-      findCompanySettings(),
-      findInvoiceForVerifactu(id),
-    ]);
-
-    if (!companySetting?.company_nif) throw new Error("Falta el NIF de la empresa en Ajustes");
-    if (!invoice) throw new Error("Factura no encontrada");
-    if (invoice.status === "draft") throw new Error("Emite la factura antes de enviarla a la AEAT");
-    if (invoice.verifactu_status === "accepted") return { csv: null };
-    if (invoice.verifactu_status === "excluded")
-      throw new Error("Esta factura está excluida de Verifactu");
-
-    const [prev, vatItems] = await Promise.all([
-      findLastVerifactuChainEntry(),
-      findInvoiceItemsForVat(id),
-    ]);
-
-    const vatLines = buildVatBreakdown(
-      vatItems.map((it) => ({ vat_rate: it.vat_rate, subtotal: it.subtotal })),
-    );
-    const descriptionOperacion =
-      vatItems
-        .map((it) => it.description)
-        .filter(Boolean)
-        .join(", ")
-        .slice(0, 250) || "Prestación de servicios profesionales";
-
-    const previousHash = prev?.current_hash ?? null;
-    const previousInvoiceNumber = prev?.full_number ?? null;
-    const previousIssueDate = prev?.issue_date ? new Date(prev.issue_date) : null;
-    const nextSequence = (prev?.chain_sequence ?? 0) + 1;
-    const generatedAt = new Date();
-    const issueDate = new Date(invoice.issue_date);
-
-    const result = await verifactu.registerInvoice({
-      nif: companySetting.company_nif,
-      invoiceNumber: invoice.full_number,
-      invoiceType: invoice.invoice_type,
-      issueDate,
-      taxAmount: invoice.tax_amount,
-      total: invoice.total,
-      previousHash,
-      generatedAt,
-      emisorName: companySetting.company_name,
-      clientNif: invoice.client_nif,
-      clientName: invoice.client_name,
-      descriptionOperacion,
-      vatLines,
-      previousInvoiceNumber,
-      previousIssueDate,
-    });
-
-    const qrUrl = verifactu.buildQrUrl({
-      nif: companySetting.company_nif,
-      invoiceNumber: invoice.full_number,
-      issueDate,
-      total: invoice.total,
-    });
-
-    // Keep technical failures separate from an AEAT fiscal rejection. This
-    // makes certificate/TLS/HTTP problems actionable and avoids suggesting a
-    // rectificative invoice when AEAT never parsed the record.
-    const persistedVerifactuStatus =
-      result.status === "accepted"
-        ? "accepted"
-        : result.status === "rejected"
-          ? "rejected"
-          : "error";
-
-    await patchInvoiceAfterVerifactu(id, {
-      idfact: result.idfact,
-      previous_hash: previousHash,
-      current_hash: result.hash,
-      chain_sequence: result.status === "accepted" ? nextSequence : null,
-      hash_generated_at: generatedAt.toISOString(),
-      verifactu_status: persistedVerifactuStatus,
-      verifactu_submitted_at: generatedAt.toISOString(),
-      verifactu_csv: result.csv,
-      verifactu_response: sanitizeVerifactuResponse(result.response),
-      verifactu_error: result.status === "accepted" ? null : extractVerifactuError(result),
-      qr_url: qrUrl,
-    });
-
-    log.info({ invoiceId: id, csv: result.csv, status: result.status }, "verifactu_submit_done");
-
-    if (result.status !== "accepted") {
-      throw new Error(extractVerifactuError(result));
-    }
-
-    // Once fiscally accepted, the originating lead is definitively won.
-    if (invoice.client_id) {
-      const supabase = await createServerClient();
-      await promoteLeadFromClient(supabase, invoice.client_id);
-    }
-
-    return { csv: result.csv };
+    await assertDurableVerifactuPackage();
+    const delivery = await deliverInvoiceVerifactu(id, `manual:${crypto.randomUUID()}`);
+    return { csv: delivery.csv };
   },
 });
 

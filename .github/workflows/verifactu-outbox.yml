@@ -1,0 +1,29 @@
+name: Retry VERI*FACTU outbox
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  retry:
+    name: Deliver queued fiscal records
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Call the VERI*FACTU retry endpoint
+        run: |
+          STATUS=$(curl --silent --output /tmp/verifactu-outbox.json \
+                        --write-out "%{http_code}" \
+                        --max-time 60 \
+                        -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+                        "${{ secrets.APP_URL }}/api/cron/verifactu-outbox")
+
+          echo "HTTP status: $STATUS"
+          cat /tmp/verifactu-outbox.json | python3 -m json.tool || true
+
+          if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 300 ]; then
+            echo "::error::El endpoint devolvió HTTP $STATUS"
+            exit 1
+          fi
