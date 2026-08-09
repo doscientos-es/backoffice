@@ -426,6 +426,20 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
         fbp: norm.context.metaFbp,
       }).catch((e) => log.error({ err: e, leadId }, "meta capi lead push failed"));
     }
+    const conversionTasks: Promise<unknown>[] = [];
+    if (!norm.context?.internalTraffic) {
+      conversionTasks.push(
+        recordLeadCreatedEvent(leadId, row, {
+          visitorId: norm.context?.visitorId,
+          resourceSlug: norm.context?.resourceSlug,
+        }).catch((e) => log.error({ err: e, leadId }, "lead conversion event failed")),
+        linkConversionEventsToLead({
+          leadId,
+          visitorId: norm.context?.visitorId,
+          eventId: norm.context?.eventId,
+        }).catch((e) => log.error({ err: e, leadId }, "conversion events link failed")),
+      );
+    }
 
     await Promise.allSettled([
       runLeadPipeline(leadId, {
@@ -454,19 +468,7 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
       logLeadCreatedInteraction(leadId, row).catch((e) =>
         log.error({ err: e, leadId }, "lead intake interaction failed"),
       ),
-      ...(!norm.context?.internalTraffic
-        ? [
-          recordLeadCreatedEvent(leadId, row, {
-            visitorId: norm.context?.visitorId,
-            resourceSlug: norm.context?.resourceSlug,
-          }).catch((e) => log.error({ err: e, leadId }, "lead conversion event failed")),
-          linkConversionEventsToLead({
-            leadId,
-            visitorId: norm.context?.visitorId,
-            eventId: norm.context?.eventId,
-          }).catch((e) => log.error({ err: e, leadId }, "conversion events link failed")),
-        ]
-        : []),
+      ...conversionTasks,
       ...(websiteCapiTask ? [websiteCapiTask] : []),
     ]);
   });
