@@ -19,6 +19,7 @@ import { LEAD_STATUS, TASK_STATUS, type TaskStatus } from "@/lib/status";
 import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
 import { TaskCreateDialog } from "../../tasks/task-create-dialog";
 import { CallInteractionDetails } from "./call-interaction-details";
+import { Lead360Timeline } from "./lead-360-timeline";
 import { LeadAiPanel } from "./lead-ai-panel";
 import { LeadCommercial } from "./lead-commercial";
 import {
@@ -28,6 +29,7 @@ import {
   LeadQuickActionsSection,
 } from "./lead-detail-async-sections";
 import { LeadEditDialog } from "./lead-edit-dialog";
+import { LeadNotesDialog } from "./lead-notes-dialog";
 import { MomTestChecklist } from "./mom-test-checklist";
 import { PhoneQuickActions } from "./phone-actions";
 import { LeadStatusSelect } from "./status-select";
@@ -247,13 +249,13 @@ export default async function LeadDetailPage({
         invoices={invoices}
       />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <div className="flex min-w-0 flex-col gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Detalles</CardTitle>
-            </CardHeader>
-            <CardContent>
+      <section className="grid gap-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(260px,0.75fr)]">
+        <Card>
+          <CardHeader className="border-b border-border/70 bg-muted/10">
+            <CardTitle className="text-base">Contexto del lead</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-5">
+            <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2">
               <DetailGrid>
                 <DetailRow label="Nombre">{lead.name as string}</DetailRow>
                 {alias && <DetailRow label="Alias">{alias}</DetailRow>}
@@ -282,10 +284,13 @@ export default async function LeadDetailPage({
                   </DetailRow>
                 )}
                 {lead.company && <DetailRow label="Empresa">{lead.company}</DetailRow>}
-                {lead.source && <DetailRow label="Origen">{lead.source}</DetailRow>}
                 <DetailRow label="Responsable">
                   <MemberLabel member={lead.assignee} />
                 </DetailRow>
+              </DetailGrid>
+
+              <DetailGrid>
+                {lead.source && <DetailRow label="Origen">{lead.source}</DetailRow>}
                 {lead.score != null && (
                   <DetailRow label="Score">{`${Number(lead.score)}/100`}</DetailRow>
                 )}
@@ -305,49 +310,90 @@ export default async function LeadDetailPage({
                 )}
                 {lead.landing_path && <DetailRow label="Landing">{lead.landing_path}</DetailRow>}
                 {lead.landing_ref && <DetailRow label="Ref">{lead.landing_ref}</DetailRow>}
-                {lead.landing_subject && (
-                  <DetailRow label="Asunto">{lead.landing_subject}</DetailRow>
-                )}
-                {firstTouch ? <DetailRow label="First touch">{firstTouch}</DetailRow> : null}
-                {lastTouch ? <DetailRow label="Last touch">{lastTouch}</DetailRow> : null}
                 {[lead.calculator_cost, lead.calculator_hours].some(hasValue) && (
-                  <DetailRow label="Resultado calculadora">
+                  <DetailRow label="Calculadora">
                     {[lead.calculator_cost, lead.calculator_hours].filter(hasValue).join(" · ")}
                   </DetailRow>
                 )}
               </DetailGrid>
+            </div>
 
-              {lead.notes ? (
-                <div className="mt-5 border-t border-border pt-4">
-                  <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Notas
-                  </h3>
-                  <p className="whitespace-pre-wrap text-sm">{lead.notes as string}</p>
-                </div>
-              ) : null}
-            </CardContent>
-          </Card>
+            {(lead.landing_subject || firstTouch || lastTouch || lead.notes) && (
+              <div className="mt-5 grid gap-4 border-t border-border pt-4 sm:grid-cols-2">
+                {lead.landing_subject || firstTouch || lastTouch ? (
+                  <div className="space-y-1 text-xs text-muted-foreground">
+                    {lead.landing_subject ? (
+                      <p>
+                        <span className="font-medium text-foreground">Asunto:</span>{" "}
+                        {lead.landing_subject}
+                      </p>
+                    ) : null}
+                    {firstTouch ? (
+                      <p>
+                        <span className="font-medium text-foreground">First touch:</span>{" "}
+                        {firstTouch}
+                      </p>
+                    ) : null}
+                    {lastTouch ? (
+                      <p>
+                        <span className="font-medium text-foreground">Last touch:</span> {lastTouch}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : (
+                  <span />
+                )}
+                {lead.notes ? (
+                  <div>
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Notas
+                      </h3>
+                      <LeadNotesDialog notes={lead.notes as string} />
+                    </div>
+                    <p className="mt-1 line-clamp-4 whitespace-pre-wrap text-sm leading-6">
+                      {lead.notes as string}
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Mom Test</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <MomTestChecklist
-                leadId={lead.id as string}
-                canEdit={canEdit}
-                initialValues={{
-                  real_problem: (lead.mom_test_real_problem as boolean | null) ?? null,
-                  aware_problem: (lead.mom_test_aware_problem as boolean | null) ?? null,
-                  tried_solutions: (lead.mom_test_tried_solutions as boolean | null) ?? null,
-                  decision_power_or_budget:
-                    (lead.mom_test_decision_power_or_budget as boolean | null) ?? null,
-                  accessible: (lead.mom_test_accessible as boolean | null) ?? null,
-                }}
-              />
-            </CardContent>
-          </Card>
+        <Card>
+          <CardHeader className="border-b border-border/70 bg-muted/10">
+            <CardTitle className="text-base">Calificación</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-5">
+            <MomTestChecklist
+              leadId={lead.id as string}
+              canEdit={canEdit}
+              initialValues={{
+                real_problem: (lead.mom_test_real_problem as boolean | null) ?? null,
+                aware_problem: (lead.mom_test_aware_problem as boolean | null) ?? null,
+                tried_solutions: (lead.mom_test_tried_solutions as boolean | null) ?? null,
+                decision_power_or_budget:
+                  (lead.mom_test_decision_power_or_budget as boolean | null) ?? null,
+                accessible: (lead.mom_test_accessible as boolean | null) ?? null,
+              }}
+            />
+          </CardContent>
+        </Card>
+      </section>
 
+      <Lead360Timeline
+        leadId={lead.id as string}
+        leadStatus={lead.status as string}
+        interactions={interactions}
+        proposals={proposals}
+        projects={projects}
+        invoices={invoices}
+        tasks={tasks}
+      />
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="flex min-w-0 flex-col gap-6">
           <SectionBoundary label="No se pudo cargar el journey de conversión">
             <LeadConversionJourneySection leadId={lead.id} eventId={lead.event_id} />
           </SectionBoundary>

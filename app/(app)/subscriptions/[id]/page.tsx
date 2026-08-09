@@ -13,6 +13,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { deleteSubscription } from "../actions";
 import { SubscriptionEditForm } from "./subscription-edit-form";
+import { type SubscriptionInvoice, SubscriptionInvoices } from "./subscription-invoices";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Suscripción · doscientos" };
@@ -28,16 +29,23 @@ export default async function SubscriptionDetailPage({
 
   const supabase = await createServerClient();
 
-  const [{ data: sub }, { data: clients }, { data: projects }] = await Promise.all([
-    supabase
-      .from("subscriptions")
-      .select("*, clients(id, name), projects(id, name)")
-      .eq("id", id)
-      .is("deleted_at", null)
-      .maybeSingle(),
-    supabase.from("clients").select("id, name").is("deleted_at", null).order("name"),
-    supabase.from("projects").select("id, name").is("deleted_at", null).order("name"),
-  ]);
+  const [{ data: sub }, { data: clients }, { data: projects }, { data: invoices }] =
+    await Promise.all([
+      supabase
+        .from("subscriptions")
+        .select("*, clients(id, name), projects(id, name)")
+        .eq("id", id)
+        .is("deleted_at", null)
+        .maybeSingle(),
+      supabase.from("clients").select("id, name").is("deleted_at", null).order("name"),
+      supabase.from("projects").select("id, name").is("deleted_at", null).order("name"),
+      supabase
+        .from("invoices")
+        .select("id, full_number, subscription_period_start, issue_date, total, status")
+        .eq("subscription_id", id)
+        .is("deleted_at", null)
+        .order("subscription_period_start", { ascending: false, nullsFirst: false }),
+    ]);
 
   if (!sub) notFound();
 
@@ -87,6 +95,13 @@ export default async function SubscriptionDetailPage({
           </CardContent>
         </Card>
       ) : null}
+
+      <SubscriptionInvoices
+        invoices={((invoices ?? []) as unknown as SubscriptionInvoice[]).map((invoice) => ({
+          ...invoice,
+          total: Number(invoice.total),
+        }))}
+      />
 
       {canEdit && user.role !== "member" ? (
         <DangerZone

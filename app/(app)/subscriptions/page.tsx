@@ -1,5 +1,9 @@
-import { Plus } from "lucide-react";
+import { FileText, Plus } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+
 import { ListPage } from "@/components/layout/list-page";
+import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireRole } from "@/lib/auth";
 import {
@@ -8,6 +12,7 @@ import {
   type SubscriptionBillingCycle,
   type SubscriptionStatus,
 } from "@/lib/status";
+import { getDefaultSubscriptionInvoiceId } from "@/lib/subscriptions/invoice-history";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import {
@@ -18,9 +23,6 @@ import {
 } from "@/lib/utils/search-params";
 
 const SUBSCRIPTION_SORT_COLUMNS = ["name", "status", "amount", "next_invoice_date"] as const;
-
-import type { Metadata } from "next";
-import Link from "next/link";
 
 export const metadata: Metadata = { title: "Suscripciones · doscientos" };
 export const dynamic = "force-dynamic";
@@ -91,7 +93,43 @@ export default async function SubscriptionsPage({
     clients: { id: string; name: string } | null;
   };
 
-  const rows = ((data as unknown as Row[]) ?? []).map((s) => ({
+  type SubscriptionInvoice = {
+    id: string;
+    subscription_id: string;
+    subscription_period_start: string | null;
+  };
+
+  const subscriptions = (data as unknown as Row[]) ?? [];
+  const subscriptionIds = subscriptions.map((subscription) => subscription.id);
+  let invoiceData: unknown[] = [];
+  let invoiceError: { message: string } | null = null;
+  if (subscriptionIds.length) {
+    const result = await supabase
+      .from("invoices")
+      .select("id, subscription_id, subscription_period_start")
+      .in("subscription_id", subscriptionIds)
+      .is("deleted_at", null)
+      .order("subscription_period_start", { ascending: false, nullsFirst: false });
+    invoiceData = result.data ?? [];
+    invoiceError = result.error;
+  }
+
+  const invoicesBySubscription = new Map<string, SubscriptionInvoice[]>();
+  for (const invoice of invoiceData as SubscriptionInvoice[]) {
+    invoicesBySubscription.set(invoice.subscription_id, [
+      ...(invoicesBySubscription.get(invoice.subscription_id) ?? []),
+      invoice,
+    ]);
+  }
+
+  const defaultInvoiceBySubscription = new Map<string, SubscriptionInvoice>();
+  for (const [subscriptionId, invoices] of invoicesBySubscription) {
+    const defaultInvoiceId = getDefaultSubscriptionInvoiceId(invoices);
+    const defaultInvoice = invoices.find((invoice) => invoice.id === defaultInvoiceId);
+    if (defaultInvoice) defaultInvoiceBySubscription.set(subscriptionId, defaultInvoice);
+  }
+
+  const rows = subscriptions.map((s) => ({
     id: s.id,
     href: `/subscriptions/${s.id}`,
     cells: [
@@ -122,6 +160,24 @@ export default async function SubscriptionsPage({
       s.amount,
       s.next_invoice_date ?? "",
     ],
+    rowActions: defaultInvoiceBySubscription.has(s.id) ? (
+      <Button asChild size="sm" variant="outline">
+        <Link href={`/invoices/${defaultInvoiceBySubscription.get(s.id)?.id}`}>
+          <FileText className="size-3.5" />
+          Ver factura
+        </Link>
+      </Button>
+    ) : (
+      <Button
+        size="sm"
+        variant="outline"
+        disabled
+        title="Aún no hay facturas automáticas generadas"
+      >
+        <FileText className="size-3.5" />
+        Sin factura
+      </Button>
+    ),
   }));
 
   return (
@@ -139,7 +195,7 @@ export default async function SubscriptionsPage({
       align={["left", "left", "left", "left", "right", "left"]}
       rows={rows}
       empty={q || status || billingCycle ? "Sin coincidencias." : "Aún no hay suscripciones."}
-      error={error?.message}
+      error={error?.message ?? invoiceError?.message}
       searchKey="q"
       searchPlaceholder="Buscar por nombre…"
       filters={[
