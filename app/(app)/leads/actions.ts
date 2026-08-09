@@ -10,6 +10,7 @@ import type { CalendarBusySlot } from "@/lib/google/calendar";
 import { findConflicts, insertEvent } from "@/lib/google/calendar";
 import { resolveSubject } from "@/lib/google/client";
 import { pushMetaConversion } from "@/lib/integrations/meta-capi";
+import { isAutomaticallyAccessible, summarizeCallOutcomes } from "@/lib/leads/call-qualification";
 import { normalizeCompanySize, normalizeLeadSource, normalizeUrgency } from "@/lib/leads/constants";
 import { scopedLogger } from "@/lib/logger";
 import { dispatchNotifications } from "@/lib/notifications/dispatch";
@@ -345,9 +346,14 @@ export const updateLeadMomTestSignal = defineAction({
   handler: async (data, { user }) => {
     const supabase = await createServerClient();
     const column = MOM_TEST_COLUMN[data.signal];
+    const patch: Record<string, boolean | string | null> = {
+      [column]: data.value,
+      updated_by: user.id,
+    };
+    if (data.signal === "accessible") patch.mom_test_accessible_source = "manual";
     const { error } = await supabase
       .from("leads")
-      .update({ [column]: data.value, updated_by: user.id })
+      .update(patch)
       .eq("id", data.leadId);
     if (error) throw new Error(error.message);
   },
@@ -643,7 +649,10 @@ export const notifyDueCallReminders = defineAction({
   },
 });
 
-export const logLeadCall = defineAction<typeof LogCallInput, { noAnswerStreak: number }>({
+export const logLeadCall = defineAction<
+  typeof LogCallInput,
+  { noAnswerStreak: number; showMomTestPrompt: boolean; accessible: boolean | null }
+>({
   name: "leads.logCall",
   schema: LogCallInput,
   revalidate: (_payload, input) => [`/leads/${input.leadId}`],
@@ -716,23 +725,53 @@ export const logLeadCall = defineAction<typeof LogCallInput, { noAnswerStreak: n
       });
     }
 
-    // Count only the latest call outcomes. Other timeline events (notes,
-    // emails, etc.) must not break a run of unanswered calls.
-    const { data: recentCalls } = await supabase
+    // Count only calls. Other timeline events (notes, emails, etc.) must not
+    // affect the unanswered streak or the accessibility qualification.
+    const { data: recentCalls, error: callsError } = await supabase
       .from("lead_interactions")
       .select("payload")
       .eq("lead_id", leadId)
       .eq("type", "call")
-      .order("created_at", { ascending: false })
-      .limit(10);
-    let noAnswerStreak = 0;
-    for (const interaction of Array.isArray(recentCalls) ? recentCalls : []) {
-      const payload = interaction.payload as { outcome?: unknown } | null;
-      if (payload?.outcome !== "no_answer") break;
-      noAnswerStreak += 1;
+      .order("created_at", { ascending: false });
+    if (callsError) throw new Error(callsError.message);
+
+    const callSummary = summarizeCallOutcomes(Array.isArray(recentCalls) ? recentCalls : []);
+    const { data: lead, error: leadError } = await supabase
+      .from("leads")
+      .select("mom_test_accessible, mom_test_accessible_source")
+      .eq("id", leadId)
+      .maybeSingle();
+    if (leadError || !lead) throw new Error(leadError?.message ?? "Lead no encontrado");
+
+    const currentAccessible = (lead.mom_test_accessible as boolean | null) ?? null;
+    const accessibilitySource = lead.mom_test_accessible_source as string | null;
+    // A manual decision always wins. Source null + a populated legacy value is
+    // also kept untouched, which makes deployment safe even before its backfill.
+    const canAutomateAccessibility =
+      accessibilitySource === "auto" || (accessibilitySource === null && currentAccessible === null);
+    let accessible = currentAccessible;
+
+    if (canAutomateAccessibility) {
+      const automaticValue = isAutomaticallyAccessible(callSummary) ? true : null;
+      if (automaticValue !== currentAccessible || accessibilitySource !== "auto") {
+        const { error: accessibilityError } = await supabase
+          .from("leads")
+          .update({
+            mom_test_accessible: automaticValue,
+            mom_test_accessible_source: "auto",
+            updated_by: user.id,
+          })
+          .eq("id", leadId);
+        if (accessibilityError) throw new Error(accessibilityError.message);
+      }
+      accessible = automaticValue;
     }
 
-    return { noAnswerStreak };
+    return {
+      noAnswerStreak: callSummary.noAnswerStreak,
+      showMomTestPrompt: outcome === "connected" && callSummary.connected === 1,
+      accessible,
+    };
   },
 });
 

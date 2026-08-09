@@ -22,6 +22,11 @@ const { db, authUser, googleCalendar } = vi.hoisted(() => ({
     updatedRows: [] as Record<string, unknown>[],
     queryError: null as string | null,
     leadStatus: "new" as string,
+    recentCallPayloads: [] as Array<{ payload: { outcome?: string | null } }>,
+    leadAccessibility: {
+      mom_test_accessible: null as boolean | null,
+      mom_test_accessible_source: null as string | null,
+    },
   },
   authUser: {
     id: "member-1",
@@ -55,26 +60,39 @@ vi.mock("@/lib/supabase/server", () => ({
   createServerClient: async () => ({
     from: (table: string) => {
       // Resolved value for terminal awaits (.single, .maybeSingle, or direct await)
-      const resolve = () => ({
-        data: db.queryError
-          ? null
-          : table === "leads"
-            ? { id: "new-lead-uuid", status: db.leadStatus }
-            : { id: "interaction-uuid" },
-        error: db.queryError ? { message: db.queryError } : null,
-      });
+      let selectedColumns = "";
+      const resolve = () => {
+        if (db.queryError) return { data: null, error: { message: db.queryError } };
+        if (table === "lead_interactions" && selectedColumns === "payload") {
+          return { data: db.recentCallPayloads, error: null };
+        }
+        if (table === "leads" && selectedColumns.includes("mom_test_accessible")) {
+          return { data: db.leadAccessibility, error: null };
+        }
+        return {
+          data:
+            table === "leads"
+              ? { id: "new-lead-uuid", status: db.leadStatus }
+              : { id: "interaction-uuid" },
+          error: null,
+        };
+      };
 
       // Builder: all chainable methods return itself; terminal methods are async.
       const builder: Record<string, unknown> = {
         insert(row: Record<string, unknown>) {
           db.insertedRows.push({ table, ...row });
+          if (table === "lead_interactions" && row.type === "call") {
+            db.recentCallPayloads.unshift({ payload: row.payload as { outcome?: string | null } });
+          }
           return builder;
         },
         update(patch: Record<string, unknown>) {
           db.updatedRows.push({ table, ...patch });
           return builder;
         },
-        select() {
+        select(columns?: string) {
+          selectedColumns = columns ?? "";
           return builder;
         },
         eq() {
@@ -102,6 +120,8 @@ vi.mock("@/lib/supabase/server", () => ({
           return resolve();
         },
         async maybeSingle() {
+          if (table === "leads" && selectedColumns.includes("mom_test_accessible"))
+            return resolve();
           if (table === "leads" && db.queryError)
             return { data: null, error: { message: db.queryError } };
           // claimLead checks `.is("assigned_to", null)` → return a row with id
@@ -171,6 +191,7 @@ import {
   logLeadCall,
   scheduleLeadMeeting,
   updateLead,
+  updateLeadMomTestSignal,
   updateLeadStatus,
 } from "@/app/(app)/leads/actions";
 
@@ -191,6 +212,8 @@ beforeEach(() => {
   db.updatedRows = [];
   db.queryError = null;
   db.leadStatus = "new";
+  db.recentCallPayloads = [];
+  db.leadAccessibility = { mom_test_accessible: null, mom_test_accessible_source: null };
   authUser.role = "admin";
   googleCalendar.insertEvent.mockResolvedValue({
     id: "calendar-event-1",
@@ -327,6 +350,14 @@ describe("logLeadCall", () => {
         payload: { from: "new", to: "contacted" },
       }),
     );
+    expect(result).toMatchObject({ showMomTestPrompt: true, accessible: true });
+    expect(db.updatedRows).toContainEqual(
+      expect.objectContaining({
+        table: "leads",
+        mom_test_accessible: true,
+        mom_test_accessible_source: "auto",
+      }),
+    );
   });
 
   it("keeps a new lead unchanged when the call is unanswered", async () => {
@@ -337,6 +368,33 @@ describe("logLeadCall", () => {
 
     expect(db.updatedRows.some((row) => row.table === "leads" && row.status === "contacted")).toBe(
       false,
+    );
+  });
+
+  it("never overwrites a manually decided accessibility signal", async () => {
+    db.leadAccessibility = { mom_test_accessible: false, mom_test_accessible_source: "manual" };
+
+    await logLeadCall({
+      leadId: "00000000-0000-0000-0000-000000000001",
+      outcome: "connected",
+    });
+
+    expect(db.updatedRows.some((row) => row.mom_test_accessible === true)).toBe(false);
+  });
+
+  it("marks an accessibility selection as manual", async () => {
+    await updateLeadMomTestSignal({
+      leadId: "00000000-0000-0000-0000-000000000001",
+      signal: "accessible",
+      value: false,
+    });
+
+    expect(db.updatedRows).toContainEqual(
+      expect.objectContaining({
+        table: "leads",
+        mom_test_accessible: false,
+        mom_test_accessible_source: "manual",
+      }),
     );
   });
 });

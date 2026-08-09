@@ -24,6 +24,7 @@ import { relativeTime } from "@/lib/utils";
 import { Brain, Mail, MessageCircle, Phone, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useState } from "react";
+import { MomTestQuickDialog } from "./[id]/mom-test-quick-dialog";
 import { logLeadCall, logLeadEmail } from "./actions";
 import { CallDigestDialog } from "./call-digest-dialog";
 
@@ -225,6 +226,8 @@ function CallDialog({
   const [open, setOpen] = useState(false);
   const [digestOpen, setDigestOpen] = useState(false);
   const [digestKey, setDigestKey] = useState(0);
+  const [momTestOpen, setMomTestOpen] = useState(false);
+  const [momTestAccessible, setMomTestAccessible] = useState<boolean | null>(null);
   const [whatsappOpen, setWhatsappOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const [duration, setDuration] = useState("");
@@ -249,7 +252,12 @@ function CallDialog({
     if (res.noAnswerStreak >= 3) setWhatsappOpen(true);
     router.refresh();
     setOpen(false);
-    if (res.noAnswerStreak < 3) setDigestOpen(true);
+    if (res.showMomTestPrompt) {
+      setMomTestAccessible(res.accessible);
+      setMomTestOpen(true);
+    } else if (res.noAnswerStreak < 3) {
+      setDigestOpen(true);
+    }
   }
 
   return (
@@ -326,6 +334,12 @@ function CallDialog({
         open={digestOpen}
         onOpenChange={setDigestOpen}
         draftKey={digestKey}
+      />
+      <MomTestQuickDialog
+        leadId={leadId}
+        open={momTestOpen}
+        onOpenChange={setMomTestOpen}
+        accessible={momTestAccessible}
       />
       <WhatsAppFollowUp
         leadId={leadId}

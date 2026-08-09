@@ -42,6 +42,7 @@ import { useRouter } from "next/navigation";
 import { type SubmitEvent, useEffect, useState } from "react";
 import { createReminder } from "../reminders/actions";
 import { EmailComposer } from "./[id]/email-composer";
+import { MomTestQuickDialog } from "./[id]/mom-test-quick-dialog";
 import { logLeadCall, logLeadEmail, logLeadNote, scheduleLeadMeeting } from "./actions";
 import { CallDigestDialog } from "./call-digest-dialog";
 
@@ -551,6 +552,8 @@ export function QCallDialog({
   const [open, setOpen] = useState(false);
   const [digestOpen, setDigestOpen] = useState(false);
   const [digestKey, setDigestKey] = useState(0);
+  const [momTestOpen, setMomTestOpen] = useState(false);
+  const [momTestAccessible, setMomTestAccessible] = useState<boolean | null>(null);
   const [whatsappOpen, setWhatsappOpen] = useState(false);
   const [outcome, setOutcome] = useState<CallOutcome>("connected");
   const [duration, setDuration] = useState("");
@@ -618,7 +621,12 @@ export function QCallDialog({
     if (res.noAnswerStreak >= 3) setWhatsappOpen(true);
     router.refresh();
     setOpen(false);
-    if (res.noAnswerStreak < 3) setDigestOpen(true);
+    if (res.showMomTestPrompt) {
+      setMomTestAccessible(res.accessible);
+      setMomTestOpen(true);
+    } else if (res.noAnswerStreak < 3) {
+      setDigestOpen(true);
+    }
   }
 
   return (
@@ -757,6 +765,12 @@ export function QCallDialog({
         open={digestOpen}
         onOpenChange={setDigestOpen}
         draftKey={digestKey}
+      />
+      <MomTestQuickDialog
+        leadId={leadId}
+        open={momTestOpen}
+        onOpenChange={setMomTestOpen}
+        accessible={momTestAccessible}
       />
       <WhatsAppFollowUp
         leadId={leadId}
