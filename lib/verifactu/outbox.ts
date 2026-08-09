@@ -48,6 +48,9 @@ export type OutboxDelivery = {
   csv: string | null;
 };
 
+export const MISSING_DURABLE_FISCAL_RECORD_MESSAGE =
+  "Esta factura es anterior al registro fiscal durable y requiere regularización antes de enviarla a AEAT.";
+
 function asRecord(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new Error("El registro fiscal almacenado no tiene un formato válido");
@@ -176,7 +179,9 @@ async function complete(
     p_result: status,
     p_csv: result?.csv ?? null,
     p_aeat_code: result?.aeatCode ?? null,
-    p_response: result ? sanitizeResponse({ ...result.response, errorCode: result.errorCode }) : null,
+    p_response: result
+      ? sanitizeResponse({ ...result.response, errorCode: result.errorCode })
+      : null,
     p_error: formatOutboxError(error, result),
   });
   if (completionError) throw new Error(completionError.message);
@@ -254,7 +259,7 @@ export async function deliverInvoiceVerifactu(
   if (ledgerError) throw new Error(ledgerError.message);
   const ledgerId = (ledger as { id?: unknown } | null)?.id;
   if (typeof ledgerId !== "string") {
-    throw new Error("La factura no tiene un registro fiscal durable");
+    throw new Error(MISSING_DURABLE_FISCAL_RECORD_MESSAGE);
   }
 
   const { data: outbox, error: outboxError } = await admin

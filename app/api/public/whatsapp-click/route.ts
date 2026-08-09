@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { clientIp, isLikelyBot } from "@/lib/integrations/conversion-events";
 import { scopedLogger } from "@/lib/logger";
-import { rateLimit } from "@/lib/ratelimit";
+import { distributedRateLimit } from "@/lib/ratelimit";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
   }
 
   const ip = clientIp(request);
-  const rl = rateLimit(`public-whatsapp:${ip}`, RATE_LIMIT);
+  const rl = await distributedRateLimit(`public-whatsapp:${ip}`, RATE_LIMIT);
   if (!rl.success) {
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }

@@ -21,6 +21,7 @@ export const CONVERSION_EVENT_NAMES = [
   "whatsapp_click",
   "lead_created",
   "diagnostic_started",
+  "diagnostic_step_completed",
   "diagnostic_completed",
   "diagnostic_report_sent",
   "diagnostic_report_opened",
@@ -45,6 +46,7 @@ export const PUBLIC_TRACKABLE_EVENT_NAMES = [
   "form_validation_failed",
   "calendar_viewed",
   "diagnostic_started",
+  "diagnostic_step_completed",
 ] as const;
 
 export const ConversionEventInput = z.object({

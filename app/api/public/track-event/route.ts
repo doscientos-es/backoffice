@@ -6,7 +6,7 @@ import {
   PublicTrackEventInput,
   recordConversionEvent,
 } from "@/lib/integrations/conversion-events";
-import { rateLimit } from "@/lib/ratelimit";
+import { distributedRateLimit } from "@/lib/ratelimit";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
   if (isLikelyBot(request.headers.get("user-agent"))) return noop;
 
   const ip = clientIp(request);
-  if (!rateLimit(`public-track:${ip}`, RATE_LIMIT).success) return noop;
+  if (!(await distributedRateLimit(`public-track:${ip}`, RATE_LIMIT)).success) return noop;
 
   const body = await request.text();
   if (!body || body.length > MAX_BODY_BYTES) return noop;

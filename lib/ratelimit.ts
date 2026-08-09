@@ -1,4 +1,5 @@
 import { LRUCache } from "lru-cache";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 type Bucket = { count: number; resetAt: number };
 
@@ -35,4 +36,36 @@ export function rateLimit(key: string, limit: number, windowMs = 60_000): RateLi
 /** Reset a bucket (mainly for tests). */
 export function resetRateLimit(key: string): void {
   buckets.delete(key);
+}
+
+/**
+ * Distributed limiter backed by Supabase/Postgres. The local limiter remains
+ * as a fallback while a migration is rolling out or if the RPC is temporarily
+ * unavailable; public routes must never fail open because a limiter is down.
+ */
+export async function distributedRateLimit(
+  key: string,
+  limit: number,
+  windowSeconds = 60,
+): Promise<RateLimitResult> {
+  try {
+    const { data, error } = await createAdminClient().rpc("consume_rate_limit", {
+      p_key: key,
+      p_limit: limit,
+      p_window_seconds: windowSeconds,
+    });
+
+    if (!error && typeof data === "boolean") {
+      const resetAt = Date.now() + windowSeconds * 1000;
+      return {
+        success: data,
+        remaining: data ? Math.max(0, limit - 1) : 0,
+        resetAt,
+      };
+    }
+  } catch {
+    // Fall through to the per-instance safety net below.
+  }
+
+  return rateLimit(key, limit, windowSeconds * 1000);
 }

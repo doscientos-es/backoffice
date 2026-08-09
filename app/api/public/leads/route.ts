@@ -3,7 +3,7 @@ import { serverEnv } from "@/lib/env";
 import { LandingLeadInput, mapLandingToIntake } from "@/lib/integrations/landing";
 import { ingestLead } from "@/lib/integrations/lead-intake";
 import { scopedLogger } from "@/lib/logger";
-import { rateLimit } from "@/lib/ratelimit";
+import { distributedRateLimit } from "@/lib/ratelimit";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
   }
 
   const ip = clientIp(request);
-  const rl = rateLimit(`public-lead:${ip}`, RATE_LIMIT);
+  const rl = await distributedRateLimit(`public-lead:${ip}`, RATE_LIMIT);
   if (!rl.success) {
     return NextResponse.json({ error: "rate_limited" }, { status: 429, headers: cors });
   }

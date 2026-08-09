@@ -6,18 +6,27 @@ import { renderEmail } from "@/lib/email/render";
 import { sendEmail } from "@/lib/email/resend";
 import { publicEnv, serverEnv } from "@/lib/env";
 import { recordConversionEvent } from "@/lib/integrations/conversion-events";
-import { rateLimit } from "@/lib/ratelimit";
+import { distributedRateLimit } from "@/lib/ratelimit";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const MAX_BODY_BYTES = 32_768;
 
 const Input = z.object({
   leadId: z.string().uuid().optional().nullable(),
   email: z.string().email(),
   company: z.string().trim().max(160).optional().nullable(),
   name: z.string().trim().max(160).optional().nullable(),
-  answers: z.record(z.unknown()).default({}),
+  answers: z.object({
+    proceso: z.string().trim().max(500),
+    personas: z.number().int().min(1).max(1000),
+    minutos_por_vez: z.number().nonnegative().max(24 * 60),
+    veces_por_semana: z.number().nonnegative().max(1000),
+    coste_hora: z.number().nonnegative().max(100_000),
+    impacto: z.string().trim().max(120),
+  }).strict(),
   metrics: z.object({
     yearlyHours: z.number().nonnegative(),
     yearlyCost: z.number().nonnegative(),
@@ -91,9 +100,21 @@ export async function POST(request: NextRequest) {
       { status: 403, headers: cors(request) },
     );
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (!rateLimit(`public-diagnostic:${ip}`, 5).success)
+  if (!(await distributedRateLimit(`public-diagnostic:${ip}`, 5)).success)
     return NextResponse.json({ error: "rate_limited" }, { status: 429, headers: cors(request) });
-  const parsed = Input.safeParse(await request.json().catch(() => null));
+  const contentLength = Number(request.headers.get("content-length") ?? 0);
+  if (contentLength > MAX_BODY_BYTES)
+    return NextResponse.json({ error: "payload_too_large" }, { status: 413, headers: cors(request) });
+  const rawBody = await request.text();
+  if (rawBody.length > MAX_BODY_BYTES)
+    return NextResponse.json({ error: "payload_too_large" }, { status: 413, headers: cors(request) });
+  let rawInput: unknown = null;
+  try {
+    rawInput = JSON.parse(rawBody || "null");
+  } catch {
+    return NextResponse.json({ error: "invalid_json" }, { status: 400, headers: cors(request) });
+  }
+  const parsed = Input.safeParse(rawInput);
   if (!parsed.success)
     return NextResponse.json(
       { error: "validation_error", issues: parsed.error.flatten() },
