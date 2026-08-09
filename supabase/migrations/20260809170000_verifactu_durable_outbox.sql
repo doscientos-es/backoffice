@@ -158,7 +158,6 @@ begin
     new.issued_at is distinct from old.issued_at or
     new.client_nif is distinct from old.client_nif or
     new.client_name is distinct from old.client_name or
-    new.client_address is distinct from old.client_address or
     new.client_address_street is distinct from old.client_address_street or
     new.client_address_zip is distinct from old.client_address_zip or
     new.client_address_city is distinct from old.client_address_city or
