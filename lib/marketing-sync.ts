@@ -2,7 +2,11 @@ import { roundCurrency } from "@/lib/finance/helpers";
 import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
 import * as MetaAPI from "./integrations/meta-marketing";
-import { extractMetaLeads } from "./integrations/meta-marketing";
+import {
+  extractMetaCreativeDetails,
+  extractMetaLeads,
+  extractMetaTrafficMetrics,
+} from "./integrations/meta-marketing";
 
 const log = scopedLogger("marketing-sync");
 
@@ -64,6 +68,7 @@ export async function syncMetaCatalog() {
     if (ads.length > 0) {
       const { error: aErr } = await supabase.from("marketing_ads").upsert(
         ads.map((a) => ({
+          ...extractMetaCreativeDetails(a),
           id: a.id,
           adset_id: a.adset_id,
           campaign_id: a.campaign_id,
@@ -101,6 +106,7 @@ export async function syncMetaInsights(since: string, until: string) {
       insights.map((i) => {
         const spend = Number.parseFloat(i.spend) || 0;
         const { totalLeads, costPerLead } = extractMetaLeads(i.actions, spend);
+        const traffic = extractMetaTrafficMetrics(i);
         return {
           ad_id: i.ad_id,
           date_start: i.date_start,
@@ -108,6 +114,10 @@ export async function syncMetaInsights(since: string, until: string) {
           impressions: Number.parseInt(i.impressions, 10) || 0,
           reach: Number.parseInt(i.reach, 10) || 0,
           clicks: Number.parseInt(i.clicks, 10) || 0,
+          inline_link_clicks: traffic.inlineLinkClicks,
+          outbound_clicks: traffic.outboundClicks,
+          unique_outbound_clicks: traffic.uniqueOutboundClicks,
+          landing_page_views: traffic.landingPageViews,
           spend,
           currency: i.account_currency ?? "EUR",
           ctr: Number.parseFloat(i.ctr) || null,

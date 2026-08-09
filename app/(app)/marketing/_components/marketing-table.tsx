@@ -43,7 +43,8 @@ export async function MarketingTable({
   accountId,
 }: MarketingTableProps) {
   const overview = await getMarketingOverview(view, since, until, sort, showPaused);
-  const { avgCpc, totalImpressions, lastSyncAt } = overview;
+  const { avgCpc, totalImpressions, totalOutboundClicks, totalLandingPageViews, lastSyncAt } =
+    overview;
 
   return (
     <>
@@ -55,7 +56,9 @@ export async function MarketingTable({
 
       <p className="text-xs text-muted-foreground">
         Datos atribuidos por Meta (acciones <code>lead</code> y{" "}
-        <code>onsite_conversion.lead_grouped</code>). CPC medio: {formatEUR(avgCpc)} · Impresiones:{" "}
+        <code>onsite_conversion.lead_grouped</code>). Clics salientes:{" "}
+        {numberFmt.format(totalOutboundClicks)} · Vistas de landing:{" "}
+        {numberFmt.format(totalLandingPageViews)} · CPC medio: {formatEUR(avgCpc)} · Impresiones:{" "}
         {numberFmt.format(totalImpressions)}.
         {lastSyncAt ? ` Sincronizado ${relativeTime(lastSyncAt)}.` : ""}
       </p>
@@ -86,6 +89,8 @@ function AdsTable({
               <TableHead>Estado</TableHead>
               <TableHead className="text-right">Impresiones</TableHead>
               <TableHead className="text-right">Clics</TableHead>
+              <TableHead className="text-right">Salientes</TableHead>
+              <TableHead className="text-right">Landing</TableHead>
               <TableHead className="text-right">CTR</TableHead>
               <TableHead className="text-right">CPC</TableHead>
               <TableHead className="text-right">Gasto</TableHead>
@@ -97,7 +102,7 @@ function AdsTable({
           <TableBody>
             {ads.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={11} className="py-8 text-center text-muted-foreground">
+                <TableCell colSpan={13} className="py-8 text-center text-muted-foreground">
                   No hay anuncios con datos en el rango seleccionado.
                 </TableCell>
               </TableRow>
@@ -119,7 +124,24 @@ function AdsTable({
                             decoding="async"
                           />
                         )}
-                        <span className="truncate">{ad.name}</span>
+                        <div className="min-w-0">
+                          <span className="block truncate">{ad.name}</span>
+                          {ad.destinationUrl ? (
+                            <a
+                              href={ad.destinationUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="block truncate text-xs text-primary hover:underline"
+                              title={ad.destinationUrl}
+                            >
+                              {ad.callToActionType ?? "Destino"}: {ad.destinationUrl}
+                            </a>
+                          ) : ad.leadFormId ? (
+                            <span className="block truncate text-xs text-muted-foreground">
+                              Formulario instantáneo: {ad.leadFormId}
+                            </span>
+                          ) : null}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">{ad.campaignName}</TableCell>
@@ -131,6 +153,12 @@ function AdsTable({
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {numberFmt.format(ad.clicks)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {numberFmt.format(ad.outboundClicks)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {numberFmt.format(ad.landingPageViews)}
                     </TableCell>
                     <TableCell className={cn("text-right tabular-nums", ctrClass(ad.ctr))}>
                       {percentFmt.format(ad.ctr)}%
@@ -202,6 +230,8 @@ function CampaignsTable({
               <TableHead className="text-right">Anuncios</TableHead>
               <TableHead className="text-right">Impresiones</TableHead>
               <TableHead className="text-right">Clics</TableHead>
+              <TableHead className="text-right">Salientes</TableHead>
+              <TableHead className="text-right">Landing</TableHead>
               <TableHead className="text-right">CTR</TableHead>
               <TableHead className="text-right">CPC</TableHead>
               <TableHead className="text-right">Gasto</TableHead>
@@ -213,7 +243,7 @@ function CampaignsTable({
           <TableBody>
             {campaigns.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={11} className="py-8 text-center text-muted-foreground">
+                <TableCell colSpan={13} className="py-8 text-center text-muted-foreground">
                   No hay campañas con datos en el rango seleccionado.
                 </TableCell>
               </TableRow>
@@ -240,6 +270,12 @@ function CampaignsTable({
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {numberFmt.format(c.clicks)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {numberFmt.format(c.outboundClicks)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {numberFmt.format(c.landingPageViews)}
                     </TableCell>
                     <TableCell className={cn("text-right tabular-nums", ctrClass(c.ctr))}>
                       {percentFmt.format(c.ctr)}%

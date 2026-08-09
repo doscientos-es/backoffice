@@ -24,6 +24,11 @@ const utmSchema = z.object({
 const contextSchema = z.object({
   eventId: z.string().optional().nullable(),
   visitorId: z.string().optional().nullable(),
+  internalTraffic: z.boolean().optional(),
+  marketingConsent: z.boolean().optional(),
+  metaFbc: z.string().optional().nullable(),
+  metaFbp: z.string().optional().nullable(),
+  metaFbclid: z.string().optional().nullable(),
   conversionStep: z.string().optional().nullable(),
   referrer: z.string().optional().nullable(),
   ip: z.string().optional().nullable(),
@@ -307,11 +312,13 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
       await enrichLead(supabase, matchedId, norm).catch((e) =>
         log.error({ err: e, leadId: matchedId }, "lead enrich failed"),
       );
-      await linkConversionEventsToLead({
-        leadId: matchedId,
-        visitorId: norm.context?.visitorId,
-        eventId: norm.context?.eventId,
-      });
+      if (!norm.context?.internalTraffic) {
+        await linkConversionEventsToLead({
+          leadId: matchedId,
+          visitorId: norm.context?.visitorId,
+          eventId: norm.context?.eventId,
+        });
+      }
       log.info({ leadId: matchedId, source: norm.source }, "soft-dedupe hit, lead enriched");
       return { ok: true, leadId: matchedId, duplicate: true };
     }
@@ -397,6 +404,29 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
   // been sent. A bare fire-and-forget promise is torn down with the Route
   // Handler before it completes, which silently dropped notifications/emails.
   after(async () => {
+    // CAPI only mirrors a consented landing submission; it must not re-send
+    // Cal.com, instant-form, or CRM events as website leads.
+    let websiteCapiTask: Promise<void> | null = null;
+    if (
+      norm.externalSource === "Landing" &&
+      norm.context?.marketingConsent === true &&
+      !norm.context.internalTraffic
+    ) {
+      websiteCapiTask = pushMetaConversion({
+        eventName: "Lead",
+        eventId: (row.event_id as string | null) ?? `lead-${leadId}`,
+        email: row.email,
+        phone: row.phone,
+        value: row.estimated_value,
+        actionSource: "website",
+        eventSourceUrl: row.landing_path ? `https://doscientos.es${row.landing_path}` : undefined,
+        clientIpAddress: row.ip as string | null,
+        clientUserAgent: row.browser as string | null,
+        fbc: norm.context.metaFbc,
+        fbp: norm.context.metaFbp,
+      }).catch((e) => log.error({ err: e, leadId }, "meta capi lead push failed"));
+    }
+
     await Promise.allSettled([
       runLeadPipeline(leadId, {
         ...norm,
@@ -424,30 +454,20 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
       logLeadCreatedInteraction(leadId, row).catch((e) =>
         log.error({ err: e, leadId }, "lead intake interaction failed"),
       ),
-      recordLeadCreatedEvent(leadId, row, {
-        visitorId: norm.context?.visitorId,
-        resourceSlug: norm.context?.resourceSlug,
-      }).catch((e) => log.error({ err: e, leadId }, "lead conversion event failed")),
-      linkConversionEventsToLead({
-        leadId,
-        visitorId: norm.context?.visitorId,
-        eventId: norm.context?.eventId,
-      }).catch((e) => log.error({ err: e, leadId }, "conversion events link failed")),
-      // Server-side Meta CAPI: captures the lead even when the browser Pixel
-      // was blocked by cookie consent or an ad blocker. Reuses the session
-      // event_id so Meta dedupes against the browser-side fbq('track','Lead')
-      // call when the visitor did accept marketing cookies.
-      pushMetaConversion({
-        eventName: "Lead",
-        eventId: (row.event_id as string | null) ?? `lead-${leadId}`,
-        email: row.email,
-        phone: row.phone,
-        value: row.estimated_value,
-        actionSource: "website",
-        eventSourceUrl: row.landing_path ? `https://doscientos.es${row.landing_path}` : undefined,
-        clientIpAddress: row.ip as string | null,
-        clientUserAgent: row.browser as string | null,
-      }).catch((e) => log.error({ err: e, leadId }, "meta capi lead push failed")),
+      ...(!norm.context?.internalTraffic
+        ? [
+          recordLeadCreatedEvent(leadId, row, {
+            visitorId: norm.context?.visitorId,
+            resourceSlug: norm.context?.resourceSlug,
+          }).catch((e) => log.error({ err: e, leadId }, "lead conversion event failed")),
+          linkConversionEventsToLead({
+            leadId,
+            visitorId: norm.context?.visitorId,
+            eventId: norm.context?.eventId,
+          }).catch((e) => log.error({ err: e, leadId }, "conversion events link failed")),
+        ]
+        : []),
+      ...(websiteCapiTask ? [websiteCapiTask] : []),
     ]);
   });
 

@@ -5,6 +5,7 @@ import {
   mapCalToLeadIntake,
   verifyCalSignature,
 } from "@/lib/integrations/cal";
+import { recordConversionEvent } from "@/lib/integrations/conversion-events";
 import { ingestLead } from "@/lib/integrations/lead-intake";
 import { pushMetaConversion } from "@/lib/integrations/meta-capi";
 import { scopedLogger } from "@/lib/logger";
@@ -86,6 +87,14 @@ export async function POST(request: NextRequest) {
         } catch (e) {
           log.warn({ err: e, leadId }, "meta_capi_status_failed");
         }
+      });
+    }
+
+    if (triggerEvent === "BOOKING_CREATED") {
+      await recordConversionEvent({
+        lead_id: leadId,
+        event_name: "calendar_booking_completed",
+        payload: { provider: "cal.com", booking_id: payload.payload.uid },
       });
     }
   }

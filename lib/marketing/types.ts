@@ -6,6 +6,8 @@ export type MarketingOverview = {
   totalLeads: number;
   totalImpressions: number;
   totalClicks: number;
+  totalOutboundClicks: number;
+  totalLandingPageViews: number;
   avgCpl: number;
   avgCtr: number;
   avgCpc: number;
@@ -18,10 +20,15 @@ export type ActiveAdRow = {
   name: string;
   status: string;
   preview_url: string | null;
+  destinationUrl: string | null;
+  callToActionType: string | null;
+  leadFormId: string | null;
   campaignName: string;
   spend: number;
   impressions: number;
   clicks: number;
+  outboundClicks: number;
+  landingPageViews: number;
   leads: number;
   ctr: number;
   cpc: number;
@@ -63,6 +70,10 @@ export interface RawInsightRow {
   spend: number | null;
   impressions: number | null;
   clicks: number | null;
+  inline_link_clicks?: number | null;
+  outbound_clicks?: number | null;
+  unique_outbound_clicks?: number | null;
+  landing_page_views?: number | null;
   ctr: number | null;
   cpc: number | null;
   total_leads: number | null;
@@ -84,6 +95,9 @@ export interface RawAdRow {
   name: string;
   status: string | null;
   preview_url: string | null;
+  destination_url?: string | null;
+  call_to_action_type?: string | null;
+  lead_form_id?: string | null;
   updated_at: string | null;
   campaign_id: string | null;
   marketing_campaigns: RawCampaign | RawCampaign[] | null;
@@ -100,6 +114,8 @@ export type CampaignRow = {
   spend: number;
   impressions: number;
   clicks: number;
+  outboundClicks: number;
+  landingPageViews: number;
   leads: number;
   ctr: number;
   cpc: number;
@@ -113,6 +129,8 @@ export type CampaignsOverview = {
   totalLeads: number;
   totalImpressions: number;
   totalClicks: number;
+  totalOutboundClicks: number;
+  totalLandingPageViews: number;
   avgCpl: number;
   avgCtr: number;
   avgCpc: number;

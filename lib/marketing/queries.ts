@@ -33,6 +33,8 @@ function aggregateInsights(insights: RawInsightRow[]) {
   const spend = sum(insights.map((i) => i.spend));
   const impressions = sum(insights.map((i) => i.impressions));
   const clicks = sum(insights.map((i) => i.clicks));
+  const outboundClicks = sum(insights.map((i) => i.outbound_clicks));
+  const landingPageViews = sum(insights.map((i) => i.landing_page_views));
   const leads = sum(insights.map((i) => i.total_leads));
   // CTR / CPC are recomputed from totals so they remain accurate across days,
   // instead of averaging Meta's per-row ratios.
@@ -40,7 +42,18 @@ function aggregateInsights(insights: RawInsightRow[]) {
   const cpc = weightedAvg(spend, clicks);
   const cpl = weightedAvg(spend, leads);
   const currency = insights.find((i) => i.currency)?.currency ?? "EUR";
-  return { spend, impressions, clicks, leads, ctr, cpc, cpl, currency };
+  return {
+    spend,
+    impressions,
+    clicks,
+    outboundClicks,
+    landingPageViews,
+    leads,
+    ctr,
+    cpc,
+    cpl,
+    currency,
+  };
 }
 
 const COMPARATORS: Record<MarketingSort, (a: ActiveAdRow, b: ActiveAdRow) => number> = {
@@ -65,9 +78,9 @@ export async function getActiveAdsOverview(opts: AdsOverviewOptions): Promise<Ma
 
   // marketing_* tables hold external data from Meta and do not use the soft-delete convention.
   let query = supabase.from("marketing_ads").select(
-    `id, name, status, preview_url, updated_at,
+    `id, name, status, preview_url, destination_url, call_to_action_type, lead_form_id, updated_at,
        marketing_campaigns ( name ),
-       marketing_insights ( spend, impressions, clicks, ctr, cpc, total_leads, cost_per_lead, currency, date_start, date_stop )`,
+       marketing_insights ( spend, impressions, clicks, inline_link_clicks, outbound_clicks, unique_outbound_clicks, landing_page_views, ctr, cpc, total_leads, cost_per_lead, currency, date_start, date_stop )`,
   );
   if (!opts.includePaused) query = query.eq("status", "ACTIVE");
 
@@ -100,10 +113,15 @@ export async function getActiveAdsOverview(opts: AdsOverviewOptions): Promise<Ma
       name: ad.name,
       status: ad.status || "UNKNOWN",
       preview_url: ad.preview_url || null,
+      destinationUrl: ad.destination_url || null,
+      callToActionType: ad.call_to_action_type || null,
+      leadFormId: ad.lead_form_id || null,
       campaignName: campaign?.name || "Sin campaña",
       spend: agg.spend,
       impressions: agg.impressions,
       clicks: agg.clicks,
+      outboundClicks: agg.outboundClicks,
+      landingPageViews: agg.landingPageViews,
       leads: agg.leads,
       ctr: agg.ctr,
       cpc: agg.cpc,
@@ -117,6 +135,8 @@ export async function getActiveAdsOverview(opts: AdsOverviewOptions): Promise<Ma
   const totalSpent = sum(processedAds.map((a) => a.spend));
   const totalImpressions = sum(processedAds.map((a) => a.impressions));
   const totalClicks = sum(processedAds.map((a) => a.clicks));
+  const totalOutboundClicks = sum(processedAds.map((a) => a.outboundClicks));
+  const totalLandingPageViews = sum(processedAds.map((a) => a.landingPageViews));
   const totalLeads = sum(processedAds.map((a) => a.leads));
   const currency = processedAds.find((a) => a.currency)?.currency ?? "EUR";
   const lastSyncAt = ads.reduce<string | null>((max, a) => {
@@ -130,6 +150,8 @@ export async function getActiveAdsOverview(opts: AdsOverviewOptions): Promise<Ma
     totalLeads,
     totalImpressions,
     totalClicks,
+    totalOutboundClicks,
+    totalLandingPageViews,
     avgCpl: weightedAvg(totalSpent, totalLeads),
     avgCtr: weightedAvg(totalClicks * 100, totalImpressions),
     avgCpc: weightedAvg(totalSpent, totalClicks),
@@ -167,7 +189,7 @@ export async function getCampaignsOverview(
   const { data: adsData, error: adsErr } = await supabase.from("marketing_ads").select(
     `id, status, updated_at, campaign_id,
        marketing_campaigns ( id, name, status, objective ),
-       marketing_insights ( spend, impressions, clicks, ctr, cpc, total_leads, cost_per_lead, currency, date_start, date_stop )`,
+       marketing_insights ( spend, impressions, clicks, inline_link_clicks, outbound_clicks, unique_outbound_clicks, landing_page_views, ctr, cpc, total_leads, cost_per_lead, currency, date_start, date_stop )`,
   );
   if (adsErr) log.error({ err: adsErr }, "marketing_ads (campaign view) query failed");
 
@@ -201,6 +223,8 @@ export async function getCampaignsOverview(
           spend: 0,
           impressions: 0,
           clicks: 0,
+          outboundClicks: 0,
+          landingPageViews: 0,
           leads: 0,
           ctr: 0,
           cpc: 0,
@@ -223,6 +247,8 @@ export async function getCampaignsOverview(
       spend: agg.spend,
       impressions: agg.impressions,
       clicks: agg.clicks,
+      outboundClicks: agg.outboundClicks,
+      landingPageViews: agg.landingPageViews,
       leads: agg.leads,
       ctr: agg.ctr,
       cpc: agg.cpc,
@@ -237,6 +263,8 @@ export async function getCampaignsOverview(
   const totalSpent = sum(campaigns.map((c) => c.spend));
   const totalImpressions = sum(campaigns.map((c) => c.impressions));
   const totalClicks = sum(campaigns.map((c) => c.clicks));
+  const totalOutboundClicks = sum(campaigns.map((c) => c.outboundClicks));
+  const totalLandingPageViews = sum(campaigns.map((c) => c.landingPageViews));
   const totalLeads = sum(campaigns.map((c) => c.leads));
   const currency = campaigns.find((c) => c.spend > 0)?.currency ?? "EUR";
   const lastSyncAt = ads.reduce<string | null>((max, a) => {
@@ -250,6 +278,8 @@ export async function getCampaignsOverview(
     totalLeads,
     totalImpressions,
     totalClicks,
+    totalOutboundClicks,
+    totalLandingPageViews,
     avgCpl: weightedAvg(totalSpent, totalLeads),
     avgCtr: weightedAvg(totalClicks * 100, totalImpressions),
     avgCpc: weightedAvg(totalSpent, totalClicks),

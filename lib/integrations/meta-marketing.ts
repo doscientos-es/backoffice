@@ -36,6 +36,19 @@ export interface MetaMarketingAd {
   creative?: {
     id: string;
     thumbnail_url?: string;
+    call_to_action_type?: string;
+    url_tags?: string;
+    object_url_spec?: { web_url?: string };
+    object_story_spec?: {
+      link_data?: {
+        link?: string;
+        call_to_action?: { type?: string; value?: { lead_gen_form_id?: string } };
+      };
+      template_data?: {
+        link?: string;
+        call_to_action?: { type?: string; value?: { lead_gen_form_id?: string } };
+      };
+    };
   };
 }
 
@@ -57,6 +70,9 @@ export interface MetaMarketingInsight {
   ctr: string;
   cpc?: string;
   cpp?: string;
+  inline_link_clicks?: string;
+  outbound_clicks?: MetaActionStat[];
+  unique_outbound_clicks?: MetaActionStat[];
   account_currency?: string;
   actions?: MetaActionStat[];
   cost_per_action_type?: MetaActionStat[];
@@ -68,6 +84,17 @@ export interface MetaMarketingInsight {
  * Campaigns usually report one or the other depending on objective.
  */
 const LEAD_ACTION_TYPES = new Set(["lead", "onsite_conversion.lead_grouped"]);
+const LANDING_PAGE_VIEW_ACTION_TYPES = new Set(["landing_page_view"]);
+const OUTBOUND_CLICK_ACTION_TYPES = new Set(["outbound_click"]);
+
+function sumActionValues(
+  actions: MetaActionStat[] | undefined,
+  actionTypes: ReadonlySet<string>,
+): number {
+  return (actions ?? [])
+    .filter((action) => actionTypes.has(action.action_type))
+    .reduce((sum, action) => sum + (Number.parseFloat(action.value) || 0), 0);
+}
 
 /**
  * Extracts lead count and computed cost-per-lead from a Meta insight row.
@@ -78,13 +105,49 @@ export function extractMetaLeads(
   actions: MetaActionStat[] | undefined,
   spend: number,
 ): { totalLeads: number; costPerLead: number } {
-  const totalLeads = (actions ?? [])
-    .filter((a) => LEAD_ACTION_TYPES.has(a.action_type))
-    .reduce((sum, a) => sum + (Number.parseFloat(a.value) || 0), 0);
+  const totalLeads = sumActionValues(actions, LEAD_ACTION_TYPES);
 
   return {
     totalLeads,
     costPerLead: totalLeads > 0 ? spend / totalLeads : 0,
+  };
+}
+
+/** Metrics that describe the path from an ad click to an actual page view. */
+export function extractMetaTrafficMetrics(insight: MetaMarketingInsight): {
+  inlineLinkClicks: number;
+  outboundClicks: number;
+  uniqueOutboundClicks: number;
+  landingPageViews: number;
+} {
+  return {
+    inlineLinkClicks: Number.parseInt(insight.inline_link_clicks ?? "", 10) || 0,
+    outboundClicks: sumActionValues(insight.outbound_clicks, OUTBOUND_CLICK_ACTION_TYPES),
+    uniqueOutboundClicks: sumActionValues(
+      insight.unique_outbound_clicks,
+      OUTBOUND_CLICK_ACTION_TYPES,
+    ),
+    landingPageViews: sumActionValues(insight.actions, LANDING_PAGE_VIEW_ACTION_TYPES),
+  };
+}
+
+/** Extract stable, user-visible creative details without depending on raw JSON. */
+export function extractMetaCreativeDetails(ad: MetaMarketingAd): {
+  creativeId: string | null;
+  destinationUrl: string | null;
+  urlTags: string | null;
+  callToActionType: string | null;
+  leadFormId: string | null;
+} {
+  const creative = ad.creative;
+  const linkData =
+    creative?.object_story_spec?.link_data ?? creative?.object_story_spec?.template_data;
+  return {
+    creativeId: creative?.id ?? null,
+    destinationUrl: creative?.object_url_spec?.web_url ?? linkData?.link ?? null,
+    urlTags: creative?.url_tags ?? null,
+    callToActionType: creative?.call_to_action_type ?? linkData?.call_to_action?.type ?? null,
+    leadFormId: linkData?.call_to_action?.value?.lead_gen_form_id ?? null,
   };
 }
 
@@ -208,7 +271,8 @@ export async function getMetaAds(): Promise<MetaMarketingAd[]> {
   if (!env.META_AD_ACCOUNT_ID) throw new Error("META_AD_ACCOUNT_ID not configured");
 
   return fetchMetaMarketing<MetaMarketingAd>(`${env.META_AD_ACCOUNT_ID}/ads`, {
-    fields: "id,adset_id,campaign_id,name,status,creative{id,thumbnail_url}",
+    fields:
+      "id,adset_id,campaign_id,name,status,creative{id,thumbnail_url,call_to_action_type,url_tags,object_url_spec,object_story_spec}",
   });
 }
 
@@ -233,7 +297,7 @@ export async function getMetaInsights(
   return fetchMetaMarketing<MetaMarketingInsight>(`${env.META_AD_ACCOUNT_ID}/insights`, {
     level: "ad",
     fields:
-      "ad_id,date_start,date_stop,impressions,reach,clicks,spend,ctr,cpc,cpp,account_currency,actions,cost_per_action_type",
+      "ad_id,date_start,date_stop,impressions,reach,clicks,inline_link_clicks,outbound_clicks,unique_outbound_clicks,spend,ctr,cpc,cpp,account_currency,actions,cost_per_action_type",
     time_range: JSON.stringify({ since, until }),
     time_increment: "1",
   });

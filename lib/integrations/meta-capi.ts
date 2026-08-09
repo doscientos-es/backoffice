@@ -61,6 +61,9 @@ export type CapiConversionInput = {
   clientIpAddress?: string | null;
   /** Raw `User-Agent` header — improves Advanced Matching. */
   clientUserAgent?: string | null;
+  /** Meta browser identifiers, collected only after marketing consent. */
+  fbc?: string | null;
+  fbp?: string | null;
   /**
    * Extra fields merged into Meta's `custom_data` object (e.g.
    * `event_source: "crm"`, `lead_event_source`, `lead_status`). Combined
@@ -107,6 +110,15 @@ export async function pushMetaConversion(input: CapiConversionInput): Promise<vo
   // Not hashed — Meta uses these as-is for Advanced Matching.
   if (input.clientIpAddress) userData.client_ip_address = input.clientIpAddress;
   if (input.clientUserAgent) userData.client_user_agent = input.clientUserAgent;
+  if (input.fbc) userData.fbc = input.fbc;
+  if (input.fbp) userData.fbp = input.fbp;
+
+  const conversionValue =
+    input.value != null ? { value: input.value, currency: input.currency ?? "EUR" } : {};
+  const customData =
+    input.value != null || input.custom_data
+      ? { ...conversionValue, ...input.custom_data }
+      : undefined;
 
   const payload = {
     data: [
@@ -117,15 +129,7 @@ export async function pushMetaConversion(input: CapiConversionInput): Promise<vo
         action_source: input.actionSource ?? "crm",
         event_source_url: input.eventSourceUrl ?? undefined,
         user_data: userData,
-        custom_data:
-          input.value != null || input.custom_data
-            ? {
-                ...(input.value != null
-                  ? { value: input.value, currency: input.currency ?? "EUR" }
-                  : {}),
-                ...input.custom_data,
-              }
-            : undefined,
+        custom_data: customData,
       },
     ],
   };
