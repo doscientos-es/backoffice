@@ -577,7 +577,7 @@ begin
     raise exception 'Resultado de outbox no válido';
   end if;
 
-  select l.*, o.attempt_count into v_ledger, v_attempt_count
+  select l.* into v_ledger
     from public.verifactu_outbox o
     join public.verifactu_ledger l on l.id = o.ledger_id
    where o.id = p_outbox_id
@@ -587,6 +587,10 @@ begin
   if not found then
     return false;
   end if;
+
+  select attempt_count into v_attempt_count
+    from public.verifactu_outbox
+   where id = p_outbox_id;
 
   update public.verifactu_outbox
      set state = case p_result
