@@ -126,14 +126,7 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
       });
       setPendingStatus(null);
       if (res.ok) {
-        feedback.setSuccess(
-          opts?.successLabel ??
-            (status === "issued"
-              ? "Factura emitida"
-              : status === "paid"
-                ? "Factura pagada"
-                : "Factura anulada"),
-        );
+        feedback.setSuccess(opts?.successLabel ?? "Factura pagada");
       } else {
         feedback.setError(res.error);
       }

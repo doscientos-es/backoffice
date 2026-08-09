@@ -120,8 +120,8 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             ) : null}
             <p className="mt-1 text-xs text-red-600/80 dark:text-red-400/70">
               {invoice.verifactu_status === "error"
-                ? "Pulsa «Reintentar envío» para volver a intentarlo."
-                : 'Corrige el motivo y vuelve a enviar con "Reintentar AEAT".'}
+                ? "El sistema reintentará el envío automáticamente. Puedes usar «Reintentar envío» si necesitas hacerlo ahora."
+                : "No se reintentará este registro automáticamente. Revisa el motivo de AEAT y aplica el procedimiento fiscal que corresponda."}
             </p>
           </div>
         </div>

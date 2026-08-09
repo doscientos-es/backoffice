@@ -33,7 +33,17 @@ export function SendAeatButton({
     fd.set("id", invoiceId);
     const result = await sendToAeat(fd);
     if (result.ok) {
-      feedback.setSuccess(result.csv ? `Aceptada · CSV ${result.csv}` : "Factura procesada");
+      if (result.status === "accepted") {
+        feedback.setSuccess(result.csv ? `Aceptada · CSV ${result.csv}` : "Aceptada por AEAT");
+      } else if (result.status === "rejected") {
+        feedback.setError(
+          "AEAT rechazó el registro. Consulta el motivo fiscal antes de continuar.",
+        );
+      } else if (result.status === "error") {
+        feedback.setError("El envío a AEAT falló; se reintentará automáticamente.");
+      } else {
+        feedback.setSuccess("El registro fiscal ya está siendo gestionado.");
+      }
       router.refresh();
     } else {
       feedback.setError(result.error);

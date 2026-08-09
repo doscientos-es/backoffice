@@ -146,10 +146,20 @@ function sanitizeResponse(response: Record<string, unknown>): Record<string, unk
     "aeatDescription",
     "soapFault",
     "error",
+    "errorCode",
   ];
   return Object.fromEntries(
     allowed.filter((key) => response[key] !== undefined).map((key) => [key, response[key]]),
   );
+}
+
+export function formatOutboxError(
+  explicitError: string | null,
+  result: Pick<VerifactuSubmitResult, "aeatCode" | "errorMessage"> | null,
+): string | null {
+  const message = explicitError ?? result?.errorMessage ?? null;
+  if (!result?.aeatCode) return message;
+  return message ? `AEAT ${result.aeatCode}: ${message}` : `AEAT ${result.aeatCode}`;
 }
 
 async function complete(
@@ -166,8 +176,8 @@ async function complete(
     p_result: status,
     p_csv: result?.csv ?? null,
     p_aeat_code: result?.aeatCode ?? null,
-    p_response: result ? sanitizeResponse(result.response) : null,
-    p_error: error ?? result?.errorMessage ?? null,
+    p_response: result ? sanitizeResponse({ ...result.response, errorCode: result.errorCode }) : null,
+    p_error: formatOutboxError(error, result),
   });
   if (completionError) throw new Error(completionError.message);
   return { processed: true, status, csv: result?.csv ?? null };

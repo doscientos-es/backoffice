@@ -56,6 +56,7 @@ import {
   assertDurableVerifactuPackage,
   deliverInvoiceVerifactu,
   deliverVerifactuOutbox,
+  type OutboxDelivery,
   syncInvoiceQrFromLedger,
 } from "@/lib/verifactu/outbox";
 
@@ -90,7 +91,10 @@ async function enqueueFiscalRecord(invoiceId: string, cancellation = false): Pro
  * the current client record so any edits made while in draft are captured.
  * Best-effort Drive backup fires on first issuance.
  */
-export const updateInvoiceStatus = defineAction({
+export const updateInvoiceStatus = defineAction<
+  typeof UpdateInvoiceStatusInput,
+  { fiscalDeliveryStatus: OutboxDelivery["status"] | null }
+>({
   name: "invoices.updateStatus",
   schema: UpdateInvoiceStatusInput,
   roles: ["owner", "admin"],
@@ -113,7 +117,7 @@ export const updateInvoiceStatus = defineAction({
         );
       }
       if (status === "issued") void backupInvoiceToDrive(id, user.email);
-      return;
+      return { fiscalDeliveryStatus: delivery.status };
     }
 
     const now = new Date().toISOString();
@@ -150,6 +154,33 @@ export const updateInvoiceStatus = defineAction({
         }
       });
     }
+
+    return { fiscalDeliveryStatus: null };
+  },
+});
+
+/** Reverts a payment without re-emitting its immutable fiscal record. */
+export const revertInvoicePayment = defineAction({
+  name: "invoices.revertPayment",
+  schema: uuidIdInput,
+  roles: ["owner", "admin"],
+  revalidate: (_p, input) => [`/invoices/${input.id}`, "/invoices", "/inicio"],
+  handler: async (input, { user }) => {
+    await consumeUserVerification(
+      user.id,
+      userVerificationScope("invoice.payment.revert", `invoice:${input.id}`),
+    );
+    const invoice = await findInvoiceForEdit(input.id);
+    if (!invoice) throw new Error("Factura no encontrada");
+    if (invoice.status !== "paid")
+      throw new Error("Solo se puede revertir el cobro de una factura pagada");
+
+    await patchInvoiceStatus(input.id, {
+      status: "issued",
+      updated_at: new Date().toISOString(),
+      paid_at: null,
+      payment_method: null,
+    });
   },
 });
 
@@ -236,7 +267,10 @@ export const restoreInvoice = defineAction({
  * Re-delivers the pre-generated RegistroAlta. It never recreates a hash or
  * overwrites fiscal evidence; a non-due/accepted job simply returns no CSV.
  */
-export const sendToAeat = defineAction<typeof SendInvoiceInput, { csv: string | null }>({
+export const sendToAeat = defineAction<
+  typeof SendInvoiceInput,
+  { csv: string | null; status: OutboxDelivery["status"] }
+>({
   name: "invoices.sendToAeat",
   schema: SendInvoiceInput,
   roles: ["owner", "admin"],
@@ -249,7 +283,7 @@ export const sendToAeat = defineAction<typeof SendInvoiceInput, { csv: string | 
     );
     await assertDurableVerifactuPackage();
     const delivery = await deliverInvoiceVerifactu(id, `manual:${crypto.randomUUID()}`);
-    return { csv: delivery.csv };
+    return { csv: delivery.csv, status: delivery.status };
   },
 });
 
