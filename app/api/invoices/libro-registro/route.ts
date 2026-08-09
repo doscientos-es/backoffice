@@ -11,11 +11,13 @@ const log = scopedLogger("api.invoices.libro-registro");
 /**
  * GET /api/invoices/libro-registro
  *
- * Exports the Libro Registro de Facturas Expedidas in CSV format,
- * conforming to the AEAT standard fields for Verifactu/SII reporting.
+ * Exports issued invoices in CSV format for the accounting advisor.
+ * This export supports the bookkeeping process; it does not replace an
+ * official filing or the AEAT's own Libro Registro.
  *
  * Query params:
- *   - year: YYYY (required) — fiscal year to export
+ *   - year: YYYY (optional, defaults to the current fiscal year)
+ *   - month: YYYY-MM (optional) — exports only that calendar month
  *   - status: comma-separated invoice statuses to include (default: issued,paid,overdue,rectified)
  */
 export async function GET(req: NextRequest): Promise<NextResponse> {
@@ -27,27 +29,43 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   const { searchParams } = new URL(req.url);
   const year = searchParams.get("year") ?? new Date().getFullYear().toString();
+  const month = searchParams.get("month");
   const statusParam = searchParams.get("status") ?? "issued,paid,overdue,rectified";
   const statuses = statusParam.split(",").map((s) => s.trim());
+
+  if (!/^\d{4}$/.test(year)) {
+    return NextResponse.json({ error: "El año debe tener el formato YYYY" }, { status: 400 });
+  }
+  if (month && !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
+    return NextResponse.json({ error: "El mes debe tener el formato YYYY-MM" }, { status: 400 });
+  }
 
   try {
     const supabase = await createServerClient();
 
-    const { data: invoices, error } = await notDeleted(
+    let query = notDeleted(
       supabase
         .from("invoices")
         .select(
           "full_number, issue_date, due_date, client_nif, client_name, subtotal, tax_amount, total, verifactu_csv, verifactu_status, status, payment_method, invoice_type, is_rectification, rectification_type",
         ),
-    )
-      .in("status", statuses)
-      .gte("issue_date", `${year}-01-01`)
-      .lte("issue_date", `${year}-12-31`)
+    ).in("status", statuses);
+
+    if (month) {
+      const monthYear = Number(month.slice(0, 4));
+      const monthNumber = Number(month.slice(5, 7));
+      const nextMonth = new Date(Date.UTC(monthYear, monthNumber, 1)).toISOString().slice(0, 10);
+      query = query.gte("issue_date", `${month}-01`).lt("issue_date", nextMonth);
+    } else {
+      query = query.gte("issue_date", `${year}-01-01`).lte("issue_date", `${year}-12-31`);
+    }
+
+    const { data: invoices, error } = await query
       .order("issue_date", { ascending: true })
       .order("full_number", { ascending: true });
 
     if (error) {
-      log.error({ err: error.message, year }, "libro_registro_query_failed");
+      log.error({ err: error.message, year, month }, "libro_registro_query_failed");
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
@@ -107,10 +125,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       ...rows.map((row) => headers.map((h) => csvEscape(row[h as keyof typeof row])).join(",")),
     ];
 
-    const csv = csvLines.join("\r\n");
-    const filename = `libro-registro-${year}.csv`;
+    const csv = `\uFEFF${csvLines.join("\r\n")}`;
+    const filename = month ? `facturas-${month}.csv` : `facturas-${year}.csv`;
 
-    log.info({ year, count: rows.length }, "libro_registro_exported");
+    log.info({ year, month, count: rows.length }, "invoice_register_exported");
 
     return new NextResponse(csv, {
       status: 200,

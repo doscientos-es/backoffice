@@ -10,6 +10,7 @@ import { INVOICE_LIST_PAGE_SIZE, INVOICE_SORT_COLUMNS } from "@/lib/invoices/typ
 import { INVOICE_STATUS, VERIFACTU_STATUS } from "@/lib/status";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { parsePage, parseSortParam, parseStringParam } from "@/lib/utils/search-params";
+import { MonthlyRegisterExport } from "./monthly-register-export";
 
 export const metadata: Metadata = { title: "Facturas · doscientos" };
 export const dynamic = "force-dynamic";
@@ -108,15 +109,18 @@ export default async function InvoicesPage({
         searchKey="q"
         searchPlaceholder="Buscar por cliente, nº o IDFACT…"
         actions={
-          <Button variant="outline" size="sm" asChild>
-            <a
-              href={`/api/invoices/libro-registro?year=${now.getFullYear()}`}
-              download={`libro-registro-${now.getFullYear()}.csv`}
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Libro Registro {now.getFullYear()}
-            </a>
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <MonthlyRegisterExport />
+            <Button variant="outline" size="sm" asChild>
+              <a
+                href={`/api/invoices/libro-registro?year=${now.getFullYear()}`}
+                download={`facturas-${now.getFullYear()}.csv`}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Descargar año {now.getFullYear()}
+              </a>
+            </Button>
+          </div>
         }
         filters={[
           { key: "status", label: "Estado", options: STATUS_FILTER_OPTIONS },
