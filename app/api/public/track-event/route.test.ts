@@ -24,7 +24,7 @@ vi.mock("@/lib/integrations/conversion-events", () => ({
 }));
 
 vi.mock("@/lib/ratelimit", () => ({
-  rateLimit: () => ({ success: true }),
+  distributedRateLimit: async () => ({ success: true }),
 }));
 
 import { OPTIONS, POST } from "./route";

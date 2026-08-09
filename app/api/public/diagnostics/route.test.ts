@@ -23,7 +23,9 @@ vi.mock("@/lib/env", () => ({
   publicEnv: { NEXT_PUBLIC_APP_URL: "https://app.example" },
   serverEnv: () => ({ LANDING_ALLOWED_ORIGINS: ' "https://landing.example/" ' }),
 }));
-vi.mock("@/lib/ratelimit", () => ({ rateLimit: () => ({ success: true }) }));
+vi.mock("@/lib/ratelimit", () => ({
+  distributedRateLimit: async () => ({ success: true }),
+}));
 vi.mock("@/lib/integrations/conversion-events", () => ({
   recordConversionEvent: mocks.recordConversionEvent,
 }));
@@ -65,7 +67,14 @@ function request(origin = "https://landing.example") {
     headers: { "x-forwarded-for": "203.0.113.10" },
     body: JSON.stringify({
       email: "ana@example.com",
-      answers: {},
+       answers: {
+         proceso: "Pasar pedidos de email a Excel",
+         personas: 2,
+         minutos_por_vez: 15,
+         veces_por_semana: 5,
+         coste_hora: 25,
+         impacto: "Retrasos y seguimiento manual",
+       },
       metrics: {
         monthlyHours: 8,
         yearlyHours: 96,
