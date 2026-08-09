@@ -1,5 +1,8 @@
 "use client";
 
+import { Check, X } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
+import { sileo } from "sileo";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import {
@@ -10,9 +13,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { Check, X } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
-import { sileo } from "sileo";
 import { updateLeadMomTestSignal } from "../actions";
 import type { MomTestValues } from "./mom-test-checklist";
 
@@ -85,7 +85,7 @@ export function MomTestQuickDialog({
                     disabled={pending}
                     className={cn(
                       value === true &&
-                      "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300",
+                        "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300",
                     )}
                     aria-pressed={value === true}
                     onClick={() => setSignal(signal.key, value === true ? null : true)}

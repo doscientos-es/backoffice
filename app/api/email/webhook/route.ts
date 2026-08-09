@@ -1,7 +1,7 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
+import { type NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { type NextRequest, NextResponse } from "next/server";
-import { createHmac, timingSafeEqual } from "node:crypto";
 
 const RESEND_TO_INTERACTION: Record<string, string> = {
   "email.sent": "email_sent",
@@ -151,7 +151,8 @@ export async function POST(request: NextRequest) {
         .is("deleted_at", null)
         .limit(1)
         .maybeSingle();
-      if (leadError) return NextResponse.json({ error: "Could not match incoming email" }, { status: 500 });
+      if (leadError)
+        return NextResponse.json({ error: "Could not match incoming email" }, { status: 500 });
       leadId = matchedLead?.id ?? null;
     }
   }

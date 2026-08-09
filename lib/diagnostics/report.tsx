@@ -1,16 +1,16 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import {
   Document,
   Font,
   Image,
   Link,
   Page,
+  renderToBuffer,
   StyleSheet,
   Text,
   View,
-  renderToBuffer,
 } from "@react-pdf/renderer";
-import { readFileSync } from "node:fs";
-import path from "node:path";
 
 const BRAND = "#2A4227";
 const INK = "#1A2E18";

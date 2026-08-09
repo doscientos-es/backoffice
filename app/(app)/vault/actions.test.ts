@@ -152,9 +152,9 @@ describe("unlockVaultWithPasskey", () => {
     const result = await unlockVaultWithPasskey();
 
     expect(result).toEqual({ ok: true });
-    expect(consumeUserVerification).toHaveBeenCalledWith(
-      "user-1",
-      { intent: "vault.unlock", resource: "vault" },
-    );
+    expect(consumeUserVerification).toHaveBeenCalledWith("user-1", {
+      intent: "vault.unlock",
+      resource: "vault",
+    });
   });
 });

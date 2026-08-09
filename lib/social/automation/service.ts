@@ -1,5 +1,5 @@
-import { scopedLogger } from "@/lib/logger";
 import { serverEnv } from "@/lib/env";
+import { scopedLogger } from "@/lib/logger";
 import { canReply } from "@/lib/social/core";
 import { sendPrivateReply } from "@/lib/social/meta/messaging";
 import { socialRegistry } from "@/lib/social/registry";

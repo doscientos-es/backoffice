@@ -4,6 +4,18 @@
 // Única fuente de verdad para las 3 fast actions (llamada, email, nota)
 // con opción de agendar follow-up. Todas refrescan el router tras éxito.
 
+import {
+  FileText,
+  Loader2,
+  Mail,
+  MessageCircle,
+  NotebookPen,
+  Phone,
+  Send,
+  Video,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { type SubmitEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -28,18 +40,6 @@ import { buildBookingUrl } from "@/lib/recovery/utils";
 import { defaultFollowUpDateTime } from "@/lib/reminders/date-presets";
 import type { CallOutcome } from "@/lib/schemas/lead";
 import { addMinutesToDatetimeLocal, datetimeLocalToIso } from "@/lib/utils/date-time";
-import {
-  FileText,
-  Loader2,
-  Mail,
-  MessageCircle,
-  NotebookPen,
-  Phone,
-  Send,
-  Video,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
-import { type SubmitEvent, useEffect, useState } from "react";
 import { createReminder } from "../reminders/actions";
 import { EmailComposer } from "./[id]/email-composer";
 import { MomTestQuickDialog } from "./[id]/mom-test-quick-dialog";

@@ -1,24 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { EntityAvatar } from "@/components/ui/entity-avatar";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { MemberAvatar } from "@/components/ui/member-avatar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-  boardColumnFor,
-  isRotting,
-  nextActionRank,
-  nextActionState,
-  STAGE_ROT_DAYS,
-  waitingForReplySince,
-} from "@/lib/leads/pipeline";
-import type { LeadListItem, LeadMemberRef } from "@/lib/leads/types";
-import { leadDisplayName } from "@/lib/leads/utils";
-import type { MemberOption } from "@/lib/members/queries";
-import type { LeadStatus } from "@/lib/status";
-import { cn, formatEUR, relativeTime } from "@/lib/utils";
 import {
   DndContext,
   type DragEndEvent,
@@ -50,6 +31,25 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useOptimistic, useState, useTransition } from "react";
+import { Badge } from "@/components/ui/badge";
+import { EntityAvatar } from "@/components/ui/entity-avatar";
+import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { MemberAvatar } from "@/components/ui/member-avatar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  boardColumnFor,
+  isRotting,
+  nextActionRank,
+  nextActionState,
+  STAGE_ROT_DAYS,
+  waitingForReplySince,
+} from "@/lib/leads/pipeline";
+import type { LeadListItem, LeadMemberRef } from "@/lib/leads/types";
+import { leadDisplayName } from "@/lib/leads/utils";
+import type { MemberOption } from "@/lib/members/queries";
+import type { LeadStatus } from "@/lib/status";
+import { cn, formatEUR, relativeTime } from "@/lib/utils";
 import { ScheduleReminderDialog } from "../reminders/schedule-reminder-dialog";
 import { LeadCallLink } from "./[id]/phone-actions";
 import { deleteLead, updateLeadStatus } from "./actions";
@@ -510,7 +510,7 @@ function Column({
         className={cn(
           "flex shrink-0 flex-col gap-1 border-b border-border px-3 py-2.5",
           collapsed &&
-          "md:items-center md:gap-2 md:px-1.5 md:group-hover/col:flex-row md:group-hover/col:items-center md:group-hover/col:justify-between md:group-hover/col:gap-1 md:group-hover/col:px-3",
+            "md:items-center md:gap-2 md:px-1.5 md:group-hover/col:flex-row md:group-hover/col:items-center md:group-hover/col:justify-between md:group-hover/col:gap-1 md:group-hover/col:px-3",
         )}
       >
         <div
@@ -525,7 +525,7 @@ function Column({
               "truncate text-xs font-semibold tracking-wide",
               tone,
               collapsed &&
-              "md:rotate-180 md:[writing-mode:vertical-rl] md:group-hover/col:rotate-0 md:group-hover/col:[writing-mode:horizontal-tb]",
+                "md:rotate-180 md:[writing-mode:vertical-rl] md:group-hover/col:rotate-0 md:group-hover/col:[writing-mode:horizontal-tb]",
             )}
           >
             {label}

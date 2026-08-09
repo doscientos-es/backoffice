@@ -1,3 +1,4 @@
+import { ArrowRight, Clock3, ExternalLink } from "lucide-react";
 import { createTask } from "@/app/(app)/tasks/actions";
 import { type AttachmentItem, AttachmentSection } from "@/components/ui/attachment-section";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,6 @@ import { isGoogleEnabled } from "@/lib/env";
 import type { MemberOption } from "@/lib/members/queries";
 import { MEETING_PROJECT_STATUSES } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
-import { ArrowRight, Clock3, ExternalLink } from "lucide-react";
 import { LeadQuickActions } from "./quick-actions";
 
 function formatJourneyTime(value: string): string {
@@ -204,18 +204,18 @@ export async function LeadQuickActionsSection({
   const supabase = await createServerClient();
   const projectsRequest = googleEnabled
     ? supabase
-      .from("projects")
-      .select("id, name")
-      .is("deleted_at", null)
-      .in("status", MEETING_PROJECT_STATUSES)
-      .order("name")
+        .from("projects")
+        .select("id, name")
+        .is("deleted_at", null)
+        .in("status", MEETING_PROJECT_STATUSES)
+        .order("name")
     : Promise.resolve({ data: [] as Array<{ id: string; name: string }>, error: null });
   const membersRequest = googleEnabled
     ? supabase.from("team_members").select("id, name, email").is("deleted_at", null).order("name")
     : Promise.resolve({
-      data: [] as Array<{ id: string; name: string; email: string }>,
-      error: null,
-    });
+        data: [] as Array<{ id: string; name: string; email: string }>,
+        error: null,
+      });
   const [projectsResult, membersResult] = await Promise.all([projectsRequest, membersRequest]);
 
   if (projectsResult.error) throw new Error(projectsResult.error.message);

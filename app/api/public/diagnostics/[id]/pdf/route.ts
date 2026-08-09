@@ -1,8 +1,8 @@
+import { type NextRequest, NextResponse } from "next/server";
 import { renderDiagnosticPdf } from "@/lib/diagnostics/report";
 import { serverEnv } from "@/lib/env";
 import { recordConversionEvent } from "@/lib/integrations/conversion-events";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { type NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

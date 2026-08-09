@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -15,8 +17,6 @@ import { leadDisplayName } from "@/lib/leads/utils";
 import { listActiveMembers } from "@/lib/members/queries";
 import { LEAD_STATUS, TASK_STATUS, type TaskStatus } from "@/lib/status";
 import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
-import Link from "next/link";
-import { notFound } from "next/navigation";
 import { TaskCreateDialog } from "../../tasks/task-create-dialog";
 import { CallInteractionDetails } from "./call-interaction-details";
 import { LeadAiPanel } from "./lead-ai-panel";
