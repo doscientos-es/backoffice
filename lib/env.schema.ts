@@ -9,6 +9,15 @@
  */
 import { z } from "zod";
 
+/** Canonical Base64 encoding of exactly 32 bytes, suitable for AES-256. */
+export const VaultEncryptionKeySchema = z
+  .string()
+  .trim()
+  .refine(
+    (value) => value === "" || /^[A-Za-z0-9+/]{43}=$/.test(value),
+    "VAULT_ENCRYPTION_KEY must be a 32-byte Base64 value (generate with: openssl rand -base64 32)",
+  );
+
 export const PublicSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(20),
@@ -36,6 +45,9 @@ export const ServerSchema = PublicSchema.extend({
   // 32-byte hex string (e.g. `openssl rand -hex 32`). Falls back to the
   // service-role key when not set; set it to reduce blast radius.
   PORTAL_COOKIE_SECRET: z.string().min(20).optional(),
+  // AES-256-GCM key for the internal vault. Optional locally so development
+  // can use its deterministic fallback; mandatory at runtime in production.
+  VAULT_ENCRYPTION_KEY: VaultEncryptionKeySchema.optional().default(""),
   RESEND_API_KEY: z.string().optional().default(""),
   RESEND_WEBHOOK_SECRET: z.string().optional().default(""),
   RESEND_FROM_DOMAIN: z.string().default("doscientos.es"),

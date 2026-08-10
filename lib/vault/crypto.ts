@@ -17,23 +17,22 @@ const ALGORITHM = "aes-256-gcm" as const;
 const IV_BYTES = 16;
 
 function getEncryptionKey(): Buffer {
-  const raw = process.env.VAULT_ENCRYPTION_KEY;
+  const env = serverEnv();
+  const raw = env.VAULT_ENCRYPTION_KEY;
   if (raw) {
-    const buf = Buffer.from(raw, "base64");
-    if (buf.length !== 32) throw new Error("VAULT_ENCRYPTION_KEY must be 32 bytes (base64)");
-    return buf;
+    // Validated as exactly 32 decoded bytes by VaultEncryptionKeySchema.
+    return Buffer.from(raw, "base64");
   }
   // In production, a dedicated key is mandatory — deriving from the service-role key
   // would mean a single secret leak compromises both DB access and vault encryption.
   if (process.env.NODE_ENV === "production") {
     throw new Error(
       "VAULT_ENCRYPTION_KEY is required in production. " +
-        "Generate one with: openssl rand -base64 32",
+      "Generate one with: openssl rand -base64 32",
     );
   }
   // Dev/test convenience fallback only.
-  const seed = serverEnv().SUPABASE_SERVICE_ROLE_KEY;
-  return scryptSync(seed, "vault-key-salt-v1", 32) as Buffer;
+  return scryptSync(env.SUPABASE_SERVICE_ROLE_KEY, "vault-key-salt-v1", 32) as Buffer;
 }
 
 /** Encrypts a plaintext string. Returns `iv:authTag:ciphertext` (hex). */
