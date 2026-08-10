@@ -14,7 +14,8 @@ import { scopedLogger } from "@/lib/logger";
  */
 
 const log = scopedLogger("meta-capi");
-const CAPI_VERSION = "v19.0";
+const CAPI_VERSION = "v26.0";
+const META_INSTANT_FORM_SOURCE = "Anuncios Meta";
 
 function sha256hex(value: string): string {
   return crypto.createHash("sha256").update(value.trim().toLowerCase()).digest("hex");
@@ -41,6 +42,11 @@ export type CapiConversionInput = {
   eventId: string;
   email?: string | null;
   phone?: string | null;
+  /**
+   * Meta-generated Lead Ads identifier. Keep it as a string: its 15–17 digits
+   * can exceed JavaScript's safe integer range.
+   */
+  metaLeadId?: string | null;
   /** Estimated deal value in EUR for bid optimization. */
   value?: number | null;
   currency?: string;
@@ -72,6 +78,49 @@ export type CapiConversionInput = {
   custom_data?: Record<string, string | number | boolean | null | undefined>;
 };
 
+export type QualifiedLeadStageInput = {
+  /** Internal CRM UUID, used only to make a stage event idempotent. */
+  leadId: string;
+  status: string;
+  email?: string | null;
+  phone?: string | null;
+  value?: number | null;
+  /** Stored provider identifier from leads.external_id. */
+  externalId?: string | null;
+  /** Stored provider namespace from leads.external_source. */
+  externalSource?: string | null;
+};
+
+function metaInstantFormLeadId(input: QualifiedLeadStageInput): string | undefined {
+  const id = input.externalId?.trim();
+  return input.externalSource === META_INSTANT_FORM_SOURCE && /^\d{15,17}$/.test(id ?? "")
+    ? id
+    : undefined;
+}
+
+/**
+ * Sends the CRM-stage format required by Meta Qualified Leads. The provider
+ * lead ID is attached only for genuine Meta instant-form leads; other CRM
+ * sources still benefit from hashed contact matching without sending an
+ * unrelated external identifier as `lead_id`.
+ */
+export function pushMetaQualifiedLeadStage(input: QualifiedLeadStageInput): Promise<void> {
+  return pushMetaConversion({
+    eventName: "Lead",
+    eventId: `lead-${input.leadId}-${input.status}`,
+    email: input.email,
+    phone: input.phone,
+    metaLeadId: metaInstantFormLeadId(input),
+    value: input.value,
+    actionSource: "system_generated",
+    custom_data: {
+      event_source: "crm",
+      lead_event_source: "doscientos-backoffice",
+      lead_status: input.status,
+    },
+  });
+}
+
 /**
  * Push one conversion event to Meta CAPI.
  * No-ops silently when META_PIXEL_ID or META_CAPI_ACCESS_TOKEN is not set.
@@ -98,11 +147,11 @@ export async function pushMetaConversion(input: CapiConversionInput): Promise<vo
     const normalized = normalizePhone(input.phone);
     if (normalized) userData.ph = [sha256hex(normalized)];
   }
+  if (input.metaLeadId) userData.lead_id = input.metaLeadId;
 
-  // Meta requires at least one user_data field. em/ph are what actually let
-  // Meta match the event to a person, so we gate on those specifically —
-  // IP/UA alone are too weak a signal to justify sending the event.
-  if (!userData.em && !userData.ph) {
+  // Meta requires at least one matching field. The Meta-generated lead ID is
+  // the strongest Qualified Leads signal, and is valid even without em/ph.
+  if (!userData.em && !userData.ph && !userData.lead_id) {
     log.debug({ eventId: input.eventId }, "meta capi: no user data available, skipping");
     return;
   }
@@ -113,12 +162,14 @@ export async function pushMetaConversion(input: CapiConversionInput): Promise<vo
   if (input.fbc) userData.fbc = input.fbc;
   if (input.fbp) userData.fbp = input.fbp;
 
-  const conversionValue =
-    input.value != null ? { value: input.value, currency: input.currency ?? "EUR" } : {};
-  const customData =
-    input.value != null || input.custom_data
-      ? { ...conversionValue, ...input.custom_data }
-      : undefined;
+  // Meta uses currency for ROAS calculation even when a Lead does not yet
+  // have an estimated value. The CRM is EUR-denominated, so always send its
+  // ISO 4217 code and only add `value` when one is known.
+  const customData = {
+    ...(input.value != null ? { value: input.value } : {}),
+    ...input.custom_data,
+    currency: input.currency ?? "EUR",
+  };
 
   const payload = {
     data: [

@@ -13,7 +13,7 @@ import { isGoogleEnabled, publicEnv, serverEnv } from "@/lib/env";
 import type { CalendarBusySlot } from "@/lib/google/calendar";
 import { findConflicts, insertEvent } from "@/lib/google/calendar";
 import { resolveSubject } from "@/lib/google/client";
-import { pushMetaConversion } from "@/lib/integrations/meta-capi";
+import { pushMetaQualifiedLeadStage } from "@/lib/integrations/meta-capi";
 import { isAutomaticallyAccessible, summarizeCallOutcomes } from "@/lib/leads/call-qualification";
 import { normalizeCompanySize, normalizeLeadSource, normalizeUrgency } from "@/lib/leads/constants";
 import { scopedLogger } from "@/lib/logger";
@@ -189,23 +189,25 @@ export const convertLeadToClient = defineAction({
     revalidatePath("/leads");
     revalidatePath("/clients");
 
-    // Fire-and-forget: push conversion to Meta CAPI after response is sent.
+    // Fire-and-forget: push the CRM `won` stage to Meta after response is sent.
     // Uses adminClient to avoid relying on session context inside after().
     const leadId = data.leadId;
     after(async () => {
       try {
         const { data: lead } = await createAdminClient()
           .from("leads")
-          .select("email, phone, estimated_value")
+          .select("email, phone, estimated_value, external_id, external_source")
           .eq("id", leadId)
           .maybeSingle();
         if (lead) {
-          await pushMetaConversion({
-            eventName: "Lead",
-            eventId: `convert-${leadId}`,
+          await pushMetaQualifiedLeadStage({
+            leadId,
+            status: "won",
             email: lead.email as string | null,
             phone: lead.phone as string | null,
             value: lead.estimated_value as number | null,
+            externalId: lead.external_id as string | null,
+            externalSource: lead.external_source as string | null,
           });
         }
       } catch {
@@ -249,6 +251,8 @@ export const updateLeadStatus = defineAction({
       .eq("id", data.leadId)
       .single();
 
+    if (current?.status === data.status) return;
+
     const updates: Record<string, unknown> = {
       status: data.status,
       updated_by: user.id,
@@ -284,21 +288,17 @@ export const updateLeadStatus = defineAction({
       try {
         const { data: lead } = await createAdminClient()
           .from("leads")
-          .select("email, phone")
+          .select("email, phone, external_id, external_source")
           .eq("id", leadId)
           .maybeSingle();
         if (lead) {
-          await pushMetaConversion({
-            eventName: "Lead",
-            eventId: `lead-${leadId}-${status}`,
+          await pushMetaQualifiedLeadStage({
+            leadId,
+            status,
             email: lead.email as string | null,
             phone: lead.phone as string | null,
-            actionSource: "system_generated",
-            custom_data: {
-              event_source: "crm",
-              lead_event_source: "doscientos-backoffice",
-              lead_status: status,
-            },
+            externalId: lead.external_id as string | null,
+            externalSource: lead.external_source as string | null,
           });
         }
       } catch (e) {
@@ -427,17 +427,17 @@ export const sendEmailToLead = defineAction({
     const renderedHtml = markdownToHtml(renderedMarkdown);
     const finalHtml = data.includeSignature
       ? appendSignature(
-          renderedHtml,
-          buildSignatureHtml(
-            {
-              name: user.name,
-              jobTitle: user.jobTitle ?? undefined,
-              phone: user.phone ?? undefined,
-              contactEmail: user.contactEmail ?? user.emailAlias ?? undefined,
-            },
-            publicEnv.NEXT_PUBLIC_APP_URL || "https://app.doscientos.es",
-          ),
-        )
+        renderedHtml,
+        buildSignatureHtml(
+          {
+            name: user.name,
+            jobTitle: user.jobTitle ?? undefined,
+            phone: user.phone ?? undefined,
+            contactEmail: user.contactEmail ?? user.emailAlias ?? undefined,
+          },
+          publicEnv.NEXT_PUBLIC_APP_URL || "https://app.doscientos.es",
+        ),
+      )
       : renderedHtml;
 
     const renderedSubject = renderTemplate(data.subject, {
@@ -626,10 +626,10 @@ export const notifyDueCallReminders = defineAction({
         link: `/leads/${task.lead_id as string}?feedback=call`,
         actions: (task.leads as { phone?: string | null } | null)?.phone
           ? [
-              { action: "call", title: "Llamar" },
-              { action: "whatsapp", title: "WhatsApp" },
-              { action: "feedback", title: "Registrar" },
-            ]
+            { action: "call", title: "Llamar" },
+            { action: "whatsapp", title: "WhatsApp" },
+            { action: "feedback", title: "Registrar" },
+          ]
           : [{ action: "feedback", title: "Registrar" }],
         data: {
           leadId: task.lead_id as string,
@@ -691,6 +691,28 @@ export const logLeadCall = defineAction<
           subject: "Estado: new → contacted",
           performed_by: user.id,
           payload: { from: "new", to: "contacted" },
+        });
+
+        after(async () => {
+          try {
+            const { data: lead } = await createAdminClient()
+              .from("leads")
+              .select("email, phone, external_id, external_source")
+              .eq("id", leadId)
+              .maybeSingle();
+            if (lead) {
+              await pushMetaQualifiedLeadStage({
+                leadId,
+                status: "contacted",
+                email: lead.email as string | null,
+                phone: lead.phone as string | null,
+                externalId: lead.external_id as string | null,
+                externalSource: lead.external_source as string | null,
+              });
+            }
+          } catch (e) {
+            log.warn({ err: e, leadId }, "meta_capi_status_failed");
+          }
         });
       }
     }
@@ -875,10 +897,10 @@ export const assignLeadOwner = defineAction({
         link: `/leads/${data.leadId}`,
         actions: (current?.phone as string | null)
           ? [
-              { action: "call", title: "Llamar" },
-              { action: "whatsapp", title: "WhatsApp" },
-              { action: "feedback", title: "Registrar" },
-            ]
+            { action: "call", title: "Llamar" },
+            { action: "whatsapp", title: "WhatsApp" },
+            { action: "feedback", title: "Registrar" },
+          ]
           : [{ action: "feedback", title: "Registrar" }],
         data: {
           callUrl: current?.phone

@@ -1,7 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { after, type NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
-import { pushMetaConversion } from "@/lib/integrations/meta-capi";
+import { pushMetaQualifiedLeadStage } from "@/lib/integrations/meta-capi";
 import { telegramRequest } from "@/lib/integrations/telegram";
 import { scopedLogger } from "@/lib/logger";
 import type { LeadStatusType } from "@/lib/schemas/lead";
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
 
   const { data: current, error: readErr } = await supabase
     .from("leads")
-    .select("name, status, email, phone")
+    .select("name, status, email, phone, external_id, external_source")
     .eq("id", leadId)
     .is("deleted_at", null)
     .single();
@@ -144,17 +144,13 @@ export async function POST(request: NextRequest) {
     // Fire-and-forget: notify Meta CAPI of the funnel stage transition.
     after(async () => {
       try {
-        await pushMetaConversion({
-          eventName: "Lead",
-          eventId: `lead-${leadId}-${nextStatus}`,
+        await pushMetaQualifiedLeadStage({
+          leadId,
+          status: nextStatus,
           email: current.email as string | null,
           phone: current.phone as string | null,
-          actionSource: "system_generated",
-          custom_data: {
-            event_source: "crm",
-            lead_event_source: "doscientos-backoffice",
-            lead_status: nextStatus,
-          },
+          externalId: current.external_id as string | null,
+          externalSource: current.external_source as string | null,
         });
       } catch (e) {
         log.warn({ err: e, leadId }, "meta_capi_status_failed");

@@ -4,7 +4,7 @@ import {
   linkConversionEventsToLead,
   recordConversionEvent,
 } from "@/lib/integrations/conversion-events";
-import { pushMetaConversion } from "@/lib/integrations/meta-capi";
+import { pushMetaConversion, pushMetaQualifiedLeadStage } from "@/lib/integrations/meta-capi";
 import { normalizeCompanySize, normalizeLeadSource, normalizeUrgency } from "@/lib/leads/constants";
 import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -407,6 +407,7 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
     // CAPI only mirrors a consented landing submission; it must not re-send
     // Cal.com, instant-form, or CRM events as website leads.
     let websiteCapiTask: Promise<void> | null = null;
+    let qualifiedLeadStageTask: Promise<void> | null = null;
     if (
       norm.externalSource === "Landing" &&
       norm.context?.marketingConsent === true &&
@@ -426,6 +427,19 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
         fbp: norm.context.metaFbp,
       }).catch((e) => log.error({ err: e, leadId }, "meta capi lead push failed"));
     }
+    // Meta instant-form leads need their initial CRM stage as well as later
+    // transitions. The helper includes the provider's leadgen id as lead_id.
+    if (norm.externalSource === "Anuncios Meta") {
+      qualifiedLeadStageTask = pushMetaQualifiedLeadStage({
+        leadId,
+        status: "new",
+        email: row.email,
+        phone: row.phone,
+        value: row.estimated_value,
+        externalId: row.external_id,
+        externalSource: row.external_source,
+      }).catch((e) => log.error({ err: e, leadId }, "meta qualified lead initial stage failed"));
+    }
     const conversionTasks: Promise<unknown>[] = [];
     if (!norm.context?.internalTraffic) {
       conversionTasks.push(
@@ -442,6 +456,7 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
     }
 
     await Promise.allSettled([
+      ...(qualifiedLeadStageTask ? [qualifiedLeadStageTask] : []),
       runLeadPipeline(leadId, {
         ...norm,
         source: normalizedSource,

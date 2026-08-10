@@ -9,15 +9,19 @@ import { verifactuConfigFromEnv } from "./config";
 
 const log = scopedLogger("verifactu.outbox");
 
-type Rpc = (
-  functionName: string,
-  args: Record<string, unknown>,
-) => Promise<{ data: unknown; error: { message: string } | null }>;
-
 type LedgerRow = {
   record_type: "alta" | "anulacion";
   current_hash: string;
   record_payload: Record<string, unknown>;
+};
+
+type HashModule = {
+  computeInvoiceHash?: (input: VerifactuSubmitInput) => string;
+  computeCancellationHash?: (input: CancellationInput) => string;
+};
+
+type CancellableClient = {
+  cancelInvoice?: (input: CancellationInput) => Promise<VerifactuSubmitResult>;
 };
 
 type CancellationInput = {
@@ -33,18 +37,9 @@ type CancellationInput = {
   rechazoPrevio: "S" | "N";
 };
 
-type DurablePackage = {
-  computeInvoiceHash?: (input: VerifactuSubmitInput) => string;
-  computeCancellationHash?: (input: CancellationInput) => string;
-};
-
-type CancellableClient = {
-  cancelInvoice?: (input: CancellationInput) => Promise<VerifactuSubmitResult>;
-};
-
 export type OutboxDelivery = {
   processed: boolean;
-  status: "accepted" | "rejected" | "error" | "skipped";
+  status: VerifactuSubmitResult["status"] | "skipped";
   csv: string | null;
 };
 
@@ -60,87 +55,45 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 function text(payload: Record<string, unknown>, key: string): string {
   const value = payload[key];
-  if (typeof value !== "string" || !value.trim()) {
-    throw new Error(`Falta ${key} en el registro fiscal`);
+  if (typeof value !== "string" || !value.trim())
+    throw new Error(`Payload fiscal inválido: ${key}`);
+  return value;
+}
+
+function amount(payload: Record<string, unknown>, key: string): number {
+  const value = payload[key];
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new Error(`Payload fiscal inválido: ${key}`);
   }
   return value;
+}
+
+function date(payload: Record<string, unknown>, key: string): Date {
+  const value = new Date(text(payload, key));
+  if (Number.isNaN(value.getTime())) throw new Error(`Fecha fiscal inválida: ${key}`);
+  return value;
+}
+
+function nullableDate(payload: Record<string, unknown>, key: string): Date | null {
+  const value = payload[key];
+  if (value === null || value === undefined) return null;
+  if (typeof value !== "string") throw new Error(`Fecha fiscal inválida: ${key}`);
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) throw new Error(`Fecha fiscal inválida: ${key}`);
+  return parsed;
 }
 
 function nullableText(payload: Record<string, unknown>, key: string): string | null {
   const value = payload[key];
-  return typeof value === "string" && value.trim() ? value : null;
-}
-
-function numberValue(payload: Record<string, unknown>, key: string): number {
-  const value = payload[key];
-  if (typeof value !== "number" || !Number.isFinite(value)) {
-    throw new Error(`Falta ${key} en el registro fiscal`);
-  }
+  if (value === null || value === undefined) return null;
+  if (typeof value !== "string") throw new Error(`Payload fiscal inválido: ${key}`);
   return value;
 }
 
-function dateValue(payload: Record<string, unknown>, key: string): Date {
-  const date = new Date(text(payload, key));
-  if (Number.isNaN(date.getTime())) throw new Error(`${key} no contiene una fecha válida`);
-  return date;
-}
-
-function toAltaInput(payload: Record<string, unknown>): VerifactuSubmitInput {
-  const lines = payload.vatLines;
-  if (!Array.isArray(lines)) throw new Error("Falta el desglose de IVA del registro fiscal");
-
-  return {
-    nif: text(payload, "nif"),
-    invoiceNumber: text(payload, "invoiceNumber"),
-    invoiceType: text(payload, "invoiceType"),
-    issueDate: dateValue(payload, "issueDate"),
-    taxAmount: numberValue(payload, "taxAmount"),
-    total: numberValue(payload, "total"),
-    previousHash: nullableText(payload, "previousHash"),
-    generatedAt: dateValue(payload, "generatedAt"),
-    emisorName: text(payload, "emisorName"),
-    clientNif: nullableText(payload, "clientNif"),
-    clientName: nullableText(payload, "clientName"),
-    descriptionOperacion: text(payload, "descriptionOperacion"),
-    vatLines: lines.map((line) => {
-      const value = asRecord(line);
-      return {
-        rate: numberValue(value, "rate"),
-        base: numberValue(value, "base"),
-        tax: numberValue(value, "tax"),
-      };
-    }),
-    previousInvoiceNumber: nullableText(payload, "previousInvoiceNumber"),
-    previousIssueDate: payload.previousIssueDate ? dateValue(payload, "previousIssueDate") : null,
-  };
-}
-
-function toCancellationInput(payload: Record<string, unknown>): CancellationInput {
-  const sinRegistroPrevio = payload.sinRegistroPrevio === "S" ? "S" : "N";
-  const rechazoPrevio = payload.rechazoPrevio === "S" ? "S" : "N";
-  return {
-    nif: text(payload, "nif"),
-    cancelledInvoiceNumber: text(payload, "cancelledInvoiceNumber"),
-    cancelledInvoiceIssueDate: dateValue(payload, "cancelledInvoiceIssueDate"),
-    previousHash: nullableText(payload, "previousHash"),
-    generatedAt: dateValue(payload, "generatedAt"),
-    emisorName: text(payload, "emisorName"),
-    previousInvoiceNumber: nullableText(payload, "previousInvoiceNumber"),
-    previousIssueDate: payload.previousIssueDate ? dateValue(payload, "previousIssueDate") : null,
-    sinRegistroPrevio,
-    rechazoPrevio,
-  };
-}
-
-export async function assertDurableVerifactuPackage(): Promise<Required<DurablePackage>> {
-  const packageApi = (await import("@doscientos/verifactu")) as unknown as DurablePackage;
-  if (!packageApi.computeInvoiceHash || !packageApi.computeCancellationHash) {
-    throw new Error("Falta @doscientos/verifactu 0.1.11 con soporte de ledger durable");
+function sanitizeResponse(response: unknown): Record<string, unknown> {
+  if (!response || typeof response !== "object" || Array.isArray(response)) {
+    return { kind: "unknown_response" };
   }
-  return packageApi as Required<DurablePackage>;
-}
-
-function sanitizeResponse(response: Record<string, unknown>): Record<string, unknown> {
   const allowed = [
     "kind",
     "httpStatus",
@@ -152,7 +105,9 @@ function sanitizeResponse(response: Record<string, unknown>): Record<string, unk
     "errorCode",
   ];
   return Object.fromEntries(
-    allowed.filter((key) => response[key] !== undefined).map((key) => [key, response[key]]),
+    allowed
+      .filter((key) => (response as Record<string, unknown>)[key] !== undefined)
+      .map((key) => [key, (response as Record<string, unknown>)[key]]),
   );
 }
 
@@ -165,15 +120,95 @@ export function formatOutboxError(
   return message ? `AEAT ${result.aeatCode}: ${message}` : `AEAT ${result.aeatCode}`;
 }
 
+/** Fails closed until the package carrying durable-flow support is deployed. */
+export async function assertDurableVerifactuPackage(requireCancellation = false): Promise<void> {
+  const hashes = (await import("@doscientos/verifactu")) as unknown as HashModule;
+  if (!hashes.computeInvoiceHash) {
+    throw new Error(
+      "Falta publicar @doscientos/verifactu 0.1.11 antes de activar VERI*FACTU durable",
+    );
+  }
+  if (!requireCancellation) return;
+  const client = createVerifactuClient(verifactuConfigFromEnv()) as unknown as CancellableClient;
+  if (!client.cancelInvoice || !hashes.computeCancellationHash) {
+    throw new Error("Falta publicar @doscientos/verifactu 0.1.11 con RegistroAnulacion");
+  }
+}
+
+function altaInput(payload: Record<string, unknown>): VerifactuSubmitInput {
+  const vatLines = payload.vatLines;
+  if (!Array.isArray(vatLines)) throw new Error("Payload fiscal inválido: vatLines");
+  return {
+    nif: text(payload, "nif"),
+    invoiceNumber: text(payload, "invoiceNumber"),
+    invoiceType: text(payload, "invoiceType"),
+    issueDate: date(payload, "issueDate"),
+    taxAmount: amount(payload, "taxAmount"),
+    total: amount(payload, "total"),
+    previousHash: nullableText(payload, "previousHash"),
+    generatedAt: date(payload, "generatedAt"),
+    emisorName: text(payload, "emisorName"),
+    clientNif: nullableText(payload, "clientNif"),
+    clientName: nullableText(payload, "clientName"),
+    descriptionOperacion: text(payload, "descriptionOperacion"),
+    vatLines: vatLines.map((line) => {
+      const value = asRecord(line);
+      return {
+        rate: amount(value, "rate"),
+        base: amount(value, "base"),
+        tax: amount(value, "tax"),
+      };
+    }),
+    previousInvoiceNumber: nullableText(payload, "previousInvoiceNumber"),
+    previousIssueDate: nullableDate(payload, "previousIssueDate"),
+  };
+}
+
+function cancellationInput(payload: Record<string, unknown>): CancellationInput {
+  return {
+    nif: text(payload, "nif"),
+    cancelledInvoiceNumber: text(payload, "cancelledInvoiceNumber"),
+    cancelledInvoiceIssueDate: date(payload, "cancelledInvoiceIssueDate"),
+    previousHash: nullableText(payload, "previousHash"),
+    generatedAt: date(payload, "generatedAt"),
+    emisorName: text(payload, "emisorName"),
+    previousInvoiceNumber: nullableText(payload, "previousInvoiceNumber"),
+    previousIssueDate: nullableDate(payload, "previousIssueDate"),
+    sinRegistroPrevio: payload.sinRegistroPrevio === "S" ? "S" : "N",
+    rechazoPrevio: payload.rechazoPrevio === "S" ? "S" : "N",
+  };
+}
+
+async function getLedger(ledgerId: string): Promise<LedgerRow> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("verifactu_ledger")
+    .select("record_type, current_hash, record_payload")
+    .eq("id", ledgerId)
+    .maybeSingle();
+  if (error || !data) throw new Error(error?.message ?? "Registro fiscal no encontrado");
+  const row = data as unknown as LedgerRow;
+  if (
+    !row.record_payload ||
+    typeof row.record_payload !== "object" ||
+    Array.isArray(row.record_payload)
+  ) {
+    throw new Error("El registro fiscal no contiene un payload válido");
+  }
+  return row;
+}
+
 async function complete(
-  rpc: Rpc,
   outboxId: string,
   workerId: string,
   result: VerifactuSubmitResult | null,
-  error: string | null,
+  error?: unknown,
 ): Promise<OutboxDelivery> {
+  const admin = createAdminClient();
   const status = result?.status ?? "error";
-  const { error: completionError } = await rpc("complete_verifactu_outbox", {
+  const explicitError = error instanceof Error ? error.message : "Error de envío a AEAT";
+  const message = formatOutboxError(error ? explicitError : null, result);
+  const { error: completionError } = await admin.rpc("complete_verifactu_outbox", {
     p_outbox_id: outboxId,
     p_worker_id: workerId,
     p_result: status,
@@ -181,70 +216,68 @@ async function complete(
     p_aeat_code: result?.aeatCode ?? null,
     p_response: result
       ? sanitizeResponse({ ...result.response, errorCode: result.errorCode })
-      : null,
-    p_error: formatOutboxError(error, result),
+      : { kind: "delivery_error" },
+    p_error: message,
   });
   if (completionError) throw new Error(completionError.message);
   return { processed: true, status, csv: result?.csv ?? null };
 }
 
-/** Deliver one already-created fiscal record. Safe to call concurrently. */
+async function deliverClaimed(
+  outboxId: string,
+  ledgerId: string,
+  workerId: string,
+): Promise<OutboxDelivery> {
+  try {
+    const ledger = await getLedger(ledgerId);
+    const client = createVerifactuClient(verifactuConfigFromEnv(), log);
+    const hashes = (await import("@doscientos/verifactu")) as unknown as HashModule;
+    let result: VerifactuSubmitResult;
+
+    if (ledger.record_type === "alta") {
+      const input = altaInput(ledger.record_payload);
+      const hash = hashes.computeInvoiceHash?.(input);
+      if (!hash) throw new Error("Falta computeInvoiceHash en @doscientos/verifactu 0.1.11");
+      if (hash !== ledger.current_hash)
+        throw new Error("La huella del ledger no coincide con su payload");
+      result = await client.registerInvoice(input);
+    } else {
+      const input = cancellationInput(ledger.record_payload);
+      const cancellable = client as unknown as CancellableClient;
+      const hash = hashes.computeCancellationHash?.(input);
+      if (!hash || !cancellable.cancelInvoice) {
+        throw new Error("Falta RegistroAnulacion en @doscientos/verifactu 0.1.11");
+      }
+      if (hash !== ledger.current_hash)
+        throw new Error("La huella de anulación no coincide con su payload");
+      result = await cancellable.cancelInvoice(input);
+    }
+    if (result.hash !== ledger.current_hash) {
+      throw new Error("La huella devuelta por VERI*FACTU no coincide con el ledger");
+    }
+    return await complete(outboxId, workerId, result);
+  } catch (error) {
+    log.error({ err: error, outboxId, ledgerId }, "verifactu_outbox_delivery_failed");
+    return complete(outboxId, workerId, null, error);
+  }
+}
+
+/** Claims and delivers a known outbox row. Safe when another worker won the race. */
 export async function deliverVerifactuOutbox(
   outboxId: string,
   workerId: string,
 ): Promise<OutboxDelivery> {
   const admin = createAdminClient();
-  const rpc = admin.rpc.bind(admin) as unknown as Rpc;
-  const { data: ledgerId, error: claimError } = await rpc("claim_verifactu_outbox", {
+  const { data: ledgerId, error } = await admin.rpc("claim_verifactu_outbox", {
     p_outbox_id: outboxId,
     p_worker_id: workerId,
   });
-  if (claimError) throw new Error(claimError.message);
-  if (typeof ledgerId !== "string") return { processed: false, status: "skipped", csv: null };
-
-  const { data, error: ledgerError } = await admin
-    .from("verifactu_ledger")
-    .select("record_type, current_hash, record_payload")
-    .eq("id", ledgerId)
-    .single();
-  if (ledgerError || !data)
-    throw new Error(ledgerError?.message ?? "Registro fiscal no encontrado");
-
-  const ledger = data as unknown as LedgerRow;
-  try {
-    const payload = asRecord(ledger.record_payload);
-    const api = await assertDurableVerifactuPackage();
-    const client = createVerifactuClient(verifactuConfigFromEnv(), log);
-    let result: VerifactuSubmitResult;
-    if (ledger.record_type === "alta") {
-      const input = toAltaInput(payload);
-      if (api.computeInvoiceHash(input) !== ledger.current_hash) {
-        throw new Error("La huella del RegistroAlta no coincide con el ledger");
-      }
-      result = await client.registerInvoice(input);
-    } else {
-      const cancellationClient = client as typeof client & CancellableClient;
-      if (!cancellationClient.cancelInvoice) {
-        throw new Error("Falta @doscientos/verifactu 0.1.11 con RegistroAnulacion");
-      }
-      const input = toCancellationInput(payload);
-      if (api.computeCancellationHash(input) !== ledger.current_hash) {
-        throw new Error("La huella del RegistroAnulacion no coincide con el ledger");
-      }
-      result = await cancellationClient.cancelInvoice(input);
-    }
-    if (result.hash !== ledger.current_hash) {
-      throw new Error("La huella devuelta por VERI*FACTU no coincide con el ledger");
-    }
-    return await complete(rpc, outboxId, workerId, result, null);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Error desconocido al enviar a AEAT";
-    log.error({ err: error, outboxId, ledgerId }, "verifactu_outbox_delivery_failed");
-    return complete(rpc, outboxId, workerId, null, message);
-  }
+  if (error) throw new Error(error.message);
+  if (!ledgerId) return { processed: false, status: "skipped", csv: null };
+  return deliverClaimed(outboxId, ledgerId as string, workerId);
 }
 
-/** Re-deliver the RegistroAlta belonging to an invoice, if it is due. */
+/** Re-delivers the immutable RegistroAlta for one invoice, if it has one. */
 export async function deliverInvoiceVerifactu(
   invoiceId: string,
   workerId: string,
@@ -258,9 +291,7 @@ export async function deliverInvoiceVerifactu(
     .maybeSingle();
   if (ledgerError) throw new Error(ledgerError.message);
   const ledgerId = (ledger as { id?: unknown } | null)?.id;
-  if (typeof ledgerId !== "string") {
-    throw new Error(MISSING_DURABLE_FISCAL_RECORD_MESSAGE);
-  }
+  if (typeof ledgerId !== "string") throw new Error(MISSING_DURABLE_FISCAL_RECORD_MESSAGE);
 
   const { data: outbox, error: outboxError } = await admin
     .from("verifactu_outbox")
@@ -273,7 +304,7 @@ export async function deliverInvoiceVerifactu(
   return deliverVerifactuOutbox(outboxId, workerId);
 }
 
-/** Persist the QR built from the immutable RegistroAlta snapshot. */
+/** Generates the invoice QR from the immutable RegistroAlta snapshot. */
 export async function syncInvoiceQrFromLedger(invoiceId: string): Promise<void> {
   const admin = createAdminClient();
   const { data, error } = await admin
@@ -282,15 +313,15 @@ export async function syncInvoiceQrFromLedger(invoiceId: string): Promise<void> 
     .eq("invoice_id", invoiceId)
     .eq("record_type", "alta")
     .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("No se encontró el RegistroAlta para generar el QR");
+  if (error || !data)
+    throw new Error(error?.message ?? "No se encontró el RegistroAlta para generar el QR");
 
-  const input = toAltaInput(asRecord((data as { record_payload?: unknown }).record_payload));
+  const input = altaInput((data as { record_payload: Record<string, unknown> }).record_payload);
   const qrUrl = createVerifactuClient(verifactuConfigFromEnv()).buildQrUrl({
-    nif: input.nif,
-    invoiceNumber: input.invoiceNumber,
-    issueDate: input.issueDate,
-    total: input.total,
+    nif: input.nif as string,
+    invoiceNumber: input.invoiceNumber as string,
+    issueDate: input.issueDate as Date,
+    total: input.total as number,
   });
   const { error: updateError } = await admin
     .from("invoices")
@@ -299,26 +330,20 @@ export async function syncInvoiceQrFromLedger(invoiceId: string): Promise<void> 
   if (updateError) throw new Error(updateError.message);
 }
 
-/** Claim and deliver due records serially to preserve the fiscal chain order. */
+/** Processes due work sequentially so AEAT sees each hash-chain entry in order. */
 export async function retryDueVerifactuOutbox(limit = 10): Promise<OutboxDelivery[]> {
   const admin = createAdminClient();
-  const rpc = admin.rpc.bind(admin) as unknown as Rpc;
-  const workerId = `cron:${crypto.randomUUID()}`;
   const results: OutboxDelivery[] = [];
-
-  for (let index = 0; index < Math.min(Math.max(limit, 1), 25); index += 1) {
-    const { data, error } = await rpc("claim_due_verifactu_outboxes", {
+  const workerId = `cron:${crypto.randomUUID()}`;
+  for (let count = 0; count < Math.min(Math.max(limit, 1), 50); count += 1) {
+    const { data, error } = await admin.rpc("claim_due_verifactu_outboxes", {
       p_limit: 1,
       p_worker_id: workerId,
     });
     if (error) throw new Error(error.message);
-    const claimed = Array.isArray(data) ? data[0] : null;
-    const outboxId =
-      claimed && typeof claimed === "object"
-        ? (claimed as { outbox_id?: unknown }).outbox_id
-        : null;
-    if (typeof outboxId !== "string") break;
-    results.push(await deliverVerifactuOutbox(outboxId, workerId));
+    const job = (data as { outbox_id: string; ledger_id: string }[] | null)?.[0];
+    if (!job) break;
+    results.push(await deliverClaimed(job.outbox_id, job.ledger_id, workerId));
   }
   return results;
 }

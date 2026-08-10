@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { pushMetaQualifiedLeadStage } from "@/lib/integrations/meta-capi";
 import { scopedLogger } from "@/lib/logger";
 import type { AcceptProposalFiscalDataType } from "@/lib/schemas/proposal";
 
@@ -45,7 +46,7 @@ export async function promoteLeadFromClient(
 
     const { data: lead, error: leadErr } = await client
       .from("leads")
-      .select("status")
+      .select("status, email, phone, estimated_value, external_id, external_source")
       .eq("id", leadId)
       .maybeSingle();
     if (leadErr || !lead) return { leadId, promoted: false };
@@ -68,6 +69,16 @@ export async function promoteLeadFromClient(
       type: "note",
       subject: "Lead ganado",
       body: "Promovido automáticamente a `won`.",
+    });
+
+    await pushMetaQualifiedLeadStage({
+      leadId,
+      status: "won",
+      email: lead.email as string | null,
+      phone: lead.phone as string | null,
+      value: lead.estimated_value as number | null,
+      externalId: lead.external_id as string | null,
+      externalSource: lead.external_source as string | null,
     });
 
     return { leadId, promoted: true };

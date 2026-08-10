@@ -7,7 +7,7 @@ import {
 } from "@/lib/integrations/cal";
 import { recordConversionEvent } from "@/lib/integrations/conversion-events";
 import { ingestLead } from "@/lib/integrations/lead-intake";
-import { pushMetaConversion } from "@/lib/integrations/meta-capi";
+import { pushMetaQualifiedLeadStage } from "@/lib/integrations/meta-capi";
 import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -67,21 +67,17 @@ export async function POST(request: NextRequest) {
         try {
           const { data: lead } = await createAdminClient()
             .from("leads")
-            .select("email, phone")
+            .select("email, phone, external_id, external_source")
             .eq("id", leadId)
             .maybeSingle();
           if (lead) {
-            await pushMetaConversion({
-              eventName: "Lead",
-              eventId: `lead-${leadId}-in_conversation`,
+            await pushMetaQualifiedLeadStage({
+              leadId,
+              status: "in_conversation",
               email: lead.email as string | null,
               phone: lead.phone as string | null,
-              actionSource: "system_generated",
-              custom_data: {
-                event_source: "crm",
-                lead_event_source: "doscientos-backoffice",
-                lead_status: "in_conversation",
-              },
+              externalId: lead.external_id as string | null,
+              externalSource: lead.external_source as string | null,
             });
           }
         } catch (e) {

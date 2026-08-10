@@ -106,7 +106,7 @@ export const updateInvoiceStatus = defineAction<
       userVerificationScope("invoice.status.update", `invoice:${id}:status:${status}`),
     );
     if (status === "issued" || status === "cancelled") {
-      await assertDurableVerifactuPackage();
+      await assertDurableVerifactuPackage(status === "cancelled");
       const outboxId = await enqueueFiscalRecord(id, status === "cancelled");
       if (status === "issued") await syncInvoiceQrFromLedger(id);
       const delivery = await deliverVerifactuOutbox(outboxId, `action:${crypto.randomUUID()}`);
