@@ -1,16 +1,18 @@
 "use client";
 
-import { AlertCircle, CalendarClock, Check, Copy, Sparkles } from "lucide-react";
-import { useState } from "react";
 import { AiNotice } from "@/components/ui/ai-notice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { AlertCircle, CalendarClock, Check, Copy, Mail, MessageCircle, Phone, Sparkles } from "lucide-react";
+import { useState } from "react";
 import {
   type ScheduleMember,
   ScheduleReminderDialog,
 } from "../../reminders/schedule-reminder-dialog";
+import { createTask } from "../../tasks/actions";
 
 export type LeadAiData = {
   ai_summary: string | null;
@@ -20,6 +22,16 @@ export type LeadAiData = {
   ai_confidence: number | null;
   ai_updated_at: string | null;
   ai_tags: string[] | null;
+};
+
+type NextBestAction = {
+  headline: string;
+  rationale: string;
+  urgency: "low" | "medium" | "high" | "urgent";
+  channel: "email" | "whatsapp" | "call" | "internal";
+  action: string;
+  message: string;
+  task: { title: string; description: string };
 };
 
 type Props = {
@@ -80,6 +92,10 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData, briefing, members 
   const [error, setError] = useState<string | null>(null);
   const [fresh, setFresh] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [recommendation, setRecommendation] = useState<NextBestAction | null>(null);
+  const [recommending, setRecommending] = useState(false);
+  const [applyingTask, setApplyingTask] = useState(false);
+  const [messageCopied, setMessageCopied] = useState(false);
 
   async function handleCopyBriefing() {
     try {
@@ -118,6 +134,56 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData, briefing, members 
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleRecommend() {
+    setRecommending(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/crm/ai/next-best-action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lead_id: leadId }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "No se pudo preparar la recomendación.");
+      setRecommendation(json as NextBestAction);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error desconocido.");
+    } finally {
+      setRecommending(false);
+    }
+  }
+
+  async function handleApplyRecommendedTask() {
+    if (!recommendation) return;
+    setApplyingTask(true);
+    setError(null);
+    try {
+      await createTask({
+        title: recommendation.task.title,
+        description: recommendation.task.description,
+        priority: recommendation.urgency,
+        status: "todo",
+        lead_id: leadId,
+        project_id: "",
+        client_id: "",
+        member_ids: [],
+        due_date: "",
+      });
+      setRecommendation((current) => current ? { ...current, task: { ...current.task, title: "Tarea creada" } } : current);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo crear la tarea.");
+    } finally {
+      setApplyingTask(false);
+    }
+  }
+
+  async function handleCopyMessage() {
+    if (!recommendation?.message) return;
+    await navigator.clipboard.writeText(recommendation.message);
+    setMessageCopied(true);
+    setTimeout(() => setMessageCopied(false), 1500);
   }
 
   const hasSummary = Boolean(data.ai_summary);
@@ -199,6 +265,33 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData, briefing, members 
         </div>
       )}
 
+      {aiEnabled ? (
+        <div className="rounded-lg border border-primary/15 bg-primary/[0.03] p-3 animate-in fade-in slide-in-from-bottom-1 duration-300">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium">Siguiente mejor acción</p>
+              <p className="text-xs text-muted-foreground">Prioriza una acción concreta según el historial y los silencios.</p>
+            </div>
+            <Button size="sm" variant="outline" onClick={handleRecommend} disabled={recommending}>
+              <Sparkles className={cn("size-3.5", recommending && "animate-spin")} />
+              {recommending ? "Pensando…" : recommendation ? "Recalcular" : "Recomendar"}
+            </Button>
+          </div>
+          {recommendation ? (
+            <div className="mt-3 flex flex-col gap-3 animate-in fade-in duration-300">
+              <div className="flex items-center gap-2">
+                <Badge variant={recommendation.urgency === "urgent" ? "danger" : recommendation.urgency === "high" ? "warning" : "outline"}>{recommendation.urgency === "urgent" ? "Urgente" : recommendation.urgency === "high" ? "Prioritaria" : "Seguimiento"}</Badge>
+                <span className="flex items-center gap-1 text-xs text-muted-foreground"><ChannelIcon channel={recommendation.channel} /> {recommendation.channel}</span>
+              </div>
+              <div><p className="text-sm font-medium">{recommendation.headline}</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{recommendation.rationale}</p></div>
+              <p className="rounded-md bg-background/70 p-2 text-sm">{recommendation.action}</p>
+              {recommendation.message ? <div><div className="mb-1 flex justify-between"><p className="text-xs font-medium text-muted-foreground">Borrador para revisar</p><Button size="xs" variant="ghost" onClick={handleCopyMessage}>{messageCopied ? <Check className="size-3 text-emerald-600" /> : <Copy className="size-3" />}{messageCopied ? "Copiado" : "Copiar"}</Button></div><Textarea value={recommendation.message} onChange={(event) => setRecommendation({ ...recommendation, message: event.target.value })} rows={5} className="text-sm" /></div> : null}
+              <div className="flex justify-end"><Button size="sm" variant="outline" disabled={applyingTask || recommendation.task.title === "Tarea creada"} onClick={handleApplyRecommendedTask}>{applyingTask ? "Creando…" : recommendation.task.title === "Tarea creada" ? "Tarea creada" : "Crear tarea"}</Button></div>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className="rounded-md border border-border bg-muted/30 px-3 py-2.5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
@@ -228,4 +321,11 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData, briefing, members 
       ) : null}
     </div>
   );
+}
+
+function ChannelIcon({ channel }: { channel: NextBestAction["channel"] }) {
+  if (channel === "email") return <Mail className="size-3" />;
+  if (channel === "whatsapp") return <MessageCircle className="size-3" />;
+  if (channel === "call") return <Phone className="size-3" />;
+  return <Sparkles className="size-3" />;
 }
