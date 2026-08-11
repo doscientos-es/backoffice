@@ -8,7 +8,8 @@
  */
 
 import { type NextRequest, NextResponse } from "next/server";
-import { AI_MODELS, isAIEnabled, runAIChat } from "@/lib/ai";
+import { z } from "zod";
+import { AI_MODELS, isAIEnabled, runAIObject } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { scopedLogger } from "@/lib/logger";
 import { rateLimit } from "@/lib/ratelimit";
@@ -19,17 +20,21 @@ export const runtime = "nodejs";
 
 const log = scopedLogger("ai.generate-client-update");
 
-const SYSTEM_PROMPT = `Eres el jefe de proyecto de una agencia de desarrollo web española.
-Escribe un update de progreso profesional, claro y conciso en ESPAÑOL para enviar al cliente.
+const ResultSchema = z.object({
+  health: z.enum(["on_track", "attention", "blocked"]),
+  summary: z.string().min(1).max(600),
+  progress: z.array(z.string().max(260)).max(5).default([]),
+  risks: z.array(z.string().max(260)).max(4).default([]),
+  next_steps: z.array(z.string().max(260)).max(5).default([]),
+  client_update: z.string().min(1).max(5000),
+});
 
-El update debe:
-- Empezar con un saludo profesional.
-- Resumir los avances recientes de forma comprensible (sin jerga técnica).
-- Mencionar el estado general del proyecto.
-- Indicar los próximos pasos previstos.
-- Terminar con una frase de cierre positiva y profesional.
-- Tono: profesional pero cercano, como el de una agencia española de confianza.
-- Longitud: 3-5 párrafos. No uses markdown, solo texto plano.`;
+const SYSTEM_PROMPT = `Eres el jefe de proyecto de una agencia de desarrollo web española. Analiza únicamente
+los datos entregados y prepara un update semanal que será revisado antes de compartir con el cliente.
+Devuelve un estado health: on_track solo si los datos no muestran bloqueos, attention si hay incertidumbre o
+retraso, blocked si existe un bloqueo explícito. No inventes progreso, fechas, aprobaciones ni compromisos.
+El client_update debe estar en español, ser claro, profesional y cercano, y tener 2-4 párrafos en texto plano.
+No expongas notas internas, horas, ni detalles técnicos irrelevantes salvo que sean necesarios para el cliente.`;
 
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!isAIEnabled()) {
@@ -111,12 +116,13 @@ Registros de trabajo recientes:
 ${workText || "(sin registros de trabajo)"}`;
 
   try {
-    const update = await runAIChat({
+    const update = await runAIObject({
       model: AI_MODELS.drafter,
       system: SYSTEM_PROMPT,
       user: userPrompt,
-      temperature: 0.4,
-      maxOutputTokens: 800,
+      schema: ResultSchema,
+      temperature: 0.25,
+      maxOutputTokens: 1400,
     });
 
     log.info({ projectId: id }, "ai_client_update_ok");
