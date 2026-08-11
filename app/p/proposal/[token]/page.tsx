@@ -1,4 +1,4 @@
-import { CheckCircle2, FileText, Presentation, XCircle } from "lucide-react";
+import { CheckCircle2, Download, FileText, Presentation, XCircle } from "lucide-react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
@@ -296,6 +296,13 @@ export default async function PortalProposalPage({
                 </strong>
               </p>
             ) : null}
+            <a
+              href={`/p/proposal/${token}/pdf`}
+              className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-[#2A4227] transition-colors hover:border-[#2A4227] hover:bg-[#2A4227]/5 dark:border-zinc-700 dark:bg-zinc-900 dark:text-[#9CC196] dark:hover:border-[#9CC196]"
+            >
+              <Download className="size-3.5" />
+              Descargar PDF
+            </a>
           </div>
         </div>
 

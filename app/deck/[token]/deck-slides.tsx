@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Download } from "lucide-react";
 import type { ReactNode } from "react";
 import { LogoMark } from "@/components/branding";
 import { Markdown } from "@/components/ui/markdown";
@@ -468,13 +468,22 @@ function ClosingSlide({ proposal, token }: { proposal: DeckProposal; token: stri
         </p>
       </Stagger>
       <Stagger i={3}>
-        <a
-          href={`/p/proposal/${token}`}
-          className="inline-flex items-center gap-2 sm:gap-3 rounded-full bg-white text-[#2A4227] px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold hover:bg-white/90 hover:gap-4 transition-all shadow-lg"
-        >
-          Ver propuesta y aceptar
-          <ArrowRight className="size-4 sm:size-5" />
-        </a>
+        <div className="flex flex-col items-center gap-3">
+          <a
+            href={`/p/proposal/${token}`}
+            className="inline-flex items-center gap-2 sm:gap-3 rounded-full bg-white text-[#2A4227] px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold hover:bg-white/90 hover:gap-4 transition-all shadow-lg"
+          >
+            Ver propuesta y aceptar
+            <ArrowRight className="size-4 sm:size-5" />
+          </a>
+          <a
+            href={`/p/proposal/${token}/pdf`}
+            className="inline-flex items-center gap-2 rounded-full border border-white/35 px-5 py-2.5 text-xs font-semibold text-white/90 transition-colors hover:border-white hover:bg-white/10"
+          >
+            <Download className="size-3.5" />
+            Descargar propuesta en PDF
+          </a>
+        </div>
       </Stagger>
       {proposal.client_name && (
         <Stagger i={4}>
