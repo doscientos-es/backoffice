@@ -1,0 +1,114 @@
+import { NextRequest } from "next/server";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const { state } = vi.hoisted(() => ({
+  state: {
+    aiEnabled: true,
+    leadId: "lead-1",
+    generatedPrompt: "",
+  },
+}));
+
+vi.mock("@/lib/ai", () => ({
+  AI_MODELS: { drafter: "test-model" },
+  isAIEnabled: () => state.aiEnabled,
+  runAIObject: vi.fn(async (input: { user: string }) => {
+    state.generatedPrompt = input.user;
+    return {
+      title: "Propuesta de portal de clientes",
+      context_markdown: "El equipo necesita centralizar su operativa.",
+      notes: "",
+      terms: "",
+      pairs: [
+        {
+          problem: "Procesos dispersos",
+          problemDescription: "La información está repartida.",
+          solution: "Portal centralizado",
+          solutionDescription: "Un punto de acceso único.",
+        },
+      ],
+    };
+  }),
+}));
+
+vi.mock("@/lib/auth", () => ({
+  requireUser: vi.fn(async () => ({ id: "user-1", role: "member" })),
+}));
+vi.mock("@/lib/ratelimit", () => ({ rateLimit: () => ({ success: true }) }));
+vi.mock("@/lib/logger", () => ({ scopedLogger: () => ({ info: vi.fn(), error: vi.fn() }) }));
+vi.mock("@/lib/leads/queries", () => ({
+  getLeadDetail: vi.fn(async () => ({
+    lead: {
+      name: "Ana",
+      company: "Acme",
+      status: "qualifying",
+      notes: "Quiere reducir tareas manuales.",
+    },
+    linkedClientName: null,
+    interactions: [
+      {
+        type: "call",
+        subject: "Descubrimiento",
+        body: null,
+        payload: { transcript: "El equipo necesita un portal para sus clientes." },
+        created_at: "2026-08-01T10:00:00.000Z",
+      },
+    ],
+    proposals: [],
+    projects: [],
+    invoices: [],
+    tasks: [],
+    reminders: [],
+    attachments: [],
+  })),
+}));
+vi.mock("@/lib/supabase/server", () => ({
+  createServerClient: vi.fn(async () => ({
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          is: () => ({ maybeSingle: async () => ({ data: { lead_id: state.leadId } }) }),
+        }),
+      }),
+    }),
+  })),
+}));
+
+import { POST } from "./route";
+
+describe("POST /api/proposals/[id]/generate-draft", () => {
+  beforeEach(() => {
+    state.aiEnabled = true;
+    state.leadId = "lead-1";
+    state.generatedPrompt = "";
+  });
+
+  it("rejects requests when AI is disabled", async () => {
+    state.aiEnabled = false;
+    expect(
+      (await POST(new NextRequest("http://localhost"), { params: Promise.resolve({ id: "p-1" }) }))
+        .status,
+    ).toBe(503);
+  });
+
+  it("requires a proposal linked to a lead", async () => {
+    state.leadId = "";
+    expect(
+      (await POST(new NextRequest("http://localhost"), { params: Promise.resolve({ id: "p-1" }) }))
+        .status,
+    ).toBe(422);
+  });
+
+  it("uses the lead briefing, including call transcripts, to prepare the draft", async () => {
+    const response = await POST(new NextRequest("http://localhost"), {
+      params: Promise.resolve({ id: "p-1" }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      ok: true,
+      title: "Propuesta de portal de clientes",
+    });
+    expect(state.generatedPrompt).toContain("Transcripción: El equipo necesita un portal");
+  });
+});

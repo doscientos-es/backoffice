@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LineItemsTable } from "@/components/finance/line-items-table";
 import { ProblemSolutionEditor } from "@/components/proposals/problem-solution-editor";
 import { AiNotice } from "@/components/ui/ai-notice";
@@ -20,7 +21,6 @@ import {
   unzipPairs,
   zipKeyPoints,
 } from "@/lib/proposals/key-points";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { updateProposal } from "../actions";
 
 export type EditableItem = LineItem;
