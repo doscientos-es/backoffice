@@ -1,12 +1,12 @@
 "use client";
 
+import { AlertCircle, Check, Copy, Sparkles } from "lucide-react";
+import { useState } from "react";
 import { AiNotice } from "@/components/ui/ai-notice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { AlertCircle, Check, Copy, Sparkles } from "lucide-react";
-import { useState } from "react";
 
 type Props = {
   projectId: string;
