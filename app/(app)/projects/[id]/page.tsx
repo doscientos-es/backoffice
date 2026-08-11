@@ -18,6 +18,7 @@ import { ScheduleReminderDialog } from "../../reminders/schedule-reminder-dialog
 import { TaskCreateDialog } from "../../tasks/task-create-dialog";
 import { GitHubModeBadge } from "../github-mode-badge";
 import type { GitHubSyncMode } from "../github-sync-section";
+import { AiKickoffPanel } from "./ai-kickoff-panel";
 import { type ChecklistItemRow, ChecklistSection } from "./checklist-section";
 import { ClientUpdatePanel } from "./client-update-panel";
 import { DeleteProjectButton } from "./delete-project-button";
@@ -322,6 +323,17 @@ export default async function ProjectDetailPage({
           ) : null}
         </CardContent>
       </Card>
+
+      {canEdit && (proposals ?? []).some((proposal) => proposal.status === "accepted") ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Arranque asistido</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AiKickoffPanel projectId={id} />
+          </CardContent>
+        </Card>
+      ) : null}
 
       {canEdit || pendingReminders.length > 0 ? (
         <Card>

@@ -1,5 +1,7 @@
 "use client";
 
+import { Check, ClipboardList, Loader2, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -10,8 +12,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { Check, ClipboardList, Loader2, Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
 import { createTask } from "../tasks/actions";
 import { EmailComposer } from "./[id]/email-composer";
 
@@ -47,7 +47,7 @@ export function CallDigestDialog({
             La llamada con {leadName} se ha registrado. Revisa el borrador antes de enviarlo.
           </DialogDescription>
         </DialogHeader>
-        {aiEnabled ? <CallCopilot leadId={leadId} open={open} draftKey={draftKey} /> : null}
+        {aiEnabled ? <CallCopilot key={draftKey} leadId={leadId} open={open} /> : null}
         <EmailComposer
           key={draftKey}
           leadId={leadId}
@@ -79,7 +79,7 @@ type CopilotResult = {
   follow_up_focus: string;
 };
 
-function CallCopilot({ leadId, open, draftKey }: { leadId: string; open: boolean; draftKey: number }) {
+function CallCopilot({ leadId, open }: { leadId: string; open: boolean }) {
   const [data, setData] = useState<CopilotResult | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -116,7 +116,7 @@ function CallCopilot({ leadId, open, draftKey }: { leadId: string; open: boolean
     return () => {
       cancelled = true;
     };
-  }, [leadId, open, draftKey]);
+  }, [leadId, open]);
 
   async function applyTasks() {
     if (!data || selected.length === 0) return;
@@ -157,7 +157,9 @@ function CallCopilot({ leadId, open, draftKey }: { leadId: string; open: boolean
         </span>
         <div>
           <p className="text-sm font-medium">Copiloto de llamada</p>
-          <p className="text-xs text-muted-foreground">Propuesta basada en las notas y transcripción registradas.</p>
+          <p className="text-xs text-muted-foreground">
+            Propuesta basada en las notas y transcripción registradas.
+          </p>
         </div>
       </div>
       {loading ? (
@@ -168,39 +170,100 @@ function CallCopilot({ leadId, open, draftKey }: { leadId: string; open: boolean
       {data ? (
         <div className="flex flex-col gap-3 text-sm">
           <p className="leading-relaxed">{data.summary}</p>
-          {data.decisions.length > 0 ? <InsightList title="Acuerdos" items={data.decisions} /> : null}
-          {data.open_questions.length > 0 ? <InsightList title="Por confirmar" items={data.open_questions} muted /> : null}
+          {data.decisions.length > 0 ? (
+            <InsightList title="Acuerdos" items={data.decisions} />
+          ) : null}
+          {data.open_questions.length > 0 ? (
+            <InsightList title="Por confirmar" items={data.open_questions} muted />
+          ) : null}
           {data.tasks.length > 0 ? (
             <div className="rounded-md border bg-background/70 p-2.5">
               <div className="mb-2 flex items-center justify-between gap-3">
-                <p className="flex items-center gap-1.5 text-xs font-medium"><ClipboardList className="size-3.5" /> Acciones sugeridas</p>
-                <span className="text-xs text-muted-foreground">{selected.length}/{data.tasks.length} seleccionadas</span>
+                <p className="flex items-center gap-1.5 text-xs font-medium">
+                  <ClipboardList className="size-3.5" /> Acciones sugeridas
+                </p>
+                <span className="text-xs text-muted-foreground">
+                  {selected.length}/{data.tasks.length} seleccionadas
+                </span>
               </div>
               <div className="flex flex-col gap-1">
-                {data.tasks.map((task) => {
+                {data.tasks.map((task, index) => {
                   const checked = selected.includes(task.title);
-                  return <label key={task.title} className="flex cursor-pointer items-start gap-2 rounded p-1.5 hover:bg-muted/50">
-                    <Checkbox checked={checked} onCheckedChange={(value) => setSelected((current) => value === true ? [...current, task.title] : current.filter((title) => title !== task.title))} />
-                    <span className="min-w-0"><span className="block text-sm">{task.title}</span>{task.description ? <span className="block text-xs text-muted-foreground">{task.description}</span> : null}</span>
-                  </label>;
+                  return (
+                    <label
+                      key={task.title}
+                      htmlFor={`call-task-${index}`}
+                      className="flex cursor-pointer items-start gap-2 rounded p-1.5 hover:bg-muted/50"
+                    >
+                      <Checkbox
+                        id={`call-task-${index}`}
+                        checked={checked}
+                        onCheckedChange={(value) =>
+                          setSelected((current) =>
+                            value === true
+                              ? [...current, task.title]
+                              : current.filter((title) => title !== task.title),
+                          )
+                        }
+                      />
+                      <span className="min-w-0">
+                        <span className="block text-sm">{task.title}</span>
+                        {task.description ? (
+                          <span className="block text-xs text-muted-foreground">
+                            {task.description}
+                          </span>
+                        ) : null}
+                      </span>
+                    </label>
+                  );
                 })}
               </div>
               <div className="mt-2 flex justify-end">
-                <Button size="sm" variant="outline" disabled={applying || selected.length === 0 || applied} onClick={applyTasks}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={applying || selected.length === 0 || applied}
+                  onClick={applyTasks}
+                >
                   {applied ? <Check className="size-3.5 text-emerald-600" /> : null}
                   {applying ? "Creando…" : applied ? "Tareas creadas" : "Crear seleccionadas"}
                 </Button>
               </div>
             </div>
           ) : null}
-          {data.follow_up_focus ? <p className="text-xs text-muted-foreground">El email de abajo se puede orientar a: {data.follow_up_focus}</p> : null}
+          {data.follow_up_focus ? (
+            <p className="text-xs text-muted-foreground">
+              El email de abajo se puede orientar a: {data.follow_up_focus}
+            </p>
+          ) : null}
         </div>
       ) : null}
-      {error ? <p className={cn("mt-2 text-xs text-destructive", loading && "hidden")}>{error}</p> : null}
+      {error ? (
+        <p className={cn("mt-2 text-xs text-destructive", loading && "hidden")}>{error}</p>
+      ) : null}
     </section>
   );
 }
 
-function InsightList({ title, items, muted = false }: { title: string; items: string[]; muted?: boolean }) {
-  return <div><p className="mb-1 text-xs font-medium text-muted-foreground">{title}</p><ul className={cn("space-y-1 pl-4 text-xs", muted && "text-muted-foreground")}>{items.map((item) => <li key={item} className="list-disc">{item}</li>)}</ul></div>;
+function InsightList({
+  title,
+  items,
+  muted = false,
+}: {
+  title: string;
+  items: string[];
+  muted?: boolean;
+}) {
+  return (
+    <div>
+      <p className="mb-1 text-xs font-medium text-muted-foreground">{title}</p>
+      <ul className={cn("space-y-1 pl-4 text-xs", muted && "text-muted-foreground")}>
+        {items.map((item) => (
+          <li key={item} className="list-disc">
+            {item}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }

@@ -76,7 +76,10 @@ export async function POST(req: NextRequest) {
     log.info({ leadId: body.lead_id, tasks: result.tasks.length }, "call_copilot_ok");
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
-    log.error({ leadId: body.lead_id, err: err instanceof Error ? err.message : err }, "call_copilot_failed");
+    log.error(
+      { leadId: body.lead_id, err: err instanceof Error ? err.message : err },
+      "call_copilot_failed",
+    );
     return NextResponse.json({ error: "ai_unavailable" }, { status: 502 });
   }
 }

@@ -1,13 +1,22 @@
 "use client";
 
+import {
+  AlertCircle,
+  CalendarClock,
+  Check,
+  Copy,
+  Mail,
+  MessageCircle,
+  Phone,
+  Sparkles,
+} from "lucide-react";
+import { useState } from "react";
 import { AiNotice } from "@/components/ui/ai-notice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { AlertCircle, CalendarClock, Check, Copy, Mail, MessageCircle, Phone, Sparkles } from "lucide-react";
-import { useState } from "react";
 import {
   type ScheduleMember,
   ScheduleReminderDialog,
@@ -171,7 +180,9 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData, briefing, members 
         member_ids: [],
         due_date: "",
       });
-      setRecommendation((current) => current ? { ...current, task: { ...current.task, title: "Tarea creada" } } : current);
+      setRecommendation((current) =>
+        current ? { ...current, task: { ...current.task, title: "Tarea creada" } } : current,
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo crear la tarea.");
     } finally {
@@ -270,7 +281,9 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData, briefing, members 
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-sm font-medium">Siguiente mejor acción</p>
-              <p className="text-xs text-muted-foreground">Prioriza una acción concreta según el historial y los silencios.</p>
+              <p className="text-xs text-muted-foreground">
+                Prioriza una acción concreta según el historial y los silencios.
+              </p>
             </div>
             <Button size="sm" variant="outline" onClick={handleRecommend} disabled={recommending}>
               <Sparkles className={cn("size-3.5", recommending && "animate-spin")} />
@@ -280,13 +293,71 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData, briefing, members 
           {recommendation ? (
             <div className="mt-3 flex flex-col gap-3 animate-in fade-in duration-300">
               <div className="flex items-center gap-2">
-                <Badge variant={recommendation.urgency === "urgent" ? "danger" : recommendation.urgency === "high" ? "warning" : "outline"}>{recommendation.urgency === "urgent" ? "Urgente" : recommendation.urgency === "high" ? "Prioritaria" : "Seguimiento"}</Badge>
-                <span className="flex items-center gap-1 text-xs text-muted-foreground"><ChannelIcon channel={recommendation.channel} /> {recommendation.channel}</span>
+                <Badge
+                  variant={
+                    recommendation.urgency === "urgent"
+                      ? "danger"
+                      : recommendation.urgency === "high"
+                        ? "warning"
+                        : "outline"
+                  }
+                >
+                  {recommendation.urgency === "urgent"
+                    ? "Urgente"
+                    : recommendation.urgency === "high"
+                      ? "Prioritaria"
+                      : "Seguimiento"}
+                </Badge>
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <ChannelIcon channel={recommendation.channel} /> {recommendation.channel}
+                </span>
               </div>
-              <div><p className="text-sm font-medium">{recommendation.headline}</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{recommendation.rationale}</p></div>
+              <div>
+                <p className="text-sm font-medium">{recommendation.headline}</p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                  {recommendation.rationale}
+                </p>
+              </div>
               <p className="rounded-md bg-background/70 p-2 text-sm">{recommendation.action}</p>
-              {recommendation.message ? <div><div className="mb-1 flex justify-between"><p className="text-xs font-medium text-muted-foreground">Borrador para revisar</p><Button size="xs" variant="ghost" onClick={handleCopyMessage}>{messageCopied ? <Check className="size-3 text-emerald-600" /> : <Copy className="size-3" />}{messageCopied ? "Copiado" : "Copiar"}</Button></div><Textarea value={recommendation.message} onChange={(event) => setRecommendation({ ...recommendation, message: event.target.value })} rows={5} className="text-sm" /></div> : null}
-              <div className="flex justify-end"><Button size="sm" variant="outline" disabled={applyingTask || recommendation.task.title === "Tarea creada"} onClick={handleApplyRecommendedTask}>{applyingTask ? "Creando…" : recommendation.task.title === "Tarea creada" ? "Tarea creada" : "Crear tarea"}</Button></div>
+              {recommendation.message ? (
+                <div>
+                  <div className="mb-1 flex justify-between">
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Borrador para revisar
+                    </p>
+                    <Button size="xs" variant="ghost" onClick={handleCopyMessage}>
+                      {messageCopied ? (
+                        <Check className="size-3 text-emerald-600" />
+                      ) : (
+                        <Copy className="size-3" />
+                      )}
+                      {messageCopied ? "Copiado" : "Copiar"}
+                    </Button>
+                  </div>
+                  <Textarea
+                    value={recommendation.message}
+                    onChange={(event) =>
+                      setRecommendation({ ...recommendation, message: event.target.value })
+                    }
+                    rows={5}
+                    className="text-sm"
+                  />
+                </div>
+              ) : null}
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={applyingTask || recommendation.task.title === "Tarea creada"}
+                  onClick={handleApplyRecommendedTask}
+                >
+                  {applyingTask
+                    ? "Creando…"
+                    : recommendation.task.title === "Tarea creada"
+                      ? "Tarea creada"
+                      : "Crear tarea"}
+                </Button>
+              </div>
             </div>
           ) : null}
         </div>

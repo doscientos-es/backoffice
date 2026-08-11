@@ -50,7 +50,7 @@ export function ClientUpdatePanel({ projectId, aiEnabled }: Props) {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Error al generar el update.");
-      setUpdate(json as ProjectUpdate);
+      setUpdate(json.update as ProjectUpdate);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido.");
     } finally {
@@ -105,7 +105,9 @@ export function ClientUpdatePanel({ projectId, aiEnabled }: Props) {
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <UpdateList title="Avances" items={update.progress} />
               <UpdateList title="Siguientes pasos" items={update.next_steps} />
-              {update.risks.length > 0 ? <UpdateList title="Riesgos a vigilar" items={update.risks} tone="warning" /> : null}
+              {update.risks.length > 0 ? (
+                <UpdateList title="Riesgos a vigilar" items={update.risks} tone="warning" />
+              ) : null}
             </div>
           </div>
           <textarea
@@ -149,9 +151,21 @@ export function ClientUpdatePanel({ projectId, aiEnabled }: Props) {
 function UpdateList({ title, items, tone }: { title: string; items: string[]; tone?: "warning" }) {
   if (items.length === 0) return null;
   return (
-    <div className={cn("rounded-md bg-background/70 p-2.5", tone === "warning" && "ring-1 ring-amber-500/20")}>
+    <div
+      className={cn(
+        "rounded-md bg-background/70 p-2.5",
+        tone === "warning" && "ring-1 ring-amber-500/20",
+      )}
+    >
       <p className="mb-1 text-xs font-medium text-muted-foreground">{title}</p>
-      <ul className="space-y-1 text-xs leading-relaxed">{items.map((item) => <li key={item} className="flex gap-1.5"><span className="text-muted-foreground">•</span><span>{item}</span></li>)}</ul>
+      <ul className="space-y-1 text-xs leading-relaxed">
+        {items.map((item) => (
+          <li key={item} className="flex gap-1.5">
+            <span className="text-muted-foreground">•</span>
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

@@ -22,7 +22,10 @@ const ResultSchema = z.object({
   channel: z.enum(["email", "whatsapp", "call", "internal"]),
   action: z.string().min(1).max(400),
   message: z.string().max(3000).default(""),
-  task: z.object({ title: z.string().min(1).max(200), description: z.string().max(800).default("") }),
+  task: z.object({
+    title: z.string().min(1).max(200),
+    description: z.string().max(800).default(""),
+  }),
 });
 
 const SYSTEM_PROMPT = `Eres un asistente comercial. Propón UNA siguiente acción para reactivar una oportunidad.
@@ -69,7 +72,9 @@ export async function POST(req: NextRequest) {
     const supabase = await createServerClient();
     const { data: proposal } = await supabase
       .from("proposals")
-      .select("title, status, sent_at, viewed_at, valid_until, notes, clients(name), leads(name, company, email)")
+      .select(
+        "title, status, sent_at, viewed_at, valid_until, notes, clients(name), leads(name, company, email)",
+      )
       .eq("id", body.proposal_id as string)
       .is("deleted_at", null)
       .maybeSingle();

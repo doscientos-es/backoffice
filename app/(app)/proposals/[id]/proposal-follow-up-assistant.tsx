@@ -88,20 +88,76 @@ export function ProposalFollowUpAssistant({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm font-medium">Asistente de seguimiento</p>
-          <p className="text-xs text-muted-foreground">Una propuesta accionable, no un envío automático.</p>
+          <p className="text-xs text-muted-foreground">
+            Una propuesta accionable, no un envío automático.
+          </p>
         </div>
         <Button size="sm" variant="outline" onClick={generate} disabled={loading}>
           <Sparkles className={cn("size-3.5", loading && "animate-spin")} />
           {loading ? "Analizando…" : data ? "Actualizar" : "Preparar acción"}
         </Button>
       </div>
-      {data ? <div className="rounded-lg border border-primary/15 bg-primary/[0.03] p-3 animate-in fade-in slide-in-from-bottom-1 duration-300">
-        <div className="flex items-center gap-2"><Badge variant={data.urgency === "urgent" ? "danger" : data.urgency === "high" ? "warning" : "outline"}>{data.urgency === "high" ? "Prioritaria" : data.urgency === "urgent" ? "Urgente" : "Seguimiento"}</Badge><span className="flex items-center gap-1 text-xs text-muted-foreground"><ChannelIcon channel={data.channel} /> {data.channel}</span></div>
-        <p className="mt-3 text-sm font-medium">{data.headline}</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{data.rationale}</p>
-        <p className="mt-3 rounded-md bg-background/70 p-2 text-sm">{data.action}</p>
-        {data.message ? <div className="mt-3"><div className="mb-1 flex justify-between"><p className="text-xs font-medium text-muted-foreground">Borrador para revisar</p><Button size="xs" variant="ghost" onClick={copyMessage}>{copied ? <Check className="size-3 text-emerald-600" /> : <Copy className="size-3" />}{copied ? "Copiado" : "Copiar"}</Button></div><Textarea value={data.message} onChange={(event) => setData({ ...data, message: event.target.value })} rows={5} /></div> : null}
-        <div className="mt-3 flex justify-end"><Button size="sm" variant="outline" onClick={applyTask} disabled={applying || data.task.title === "Tarea creada"}>{applying ? "Creando…" : data.task.title === "Tarea creada" ? "Tarea creada" : "Crear tarea"}</Button></div>
-      </div> : null}
+      {data ? (
+        <div className="rounded-lg border border-primary/15 bg-primary/[0.03] p-3 animate-in fade-in slide-in-from-bottom-1 duration-300">
+          <div className="flex items-center gap-2">
+            <Badge
+              variant={
+                data.urgency === "urgent"
+                  ? "danger"
+                  : data.urgency === "high"
+                    ? "warning"
+                    : "outline"
+              }
+            >
+              {data.urgency === "high"
+                ? "Prioritaria"
+                : data.urgency === "urgent"
+                  ? "Urgente"
+                  : "Seguimiento"}
+            </Badge>
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <ChannelIcon channel={data.channel} /> {data.channel}
+            </span>
+          </div>
+          <p className="mt-3 text-sm font-medium">{data.headline}</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{data.rationale}</p>
+          <p className="mt-3 rounded-md bg-background/70 p-2 text-sm">{data.action}</p>
+          {data.message ? (
+            <div className="mt-3">
+              <div className="mb-1 flex justify-between">
+                <p className="text-xs font-medium text-muted-foreground">Borrador para revisar</p>
+                <Button size="xs" variant="ghost" onClick={copyMessage}>
+                  {copied ? (
+                    <Check className="size-3 text-emerald-600" />
+                  ) : (
+                    <Copy className="size-3" />
+                  )}
+                  {copied ? "Copiado" : "Copiar"}
+                </Button>
+              </div>
+              <Textarea
+                value={data.message}
+                onChange={(event) => setData({ ...data, message: event.target.value })}
+                rows={5}
+              />
+            </div>
+          ) : null}
+          <div className="mt-3 flex justify-end">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={applyTask}
+              disabled={applying || data.task.title === "Tarea creada"}
+            >
+              {applying
+                ? "Creando…"
+                : data.task.title === "Tarea creada"
+                  ? "Tarea creada"
+                  : "Crear tarea"}
+            </Button>
+          </div>
+        </div>
+      ) : null}
       {error ? <p className="text-xs text-destructive">{error}</p> : null}
     </div>
   );
