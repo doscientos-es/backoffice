@@ -84,7 +84,7 @@ async function acceptWithFiscal(token: string, fiscalInput: unknown): Promise<Ac
   const { data: proposal, error: fetchError } = await admin
     .from("proposals")
     .select(
-      "id, status, title, client_id, lead_id, clients(name, nif, billing_address), leads(name, email, phone, company)",
+      "id, status, title, client_id, lead_id, clients(name, nif, billing_address_street), leads(name, email, phone, company)",
     )
     .eq("portal_token", parsed.data)
     .is("deleted_at", null)
@@ -101,7 +101,11 @@ async function acceptWithFiscal(token: string, fiscalInput: unknown): Promise<Ac
   // only when their row is missing the legal minimum (name + NIF + address).
   const client = (
     proposal as unknown as {
-      clients: { name: string | null; nif: string | null; billing_address: string | null } | null;
+      clients: {
+        name: string | null;
+        nif: string | null;
+        billing_address_street: string | null;
+      } | null;
     }
   ).clients;
   const needsFiscal = proposal.lead_id != null || !client || !hasCompleteFiscalData(client);

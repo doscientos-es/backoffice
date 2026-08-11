@@ -2,17 +2,25 @@ import { describe, expect, it } from "vitest";
 import { hasCompleteFiscalData, promoteLeadFromClient } from "@/lib/crm/conversion";
 
 describe("hasCompleteFiscalData", () => {
-  it("is true only when name, nif and billing_address are all present", () => {
-    expect(hasCompleteFiscalData({ name: "Acme", nif: "B1", billing_address: "Calle 1" })).toBe(
-      true,
-    );
+  it("is true only when name, nif and billing address street are all present", () => {
+    expect(
+      hasCompleteFiscalData({ name: "Acme", nif: "B1", billing_address_street: "Calle 1" }),
+    ).toBe(true);
   });
 
   it("is false when any field is missing or blank", () => {
-    expect(hasCompleteFiscalData({ name: null, nif: "B1", billing_address: "C" })).toBe(false);
-    expect(hasCompleteFiscalData({ name: "Acme", nif: null, billing_address: "C" })).toBe(false);
-    expect(hasCompleteFiscalData({ name: "Acme", nif: "B1", billing_address: null })).toBe(false);
-    expect(hasCompleteFiscalData({ name: "  ", nif: "B1", billing_address: "C" })).toBe(false);
+    expect(hasCompleteFiscalData({ name: null, nif: "B1", billing_address_street: "C" })).toBe(
+      false,
+    );
+    expect(hasCompleteFiscalData({ name: "Acme", nif: null, billing_address_street: "C" })).toBe(
+      false,
+    );
+    expect(hasCompleteFiscalData({ name: "Acme", nif: "B1", billing_address_street: null })).toBe(
+      false,
+    );
+    expect(hasCompleteFiscalData({ name: "  ", nif: "B1", billing_address_street: "C" })).toBe(
+      false,
+    );
   });
 });
 

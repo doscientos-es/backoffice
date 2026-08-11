@@ -8,7 +8,11 @@ type ProposalRow = {
   status: string;
   lead_id?: string | null;
   client_id?: string | null;
-  clients?: { name: string | null; nif: string | null; billing_address: string | null } | null;
+  clients?: {
+    name: string | null;
+    nif: string | null;
+    billing_address_street: string | null;
+  } | null;
 } | null;
 type FetchResult = { data: ProposalRow; error: unknown };
 type UpdateResult = { error: unknown };
@@ -70,7 +74,7 @@ const VALID_TOKEN = "a".repeat(48);
 const COMPLETE_CLIENT = {
   name: "Acme SL",
   nif: "B12345678",
-  billing_address: "Calle Mayor 1, Madrid",
+  billing_address_street: "Calle Mayor 1, Madrid",
 };
 
 describe("portal proposal actions", () => {

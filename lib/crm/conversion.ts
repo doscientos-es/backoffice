@@ -19,9 +19,11 @@ type AnyClient = SupabaseClient<any, any, any>;
 export function hasCompleteFiscalData(client: {
   name: string | null;
   nif: string | null;
-  billing_address: string | null;
+  billing_address_street: string | null;
 }): boolean {
-  return Boolean(client.name?.trim() && client.nif?.trim() && client.billing_address?.trim());
+  return Boolean(
+    client.name?.trim() && client.nif?.trim() && client.billing_address_street?.trim(),
+  );
 }
 
 /**
@@ -211,7 +213,7 @@ export async function ensureClientForProposal(
       lead_id: leadId,
       name: fiscal.name,
       nif: fiscal.nif,
-      billing_address: fiscal.billing_address,
+      billing_address_street: fiscal.billing_address,
       email: fiscal.email ?? null,
       phone: fiscal.phone ?? null,
       contact_person: fiscal.contact_person ?? null,
@@ -243,15 +245,15 @@ async function patchMissingClientFiscal(
 ): Promise<void> {
   const { data: row } = await client
     .from("clients")
-    .select("name, nif, billing_address, email, phone, contact_person")
+    .select("name, nif, billing_address_street, email, phone, contact_person")
     .eq("id", clientId)
     .maybeSingle();
   if (!row) return;
 
   const patch: Record<string, unknown> = {};
   if (!row.nif && fiscal.nif) patch.nif = fiscal.nif;
-  if (!row.billing_address && fiscal.billing_address)
-    patch.billing_address = fiscal.billing_address;
+  if (!row.billing_address_street && fiscal.billing_address)
+    patch.billing_address_street = fiscal.billing_address;
   if (!row.email && fiscal.email) patch.email = fiscal.email;
   if (!row.phone && fiscal.phone) patch.phone = fiscal.phone;
   if (!row.contact_person && fiscal.contact_person) patch.contact_person = fiscal.contact_person;
