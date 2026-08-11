@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
 import { requireUser } from "@/lib/auth";
+import { isAIEnabled } from "@/lib/env";
 import { createServerClient } from "@/lib/supabase/server";
 import { NewProposalForm } from "./new-proposal-form";
 
@@ -52,6 +53,7 @@ export default async function NewProposalPage({
         projects={(projects ?? []) as Array<{ id: string; name: string; client_id: string }>}
         initialClientId={client_id}
         initialLeadId={lead_id}
+        aiEnabled={isAIEnabled()}
       />
     </div>
   );

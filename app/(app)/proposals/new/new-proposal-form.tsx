@@ -18,7 +18,6 @@ import { EntityCombobox } from "@/components/ui/entity-combobox";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
-import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { EMPTY_LINE_ITEM, type LineItem } from "@/lib/finance";
 import { updateLeadStatus } from "../../leads/actions";
@@ -30,6 +29,7 @@ type Props = {
   projects: Array<{ id: string; name: string; client_id: string }>;
   initialClientId?: string;
   initialLeadId?: string;
+  aiEnabled: boolean;
 };
 
 /** Statuses where the lead hasn't been quoted yet */
@@ -52,6 +52,7 @@ export function NewProposalForm({
   projects,
   initialClientId,
   initialLeadId,
+  aiEnabled,
 }: Props) {
   const router = useRouter();
   const feedback = useFormFeedback({ successResetMs: 4000 });
@@ -79,30 +80,56 @@ export function NewProposalForm({
     leadId: string;
     leadName: string;
     proposalId: string;
+    mode: "blank" | "ai";
   } | null>(null);
 
-  const canSubmit = useMemo(() => {
-    if (!recipient || title.trim().length < 1) return false;
-    if (items.length === 0) return false;
-    return items.every((it) => it.description.trim().length > 0 && Number(it.quantity) > 0);
-  }, [recipient, title, items]);
+  const selectedRecipient = useMemo(() => {
+    if (!recipient) return null;
+    return recipient.kind === "lead"
+      ? (leads.find((lead) => lead.id === recipient.id) ?? null)
+      : (clients.find((client) => client.id === recipient.id) ?? null);
+  }, [clients, leads, recipient]);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  const canSubmit = Boolean(recipient);
+
+  function handleCreate(mode: "blank" | "ai") {
     if (!canSubmit || pending || !recipient) {
-      feedback.setError("Completa destinatario, título y al menos una línea con descripción");
+      feedback.setError("Selecciona el destinatario de la propuesta");
       return;
     }
+    if (mode === "ai" && recipient.kind !== "lead") {
+      feedback.setError("El prerrelleno con IA necesita una propuesta vinculada a un lead");
+      return;
+    }
+
+    const validItems = items.filter(
+      (item) => item.description.trim().length > 0 && Number(item.quantity) > 0,
+    );
+    const proposalItems =
+      validItems.length > 0
+        ? validItems
+        : [
+            {
+              ...EMPTY_LINE_ITEM,
+              id: crypto.randomUUID(),
+              description: "Pendiente de definir",
+              quantity: 1,
+            },
+          ];
+    const defaultTitle = selectedRecipient
+      ? `Propuesta para ${selectedRecipient.name}`
+      : "Nueva propuesta";
+
     feedback.setPending();
     startTransition(async () => {
       const res = await createProposalAction({
         client_id: recipient.kind === "client" ? recipient.id : undefined,
         lead_id: recipient.kind === "lead" ? recipient.id : undefined,
         project_id: projectId || undefined,
-        title: title.trim(),
+        title: title.trim() || defaultTitle,
         valid_until: validUntil || undefined,
         notes: notes || undefined,
-        items: items.map((it) => ({
+        items: proposalItems.map((it) => ({
           description: it.description,
           quantity: it.quantity,
           unit_price: it.unit_price,
@@ -124,12 +151,18 @@ export function NewProposalForm({
           leadId: selectedLead.id,
           leadName: selectedLead.name,
           proposalId: res.id,
+          mode,
         });
         return;
       }
 
-      router.push(`/proposals/${res.id}`);
+      router.push(`/proposals/${res.id}${mode === "ai" ? "?ai_draft=1" : ""}`);
     });
+  }
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    handleCreate("blank");
   }
 
   function onRecipientChange(value: string) {
@@ -150,8 +183,8 @@ export function NewProposalForm({
         <Card>
           <CardContent className="pt-6">
             <p className="mb-4 text-xs text-muted-foreground">
-              Los campos marcados con <span className="text-destructive">*</span> son obligatorios.
-              El resto puedes dejarlos en blanco y completarlos más tarde.
+              Solo el destinatario es obligatorio. Puedes completar el resto ahora o abrir el
+              borrador y editarlo después.
             </p>
             <div className="grid gap-5 sm:grid-cols-2">
               <FormRow
@@ -176,12 +209,11 @@ export function NewProposalForm({
                   required
                 />
               </FormRow>
-              <FormRow label="Título" htmlFor="title" required>
+              <FormRow label="Título" htmlFor="title">
                 <Input
                   id="title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  required
                   maxLength={200}
                   autoFocus
                   placeholder="Propuesta de servicios"
@@ -244,17 +276,42 @@ export function NewProposalForm({
           <Button asChild variant="ghost" size="sm">
             <Link href="/proposals">Cancelar</Link>
           </Button>
-          <SubmitButton loading={pending} disabled={!canSubmit} pendingLabel="Creando…">
-            Crear propuesta
-          </SubmitButton>
+          <Button type="submit" size="sm" disabled={pending || !canSubmit}>
+            {pending ? "Creando…" : "Crear en blanco"}
+          </Button>
+          {aiEnabled ? (
+            <Button
+              type="button"
+              size="sm"
+              disabled={pending || !canSubmit || recipient?.kind !== "lead"}
+              onClick={() => handleCreate("ai")}
+              title={
+                recipient?.kind !== "lead"
+                  ? "Selecciona un lead para usar su contexto con IA"
+                  : undefined
+              }
+            >
+              {pending ? "Creando…" : "Crear y prerrellenar con IA"}
+            </Button>
+          ) : null}
         </div>
+        {aiEnabled ? (
+          <p className="-mt-3 text-right text-xs text-muted-foreground">
+            La IA usa ficha, notas, interacciones y llamadas del lead. No propone importes ni
+            condiciones que no consten en el CRM.
+          </p>
+        ) : null}
       </form>
 
       <Dialog
         open={!!pendingLeadMove}
         onOpenChange={(v) => {
           if (!v && pendingLeadMove) {
-            router.push(`/proposals/${pendingLeadMove.proposalId}`);
+            router.push(
+              `/proposals/${pendingLeadMove.proposalId}${
+                pendingLeadMove.mode === "ai" ? "?ai_draft=1" : ""
+              }`,
+            );
             setPendingLeadMove(null);
           }
         }}
@@ -273,7 +330,11 @@ export function NewProposalForm({
               size="sm"
               onClick={() => {
                 if (!pendingLeadMove) return;
-                router.push(`/proposals/${pendingLeadMove.proposalId}`);
+                router.push(
+                  `/proposals/${pendingLeadMove.proposalId}${
+                    pendingLeadMove.mode === "ai" ? "?ai_draft=1" : ""
+                  }`,
+                );
                 setPendingLeadMove(null);
               }}
             >
@@ -283,10 +344,10 @@ export function NewProposalForm({
               size="sm"
               onClick={async () => {
                 if (!pendingLeadMove) return;
-                const { leadId, proposalId } = pendingLeadMove;
+                const { leadId, proposalId, mode } = pendingLeadMove;
                 setPendingLeadMove(null);
                 await updateLeadStatus({ leadId, status: "quoted" });
-                router.push(`/proposals/${proposalId}`);
+                router.push(`/proposals/${proposalId}${mode === "ai" ? "?ai_draft=1" : ""}`);
               }}
             >
               Sí, mover
