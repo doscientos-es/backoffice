@@ -24,6 +24,7 @@ import { GenerateInvoiceButton } from "./generate-invoice-button";
 import { LinkProjectButton } from "./link-project-button";
 import { MarkAcceptedButton } from "./mark-accepted-button";
 import { type EditableItem, ProposalEditor } from "./proposal-editor";
+import { ProposalFollowUpAssistant } from "./proposal-follow-up-assistant";
 import { type ProposalSpec, ProposalSpecs } from "./proposal-specs";
 import { ProposalTeamSelector } from "./proposal-team-selector";
 import { ReopenProposalButton } from "./reopen-proposal-button";
@@ -266,6 +267,17 @@ export default async function ProposalDetailPage({
           </CardContent>
         </Card>
       </SectionBoundary>
+
+      {isAIEnabled() && ["sent", "viewed"].includes(status) ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Próximo paso comercial</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ProposalFollowUpAssistant proposalId={id} leadId={lead?.id ?? null} clientId={client?.id ?? null} />
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <Card className="min-w-0">
