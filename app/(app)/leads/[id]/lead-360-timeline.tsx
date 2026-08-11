@@ -118,6 +118,91 @@ function eventList({
     .slice(0, 8);
 }
 
+type NextMove = {
+  label: string;
+  hint: string;
+  href: string;
+  icon: typeof Mail;
+  tone: string;
+};
+
+function nextMove({
+  leadId,
+  leadStatus,
+  proposals,
+  projects,
+  invoices,
+}: {
+  leadId: string;
+  leadStatus: string;
+  proposals: LeadRelatedProposal[];
+  projects: LeadRelatedProject[];
+  invoices: LeadRelatedInvoice[];
+}): NextMove {
+  const overdueInvoice = invoices.find((item) => item.status === "overdue");
+  if (overdueInvoice) {
+    return {
+      label: "Reclamar el cobro pendiente",
+      hint: `La factura ${overdueInvoice.full_number ?? "vencida"} necesita seguimiento.`,
+      href: `/invoices/${overdueInvoice.id}`,
+      icon: ReceiptText,
+      tone: "border-rose-500/20 bg-rose-500/[0.06] text-rose-700 dark:text-rose-300",
+    };
+  }
+
+  const draftProposal = proposals.find((item) => item.status === "draft");
+  if (draftProposal) {
+    return {
+      label: "Completar y enviar la propuesta",
+      hint: `${draftProposal.number ?? draftProposal.title ?? "La propuesta"} está en borrador.`,
+      href: `/proposals/${draftProposal.id}`,
+      icon: FileSignature,
+      tone: "border-violet-500/20 bg-violet-500/[0.06] text-violet-700 dark:text-violet-300",
+    };
+  }
+
+  const openProposal = proposals.find((item) => ["sent", "viewed"].includes(item.status ?? ""));
+  if (openProposal) {
+    return {
+      label: "Hacer seguimiento de la propuesta",
+      hint: `${openProposal.number ?? "La propuesta"} está en circulación.`,
+      href: `/proposals/${openProposal.id}`,
+      icon: FileSignature,
+      tone: "border-violet-500/20 bg-violet-500/[0.06] text-violet-700 dark:text-violet-300",
+    };
+  }
+
+  const activeProject = projects.find((item) => item.status === "active");
+  if (activeProject) {
+    return {
+      label: "Mantener al cliente al día",
+      hint: `${activeProject.name} está en ejecución.`,
+      href: `/projects/${activeProject.id}`,
+      icon: BriefcaseBusiness,
+      tone: "border-amber-500/20 bg-amber-500/[0.06] text-amber-700 dark:text-amber-300",
+    };
+  }
+
+  const acceptedProposal = proposals.find((item) => item.status === "accepted");
+  if (acceptedProposal) {
+    return {
+      label: "Preparar la entrega acordada",
+      hint: `${acceptedProposal.number ?? acceptedProposal.title ?? "La propuesta"} ya está aceptada.`,
+      href: `/proposals/${acceptedProposal.id}`,
+      icon: FileSignature,
+      tone: "border-emerald-500/20 bg-emerald-500/[0.06] text-emerald-700 dark:text-emerald-300",
+    };
+  }
+
+  return {
+    label: leadStatus === "new" ? "Contactar cuanto antes" : "Crear la siguiente oportunidad",
+    hint: "El flujo no tiene una transición abierta todavía.",
+    href: proposals.length ? `/proposals/new?lead_id=${leadId}` : `/leads/${leadId}?feedback=call`,
+    icon: CircleDollarSign,
+    tone: "border-primary/20 bg-primary/[0.06] text-primary",
+  };
+}
+
 export function Lead360Timeline({
   leadId,
   leadStatus,
@@ -136,43 +221,7 @@ export function Lead360Timeline({
   tasks: LeadRelatedTask[];
 }) {
   const events = eventList({ interactions, proposals, invoices, tasks });
-  const openProposal = proposals.find((item) => ["sent", "viewed"].includes(item.status ?? ""));
-  const overdueInvoice = invoices.find((item) => item.status === "overdue");
-  const activeProject = projects.find((item) => item.status === "active");
-  const next = overdueInvoice
-    ? {
-        label: "Reclamar el cobro pendiente",
-        hint: `La factura ${overdueInvoice.full_number ?? "vencida"} necesita seguimiento.`,
-        href: `/invoices/${overdueInvoice.id}`,
-        icon: ReceiptText,
-        tone: "border-rose-500/20 bg-rose-500/[0.06] text-rose-700 dark:text-rose-300",
-      }
-    : openProposal
-      ? {
-          label: "Hacer seguimiento de la propuesta",
-          hint: `${openProposal.number ?? "La propuesta"} está en circulación.`,
-          href: `/proposals/${openProposal.id}`,
-          icon: FileSignature,
-          tone: "border-violet-500/20 bg-violet-500/[0.06] text-violet-700 dark:text-violet-300",
-        }
-      : activeProject
-        ? {
-            label: "Mantener al cliente al día",
-            hint: `${activeProject.name} está en ejecución.`,
-            href: `/projects/${activeProject.id}`,
-            icon: BriefcaseBusiness,
-            tone: "border-amber-500/20 bg-amber-500/[0.06] text-amber-700 dark:text-amber-300",
-          }
-        : {
-            label:
-              leadStatus === "new" ? "Contactar cuanto antes" : "Crear la siguiente oportunidad",
-            hint: "El flujo no tiene una transición abierta todavía.",
-            href: proposals.length
-              ? `/proposals/new?lead_id=${leadId}`
-              : `/leads/${leadId}?feedback=call`,
-            icon: CircleDollarSign,
-            tone: "border-primary/20 bg-primary/[0.06] text-primary",
-          };
+  const next = nextMove({ leadId, leadStatus, proposals, projects, invoices });
   const NextIcon = next.icon;
 
   return (
