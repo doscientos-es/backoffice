@@ -1,13 +1,10 @@
-import { CheckCircle2, FileText, Presentation, XCircle } from "lucide-react";
-import type { Metadata } from "next";
-import { headers } from "next/headers";
-import { notFound } from "next/navigation";
 import { LogoMark } from "@/components/branding";
 import { PortalPasswordGate } from "@/components/portal/password-gate";
 import { ProposalPaymentButton } from "@/components/portal/proposal-payment-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Markdown } from "@/components/ui/markdown";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { formatAddress } from "@/lib/address";
 import { getCurrentUser } from "@/lib/auth";
 import { BILLING_CYCLE_LABELS, type BillingCycle, computeProposalTotals } from "@/lib/finance";
 import { scopedLogger } from "@/lib/logger";
@@ -16,6 +13,10 @@ import { parseKeyPoints } from "@/lib/proposals/key-points";
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
+import { CheckCircle2, FileText, Presentation, XCircle } from "lucide-react";
+import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 import { unlockProposalPortal } from "./actions";
 import { PortalKeyPointsList, PortalNarrativeBlock } from "./narrative";
 import { ProposalActions } from "./proposal-actions";
@@ -56,7 +57,7 @@ export default async function PortalProposalPage({
   const { data: proposal, error: proposalError } = await admin
     .from("proposals")
     .select(
-      "*, clients(name, nif, billing_address, email, phone, contact_person, logo_url), leads(name, email, phone, company)",
+      "*, clients(name, nif, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country, email, phone, contact_person, logo_url), leads(name, email, phone, company)",
     )
     .eq("portal_token", token)
     .is("deleted_at", null)
@@ -143,7 +144,11 @@ export default async function PortalProposalPage({
       clients: {
         name: string;
         nif: string | null;
-        billing_address: string | null;
+        billing_address_street: string | null;
+        billing_address_zip: string | null;
+        billing_address_city: string | null;
+        billing_address_province: string | null;
+        billing_address_country: string | null;
         email: string | null;
         phone: string | null;
         contact_person: string | null;
@@ -168,13 +173,22 @@ export default async function PortalProposalPage({
   // The client branch only asks when the legal minimum (name + NIF + billing
   // address) is missing — typically a placeholder client created by the
   // back-office for prospects that never went through onboarding.
+  const clientBillingAddress = client
+    ? formatAddress({
+      street: client.billing_address_street,
+      zip: client.billing_address_zip,
+      city: client.billing_address_city,
+      province: client.billing_address_province,
+      country: client.billing_address_country,
+    })
+    : "";
   const needsFiscal =
-    !client?.nif?.trim() || !client.billing_address?.trim() || !client.name?.trim();
+    !client?.nif?.trim() || !clientBillingAddress || !client.name?.trim();
   const fiscalPrefill = client
     ? {
       name: client.name ?? "",
       nif: client.nif ?? "",
-      billing_address: client.billing_address ?? "",
+      billing_address: clientBillingAddress,
       contact_person: client.contact_person ?? "",
       email: client.email ?? "",
       phone: client.phone ?? "",
