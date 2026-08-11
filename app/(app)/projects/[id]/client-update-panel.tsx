@@ -1,20 +1,36 @@
 "use client";
 
-import { AlertCircle, Check, Copy, Sparkles } from "lucide-react";
-import { useState } from "react";
 import { AiNotice } from "@/components/ui/ai-notice";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { AlertCircle, Check, Copy, Sparkles } from "lucide-react";
+import { useState } from "react";
 
 type Props = {
   projectId: string;
   aiEnabled: boolean;
 };
 
+type ProjectUpdate = {
+  health: "on_track" | "attention" | "blocked";
+  summary: string;
+  progress: string[];
+  risks: string[];
+  next_steps: string[];
+  client_update: string;
+};
+
+const HEALTH = {
+  on_track: { label: "En curso", variant: "success" as const },
+  attention: { label: "Atención", variant: "warning" as const },
+  blocked: { label: "Bloqueado", variant: "danger" as const },
+};
+
 export function ClientUpdatePanel({ projectId, aiEnabled }: Props) {
   const [loading, setLoading] = useState(false);
-  const [update, setUpdate] = useState<string | null>(null);
+  const [update, setUpdate] = useState<ProjectUpdate | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -34,7 +50,7 @@ export function ClientUpdatePanel({ projectId, aiEnabled }: Props) {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Error al generar el update.");
-      setUpdate(json.update as string);
+      setUpdate(json as ProjectUpdate);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido.");
     } finally {
@@ -44,7 +60,7 @@ export function ClientUpdatePanel({ projectId, aiEnabled }: Props) {
 
   async function handleCopy() {
     if (!update) return;
-    await navigator.clipboard.writeText(update);
+    await navigator.clipboard.writeText(update.client_update);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -81,11 +97,23 @@ export function ClientUpdatePanel({ projectId, aiEnabled }: Props) {
               {copied ? "Copiado" : "Copiar"}
             </Button>
           </div>
+          <div className="rounded-lg border border-primary/15 bg-primary/[0.03] p-3 animate-in fade-in slide-in-from-bottom-1 duration-300">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant={HEALTH[update.health].variant}>{HEALTH[update.health].label}</Badge>
+              <p className="text-sm font-medium">{update.summary}</p>
+            </div>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <UpdateList title="Avances" items={update.progress} />
+              <UpdateList title="Siguientes pasos" items={update.next_steps} />
+              {update.risks.length > 0 ? <UpdateList title="Riesgos a vigilar" items={update.risks} tone="warning" /> : null}
+            </div>
+          </div>
           <textarea
-            readOnly
-            value={update}
-            rows={12}
-            className="w-full resize-none rounded-md border border-border bg-muted/30 p-3 text-sm leading-relaxed text-foreground outline-none"
+            value={update.client_update}
+            onChange={(event) => setUpdate({ ...update, client_update: event.target.value })}
+            rows={10}
+            className="w-full resize-y rounded-md border border-border bg-muted/30 p-3 text-sm leading-relaxed text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Borrador de update para el cliente"
           />
         </div>
       )}
@@ -114,6 +142,16 @@ export function ClientUpdatePanel({ projectId, aiEnabled }: Props) {
           {loading ? "Generando…" : update ? "Regenerar" : "Generar update"}
         </Button>
       </div>
+    </div>
+  );
+}
+
+function UpdateList({ title, items, tone }: { title: string; items: string[]; tone?: "warning" }) {
+  if (items.length === 0) return null;
+  return (
+    <div className={cn("rounded-md bg-background/70 p-2.5", tone === "warning" && "ring-1 ring-amber-500/20")}>
+      <p className="mb-1 text-xs font-medium text-muted-foreground">{title}</p>
+      <ul className="space-y-1 text-xs leading-relaxed">{items.map((item) => <li key={item} className="flex gap-1.5"><span className="text-muted-foreground">•</span><span>{item}</span></li>)}</ul>
     </div>
   );
 }
