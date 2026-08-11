@@ -17,8 +17,9 @@
  *  - Unauthenticated requests → redirect to /login?next=<path>
  *  - Authenticated requests   → NextResponse.next() (200)
  *  - Public paths             → always pass through
- *  - /p/ portal paths         → pass through (rate-limited per IP)
- *  - /p/ portal paths         → 429 when the bucket is exhausted
+ *  - portal and deck paths    → pass through (rate-limited per IP)
+ *  - portal and deck paths    → refresh an existing team session
+ *  - portal paths             → 429 when the bucket is exhausted
  */
 
 import { NextRequest } from "next/server";
@@ -27,7 +28,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // ── shared mutable state controlled per-test ──────────────────────────────────
 
 const { auth, rateLimitResult } = vi.hoisted(() => ({
-  auth: { user: null as { id: string } | null },
+  auth: { user: null as { id: string } | null, getUserCalls: 0 },
   rateLimitResult: { success: true, resetAt: Date.now() + 60_000 },
 }));
 
@@ -35,7 +36,10 @@ const { auth, rateLimitResult } = vi.hoisted(() => ({
 vi.mock("@supabase/ssr", () => ({
   createServerClient: () => ({
     auth: {
-      getUser: async () => ({ data: { user: auth.user }, error: null }),
+      getUser: async () => {
+        auth.getUserCalls += 1;
+        return { data: { user: auth.user }, error: null };
+      },
     },
   }),
 }));
@@ -63,6 +67,7 @@ function req(path: string, ip = "1.2.3.4") {
 describe("proxy – unauthenticated requests", () => {
   beforeEach(() => {
     auth.user = null;
+    auth.getUserCalls = 0;
     rateLimitResult.success = true;
   });
 
@@ -83,6 +88,7 @@ describe("proxy – unauthenticated requests", () => {
 describe("proxy – authenticated requests", () => {
   beforeEach(() => {
     auth.user = { id: "user-1" };
+    auth.getUserCalls = 0;
     rateLimitResult.success = true;
   });
 
@@ -101,6 +107,7 @@ describe("proxy – authenticated requests", () => {
 describe("proxy – public paths (always pass through)", () => {
   beforeEach(() => {
     auth.user = null; // Even unauthenticated must pass
+    auth.getUserCalls = 0;
     rateLimitResult.success = true;
   });
 
@@ -121,9 +128,10 @@ describe("proxy – public paths (always pass through)", () => {
   });
 });
 
-describe("proxy – /p/ portal routes (rate-limited, no auth)", () => {
+describe("proxy – public portal routes", () => {
   beforeEach(() => {
     auth.user = null;
+    auth.getUserCalls = 0;
     rateLimitResult.success = true;
     rateLimitResult.resetAt = Date.now() + 60_000;
   });
@@ -132,6 +140,16 @@ describe("proxy – /p/ portal routes (rate-limited, no auth)", () => {
     const res = await proxy(req("/p/invoice/some-token"));
     expect(res.status).not.toBe(307);
     expect(res.status).not.toBe(429);
+    expect(auth.getUserCalls).toBe(1);
+  });
+
+  it("passes through public deck paths and refreshes an existing team session", async () => {
+    auth.user = { id: "user-1" };
+    const res = await proxy(req("/deck/some-token"));
+
+    expect(res.status).not.toBe(307);
+    expect(res.status).not.toBe(429);
+    expect(auth.getUserCalls).toBe(1);
   });
 
   it("returns 429 when the rate bucket is exhausted", async () => {

@@ -25,9 +25,12 @@ function clientIp(request: NextRequest): string {
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const isPublicPortal = pathname.startsWith("/p/") || pathname.startsWith("/deck/");
 
-  // Public portal: /p/[type]/[token] is always public, rate-limited per IP
-  if (pathname.startsWith("/p/")) {
+  // Public portal and presentation links remain anonymous, but still resolve
+  // Supabase below. That refreshes an existing team session, allowing members
+  // to preview drafts without making them accessible to clients.
+  if (isPublicPortal) {
     const ip = clientIp(request);
     const { success, resetAt } = rateLimit(`portal:${ip}`, 30);
     if (!success) {
@@ -36,7 +39,6 @@ export async function proxy(request: NextRequest) {
         headers: { "Retry-After": String(Math.ceil((resetAt - Date.now()) / 1000)) },
       });
     }
-    return NextResponse.next();
   }
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) return NextResponse.next();
   if (pathname.startsWith("/_next") || pathname.startsWith("/favicon")) return NextResponse.next();
@@ -72,7 +74,7 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (!user && !isPublicPortal) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("next", pathname);
