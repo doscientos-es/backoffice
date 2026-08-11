@@ -23,7 +23,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── shared mutable state ───────────────────────────────────────────────────────
 
-const { db, authUser } = vi.hoisted(() => ({
+const { db, authUser, rpc } = vi.hoisted(() => ({
   db: {
     /** Controls what findInvoiceForRectification returns. null = not found. */
     original: null as Record<string, unknown> | null,
@@ -47,6 +47,7 @@ const { db, authUser } = vi.hoisted(() => ({
     phone: null,
     contactEmail: null,
   },
+  rpc: vi.fn(),
 }));
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
@@ -96,19 +97,19 @@ vi.mock("@/lib/supabase/server", () => ({
           Promise.resolve(
             table === "invoice_items"
               ? {
-                  data: db.itemsError
-                    ? null
-                    : [
-                        {
-                          position: 0,
-                          description: "Servicio",
-                          quantity: 1,
-                          unit_price: 100,
-                          vat_rate: 21,
-                        },
-                      ],
-                  error: db.itemsError ? { message: db.itemsError } : null,
-                }
+                data: db.itemsError
+                  ? null
+                  : [
+                    {
+                      position: 0,
+                      description: "Servicio",
+                      quantity: 1,
+                      unit_price: 100,
+                      vat_rate: 21,
+                    },
+                  ],
+                error: db.itemsError ? { message: db.itemsError } : null,
+              }
               : { data: null, error: null },
           ),
         // other methods used by different actions — unused here
@@ -123,7 +124,7 @@ vi.mock("@/lib/supabase/server", () => ({
       };
       return builder;
     },
-    rpc: async () => ({ data: 1, error: null }),
+    rpc,
   }),
 }));
 
@@ -202,6 +203,28 @@ beforeEach(() => {
   db.insertedInvoice = null;
   db.patchedStatus = null;
   authUser.role = "admin";
+  rpc.mockReset();
+  rpc.mockImplementation(async (_name: string, params: Record<string, unknown>) => {
+    if (db.itemsError) return { data: null, error: { message: db.itemsError } };
+    const original = db.original;
+    if (!original) return { data: null, error: { message: "Factura original no encontrada" } };
+    if (original.is_rectification) {
+      return { data: null, error: { message: "No se puede rectificar una factura rectificativa" } };
+    }
+    if (!["issued", "paid", "overdue"].includes(String(original.status))) {
+      return { data: null, error: { message: "Solo pueden rectificarse facturas emitidas o pagadas" } };
+    }
+    db.insertedInvoice = {
+      ...original,
+      series: "R",
+      is_rectification: true,
+      rectified_invoice_id: original.id,
+      invoice_type: params.p_rectification_type,
+      rectification_reason: params.p_reason,
+    };
+    db.patchedStatus = { id: original.id, status: "rectified" };
+    return { data: "rect-invoice-uuid", error: null };
+  });
 });
 
 // ── tests ─────────────────────────────────────────────────────────────────────

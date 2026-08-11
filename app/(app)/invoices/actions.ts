@@ -31,7 +31,6 @@ import type { InvoiceHeaderPatch } from "@/lib/invoices/types";
 import {
   buildInvoiceItemRows,
   getMonthlyBillingWindow,
-  isRectifiableInvoice,
 } from "@/lib/invoices/workflows";
 import { scopedLogger } from "@/lib/logger";
 import { buildPortalAccessPatch } from "@/lib/portal/access";
@@ -465,8 +464,6 @@ export async function updateInvoicePortalAccess(
 }
 
 // ─── Rectification ───────────────────────────────────────────────────────────
-
-const RECTIFICATION_SERIES = "R";
 
 /**
  * Creates a rectification invoice (factura rectificativa) from an issued invoice.
