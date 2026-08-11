@@ -24,9 +24,9 @@ const log = scopedLogger("ai.generate-narrative");
 
 const PairSchema = z.object({
   problem: z.string().min(1).max(200),
-  problemDescription: z.string().max(2000).default(""),
+  problemDescription: z.string().min(1).max(2000),
   solution: z.string().min(1).max(200),
-  solutionDescription: z.string().max(2000).default(""),
+  solutionDescription: z.string().min(1).max(2000),
 });
 const ResultSchema = z.object({ pairs: z.array(PairSchema).min(1).max(5) });
 

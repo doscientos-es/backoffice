@@ -20,9 +20,9 @@ const log = scopedLogger("ai.generate-proposal-draft");
 
 const PairSchema = z.object({
   problem: z.string().min(1).max(200),
-  problemDescription: z.string().max(2000).default(""),
+  problemDescription: z.string().min(1).max(2000),
   solution: z.string().min(1).max(200),
-  solutionDescription: z.string().max(2000).default(""),
+  solutionDescription: z.string().min(1).max(2000),
 });
 
 const ResultSchema = z.object({
@@ -39,6 +39,8 @@ Prepara un primer borrador de propuesta, en español, para que un equipo lo revi
 Devuelve solamente un objeto JSON con title, context_markdown, notes, terms y pairs.
 - context_markdown: 2-3 frases que expliquen la situación y necesidad del lead.
 - pairs: entre 2 y 5 pares de problema y solución, concretos y directamente relacionados.
+- problemDescription y solutionDescription: una o dos frases específicas por cada par. Explica el
+  impacto observado y cómo se aborda, sin repetir el titular ni inventar detalles ausentes.
 - notes: aclaraciones de alcance que consten explícitamente en el briefing; deja "" si no hay.
 - terms: solo condiciones, pagos, plazos o vigencia mencionados explícitamente en el briefing; deja "" si no hay.
 - title: título profesional y específico, sin inventar un producto, precio o alcance.

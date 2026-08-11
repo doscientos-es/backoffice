@@ -108,6 +108,12 @@ describe("POST /api/proposals/[id]/generate-draft", () => {
     expect(await response.json()).toMatchObject({
       ok: true,
       title: "Propuesta de portal de clientes",
+      pairs: [
+        {
+          problemDescription: "La información está repartida.",
+          solutionDescription: "Un punto de acceso único.",
+        },
+      ],
     });
     expect(state.generatedPrompt).toContain("Transcripción: El equipo necesita un portal");
   });

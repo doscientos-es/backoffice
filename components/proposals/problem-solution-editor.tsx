@@ -156,7 +156,7 @@ export function ProblemSolutionEditor({
                   value={it.problemDescription}
                   onChange={(e) => update(i, { problemDescription: e.target.value })}
                   disabled={disabled}
-                  placeholder="Descripción (opcional)"
+                  placeholder="Impacto o contexto del problema"
                   maxLength={KEY_POINTS_LIMITS.maxDescriptionLength}
                   rows={2}
                   aria-label={`Descripción del problema ${i + 1}`}
@@ -177,7 +177,7 @@ export function ProblemSolutionEditor({
                   value={it.solutionDescription}
                   onChange={(e) => update(i, { solutionDescription: e.target.value })}
                   disabled={disabled}
-                  placeholder="Descripción (opcional)"
+                  placeholder="Cómo se aborda esta necesidad"
                   maxLength={KEY_POINTS_LIMITS.maxDescriptionLength}
                   rows={2}
                   aria-label={`Descripción de la solución ${i + 1}`}
