@@ -33,6 +33,11 @@ import {
   softDeleteInvoice,
 } from "@/lib/invoices/queries";
 import type { InvoiceHeaderPatch } from "@/lib/invoices/types";
+import {
+  buildInvoiceItemRows,
+  getMonthlyBillingWindow,
+  isRectifiableInvoice,
+} from "@/lib/invoices/workflows";
 import { scopedLogger } from "@/lib/logger";
 import { buildPortalAccessPatch } from "@/lib/portal/access";
 import { uuidIdInput } from "@/lib/schemas/common";
@@ -379,10 +384,7 @@ export const createHourlyInvoice = defineAction<
     if (project.billing_type !== "hourly") throw new Error("El proyecto no factura por horas");
     if (!(project.hourly_rate > 0)) throw new Error("El proyecto no tiene un precio/hora válido");
 
-    const year = Number(month.slice(0, 4));
-    const mon = Number(month.slice(5, 7));
-    const monthStart = `${month}-01`;
-    const monthEnd = new Date(Date.UTC(year, mon, 1)).toISOString().slice(0, 10);
+    const { start: monthStart, end: monthEnd } = getMonthlyBillingWindow(month);
 
     const logs = await findUnlinkedWorkLogsForMonth(projectId, monthStart, monthEnd);
     const hours = logs.reduce((sum, l) => sum + l.hours, 0);
@@ -479,16 +481,7 @@ export const updateInvoice = defineAction({
     await patchInvoiceHeader(input.id, headerPatch);
 
     if (input.items) {
-      await replaceInvoiceItems(
-        input.id,
-        input.items.map((it, idx) => ({
-          position: idx,
-          description: it.description,
-          quantity: it.quantity,
-          unit_price: it.unit_price,
-          vat_rate: it.vat_rate,
-        })),
-      );
+      await replaceInvoiceItems(input.id, buildInvoiceItemRows(input.items));
     }
   },
 });
@@ -555,15 +548,16 @@ export const createRectification = defineAction<typeof CreateRectificationInput,
     const original = await findInvoiceForRectification(originalInvoiceId);
     if (!original) throw new Error("Factura original no encontrada");
 
-    const RECTIFIABLE_STATUSES = ["issued", "paid", "overdue"] as const;
-    if (!(RECTIFIABLE_STATUSES as readonly string[]).includes(original.status)) {
+    if (
+      !isRectifiableInvoice({ status: original.status, isRectification: original.is_rectification })
+    ) {
+      if (original.is_rectification) {
+        throw new Error(
+          "No se puede rectificar una factura que ya es rectificativa. Rectifica la factura original.",
+        );
+      }
       throw new Error(
         `Solo pueden rectificarse facturas emitidas o pagadas. El estado actual es: ${original.status}`,
-      );
-    }
-    if (original.is_rectification) {
-      throw new Error(
-        "No se puede rectificar una factura que ya es rectificativa. Rectifica la factura original.",
       );
     }
 

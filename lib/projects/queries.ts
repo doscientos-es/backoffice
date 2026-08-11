@@ -136,3 +136,139 @@ export async function getProjectDetail(
     })),
   };
 }
+
+/**
+ * Read model for the project workspace. It intentionally owns every query used
+ * by the detail screen so pages remain composition-only server components.
+ */
+export async function getProjectWorkspace(
+  id: string,
+  options: { includeClients: boolean; tasksView: "board" | "list" },
+) {
+  const supabase = await createServerClient();
+  const { data: project, error } = await supabase
+    .from("projects")
+    .select("*, clients(id, name)")
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (error) log.error({ projectId: id, err: error.message }, "get_project_workspace_failed");
+  if (!project) return null;
+
+  const client = (project as unknown as { clients: { id: string; name: string } | null }).clients;
+  const clientsResult = options.includeClients
+    ? await supabase.from("clients").select("id, name").is("deleted_at", null).order("name")
+    : { data: [] as Array<{ id: string; name: string }> };
+
+  const [
+    { data: tasks },
+    { data: proposals },
+    { data: invoices },
+    { data: members },
+    { data: attachments },
+    { data: workLogsData },
+    { data: invoiceTotals },
+    { data: expenseTotals },
+    { data: settings },
+    { data: checklistData },
+    { data: unlinkedProposals },
+    { data: reminders },
+  ] = await Promise.all([
+    options.tasksView === "board"
+      ? supabase
+          .from("tasks")
+          .select(
+            "id, title, status, priority, due_date, kanban_order, team_members:assignee_id(id, name)",
+          )
+          .eq("project_id", id)
+          .is("deleted_at", null)
+          .order("kanban_order", { ascending: true })
+      : supabase
+          .from("tasks")
+          .select("id, title, status")
+          .eq("project_id", id)
+          .is("deleted_at", null)
+          .order("created_at", { ascending: false })
+          .limit(PROJECT_TASKS_LIMIT),
+    supabase
+      .from("proposals")
+      .select("id, number, title, status, total")
+      .eq("project_id", id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(PROJECT_RELATED_LIMIT),
+    supabase
+      .from("invoices")
+      .select("id, full_number, status, total, issue_date")
+      .eq("project_id", id)
+      .is("deleted_at", null)
+      .order("issue_date", { ascending: false })
+      .limit(PROJECT_RELATED_LIMIT),
+    supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
+    supabase
+      .from("attachments")
+      .select("id, name, mime_type, size_bytes, created_at, source, drive_file_id, web_view_link")
+      .eq("project_id", id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("work_logs")
+      .select(
+        "id, work_date, start_time, end_time, hours, note, team_members:member_id(id, name, avatar_url, github_handle)",
+      )
+      .eq("project_id", id)
+      .is("deleted_at", null)
+      .order("work_date", { ascending: false }),
+    supabase.from("invoices").select("total, status").eq("project_id", id).is("deleted_at", null),
+    supabase
+      .from("expenses")
+      .select("total")
+      .eq("project_id", id)
+      .is("deleted_at", null)
+      .neq("status", "cancelled"),
+    supabase.from("settings").select("internal_hourly_cost").eq("id", 1).maybeSingle(),
+    supabase
+      .from("project_checklist_items")
+      .select("id, label, is_done, position")
+      .eq("project_id", id)
+      .is("deleted_at", null)
+      .order("position"),
+    client
+      ? supabase
+          .from("proposals")
+          .select("id, number, title")
+          .eq("client_id", client.id)
+          .is("project_id", null)
+          .is("deleted_at", null)
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] }),
+    supabase
+      .from("tasks")
+      .select("id, title, start_at")
+      .eq("kind", "reminder")
+      .eq("project_id", id)
+      .is("completed_at", null)
+      .is("deleted_at", null)
+      .order("start_at", { ascending: true })
+      .limit(PROJECT_RELATED_LIMIT),
+  ]);
+
+  return {
+    project,
+    client,
+    clients: clientsResult.data ?? [],
+    tasks: tasks ?? [],
+    proposals: proposals ?? [],
+    invoices: invoices ?? [],
+    members: members ?? [],
+    attachments: attachments ?? [],
+    workLogsData: workLogsData ?? [],
+    invoiceTotals: invoiceTotals ?? [],
+    expenseTotals: expenseTotals ?? [],
+    settings,
+    checklistData: checklistData ?? [],
+    unlinkedProposals: unlinkedProposals ?? [],
+    reminders: reminders ?? [],
+  };
+}

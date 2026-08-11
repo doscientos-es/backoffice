@@ -39,24 +39,15 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { VAULT_SERVICE_LABELS, VAULT_SERVICES, type VaultService } from "@/lib/schemas/vault";
 import { cn } from "@/lib/utils";
+import { filterAndSortVaultItems, type VaultListItem, type VaultSortField } from "@/lib/vault/list";
 import { deleteVaultItem, lockVault, revealVaultSecret } from "../actions";
 import { EnrollPasskeyForm, SetPasswordForm, UnlockForm } from "./vault-dialogs";
 import { VaultItemForm } from "./vault-item-dialog";
 
-type VaultItem = {
-  id: string;
-  name: string;
-  service: string;
-  username: string | null;
-  notes: string | null;
-  is_sensitive: boolean;
-  expires_at: string | null;
-  client_id: string | null;
-  created_at: string;
-};
+type VaultItem = VaultListItem;
 type Client = { id: string; name: string };
 type Dialog_ = "add" | "edit" | "unlock" | "setPassword" | "passkey" | null;
-type SortField = "name" | "service" | "expires_at";
+type SortField = VaultSortField;
 
 const PAGE_SIZE = 20;
 
@@ -138,37 +129,18 @@ export function VaultClient({
     setPage(1);
   }, [search, serviceFilter, sensitiveFilter, clientFilter, sortField, sortDir]);
 
-  const filtered = useMemo(() => {
-    let result = [...items];
-    if (search) {
-      const q = search.toLowerCase();
-      result = result.filter(
-        (i) =>
-          i.name.toLowerCase().includes(q) ||
-          i.username?.toLowerCase().includes(q) ||
-          i.notes?.toLowerCase().includes(q) ||
-          i.service.toLowerCase().includes(q),
-      );
-    }
-    if (serviceFilter) result = result.filter((i) => i.service === serviceFilter);
-    if (sensitiveFilter === "sensitive") result = result.filter((i) => i.is_sensitive);
-    if (sensitiveFilter === "public") result = result.filter((i) => !i.is_sensitive);
-    if (clientFilter) result = result.filter((i) => i.client_id === clientFilter);
-
-    result.sort((a, b) => {
-      let cmp = 0;
-      if (sortField === "name") cmp = a.name.localeCompare(b.name);
-      else if (sortField === "service") cmp = a.service.localeCompare(b.service);
-      else if (sortField === "expires_at") {
-        if (!a.expires_at && !b.expires_at) cmp = 0;
-        else if (!a.expires_at) cmp = 1;
-        else if (!b.expires_at) cmp = -1;
-        else cmp = a.expires_at.localeCompare(b.expires_at);
-      }
-      return sortDir === "asc" ? cmp : -cmp;
-    });
-    return result;
-  }, [items, search, serviceFilter, sensitiveFilter, clientFilter, sortField, sortDir]);
+  const filtered = useMemo(
+    () =>
+      filterAndSortVaultItems(items, {
+        search,
+        service: serviceFilter,
+        sensitivity: sensitiveFilter,
+        clientId: clientFilter,
+        sortField,
+        sortDirection: sortDir,
+      }),
+    [items, search, serviceFilter, sensitiveFilter, clientFilter, sortField, sortDir],
+  );
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);

@@ -15,7 +15,17 @@ import { findConflicts, insertEvent } from "@/lib/google/calendar";
 import { resolveSubject } from "@/lib/google/client";
 import { pushMetaQualifiedLeadStage } from "@/lib/integrations/meta-capi";
 import { isAutomaticallyAccessible, summarizeCallOutcomes } from "@/lib/leads/call-qualification";
+import {
+  CALL_AUTO_FOLLOW_UP,
+  CALL_REMINDER_DELAY_MS,
+  CALL_REMINDER_DESCRIPTION,
+  CALL_REMINDER_NOTIFIED_DESCRIPTION,
+  followUpDelayHours,
+  normalizePhoneForCall,
+  normalizePhoneForWhatsApp,
+} from "@/lib/leads/call-workflow";
 import { normalizeCompanySize, normalizeLeadSource, normalizeUrgency } from "@/lib/leads/constants";
+import { buildLeadStatusPatch, canAutomateLeadAccessibility } from "@/lib/leads/status-transitions";
 import { scopedLogger } from "@/lib/logger";
 import { dispatchNotifications } from "@/lib/notifications/dispatch";
 import {
@@ -232,11 +242,6 @@ export async function convertLeadToClientForm(formData: FormData): Promise<void>
 
 // ---------------- UPDATE STATUS ----------------
 
-const CLOSURE_STATUSES = ["lost", "not_interested"] as const;
-type ClosureStatus = (typeof CLOSURE_STATUSES)[number];
-const isClosureStatus = (s: string): s is ClosureStatus =>
-  (CLOSURE_STATUSES as readonly string[]).includes(s);
-
 export const updateLeadStatus = defineAction({
   name: "leads.updateStatus",
   schema: UpdateLeadStatusInput,
@@ -253,17 +258,12 @@ export const updateLeadStatus = defineAction({
 
     if (current?.status === data.status) return;
 
-    const updates: Record<string, unknown> = {
+    const updates = buildLeadStatusPatch({
       status: data.status,
-      updated_by: user.id,
-    };
-    if (isClosureStatus(data.status)) {
-      updates.lost_reason = data.lostReason;
-      updates.lost_at = new Date().toISOString();
-    } else {
-      updates.lost_reason = null;
-      updates.lost_at = null;
-    }
+      lostReason: data.lostReason,
+      userId: user.id,
+      now: new Date().toISOString(),
+    });
     const { error } = await supabase.from("leads").update(updates).eq("id", data.leadId);
     if (error) throw new Error(error.message);
 
@@ -427,17 +427,17 @@ export const sendEmailToLead = defineAction({
     const renderedHtml = markdownToHtml(renderedMarkdown);
     const finalHtml = data.includeSignature
       ? appendSignature(
-        renderedHtml,
-        buildSignatureHtml(
-          {
-            name: user.name,
-            jobTitle: user.jobTitle ?? undefined,
-            phone: user.phone ?? undefined,
-            contactEmail: user.contactEmail ?? user.emailAlias ?? undefined,
-          },
-          publicEnv.NEXT_PUBLIC_APP_URL || "https://app.doscientos.es",
-        ),
-      )
+          renderedHtml,
+          buildSignatureHtml(
+            {
+              name: user.name,
+              jobTitle: user.jobTitle ?? undefined,
+              phone: user.phone ?? undefined,
+              contactEmail: user.contactEmail ?? user.emailAlias ?? undefined,
+            },
+            publicEnv.NEXT_PUBLIC_APP_URL || "https://app.doscientos.es",
+          ),
+        )
       : renderedHtml;
 
     const renderedSubject = renderTemplate(data.subject, {
@@ -546,11 +546,6 @@ const CALL_OUTCOME_LABEL: Record<string, string> = {
   wrong_number: "Número erróneo",
 };
 
-const CALL_REMINDER_DESCRIPTION = "CALL_PENDING";
-const CALL_REMINDER_NOTIFIED_DESCRIPTION = "CALL_PENDING_NOTIFIED";
-const CALL_REMINDER_DELAY_MS = 3 * 60 * 1000;
-const CALL_AUTO_FOLLOW_UP = "CALL_AUTO_FOLLOW_UP";
-
 /** Creates a durable, self-expiring reminder when the rep starts a call. */
 export const startLeadCall = defineAction<typeof StartLeadCallInput, { id: string }>({
   name: "leads.startCall",
@@ -616,6 +611,7 @@ export const notifyDueCallReminders = defineAction({
         .select("id")
         .maybeSingle();
       if (!claimed || !task.lead_id) continue;
+      const taskLead = Array.isArray(task.leads) ? task.leads[0] : task.leads;
 
       await dispatchNotifications({
         recipientIds: [user.id],
@@ -624,20 +620,18 @@ export const notifyDueCallReminders = defineAction({
         entityId: task.lead_id as string,
         body: `${task.title as string}. Registra el resultado o abre la ficha del lead.`,
         link: `/leads/${task.lead_id as string}?feedback=call`,
-        actions: (task.leads as { phone?: string | null } | null)?.phone
+        actions: taskLead?.phone
           ? [
-            { action: "call", title: "Llamar" },
-            { action: "whatsapp", title: "WhatsApp" },
-            { action: "feedback", title: "Registrar" },
-          ]
+              { action: "call", title: "Llamar" },
+              { action: "whatsapp", title: "WhatsApp" },
+              { action: "feedback", title: "Registrar" },
+            ]
           : [{ action: "feedback", title: "Registrar" }],
         data: {
           leadId: task.lead_id as string,
-          callUrl: (task.leads as { phone?: string | null } | null)?.phone
-            ? `tel:${((task.leads as { phone?: string | null }).phone ?? "").replace(/\D/g, "")}`
-            : null,
-          whatsappUrl: (task.leads as { phone?: string | null } | null)?.phone
-            ? `https://wa.me/${((task.leads as { phone?: string | null }).phone ?? "").replace(/\D/g, "")}`
+          callUrl: taskLead?.phone ? `tel:${normalizePhoneForCall(taskLead.phone)}` : null,
+          whatsappUrl: taskLead?.phone
+            ? `https://wa.me/${normalizePhoneForWhatsApp(taskLead.phone)}`
             : null,
           feedbackUrl: `/leads/${task.lead_id as string}?feedback=call`,
         },
@@ -729,8 +723,8 @@ export const logLeadCall = defineAction<
     // Keep the next attempt alive even when the rep closes the backoffice.
     // This is a durable reminder, not a cron: it becomes visible/pushable the
     // next time the app is open, and never sends anything to the lead.
-    if (outcome === "no_answer" || outcome === "busy" || outcome === "voicemail") {
-      const followUpHours = outcome === "busy" ? 4 : outcome === "voicemail" ? 24 : 24;
+    const followUpHours = followUpDelayHours(outcome);
+    if (followUpHours !== null) {
       await supabase.from("tasks").insert({
         kind: "reminder",
         title: `Reintentar llamada · lead`,
@@ -766,12 +760,13 @@ export const logLeadCall = defineAction<
     const accessibilitySource = lead.mom_test_accessible_source as string | null;
     // A manual decision always wins. Source null + a populated legacy value is
     // also kept untouched, which makes deployment safe even before its backfill.
-    const canAutomateAccessibility =
-      accessibilitySource === "auto" ||
-      (accessibilitySource === null && currentAccessible === null);
+    const shouldAutomateAccessibility = canAutomateLeadAccessibility({
+      value: currentAccessible,
+      source: accessibilitySource,
+    });
     let accessible = currentAccessible;
 
-    if (canAutomateAccessibility) {
+    if (shouldAutomateAccessibility) {
       const automaticValue = isAutomaticallyAccessible(callSummary) ? true : null;
       if (automaticValue !== currentAccessible || accessibilitySource !== "auto") {
         const { error: accessibilityError } = await supabase
@@ -897,17 +892,15 @@ export const assignLeadOwner = defineAction({
         link: `/leads/${data.leadId}`,
         actions: (current?.phone as string | null)
           ? [
-            { action: "call", title: "Llamar" },
-            { action: "whatsapp", title: "WhatsApp" },
-            { action: "feedback", title: "Registrar" },
-          ]
+              { action: "call", title: "Llamar" },
+              { action: "whatsapp", title: "WhatsApp" },
+              { action: "feedback", title: "Registrar" },
+            ]
           : [{ action: "feedback", title: "Registrar" }],
         data: {
-          callUrl: current?.phone
-            ? `tel:${(current.phone as string).replace(/[^\d+#*]/g, "")}`
-            : null,
+          callUrl: current?.phone ? `tel:${normalizePhoneForCall(current.phone as string)}` : null,
           whatsappUrl: current?.phone
-            ? `https://wa.me/${(current.phone as string).replace(/\D/g, "")}`
+            ? `https://wa.me/${normalizePhoneForWhatsApp(current.phone as string)}`
             : null,
           feedbackUrl: `/leads/${data.leadId}?feedback=call`,
         },

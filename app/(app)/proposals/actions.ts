@@ -8,10 +8,14 @@ import { requireRole, requireUser } from "@/lib/auth";
 import { renderEmail } from "@/lib/email/render";
 import { sendEmail } from "@/lib/email/resend";
 import { publicEnv } from "@/lib/env";
-import { computeProposalTotals } from "@/lib/finance";
 import { backupProposalToDrive } from "@/lib/google/backup";
 import { scopedLogger } from "@/lib/logger";
 import { buildPortalAccessPatch } from "@/lib/portal/access";
+import {
+  buildProposalItemRows,
+  buildProposalTotalsPatch,
+  isProposalEditable,
+} from "@/lib/proposals/items";
 import { UpdatePortalAccessInput } from "@/lib/schemas/portal";
 import {
   CreateProposalInput,
@@ -56,7 +60,7 @@ async function insertDraftProposal(
   userId: string,
   data: import("@/lib/schemas/proposal").CreateProposalInputType,
 ): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
-  const { oneTime } = computeProposalTotals(data.items);
+  const totals = buildProposalTotalsPatch(data.items);
 
   const { data: proposal, error } = await supabase
     .from("proposals")
@@ -68,9 +72,7 @@ async function insertDraftProposal(
       title: data.title,
       status: "draft",
       currency: "EUR",
-      subtotal: oneTime.subtotal,
-      tax_amount: oneTime.taxAmount,
-      total: oneTime.total,
+      ...totals,
       valid_until: data.valid_until ?? null,
       notes: data.notes ?? null,
       created_by: userId,
@@ -83,17 +85,9 @@ async function insertDraftProposal(
     return { ok: false, error: error?.message ?? "No se pudo crear la propuesta" };
   }
 
-  const { error: itemsError } = await supabase.from("proposal_items").insert(
-    data.items.map((it, idx) => ({
-      proposal_id: proposal.id,
-      position: idx,
-      description: it.description,
-      quantity: it.quantity,
-      unit_price: it.unit_price,
-      vat_rate: it.vat_rate,
-      billing_cycle: it.billing_cycle,
-    })),
-  );
+  const { error: itemsError } = await supabase
+    .from("proposal_items")
+    .insert(buildProposalItemRows(data.items, proposal.id));
   if (itemsError) {
     log.error({ err: itemsError, proposalId: proposal.id }, "create_proposal_items_failed");
     return { ok: false, error: itemsError.message };
@@ -267,7 +261,7 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
     .is("deleted_at", null)
     .maybeSingle();
   if (readError || !current) return { ok: false, error: "Propuesta no encontrada" };
-  if (current.status === "accepted" || current.status === "rejected") {
+  if (!isProposalEditable(current.status)) {
     return { ok: false, error: "La propuesta ya ha sido respondida y no se puede editar" };
   }
 
@@ -285,10 +279,7 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
   if (rest.terms !== undefined) patch.terms = rest.terms;
 
   if (items) {
-    const { oneTime } = computeProposalTotals(items);
-    patch.subtotal = oneTime.subtotal;
-    patch.tax_amount = oneTime.taxAmount;
-    patch.total = oneTime.total;
+    Object.assign(patch, buildProposalTotalsPatch(items));
   }
 
   if (Object.keys(patch).length > 0) {
@@ -308,17 +299,9 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
       log.error({ err: deleteError, id }, "update_proposal_items_delete_failed");
       return { ok: false, error: deleteError.message };
     }
-    const { error: insertError } = await supabase.from("proposal_items").insert(
-      items.map((it, idx) => ({
-        proposal_id: id,
-        position: idx,
-        description: it.description,
-        quantity: it.quantity,
-        unit_price: it.unit_price,
-        vat_rate: it.vat_rate,
-        billing_cycle: it.billing_cycle,
-      })),
-    );
+    const { error: insertError } = await supabase
+      .from("proposal_items")
+      .insert(buildProposalItemRows(items, id));
     if (insertError) {
       log.error({ err: insertError, id }, "update_proposal_items_insert_failed");
       return { ok: false, error: insertError.message };
@@ -386,7 +369,7 @@ export async function setProposalTeamMembers(
     .maybeSingle();
 
   if (proposalError || !proposal) return { ok: false, error: "Propuesta no encontrada" };
-  if (proposal.status === "accepted" || proposal.status === "rejected") {
+  if (!isProposalEditable(proposal.status)) {
     return { ok: false, error: "La propuesta ya ha sido respondida y no se puede editar" };
   }
 

@@ -19,9 +19,8 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
-import { publicEnv } from "@/lib/env";
 import type { LeadInteraction, LeadListItem } from "@/lib/leads/types";
-import { buildBookingUrl } from "@/lib/recovery/utils";
+import { buildLeadWhatsAppMessage, buildWhatsAppUrl } from "@/lib/leads/whatsapp";
 import type { CallOutcome } from "@/lib/schemas/lead";
 import { relativeTime } from "@/lib/utils";
 import { MomTestQuickDialog } from "./[id]/mom-test-quick-dialog";
@@ -87,27 +86,15 @@ function WhatsAppFollowUp({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const firstName = leadName.split(" ")[0] || leadName;
-  const bookingUrl = buildBookingUrl(publicEnv.NEXT_PUBLIC_CAL_LINK, {
-    id: leadId,
-    name: leadName,
-    email: leadEmail,
-  });
   const [message, setMessage] = useState(() =>
-    [
-      `Hola, ${firstName}. Soy ${senderName || "el equipo"}, de Doscientos.`,
-      "He intentado llamarte porque rellenaste un formulario en uno de nuestros anuncios de Meta.",
-      "Me gustaría entender qué necesitas y ver si podemos ayudarte.",
-      bookingUrl
-        ? `Puedes contarme brevemente por aquí o, si lo prefieres, agendar una reunión: ${bookingUrl}`
-        : "Puedes contarme brevemente por aquí y te respondo en cuanto pueda.",
-      "¿Qué te resulta más cómodo?",
-    ].join("\n\n"),
+    buildLeadWhatsAppMessage(
+      { id: leadId, name: leadName, email: leadEmail },
+      senderName,
+      undefined,
+    ),
   );
   if (!leadPhone) return null;
-  const digits = leadPhone.replace(/\D/g, "");
-  const phone = digits.length === 9 ? `34${digits}` : digits;
-  const href = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+  const href = buildWhatsAppUrl(leadPhone, message);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

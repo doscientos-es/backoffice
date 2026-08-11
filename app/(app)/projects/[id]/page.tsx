@@ -11,8 +11,8 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
 import { githubDefaultInstallationId, isAIEnabled } from "@/lib/env";
 import { computeProjectProfitability } from "@/lib/finance";
+import { getProjectWorkspace } from "@/lib/projects/queries";
 import { INVOICE_STATUS, PROJECT_STATUS, PROPOSAL_STATUS } from "@/lib/status";
-import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { ScheduleReminderDialog } from "../../reminders/schedule-reminder-dialog";
 import { TaskCreateDialog } from "../../tasks/task-create-dialog";
@@ -42,117 +42,29 @@ export default async function ProjectDetailPage({
   const { tasks_view } = await searchParams;
   const isBoard = tasks_view === "board";
   const user = await requireUser();
-  const supabase = await createServerClient();
-
-  const { data: project } = await supabase
-    .from("projects")
-    .select("*, clients(id, name)")
-    .eq("id", id)
-    .is("deleted_at", null)
-    .maybeSingle();
-
-  if (!project) notFound();
-
-  const client = (project as unknown as { clients: { id: string; name: string } | null }).clients;
-
   const canEdit = user.role !== "viewer";
-  const { data: clients } = canEdit
-    ? await supabase.from("clients").select("id, name").is("deleted_at", null).order("name")
-    : { data: null as Array<{ id: string; name: string }> | null };
-
-  const [
-    { data: tasks },
-    { data: proposals },
-    { data: invoices },
-    { data: members },
-    { data: attachments },
-    { data: workLogsData },
-    { data: invoiceTotals },
-    { data: expenseTotals },
-    { data: settings },
-    { data: checklistData },
-    { data: unlinkdProposals },
-    { data: reminders },
-  ] = await Promise.all([
-    isBoard
-      ? supabase
-          .from("tasks")
-          .select(
-            "id, title, status, priority, due_date, kanban_order, team_members:assignee_id(id, name)",
-          )
-          .eq("project_id", id)
-          .is("deleted_at", null)
-          .order("kanban_order", { ascending: true })
-      : supabase
-          .from("tasks")
-          .select("id, title, status")
-          .eq("project_id", id)
-          .is("deleted_at", null)
-          .order("created_at", { ascending: false })
-          .limit(20),
-    supabase
-      .from("proposals")
-      .select("id, number, title, status, total")
-      .eq("project_id", id)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false })
-      .limit(10),
-    supabase
-      .from("invoices")
-      .select("id, full_number, status, total, issue_date")
-      .eq("project_id", id)
-      .is("deleted_at", null)
-      .order("issue_date", { ascending: false })
-      .limit(10),
-    supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
-    supabase
-      .from("attachments")
-      .select("id, name, mime_type, size_bytes, created_at, source, drive_file_id, web_view_link")
-      .eq("project_id", id)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("work_logs")
-      .select(
-        "id, work_date, start_time, end_time, hours, note, team_members:member_id(id, name, avatar_url, github_handle)",
-      )
-      .eq("project_id", id)
-      .is("deleted_at", null)
-      .order("work_date", { ascending: false }),
-    supabase.from("invoices").select("total, status").eq("project_id", id).is("deleted_at", null),
-    supabase
-      .from("expenses")
-      .select("total")
-      .eq("project_id", id)
-      .is("deleted_at", null)
-      .neq("status", "cancelled"),
-    supabase.from("settings").select("internal_hourly_cost").eq("id", 1).maybeSingle(),
-    supabase
-      .from("project_checklist_items")
-      .select("id, label, is_done, position")
-      .eq("project_id", id)
-      .is("deleted_at", null)
-      .order("position"),
-    // Proposals from the same client that are not yet linked to any project.
-    client
-      ? supabase
-          .from("proposals")
-          .select("id, number, title")
-          .eq("client_id", client.id)
-          .is("project_id", null)
-          .is("deleted_at", null)
-          .order("created_at", { ascending: false })
-      : Promise.resolve({ data: [] }),
-    supabase
-      .from("tasks")
-      .select("id, title, start_at")
-      .eq("kind", "reminder")
-      .eq("project_id", id)
-      .is("completed_at", null)
-      .is("deleted_at", null)
-      .order("start_at", { ascending: true })
-      .limit(10),
-  ]);
+  const workspace = await getProjectWorkspace(id, {
+    includeClients: canEdit,
+    tasksView: isBoard ? "board" : "list",
+  });
+  if (!workspace) notFound();
+  const {
+    project,
+    client,
+    clients,
+    tasks,
+    proposals,
+    invoices,
+    members,
+    attachments,
+    workLogsData,
+    invoiceTotals,
+    expenseTotals,
+    settings,
+    checklistData,
+    unlinkedProposals,
+    reminders,
+  } = workspace;
 
   const pendingReminders = ((reminders ?? []) as Array<Record<string, unknown>>).map((r) => ({
     id: r.id as string,
@@ -523,7 +435,7 @@ export default async function ProjectDetailPage({
               <LinkProposalButton
                 projectId={id}
                 unlinkdProposals={
-                  (unlinkdProposals ?? []) as {
+                  (unlinkedProposals ?? []) as {
                     id: string;
                     number: string | null;
                     title: string | null;

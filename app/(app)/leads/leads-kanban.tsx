@@ -38,9 +38,14 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import { MemberAvatar } from "@/components/ui/member-avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
-  boardColumnFor,
+  countLeadsNeedingAttention,
+  DEFAULT_COMPACT_LEAD_KANBAN_COLUMNS,
+  groupLeadsForKanban,
+  LEAD_KANBAN_COLUMNS,
+  sumLeadEstimatedValue,
+} from "@/lib/leads/kanban-policy";
+import {
   isRotting,
-  nextActionRank,
   nextActionState,
   STAGE_ROT_DAYS,
   waitingForReplySince,
@@ -81,33 +86,6 @@ const NEXT_ACTION_SUGGESTION: Partial<Record<LeadStatus, string>> = {
   quoted: "Seguimiento del presupuesto de",
 };
 
-function sumEstimated(leads: KanbanLead[]): number {
-  return leads.reduce((acc, l) => acc + (l.estimated_value ?? 0), 0);
-}
-
-/**
- * Orders a column by risk: overdue first, then leads with nothing scheduled,
- * then by due date. Ties fall back to the oldest update, so forgotten cards
- * never hide at the bottom.
- */
-function compareByUrgency(a: KanbanLead, b: KanbanLead): number {
-  const rankA = nextActionRank(nextActionState(a.status, a.next_action));
-  const rankB = nextActionRank(nextActionState(b.status, b.next_action));
-  if (rankA !== rankB) return rankA - rankB;
-  const dueA = a.next_action ? new Date(a.next_action.remind_at).getTime() : 0;
-  const dueB = b.next_action ? new Date(b.next_action.remind_at).getTime() : 0;
-  if (dueA !== dueB) return dueA - dueB;
-  return new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
-}
-
-/** Cards a rep should act on right now: overdue or with no next step at all. */
-function countNeedingAttention(leads: KanbanLead[]): number {
-  return leads.filter((l) => {
-    const state = nextActionState(l.status, l.next_action);
-    return state === "overdue" || state === "missing";
-  }).length;
-}
-
 export type KanbanLead = LeadListItem;
 
 const INTERACTION_LABEL: Record<string, string> = {
@@ -129,73 +107,6 @@ const INTERACTION_LABEL: Record<string, string> = {
   status_change: "Cambio de estado",
 };
 
-// `compact` columns rinden estrechas por defecto y se expanden al pasar por
-// encima con un drag (o con el ratón). Útil para estados terminales o de
-// baja prioridad que no merecen ocupar ancho de pipeline activo.
-type ColumnDef = {
-  id: LeadStatus;
-  label: string;
-  tone: string;
-  dot: string;
-  compact?: boolean;
-};
-
-const COLUMNS: ColumnDef[] = [
-  {
-    id: "new",
-    label: "Nuevo",
-    tone: "text-sky-700 dark:text-sky-300",
-    dot: "bg-sky-500",
-  },
-  {
-    id: "contacted",
-    label: "Esperando respuesta",
-    tone: "text-indigo-700 dark:text-indigo-300",
-    dot: "bg-indigo-500",
-  },
-  {
-    id: "in_conversation",
-    label: "En conversación",
-    tone: "text-amber-700 dark:text-amber-300",
-    dot: "bg-amber-500",
-  },
-  {
-    id: "quoted",
-    label: "Presupuestado",
-    tone: "text-amber-700 dark:text-amber-300",
-    dot: "bg-amber-400",
-  },
-  {
-    id: "won",
-    label: "Ganado",
-    tone: "text-emerald-700 dark:text-emerald-300",
-    dot: "bg-emerald-500",
-  },
-  {
-    id: "lost",
-    label: "Perdido",
-    tone: "text-red-700 dark:text-red-300",
-    dot: "bg-red-500",
-    compact: true,
-  },
-  {
-    id: "not_interested",
-    label: "No interesa",
-    tone: "text-zinc-700 dark:text-zinc-300",
-    dot: "bg-zinc-400",
-    compact: true,
-  },
-  {
-    id: "archived",
-    label: "Archivado",
-    tone: "text-muted-foreground",
-    dot: "bg-muted-foreground/40",
-    compact: true,
-  },
-];
-
-// Columnas `compact` por defecto (antes de leer la preferencia persistida).
-const DEFAULT_COMPACT_COLUMNS: LeadStatus[] = COLUMNS.filter((c) => c.compact).map((c) => c.id);
 const COMPACT_COLUMNS_KEY = "leads-kanban:compact-columns";
 
 function loadColumnSet(key: string): Set<LeadStatus> | null {
@@ -241,7 +152,7 @@ export function LeadsKanban({
   // Cualquier columna puede activarlo, no solo las de estado terminal; la
   // preferencia persiste en localStorage.
   const [compactColumns, setCompactColumns] = useState<ReadonlySet<LeadStatus>>(
-    () => new Set(DEFAULT_COMPACT_COLUMNS),
+    () => new Set(DEFAULT_COMPACT_LEAD_KANBAN_COLUMNS),
   );
 
   // Lee las preferencias persistidas tras el montaje: el servidor siempre
@@ -362,9 +273,7 @@ export function LeadsKanban({
     }
   };
 
-  const grouped = new Map<LeadStatus, KanbanLead[]>(COLUMNS.map((c) => [c.id, []]));
-  for (const l of optimistic) grouped.get(boardColumnFor(l.status))?.push(l);
-  for (const list of grouped.values()) list.sort(compareByUrgency);
+  const grouped = groupLeadsForKanban(optimistic);
 
   const active = activeId ? optimistic.find((l) => l.id === activeId) : null;
   const isDragging = activeId !== null;
@@ -377,7 +286,7 @@ export function LeadsKanban({
       onDragCancel={() => setActiveId(null)}
     >
       <div className="flex gap-3 overflow-x-auto pb-2 h-[calc(100dvh-11rem)] min-h-[28rem] scroll-fade-x no-scrollbar">
-        {COLUMNS.map((col) => (
+        {LEAD_KANBAN_COLUMNS.map((col) => (
           <Column
             key={col.id}
             status={col.id}
@@ -485,8 +394,8 @@ function Column({
   onToggleCompact: () => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
-  const total = sumEstimated(leads);
-  const attention = countNeedingAttention(leads);
+  const total = sumLeadEstimatedValue(leads);
+  const attention = countLeadsNeedingAttention(leads);
   // Las columnas compactas se expanden durante hover para facilitar la
   // revisión y vuelven a colapsarse al salir el cursor.
   // El comportamiento responsive se delega a Tailwind con prefijos `md:`,

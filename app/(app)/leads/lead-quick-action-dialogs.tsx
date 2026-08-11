@@ -36,7 +36,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { defaultMeetingEnd, defaultMeetingStart } from "@/lib/calendar/date-presets";
 import { publicEnv } from "@/lib/env";
-import { buildBookingUrl } from "@/lib/recovery/utils";
+import { buildLeadWhatsAppMessage, buildWhatsAppUrl } from "@/lib/leads/whatsapp";
 import { defaultFollowUpDateTime } from "@/lib/reminders/date-presets";
 import type { CallOutcome } from "@/lib/schemas/lead";
 import { addMinutesToDatetimeLocal, datetimeLocalToIso } from "@/lib/utils/date-time";
@@ -50,27 +50,6 @@ import { CallDigestDialog } from "./call-digest-dialog";
 
 /** Shape passed for Meet invitee selection — subset of team_members with email. */
 export type MeetMember = { id: string; name: string; email: string };
-
-function whatsappPhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  return digits.length === 9 ? `34${digits}` : digits;
-}
-
-function whatsappMessage(
-  lead: { id: string; name: string; email: string | null },
-  senderName: string,
-): string {
-  const bookingUrl = buildBookingUrl(publicEnv.NEXT_PUBLIC_CAL_LINK, lead);
-  return [
-    `Hola, ${lead.name.split(" ")[0] || lead.name}. Soy ${senderName || "el equipo"}, de Doscientos.`,
-    "He intentado llamarte porque rellenaste un formulario en uno de nuestros anuncios de Meta.",
-    "Me gustaría entender qué necesitas y ver si podemos ayudarte.",
-    bookingUrl
-      ? `Puedes contarme brevemente por aquí o, si lo prefieres, agendar una reunión: ${bookingUrl}`
-      : "Puedes contarme brevemente por aquí y te respondo en cuanto pueda.",
-    "¿Qué te resulta más cómodo?",
-  ].join("\n\n");
-}
 
 function WhatsAppFollowUp({
   leadId,
@@ -90,10 +69,14 @@ function WhatsAppFollowUp({
   onOpenChange: (open: boolean) => void;
 }) {
   const [message, setMessage] = useState(() =>
-    whatsappMessage({ id: leadId, name: leadName, email: leadEmail }, senderName),
+    buildLeadWhatsAppMessage(
+      { id: leadId, name: leadName, email: leadEmail },
+      senderName,
+      publicEnv.NEXT_PUBLIC_CAL_LINK,
+    ),
   );
   if (!leadPhone) return null;
-  const href = `https://wa.me/${whatsappPhone(leadPhone)}?text=${encodeURIComponent(message)}`;
+  const href = buildWhatsAppUrl(leadPhone, message);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
