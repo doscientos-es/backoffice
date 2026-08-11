@@ -83,12 +83,17 @@ export default async function DeckPage({ params }: { params: Promise<{ token: st
   const auth = await getCurrentUser();
   const isTeam = auth.ok;
 
-  const { data: proposal } = await admin
+  const { data: proposal, error: proposalError } = await admin
     .from("proposals")
     .select("*, clients(name, email, logo_url)")
     .eq("portal_token", token)
     .is("deleted_at", null)
     .maybeSingle();
+
+  if (proposalError) {
+    log.error({ err: proposalError }, "deck_proposal_lookup_failed");
+    notFound();
+  }
 
   // Drafts are only accessible to authenticated team members.
   if (!proposal || (proposal.status === "draft" && !isTeam)) notFound();
@@ -113,10 +118,10 @@ export default async function DeckPage({ params }: { params: Promise<{ token: st
   const { data: team } =
     selectedMemberIds.length > 0
       ? await admin
-          .from("team_members")
-          .select("id, name, job_title, avatar_url")
-          .in("id", selectedMemberIds)
-          .is("deleted_at", null)
+        .from("team_members")
+        .select("id, name, job_title, avatar_url")
+        .in("id", selectedMemberIds)
+        .is("deleted_at", null)
       : { data: [] };
 
   // Bump status from 'sent' to 'viewed' on the first external (client) open

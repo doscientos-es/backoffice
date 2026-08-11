@@ -53,7 +53,7 @@ export default async function PortalProposalPage({
   const auth = await getCurrentUser();
   const isTeam = auth.ok;
 
-  const { data: proposal } = await admin
+  const { data: proposal, error: proposalError } = await admin
     .from("proposals")
     .select(
       "*, clients(name, nif, billing_address, email, phone, contact_person, logo_url), leads(name, email, phone, company)",
@@ -63,6 +63,10 @@ export default async function PortalProposalPage({
     .maybeSingle();
 
   // Drafts are only accessible to authenticated team members.
+  if (proposalError) {
+    log.error({ err: proposalError }, "portal_proposal_lookup_failed");
+    notFound();
+  }
   if (!proposal) {
     log.error({ token }, "portal_proposal_not_found — query returned null");
     notFound();
@@ -168,21 +172,21 @@ export default async function PortalProposalPage({
     !client?.nif?.trim() || !client.billing_address?.trim() || !client.name?.trim();
   const fiscalPrefill = client
     ? {
-        name: client.name ?? "",
-        nif: client.nif ?? "",
-        billing_address: client.billing_address ?? "",
-        contact_person: client.contact_person ?? "",
-        email: client.email ?? "",
-        phone: client.phone ?? "",
-      }
+      name: client.name ?? "",
+      nif: client.nif ?? "",
+      billing_address: client.billing_address ?? "",
+      contact_person: client.contact_person ?? "",
+      email: client.email ?? "",
+      phone: client.phone ?? "",
+    }
     : {
-        name: lead?.company ?? lead?.name ?? "",
-        nif: "",
-        billing_address: "",
-        contact_person: lead?.name ?? "",
-        email: lead?.email ?? "",
-        phone: lead?.phone ?? "",
-      };
+      name: lead?.company ?? lead?.name ?? "",
+      nif: "",
+      billing_address: "",
+      contact_person: lead?.name ?? "",
+      email: lead?.email ?? "",
+      phone: lead?.phone ?? "",
+    };
   const recipientName = client?.name ?? lead?.company ?? lead?.name ?? "—";
   const proposalNumber = (proposal.number as string | null) ?? "Borrador";
   const safeItems = (items ?? []) as unknown as ProposalItem[];
