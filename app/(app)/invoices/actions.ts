@@ -15,16 +15,11 @@ import {
   findClientInfo,
   findInvoiceForEdit,
   findInvoiceForEmail,
-  findInvoiceForRectification,
   findInvoiceSeries,
   findNextInvoiceNumberForSeries,
-  findProjectForHourlyBilling,
   findProposalForInvoice,
   findProposalItems,
-  findUnlinkedWorkLogsForMonth,
   insertInvoiceWithItems,
-  insertRectificationWithItems,
-  linkWorkLogsToInvoice,
   patchInvoiceClientSnapshot,
   patchInvoiceHeader,
   patchInvoiceStatus,
@@ -378,73 +373,20 @@ export const createHourlyInvoice = defineAction<
   revalidate: (_p, input) => ["/invoices", `/projects/${input.projectId}`],
   handler: async (input, { user }) => {
     const { projectId, month } = input;
-
-    const project = await findProjectForHourlyBilling(projectId);
-    if (!project) throw new Error("Proyecto no encontrado");
-    if (project.billing_type !== "hourly") throw new Error("El proyecto no factura por horas");
-    if (!(project.hourly_rate > 0)) throw new Error("El proyecto no tiene un precio/hora válido");
-
     const { start: monthStart, end: monthEnd } = getMonthlyBillingWindow(month);
-
-    const logs = await findUnlinkedWorkLogsForMonth(projectId, monthStart, monthEnd);
-    const hours = logs.reduce((sum, l) => sum + l.hours, 0);
-    if (!(hours > 0)) throw new Error("No hay horas registradas en ese mes");
-
-    const [client, series] = await Promise.all([
-      findClientInfo(project.client_id),
-      findInvoiceSeries(),
-    ]);
-    const nextNumber = await findNextInvoiceNumberForSeries(series);
-
     const monthLabel = new Intl.DateTimeFormat("es-ES", { month: "long", year: "numeric" }).format(
       new Date(`${monthStart}T00:00:00`),
     );
-    const { subtotal, taxAmount, total } = computeLineTotals([
-      { quantity: hours, unit_price: project.hourly_rate, vat_rate: project.hourly_vat_rate },
-    ]);
-
-    const { id } = await insertInvoiceWithItems(
-      {
-        client_id: project.client_id,
-        project_id: project.id,
-        series,
-        number: nextNumber,
-        status: "draft",
-        currency: "EUR",
-        subtotal,
-        tax_amount: taxAmount,
-        total,
-        client_nif: client?.nif ?? null,
-        client_name: client?.name ?? null,
-        client_address_street: client?.billing_address_street ?? null,
-        client_address_zip: client?.billing_address_zip ?? null,
-        client_address_city: client?.billing_address_city ?? null,
-        client_address_province: client?.billing_address_province ?? null,
-        client_address_country: client?.billing_address_country ?? null,
-        created_by: user.id,
-      },
-      [
-        {
-          position: 0,
-          description: `Horas trabajadas: ${monthLabel}`,
-          quantity: hours,
-          unit_price: project.hourly_rate,
-          vat_rate: project.hourly_vat_rate,
-        },
-      ],
-    );
-
-    // Link logs to invoice so they can't be double-billed (best-effort).
-    try {
-      await linkWorkLogsToInvoice(
-        logs.map((l) => l.id),
-        id,
-      );
-    } catch (err) {
-      log.error({ err, invoiceId: id }, "link_work_logs_failed");
-    }
-
-    return { id };
+    const supabase = await createServerClient();
+    const { data: id, error } = await supabase.rpc("create_hourly_invoice", {
+      p_project_id: projectId,
+      p_month_start: monthStart,
+      p_month_end: monthEnd,
+      p_month_label: monthLabel,
+    });
+    if (error || !id) throw new Error(error?.message ?? "No se pudo crear la factura por horas");
+    log.info({ invoiceId: id, projectId, month, userId: user.id }, "hourly_invoice_created");
+    return { id: id as string };
   },
 });
 
@@ -542,86 +484,19 @@ export const createRectification = defineAction<typeof CreateRectificationInput,
   schema: CreateRectificationInput,
   roles: ["owner", "admin"],
   revalidate: (_p, input) => [`/invoices/${input.originalInvoiceId}`, "/invoices"],
-  handler: async (input, { user }) => {
+  handler: async (input) => {
     const { originalInvoiceId, rectificationType, reason } = input;
-
-    const original = await findInvoiceForRectification(originalInvoiceId);
-    if (!original) throw new Error("Factura original no encontrada");
-
-    if (
-      !isRectifiableInvoice({ status: original.status, isRectification: original.is_rectification })
-    ) {
-      if (original.is_rectification) {
-        throw new Error(
-          "No se puede rectificar una factura que ya es rectificativa. Rectifica la factura original.",
-        );
-      }
-      throw new Error(
-        `Solo pueden rectificarse facturas emitidas o pagadas. El estado actual es: ${original.status}`,
-      );
-    }
-
-    // Fetch original items to clone
     const supabase = await createServerClient();
-    const { data: originalItems, error: itemsErr } = await supabase
-      .from("invoice_items")
-      .select("position, description, quantity, unit_price, vat_rate")
-      .eq("invoice_id", originalInvoiceId)
-      .order("position");
-    if (itemsErr) throw new Error(itemsErr.message);
-
-    const nextNumber = await findNextInvoiceNumberForSeries(RECTIFICATION_SERIES);
-
-    const { id } = await insertRectificationWithItems(
-      {
-        client_id: original.client_id,
-        project_id: original.project_id,
-        series: RECTIFICATION_SERIES,
-        number: nextNumber,
-        invoice_type: rectificationType,
-        status: "draft",
-        currency: "EUR",
-        subtotal: original.subtotal,
-        tax_amount: original.tax_amount,
-        total: original.total,
-        client_nif: original.client_nif,
-        client_name: original.client_name,
-        client_address_street: original.client_address_street,
-        client_address_zip: original.client_address_zip,
-        client_address_city: original.client_address_city,
-        client_address_province: original.client_address_province,
-        client_address_country: original.client_address_country,
-        notes: original.notes,
-        payment_terms: original.payment_terms,
-        created_by: user.id,
-        // Rectification metadata
-        is_rectification: true,
-        rectified_invoice_id: originalInvoiceId,
-        rectification_reason: reason,
-        rectification_type: rectificationType,
-      },
-      (originalItems ?? []).map((it, idx) => ({
-        position: idx,
-        description: (it.description as string | null) ?? null,
-        quantity: Number(it.quantity ?? 1),
-        unit_price: Number(it.unit_price ?? 0),
-        vat_rate: Number(it.vat_rate ?? 21),
-      })),
-    );
-
-    // Mark original invoice as rectified so it can't be rectified again.
-    await patchInvoiceStatus(originalInvoiceId, {
-      status: "rectified",
-      updated_at: new Date().toISOString(),
-      paid_at: null,
+    const { data: id, error } = await supabase.rpc("create_rectification_invoice", {
+      p_original_invoice_id: originalInvoiceId,
+      p_rectification_type: rectificationType,
+      p_reason: reason,
     });
+    if (error || !id) throw new Error(error?.message ?? "No se pudo crear la rectificativa");
 
-    log.info(
-      { originalInvoiceId, rectificationId: id, rectificationType },
-      "rectification_created",
-    );
+    log.info({ originalInvoiceId, rectificationId: id, rectificationType }, "rectification_created");
 
-    return { id };
+    return { id: id as string };
   },
 });
 
