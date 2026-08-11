@@ -1,8 +1,5 @@
 "use client";
 
-import { AlertCircle, CheckCheck, ListTodo, Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
-import { sileo } from "sileo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,6 +13,9 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { AlertCircle, CheckCheck, ListTodo, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { sileo } from "sileo";
 
 type SuggestedTask = {
   title: string;
@@ -186,6 +186,12 @@ export function ExtractTasksDialog({ leadId, trigger, createTaskAction }: Extrac
                 </li>
               ))}
             </ul>
+          )}
+          {!loading && !error && tasks.length === 0 && (
+            <p className="rounded-md bg-muted/40 p-3 text-sm text-muted-foreground">
+              No hay acciones concretas que crear con la información actual. Añade una nota, registra la
+              llamada o programa el siguiente paso cuando lo tengas claro.
+            </p>
           )}
         </div>
 

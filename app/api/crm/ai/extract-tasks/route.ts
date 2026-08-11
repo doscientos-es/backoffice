@@ -11,9 +11,10 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { AI_MODELS, isAIEnabled, runAIObject } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
+import { formatLeadBriefingForAI } from "@/lib/leads/ai-context";
+import { getLeadDetail } from "@/lib/leads/queries";
 import { scopedLogger } from "@/lib/logger";
 import { rateLimit } from "@/lib/ratelimit";
-import { createServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -29,19 +30,21 @@ const TaskSuggestion = z.object({
 });
 
 const ResultSchema = z.object({
-  tasks: z.array(TaskSuggestion).min(1).max(8),
+  tasks: z.array(TaskSuggestion).max(8).default([]),
 });
 
 const SYSTEM_PROMPT = `Eres un asistente de CRM para una agencia de desarrollo web española.
-Analiza la información de un lead y sus interacciones recientes y extrae entre 1 y 8 tareas
-accionables concretas que el equipo comercial debería realizar para avanzar con este lead.
+Analiza el briefing completo de un lead y extrae hasta 8 tareas accionables concretas que el equipo
+comercial debería realizar para avanzar con este lead. Devuelve una lista vacía si el contexto no justifica
+ninguna acción concreta.
 
 Para cada tarea devuelve:
 - "title": título corto y accionable (máx 200 chars). Empieza con un verbo (Llamar, Enviar, Preparar…).
 - "description": contexto breve de por qué es necesaria (máx 500 chars, puede ser vacío).
 - "priority": "low" | "medium" | "high" | "urgent" según la urgencia percibida.
 
-Devuelve SOLO tareas que tengan sentido y valor real. No inventes información.`;
+Devuelve SOLO tareas que tengan sentido y valor real. Usa las transcripciones y los acuerdos explícitos
+cuando existan; no inventes fechas, responsables, precios, alcance o compromisos.`;
 
 export async function POST(req: NextRequest) {
   if (!isAIEnabled()) {
@@ -69,43 +72,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "lead_id requerido" }, { status: 400 });
   }
 
-  const supabase = await createServerClient();
+  const detail = await getLeadDetail(body.lead_id);
+  if (!detail) return NextResponse.json({ error: "lead not found" }, { status: 404 });
 
-  const [{ data: lead }, { data: interactions }] = await Promise.all([
-    supabase
-      .from("leads")
-      .select("id, name, company, status, notes, ai_summary")
-      .eq("id", body.lead_id)
-      .is("deleted_at", null)
-      .maybeSingle(),
-    supabase
-      .from("lead_interactions")
-      .select("type, subject, body, created_at")
-      .eq("lead_id", body.lead_id)
-      .order("created_at", { ascending: false })
-      .limit(10),
-  ]);
-
-  if (!lead) return NextResponse.json({ error: "lead not found" }, { status: 404 });
-
-  const interactionsText = (interactions ?? [])
-    .reverse()
-    .map((i) => {
-      const date = new Date(i.created_at as string).toISOString().slice(0, 10);
-      const subject = (i.subject as string | null)?.trim();
-      const txt = (i.body as string | null)?.trim()?.slice(0, 300);
-      return `- ${date} | ${i.type as string}${subject ? ` | "${subject}"` : ""}${txt ? ` | ${txt}` : ""}`;
-    })
-    .join("\n");
-
-  const userPrompt = `Lead: ${lead.name}
-Empresa: ${lead.company ?? "—"}
-Estado: ${lead.status}
-Notas: ${(lead.notes as string | null) ?? "—"}
-Resumen IA existente: ${(lead.ai_summary as string | null) ?? "—"}
-
-Interacciones recientes:
-${interactionsText || "(sin interacciones)"}`;
+  const userPrompt = formatLeadBriefingForAI({
+    lead: detail.lead,
+    clientName: detail.linkedClientName,
+    interactions: detail.interactions,
+    proposals: detail.proposals,
+    projects: detail.projects,
+    invoices: detail.invoices,
+    tasks: detail.tasks,
+    reminders: detail.reminders,
+    attachments: detail.attachments,
+  });
 
   try {
     const result = await runAIObject({
