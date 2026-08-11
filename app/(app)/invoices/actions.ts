@@ -28,10 +28,7 @@ import {
   softDeleteInvoice,
 } from "@/lib/invoices/queries";
 import type { InvoiceHeaderPatch } from "@/lib/invoices/types";
-import {
-  buildInvoiceItemRows,
-  getMonthlyBillingWindow,
-} from "@/lib/invoices/workflows";
+import { buildInvoiceItemRows, getMonthlyBillingWindow } from "@/lib/invoices/workflows";
 import { scopedLogger } from "@/lib/logger";
 import { buildPortalAccessPatch } from "@/lib/portal/access";
 import { uuidIdInput } from "@/lib/schemas/common";
@@ -491,7 +488,10 @@ export const createRectification = defineAction<typeof CreateRectificationInput,
     });
     if (error || !id) throw new Error(error?.message ?? "No se pudo crear la rectificativa");
 
-    log.info({ originalInvoiceId, rectificationId: id, rectificationType }, "rectification_created");
+    log.info(
+      { originalInvoiceId, rectificationId: id, rectificationType },
+      "rectification_created",
+    );
 
     return { id: id as string };
   },

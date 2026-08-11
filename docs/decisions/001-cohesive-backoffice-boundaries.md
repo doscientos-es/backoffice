@@ -39,6 +39,12 @@ Para cabecera + líneas, conversiones y cambios que escriben timeline, usar una 
 de uso. Si las escrituras deben ser atómicas, implementar una RPC/migración nueva y verificarla
 en producción y demo; nunca encadenar `delete` + `insert` como sustituto de una transacción.
 
+Una RPC de escritura acepta el mínimo input de intención, valida invariantes en PostgreSQL y
+recalcula importes/actor desde la base. Debe bloquear la entidad raíz o usar un advisory lock si
+hay concurrencia, ser idempotente cuando el cliente pueda reintentar y devolver un resultado
+pequeño. Declarar `SECURITY DEFINER` implica fijar `search_path`, revocar `PUBLIC`/`anon` y
+verificar el rol dentro de la función antes de escribir.
+
 ### 6. Integraciones externas son adaptadores best-effort
 
 Meta, email, Drive y Calendar no deciden el estado interno. Se invocan desde un adaptador tras

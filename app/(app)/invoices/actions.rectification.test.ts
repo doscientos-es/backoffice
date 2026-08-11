@@ -97,19 +97,19 @@ vi.mock("@/lib/supabase/server", () => ({
           Promise.resolve(
             table === "invoice_items"
               ? {
-                data: db.itemsError
-                  ? null
-                  : [
-                    {
-                      position: 0,
-                      description: "Servicio",
-                      quantity: 1,
-                      unit_price: 100,
-                      vat_rate: 21,
-                    },
-                  ],
-                error: db.itemsError ? { message: db.itemsError } : null,
-              }
+                  data: db.itemsError
+                    ? null
+                    : [
+                        {
+                          position: 0,
+                          description: "Servicio",
+                          quantity: 1,
+                          unit_price: 100,
+                          vat_rate: 21,
+                        },
+                      ],
+                  error: db.itemsError ? { message: db.itemsError } : null,
+                }
               : { data: null, error: null },
           ),
         // other methods used by different actions — unused here
@@ -212,7 +212,10 @@ beforeEach(() => {
       return { data: null, error: { message: "No se puede rectificar una factura rectificativa" } };
     }
     if (!["issued", "paid", "overdue"].includes(String(original.status))) {
-      return { data: null, error: { message: "Solo pueden rectificarse facturas emitidas o pagadas" } };
+      return {
+        data: null,
+        error: { message: "Solo pueden rectificarse facturas emitidas o pagadas" },
+      };
     }
     db.insertedInvoice = {
       ...original,
@@ -239,6 +242,11 @@ describe("createRectification – happy path", () => {
 
   it("creates the rectification with series R and is_rectification:true", async () => {
     await createRectification(validInput);
+    expect(rpc).toHaveBeenCalledWith("create_rectification_invoice", {
+      p_original_invoice_id: ORIG_ID,
+      p_rectification_type: "R1",
+      p_reason: validInput.reason,
+    });
     expect(db.insertedInvoice?.series).toBe("R");
     expect(db.insertedInvoice?.is_rectification).toBe(true);
     expect(db.insertedInvoice?.rectified_invoice_id).toBe(ORIG_ID);
