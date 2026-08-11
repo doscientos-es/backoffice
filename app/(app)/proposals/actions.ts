@@ -279,10 +279,6 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
   if (rest.terms !== undefined) patch.terms = rest.terms;
 
   if (items) {
-    Object.assign(patch, buildProposalTotalsPatch(items));
-  }
-
-  if (items) {
     const { error: rpcError } = await supabase.rpc("replace_proposal_items", {
       p_proposal_id: id,
       p_patch: patch,
