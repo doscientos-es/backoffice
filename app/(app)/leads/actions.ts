@@ -147,53 +147,20 @@ export const updateLead = defineAction({
 export const convertLeadToClient = defineAction({
   name: "leads.convert",
   schema: ConvertLeadInput,
-  handler: async (data, { user }) => {
+  handler: async (data) => {
     const supabase = await createServerClient();
-
-    // Idempotency: if a client is already linked to this lead, return it.
-    const { data: existing } = await supabase
-      .from("clients")
-      .select("id")
-      .eq("lead_id", data.leadId)
-      .is("deleted_at", null)
-      .maybeSingle();
-
-    if (existing?.id) {
-      return { clientId: existing.id as string };
-    }
-
-    const { data: client, error } = await supabase
-      .from("clients")
-      .insert({
-        lead_id: data.leadId,
-        name: data.name,
-        label: data.alias || null,
-        nif: data.nif,
-        billing_address: data.billing_address,
-        email: data.email ?? null,
-        phone: data.phone || null,
-        contact_person: data.contact_person || null,
-        notes: data.notes || null,
-      })
-      .select("id")
-      .single();
-
-    if (error || !client) {
-      throw new Error(error?.message ?? "No se pudo crear el cliente");
-    }
-
-    await supabase
-      .from("leads")
-      .update({ status: "won", updated_at: new Date().toISOString(), updated_by: user.id })
-      .eq("id", data.leadId);
-
-    await supabase.from("lead_interactions").insert({
-      lead_id: data.leadId,
-      client_id: client.id as string,
-      type: "note",
-      subject: "Convertido a cliente",
-      performed_by: user.id,
+    const { data: clientId, error } = await supabase.rpc("convert_lead_to_client", {
+      p_lead_id: data.leadId,
+      p_name: data.name,
+      p_label: data.alias ?? "",
+      p_nif: data.nif,
+      p_billing_address: data.billing_address,
+      p_email: data.email ?? "",
+      p_phone: data.phone ?? "",
+      p_contact_person: data.contact_person ?? "",
+      p_notes: data.notes ?? "",
     });
+    if (error || !clientId) throw new Error(error?.message ?? "No se pudo crear el cliente");
 
     revalidatePath(`/leads/${data.leadId}`);
     revalidatePath("/leads");
@@ -225,7 +192,7 @@ export const convertLeadToClient = defineAction({
       }
     });
 
-    return { clientId: client.id as string };
+    return { clientId: clientId as string };
   },
 });
 
@@ -427,17 +394,17 @@ export const sendEmailToLead = defineAction({
     const renderedHtml = markdownToHtml(renderedMarkdown);
     const finalHtml = data.includeSignature
       ? appendSignature(
-          renderedHtml,
-          buildSignatureHtml(
-            {
-              name: user.name,
-              jobTitle: user.jobTitle ?? undefined,
-              phone: user.phone ?? undefined,
-              contactEmail: user.contactEmail ?? user.emailAlias ?? undefined,
-            },
-            publicEnv.NEXT_PUBLIC_APP_URL || "https://app.doscientos.es",
-          ),
-        )
+        renderedHtml,
+        buildSignatureHtml(
+          {
+            name: user.name,
+            jobTitle: user.jobTitle ?? undefined,
+            phone: user.phone ?? undefined,
+            contactEmail: user.contactEmail ?? user.emailAlias ?? undefined,
+          },
+          publicEnv.NEXT_PUBLIC_APP_URL || "https://app.doscientos.es",
+        ),
+      )
       : renderedHtml;
 
     const renderedSubject = renderTemplate(data.subject, {
@@ -622,10 +589,10 @@ export const notifyDueCallReminders = defineAction({
         link: `/leads/${task.lead_id as string}?feedback=call`,
         actions: taskLead?.phone
           ? [
-              { action: "call", title: "Llamar" },
-              { action: "whatsapp", title: "WhatsApp" },
-              { action: "feedback", title: "Registrar" },
-            ]
+            { action: "call", title: "Llamar" },
+            { action: "whatsapp", title: "WhatsApp" },
+            { action: "feedback", title: "Registrar" },
+          ]
           : [{ action: "feedback", title: "Registrar" }],
         data: {
           leadId: task.lead_id as string,
@@ -892,10 +859,10 @@ export const assignLeadOwner = defineAction({
         link: `/leads/${data.leadId}`,
         actions: (current?.phone as string | null)
           ? [
-              { action: "call", title: "Llamar" },
-              { action: "whatsapp", title: "WhatsApp" },
-              { action: "feedback", title: "Registrar" },
-            ]
+            { action: "call", title: "Llamar" },
+            { action: "whatsapp", title: "WhatsApp" },
+            { action: "feedback", title: "Registrar" },
+          ]
           : [{ action: "feedback", title: "Registrar" }],
         data: {
           callUrl: current?.phone ? `tel:${normalizePhoneForCall(current.phone as string)}` : null,

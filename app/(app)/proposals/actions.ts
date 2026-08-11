@@ -282,29 +282,21 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
     Object.assign(patch, buildProposalTotalsPatch(items));
   }
 
-  if (Object.keys(patch).length > 0) {
+  if (items) {
+    const { error: rpcError } = await supabase.rpc("replace_proposal_items", {
+      p_proposal_id: id,
+      p_patch: patch,
+      p_items: items,
+    });
+    if (rpcError) {
+      log.error({ err: rpcError, id }, "replace_proposal_items_failed");
+      return { ok: false, error: rpcError.message };
+    }
+  } else if (Object.keys(patch).length > 0) {
     const { error: updateError } = await supabase.from("proposals").update(patch).eq("id", id);
     if (updateError) {
       log.error({ err: updateError, id }, "update_proposal_failed");
       return { ok: false, error: updateError.message };
-    }
-  }
-
-  if (items) {
-    const { error: deleteError } = await supabase
-      .from("proposal_items")
-      .delete()
-      .eq("proposal_id", id);
-    if (deleteError) {
-      log.error({ err: deleteError, id }, "update_proposal_items_delete_failed");
-      return { ok: false, error: deleteError.message };
-    }
-    const { error: insertError } = await supabase
-      .from("proposal_items")
-      .insert(buildProposalItemRows(items, id));
-    if (insertError) {
-      log.error({ err: insertError, id }, "update_proposal_items_insert_failed");
-      return { ok: false, error: insertError.message };
     }
   }
 
