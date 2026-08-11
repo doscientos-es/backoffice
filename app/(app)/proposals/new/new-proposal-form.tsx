@@ -1,8 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
 import { LineItemsTable } from "@/components/finance/line-items-table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,6 +17,9 @@ import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { EMPTY_LINE_ITEM, type LineItem } from "@/lib/finance";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useMemo, useState, useTransition } from "react";
 import { updateLeadStatus } from "../../leads/actions";
 import { createProposalAction } from "../actions";
 
@@ -109,13 +109,13 @@ export function NewProposalForm({
       validItems.length > 0
         ? validItems
         : [
-            {
-              ...EMPTY_LINE_ITEM,
-              id: crypto.randomUUID(),
-              description: "Pendiente de definir",
-              quantity: 1,
-            },
-          ];
+          {
+            ...EMPTY_LINE_ITEM,
+            id: crypto.randomUUID(),
+            description: "Pendiente de definir",
+            quantity: 1,
+          },
+        ];
     const defaultTitle = selectedRecipient
       ? `Propuesta para ${selectedRecipient.name}`
       : "Nueva propuesta";
@@ -308,8 +308,7 @@ export function NewProposalForm({
         onOpenChange={(v) => {
           if (!v && pendingLeadMove) {
             router.push(
-              `/proposals/${pendingLeadMove.proposalId}${
-                pendingLeadMove.mode === "ai" ? "?ai_draft=1" : ""
+              `/proposals/${pendingLeadMove.proposalId}${pendingLeadMove.mode === "ai" ? "?ai_draft=1" : ""
               }`,
             );
             setPendingLeadMove(null);
@@ -331,8 +330,7 @@ export function NewProposalForm({
               onClick={() => {
                 if (!pendingLeadMove) return;
                 router.push(
-                  `/proposals/${pendingLeadMove.proposalId}${
-                    pendingLeadMove.mode === "ai" ? "?ai_draft=1" : ""
+                  `/proposals/${pendingLeadMove.proposalId}${pendingLeadMove.mode === "ai" ? "?ai_draft=1" : ""
                   }`,
                 );
                 setPendingLeadMove(null);
