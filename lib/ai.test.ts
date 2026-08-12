@@ -41,6 +41,17 @@ describe("runAIObject", () => {
     );
   });
 
+  it("retries when the provider finishes without structured output", async () => {
+    const noOutputError = new Error("No output generated.");
+    noOutputError.name = "AI_NoOutputGeneratedError";
+    generateText
+      .mockRejectedValueOnce(noOutputError)
+      .mockResolvedValueOnce({ output: { title: "Borrador válido" }, usage: undefined });
+
+    await expect(runAIObject(input)).resolves.toEqual({ title: "Borrador válido" });
+    expect(generateText).toHaveBeenCalledTimes(2);
+  });
+
   it("hides JSON parsing details when the retry also fails", async () => {
     generateText.mockRejectedValue(
       new SyntaxError("JSON.parse: unexpected character at line 1 column 1"),

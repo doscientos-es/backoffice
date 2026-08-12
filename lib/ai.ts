@@ -95,10 +95,16 @@ function normalizeAIError(err: unknown): Error {
 }
 
 /** Detects provider responses that cannot be parsed as the requested JSON object. */
-function isInvalidStructuredOutputError(err: unknown): boolean {
+function isRetryableStructuredOutputError(err: unknown): boolean {
   if (err instanceof SyntaxError) return true;
   if (!(err instanceof Error)) return false;
-  return /json\.parse|unexpected (?:token|character)|invalid json/i.test(err.message);
+  return (
+    err.name === "AI_NoOutputGeneratedError" ||
+    err.name === "AI_NoObjectGeneratedError" ||
+    /json\.parse|unexpected (?:token|character)|invalid json|no (?:object|output) generated|response did not match schema|type validation/i.test(
+      err.message,
+    )
+  );
 }
 
 export type RunAIChatInput = {
@@ -204,7 +210,7 @@ export async function runAIObject<S extends z.ZodType>(
   try {
     return await generateObject(input.system);
   } catch (err) {
-    if (!isInvalidStructuredOutputError(err)) throw normalizeAIError(err);
+    if (!isRetryableStructuredOutputError(err)) throw normalizeAIError(err);
 
     try {
       return await generateObject(
