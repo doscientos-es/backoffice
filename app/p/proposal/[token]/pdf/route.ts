@@ -61,10 +61,10 @@ export async function GET(
   const lead = (
     proposal as unknown as { leads: { name: string | null; company: string | null } | null }
   ).leads;
-  const maintenancePlan = selectedMaintenancePlan(
-    parseMaintenanceOffer(proposal.maintenance_options),
-    (proposal.maintenance_selected_plan_id as string | null) ?? null,
-  );
+  const maintenanceOffer = parseMaintenanceOffer(proposal.maintenance_options);
+  const maintenanceSelectedPlanId =
+    (proposal.maintenance_selected_plan_id as string | null) ?? null;
+  const maintenancePlan = selectedMaintenancePlan(maintenanceOffer, maintenanceSelectedPlanId);
   const pdfItems: ProposalPdfItem[] = ((items ?? []) as Array<Record<string, unknown>>).map(
     (item): ProposalPdfItem => ({
       id: String(item.id),
@@ -108,6 +108,8 @@ export async function GET(
     taxAmount: Number(proposal.tax_amount ?? 0),
     total: Number(proposal.total ?? 0),
     items: pdfItems,
+    maintenanceOffer,
+    maintenanceSelectedPlanId,
     portalUrl: `${publicEnv.NEXT_PUBLIC_APP_URL}/p/proposal/${token}`,
   });
 

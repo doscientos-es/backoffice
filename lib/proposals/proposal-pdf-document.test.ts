@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_MAINTENANCE_OFFER } from "./maintenance";
 import { printableMarkdown, proposalPdfFilename, renderProposalPdf } from "./proposal-pdf-document";
 
 describe("proposal PDF helpers", () => {
@@ -53,6 +54,8 @@ describe("proposal PDF helpers", () => {
           billingCycle: "none",
         },
       ],
+      maintenanceOffer: DEFAULT_MAINTENANCE_OFFER,
+      maintenanceSelectedPlanId: "growth",
       portalUrl: "https://example.test/p/proposal/token",
     });
 

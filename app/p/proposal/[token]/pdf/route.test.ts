@@ -7,6 +7,7 @@ const state = vi.hoisted(() => ({
   proposal: null as Record<string, unknown> | null,
   items: [] as Array<Record<string, unknown>>,
 }));
+const renderProposalPdf = vi.hoisted(() => vi.fn(async () => Buffer.from("pdf-content")));
 
 vi.mock("@/lib/auth", () => ({
   getCurrentUser: async () =>
@@ -15,7 +16,7 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/lib/portal/access", () => ({ isPortalUnlocked: async () => state.unlocked }));
 vi.mock("@/lib/proposals/proposal-pdf-document", () => ({
   proposalPdfFilename: (number: string | null, id: string) => `propuesta-${number ?? id}.pdf`,
-  renderProposalPdf: async () => Buffer.from("pdf-content"),
+  renderProposalPdf,
 }));
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
@@ -44,6 +45,7 @@ describe("GET /p/proposal/[token]/pdf", () => {
     state.isTeam = false;
     state.unlocked = true;
     state.items = [];
+    renderProposalPdf.mockClear();
     state.proposal = {
       id: "proposal-1",
       status: "sent",
@@ -97,5 +99,11 @@ describe("GET /p/proposal/[token]/pdf", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toBe("application/pdf");
     expect(response.headers.get("content-disposition")).toContain("propuesta-P-001.pdf");
+    expect(renderProposalPdf).toHaveBeenCalledWith(
+      expect.objectContaining({
+        maintenanceOffer: expect.objectContaining({ plans: expect.any(Array) }),
+        maintenanceSelectedPlanId: null,
+      }),
+    );
   });
 });

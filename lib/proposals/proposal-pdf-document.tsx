@@ -1,9 +1,3 @@
-import type { KeyPoint } from "@/lib/proposals/key-points";
-import {
-  PAYMENT_SCHEDULE_LABELS,
-  type PaymentSchedule,
-  type ScopeModule,
-} from "@/lib/proposals/scope";
 import {
   Document,
   Font,
@@ -14,6 +8,13 @@ import {
   Text,
   View,
 } from "@react-pdf/renderer";
+import type { KeyPoint } from "@/lib/proposals/key-points";
+import type { MaintenanceOffer } from "@/lib/proposals/maintenance";
+import {
+  PAYMENT_SCHEDULE_LABELS,
+  type PaymentSchedule,
+  type ScopeModule,
+} from "@/lib/proposals/scope";
 
 const BRAND = "#2A4227";
 const INK = "#183017";
@@ -113,6 +114,15 @@ const styles = StyleSheet.create({
   },
   pointTitle: { color: INK, fontFamily: "Helvetica-Bold", fontSize: 10 },
   pointText: { color: MUTED, fontSize: 8.5, lineHeight: 1.45, marginTop: 4 },
+  optionPrice: { color: BRAND, fontFamily: "Helvetica-Bold", fontSize: 9, marginTop: 4 },
+  optionLabel: {
+    color: BRAND,
+    fontFamily: "Helvetica-Bold",
+    fontSize: 7.5,
+    letterSpacing: 0.6,
+    marginTop: 9,
+    textTransform: "uppercase",
+  },
   investment: { backgroundColor: BRAND, borderRadius: 14, marginTop: 13, padding: 18 },
   investmentLabel: {
     color: ACCENT,
@@ -199,6 +209,8 @@ export type ProposalPdfData = {
   taxAmount: number;
   total: number;
   items: ProposalPdfItem[];
+  maintenanceOffer: MaintenanceOffer;
+  maintenanceSelectedPlanId: string | null;
   portalUrl: string;
 };
 
@@ -281,11 +293,51 @@ function ScopeModuleList({ modules }: { modules: ScopeModule[] }) {
   );
 }
 
+function MaintenancePlanList({
+  offer,
+  selectedPlanId,
+}: {
+  offer: MaintenanceOffer;
+  selectedPlanId: string | null;
+}) {
+  return (
+    <>
+      {offer.plans.map((plan) => {
+        const selected = plan.id === selectedPlanId;
+        return (
+          <View key={plan.id} style={styles.point} wrap={false}>
+            <Text
+              style={styles.pointTitle}
+            >{`${plan.name}${selected ? " · Seleccionado" : ""}`}</Text>
+            <Text style={styles.optionPrice}>{`${money(plan.monthly_price)} / mes + IVA`}</Text>
+            <Text style={styles.pointText}>{plan.summary}</Text>
+            <Text style={styles.optionLabel}>Incluye</Text>
+            {plan.coverage.map((item) => (
+              <Text key={`coverage-${item}`} style={styles.bullet}>{`• ${item}`}</Text>
+            ))}
+            {plan.exclusions.length > 0 ? (
+              <>
+                <Text style={styles.optionLabel}>No incluye</Text>
+                {plan.exclusions.map((item) => (
+                  <Text key={`exclusion-${item}`} style={styles.bullet}>{`— ${item}`}</Text>
+                ))}
+              </>
+            ) : null}
+          </View>
+        );
+      })}
+    </>
+  );
+}
+
 function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
   const validUntil = date(data.validUntil);
   const hasRecurring = data.items.some((item) => item.billingCycle && item.billingCycle !== "none");
   const deliverables = data.deliverables?.trim();
   const acceptanceCriteria = data.acceptanceCriteria?.trim();
+  const selectedMaintenancePlan = data.maintenanceOffer.plans.find(
+    (plan) => plan.id === data.maintenanceSelectedPlanId,
+  );
   return (
     <Document title={`Propuesta ${data.number ?? ""} · ${data.title}`} author="doscientos">
       <Page size="A4" style={styles.cover}>
@@ -373,11 +425,11 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
           style={styles.section}
           break={Boolean(
             data.context ||
-            data.problems.length ||
-            data.solutions.length ||
-            data.scopeModules.length ||
-            deliverables ||
-            acceptanceCriteria,
+              data.problems.length ||
+              data.solutions.length ||
+              data.scopeModules.length ||
+              deliverables ||
+              acceptanceCriteria,
           )}
         >
           <Text style={styles.sectionLabel}>Propuesta económica</Text>
@@ -445,6 +497,25 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>Notas</Text>
             <Text style={styles.body}>{printableMarkdown(data.notes)}</Text>
+          </View>
+        ) : null}
+        {data.maintenanceOffer.plans.length > 0 ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Mantenimiento opcional</Text>
+            <Text style={styles.sectionTitle}>Elige la cobertura que prefieras</Text>
+            <Text style={styles.body}>
+              Compara los planes y sus coberturas. El mantenimiento es opcional y puedes elegir un
+              único plan desde la propuesta online antes de confirmarla.
+            </Text>
+            <MaintenancePlanList
+              offer={data.maintenanceOffer}
+              selectedPlanId={data.maintenanceSelectedPlanId}
+            />
+            <Text style={styles.body}>
+              {selectedMaintenancePlan
+                ? `Plan elegido: ${selectedMaintenancePlan.name}. Puedes revisarlo online antes de confirmar.`
+                : "No hay ningún plan seleccionado. Puedes confirmar la propuesta sin mantenimiento."}
+            </Text>
           </View>
         ) : null}
         <View style={styles.cta} wrap={false}>

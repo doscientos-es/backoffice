@@ -1,12 +1,12 @@
 "use client";
 
+import { Check } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import type { MaintenanceOffer } from "@/lib/proposals/maintenance";
 import { formatEUR } from "@/lib/utils";
-import { Check } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { selectProposalMaintenance } from "./actions";
 
 export function ProposalMaintenanceOptions({
@@ -23,6 +23,7 @@ export function ProposalMaintenanceOptions({
   const router = useRouter();
   const feedback = useFormFeedback({ successResetMs: 0 });
   const [selected, setSelected] = useState(selectedPlanId);
+  const selectedPlan = offer.plans.find((plan) => plan.id === selected) ?? null;
 
   const choose = async (planId: string | null) => {
     if (disabled) return;
@@ -35,11 +36,20 @@ export function ProposalMaintenanceOptions({
   };
 
   return (
-    <section className="border-b border-zinc-100 px-6 py-7 dark:border-zinc-800/60 sm:px-8">
-      <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
-        {offer.heading}
-      </p>
-      <p className="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">{offer.intro}</p>
+    <section className="border-t border-zinc-100 bg-[#2A4227]/[0.03] px-6 py-7 dark:border-zinc-800/60 dark:bg-[#9CC196]/[0.04] sm:px-8">
+      <header className="max-w-3xl">
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-[#2A4227] dark:text-[#9CC196]">
+          {offer.heading}
+        </p>
+        <h2 className="mt-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+          Elige la cobertura que prefieras
+        </h2>
+        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{offer.intro}</p>
+        <p className="mt-3 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+          Es opcional: compara qué cubre cada plan y selecciona como máximo uno antes de confirmar
+          la propuesta.
+        </p>
+      </header>
       <div className="mt-5 grid gap-3 lg:grid-cols-3">
         {offer.plans.map((plan) => {
           const active = selected === plan.id;
@@ -56,9 +66,16 @@ export function ProposalMaintenanceOptions({
                     <span className="text-xs font-medium">/ mes + IVA</span>
                   </p>
                 </div>
-                {active ? <Check className="size-5 text-[#2A4227] dark:text-[#9CC196]" /> : null}
+                {active ? (
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-[#2A4227] dark:text-[#9CC196]">
+                    <Check className="size-4" aria-hidden /> Seleccionado
+                  </span>
+                ) : null}
               </div>
               <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">{plan.summary}</p>
+              <p className="mt-4 text-[11px] font-semibold uppercase tracking-wide text-[#2A4227] dark:text-[#9CC196]">
+                Incluye
+              </p>
               <ul className="mt-3 space-y-1.5 text-xs text-zinc-600 dark:text-zinc-400">
                 {plan.coverage.map((item) => (
                   <li key={item} className="flex gap-2">
@@ -91,21 +108,27 @@ export function ProposalMaintenanceOptions({
                   disabled={feedback.pending}
                   onClick={() => choose(active ? null : plan.id)}
                 >
-                  {active ? "Quitar mantenimiento" : "Elegir este plan"}
+                  {active ? "Plan seleccionado · Quitar" : "Elegir este plan"}
                 </Button>
               ) : null}
             </article>
           );
         })}
       </div>
-      {!disabled ? (
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <FormFeedback state={feedback.state} pendingLabel="Actualizando propuesta…" />
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Es opcional. Puedes aceptar la propuesta sin seleccionar mantenimiento.
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        {selectedPlan ? (
+          <p className="text-xs font-medium text-[#2A4227] dark:text-[#9CC196]">
+            Has elegido {selectedPlan.name}. Puedes cambiarlo o quitarlo antes de confirmar.
           </p>
-        </div>
-      ) : null}
+        ) : (
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            Puedes confirmar la propuesta sin añadir mantenimiento.
+          </p>
+        )}
+        {!disabled ? (
+          <FormFeedback state={feedback.state} pendingLabel="Actualizando propuesta…" />
+        ) : null}
+      </div>
     </section>
   );
 }
