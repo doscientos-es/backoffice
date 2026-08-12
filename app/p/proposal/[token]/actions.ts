@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import {
   ensureClientForProposal,
   ensureProjectForProposal,
@@ -14,6 +13,7 @@ import { createRedsysPayment, getRedsysUrl } from "@/lib/integrations/redsys";
 import { scopedLogger } from "@/lib/logger";
 import { dispatchNotifications } from "@/lib/notifications/dispatch";
 import { unlockPortalResource } from "@/lib/portal/access";
+import { paymentInitialPercentage, paymentScheduleInput } from "@/lib/proposals/scope";
 import {
   AcceptProposalFiscalData,
   type AcceptProposalFiscalDataType,
@@ -21,6 +21,7 @@ import {
   ProposalRejectionReason,
 } from "@/lib/schemas/proposal";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { revalidatePath } from "next/cache";
 
 const log = scopedLogger("portal.proposal");
 
@@ -28,13 +29,13 @@ type ActionResult = { ok: true } | { ok: false; error: string };
 
 export type PaymentInitResult =
   | {
-      ok: true;
-      demo?: boolean;
-      url: string;
-      signatureVersion: string;
-      merchantParameters: string;
-      signature: string;
-    }
+    ok: true;
+    demo?: boolean;
+    url: string;
+    signatureVersion: string;
+    merchantParameters: string;
+    signature: string;
+  }
   | { ok: false; error: string };
 
 /**
@@ -241,7 +242,7 @@ export async function initiateProposalPayment(
 
   const { data: proposal } = await admin
     .from("proposals")
-    .select("id, status, total")
+    .select("id, status, total, payment_schedule")
     .eq("id", proposalId)
     .eq("portal_token", token)
     .maybeSingle();
@@ -250,8 +251,14 @@ export async function initiateProposalPayment(
     return { ok: false, error: "Propuesta no disponible para pago" };
   }
 
-  // Fixed 50% deposit for proposal signal
-  const amount = Math.round(Number(proposal.total) * 50) / 100;
+  const paymentSchedule = paymentScheduleInput.safeParse(proposal.payment_schedule);
+  const initialPercentage = paymentSchedule.success
+    ? paymentInitialPercentage(paymentSchedule.data)
+    : null;
+  if (initialPercentage === null) {
+    return { ok: false, error: "La forma de pago personalizada no admite cobro automático" };
+  }
+  const amount = Math.round(Number(proposal.total) * initialPercentage) / 100;
 
   // Check if signal already paid
   const { data: existing } = await admin

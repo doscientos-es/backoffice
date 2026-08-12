@@ -1,7 +1,3 @@
-import { CheckCircle2, Download, FileText, Presentation, XCircle } from "lucide-react";
-import type { Metadata } from "next";
-import { headers } from "next/headers";
-import { notFound } from "next/navigation";
 import { LogoMark } from "@/components/branding";
 import { PortalPasswordGate } from "@/components/portal/password-gate";
 import { ProposalPaymentButton } from "@/components/portal/proposal-payment-button";
@@ -18,10 +14,15 @@ import {
   PAYMENT_SCHEDULE_LABELS,
   type PaymentSchedule,
   parseScopeModules,
+  paymentInitialPercentage,
 } from "@/lib/proposals/scope";
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
+import { CheckCircle2, Download, FileText, Presentation, XCircle } from "lucide-react";
+import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 import { unlockProposalPortal } from "./actions";
 import { PortalKeyPointsList, PortalNarrativeBlock } from "./narrative";
 import { ProposalActions } from "./proposal-actions";
@@ -217,31 +218,31 @@ export default async function PortalProposalPage({
   // back-office for prospects that never went through onboarding.
   const clientBillingAddress = client
     ? formatAddress({
-        street: client.billing_address_street,
-        zip: client.billing_address_zip,
-        city: client.billing_address_city,
-        province: client.billing_address_province,
-        country: client.billing_address_country,
-      })
+      street: client.billing_address_street,
+      zip: client.billing_address_zip,
+      city: client.billing_address_city,
+      province: client.billing_address_province,
+      country: client.billing_address_country,
+    })
     : "";
   const needsFiscal = !client?.nif?.trim() || !clientBillingAddress || !client.name?.trim();
   const fiscalPrefill = client
     ? {
-        name: client.name ?? "",
-        nif: client.nif ?? "",
-        billing_address: clientBillingAddress,
-        contact_person: client.contact_person ?? "",
-        email: client.email ?? "",
-        phone: client.phone ?? "",
-      }
+      name: client.name ?? "",
+      nif: client.nif ?? "",
+      billing_address: clientBillingAddress,
+      contact_person: client.contact_person ?? "",
+      email: client.email ?? "",
+      phone: client.phone ?? "",
+    }
     : {
-        name: lead?.company ?? lead?.name ?? "",
-        nif: "",
-        billing_address: "",
-        contact_person: lead?.name ?? "",
-        email: lead?.email ?? "",
-        phone: lead?.phone ?? "",
-      };
+      name: lead?.company ?? lead?.name ?? "",
+      nif: "",
+      billing_address: "",
+      contact_person: lead?.name ?? "",
+      email: lead?.email ?? "",
+      phone: lead?.phone ?? "",
+    };
   const recipientName = client?.name ?? lead?.company ?? lead?.name ?? "—";
   const proposalNumber = (proposal.number as string | null) ?? "Borrador";
   const safeItems = (items ?? []) as unknown as ProposalItem[];
@@ -284,7 +285,11 @@ export default async function PortalProposalPage({
 
   const confirmedPayments = proposalPayments ?? [];
   const signalPaid = confirmedPayments.length > 0;
-  const depositAmount = Math.round(Number(proposal.total) * 50) / 100;
+  const initialPaymentPercentage = paymentInitialPercentage(paymentSchedule);
+  const depositAmount =
+    initialPaymentPercentage === null
+      ? null
+      : Math.round(Number(proposal.total) * initialPaymentPercentage) / 100;
 
   return (
     <div className="flex flex-col gap-4">
@@ -687,20 +692,21 @@ export default async function PortalProposalPage({
             Respondida el {formatDate(proposal.responded_at as string | null)}.
           </p>
 
-          {status === "accepted" && !signalPaid && !isTeam && (
+          {status === "accepted" && !signalPaid && !isTeam && depositAmount !== null && (
             <div className="w-full max-w-md p-6 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm flex flex-col items-center gap-4">
               <div className="text-center space-y-1">
                 <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                  Reserva tu proyecto
+                  Realiza el primer pago
                 </p>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                  Para poner en marcha el proyecto, es necesario abonar la señal del 50%.
+                  Para poner en marcha el proyecto, abona el primer plazo acordado ({initialPaymentPercentage} %).
                 </p>
               </div>
               <ProposalPaymentButton
                 proposalId={proposal.id as string}
                 token={token}
                 depositAmount={depositAmount}
+                paymentLabel="Pagar primer plazo"
               />
             </div>
           )}
@@ -710,7 +716,7 @@ export default async function PortalProposalPage({
               <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/50">
                 <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
                 <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
-                  Señal de reserva abonada ({formatEUR(confirmedPayments[0].amount)})
+                  Primer pago abonado ({formatEUR(confirmedPayments[0].amount)})
                 </span>
               </div>
               <a

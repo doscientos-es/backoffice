@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_CHANGE_MANAGEMENT_TERMS,
   parseScopeModules,
+  paymentInitialPercentage,
   paymentScheduleInput,
   scopeModulesInput,
 } from "./scope";
@@ -30,5 +31,12 @@ describe("proposal commercial scope", () => {
     expect(paymentScheduleInput.parse("30_40_30")).toBe("30_40_30");
     expect(paymentScheduleInput.safeParse("60_40").success).toBe(false);
     expect(DEFAULT_CHANGE_MANAGEMENT_TERMS).toContain("excedan el alcance");
+  });
+
+  it("calculates only the automatic first payment of standard schedules", () => {
+    expect(paymentInitialPercentage("upfront")).toBe(100);
+    expect(paymentInitialPercentage("half_half")).toBe(50);
+    expect(paymentInitialPercentage("30_40_30")).toBe(30);
+    expect(paymentInitialPercentage("custom")).toBeNull();
   });
 });

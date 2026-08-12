@@ -1,21 +1,23 @@
 "use client";
 
-import { CreditCard, Loader2 } from "lucide-react";
-import { useTransition } from "react";
 import { initiateProposalPayment } from "@/app/p/proposal/[token]/actions";
 import { Button } from "@/components/ui/button";
 import { formatEUR } from "@/lib/utils";
+import { CreditCard, Loader2 } from "lucide-react";
+import { useTransition } from "react";
 
 interface ProposalPaymentButtonProps {
   proposalId: string;
   token: string;
   depositAmount: number;
+  paymentLabel: string;
 }
 
 export function ProposalPaymentButton({
   proposalId,
   token,
   depositAmount,
+  paymentLabel,
 }: ProposalPaymentButtonProps) {
   const [isPending, startTransition] = useTransition();
 
@@ -64,7 +66,7 @@ export function ProposalPaymentButton({
       ) : (
         <CreditCard className="mr-2 h-5 w-5" />
       )}
-      {isPending ? "Preparando pago…" : `Pagar señal de reserva (${formatEUR(depositAmount)})`}
+      {isPending ? "Preparando pago…" : `${paymentLabel} (${formatEUR(depositAmount)})`}
     </Button>
   );
 }

@@ -49,6 +49,11 @@ export const PAYMENT_SCHEDULE_TEMPLATES: Record<Exclude<PaymentSchedule, "custom
 export const DEFAULT_CHANGE_MANAGEMENT_TERMS =
   "Las solicitudes que excedan el alcance descrito se analizarán y, si procede, se presentarán como una ampliación de alcance y presupuesto antes de ejecutarse.";
 
+/** `null` means the bespoke terms should be handled outside the automatic payment flow. */
+export function paymentInitialPercentage(schedule: PaymentSchedule): number | null {
+  return { upfront: 100, half_half: 50, "30_40_30": 30, custom: null }[schedule];
+}
+
 export function createEmptyScopeModule(): ScopeModule {
   return {
     id: crypto.randomUUID(),
