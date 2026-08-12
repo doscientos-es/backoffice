@@ -44,6 +44,7 @@ import { leadDisplayName } from "@/lib/leads/utils";
 import type { MemberOption } from "@/lib/members/queries";
 import { LEAD_STATUS } from "@/lib/status";
 import { formatEUR, relativeTime } from "@/lib/utils";
+import { ScheduleReminderDialog } from "../reminders/schedule-reminder-dialog";
 import { LeadEditDialog } from "./[id]/lead-edit-dialog";
 import { LeadCallLink } from "./[id]/phone-actions";
 import { assignLeadOwner, claimLead } from "./actions";
@@ -512,6 +513,15 @@ function QuickActions({
         />
         <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
         <QNoteDialog leadId={leadId} />
+        <ScheduleReminderDialog
+          leadId={leadId}
+          defaultTitle={`Seguimiento de ${leadName}`}
+          trigger={
+            <Button type="button" size="sm" variant="outline" className="w-full justify-start">
+              Programar seguimiento
+            </Button>
+          }
+        />
       </div>
     </div>
   );

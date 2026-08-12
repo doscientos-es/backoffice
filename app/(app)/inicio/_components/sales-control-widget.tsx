@@ -25,7 +25,7 @@ export async function SalesControlWidget() {
       tone: "text-amber-500",
     },
     {
-      href: "/proposals",
+      href: "/proposals?followup=waiting_72",
       label: "Propuestas esperando",
       value: data.counts.pendingProposals,
       detail: "más de 72 h",

@@ -9,6 +9,7 @@ import { renderEmail } from "@/lib/email/render";
 import { sendEmail } from "@/lib/email/resend";
 import { publicEnv } from "@/lib/env";
 import { backupProposalToDrive } from "@/lib/google/backup";
+import { buildLeadStatusPatch } from "@/lib/leads/status-transitions";
 import { scopedLogger } from "@/lib/logger";
 import { buildPortalAccessPatch } from "@/lib/portal/access";
 import {
@@ -28,6 +29,73 @@ import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 
 const log = scopedLogger("proposals");
+
+const PRE_QUOTE_LEAD_STATUSES = new Set(["new", "contacted", "in_conversation", "qualifying"]);
+
+/**
+ * Completes the CRM side of a first proposal delivery. A draft is internal;
+ * only a proposal that has actually been sent puts its linked lead in the
+ * Presupuestado stage. It also leaves a durable follow-up in the sender's
+ * work queue after 72 hours.
+ */
+async function completeProposalDelivery(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  proposal: { id: string; title: string; lead_id: string | null; client_id: string | null },
+  userId: string,
+): Promise<string | null> {
+  const { error: reminderError } = await supabase.from("tasks").insert({
+    kind: "reminder",
+    title: `Seguimiento de propuesta · ${proposal.title}`,
+    description: "Revisar respuesta del cliente 72 horas después del envío.",
+    start_at: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(),
+    lead_id: proposal.lead_id,
+    client_id: proposal.client_id,
+    created_by: userId,
+    assignee_id: userId,
+    status: "todo",
+    priority: "high",
+  });
+  if (reminderError) {
+    log.warn({ err: reminderError, proposalId: proposal.id }, "proposal_follow_up_reminder_failed");
+  }
+
+  if (!proposal.lead_id) return null;
+  const { data: lead, error: leadError } = await supabase
+    .from("leads")
+    .select("status")
+    .eq("id", proposal.lead_id)
+    .maybeSingle();
+  if (leadError || !lead || !PRE_QUOTE_LEAD_STATUSES.has(lead.status as string)) {
+    if (leadError)
+      log.warn({ err: leadError, proposalId: proposal.id }, "proposal_lead_read_failed");
+    return proposal.lead_id;
+  }
+
+  const now = new Date().toISOString();
+  const { error: updateError } = await supabase
+    .from("leads")
+    .update(buildLeadStatusPatch({ status: "quoted", userId, now }))
+    .eq("id", proposal.lead_id);
+  if (updateError) {
+    log.warn({ err: updateError, proposalId: proposal.id }, "proposal_lead_quote_sync_failed");
+    return proposal.lead_id;
+  }
+
+  const { error: interactionError } = await supabase.from("lead_interactions").insert({
+    lead_id: proposal.lead_id,
+    type: "status_change",
+    subject: `Estado: ${lead.status as string} → quoted`,
+    performed_by: userId,
+    payload: { from: lead.status as string, to: "quoted", proposal_id: proposal.id },
+  });
+  if (interactionError) {
+    log.warn(
+      { err: interactionError, proposalId: proposal.id },
+      "proposal_lead_quote_interaction_failed",
+    );
+  }
+  return proposal.lead_id;
+}
 
 /**
  * Allocates the next sequential proposal number for the current year. Called
@@ -480,7 +548,7 @@ export async function updateProposalPortalAccess(
 export async function markProposalAsSent(
   input: unknown,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  await requireUser();
+  const user = await requireUser();
 
   const parsed = z.object({ id: z.string().uuid() }).safeParse(input);
   if (!parsed.success) return { ok: false, error: "ID inválido" };
@@ -489,7 +557,7 @@ export async function markProposalAsSent(
   const supabase = await createServerClient();
   const { data: proposal, error: readError } = await supabase
     .from("proposals")
-    .select("id, number, status")
+    .select("id, number, status, title, lead_id, client_id")
     .eq("id", id)
     .is("deleted_at", null)
     .maybeSingle();
@@ -508,8 +576,22 @@ export async function markProposalAsSent(
     return { ok: false, error: error.message };
   }
 
+  const leadId = await completeProposalDelivery(
+    supabase,
+    {
+      id,
+      title: proposal.title as string,
+      lead_id: (proposal.lead_id as string | null) ?? null,
+      client_id: (proposal.client_id as string | null) ?? null,
+    },
+    user.id,
+  );
+
   revalidatePath(`/proposals/${id}`);
   revalidatePath("/proposals");
+  if (leadId) revalidatePath(`/leads/${leadId}`);
+  revalidatePath("/leads");
+  revalidatePath("/inicio");
   return { ok: true };
 }
 
@@ -537,7 +619,7 @@ export async function sendPreviewLink(input: unknown): Promise<SendPreviewResult
   const { data: proposal, error: readError } = await supabase
     .from("proposals")
     .select(
-      "id, number, title, total, status, portal_token, valid_until, sent_at, clients(name, email), leads(name, email)",
+      "id, number, title, total, status, portal_token, valid_until, sent_at, lead_id, client_id, clients(name, email), leads(name, email)",
     )
     .eq("id", id)
     .is("deleted_at", null)
@@ -622,14 +704,30 @@ export async function sendPreviewLink(input: unknown): Promise<SendPreviewResult
   } else if (!proposal.sent_at) {
     patch.sent_at = new Date().toISOString();
   }
+  let syncedLeadId: string | null = null;
   if (Object.keys(patch).length > 0) {
     const { error: updateError } = await supabase.from("proposals").update(patch).eq("id", id);
     if (updateError) {
       log.error({ err: updateError, id }, "send_preview_link_update_failed");
+    } else if (proposal.status === "draft") {
+      syncedLeadId = await completeProposalDelivery(
+        supabase,
+        {
+          id,
+          title: proposal.title as string,
+          lead_id: (proposal.lead_id as string | null) ?? null,
+          client_id: (proposal.client_id as string | null) ?? null,
+        },
+        user.id,
+      );
     }
   }
 
   revalidatePath(`/proposals/${id}`);
+  revalidatePath("/proposals");
+  if (syncedLeadId) revalidatePath(`/leads/${syncedLeadId}`);
+  if (syncedLeadId) revalidatePath("/leads");
+  if (proposal.status === "draft") revalidatePath("/inicio");
   return { ok: true, portalUrl, mocked };
 }
 

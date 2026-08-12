@@ -44,7 +44,7 @@ export default async function ProposalDetailPage({
 }) {
   const { id } = await params;
   const { ai_draft } = await searchParams;
-  await requireUser();
+  const user = await requireUser();
   const supabase = await createServerClient();
 
   const { data: proposal } = await supabase
@@ -216,8 +216,12 @@ export default async function ProposalDetailPage({
             />
             <StatusBadge meta={PROPOSAL_STATUS} value={status} />
             <DuplicateProposalButton proposalId={id} />
-            {status === "accepted" ? (
+            {status === "accepted" && ["owner", "admin"].includes(user.role) ? (
               <GenerateInvoiceButton proposalId={id} />
+            ) : status === "accepted" ? (
+              <span className="text-xs text-muted-foreground">
+                Facturación gestionada por administración
+              </span>
             ) : status !== "rejected" ? (
               <MarkAcceptedButton proposalId={id} />
             ) : null}

@@ -8,7 +8,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
-import { formatDate, formatEUR } from "@/lib/utils";
+import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
 import {
   escapeIlike,
   parsePage,
@@ -34,6 +34,9 @@ const EXPIRY_FILTER_OPTIONS = [
   { value: "expired", label: "Vencidas" },
 ];
 
+const FOLLOW_UP_FILTER_OPTIONS = [{ value: "waiting_72", label: "Esperando +72 h" }];
+const FOLLOW_UP_CUTOFF_MS = 72 * 60 * 60 * 1000;
+
 export default async function ProposalsPage({
   searchParams,
 }: {
@@ -45,6 +48,7 @@ export default async function ProposalsPage({
   const status = parseStringParam(sp, "status");
   const clientId = parseStringParam(sp, "client");
   const expiry = parseStringParam(sp, "expiry");
+  const followUp = parseStringParam(sp, "followup");
   const page = parsePage(sp);
   const { sort, dir } = parseSortParam(sp, PROPOSAL_SORT_COLUMNS, "created_at", "desc");
   const from = (page - 1) * PAGE_SIZE;
@@ -63,7 +67,7 @@ export default async function ProposalsPage({
   let query = supabase
     .from("proposals")
     .select(
-      "id, number, title, status, total, valid_until, client_id, clients(name, logo_url), lead_id, leads(name), project_id, projects(name)",
+      "id, number, title, status, total, valid_until, sent_at, client_id, clients(name, logo_url), lead_id, leads(name), project_id, projects(name)",
       { count: "exact" },
     )
     .is("deleted_at", null);
@@ -86,6 +90,11 @@ export default async function ProposalsPage({
     const in30 = new Date(Date.now() + 30 * 86400_000).toISOString().slice(0, 10);
     query = query.gte("valid_until", today).lte("valid_until", in30);
   }
+  if (followUp === "waiting_72") {
+    query = query
+      .in("status", ["sent", "viewed"])
+      .lt("sent_at", new Date(Date.now() - FOLLOW_UP_CUTOFF_MS).toISOString());
+  }
 
   const ascending = sort !== "created_at" ? dir !== "desc" : false;
   const { data, error, count } = await query
@@ -101,7 +110,7 @@ export default async function ProposalsPage({
     </Button>
   );
 
-  const hasFilters = !!(q || status || clientId || expiry);
+  const hasFilters = !!(q || status || clientId || expiry || followUp);
 
   return (
     <ListPage
@@ -118,6 +127,7 @@ export default async function ProposalsPage({
         { key: "status", label: "Estado", options: STATUS_FILTER_OPTIONS },
         { key: "client", label: "Cliente", options: CLIENT_FILTER_OPTIONS },
         { key: "expiry", label: "Vencimiento", options: EXPIRY_FILTER_OPTIONS },
+        { key: "followup", label: "Seguimiento", options: FOLLOW_UP_FILTER_OPTIONS },
       ]}
       pagination={{ page, pageSize: PAGE_SIZE, total: count ?? 0 }}
       headers={[
@@ -126,10 +136,11 @@ export default async function ProposalsPage({
         { label: "Cliente / Lead" },
         { label: "Proyecto" },
         { label: "Estado", sortKey: "status" },
+        "Seguimiento",
         { label: "Importe", align: "right", sortKey: "total" },
         { label: "Válida hasta", sortKey: "valid_until" },
       ]}
-      align={["left", "left", "left", "left", "left", "right", "left"]}
+      align={["left", "left", "left", "left", "left", "left", "right", "left"]}
       exportFilename="propuestas"
       rows={
         data?.map((p) => {
@@ -158,6 +169,7 @@ export default async function ProposalsPage({
               clientCell,
               projectName,
               <StatusBadge key="status" meta={PROPOSAL_STATUS} value={p.status as string} />,
+              p.sent_at ? relativeTime(p.sent_at as string) : "Sin enviar",
               formatEUR(p.total as number),
               formatDate(p.valid_until as string | null),
             ],
@@ -167,6 +179,7 @@ export default async function ProposalsPage({
               clientName,
               projectName,
               p.status as string,
+              (p.sent_at as string | null) ?? "",
               p.total as number,
               (p.valid_until as string | null) ?? "",
             ],

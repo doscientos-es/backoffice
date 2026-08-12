@@ -235,6 +235,20 @@ describe("createLead", () => {
     expect(inserted?.created_by).toBe("member-1");
   });
 
+  it("assigns the creator and schedules the first contact for manual intake", async () => {
+    await createLead(lead());
+
+    expect(db.insertedRows.find((r) => r.table === "leads")).toMatchObject({
+      assigned_to: "member-1",
+    });
+    expect(db.insertedRows.find((r) => r.table === "tasks")).toMatchObject({
+      kind: "reminder",
+      lead_id: "new-lead-uuid",
+      assignee_id: "member-1",
+      priority: "high",
+    });
+  });
+
   it("returns ok:false with a message when the DB fails", async () => {
     db.queryError = "duplicate key";
     const result = await createLead(lead());

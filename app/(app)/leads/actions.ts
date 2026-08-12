@@ -68,16 +68,17 @@ async function markFirstContacted(
 
 // ---------------- CREATE ----------------
 
-export const createLead = defineAction({
+export const createLead = defineAction<typeof CreateLeadInput, { id: string }>({
   name: "leads.create",
   schema: CreateLeadInput,
-  revalidate: () => ["/leads"],
+  revalidate: (payload) => ["/leads", "/inicio", "/reminders", `/leads/${payload.id}`],
   handler: async (input, { user }) => {
     const supabase = await createServerClient();
     const { data, error } = await supabase
       .from("leads")
       .insert({
         ...input,
+        assigned_to: input.assigned_to ?? user.id,
         source: normalizeLeadSource(input.source) ?? null,
         company_size: normalizeCompanySize(input.company_size),
         urgency: normalizeUrgency(input.urgency),
@@ -89,6 +90,22 @@ export const createLead = defineAction({
 
     if (error || !data) {
       throw new Error(error?.message ?? "No se pudo crear el lead");
+    }
+
+    // Manual leads need the same operational safety net as integrated ones:
+    // an owner and a first-touch reminder, so none silently enter the board.
+    const { error: reminderError } = await supabase.from("tasks").insert({
+      kind: "reminder",
+      title: `Contactar con ${input.alias?.trim() || input.name}`,
+      start_at: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
+      lead_id: data.id,
+      created_by: user.id,
+      assignee_id: input.assigned_to ?? user.id,
+      status: "todo",
+      priority: "high",
+    });
+    if (reminderError) {
+      log.warn({ err: reminderError, leadId: data.id }, "create_lead_first_touch_reminder_failed");
     }
 
     return { id: data.id as string };
