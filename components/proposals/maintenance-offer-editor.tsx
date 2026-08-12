@@ -16,7 +16,10 @@ type Props = {
 };
 
 function coverageLines(value: string): string[] {
-  return value.split("\n").map((line) => line.trim()).filter(Boolean);
+  return value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
 }
 
 /** Proposal-scoped maintenance plans. Copy and pricing remain editable per quote. */
@@ -39,7 +42,8 @@ export function MaintenanceOfferEditor({
       <header className="flex flex-col gap-0.5">
         <h2 className="text-sm font-semibold">Mantenimiento opcional</h2>
         <p className="text-[11px] text-muted-foreground">
-          Personaliza los planes para esta propuesta. El cliente podrá escoger uno antes de aceptarla.
+          Personaliza los planes para esta propuesta. El cliente podrá escoger uno antes de
+          aceptarla.
         </p>
       </header>
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
@@ -69,7 +73,9 @@ export function MaintenanceOfferEditor({
                 <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Plan {index + 1}
                 </span>
-                {selected ? <Check className="size-4 text-primary" aria-label="Seleccionado" /> : null}
+                {selected ? (
+                  <Check className="size-4 text-primary" aria-label="Seleccionado" />
+                ) : null}
               </div>
               <Input
                 value={plan.name}
@@ -83,7 +89,9 @@ export function MaintenanceOfferEditor({
                   min="0"
                   step="1"
                   value={plan.monthly_price}
-                  onChange={(event) => patchPlan(index, { monthly_price: Number(event.target.value) || 0 })}
+                  onChange={(event) =>
+                    patchPlan(index, { monthly_price: Number(event.target.value) || 0 })
+                  }
                   disabled={locked}
                   aria-label={`Precio mensual del plan ${plan.name}`}
                 />
@@ -98,7 +106,9 @@ export function MaintenanceOfferEditor({
               />
               <Textarea
                 value={plan.coverage.join("\n")}
-                onChange={(event) => patchPlan(index, { coverage: coverageLines(event.target.value) })}
+                onChange={(event) =>
+                  patchPlan(index, { coverage: coverageLines(event.target.value) })
+                }
                 disabled={locked}
                 rows={6}
                 placeholder="Una cobertura por línea"
@@ -111,7 +121,9 @@ export function MaintenanceOfferEditor({
                 disabled={locked}
                 onClick={() => onSelectedPlanChange(selected ? null : plan.id)}
               >
-                {selected ? "Quitar de la propuesta" : `Seleccionar · ${formatEUR(plan.monthly_price)}/mes`}
+                {selected
+                  ? "Quitar de la propuesta"
+                  : `Seleccionar · ${formatEUR(plan.monthly_price)}/mes`}
               </Button>
             </article>
           );

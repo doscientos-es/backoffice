@@ -1,3 +1,6 @@
+import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import type { BillingCycle } from "@/lib/finance";
 import { scopedLogger } from "@/lib/logger";
@@ -7,11 +10,8 @@ import {
   parseMaintenanceOffer,
   selectedMaintenancePlan,
 } from "@/lib/proposals/maintenance";
-import { parseScopeModules, type PaymentSchedule, type ScopeModule } from "@/lib/proposals/scope";
+import { type PaymentSchedule, parseScopeModules, type ScopeModule } from "@/lib/proposals/scope";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { Metadata } from "next";
-import { headers } from "next/headers";
-import { notFound } from "next/navigation";
 import { DeckViewer } from "./deck-viewer-client";
 
 const log = scopedLogger("deck.page");
@@ -130,10 +130,10 @@ export default async function DeckPage({ params }: { params: Promise<{ token: st
   const { data: team } =
     selectedMemberIds.length > 0
       ? await admin
-        .from("team_members")
-        .select("id, name, job_title, avatar_url")
-        .in("id", selectedMemberIds)
-        .is("deleted_at", null)
+          .from("team_members")
+          .select("id, name, job_title, avatar_url")
+          .in("id", selectedMemberIds)
+          .is("deleted_at", null)
       : { data: [] };
 
   // Bump status from 'sent' to 'viewed' on the first external (client) open

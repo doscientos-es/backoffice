@@ -1,5 +1,7 @@
 "use client";
 
+import { AlertCircle } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LineItemsTable } from "@/components/finance/line-items-table";
 import { MaintenanceOfferEditor } from "@/components/proposals/maintenance-offer-editor";
 import { ProblemSolutionEditor } from "@/components/proposals/problem-solution-editor";
@@ -32,8 +34,6 @@ import {
   type PaymentSchedule,
   type ScopeModule,
 } from "@/lib/proposals/scope";
-import { AlertCircle } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { updateProposal } from "../actions";
 
 export type EditableItem = LineItem;
@@ -242,15 +242,15 @@ export function ProposalEditor({
       const nextKeyPoints = pairsAreEmpty ? unzipPairs(nextPairs) : null;
       const generatedNarrativePatch = pairsAreEmpty
         ? {
-          problems: serializeKeyPoints(nextKeyPoints?.problems ?? []),
-          solutions: serializeKeyPoints(nextKeyPoints?.solutions ?? []),
-        }
+            problems: serializeKeyPoints(nextKeyPoints?.problems ?? []),
+            solutions: serializeKeyPoints(nextKeyPoints?.solutions ?? []),
+          }
         : {};
       const generatedPaymentTermsPatch = paymentTermsAreEmpty
         ? {
-          payment_schedule: json.payment_schedule as PaymentSchedule,
-          payment_terms: json.payment_terms || null,
-        }
+            payment_schedule: json.payment_schedule as PaymentSchedule,
+            payment_terms: json.payment_terms || null,
+          }
         : {};
       const save = await updateProposal({
         id,

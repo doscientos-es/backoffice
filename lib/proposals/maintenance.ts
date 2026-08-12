@@ -13,9 +13,9 @@ export const maintenancePlanInput = z.object({
   summary: z.string().trim().min(1, "Describe qué cubre el plan").max(400),
   monthly_price: z.coerce.number().min(0).max(100_000),
   vat_rate: z.coerce.number().min(0).max(100).default(21),
-  coverage: z.array(z.string().trim().min(1).max(MAINTENANCE_LIMITS.maxCoverageLength)).max(
-    MAINTENANCE_LIMITS.maxCoverageItems,
-  ),
+  coverage: z
+    .array(z.string().trim().min(1).max(MAINTENANCE_LIMITS.maxCoverageLength))
+    .max(MAINTENANCE_LIMITS.maxCoverageItems),
 });
 
 export const maintenanceOfferInput = z.object({

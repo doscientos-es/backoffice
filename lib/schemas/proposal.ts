@@ -1,7 +1,7 @@
+import { z } from "zod";
 import { KEY_POINTS_LIMITS } from "@/lib/proposals/key-points";
 import { maintenanceOfferInput } from "@/lib/proposals/maintenance";
 import { paymentScheduleInput, scopeModulesInput } from "@/lib/proposals/scope";
-import { z } from "zod";
 import {
   emptyToUndef,
   lineItemInput,
@@ -104,12 +104,7 @@ export const UpdateProposalInput = z.object({
   payment_terms: proposalMarkdownField(8_000),
   change_management_terms: proposalMarkdownField(8_000),
   maintenance_options: maintenanceOfferInput.nullable().optional(),
-  maintenance_selected_plan_id: z
-    .string()
-    .min(1)
-    .max(64)
-    .nullable()
-    .optional(),
+  maintenance_selected_plan_id: z.string().min(1).max(64).nullable().optional(),
   items: z.array(lineItemInput).min(1).optional(),
 });
 export type UpdateProposalInputType = z.infer<typeof UpdateProposalInput>;

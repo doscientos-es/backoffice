@@ -15,8 +15,8 @@ import { createRedsysPayment, getRedsysUrl } from "@/lib/integrations/redsys";
 import { scopedLogger } from "@/lib/logger";
 import { dispatchNotifications } from "@/lib/notifications/dispatch";
 import { unlockPortalResource } from "@/lib/portal/access";
-import { paymentInitialPercentage, paymentScheduleInput } from "@/lib/proposals/scope";
 import { parseMaintenanceOffer, selectedMaintenancePlan } from "@/lib/proposals/maintenance";
+import { paymentInitialPercentage, paymentScheduleInput } from "@/lib/proposals/scope";
 import {
   AcceptProposalFiscalData,
   type AcceptProposalFiscalDataType,
@@ -31,13 +31,13 @@ type ActionResult = { ok: true } | { ok: false; error: string };
 
 export type PaymentInitResult =
   | {
-    ok: true;
-    demo?: boolean;
-    url: string;
-    signatureVersion: string;
-    merchantParameters: string;
-    signature: string;
-  }
+      ok: true;
+      demo?: boolean;
+      url: string;
+      signatureVersion: string;
+      merchantParameters: string;
+      signature: string;
+    }
   | { ok: false; error: string };
 
 /**

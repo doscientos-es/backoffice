@@ -52,7 +52,8 @@ export function ProposalMaintenanceOptions({
                 <div>
                   <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">{plan.name}</h2>
                   <p className="mt-1 text-lg font-bold text-[#2A4227] dark:text-[#9CC196]">
-                    {formatEUR(plan.monthly_price)} <span className="text-xs font-medium">/ mes + IVA</span>
+                    {formatEUR(plan.monthly_price)}{" "}
+                    <span className="text-xs font-medium">/ mes + IVA</span>
                   </p>
                 </div>
                 {active ? <Check className="size-5 text-[#2A4227] dark:text-[#9CC196]" /> : null}
@@ -60,7 +61,10 @@ export function ProposalMaintenanceOptions({
               <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">{plan.summary}</p>
               <ul className="mt-3 space-y-1.5 text-xs text-zinc-600 dark:text-zinc-400">
                 {plan.coverage.map((item) => (
-                  <li key={item} className="flex gap-2"><span aria-hidden>•</span><span>{item}</span></li>
+                  <li key={item} className="flex gap-2">
+                    <span aria-hidden>•</span>
+                    <span>{item}</span>
+                  </li>
                 ))}
               </ul>
               {!disabled ? (
