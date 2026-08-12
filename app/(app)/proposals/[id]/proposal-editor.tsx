@@ -1,5 +1,7 @@
 "use client";
 
+import { AlertCircle, Save } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LineItemsTable } from "@/components/finance/line-items-table";
 import { MaintenanceOfferEditor } from "@/components/proposals/maintenance-offer-editor";
 import { ProblemSolutionEditor } from "@/components/proposals/problem-solution-editor";
@@ -30,8 +32,6 @@ import {
   type PaymentSchedule,
   type ScopeModule,
 } from "@/lib/proposals/scope";
-import { AlertCircle, Save } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { updateProposal } from "../actions";
 
 export type EditableItem = LineItem;

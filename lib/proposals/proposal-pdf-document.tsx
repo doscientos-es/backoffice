@@ -114,15 +114,45 @@ const styles = StyleSheet.create({
   },
   pointTitle: { color: INK, fontFamily: "Helvetica-Bold", fontSize: 10 },
   pointText: { color: MUTED, fontSize: 8.5, lineHeight: 1.45, marginTop: 4 },
-  optionPrice: { color: BRAND, fontFamily: "Helvetica-Bold", fontSize: 9, marginTop: 4 },
-  optionLabel: {
+  maintenanceTable: {
+    borderColor: "#D9E1D7",
+    borderRadius: 10,
+    borderWidth: 1,
+    marginTop: 13,
+    overflow: "hidden",
+  },
+  maintenanceRow: {
+    borderTopColor: "#E5EAE3",
+    borderTopWidth: 1,
+    flexDirection: "row",
+    paddingHorizontal: 11,
+    paddingVertical: 10,
+  },
+  maintenancePlanName: { color: INK, fontFamily: "Helvetica-Bold", fontSize: 9.5 },
+  maintenanceSelection: {
     color: BRAND,
     fontFamily: "Helvetica-Bold",
     fontSize: 7.5,
     letterSpacing: 0.6,
-    marginTop: 9,
     textTransform: "uppercase",
   },
+  maintenanceSummary: { color: MUTED, fontSize: 8, lineHeight: 1.4, marginTop: 3 },
+  maintenanceListLabel: {
+    color: BRAND,
+    fontFamily: "Helvetica-Bold",
+    fontSize: 7,
+    letterSpacing: 0.5,
+    marginTop: 7,
+    textTransform: "uppercase",
+  },
+  maintenanceList: { color: MUTED, fontSize: 7.5, lineHeight: 1.4, marginTop: 2 },
+  maintenancePrice: {
+    color: BRAND,
+    fontFamily: "Helvetica-Bold",
+    fontSize: 11,
+    textAlign: "right",
+  },
+  maintenanceVat: { color: MUTED, fontSize: 7.5, marginTop: 2, textAlign: "right" },
   investment: { backgroundColor: BRAND, borderRadius: 14, marginTop: 13, padding: 18 },
   investmentLabel: {
     color: ACCENT,
@@ -301,32 +331,38 @@ function MaintenancePlanList({
   selectedPlanId: string | null;
 }) {
   return (
-    <>
+    <View style={styles.maintenanceTable}>
+      <View style={styles.tableHeader}>
+        <Text style={[styles.tableHeaderText, { width: "74%" }]}>Cobertura</Text>
+        <Text style={[styles.tableHeaderText, { textAlign: "right", width: "26%" }]}>
+          Cuota mensual
+        </Text>
+      </View>
       {offer.plans.map((plan) => {
         const selected = plan.id === selectedPlanId;
         return (
-          <View key={plan.id} style={styles.point} wrap={false}>
-            <Text
-              style={styles.pointTitle}
-            >{`${plan.name}${selected ? " · Seleccionado" : ""}`}</Text>
-            <Text style={styles.optionPrice}>{`${money(plan.monthly_price)} / mes + IVA`}</Text>
-            <Text style={styles.pointText}>{plan.summary}</Text>
-            <Text style={styles.optionLabel}>Incluye</Text>
-            {plan.coverage.map((item) => (
-              <Text key={`coverage-${item}`} style={styles.bullet}>{`• ${item}`}</Text>
-            ))}
-            {plan.exclusions.length > 0 ? (
-              <>
-                <Text style={styles.optionLabel}>No incluye</Text>
-                {plan.exclusions.map((item) => (
-                  <Text key={`exclusion-${item}`} style={styles.bullet}>{`— ${item}`}</Text>
-                ))}
-              </>
-            ) : null}
+          <View key={plan.id} style={styles.maintenanceRow} wrap={false}>
+            <View style={{ width: "74%" }}>
+              <Text style={styles.maintenancePlanName}>{plan.name}</Text>
+              {selected ? <Text style={styles.maintenanceSelection}>Plan elegido</Text> : null}
+              <Text style={styles.maintenanceSummary}>{plan.summary}</Text>
+              <Text style={styles.maintenanceListLabel}>Incluye</Text>
+              <Text style={styles.maintenanceList}>{plan.coverage.join(" · ")}</Text>
+              {plan.exclusions.length > 0 ? (
+                <>
+                  <Text style={styles.maintenanceListLabel}>No incluye</Text>
+                  <Text style={styles.maintenanceList}>{plan.exclusions.join(" · ")}</Text>
+                </>
+              ) : null}
+            </View>
+            <View style={{ width: "26%" }}>
+              <Text style={styles.maintenancePrice}>{`${money(plan.monthly_price)} / mes`}</Text>
+              <Text style={styles.maintenanceVat}>+ IVA</Text>
+            </View>
           </View>
         );
       })}
-    </>
+    </View>
   );
 }
 
@@ -335,9 +371,6 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
   const hasRecurring = data.items.some((item) => item.billingCycle && item.billingCycle !== "none");
   const deliverables = data.deliverables?.trim();
   const acceptanceCriteria = data.acceptanceCriteria?.trim();
-  const selectedMaintenancePlan = data.maintenanceOffer.plans.find(
-    (plan) => plan.id === data.maintenanceSelectedPlanId,
-  );
   return (
     <Document title={`Propuesta ${data.number ?? ""} · ${data.title}`} author="doscientos">
       <Page size="A4" style={styles.cover}>
@@ -500,21 +533,17 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
           </View>
         ) : null}
         {data.maintenanceOffer.plans.length > 0 ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Mantenimiento opcional</Text>
-            <Text style={styles.sectionTitle}>Elige la cobertura que prefieras</Text>
-            <Text style={styles.body}>
-              Compara los planes y sus coberturas. El mantenimiento es opcional y puedes elegir un
-              único plan desde la propuesta online antes de confirmarla.
-            </Text>
+          <View style={styles.section} break>
+            <Text style={styles.sectionLabel}>Mantenimiento</Text>
+            <Text style={styles.sectionTitle}>{data.maintenanceOffer.heading}</Text>
+            <Text style={styles.body}>{data.maintenanceOffer.intro}</Text>
             <MaintenancePlanList
               offer={data.maintenanceOffer}
               selectedPlanId={data.maintenanceSelectedPlanId}
             />
             <Text style={styles.body}>
-              {selectedMaintenancePlan
-                ? `Plan elegido: ${selectedMaintenancePlan.name}. Puedes revisarlo online antes de confirmar.`
-                : "No hay ningún plan seleccionado. Puedes confirmar la propuesta sin mantenimiento."}
+              Selecciona desde la propuesta online la cobertura que mejor se ajuste al mantenimiento
+              de tu sistema.
             </Text>
           </View>
         ) : null}
