@@ -88,7 +88,17 @@ function normalizeAIError(err: unknown): Error {
   if (err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError")) {
     return new Error("La IA tardó demasiado en responder (timeout 30s).");
   }
+  if (isInvalidStructuredOutputError(err)) {
+    return new Error("La IA devolvió un resultado con un formato no válido. Inténtalo de nuevo.");
+  }
   return err instanceof Error ? err : new Error("Fallo en la llamada a la IA.");
+}
+
+/** Detects provider responses that cannot be parsed as the requested JSON object. */
+function isInvalidStructuredOutputError(err: unknown): boolean {
+  if (err instanceof SyntaxError) return true;
+  if (!(err instanceof Error)) return false;
+  return /json\.parse|unexpected (?:token|character)|invalid json/i.test(err.message);
 }
 
 export type RunAIChatInput = {
@@ -170,11 +180,11 @@ export async function runAIObject<S extends z.ZodType>(
   const model = resolveModel(input.model);
   const startedAt = Date.now();
 
-  try {
+  const generateObject = async (system: string): Promise<z.infer<S>> => {
     const { output, usage } = await generateText({
       model,
       output: Output.object({ schema: input.schema }),
-      system: input.system,
+      system,
       prompt: input.user,
       temperature: input.temperature ?? 0.3,
       ...(input.maxOutputTokens ? { maxOutputTokens: input.maxOutputTokens } : {}),
@@ -189,8 +199,20 @@ export async function runAIObject<S extends z.ZodType>(
 
     logUsage(input.model, usage, Date.now() - startedAt);
     return output;
+  };
+
+  try {
+    return await generateObject(input.system);
   } catch (err) {
-    throw normalizeAIError(err);
+    if (!isInvalidStructuredOutputError(err)) throw normalizeAIError(err);
+
+    try {
+      return await generateObject(
+        `${input.system}\n\nIMPORTANTE: responde exclusivamente con un objeto JSON válido, sin texto, Markdown ni bloques de código alrededor.`,
+      );
+    } catch (retryErr) {
+      throw normalizeAIError(retryErr);
+    }
   }
 }
 
