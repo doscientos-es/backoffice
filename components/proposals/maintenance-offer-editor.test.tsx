@@ -1,6 +1,6 @@
-import { DEFAULT_MAINTENANCE_OFFER } from "@/lib/proposals/maintenance";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { DEFAULT_MAINTENANCE_OFFER } from "@/lib/proposals/maintenance";
 import { MaintenanceOfferEditor } from "./maintenance-offer-editor";
 
 describe("MaintenanceOfferEditor", () => {

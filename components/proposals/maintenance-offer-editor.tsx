@@ -69,7 +69,10 @@ function MaintenanceListTextarea({
       </div>
       <Textarea
         value={draft}
-        onChange={(event) => setDraft(event.target.value)}
+        onChange={(event) => {
+          editing.current = true;
+          setDraft(event.target.value);
+        }}
         onFocus={() => {
           editing.current = true;
         }}
