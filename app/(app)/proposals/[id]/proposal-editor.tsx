@@ -380,51 +380,45 @@ export function ProposalEditor({
         </Alert>
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <div className="min-w-0 overflow-hidden rounded-lg border border-border">
-          <LineItemsTable items={items} onChange={setItems} locked={locked} showBillingCycle />
-        </div>
-
-        <aside className="flex min-w-0 flex-col gap-3">
-          <FormRow label="Válida hasta" htmlFor="valid-until">
-            <Input
-              id="valid-until"
-              type="date"
-              value={validUntil ?? ""}
-              onChange={(e) => setValidUntil(e.target.value)}
-              disabled={locked}
-            />
-          </FormRow>
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-muted-foreground">Notas</span>
-              {notes && (
-                <button
-                  type="button"
-                  onClick={() => setNotesPreview((p) => !p)}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {notesPreview ? "Editar" : "Previsualizar"}
-                </button>
-              )}
-            </div>
-            {notesPreview && notes ? (
-              <div className="rounded-md border border-border bg-muted/20 px-3 py-2 min-h-36">
-                <Markdown source={notes} />
-              </div>
-            ) : (
-              <Textarea
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                disabled={locked}
-                rows={6}
-                placeholder="Notas internas o para el cliente… (soporta Markdown)"
-              />
+      <aside className="flex min-w-0 flex-col gap-3 rounded-lg border border-border bg-card p-4">
+        <FormRow label="Válida hasta" htmlFor="valid-until">
+          <Input
+            id="valid-until"
+            type="date"
+            value={validUntil ?? ""}
+            onChange={(e) => setValidUntil(e.target.value)}
+            disabled={locked}
+          />
+        </FormRow>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-muted-foreground">Notas</span>
+            {notes && (
+              <button
+                type="button"
+                onClick={() => setNotesPreview((p) => !p)}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {notesPreview ? "Editar" : "Previsualizar"}
+              </button>
             )}
           </div>
-        </aside>
-      </div>
+          {notesPreview && notes ? (
+            <div className="rounded-md border border-border bg-muted/20 px-3 py-2 min-h-36">
+              <Markdown source={notes} />
+            </div>
+          ) : (
+            <Textarea
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              disabled={locked}
+              rows={6}
+              placeholder="Notas internas o para el cliente… (soporta Markdown)"
+            />
+          )}
+        </div>
+      </aside>
 
       {/* Narrative blocks — shown before the price on every client surface */}
       <section className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4">
@@ -604,6 +598,10 @@ export function ProposalEditor({
           />
         </FormRow>
       </section>
+
+      <div className="min-w-0 overflow-hidden rounded-lg border border-border">
+        <LineItemsTable items={items} onChange={setItems} locked={locked} showBillingCycle />
+      </div>
 
       <MaintenanceOfferEditor
         offer={maintenanceOptions}
