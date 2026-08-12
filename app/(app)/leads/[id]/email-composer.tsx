@@ -1,7 +1,5 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
-import { useState } from "react";
 import { AiNotice } from "@/components/ui/ai-notice";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
@@ -10,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
+import { Sparkles } from "lucide-react";
+import { useState } from "react";
 import { sendEmailToLead } from "../actions";
 
 /** Idiomas soportados para el borrador generado por IA. */
@@ -29,6 +29,8 @@ export type EmailComposerProps = {
   /** Kind and extra instructions sent to the optional AI drafting endpoint. */
   draftKind?: string;
   draftInstructions?: string;
+  /** Sends a copy to active owners and admins. Used for post-call summaries. */
+  ccAdmins?: boolean;
   disabled?: boolean;
   disabledReason?: string;
   aiEnabled?: boolean;
@@ -42,6 +44,7 @@ export function EmailComposer({
   defaultBody,
   draftKind = "follow_up",
   draftInstructions,
+  ccAdmins = false,
   disabled,
   disabledReason,
   aiEnabled,
@@ -104,6 +107,7 @@ export function EmailComposer({
       subject,
       bodyHtml: body,
       includeSignature: true,
+      ccAdmins,
     });
     if (res.ok) {
       setConfirmOpen(false);

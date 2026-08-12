@@ -1,6 +1,6 @@
-import { Resend } from "resend";
 import { isDemoMode } from "@/lib/demo";
 import { serverEnv } from "@/lib/env";
+import { Resend } from "resend";
 
 let cached: Resend | null = null;
 
@@ -18,6 +18,7 @@ export type SendEmailInput = {
   fromName: string;
   fromAlias: string;
   to: string;
+  cc?: string[];
   replyTo?: string;
   subject: string;
   html: string;
@@ -43,6 +44,7 @@ export async function sendEmail(
   const { data, error } = await resend.emails.send({
     from,
     to: input.to,
+    cc: input.cc,
     subject: input.subject,
     html: input.html,
     replyTo: input.replyTo,

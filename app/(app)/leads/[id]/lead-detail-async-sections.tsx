@@ -1,4 +1,3 @@
-import { ArrowRight, Clock3, ExternalLink } from "lucide-react";
 import { createTask } from "@/app/(app)/tasks/actions";
 import { type AttachmentItem, AttachmentSection } from "@/components/ui/attachment-section";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +10,7 @@ import { isGoogleEnabled } from "@/lib/env";
 import type { MemberOption } from "@/lib/members/queries";
 import { MEETING_PROJECT_STATUSES } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
+import { ArrowRight, Clock3, ExternalLink } from "lucide-react";
 import { LeadQuickActions } from "./quick-actions";
 
 function formatJourneyTime(value: string): string {
@@ -112,41 +112,41 @@ export async function LeadConversionJourneySection({
 export async function LeadDiagnosticsSection({ leadId }: { leadId: string }) {
   const diagnostics = await listLeadDiagnostics(leadId);
 
+  if (diagnostics.length === 0) {
+    return null;
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Diagnósticos personalizados</CardTitle>
       </CardHeader>
       <CardContent>
-        {diagnostics.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Todavía no hay un diagnóstico completado.</p>
-        ) : (
-          <div className="space-y-4">
-            {diagnostics.map((diagnostic) => (
-              <div key={diagnostic.id} className="rounded-lg border border-border p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm font-medium">{diagnostic.company || diagnostic.email}</p>
-                  <Badge variant={diagnostic.report_opened_at ? "success" : "neutral"}>
-                    {diagnostic.report_opened_at
-                      ? "Informe abierto"
-                      : diagnostic.report_sent_at
-                        ? "Informe enviado"
-                        : "Completado"}
-                  </Badge>
-                </div>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {diagnostic.metrics.monthlyHours ?? "—"} h/mes ·{" "}
-                  {diagnostic.metrics.yearlyHours ?? "—"} h/año · {diagnostic.metrics.risk ?? "—"}
-                </p>
-                {diagnostic.metrics.primaryOpportunity ? (
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    {diagnostic.metrics.primaryOpportunity}
-                  </p>
-                ) : null}
+        <div className="space-y-4">
+          {diagnostics.map((diagnostic) => (
+            <div key={diagnostic.id} className="rounded-lg border border-border p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-medium">{diagnostic.company || diagnostic.email}</p>
+                <Badge variant={diagnostic.report_opened_at ? "success" : "neutral"}>
+                  {diagnostic.report_opened_at
+                    ? "Informe abierto"
+                    : diagnostic.report_sent_at
+                      ? "Informe enviado"
+                      : "Completado"}
+                </Badge>
               </div>
-            ))}
-          </div>
-        )}
+              <p className="mt-2 text-sm text-muted-foreground">
+                {diagnostic.metrics.monthlyHours ?? "—"} h/mes ·{" "}
+                {diagnostic.metrics.yearlyHours ?? "—"} h/año · {diagnostic.metrics.risk ?? "—"}
+              </p>
+              {diagnostic.metrics.primaryOpportunity ? (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {diagnostic.metrics.primaryOpportunity}
+                </p>
+              ) : null}
+            </div>
+          ))}
+        </div>
       </CardContent>
     </Card>
   );
@@ -204,18 +204,18 @@ export async function LeadQuickActionsSection({
   const supabase = await createServerClient();
   const projectsRequest = googleEnabled
     ? supabase
-        .from("projects")
-        .select("id, name")
-        .is("deleted_at", null)
-        .in("status", MEETING_PROJECT_STATUSES)
-        .order("name")
+      .from("projects")
+      .select("id, name")
+      .is("deleted_at", null)
+      .in("status", MEETING_PROJECT_STATUSES)
+      .order("name")
     : Promise.resolve({ data: [] as Array<{ id: string; name: string }>, error: null });
   const membersRequest = googleEnabled
     ? supabase.from("team_members").select("id, name, email").is("deleted_at", null).order("name")
     : Promise.resolve({
-        data: [] as Array<{ id: string; name: string; email: string }>,
-        error: null,
-      });
+      data: [] as Array<{ id: string; name: string; email: string }>,
+      error: null,
+    });
   const [projectsResult, membersResult] = await Promise.all([projectsRequest, membersRequest]);
 
   if (projectsResult.error) throw new Error(projectsResult.error.message);

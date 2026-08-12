@@ -1,7 +1,5 @@
 "use client";
 
-import { Check, ClipboardList, Loader2, Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -12,6 +10,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { Check, ClipboardList, Loader2, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
 import { createTask } from "../tasks/actions";
 import { EmailComposer } from "./[id]/email-composer";
 
@@ -58,6 +58,7 @@ export function CallDigestDialog({
           aiEnabled={aiEnabled}
           draftKind="call_digest"
           draftInstructions="Redacta un resumen posterior a la llamada. Incluye los temas tratados, acuerdos y próximos pasos que aparezcan en las notas o transcripción. No menciones notas internas, IA ni la transcripción como tal y no inventes información. Tono profesional, cercano y accionable."
+          ccAdmins
           onSuccess={() => onOpenChange(false)}
         />
       </DialogContent>

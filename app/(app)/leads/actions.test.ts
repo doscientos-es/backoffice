@@ -16,7 +16,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── shared DB state ───────────────────────────────────────────────────────────
 
-const { db, authUser, googleCalendar } = vi.hoisted(() => ({
+const { db, authUser, googleCalendar, sendEmail } = vi.hoisted(() => ({
   db: {
     insertedRows: [] as Record<string, unknown>[],
     updatedRows: [] as Record<string, unknown>[],
@@ -27,6 +27,7 @@ const { db, authUser, googleCalendar } = vi.hoisted(() => ({
       mom_test_accessible: null as boolean | null,
       mom_test_accessible_source: null as string | null,
     },
+    adminEmails: [{ email: "admin@doscientos.es" }, { email: "owner@doscientos.es" }],
   },
   authUser: {
     id: "member-1",
@@ -34,7 +35,7 @@ const { db, authUser, googleCalendar } = vi.hoisted(() => ({
     email: "pol@doscientos.es",
     role: "admin" as "owner" | "admin" | "member" | "viewer",
     avatarUrl: null,
-    emailAlias: null,
+    emailAlias: null as string | null,
     githubHandle: null,
     onboardedAt: "2024-01-01",
     jobTitle: null,
@@ -45,6 +46,7 @@ const { db, authUser, googleCalendar } = vi.hoisted(() => ({
     findConflicts: vi.fn(),
     insertEvent: vi.fn(),
   },
+  sendEmail: vi.fn(),
 }));
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
@@ -69,11 +71,14 @@ vi.mock("@/lib/supabase/server", () => ({
         if (table === "leads" && selectedColumns.includes("mom_test_accessible")) {
           return { data: db.leadAccessibility, error: null };
         }
+        if (table === "team_members") return { data: db.adminEmails, error: null };
         return {
           data:
             table === "leads"
-              ? { id: "new-lead-uuid", status: db.leadStatus }
-              : { id: "interaction-uuid" },
+              ? { id: "new-lead-uuid", name: "Lead Test", status: db.leadStatus }
+              : table === "lead_campaign_sends"
+                ? { id: "campaign-send-uuid", tracking_token: "tracking-token" }
+                : { id: "interaction-uuid" },
           error: null,
         };
       };
@@ -181,6 +186,7 @@ vi.mock("@/lib/env", () => ({
 }));
 vi.mock("@/lib/google/calendar", () => googleCalendar);
 vi.mock("@/lib/google/client", () => ({ resolveSubject: () => "pol@doscientos.es" }));
+vi.mock("@/lib/email/resend", () => ({ sendEmail }));
 
 // ── SUT ───────────────────────────────────────────────────────────────────────
 
@@ -190,6 +196,7 @@ import {
   deleteLead,
   logLeadCall,
   scheduleLeadMeeting,
+  sendEmailToLead,
   updateLead,
   updateLeadMomTestSignal,
   updateLeadStatus,
@@ -214,7 +221,11 @@ beforeEach(() => {
   db.leadStatus = "new";
   db.recentCallPayloads = [];
   db.leadAccessibility = { mom_test_accessible: null, mom_test_accessible_source: null };
+  db.adminEmails = [{ email: "admin@doscientos.es" }, { email: "owner@doscientos.es" }];
   authUser.role = "admin";
+  authUser.emailAlias = "pol";
+  sendEmail.mockReset();
+  sendEmail.mockResolvedValue({ id: "resend-email-1", mocked: false });
   googleCalendar.insertEvent.mockResolvedValue({
     id: "calendar-event-1",
     htmlLink: "https://calendar.google.com/event-1",
@@ -330,6 +341,26 @@ describe("claimLead", () => {
   it("returns ok:true when lead has no owner", async () => {
     const result = await claimLead({ leadId: "00000000-0000-0000-0000-000000000001" });
     expect(result.ok).toBe(true);
+  });
+});
+
+describe("sendEmailToLead", () => {
+  it("copies active owners and admins for a post-call email", async () => {
+    const result = await sendEmailToLead({
+      leadId: "00000000-0000-0000-0000-000000000001",
+      to: "lead@example.com",
+      subject: "Resumen de nuestra llamada",
+      bodyHtml: "Gracias por tu tiempo.",
+      ccAdmins: true,
+    });
+
+    expect(result).toMatchObject({ ok: true });
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: "lead@example.com",
+        cc: ["admin@doscientos.es", "owner@doscientos.es"],
+      }),
+    );
   });
 });
 

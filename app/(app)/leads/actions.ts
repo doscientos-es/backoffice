@@ -465,6 +465,25 @@ export const sendEmailToLead = defineAction({
       sendRow.tracking_token as string,
     );
 
+    let cc: string[] | undefined;
+    if (data.ccAdmins) {
+      const { data: admins, error: adminsError } = await supabase
+        .from("team_members")
+        .select("email")
+        .in("role", ["owner", "admin"])
+        .is("deleted_at", null);
+      if (adminsError) throw new Error(adminsError.message);
+
+      const recipient = data.to.toLowerCase();
+      cc = [
+        ...new Set(
+          (admins ?? [])
+            .map((admin) => admin.email as string)
+            .filter((email) => email.toLowerCase() !== recipient),
+        ),
+      ];
+    }
+
     let resendId: string | null = null;
     let mocked = false;
     try {
@@ -472,6 +491,7 @@ export const sendEmailToLead = defineAction({
         fromName: user.name,
         fromAlias: user.emailAlias,
         to: data.to,
+        cc,
         replyTo: user.email,
         subject: renderedSubject,
         html: trackedHtml,

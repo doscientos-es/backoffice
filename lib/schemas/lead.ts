@@ -153,6 +153,7 @@ export type LogNoteInputType = z.infer<typeof LogNoteInput>;
 export const SendEmailToLeadInput = z.object({
   leadId: z.string().uuid(),
   templateSlug: z.string().min(1).optional(),
+  ccAdmins: z.boolean().default(false),
   subject: z.string().min(1),
   bodyHtml: z.string().min(1),
   includeSignature: z.boolean().default(true),
