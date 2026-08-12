@@ -1,6 +1,3 @@
-import { CheckCircle2, Clock, FileText, Presentation, XCircle } from "lucide-react";
-import Link from "next/link";
-import { notFound } from "next/navigation";
 import { BackLink } from "@/components/layout/back-link";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
@@ -14,9 +11,13 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
 import { isAIEnabled } from "@/lib/env";
 import { parseKeyPoints, toEditableKeyPoints } from "@/lib/proposals/key-points";
+import { parseScopeModules, type PaymentSchedule } from "@/lib/proposals/scope";
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
+import { CheckCircle2, Clock, FileText, Presentation, XCircle } from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { updateProposalPortalAccess } from "../actions";
 import { DeleteProposalButton } from "./delete-proposal-button";
 import { DuplicateProposalButton } from "./duplicate-proposal-button";
@@ -113,11 +114,11 @@ export default async function ProposalDetailPage({
   const clientId = (proposal.client_id as string | null) ?? null;
   const { data: availableProjects } = clientId
     ? await supabase
-        .from("projects")
-        .select("id, name")
-        .eq("client_id", clientId)
-        .is("deleted_at", null)
-        .order("name")
+      .from("projects")
+      .select("id, name")
+      .eq("client_id", clientId)
+      .is("deleted_at", null)
+      .order("name")
     : { data: [] };
 
   const [{ data: teamMembers }, { data: proposalTeam }] = await Promise.all([
@@ -205,7 +206,7 @@ export default async function ProposalDetailPage({
                     client ? `Cliente: ${client.name}` : lead ? `Lead: ${lead.name}` : null,
                     `Estado: ${PROPOSAL_STATUS[status]?.label ?? status}`,
                     Number(proposal.total ?? 0) > 0 &&
-                      `Total: ${formatEUR(Number(proposal.total))}`,
+                    `Total: ${formatEUR(Number(proposal.total))}`,
                   ]
                     .filter(Boolean)
                     .join(" · "),
@@ -240,6 +241,12 @@ export default async function ProposalDetailPage({
           initialProblems={toEditableKeyPoints(parseKeyPoints(proposal.problems))}
           initialSolutions={toEditableKeyPoints(parseKeyPoints(proposal.solutions))}
           initialTerms={(proposal.terms as string | null) ?? null}
+          initialScopeModules={parseScopeModules(proposal.scope_modules)}
+          initialDeliverables={(proposal.deliverables as string | null) ?? null}
+          initialAcceptanceCriteria={(proposal.acceptance_criteria as string | null) ?? null}
+          initialPaymentSchedule={(proposal.payment_schedule as PaymentSchedule | null) ?? null}
+          initialPaymentTerms={(proposal.payment_terms as string | null) ?? null}
+          initialChangeManagementTerms={(proposal.change_management_terms as string | null) ?? null}
           initialItems={editableItems}
           aiEnabled={isAIEnabled()}
           leadId={lead?.id ?? null}

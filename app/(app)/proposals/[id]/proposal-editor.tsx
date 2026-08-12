@@ -379,21 +379,109 @@ export function ProposalEditor({
         </FormRow>
       </section>
 
-      <FormRow
-        label="Condiciones"
-        htmlFor="terms"
-        hint="Markdown que se muestra después del total. Forma de pago, validez, etc."
-      >
-        <Textarea
-          id="terms"
-          value={terms}
-          onChange={(e) => setTerms(e.target.value)}
-          disabled={locked}
-          rows={6}
-          className="font-mono text-xs"
-          placeholder={"## Condiciones\n\n- 50% al inicio, 50% a la entrega.\n- Vigencia: 30 días."}
-        />
-      </FormRow>
+      <section className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4">
+        <header className="flex flex-col gap-0.5">
+          <h2 className="text-sm font-semibold">Alcance y entregables</h2>
+          <p className="text-[11px] text-muted-foreground">
+            Define el trabajo incluido por módulo. Esta estructura se mostrará en el deck y el PDF,
+            y podrá alimentar el briefing inicial del proyecto.
+          </p>
+        </header>
+        <ScopeModulesEditor modules={scopeModules} onChange={setScopeModules} locked={locked} />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <FormRow
+            label="Entregables"
+            htmlFor="deliverables"
+            hint="Markdown. Qué recibirá el cliente al finalizar."
+          >
+            <Textarea
+              id="deliverables"
+              value={deliverables}
+              onChange={(event) => setDeliverables(event.target.value)}
+              disabled={locked}
+              rows={5}
+              className="font-mono text-xs"
+              placeholder={"- Diseño validado\n- Desarrollo de los módulos acordados\n- Formación y documentación"}
+            />
+          </FormRow>
+          <FormRow
+            label="Criterios de aceptación"
+            htmlFor="acceptance-criteria"
+            hint="Markdown. Cómo comprobaremos que el trabajo está entregado."
+          >
+            <Textarea
+              id="acceptance-criteria"
+              value={acceptanceCriteria}
+              onChange={(event) => setAcceptanceCriteria(event.target.value)}
+              disabled={locked}
+              rows={5}
+              className="font-mono text-xs"
+              placeholder={"- Los flujos descritos funcionan en producción.\n- El cliente valida los entregables acordados."}
+            />
+          </FormRow>
+        </div>
+      </section>
+
+      <section className="grid gap-4 rounded-lg border border-border bg-card p-4 lg:grid-cols-2">
+        <FormRow
+          label="Forma de pago"
+          htmlFor="payment-schedule"
+          hint="Elige una base y ajusta el texto si hace falta."
+        >
+          <div className="flex flex-col gap-3">
+            <Select
+              id="payment-schedule"
+              value={paymentSchedule}
+              onChange={(event) => handlePaymentScheduleChange(event.target.value as PaymentSchedule)}
+              disabled={locked}
+            >
+              {Object.entries(PAYMENT_SCHEDULE_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </Select>
+            <Textarea
+              value={paymentTerms}
+              onChange={(event) => setPaymentTerms(event.target.value)}
+              disabled={locked}
+              rows={4}
+              className="text-sm"
+              placeholder="Condiciones de pago"
+              aria-label="Condiciones de pago"
+            />
+          </div>
+        </FormRow>
+        <FormRow
+          label="Gestión de cambios"
+          htmlFor="change-management"
+          hint="Texto predefinido y editable para proteger el alcance acordado."
+        >
+          <Textarea
+            id="change-management"
+            value={changeManagementTerms}
+            onChange={(event) => setChangeManagementTerms(event.target.value)}
+            disabled={locked}
+            rows={6}
+            className="text-sm"
+          />
+        </FormRow>
+        <FormRow
+          label="Condiciones adicionales"
+          htmlFor="terms"
+          hint="Markdown. Vigencia, licencias, garantías u otras condiciones."
+        >
+          <Textarea
+            id="terms"
+            value={terms}
+            onChange={(event) => setTerms(event.target.value)}
+            disabled={locked}
+            rows={5}
+            className="font-mono text-xs"
+            placeholder={"## Condiciones adicionales\n\n- Vigencia: 30 días.\n- Licencias de terceros no incluidas."}
+          />
+        </FormRow>
+      </section>
     </div>
   );
 }

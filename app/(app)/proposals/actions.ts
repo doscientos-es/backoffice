@@ -1,8 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { z } from "zod";
 import { ProposalEmail } from "@/components/email";
 import { requireRole, requireUser } from "@/lib/auth";
 import { renderEmail } from "@/lib/email/render";
@@ -27,6 +24,9 @@ import {
 } from "@/lib/schemas/proposal";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
 
 const log = scopedLogger("proposals");
 
@@ -220,7 +220,7 @@ export async function createProposalAction(
 /**
  * Clones an existing proposal as a new draft. Resets status, portal token,
  * number, timestamps and signature data; copies title (prefixed "Copia de"),
- * target, narrative blocks, terms, notes and line items. Useful for
+ * target, narrative blocks, commercial terms and line items. Useful for
  * re-quoting after a rejection or when iterating with the same client.
  */
 export async function duplicateProposal(
@@ -237,7 +237,7 @@ export async function duplicateProposal(
   const { data: source, error: readError } = await supabase
     .from("proposals")
     .select(
-      "client_id, lead_id, title, valid_until, notes, context_markdown, problems, solutions, terms, subtotal, tax_amount, total, currency",
+      "client_id, lead_id, title, valid_until, notes, context_markdown, problems, solutions, terms, scope_modules, deliverables, acceptance_criteria, payment_schedule, payment_terms, change_management_terms, subtotal, tax_amount, total, currency",
     )
     .eq("id", parsed.data.id)
     .is("deleted_at", null)
@@ -269,6 +269,12 @@ export async function duplicateProposal(
       problems: source.problems,
       solutions: source.solutions,
       terms: source.terms,
+      scope_modules: source.scope_modules,
+      deliverables: source.deliverables,
+      acceptance_criteria: source.acceptance_criteria,
+      payment_schedule: source.payment_schedule,
+      payment_terms: source.payment_terms,
+      change_management_terms: source.change_management_terms,
       created_by: user.id,
     })
     .select("id")
@@ -345,6 +351,16 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
     patch.solutions = rest.solutions && rest.solutions.length > 0 ? rest.solutions : null;
   }
   if (rest.terms !== undefined) patch.terms = rest.terms;
+  if (rest.scope_modules !== undefined) {
+    patch.scope_modules = rest.scope_modules && rest.scope_modules.length > 0 ? rest.scope_modules : null;
+  }
+  if (rest.deliverables !== undefined) patch.deliverables = rest.deliverables;
+  if (rest.acceptance_criteria !== undefined) patch.acceptance_criteria = rest.acceptance_criteria;
+  if (rest.payment_schedule !== undefined) patch.payment_schedule = rest.payment_schedule;
+  if (rest.payment_terms !== undefined) patch.payment_terms = rest.payment_terms;
+  if (rest.change_management_terms !== undefined) {
+    patch.change_management_terms = rest.change_management_terms;
+  }
 
   if (items) {
     const { error: rpcError } = await supabase.rpc("replace_proposal_items", {
