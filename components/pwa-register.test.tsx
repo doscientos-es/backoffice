@@ -1,6 +1,6 @@
-import { STARTUP_SPLASH_SESSION_KEY } from "@/lib/startup-splash";
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { STARTUP_SPLASH_SESSION_KEY } from "@/lib/startup-splash";
 import { PwaRegister } from "./pwa-register";
 
 const register = vi.fn();

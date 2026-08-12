@@ -7,7 +7,7 @@ import { STARTUP_SPLASH_SESSION_KEY } from "@/lib/startup-splash";
 export function PwaRegister() {
   useEffect(() => {
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => { });
+      navigator.serviceWorker.register("/sw.js").catch(() => undefined);
     }
 
     try {
