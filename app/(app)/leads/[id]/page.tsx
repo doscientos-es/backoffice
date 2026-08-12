@@ -58,6 +58,14 @@ const INTERACTION_LABEL: Record<string, string> = {
   portal_reject: "Propuesta rechazada",
 };
 
+type NextAction = {
+  id: string;
+  title: string;
+  kind: "task" | "reminder";
+  when: string | null;
+  status: TaskStatus;
+};
+
 /**
  * Recorta el cuerpo de la interacción para mostrarlo en el timeline.
  * Acepta HTML (emails) y texto plano (notas, transcripciones).
@@ -111,7 +119,7 @@ export default async function LeadDetailPage({
   const aiEnabled = isAIEnabled();
   const canEdit = user.role !== "viewer";
   const members = canEdit ? await listActiveMembers().catch(() => []) : [];
-  const nextActions = [
+  const nextActions: NextAction[] = [
     ...tasks.map((task) => ({
       id: task.id as string,
       title: task.title as string,
@@ -240,6 +248,16 @@ export default async function LeadDetailPage({
           </>
         }
       />
+
+      {canEdit || nextActions.length > 0 ? (
+        <NextActionsCard
+          canEdit={canEdit}
+          leadId={id}
+          members={members}
+          currentUserId={user.id}
+          actions={nextActions}
+        />
+      ) : null}
 
       <LeadCommercial
         leadId={lead.id as string}
@@ -499,67 +517,84 @@ export default async function LeadDetailPage({
               scheduleMembers={members}
             />
           </SectionBoundary>
-
-          {canEdit || nextActions.length > 0 ? (
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Qué hacer ahora</CardTitle>
-                {canEdit ? (
-                  <TaskCreateDialog
-                    leadId={id}
-                    members={members}
-                    currentUserId={user.id}
-                    trigger={<Button size="sm">Nueva tarea</Button>}
-                  />
-                ) : null}
-              </CardHeader>
-              <CardContent className="px-0">
-                {nextActions.length > 0 ? (
-                  <ul className="divide-y divide-border">
-                    {nextActions.map((action) => {
-                      const overdue = action.when ? new Date(action.when) < new Date() : false;
-                      return (
-                        <li
-                          key={`${action.kind}-${action.id}`}
-                          className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm"
-                        >
-                          <Link
-                            href={`/tasks/${action.id}`}
-                            className="min-w-0 truncate font-medium hover:underline"
-                          >
-                            <span className="mr-2 text-xs text-muted-foreground">
-                              {action.kind === "reminder" ? "Aviso" : "Tarea"}
-                            </span>
-                            {action.title}
-                          </Link>
-                          <div className="flex shrink-0 items-center gap-3 text-xs">
-                            {action.kind === "task" ? (
-                              <StatusBadge meta={TASK_STATUS} value={action.status} />
-                            ) : null}
-                            {action.when ? (
-                              <span
-                                className={
-                                  overdue ? "font-medium text-destructive" : "text-muted-foreground"
-                                }
-                              >
-                                {relativeTime(action.when)}
-                              </span>
-                            ) : null}
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                ) : (
-                  <p className="px-6 py-2 text-sm text-muted-foreground">
-                    Sin acciones pendientes.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          ) : null}
         </div>
       </div>
     </div>
+  );
+}
+
+function NextActionsCard({
+  canEdit,
+  leadId,
+  members,
+  currentUserId,
+  actions,
+}: {
+  canEdit: boolean;
+  leadId: string;
+  members: Awaited<ReturnType<typeof listActiveMembers>>;
+  currentUserId: string;
+  actions: NextAction[];
+}) {
+  return (
+    <Card className="border-primary/20 bg-primary/[0.02]">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Qué hacer ahora</CardTitle>
+          <p className="mt-1 text-sm font-normal text-muted-foreground">
+            Próximos pasos para mantener el lead en movimiento.
+          </p>
+        </div>
+        {canEdit ? (
+          <TaskCreateDialog
+            leadId={leadId}
+            members={members}
+            currentUserId={currentUserId}
+            trigger={<Button size="sm">Nueva tarea</Button>}
+          />
+        ) : null}
+      </CardHeader>
+      <CardContent className="px-0">
+        {actions.length > 0 ? (
+          <ul className="divide-y divide-border">
+            {actions.map((action) => {
+              const overdue = action.when ? new Date(action.when) < new Date() : false;
+              return (
+                <li
+                  key={`${action.kind}-${action.id}`}
+                  className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm"
+                >
+                  <Link
+                    href={`/tasks/${action.id}`}
+                    className="min-w-0 truncate font-medium hover:underline"
+                  >
+                    <span className="mr-2 text-xs text-muted-foreground">
+                      {action.kind === "reminder" ? "Aviso" : "Tarea"}
+                    </span>
+                    {action.title}
+                  </Link>
+                  <div className="flex shrink-0 items-center gap-3 text-xs">
+                    {action.kind === "task" ? (
+                      <StatusBadge meta={TASK_STATUS} value={action.status} />
+                    ) : null}
+                    {action.when ? (
+                      <span
+                        className={
+                          overdue ? "font-medium text-destructive" : "text-muted-foreground"
+                        }
+                      >
+                        {relativeTime(action.when)}
+                      </span>
+                    ) : null}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="px-6 py-2 text-sm text-muted-foreground">Sin acciones pendientes.</p>
+        )}
+      </CardContent>
+    </Card>
   );
 }

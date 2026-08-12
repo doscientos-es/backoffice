@@ -30,6 +30,7 @@ import {
 import type { InvoiceHeaderPatch } from "@/lib/invoices/types";
 import { buildInvoiceItemRows, getMonthlyBillingWindow } from "@/lib/invoices/workflows";
 import { scopedLogger } from "@/lib/logger";
+import { dispatchNotifications } from "@/lib/notifications/dispatch";
 import { buildPortalAccessPatch } from "@/lib/portal/access";
 import { uuidIdInput } from "@/lib/schemas/common";
 import {
@@ -353,6 +354,44 @@ export const createInvoiceFromProposal = defineAction<
     );
 
     return { id };
+  },
+});
+
+/**
+ * Lets a commercial hand an accepted proposal to administration without
+ * granting access to the financial draft-creation flow.
+ */
+export const requestInvoiceFromProposal = defineAction<typeof CreateInvoiceFromProposalInput>({
+  name: "invoices.requestFromProposal",
+  schema: CreateInvoiceFromProposalInput,
+  revalidate: (_p, input) => [`/proposals/${input.proposalId}`],
+  handler: async ({ proposalId }, { user }) => {
+    if (user.role === "viewer") throw new Error("No tienes permiso para solicitar facturación");
+
+    const proposal = await findProposalForInvoice(proposalId);
+    if (!proposal) throw new Error("Propuesta no encontrada");
+    if (proposal.status !== "accepted") {
+      throw new Error("Solo se puede solicitar facturación para una propuesta aceptada");
+    }
+
+    const supabase = await createServerClient();
+    const { data: recipients, error } = await supabase
+      .from("team_members")
+      .select("id")
+      .in("role", ["owner", "admin"])
+      .is("deleted_at", null);
+    if (error) throw new Error(error.message);
+    if (!recipients?.length) throw new Error("No hay responsables de administración disponibles");
+
+    await dispatchNotifications({
+      recipientIds: recipients.map((member) => member.id as string),
+      actorId: user.id,
+      eventType: "invoice_requested",
+      entityType: "proposal",
+      entityId: proposal.id,
+      body: `${user.name} solicita facturar «${proposal.title ?? "Propuesta aceptada"}».`,
+      link: `/proposals/${proposal.id}`,
+    });
   },
 });
 

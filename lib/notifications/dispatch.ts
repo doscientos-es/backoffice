@@ -13,6 +13,7 @@ export type NotificationEvent =
   | "task_assigned"
   | "invoice_paid"
   | "invoice_payment"
+  | "invoice_requested"
   | "proposal_accepted"
   | "proposal_rejected"
   | "proposal_deck_completed";
@@ -29,6 +30,7 @@ const TITLES: Record<NotificationEvent, string> = {
   task_assigned: "✅ Tarea asignada",
   invoice_paid: "💰 Factura cobrada",
   invoice_payment: "💰 Pago recibido",
+  invoice_requested: "🧾 Solicitud de facturación",
   proposal_accepted: "✅ Propuesta aceptada",
   proposal_rejected: "❌ Propuesta rechazada",
   proposal_deck_completed: "👀 Propuesta visualizada",

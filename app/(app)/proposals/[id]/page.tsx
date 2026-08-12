@@ -216,12 +216,11 @@ export default async function ProposalDetailPage({
             />
             <StatusBadge meta={PROPOSAL_STATUS} value={status} />
             <DuplicateProposalButton proposalId={id} />
-            {status === "accepted" && ["owner", "admin"].includes(user.role) ? (
-              <GenerateInvoiceButton proposalId={id} />
-            ) : status === "accepted" ? (
-              <span className="text-xs text-muted-foreground">
-                Facturación gestionada por administración
-              </span>
+            {status === "accepted" ? (
+              <GenerateInvoiceButton
+                proposalId={id}
+                canGenerateInvoice={["owner", "admin"].includes(user.role)}
+              />
             ) : status !== "rejected" ? (
               <MarkAcceptedButton proposalId={id} />
             ) : null}

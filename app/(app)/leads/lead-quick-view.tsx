@@ -3,6 +3,7 @@
 import {
   ArrowUpRight,
   Building2,
+  CalendarPlus,
   Clock,
   Hand,
   Loader2,
@@ -40,6 +41,7 @@ import {
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { MemberLabel } from "@/components/ui/member-avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { nextActionState } from "@/lib/leads/pipeline";
 import { leadDisplayName } from "@/lib/leads/utils";
 import type { MemberOption } from "@/lib/members/queries";
 import { LEAD_STATUS } from "@/lib/status";
@@ -121,6 +123,7 @@ function Body({
   const hasEstimated = lead.estimated_value != null && lead.estimated_value > 0;
   const displayName = leadDisplayName(lead);
   const alias = lead.alias?.trim();
+  const needsNextAction = nextActionState(lead.status, lead.next_action) === "missing";
   return (
     <div className="grid h-full grid-rows-[auto_1fr_auto_auto]">
       <DrawerHeader className="flex flex-row items-start justify-between gap-2 border-b border-border">
@@ -142,6 +145,28 @@ function Body({
       </DrawerHeader>
 
       <div className="flex flex-col gap-4 overflow-y-auto h-full flex-1 p-4 scroll-fade no-scrollbar">
+        {canEdit && needsNextAction ? (
+          <section className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+            <div className="flex items-start gap-2">
+              <CalendarPlus className="mt-0.5 size-4 shrink-0 text-destructive" aria-hidden />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold">Sin próxima acción</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Agenda el siguiente contacto antes de cerrar este lead.
+                </p>
+                <ScheduleReminderDialog
+                  leadId={lead.id}
+                  defaultTitle={`Seguimiento de ${displayName}`}
+                  trigger={
+                    <Button type="button" size="sm" className="mt-3 w-full">
+                      Agendar seguimiento
+                    </Button>
+                  }
+                />
+              </div>
+            </div>
+          </section>
+        ) : null}
         {(lead.status === "lost" || lead.status === "not_interested") && lead.lost_reason && (
           <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/8 px-3 py-2.5 text-xs">
             <TriangleAlert className="size-3.5 shrink-0 mt-0.5 text-destructive" />
