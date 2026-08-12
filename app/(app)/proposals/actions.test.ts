@@ -105,6 +105,22 @@ describe("updateProposal", () => {
       payment_schedule: "half_half",
       payment_terms: "50 % al aceptar.",
       change_management_terms: "Cambios presupuestados.",
+      maintenance_options: {
+        heading: "Mantenimiento web",
+        intro: "Soporte técnico continuo.",
+        plans: [
+          {
+            id: "essential",
+            name: "Esencial",
+            summary: "Cobertura básica.",
+            monthly_price: 80,
+            vat_rate: 21,
+            coverage: ["Backups"],
+            exclusions: [],
+          },
+        ],
+      },
+      maintenance_selected_plan_id: "essential",
       items: [
         {
           description: "Implementación",
@@ -137,6 +153,24 @@ describe("updateProposal", () => {
       payment_schedule: "half_half",
       payment_terms: "50 % al aceptar.",
       change_management_terms: "Cambios presupuestados.",
+      maintenance_options: {
+        heading: "Mantenimiento web",
+        intro: "Soporte técnico continuo.",
+        plans: [
+          {
+            id: "essential",
+            name: "Esencial",
+            summary: "Cobertura básica.",
+            monthly_price: 80,
+            vat_rate: 21,
+            coverage: ["Backups"],
+            exclusions: [],
+          },
+        ],
+      },
+      maintenance_selected_plan_id: "essential",
+      maintenance_selection_source: "team",
+      maintenance_selected_at: expect.any(String),
     });
   });
 
