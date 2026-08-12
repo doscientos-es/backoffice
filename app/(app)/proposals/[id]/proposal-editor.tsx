@@ -1,7 +1,9 @@
 "use client";
 
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LineItemsTable } from "@/components/finance/line-items-table";
 import { ProblemSolutionEditor } from "@/components/proposals/problem-solution-editor";
+import { ScopeModulesEditor } from "@/components/proposals/scope-modules-editor";
 import { AiNotice } from "@/components/ui/ai-notice";
 import { AutosaveIndicator } from "@/components/ui/autosave-indicator";
 import { Button } from "@/components/ui/button";
@@ -9,6 +11,7 @@ import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
 import { Markdown } from "@/components/ui/markdown";
+import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { EMPTY_LINE_ITEM, type LineItem } from "@/lib/finance";
 import { useAutosave } from "@/lib/hooks/use-autosave";
@@ -22,11 +25,11 @@ import {
 } from "@/lib/proposals/key-points";
 import {
   DEFAULT_CHANGE_MANAGEMENT_TERMS,
+  PAYMENT_SCHEDULE_LABELS,
   PAYMENT_SCHEDULE_TEMPLATES,
   type PaymentSchedule,
-  type ScopeModule
+  type ScopeModule,
 } from "@/lib/proposals/scope";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { updateProposal } from "../actions";
 
 export type EditableItem = LineItem;
@@ -401,7 +404,9 @@ export function ProposalEditor({
               disabled={locked}
               rows={5}
               className="font-mono text-xs"
-              placeholder={"- Diseño validado\n- Desarrollo de los módulos acordados\n- Formación y documentación"}
+              placeholder={
+                "- Diseño validado\n- Desarrollo de los módulos acordados\n- Formación y documentación"
+              }
             />
           </FormRow>
           <FormRow
@@ -416,7 +421,9 @@ export function ProposalEditor({
               disabled={locked}
               rows={5}
               className="font-mono text-xs"
-              placeholder={"- Los flujos descritos funcionan en producción.\n- El cliente valida los entregables acordados."}
+              placeholder={
+                "- Los flujos descritos funcionan en producción.\n- El cliente valida los entregables acordados."
+              }
             />
           </FormRow>
         </div>
@@ -432,7 +439,9 @@ export function ProposalEditor({
             <Select
               id="payment-schedule"
               value={paymentSchedule}
-              onChange={(event) => handlePaymentScheduleChange(event.target.value as PaymentSchedule)}
+              onChange={(event) =>
+                handlePaymentScheduleChange(event.target.value as PaymentSchedule)
+              }
               disabled={locked}
             >
               {Object.entries(PAYMENT_SCHEDULE_LABELS).map(([value, label]) => (
@@ -478,7 +487,9 @@ export function ProposalEditor({
             disabled={locked}
             rows={5}
             className="font-mono text-xs"
-            placeholder={"## Condiciones adicionales\n\n- Vigencia: 30 días.\n- Licencias de terceros no incluidas."}
+            placeholder={
+              "## Condiciones adicionales\n\n- Vigencia: 30 días.\n- Licencias de terceros no incluidas."
+            }
           />
         </FormRow>
       </section>
