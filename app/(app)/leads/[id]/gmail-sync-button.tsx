@@ -7,7 +7,13 @@ import { sileo } from "sileo";
 import { Button } from "@/components/ui/button";
 import { syncLeadGmail } from "../actions";
 
-export function GmailSyncButton({ leadId, leadEmail }: { leadId: string; leadEmail: string | null }) {
+export function GmailSyncButton({
+  leadId,
+  leadEmail,
+}: {
+  leadId: string;
+  leadEmail: string | null;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 

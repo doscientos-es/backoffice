@@ -43,7 +43,9 @@ export type GmailLeadSyncSource = {
 };
 
 function getHeader(headers: GmailHeader[] | undefined, name: string): string | null {
-  return headers?.find((header) => header.name?.toLowerCase() === name.toLowerCase())?.value ?? null;
+  return (
+    headers?.find((header) => header.name?.toLowerCase() === name.toLowerCase())?.value ?? null
+  );
 }
 
 function decodeBase64Url(value: string): string {
@@ -93,9 +95,15 @@ function messageDate(internalDate: string | undefined): string {
   return Number.isFinite(millis) ? new Date(millis).toISOString() : new Date().toISOString();
 }
 
-async function listMailboxMessages(mailbox: string, leadEmail: string): Promise<GmailLeadMessage[]> {
+async function listMailboxMessages(
+  mailbox: string,
+  leadEmail: string,
+): Promise<GmailLeadMessage[]> {
   const listUrl = new URL(`${GMAIL_API_BASE}/messages`);
-  listUrl.searchParams.set("q", `in:anywhere {from:${leadEmail} to:${leadEmail} cc:${leadEmail} bcc:${leadEmail}}`);
+  listUrl.searchParams.set(
+    "q",
+    `in:anywhere {from:${leadEmail} to:${leadEmail} cc:${leadEmail} bcc:${leadEmail}}`,
+  );
   listUrl.searchParams.set("maxResults", String(MAX_MESSAGES_PER_MAILBOX));
 
   const list = await googleFetch<GmailMessageList>(
@@ -147,12 +155,12 @@ export async function listLeadGmailMessages(leadEmail: string): Promise<GmailLea
   const unavailableMailboxes: string[] = [];
   let synchronizedMailboxes = 0;
 
-  for (const result of settled) {
+  for (const [index, result] of settled.entries()) {
     if (result.status === "fulfilled") {
       synchronizedMailboxes++;
       messages.push(...result.value.messages);
     } else {
-      const mailbox = SYNC_MAILBOXES[settled.indexOf(result)];
+      const mailbox = SYNC_MAILBOXES[index];
       if (mailbox) unavailableMailboxes.push(mailbox);
     }
   }
