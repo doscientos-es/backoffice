@@ -1,7 +1,5 @@
 "use client";
 
-import { ChevronDown, ChevronUp, ClipboardPaste, Plus, Trash2, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -9,6 +7,8 @@ import {
   SCOPE_MODULE_LIMITS,
   type ScopeModule,
 } from "@/lib/proposals/scope";
+import { ChevronDown, ChevronUp, ClipboardPaste, Plus, Trash2, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 type Props = {
   modules: ScopeModule[];
@@ -229,7 +229,7 @@ function ScopeBulletEditor({
             value={pasteText}
             onChange={(event) => setPasteText(event.target.value)}
             rows={4}
-            placeholder="Pega aquí una lista de ChatGPT. Cada línea se convertirá en un punto."
+            placeholder="Pega aquí una lista, cada línea se convertirá en un punto."
             aria-label={`Texto para añadir a ${label}`}
             className="min-h-24 resize-y text-sm"
           />
