@@ -4,6 +4,11 @@ import { publicEnv } from "@/lib/env";
 import { isPortalUnlocked } from "@/lib/portal/access";
 import { parseKeyPoints } from "@/lib/proposals/key-points";
 import {
+  maintenancePlanAsLineItem,
+  parseMaintenanceOffer,
+  selectedMaintenancePlan,
+} from "@/lib/proposals/maintenance";
+import {
   type ProposalPdfItem,
   proposalPdfFilename,
   renderProposalPdf,
@@ -56,6 +61,33 @@ export async function GET(
   const lead = (
     proposal as unknown as { leads: { name: string | null; company: string | null } | null }
   ).leads;
+  const maintenancePlan = selectedMaintenancePlan(
+    parseMaintenanceOffer(proposal.maintenance_options),
+    (proposal.maintenance_selected_plan_id as string | null) ?? null,
+  );
+  const pdfItems: ProposalPdfItem[] = ((items ?? []) as Array<Record<string, unknown>>).map(
+    (item): ProposalPdfItem => ({
+      id: String(item.id),
+      description: String(item.description ?? ""),
+      quantity: Number(item.quantity ?? 0),
+      unitPrice: Number(item.unit_price ?? 0),
+      vatRate: Number(item.vat_rate ?? 0),
+      subtotal: Number(item.subtotal ?? 0),
+      billingCycle: (item.billing_cycle as string | null) ?? null,
+    }),
+  );
+  if (maintenancePlan) {
+    const item = maintenancePlanAsLineItem(maintenancePlan);
+    pdfItems.push({
+      id: item.id,
+      description: item.description,
+      quantity: item.quantity,
+      unitPrice: item.unit_price,
+      vatRate: item.vat_rate,
+      subtotal: item.subtotal,
+      billingCycle: item.billing_cycle,
+    });
+  }
   const pdf = await renderProposalPdf({
     number: (proposal.number as string | null) ?? null,
     title: proposal.title as string,
@@ -75,17 +107,7 @@ export async function GET(
     subtotal: Number(proposal.subtotal ?? 0),
     taxAmount: Number(proposal.tax_amount ?? 0),
     total: Number(proposal.total ?? 0),
-    items: ((items ?? []) as Array<Record<string, unknown>>).map(
-      (item): ProposalPdfItem => ({
-        id: String(item.id),
-        description: String(item.description ?? ""),
-        quantity: Number(item.quantity ?? 0),
-        unitPrice: Number(item.unit_price ?? 0),
-        vatRate: Number(item.vat_rate ?? 0),
-        subtotal: Number(item.subtotal ?? 0),
-        billingCycle: (item.billing_cycle as string | null) ?? null,
-      }),
-    ),
+    items: pdfItems,
     portalUrl: `${publicEnv.NEXT_PUBLIC_APP_URL}/p/proposal/${token}`,
   });
 
