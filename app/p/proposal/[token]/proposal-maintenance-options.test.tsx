@@ -23,6 +23,7 @@ describe("ProposalMaintenanceOptions", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Elige la cobertura que prefieras" })).toBeDefined();
+    expect(screen.getByText("Recomendado")).toBeDefined();
     expect(screen.getAllByText("Incluye")).toHaveLength(DEFAULT_MAINTENANCE_OFFER.plans.length);
     expect(screen.getAllByText("No incluye")).toHaveLength(DEFAULT_MAINTENANCE_OFFER.plans.length);
 

@@ -1,7 +1,3 @@
-import { CheckCircle2, Download, FileText, Presentation, XCircle } from "lucide-react";
-import type { Metadata } from "next";
-import { headers } from "next/headers";
-import { notFound } from "next/navigation";
 import { LogoMark } from "@/components/branding";
 import { PortalPasswordGate } from "@/components/portal/password-gate";
 import { ProposalPaymentButton } from "@/components/portal/proposal-payment-button";
@@ -32,6 +28,10 @@ import {
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
+import { CheckCircle2, Download, FileText, Presentation, XCircle } from "lucide-react";
+import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 import { sendProposalQuestion, unlockProposalPortal } from "./actions";
 import { PortalKeyPointsList, PortalNarrativeBlock } from "./narrative";
 import { ProposalActions } from "./proposal-actions";
@@ -233,31 +233,31 @@ export default async function PortalProposalPage({
   // back-office for prospects that never went through onboarding.
   const clientBillingAddress = client
     ? formatAddress({
-        street: client.billing_address_street,
-        zip: client.billing_address_zip,
-        city: client.billing_address_city,
-        province: client.billing_address_province,
-        country: client.billing_address_country,
-      })
+      street: client.billing_address_street,
+      zip: client.billing_address_zip,
+      city: client.billing_address_city,
+      province: client.billing_address_province,
+      country: client.billing_address_country,
+    })
     : "";
   const needsFiscal = !client?.nif?.trim() || !clientBillingAddress || !client.name?.trim();
   const fiscalPrefill = client
     ? {
-        name: client.name ?? "",
-        nif: client.nif ?? "",
-        billing_address: clientBillingAddress,
-        contact_person: client.contact_person ?? "",
-        email: client.email ?? "",
-        phone: client.phone ?? "",
-      }
+      name: client.name ?? "",
+      nif: client.nif ?? "",
+      billing_address: clientBillingAddress,
+      contact_person: client.contact_person ?? "",
+      email: client.email ?? "",
+      phone: client.phone ?? "",
+    }
     : {
-        name: lead?.company ?? lead?.name ?? "",
-        nif: "",
-        billing_address: "",
-        contact_person: lead?.name ?? "",
-        email: lead?.email ?? "",
-        phone: lead?.phone ?? "",
-      };
+      name: lead?.company ?? lead?.name ?? "",
+      nif: "",
+      billing_address: "",
+      contact_person: lead?.name ?? "",
+      email: lead?.email ?? "",
+      phone: lead?.phone ?? "",
+    };
   const recipientName = client?.name ?? lead?.company ?? lead?.name ?? "—";
   const proposalNumber = (proposal.number as string | null) ?? "Borrador";
   const baseItems = (items ?? []) as unknown as ProposalItem[];
@@ -713,16 +713,17 @@ export default async function PortalProposalPage({
             ) : null}
           </div>
 
-          <ProposalMaintenanceOptions
-            token={token}
-            offer={maintenanceOffer}
-            selectedPlanId={(proposal.maintenance_selected_plan_id as string | null) ?? null}
-            disabled={isDraft || responded || isTeam}
-          />
         </article>
         <ProposalMessageThread
           messages={proposalMessages}
           submit={sendProposalQuestion.bind(null, token)}
+          disabled={isDraft || responded || isTeam}
+        />
+
+        <ProposalMaintenanceOptions
+          token={token}
+          offer={maintenanceOffer}
+          selectedPlanId={(proposal.maintenance_selected_plan_id as string | null) ?? null}
           disabled={isDraft || responded || isTeam}
         />
       </div>

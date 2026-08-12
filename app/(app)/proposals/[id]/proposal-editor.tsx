@@ -1,7 +1,5 @@
 "use client";
 
-import { AlertCircle } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LineItemsTable } from "@/components/finance/line-items-table";
 import { MaintenanceOfferEditor } from "@/components/proposals/maintenance-offer-editor";
 import { ProblemSolutionEditor } from "@/components/proposals/problem-solution-editor";
@@ -34,6 +32,8 @@ import {
   type PaymentSchedule,
   type ScopeModule,
 } from "@/lib/proposals/scope";
+import { AlertCircle } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { updateProposal } from "../actions";
 
 export type EditableItem = LineItem;
@@ -242,15 +242,15 @@ export function ProposalEditor({
       const nextKeyPoints = pairsAreEmpty ? unzipPairs(nextPairs) : null;
       const generatedNarrativePatch = pairsAreEmpty
         ? {
-            problems: serializeKeyPoints(nextKeyPoints?.problems ?? []),
-            solutions: serializeKeyPoints(nextKeyPoints?.solutions ?? []),
-          }
+          problems: serializeKeyPoints(nextKeyPoints?.problems ?? []),
+          solutions: serializeKeyPoints(nextKeyPoints?.solutions ?? []),
+        }
         : {};
       const generatedPaymentTermsPatch = paymentTermsAreEmpty
         ? {
-            payment_schedule: json.payment_schedule as PaymentSchedule,
-            payment_terms: json.payment_terms || null,
-          }
+          payment_schedule: json.payment_schedule as PaymentSchedule,
+          payment_terms: json.payment_terms || null,
+        }
         : {};
       const save = await updateProposal({
         id,
@@ -379,6 +379,10 @@ export function ProposalEditor({
           </AlertDescription>
         </Alert>
       ) : null}
+
+      <div className="min-w-0 overflow-hidden rounded-lg border border-border">
+        <LineItemsTable items={items} onChange={setItems} locked={locked} showBillingCycle />
+      </div>
 
       <aside className="flex min-w-0 flex-col gap-3 rounded-lg border border-border bg-card p-4">
         <FormRow label="Válida hasta" htmlFor="valid-until">
@@ -598,10 +602,6 @@ export function ProposalEditor({
           />
         </FormRow>
       </section>
-
-      <div className="min-w-0 overflow-hidden rounded-lg border border-border">
-        <LineItemsTable items={items} onChange={setItems} locked={locked} showBillingCycle />
-      </div>
 
       <MaintenanceOfferEditor
         offer={maintenanceOptions}

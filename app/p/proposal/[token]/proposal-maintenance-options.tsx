@@ -36,7 +36,7 @@ export function ProposalMaintenanceOptions({
   };
 
   return (
-    <section className="border-t border-zinc-100 bg-[#2A4227]/[0.03] px-6 py-7 dark:border-zinc-800/60 dark:bg-[#9CC196]/[0.04] sm:px-8">
+    <section className="border-t border-zinc-100 bg-[#2A4227]/3 px-6 py-7 dark:border-zinc-800/60 dark:bg-[#9CC196]/4 sm:px-8">
       <header className="max-w-3xl">
         <p className="text-[11px] font-semibold uppercase tracking-widest text-[#2A4227] dark:text-[#9CC196]">
           {offer.heading}
@@ -51,12 +51,13 @@ export function ProposalMaintenanceOptions({
         </p>
       </header>
       <div className="mt-5 grid gap-3 lg:grid-cols-3">
-        {offer.plans.map((plan) => {
+        {offer.plans.map((plan, index) => {
           const active = selected === plan.id;
+          const recommended = index === Math.floor(offer.plans.length / 2);
           return (
             <article
               key={plan.id}
-              className={`rounded-lg border p-4 ${active ? "border-[#2A4227] bg-[#2A4227]/5 dark:border-[#9CC196]" : "border-zinc-200 dark:border-zinc-800"}`}
+              className={`rounded-lg border p-4 ${active ? "border-[#2A4227] bg-[#2A4227]/5 dark:border-[#9CC196]" : recommended ? "border-[#2A4227]/50 bg-[#2A4227]/3 dark:border-[#9CC196]/60 dark:bg-[#9CC196]/5" : "border-zinc-200 dark:border-zinc-800"}`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -66,11 +67,18 @@ export function ProposalMaintenanceOptions({
                     <span className="text-xs font-medium">/ mes + IVA</span>
                   </p>
                 </div>
-                {active ? (
-                  <span className="inline-flex items-center gap-1 text-xs font-medium text-[#2A4227] dark:text-[#9CC196]">
-                    <Check className="size-4" aria-hidden /> Seleccionado
-                  </span>
-                ) : null}
+                <div className="flex flex-col items-end gap-1.5">
+                  {recommended ? (
+                    <span className="rounded-full bg-[#2A4227] px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white dark:bg-[#9CC196] dark:text-[#1a2b18]">
+                      Recomendado
+                    </span>
+                  ) : null}
+                  {active ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-[#2A4227] dark:text-[#9CC196]">
+                      <Check className="size-4" aria-hidden /> Seleccionado
+                    </span>
+                  ) : null}
+                </div>
               </div>
               <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">{plan.summary}</p>
               <p className="mt-4 text-[11px] font-semibold uppercase tracking-wide text-[#2A4227] dark:text-[#9CC196]">
