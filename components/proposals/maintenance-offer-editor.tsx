@@ -1,11 +1,12 @@
 "use client";
 
-import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import type { MaintenanceOffer } from "@/lib/proposals/maintenance";
+import { MAINTENANCE_LIMITS, type MaintenanceOffer } from "@/lib/proposals/maintenance";
 import { formatEUR } from "@/lib/utils";
+import { Check } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 type Props = {
   offer: MaintenanceOffer;
@@ -15,11 +16,75 @@ type Props = {
   locked: boolean;
 };
 
-function listLines(value: string): string[] {
+function listLines(value: string, maxItems: number): string[] {
   return value
     .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
+    .map((line) => line.replace(/^\s*(?:[-*•]|[0-9]+[.)])\s*/, "").trim())
+    .filter(Boolean)
+    .slice(0, maxItems);
+}
+
+function MaintenanceListTextarea({
+  items,
+  onChange,
+  disabled,
+  maxItems,
+  label,
+  ariaLabel,
+  placeholder,
+  className,
+}: {
+  items: string[];
+  onChange: (items: string[]) => void;
+  disabled: boolean;
+  maxItems: number;
+  label: string;
+  ariaLabel: string;
+  placeholder: string;
+  className: string;
+}) {
+  const [draft, setDraft] = useState(() => items.join("\n"));
+  const editing = useRef(false);
+  const count = listLines(draft, maxItems).length;
+
+  useEffect(() => {
+    const nextDraft = items.join("\n");
+    if (!editing.current && draft !== nextDraft) setDraft(nextDraft);
+  }, [draft, items]);
+
+  const commit = () => {
+    editing.current = false;
+    const nextItems = listLines(draft, maxItems);
+    setDraft(nextItems.join("\n"));
+    onChange(nextItems);
+  };
+
+  return (
+    <>
+      <div className="flex items-center justify-between gap-2">
+        <span>{label}</span>
+        <span className="text-[11px] font-normal tabular-nums text-muted-foreground">
+          {count}/{maxItems}
+        </span>
+      </div>
+      <Textarea
+        value={draft}
+        onChange={(event) => setDraft(event.target.value)}
+        onFocus={() => {
+          editing.current = true;
+        }}
+        onBlur={commit}
+        disabled={disabled}
+        rows={5}
+        placeholder={placeholder}
+        aria-label={ariaLabel}
+        className={className}
+      />
+      <p className="text-[11px] font-normal text-muted-foreground">
+        Un punto por línea. Puedes pegar una lista con viñetas.
+      </p>
+    </>
+  );
 }
 
 /** Proposal-scoped maintenance plans. Copy and pricing remain editable per quote. */
@@ -126,30 +191,26 @@ export function MaintenanceOfferEditor({
               </div>
               <div className="grid gap-3">
                 <div className="flex flex-col gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-                  <span>Incluye</span>
-                  <Textarea
-                    value={plan.coverage.join("\n")}
-                    onChange={(event) =>
-                      patchPlan(index, { coverage: listLines(event.target.value) })
-                    }
+                  <MaintenanceListTextarea
+                    items={plan.coverage}
+                    onChange={(coverage) => patchPlan(index, { coverage })}
                     disabled={locked}
-                    rows={5}
+                    maxItems={MAINTENANCE_LIMITS.maxCoverageItems}
+                    label="Incluye"
+                    ariaLabel={`Coberturas del plan ${plan.name}`}
                     placeholder="Un concepto por línea"
-                    aria-label={`Coberturas del plan ${plan.name}`}
                     className="min-h-28 resize-y bg-emerald-500/5 text-sm"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">
-                  <span>No incluye</span>
-                  <Textarea
-                    value={plan.exclusions.join("\n")}
-                    onChange={(event) =>
-                      patchPlan(index, { exclusions: listLines(event.target.value) })
-                    }
+                  <MaintenanceListTextarea
+                    items={plan.exclusions}
+                    onChange={(exclusions) => patchPlan(index, { exclusions })}
                     disabled={locked}
-                    rows={4}
+                    maxItems={MAINTENANCE_LIMITS.maxExclusionItems}
+                    label="No incluye"
+                    ariaLabel={`Exclusiones del plan ${plan.name}`}
                     placeholder="Una exclusión por línea"
-                    aria-label={`Exclusiones del plan ${plan.name}`}
                     className="min-h-24 resize-y bg-muted/30 text-sm"
                   />
                 </div>

@@ -1,10 +1,10 @@
+import { DEFAULT_MAINTENANCE_OFFER } from "@/lib/proposals/maintenance";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { DEFAULT_MAINTENANCE_OFFER } from "@/lib/proposals/maintenance";
 import { MaintenanceOfferEditor } from "./maintenance-offer-editor";
 
 describe("MaintenanceOfferEditor", () => {
-  it("shows and persists the exclusions textarea for each plan", () => {
+  it("keeps multiline edits until blur and imports pasted bullet lists", () => {
     const onChange = vi.fn();
     render(
       <MaintenanceOfferEditor
@@ -18,15 +18,18 @@ describe("MaintenanceOfferEditor", () => {
 
     const exclusions = screen.getByLabelText("Exclusiones del plan Esencial");
     fireEvent.change(exclusions, {
-      target: { value: "Cambios de contenido\nNuevas integraciones" },
+      target: { value: "- Cambios de contenido\n• Nuevas integraciones\n3. Formación" },
     });
+    expect((exclusions as HTMLTextAreaElement).value).toContain("\n• Nuevas integraciones");
+    expect(onChange).not.toHaveBeenCalled();
+    fireEvent.blur(exclusions);
 
     expect(onChange).toHaveBeenLastCalledWith(
       expect.objectContaining({
         plans: expect.arrayContaining([
           expect.objectContaining({
             id: "essential",
-            exclusions: ["Cambios de contenido", "Nuevas integraciones"],
+            exclusions: ["Cambios de contenido", "Nuevas integraciones", "Formación"],
           }),
         ]),
       }),
