@@ -22,6 +22,21 @@ describe("proposal PDF helpers", () => {
       context: null,
       problems: [],
       solutions: [],
+      scopeModules: [
+        {
+          id: "scope-1",
+          title: "Portal de clientes",
+          description: "Un espacio privado para clientes.",
+          included: ["Acceso con usuarios"],
+          excluded: ["Migración histórica"],
+          notes: null,
+        },
+      ],
+      deliverables: "- Portal publicado",
+      acceptanceCriteria: "- El cliente valida el acceso",
+      paymentSchedule: "half_half",
+      paymentTerms: "50 % al aceptar y 50 % a la entrega.",
+      changeManagementTerms: "Los cambios fuera de alcance se presupuestan aparte.",
       terms: null,
       notes: null,
       subtotal: 1000,
@@ -38,6 +53,7 @@ describe("proposal PDF helpers", () => {
           billingCycle: "none",
         },
       ],
+      portalUrl: "https://example.test/p/proposal/token",
     });
 
     expect(pdf.subarray(0, 4).toString()).toBe("%PDF");

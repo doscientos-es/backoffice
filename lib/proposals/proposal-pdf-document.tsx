@@ -1,5 +1,6 @@
-import { Document, Font, Page, renderToBuffer, StyleSheet, Text, View } from "@react-pdf/renderer";
 import type { KeyPoint } from "@/lib/proposals/key-points";
+import { PAYMENT_SCHEDULE_LABELS, type PaymentSchedule, type ScopeModule } from "@/lib/proposals/scope";
+import { Document, Font, Link, Page, renderToBuffer, StyleSheet, Text, View } from "@react-pdf/renderer";
 
 const BRAND = "#2A4227";
 const INK = "#183017";
@@ -149,6 +150,10 @@ const styles = StyleSheet.create({
   totalValue: { color: BRAND, fontFamily: "Helvetica-Bold", fontSize: 18 },
   footer: { bottom: 25, color: MUTED, fontSize: 7.5, left: 48, position: "absolute", right: 48 },
   footerLine: { borderTopColor: "#D9E1D7", borderTopWidth: 1, paddingTop: 8 },
+  bullet: { color: MUTED, fontSize: 8.5, lineHeight: 1.45, marginTop: 3 },
+  cta: { backgroundColor: BRAND, borderRadius: 10, marginTop: 20, padding: 15 },
+  ctaText: { color: "#DDE9DB", fontSize: 8.5, lineHeight: 1.45 },
+  ctaLink: { color: ACCENT, fontFamily: "Helvetica-Bold", fontSize: 10, marginTop: 7 },
 });
 
 export type ProposalPdfItem = {
@@ -169,12 +174,19 @@ export type ProposalPdfData = {
   context: string | null;
   problems: KeyPoint[];
   solutions: KeyPoint[];
+  scopeModules: ScopeModule[];
+  deliverables: string | null;
+  acceptanceCriteria: string | null;
+  paymentSchedule: PaymentSchedule;
+  paymentTerms: string | null;
+  changeManagementTerms: string | null;
   terms: string | null;
   notes: string | null;
   subtotal: number;
   taxAmount: number;
   total: number;
   items: ProposalPdfItem[];
+  portalUrl: string;
 };
 
 function money(value: number): string {
@@ -220,6 +232,24 @@ function PointList({ points }: { points: KeyPoint[] }) {
           {point.description ? (
             <Text style={styles.pointText}>{printableMarkdown(point.description)}</Text>
           ) : null}
+        </View>
+      ))}
+    </>
+  );
+}
+
+function ScopeModuleList({ modules }: { modules: ScopeModule[] }) {
+  return (
+    <>
+      {modules.map((module, index) => (
+        <View key={module.id} style={styles.point} wrap={false}>
+          <Text style={styles.pointTitle}>{`${String(index + 1).padStart(2, "0")} · ${module.title}`}</Text>
+          {module.description ? <Text style={styles.pointText}>{module.description}</Text> : null}
+          {module.included.length > 0 ? <Text style={[styles.pointText, { color: BRAND, fontFamily: "Helvetica-Bold" }]}>Incluido</Text> : null}
+          {module.included.map((item) => <Text key={`included-${item}`} style={styles.bullet}>{`• ${item}`}</Text>)}
+          {module.excluded.length > 0 ? <Text style={[styles.pointText, { fontFamily: "Helvetica-Bold" }]}>No incluido</Text> : null}
+          {module.excluded.map((item) => <Text key={`excluded-${item}`} style={styles.bullet}>{`• ${item}`}</Text>)}
+          {module.notes ? <Text style={styles.pointText}>{`Notas: ${module.notes}`}</Text> : null}
         </View>
       ))}
     </>
@@ -283,9 +313,25 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
           </View>
         ) : null}
 
+        {data.scopeModules.length > 0 ? (
+          <View style={styles.section} break={Boolean(data.context || data.problems.length || data.solutions.length)}>
+            <Text style={styles.sectionLabel}>Alcance del proyecto</Text>
+            <Text style={styles.sectionTitle}>Qué incluye esta propuesta</Text>
+            <ScopeModuleList modules={data.scopeModules} />
+          </View>
+        ) : null}
+
+        {data.deliverables || data.acceptanceCriteria ? (
+          <View style={styles.section} break={data.scopeModules.length > 0}>
+            <Text style={styles.sectionLabel}>Entrega y validación</Text>
+            {data.deliverables ? <><Text style={styles.pointTitle}>Entregables</Text><Text style={styles.body}>{printableMarkdown(data.deliverables)}</Text></> : null}
+            {data.acceptanceCriteria ? <><Text style={[styles.pointTitle, { marginTop: 12 }]}>Criterios de aceptación</Text><Text style={styles.body}>{printableMarkdown(data.acceptanceCriteria)}</Text></> : null}
+          </View>
+        ) : null}
+
         <View
           style={styles.section}
-          break={Boolean(data.context || data.problems.length || data.solutions.length)}
+          break={Boolean(data.context || data.problems.length || data.solutions.length || data.scopeModules.length || data.deliverables || data.acceptanceCriteria)}
         >
           <Text style={styles.sectionLabel}>Propuesta económica</Text>
           <Text style={styles.sectionTitle}>Inversión y alcance</Text>
@@ -327,10 +373,12 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
           </View>
         </View>
 
-        {data.terms ? (
+        {data.paymentTerms || data.changeManagementTerms || data.terms ? (
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>Condiciones</Text>
-            <Text style={styles.body}>{printableMarkdown(data.terms)}</Text>
+            {data.paymentTerms ? <><Text style={styles.pointTitle}>Forma de pago</Text><Text style={styles.pointText}>{PAYMENT_SCHEDULE_LABELS[data.paymentSchedule]}</Text><Text style={styles.body}>{printableMarkdown(data.paymentTerms)}</Text></> : null}
+            {data.changeManagementTerms ? <><Text style={[styles.pointTitle, { marginTop: 12 }]}>Cambios de alcance</Text><Text style={styles.body}>{printableMarkdown(data.changeManagementTerms)}</Text></> : null}
+            {data.terms ? <Text style={styles.body}>{printableMarkdown(data.terms)}</Text> : null}
           </View>
         ) : null}
         {data.notes ? (
@@ -339,6 +387,10 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
             <Text style={styles.body}>{printableMarkdown(data.notes)}</Text>
           </View>
         ) : null}
+        <View style={styles.cta} wrap={false}>
+          <Text style={styles.ctaText}>¿Todo claro? Revisa la propuesta online y confírmala para que podamos empezar.</Text>
+          <Link src={data.portalUrl} style={styles.ctaLink}>Revisar y aceptar la propuesta →</Link>
+        </View>
         <Footer />
       </Page>
     </Document>

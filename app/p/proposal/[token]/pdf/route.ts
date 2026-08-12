@@ -1,5 +1,5 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { publicEnv } from "@/lib/env";
 import { isPortalUnlocked } from "@/lib/portal/access";
 import { parseKeyPoints } from "@/lib/proposals/key-points";
 import {
@@ -7,7 +7,9 @@ import {
   proposalPdfFilename,
   renderProposalPdf,
 } from "@/lib/proposals/proposal-pdf-document";
+import { type PaymentSchedule, parseScopeModules } from "@/lib/proposals/scope";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -62,6 +64,12 @@ export async function GET(
     context: (proposal.context_markdown as string | null) ?? null,
     problems: parseKeyPoints(proposal.problems),
     solutions: parseKeyPoints(proposal.solutions),
+    scopeModules: parseScopeModules(proposal.scope_modules),
+    deliverables: (proposal.deliverables as string | null) ?? null,
+    acceptanceCriteria: (proposal.acceptance_criteria as string | null) ?? null,
+    paymentSchedule: (proposal.payment_schedule as PaymentSchedule | null) ?? "half_half",
+    paymentTerms: (proposal.payment_terms as string | null) ?? null,
+    changeManagementTerms: (proposal.change_management_terms as string | null) ?? null,
     terms: (proposal.terms as string | null) ?? null,
     notes: (proposal.notes as string | null) ?? null,
     subtotal: Number(proposal.subtotal ?? 0),
@@ -78,6 +86,7 @@ export async function GET(
         billingCycle: (item.billing_cycle as string | null) ?? null,
       }),
     ),
+    portalUrl: `${publicEnv.NEXT_PUBLIC_APP_URL}/p/proposal/${token}`,
   });
 
   return new NextResponse(new Uint8Array(pdf), {
