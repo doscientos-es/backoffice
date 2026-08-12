@@ -185,6 +185,13 @@ export function ProposalEditor({
 
   const narrativeIsEmpty =
     !notes.trim() && !contextMarkdown.trim() && pairs.length === 0 && !terms.trim();
+  const commercialScopeIsEmpty =
+    scopeModules.length === 0 && !deliverables.trim() && !acceptanceCriteria.trim();
+  const hasEmptyDraftFields =
+    narrativeIsEmpty ||
+    commercialScopeIsEmpty ||
+    !paymentTerms.trim() ||
+    !changeManagementTerms.trim();
 
   function handlePaymentScheduleChange(value: PaymentSchedule) {
     setPaymentSchedule(value);
@@ -192,7 +199,7 @@ export function ProposalEditor({
   }
 
   const handleGenerateDraft = useCallback(async () => {
-    if (!leadId || generating || locked || !narrativeIsEmpty) return;
+    if (!leadId || generating || locked || !hasEmptyDraftFields) return;
     setGenerating(true);
     aiFeedback.setPending();
     try {
@@ -202,30 +209,88 @@ export function ProposalEditor({
 
       const incoming = (json.pairs ?? []) as Array<Omit<EditablePair, "id">>;
       const nextPairs = incoming.map((pair) => ({ ...createEmptyPair(), ...pair }));
-      const { problems, solutions } = unzipPairs(nextPairs);
+      const nextScopeModules = (json.scope_modules ?? []) as ScopeModule[];
+      const titleIsEmpty = !title.trim();
+      const notesAreEmpty = !notes.trim();
+      const contextIsEmpty = !contextMarkdown.trim();
+      const pairsAreEmpty = pairs.length === 0;
+      const termsAreEmpty = !terms.trim();
+      const modulesAreEmpty = scopeModules.length === 0;
+      const deliverablesAreEmpty = !deliverables.trim();
+      const acceptanceCriteriaAreEmpty = !acceptanceCriteria.trim();
+      const paymentTermsAreEmpty = !paymentTerms.trim();
+      const changeManagementTermsAreEmpty = !changeManagementTerms.trim();
+      const nextKeyPoints = pairsAreEmpty ? unzipPairs(nextPairs) : null;
       const save = await updateProposal({
         id,
-        title: json.title,
-        notes: json.notes || null,
-        context_markdown: json.context_markdown || null,
-        problems: serializeKeyPoints(problems),
-        solutions: serializeKeyPoints(solutions),
-        terms: json.terms || null,
+        ...(titleIsEmpty ? { title: json.title } : {}),
+        ...(notesAreEmpty ? { notes: json.notes || null } : {}),
+        ...(contextIsEmpty ? { context_markdown: json.context_markdown || null } : {}),
+        ...(pairsAreEmpty
+          ? {
+              problems: serializeKeyPoints(nextKeyPoints?.problems ?? []),
+              solutions: serializeKeyPoints(nextKeyPoints?.solutions ?? []),
+            }
+          : {}),
+        ...(termsAreEmpty ? { terms: json.terms || null } : {}),
+        ...(modulesAreEmpty && nextScopeModules.length > 0
+          ? { scope_modules: nextScopeModules }
+          : {}),
+        ...(deliverablesAreEmpty ? { deliverables: json.deliverables || null } : {}),
+        ...(acceptanceCriteriaAreEmpty
+          ? { acceptance_criteria: json.acceptance_criteria || null }
+          : {}),
+        ...(paymentTermsAreEmpty
+          ? {
+              payment_schedule: json.payment_schedule as PaymentSchedule,
+              payment_terms: json.payment_terms || null,
+            }
+          : {}),
+        ...(changeManagementTermsAreEmpty
+          ? { change_management_terms: json.change_management_terms || null }
+          : {}),
       });
       if (!save.ok) throw new Error(save.error);
 
-      setTitle(json.title);
-      setNotes(json.notes ?? "");
-      setContextMarkdown(json.context_markdown ?? "");
-      setPairs(nextPairs);
-      setTerms(json.terms ?? "");
+      if (titleIsEmpty) setTitle(json.title);
+      if (notesAreEmpty) setNotes(json.notes ?? "");
+      if (contextIsEmpty) setContextMarkdown(json.context_markdown ?? "");
+      if (pairsAreEmpty) setPairs(nextPairs);
+      if (termsAreEmpty) setTerms(json.terms ?? "");
+      if (modulesAreEmpty && nextScopeModules.length > 0) setScopeModules(nextScopeModules);
+      if (deliverablesAreEmpty) setDeliverables(json.deliverables ?? "");
+      if (acceptanceCriteriaAreEmpty) setAcceptanceCriteria(json.acceptance_criteria ?? "");
+      if (paymentTermsAreEmpty) {
+        setPaymentSchedule(json.payment_schedule as PaymentSchedule);
+        setPaymentTerms(json.payment_terms ?? "");
+      }
+      if (changeManagementTermsAreEmpty) {
+        setChangeManagementTerms(json.change_management_terms ?? "");
+      }
       aiFeedback.setSuccess("Borrador preparado con el contexto del lead");
     } catch (err) {
       aiFeedback.setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
       setGenerating(false);
     }
-  }, [aiFeedback, generating, id, leadId, locked, narrativeIsEmpty]);
+  }, [
+    acceptanceCriteria,
+    aiFeedback,
+    changeManagementTerms,
+    contextMarkdown,
+    deliverables,
+    generating,
+    hasEmptyDraftFields,
+    id,
+    leadId,
+    locked,
+    notes,
+    pairs,
+    paymentTerms,
+    scopeModules,
+    terms,
+    title,
+  ]);
 
   useEffect(() => {
     if (
@@ -234,13 +299,22 @@ export function ProposalEditor({
       !leadId ||
       locked ||
       !narrativeIsEmpty ||
+      !commercialScopeIsEmpty ||
       automaticDraftStarted.current
     ) {
       return;
     }
     automaticDraftStarted.current = true;
     void handleGenerateDraft();
-  }, [autoGenerateDraft, aiEnabled, leadId, locked, narrativeIsEmpty, handleGenerateDraft]);
+  }, [
+    autoGenerateDraft,
+    aiEnabled,
+    leadId,
+    locked,
+    narrativeIsEmpty,
+    commercialScopeIsEmpty,
+    handleGenerateDraft,
+  ]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -332,11 +406,12 @@ export function ProposalEditor({
           </div>
         </header>
 
-        {aiEnabled && leadId && narrativeIsEmpty && !locked ? (
+        {aiEnabled && leadId && hasEmptyDraftFields && !locked ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-primary/20 bg-primary/5 px-3 py-2.5">
             <p className="text-xs text-muted-foreground">
-              Usa las notas, llamadas e historial del lead para preparar contexto, condiciones y
-              enfoque. Revísalo antes de enviarlo.
+              Usa las notas, llamadas e historial del lead para preparar el contexto, alcance,
+              entregables, criterios de aceptación y condiciones. Solo rellenará los campos vacíos;
+              revísalo antes de enviarlo.
             </p>
             <Button
               type="button"

@@ -6,19 +6,35 @@ const { state } = vi.hoisted(() => ({
     aiEnabled: true,
     leadId: "lead-1",
     generatedPrompt: "",
+    generatedSystem: "",
   },
 }));
 
 vi.mock("@/lib/ai", () => ({
   AI_MODELS: { drafter: "test-model" },
   isAIEnabled: () => state.aiEnabled,
-  runAIObject: vi.fn(async (input: { user: string }) => {
+  runAIObject: vi.fn(async (input: { user: string; system: string }) => {
     state.generatedPrompt = input.user;
+    state.generatedSystem = input.system;
     return {
       title: "Propuesta de portal de clientes",
       context_markdown: "El equipo necesita centralizar su operativa.",
       notes: "",
       terms: "",
+      scope_modules: [
+        {
+          title: "Portal de clientes",
+          description: "Unifica el acceso de los clientes.",
+          included: ["Acceso privado"],
+          excluded: ["Integraciones no analizadas"],
+          notes: "Validar los flujos prioritarios.",
+        },
+      ],
+      deliverables: "- Portal publicado",
+      acceptance_criteria: "- El cliente valida el acceso",
+      payment_schedule: "half_half",
+      payment_terms: "50 % al aceptar y 50 % a la entrega.",
+      change_management_terms: "Los cambios fuera de alcance se valoran antes de ejecutarse.",
       pairs: [
         {
           problem: "Procesos dispersos",
@@ -81,6 +97,7 @@ describe("POST /api/proposals/[id]/generate-draft", () => {
     state.aiEnabled = true;
     state.leadId = "lead-1";
     state.generatedPrompt = "";
+    state.generatedSystem = "";
   });
 
   it("rejects requests when AI is disabled", async () => {
@@ -114,7 +131,15 @@ describe("POST /api/proposals/[id]/generate-draft", () => {
           solutionDescription: "Un punto de acceso único.",
         },
       ],
+      scope_modules: [
+        expect.objectContaining({ title: "Portal de clientes", id: expect.any(String) }),
+      ],
+      deliverables: "- Portal publicado",
+      acceptance_criteria: "- El cliente valida el acceso",
+      payment_schedule: "half_half",
     });
     expect(state.generatedPrompt).toContain("Transcripción: El equipo necesita un portal");
+    expect(state.generatedSystem).toContain("scope_modules");
+    expect(state.generatedSystem).toContain("acceptance_criteria");
   });
 });
