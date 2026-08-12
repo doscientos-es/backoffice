@@ -15,6 +15,7 @@ import { scopedLogger } from "@/lib/logger";
 import { dispatchNotifications } from "@/lib/notifications/dispatch";
 import { unlockPortalResource } from "@/lib/portal/access";
 import { paymentInitialPercentage, paymentScheduleInput } from "@/lib/proposals/scope";
+import { parseMaintenanceOffer, selectedMaintenancePlan } from "@/lib/proposals/maintenance";
 import {
   AcceptProposalFiscalData,
   type AcceptProposalFiscalDataType,
@@ -29,13 +30,13 @@ type ActionResult = { ok: true } | { ok: false; error: string };
 
 export type PaymentInitResult =
   | {
-      ok: true;
-      demo?: boolean;
-      url: string;
-      signatureVersion: string;
-      merchantParameters: string;
-      signature: string;
-    }
+    ok: true;
+    demo?: boolean;
+    url: string;
+    signatureVersion: string;
+    merchantParameters: string;
+    signature: string;
+  }
   | { ok: false; error: string };
 
 /**
@@ -222,6 +223,49 @@ export async function acceptProposal(token: string, fiscal?: unknown): Promise<A
 export async function rejectProposal(token: string, reason?: string): Promise<ActionResult> {
   const parsedReason = ProposalRejectionReason.safeParse(reason);
   return rejectAction(token, parsedReason.success ? parsedReason.data : undefined);
+}
+
+/** The portal can only change maintenance before the proposal has a final response. */
+export async function selectProposalMaintenance(
+  token: string,
+  planId: string | null,
+): Promise<ActionResult> {
+  const parsedToken = ProposalPortalToken.safeParse(token);
+  if (!parsedToken.success) return { ok: false, error: "Token inválido" };
+  if (planId !== null && !z.string().min(1).max(64).safeParse(planId).success) {
+    return { ok: false, error: "Plan de mantenimiento no válido" };
+  }
+
+  const admin = createAdminClient();
+  const { data: proposal, error } = await admin
+    .from("proposals")
+    .select("id, status, maintenance_options")
+    .eq("portal_token", parsedToken.data)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (error || !proposal) return { ok: false, error: "Propuesta no encontrada" };
+  if (!["sent", "viewed"].includes(proposal.status as string)) {
+    return { ok: false, error: "El mantenimiento ya no se puede modificar" };
+  }
+
+  const offer = parseMaintenanceOffer(proposal.maintenance_options);
+  if (planId && !selectedMaintenancePlan(offer, planId)) {
+    return { ok: false, error: "Este plan no está disponible en la propuesta" };
+  }
+  const { error: updateError } = await admin
+    .from("proposals")
+    .update({
+      maintenance_options: offer,
+      maintenance_selected_plan_id: planId,
+      maintenance_selection_source: planId ? "client" : null,
+      maintenance_selected_at: planId ? new Date().toISOString() : null,
+    })
+    .eq("id", proposal.id as string)
+    .in("status", ["sent", "viewed"]);
+  if (updateError) return { ok: false, error: "No se pudo actualizar el mantenimiento" };
+
+  revalidatePath(`/p/proposal/${parsedToken.data}`);
+  return { ok: true };
 }
 
 /** Public unlock-form submit for a password-protected proposal portal link. */

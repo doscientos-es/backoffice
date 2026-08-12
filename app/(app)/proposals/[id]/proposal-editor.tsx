@@ -1,8 +1,7 @@
 "use client";
 
-import { AlertCircle } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LineItemsTable } from "@/components/finance/line-items-table";
+import { MaintenanceOfferEditor } from "@/components/proposals/maintenance-offer-editor";
 import { ProblemSolutionEditor } from "@/components/proposals/problem-solution-editor";
 import { ScopeModulesEditor } from "@/components/proposals/scope-modules-editor";
 import { AiNotice } from "@/components/ui/ai-notice";
@@ -25,6 +24,7 @@ import {
   unzipPairs,
   zipKeyPoints,
 } from "@/lib/proposals/key-points";
+import { DEFAULT_MAINTENANCE_OFFER, type MaintenanceOffer } from "@/lib/proposals/maintenance";
 import {
   DEFAULT_CHANGE_MANAGEMENT_TERMS,
   PAYMENT_SCHEDULE_LABELS,
@@ -32,6 +32,8 @@ import {
   type PaymentSchedule,
   type ScopeModule,
 } from "@/lib/proposals/scope";
+import { AlertCircle } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { updateProposal } from "../actions";
 
 export type EditableItem = LineItem;
@@ -51,6 +53,8 @@ export type ProposalEditorProps = {
   initialPaymentSchedule: PaymentSchedule | null;
   initialPaymentTerms: string | null;
   initialChangeManagementTerms: string | null;
+  initialMaintenanceOptions: MaintenanceOffer | null;
+  initialMaintenanceSelectedPlanId: string | null;
   initialItems: EditableItem[];
   /** When true, fields are read-only (proposal accepted/rejected). */
   locked: boolean;
@@ -86,6 +90,8 @@ export function ProposalEditor({
   initialPaymentSchedule,
   initialPaymentTerms,
   initialChangeManagementTerms,
+  initialMaintenanceOptions,
+  initialMaintenanceSelectedPlanId,
   initialItems,
   locked,
   aiEnabled,
@@ -116,6 +122,12 @@ export function ProposalEditor({
   const [changeManagementTerms, setChangeManagementTerms] = useState(
     initialChangeManagementTerms ?? DEFAULT_CHANGE_MANAGEMENT_TERMS,
   );
+  const [maintenanceOptions, setMaintenanceOptions] = useState<MaintenanceOffer>(
+    initialMaintenanceOptions ?? DEFAULT_MAINTENANCE_OFFER,
+  );
+  const [maintenanceSelectedPlanId, setMaintenanceSelectedPlanId] = useState<string | null>(
+    initialMaintenanceSelectedPlanId,
+  );
   const [items, setItems] = useState<EditableItem[]>(
     initialItems.length > 0
       ? initialItems.map((it) => ({ ...it, id: it.id || crypto.randomUUID() }))
@@ -139,6 +151,8 @@ export function ProposalEditor({
       payment_schedule: paymentSchedule,
       payment_terms: paymentTerms || null,
       change_management_terms: changeManagementTerms || null,
+      maintenance_options: maintenanceOptions,
+      maintenance_selected_plan_id: maintenanceSelectedPlanId,
       items,
     };
   }, [
@@ -155,6 +169,8 @@ export function ProposalEditor({
     paymentSchedule,
     paymentTerms,
     changeManagementTerms,
+    maintenanceOptions,
+    maintenanceSelectedPlanId,
     items,
   ]);
 
@@ -226,15 +242,15 @@ export function ProposalEditor({
       const nextKeyPoints = pairsAreEmpty ? unzipPairs(nextPairs) : null;
       const generatedNarrativePatch = pairsAreEmpty
         ? {
-            problems: serializeKeyPoints(nextKeyPoints?.problems ?? []),
-            solutions: serializeKeyPoints(nextKeyPoints?.solutions ?? []),
-          }
+          problems: serializeKeyPoints(nextKeyPoints?.problems ?? []),
+          solutions: serializeKeyPoints(nextKeyPoints?.solutions ?? []),
+        }
         : {};
       const generatedPaymentTermsPatch = paymentTermsAreEmpty
         ? {
-            payment_schedule: json.payment_schedule as PaymentSchedule,
-            payment_terms: json.payment_terms || null,
-          }
+          payment_schedule: json.payment_schedule as PaymentSchedule,
+          payment_terms: json.payment_terms || null,
+        }
         : {};
       const save = await updateProposal({
         id,
@@ -588,6 +604,14 @@ export function ProposalEditor({
           />
         </FormRow>
       </section>
+
+      <MaintenanceOfferEditor
+        offer={maintenanceOptions}
+        selectedPlanId={maintenanceSelectedPlanId}
+        onChange={setMaintenanceOptions}
+        onSelectedPlanChange={setMaintenanceSelectedPlanId}
+        locked={locked}
+      />
     </div>
   );
 }
