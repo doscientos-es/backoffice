@@ -90,6 +90,21 @@ describe("updateProposal", () => {
       title: "Propuesta",
       problems: [{ id: "pair-1", title: "Proceso manual", description: "Mucho trabajo" }],
       solutions: [{ id: "pair-1", title: "Automatizar", description: "Menos trabajo" }],
+      scope_modules: [
+        {
+          id: "scope-1",
+          title: "Portal",
+          description: "Área privada",
+          included: ["Acceso"],
+          excluded: [],
+          notes: null,
+        },
+      ],
+      deliverables: "Portal publicado",
+      acceptance_criteria: "Acceso verificado",
+      payment_schedule: "half_half",
+      payment_terms: "50 % al aceptar.",
+      change_management_terms: "Cambios presupuestados.",
       items: [
         {
           description: "Implementación",
@@ -107,6 +122,21 @@ describe("updateProposal", () => {
       title: "Propuesta",
       problems: [{ id: "pair-1", title: "Proceso manual", description: "Mucho trabajo" }],
       solutions: [{ id: "pair-1", title: "Automatizar", description: "Menos trabajo" }],
+      scope_modules: [
+        {
+          id: "scope-1",
+          title: "Portal",
+          description: "Área privada",
+          included: ["Acceso"],
+          excluded: [],
+          notes: null,
+        },
+      ],
+      deliverables: "Portal publicado",
+      acceptance_criteria: "Acceso verificado",
+      payment_schedule: "half_half",
+      payment_terms: "50 % al aceptar.",
+      change_management_terms: "Cambios presupuestados.",
     });
   });
 

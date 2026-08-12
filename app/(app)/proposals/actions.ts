@@ -17,6 +17,7 @@ import {
   buildProposalTotalsPatch,
   isProposalEditable,
 } from "@/lib/proposals/items";
+import { parseMaintenanceOffer, selectedMaintenancePlan } from "@/lib/proposals/maintenance";
 import { formatProposalValidationIssues } from "@/lib/proposals/validation";
 import { UpdatePortalAccessInput } from "@/lib/schemas/portal";
 import {
@@ -328,6 +329,14 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
   }
   const { id, items, ...rest } = parsed.data;
 
+  const maintenanceOffer = parseMaintenanceOffer(rest.maintenance_options);
+  if (
+    rest.maintenance_selected_plan_id &&
+    !selectedMaintenancePlan(maintenanceOffer, rest.maintenance_selected_plan_id)
+  ) {
+    return { ok: false, error: "Mantenimiento: el plan seleccionado no existe en esta propuesta" };
+  }
+
   const supabase = await createServerClient();
 
   const { data: current, error: readError } = await supabase
@@ -363,6 +372,14 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
   if (rest.payment_terms !== undefined) patch.payment_terms = rest.payment_terms;
   if (rest.change_management_terms !== undefined) {
     patch.change_management_terms = rest.change_management_terms;
+  }
+  if (rest.maintenance_options !== undefined) patch.maintenance_options = rest.maintenance_options;
+  if (rest.maintenance_selected_plan_id !== undefined) {
+    patch.maintenance_selected_plan_id = rest.maintenance_selected_plan_id;
+    patch.maintenance_selection_source = rest.maintenance_selected_plan_id ? "team" : null;
+    patch.maintenance_selected_at = rest.maintenance_selected_plan_id
+      ? new Date().toISOString()
+      : null;
   }
 
   if (items) {
