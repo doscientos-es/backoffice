@@ -16,3 +16,5 @@ alter table public.proposal_messages enable row level security;
 drop policy if exists "proposal_messages_team_select" on public.proposal_messages;
 create policy "proposal_messages_team_select" on public.proposal_messages
   for select using (public.current_member_role() is not null);
+
+notify pgrst, 'reload schema';
