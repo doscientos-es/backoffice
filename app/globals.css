@@ -93,6 +93,10 @@
   pointer-events: none;
 }
 
+html[data-startup-splash-seen] #startup-splash {
+  display: none;
+}
+
 @keyframes splash-pop {
   from {
     opacity: 0;

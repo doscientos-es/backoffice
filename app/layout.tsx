@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from "next";
+import { Geist } from "next/font/google";
+import Script from "next/script";
+import { Toaster } from "sileo";
 import { LogoMark } from "@/components/branding";
 import { PwaRegister } from "@/components/pwa-register";
 import { ThemeProvider } from "@/components/theme-provider";
-import "./globals.css";
-import { Geist } from "next/font/google";
-import { Toaster } from "sileo";
+import { STARTUP_SPLASH_SESSION_KEY } from "@/lib/startup-splash";
 import { cn } from "@/lib/utils";
+import "./globals.css";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -38,6 +40,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
       <body>
+        <Script id="startup-splash-state" strategy="beforeInteractive">
+          {`try { if (sessionStorage.getItem("${STARTUP_SPLASH_SESSION_KEY}")) document.documentElement.dataset.startupSplashSeen = "true"; } catch {}`}
+        </Script>
         <div id="startup-splash" role="status" aria-label="Cargando Doscientos">
           <div className="startup-splash-mark-shell">
             <LogoMark size={112} className="startup-splash-mark" />
