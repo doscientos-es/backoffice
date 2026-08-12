@@ -13,7 +13,11 @@ const scopeBullet = z.string().trim().min(1).max(SCOPE_MODULE_LIMITS.maxBulletLe
 
 export const scopeModuleInput = z.object({
   id: z.string().min(1).max(64),
-  title: z.string().trim().min(1, "El nombre del módulo es obligatorio").max(SCOPE_MODULE_LIMITS.maxTitleLength),
+  title: z
+    .string()
+    .trim()
+    .min(1, "El nombre del módulo es obligatorio")
+    .max(SCOPE_MODULE_LIMITS.maxTitleLength),
   description: z.string().max(SCOPE_MODULE_LIMITS.maxDescriptionLength).nullable().optional(),
   included: z.array(scopeBullet).max(SCOPE_MODULE_LIMITS.maxBulletCount),
   excluded: z.array(scopeBullet).max(SCOPE_MODULE_LIMITS.maxBulletCount),
@@ -36,8 +40,10 @@ export const PAYMENT_SCHEDULE_LABELS: Record<PaymentSchedule, string> = {
 
 export const PAYMENT_SCHEDULE_TEMPLATES: Record<Exclude<PaymentSchedule, "custom">, string> = {
   upfront: "El 100 % del importe se abonará a la aceptación de la propuesta.",
-  half_half: "El 50 % del importe se abonará a la aceptación de la propuesta y el 50 % restante a la entrega.",
-  "30_40_30": "El 30 % del importe se abonará a la aceptación, el 40 % al validar el avance acordado y el 30 % restante a la entrega.",
+  half_half:
+    "El 50 % del importe se abonará a la aceptación de la propuesta y el 50 % restante a la entrega.",
+  "30_40_30":
+    "El 30 % del importe se abonará a la aceptación, el 40 % al validar el avance acordado y el 30 % restante a la entrega.",
 };
 
 export const DEFAULT_CHANGE_MANAGEMENT_TERMS =

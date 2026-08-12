@@ -1,6 +1,19 @@
+import {
+  Document,
+  Font,
+  Link,
+  Page,
+  renderToBuffer,
+  StyleSheet,
+  Text,
+  View,
+} from "@react-pdf/renderer";
 import type { KeyPoint } from "@/lib/proposals/key-points";
-import { PAYMENT_SCHEDULE_LABELS, type PaymentSchedule, type ScopeModule } from "@/lib/proposals/scope";
-import { Document, Font, Link, Page, renderToBuffer, StyleSheet, Text, View } from "@react-pdf/renderer";
+import {
+  PAYMENT_SCHEDULE_LABELS,
+  type PaymentSchedule,
+  type ScopeModule,
+} from "@/lib/proposals/scope";
 
 const BRAND = "#2A4227";
 const INK = "#183017";
@@ -243,12 +256,24 @@ function ScopeModuleList({ modules }: { modules: ScopeModule[] }) {
     <>
       {modules.map((module, index) => (
         <View key={module.id} style={styles.point} wrap={false}>
-          <Text style={styles.pointTitle}>{`${String(index + 1).padStart(2, "0")} · ${module.title}`}</Text>
+          <Text
+            style={styles.pointTitle}
+          >{`${String(index + 1).padStart(2, "0")} · ${module.title}`}</Text>
           {module.description ? <Text style={styles.pointText}>{module.description}</Text> : null}
-          {module.included.length > 0 ? <Text style={[styles.pointText, { color: BRAND, fontFamily: "Helvetica-Bold" }]}>Incluido</Text> : null}
-          {module.included.map((item) => <Text key={`included-${item}`} style={styles.bullet}>{`• ${item}`}</Text>)}
-          {module.excluded.length > 0 ? <Text style={[styles.pointText, { fontFamily: "Helvetica-Bold" }]}>No incluido</Text> : null}
-          {module.excluded.map((item) => <Text key={`excluded-${item}`} style={styles.bullet}>{`• ${item}`}</Text>)}
+          {module.included.length > 0 ? (
+            <Text style={[styles.pointText, { color: BRAND, fontFamily: "Helvetica-Bold" }]}>
+              Incluido
+            </Text>
+          ) : null}
+          {module.included.map((item) => (
+            <Text key={`included-${item}`} style={styles.bullet}>{`• ${item}`}</Text>
+          ))}
+          {module.excluded.length > 0 ? (
+            <Text style={[styles.pointText, { fontFamily: "Helvetica-Bold" }]}>No incluido</Text>
+          ) : null}
+          {module.excluded.map((item) => (
+            <Text key={`excluded-${item}`} style={styles.bullet}>{`• ${item}`}</Text>
+          ))}
           {module.notes ? <Text style={styles.pointText}>{`Notas: ${module.notes}`}</Text> : null}
         </View>
       ))}
@@ -314,7 +339,10 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
         ) : null}
 
         {data.scopeModules.length > 0 ? (
-          <View style={styles.section} break={Boolean(data.context || data.problems.length || data.solutions.length)}>
+          <View
+            style={styles.section}
+            break={Boolean(data.context || data.problems.length || data.solutions.length)}
+          >
             <Text style={styles.sectionLabel}>Alcance del proyecto</Text>
             <Text style={styles.sectionTitle}>Qué incluye esta propuesta</Text>
             <ScopeModuleList modules={data.scopeModules} />
@@ -324,14 +352,31 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
         {data.deliverables || data.acceptanceCriteria ? (
           <View style={styles.section} break={data.scopeModules.length > 0}>
             <Text style={styles.sectionLabel}>Entrega y validación</Text>
-            {data.deliverables ? <><Text style={styles.pointTitle}>Entregables</Text><Text style={styles.body}>{printableMarkdown(data.deliverables)}</Text></> : null}
-            {data.acceptanceCriteria ? <><Text style={[styles.pointTitle, { marginTop: 12 }]}>Criterios de aceptación</Text><Text style={styles.body}>{printableMarkdown(data.acceptanceCriteria)}</Text></> : null}
+            {data.deliverables ? (
+              <>
+                <Text style={styles.pointTitle}>Entregables</Text>
+                <Text style={styles.body}>{printableMarkdown(data.deliverables)}</Text>
+              </>
+            ) : null}
+            {data.acceptanceCriteria ? (
+              <>
+                <Text style={[styles.pointTitle, { marginTop: 12 }]}>Criterios de aceptación</Text>
+                <Text style={styles.body}>{printableMarkdown(data.acceptanceCriteria)}</Text>
+              </>
+            ) : null}
           </View>
         ) : null}
 
         <View
           style={styles.section}
-          break={Boolean(data.context || data.problems.length || data.solutions.length || data.scopeModules.length || data.deliverables || data.acceptanceCriteria)}
+          break={Boolean(
+            data.context ||
+              data.problems.length ||
+              data.solutions.length ||
+              data.scopeModules.length ||
+              data.deliverables ||
+              data.acceptanceCriteria,
+          )}
         >
           <Text style={styles.sectionLabel}>Propuesta económica</Text>
           <Text style={styles.sectionTitle}>Inversión y alcance</Text>
@@ -376,8 +421,21 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
         {data.paymentTerms || data.changeManagementTerms || data.terms ? (
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>Condiciones</Text>
-            {data.paymentTerms ? <><Text style={styles.pointTitle}>Forma de pago</Text><Text style={styles.pointText}>{PAYMENT_SCHEDULE_LABELS[data.paymentSchedule]}</Text><Text style={styles.body}>{printableMarkdown(data.paymentTerms)}</Text></> : null}
-            {data.changeManagementTerms ? <><Text style={[styles.pointTitle, { marginTop: 12 }]}>Cambios de alcance</Text><Text style={styles.body}>{printableMarkdown(data.changeManagementTerms)}</Text></> : null}
+            {data.paymentTerms ? (
+              <>
+                <Text style={styles.pointTitle}>Forma de pago</Text>
+                <Text style={styles.pointText}>
+                  {PAYMENT_SCHEDULE_LABELS[data.paymentSchedule]}
+                </Text>
+                <Text style={styles.body}>{printableMarkdown(data.paymentTerms)}</Text>
+              </>
+            ) : null}
+            {data.changeManagementTerms ? (
+              <>
+                <Text style={[styles.pointTitle, { marginTop: 12 }]}>Cambios de alcance</Text>
+                <Text style={styles.body}>{printableMarkdown(data.changeManagementTerms)}</Text>
+              </>
+            ) : null}
             {data.terms ? <Text style={styles.body}>{printableMarkdown(data.terms)}</Text> : null}
           </View>
         ) : null}
@@ -388,8 +446,12 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
           </View>
         ) : null}
         <View style={styles.cta} wrap={false}>
-          <Text style={styles.ctaText}>¿Todo claro? Revisa la propuesta online y confírmala para que podamos empezar.</Text>
-          <Link src={data.portalUrl} style={styles.ctaLink}>Revisar y aceptar la propuesta →</Link>
+          <Text style={styles.ctaText}>
+            ¿Todo claro? Revisa la propuesta online y confírmala para que podamos empezar.
+          </Text>
+          <Link src={data.portalUrl} style={styles.ctaLink}>
+            Revisar y aceptar la propuesta →
+          </Link>
         </View>
         <Footer />
       </Page>

@@ -1,5 +1,8 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
 import { ProposalEmail } from "@/components/email";
 import { requireRole, requireUser } from "@/lib/auth";
 import { renderEmail } from "@/lib/email/render";
@@ -24,9 +27,6 @@ import {
 } from "@/lib/schemas/proposal";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { z } from "zod";
 
 const log = scopedLogger("proposals");
 
@@ -352,7 +352,8 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
   }
   if (rest.terms !== undefined) patch.terms = rest.terms;
   if (rest.scope_modules !== undefined) {
-    patch.scope_modules = rest.scope_modules && rest.scope_modules.length > 0 ? rest.scope_modules : null;
+    patch.scope_modules =
+      rest.scope_modules && rest.scope_modules.length > 0 ? rest.scope_modules : null;
   }
   if (rest.deliverables !== undefined) patch.deliverables = rest.deliverables;
   if (rest.acceptance_criteria !== undefined) patch.acceptance_criteria = rest.acceptance_criteria;

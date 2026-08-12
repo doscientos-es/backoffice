@@ -1,3 +1,4 @@
+import { type NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { publicEnv } from "@/lib/env";
 import { isPortalUnlocked } from "@/lib/portal/access";
@@ -9,7 +10,6 @@ import {
 } from "@/lib/proposals/proposal-pdf-document";
 import { type PaymentSchedule, parseScopeModules } from "@/lib/proposals/scope";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

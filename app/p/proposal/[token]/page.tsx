@@ -1,3 +1,7 @@
+import { CheckCircle2, Download, FileText, Presentation, XCircle } from "lucide-react";
+import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 import { LogoMark } from "@/components/branding";
 import { PortalPasswordGate } from "@/components/portal/password-gate";
 import { ProposalPaymentButton } from "@/components/portal/proposal-payment-button";
@@ -18,10 +22,6 @@ import {
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { CheckCircle2, Download, FileText, Presentation, XCircle } from "lucide-react";
-import type { Metadata } from "next";
-import { headers } from "next/headers";
-import { notFound } from "next/navigation";
 import { unlockProposalPortal } from "./actions";
 import { PortalKeyPointsList, PortalNarrativeBlock } from "./narrative";
 import { ProposalActions } from "./proposal-actions";
@@ -55,9 +55,18 @@ function ScopeBullets({
 }) {
   return (
     <div>
-      <p className={`text-xs font-semibold ${tone === "included" ? "text-emerald-700 dark:text-emerald-400" : "text-zinc-600 dark:text-zinc-400"}`}>{label}</p>
+      <p
+        className={`text-xs font-semibold ${tone === "included" ? "text-emerald-700 dark:text-emerald-400" : "text-zinc-600 dark:text-zinc-400"}`}
+      >
+        {label}
+      </p>
       <ul className="mt-2 flex flex-col gap-1.5 text-sm text-zinc-600 dark:text-zinc-400">
-        {items.map((item) => <li key={item} className="flex gap-2"><span aria-hidden>•</span><span>{item}</span></li>)}
+        {items.map((item) => (
+          <li key={item} className="flex gap-2">
+            <span aria-hidden>•</span>
+            <span>{item}</span>
+          </li>
+        ))}
       </ul>
     </div>
   );
@@ -208,31 +217,31 @@ export default async function PortalProposalPage({
   // back-office for prospects that never went through onboarding.
   const clientBillingAddress = client
     ? formatAddress({
-      street: client.billing_address_street,
-      zip: client.billing_address_zip,
-      city: client.billing_address_city,
-      province: client.billing_address_province,
-      country: client.billing_address_country,
-    })
+        street: client.billing_address_street,
+        zip: client.billing_address_zip,
+        city: client.billing_address_city,
+        province: client.billing_address_province,
+        country: client.billing_address_country,
+      })
     : "";
   const needsFiscal = !client?.nif?.trim() || !clientBillingAddress || !client.name?.trim();
   const fiscalPrefill = client
     ? {
-      name: client.name ?? "",
-      nif: client.nif ?? "",
-      billing_address: clientBillingAddress,
-      contact_person: client.contact_person ?? "",
-      email: client.email ?? "",
-      phone: client.phone ?? "",
-    }
+        name: client.name ?? "",
+        nif: client.nif ?? "",
+        billing_address: clientBillingAddress,
+        contact_person: client.contact_person ?? "",
+        email: client.email ?? "",
+        phone: client.phone ?? "",
+      }
     : {
-      name: lead?.company ?? lead?.name ?? "",
-      nif: "",
-      billing_address: "",
-      contact_person: lead?.name ?? "",
-      email: lead?.email ?? "",
-      phone: lead?.phone ?? "",
-    };
+        name: lead?.company ?? lead?.name ?? "",
+        nif: "",
+        billing_address: "",
+        contact_person: lead?.name ?? "",
+        email: lead?.email ?? "",
+        phone: lead?.phone ?? "",
+      };
   const recipientName = client?.name ?? lead?.company ?? lead?.name ?? "—";
   const proposalNumber = (proposal.number as string | null) ?? "Borrador";
   const safeItems = (items ?? []) as unknown as ProposalItem[];
@@ -393,25 +402,49 @@ export default async function PortalProposalPage({
             </p>
             <div className="mt-4 flex flex-col gap-4">
               {scopeModules.map((module, index) => (
-                <section key={module.id} className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+                <section
+                  key={module.id}
+                  className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
+                >
                   <p className="text-[11px] font-semibold uppercase tracking-widest text-[#2A4227] dark:text-[#9CC196]">
                     Módulo {String(index + 1).padStart(2, "0")}
                   </p>
-                  <h2 className="mt-1 text-base font-semibold text-zinc-900 dark:text-zinc-100">{module.title}</h2>
-                  {module.description ? <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{module.description}</p> : null}
+                  <h2 className="mt-1 text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                    {module.title}
+                  </h2>
+                  {module.description ? (
+                    <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                      {module.description}
+                    </p>
+                  ) : null}
                   {(module.included.length > 0 || module.excluded.length > 0) && (
                     <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                      {module.included.length > 0 ? <ScopeBullets label="Incluido" items={module.included} tone="included" /> : null}
-                      {module.excluded.length > 0 ? <ScopeBullets label="No incluido" items={module.excluded} tone="excluded" /> : null}
+                      {module.included.length > 0 ? (
+                        <ScopeBullets label="Incluido" items={module.included} tone="included" />
+                      ) : null}
+                      {module.excluded.length > 0 ? (
+                        <ScopeBullets label="No incluido" items={module.excluded} tone="excluded" />
+                      ) : null}
                     </div>
                   )}
-                  {module.notes ? <p className="mt-4 border-t border-zinc-100 pt-3 text-xs leading-relaxed text-zinc-500 dark:border-zinc-800 dark:text-zinc-400"><strong>Notas:</strong> {module.notes}</p> : null}
+                  {module.notes ? (
+                    <p className="mt-4 border-t border-zinc-100 pt-3 text-xs leading-relaxed text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                      <strong>Notas:</strong> {module.notes}
+                    </p>
+                  ) : null}
                 </section>
               ))}
               {deliverables || acceptanceCriteria ? (
                 <div className="grid gap-4 lg:grid-cols-2">
-                  {deliverables ? <ProposalTextBlock label="Entregables" source={deliverables} /> : null}
-                  {acceptanceCriteria ? <ProposalTextBlock label="Criterios de aceptación" source={acceptanceCriteria} /> : null}
+                  {deliverables ? (
+                    <ProposalTextBlock label="Entregables" source={deliverables} />
+                  ) : null}
+                  {acceptanceCriteria ? (
+                    <ProposalTextBlock
+                      label="Criterios de aceptación"
+                      source={acceptanceCriteria}
+                    />
+                  ) : null}
                 </div>
               ) : null}
             </div>
@@ -556,7 +589,7 @@ export default async function PortalProposalPage({
           </div>
         </div>
 
-        {(paymentTerms || changeManagementTerms || terms) ? (
+        {paymentTerms || changeManagementTerms || terms ? (
           <div className="border-t border-zinc-100 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-900/50 px-8 py-6">
             <p className="mb-4 text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
               Condiciones
@@ -564,18 +597,32 @@ export default async function PortalProposalPage({
             <div className="grid gap-5 lg:grid-cols-2">
               {paymentTerms ? (
                 <div>
-                  <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Forma de pago</p>
-                  <p className="mt-1 text-xs font-medium text-[#2A4227] dark:text-[#9CC196]">{PAYMENT_SCHEDULE_LABELS[paymentSchedule]}</p>
-                  <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">{paymentTerms}</p>
+                  <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                    Forma de pago
+                  </p>
+                  <p className="mt-1 text-xs font-medium text-[#2A4227] dark:text-[#9CC196]">
+                    {PAYMENT_SCHEDULE_LABELS[paymentSchedule]}
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                    {paymentTerms}
+                  </p>
                 </div>
               ) : null}
               {changeManagementTerms ? (
                 <div>
-                  <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Cambios de alcance</p>
-                  <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">{changeManagementTerms}</p>
+                  <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                    Cambios de alcance
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                    {changeManagementTerms}
+                  </p>
                 </div>
               ) : null}
-              {terms ? <div className="lg:col-span-2"><Markdown source={terms} /></div> : null}
+              {terms ? (
+                <div className="lg:col-span-2">
+                  <Markdown source={terms} />
+                </div>
+              ) : null}
             </div>
           </div>
         ) : null}
