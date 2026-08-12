@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronUp, Plus, Trash2, X } from "lucide-react";
+import { ChevronDown, ChevronUp, ClipboardPaste, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,7 +27,9 @@ function makeDrafts(items: string[]): BulletDraft[] {
 }
 
 function compactBullets(values: string[]): string[] {
-  return values.map((line) => line.replace(/^\s*[-*]\s*/, "").trim()).filter(Boolean);
+  return values
+    .map((line) => line.replace(/^\s*(?:[-*•]|[0-9]+[.)])\s*/, "").trim())
+    .filter(Boolean);
 }
 
 function sameBullets(left: string[], right: string[]): boolean {
@@ -50,6 +52,9 @@ function ScopeBulletEditor({
   tone: "included" | "excluded";
 }) {
   const [drafts, setDrafts] = useState<BulletDraft[]>(() => makeDrafts(items));
+  const [pasteOpen, setPasteOpen] = useState(false);
+  const [pasteText, setPasteText] = useState("");
+  const [pasteFeedback, setPasteFeedback] = useState<string | null>(null);
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const focusIndex = useRef<number | null>(null);
   const hintId = `scope-${tone}-${moduleIndex}-hint`;
@@ -98,6 +103,33 @@ function ScopeBulletEditor({
     ];
     focusIndex.current = afterIndex + 1;
     setDrafts(next);
+  };
+
+  const addPastedBullets = () => {
+    const pasted = compactBullets(pasteText.split(/\r?\n/));
+    const current = compactBullets(drafts.map((draft) => draft.value));
+    const available = SCOPE_MODULE_LIMITS.maxBulletCount - current.length;
+    const added = pasted.slice(0, available);
+
+    if (added.length === 0) {
+      setPasteFeedback(
+        available === 0
+          ? "Ya has alcanzado el límite de puntos."
+          : "No hemos detectado ningún punto.",
+      );
+      return;
+    }
+
+    const next = [...current, ...added];
+    setDrafts(makeDrafts(next));
+    onChange(next);
+    setPasteText("");
+    setPasteOpen(false);
+    setPasteFeedback(
+      added.length === pasted.length
+        ? `${added.length} ${added.length === 1 ? "punto añadido" : "puntos añadidos"}.`
+        : `Se han añadido ${added.length} de ${pasted.length} puntos por el límite.`,
+    );
   };
 
   const accentClass =
@@ -168,14 +200,67 @@ function ScopeBulletEditor({
           </li>
         ))}
       </ol>
-      <button
-        type="button"
-        onClick={() => addDraft()}
-        disabled={disabled || (atLimit && !hasBlankDraft)}
-        className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline disabled:pointer-events-none disabled:opacity-50"
-      >
-        <Plus className="size-3.5" aria-hidden /> Añadir punto
-      </button>
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+        <button
+          type="button"
+          onClick={() => addDraft()}
+          disabled={disabled || (atLimit && !hasBlankDraft)}
+          className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline disabled:pointer-events-none disabled:opacity-50"
+        >
+          <Plus className="size-3.5" aria-hidden /> Añadir punto
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setPasteOpen((open) => !open);
+            setPasteFeedback(null);
+          }}
+          disabled={disabled || atLimit}
+          aria-expanded={pasteOpen}
+          aria-label={`Pegar texto en ${label}`}
+          className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+        >
+          <ClipboardPaste className="size-3.5" aria-hidden /> Pegar texto
+        </button>
+      </div>
+      {pasteOpen ? (
+        <div className="mt-3 rounded-md border border-dashed border-border bg-background p-2">
+          <Textarea
+            value={pasteText}
+            onChange={(event) => setPasteText(event.target.value)}
+            rows={4}
+            placeholder="Pega aquí una lista de ChatGPT. Cada línea se convertirá en un punto."
+            aria-label={`Texto para añadir a ${label}`}
+            className="min-h-24 resize-y text-sm"
+          />
+          <div className="mt-2 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setPasteOpen(false);
+                setPasteText("");
+              }}
+              className="text-xs font-medium text-muted-foreground hover:text-foreground"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={addPastedBullets}
+              disabled={!pasteText.trim()}
+              aria-label={`Convertir texto en puntos de ${label}`}
+              className="rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
+            >
+              Añadir puntos
+            </button>
+          </div>
+        </div>
+      ) : null}
+      {pasteFeedback ? (
+        <p role="status" className="mt-2 text-[11px] text-muted-foreground">
+          {pasteFeedback}
+        </p>
+      ) : null}
     </section>
   );
 }

@@ -1,3 +1,9 @@
+import type { KeyPoint } from "@/lib/proposals/key-points";
+import {
+  PAYMENT_SCHEDULE_LABELS,
+  type PaymentSchedule,
+  type ScopeModule,
+} from "@/lib/proposals/scope";
 import {
   Document,
   Font,
@@ -8,12 +14,6 @@ import {
   Text,
   View,
 } from "@react-pdf/renderer";
-import type { KeyPoint } from "@/lib/proposals/key-points";
-import {
-  PAYMENT_SCHEDULE_LABELS,
-  type PaymentSchedule,
-  type ScopeModule,
-} from "@/lib/proposals/scope";
 
 const BRAND = "#2A4227";
 const INK = "#183017";
@@ -284,6 +284,8 @@ function ScopeModuleList({ modules }: { modules: ScopeModule[] }) {
 function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
   const validUntil = date(data.validUntil);
   const hasRecurring = data.items.some((item) => item.billingCycle && item.billingCycle !== "none");
+  const deliverables = data.deliverables?.trim();
+  const acceptanceCriteria = data.acceptanceCriteria?.trim();
   return (
     <Document title={`Propuesta ${data.number ?? ""} · ${data.title}`} author="doscientos">
       <Page size="A4" style={styles.cover}>
@@ -349,19 +351,19 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
           </View>
         ) : null}
 
-        {data.deliverables || data.acceptanceCriteria ? (
+        {deliverables || acceptanceCriteria ? (
           <View style={styles.section} break={data.scopeModules.length > 0}>
             <Text style={styles.sectionLabel}>Entrega y validación</Text>
-            {data.deliverables ? (
+            {deliverables ? (
               <>
                 <Text style={styles.pointTitle}>Entregables</Text>
-                <Text style={styles.body}>{printableMarkdown(data.deliverables)}</Text>
+                <Text style={styles.body}>{printableMarkdown(deliverables)}</Text>
               </>
             ) : null}
-            {data.acceptanceCriteria ? (
+            {acceptanceCriteria ? (
               <>
                 <Text style={[styles.pointTitle, { marginTop: 12 }]}>Criterios de aceptación</Text>
-                <Text style={styles.body}>{printableMarkdown(data.acceptanceCriteria)}</Text>
+                <Text style={styles.body}>{printableMarkdown(acceptanceCriteria)}</Text>
               </>
             ) : null}
           </View>
@@ -371,11 +373,11 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
           style={styles.section}
           break={Boolean(
             data.context ||
-              data.problems.length ||
-              data.solutions.length ||
-              data.scopeModules.length ||
-              data.deliverables ||
-              data.acceptanceCriteria,
+            data.problems.length ||
+            data.solutions.length ||
+            data.scopeModules.length ||
+            deliverables ||
+            acceptanceCriteria,
           )}
         >
           <Text style={styles.sectionLabel}>Propuesta económica</Text>

@@ -4,6 +4,8 @@ import type { BillingCycle } from "@/lib/finance";
 export const MAINTENANCE_LIMITS = {
   maxCoverageItems: 12,
   maxCoverageLength: 240,
+  maxExclusionItems: 12,
+  maxExclusionLength: 240,
   maxPlans: 6,
 } as const;
 
@@ -16,6 +18,10 @@ export const maintenancePlanInput = z.object({
   coverage: z
     .array(z.string().trim().min(1).max(MAINTENANCE_LIMITS.maxCoverageLength))
     .max(MAINTENANCE_LIMITS.maxCoverageItems),
+  exclusions: z
+    .array(z.string().trim().min(1).max(MAINTENANCE_LIMITS.maxExclusionLength))
+    .max(MAINTENANCE_LIMITS.maxExclusionItems)
+    .default([]),
 });
 
 export const maintenanceOfferInput = z.object({
@@ -47,6 +53,11 @@ export const DEFAULT_MAINTENANCE_OFFER: MaintenanceOffer = {
         "Corrección de errores críticos",
         "Soporte por email",
       ],
+      exclusions: [
+        "Cambios de contenido o diseño",
+        "Nuevas funcionalidades e integraciones",
+        "Correcciones no relacionadas con la web entregada",
+      ],
     },
     {
       id: "growth",
@@ -61,6 +72,11 @@ export const DEFAULT_MAINTENANCE_OFFER: MaintenanceOffer = {
         "Revisión trimestral",
         "Analítica y rendimiento básico",
       ],
+      exclusions: [
+        "Desarrollos a medida de gran alcance",
+        "Integraciones o licencias de terceros",
+        "Migraciones de contenido complejas",
+      ],
     },
     {
       id: "evolution",
@@ -74,6 +90,11 @@ export const DEFAULT_MAINTENANCE_OFFER: MaintenanceOffer = {
         "Pequeñas funcionalidades nuevas",
         "Revisión mensual",
         "Evolución continua limitada",
+      ],
+      exclusions: [
+        "Proyectos o funcionalidades de gran alcance",
+        "Servicios, licencias y herramientas de terceros",
+        "Trabajo no utilizado durante el mes",
       ],
     },
   ],

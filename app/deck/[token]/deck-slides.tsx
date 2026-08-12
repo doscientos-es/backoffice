@@ -1,5 +1,3 @@
-import { ArrowRight, Download } from "lucide-react";
-import type { ReactNode } from "react";
 import { LogoMark } from "@/components/branding";
 import { Markdown } from "@/components/ui/markdown";
 import {
@@ -11,6 +9,8 @@ import {
 import type { KeyPoint } from "@/lib/proposals/key-points";
 import { PAYMENT_SCHEDULE_LABELS, type ScopeModule } from "@/lib/proposals/scope";
 import { formatDate, formatEUR } from "@/lib/utils";
+import { ArrowRight, Download } from "lucide-react";
+import type { ReactNode } from "react";
 import type { DeckProposal, DeckProposalItem, DeckTeamMember } from "./page";
 
 function buildTotals(items: DeckProposalItem[]): ProposalTotals {
@@ -308,23 +308,25 @@ function ScopeList({
 }
 
 function DeliverySlide({ proposal }: { proposal: DeckProposal }) {
+  const deliverables = proposal.deliverables?.trim();
+  const acceptanceCriteria = proposal.acceptance_criteria?.trim();
   return (
     <SectionSlide label="Entrega" title="Cómo validaremos el proyecto">
       <div className="grid max-w-3xl gap-8 text-left sm:grid-cols-2">
-        {proposal.deliverables ? (
+        {deliverables ? (
           <div>
             <p className="mb-3 text-sm font-semibold text-zinc-900">Entregables</p>
             <Markdown
-              source={proposal.deliverables}
+              source={deliverables}
               className="deck-markdown text-sm text-zinc-600"
             />
           </div>
         ) : null}
-        {proposal.acceptance_criteria ? (
+        {acceptanceCriteria ? (
           <div>
             <p className="mb-3 text-sm font-semibold text-zinc-900">Criterios de aceptación</p>
             <Markdown
-              source={proposal.acceptance_criteria}
+              source={acceptanceCriteria}
               className="deck-markdown text-sm text-zinc-600"
             />
           </div>
@@ -668,7 +670,7 @@ export function buildSlides(
       element: wm(<ScopeModuleSlide module={module} index={index} />),
     });
   });
-  if (proposal.deliverables || proposal.acceptance_criteria) {
+  if (proposal.deliverables?.trim() || proposal.acceptance_criteria?.trim()) {
     slides.push({
       key: "delivery",
       label: "Entrega",

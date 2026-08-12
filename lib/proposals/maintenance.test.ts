@@ -12,6 +12,17 @@ describe("proposal maintenance offer", () => {
     expect(parseMaintenanceOffer({ plans: [] })).toEqual(DEFAULT_MAINTENANCE_OFFER);
   });
 
+  it("keeps legacy snapshots valid by defaulting their exclusions to an empty list", () => {
+    const legacyOffer = {
+      ...DEFAULT_MAINTENANCE_OFFER,
+      plans: DEFAULT_MAINTENANCE_OFFER.plans.map(({ exclusions: _exclusions, ...plan }) => plan),
+    };
+
+    expect(
+      parseMaintenanceOffer(legacyOffer).plans.every((plan) => plan.exclusions.length === 0),
+    ).toBe(true);
+  });
+
   it("turns the selected plan into a monthly proposal line", () => {
     const plan = selectedMaintenancePlan(DEFAULT_MAINTENANCE_OFFER, "growth");
     expect(plan?.name).toBe("Crecimiento");

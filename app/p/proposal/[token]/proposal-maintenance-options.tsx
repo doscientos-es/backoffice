@@ -67,6 +67,21 @@ export function ProposalMaintenanceOptions({
                   </li>
                 ))}
               </ul>
+              {plan.exclusions.length > 0 ? (
+                <div className="mt-4 border-t border-zinc-100 pt-3 dark:border-zinc-800/60">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    No incluye
+                  </p>
+                  <ul className="mt-2 space-y-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+                    {plan.exclusions.map((item) => (
+                      <li key={item} className="flex gap-2">
+                        <span aria-hidden>—</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
               {!disabled ? (
                 <Button
                   type="button"

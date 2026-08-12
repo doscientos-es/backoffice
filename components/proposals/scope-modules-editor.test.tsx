@@ -56,4 +56,32 @@ describe("ScopeModulesEditor", () => {
     expect(screen.queryByLabelText("Incluido, punto 2")).toBeNull();
     expect(screen.getByLabelText("No incluido, punto 1")).toBeDefined();
   });
+
+  it("adds pasted markdown list items to the requested scope column", () => {
+    const onChange = vi.fn();
+    render(<ControlledEditor onChange={onChange} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Pegar texto en No incluido" }));
+    fireEvent.change(screen.getByLabelText("Texto para añadir a No incluido"), {
+      target: { value: "- Migración histórica\n• Integraciones adicionales\n3. Formación" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Convertir texto en puntos de No incluido" }),
+    );
+
+    expect((screen.getByLabelText("No incluido, punto 1") as HTMLInputElement).value).toBe(
+      "Migración histórica",
+    );
+    expect((screen.getByLabelText("No incluido, punto 2") as HTMLInputElement).value).toBe(
+      "Integraciones adicionales",
+    );
+    expect((screen.getByLabelText("No incluido, punto 3") as HTMLInputElement).value).toBe(
+      "Formación",
+    );
+    expect(onChange).toHaveBeenLastCalledWith([
+      expect.objectContaining({
+        excluded: ["Migración histórica", "Integraciones adicionales", "Formación"],
+      }),
+    ]);
+  });
 });
