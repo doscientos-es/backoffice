@@ -1,10 +1,10 @@
 "use client";
 
+import { CreditCard, Loader2 } from "lucide-react";
+import { useTransition } from "react";
 import { initiateProposalPayment } from "@/app/p/proposal/[token]/actions";
 import { Button } from "@/components/ui/button";
 import { formatEUR } from "@/lib/utils";
-import { CreditCard, Loader2 } from "lucide-react";
-import { useTransition } from "react";
 
 interface ProposalPaymentButtonProps {
   proposalId: string;

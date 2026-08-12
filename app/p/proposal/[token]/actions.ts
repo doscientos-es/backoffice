@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import {
   ensureClientForProposal,
   ensureProjectForProposal,
@@ -21,7 +22,6 @@ import {
   ProposalRejectionReason,
 } from "@/lib/schemas/proposal";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { revalidatePath } from "next/cache";
 
 const log = scopedLogger("portal.proposal");
 
@@ -29,13 +29,13 @@ type ActionResult = { ok: true } | { ok: false; error: string };
 
 export type PaymentInitResult =
   | {
-    ok: true;
-    demo?: boolean;
-    url: string;
-    signatureVersion: string;
-    merchantParameters: string;
-    signature: string;
-  }
+      ok: true;
+      demo?: boolean;
+      url: string;
+      signatureVersion: string;
+      merchantParameters: string;
+      signature: string;
+    }
   | { ok: false; error: string };
 
 /**
