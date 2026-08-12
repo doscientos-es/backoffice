@@ -712,7 +712,6 @@ export default async function PortalProposalPage({
               </div>
             ) : null}
           </div>
-
         </article>
         <ProposalMessageThread
           messages={proposalMessages}
