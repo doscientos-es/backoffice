@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { MessageCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import { useState } from "react";
 
 export type ProposalMessage = {
   id: string;
@@ -32,7 +32,7 @@ export function ProposalMessageThread({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+  async function onSubmit(event: { preventDefault(): void }) {
     event.preventDefault();
     const text = body.trim();
     if (!text || pending) return;
