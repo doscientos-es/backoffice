@@ -17,6 +17,7 @@ import {
   buildProposalTotalsPatch,
   isProposalEditable,
 } from "@/lib/proposals/items";
+import { formatProposalValidationIssues } from "@/lib/proposals/validation";
 import { UpdatePortalAccessInput } from "@/lib/schemas/portal";
 import {
   CreateProposalInput,
@@ -322,7 +323,8 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
 
   const parsed = UpdateProposalInput.safeParse(input);
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+    const errors = formatProposalValidationIssues(parsed.error.issues);
+    return { ok: false, error: errors.join("\n") || "Datos de la propuesta no válidos" };
   }
   const { id, items, ...rest } = parsed.data;
 

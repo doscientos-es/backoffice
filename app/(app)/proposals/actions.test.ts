@@ -109,6 +109,24 @@ describe("updateProposal", () => {
       solutions: [{ id: "pair-1", title: "Automatizar", description: "Menos trabajo" }],
     });
   });
+
+  it("returns each invalid field with an actionable label", async () => {
+    const result = await updateProposal({
+      id: ID,
+      items: [
+        { description: "", quantity: 0, unit_price: 100, vat_rate: 21, billing_cycle: "none" },
+      ],
+      scope_modules: [
+        { id: "scope-1", title: "", description: null, included: [], excluded: [], notes: null },
+      ],
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      error:
+        "Módulo 1 · Nombre: El nombre del módulo es obligatorio\nLínea 1 · Descripción: Descripción obligatoria\nLínea 1 · Cantidad: Cantidad > 0",
+    });
+  });
 });
 
 describe("markProposalAsSent", () => {

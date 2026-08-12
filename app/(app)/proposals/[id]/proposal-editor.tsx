@@ -1,10 +1,12 @@
 "use client";
 
+import { AlertCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LineItemsTable } from "@/components/finance/line-items-table";
 import { ProblemSolutionEditor } from "@/components/proposals/problem-solution-editor";
 import { ScopeModulesEditor } from "@/components/proposals/scope-modules-editor";
 import { AiNotice } from "@/components/ui/ai-notice";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AutosaveIndicator } from "@/components/ui/autosave-indicator";
 import { Button } from "@/components/ui/button";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
@@ -192,6 +194,7 @@ export function ProposalEditor({
     commercialScopeIsEmpty ||
     !paymentTerms.trim() ||
     !changeManagementTerms.trim();
+  const saveErrors = autosave.error?.split("\n").filter(Boolean) ?? [];
 
   function handlePaymentScheduleChange(value: PaymentSchedule) {
     setPaymentSchedule(value);
@@ -221,17 +224,24 @@ export function ProposalEditor({
       const paymentTermsAreEmpty = !paymentTerms.trim();
       const changeManagementTermsAreEmpty = !changeManagementTerms.trim();
       const nextKeyPoints = pairsAreEmpty ? unzipPairs(nextPairs) : null;
+      const generatedNarrativePatch = pairsAreEmpty
+        ? {
+            problems: serializeKeyPoints(nextKeyPoints?.problems ?? []),
+            solutions: serializeKeyPoints(nextKeyPoints?.solutions ?? []),
+          }
+        : {};
+      const generatedPaymentTermsPatch = paymentTermsAreEmpty
+        ? {
+            payment_schedule: json.payment_schedule as PaymentSchedule,
+            payment_terms: json.payment_terms || null,
+          }
+        : {};
       const save = await updateProposal({
         id,
         ...(titleIsEmpty ? { title: json.title } : {}),
         ...(notesAreEmpty ? { notes: json.notes || null } : {}),
         ...(contextIsEmpty ? { context_markdown: json.context_markdown || null } : {}),
-        ...(pairsAreEmpty
-          ? {
-              problems: serializeKeyPoints(nextKeyPoints?.problems ?? []),
-              solutions: serializeKeyPoints(nextKeyPoints?.solutions ?? []),
-            }
-          : {}),
+        ...generatedNarrativePatch,
         ...(termsAreEmpty ? { terms: json.terms || null } : {}),
         ...(modulesAreEmpty && nextScopeModules.length > 0
           ? { scope_modules: nextScopeModules }
@@ -240,12 +250,7 @@ export function ProposalEditor({
         ...(acceptanceCriteriaAreEmpty
           ? { acceptance_criteria: json.acceptance_criteria || null }
           : {}),
-        ...(paymentTermsAreEmpty
-          ? {
-              payment_schedule: json.payment_schedule as PaymentSchedule,
-              payment_terms: json.payment_terms || null,
-            }
-          : {}),
+        ...generatedPaymentTermsPatch,
         ...(changeManagementTermsAreEmpty
           ? { change_management_terms: json.change_management_terms || null }
           : {}),
@@ -343,6 +348,21 @@ export function ProposalEditor({
           </Button>
         )}
       </div>
+
+      {autosave.status === "error" && saveErrors.length > 0 ? (
+        <Alert variant="destructive" className="border-destructive/30 bg-destructive/5 px-4 py-3">
+          <AlertCircle className="size-4" aria-hidden />
+          <AlertTitle>No se ha podido guardar la propuesta</AlertTitle>
+          <AlertDescription>
+            <p>Revisa y corrige estos campos. Tus cambios siguen en esta pantalla.</p>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              {saveErrors.map((error) => (
+                <li key={error}>{error}</li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="min-w-0 overflow-hidden rounded-lg border border-border">
