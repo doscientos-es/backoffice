@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
+import { indexInternalDocument } from "@/lib/internal-documents";
 import {
   INTERNAL_DOC_CATEGORIES,
   INTERNAL_DOC_MAX_SIZE_BYTES,
@@ -109,6 +110,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     action: "created",
     actor_id: user.id,
     payload: { name, category, visibility, size_bytes: file.size },
+  });
+
+  await indexInternalDocument({
+    documentId: docId,
+    version: 1,
+    mimeType: file.type || null,
+    bytes,
   });
 
   return NextResponse.json({ id: data.id as string }, { status: 201 });

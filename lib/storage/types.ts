@@ -10,6 +10,11 @@ export interface StorageProvider {
 
   remove(bucket: StorageBucket, paths: string[]): Promise<{ error: string | null }>;
 
+  download(
+    bucket: StorageBucket,
+    path: string,
+  ): Promise<{ data: ArrayBuffer | null; error: string | null }>;
+
   createSignedUrl(
     bucket: StorageBucket,
     path: string,

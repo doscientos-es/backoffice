@@ -23,6 +23,14 @@ export class SupabaseStorageProvider implements StorageProvider {
     return { error: error?.message ?? null };
   }
 
+  async download(
+    bucket: StorageBucket,
+    path: string,
+  ): Promise<{ data: ArrayBuffer | null; error: string | null }> {
+    const { data, error } = await this.bucket(bucket).download(path);
+    return { data: data ? await data.arrayBuffer() : null, error: error?.message ?? null };
+  }
+
   async createSignedUrl(
     bucket: StorageBucket,
     path: string,

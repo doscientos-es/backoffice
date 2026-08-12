@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
+import { indexInternalDocument } from "@/lib/internal-documents";
 import { INTERNAL_DOC_MAX_SIZE_BYTES } from "@/lib/schemas/internal-doc";
 import { getStorage } from "@/lib/storage";
 import { createServerClient } from "@/lib/supabase/server";
@@ -115,6 +116,13 @@ export async function POST(
       },
       to: { filename: safeFilename, size: file.size, version: nextVersion },
     },
+  });
+
+  await indexInternalDocument({
+    documentId: id,
+    version: nextVersion,
+    mimeType: file.type || null,
+    bytes,
   });
 
   return NextResponse.json({ ok: true, version: nextVersion }, { status: 200 });

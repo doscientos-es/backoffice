@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { defineAction } from "@/lib/actions/define-action";
-import { requireRole } from "@/lib/auth";
+import { requireRole, requireUser } from "@/lib/auth";
+import { indexInternalDocument } from "@/lib/internal-documents";
 import { InternalDocIdInput, UpdateInternalDocInput } from "@/lib/schemas/internal-doc";
 import { getStorage } from "@/lib/storage";
 import { createServerClient } from "@/lib/supabase/server";
@@ -114,6 +115,41 @@ export const updateInternalDoc = defineAction({
     }
   },
 });
+
+/** Extract the native PDF text layer for an existing document without changing its file or metadata. */
+export async function reindexInternalDoc(formData: FormData): Promise<void> {
+  const user = await requireUser();
+  if (user.role === "viewer") throw new Error("Sin permiso");
+
+  const parsed = InternalDocIdInput.safeParse({ id: formData.get("id")?.toString() });
+  if (!parsed.success) throw new Error("ID inválido");
+
+  const supabase = await createServerClient();
+  const { data: doc, error } = await supabase
+    .from("internal_documents")
+    .select("id, storage_path, mime_type, version, visibility, deleted_at")
+    .eq("id", parsed.data.id)
+    .maybeSingle();
+
+  if (error || !doc || doc.deleted_at) throw new Error("Documento no encontrado");
+  if ((doc.visibility as string) === "admins_only" && !["owner", "admin"].includes(user.role)) {
+    throw new Error("Sin permiso");
+  }
+
+  const { data, error: downloadError } = await getStorage().download(
+    "internal-docs",
+    doc.storage_path as string,
+  );
+  if (downloadError || !data) throw new Error(downloadError ?? "No se pudo descargar el documento");
+
+  await indexInternalDocument({
+    documentId: doc.id as string,
+    version: Number(doc.version) || 1,
+    mimeType: (doc.mime_type as string | null) ?? null,
+    bytes: data,
+  });
+  revalidatePath(`/internal-docs/${doc.id as string}`);
+}
 
 /**
  * Soft-delete an internal document and remove the file from Storage.
