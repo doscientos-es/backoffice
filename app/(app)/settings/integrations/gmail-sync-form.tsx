@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { verifyWithPasskey } from "@/lib/security/webauthn-client";
+import { useState } from "react";
 import { updateGmailSyncMailboxes } from "../actions";
 
 export function GmailSyncForm({ mailboxes }: { mailboxes: string[] }) {
