@@ -1,11 +1,10 @@
-import { TriangleAlert } from "lucide-react";
-import type { Metadata } from "next";
 import { ListControls } from "@/components/layout/list-controls";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
 import { isAIEnabled } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
+import { isGoogleEnabled } from "@/lib/env";
 import { SELECTABLE_LEAD_STATUSES } from "@/lib/leads/pipeline";
 import { listLeads } from "@/lib/leads/queries";
 import {
@@ -17,6 +16,8 @@ import {
 import { listActiveMembers } from "@/lib/members/queries";
 import { LEAD_STATUS, type LeadStatus } from "@/lib/status";
 import { parseSortParam } from "@/lib/utils/search-params";
+import { TriangleAlert } from "lucide-react";
+import type { Metadata } from "next";
 import { LeadCreateDialog } from "./lead-create-dialog";
 import { LEAD_SOURCES, SOLUTION_TYPES } from "./lead-form-fields";
 import { LeadsKanban } from "./leads-kanban";
@@ -72,6 +73,7 @@ export default async function LeadsPage({
 
   const user = await requireUser();
   const aiEnabled = isAIEnabled();
+  const googleEnabled = isGoogleEnabled();
   const canEdit = user.role !== "viewer";
 
   const members = await listActiveMembers();
@@ -203,7 +205,12 @@ export default async function LeadsPage({
               </span>
             </div>
           ) : null}
-          <LeadsKanban leads={enrichedLeads} canEdit={canEdit} members={members} />
+          <LeadsKanban
+            leads={enrichedLeads}
+            canEdit={canEdit}
+            googleEnabled={googleEnabled}
+            members={members}
+          />
         </>
       )}
     </div>

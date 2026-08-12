@@ -1,9 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { after } from "next/server";
-import { z } from "zod";
 import { defineAction } from "@/lib/actions/define-action";
 import { sendEmail } from "@/lib/email/resend";
 import { buildSignatureHtml } from "@/lib/email/signature";
@@ -13,6 +9,7 @@ import { isGoogleEnabled, publicEnv, serverEnv } from "@/lib/env";
 import type { CalendarBusySlot } from "@/lib/google/calendar";
 import { findConflicts, insertEvent } from "@/lib/google/calendar";
 import { resolveSubject } from "@/lib/google/client";
+import { listLeadGmailMessages } from "@/lib/google/gmail";
 import { pushMetaQualifiedLeadStage } from "@/lib/integrations/meta-capi";
 import { isAutomaticallyAccessible, summarizeCallOutcomes } from "@/lib/leads/call-qualification";
 import {
@@ -40,12 +37,17 @@ import {
   ScheduleLeadMeetingInput,
   SendEmailToLeadInput,
   StartLeadCallInput,
+  SyncLeadGmailInput,
   UpdateLeadInput,
   UpdateLeadMomTestInput,
   UpdateLeadStatusInput,
 } from "@/lib/schemas/lead";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { after } from "next/server";
+import { z } from "zod";
 
 const log = scopedLogger("leads.actions");
 
@@ -411,17 +413,17 @@ export const sendEmailToLead = defineAction({
     const renderedHtml = markdownToHtml(renderedMarkdown);
     const finalHtml = data.includeSignature
       ? appendSignature(
-          renderedHtml,
-          buildSignatureHtml(
-            {
-              name: user.name,
-              jobTitle: user.jobTitle ?? undefined,
-              phone: user.phone ?? undefined,
-              contactEmail: user.contactEmail ?? user.emailAlias ?? undefined,
-            },
-            publicEnv.NEXT_PUBLIC_APP_URL || "https://app.doscientos.es",
-          ),
-        )
+        renderedHtml,
+        buildSignatureHtml(
+          {
+            name: user.name,
+            jobTitle: user.jobTitle ?? undefined,
+            phone: user.phone ?? undefined,
+            contactEmail: user.contactEmail ?? user.emailAlias ?? undefined,
+          },
+          publicEnv.NEXT_PUBLIC_APP_URL || "https://app.doscientos.es",
+        ),
+      )
       : renderedHtml;
 
     const renderedSubject = renderTemplate(data.subject, {
@@ -606,10 +608,10 @@ export const notifyDueCallReminders = defineAction({
         link: `/leads/${task.lead_id as string}?feedback=call`,
         actions: taskLead?.phone
           ? [
-              { action: "call", title: "Llamar" },
-              { action: "whatsapp", title: "WhatsApp" },
-              { action: "feedback", title: "Registrar" },
-            ]
+            { action: "call", title: "Llamar" },
+            { action: "whatsapp", title: "WhatsApp" },
+            { action: "feedback", title: "Registrar" },
+          ]
           : [{ action: "feedback", title: "Registrar" }],
         data: {
           leadId: task.lead_id as string,
@@ -796,6 +798,90 @@ export const logLeadEmail = defineAction({
   },
 });
 
+// ---------------- GMAIL SYNC ----------------
+
+/**
+ * Imports the most recent Gmail messages involving this lead from the approved
+ * commercial mailboxes. Database uniqueness constraints make retries safe.
+ */
+export const syncLeadGmail = defineAction<
+  typeof SyncLeadGmailInput,
+  { imported: number; scanned: number; unavailableMailboxes: string[] }
+>({
+  name: "leads.syncGmail",
+  schema: SyncLeadGmailInput,
+  roles: ["owner", "admin", "member"],
+  revalidate: (_payload, input) => ["/leads", `/leads/${input.leadId}`],
+  handler: async ({ leadId }) => {
+    if (!isGoogleEnabled()) throw new Error("Google Workspace no está configurado");
+
+    const supabase = await createServerClient();
+    const { data: lead, error: leadError } = await supabase
+      .from("leads")
+      .select("id, email")
+      .eq("id", leadId)
+      .is("deleted_at", null)
+      .single();
+    if (leadError || !lead) throw new Error(leadError?.message ?? "Lead no encontrado");
+    if (!lead.email) throw new Error("Este lead no tiene email registrado.");
+
+    const source = await listLeadGmailMessages(lead.email.toLowerCase());
+    if (source.synchronizedMailboxes === 0) {
+      throw new Error(
+        "No se pudo acceder a Gmail. Comprueba que la Gmail API y su permiso están autorizados.",
+      );
+    }
+
+    let imported = 0;
+    const sentDates: string[] = [];
+    for (const message of source.messages) {
+      if (message.direction === "outgoing") sentDates.push(message.createdAt);
+      const { error } = await supabase.from("lead_interactions").insert({
+        lead_id: leadId,
+        type: message.direction === "outgoing" ? "email_sent" : "email_received",
+        subject: message.subject,
+        body: message.body,
+        created_at: message.createdAt,
+        gmail_mailbox: message.mailbox,
+        gmail_message_id: message.gmailMessageId,
+        gmail_thread_id: message.gmailThreadId,
+        gmail_rfc_message_id: message.rfcMessageId,
+        payload: {
+          source: "gmail_sync",
+          mailbox: message.mailbox,
+          gmail_thread_id: message.gmailThreadId,
+          from: message.from,
+          to: message.to,
+          cc: message.cc,
+        },
+      });
+      if (!error) {
+        imported++;
+        continue;
+      }
+      // Both Gmail id and RFC Message-ID have uniqueness guards. A duplicate
+      // means this message was already visible in the lead history.
+      if (error.code === "23505") continue;
+      throw new Error(error.message);
+    }
+
+    const firstSentAt = sentDates.sort()[0];
+    if (firstSentAt) {
+      await supabase
+        .from("leads")
+        .update({ first_contacted_at: firstSentAt })
+        .eq("id", leadId)
+        .is("first_contacted_at", null);
+    }
+
+    return {
+      imported,
+      scanned: source.scanned,
+      unavailableMailboxes: source.unavailableMailboxes,
+    };
+  },
+});
+
 export const logLeadNote = defineAction({
   name: "leads.logNote",
   schema: LogNoteInput,
@@ -876,10 +962,10 @@ export const assignLeadOwner = defineAction({
         link: `/leads/${data.leadId}`,
         actions: (current?.phone as string | null)
           ? [
-              { action: "call", title: "Llamar" },
-              { action: "whatsapp", title: "WhatsApp" },
-              { action: "feedback", title: "Registrar" },
-            ]
+            { action: "call", title: "Llamar" },
+            { action: "whatsapp", title: "WhatsApp" },
+            { action: "feedback", title: "Registrar" },
+          ]
           : [{ action: "feedback", title: "Registrar" }],
         data: {
           callUrl: current?.phone ? `tel:${normalizePhoneForCall(current.phone as string)}` : null,

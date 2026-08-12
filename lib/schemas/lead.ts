@@ -45,6 +45,9 @@ export const UpdateLeadInput = CreateLeadInput.extend({
 
 export type UpdateLeadInputType = z.infer<typeof UpdateLeadInput>;
 
+/** Imports emails that already exist in the configured Gmail mailboxes. */
+export const SyncLeadGmailInput = z.object({ leadId: z.string().uuid() });
+
 export const ConvertLeadInput = z.object({
   leadId: z.string().uuid(),
   name: requiredText(160, "El nombre es obligatorio"),

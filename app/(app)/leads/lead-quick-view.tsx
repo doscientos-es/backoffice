@@ -1,26 +1,5 @@
 "use client";
 
-import {
-  ArrowUpRight,
-  Building2,
-  CalendarPlus,
-  Clock,
-  Hand,
-  Loader2,
-  Mail,
-  Phone,
-  Timer,
-  Trash2,
-  TriangleAlert,
-  UserRound,
-  Users,
-  Wallet,
-  Wrench,
-  X,
-} from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { type ReactNode, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -46,7 +25,29 @@ import { leadDisplayName } from "@/lib/leads/utils";
 import type { MemberOption } from "@/lib/members/queries";
 import { LEAD_STATUS } from "@/lib/status";
 import { formatEUR, relativeTime } from "@/lib/utils";
+import {
+  ArrowUpRight,
+  Building2,
+  CalendarPlus,
+  Clock,
+  Hand,
+  Loader2,
+  Mail,
+  Phone,
+  Timer,
+  Trash2,
+  TriangleAlert,
+  UserRound,
+  Users,
+  Wallet,
+  Wrench,
+  X,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { type ReactNode, useState, useTransition } from "react";
 import { ScheduleReminderDialog } from "../reminders/schedule-reminder-dialog";
+import { GmailSyncButton } from "./[id]/gmail-sync-button";
 import { LeadEditDialog } from "./[id]/lead-edit-dialog";
 import { LeadCallLink } from "./[id]/phone-actions";
 import { assignLeadOwner, claimLead } from "./actions";
@@ -75,6 +76,7 @@ const INTERACTION_LABEL: Record<string, string> = {
 export function LeadQuickView({
   lead,
   canEdit = false,
+  googleEnabled = false,
   members = [],
   senderName = "",
   onDeleteAction,
@@ -82,6 +84,7 @@ export function LeadQuickView({
 }: {
   lead: KanbanLead | null;
   canEdit?: boolean;
+  googleEnabled?: boolean;
   members?: MemberOption[];
   senderName?: string;
   /** Optimistically removes the lead from the board and runs the delete. Optional — falls back to router.refresh(). */
@@ -96,6 +99,7 @@ export function LeadQuickView({
             <Body
               lead={lead}
               canEdit={canEdit}
+              googleEnabled={googleEnabled}
               members={members}
               senderName={senderName}
               onDeleteAction={onDeleteAction}
@@ -110,12 +114,14 @@ export function LeadQuickView({
 function Body({
   lead,
   canEdit,
+  googleEnabled,
   members,
   senderName,
   onDeleteAction,
 }: {
   lead: KanbanLead;
   canEdit: boolean;
+  googleEnabled: boolean;
   members: MemberOption[];
   senderName: string;
   onDeleteAction?: (id: string) => void;
@@ -242,34 +248,34 @@ function Body({
           lead.first_landing_path ||
           lead.last_utm_source ||
           lead.last_utm_campaign) && (
-          <section className="flex flex-col gap-1.5 text-xs">
-            <Heading>Atribución</Heading>
-            {(lead.last_utm_source || lead.source) && (
-              <Row icon={<ArrowUpRight className="size-3.5" />}>
-                Fuente: {lead.last_utm_source || lead.source}
-              </Row>
-            )}
-            {lead.last_utm_campaign && (
-              <Row icon={<ArrowUpRight className="size-3.5" />}>
-                Campaña: {lead.last_utm_campaign}
-              </Row>
-            )}
-            {(lead.first_landing_path || lead.landing_path) && (
-              <Row icon={<ArrowUpRight className="size-3.5" />}>
-                Entrada: {lead.first_landing_path || lead.landing_path}
-              </Row>
-            )}
-            {lead.conversion_step && (
-              <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.conversion_step}</Row>
-            )}
-            {lead.landing_ref && (
-              <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_ref}</Row>
-            )}
-            {lead.landing_subject && (
-              <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_subject}</Row>
-            )}
-          </section>
-        )}
+            <section className="flex flex-col gap-1.5 text-xs">
+              <Heading>Atribución</Heading>
+              {(lead.last_utm_source || lead.source) && (
+                <Row icon={<ArrowUpRight className="size-3.5" />}>
+                  Fuente: {lead.last_utm_source || lead.source}
+                </Row>
+              )}
+              {lead.last_utm_campaign && (
+                <Row icon={<ArrowUpRight className="size-3.5" />}>
+                  Campaña: {lead.last_utm_campaign}
+                </Row>
+              )}
+              {(lead.first_landing_path || lead.landing_path) && (
+                <Row icon={<ArrowUpRight className="size-3.5" />}>
+                  Entrada: {lead.first_landing_path || lead.landing_path}
+                </Row>
+              )}
+              {lead.conversion_step && (
+                <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.conversion_step}</Row>
+              )}
+              {lead.landing_ref && (
+                <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_ref}</Row>
+              )}
+              {lead.landing_subject && (
+                <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_subject}</Row>
+              )}
+            </section>
+          )}
         {lead.notes && (
           <section className="flex flex-col gap-1.5">
             <Heading>Notas</Heading>
@@ -294,6 +300,7 @@ function Body({
           leadPhone={lead.phone}
           leadEmail={lead.email}
           senderName={senderName}
+          googleEnabled={googleEnabled}
         />
       </div>
 
@@ -516,12 +523,14 @@ function QuickActions({
   leadPhone,
   leadEmail,
   senderName,
+  googleEnabled,
 }: {
   leadId: string;
   leadName: string;
   leadPhone: string | null;
   leadEmail: string | null;
   senderName: string;
+  googleEnabled: boolean;
 }) {
   return (
     <div className="flex flex-col gap-2">
@@ -538,6 +547,7 @@ function QuickActions({
         />
         <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
         <QNoteDialog leadId={leadId} />
+        {googleEnabled ? <GmailSyncButton leadId={leadId} leadEmail={leadEmail} /> : null}
         <ScheduleReminderDialog
           leadId={leadId}
           defaultTitle={`Seguimiento de ${leadName}`}

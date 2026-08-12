@@ -1,9 +1,9 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { CalendarClock, Hand, ListTodo } from "lucide-react";
 import { type ReactNode, useState, useTransition } from "react";
 import { sileo } from "sileo";
-import { Button } from "@/components/ui/button";
 import {
   type ScheduleMember,
   ScheduleReminderDialog,
@@ -19,6 +19,7 @@ import {
   QSendEmailDialog,
 } from "../lead-quick-action-dialogs";
 import { ExtractTasksDialog, type ExtractTasksDialogProps } from "./extract-tasks-dialog";
+import { GmailSyncButton } from "./gmail-sync-button";
 
 type Props = {
   leadId: string;
@@ -69,6 +70,7 @@ export function LeadQuickActions({
       <QNoteDialog leadId={leadId} />
       {googleEnabled && (
         <>
+          <GmailSyncButton leadId={leadId} leadEmail={leadEmail} />
           <QMeetNowDialog
             leadId={leadId}
             leadName={leadName}
