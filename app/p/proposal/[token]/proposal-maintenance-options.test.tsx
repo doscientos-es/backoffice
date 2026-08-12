@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { DEFAULT_MAINTENANCE_OFFER } from "@/lib/proposals/maintenance";
 import { ProposalMaintenanceOptions } from "./proposal-maintenance-options";
@@ -26,7 +26,8 @@ describe("ProposalMaintenanceOptions", () => {
     expect(screen.getAllByText("Incluye")).toHaveLength(DEFAULT_MAINTENANCE_OFFER.plans.length);
     expect(screen.getAllByText("No incluye")).toHaveLength(DEFAULT_MAINTENANCE_OFFER.plans.length);
 
-    fireEvent.click(screen.getByRole("button", { name: "Elegir este plan" }));
+    const essentialPlan = screen.getByRole("heading", { name: "Esencial" }).closest("article");
+    fireEvent.click(within(essentialPlan!).getByRole("button", { name: "Elegir este plan" }));
 
     await waitFor(() => {
       expect(selectProposalMaintenance).toHaveBeenCalledWith("a".repeat(48), "essential");
