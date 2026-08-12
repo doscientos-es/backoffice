@@ -1,5 +1,6 @@
-import { z } from "zod";
 import { KEY_POINTS_LIMITS } from "@/lib/proposals/key-points";
+import { paymentScheduleInput, scopeModulesInput } from "@/lib/proposals/scope";
+import { z } from "zod";
 import {
   emptyToUndef,
   lineItemInput,
@@ -28,6 +29,14 @@ const keyPointListField = z
   .max(KEY_POINTS_LIMITS.maxCount)
   .nullable()
   .optional();
+
+const proposalMarkdownField = (maxLength: number) =>
+  z
+    .string()
+    .max(maxLength)
+    .optional()
+    .or(z.literal("").transform(() => null))
+    .nullable();
 
 /**
  * Zod schemas for the `proposals` domain.
@@ -82,26 +91,17 @@ export const UpdateProposalInput = z.object({
     .optional()
     .or(z.literal("").transform(() => null))
     .nullable(),
-  notes: z
-    .string()
-    .max(4000)
-    .optional()
-    .or(z.literal("").transform(() => null))
-    .nullable(),
-  context_markdown: z
-    .string()
-    .max(20_000)
-    .optional()
-    .or(z.literal("").transform(() => null))
-    .nullable(),
+  notes: proposalMarkdownField(4_000),
+  context_markdown: proposalMarkdownField(20_000),
   problems: keyPointListField,
   solutions: keyPointListField,
-  terms: z
-    .string()
-    .max(20_000)
-    .optional()
-    .or(z.literal("").transform(() => null))
-    .nullable(),
+  terms: proposalMarkdownField(20_000),
+  scope_modules: scopeModulesInput.nullable().optional(),
+  deliverables: proposalMarkdownField(20_000),
+  acceptance_criteria: proposalMarkdownField(20_000),
+  payment_schedule: paymentScheduleInput.optional(),
+  payment_terms: proposalMarkdownField(8_000),
+  change_management_terms: proposalMarkdownField(8_000),
   items: z.array(lineItemInput).min(1).optional(),
 });
 export type UpdateProposalInputType = z.infer<typeof UpdateProposalInput>;

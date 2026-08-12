@@ -1,6 +1,5 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LineItemsTable } from "@/components/finance/line-items-table";
 import { ProblemSolutionEditor } from "@/components/proposals/problem-solution-editor";
 import { AiNotice } from "@/components/ui/ai-notice";
@@ -21,6 +20,13 @@ import {
   unzipPairs,
   zipKeyPoints,
 } from "@/lib/proposals/key-points";
+import {
+  DEFAULT_CHANGE_MANAGEMENT_TERMS,
+  PAYMENT_SCHEDULE_TEMPLATES,
+  type PaymentSchedule,
+  type ScopeModule
+} from "@/lib/proposals/scope";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { updateProposal } from "../actions";
 
 export type EditableItem = LineItem;
@@ -34,6 +40,12 @@ export type ProposalEditorProps = {
   initialProblems: EditableKeyPoint[];
   initialSolutions: EditableKeyPoint[];
   initialTerms: string | null;
+  initialScopeModules: ScopeModule[];
+  initialDeliverables: string | null;
+  initialAcceptanceCriteria: string | null;
+  initialPaymentSchedule: PaymentSchedule | null;
+  initialPaymentTerms: string | null;
+  initialChangeManagementTerms: string | null;
   initialItems: EditableItem[];
   /** When true, fields are read-only (proposal accepted/rejected). */
   locked: boolean;
@@ -63,6 +75,12 @@ export function ProposalEditor({
   initialProblems,
   initialSolutions,
   initialTerms,
+  initialScopeModules,
+  initialDeliverables,
+  initialAcceptanceCriteria,
+  initialPaymentSchedule,
+  initialPaymentTerms,
+  initialChangeManagementTerms,
   initialItems,
   locked,
   aiEnabled,
@@ -81,6 +99,18 @@ export function ProposalEditor({
   const aiFeedback = useFormFeedback();
   const automaticDraftStarted = useRef(false);
   const [terms, setTerms] = useState(initialTerms ?? "");
+  const [scopeModules, setScopeModules] = useState(initialScopeModules);
+  const [deliverables, setDeliverables] = useState(initialDeliverables ?? "");
+  const [acceptanceCriteria, setAcceptanceCriteria] = useState(initialAcceptanceCriteria ?? "");
+  const [paymentSchedule, setPaymentSchedule] = useState<PaymentSchedule>(
+    initialPaymentSchedule ?? "half_half",
+  );
+  const [paymentTerms, setPaymentTerms] = useState(
+    initialPaymentTerms ?? PAYMENT_SCHEDULE_TEMPLATES.half_half,
+  );
+  const [changeManagementTerms, setChangeManagementTerms] = useState(
+    initialChangeManagementTerms ?? DEFAULT_CHANGE_MANAGEMENT_TERMS,
+  );
   const [items, setItems] = useState<EditableItem[]>(
     initialItems.length > 0
       ? initialItems.map((it) => ({ ...it, id: it.id || crypto.randomUUID() }))
@@ -98,9 +128,30 @@ export function ProposalEditor({
       problems: serializeKeyPoints(problems),
       solutions: serializeKeyPoints(solutions),
       terms: terms || null,
+      scope_modules: scopeModules.length > 0 ? scopeModules : null,
+      deliverables: deliverables || null,
+      acceptance_criteria: acceptanceCriteria || null,
+      payment_schedule: paymentSchedule,
+      payment_terms: paymentTerms || null,
+      change_management_terms: changeManagementTerms || null,
       items,
     };
-  }, [id, title, validUntil, notes, contextMarkdown, pairs, terms, items]);
+  }, [
+    id,
+    title,
+    validUntil,
+    notes,
+    contextMarkdown,
+    pairs,
+    terms,
+    scopeModules,
+    deliverables,
+    acceptanceCriteria,
+    paymentSchedule,
+    paymentTerms,
+    changeManagementTerms,
+    items,
+  ]);
 
   const autosave = useAutosave({
     data: payload,
@@ -131,6 +182,11 @@ export function ProposalEditor({
 
   const narrativeIsEmpty =
     !notes.trim() && !contextMarkdown.trim() && pairs.length === 0 && !terms.trim();
+
+  function handlePaymentScheduleChange(value: PaymentSchedule) {
+    setPaymentSchedule(value);
+    if (value !== "custom") setPaymentTerms(PAYMENT_SCHEDULE_TEMPLATES[value]);
+  }
 
   const handleGenerateDraft = useCallback(async () => {
     if (!leadId || generating || locked || !narrativeIsEmpty) return;
