@@ -1,6 +1,7 @@
 import { LogoMark } from "@/components/branding";
 import { PortalPasswordGate } from "@/components/portal/password-gate";
 import { ProposalPaymentButton } from "@/components/portal/proposal-payment-button";
+import { type ProposalMessage, ProposalMessageThread } from "@/components/proposals/proposal-message-thread";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Markdown } from "@/components/ui/markdown";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -28,7 +29,7 @@ import { CheckCircle2, Download, FileText, Presentation, XCircle } from "lucide-
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { unlockProposalPortal } from "./actions";
+import { sendProposalQuestion, unlockProposalPortal } from "./actions";
 import { PortalKeyPointsList, PortalNarrativeBlock } from "./narrative";
 import { ProposalActions } from "./proposal-actions";
 import { ProposalMaintenanceOptions } from "./proposal-maintenance-options";
@@ -157,6 +158,11 @@ export default async function PortalProposalPage({
     .eq("proposal_id", proposal.id as string)
     .eq("is_client_visible", true)
     .not("portal_token", "is", null);
+  const { data: messages } = await admin
+    .from("proposal_messages")
+    .select("id, author_type, author_name, body, created_at")
+    .eq("proposal_id", proposal.id as string)
+    .order("created_at", { ascending: true });
 
   // Bump status from 'sent' to 'viewed' only on the first external (client)
   // view. Team previews and drafts never transition the status.
@@ -257,6 +263,7 @@ export default async function PortalProposalPage({
     title: string;
     portal_token: string;
   }>;
+  const proposalMessages = (messages ?? []) as unknown as ProposalMessage[];
   const contextMarkdown = (proposal.context_markdown as string | null) ?? null;
   const problems = parseKeyPoints(proposal.problems);
   const solutions = parseKeyPoints(proposal.solutions);
@@ -334,377 +341,384 @@ export default async function PortalProposalPage({
           </AlertDescription>
         </Alert>
       )}
-      <article className="rounded-xl bg-white dark:bg-zinc-900 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-800 overflow-hidden">
-        {/* Document header */}
-        <div className="border-b border-zinc-200 dark:border-zinc-800 px-8 py-7 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2 mb-1">
-              <LogoMark size={20} className="text-[#2A4227] dark:text-[#9CC196]" />
-              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                doscientos
-              </span>
-            </div>
-            <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
-              Presupuesto · {proposalNumber}
-            </p>
-          </div>
-          <div className="flex flex-col items-start sm:items-end gap-1.5">
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-                {proposal.title as string}
-              </h1>
-              <StatusBadge meta={PROPOSAL_STATUS} value={status} />
-            </div>
-            {proposal.valid_until ? (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Válida hasta:{" "}
-                <strong className="text-zinc-700 dark:text-zinc-300">
-                  {formatDate(proposal.valid_until as string)}
-                </strong>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+        <article className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-800">
+          {/* Document header */}
+          <div className="flex flex-col gap-6 border-b border-zinc-200 px-6 py-7 dark:border-zinc-800 sm:flex-row sm:items-start sm:justify-between sm:px-8">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2 mb-1">
+                <LogoMark size={20} className="text-[#2A4227] dark:text-[#9CC196]" />
+                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  doscientos
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
+                Presupuesto · {proposalNumber}
               </p>
-            ) : null}
-            <a
-              href={`/p/proposal/${token}/pdf`}
-              className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-[#2A4227] transition-colors hover:border-[#2A4227] hover:bg-[#2A4227]/5 dark:border-zinc-700 dark:bg-zinc-900 dark:text-[#9CC196] dark:hover:border-[#9CC196]"
-            >
-              <Download className="size-3.5" />
-              Descargar PDF
-            </a>
-          </div>
-        </div>
-
-        {/* Recipient */}
-        <div className="px-8 py-5 border-b border-zinc-100 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-900/50">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-2">
-            Dirigido a
-          </p>
-          <div className="flex items-center gap-3">
-            {client?.logo_url ? (
-              // biome-ignore lint/performance/noImgElement: URL externa del logo del cliente, no compatible con next/image
-              <img
-                src={client.logo_url}
-                alt={`Logo ${recipientName}`}
-                className="size-8 rounded object-contain"
-              />
-            ) : null}
-            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-              {recipientName}
-            </p>
-          </div>
-        </div>
-
-        {/* Narrative: Context → Problems → Solutions (always before price) */}
-        {contextMarkdown || problems.length > 0 || solutions.length > 0 ? (
-          <div className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800/60 border-b border-zinc-100 dark:border-zinc-800/60">
-            {contextMarkdown ? (
-              <PortalNarrativeBlock label="Contexto">
-                <Markdown source={contextMarkdown} />
-              </PortalNarrativeBlock>
-            ) : null}
-            {problems.length > 0 ? (
-              <PortalNarrativeBlock label="Problemas detectados">
-                <PortalKeyPointsList items={problems} variant="problems" />
-              </PortalNarrativeBlock>
-            ) : null}
-            {solutions.length > 0 ? (
-              <PortalNarrativeBlock label="Cómo lo abordamos">
-                <PortalKeyPointsList items={solutions} variant="solutions" />
-              </PortalNarrativeBlock>
-            ) : null}
-          </div>
-        ) : null}
-
-        {(scopeModules.length > 0 || deliverables || acceptanceCriteria) && (
-          <div className="border-b border-zinc-100 px-8 py-7 dark:border-zinc-800/60">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
-              Alcance del proyecto
-            </p>
-            <div className="mt-4 flex flex-col gap-4">
-              {scopeModules.map((module, index) => (
-                <section
-                  key={module.id}
-                  className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
-                >
-                  <p className="text-[11px] font-semibold uppercase tracking-widest text-[#2A4227] dark:text-[#9CC196]">
-                    Módulo {String(index + 1).padStart(2, "0")}
-                  </p>
-                  <h2 className="mt-1 text-base font-semibold text-zinc-900 dark:text-zinc-100">
-                    {module.title}
-                  </h2>
-                  {module.description ? (
-                    <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                      {module.description}
-                    </p>
-                  ) : null}
-                  {(module.included.length > 0 || module.excluded.length > 0) && (
-                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                      {module.included.length > 0 ? (
-                        <ScopeBullets label="Incluido" items={module.included} tone="included" />
-                      ) : null}
-                      {module.excluded.length > 0 ? (
-                        <ScopeBullets label="No incluido" items={module.excluded} tone="excluded" />
-                      ) : null}
-                    </div>
-                  )}
-                  {module.notes ? (
-                    <p className="mt-4 border-t border-zinc-100 pt-3 text-xs leading-relaxed text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-                      <strong>Notas:</strong> {module.notes}
-                    </p>
-                  ) : null}
-                </section>
-              ))}
-              {deliverables || acceptanceCriteria ? (
-                <div className="grid gap-4 lg:grid-cols-2">
-                  {deliverables ? (
-                    <ProposalTextBlock label="Entregables" source={deliverables} />
-                  ) : null}
-                  {acceptanceCriteria ? (
-                    <ProposalTextBlock
-                      label="Criterios de aceptación"
-                      source={acceptanceCriteria}
-                    />
-                  ) : null}
-                </div>
-              ) : null}
             </div>
-          </div>
-        )}
-
-        <ProposalMaintenanceOptions
-          token={token}
-          offer={maintenanceOffer}
-          selectedPlanId={(proposal.maintenance_selected_plan_id as string | null) ?? null}
-          disabled={isDraft || responded || isTeam}
-        />
-
-        {/* Line items */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-zinc-200 dark:border-zinc-800">
-                <th className="px-8 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
-                  Descripción
-                </th>
-                {hasRecurring ? (
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
-                    Cadencia
-                  </th>
-                ) : null}
-                <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
-                  Cant.
-                </th>
-                <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
-                  Precio
-                </th>
-                <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
-                  IVA
-                </th>
-                <th className="px-8 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
-                  Subtotal
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {safeItems.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={hasRecurring ? 6 : 5}
-                    className="px-8 py-6 text-sm text-zinc-400 dark:text-zinc-600"
-                  >
-                    Sin líneas.
-                  </td>
-                </tr>
-              ) : (
-                safeItems.map((item, i) => {
-                  const cycle: BillingCycle = item.billing_cycle ?? "none";
-                  return (
-                    <tr
-                      key={item.id}
-                      className={i > 0 ? "border-t border-zinc-100 dark:border-zinc-800/60" : ""}
-                    >
-                      <td className="px-8 py-3.5 text-zinc-800 dark:text-zinc-200">
-                        {item.description}
-                      </td>
-                      {hasRecurring ? (
-                        <td className="px-4 py-3.5 text-left text-xs">
-                          {cycle === "none" ? (
-                            <span className="text-zinc-400 dark:text-zinc-600">
-                              {BILLING_CYCLE_LABELS.none}
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center rounded-full bg-[#2A4227]/10 dark:bg-[#9CC196]/10 px-2 py-0.5 font-medium text-[#2A4227] dark:text-[#9CC196]">
-                              {BILLING_CYCLE_LABELS[cycle]}
-                            </span>
-                          )}
-                        </td>
-                      ) : null}
-                      <td className="px-4 py-3.5 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
-                        {item.quantity}
-                      </td>
-                      <td className="px-4 py-3.5 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
-                        {formatEUR(item.unit_price)}
-                      </td>
-                      <td className="px-4 py-3.5 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
-                        {item.vat_rate}%
-                      </td>
-                      <td className="px-8 py-3.5 text-right tabular-nums font-medium text-zinc-900 dark:text-zinc-100">
-                        {formatEUR(item.subtotal)}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Totals */}
-        <div className="border-t border-zinc-200 dark:border-zinc-800 px-8 py-5 flex justify-end">
-          <div className="flex flex-col gap-3 w-64">
-            <div className="flex flex-col gap-1.5">
-              {hasRecurring ? (
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
-                  Inversión inicial
+            <div className="flex flex-col items-start sm:items-end gap-1.5">
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+                  {proposal.title as string}
+                </h1>
+                <StatusBadge meta={PROPOSAL_STATUS} value={status} />
+              </div>
+              {proposal.valid_until ? (
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Válida hasta:{" "}
+                  <strong className="text-zinc-700 dark:text-zinc-300">
+                    {formatDate(proposal.valid_until as string)}
+                  </strong>
                 </p>
               ) : null}
-              <div className="flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
-                <span>Subtotal</span>
-                <span className="tabular-nums">{formatEUR(totals.oneTime.subtotal)}</span>
-              </div>
-              <div className="flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
-                <span>IVA</span>
-                <span className="tabular-nums">{formatEUR(totals.oneTime.taxAmount)}</span>
-              </div>
-              <div className="flex justify-between text-sm font-bold text-zinc-900 dark:text-zinc-100 border-t border-zinc-200 dark:border-zinc-700 pt-2 mt-1">
-                <span>Total</span>
-                <span className="tabular-nums">{formatEUR(totals.oneTime.total)}</span>
-              </div>
-            </div>
-
-            {hasRecurring ? (
-              <div className="flex flex-col gap-1.5 border-t border-zinc-200 dark:border-zinc-800 pt-3">
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
-                  Mantenimiento recurrente
-                </p>
-                {totals.monthly.total > 0 ? (
-                  <div className="flex justify-between text-xs text-zinc-600 dark:text-zinc-400">
-                    <span>Mensual</span>
-                    <span className="tabular-nums font-medium">
-                      {formatEUR(totals.monthly.total)}
-                    </span>
-                  </div>
-                ) : null}
-                {totals.quarterly.total > 0 ? (
-                  <div className="flex justify-between text-xs text-zinc-600 dark:text-zinc-400">
-                    <span>Trimestral</span>
-                    <span className="tabular-nums font-medium">
-                      {formatEUR(totals.quarterly.total)}
-                    </span>
-                  </div>
-                ) : null}
-                {totals.yearly.total > 0 ? (
-                  <div className="flex justify-between text-xs text-zinc-600 dark:text-zinc-400">
-                    <span>Anual</span>
-                    <span className="tabular-nums font-medium">
-                      {formatEUR(totals.yearly.total)}
-                    </span>
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
-        </div>
-
-        {paymentTerms || changeManagementTerms || terms ? (
-          <div className="border-t border-zinc-100 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-900/50 px-8 py-6">
-            <p className="mb-4 text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
-              Condiciones
-            </p>
-            <div className="grid gap-5 lg:grid-cols-2">
-              {paymentTerms ? (
-                <div>
-                  <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                    Forma de pago
-                  </p>
-                  <p className="mt-1 text-xs font-medium text-[#2A4227] dark:text-[#9CC196]">
-                    {PAYMENT_SCHEDULE_LABELS[paymentSchedule]}
-                  </p>
-                  <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-                    {paymentTerms}
-                  </p>
-                </div>
-              ) : null}
-              {changeManagementTerms ? (
-                <div>
-                  <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                    Cambios de alcance
-                  </p>
-                  <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-                    {changeManagementTerms}
-                  </p>
-                </div>
-              ) : null}
-              {terms ? (
-                <div className="lg:col-span-2">
-                  <Markdown source={terms} />
-                </div>
-              ) : null}
+              <a
+                href={`/p/proposal/${token}/pdf`}
+                className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-[#2A4227] transition-colors hover:border-[#2A4227] hover:bg-[#2A4227]/5 dark:border-zinc-700 dark:bg-zinc-900 dark:text-[#9CC196] dark:hover:border-[#9CC196]"
+              >
+                <Download className="size-3.5" />
+                Descargar PDF
+              </a>
             </div>
           </div>
-        ) : null}
 
-        {/* Notes */}
-        {(proposal.notes as string | null) ? (
-          <div className="border-t border-zinc-100 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-900/50 px-8 py-5">
+          {/* Recipient */}
+          <div className="border-b border-zinc-100 bg-zinc-50 px-6 py-5 dark:border-zinc-800/60 dark:bg-zinc-900/50 sm:px-8">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-2">
-              Notas
+              Dirigido a
             </p>
-            <Markdown
-              source={proposal.notes as string}
-              className="text-zinc-700 dark:text-zinc-300"
-            />
-          </div>
-        ) : null}
-
-        {/* Deck link + Technical specs */}
-        <div className="border-t border-zinc-200 dark:border-zinc-800 px-8 py-6 flex flex-col gap-4">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-3">
-              Presentación
-            </p>
-            <a
-              href={`/deck/${token}`}
-              className="flex items-center gap-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100 hover:border-[#2A4227] hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
-            >
-              <Presentation className="size-4 text-zinc-400 dark:text-zinc-600 shrink-0" />
-              <span className="flex-1 truncate font-medium">Ver presentación del proyecto</span>
-              <span className="text-xs text-zinc-400 dark:text-zinc-600">Abrir →</span>
-            </a>
-          </div>
-
-          {safeSpecs.length > 0 ? (
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-3">
-                Documentación técnica
+            <div className="flex items-center gap-3">
+              {client?.logo_url ? (
+                // biome-ignore lint/performance/noImgElement: URL externa del logo del cliente, no compatible con next/image
+                <img
+                  src={client.logo_url}
+                  alt={`Logo ${recipientName}`}
+                  className="size-8 rounded object-contain"
+                />
+              ) : null}
+              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                {recipientName}
               </p>
-              <ul className="flex flex-col gap-2">
-                {safeSpecs.map((spec) => (
-                  <li key={spec.id}>
-                    <a
-                      href={`/p/spec/${spec.portal_token}`}
-                      className="flex items-center gap-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100 hover:border-[#2A4227] hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
-                    >
-                      <FileText className="size-4 text-zinc-400 dark:text-zinc-600 shrink-0" />
-                      <span className="flex-1 truncate font-medium">{spec.title}</span>
-                      <span className="text-xs text-zinc-400 dark:text-zinc-600">Abrir →</span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
+            </div>
+          </div>
+
+          {/* Narrative: Context → Problems → Solutions (always before price) */}
+          {contextMarkdown || problems.length > 0 || solutions.length > 0 ? (
+            <div className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800/60 border-b border-zinc-100 dark:border-zinc-800/60">
+              {contextMarkdown ? (
+                <PortalNarrativeBlock label="Contexto">
+                  <Markdown source={contextMarkdown} />
+                </PortalNarrativeBlock>
+              ) : null}
+              {problems.length > 0 ? (
+                <PortalNarrativeBlock label="Problemas detectados">
+                  <PortalKeyPointsList items={problems} variant="problems" />
+                </PortalNarrativeBlock>
+              ) : null}
+              {solutions.length > 0 ? (
+                <PortalNarrativeBlock label="Cómo lo abordamos">
+                  <PortalKeyPointsList items={solutions} variant="solutions" />
+                </PortalNarrativeBlock>
+              ) : null}
             </div>
           ) : null}
-        </div>
-      </article>
+
+          {(scopeModules.length > 0 || deliverables || acceptanceCriteria) && (
+            <div className="border-b border-zinc-100 px-6 py-7 dark:border-zinc-800/60 sm:px-8">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+                Alcance del proyecto
+              </p>
+              <div className="mt-4 flex flex-col gap-4">
+                {scopeModules.map((module, index) => (
+                  <section
+                    key={module.id}
+                    className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
+                  >
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-[#2A4227] dark:text-[#9CC196]">
+                      Módulo {String(index + 1).padStart(2, "0")}
+                    </p>
+                    <h2 className="mt-1 text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                      {module.title}
+                    </h2>
+                    {module.description ? (
+                      <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                        {module.description}
+                      </p>
+                    ) : null}
+                    {(module.included.length > 0 || module.excluded.length > 0) && (
+                      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                        {module.included.length > 0 ? (
+                          <ScopeBullets label="Incluido" items={module.included} tone="included" />
+                        ) : null}
+                        {module.excluded.length > 0 ? (
+                          <ScopeBullets label="No incluido" items={module.excluded} tone="excluded" />
+                        ) : null}
+                      </div>
+                    )}
+                    {module.notes ? (
+                      <p className="mt-4 border-t border-zinc-100 pt-3 text-xs leading-relaxed text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                        <strong>Notas:</strong> {module.notes}
+                      </p>
+                    ) : null}
+                  </section>
+                ))}
+                {deliverables || acceptanceCriteria ? (
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    {deliverables ? (
+                      <ProposalTextBlock label="Entregables" source={deliverables} />
+                    ) : null}
+                    {acceptanceCriteria ? (
+                      <ProposalTextBlock
+                        label="Criterios de aceptación"
+                        source={acceptanceCriteria}
+                      />
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          )}
+
+          <ProposalMaintenanceOptions
+            token={token}
+            offer={maintenanceOffer}
+            selectedPlanId={(proposal.maintenance_selected_plan_id as string | null) ?? null}
+            disabled={isDraft || responded || isTeam}
+          />
+
+          {/* Line items */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-zinc-200 dark:border-zinc-800">
+                  <th className="px-8 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+                    Descripción
+                  </th>
+                  {hasRecurring ? (
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+                      Cadencia
+                    </th>
+                  ) : null}
+                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+                    Cant.
+                  </th>
+                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+                    Precio
+                  </th>
+                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+                    IVA
+                  </th>
+                  <th className="px-8 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+                    Subtotal
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {safeItems.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={hasRecurring ? 6 : 5}
+                      className="px-8 py-6 text-sm text-zinc-400 dark:text-zinc-600"
+                    >
+                      Sin líneas.
+                    </td>
+                  </tr>
+                ) : (
+                  safeItems.map((item, i) => {
+                    const cycle: BillingCycle = item.billing_cycle ?? "none";
+                    return (
+                      <tr
+                        key={item.id}
+                        className={i > 0 ? "border-t border-zinc-100 dark:border-zinc-800/60" : ""}
+                      >
+                        <td className="px-8 py-3.5 text-zinc-800 dark:text-zinc-200">
+                          {item.description}
+                        </td>
+                        {hasRecurring ? (
+                          <td className="px-4 py-3.5 text-left text-xs">
+                            {cycle === "none" ? (
+                              <span className="text-zinc-400 dark:text-zinc-600">
+                                {BILLING_CYCLE_LABELS.none}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center rounded-full bg-[#2A4227]/10 dark:bg-[#9CC196]/10 px-2 py-0.5 font-medium text-[#2A4227] dark:text-[#9CC196]">
+                                {BILLING_CYCLE_LABELS[cycle]}
+                              </span>
+                            )}
+                          </td>
+                        ) : null}
+                        <td className="px-4 py-3.5 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
+                          {item.quantity}
+                        </td>
+                        <td className="px-4 py-3.5 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
+                          {formatEUR(item.unit_price)}
+                        </td>
+                        <td className="px-4 py-3.5 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
+                          {item.vat_rate}%
+                        </td>
+                        <td className="px-8 py-3.5 text-right tabular-nums font-medium text-zinc-900 dark:text-zinc-100">
+                          {formatEUR(item.subtotal)}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Totals */}
+          <div className="border-t border-zinc-200 dark:border-zinc-800 px-8 py-5 flex justify-end">
+            <div className="flex flex-col gap-3 w-64">
+              <div className="flex flex-col gap-1.5">
+                {hasRecurring ? (
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+                    Inversión inicial
+                  </p>
+                ) : null}
+                <div className="flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
+                  <span>Subtotal</span>
+                  <span className="tabular-nums">{formatEUR(totals.oneTime.subtotal)}</span>
+                </div>
+                <div className="flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
+                  <span>IVA</span>
+                  <span className="tabular-nums">{formatEUR(totals.oneTime.taxAmount)}</span>
+                </div>
+                <div className="flex justify-between text-sm font-bold text-zinc-900 dark:text-zinc-100 border-t border-zinc-200 dark:border-zinc-700 pt-2 mt-1">
+                  <span>Total</span>
+                  <span className="tabular-nums">{formatEUR(totals.oneTime.total)}</span>
+                </div>
+              </div>
+
+              {hasRecurring ? (
+                <div className="flex flex-col gap-1.5 border-t border-zinc-200 dark:border-zinc-800 pt-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+                    Mantenimiento recurrente
+                  </p>
+                  {totals.monthly.total > 0 ? (
+                    <div className="flex justify-between text-xs text-zinc-600 dark:text-zinc-400">
+                      <span>Mensual</span>
+                      <span className="tabular-nums font-medium">
+                        {formatEUR(totals.monthly.total)}
+                      </span>
+                    </div>
+                  ) : null}
+                  {totals.quarterly.total > 0 ? (
+                    <div className="flex justify-between text-xs text-zinc-600 dark:text-zinc-400">
+                      <span>Trimestral</span>
+                      <span className="tabular-nums font-medium">
+                        {formatEUR(totals.quarterly.total)}
+                      </span>
+                    </div>
+                  ) : null}
+                  {totals.yearly.total > 0 ? (
+                    <div className="flex justify-between text-xs text-zinc-600 dark:text-zinc-400">
+                      <span>Anual</span>
+                      <span className="tabular-nums font-medium">
+                        {formatEUR(totals.yearly.total)}
+                      </span>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          {paymentTerms || changeManagementTerms || terms ? (
+            <div className="border-t border-zinc-100 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-900/50 px-8 py-6">
+              <p className="mb-4 text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+                Condiciones
+              </p>
+              <div className="grid gap-5 lg:grid-cols-2">
+                {paymentTerms ? (
+                  <div>
+                    <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                      Forma de pago
+                    </p>
+                    <p className="mt-1 text-xs font-medium text-[#2A4227] dark:text-[#9CC196]">
+                      {PAYMENT_SCHEDULE_LABELS[paymentSchedule]}
+                    </p>
+                    <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                      {paymentTerms}
+                    </p>
+                  </div>
+                ) : null}
+                {changeManagementTerms ? (
+                  <div>
+                    <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                      Cambios de alcance
+                    </p>
+                    <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                      {changeManagementTerms}
+                    </p>
+                  </div>
+                ) : null}
+                {terms ? (
+                  <div className="lg:col-span-2">
+                    <Markdown source={terms} />
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+
+          {/* Notes */}
+          {(proposal.notes as string | null) ? (
+            <div className="border-t border-zinc-100 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-900/50 px-8 py-5">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-2">
+                Notas
+              </p>
+              <Markdown
+                source={proposal.notes as string}
+                className="text-zinc-700 dark:text-zinc-300"
+              />
+            </div>
+          ) : null}
+
+          {/* Deck link + Technical specs */}
+          <div className="border-t border-zinc-200 dark:border-zinc-800 px-8 py-6 flex flex-col gap-4">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-3">
+                Presentación
+              </p>
+              <a
+                href={`/deck/${token}`}
+                className="flex items-center gap-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100 hover:border-[#2A4227] hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+              >
+                <Presentation className="size-4 text-zinc-400 dark:text-zinc-600 shrink-0" />
+                <span className="flex-1 truncate font-medium">Ver presentación del proyecto</span>
+                <span className="text-xs text-zinc-400 dark:text-zinc-600">Abrir →</span>
+              </a>
+            </div>
+
+            {safeSpecs.length > 0 ? (
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-3">
+                  Documentación técnica
+                </p>
+                <ul className="flex flex-col gap-2">
+                  {safeSpecs.map((spec) => (
+                    <li key={spec.id}>
+                      <a
+                        href={`/p/spec/${spec.portal_token}`}
+                        className="flex items-center gap-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100 hover:border-[#2A4227] hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+                      >
+                        <FileText className="size-4 text-zinc-400 dark:text-zinc-600 shrink-0" />
+                        <span className="flex-1 truncate font-medium">{spec.title}</span>
+                        <span className="text-xs text-zinc-400 dark:text-zinc-600">Abrir →</span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        </article>
+        <ProposalMessageThread
+          messages={proposalMessages}
+          submit={sendProposalQuestion.bind(null, token)}
+          disabled={isDraft || responded || isTeam}
+        />
+      </div>
 
       {/* Response area — hidden for draft previews */}
       {!isDraft && responded ? (

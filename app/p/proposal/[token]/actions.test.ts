@@ -87,10 +87,17 @@ describe("portal proposal actions", () => {
   });
 
   it("rejects malformed tokens without touching the DB", async () => {
-    const { acceptProposal } = await import("@/app/p/proposal/[token]/actions");
+    const { acceptProposal, sendProposalQuestion } = await import(
+      "@/app/p/proposal/[token]/actions",
+    );
     const result = await acceptProposal("short");
     expect(result).toEqual({ ok: false, error: "Token inválido" });
     expect(state.lastPatch).toBeNull();
+
+    await expect(sendProposalQuestion("short", "¿Incluye soporte?")).resolves.toEqual({
+      ok: false,
+      error: "La consulta no es válida",
+    });
   });
 
   it("returns not-found when the proposal does not exist", async () => {

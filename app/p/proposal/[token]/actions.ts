@@ -31,13 +31,13 @@ type ActionResult = { ok: true } | { ok: false; error: string };
 
 export type PaymentInitResult =
   | {
-      ok: true;
-      demo?: boolean;
-      url: string;
-      signatureVersion: string;
-      merchantParameters: string;
-      signature: string;
-    }
+    ok: true;
+    demo?: boolean;
+    url: string;
+    signatureVersion: string;
+    merchantParameters: string;
+    signature: string;
+  }
   | { ok: false; error: string };
 
 /**
@@ -71,7 +71,7 @@ async function notifyAdmins(
   if (!recipients?.length) return;
   await dispatchNotifications({
     recipientIds: recipients.map((r) => r.id as string),
-    eventType: eventType as "proposal_accepted" | "proposal_rejected",
+    eventType: eventType as "proposal_accepted" | "proposal_rejected" | "proposal_question",
     entityType: "proposal",
     entityId: link.split("/").pop() ?? "unknown",
     body,
@@ -266,6 +266,46 @@ export async function selectProposalMaintenance(
   if (updateError) return { ok: false, error: "No se pudo actualizar el mantenimiento" };
 
   revalidatePath(`/p/proposal/${parsedToken.data}`);
+  return { ok: true };
+}
+
+export async function sendProposalQuestion(token: string, body: string): Promise<ActionResult> {
+  const parsedToken = ProposalPortalToken.safeParse(token);
+  const parsedBody = z.string().trim().min(1).max(2000).safeParse(body);
+  if (!parsedToken.success || !parsedBody.success) {
+    return { ok: false, error: "La consulta no es válida" };
+  }
+
+  const admin = createAdminClient();
+  const { data: proposal, error } = await admin
+    .from("proposals")
+    .select("id, status, title, clients(name), leads(name)")
+    .eq("portal_token", parsedToken.data)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (error || !proposal) return { ok: false, error: "Propuesta no encontrada" };
+  if (!["sent", "viewed"].includes(proposal.status as string)) {
+    return { ok: false, error: "Esta propuesta ya no admite consultas" };
+  }
+
+  const client = (proposal as unknown as { clients: { name: string } | null }).clients;
+  const lead = (proposal as unknown as { leads: { name: string } | null }).leads;
+  const { error: insertError } = await admin.from("proposal_messages").insert({
+    proposal_id: proposal.id,
+    author_type: "client",
+    author_name: client?.name ?? lead?.name ?? "Cliente",
+    body: parsedBody.data,
+  });
+  if (insertError) return { ok: false, error: "No se pudo enviar la consulta" };
+
+  void notifyAdmins(
+    admin,
+    "proposal_question",
+    `${proposal.title as string}: ${parsedBody.data.slice(0, 120)}`,
+    `/proposals/${proposal.id}`,
+  );
+  revalidatePath(`/p/proposal/${parsedToken.data}`);
+  revalidatePath(`/proposals/${proposal.id}`);
   return { ok: true };
 }
 

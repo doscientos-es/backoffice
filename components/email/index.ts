@@ -8,4 +8,5 @@ export {
   type PaymentReceiptEmailProps,
 } from "./payment-receipt-email";
 export { ProposalEmail, type ProposalEmailProps } from "./proposal-email";
+export { ProposalMessageEmail } from "./proposal-message-email";
 export { TeamInviteEmail, type TeamInviteEmailProps } from "./team-invite-email";

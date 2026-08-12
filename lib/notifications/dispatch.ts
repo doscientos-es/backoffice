@@ -16,6 +16,7 @@ export type NotificationEvent =
   | "invoice_requested"
   | "proposal_accepted"
   | "proposal_rejected"
+  | "proposal_question"
   | "proposal_deck_completed";
 
 const TITLES: Record<NotificationEvent, string> = {
@@ -33,6 +34,7 @@ const TITLES: Record<NotificationEvent, string> = {
   invoice_requested: "🧾 Solicitud de facturación",
   proposal_accepted: "✅ Propuesta aceptada",
   proposal_rejected: "❌ Propuesta rechazada",
+  proposal_question: "💬 Consulta sobre propuesta",
   proposal_deck_completed: "👀 Propuesta visualizada",
 };
 

@@ -1,10 +1,8 @@
-import { CheckCircle2, Clock, FileText, Presentation, XCircle } from "lucide-react";
-import Link from "next/link";
-import { notFound } from "next/navigation";
 import { BackLink } from "@/components/layout/back-link";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { PortalAccessControls } from "@/components/portal/portal-access-controls";
+import { type ProposalMessage, ProposalMessageThread } from "@/components/proposals/proposal-message-thread";
 import { AttachmentSection } from "@/components/ui/attachment-section";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,12 +17,16 @@ import { type PaymentSchedule, parseScopeModules } from "@/lib/proposals/scope";
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
+import { CheckCircle2, Clock, FileText, Presentation, XCircle } from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { updateProposalPortalAccess } from "../actions";
 import { DeleteProposalButton } from "./delete-proposal-button";
 import { DuplicateProposalButton } from "./duplicate-proposal-button";
 import { GenerateInvoiceButton } from "./generate-invoice-button";
 import { LinkProjectButton } from "./link-project-button";
 import { MarkAcceptedButton } from "./mark-accepted-button";
+import { replyToProposalMessage } from "./message-actions";
 import { type EditableItem, ProposalEditor } from "./proposal-editor";
 import { ProposalFollowUpAssistant } from "./proposal-follow-up-assistant";
 import { type ProposalSpec, ProposalSpecs } from "./proposal-specs";
@@ -110,16 +112,21 @@ export default async function ProposalDetailPage({
     .eq("proposal_id", id)
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
+  const { data: messages } = await supabase
+    .from("proposal_messages")
+    .select("id, author_type, author_name, body, created_at")
+    .eq("proposal_id", id)
+    .order("created_at", { ascending: true });
 
   // Projects available to link: same client, active (not deleted).
   const clientId = (proposal.client_id as string | null) ?? null;
   const { data: availableProjects } = clientId
     ? await supabase
-        .from("projects")
-        .select("id, name")
-        .eq("client_id", clientId)
-        .is("deleted_at", null)
-        .order("name")
+      .from("projects")
+      .select("id, name")
+      .eq("client_id", clientId)
+      .is("deleted_at", null)
+      .order("name")
     : { data: [] };
 
   const [{ data: teamMembers }, { data: proposalTeam }] = await Promise.all([
@@ -207,7 +214,7 @@ export default async function ProposalDetailPage({
                     client ? `Cliente: ${client.name}` : lead ? `Lead: ${lead.name}` : null,
                     `Estado: ${PROPOSAL_STATUS[status]?.label ?? status}`,
                     Number(proposal.total ?? 0) > 0 &&
-                      `Total: ${formatEUR(Number(proposal.total))}`,
+                    `Total: ${formatEUR(Number(proposal.total))}`,
                   ]
                     .filter(Boolean)
                     .join(" · "),
@@ -259,6 +266,18 @@ export default async function ProposalDetailPage({
           locked={locked}
         />
       </SectionBoundary>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Consultas del cliente</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ProposalMessageThread
+            messages={((messages ?? []) as unknown as ProposalMessage[])}
+            submit={replyToProposalMessage.bind(null, id)}
+          />
+        </CardContent>
+      </Card>
 
       <SectionBoundary label="No se pudo cargar la documentación técnica">
         <Card>

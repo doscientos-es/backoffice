@@ -1,12 +1,12 @@
 "use client";
 
-import { Check } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import type { MaintenanceOffer } from "@/lib/proposals/maintenance";
 import { formatEUR } from "@/lib/utils";
+import { Check } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { selectProposalMaintenance } from "./actions";
 
 export function ProposalMaintenanceOptions({
@@ -35,7 +35,7 @@ export function ProposalMaintenanceOptions({
   };
 
   return (
-    <section className="border-b border-zinc-100 px-8 py-7 dark:border-zinc-800/60">
+    <section className="border-b border-zinc-100 px-6 py-7 dark:border-zinc-800/60 sm:px-8">
       <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
         {offer.heading}
       </p>
