@@ -1,10 +1,10 @@
 "use client";
 
-import { MessageCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { MessageCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { type FormEvent, useState } from "react";
 
 export type ProposalMessage = {
   id: string;
@@ -20,17 +20,19 @@ export function ProposalMessageThread({
   messages,
   submit,
   disabled = false,
+  sticky = true,
 }: {
   messages: ProposalMessage[];
   submit: (body: string) => Promise<Result>;
   disabled?: boolean;
+  sticky?: boolean;
 }) {
   const router = useRouter();
   const [body, setBody] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = body.trim();
     if (!text || pending) return;
@@ -44,7 +46,9 @@ export function ProposalMessageThread({
   }
 
   return (
-    <aside className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-800 lg:sticky lg:top-6">
+    <aside
+      className={`rounded-xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-800 ${sticky ? "lg:sticky lg:top-6" : ""}`}
+    >
       <div className="flex items-center gap-2">
         <MessageCircle className="size-4 text-[#2A4227] dark:text-[#9CC196]" />
         <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Consultas</h2>

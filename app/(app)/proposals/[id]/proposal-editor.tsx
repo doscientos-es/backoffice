@@ -6,7 +6,6 @@ import { ProblemSolutionEditor } from "@/components/proposals/problem-solution-e
 import { ScopeModulesEditor } from "@/components/proposals/scope-modules-editor";
 import { AiNotice } from "@/components/ui/ai-notice";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AutosaveIndicator } from "@/components/ui/autosave-indicator";
 import { Button } from "@/components/ui/button";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { FormRow } from "@/components/ui/form-row";
@@ -15,7 +14,6 @@ import { Markdown } from "@/components/ui/markdown";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { EMPTY_LINE_ITEM, type LineItem } from "@/lib/finance";
-import { useAutosave } from "@/lib/hooks/use-autosave";
 import {
   createEmptyPair,
   type EditableKeyPoint,
@@ -32,7 +30,7 @@ import {
   type PaymentSchedule,
   type ScopeModule,
 } from "@/lib/proposals/scope";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Save } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { updateProposal } from "../actions";
 
@@ -67,9 +65,8 @@ export type ProposalEditorProps = {
 };
 
 /**
- * Inline editor for the proposal detail page. Every field autosaves with a
- * 2 s debounce via `updateProposal` server action so two team members can
- * collaborate without explicit save buttons.
+ * Inline editor for the proposal detail page. Changes remain local until the
+ * user explicitly saves them, avoiding partial or conflicting writes.
  *
  * Narrative is split into three blocks (context / problems / solutions) that
  * map 1-to-1 to deck slides and portal sections; see
@@ -108,6 +105,7 @@ export function ProposalEditor({
   );
   const [generating, setGenerating] = useState(false);
   const aiFeedback = useFormFeedback();
+  const saveFeedback = useFormFeedback({ successResetMs: 4_000 });
   const automaticDraftStarted = useRef(false);
   const [terms, setTerms] = useState(initialTerms ?? "");
   const [scopeModules, setScopeModules] = useState(initialScopeModules);
@@ -174,16 +172,6 @@ export function ProposalEditor({
     items,
   ]);
 
-  const autosave = useAutosave({
-    data: payload,
-    enabled: !locked,
-    storageKey: `proposal-edit:${id}`,
-    onSaveAction: async (data) => {
-      const res = await updateProposal(data);
-      if (!res.ok) return { error: res.error };
-    },
-  });
-
   async function handleGenerateNarrative() {
     setGenerating(true);
     aiFeedback.setPending();
@@ -210,7 +198,26 @@ export function ProposalEditor({
     commercialScopeIsEmpty ||
     !paymentTerms.trim() ||
     !changeManagementTerms.trim();
-  const saveErrors = autosave.error?.split("\n").filter(Boolean) ?? [];
+  const saveErrors =
+    saveFeedback.state.status === "error"
+      ? saveFeedback.state.message.split("\n").filter(Boolean)
+      : [];
+
+  async function handleSave() {
+    saveFeedback.setPending();
+    try {
+      const result = await updateProposal(payload);
+      if (!result.ok) {
+        saveFeedback.setError(result.error);
+        return;
+      }
+      saveFeedback.setSuccess("Propuesta guardada");
+    } catch (error) {
+      saveFeedback.setError(
+        error instanceof Error ? error.message : "No se pudo guardar la propuesta",
+      );
+    }
+  }
 
   function handlePaymentScheduleChange(value: PaymentSchedule) {
     setPaymentSchedule(value);
@@ -239,40 +246,6 @@ export function ProposalEditor({
       const acceptanceCriteriaAreEmpty = !acceptanceCriteria.trim();
       const paymentTermsAreEmpty = !paymentTerms.trim();
       const changeManagementTermsAreEmpty = !changeManagementTerms.trim();
-      const nextKeyPoints = pairsAreEmpty ? unzipPairs(nextPairs) : null;
-      const generatedNarrativePatch = pairsAreEmpty
-        ? {
-          problems: serializeKeyPoints(nextKeyPoints?.problems ?? []),
-          solutions: serializeKeyPoints(nextKeyPoints?.solutions ?? []),
-        }
-        : {};
-      const generatedPaymentTermsPatch = paymentTermsAreEmpty
-        ? {
-          payment_schedule: json.payment_schedule as PaymentSchedule,
-          payment_terms: json.payment_terms || null,
-        }
-        : {};
-      const save = await updateProposal({
-        id,
-        ...(titleIsEmpty ? { title: json.title } : {}),
-        ...(notesAreEmpty ? { notes: json.notes || null } : {}),
-        ...(contextIsEmpty ? { context_markdown: json.context_markdown || null } : {}),
-        ...generatedNarrativePatch,
-        ...(termsAreEmpty ? { terms: json.terms || null } : {}),
-        ...(modulesAreEmpty && nextScopeModules.length > 0
-          ? { scope_modules: nextScopeModules }
-          : {}),
-        ...(deliverablesAreEmpty ? { deliverables: json.deliverables || null } : {}),
-        ...(acceptanceCriteriaAreEmpty
-          ? { acceptance_criteria: json.acceptance_criteria || null }
-          : {}),
-        ...generatedPaymentTermsPatch,
-        ...(changeManagementTermsAreEmpty
-          ? { change_management_terms: json.change_management_terms || null }
-          : {}),
-      });
-      if (!save.ok) throw new Error(save.error);
-
       if (titleIsEmpty) setTitle(json.title);
       if (notesAreEmpty) setNotes(json.notes ?? "");
       if (contextIsEmpty) setContextMarkdown(json.context_markdown ?? "");
@@ -339,7 +312,7 @@ export function ProposalEditor({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="sticky top-3 z-20 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-background/95 p-3 shadow-sm backdrop-blur">
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -348,24 +321,18 @@ export function ProposalEditor({
           className="flex-1 min-w-0 h-9 text-base font-medium"
           aria-label="Título"
         />
-        <AutosaveIndicator
-          status={autosave.status}
-          savedAt={autosave.savedAt}
-          error={autosave.error}
-        />
         {!locked && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={autosave.saveNow}
-            disabled={autosave.status === "saving"}
-          >
-            Guardar
-          </Button>
+          <div className="flex items-center gap-3">
+            <FormFeedback state={saveFeedback.state} pendingLabel="Guardando propuesta…" />
+            <Button size="default" onClick={handleSave} disabled={saveFeedback.pending}>
+              <Save className="size-4" aria-hidden />
+              {saveFeedback.pending ? "Guardando…" : "Guardar cambios"}
+            </Button>
+          </div>
         )}
       </div>
 
-      {autosave.status === "error" && saveErrors.length > 0 ? (
+      {saveFeedback.state.status === "error" && saveErrors.length > 0 ? (
         <Alert variant="destructive" className="border-destructive/30 bg-destructive/5 px-4 py-3">
           <AlertCircle className="size-4" aria-hidden />
           <AlertTitle>No se ha podido guardar la propuesta</AlertTitle>

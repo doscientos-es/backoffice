@@ -92,6 +92,19 @@ function ProposalTextBlock({ label, source }: { label: string; source: string })
   );
 }
 
+function PresentationLink({ token }: { token: string }) {
+  return (
+    <a
+      href={`/deck/${token}`}
+      className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 transition-colors hover:border-[#2A4227] hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800/50"
+    >
+      <Presentation className="size-4 shrink-0 text-zinc-400 dark:text-zinc-600" />
+      <span className="flex-1 truncate font-medium">Ver presentación del proyecto</span>
+      <span className="text-xs text-zinc-400 dark:text-zinc-600">Abrir →</span>
+    </a>
+  );
+}
+
 export default async function PortalProposalPage({
   params,
   searchParams,
@@ -674,50 +687,44 @@ export default async function PortalProposalPage({
             </div>
           ) : null}
 
-          {/* Deck link + Technical specs */}
-          <div className="border-t border-zinc-200 dark:border-zinc-800 px-8 py-6 flex flex-col gap-4">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-3">
-                Presentación
+          {/* Technical specs */}
+          {safeSpecs.length > 0 ? (
+            <div className="flex flex-col gap-4 border-t border-zinc-200 px-8 py-6 dark:border-zinc-800">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+                Documentación técnica
               </p>
-              <a
-                href={`/deck/${token}`}
-                className="flex items-center gap-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100 hover:border-[#2A4227] hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
-              >
-                <Presentation className="size-4 text-zinc-400 dark:text-zinc-600 shrink-0" />
-                <span className="flex-1 truncate font-medium">Ver presentación del proyecto</span>
-                <span className="text-xs text-zinc-400 dark:text-zinc-600">Abrir →</span>
-              </a>
+              <ul className="flex flex-col gap-2">
+                {safeSpecs.map((spec) => (
+                  <li key={spec.id}>
+                    <a
+                      href={`/p/spec/${spec.portal_token}`}
+                      className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 transition-colors hover:border-[#2A4227] hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800/50"
+                    >
+                      <FileText className="size-4 shrink-0 text-zinc-400 dark:text-zinc-600" />
+                      <span className="flex-1 truncate font-medium">{spec.title}</span>
+                      <span className="text-xs text-zinc-400 dark:text-zinc-600">Abrir →</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
+          ) : null}
 
-            {safeSpecs.length > 0 ? (
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-3">
-                  Documentación técnica
-                </p>
-                <ul className="flex flex-col gap-2">
-                  {safeSpecs.map((spec) => (
-                    <li key={spec.id}>
-                      <a
-                        href={`/p/spec/${spec.portal_token}`}
-                        className="flex items-center gap-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100 hover:border-[#2A4227] hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
-                      >
-                        <FileText className="size-4 text-zinc-400 dark:text-zinc-600 shrink-0" />
-                        <span className="flex-1 truncate font-medium">{spec.title}</span>
-                        <span className="text-xs text-zinc-400 dark:text-zinc-600">Abrir →</span>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-          </div>
         </article>
-        <ProposalMessageThread
-          messages={proposalMessages}
-          submit={sendProposalQuestion.bind(null, token)}
-          disabled={isDraft || responded || isTeam}
-        />
+        <aside className="flex flex-col gap-4 self-start lg:sticky lg:top-6">
+          <ProposalMessageThread
+            messages={proposalMessages}
+            submit={sendProposalQuestion.bind(null, token)}
+            disabled={isDraft || responded || isTeam}
+            sticky={false}
+          />
+          <section className="hidden rounded-xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-800 lg:block">
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+              Presentación
+            </p>
+            <PresentationLink token={token} />
+          </section>
+        </aside>
 
         <ProposalMaintenanceOptions
           token={token}
@@ -725,6 +732,12 @@ export default async function PortalProposalPage({
           selectedPlanId={(proposal.maintenance_selected_plan_id as string | null) ?? null}
           disabled={isDraft || responded || isTeam}
         />
+        <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-800 lg:hidden">
+          <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+            Presentación
+          </p>
+          <PresentationLink token={token} />
+        </section>
       </div>
 
       {/* Response area — hidden for draft previews */}
