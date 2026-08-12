@@ -102,7 +102,7 @@ async function listMailboxMessages(
   const listUrl = new URL(`${GMAIL_API_BASE}/messages`);
   listUrl.searchParams.set(
     "q",
-    `in:anywhere {from:${leadEmail} to:${leadEmail} cc:${leadEmail} bcc:${leadEmail}}`,
+    `in:anywhere -label:drafts {from:${leadEmail} to:${leadEmail} cc:${leadEmail} bcc:${leadEmail}}`,
   );
   listUrl.searchParams.set("maxResults", String(MAX_MESSAGES_PER_MAILBOX));
 
