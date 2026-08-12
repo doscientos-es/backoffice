@@ -11,6 +11,7 @@ export const USER_VERIFICATION_INTENTS = [
   "team.member.deactivate",
   "team.member.delete",
   "company.settings.update",
+  "integrations.gmail_sync_mailboxes.update",
   "backup.delete",
   "web.db_credentials.update",
   "web.backup.run",

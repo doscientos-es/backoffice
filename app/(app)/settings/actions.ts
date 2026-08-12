@@ -1,11 +1,12 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { requireRole, requireUser } from "@/lib/auth";
+import { serverEnv } from "@/lib/env";
 import { consumeUserVerification } from "@/lib/security/user-verification";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { createServerClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 const ProfileInput = z.object({
   email_alias: z
@@ -179,6 +180,41 @@ const CompanyInput = z.object({
   invoice_series: z.string().min(1).max(10),
   internal_hourly_cost: z.coerce.number().min(0).max(100000),
 });
+
+const GmailSyncMailboxesInput = z.object({
+  mailboxes: z.array(z.string().trim().email("Introduce emails válidos")).max(30),
+});
+
+export async function updateGmailSyncMailboxes(
+  input: unknown,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const user = await requireRole(["owner", "admin"]);
+  const parsed = GmailSyncMailboxesInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+  }
+
+  const domain = serverEnv().GOOGLE_WORKSPACE_DOMAIN.toLowerCase();
+  const mailboxes = [...new Set(parsed.data.mailboxes.map((email) => email.toLowerCase()))];
+  if (mailboxes.some((email) => !email.endsWith(`@${domain}`))) {
+    return { ok: false, error: `Los buzones deben pertenecer al dominio @${domain}.` };
+  }
+
+  await consumeUserVerification(
+    user.id,
+    userVerificationScope("integrations.gmail_sync_mailboxes.update", "settings:1"),
+  );
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("settings")
+    .update({ gmail_sync_mailboxes: mailboxes, updated_at: new Date().toISOString() })
+    .eq("id", 1);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/settings/integrations");
+  revalidatePath("/leads");
+  return { ok: true };
+}
 
 export async function updateCompanySettings(
   formData: FormData,

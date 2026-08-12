@@ -7,7 +7,7 @@ vi.mock("./client", () => ({
   googleFetch,
 }));
 
-import { listLeadGmailMessages } from "./gmail";
+import { listLeadGmailMessages, resolveGmailSyncMailboxes } from "./gmail";
 
 const encoded = Buffer.from("Hola desde Gmail", "utf8").toString("base64url");
 
@@ -43,7 +43,11 @@ describe("listLeadGmailMessages", () => {
       return { messages: [] };
     });
 
-    const result = await listLeadGmailMessages("lead@example.test");
+    const result = await listLeadGmailMessages("lead@example.test", [
+      "pol@doscientos.es",
+      "gerard@doscientos.es",
+      "hola@doscientos.es",
+    ]);
 
     expect(result.synchronizedMailboxes).toBe(3);
     expect(result.unavailableMailboxes).toEqual([]);
@@ -66,10 +70,26 @@ describe("listLeadGmailMessages", () => {
       return { messages: [] };
     });
 
-    const result = await listLeadGmailMessages("lead@example.test");
+    const result = await listLeadGmailMessages("lead@example.test", [
+      "pol@doscientos.es",
+      "gerard@doscientos.es",
+      "hola@doscientos.es",
+    ]);
 
     expect(result.synchronizedMailboxes).toBe(2);
     expect(result.unavailableMailboxes).toEqual(["hola@doscientos.es"]);
     expect(result.scanned).toBe(0);
+  });
+});
+
+describe("resolveGmailSyncMailboxes", () => {
+  it("combines active member and general Workspace inboxes without duplicates", () => {
+    expect(
+      resolveGmailSyncMailboxes(
+        ["Pol@doscientos.es", null, "external@example.test"],
+        ["hola@doscientos.es", "pol@doscientos.es", ""],
+        "doscientos.es",
+      ),
+    ).toEqual(["pol@doscientos.es", "hola@doscientos.es"]);
   });
 });

@@ -1,19 +1,20 @@
 "use client";
 
-import { Activity, Building2, Mail, Shield, Target, User, Users } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Activity, Building2, Mail, PlugZap, Shield, Target, User, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
 
 type Item = {
   href:
-    | "/settings/profile"
-    | "/settings/company"
-    | "/settings/team"
-    | "/settings/goals"
-    | "/settings/email-templates"
-    | "/settings/diagnostics"
-    | "/settings/legal";
+  | "/settings/profile"
+  | "/settings/company"
+  | "/settings/team"
+  | "/settings/goals"
+  | "/settings/integrations"
+  | "/settings/email-templates"
+  | "/settings/diagnostics"
+  | "/settings/legal";
   label: string;
   icon: typeof User;
   requiresAdmin: boolean;
@@ -24,6 +25,7 @@ const ITEMS: readonly Item[] = [
   { href: "/settings/company", label: "Empresa", icon: Building2, requiresAdmin: true },
   { href: "/settings/team", label: "Equipo", icon: Users, requiresAdmin: true },
   { href: "/settings/goals", label: "Metas", icon: Target, requiresAdmin: true },
+  { href: "/settings/integrations", label: "Integraciones", icon: PlugZap, requiresAdmin: true },
   { href: "/settings/email-templates", label: "Plantillas email", icon: Mail, requiresAdmin: true },
   { href: "/settings/diagnostics", label: "Diagnóstico", icon: Activity, requiresAdmin: true },
   { href: "/settings/legal", label: "Legal / Verifactu", icon: Shield, requiresAdmin: false },

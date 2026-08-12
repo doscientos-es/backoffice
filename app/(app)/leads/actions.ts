@@ -9,7 +9,7 @@ import { isGoogleEnabled, publicEnv, serverEnv } from "@/lib/env";
 import type { CalendarBusySlot } from "@/lib/google/calendar";
 import { findConflicts, insertEvent } from "@/lib/google/calendar";
 import { resolveSubject } from "@/lib/google/client";
-import { listLeadGmailMessages } from "@/lib/google/gmail";
+import { listLeadGmailMessages, resolveGmailSyncMailboxes } from "@/lib/google/gmail";
 import { pushMetaQualifiedLeadStage } from "@/lib/integrations/meta-capi";
 import { isAutomaticallyAccessible, summarizeCallOutcomes } from "@/lib/leads/call-qualification";
 import {
@@ -825,7 +825,27 @@ export const syncLeadGmail = defineAction<
     if (leadError || !lead) throw new Error(leadError?.message ?? "Lead no encontrado");
     if (!lead.email) throw new Error("Este lead no tiene email registrado.");
 
-    const source = await listLeadGmailMessages(lead.email.toLowerCase());
+    const [{ data: members, error: membersError }, { data: settings, error: settingsError }] =
+      await Promise.all([
+        supabase.from("team_members").select("email").is("deleted_at", null),
+        supabase.from("settings").select("gmail_sync_mailboxes").eq("id", 1).maybeSingle(),
+      ]);
+    if (membersError) throw new Error(membersError.message);
+    if (settingsError) throw new Error(settingsError.message);
+
+    const generalMailboxes = Array.isArray(settings?.gmail_sync_mailboxes)
+      ? settings.gmail_sync_mailboxes
+      : [];
+    const mailboxes = resolveGmailSyncMailboxes(
+      (members ?? []).map((member) => member.email),
+      generalMailboxes,
+      serverEnv().GOOGLE_WORKSPACE_DOMAIN,
+    );
+    if (mailboxes.length === 0) {
+      throw new Error("No hay buzones de Gmail configurados para sincronizar.");
+    }
+
+    const source = await listLeadGmailMessages(lead.email.toLowerCase(), mailboxes);
     if (source.synchronizedMailboxes === 0) {
       throw new Error(
         "No se pudo acceder a Gmail. Comprueba que la Gmail API y su permiso están autorizados.",

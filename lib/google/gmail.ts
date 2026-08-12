@@ -1,7 +1,6 @@
 import { GOOGLE_SCOPES, googleFetch } from "./client";
 
 const GMAIL_API_BASE = "https://gmail.googleapis.com/gmail/v1/users/me";
-const SYNC_MAILBOXES = ["pol@doscientos.es", "gerard@doscientos.es", "hola@doscientos.es"];
 const MAX_MESSAGES_PER_MAILBOX = 50;
 const MAX_BODY_LENGTH = 20_000;
 
@@ -41,6 +40,20 @@ export type GmailLeadSyncSource = {
   synchronizedMailboxes: number;
   unavailableMailboxes: string[];
 };
+
+/** Combines active member inboxes with admin-configured shared mailboxes. */
+export function resolveGmailSyncMailboxes(
+  memberEmails: Array<string | null | undefined>,
+  generalMailboxes: Array<string | null | undefined>,
+  workspaceDomain: string,
+): string[] {
+  const domain = workspaceDomain.trim().toLowerCase();
+  return [...memberEmails, ...generalMailboxes]
+    .filter((email): email is string => typeof email === "string")
+    .map((email) => email.trim().toLowerCase())
+    .filter((email) => email.endsWith(`@${domain}`))
+    .filter((email, index, values) => values.indexOf(email) === index);
+}
 
 function getHeader(headers: GmailHeader[] | undefined, name: string): string | null {
   return (
@@ -141,12 +154,15 @@ async function listMailboxMessages(
 }
 
 /**
- * Reads the newest matching messages for one lead from the approved commercial
+ * Reads the newest matching messages for one lead from the supplied Workspace
  * mailboxes. A failing alias/group does not block the remaining mailboxes.
  */
-export async function listLeadGmailMessages(leadEmail: string): Promise<GmailLeadSyncSource> {
+export async function listLeadGmailMessages(
+  leadEmail: string,
+  mailboxes: string[],
+): Promise<GmailLeadSyncSource> {
   const settled = await Promise.allSettled(
-    SYNC_MAILBOXES.map(async (mailbox) => ({
+    mailboxes.map(async (mailbox) => ({
       mailbox,
       messages: await listMailboxMessages(mailbox, leadEmail),
     })),
@@ -160,7 +176,7 @@ export async function listLeadGmailMessages(leadEmail: string): Promise<GmailLea
       synchronizedMailboxes++;
       messages.push(...result.value.messages);
     } else {
-      const mailbox = SYNC_MAILBOXES[index];
+      const mailbox = mailboxes[index];
       if (mailbox) unavailableMailboxes.push(mailbox);
     }
   }
