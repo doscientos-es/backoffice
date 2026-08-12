@@ -1,5 +1,3 @@
-import { ArrowRight, Download } from "lucide-react";
-import type { ReactNode } from "react";
 import { LogoMark } from "@/components/branding";
 import { Markdown } from "@/components/ui/markdown";
 import {
@@ -9,7 +7,10 @@ import {
   type ProposalTotals,
 } from "@/lib/finance";
 import type { KeyPoint } from "@/lib/proposals/key-points";
+import { PAYMENT_SCHEDULE_LABELS, type ScopeModule } from "@/lib/proposals/scope";
 import { formatDate, formatEUR } from "@/lib/utils";
+import { ArrowRight, Download } from "lucide-react";
+import type { ReactNode } from "react";
 import type { DeckProposal, DeckProposalItem, DeckTeamMember } from "./page";
 
 function buildTotals(items: DeckProposalItem[]): ProposalTotals {
@@ -247,6 +248,43 @@ function ServicesSlide({ items }: { items: DeckProposalItem[] }) {
   );
 }
 
+function ScopeModuleSlide({ module, index }: { module: ScopeModule; index: number }) {
+  return (
+    <SectionSlide label={`Alcance · ${String(index + 1).padStart(2, "0")}`} title={module.title} accent="zinc">
+      <div className="max-w-3xl w-full text-left">
+        {module.description ? <p className="mb-6 text-base leading-relaxed text-zinc-600 sm:text-lg">{module.description}</p> : null}
+        <div className="grid gap-6 sm:grid-cols-2">
+          {module.included.length > 0 ? <ScopeList title="Incluido" items={module.included} tone="included" /> : null}
+          {module.excluded.length > 0 ? <ScopeList title="No incluido" items={module.excluded} tone="excluded" /> : null}
+        </div>
+        {module.notes ? <p className="mt-6 border-t border-zinc-200 pt-4 text-sm leading-relaxed text-zinc-500"><strong>Notas:</strong> {module.notes}</p> : null}
+      </div>
+    </SectionSlide>
+  );
+}
+
+function ScopeList({ title, items, tone }: { title: string; items: string[]; tone: "included" | "excluded" }) {
+  return (
+    <div>
+      <p className={`mb-3 text-xs font-semibold uppercase tracking-[0.2em] ${tone === "included" ? "text-[#2A4227]" : "text-zinc-500"}`}>{title}</p>
+      <ul className="flex flex-col gap-2 text-sm leading-relaxed text-zinc-700 sm:text-base">
+        {items.map((item) => <li key={item} className="flex gap-2"><span aria-hidden>•</span><span>{item}</span></li>)}
+      </ul>
+    </div>
+  );
+}
+
+function DeliverySlide({ proposal }: { proposal: DeckProposal }) {
+  return (
+    <SectionSlide label="Entrega" title="Cómo validaremos el proyecto">
+      <div className="grid max-w-3xl gap-8 text-left sm:grid-cols-2">
+        {proposal.deliverables ? <div><p className="mb-3 text-sm font-semibold text-zinc-900">Entregables</p><Markdown source={proposal.deliverables} className="deck-markdown text-sm text-zinc-600" /></div> : null}
+        {proposal.acceptance_criteria ? <div><p className="mb-3 text-sm font-semibold text-zinc-900">Criterios de aceptación</p><Markdown source={proposal.acceptance_criteria} className="deck-markdown text-sm text-zinc-600" /></div> : null}
+      </div>
+    </SectionSlide>
+  );
+}
+
 function PricingTotals({ totals }: { totals: ProposalTotals }) {
   const recurring = hasRecurring(totals);
   return (
@@ -442,6 +480,19 @@ function TermsSlide({ proposal }: { proposal: DeckProposal }) {
   return (
     <SectionSlide label="Condiciones" title="Términos del acuerdo" accent="zinc">
       <div className="max-w-3xl text-left w-full">
+        {proposal.payment_terms ? (
+          <div className="mb-6">
+            <p className="text-sm font-semibold text-zinc-900">Forma de pago</p>
+            <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-[#2A4227]">{PAYMENT_SCHEDULE_LABELS[proposal.payment_schedule]}</p>
+            <p className="mt-2 text-sm leading-relaxed text-zinc-600">{proposal.payment_terms}</p>
+          </div>
+        ) : null}
+        {proposal.change_management_terms ? (
+          <div className="mb-6">
+            <p className="text-sm font-semibold text-zinc-900">Cambios de alcance</p>
+            <p className="mt-2 text-sm leading-relaxed text-zinc-600">{proposal.change_management_terms}</p>
+          </div>
+        ) : null}
         <Markdown
           source={proposal.terms ?? ""}
           className="deck-markdown deck-markdown-terms text-sm sm:text-base text-zinc-600"
@@ -556,6 +607,22 @@ export function buildSlides(
       ),
     });
   }
+  proposal.scope_modules.forEach((module, index) => {
+    slides.push({
+      key: `scope-${module.id}`,
+      label: `Módulo ${index + 1}`,
+      accent: "zinc",
+      element: wm(<ScopeModuleSlide module={module} index={index} />),
+    });
+  });
+  if (proposal.deliverables || proposal.acceptance_criteria) {
+    slides.push({
+      key: "delivery",
+      label: "Entrega",
+      accent: "white",
+      element: wm(<DeliverySlide proposal={proposal} />),
+    });
+  }
   if (team.length > 0) {
     slides.push({
       key: "team",
@@ -579,7 +646,7 @@ export function buildSlides(
       );
     slides.push({ key: "pricing", label: "Inversión", accent: "white", element: wm(pricing) });
   }
-  if (proposal.terms) {
+  if (proposal.payment_terms || proposal.change_management_terms || proposal.terms) {
     slides.push({
       key: "terms",
       label: "Condiciones",

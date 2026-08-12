@@ -1,7 +1,3 @@
-import { CheckCircle2, Download, FileText, Presentation, XCircle } from "lucide-react";
-import type { Metadata } from "next";
-import { headers } from "next/headers";
-import { notFound } from "next/navigation";
 import { LogoMark } from "@/components/branding";
 import { PortalPasswordGate } from "@/components/portal/password-gate";
 import { ProposalPaymentButton } from "@/components/portal/proposal-payment-button";
@@ -14,9 +10,18 @@ import { BILLING_CYCLE_LABELS, type BillingCycle, computeProposalTotals } from "
 import { scopedLogger } from "@/lib/logger";
 import { isPortalUnlocked } from "@/lib/portal/access";
 import { parseKeyPoints } from "@/lib/proposals/key-points";
+import {
+  PAYMENT_SCHEDULE_LABELS,
+  type PaymentSchedule,
+  parseScopeModules,
+} from "@/lib/proposals/scope";
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
+import { CheckCircle2, Download, FileText, Presentation, XCircle } from "lucide-react";
+import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 import { unlockProposalPortal } from "./actions";
 import { PortalKeyPointsList, PortalNarrativeBlock } from "./narrative";
 import { ProposalActions } from "./proposal-actions";
@@ -38,6 +43,34 @@ type ProposalItem = {
   subtotal: number;
   billing_cycle: BillingCycle | null;
 };
+
+function ScopeBullets({
+  label,
+  items,
+  tone,
+}: {
+  label: string;
+  items: string[];
+  tone: "included" | "excluded";
+}) {
+  return (
+    <div>
+      <p className={`text-xs font-semibold ${tone === "included" ? "text-emerald-700 dark:text-emerald-400" : "text-zinc-600 dark:text-zinc-400"}`}>{label}</p>
+      <ul className="mt-2 flex flex-col gap-1.5 text-sm text-zinc-600 dark:text-zinc-400">
+        {items.map((item) => <li key={item} className="flex gap-2"><span aria-hidden>•</span><span>{item}</span></li>)}
+      </ul>
+    </div>
+  );
+}
+
+function ProposalTextBlock({ label, source }: { label: string; source: string }) {
+  return (
+    <section className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+      <p className="mb-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">{label}</p>
+      <Markdown source={source} className="text-sm text-zinc-600 dark:text-zinc-400" />
+    </section>
+  );
+}
 
 export default async function PortalProposalPage({
   params,
@@ -175,31 +208,31 @@ export default async function PortalProposalPage({
   // back-office for prospects that never went through onboarding.
   const clientBillingAddress = client
     ? formatAddress({
-        street: client.billing_address_street,
-        zip: client.billing_address_zip,
-        city: client.billing_address_city,
-        province: client.billing_address_province,
-        country: client.billing_address_country,
-      })
+      street: client.billing_address_street,
+      zip: client.billing_address_zip,
+      city: client.billing_address_city,
+      province: client.billing_address_province,
+      country: client.billing_address_country,
+    })
     : "";
   const needsFiscal = !client?.nif?.trim() || !clientBillingAddress || !client.name?.trim();
   const fiscalPrefill = client
     ? {
-        name: client.name ?? "",
-        nif: client.nif ?? "",
-        billing_address: clientBillingAddress,
-        contact_person: client.contact_person ?? "",
-        email: client.email ?? "",
-        phone: client.phone ?? "",
-      }
+      name: client.name ?? "",
+      nif: client.nif ?? "",
+      billing_address: clientBillingAddress,
+      contact_person: client.contact_person ?? "",
+      email: client.email ?? "",
+      phone: client.phone ?? "",
+    }
     : {
-        name: lead?.company ?? lead?.name ?? "",
-        nif: "",
-        billing_address: "",
-        contact_person: lead?.name ?? "",
-        email: lead?.email ?? "",
-        phone: lead?.phone ?? "",
-      };
+      name: lead?.company ?? lead?.name ?? "",
+      nif: "",
+      billing_address: "",
+      contact_person: lead?.name ?? "",
+      email: lead?.email ?? "",
+      phone: lead?.phone ?? "",
+    };
   const recipientName = client?.name ?? lead?.company ?? lead?.name ?? "—";
   const proposalNumber = (proposal.number as string | null) ?? "Borrador";
   const safeItems = (items ?? []) as unknown as ProposalItem[];
@@ -212,6 +245,12 @@ export default async function PortalProposalPage({
   const problems = parseKeyPoints(proposal.problems);
   const solutions = parseKeyPoints(proposal.solutions);
   const terms = (proposal.terms as string | null) ?? null;
+  const scopeModules = parseScopeModules(proposal.scope_modules);
+  const deliverables = (proposal.deliverables as string | null) ?? null;
+  const acceptanceCriteria = (proposal.acceptance_criteria as string | null) ?? null;
+  const paymentSchedule = (proposal.payment_schedule as PaymentSchedule | null) ?? "half_half";
+  const paymentTerms = (proposal.payment_terms as string | null) ?? null;
+  const changeManagementTerms = (proposal.change_management_terms as string | null) ?? null;
 
   // Recompute totals on the fly so we can show separate buckets for one-time
   // and recurring lines. The stored `proposals.total` reflects the one-time
@@ -346,6 +385,38 @@ export default async function PortalProposalPage({
             ) : null}
           </div>
         ) : null}
+
+        {(scopeModules.length > 0 || deliverables || acceptanceCriteria) && (
+          <div className="border-b border-zinc-100 px-8 py-7 dark:border-zinc-800/60">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+              Alcance del proyecto
+            </p>
+            <div className="mt-4 flex flex-col gap-4">
+              {scopeModules.map((module, index) => (
+                <section key={module.id} className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-[#2A4227] dark:text-[#9CC196]">
+                    Módulo {String(index + 1).padStart(2, "0")}
+                  </p>
+                  <h2 className="mt-1 text-base font-semibold text-zinc-900 dark:text-zinc-100">{module.title}</h2>
+                  {module.description ? <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{module.description}</p> : null}
+                  {(module.included.length > 0 || module.excluded.length > 0) && (
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                      {module.included.length > 0 ? <ScopeBullets label="Incluido" items={module.included} tone="included" /> : null}
+                      {module.excluded.length > 0 ? <ScopeBullets label="No incluido" items={module.excluded} tone="excluded" /> : null}
+                    </div>
+                  )}
+                  {module.notes ? <p className="mt-4 border-t border-zinc-100 pt-3 text-xs leading-relaxed text-zinc-500 dark:border-zinc-800 dark:text-zinc-400"><strong>Notas:</strong> {module.notes}</p> : null}
+                </section>
+              ))}
+              {deliverables || acceptanceCriteria ? (
+                <div className="grid gap-4 lg:grid-cols-2">
+                  {deliverables ? <ProposalTextBlock label="Entregables" source={deliverables} /> : null}
+                  {acceptanceCriteria ? <ProposalTextBlock label="Criterios de aceptación" source={acceptanceCriteria} /> : null}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        )}
 
         {/* Line items */}
         <div className="overflow-x-auto">
@@ -485,10 +556,27 @@ export default async function PortalProposalPage({
           </div>
         </div>
 
-        {/* Terms (markdown) */}
-        {terms ? (
+        {(paymentTerms || changeManagementTerms || terms) ? (
           <div className="border-t border-zinc-100 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-900/50 px-8 py-6">
-            <Markdown source={terms} />
+            <p className="mb-4 text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+              Condiciones
+            </p>
+            <div className="grid gap-5 lg:grid-cols-2">
+              {paymentTerms ? (
+                <div>
+                  <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Forma de pago</p>
+                  <p className="mt-1 text-xs font-medium text-[#2A4227] dark:text-[#9CC196]">{PAYMENT_SCHEDULE_LABELS[paymentSchedule]}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">{paymentTerms}</p>
+                </div>
+              ) : null}
+              {changeManagementTerms ? (
+                <div>
+                  <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Cambios de alcance</p>
+                  <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">{changeManagementTerms}</p>
+                </div>
+              ) : null}
+              {terms ? <div className="lg:col-span-2"><Markdown source={terms} /></div> : null}
+            </div>
           </div>
         ) : null}
 

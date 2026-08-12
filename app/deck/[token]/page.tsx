@@ -1,11 +1,12 @@
-import type { Metadata } from "next";
-import { headers } from "next/headers";
-import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import type { BillingCycle } from "@/lib/finance";
 import { scopedLogger } from "@/lib/logger";
 import { type KeyPoint, parseKeyPoints } from "@/lib/proposals/key-points";
+import { parseScopeModules, type PaymentSchedule, type ScopeModule } from "@/lib/proposals/scope";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 import { DeckViewer } from "./deck-viewer-client";
 
 const log = scopedLogger("deck.page");
@@ -37,6 +38,12 @@ export type DeckProposal = {
   problems: KeyPoint[];
   solutions: KeyPoint[];
   terms: string | null;
+  scope_modules: ScopeModule[];
+  deliverables: string | null;
+  acceptance_criteria: string | null;
+  payment_schedule: PaymentSchedule;
+  payment_terms: string | null;
+  change_management_terms: string | null;
   notes: string | null;
   subtotal: number;
   tax_amount: number;
@@ -168,6 +175,12 @@ export default async function DeckPage({ params }: { params: Promise<{ token: st
     problems: parseKeyPoints(proposal.problems),
     solutions: parseKeyPoints(proposal.solutions),
     terms: (proposal.terms as string | null) ?? null,
+    scope_modules: parseScopeModules(proposal.scope_modules),
+    deliverables: (proposal.deliverables as string | null) ?? null,
+    acceptance_criteria: (proposal.acceptance_criteria as string | null) ?? null,
+    payment_schedule: (proposal.payment_schedule as PaymentSchedule | null) ?? "half_half",
+    payment_terms: (proposal.payment_terms as string | null) ?? null,
+    change_management_terms: (proposal.change_management_terms as string | null) ?? null,
     notes: (proposal.notes as string | null) ?? null,
     subtotal: proposal.subtotal as number,
     tax_amount: proposal.tax_amount as number,
