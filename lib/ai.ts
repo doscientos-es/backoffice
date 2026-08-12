@@ -88,7 +88,7 @@ function normalizeAIError(err: unknown): Error {
   if (err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError")) {
     return new Error("La IA tardó demasiado en responder (timeout 30s).");
   }
-  if (isInvalidStructuredOutputError(err)) {
+  if (isRetryableStructuredOutputError(err)) {
     return new Error("La IA devolvió un resultado con un formato no válido. Inténtalo de nuevo.");
   }
   return err instanceof Error ? err : new Error("Fallo en la llamada a la IA.");
