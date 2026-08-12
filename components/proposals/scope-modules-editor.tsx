@@ -1,5 +1,7 @@
 "use client";
 
+import { ChevronDown, ChevronUp, Plus, Trash2, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -7,8 +9,6 @@ import {
   SCOPE_MODULE_LIMITS,
   type ScopeModule,
 } from "@/lib/proposals/scope";
-import { ChevronDown, ChevronUp, Plus, Trash2, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 
 type Props = {
   modules: ScopeModule[];
@@ -16,10 +16,18 @@ type Props = {
   locked?: boolean;
 };
 
+type BulletDraft = { id: string; value: string };
+
+function makeDraft(value: string): BulletDraft {
+  return { id: crypto.randomUUID(), value };
+}
+
+function makeDrafts(items: string[]): BulletDraft[] {
+  return items.length > 0 ? items.map(makeDraft) : [makeDraft("")];
+}
+
 function compactBullets(values: string[]): string[] {
-  return values
-    .map((line) => line.replace(/^\s*[-*]\s*/, "").trim())
-    .filter(Boolean);
+  return values.map((line) => line.replace(/^\s*[-*]\s*/, "").trim()).filter(Boolean);
 }
 
 function sameBullets(left: string[], right: string[]): boolean {
@@ -41,17 +49,18 @@ function ScopeBulletEditor({
   moduleIndex: number;
   tone: "included" | "excluded";
 }) {
-  const [drafts, setDrafts] = useState<string[]>(() => (items.length > 0 ? items : [""]));
+  const [drafts, setDrafts] = useState<BulletDraft[]>(() => makeDrafts(items));
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const focusIndex = useRef<number | null>(null);
   const hintId = `scope-${tone}-${moduleIndex}-hint`;
-  const filledCount = compactBullets(drafts).length;
-  const hasBlankDraft = drafts.some((draft) => !draft.trim());
+  const draftValues = drafts.map((draft) => draft.value);
+  const filledCount = compactBullets(draftValues).length;
+  const hasBlankDraft = drafts.some((draft) => !draft.value.trim());
   const atLimit = drafts.length >= SCOPE_MODULE_LIMITS.maxBulletCount;
 
   useEffect(() => {
-    if (!sameBullets(compactBullets(drafts), items)) {
-      setDrafts(items.length > 0 ? items : [""]);
+    if (!sameBullets(compactBullets(drafts.map((draft) => draft.value)), items)) {
+      setDrafts(makeDrafts(items));
     }
   }, [drafts, items]);
 
@@ -59,30 +68,34 @@ function ScopeBulletEditor({
     if (focusIndex.current === null) return;
     inputRefs.current[focusIndex.current]?.focus();
     focusIndex.current = null;
-  }, [drafts.length]);
+  });
 
   const updateDraft = (index: number, value: string) => {
-    const next = drafts.map((draft, current) => (current === index ? value : draft));
+    const next = drafts.map((draft, current) => (current === index ? { ...draft, value } : draft));
     setDrafts(next);
-    onChange(compactBullets(next));
+    onChange(compactBullets(next.map((draft) => draft.value)));
   };
 
   const removeDraft = (index: number, nextFocusIndex = Math.max(0, index - 1)) => {
     const next = drafts.filter((_, current) => current !== index);
-    const nextDrafts = next.length > 0 ? next : [""];
+    const nextDrafts = next.length > 0 ? next : [makeDraft("")];
     focusIndex.current = Math.min(nextFocusIndex, nextDrafts.length - 1);
     setDrafts(nextDrafts);
-    onChange(compactBullets(nextDrafts));
+    onChange(compactBullets(nextDrafts.map((draft) => draft.value)));
   };
 
   const addDraft = (afterIndex = drafts.length - 1) => {
-    const blankIndex = drafts.findIndex((draft) => !draft.trim());
+    const blankIndex = drafts.findIndex((draft) => !draft.value.trim());
     if (blankIndex >= 0) {
       inputRefs.current[blankIndex]?.focus();
       return;
     }
     if (atLimit) return;
-    const next = [...drafts.slice(0, afterIndex + 1), "", ...drafts.slice(afterIndex + 1)];
+    const next = [
+      ...drafts.slice(0, afterIndex + 1),
+      makeDraft(""),
+      ...drafts.slice(afterIndex + 1),
+    ];
     focusIndex.current = afterIndex + 1;
     setDrafts(next);
   };
@@ -93,7 +106,10 @@ function ScopeBulletEditor({
       : "bg-muted text-muted-foreground";
 
   return (
-    <section aria-labelledby={`scope-${tone}-${moduleIndex}-label`} className="rounded-lg border border-border bg-muted/20 p-3">
+    <section
+      aria-labelledby={`scope-${tone}-${moduleIndex}-label`}
+      className="rounded-lg border border-border bg-muted/20 p-3"
+    >
       <div className="mb-2 flex items-start justify-between gap-3">
         <div>
           <h3 id={`scope-${tone}-${moduleIndex}-label`} className="text-sm font-medium">
@@ -109,23 +125,26 @@ function ScopeBulletEditor({
       </div>
       <ol aria-label={`${label} en módulo ${moduleIndex + 1}`} className="flex flex-col gap-1.5">
         {drafts.map((draft, bulletIndex) => (
-          <li key={bulletIndex} className="flex items-center gap-2">
-            <span aria-hidden className={`flex size-5 shrink-0 items-center justify-center rounded-full text-xs ${accentClass}`}>
+          <li key={draft.id} className="flex items-center gap-2">
+            <span
+              aria-hidden
+              className={`flex size-5 shrink-0 items-center justify-center rounded-full text-xs ${accentClass}`}
+            >
               •
             </span>
             <Input
               ref={(element) => {
                 inputRefs.current[bulletIndex] = element;
               }}
-              value={draft}
+              value={draft.value}
               onChange={(event) => updateDraft(bulletIndex, event.target.value)}
               onKeyDown={(event) => {
                 if (event.nativeEvent.isComposing) return;
-                if (event.key === "Enter" && draft.trim()) {
+                if (event.key === "Enter" && draft.value.trim()) {
                   event.preventDefault();
                   addDraft(bulletIndex);
                 }
-                if (event.key === "Backspace" && !draft && bulletIndex > 0) {
+                if (event.key === "Backspace" && !draft.value && bulletIndex > 0) {
                   event.preventDefault();
                   removeDraft(bulletIndex);
                 }
@@ -140,7 +159,7 @@ function ScopeBulletEditor({
             <button
               type="button"
               onClick={() => removeDraft(bulletIndex)}
-              disabled={disabled || (drafts.length === 1 && !draft)}
+              disabled={disabled || (drafts.length === 1 && !draft.value)}
               aria-label={`Eliminar punto ${bulletIndex + 1} de ${label}`}
               className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:pointer-events-none disabled:opacity-30"
             >
