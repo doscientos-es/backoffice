@@ -1,7 +1,3 @@
-import { CheckCircle2, Download, FileText, Presentation, XCircle } from "lucide-react";
-import type { Metadata } from "next";
-import { headers } from "next/headers";
-import { notFound } from "next/navigation";
 import { LogoMark } from "@/components/branding";
 import { PortalPasswordGate } from "@/components/portal/password-gate";
 import { ProposalPaymentButton } from "@/components/portal/proposal-payment-button";
@@ -15,6 +11,11 @@ import { scopedLogger } from "@/lib/logger";
 import { isPortalUnlocked } from "@/lib/portal/access";
 import { parseKeyPoints } from "@/lib/proposals/key-points";
 import {
+  maintenancePlanAsLineItem,
+  parseMaintenanceOffer,
+  selectedMaintenancePlan,
+} from "@/lib/proposals/maintenance";
+import {
   PAYMENT_SCHEDULE_LABELS,
   type PaymentSchedule,
   parseScopeModules,
@@ -23,9 +24,14 @@ import {
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
+import { CheckCircle2, Download, FileText, Presentation, XCircle } from "lucide-react";
+import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 import { unlockProposalPortal } from "./actions";
 import { PortalKeyPointsList, PortalNarrativeBlock } from "./narrative";
 import { ProposalActions } from "./proposal-actions";
+import { ProposalMaintenanceOptions } from "./proposal-maintenance-options";
 
 const log = scopedLogger("portal.proposal");
 
@@ -218,34 +224,34 @@ export default async function PortalProposalPage({
   // back-office for prospects that never went through onboarding.
   const clientBillingAddress = client
     ? formatAddress({
-        street: client.billing_address_street,
-        zip: client.billing_address_zip,
-        city: client.billing_address_city,
-        province: client.billing_address_province,
-        country: client.billing_address_country,
-      })
+      street: client.billing_address_street,
+      zip: client.billing_address_zip,
+      city: client.billing_address_city,
+      province: client.billing_address_province,
+      country: client.billing_address_country,
+    })
     : "";
   const needsFiscal = !client?.nif?.trim() || !clientBillingAddress || !client.name?.trim();
   const fiscalPrefill = client
     ? {
-        name: client.name ?? "",
-        nif: client.nif ?? "",
-        billing_address: clientBillingAddress,
-        contact_person: client.contact_person ?? "",
-        email: client.email ?? "",
-        phone: client.phone ?? "",
-      }
+      name: client.name ?? "",
+      nif: client.nif ?? "",
+      billing_address: clientBillingAddress,
+      contact_person: client.contact_person ?? "",
+      email: client.email ?? "",
+      phone: client.phone ?? "",
+    }
     : {
-        name: lead?.company ?? lead?.name ?? "",
-        nif: "",
-        billing_address: "",
-        contact_person: lead?.name ?? "",
-        email: lead?.email ?? "",
-        phone: lead?.phone ?? "",
-      };
+      name: lead?.company ?? lead?.name ?? "",
+      nif: "",
+      billing_address: "",
+      contact_person: lead?.name ?? "",
+      email: lead?.email ?? "",
+      phone: lead?.phone ?? "",
+    };
   const recipientName = client?.name ?? lead?.company ?? lead?.name ?? "—";
   const proposalNumber = (proposal.number as string | null) ?? "Borrador";
-  const safeItems = (items ?? []) as unknown as ProposalItem[];
+  const baseItems = (items ?? []) as unknown as ProposalItem[];
   const safeSpecs = (specs ?? []) as unknown as Array<{
     id: string;
     title: string;
@@ -261,6 +267,14 @@ export default async function PortalProposalPage({
   const paymentSchedule = (proposal.payment_schedule as PaymentSchedule | null) ?? "half_half";
   const paymentTerms = (proposal.payment_terms as string | null) ?? null;
   const changeManagementTerms = (proposal.change_management_terms as string | null) ?? null;
+  const maintenanceOffer = parseMaintenanceOffer(proposal.maintenance_options);
+  const maintenancePlan = selectedMaintenancePlan(
+    maintenanceOffer,
+    (proposal.maintenance_selected_plan_id as string | null) ?? null,
+  );
+  const safeItems = maintenancePlan
+    ? [...baseItems, maintenancePlanAsLineItem(maintenancePlan)]
+    : baseItems;
 
   // Recompute totals on the fly so we can show separate buckets for one-time
   // and recurring lines. The stored `proposals.total` reflects the one-time
@@ -455,6 +469,13 @@ export default async function PortalProposalPage({
             </div>
           </div>
         )}
+
+        <ProposalMaintenanceOptions
+          token={token}
+          offer={maintenanceOffer}
+          selectedPlanId={(proposal.maintenance_selected_plan_id as string | null) ?? null}
+          disabled={isDraft || responded || isTeam}
+        />
 
         {/* Line items */}
         <div className="overflow-x-auto">
