@@ -121,6 +121,7 @@ describe("proxy – public paths (always pass through)", () => {
     ["/api/email/webhook"],
     ["/api/public/status"],
     ["/api/cron/web-backups"],
+    ["/api/crm/follow-ups"],
   ])("passes through %s without auth check", async (path) => {
     const res = await proxy(req(path));
     expect(res.status).not.toBe(307);

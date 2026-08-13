@@ -13,6 +13,8 @@ const PUBLIC_PATHS = [
   "/api/email/webhook",
   "/api/public",
   "/api/cron",
+  // This scheduled endpoint authenticates with CRON_SECRET in its route handler.
+  "/api/crm/follow-ups",
   // Integration endpoints authenticate themselves via secrets; no session needed.
   "/api/integrations",
 ];

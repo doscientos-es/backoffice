@@ -1,3 +1,7 @@
+import { CheckCircle2, Download, FileText, Presentation, XCircle } from "lucide-react";
+import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 import { LogoMark } from "@/components/branding";
 import { PortalPasswordGate } from "@/components/portal/password-gate";
 import { ProposalPaymentButton } from "@/components/portal/proposal-payment-button";
@@ -28,10 +32,6 @@ import {
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { CheckCircle2, Download, FileText, Presentation, XCircle } from "lucide-react";
-import type { Metadata } from "next";
-import { headers } from "next/headers";
-import { notFound } from "next/navigation";
 import { sendProposalQuestion, unlockProposalPortal } from "./actions";
 import { PortalKeyPointsList, PortalNarrativeBlock } from "./narrative";
 import { ProposalActions } from "./proposal-actions";
@@ -96,11 +96,20 @@ function PresentationLink({ token }: { token: string }) {
   return (
     <a
       href={`/deck/${token}`}
-      className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 transition-colors hover:border-[#2A4227] hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800/50"
+      className="group flex items-center gap-3 rounded-lg border border-[#2A4227]/20 bg-[#2A4227]/3 p-3 text-zinc-900 transition-colors hover:border-[#2A4227]/50 hover:bg-[#2A4227]/[0.07] dark:border-[#9CC196]/25 dark:bg-[#9CC196]/5 dark:text-zinc-100 dark:hover:border-[#9CC196]/60 dark:hover:bg-[#9CC196]/10"
     >
-      <Presentation className="size-4 shrink-0 text-zinc-400 dark:text-zinc-600" />
-      <span className="flex-1 truncate font-medium">Ver presentación del proyecto</span>
-      <span className="text-xs text-zinc-400 dark:text-zinc-600">Abrir →</span>
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-white text-[#2A4227] shadow-sm ring-1 ring-[#2A4227]/10 dark:bg-zinc-900 dark:text-[#9CC196] dark:ring-[#9CC196]/15">
+        <Presentation className="size-4" aria-hidden />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-semibold">Presentación del proyecto</span>
+        <span className="mt-0.5 block text-xs text-zinc-500 dark:text-zinc-400">
+          Recorre la propuesta en formato visual
+        </span>
+      </span>
+      <span className="shrink-0 text-xs font-semibold text-[#2A4227] transition-transform group-hover:translate-x-0.5 dark:text-[#9CC196]">
+        Abrir <span aria-hidden>→</span>
+      </span>
     </a>
   );
 }
@@ -246,31 +255,31 @@ export default async function PortalProposalPage({
   // back-office for prospects that never went through onboarding.
   const clientBillingAddress = client
     ? formatAddress({
-      street: client.billing_address_street,
-      zip: client.billing_address_zip,
-      city: client.billing_address_city,
-      province: client.billing_address_province,
-      country: client.billing_address_country,
-    })
+        street: client.billing_address_street,
+        zip: client.billing_address_zip,
+        city: client.billing_address_city,
+        province: client.billing_address_province,
+        country: client.billing_address_country,
+      })
     : "";
   const needsFiscal = !client?.nif?.trim() || !clientBillingAddress || !client.name?.trim();
   const fiscalPrefill = client
     ? {
-      name: client.name ?? "",
-      nif: client.nif ?? "",
-      billing_address: clientBillingAddress,
-      contact_person: client.contact_person ?? "",
-      email: client.email ?? "",
-      phone: client.phone ?? "",
-    }
+        name: client.name ?? "",
+        nif: client.nif ?? "",
+        billing_address: clientBillingAddress,
+        contact_person: client.contact_person ?? "",
+        email: client.email ?? "",
+        phone: client.phone ?? "",
+      }
     : {
-      name: lead?.company ?? lead?.name ?? "",
-      nif: "",
-      billing_address: "",
-      contact_person: lead?.name ?? "",
-      email: lead?.email ?? "",
-      phone: lead?.phone ?? "",
-    };
+        name: lead?.company ?? lead?.name ?? "",
+        nif: "",
+        billing_address: "",
+        contact_person: lead?.name ?? "",
+        email: lead?.email ?? "",
+        phone: lead?.phone ?? "",
+      };
   const recipientName = client?.name ?? lead?.company ?? lead?.name ?? "—";
   const proposalNumber = (proposal.number as string | null) ?? "Borrador";
   const baseItems = (items ?? []) as unknown as ProposalItem[];
@@ -709,7 +718,6 @@ export default async function PortalProposalPage({
               </ul>
             </div>
           ) : null}
-
         </article>
         <aside className="flex flex-col gap-4 self-start lg:sticky lg:top-6">
           <ProposalMessageThread

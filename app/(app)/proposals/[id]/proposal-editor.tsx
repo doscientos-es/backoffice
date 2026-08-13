@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, Save } from "lucide-react";
+import { AlertCircle, Check, ChevronLeft, ChevronRight, Save, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LineItemsTable } from "@/components/finance/line-items-table";
 import { MaintenanceOfferEditor } from "@/components/proposals/maintenance-offer-editor";
@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Markdown } from "@/components/ui/markdown";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { EMPTY_LINE_ITEM, type LineItem } from "@/lib/finance";
+import { computeProposalTotals, EMPTY_LINE_ITEM, type LineItem } from "@/lib/finance";
 import {
   createEmptyPair,
   type EditableKeyPoint,
@@ -24,7 +24,11 @@ import {
   unzipPairs,
   zipKeyPoints,
 } from "@/lib/proposals/key-points";
-import { DEFAULT_MAINTENANCE_OFFER, type MaintenanceOffer } from "@/lib/proposals/maintenance";
+import {
+  DEFAULT_MAINTENANCE_OFFER,
+  type MaintenanceOffer,
+  selectedMaintenancePlan,
+} from "@/lib/proposals/maintenance";
 import {
   DEFAULT_CHANGE_MANAGEMENT_TERMS,
   PAYMENT_SCHEDULE_LABELS,
@@ -32,9 +36,17 @@ import {
   type PaymentSchedule,
   type ScopeModule,
 } from "@/lib/proposals/scope";
+import { formatEUR } from "@/lib/utils";
 import { updateProposal } from "../actions";
 
 export type EditableItem = LineItem;
+
+const EDITOR_STEPS = [
+  { label: "Datos", description: "Base de la propuesta" },
+  { label: "Alcance", description: "Qué vamos a entregar" },
+  { label: "Precio", description: "Partidas y condiciones" },
+  { label: "Revisión", description: "Mantenimiento y resumen" },
+] as const;
 
 export type ProposalEditorProps = {
   id: string;
@@ -126,6 +138,7 @@ export function ProposalEditor({
   const [maintenanceSelectedPlanId, setMaintenanceSelectedPlanId] = useState<string | null>(
     initialMaintenanceSelectedPlanId,
   );
+  const [activeStep, setActiveStep] = useState(0);
   const [items, setItems] = useState<EditableItem[]>(
     initialItems.length > 0
       ? initialItems.map((it) => ({ ...it, id: it.id || crypto.randomUUID() }))
@@ -202,6 +215,19 @@ export function ProposalEditor({
     saveFeedback.state.status === "error"
       ? saveFeedback.state.message.split("\n").filter(Boolean)
       : [];
+  const proposalTotals = useMemo(() => computeProposalTotals(items), [items]);
+  const selectedMaintenance = selectedMaintenancePlan(
+    maintenanceOptions,
+    maintenanceSelectedPlanId,
+  );
+  const stepComplete = [
+    Boolean(title.trim() && validUntil),
+    Boolean(contextMarkdown.trim() || pairs.length || scopeModules.length || deliverables.trim()),
+    Boolean(items.some((item) => item.description.trim() && Number(item.quantity) > 0)),
+    Boolean(selectedMaintenance),
+  ];
+  const currentStep = EDITOR_STEPS[activeStep] ?? EDITOR_STEPS[0]!;
+  const nextStep = EDITOR_STEPS[activeStep + 1] ?? currentStep;
 
   async function handleSave() {
     saveFeedback.setPending();
@@ -311,26 +337,31 @@ export function ProposalEditor({
   ]);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="sticky top-3 z-20 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-background/95 p-3 shadow-sm backdrop-blur">
-        <Input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          disabled={locked}
-          placeholder="Título de la propuesta"
-          className="flex-1 min-w-0 h-9 text-base font-medium"
-          aria-label="Título"
-        />
-        {!locked && (
+    <div className="flex flex-col gap-5">
+      <header className="sticky top-3 z-20 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-background/95 p-3 shadow-sm backdrop-blur">
+        <div className="min-w-0 flex-1">
+          <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            Paso {activeStep + 1} de {EDITOR_STEPS.length} · {currentStep.label}
+          </p>
+          <Input
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            disabled={locked}
+            placeholder="Título de la propuesta"
+            className="h-9 text-base font-medium"
+            aria-label="Título"
+          />
+        </div>
+        {!locked ? (
           <div className="flex items-center gap-3">
             <FormFeedback state={saveFeedback.state} pendingLabel="Guardando propuesta…" />
-            <Button size="default" onClick={handleSave} disabled={saveFeedback.pending}>
+            <Button onClick={handleSave} disabled={saveFeedback.pending}>
               <Save className="size-4" aria-hidden />
-              {saveFeedback.pending ? "Guardando…" : "Guardar cambios"}
+              {saveFeedback.pending ? "Guardando…" : "Guardar"}
             </Button>
           </div>
-        )}
-      </div>
+        ) : null}
+      </header>
 
       {saveFeedback.state.status === "error" && saveErrors.length > 0 ? (
         <Alert variant="destructive" className="border-destructive/30 bg-destructive/5 px-4 py-3">
@@ -347,236 +378,415 @@ export function ProposalEditor({
         </Alert>
       ) : null}
 
-      <div className="min-w-0 overflow-hidden rounded-lg border border-border">
-        <LineItemsTable items={items} onChange={setItems} locked={locked} showBillingCycle />
+      <nav aria-label="Pasos de la propuesta" className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+        {EDITOR_STEPS.map((step, index) => {
+          const active = activeStep === index;
+          return (
+            <button
+              key={step.label}
+              type="button"
+              onClick={() => setActiveStep(index)}
+              aria-current={active ? "step" : undefined}
+              className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${active ? "border-primary bg-primary/5" : "border-border bg-card hover:bg-muted/40"}`}
+            >
+              <span
+                className={`flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${stepComplete[index] ? "bg-primary text-primary-foreground" : active ? "border border-primary text-primary" : "bg-muted text-muted-foreground"}`}
+              >
+                {stepComplete[index] ? <Check className="size-3.5" aria-hidden /> : index + 1}
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold">{step.label}</span>
+                <span className="block truncate text-[11px] text-muted-foreground">
+                  {step.description}
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </nav>
+
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_18rem]">
+        <main className="min-w-0">
+          {activeStep === 0 ? (
+            <section className="flex flex-col gap-5 rounded-xl border border-border bg-card p-5">
+              <header>
+                <h2 className="text-base font-semibold">Empieza por lo esencial</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Define la vigencia y añade solo las notas que necesites para preparar la
+                  propuesta.
+                </p>
+              </header>
+
+              {aiEnabled && leadId && hasEmptyDraftFields && !locked ? (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4">
+                  <div>
+                    <p className="text-sm font-medium">Prepara una primera versión con IA</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Usa el historial del lead y rellena solo los campos que estén vacíos.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={generating}
+                    onClick={handleGenerateDraft}
+                  >
+                    <Sparkles className="size-4" aria-hidden />
+                    {generating ? "Preparando…" : "Crear borrador"}
+                  </Button>
+                </div>
+              ) : null}
+
+              <div className="grid gap-5 lg:grid-cols-[minmax(0,0.6fr)_minmax(0,1.4fr)]">
+                <FormRow
+                  label="Válida hasta"
+                  htmlFor="valid-until"
+                  hint="Fecha límite para aceptar esta propuesta."
+                >
+                  <Input
+                    id="valid-until"
+                    type="date"
+                    value={validUntil}
+                    onChange={(event) => setValidUntil(event.target.value)}
+                    disabled={locked}
+                  />
+                </FormRow>
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Notas</span>
+                    {notes ? (
+                      <button
+                        type="button"
+                        onClick={() => setNotesPreview((preview) => !preview)}
+                        className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        {notesPreview ? "Editar" : "Previsualizar"}
+                      </button>
+                    ) : null}
+                  </div>
+                  {notesPreview && notes ? (
+                    <div className="min-h-32 rounded-md border border-border bg-muted/20 px-3 py-2">
+                      <Markdown source={notes} />
+                    </div>
+                  ) : (
+                    <Textarea
+                      id="notes"
+                      value={notes}
+                      onChange={(event) => setNotes(event.target.value)}
+                      disabled={locked}
+                      rows={5}
+                      placeholder="Notas internas o para el cliente… (soporta Markdown)"
+                    />
+                  )}
+                </div>
+              </div>
+            </section>
+          ) : null}
+
+          {activeStep === 1 ? (
+            <div className="flex flex-col gap-5">
+              <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5">
+                <header className="flex items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-base font-semibold">Cuenta la propuesta</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Explica el punto de partida y cómo lo vas a resolver.
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <FormFeedback state={aiFeedback.state} pendingLabel="Generando…" />
+                    {!aiEnabled ? <AiNotice inline /> : null}
+                  </div>
+                </header>
+                <FormRow
+                  label="Contexto"
+                  htmlFor="context-markdown"
+                  hint="Resume la situación actual del cliente en 2-3 frases."
+                >
+                  <Textarea
+                    id="context-markdown"
+                    value={contextMarkdown}
+                    onChange={(event) => setContextMarkdown(event.target.value)}
+                    disabled={locked}
+                    rows={4}
+                    placeholder="Tras nuestras conversaciones, hemos detectado que…"
+                  />
+                </FormRow>
+                <FormRow
+                  label="Problemas y soluciones"
+                  htmlFor="problems-solutions"
+                  hint="Cada problema se mostrará junto a su solución."
+                >
+                  <ProblemSolutionEditor
+                    items={pairs}
+                    onChange={setPairs}
+                    locked={locked}
+                    aiEnabled={aiEnabled}
+                    onGenerate={handleGenerateNarrative}
+                    generating={generating}
+                  />
+                </FormRow>
+              </section>
+
+              <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5">
+                <header>
+                  <h2 className="text-base font-semibold">Alcance y entregables</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Añade los módulos y concreta lo que recibirá el cliente.
+                  </p>
+                </header>
+                <ScopeModulesEditor
+                  modules={scopeModules}
+                  onChange={setScopeModules}
+                  locked={locked}
+                />
+                <FormRow
+                  label="Entregables"
+                  htmlFor="deliverables"
+                  hint="Qué recibirá el cliente al finalizar."
+                >
+                  <Textarea
+                    id="deliverables"
+                    value={deliverables}
+                    onChange={(event) => setDeliverables(event.target.value)}
+                    disabled={locked}
+                    rows={4}
+                    placeholder="- Diseño validado\n- Desarrollo de los módulos acordados\n- Formación y documentación"
+                  />
+                </FormRow>
+                <details className="rounded-lg border border-border bg-muted/20 p-3">
+                  <summary className="cursor-pointer text-sm font-medium">
+                    Añadir criterios de aceptación
+                  </summary>
+                  <div className="mt-3">
+                    <FormRow
+                      label="Criterios de aceptación"
+                      htmlFor="acceptance-criteria"
+                      hint="Cómo comprobaremos que el trabajo está entregado."
+                    >
+                      <Textarea
+                        id="acceptance-criteria"
+                        value={acceptanceCriteria}
+                        onChange={(event) => setAcceptanceCriteria(event.target.value)}
+                        disabled={locked}
+                        rows={4}
+                        placeholder="- Los flujos descritos funcionan en producción.\n- El cliente valida los entregables acordados."
+                      />
+                    </FormRow>
+                  </div>
+                </details>
+              </section>
+            </div>
+          ) : null}
+
+          {activeStep === 2 ? (
+            <div className="flex flex-col gap-5">
+              <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5">
+                <header>
+                  <h2 className="text-base font-semibold">Precio de la propuesta</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Añade una partida por cada servicio. Los totales se calculan automáticamente.
+                  </p>
+                </header>
+                <div className="min-w-0 overflow-hidden rounded-lg border border-border">
+                  <LineItemsTable
+                    items={items}
+                    onChange={setItems}
+                    locked={locked}
+                    showBillingCycle
+                  />
+                </div>
+              </section>
+
+              <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5">
+                <header>
+                  <h2 className="text-base font-semibold">Forma de pago</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Elige una base y ajusta el mensaje para el cliente si lo necesitas.
+                  </p>
+                </header>
+                <FormRow label="Calendario de pago" htmlFor="payment-schedule">
+                  <div className="flex flex-col gap-3">
+                    <Select
+                      id="payment-schedule"
+                      value={paymentSchedule}
+                      onChange={(event) =>
+                        handlePaymentScheduleChange(event.target.value as PaymentSchedule)
+                      }
+                      disabled={locked}
+                    >
+                      {Object.entries(PAYMENT_SCHEDULE_LABELS).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </Select>
+                    <Textarea
+                      value={paymentTerms}
+                      onChange={(event) => setPaymentTerms(event.target.value)}
+                      disabled={locked}
+                      rows={4}
+                      placeholder="Condiciones de pago"
+                      aria-label="Condiciones de pago"
+                    />
+                  </div>
+                </FormRow>
+                <details className="rounded-lg border border-border bg-muted/20 p-3">
+                  <summary className="cursor-pointer text-sm font-medium">
+                    Personalizar condiciones
+                  </summary>
+                  <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                    <FormRow label="Gestión de cambios" htmlFor="change-management">
+                      <Textarea
+                        id="change-management"
+                        value={changeManagementTerms}
+                        onChange={(event) => setChangeManagementTerms(event.target.value)}
+                        disabled={locked}
+                        rows={5}
+                      />
+                    </FormRow>
+                    <FormRow label="Condiciones adicionales" htmlFor="terms">
+                      <Textarea
+                        id="terms"
+                        value={terms}
+                        onChange={(event) => setTerms(event.target.value)}
+                        disabled={locked}
+                        rows={5}
+                        placeholder="Vigencia, licencias, garantías u otras condiciones."
+                      />
+                    </FormRow>
+                  </div>
+                </details>
+              </section>
+            </div>
+          ) : null}
+
+          {activeStep === 3 ? (
+            <div className="flex flex-col gap-5">
+              <MaintenanceOfferEditor
+                offer={maintenanceOptions}
+                selectedPlanId={maintenanceSelectedPlanId}
+                onChange={setMaintenanceOptions}
+                onSelectedPlanChange={setMaintenanceSelectedPlanId}
+                locked={locked}
+              />
+              <section className="rounded-xl border border-primary/20 bg-primary/5 p-5">
+                <h2 className="text-base font-semibold">Lista para revisar</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Comprueba el resumen, guarda los cambios y abre la vista del cliente antes de
+                  enviar.
+                </p>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-lg bg-background p-3">
+                    <p className="text-xs text-muted-foreground">Inversión inicial</p>
+                    <p className="mt-1 text-lg font-semibold tabular-nums">
+                      {formatEUR(proposalTotals.oneTime.total)}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-background p-3">
+                    <p className="text-xs text-muted-foreground">Mantenimiento</p>
+                    <p className="mt-1 text-lg font-semibold">
+                      {selectedMaintenance
+                        ? `${selectedMaintenance.name} · ${formatEUR(selectedMaintenance.monthly_price)}/mes`
+                        : "Pendiente de elegir"}
+                    </p>
+                  </div>
+                </div>
+              </section>
+            </div>
+          ) : null}
+        </main>
+
+        <aside className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 xl:sticky xl:top-24">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Resumen comercial
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">Se actualiza mientras editas.</p>
+          </div>
+          <div className="rounded-lg bg-muted/40 p-3">
+            <p className="text-xs text-muted-foreground">Inversión inicial · IVA incluido</p>
+            <p className="mt-1 text-2xl font-semibold tabular-nums">
+              {formatEUR(proposalTotals.oneTime.total)}
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 text-sm">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground">Vigencia</span>
+              <span className="font-medium">{validUntil || "Pendiente"}</span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground">Mantenimiento</span>
+              <span className="text-right font-medium">
+                {selectedMaintenance
+                  ? `${formatEUR(selectedMaintenance.monthly_price)}/mes`
+                  : "Pendiente"}
+              </span>
+            </div>
+            {proposalTotals.monthly.total > 0 ? (
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-muted-foreground">Recurrente en partidas</span>
+                <span className="font-medium tabular-nums">
+                  {formatEUR(proposalTotals.monthly.total)}/mes
+                </span>
+              </div>
+            ) : null}
+          </div>
+          <div className="border-t border-border pt-3">
+            <p className="mb-2 text-xs font-medium text-muted-foreground">Completitud</p>
+            <div className="flex flex-col gap-2">
+              {EDITOR_STEPS.map((step, index) => (
+                <div key={step.label} className="flex items-center gap-2 text-xs">
+                  <Check
+                    className={`size-3.5 ${stepComplete[index] ? "text-primary" : "text-muted-foreground/40"}`}
+                    aria-hidden
+                  />
+                  <span
+                    className={stepComplete[index] ? "text-foreground" : "text-muted-foreground"}
+                  >
+                    {step.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </aside>
       </div>
 
-      <aside className="flex min-w-0 flex-col gap-3 rounded-lg border border-border bg-card p-4">
-        <FormRow label="Válida hasta" htmlFor="valid-until">
-          <Input
-            id="valid-until"
-            type="date"
-            value={validUntil ?? ""}
-            onChange={(e) => setValidUntil(e.target.value)}
-            disabled={locked}
-          />
-        </FormRow>
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground">Notas</span>
-            {notes && (
-              <button
-                type="button"
-                onClick={() => setNotesPreview((p) => !p)}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {notesPreview ? "Editar" : "Previsualizar"}
-              </button>
-            )}
-          </div>
-          {notesPreview && notes ? (
-            <div className="rounded-md border border-border bg-muted/20 px-3 py-2 min-h-36">
-              <Markdown source={notes} />
-            </div>
-          ) : (
-            <Textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              disabled={locked}
-              rows={6}
-              placeholder="Notas internas o para el cliente… (soporta Markdown)"
-            />
-          )}
-        </div>
-      </aside>
-
-      {/* Narrative blocks — shown before the price on every client surface */}
-      <section className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4">
-        <header className="flex items-start justify-between gap-3">
-          <div className="flex flex-col gap-0.5">
-            <h2 className="text-sm font-semibold">Narrativa de la propuesta</h2>
-            <p className="text-[11px] text-muted-foreground">
-              Contexto, problemas detectados y enfoque de la solución. Se muestran al cliente antes
-              del precio en el portal y como diapositivas en la presentación.
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <FormFeedback state={aiFeedback.state} pendingLabel="Generando…" />
-            {!aiEnabled ? <AiNotice inline /> : null}
-          </div>
-        </header>
-
-        {aiEnabled && leadId && hasEmptyDraftFields && !locked ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-primary/20 bg-primary/5 px-3 py-2.5">
-            <p className="text-xs text-muted-foreground">
-              Usa las notas, llamadas e historial del lead para preparar el contexto, alcance,
-              entregables, criterios de aceptación y condiciones. Solo rellenará los campos vacíos;
-              revísalo antes de enviarlo.
-            </p>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={generating}
-              onClick={handleGenerateDraft}
-            >
-              {generating ? "Preparando…" : "Preparar borrador con IA"}
-            </Button>
-          </div>
-        ) : null}
-
-        <FormRow
-          label="Contexto"
-          htmlFor="context-markdown"
-          hint="Markdown. Sitúa la situación actual del cliente en 2-3 frases."
+      <footer className="sticky bottom-3 z-20 flex items-center justify-between gap-3 rounded-xl border border-border bg-background/95 p-3 shadow-sm backdrop-blur">
+        <Button
+          type="button"
+          variant="outline"
+          disabled={activeStep === 0}
+          onClick={() => setActiveStep((step) => Math.max(0, step - 1))}
         >
-          <Textarea
-            id="context-markdown"
-            value={contextMarkdown}
-            onChange={(e) => setContextMarkdown(e.target.value)}
-            disabled={locked}
-            rows={4}
-            className="font-mono text-xs"
-            placeholder={"Tras nuestras conversaciones, hemos detectado que…"}
-          />
-        </FormRow>
-
-        <FormRow
-          label="Problemas y soluciones"
-          htmlFor="problems-solutions"
-          hint="Cada problema con la solución que proponemos. Se muestran emparejados al cliente."
-        >
-          <ProblemSolutionEditor
-            items={pairs}
-            onChange={setPairs}
-            locked={locked}
-            aiEnabled={aiEnabled}
-            onGenerate={handleGenerateNarrative}
-            generating={generating}
-          />
-        </FormRow>
-      </section>
-
-      <section className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4">
-        <header className="flex flex-col gap-0.5">
-          <h2 className="text-sm font-semibold">Alcance y entregables</h2>
-          <p className="text-[11px] text-muted-foreground">
-            Define el trabajo incluido por módulo. Esta estructura se mostrará en el deck y el PDF,
-            y podrá alimentar el briefing inicial del proyecto.
-          </p>
-        </header>
-        <ScopeModulesEditor modules={scopeModules} onChange={setScopeModules} locked={locked} />
-        <div className="grid gap-4 lg:grid-cols-2">
-          <FormRow
-            label="Entregables"
-            htmlFor="deliverables"
-            hint="Markdown. Qué recibirá el cliente al finalizar."
-          >
-            <Textarea
-              id="deliverables"
-              value={deliverables}
-              onChange={(event) => setDeliverables(event.target.value)}
-              disabled={locked}
-              rows={5}
-              className="font-mono text-xs"
-              placeholder={
-                "- Diseño validado\n- Desarrollo de los módulos acordados\n- Formación y documentación"
-              }
-            />
-          </FormRow>
-          <FormRow
-            label="Criterios de aceptación"
-            htmlFor="acceptance-criteria"
-            hint="Markdown. Cómo comprobaremos que el trabajo está entregado."
-          >
-            <Textarea
-              id="acceptance-criteria"
-              value={acceptanceCriteria}
-              onChange={(event) => setAcceptanceCriteria(event.target.value)}
-              disabled={locked}
-              rows={5}
-              className="font-mono text-xs"
-              placeholder={
-                "- Los flujos descritos funcionan en producción.\n- El cliente valida los entregables acordados."
-              }
-            />
-          </FormRow>
-        </div>
-      </section>
-
-      <section className="grid gap-4 rounded-lg border border-border bg-card p-4 lg:grid-cols-2">
-        <FormRow
-          label="Forma de pago"
-          htmlFor="payment-schedule"
-          hint="Elige una base y ajusta el texto si hace falta."
-        >
-          <div className="flex flex-col gap-3">
-            <Select
-              id="payment-schedule"
-              value={paymentSchedule}
-              onChange={(event) =>
-                handlePaymentScheduleChange(event.target.value as PaymentSchedule)
-              }
-              disabled={locked}
-            >
-              {Object.entries(PAYMENT_SCHEDULE_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </Select>
-            <Textarea
-              value={paymentTerms}
-              onChange={(event) => setPaymentTerms(event.target.value)}
-              disabled={locked}
-              rows={4}
-              className="text-sm"
-              placeholder="Condiciones de pago"
-              aria-label="Condiciones de pago"
-            />
-          </div>
-        </FormRow>
-        <FormRow
-          label="Gestión de cambios"
-          htmlFor="change-management"
-          hint="Texto predefinido y editable para proteger el alcance acordado."
-        >
-          <Textarea
-            id="change-management"
-            value={changeManagementTerms}
-            onChange={(event) => setChangeManagementTerms(event.target.value)}
-            disabled={locked}
-            rows={6}
-            className="text-sm"
-          />
-        </FormRow>
-        <FormRow
-          label="Condiciones adicionales"
-          htmlFor="terms"
-          hint="Markdown. Vigencia, licencias, garantías u otras condiciones."
-        >
-          <Textarea
-            id="terms"
-            value={terms}
-            onChange={(event) => setTerms(event.target.value)}
-            disabled={locked}
-            rows={5}
-            className="font-mono text-xs"
-            placeholder={
-              "## Condiciones adicionales\n\n- Vigencia: 30 días.\n- Licencias de terceros no incluidas."
+          <ChevronLeft className="size-4" aria-hidden />
+          Anterior
+        </Button>
+        <Button
+          type="button"
+          disabled={activeStep === EDITOR_STEPS.length - 1 && (locked || saveFeedback.pending)}
+          onClick={() => {
+            if (activeStep === EDITOR_STEPS.length - 1) {
+              void handleSave();
+              return;
             }
-          />
-        </FormRow>
-      </section>
-
-      <MaintenanceOfferEditor
-        offer={maintenanceOptions}
-        selectedPlanId={maintenanceSelectedPlanId}
-        onChange={setMaintenanceOptions}
-        onSelectedPlanChange={setMaintenanceSelectedPlanId}
-        locked={locked}
-      />
+            setActiveStep((step) => Math.min(EDITOR_STEPS.length - 1, step + 1));
+          }}
+        >
+          {activeStep === EDITOR_STEPS.length - 1 ? (
+            <>
+              <Save className="size-4" aria-hidden />
+              {saveFeedback.pending ? "Guardando…" : "Guardar y revisar"}
+            </>
+          ) : (
+            <>
+              Continuar a {nextStep.label}
+              <ChevronRight className="size-4" aria-hidden />
+            </>
+          )}
+        </Button>
+      </footer>
     </div>
   );
 }
