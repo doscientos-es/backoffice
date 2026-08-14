@@ -140,8 +140,8 @@ describe("updateProposal", () => {
       ],
     });
 
-    expect(result).toEqual({ ok: true });
-    expect(state.rpcArgs).toMatchObject({ p_proposal_id: ID });
+    expect(result).toEqual({ ok: true, version: 2 });
+    expect(state.rpcArgs).toMatchObject({ p_proposal_id: ID, p_expected_version: 1 });
     expect(state.rpcArgs?.p_patch).toEqual({
       title: "Propuesta",
       problems: [{ id: "pair-1", title: "Proceso manual", description: "Mucho trabajo" }],
@@ -206,6 +206,7 @@ describe("updateProposal", () => {
   it("returns each invalid field with an actionable label", async () => {
     const result = await updateProposal({
       id: ID,
+      expected_version: 1,
       items: [
         { description: "", quantity: 0, unit_price: 100, vat_rate: 21, billing_cycle: "none" },
       ],

@@ -32,6 +32,27 @@ export default async function BackupSettingsPage() {
 
       <Card>
         <CardHeader>
+          <CardTitle>Descargar los datos actuales</CardTitle>
+          <CardDescription>
+            Descarga un JSON completo o el CSV de una tabla para abrirlo en Excel. Es una
+            exportación puntual del estado actual, no una copia restaurable del sistema.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <BackupActions
+            runnerConfigured={setup.configured}
+            tables={tables}
+            showBackupAction={false}
+          />
+          <p className="text-sm text-muted-foreground">
+            Los archivos físicos de Supabase Storage no van en esta descarga; sus metadatos y rutas
+            sí.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <CardTitle>Respaldo automático</CardTitle>
@@ -50,7 +71,11 @@ export default async function BackupSettingsPage() {
             Se conservan las últimas {env.BACKUP_RETENTION_DAYS} copias diarias. Las credenciales
             nunca se muestran ni se incluyen en las exportaciones.
           </p>
-          <BackupActions runnerConfigured={setup.configured} tables={tables} />
+          <BackupActions
+            runnerConfigured={setup.configured}
+            tables={tables}
+            showExportActions={false}
+          />
         </CardContent>
       </Card>
 
@@ -66,20 +91,6 @@ export default async function BackupSettingsPage() {
           </CardHeader>
         </Card>
       )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Exportación local</CardTitle>
-          <CardDescription>
-            JSON descarga el conjunto completo de datos operativos. Los CSV se descargan por tabla
-            para abrirlos fácilmente en Excel.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          Los archivos físicos de Supabase Storage se incluyen en la copia automática; la
-          exportación local contiene sus metadatos y rutas, no los binarios.
-        </CardContent>
-      </Card>
     </div>
   );
 }

@@ -1,12 +1,12 @@
 "use client";
 
-import { DatabaseBackup, Download, Loader2 } from "lucide-react";
-import { useState, useTransition } from "react";
-import { sileo } from "sileo";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { verifyWithPasskey } from "@/lib/security/webauthn-client";
+import { DatabaseBackup, Download, Loader2 } from "lucide-react";
+import { useState, useTransition } from "react";
+import { sileo } from "sileo";
 import { triggerBackofficeBackup } from "./actions";
 
 type ExportTable = { value: string; label: string };
@@ -14,9 +14,13 @@ type ExportTable = { value: string; label: string };
 export function BackupActions({
   runnerConfigured,
   tables,
+  showBackupAction = true,
+  showExportActions = true,
 }: {
   runnerConfigured: boolean;
   tables: readonly ExportTable[];
+  showBackupAction?: boolean;
+  showExportActions?: boolean;
 }) {
   const [pending, startTransition] = useTransition();
   const [table, setTable] = useState(tables[0]?.value ?? "");
@@ -39,53 +43,57 @@ export function BackupActions({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={forceBackup}
-          disabled={!runnerConfigured || pending}
-        >
-          {pending ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <DatabaseBackup className="size-4" />
-          )}
-          {pending ? "Creando copia…" : "Crear copia ahora"}
-        </Button>
-        {!runnerConfigured ? (
-          <span className="text-xs text-muted-foreground">
-            La copia automática se activará al configurar el runner.
-          </span>
-        ) : null}
-      </div>
+      {showBackupAction ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={forceBackup}
+            disabled={!runnerConfigured || pending}
+          >
+            {pending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <DatabaseBackup className="size-4" />
+            )}
+            {pending ? "Creando copia…" : "Crear copia ahora"}
+          </Button>
+          {!runnerConfigured ? (
+            <span className="text-xs text-muted-foreground">
+              La copia automática se activará al configurar el runner.
+            </span>
+          ) : null}
+        </div>
+      ) : null}
 
-      <div className="flex flex-wrap items-center gap-2 border-t border-border pt-4">
-        <Button asChild variant="outline">
-          <a href="/api/data-export?format=json" download>
-            <Download className="size-4" />
-            Descargar todos los datos (JSON)
-          </a>
-        </Button>
-        <Select
-          value={table}
-          onChange={(event) => setTable(event.target.value)}
-          aria-label="Tabla para exportar como CSV"
-          className="w-52"
-        >
-          {tables.map((item) => (
-            <option key={item.value} value={item.value}>
-              {item.label}
-            </option>
-          ))}
-        </Select>
-        <Button asChild variant="outline" disabled={!table}>
-          <a href={csvHref} download>
-            <Download className="size-4" />
-            Descargar CSV
-          </a>
-        </Button>
-      </div>
+      {showExportActions ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild variant="outline">
+            <a href="/api/data-export?format=json" download>
+              <Download className="size-4" />
+              Descargar datos actuales (JSON)
+            </a>
+          </Button>
+          <Select
+            value={table}
+            onChange={(event) => setTable(event.target.value)}
+            aria-label="Tabla actual para exportar como CSV"
+            className="w-52"
+          >
+            {tables.map((item) => (
+              <option key={item.value} value={item.value}>
+                {item.label}
+              </option>
+            ))}
+          </Select>
+          <Button asChild variant="outline" disabled={!table}>
+            <a href={csvHref} download>
+              <Download className="size-4" />
+              Descargar datos actuales (CSV / Excel)
+            </a>
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

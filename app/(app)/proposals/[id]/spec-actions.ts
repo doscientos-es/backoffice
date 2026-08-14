@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { scopedLogger } from "@/lib/logger";
 import {
@@ -9,7 +10,6 @@ import {
   UpdateProposalSpecInput,
 } from "@/lib/schemas/proposal";
 import { createServerClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
 
 const log = scopedLogger("proposals.specs");
 

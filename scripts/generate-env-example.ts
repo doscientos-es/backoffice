@@ -40,6 +40,9 @@ function describeField(schema: z.ZodTypeAny): FieldMeta {
   if (schema instanceof z.ZodOptional) {
     return { ...describeField(schema._def.innerType as z.ZodTypeAny), required: false };
   }
+  if (schema instanceof z.ZodEffects) {
+    return describeField(schema._def.schema as z.ZodTypeAny);
+  }
   if (schema instanceof z.ZodString) {
     const checks = (schema._def.checks ?? []) as Array<{ kind: string; value?: number }>;
     const parts: string[] = [];

@@ -23,7 +23,7 @@ interface UseActionFormOptions {
    */
   onSuccess?: (form: HTMLFormElement) => void;
   /** Return true when the caller has shown a specialized failure UI. */
-  onFailure?: (result: ActionFailure) => boolean | void;
+  onFailure?: (result: ActionFailure) => boolean | undefined;
 }
 
 export interface UseActionFormResult {
