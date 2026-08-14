@@ -118,7 +118,8 @@ export function MyDayPanel({ tasks, myLeads, unassignedLeads, weekStats, scope }
           href="/tasks"
           empty={
             <>
-              No tienes acciones pendientes. <PartyPopper aria-hidden="true" className="inline size-4" />
+              No tienes acciones pendientes.{" "}
+              <PartyPopper aria-hidden="true" className="inline size-4" />
             </>
           }
         >
