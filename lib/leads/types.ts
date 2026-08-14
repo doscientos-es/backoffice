@@ -112,6 +112,8 @@ export type LeadDetailAiTemperature = "hot" | "warm" | "cold";
 
 export type LeadDetail = {
   id: string;
+  /** Internal optimistic-concurrency token. */
+  version: number;
   name: string;
   /** Optional short display name. Falls back to `name` when null. */
   alias: string | null;

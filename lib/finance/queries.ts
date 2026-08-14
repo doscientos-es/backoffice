@@ -1,7 +1,7 @@
-import { cache } from "react";
 import { scopedLogger } from "@/lib/logger";
 import { notDeleted } from "@/lib/supabase/filters";
 import { createServerClient } from "@/lib/supabase/server";
+import { cache } from "react";
 import {
   buildMonthlySeries,
   EXPENSE_CATEGORIES,
@@ -264,8 +264,8 @@ export async function getFinanceDetails(since: string, until: string): Promise<F
       client_name:
         (inv.clients as { name: string } | { name: string }[] | null) != null
           ? ((Array.isArray(inv.clients)
-              ? inv.clients[0]?.name
-              : (inv.clients as { name: string })?.name) ?? null)
+            ? inv.clients[0]?.name
+            : (inv.clients as { name: string })?.name) ?? null)
           : null,
     })),
   };
@@ -361,6 +361,7 @@ export async function getExpensesPage(params: ExpenseListParams): Promise<Expens
   return {
     expenses: (data ?? []).map((e) => ({
       id: e.id as string,
+      version: Number(e.version),
       vendor: e.vendor as string,
       category: e.category as ExpenseCategory,
       status: e.status as ExpenseStatus,

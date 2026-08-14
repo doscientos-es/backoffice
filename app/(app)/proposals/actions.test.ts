@@ -81,7 +81,7 @@ describe("updateProposal", () => {
     state.updates = [];
     state.proposal = {
       id: ID,
-      expected_version: 1,
+      version: 1,
       number: null,
       status: "draft",
       title: "Automatización comercial",

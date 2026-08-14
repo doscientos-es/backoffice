@@ -1,6 +1,5 @@
-import { revalidateTag } from "next/cache";
-import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
+import { BACKOFFICE_BACKUP_SLUG } from "@/lib/backups/backoffice";
 import {
   backupsCacheTag,
   deleteClientBackup,
@@ -9,11 +8,16 @@ import {
 } from "@/lib/filebrowser";
 import { consumeUserVerification } from "@/lib/security/user-verification";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
+import { revalidateTag } from "next/cache";
+import { NextResponse } from "next/server";
 
 export async function GET(request: Request, { params }: { params: Promise<{ client: string }> }) {
-  await requireUser();
+  const user = await requireUser();
 
   const { client } = await params;
+  if (client === BACKOFFICE_BACKUP_SLUG && user.role !== "owner" && user.role !== "admin") {
+    return NextResponse.json({ error: "Sin permiso" }, { status: 403 });
+  }
   const { searchParams } = new URL(request.url);
   const subPath = searchParams.get("path") ?? "";
 

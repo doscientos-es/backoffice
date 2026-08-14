@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { scopedLogger } from "@/lib/logger";
 import {
@@ -10,6 +9,7 @@ import {
   UpdateProposalSpecInput,
 } from "@/lib/schemas/proposal";
 import { createServerClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
 
 const log = scopedLogger("proposals.specs");
 
@@ -61,7 +61,7 @@ export async function createSpec(input: unknown): Promise<Result<{ id: string }>
   return { ok: true, id: doc.id as string };
 }
 
-export async function updateSpec(input: unknown): Promise<Result> {
+export async function updateSpec(input: unknown): Promise<Result<{ version: number }>> {
   await requireUser();
   const parsed = UpdateProposalSpecInput.safeParse(input);
   if (!parsed.success) {
@@ -98,7 +98,7 @@ export async function updateSpec(input: unknown): Promise<Result> {
   return { ok: true, version: Number(doc.version) };
 }
 
-export async function toggleSpecVisibility(input: unknown): Promise<Result> {
+export async function toggleSpecVisibility(input: unknown): Promise<Result<{ version: number }>> {
   await requireUser();
   const parsed = ToggleProposalSpecVisibilityInput.safeParse(input);
   if (!parsed.success) {

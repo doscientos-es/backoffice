@@ -296,6 +296,7 @@ export default async function ProposalDetailPage({
                 is_client_visible: s.is_client_visible,
                 portal_token: s.portal_token,
                 updated_at: s.updated_at,
+                version: s.version,
               }))}
               aiEnabled={isAIEnabled()}
               locked={locked}

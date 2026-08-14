@@ -5,9 +5,10 @@
  * GET /api/backups/[client]/download?path=daily/dump.sql
  */
 
-import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
+import { BACKOFFICE_BACKUP_SLUG } from "@/lib/backups/backoffice";
 import { isFileBrowserConfigured } from "@/lib/filebrowser";
+import { NextResponse } from "next/server";
 
 async function getAuthToken(): Promise<string> {
   const res = await fetch(`${process.env.FILEBROWSER_API_URL}/login`, {
@@ -23,13 +24,16 @@ async function getAuthToken(): Promise<string> {
 }
 
 export async function GET(request: Request, { params }: { params: Promise<{ client: string }> }) {
-  await requireUser();
+  const user = await requireUser();
 
   if (!isFileBrowserConfigured()) {
     return NextResponse.json({ error: "FileBrowser no configurado" }, { status: 503 });
   }
 
   const { client } = await params;
+  if (client === BACKOFFICE_BACKUP_SLUG && user.role !== "owner" && user.role !== "admin") {
+    return NextResponse.json({ error: "Sin permiso" }, { status: 403 });
+  }
   const { searchParams } = new URL(request.url);
   const filePath = searchParams.get("path") ?? "";
 

@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import {
   Activity,
   Building2,
@@ -14,18 +13,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 type Item = {
-  href:
-  | "/settings/profile"
-  | "/settings/company"
-  | "/settings/team"
-  | "/settings/goals"
-  | "/settings/integrations"
-  | "/settings/email-templates"
-  | "/settings/diagnostics"
-  | "/settings/backups"
-  | "/settings/legal";
+  href: string;
   label: string;
   icon: typeof User;
   requiresAdmin: boolean;

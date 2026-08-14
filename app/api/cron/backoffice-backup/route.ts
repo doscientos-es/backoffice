@@ -1,8 +1,8 @@
+import { type NextRequest, NextResponse } from "next/server";
 import { runBackofficeBackup } from "@/lib/backups/backoffice";
 import { isDemoMode } from "@/lib/demo";
 import { serverEnv } from "@/lib/env";
 import { scopedLogger } from "@/lib/logger";
-import { type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

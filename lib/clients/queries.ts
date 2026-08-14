@@ -47,6 +47,7 @@ export async function listClients(params: ClientListParams): Promise<ClientListR
   return {
     data: (data ?? []).map((c) => ({
       id: c.id as string,
+      version: Number(c.version),
       name: c.name as string,
       label: (c.label as string | null) ?? null,
       nif: (c.nif as string | null) ?? null,

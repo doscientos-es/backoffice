@@ -80,6 +80,8 @@ export type ClientTaskItem = {
 
 export type ClientDetail = {
   id: string;
+  /** Internal optimistic-concurrency token. */
+  version: number;
   name: string;
   /** Optional short display name. Falls back to `name` when null. */
   label: string | null;
