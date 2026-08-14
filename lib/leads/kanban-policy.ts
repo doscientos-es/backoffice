@@ -1,4 +1,9 @@
-import { boardColumnFor, nextActionRank, nextActionState } from "@/lib/leads/pipeline";
+import {
+  boardColumnFor,
+  isActiveLeadStatus,
+  nextActionRank,
+  nextActionState,
+} from "@/lib/leads/pipeline";
 import type { LeadListItem } from "@/lib/leads/types";
 import type { LeadStatus } from "@/lib/status";
 
@@ -81,6 +86,41 @@ export function countLeadsNeedingAttention(leads: LeadListItem[]): number {
     const state = nextActionState(lead.status, lead.next_action);
     return state === "overdue" || state === "missing";
   }).length;
+}
+
+export type LeadAgendaBucket = "overdue" | "today" | "upcoming" | "missing";
+
+/**
+ * Operational queues are deliberately derived from the next action rather
+ * than persisted as lead statuses, so pipeline reporting remains factual.
+ */
+export function groupLeadsForAgenda(leads: LeadListItem[], now = new Date()) {
+  const grouped = new Map<LeadAgendaBucket, LeadListItem[]>([
+    ["overdue", []],
+    ["today", []],
+    ["upcoming", []],
+    ["missing", []],
+  ]);
+
+  for (const lead of leads) {
+    if (!isActiveLeadStatus(lead.status)) continue;
+    const state = nextActionState(lead.status, lead.next_action, now);
+    const bucket =
+      state === "overdue" || state === "today" || state === "missing"
+        ? state
+        : state === "scheduled"
+          ? "upcoming"
+          : null;
+    if (bucket) grouped.get(bucket)?.push(lead);
+  }
+
+  for (const [bucket, bucketLeads] of grouped) {
+    bucketLeads.sort((a, b) => {
+      if (bucket === "missing") return new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+      return (new Date(a.next_action?.remind_at ?? 0).getTime() - new Date(b.next_action?.remind_at ?? 0).getTime());
+    });
+  }
+  return grouped;
 }
 
 function compareLeadsByUrgency(a: LeadListItem, b: LeadListItem): number {

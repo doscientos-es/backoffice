@@ -17,6 +17,11 @@ import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { suggestedReminderDateTime } from "@/lib/reminders/date-presets";
+import {
+  REMINDER_ACTION_TYPE_LABEL,
+  REMINDER_ACTION_TYPES,
+  type ReminderActionType,
+} from "@/lib/reminders/action-types";
 import { datetimeLocalToIso, toDatetimeLocalValue } from "@/lib/utils/date-time";
 import { createReminder } from "./actions";
 
@@ -47,6 +52,8 @@ type Props = {
   defaultNotes?: string;
   /** ISO timestamp suggested by the AI; converted to the user's local timezone. */
   defaultRemindAt?: string | null;
+  /** Classifies the action in the commercial agenda. */
+  defaultActionType?: ReminderActionType;
   /** Team members available for assignment. When provided, a member picker is shown. */
   members?: ScheduleMember[];
   onScheduled?: () => void;
@@ -68,6 +75,7 @@ export function ScheduleReminderDialog({
   defaultTitle = "",
   defaultNotes = "",
   defaultRemindAt = null,
+  defaultActionType = "follow_up",
   members = [],
   onScheduled,
 }: Props) {
@@ -75,6 +83,7 @@ export function ScheduleReminderDialog({
   const [title, setTitle] = useState(defaultTitle);
   const [remindAt, setRemindAt] = useState(suggestedReminderDateTime(defaultRemindAt));
   const [notes, setNotes] = useState(defaultNotes);
+  const [actionType, setActionType] = useState<ReminderActionType>(defaultActionType);
   const [assigneeId, setAssigneeId] = useState<string>("");
   const feedback = useFormFeedback();
 
@@ -85,10 +94,11 @@ export function ScheduleReminderDialog({
   const resetFields = useCallback(() => {
     setTitle(defaultTitle);
     setNotes(defaultNotes);
+    setActionType(defaultActionType);
     setRemindAt(suggestedReminderDateTime(defaultRemindAt));
     setAssigneeId("");
     feedback.reset();
-  }, [defaultTitle, defaultNotes, defaultRemindAt, feedback.reset]);
+  }, [defaultTitle, defaultNotes, defaultRemindAt, defaultActionType, feedback.reset]);
 
   // Controlled callers flip `open` without going through the trigger, so the
   // prefilled values are refreshed here instead of in `handleOpenChange`.
@@ -120,6 +130,7 @@ export function ScheduleReminderDialog({
       projectId,
       clientId,
       title: title.trim(),
+      actionType,
       remindAt: datetimeLocalToIso(remindAt),
       notes: notes || undefined,
       assigneeId: assigneeId || undefined,
@@ -149,6 +160,19 @@ export function ScheduleReminderDialog({
               required
               maxLength={200}
             />
+          </FormRow>
+          <FormRow label="Tipo" htmlFor="schedule-action-type">
+            <Select
+              id="schedule-action-type"
+              value={actionType}
+              onChange={(e) => setActionType(e.target.value as ReminderActionType)}
+            >
+              {REMINDER_ACTION_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {REMINDER_ACTION_TYPE_LABEL[type]}
+                </option>
+              ))}
+            </Select>
           </FormRow>
           <FormRow label="Fecha y hora" htmlFor="schedule-when" required>
             <Input

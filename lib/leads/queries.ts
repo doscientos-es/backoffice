@@ -161,9 +161,8 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
 }
 
 /**
- * Soonest pending reminder per lead. Reminders live in `tasks` under
- * `kind = 'reminder'`; ordering ascending and keeping the first hit per lead
- * gives the next action without a per-lead round trip.
+ * Soonest pending reminder per lead. `action_type` keeps the commercial
+ * agenda distinct from the lead pipeline without inferring intent from titles.
  */
 async function loadNextActions(leadIds: string[]): Promise<Map<string, LeadNextAction>> {
   const byLead = new Map<string, LeadNextAction>();
@@ -172,7 +171,7 @@ async function loadNextActions(leadIds: string[]): Promise<Map<string, LeadNextA
   const supabase = await createServerClient();
   const { data } = await supabase
     .from("tasks")
-    .select("id, lead_id, title, start_at")
+    .select("id, lead_id, title, start_at, action_type")
     .eq("kind", "reminder")
     .in("lead_id", leadIds)
     .is("completed_at", null)
@@ -186,6 +185,7 @@ async function loadNextActions(leadIds: string[]): Promise<Map<string, LeadNextA
       id: r.id as string,
       title: r.title as string,
       remind_at: r.start_at as string,
+      action_type: (r.action_type as LeadNextAction["action_type"] | null) ?? "follow_up",
     });
   }
   return byLead;

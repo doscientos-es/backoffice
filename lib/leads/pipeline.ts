@@ -15,6 +15,7 @@
  * everywhere the board groups leads.
  */
 
+import type { ReminderActionType } from "@/lib/reminders/action-types";
 import type { LeadStatus } from "@/lib/status";
 
 /** Stages that still require human follow-up (the rest are closed/parked). */
@@ -102,6 +103,7 @@ export type LeadNextAction = {
   id: string;
   title: string;
   remind_at: string;
+  action_type: ReminderActionType;
 };
 
 /**
@@ -113,12 +115,13 @@ export type NextActionState = "overdue" | "today" | "scheduled" | "missing" | "n
 export function nextActionState(
   status: LeadStatus,
   nextAction: LeadNextAction | null,
+  now = new Date(),
 ): NextActionState {
   if (!nextAction) return isActiveLeadStatus(status) ? "missing" : "none";
   const due = new Date(nextAction.remind_at).getTime();
-  const now = Date.now();
-  if (due < now) return "overdue";
+  if (due < now.getTime()) return "overdue";
   const endOfToday = new Date();
+  endOfToday.setTime(now.getTime());
   endOfToday.setHours(23, 59, 59, 999);
   return due <= endOfToday.getTime() ? "today" : "scheduled";
 }

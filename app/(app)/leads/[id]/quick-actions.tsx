@@ -161,8 +161,9 @@ function ScheduleDialog({
     <ScheduleReminderDialog
       leadId={leadId}
       defaultTitle={`Llamar a ${leadName}`}
+      defaultActionType="call"
       members={members}
-      trigger={<ActionTrigger icon={<CalendarClock className="size-4" />} label="Agendar" />}
+      trigger={<ActionTrigger icon={<CalendarClock className="size-4" />} label="Agendar llamada" />}
     />
   );
 }

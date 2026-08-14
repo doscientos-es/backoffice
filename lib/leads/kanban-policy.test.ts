@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   countLeadsNeedingAttention,
+  groupLeadsForAgenda,
   groupLeadsForKanban,
   sumLeadEstimatedValue,
 } from "./kanban-policy";
@@ -33,5 +34,21 @@ describe("lead kanban policy", () => {
     expect(
       sumLeadEstimatedValue([lead({ estimated_value: 200 }), lead({ estimated_value: null })]),
     ).toBe(200);
+  });
+
+  it("groups active leads by their operational next action, not their pipeline status", () => {
+    const now = new Date("2026-08-14T10:00:00.000Z");
+    const leads = [
+      lead({ id: "overdue", next_action: { remind_at: "2026-08-14T09:00:00.000Z" } }),
+      lead({ id: "today", next_action: { remind_at: "2026-08-14T16:00:00.000Z" } }),
+      lead({ id: "upcoming", next_action: { remind_at: "2026-08-18T10:00:00.000Z" } }),
+      lead({ id: "missing" }),
+      lead({ id: "closed", status: "won", next_action: { remind_at: "2026-08-18T10:00:00.000Z" } }),
+    ];
+    const agenda = groupLeadsForAgenda(leads, now);
+    expect(agenda.get("overdue")?.map((item) => item.id)).toEqual(["overdue"]);
+    expect(agenda.get("today")?.map((item) => item.id)).toEqual(["today"]);
+    expect(agenda.get("upcoming")?.map((item) => item.id)).toEqual(["upcoming"]);
+    expect(agenda.get("missing")?.map((item) => item.id)).toEqual(["missing"]);
   });
 });

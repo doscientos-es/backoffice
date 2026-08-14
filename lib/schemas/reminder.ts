@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { uuidIdInput } from "./common";
+import { REMINDER_ACTION_TYPES } from "@/lib/reminders/action-types";
 
 /**
  * Zod schemas for the `reminders` domain.
@@ -13,6 +14,7 @@ export const ReminderIdInput = uuidIdInput;
 
 export const CreateReminderInput = z.object({
   title: z.string().trim().min(1, "El título es obligatorio").max(200),
+  actionType: z.enum(REMINDER_ACTION_TYPES).default("follow_up"),
   remindAt: z
     .string()
     .min(1, "Indica fecha y hora")

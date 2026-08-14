@@ -1094,6 +1094,25 @@ export const scheduleLeadMeeting = defineAction<
     });
     if (error) throw new Error(error.message);
 
+    // A booked Meet must also become a durable next action; the calendar event
+    // alone is not queried by the lead board or its commercial agenda.
+    const { error: reminderError } = await supabase.from("tasks").insert({
+      kind: "reminder",
+      action_type: "meeting",
+      title: data.title,
+      description: data.description ?? null,
+      start_at: data.start,
+      lead_id: data.leadId,
+      project_id: data.projectId ?? null,
+      created_by: user.id,
+      assignee_id: user.id,
+      status: "todo",
+      priority: "medium",
+    });
+    if (reminderError) {
+      log.warn({ err: reminderError, leadId: data.leadId }, "schedule_meeting_reminder_failed");
+    }
+
     await markFirstContacted(supabase, data.leadId);
 
     return { eventId: event.id, htmlLink: event.htmlLink, meetUrl: event.meetUrl };

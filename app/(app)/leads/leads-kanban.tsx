@@ -59,6 +59,7 @@ import { ScheduleReminderDialog } from "../reminders/schedule-reminder-dialog";
 import { LeadCallLink } from "./[id]/phone-actions";
 import { deleteLead, updateLeadStatus } from "./actions";
 import { CloseReasonDialog, type CloseReasonVariant } from "./close-reason-dialog";
+import { LeadCommercialAgenda } from "./lead-commercial-agenda";
 import { LeadQuickView } from "./lead-quick-view";
 import { QuotedSuggestionDialog } from "./quoted-suggestion-dialog";
 import { ReopenConfirmDialog } from "./reopen-confirm-dialog";
@@ -281,49 +282,48 @@ export function LeadsKanban({
   const isDragging = activeId !== null;
 
   return (
-    <DndContext
-      sensors={sensors}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-      onDragCancel={() => setActiveId(null)}
-    >
-      <div className="flex gap-3 overflow-x-auto pb-2 h-[calc(100dvh-11rem)] min-h-[28rem] scroll-fade-x no-scrollbar">
-        {LEAD_KANBAN_COLUMNS.map((col) => (
-          <Column
-            key={col.id}
-            status={col.id}
-            label={col.label}
-            tone={col.tone}
-            dot={col.dot}
-            compact={compactColumns.has(col.id)}
-            isDragging={isDragging}
-            leads={grouped.get(col.id) ?? []}
-            canEdit={canEdit}
-            onOpenQuickView={setQuickViewId}
-            onToggleCompact={() => toggleColumnCompact(col.id)}
-          />
-        ))}
-      </div>
-      <div className="flex min-h-5 items-center justify-between pt-1">
-        <FormFeedback state={feedback.state} pendingLabel="Actualizando…" />
-        <button
-          type="button"
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
-          title="Actualizar leads"
-        >
-          <RefreshCw className={cn("size-3", isRefreshing && "animate-spin")} />
-          <span>
-            {isRefreshing
-              ? "Actualizando…"
-              : `Actualizado ${relativeTime(lastRefresh.toISOString())}`}
-          </span>
-        </button>
-      </div>
-      <DragOverlay>
-        {active ? <Card lead={active} isOverlay canEdit={canEdit} /> : null}
-      </DragOverlay>
+    <>
+      <LeadCommercialAgenda leads={optimistic} />
+      <DndContext
+        sensors={sensors}
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+        onDragCancel={() => setActiveId(null)}
+      >
+        <div className="flex gap-3 overflow-x-auto pb-2 h-[calc(100dvh-23rem)] min-h-[28rem] scroll-fade-x no-scrollbar">
+          {LEAD_KANBAN_COLUMNS.map((col) => (
+            <Column
+              key={col.id}
+              status={col.id}
+              label={col.label}
+              tone={col.tone}
+              dot={col.dot}
+              compact={compactColumns.has(col.id)}
+              isDragging={isDragging}
+              leads={grouped.get(col.id) ?? []}
+              canEdit={canEdit}
+              onOpenQuickView={setQuickViewId}
+              onToggleCompact={() => toggleColumnCompact(col.id)}
+            />
+          ))}
+        </div>
+        <div className="flex min-h-5 items-center justify-between pt-1">
+          <FormFeedback state={feedback.state} pendingLabel="Actualizando…" />
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+            title="Actualizar leads"
+          >
+            <RefreshCw className={cn("size-3", isRefreshing && "animate-spin")} />
+            <span>{isRefreshing ? "Actualizando…" : `Actualizado ${relativeTime(lastRefresh.toISOString())}`}</span>
+          </button>
+        </div>
+        <DragOverlay>
+          {active ? <Card lead={active} isOverlay canEdit={canEdit} /> : null}
+        </DragOverlay>
+      </DndContext>
       <CloseReasonDialog
         lead={pendingClosure ? { id: pendingClosure.id, name: pendingClosure.name } : null}
         variant={pendingClosure?.variant ?? "lost"}
@@ -369,7 +369,7 @@ export function LeadsKanban({
         onDeleteAction={commitDelete}
         onCloseAction={() => setQuickViewId(null)}
       />
-    </DndContext>
+    </>
   );
 }
 
