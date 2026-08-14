@@ -1,6 +1,6 @@
+import { DEFAULT_MAINTENANCE_OFFER } from "@/lib/proposals/maintenance";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_MAINTENANCE_OFFER } from "@/lib/proposals/maintenance";
 
 vi.mock("@/components/finance/line-items-table", () => ({ LineItemsTable: () => null }));
 vi.mock("@/components/proposals/maintenance-offer-editor", () => ({
@@ -35,6 +35,7 @@ const props = {
   initialMaintenanceOptions: DEFAULT_MAINTENANCE_OFFER,
   initialMaintenanceSelectedPlanId: null,
   initialItems: [],
+  initialVersion: 1,
   locked: false,
   aiEnabled: false,
   leadId: null,
@@ -44,7 +45,7 @@ const props = {
 describe("ProposalEditor", () => {
   beforeEach(() => {
     saveProposal.mockReset();
-    saveProposal.mockResolvedValue({ ok: true });
+    saveProposal.mockResolvedValue({ ok: true, version: 2 });
   });
 
   it("only saves proposal edits when the user presses Guardar cambios", async () => {

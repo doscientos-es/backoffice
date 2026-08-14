@@ -123,6 +123,7 @@ export async function getClientDetail(id: string): Promise<ClientDetailResult> {
   return {
     client: {
       id: client.id as string,
+      version: Number(client.version),
       name: client.name as string,
       label: (client.label as string | null) ?? null,
       nif: (client.nif as string | null) ?? null,

@@ -1,3 +1,5 @@
+import { revalidateTag } from "next/cache";
+import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { BACKOFFICE_BACKUP_SLUG } from "@/lib/backups/backoffice";
 import {
@@ -8,8 +10,6 @@ import {
 } from "@/lib/filebrowser";
 import { consumeUserVerification } from "@/lib/security/user-verification";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
-import { revalidateTag } from "next/cache";
-import { NextResponse } from "next/server";
 
 export async function GET(request: Request, { params }: { params: Promise<{ client: string }> }) {
   const user = await requireUser();

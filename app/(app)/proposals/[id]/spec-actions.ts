@@ -72,7 +72,7 @@ export async function updateSpec(input: unknown): Promise<Result<{ version: numb
   const patch: Record<string, unknown> = {};
   if (rest.title !== undefined) patch.title = rest.title;
   if (rest.body_markdown !== undefined) patch.body_markdown = rest.body_markdown;
-  if (Object.keys(patch).length === 0) return { ok: true };
+  if (Object.keys(patch).length === 0) return { ok: true, version: expected_version };
 
   const supabase = await createServerClient();
   const { data: doc, error } = await supabase

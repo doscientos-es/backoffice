@@ -5,10 +5,10 @@
  * GET /api/backups/[client]/download?path=daily/dump.sql
  */
 
+import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { BACKOFFICE_BACKUP_SLUG } from "@/lib/backups/backoffice";
 import { isFileBrowserConfigured } from "@/lib/filebrowser";
-import { NextResponse } from "next/server";
 
 async function getAuthToken(): Promise<string> {
   const res = await fetch(`${process.env.FILEBROWSER_API_URL}/login`, {
