@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  boardColumnForLead,
   countLeadsNeedingAttention,
   groupLeadsForKanban,
   sumLeadEstimatedValue,
@@ -36,25 +35,18 @@ describe("lead kanban policy", () => {
     ).toBe(200);
   });
 
-  it("parks future appointments and brings them back when they are due", () => {
-    const now = new Date("2026-08-14T10:00:00.000Z");
-    const futureCall = lead({
-      status: "in_conversation",
-      next_action: { remind_at: "2026-08-18T10:00:00.000Z", action_type: "call" },
-    });
-    const dueCall = lead({
-      status: "in_conversation",
-      next_action: { remind_at: "2026-08-14T16:00:00.000Z", action_type: "call" },
-    });
-    const waiting = lead({
-      status: "quoted",
-      next_action: { remind_at: "2026-08-18T10:00:00.000Z", action_type: "follow_up" },
-    });
-    const missing = lead({ id: "missing", status: "quoted" });
+  it("keeps leads in their commercial column regardless of the next action", () => {
+    const leads = [
+      lead({
+        id: "contacted",
+        status: "contacted",
+        next_action: { remind_at: "2026-08-18T10:00:00.000Z" },
+      }),
+      lead({ id: "quoted", status: "quoted", next_action: null }),
+    ];
+    const grouped = groupLeadsForKanban(leads);
 
-    expect(boardColumnForLead(futureCall, now)).toBe("scheduled");
-    expect(boardColumnForLead(dueCall, now)).toBe("needs_action");
-    expect(boardColumnForLead(waiting, now)).toBe("waiting");
-    expect(boardColumnForLead(missing, now)).toBe("needs_action");
+    expect(grouped.get("contacted")?.map((item) => item.id)).toEqual(["contacted"]);
+    expect(grouped.get("quoted")?.map((item) => item.id)).toEqual(["quoted"]);
   });
 });

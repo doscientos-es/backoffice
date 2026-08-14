@@ -1,23 +1,5 @@
 "use client";
 
-import {
-  AlertTriangle,
-  CalendarClock,
-  CalendarPlus,
-  Filter,
-  History as HistoryIcon,
-  Hourglass,
-  Mail,
-  Maximize2,
-  Minimize2,
-  Phone,
-  Plus,
-  RefreshCw,
-  User,
-} from "lucide-react";
-import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useOptimistic, useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
 import { EntityAvatar } from "@/components/ui/entity-avatar";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
@@ -26,10 +8,8 @@ import { MemberAvatar } from "@/components/ui/member-avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   countLeadsNeedingAttention,
-  DEFAULT_COMPACT_LEAD_KANBAN_COLUMNS,
   groupLeadsForKanban,
   LEAD_KANBAN_COLUMNS,
-  type LeadWorkBoardColumnId,
   sumLeadEstimatedValue,
 } from "@/lib/leads/kanban-policy";
 import {
@@ -41,11 +21,43 @@ import {
 import type { LeadListItem, LeadMemberRef } from "@/lib/leads/types";
 import { leadDisplayName } from "@/lib/leads/utils";
 import type { MemberOption } from "@/lib/members/queries";
-import { LEAD_STATUS } from "@/lib/status";
+import { LEAD_STATUS, type LeadStatus } from "@/lib/status";
 import { cn, formatEUR, relativeTime } from "@/lib/utils";
+import {
+  DndContext,
+  type DragEndEvent,
+  DragOverlay,
+  type DragStartEvent,
+  PointerSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  AlertTriangle,
+  CalendarClock,
+  CalendarPlus,
+  Filter,
+  GripVertical,
+  History as HistoryIcon,
+  Hourglass,
+  Mail,
+  Phone,
+  Plus,
+  RefreshCw,
+  User,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useOptimistic, useState, useTransition } from "react";
+import { ScheduleReminderDialog } from "../reminders/schedule-reminder-dialog";
 import { LeadCallLink } from "./[id]/phone-actions";
-import { deleteLead } from "./actions";
+import { deleteLead, updateLeadStatus } from "./actions";
+import { CloseReasonDialog, type CloseReasonVariant } from "./close-reason-dialog";
 import { LeadQuickView } from "./lead-quick-view";
+import { QuotedSuggestionDialog } from "./quoted-suggestion-dialog";
+import { ReopenConfirmDialog } from "./reopen-confirm-dialog";
 
 const URGENCY_STYLE: Record<string, string> = {
   Inmediata: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400",
@@ -75,27 +87,21 @@ const INTERACTION_LABEL: Record<string, string> = {
   status_change: "Cambio de estado",
 };
 
-const COMPACT_COLUMNS_KEY = "leads-kanban:workboard-compact-columns";
+const REOPEN_INTO: ReadonlySet<LeadStatus> = new Set([
+  "new",
+  "contacted",
+  "in_conversation",
+  "quoted",
+]);
 
-function loadColumnSet(key: string): Set<LeadWorkBoardColumnId> | null {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? new Set(JSON.parse(raw) as LeadWorkBoardColumnId[]) : null;
-  } catch {
-    return null;
-  }
-}
+const NEXT_ACTION_SUGGESTION: Partial<Record<LeadStatus, string>> = {
+  new: "Contactar con",
+  contacted: "Hacer seguimiento a",
+  in_conversation: "Continuar la conversación con",
+  quoted: "Seguimiento del presupuesto de",
+};
 
-function saveColumnSet(key: string, value: ReadonlySet<LeadWorkBoardColumnId>) {
-  try {
-    localStorage.setItem(key, JSON.stringify([...value]));
-  } catch {
-    // Almacenamiento no disponible (modo privado, cuota llena…): la
-    // preferencia simplemente no persiste entre sesiones.
-  }
-}
-
-type Action = { type: "remove"; id: string };
+type Action = { type: "move"; id: string; status: LeadStatus } | { type: "remove"; id: string };
 
 export function LeadsKanban({
   leads,
@@ -113,42 +119,50 @@ export function LeadsKanban({
   const [isRefreshing, startRefresh] = useTransition();
   const [lastRefresh, setLastRefresh] = useState<Date>(() => new Date());
   const [optimistic, applyOptimistic] = useOptimistic(leads, (state, action: Action) =>
-    state.filter((l) => l.id !== action.id),
+    action.type === "remove"
+      ? state.filter((l) => l.id !== action.id)
+      : state.map((l) => (l.id === action.id ? { ...l, status: action.status } : l)),
   );
-  // Columnas en modo compacto: se colapsan cuando no están bajo hover.
-  // Cualquier columna puede activarlo, no solo las de estado terminal; la
-  // preferencia persiste en localStorage.
-  const [compactColumns, setCompactColumns] = useState<ReadonlySet<LeadWorkBoardColumnId>>(
-    () => new Set(DEFAULT_COMPACT_LEAD_KANBAN_COLUMNS),
-  );
-
-  // Lee las preferencias persistidas tras el montaje: el servidor siempre
-  // renderiza el set por defecto, así que aplicar esto antes provocaría un
-  // mismatch de hidratación.
-  useEffect(() => {
-    const storedCompact = loadColumnSet(COMPACT_COLUMNS_KEY);
-    if (storedCompact) setCompactColumns(storedCompact);
-  }, []);
-
-  const toggleColumnCompact = (id: LeadWorkBoardColumnId) => {
-    const wasCompact = compactColumns.has(id);
-    setCompactColumns((prev) => {
-      const next = new Set(prev);
-      if (wasCompact) next.delete(id);
-      else next.add(id);
-      saveColumnSet(COMPACT_COLUMNS_KEY, next);
-      return next;
-    });
-  };
-
   const handleRefresh = () => {
     startRefresh(() => {
       router.refresh();
       setLastRefresh(new Date());
     });
   };
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [pendingClosure, setPendingClosure] = useState<{
+    id: string;
+    name: string;
+    variant: CloseReasonVariant;
+  } | null>(null);
+  const [pendingReopen, setPendingReopen] = useState<{
+    id: string;
+    name: string;
+    to: LeadStatus;
+  } | null>(null);
+  const [pendingSuggestion, setPendingSuggestion] = useState<{ id: string; name: string } | null>(
+    null,
+  );
+  const [pendingNextAction, setPendingNextAction] = useState<{
+    id: string;
+    name: string;
+    status: LeadStatus;
+  } | null>(null);
   const [quickViewId, setQuickViewId] = useState<string | null>(null);
   const feedback = useFormFeedback();
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  const onDragStart = (event: DragStartEvent) => setActiveId(String(event.active.id));
+
+  const commitMove = (id: string, status: LeadStatus, lostReason?: string) => {
+    startTransition(async () => {
+      applyOptimistic({ type: "move", id, status });
+      feedback.setPending();
+      const res = await updateLeadStatus({ leadId: id, status, lostReason });
+      if (!res.ok) feedback.setError(res.error);
+      else feedback.setSuccess("Estado actualizado");
+    });
+  };
 
   // Optimistically drops the card from the board; the server revalidation keeps
   // it gone on success, and on failure React reverts the state (the card
@@ -164,44 +178,113 @@ export function LeadsKanban({
     });
   };
 
+  const onDragEnd = (event: DragEndEvent) => {
+    setActiveId(null);
+    if (!event.over) return;
+    const id = String(event.active.id);
+    const status = String(event.over.id) as LeadStatus;
+    const current = optimistic.find((lead) => lead.id === id);
+    if (!current || current.status === status) return;
+
+    if (status === "lost" || status === "not_interested") {
+      setPendingClosure({ id, name: leadDisplayName(current), variant: status });
+      return;
+    }
+    if (current.status === "won" && REOPEN_INTO.has(status)) {
+      setPendingReopen({ id, name: leadDisplayName(current), to: status });
+      return;
+    }
+
+    commitMove(id, status);
+    if (status === "quoted") setPendingSuggestion({ id, name: leadDisplayName(current) });
+    if (NEXT_ACTION_SUGGESTION[status] && !current.next_action) {
+      setPendingNextAction({ id, name: leadDisplayName(current), status });
+    }
+  };
+
   const grouped = groupLeadsForKanban(optimistic);
+  const active = activeId ? optimistic.find((lead) => lead.id === activeId) : null;
 
   return (
     <>
-      <div className="flex gap-3 overflow-x-auto pb-2 h-[calc(100dvh-11rem)] min-h-[28rem] scroll-fade-x no-scrollbar">
-        {LEAD_KANBAN_COLUMNS.map((col) => (
-          <Column
-            key={col.id}
-            status={col.id}
-            label={col.label}
-            description={col.description}
-            tone={col.tone}
-            dot={col.dot}
-            focus={col.focus}
-            compact={compactColumns.has(col.id)}
-            leads={grouped.get(col.id) ?? []}
-            onOpenQuickView={setQuickViewId}
-            onToggleCompact={() => toggleColumnCompact(col.id)}
-          />
-        ))}
-      </div>
-      <div className="flex min-h-5 items-center justify-between pt-1">
-        <FormFeedback state={feedback.state} pendingLabel="Actualizando…" />
-        <button
-          type="button"
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
-          title="Actualizar leads"
-        >
-          <RefreshCw className={cn("size-3", isRefreshing && "animate-spin")} />
-          <span>
-            {isRefreshing
-              ? "Actualizando…"
-              : `Actualizado ${relativeTime(lastRefresh.toISOString())}`}
-          </span>
-        </button>
-      </div>
+      <DndContext
+        sensors={sensors}
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+        onDragCancel={() => setActiveId(null)}
+      >
+        <div className="flex h-[calc(100dvh-11rem)] min-h-112 gap-4 overflow-x-auto pb-2 scroll-fade-x no-scrollbar">
+          {LEAD_KANBAN_COLUMNS.map((col) => (
+            <Column
+              key={col.id}
+              status={col.id}
+              label={col.label}
+              description={col.description}
+              tone={col.tone}
+              dot={col.dot}
+              leads={grouped.get(col.id) ?? []}
+              canEdit={canEdit}
+              isDragging={activeId !== null}
+              onOpenQuickView={setQuickViewId}
+            />
+          ))}
+        </div>
+        <div className="flex min-h-5 items-center justify-between pt-1">
+          <FormFeedback state={feedback.state} pendingLabel="Actualizando…" />
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+            title="Actualizar leads"
+          >
+            <RefreshCw className={cn("size-3", isRefreshing && "animate-spin")} />
+            <span>
+              {isRefreshing
+                ? "Actualizando…"
+                : `Actualizado ${relativeTime(lastRefresh.toISOString())}`}
+            </span>
+          </button>
+        </div>
+        <DragOverlay>{active ? <Card lead={active} isOverlay /> : null}</DragOverlay>
+      </DndContext>
+      <CloseReasonDialog
+        lead={pendingClosure ? { id: pendingClosure.id, name: pendingClosure.name } : null}
+        variant={pendingClosure?.variant ?? "lost"}
+        onCancel={() => setPendingClosure(null)}
+        onConfirm={(reason) => {
+          if (!pendingClosure) return;
+          const { id, variant } = pendingClosure;
+          setPendingClosure(null);
+          commitMove(id, variant, reason);
+        }}
+      />
+      <ReopenConfirmDialog
+        lead={pendingReopen ? { id: pendingReopen.id, name: pendingReopen.name } : null}
+        onCancel={() => setPendingReopen(null)}
+        onConfirm={() => {
+          if (!pendingReopen) return;
+          const { id, to } = pendingReopen;
+          setPendingReopen(null);
+          commitMove(id, to);
+        }}
+      />
+      <QuotedSuggestionDialog lead={pendingSuggestion} onClose={() => setPendingSuggestion(null)} />
+      <ScheduleReminderDialog
+        key={pendingNextAction?.id ?? "next-action"}
+        leadId={pendingNextAction?.id}
+        open={pendingNextAction !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingNextAction(null);
+        }}
+        defaultTitle={
+          pendingNextAction
+            ? `${NEXT_ACTION_SUGGESTION[pendingNextAction.status] ?? "Seguimiento de"} ${pendingNextAction.name}`
+            : ""
+        }
+        members={members}
+        onScheduled={() => router.refresh()}
+      />
       <LeadQuickView
         lead={quickViewId ? (optimistic.find((l) => l.id === quickViewId) ?? null) : null}
         canEdit={canEdit}
@@ -221,108 +304,38 @@ function Column({
   tone,
   dot,
   leads,
+  canEdit,
+  isDragging,
   onOpenQuickView,
-  compact = false,
-  focus = false,
-  onToggleCompact,
 }: {
-  status: LeadWorkBoardColumnId;
+  status: LeadStatus;
   label: string;
   description: string;
   tone: string;
   dot: string;
   leads: KanbanLead[];
+  canEdit: boolean;
+  isDragging: boolean;
   onOpenQuickView: (id: string) => void;
-  compact?: boolean;
-  focus?: boolean;
-  onToggleCompact: () => void;
 }) {
+  const { setNodeRef, isOver } = useDroppable({ id: status });
   const total = sumLeadEstimatedValue(leads);
   const attention = countLeadsNeedingAttention(leads);
-  // Las columnas compactas se expanden durante hover para facilitar la
-  // revisión y vuelven a colapsarse al salir el cursor.
-  // El comportamiento responsive se delega a Tailwind con prefijos `md:`,
-  // de modo que en < md la columna siempre se renderiza expandida.
-  const collapsed = compact;
   return (
     <section
+      ref={setNodeRef}
       aria-label={`${label} · ${leads.length} lead${leads.length === 1 ? "" : "s"}`}
-      title={collapsed ? `${label} (${leads.length}) · pasa el cursor para expandir` : undefined}
       className={cn(
-        "group/col relative flex h-full w-72 shrink-0 flex-col overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10",
-        "transition-[width,background-color,box-shadow] duration-200 ease-out motion-reduce:transition-none",
-        collapsed && "md:w-11 md:cursor-pointer md:bg-muted/30 md:hover:w-72 md:hover:bg-card",
-        focus && "ring-primary/30 shadow-[0_12px_32px_-20px] shadow-primary/50",
+        "flex h-full w-80 shrink-0 flex-col overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10",
+        isOver && "bg-primary/5 ring-2 ring-primary/50",
+        isDragging && !isOver && "ring-dashed ring-primary/30",
       )}
     >
-      <header
-        className={cn(
-          "flex shrink-0 flex-col gap-1 border-b border-border px-3 py-2.5",
-          collapsed &&
-            "md:items-center md:gap-2 md:px-1.5 md:group-hover/col:flex-row md:group-hover/col:items-center md:group-hover/col:justify-between md:group-hover/col:gap-1 md:group-hover/col:px-3",
-        )}
-      >
-        <div
-          className={cn(
-            "flex flex-1 min-w-0 items-center gap-2",
-            collapsed && "md:flex-col md:group-hover/col:flex-row",
-          )}
-        >
+      <header className="shrink-0 border-b border-border px-3 py-3">
+        <div className="flex min-w-0 items-center gap-2">
           <span className={cn("size-2 shrink-0 rounded-full", dot)} aria-hidden />
-          <span
-            className={cn(
-              "truncate text-xs font-semibold tracking-wide",
-              tone,
-              collapsed &&
-                "md:rotate-180 md:[writing-mode:vertical-rl] md:group-hover/col:rotate-0 md:group-hover/col:[writing-mode:horizontal-tb]",
-            )}
-          >
-            {label}
-          </span>
-          <span
-            className={cn(
-              "hidden text-[10px] font-normal text-muted-foreground",
-              !collapsed && "md:block",
-              collapsed && "md:group-hover/col:block",
-            )}
-          >
-            {description}
-          </span>
-        </div>
-        <div
-          className={cn(
-            "flex shrink-0 items-center justify-between gap-2",
-            collapsed && "md:justify-center md:group-hover/col:justify-between",
-          )}
-        >
-          {total > 0 && (
-            <p
-              className={cn(
-                "pl-4 text-[11px] tabular-nums text-muted-foreground",
-                collapsed && "md:hidden md:group-hover/col:block",
-              )}
-            >
-              {formatEUR(total)}
-            </p>
-          )}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleCompact();
-            }}
-            title={compact ? "Mantener siempre visible" : "Colapsar cuando no esté en uso"}
-            aria-label={compact ? "Mantener siempre visible" : "Colapsar cuando no esté en uso"}
-            className={cn(
-              "shrink-0 rounded p-0.5 text-muted-foreground/40 opacity-0 transition-opacity",
-              "hover:text-foreground focus-visible:opacity-100 focus-visible:outline-none",
-              "focus-visible:ring-2 focus-visible:ring-ring/50 group-hover/col:opacity-100",
-              collapsed && "md:hidden md:group-hover/col:inline-flex",
-            )}
-          >
-            {compact ? <Maximize2 className="size-3" /> : <Minimize2 className="size-3" />}
-          </button>
-          <div className="ml-auto flex shrink-0 items-center gap-1">
+          <span className={cn("min-w-0 flex-1 truncate text-sm font-semibold", tone)}>{label}</span>
+          <div className="flex shrink-0 items-center gap-1">
             {attention > 0 && (
               <Badge
                 variant="danger"
@@ -338,17 +351,22 @@ function Column({
             </Badge>
           </div>
         </div>
+        <p className="mt-1.5 truncate pl-4 text-[11px] text-muted-foreground">{description}</p>
+        {total > 0 ? (
+          <p className="mt-2 pl-4 text-xs font-medium tabular-nums text-foreground/80">
+            {formatEUR(total)}
+          </p>
+        ) : null}
       </header>
-      <div
-        className={cn(
-          "flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-2 scroll-fade no-scrollbar",
-          collapsed && "md:hidden md:group-hover/col:flex",
-        )}
-      >
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2.5 scroll-fade no-scrollbar">
         {leads.length === 0 ? (
-          <p className="px-2 py-6 text-center text-xs text-muted-foreground">Sin leads</p>
+          <p className="px-2 py-6 text-center text-xs text-muted-foreground">
+            {isDragging ? "Soltar aquí" : "Sin leads"}
+          </p>
         ) : (
-          leads.map((l) => <Card key={l.id} lead={l} onOpenQuickView={onOpenQuickView} />)
+          leads.map((l) => (
+            <Card key={l.id} lead={l} canEdit={canEdit} onOpenQuickView={onOpenQuickView} />
+          ))
         )}
         {status === "new" && <AddLeadCard />}
       </div>
@@ -382,21 +400,45 @@ function LeadAvatar({ lead }: { lead: KanbanLead }) {
 
 function Card({
   lead,
+  isOverlay = false,
+  canEdit = false,
   onOpenQuickView,
 }: {
   lead: KanbanLead;
+  isOverlay?: boolean;
+  canEdit?: boolean;
   onOpenQuickView?: (id: string) => void;
 }) {
+  const { attributes, listeners, setActivatorNodeRef, setNodeRef, isDragging } = useDraggable({
+    id: lead.id,
+    disabled: !canEdit || isOverlay,
+  });
   const rotting = isRotting(lead.status, lead.updated_at);
   const rotDays = STAGE_ROT_DAYS[lead.status];
   return (
     <article
+      ref={setNodeRef}
       className={cn(
         "group flex flex-col gap-2 rounded-lg bg-background p-3 text-left ring-1 ring-border transition-all hover:shadow-sm hover:ring-foreground/20",
-        rotting && "ring-amber-400/60 dark:ring-amber-500/40",
+        isDragging && "opacity-30",
+        isOverlay && "cursor-grabbing shadow-lg ring-foreground/30",
+        rotting && !isOverlay && "ring-amber-400/60 dark:ring-amber-500/40",
       )}
     >
       <div className="flex items-start gap-2">
+        {canEdit ? (
+          <button
+            ref={setActivatorNodeRef}
+            type="button"
+            {...attributes}
+            {...listeners}
+            aria-label={`Arrastrar ${leadDisplayName(lead)}`}
+            title="Arrastrar lead"
+            className="mt-0.5 shrink-0 cursor-grab touch-none rounded text-muted-foreground/45 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 active:cursor-grabbing"
+          >
+            <GripVertical className="size-3.5" aria-hidden />
+          </button>
+        ) : null}
         <LeadAvatar lead={lead} />
         <div className="min-w-0 flex-1">
           {onOpenQuickView ? (
@@ -417,7 +459,7 @@ function Card({
             <p className="truncate text-[11px] leading-tight text-muted-foreground">{lead.name}</p>
           ) : null}
         </div>
-        {rotting && (
+        {rotting && !isOverlay && (
           <span
             role="img"
             aria-label="Lead estancado: necesita seguimiento"
@@ -428,9 +470,9 @@ function Card({
           </span>
         )}
       </div>
-      <NextActionChip lead={lead} />
-      {(lead.company || lead.phone || lead.email) && (
-        <div className="flex min-w-0 flex-col gap-0.5 text-xs">
+      {!isOverlay && <NextActionChip lead={lead} />}
+      {!isOverlay && (lead.company || lead.phone || lead.email) && (
+        <div className="flex min-w-0 flex-col gap-0.5 pl-8 text-xs">
           {lead.company ? <p className="truncate text-muted-foreground">{lead.company}</p> : null}
           {lead.phone ? (
             <LeadCallLink
@@ -455,8 +497,8 @@ function Card({
           ) : null}
         </div>
       )}
-      {lead.urgency && (
-        <div className="flex flex-wrap items-center gap-1">
+      {!isOverlay && lead.urgency && (
+        <div className="flex flex-wrap items-center gap-1 pl-8">
           <span
             className={cn(
               "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium",
@@ -467,15 +509,15 @@ function Card({
           </span>
         </div>
       )}
-      {lead.status === "lost" && lead.lost_reason ? (
+      {!isOverlay && lead.status === "lost" && lead.lost_reason ? (
         <p
-          className="truncate text-[11px] text-destructive/75"
+          className="truncate pl-8 text-[11px] text-destructive/75"
           title={`Motivo de pérdida: ${lead.lost_reason}`}
         >
           <span className="font-medium">Pérdida:</span> {lead.lost_reason}
         </p>
       ) : null}
-      <div className="flex items-center justify-between gap-1.5">
+      <div className="flex items-center justify-between gap-1.5 pl-8">
         <div className="flex items-center gap-1.5">
           <Badge
             variant="neutral"
@@ -494,7 +536,7 @@ function Card({
               {formatEUR(lead.estimated_value)}
             </Badge>
           )}
-          <RecentActivity lead={lead} />
+          {!isOverlay && <RecentActivity lead={lead} />}
         </div>
         {lead.assignee ? <MemberFilterPopover member={lead.assignee} /> : null}
       </div>
