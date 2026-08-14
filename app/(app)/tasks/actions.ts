@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { defineAction } from "@/lib/actions/define-action";
 import { requireUser } from "@/lib/auth";
+import { VersionConflictError } from "@/lib/concurrency/version-conflict";
 import { autoSyncTaskIssue, syncTaskStatusToGitHub } from "@/lib/integrations/github-sync";
 import { ACTIVE_LEAD_STATUSES } from "@/lib/leads/pipeline";
 import { dispatchNotifications } from "@/lib/notifications/dispatch";
@@ -185,7 +186,7 @@ export const updateTask = defineAction({
   handler: async (input, { user }) => {
     const supabase = await createServerClient();
 
-    const { id, member_ids = [], ...rest } = input;
+    const { id, expected_version, member_ids = [], ...rest } = input;
     const assigneeId = member_ids[0] ?? null;
 
     const { data: previousMembers } = await supabase
@@ -207,8 +208,15 @@ export const updateTask = defineAction({
     if (rest.status === "done") updates.completed_at = new Date().toISOString();
     if (rest.status === "in_progress") updates.started_at = new Date().toISOString();
 
-    const { error } = await supabase.from("tasks").update(updates).eq("id", id);
+    const { data, error } = await supabase
+      .from("tasks")
+      .update(updates)
+      .eq("id", id)
+      .eq("version", expected_version)
+      .select("version")
+      .maybeSingle();
     if (error) throw new Error(error.message);
+    if (!data) throw new VersionConflictError();
     if (rest.status === "done") await ensureLeadNextAction(supabase, id, user.id);
 
     // Sync task_members: replace all existing entries
@@ -238,6 +246,7 @@ export const updateTask = defineAction({
     });
 
     void syncTaskStatusToGitHub(id, rest.status);
+    return { version: Number(data.version) };
   },
 });
 
@@ -253,7 +262,9 @@ export const updateTaskStatus = defineAction({
 
     const { error } = await supabase.from("tasks").update(updates).eq("id", data.taskId);
     if (error) throw new Error(error.message);
-    if (data.status === "done") await ensureLeadNextAction(supabase, data.taskId, user.id);
+    if (data.status === "done" && !data.suppressNextAction) {
+      await ensureLeadNextAction(supabase, data.taskId, user.id);
+    }
     void syncTaskStatusToGitHub(data.taskId, data.status);
   },
 });

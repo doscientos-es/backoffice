@@ -3,6 +3,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const { state } = vi.hoisted(() => ({
   state: {
     rpcArgs: null as Record<string, unknown> | null,
+    rpcResult: {
+      data: [{ version: 2 }] as Array<{ version: number }> | null,
+      error: null as null | { message: string },
+    },
     inserts: [] as Array<Record<string, unknown>>,
     updates: [] as Array<Record<string, unknown>>,
     proposal: {
@@ -10,6 +14,7 @@ const { state } = vi.hoisted(() => ({
       number: null as string | null,
       status: "draft",
       title: "Automatización comercial",
+      version: 1,
       lead_id: "f4e5d6c7-b8a9-4012-8012-123456789abc",
       client_id: null as string | null,
     },
@@ -53,7 +58,7 @@ vi.mock("@/lib/supabase/server", () => ({
     },
     rpc: async (_name: string, args: Record<string, unknown>) => {
       state.rpcArgs = args;
-      return { error: null };
+      return state.rpcResult;
     },
   })),
 }));
@@ -71,10 +76,12 @@ const ID = "494d62cb-fd56-4650-b131-9e3a927a20ad";
 describe("updateProposal", () => {
   beforeEach(() => {
     state.rpcArgs = null;
+    state.rpcResult = { data: [{ version: 2 }], error: null };
     state.inserts = [];
     state.updates = [];
     state.proposal = {
       id: ID,
+      expected_version: 1,
       number: null,
       status: "draft",
       title: "Automatización comercial",
@@ -87,6 +94,7 @@ describe("updateProposal", () => {
   it("does not pass derived totals to the item-replacement RPC", async () => {
     const result = await updateProposal({
       id: ID,
+      expected_version: 1,
       title: "Propuesta",
       problems: [{ id: "pair-1", title: "Proceso manual", description: "Mucho trabajo" }],
       solutions: [{ id: "pair-1", title: "Automatizar", description: "Menos trabajo" }],
@@ -172,6 +180,27 @@ describe("updateProposal", () => {
       maintenance_selection_source: "team",
       maintenance_selected_at: expect.any(String),
     });
+  });
+
+  it("returns a structured conflict without overwriting a newer proposal", async () => {
+    state.rpcResult = { data: null, error: { message: "VERSION_CONFLICT" } };
+
+    const result = await updateProposal({
+      id: ID,
+      expected_version: 1,
+      title: "Título local",
+      items: [
+        {
+          description: "Servicio",
+          quantity: 1,
+          unit_price: 100,
+          vat_rate: 21,
+          billing_cycle: "none",
+        },
+      ],
+    });
+
+    expect(result).toMatchObject({ ok: false, code: "conflict" });
   });
 
   it("returns each invalid field with an actionable label", async () => {

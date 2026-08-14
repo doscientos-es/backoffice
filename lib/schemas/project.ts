@@ -89,6 +89,7 @@ export type ProjectInputType = z.infer<typeof ProjectInput>;
 
 export const UpdateProjectInput = ProjectBase.extend({
   id: z.string().uuid("ID de proyecto inválido"),
+  expected_version: z.coerce.number().int().positive(),
 }).superRefine(projectRefinement);
 
 export type UpdateProjectInputType = z.infer<typeof UpdateProjectInput>;

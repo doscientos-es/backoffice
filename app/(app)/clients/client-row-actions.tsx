@@ -1,10 +1,10 @@
 "use client";
 
-import { Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useUndoableDelete } from "@/lib/hooks/use-undoable-delete";
+import { Pencil, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { ClientEditDialog } from "./[id]/client-edit-dialog";
 import { deleteClient, restoreClient } from "./actions";
 
@@ -23,6 +23,7 @@ type Client = {
   billing_address_country: string | null;
   notes: string | null;
   logo_url: string | null;
+  version: number;
 };
 
 export function ClientRowActions({ client }: { client: Client }) {

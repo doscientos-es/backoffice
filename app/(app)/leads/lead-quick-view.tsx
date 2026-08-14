@@ -330,6 +330,7 @@ function Body({
                 solution_type: lead.solution_type ?? null,
                 urgency: lead.urgency ?? null,
                 assigned_to: lead.assignee?.id ?? null,
+                version: lead.version,
               }}
             />
           </>

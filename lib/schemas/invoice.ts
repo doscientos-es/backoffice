@@ -50,6 +50,7 @@ export type CreateMonthlyHourlyInvoiceInputType = z.infer<typeof CreateMonthlyHo
 
 export const UpdateInvoiceInput = z.object({
   id: z.string().uuid(),
+  expected_version: z.coerce.number().int().positive(),
   issue_date: z.string().optional(),
   due_date: z.string().nullable().optional(),
   notes: z.string().max(4000).nullable().optional(),

@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { defineAction } from "@/lib/actions/define-action";
+import { VersionConflictError } from "@/lib/concurrency/version-conflict";
 import { createServerClient } from "@/lib/supabase/server";
 
 // ---------------------------------------------------------------------------
@@ -30,7 +31,7 @@ const subscriptionSchema = subscriptionFields.refine(
 );
 
 const updateSubscriptionSchema = subscriptionFields
-  .extend({ id: z.string().uuid() })
+  .extend({ id: z.string().uuid(), expected_version: z.coerce.number().int().positive() })
   .refine((d) => !d.end_date || d.end_date >= d.start_date, {
     message: "La fecha de fin no puede ser anterior al inicio",
     path: ["end_date"],
@@ -63,17 +64,22 @@ export const updateSubscription = defineAction({
   schema: updateSubscriptionSchema,
   roles: ["owner", "admin", "member"],
   revalidate: (_, input) => ["/subscriptions", `/subscriptions/${input.id}`],
-  async handler({ id, ...rest }) {
+  async handler({ id, expected_version, ...rest }) {
     const supabase = await createServerClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("subscriptions")
       .update({
         ...rest,
         project_id: rest.project_id || null,
         end_date: rest.end_date || null,
       })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("version", expected_version)
+      .select("version")
+      .maybeSingle();
     if (error) throw new Error(error.message);
+    if (!data) throw new VersionConflictError();
+    return { version: Number(data.version) };
   },
 });
 

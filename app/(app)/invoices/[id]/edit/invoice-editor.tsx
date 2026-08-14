@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateField } from "@/components/ui/date-field";
 import { FormRow } from "@/components/ui/form-row";
 import { Textarea } from "@/components/ui/textarea";
+import { VersionConflictDialog } from "@/components/ui/version-conflict-dialog";
 import { EMPTY_LINE_ITEM, type LineItem } from "@/lib/finance";
 import { updateInvoice } from "../../actions";
 
@@ -29,6 +30,7 @@ export type InvoiceEditorProps = {
   initialNotes: string | null;
   initialPaymentTerms: string | null;
   initialItems: InitialEditableItem[];
+  initialVersion: number;
   /** When true, fields are read-only (invoice issued). */
   locked: boolean;
 };
@@ -40,11 +42,14 @@ export function InvoiceEditor({
   initialNotes,
   initialPaymentTerms,
   initialItems,
+  initialVersion,
   locked,
 }: InvoiceEditorProps) {
   const router = useRouter();
   const [saving, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [expectedVersion, setExpectedVersion] = useState(initialVersion);
+  const [conflictOpen, setConflictOpen] = useState(false);
 
   const [issueDate, setIssueDate] = useState(initialIssueDate);
   const [dueDate, setDueDate] = useState(initialDueDate ?? "");
@@ -72,6 +77,7 @@ export function InvoiceEditor({
 
   const buildPayload = () => ({
     id,
+    expected_version: expectedVersion,
     issue_date: issueDate,
     due_date: dueDate || null,
     notes: notes || null,
@@ -83,8 +89,10 @@ export function InvoiceEditor({
     startTransition(async () => {
       const res = await updateInvoice(buildPayload());
       if (!res.ok) {
-        setError(res.error);
+        if (res.code === "conflict") setConflictOpen(true);
+        else setError(res.error);
       } else {
+        setExpectedVersion(res.version);
         setDirty(false);
         setError(null);
       }
@@ -95,7 +103,8 @@ export function InvoiceEditor({
     startTransition(async () => {
       const res = await updateInvoice(buildPayload());
       if (!res.ok) {
-        setError(res.error);
+        if (res.code === "conflict") setConflictOpen(true);
+        else setError(res.error);
       } else {
         router.push(`/invoices/${id}`);
       }
@@ -103,96 +112,107 @@ export function InvoiceEditor({
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <Card className="min-w-0">
-          <CardHeader>
-            <CardTitle>Líneas</CardTitle>
-          </CardHeader>
-          <CardContent className="px-0">
-            <LineItemsTable items={items} onChange={setItems} locked={locked} />
-          </CardContent>
-        </Card>
+    <>
+      <div className="flex flex-col gap-6">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+          <Card className="min-w-0">
+            <CardHeader>
+              <CardTitle>Líneas</CardTitle>
+            </CardHeader>
+            <CardContent className="px-0">
+              <LineItemsTable items={items} onChange={setItems} locked={locked} />
+            </CardContent>
+          </Card>
 
-        <Card className="min-w-0">
-          <CardHeader>
-            <CardTitle>Detalles</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <FormRow label="Fecha de emisión" htmlFor="issue-date">
-              <DateField
-                id="issue-date"
-                value={issueDate}
-                onChange={setIssueDate}
-                disabled={locked}
-              />
-            </FormRow>
-            <FormRow label="Fecha de vencimiento" htmlFor="due-date">
-              <DateField id="due-date" value={dueDate} onChange={setDueDate} disabled={locked} />
-            </FormRow>
-            <FormRow label="Notas" htmlFor="notes">
-              <Textarea
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                disabled={locked}
-                rows={6}
-                placeholder="Notas internas o para el cliente…"
-              />
-            </FormRow>
-            <FormRow label="Términos de pago" htmlFor="payment-terms">
-              <Textarea
-                id="payment-terms"
-                value={paymentTerms}
-                onChange={(e) => setPaymentTerms(e.target.value)}
-                disabled={locked}
-                rows={4}
-                placeholder="Se usa el valor por defecto de la empresa si se deja vacío…"
-              />
-            </FormRow>
-          </CardContent>
-        </Card>
-      </div>
+          <Card className="min-w-0">
+            <CardHeader>
+              <CardTitle>Detalles</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <FormRow label="Fecha de emisión" htmlFor="issue-date">
+                <DateField
+                  id="issue-date"
+                  value={issueDate}
+                  onChange={setIssueDate}
+                  disabled={locked}
+                />
+              </FormRow>
+              <FormRow label="Fecha de vencimiento" htmlFor="due-date">
+                <DateField id="due-date" value={dueDate} onChange={setDueDate} disabled={locked} />
+              </FormRow>
+              <FormRow label="Notas" htmlFor="notes">
+                <Textarea
+                  id="notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  disabled={locked}
+                  rows={6}
+                  placeholder="Notas internas o para el cliente…"
+                />
+              </FormRow>
+              <FormRow label="Términos de pago" htmlFor="payment-terms">
+                <Textarea
+                  id="payment-terms"
+                  value={paymentTerms}
+                  onChange={(e) => setPaymentTerms(e.target.value)}
+                  disabled={locked}
+                  rows={4}
+                  placeholder="Se usa el valor por defecto de la empresa si se deja vacío…"
+                />
+              </FormRow>
+            </CardContent>
+          </Card>
+        </div>
 
-      {/* Sticky action bar */}
-      <div className="sticky bottom-0 z-10 -mx-4 -mb-4 border-t border-border bg-background/85 backdrop-blur supports-backdrop-filter:bg-background/70 md:-mx-6 md:-mb-6">
-        <div className="flex items-center justify-between gap-4 px-4 py-3 md:px-6">
-          <div className="text-sm">
-            {error && <span className="text-destructive">{error}</span>}
-            {!error && dirty && !saving && (
-              <span className="text-muted-foreground">Cambios sin guardar</span>
-            )}
-            {!error && !dirty && !saving && (
-              <span className="text-muted-foreground">Sin cambios pendientes</span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href={`/invoices/${id}`}>
-                <ArrowLeft className="size-3.5" />
-                Volver
-              </Link>
-            </Button>
-            {!locked && (
-              <>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={saving || !dirty}
-                  onClick={handleSave}
-                >
-                  <Save className="size-3.5" />
-                  {saving ? "Guardando…" : "Guardar"}
-                </Button>
-                <Button size="sm" disabled={saving} onClick={handleSaveAndReturn}>
-                  <Save className="size-3.5" />
-                  {saving ? "Guardando…" : "Guardar y volver"}
-                </Button>
-              </>
-            )}
+        {/* Sticky action bar */}
+        <div className="sticky bottom-0 z-10 -mx-4 -mb-4 border-t border-border bg-background/85 backdrop-blur supports-backdrop-filter:bg-background/70 md:-mx-6 md:-mb-6">
+          <div className="flex items-center justify-between gap-4 px-4 py-3 md:px-6">
+            <div className="text-sm">
+              {error && <span className="text-destructive">{error}</span>}
+              {!error && dirty && !saving && (
+                <span className="text-muted-foreground">Cambios sin guardar</span>
+              )}
+              {!error && !dirty && !saving && (
+                <span className="text-muted-foreground">Sin cambios pendientes</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" asChild>
+                <Link href={`/invoices/${id}`}>
+                  <ArrowLeft className="size-3.5" />
+                  Volver
+                </Link>
+              </Button>
+              {!locked && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={saving || !dirty}
+                    onClick={handleSave}
+                  >
+                    <Save className="size-3.5" />
+                    {saving ? "Guardando…" : "Guardar"}
+                  </Button>
+                  <Button size="sm" disabled={saving} onClick={handleSaveAndReturn}>
+                    <Save className="size-3.5" />
+                    {saving ? "Guardando…" : "Guardar y volver"}
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+      <VersionConflictDialog
+        open={conflictOpen}
+        entityName="factura"
+        onKeepEditing={() => setConflictOpen(false)}
+        onReload={() => {
+          setConflictOpen(false);
+          router.refresh();
+        }}
+      />
+    </>
   );
 }

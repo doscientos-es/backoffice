@@ -28,6 +28,7 @@ export type CreateTaskInputType = z.infer<typeof CreateTaskInput>;
 
 export const UpdateTaskInput = z.object({
   id: z.string().uuid(),
+  expected_version: z.coerce.number().int().positive(),
   title: requiredText(200, "El título es obligatorio"),
   description: optionalText(8000),
   /** Multi-member assignment. First entry becomes the primary assignee_id. */
@@ -42,6 +43,8 @@ export type UpdateTaskInputType = z.infer<typeof UpdateTaskInput>;
 export const UpdateTaskStatusInput = z.object({
   taskId: z.string().uuid(),
   status: TaskStatus,
+  /** The lead detail quick-complete flow collects the next action in its own UI. */
+  suppressNextAction: z.boolean().optional().default(false),
 });
 
 export const MoveTaskInput = z.object({

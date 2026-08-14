@@ -296,13 +296,18 @@ describe("updateLead", () => {
   it("returns ok:true for a valid patch", async () => {
     const result = await updateLead({
       id: "00000000-0000-0000-0000-000000000001",
+      expected_version: 1,
       name: "Updated Name",
     });
     expect(result.ok).toBe(true);
   });
 
   it("sets updated_by to the current user", async () => {
-    await updateLead({ id: "00000000-0000-0000-0000-000000000001", name: "X" });
+    await updateLead({
+      id: "00000000-0000-0000-0000-000000000001",
+      expected_version: 1,
+      name: "X",
+    });
     const row = db.updatedRows.find((r) => r.table === "leads");
     expect(row?.updated_by).toBe("member-1");
   });

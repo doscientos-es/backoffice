@@ -1,0 +1,29 @@
+name: Create daily backoffice backup
+
+on:
+  schedule:
+    # Daily at 02:30 UTC, outside normal working hours in Spain.
+    - cron: "30 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  backup:
+    name: Run the off-site backup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Call the backup endpoint
+        run: |
+          STATUS=$(curl --silent --output /tmp/backoffice-backup.json \
+                        --write-out "%{http_code}" \
+                        --max-time 300 \
+                        -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+                        "${{ secrets.APP_URL }}/api/cron/backoffice-backup")
+
+          echo "HTTP status: $STATUS"
+          cat /tmp/backoffice-backup.json | python3 -m json.tool || true
+
+          if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 300 ]; then
+            echo "::error::El endpoint devolvió HTTP $STATUS"
+            exit 1
+          fi

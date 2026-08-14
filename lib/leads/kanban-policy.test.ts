@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  boardColumnForLead,
   countLeadsNeedingAttention,
-  groupLeadsForAgenda,
   groupLeadsForKanban,
   sumLeadEstimatedValue,
 } from "./kanban-policy";
@@ -17,7 +17,7 @@ const lead = (overrides: Record<string, unknown> = {}) =>
   }) as never;
 
 describe("lead kanban policy", () => {
-  it("groups through the canonical board column and prioritizes attention", () => {
+  it("keeps new leads visible and prioritizes the cards that need our action", () => {
     const leads = [
       lead({ id: "scheduled", next_action: { remind_at: "2026-08-15T10:00:00.000Z" } }),
       lead({ id: "missing" }),
@@ -36,19 +36,25 @@ describe("lead kanban policy", () => {
     ).toBe(200);
   });
 
-  it("groups active leads by their operational next action, not their pipeline status", () => {
+  it("parks future appointments and brings them back when they are due", () => {
     const now = new Date("2026-08-14T10:00:00.000Z");
-    const leads = [
-      lead({ id: "overdue", next_action: { remind_at: "2026-08-14T09:00:00.000Z" } }),
-      lead({ id: "today", next_action: { remind_at: "2026-08-14T16:00:00.000Z" } }),
-      lead({ id: "upcoming", next_action: { remind_at: "2026-08-18T10:00:00.000Z" } }),
-      lead({ id: "missing" }),
-      lead({ id: "closed", status: "won", next_action: { remind_at: "2026-08-18T10:00:00.000Z" } }),
-    ];
-    const agenda = groupLeadsForAgenda(leads, now);
-    expect(agenda.get("overdue")?.map((item) => item.id)).toEqual(["overdue"]);
-    expect(agenda.get("today")?.map((item) => item.id)).toEqual(["today"]);
-    expect(agenda.get("upcoming")?.map((item) => item.id)).toEqual(["upcoming"]);
-    expect(agenda.get("missing")?.map((item) => item.id)).toEqual(["missing"]);
+    const futureCall = lead({
+      status: "in_conversation",
+      next_action: { remind_at: "2026-08-18T10:00:00.000Z", action_type: "call" },
+    });
+    const dueCall = lead({
+      status: "in_conversation",
+      next_action: { remind_at: "2026-08-14T16:00:00.000Z", action_type: "call" },
+    });
+    const waiting = lead({
+      status: "quoted",
+      next_action: { remind_at: "2026-08-18T10:00:00.000Z", action_type: "follow_up" },
+    });
+    const missing = lead({ id: "missing", status: "quoted" });
+
+    expect(boardColumnForLead(futureCall, now)).toBe("scheduled");
+    expect(boardColumnForLead(dueCall, now)).toBe("needs_action");
+    expect(boardColumnForLead(waiting, now)).toBe("waiting");
+    expect(boardColumnForLead(missing, now)).toBe("needs_action");
   });
 });

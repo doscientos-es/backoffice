@@ -11,6 +11,7 @@ import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Markdown } from "@/components/ui/markdown";
 import { Textarea } from "@/components/ui/textarea";
+import { VersionConflictDialog } from "@/components/ui/version-conflict-dialog";
 import { deleteSpec, toggleSpecVisibility, updateSpec } from "./spec-actions";
 
 export type ProposalSpec = {
@@ -20,6 +21,7 @@ export type ProposalSpec = {
   is_client_visible: boolean;
   portal_token: string | null;
   updated_at: string;
+  version: number;
 };
 
 type Props = {
@@ -86,7 +88,7 @@ export function ProposalSpecs({ proposalId, specs, aiEnabled, locked }: Props) {
       ) : (
         <ul className="flex flex-col gap-3">
           {specs.map((spec) => (
-            <SpecRow key={spec.id} spec={spec} locked={locked} />
+            <SpecRow key={`${spec.id}-${spec.version}`} spec={spec} locked={locked} />
           ))}
         </ul>
       )}
@@ -100,29 +102,38 @@ function SpecRow({ spec, locked }: { spec: ProposalSpec; locked: boolean }) {
   const [title, setTitle] = useState(spec.title);
   const [body, setBody] = useState(spec.body_markdown);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [conflictOpen, setConflictOpen] = useState(false);
   const feedback = useFormFeedback();
   const [deleting, startTransition] = useTransition();
 
   async function handleSave() {
     feedback.setPending();
-    const res = await updateSpec({ id: spec.id, title, body_markdown: body });
+    const res = await updateSpec({
+      id: spec.id,
+      expected_version: spec.version,
+      title,
+      body_markdown: body,
+    });
     if (res.ok) {
       feedback.setSuccess("Guardado");
       setEditing(false);
       startTransition(() => router.refresh());
-    } else feedback.setError(res.error);
+    } else if (res.code === "conflict") setConflictOpen(true);
+    else feedback.setError(res.error);
   }
 
   async function handleToggle() {
     feedback.setPending();
     const res = await toggleSpecVisibility({
       id: spec.id,
+      expected_version: spec.version,
       is_client_visible: !spec.is_client_visible,
     });
     if (res.ok) {
       feedback.setSuccess(spec.is_client_visible ? "Ocultada" : "Visible para cliente");
       startTransition(() => router.refresh());
-    } else feedback.setError(res.error);
+    } else if (res.code === "conflict") setConflictOpen(true);
+    else feedback.setError(res.error);
   }
 
   // Hard delete (irreversible): a `proposal_specs` row is removed permanently,
@@ -217,6 +228,15 @@ function SpecRow({ spec, locked }: { spec: ProposalSpec; locked: boolean }) {
         destructive
         pending={deleting}
         onConfirm={handleDelete}
+      />
+      <VersionConflictDialog
+        open={conflictOpen}
+        entityName="documento técnico"
+        onKeepEditing={() => setConflictOpen(false)}
+        onReload={() => {
+          setConflictOpen(false);
+          router.refresh();
+        }}
       />
 
       {editing ? (

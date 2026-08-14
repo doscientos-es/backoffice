@@ -26,7 +26,7 @@ export async function listClients(params: ClientListParams): Promise<ClientListR
     supabase
       .from("clients")
       .select(
-        "id, name, label, nif, email, phone, contact_person, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country, notes, logo_url, updated_at",
+        "id, version, name, label, nif, email, phone, contact_person, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country, notes, logo_url, updated_at",
         { count: "exact" },
       ),
   );

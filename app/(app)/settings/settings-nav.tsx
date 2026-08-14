@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Activity, Building2, Mail, PlugZap, Shield, Target, User, Users } from "lucide-react";
+import { Activity, Building2, DatabaseBackup, Mail, PlugZap, Shield, Target, User, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -14,6 +14,7 @@ type Item = {
   | "/settings/integrations"
   | "/settings/email-templates"
   | "/settings/diagnostics"
+  | "/settings/backups"
   | "/settings/legal";
   label: string;
   icon: typeof User;
@@ -27,6 +28,7 @@ const ITEMS: readonly Item[] = [
   { href: "/settings/goals", label: "Metas", icon: Target, requiresAdmin: true },
   { href: "/settings/integrations", label: "Integraciones", icon: PlugZap, requiresAdmin: true },
   { href: "/settings/email-templates", label: "Plantillas email", icon: Mail, requiresAdmin: true },
+  { href: "/settings/backups", label: "Copias", icon: DatabaseBackup, requiresAdmin: true },
   { href: "/settings/diagnostics", label: "Diagnóstico", icon: Activity, requiresAdmin: true },
   { href: "/settings/legal", label: "Legal / Verifactu", icon: Shield, requiresAdmin: false },
 ] as const;

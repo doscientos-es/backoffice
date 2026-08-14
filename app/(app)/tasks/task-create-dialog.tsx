@@ -32,6 +32,9 @@ interface Props {
   currentUserId?: string;
   /** Custom trigger. Falls back to a primary button labelled "Nueva tarea". */
   trigger?: ReactNode;
+  /** Controlled visibility, for flows that open the dialog after another action. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   /** Optional callback fired after a successful creation (e.g. router refresh). */
   onCreated?: (id: string) => void;
 }
@@ -52,11 +55,20 @@ export function TaskCreateDialog({
   members = [],
   currentUserId,
   trigger,
+  open: controlledOpen,
+  onOpenChange,
   onCreated,
 }: Props) {
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const feedback = useFormFeedback();
   const formRef = useRef<HTMLFormElement>(null);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : uncontrolledOpen;
+
+  function setOpen(next: boolean) {
+    if (isControlled) onOpenChange?.(next);
+    else setUncontrolledOpen(next);
+  }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -91,14 +103,16 @@ export function TaskCreateDialog({
         if (!v) feedback.reset();
       }}
     >
-      <DialogTrigger asChild>
-        {trigger ?? (
+      {trigger ? (
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+      ) : !isControlled ? (
+        <DialogTrigger asChild>
           <Button size="sm">
             <Plus className="size-4" aria-hidden />
             Nueva tarea
           </Button>
-        )}
-      </DialogTrigger>
+        </DialogTrigger>
+      ) : null}
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Crear tarea</DialogTitle>

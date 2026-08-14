@@ -1,6 +1,3 @@
-import { Plus } from "lucide-react";
-import type { Metadata } from "next";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { EntityAvatar } from "@/components/ui/entity-avatar";
 import { requireUser } from "@/lib/auth";
@@ -8,6 +5,9 @@ import { listClients } from "@/lib/clients/queries";
 import { CLIENT_LIST_PAGE_SIZE, CLIENT_SORT_COLUMNS } from "@/lib/clients/types";
 import { clientDisplayName } from "@/lib/clients/utils";
 import { parsePage, parseSortParam, parseStringParam } from "@/lib/utils/search-params";
+import { Plus } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
 import { ClientRowActions } from "./client-row-actions";
 import { ClientsList } from "./clients-list";
 
@@ -97,6 +97,7 @@ export default async function ClientsPage({
               <ClientRowActions
                 client={{
                   id: c.id,
+                  version: c.version,
                   name: c.name,
                   label: c.label,
                   nif: c.nif,

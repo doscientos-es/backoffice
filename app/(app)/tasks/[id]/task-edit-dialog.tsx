@@ -1,6 +1,7 @@
 "use client";
 
 import { Pencil } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { VersionConflictDialog } from "@/components/ui/version-conflict-dialog";
 import { useFormDirty } from "@/lib/hooks/use-form-dirty";
 import type { TaskPriorityType, TaskStatusType } from "@/lib/schemas/task";
 import { updateTask } from "../actions";
@@ -26,6 +28,7 @@ type Task = {
   priority: string;
   member_ids: string[];
   due_date: string | null;
+  version: number;
 };
 
 interface Props {
@@ -34,7 +37,9 @@ interface Props {
 }
 
 export function TaskEditDialog({ task, members }: Props) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [conflictOpen, setConflictOpen] = useState(false);
   const feedback = useFormFeedback();
   const { formRef, isDirty, reset, markDirty } = useFormDirty<HTMLFormElement>();
 
@@ -44,6 +49,7 @@ export function TaskEditDialog({ task, members }: Props) {
     const fd = new FormData(e.currentTarget);
     const res = await updateTask({
       id: task.id,
+      expected_version: task.version,
       title: fd.get("title")?.toString() ?? "",
       description: fd.get("description")?.toString() ?? "",
       member_ids: fd
@@ -54,10 +60,17 @@ export function TaskEditDialog({ task, members }: Props) {
       priority: (fd.get("priority")?.toString() ?? "medium") as TaskPriorityType,
       due_date: fd.get("due_date")?.toString() ?? "",
     });
-    if (!res.ok) return feedback.setError(res.error);
+    if (!res.ok) {
+      if (res.code === "conflict") setConflictOpen(true);
+      else feedback.setError(res.error);
+      return;
+    }
     feedback.setSuccess("Guardado");
     reset();
-    setTimeout(() => setOpen(false), 400);
+    setTimeout(() => {
+      setOpen(false);
+      router.refresh();
+    }, 400);
   }
 
   return (
@@ -79,7 +92,12 @@ export function TaskEditDialog({ task, members }: Props) {
           <DialogTitle>Editar tarea</DialogTitle>
           <DialogDescription>Actualiza los datos de la tarea.</DialogDescription>
         </DialogHeader>
-        <form ref={formRef} onSubmit={onSubmit} className="flex flex-col max-h-[70vh]">
+        <form
+          key={task.version}
+          ref={formRef}
+          onSubmit={onSubmit}
+          className="flex flex-col max-h-[70vh]"
+        >
           <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-5 scroll-fade no-scrollbar">
             <TaskFormFields
               idPrefix={`edit-${task.id}`}
@@ -103,6 +121,16 @@ export function TaskEditDialog({ task, members }: Props) {
           </div>
         </form>
       </DialogContent>
+      <VersionConflictDialog
+        open={conflictOpen}
+        entityName="tarea"
+        onKeepEditing={() => setConflictOpen(false)}
+        onReload={() => {
+          setConflictOpen(false);
+          setOpen(false);
+          router.refresh();
+        }}
+      />
     </Dialog>
   );
 }

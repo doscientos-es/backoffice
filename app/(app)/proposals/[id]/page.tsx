@@ -102,7 +102,7 @@ export default async function ProposalDetailPage({
 
   const { data: specs } = await supabase
     .from("proposal_specs")
-    .select("id, title, body_markdown, is_client_visible, portal_token, updated_at")
+    .select("id, title, body_markdown, is_client_visible, portal_token, updated_at, version")
     .eq("proposal_id", id)
     .order("created_at", { ascending: true });
 
@@ -241,7 +241,9 @@ export default async function ProposalDetailPage({
 
       <SectionBoundary label="No se pudo cargar el editor de la propuesta">
         <ProposalEditor
+          key={proposal.version as number}
           id={id}
+          initialVersion={Number(proposal.version)}
           initialTitle={proposal.title as string}
           initialValidUntil={(proposal.valid_until as string | null) ?? null}
           initialNotes={(proposal.notes as string | null) ?? null}

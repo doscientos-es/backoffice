@@ -31,19 +31,23 @@ describe("id payloads", () => {
 
 describe("UpdateInvoiceInput", () => {
   it("requires at least one line item when items provided", () => {
-    expect(UpdateInvoiceInput.safeParse({ id: uuid, items: [] }).success).toBe(false);
+    expect(UpdateInvoiceInput.safeParse({ id: uuid, expected_version: 1, items: [] }).success).toBe(
+      false,
+    );
   });
   it("coerces line items and defaults", () => {
     const out = UpdateInvoiceInput.parse({
       id: uuid,
+      expected_version: 1,
       items: [{ description: "Servicio", quantity: "2", unit_price: "50" }],
     });
     expect(out.items?.[0]?.quantity).toBe(2);
     expect(out.items?.[0]?.vat_rate).toBe(21);
     expect(out.items?.[0]?.billing_cycle).toBe("none");
   });
-  it("accepts a payload with only an id", () => {
-    expect(UpdateInvoiceInput.safeParse({ id: uuid }).success).toBe(true);
+  it("requires the version loaded by the editor", () => {
+    expect(UpdateInvoiceInput.safeParse({ id: uuid }).success).toBe(false);
+    expect(UpdateInvoiceInput.safeParse({ id: uuid, expected_version: 1 }).success).toBe(true);
   });
 });
 

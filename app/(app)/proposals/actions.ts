@@ -310,7 +310,7 @@ export async function duplicateProposal(
 
 // ---------------- UPDATE (collaborative inline edits + autosave) ----------------
 
-type UpdateResult = { ok: true } | { ok: false; error: string };
+type UpdateResult = { ok: true; version: number } | { ok: false; error: string; code?: "conflict" };
 
 /**
  * Patches a proposal in place. Used by the inline editor + autosave loop.
@@ -327,7 +327,7 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
     const errors = formatProposalValidationIssues(parsed.error.issues);
     return { ok: false, error: errors.join("\n") || "Datos de la propuesta no válidos" };
   }
-  const { id, items, ...rest } = parsed.data;
+  const { id, expected_version, items, ...rest } = parsed.data;
 
   const maintenanceOffer = parseMaintenanceOffer(rest.maintenance_options);
   if (
@@ -383,25 +383,51 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
   }
 
   if (items) {
-    const { error: rpcError } = await supabase.rpc("replace_proposal_items", {
+    const { data, error: rpcError } = await supabase.rpc("update_proposal_items_versioned", {
       p_proposal_id: id,
+      p_expected_version: expected_version,
       p_patch: patch,
       p_items: items,
     });
     if (rpcError) {
+      if (rpcError.message === "VERSION_CONFLICT") {
+        return {
+          ok: false,
+          code: "conflict",
+          error: "Este registro ha cambiado mientras lo editabas.",
+        };
+      }
       log.error({ err: rpcError, id }, "replace_proposal_items_failed");
       return { ok: false, error: rpcError.message };
     }
+    const version = Number((data as Array<{ version: number }> | null)?.[0]?.version);
+    if (!Number.isSafeInteger(version))
+      return { ok: false, error: "No se pudo confirmar el guardado" };
+    revalidatePath(`/proposals/${id}`);
+    return { ok: true, version };
   } else if (Object.keys(patch).length > 0) {
-    const { error: updateError } = await supabase.from("proposals").update(patch).eq("id", id);
+    const { data, error: updateError } = await supabase
+      .from("proposals")
+      .update(patch)
+      .eq("id", id)
+      .eq("version", expected_version)
+      .select("version")
+      .maybeSingle();
     if (updateError) {
       log.error({ err: updateError, id }, "update_proposal_failed");
       return { ok: false, error: updateError.message };
     }
+    if (!data)
+      return {
+        ok: false,
+        code: "conflict",
+        error: "Este registro ha cambiado mientras lo editabas.",
+      };
+    revalidatePath(`/proposals/${id}`);
+    return { ok: true, version: Number(data.version) };
   }
 
-  revalidatePath(`/proposals/${id}`);
-  return { ok: true };
+  return { ok: true, version: expected_version };
 }
 
 // ---------------- LINK PROJECT ----------------

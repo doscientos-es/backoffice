@@ -15,6 +15,7 @@ export const USER_VERIFICATION_INTENTS = [
   "backup.delete",
   "web.db_credentials.update",
   "web.backup.run",
+  "backoffice.backup.run",
 ] as const;
 
 export type UserVerificationIntent = (typeof USER_VERIFICATION_INTENTS)[number];

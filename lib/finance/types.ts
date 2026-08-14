@@ -41,6 +41,8 @@ export type InvoiceRow = {
 
 export type ExpenseListItem = {
   id: string;
+  /** Internal optimistic-concurrency token. */
+  version: number;
   vendor: string;
   category: ExpenseCategory;
   status: ExpenseStatus;
@@ -104,6 +106,8 @@ export type ExpenseDetailProject = {
 
 export type ExpenseDetail = {
   id: string;
+  /** Internal optimistic-concurrency token. */
+  version: number;
   vendor: string;
   description: string | null;
   category: ExpenseCategory;

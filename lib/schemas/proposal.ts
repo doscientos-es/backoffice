@@ -86,6 +86,7 @@ export type DuplicateProposalInputType = z.infer<typeof DuplicateProposalInput>;
  */
 export const UpdateProposalInput = z.object({
   id: z.string().uuid(),
+  expected_version: z.coerce.number().int().positive(),
   title: z.string().min(1).max(200).optional(),
   valid_until: z
     .string()
@@ -134,6 +135,7 @@ export type CreateProposalSpecInputType = z.infer<typeof CreateProposalSpecInput
 
 export const UpdateProposalSpecInput = z.object({
   id: z.string().uuid(),
+  expected_version: z.coerce.number().int().positive(),
   title: z.string().min(1).max(200).optional(),
   body_markdown: z.string().min(1).max(60_000).optional(),
 });
@@ -141,6 +143,7 @@ export type UpdateProposalSpecInputType = z.infer<typeof UpdateProposalSpecInput
 
 export const ToggleProposalSpecVisibilityInput = z.object({
   id: z.string().uuid(),
+  expected_version: z.coerce.number().int().positive(),
   is_client_visible: z.boolean(),
 });
 export type ToggleProposalSpecVisibilityInputType = z.infer<

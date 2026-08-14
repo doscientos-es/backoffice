@@ -1,5 +1,3 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -16,6 +14,8 @@ import { getExpenseDetail } from "@/lib/finance/queries";
 import { EXPENSE_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { deleteExpense } from "../actions";
 import { ExpenseEditDialog } from "./expense-edit-dialog";
 
@@ -78,6 +78,7 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
                   notes: expense.notes,
                   payment_source: expense.payment_source,
                   paid_by_member_id: expense.paid_by_member_id,
+                  version: Number(expense.version),
                 }}
                 projects={projectOptions}
                 teamMembers={teamMembers}

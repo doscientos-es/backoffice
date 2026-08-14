@@ -76,5 +76,6 @@ export const ExpenseIdInput = uuidIdInput;
  */
 export const UpdateExpenseInput = ExpenseBase.extend({
   id: z.string().uuid("ID inválido"),
+  expected_version: z.coerce.number().int().positive(),
 }).refine(hasPayer, payerRefinement);
 export type UpdateExpenseInputType = z.infer<typeof UpdateExpenseInput>;

@@ -32,6 +32,7 @@ export type CreateClientInputType = z.infer<typeof CreateClientInput>;
 
 export const UpdateClientInput = CreateClientInput.extend({
   id: z.string().uuid(),
+  expected_version: z.coerce.number().int().positive(),
 });
 
 export type UpdateClientInputType = z.infer<typeof UpdateClientInput>;

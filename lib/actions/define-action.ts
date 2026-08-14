@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import type { z } from "zod";
 import { type CurrentUser, type MemberRole, requireRole, requireUser } from "@/lib/auth";
+import { isVersionConflictError } from "@/lib/concurrency/version-conflict";
 import { scopedLogger } from "@/lib/logger";
 import { formDataToObject } from "@/lib/schemas/common";
 import type { ActionResult } from "./types";
@@ -83,6 +84,9 @@ export function defineAction<TSchema extends z.ZodTypeAny, TPayload = void>(
       ) as ActionResult<TPayload>;
     } catch (err) {
       if (isFrameworkError(err)) throw err;
+      if (isVersionConflictError(err)) {
+        return { ok: false, code: "conflict", error: err.message } as ActionResult<TPayload>;
+      }
       const message = err instanceof Error ? err.message : "Error desconocido";
       log.error({ err }, "action failed");
       return fail(message);

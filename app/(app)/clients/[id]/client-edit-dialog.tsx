@@ -1,6 +1,7 @@
 "use client";
 
 import { Pencil } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { type ReactNode, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { VersionConflictDialog } from "@/components/ui/version-conflict-dialog";
 import { useFormDirty } from "@/lib/hooks/use-form-dirty";
 import { updateClient } from "../actions";
 import { ClientFormFields } from "../client-form-fields";
@@ -32,6 +34,7 @@ type Client = {
   billing_address_country: string | null;
   notes: string | null;
   logo_url: string | null;
+  version: number;
 };
 
 export function ClientEditDialog({
@@ -42,7 +45,9 @@ export function ClientEditDialog({
   /** Custom trigger element. Defaults to the standard "Editar" button. */
   trigger?: ReactNode;
 }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [conflictOpen, setConflictOpen] = useState(false);
   const feedback = useFormFeedback();
   const { formRef, isDirty, reset } = useFormDirty<HTMLFormElement>();
 
@@ -52,6 +57,7 @@ export function ClientEditDialog({
     const fd = new FormData(e.currentTarget);
     const res = await updateClient({
       id: client.id,
+      expected_version: client.version,
       name: fd.get("name")?.toString() ?? "",
       label: fd.get("label")?.toString() ?? "",
       nif: fd.get("nif")?.toString() ?? "",
@@ -66,10 +72,17 @@ export function ClientEditDialog({
       notes: fd.get("notes")?.toString() ?? "",
       logo_url: fd.get("logo_url")?.toString() ?? "",
     });
-    if (!res.ok) return feedback.setError(res.error);
+    if (!res.ok) {
+      if (res.code === "conflict") setConflictOpen(true);
+      else feedback.setError(res.error);
+      return;
+    }
     feedback.setSuccess("Guardado");
     reset();
-    setTimeout(() => setOpen(false), 400);
+    setTimeout(() => {
+      setOpen(false);
+      router.refresh();
+    }, 400);
   }
 
   return (
@@ -93,7 +106,12 @@ export function ClientEditDialog({
           <DialogTitle>Editar cliente</DialogTitle>
           <DialogDescription>Actualiza los datos del cliente.</DialogDescription>
         </DialogHeader>
-        <form ref={formRef} onSubmit={onSubmit} className="flex flex-col max-h-[70vh]">
+        <form
+          key={client.version}
+          ref={formRef}
+          onSubmit={onSubmit}
+          className="flex flex-col max-h-[70vh]"
+        >
           <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-5 scroll-fade no-scrollbar">
             <ClientFormFields
               idPrefix={`edit-${client.id}`}
@@ -122,6 +140,16 @@ export function ClientEditDialog({
           </div>
         </form>
       </DialogContent>
+      <VersionConflictDialog
+        open={conflictOpen}
+        entityName="cliente"
+        onKeepEditing={() => setConflictOpen(false)}
+        onReload={() => {
+          setConflictOpen(false);
+          setOpen(false);
+          router.refresh();
+        }}
+      />
     </Dialog>
   );
 }

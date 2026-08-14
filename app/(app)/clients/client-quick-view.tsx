@@ -1,18 +1,5 @@
 "use client";
 
-import {
-  ArrowUpRight,
-  Building2,
-  FileText,
-  Mail,
-  MapPin,
-  Phone,
-  Trash2,
-  User,
-  X,
-} from "lucide-react";
-import Link from "next/link";
-import { type ReactNode, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +21,19 @@ import {
 import { EntityAvatar } from "@/components/ui/entity-avatar";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { relativeTime } from "@/lib/utils";
+import {
+  ArrowUpRight,
+  Building2,
+  FileText,
+  Mail,
+  MapPin,
+  Phone,
+  Trash2,
+  User,
+  X,
+} from "lucide-react";
+import Link from "next/link";
+import { type ReactNode, useState } from "react";
 import { ClientEditDialog } from "./[id]/client-edit-dialog";
 
 export type QuickClient = {
@@ -52,6 +52,7 @@ export type QuickClient = {
   billing_address_country: string | null;
   notes: string | null;
   updated_at: string;
+  version: number;
 };
 
 export function ClientQuickView({

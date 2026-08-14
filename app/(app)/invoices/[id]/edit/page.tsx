@@ -1,7 +1,7 @@
-import { notFound, redirect } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
+import { notFound, redirect } from "next/navigation";
 import { InvoiceEditor } from "./invoice-editor";
 
 export const dynamic = "force-dynamic";
@@ -48,7 +48,9 @@ export default async function EditInvoicePage({ params }: { params: Promise<{ id
       />
 
       <InvoiceEditor
+        key={invoice.version as number}
         id={id}
+        initialVersion={Number(invoice.version)}
         initialIssueDate={invoice.issue_date}
         initialDueDate={invoice.due_date}
         initialNotes={invoice.notes}

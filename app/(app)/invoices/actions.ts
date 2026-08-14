@@ -5,6 +5,7 @@ import { after } from "next/server";
 import { InvoiceEmail } from "@/components/email";
 import { defineAction } from "@/lib/actions/define-action";
 import { requireRole } from "@/lib/auth";
+import { VersionConflictError } from "@/lib/concurrency/version-conflict";
 import { renderEmail } from "@/lib/email/render";
 import { sendEmail } from "@/lib/email/resend";
 import { publicEnv } from "@/lib/env";
@@ -21,14 +22,11 @@ import {
   findProposalItems,
   insertInvoiceWithItems,
   patchInvoiceClientSnapshot,
-  patchInvoiceHeader,
   patchInvoiceStatus,
-  replaceInvoiceItems,
   restoreDeletedInvoice,
   softDeleteInvoice,
 } from "@/lib/invoices/queries";
-import type { InvoiceHeaderPatch } from "@/lib/invoices/types";
-import { buildInvoiceItemRows, getMonthlyBillingWindow } from "@/lib/invoices/workflows";
+import { getMonthlyBillingWindow } from "@/lib/invoices/workflows";
 import { scopedLogger } from "@/lib/logger";
 import { dispatchNotifications } from "@/lib/notifications/dispatch";
 import { buildPortalAccessPatch } from "@/lib/portal/access";
@@ -442,24 +440,26 @@ export const updateInvoice = defineAction({
     if (!current) throw new Error("Factura no encontrada");
     if (current.status !== "draft") throw new Error("No se puede editar una factura ya emitida");
 
-    const headerPatch: InvoiceHeaderPatch = { updated_at: new Date().toISOString() };
+    const headerPatch: Record<string, unknown> = {};
     if (input.issue_date) headerPatch.issue_date = input.issue_date;
     if (input.due_date !== undefined) headerPatch.due_date = input.due_date ?? null;
     if (input.notes !== undefined) headerPatch.notes = input.notes;
     if (input.payment_terms !== undefined) headerPatch.payment_terms = input.payment_terms ?? null;
 
-    if (input.items) {
-      const { subtotal, taxAmount, total } = computeLineTotals(input.items);
-      headerPatch.subtotal = subtotal;
-      headerPatch.tax_amount = taxAmount;
-      headerPatch.total = total;
+    const supabase = await createServerClient();
+    const { data, error } = await supabase.rpc("update_draft_invoice_versioned", {
+      p_invoice_id: input.id,
+      p_expected_version: input.expected_version,
+      p_patch: headerPatch,
+      p_items: input.items ?? null,
+    });
+    if (error) {
+      if (error.message === "VERSION_CONFLICT") throw new VersionConflictError();
+      throw new Error(error.message);
     }
-
-    await patchInvoiceHeader(input.id, headerPatch);
-
-    if (input.items) {
-      await replaceInvoiceItems(input.id, buildInvoiceItemRows(input.items));
-    }
+    const version = Number((data as Array<{ version: number }> | null)?.[0]?.version);
+    if (!Number.isSafeInteger(version)) throw new Error("No se pudo confirmar el guardado");
+    return { version };
   },
 });
 

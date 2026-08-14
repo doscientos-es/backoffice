@@ -1,6 +1,3 @@
-import { ArrowUpRight, ExternalLink } from "lucide-react";
-import Link from "next/link";
-import { notFound } from "next/navigation";
 import { BackLink } from "@/components/layout/back-link";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
@@ -13,6 +10,9 @@ import { TASK_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { mergeTaskMemberIds } from "@/lib/tasks/assignments";
 import { formatDate } from "@/lib/utils";
+import { ArrowUpRight, ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { GitHubModeBadge } from "../../projects/github-mode-badge";
 import type { GitHubSyncMode } from "../../projects/github-sync-section";
 import { syncTaskToGithub } from "../actions";
@@ -102,6 +102,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
                   priority: task.priority as string,
                   member_ids: taskMemberIds,
                   due_date: (task.due_date as string | null) ?? null,
+                  version: Number(task.version),
                 }}
                 members={(members ?? []) as Array<{ id: string; name: string }>}
               />

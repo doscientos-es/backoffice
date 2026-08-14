@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import type { ActionResult } from "../lib/types";
+import type { ActionFailure, ActionResult } from "../lib/types";
 import { type FormFeedbackState, useFormFeedback } from "../ui/form-feedback";
 
 /**
@@ -22,6 +22,8 @@ interface UseActionFormOptions {
    * captured synchronously, so it stays valid across the `await`.
    */
   onSuccess?: (form: HTMLFormElement) => void;
+  /** Return true when the caller has shown a specialized failure UI. */
+  onFailure?: (result: ActionFailure) => boolean | void;
 }
 
 export interface UseActionFormResult {
@@ -50,6 +52,7 @@ export function useActionForm(
     feedback.setPending();
     const res = await action(new FormData(form));
     if (res && !res.ok) {
+      if (options.onFailure?.(res)) return;
       feedback.setError(res.error);
       return;
     }

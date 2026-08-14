@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { defineAction } from "@/lib/actions/define-action";
+import { VersionConflictError } from "@/lib/concurrency/version-conflict";
 import { parseGithubRepoUrl } from "@/lib/integrations/github-sync";
 import { uuidIdInput } from "@/lib/schemas/common";
 import { ProjectInput, UpdateProjectInput } from "@/lib/schemas/project";
@@ -75,12 +76,18 @@ export const updateProject = defineAction({
   revalidate: (_payload, input) => ["/projects", `/projects/${input.id}`],
   handler: async (input) => {
     const supabase = await createServerClient();
-    const { error } = await supabase
+    const { id, expected_version } = input;
+    const { data, error } = await supabase
       .from("projects")
-      .update({ ...buildDbPayload(input), updated_at: new Date().toISOString() })
-      .eq("id", input.id);
+      .update(buildDbPayload(input))
+      .eq("id", id)
+      .eq("version", expected_version)
+      .select("version")
+      .maybeSingle();
 
     if (error) throw new Error(error.message);
+    if (!data) throw new VersionConflictError();
+    return { version: Number(data.version) };
   },
 });
 

@@ -29,6 +29,7 @@ import {
   LeadQuickActionsSection,
 } from "./lead-detail-async-sections";
 import { LeadEditDialog } from "./lead-edit-dialog";
+import { LeadNextActionTaskItem } from "./lead-next-action-task-item";
 import { LeadNotesDialog } from "./lead-notes-dialog";
 import { MomTestChecklist } from "./mom-test-checklist";
 import { PhoneQuickActions } from "./phone-actions";
@@ -228,6 +229,7 @@ export default async function LeadDetailPage({
                   solution_type: (lead.solution_type as string | null) ?? null,
                   urgency: (lead.urgency as string | null) ?? null,
                   assigned_to: (lead.assigned_to as string | null) ?? null,
+                  version: Number(lead.version),
                 }}
               />
             ) : null}
@@ -559,6 +561,21 @@ function NextActionsCard({
           <ul className="divide-y divide-border">
             {actions.map((action) => {
               const overdue = action.when ? new Date(action.when) < new Date() : false;
+              if (action.kind === "task" && canEdit) {
+                return (
+                  <LeadNextActionTaskItem
+                    key={`${action.kind}-${action.id}`}
+                    task={{
+                      ...action,
+                      overdue,
+                      whenLabel: action.when ? relativeTime(action.when) : null,
+                    }}
+                    leadId={leadId}
+                    members={members}
+                    currentUserId={currentUserId}
+                  />
+                );
+              }
               return (
                 <li
                   key={`${action.kind}-${action.id}`}

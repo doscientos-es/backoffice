@@ -1,6 +1,7 @@
 "use client";
 
 import { Pencil } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { VersionConflictDialog } from "@/components/ui/version-conflict-dialog";
 import { useFormDirty } from "@/lib/hooks/use-form-dirty";
 import type { GithubSyncModeType, ProjectStatusType } from "@/lib/schemas/project";
 import { updateProject } from "../actions";
@@ -35,6 +37,7 @@ type Project = {
   github_repo: string | null;
   github_installation_id: number | null;
   github_auto_sync: boolean | null;
+  version: number;
 };
 
 interface Props {
@@ -45,7 +48,9 @@ interface Props {
 }
 
 export function ProjectEditDialog({ project, clients, orgDefaultInstallationId = null }: Props) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [conflictOpen, setConflictOpen] = useState(false);
   const feedback = useFormFeedback();
   const { formRef, isDirty, reset } = useFormDirty<HTMLFormElement>();
 
@@ -58,6 +63,7 @@ export function ProjectEditDialog({ project, clients, orgDefaultInstallationId =
     const vatRaw = fd.get("hourly_vat_rate")?.toString() ?? "";
     const res = await updateProject({
       id: project.id,
+      expected_version: project.version,
       client_id: fd.get("client_id")?.toString() ?? "",
       name: fd.get("name")?.toString() ?? "",
       description: fd.get("description")?.toString() ?? "",
@@ -72,10 +78,17 @@ export function ProjectEditDialog({ project, clients, orgDefaultInstallationId =
       github_repo: fd.get("github_repo")?.toString() ?? "",
       github_installation_id: installIdRaw === "" ? "" : Number(installIdRaw),
     });
-    if (!res.ok) return feedback.setError(res.error);
+    if (!res.ok) {
+      if (res.code === "conflict") setConflictOpen(true);
+      else feedback.setError(res.error);
+      return;
+    }
     feedback.setSuccess("Guardado");
     reset();
-    setTimeout(() => setOpen(false), 400);
+    setTimeout(() => {
+      setOpen(false);
+      router.refresh();
+    }, 400);
   }
 
   return (
@@ -97,7 +110,12 @@ export function ProjectEditDialog({ project, clients, orgDefaultInstallationId =
           <DialogTitle>Editar proyecto</DialogTitle>
           <DialogDescription>Actualiza los datos del proyecto.</DialogDescription>
         </DialogHeader>
-        <form ref={formRef} onSubmit={onSubmit} className="flex flex-col max-h-[70vh]">
+        <form
+          key={project.version}
+          ref={formRef}
+          onSubmit={onSubmit}
+          className="flex flex-col max-h-[70vh]"
+        >
           <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-5 scroll-fade no-scrollbar">
             <ProjectFormFields
               idPrefix={`edit-${project.id}`}
@@ -129,6 +147,16 @@ export function ProjectEditDialog({ project, clients, orgDefaultInstallationId =
           </div>
         </form>
       </DialogContent>
+      <VersionConflictDialog
+        open={conflictOpen}
+        entityName="proyecto"
+        onKeepEditing={() => setConflictOpen(false)}
+        onReload={() => {
+          setConflictOpen(false);
+          setOpen(false);
+          router.refresh();
+        }}
+      />
     </Dialog>
   );
 }

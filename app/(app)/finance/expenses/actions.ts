@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { defineAction } from "@/lib/actions/define-action";
+import { VersionConflictError } from "@/lib/concurrency/version-conflict";
 import { computeExpenseTotals } from "@/lib/finance";
 import { uuidIdInput } from "@/lib/schemas/common";
 import { ExpenseInput, type ExpenseInputType, UpdateExpenseInput } from "@/lib/schemas/expense";
@@ -67,12 +68,17 @@ export const updateExpense = defineAction({
   ],
   handler: async (input) => {
     const supabase = await createServerClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("expenses")
-      .update({ ...buildExpenseDbPayload(input), updated_at: new Date().toISOString() })
-      .eq("id", input.id);
+      .update(buildExpenseDbPayload(input))
+      .eq("id", input.id)
+      .eq("version", input.expected_version)
+      .select("version")
+      .maybeSingle();
 
     if (error) throw new Error(error.message);
+    if (!data) throw new VersionConflictError();
+    return { version: Number(data.version) };
   },
 });
 

@@ -41,6 +41,7 @@ describe("UpdateTaskInput", () => {
     expect(
       UpdateTaskInput.safeParse({
         id: uuid,
+        expected_version: 1,
         title: "T",
         status: "done",
         priority: "high",
@@ -55,6 +56,15 @@ describe("UpdateTaskStatusInput / MoveTaskInput", () => {
     expect(UpdateTaskStatusInput.safeParse({ taskId: uuid, status: "in_review" }).success).toBe(
       true,
     );
+  });
+  it("allows the quick-complete flow to handle the next action itself", () => {
+    expect(
+      UpdateTaskStatusInput.safeParse({
+        taskId: uuid,
+        status: "done",
+        suppressNextAction: true,
+      }).success,
+    ).toBe(true);
   });
   it("accepts optional before/after ids and null", () => {
     const out = MoveTaskInput.parse({

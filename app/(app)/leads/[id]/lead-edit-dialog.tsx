@@ -1,6 +1,7 @@
 "use client";
 
 import { Pencil } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { sileo } from "sileo";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { VersionConflictDialog } from "@/components/ui/version-conflict-dialog";
 import { useFormDirty } from "@/lib/hooks/use-form-dirty";
 import type { MemberOption } from "@/lib/members/queries";
 import { updateLead } from "../actions";
@@ -32,10 +34,13 @@ type Lead = {
   solution_type: string | null;
   urgency: string | null;
   assigned_to: string | null;
+  version: number;
 };
 
 export function LeadEditDialog({ lead, members = [] }: { lead: Lead; members?: MemberOption[] }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [conflictOpen, setConflictOpen] = useState(false);
   const { formRef, isDirty, reset } = useFormDirty<HTMLFormElement>();
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -44,6 +49,7 @@ export function LeadEditDialog({ lead, members = [] }: { lead: Lead; members?: M
     const estimatedRaw = fd.get("estimated_value")?.toString() ?? "";
     const payload = {
       id: lead.id,
+      expected_version: lead.version,
       name: fd.get("name")?.toString() ?? "",
       alias: fd.get("alias")?.toString() ?? "",
       email: fd.get("email")?.toString() ?? "",
@@ -57,11 +63,15 @@ export function LeadEditDialog({ lead, members = [] }: { lead: Lead; members?: M
       urgency: fd.get("urgency")?.toString() ?? "",
       assigned_to: fd.get("assigned_to")?.toString() ?? "",
     };
-    // Close immediately (optimistic) — server revalidatePath updates the page.
+    const res = await updateLead(payload);
+    if (!res.ok) {
+      if (res.code === "conflict") setConflictOpen(true);
+      else sileo.error({ title: res.error ?? "No se pudo guardar el lead" });
+      return;
+    }
     reset();
     setOpen(false);
-    const res = await updateLead(payload);
-    if (!res.ok) sileo.error({ title: res.error ?? "No se pudo guardar el lead" });
+    router.refresh();
   }
 
   return (
@@ -77,7 +87,12 @@ export function LeadEditDialog({ lead, members = [] }: { lead: Lead; members?: M
           <DialogTitle>Editar lead</DialogTitle>
           <DialogDescription>Actualiza los datos del lead.</DialogDescription>
         </DialogHeader>
-        <form ref={formRef} onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
+        <form
+          key={lead.version}
+          ref={formRef}
+          onSubmit={onSubmit}
+          className="flex min-h-0 flex-1 flex-col"
+        >
           <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 flex flex-col gap-5 scroll-fade no-scrollbar">
             <LeadFormFields
               idPrefix={`edit-${lead.id}`}
@@ -104,6 +119,16 @@ export function LeadEditDialog({ lead, members = [] }: { lead: Lead; members?: M
           </div>
         </form>
       </DialogContent>
+      <VersionConflictDialog
+        open={conflictOpen}
+        entityName="lead"
+        onKeepEditing={() => setConflictOpen(false)}
+        onReload={() => {
+          setConflictOpen(false);
+          setOpen(false);
+          router.refresh();
+        }}
+      />
     </Dialog>
   );
 }

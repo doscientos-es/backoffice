@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { defineAction } from "@/lib/actions/define-action";
 import { requireUser } from "@/lib/auth";
+import { VersionConflictError } from "@/lib/concurrency/version-conflict";
 import { findCompanyByCif, getCompanyDetails, isCifNumber } from "@/lib/openmercantil/client";
 import { CreateClientInput, UpdateClientInput } from "@/lib/schemas/client";
 import { uuidIdInput } from "@/lib/schemas/common";
@@ -87,26 +88,31 @@ export const updateClient = defineAction({
   revalidate: (_payload, input) => [`/clients/${input.id}`, "/clients"],
   handler: async (input) => {
     const supabase = await createServerClient();
-    const { error } = await supabase
+    const { id, expected_version, ...patch } = input;
+    const { data, error } = await supabase
       .from("clients")
       .update({
-        name: input.name,
-        label: input.label ?? null,
-        nif: input.nif ?? null,
-        email: input.email ?? null,
-        phone: input.phone ?? null,
-        billing_address_street: input.billing_address_street ?? null,
-        billing_address_zip: input.billing_address_zip ?? null,
-        billing_address_city: input.billing_address_city ?? null,
-        billing_address_province: input.billing_address_province ?? null,
-        billing_address_country: input.billing_address_country ?? "ES",
-        contact_person: input.contact_person ?? null,
-        notes: input.notes ?? null,
-        logo_url: input.logo_url ?? null,
-        updated_at: new Date().toISOString(),
+        name: patch.name,
+        label: patch.label ?? null,
+        nif: patch.nif ?? null,
+        email: patch.email ?? null,
+        phone: patch.phone ?? null,
+        billing_address_street: patch.billing_address_street ?? null,
+        billing_address_zip: patch.billing_address_zip ?? null,
+        billing_address_city: patch.billing_address_city ?? null,
+        billing_address_province: patch.billing_address_province ?? null,
+        billing_address_country: patch.billing_address_country ?? "ES",
+        contact_person: patch.contact_person ?? null,
+        notes: patch.notes ?? null,
+        logo_url: patch.logo_url ?? null,
       })
-      .eq("id", input.id);
+      .eq("id", id)
+      .eq("version", expected_version)
+      .select("version")
+      .maybeSingle();
     if (error) throw new Error(error.message);
+    if (!data) throw new VersionConflictError();
+    return { version: Number(data.version) };
   },
 });
 

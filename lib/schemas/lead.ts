@@ -40,6 +40,7 @@ export type CreateLeadInputType = z.infer<typeof CreateLeadInput>;
 
 export const UpdateLeadInput = CreateLeadInput.extend({
   id: z.string().uuid(),
+  expected_version: z.coerce.number().int().positive(),
   estimated_value: z.number().min(0).max(99_999_999.99).nullable().optional(),
 });
 

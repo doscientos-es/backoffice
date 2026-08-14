@@ -9,6 +9,12 @@
  */
 import { z } from "zod";
 
+const OptionalPositiveInt = (defaultValue: number, max: number) =>
+  z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.coerce.number().int().min(1).max(max).optional().default(defaultValue),
+  );
+
 /** Canonical Base64 encoding of exactly 32 bytes, suitable for AES-256. */
 export const VaultEncryptionKeySchema = z
   .string()
@@ -168,6 +174,14 @@ export const ServerSchema = PublicSchema.extend({
   // Backup runner — lightweight HTTP endpoint on the backup server
   BACKUP_RUNNER_URL: z.string().url().or(z.literal("")).optional().default(""),
   BACKUP_RUNNER_TOKEN: z.string().optional().default(""),
+  // Dedicated connection used only to create a complete PostgreSQL dump of this
+  // backoffice. It is sent directly to the trusted backup runner, never to users.
+  BACKUP_DB_HOST: z.string().optional().default(""),
+  BACKUP_DB_PORT: OptionalPositiveInt(5432, 65535),
+  BACKUP_DB_NAME: z.string().optional().default(""),
+  BACKUP_DB_USER: z.string().optional().default(""),
+  BACKUP_DB_PASSWORD: z.string().optional().default(""),
+  BACKUP_RETENTION_DAYS: OptionalPositiveInt(14, 90),
   // Redsys / BBVA Paygold
   REDSYS_MERCHANT_CODE: z.string().default("370475436"),
   REDSYS_TERMINAL: z.string().default("001"),

@@ -13,7 +13,7 @@ import { createServerClient } from "@/lib/supabase/server";
 
 const log = scopedLogger("proposals.specs");
 
-type Result<T = unknown> = ({ ok: true } & T) | { ok: false; error: string };
+type Result<T = unknown> = ({ ok: true } & T) | { ok: false; error: string; code?: "conflict" };
 
 /**
  * Creates a proposal_spec linked to a proposal. Returns the new id so the
@@ -67,7 +67,7 @@ export async function updateSpec(input: unknown): Promise<Result> {
   if (!parsed.success) {
     return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
   }
-  const { id, ...rest } = parsed.data;
+  const { id, expected_version, ...rest } = parsed.data;
 
   const patch: Record<string, unknown> = {};
   if (rest.title !== undefined) patch.title = rest.title;
@@ -79,16 +79,23 @@ export async function updateSpec(input: unknown): Promise<Result> {
     .from("proposal_specs")
     .update(patch)
     .eq("id", id)
-    .select("proposal_id")
-    .single();
+    .eq("version", expected_version)
+    .select("proposal_id, version")
+    .maybeSingle();
 
-  if (error || !doc) {
+  if (error) {
     log.error({ err: error, id }, "update_spec_failed");
-    return { ok: false, error: error?.message ?? "No se pudo actualizar" };
+    return { ok: false, error: error.message };
   }
+  if (!doc)
+    return {
+      ok: false,
+      code: "conflict",
+      error: "Este registro ha cambiado mientras lo editabas.",
+    };
   const proposalId = (doc as { proposal_id: string | null }).proposal_id;
   if (proposalId) revalidatePath(`/proposals/${proposalId}`);
-  return { ok: true };
+  return { ok: true, version: Number(doc.version) };
 }
 
 export async function toggleSpecVisibility(input: unknown): Promise<Result> {
@@ -102,12 +109,19 @@ export async function toggleSpecVisibility(input: unknown): Promise<Result> {
     .from("proposal_specs")
     .update({ is_client_visible: parsed.data.is_client_visible })
     .eq("id", parsed.data.id)
-    .select("proposal_id")
-    .single();
-  if (error || !doc) return { ok: false, error: error?.message ?? "No se pudo actualizar" };
+    .eq("version", parsed.data.expected_version)
+    .select("proposal_id, version")
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!doc)
+    return {
+      ok: false,
+      code: "conflict",
+      error: "Este registro ha cambiado mientras lo editabas.",
+    };
   const proposalId = (doc as { proposal_id: string | null }).proposal_id;
   if (proposalId) revalidatePath(`/proposals/${proposalId}`);
-  return { ok: true };
+  return { ok: true, version: Number(doc.version) };
 }
 
 export async function deleteSpec(input: unknown): Promise<Result> {

@@ -1,6 +1,7 @@
 "use client";
 
 import { Pencil } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { VersionConflictDialog } from "@/components/ui/version-conflict-dialog";
 import { useActionForm } from "@/lib/hooks/use-action-form";
 import { useFormDirty } from "@/lib/hooks/use-form-dirty";
 import { updateExpense } from "../actions";
@@ -37,6 +39,7 @@ type Expense = {
   notes: string | null;
   payment_source?: string | null;
   paid_by_member_id?: string | null;
+  version: number;
 };
 
 interface Props {
@@ -60,7 +63,9 @@ export function ExpenseEditDialog({
   onOpenChange,
   hideTrigger = false,
 }: Props) {
+  const router = useRouter();
   const [internalOpen, setInternalOpen] = useState(false);
+  const [conflictOpen, setConflictOpen] = useState(false);
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
   const setOpen = (v: boolean) => {
@@ -77,7 +82,15 @@ export function ExpenseEditDialog({
     successMessage: "Guardado",
     onSuccess: () => {
       resetDirty();
-      setTimeout(() => setOpen(false), 400);
+      setTimeout(() => {
+        setOpen(false);
+        router.refresh();
+      }, 400);
+    },
+    onFailure: (result) => {
+      if (result.code !== "conflict") return false;
+      setConflictOpen(true);
+      return true;
     },
   });
 
@@ -102,8 +115,14 @@ export function ExpenseEditDialog({
           <DialogTitle>Editar gasto</DialogTitle>
           <DialogDescription>Actualiza los datos del gasto.</DialogDescription>
         </DialogHeader>
-        <form ref={formRef} onSubmit={onSubmit} className="flex flex-col max-h-[70vh]">
+        <form
+          key={expense.version}
+          ref={formRef}
+          onSubmit={onSubmit}
+          className="flex flex-col max-h-[70vh]"
+        >
           <input type="hidden" name="id" value={expense.id} />
+          <input type="hidden" name="expected_version" value={expense.version} />
           <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-5 scroll-fade no-scrollbar">
             <ExpenseFormFields
               idPrefix={`edit-${expense.id}`}
@@ -140,6 +159,16 @@ export function ExpenseEditDialog({
           </div>
         </form>
       </DialogContent>
+      <VersionConflictDialog
+        open={conflictOpen}
+        entityName="gasto"
+        onKeepEditing={() => setConflictOpen(false)}
+        onReload={() => {
+          setConflictOpen(false);
+          setOpen(false);
+          router.refresh();
+        }}
+      />
     </Dialog>
   );
 }

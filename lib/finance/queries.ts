@@ -164,7 +164,7 @@ export async function getFinanceDetails(since: string, until: string): Promise<F
       supabase
         .from("expenses")
         .select(
-          "id, vendor, category, status, total, expense_date, recurrence, description, due_date, paid_at, currency, subtotal, tax_rate, vendor_nif, invoice_reference, project_id, notes, payment_source, paid_by_member_id",
+          "id, version, vendor, category, status, total, expense_date, recurrence, description, due_date, paid_at, currency, subtotal, tax_rate, vendor_nif, invoice_reference, project_id, notes, payment_source, paid_by_member_id",
         )
         .order("expense_date", { ascending: false })
         .limit(5),
@@ -236,6 +236,7 @@ export async function getFinanceDetails(since: string, until: string): Promise<F
     memberContributions,
     recentExpenses: (recentExpenses ?? []).map((e) => ({
       id: e.id as string,
+      version: Number(e.version),
       vendor: e.vendor as string,
       category: e.category as ExpenseCategory,
       status: e.status as ExpenseStatus,
@@ -318,7 +319,7 @@ export async function getExpensesPage(params: ExpenseListParams): Promise<Expens
     supabase
       .from("expenses")
       .select(
-        "id, vendor, category, status, total, expense_date, recurrence, description, due_date, paid_at, currency, subtotal, tax_rate, vendor_nif, invoice_reference, project_id, notes, payment_source, paid_by_member_id",
+        "id, version, vendor, category, status, total, expense_date, recurrence, description, due_date, paid_at, currency, subtotal, tax_rate, vendor_nif, invoice_reference, project_id, notes, payment_source, paid_by_member_id",
         { count: "exact" },
       ),
   );
@@ -475,6 +476,7 @@ export async function getExpenseDetail(id: string): Promise<ExpenseDetailResult 
   return {
     expense: {
       id: expense.id as string,
+      version: Number(expense.version),
       vendor: expense.vendor as string,
       description: (expense.description as string | null) ?? null,
       category: expense.category as ExpenseCategory,
