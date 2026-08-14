@@ -171,7 +171,6 @@ export function ListControls({
               <div
                 key={filter.key}
                 className="flex h-9 shrink-0 items-center gap-1 rounded-lg border border-border bg-background px-1.5 shadow-xs"
-                aria-label={filter.label}
               >
                 {filter.options.map((option) => {
                   const isSelected = selectedValue === option.value;
@@ -231,7 +230,9 @@ export function ListControls({
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold">Filtros de leads</p>
-                    <p className="text-xs text-muted-foreground">Acota el tablero por sus atributos.</p>
+                    <p className="text-xs text-muted-foreground">
+                      Acota el tablero por sus atributos.
+                    </p>
                   </div>
                   {hasActiveFilters ? (
                     <Button type="button" variant="ghost" size="xs" onClick={clearFilters}>
@@ -243,20 +244,33 @@ export function ListControls({
                   {secondaryFilters.map((filter) => {
                     const selectedValue = params.get(filter.key) ?? "";
                     return filter.searchable ? (
-                      <label key={filter.key} className="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-2">
-                        <span className="text-xs font-medium text-muted-foreground">{filter.label}</span>
+                      <div
+                        key={filter.key}
+                        className="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-2"
+                      >
+                        <span className="text-xs font-medium text-muted-foreground">
+                          {filter.label}
+                        </span>
                         <EntityCombobox
-                          items={filter.options.map((option) => ({ id: option.value, label: option.label }))}
+                          items={filter.options.map((option) => ({
+                            id: option.value,
+                            label: option.label,
+                          }))}
                           value={selectedValue}
                           onChange={(value) => setFilter(filter.key, value)}
                           placeholder={`${filter.label}: todos`}
                           aria-label={filter.label}
                           className="h-9 text-xs"
                         />
-                      </label>
+                      </div>
                     ) : (
-                      <label key={filter.key} className="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-2">
-                        <span className="text-xs font-medium text-muted-foreground">{filter.label}</span>
+                      <div
+                        key={filter.key}
+                        className="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-2"
+                      >
+                        <span className="text-xs font-medium text-muted-foreground">
+                          {filter.label}
+                        </span>
                         <Select
                           value={selectedValue}
                           onChange={(event) => setFilter(filter.key, event.target.value)}
@@ -270,7 +284,7 @@ export function ListControls({
                             </option>
                           ))}
                         </Select>
-                      </label>
+                      </div>
                     );
                   })}
                 </div>
@@ -306,7 +320,9 @@ export function ListControls({
             {pagination ? (
               <>
                 <span className="text-xs tabular-nums text-muted-foreground">
-                  {pagination.total === 0 ? "Sin resultados" : `${from}–${to} de ${pagination.total}`}
+                  {pagination.total === 0
+                    ? "Sin resultados"
+                    : `${from}–${to} de ${pagination.total}`}
                 </span>
                 <Button
                   type="button"

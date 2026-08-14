@@ -31,19 +31,19 @@ export type ListAlign = "left" | "right";
 export type ListHeader =
   | string
   | {
-      label: string;
-      /** Activa la ordenación cliente (requiere `sortValues` en las filas). */
-      sortable?: boolean;
-      /**
-       * Clave de columna DB para ordenación en el servidor.
-       * Al hacer clic actualiza los URL params `sort` + `dir` y resetea `page`.
-       * Tiene preferencia sobre `sortable`.
-       */
-      sortKey?: string;
-      align?: ListAlign;
-      /** Ancho mínimo CSS para la columna (ej. "8rem"). Evita wrapping en celdas cortas. */
-      minWidth?: string;
-    };
+    label: string;
+    /** Activa la ordenación cliente (requiere `sortValues` en las filas). */
+    sortable?: boolean;
+    /**
+     * Clave de columna DB para ordenación en el servidor.
+     * Al hacer clic actualiza los URL params `sort` + `dir` y resetea `page`.
+     * Tiene preferencia sobre `sortable`.
+     */
+    sortKey?: string;
+    align?: ListAlign;
+    /** Ancho mínimo CSS para la columna (ej. "8rem"). Evita wrapping en celdas cortas. */
+    minWidth?: string;
+  };
 
 export type ListRow = {
   id: string;
