@@ -68,7 +68,7 @@ export function ListControls({
 
   // Keep the latest router-related callbacks in a ref so the debounce effect
   // can depend only on `q` without re-creating the timeout on every render.
-  const commitRef = useRef<(value: string) => void>(() => { });
+  const commitRef = useRef<(value: string) => void>(() => {});
   commitRef.current = (value: string) => {
     const next = updateParams(params, { [searchKey]: value, page: null });
     const query = next.toString();
@@ -427,7 +427,7 @@ export function ListControls({
                   className={cn(
                     "flex items-center gap-1",
                     isPanel &&
-                    "min-h-9 w-full rounded-lg border border-border bg-background px-2 shadow-xs lg:w-auto",
+                      "min-h-9 w-full rounded-lg border border-border bg-background px-2 shadow-xs lg:w-auto",
                   )}
                 >
                   <span className="mr-0.5 text-xs font-medium text-muted-foreground">
@@ -477,7 +477,7 @@ export function ListControls({
                 className={cn(
                   "min-w-30 max-w-45 flex-1 text-xs sm:flex-none",
                   isPanel &&
-                  "h-9 w-full max-w-none rounded-lg border-border bg-background shadow-xs lg:w-auto lg:max-w-45",
+                    "h-9 w-full max-w-none rounded-lg border-border bg-background shadow-xs lg:w-auto lg:max-w-45",
                   !isPanel && "h-8",
                 )}
               />
