@@ -1,21 +1,23 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Download, Search, X } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EntityCombobox } from "@/components/ui/entity-combobox";
 import { Input } from "@/components/ui/input";
+import { type AvatarMember, MemberAvatar } from "@/components/ui/member-avatar";
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { ChevronLeft, ChevronRight, Download, Search, SlidersHorizontal, X } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-export type FilterOption = { value: string; label: string };
+export type FilterOption = { value: string; label: string; avatar?: AvatarMember };
 
 export type FilterConfig = {
   key: string;
   label: string;
   options: FilterOption[];
   searchable?: boolean;
+  display?: "select" | "avatars";
 };
 
 export type ListControlsProps = {
@@ -29,6 +31,8 @@ export type ListControlsProps = {
   };
   /** Override classes on the root container (e.g. to remove border-b). */
   className?: string;
+  /** Presentación visual del bloque de búsqueda y filtros. */
+  presentation?: "default" | "panel";
   /** Si se provee, muestra un botón "Exportar CSV" que llama este callback. */
   onExport?: () => void;
 };
@@ -51,6 +55,7 @@ export function ListControls({
   filters = [],
   pagination,
   className,
+  presentation = "default",
   onExport,
 }: ListControlsProps) {
   const router = useRouter();
@@ -65,7 +70,8 @@ export function ListControls({
   const commitRef = useRef<(value: string) => void>(() => {});
   commitRef.current = (value: string) => {
     const next = updateParams(params, { [searchKey]: value, page: null });
-    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+    const query = next.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
 
   // Sync local input when the URL changes externally (back/forward, links).
@@ -83,7 +89,8 @@ export function ListControls({
   const setFilter = useCallback(
     (key: string, value: string) => {
       const next = updateParams(params, { [key]: value || null, page: null });
-      router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+      const query = next.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
     },
     [params, pathname, router],
   );
@@ -106,6 +113,13 @@ export function ListControls({
 
   const hasActiveFilters =
     Boolean(params.get(searchKey)) || filters.some((filter) => Boolean(params.get(filter.key)));
+  const isPanel = presentation === "panel";
+  const activeFilters = filters.flatMap((filter) => {
+    const value = params.get(filter.key);
+    if (!value) return [];
+    const option = filter.options.find((item) => item.value === value);
+    return option ? [{ key: filter.key, label: `${filter.label}: ${option.label}` }] : [];
+  });
 
   const hasControls = searchKey || filters.length > 0;
   const hasPagination =
@@ -120,59 +134,172 @@ export function ListControls({
   const to = pagination ? Math.min(pagination.page * pagination.pageSize, pagination.total) : 0;
 
   return (
-    <div className={cn("flex flex-col border-b border-border", className)}>
-      {/* ── Single row: search + filters + export + pagination ───────── */}
-      {/* On large screens everything fits inline; on small it wraps.    */}
-      <div className="flex flex-wrap items-center gap-2 px-3 py-2">
+    <div
+      className={cn(
+        "flex flex-col",
+        isPanel ? "rounded-xl border border-border bg-card shadow-xs" : "border-b border-border",
+        className,
+      )}
+    >
+      <div
+        className={cn(
+          "flex flex-wrap items-center",
+          isPanel
+            ? "flex-col items-stretch gap-3 p-3 sm:p-4 lg:flex-row lg:items-center"
+            : "gap-2 px-3 py-2",
+        )}
+      >
         {searchKey ? (
-          <div className="relative w-full min-w-32 flex-1 sm:max-w-56">
-            <Search className="absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <div
+            className={cn(
+              "relative w-full min-w-32 flex-1",
+              isPanel ? "max-w-none lg:max-w-sm" : "sm:max-w-56",
+            )}
+          >
+            <Search
+              className={cn(
+                "absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground",
+                isPanel && "size-4",
+              )}
+            />
             <Input
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder={searchPlaceholder}
-              className="h-8 pl-7 text-sm"
+              className={cn(
+                "text-sm",
+                isPanel
+                  ? "h-9 rounded-lg border-border bg-background pl-8 pr-8 shadow-xs focus-visible:ring-primary/25"
+                  : "h-8 pl-7",
+              )}
             />
+            {isPanel && q ? (
+              <button
+                type="button"
+                onClick={() => setQ("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-0.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                aria-label="Limpiar búsqueda"
+              >
+                <X className="size-3.5" />
+              </button>
+            ) : null}
           </div>
         ) : null}
 
-        {/* Filters inline with the search on large screens */}
-        {filters.map((f) =>
-          f.searchable ? (
-            <EntityCombobox
-              key={f.key}
-              items={f.options.map((o) => ({ id: o.value, label: o.label }))}
-              value={params.get(f.key) ?? ""}
-              onChange={(value) => setFilter(f.key, value)}
-              placeholder={`${f.label}: todos`}
-              aria-label={f.label}
-              className="h-8 min-w-30 max-w-45 flex-1 text-xs sm:flex-none"
-            />
-          ) : (
-            <Select
-              key={f.key}
-              value={params.get(f.key) ?? ""}
-              onChange={(e) => setFilter(f.key, e.target.value)}
-              aria-label={f.label}
-              className="h-8 min-w-30 max-w-45 flex-1 text-xs sm:flex-none"
-            >
-              <option value="">{f.label}: todos</option>
-              {f.options.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </Select>
-          ),
-        )}
+        <div
+          className={cn(
+            "flex min-w-0 flex-wrap items-center gap-2",
+            isPanel && "grid w-full grid-cols-1 sm:grid-cols-2 lg:flex lg:w-auto lg:flex-1",
+          )}
+        >
+          {isPanel ? (
+            <span className="col-span-full inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
+              <SlidersHorizontal className="size-3.5" aria-hidden />
+              Filtros
+            </span>
+          ) : null}
+          {filters.map((f) => {
+            const selectedValue = params.get(f.key) ?? "";
 
-        <div className="ml-auto flex shrink-0 items-center gap-1">
+            if (f.display === "avatars") {
+              return (
+                <div
+                  key={f.key}
+                  className={cn(
+                    "flex items-center gap-1",
+                    isPanel &&
+                      "min-h-9 w-full rounded-lg border border-border bg-background px-2 shadow-xs lg:w-auto",
+                  )}
+                >
+                  <span className="mr-0.5 text-xs font-medium text-muted-foreground">
+                    {f.label}
+                  </span>
+                  {f.options.map((option) => {
+                    const isSelected = selectedValue === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        aria-pressed={isSelected}
+                        aria-label={
+                          isSelected
+                            ? `Quitar filtro de ${option.label}`
+                            : `Filtrar por ${option.label}`
+                        }
+                        title={option.label}
+                        onClick={() => setFilter(f.key, isSelected ? "" : option.value)}
+                        className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                      >
+                        <MemberAvatar
+                          member={option.avatar ?? null}
+                          size="sm"
+                          className={cn(
+                            "transition-all",
+                            isSelected
+                              ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                              : "opacity-60 hover:scale-105 hover:opacity-100",
+                          )}
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            }
+
+            return f.searchable ? (
+              <EntityCombobox
+                key={f.key}
+                items={f.options.map((o) => ({ id: o.value, label: o.label }))}
+                value={selectedValue}
+                onChange={(value) => setFilter(f.key, value)}
+                placeholder={`${f.label}: todos`}
+                aria-label={f.label}
+                className={cn(
+                  "min-w-30 max-w-45 flex-1 text-xs sm:flex-none",
+                  isPanel &&
+                    "h-9 w-full max-w-none rounded-lg border-border bg-background shadow-xs lg:w-auto lg:max-w-45",
+                  !isPanel && "h-8",
+                )}
+              />
+            ) : (
+              <Select
+                key={f.key}
+                value={selectedValue}
+                onChange={(e) => setFilter(f.key, e.target.value)}
+                aria-label={f.label}
+                className={cn(
+                  "min-w-30 max-w-45 flex-1 text-xs font-medium sm:flex-none",
+                  isPanel && [
+                    "h-9 w-full max-w-none rounded-lg border-border bg-background shadow-xs hover:border-primary/30 lg:w-auto lg:max-w-45",
+                    selectedValue && "border-primary/30 bg-primary/5 text-primary",
+                  ],
+                  !isPanel && "h-8",
+                )}
+              >
+                <option value="">{f.label}: todos</option>
+                {f.options.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </Select>
+            );
+          })}
+        </div>
+
+        <div
+          className={cn(
+            "ml-auto flex shrink-0 items-center gap-1",
+            isPanel && "w-full justify-end lg:w-auto",
+          )}
+        >
           {hasActiveFilters ? (
             <Button
               type="button"
               size="sm"
-              variant="ghost"
-              className="h-8 text-xs text-muted-foreground"
+              variant={isPanel ? "outline" : "ghost"}
+              className={cn("text-xs text-muted-foreground", isPanel ? "h-9" : "h-8")}
               onClick={clearFilters}
             >
               <X className="size-3.5" />
@@ -220,6 +347,36 @@ export function ListControls({
           ) : null}
         </div>
       </div>
+
+      {isPanel && activeFilters.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-1.5 border-t border-border/70 px-3 py-2 sm:px-4">
+          <span className="mr-1 text-xs text-muted-foreground">Activos:</span>
+          {urlQ ? (
+            <button
+              type="button"
+              onClick={() => {
+                setQ("");
+                setFilter(searchKey, "");
+              }}
+              className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/5 px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+            >
+              Búsqueda: {urlQ}
+              <X className="size-3" aria-hidden />
+            </button>
+          ) : null}
+          {activeFilters.map((filter) => (
+            <button
+              key={filter.key}
+              type="button"
+              onClick={() => setFilter(filter.key, "")}
+              className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/5 px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+            >
+              {filter.label}
+              <X className="size-3" aria-hidden />
+            </button>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

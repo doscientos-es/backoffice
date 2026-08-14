@@ -100,7 +100,15 @@ export default async function LeadsPage({
     dir,
   });
 
-  const ASSIGNEE_FILTER_OPTIONS = members.map((m) => ({ value: m.id, label: m.name }));
+  const ASSIGNEE_FILTER_OPTIONS = members.map((m) => ({
+    value: m.id,
+    label: m.name,
+    avatar: {
+      name: m.name,
+      avatar_url: m.avatar_url,
+      github_handle: m.github_handle,
+    },
+  }));
 
   const boardCapped = view === "board" && enrichedLeads.length >= LEAD_BOARD_LIMIT;
 
@@ -129,11 +137,17 @@ export default async function LeadsPage({
         emptyAction={<LeadCreateDialog />}
         searchKey="q"
         searchPlaceholder="Buscar por nombre, empresa o email…"
+        controlsPresentation="panel"
         filters={[
           { key: "status", label: "Estado", options: STATUS_FILTER_OPTIONS },
           { key: "source", label: "Origen", options: SOURCE_FILTER_OPTIONS },
           { key: "solution", label: "Necesidad", options: SOLUTION_FILTER_OPTIONS },
-          { key: "assignee", label: "Responsable", options: ASSIGNEE_FILTER_OPTIONS },
+          {
+            key: "assignee",
+            label: "Responsable",
+            options: ASSIGNEE_FILTER_OPTIONS,
+            display: "avatars",
+          },
           { key: "attention", label: "Atención", options: ATTENTION_FILTER_OPTIONS },
         ]}
         pagination={{ page, pageSize: LEAD_LIST_PAGE_SIZE, total: count }}
@@ -156,7 +170,7 @@ export default async function LeadsPage({
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex h-full min-h-0 flex-col gap-6 overflow-hidden">
       <PageHeader
         title="Leads"
         description="Oportunidades comerciales sin contrato firmado."
@@ -166,13 +180,18 @@ export default async function LeadsPage({
       <ListControls
         searchKey="q"
         searchPlaceholder="Buscar por nombre, empresa, email o teléfono…"
+        presentation="panel"
         filters={[
           { key: "source", label: "Origen", options: SOURCE_FILTER_OPTIONS },
           { key: "solution", label: "Necesidad", options: SOLUTION_FILTER_OPTIONS },
-          { key: "assignee", label: "Responsable", options: ASSIGNEE_FILTER_OPTIONS },
+          {
+            key: "assignee",
+            label: "Responsable",
+            options: ASSIGNEE_FILTER_OPTIONS,
+            display: "avatars",
+          },
           { key: "attention", label: "Atención", options: ATTENTION_FILTER_OPTIONS },
         ]}
-        className="rounded-xl border border-border bg-card px-4"
       />
 
       {error ? (
@@ -195,9 +214,9 @@ export default async function LeadsPage({
           </CardContent>
         </Card>
       ) : (
-        <>
+        <div className="flex min-h-0 flex-1 flex-col gap-3">
           {boardCapped ? (
-            <div className="flex items-center gap-2 rounded-lg border border-amber-300/40 bg-amber-50/60 px-4 py-2.5 text-sm text-amber-800 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300">
+            <div className="flex shrink-0 items-center gap-2 rounded-lg border border-amber-300/40 bg-amber-50/60 px-4 py-2.5 text-sm text-amber-800 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300">
               <TriangleAlert className="size-4 shrink-0" />
               <span>
                 Se muestran los primeros <strong>{LEAD_BOARD_LIMIT}</strong> leads. Usa los filtros
@@ -205,13 +224,15 @@ export default async function LeadsPage({
               </span>
             </div>
           ) : null}
-          <LeadsKanban
-            leads={enrichedLeads}
-            canEdit={canEdit}
-            googleEnabled={googleEnabled}
-            members={members}
-          />
-        </>
+          <div className="min-h-0 flex-1">
+            <LeadsKanban
+              leads={enrichedLeads}
+              canEdit={canEdit}
+              googleEnabled={googleEnabled}
+              members={members}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

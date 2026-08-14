@@ -1,8 +1,5 @@
 "use client";
 
-import { BellRing, ChevronRight, Inbox, ListTodo, Phone, UserRound } from "lucide-react";
-import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { claimLead } from "@/app/(app)/leads/actions";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +10,20 @@ import { useOptimisticRemoval } from "@/lib/hooks/use-optimistic-removal";
 import { leadDisplayName } from "@/lib/leads/utils";
 import { LEAD_STATUS, TASK_STATUS } from "@/lib/status";
 import { relativeTime } from "@/lib/utils";
+import {
+  BellRing,
+  CheckCircle2,
+  ChevronRight,
+  Flame,
+  Inbox,
+  ListTodo,
+  PartyPopper,
+  Phone,
+  UserRound,
+  type LucideIcon,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { LeadCallLink } from "../leads/[id]/phone-actions";
 import { ClaimLeadButton } from "./_components/claim-lead-button";
 
@@ -33,23 +44,26 @@ function WeekStatsStrip({ weekStats }: { weekStats: WeekStats }) {
   const { tasksCompleted, leadsAttended, streakDays } = weekStats;
   if (tasksCompleted === 0 && leadsAttended === 0 && streakDays === 0) return null;
 
-  const items: { key: string; icon: string; label: string }[] = [];
+  const items: { key: string; icon: LucideIcon; tone: string; label: string }[] = [];
   if (tasksCompleted > 0)
     items.push({
       key: "tasks",
-      icon: "✅",
+      icon: CheckCircle2,
+      tone: "text-emerald-500",
       label: `${tasksCompleted} ${plural(tasksCompleted, "tarea completada", "tareas completadas")}`,
     });
   if (leadsAttended > 0)
     items.push({
       key: "leads",
-      icon: "📬",
+      icon: Inbox,
+      tone: "text-blue-500",
       label: `${leadsAttended} ${plural(leadsAttended, "lead atendido", "leads atendidos")}`,
     });
   if (streakDays > 0)
     items.push({
       key: "streak",
-      icon: "🔥",
+      icon: Flame,
+      tone: "text-amber-500",
       label: `${streakDays} ${plural(streakDays, "día seguido", "días seguidos")}`,
     });
 
@@ -58,13 +72,16 @@ function WeekStatsStrip({ weekStats }: { weekStats: WeekStats }) {
       <span className="mr-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         Esta semana
       </span>
-      {items.map((item, i) => (
-        <span key={item.key} className="flex items-center gap-1 text-sm text-foreground">
-          {i > 0 && <span className="text-muted-foreground/40 select-none">·</span>}
-          <span>{item.icon}</span>
-          <span>{item.label}</span>
-        </span>
-      ))}
+      {items.map((item, i) => {
+        const Icon = item.icon;
+        return (
+          <span key={item.key} className="flex items-center gap-1 text-sm text-foreground">
+            {i > 0 && <span className="text-muted-foreground/40 select-none">·</span>}
+            <Icon aria-hidden="true" className={`size-3.5 ${item.tone}`} />
+            <span>{item.label}</span>
+          </span>
+        );
+      })}
     </div>
   );
 }
@@ -99,7 +116,11 @@ export function MyDayPanel({ tasks, myLeads, unassignedLeads, weekStats, scope }
           title="Qué hacer ahora"
           count={tasks.length}
           href="/tasks"
-          empty="No tienes acciones pendientes. 🎉"
+          empty={
+            <>
+              No tienes acciones pendientes. <PartyPopper aria-hidden="true" className="inline size-4" />
+            </>
+          }
         >
           {tasks.map((t) => (
             <TaskItem key={t.id} task={t} showAssignee={isTeamScope} />
@@ -182,7 +203,7 @@ function Column({
   title: string;
   count: number;
   href: string;
-  empty: string;
+  empty: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (

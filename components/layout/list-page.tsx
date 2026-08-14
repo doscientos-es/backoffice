@@ -1,6 +1,16 @@
 "use client";
 
 import {
+  type FilterConfig,
+  ListControls,
+  type ListControlsProps,
+} from "@/components/layout/list-controls";
+import { type BreadcrumbEntry, PageHeader } from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
+import { cn } from "@/lib/utils";
+import {
   type ColumnDef,
   flexRender,
   getCoreRowModel,
@@ -12,16 +22,6 @@ import { ArrowDown, ArrowRight, ArrowUp, ArrowUpDown, Download, Plus } from "luc
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
-import {
-  type FilterConfig,
-  ListControls,
-  type ListControlsProps,
-} from "@/components/layout/list-controls";
-import { type BreadcrumbEntry, PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
-import { cn } from "@/lib/utils";
 
 export type { BreadcrumbEntry };
 
@@ -81,6 +81,7 @@ export type ListPageProps = {
   searchPlaceholder?: string;
   filters?: FilterConfig[];
   pagination?: ListControlsProps["pagination"];
+  controlsPresentation?: ListControlsProps["presentation"];
   onRowClick?: (row: ListRow) => void;
   addHref?: string;
   addLabel?: string;
@@ -150,6 +151,7 @@ export function ListPage({
   searchPlaceholder,
   filters,
   pagination,
+  controlsPresentation,
   onRowClick,
   addHref,
   addLabel,
@@ -286,6 +288,7 @@ export function ListPage({
               searchPlaceholder={searchPlaceholder}
               filters={filters}
               pagination={pagination}
+              presentation={controlsPresentation}
               onExport={
                 exportFilename ? () => exportToCSV(headers, rows, exportFilename) : undefined
               }

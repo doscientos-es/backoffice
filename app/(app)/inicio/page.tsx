@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import {
   AccountsReceivableSkeleton,
   AccountsReceivableWidget,
@@ -13,6 +12,8 @@ import { canViewFinance, requireUser } from "@/lib/auth";
 import { getCrossModulePulse } from "@/lib/dashboard/cross-module";
 import { hasRegisteredPasskey } from "@/lib/security/webauthn";
 import { getGreeting, parseDashboardRange } from "@/lib/utils/date";
+import { Hand } from "lucide-react";
+import type { Metadata } from "next";
 import { AvisosWidget } from "./_components/avisos-widget";
 import { BusinessFlow } from "./_components/business-flow";
 import { EnablePushBanner } from "./_components/enable-push-banner";
@@ -55,7 +56,7 @@ export default async function InicioPage({ searchParams }: PageProps) {
     <div className="flex flex-col gap-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
-          {greeting}, {firstName} 👋
+          {greeting}, {firstName} <Hand aria-hidden="true" className="inline-block size-5" />
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Aquí tienes lo que requiere tu atención.

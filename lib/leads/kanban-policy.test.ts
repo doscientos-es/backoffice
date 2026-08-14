@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  boardColumnForLead,
   countLeadsNeedingAttention,
+  DEFAULT_COMPACT_LEAD_KANBAN_COLUMNS,
   groupLeadsForKanban,
   sumLeadEstimatedValue,
 } from "./kanban-policy";
@@ -16,6 +18,15 @@ const lead = (overrides: Record<string, unknown> = {}) =>
   }) as never;
 
 describe("lead kanban policy", () => {
+  it("collapses terminal columns by default", () => {
+    expect(DEFAULT_COMPACT_LEAD_KANBAN_COLUMNS).toEqual([
+      "won",
+      "lost",
+      "not_interested",
+      "archived",
+    ]);
+  });
+
   it("keeps new leads visible and prioritizes the cards that need our action", () => {
     const leads = [
       lead({ id: "scheduled", next_action: { remind_at: "2026-08-15T10:00:00.000Z" } }),
@@ -46,7 +57,30 @@ describe("lead kanban policy", () => {
     ];
     const grouped = groupLeadsForKanban(leads);
 
-    expect(grouped.get("contacted")?.map((item) => item.id)).toEqual(["contacted"]);
+    expect(grouped.get("waiting")?.map((item) => item.id)).toEqual(["contacted"]);
     expect(grouped.get("quoted")?.map((item) => item.id)).toEqual(["quoted"]);
+  });
+
+  it("puts future calls and meetings in their operational column", () => {
+    const call = lead({
+      id: "call",
+      status: "new",
+      next_action: {
+        remind_at: "2026-08-18T10:00:00.000Z",
+        action_type: "call",
+      },
+    });
+    const meeting = lead({
+      id: "meeting",
+      status: "in_conversation",
+      next_action: {
+        remind_at: "2026-08-18T10:00:00.000Z",
+        action_type: "meeting",
+      },
+    });
+    const now = new Date("2026-08-14T10:00:00.000Z");
+
+    expect(boardColumnForLead(call, now)).toBe("meeting");
+    expect(boardColumnForLead(meeting, now)).toBe("meeting");
   });
 });

@@ -7,9 +7,12 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import { MemberAvatar } from "@/components/ui/member-avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
+  boardColumnForLead,
   countLeadsNeedingAttention,
+  DEFAULT_COMPACT_LEAD_KANBAN_COLUMNS,
   groupLeadsForKanban,
   LEAD_KANBAN_COLUMNS,
+  type LeadKanbanColumnId,
   sumLeadEstimatedValue,
 } from "@/lib/leads/kanban-policy";
 import {
@@ -43,6 +46,8 @@ import {
   History as HistoryIcon,
   Hourglass,
   Mail,
+  Maximize2,
+  Minimize2,
   Phone,
   Plus,
   RefreshCw,
@@ -50,7 +55,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useOptimistic, useState, useTransition } from "react";
+import { useEffect, useOptimistic, useState, useTransition } from "react";
 import { ScheduleReminderDialog } from "../reminders/schedule-reminder-dialog";
 import { LeadCallLink } from "./[id]/phone-actions";
 import { deleteLead, updateLeadStatus } from "./actions";
@@ -94,12 +99,35 @@ const REOPEN_INTO: ReadonlySet<LeadStatus> = new Set([
   "quoted",
 ]);
 
-const NEXT_ACTION_SUGGESTION: Partial<Record<LeadStatus, string>> = {
-  new: "Contactar con",
-  contacted: "Hacer seguimiento a",
-  in_conversation: "Continuar la conversación con",
-  quoted: "Seguimiento del presupuesto de",
+const STATUS_BY_COLUMN: Record<Exclude<LeadKanbanColumnId, "meeting">, LeadStatus> = {
+  new: "new",
+  in_conversation: "in_conversation",
+  waiting: "contacted",
+  quoted: "quoted",
+  won: "won",
+  lost: "lost",
+  not_interested: "not_interested",
+  archived: "archived",
 };
+
+const COMPACT_COLUMNS_KEY = "leads-kanban:compact-columns";
+
+function loadColumnSet(key: string): Set<LeadKanbanColumnId> | null {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? new Set(JSON.parse(raw) as LeadKanbanColumnId[]) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveColumnSet(key: string, value: ReadonlySet<LeadKanbanColumnId>) {
+  try {
+    localStorage.setItem(key, JSON.stringify([...value]));
+  } catch {
+    // The preference is optional when browser storage is unavailable.
+  }
+}
 
 type Action = { type: "move"; id: string; status: LeadStatus } | { type: "remove"; id: string };
 
@@ -123,6 +151,23 @@ export function LeadsKanban({
       ? state.filter((l) => l.id !== action.id)
       : state.map((l) => (l.id === action.id ? { ...l, status: action.status } : l)),
   );
+  const [compactColumns, setCompactColumns] = useState<ReadonlySet<LeadKanbanColumnId>>(
+    () => new Set(DEFAULT_COMPACT_LEAD_KANBAN_COLUMNS),
+  );
+  useEffect(() => {
+    const storedCompact = loadColumnSet(COMPACT_COLUMNS_KEY);
+    if (storedCompact) setCompactColumns(storedCompact);
+  }, []);
+
+  const toggleColumnCompact = (id: LeadKanbanColumnId) => {
+    setCompactColumns((previous) => {
+      const next = new Set(previous);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      saveColumnSet(COMPACT_COLUMNS_KEY, next);
+      return next;
+    });
+  };
   const handleRefresh = () => {
     startRefresh(() => {
       router.refresh();
@@ -138,15 +183,14 @@ export function LeadsKanban({
   const [pendingReopen, setPendingReopen] = useState<{
     id: string;
     name: string;
-    to: LeadStatus;
+    to: LeadKanbanColumnId;
   } | null>(null);
   const [pendingSuggestion, setPendingSuggestion] = useState<{ id: string; name: string } | null>(
     null,
   );
-  const [pendingNextAction, setPendingNextAction] = useState<{
+  const [pendingMeeting, setPendingMeeting] = useState<{
     id: string;
     name: string;
-    status: LeadStatus;
   } | null>(null);
   const [quickViewId, setQuickViewId] = useState<string | null>(null);
   const feedback = useFormFeedback();
@@ -178,32 +222,45 @@ export function LeadsKanban({
     });
   };
 
+  const moveToColumn = (lead: KanbanLead, column: LeadKanbanColumnId) => {
+    if (column === "meeting") {
+      if (lead.status !== "in_conversation") commitMove(lead.id, "in_conversation");
+      setPendingMeeting({ id: lead.id, name: leadDisplayName(lead) });
+      return;
+    }
+
+    const status = STATUS_BY_COLUMN[column];
+    if (status === "lost" || status === "not_interested") {
+      setPendingClosure({ id: lead.id, name: leadDisplayName(lead), variant: status });
+      return;
+    }
+
+    commitMove(lead.id, status);
+    if (status === "quoted") setPendingSuggestion({ id: lead.id, name: leadDisplayName(lead) });
+  };
+
   const onDragEnd = (event: DragEndEvent) => {
     setActiveId(null);
     if (!event.over) return;
     const id = String(event.active.id);
-    const status = String(event.over.id) as LeadStatus;
+    const column = String(event.over.id) as LeadKanbanColumnId;
     const current = optimistic.find((lead) => lead.id === id);
-    if (!current || current.status === status) return;
+    if (!current || boardColumnForLead(current) === column) return;
 
-    if (status === "lost" || status === "not_interested") {
-      setPendingClosure({ id, name: leadDisplayName(current), variant: status });
-      return;
-    }
-    if (current.status === "won" && REOPEN_INTO.has(status)) {
-      setPendingReopen({ id, name: leadDisplayName(current), to: status });
+    const targetStatus = column === "meeting" ? "in_conversation" : STATUS_BY_COLUMN[column];
+    if (current.status === "won" && REOPEN_INTO.has(targetStatus)) {
+      setPendingReopen({ id, name: leadDisplayName(current), to: column });
       return;
     }
 
-    commitMove(id, status);
-    if (status === "quoted") setPendingSuggestion({ id, name: leadDisplayName(current) });
-    if (NEXT_ACTION_SUGGESTION[status] && !current.next_action) {
-      setPendingNextAction({ id, name: leadDisplayName(current), status });
-    }
+    moveToColumn(current, column);
   };
 
   const grouped = groupLeadsForKanban(optimistic);
   const active = activeId ? optimistic.find((lead) => lead.id === activeId) : null;
+  const refreshLabel = isRefreshing
+    ? "Actualizando leads"
+    : `Actualizar leads; actualizado ${relativeTime(lastRefresh.toISOString())}`;
 
   return (
     <>
@@ -213,38 +270,39 @@ export function LeadsKanban({
         onDragEnd={onDragEnd}
         onDragCancel={() => setActiveId(null)}
       >
-        <div className="flex h-[calc(100dvh-11rem)] min-h-112 gap-4 overflow-x-auto pb-2 scroll-fade-x no-scrollbar">
-          {LEAD_KANBAN_COLUMNS.map((col) => (
-            <Column
-              key={col.id}
-              status={col.id}
-              label={col.label}
-              description={col.description}
-              tone={col.tone}
-              dot={col.dot}
-              leads={grouped.get(col.id) ?? []}
-              canEdit={canEdit}
-              isDragging={activeId !== null}
-              onOpenQuickView={setQuickViewId}
-            />
-          ))}
-        </div>
-        <div className="flex min-h-5 items-center justify-between pt-1">
-          <FormFeedback state={feedback.state} pendingLabel="Actualizando…" />
-          <button
-            type="button"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
-            title="Actualizar leads"
-          >
-            <RefreshCw className={cn("size-3", isRefreshing && "animate-spin")} />
-            <span>
-              {isRefreshing
-                ? "Actualizando…"
-                : `Actualizado ${relativeTime(lastRefresh.toISOString())}`}
-            </span>
-          </button>
+        <div className="flex h-full min-h-0 flex-col">
+          <div className="flex min-h-0 flex-1 gap-4 overflow-x-auto overflow-y-hidden pb-2 scroll-fade-x no-scrollbar">
+            {LEAD_KANBAN_COLUMNS.map((col) => (
+              <Column
+                key={col.id}
+                status={col.id}
+                label={col.label}
+                description={col.description}
+                tone={col.tone}
+                dot={col.dot}
+                leads={grouped.get(col.id) ?? []}
+                canEdit={canEdit}
+                compact={compactColumns.has(col.id)}
+                isDragging={activeId !== null}
+                onOpenQuickView={setQuickViewId}
+                onToggleCompact={() => toggleColumnCompact(col.id)}
+              />
+            ))}
+          </div>
+          <div className="flex h-5 shrink-0 items-center justify-between">
+            <FormFeedback state={feedback.state} pendingLabel="Actualizando…" />
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="flex items-center text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+              aria-label={refreshLabel}
+              title={refreshLabel}
+            >
+              <RefreshCw className={cn("size-3", isRefreshing && "animate-spin")} />
+              <span className="sr-only">{refreshLabel}</span>
+            </button>
+          </div>
         </div>
         <DragOverlay>{active ? <Card lead={active} isOverlay /> : null}</DragOverlay>
       </DndContext>
@@ -266,22 +324,20 @@ export function LeadsKanban({
           if (!pendingReopen) return;
           const { id, to } = pendingReopen;
           setPendingReopen(null);
-          commitMove(id, to);
+          const lead = optimistic.find((item) => item.id === id);
+          if (lead) moveToColumn(lead, to);
         }}
       />
       <QuotedSuggestionDialog lead={pendingSuggestion} onClose={() => setPendingSuggestion(null)} />
       <ScheduleReminderDialog
-        key={pendingNextAction?.id ?? "next-action"}
-        leadId={pendingNextAction?.id}
-        open={pendingNextAction !== null}
+        key={pendingMeeting?.id ?? "meeting"}
+        leadId={pendingMeeting?.id}
+        open={pendingMeeting !== null}
         onOpenChange={(open) => {
-          if (!open) setPendingNextAction(null);
+          if (!open) setPendingMeeting(null);
         }}
-        defaultTitle={
-          pendingNextAction
-            ? `${NEXT_ACTION_SUGGESTION[pendingNextAction.status] ?? "Seguimiento de"} ${pendingNextAction.name}`
-            : ""
-        }
+        defaultTitle={pendingMeeting ? `Llamar a ${pendingMeeting.name}` : ""}
+        defaultActionType="call"
         members={members}
         onScheduled={() => router.refresh()}
       />
@@ -305,41 +361,71 @@ function Column({
   dot,
   leads,
   canEdit,
+  compact,
   isDragging,
   onOpenQuickView,
+  onToggleCompact,
 }: {
-  status: LeadStatus;
+  status: LeadKanbanColumnId;
   label: string;
   description: string;
   tone: string;
   dot: string;
   leads: KanbanLead[];
   canEdit: boolean;
+  compact: boolean;
   isDragging: boolean;
   onOpenQuickView: (id: string) => void;
+  onToggleCompact: () => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   const total = sumLeadEstimatedValue(leads);
   const attention = countLeadsNeedingAttention(leads);
+  const collapsed = compact && !isOver;
   return (
     <section
       ref={setNodeRef}
       aria-label={`${label} · ${leads.length} lead${leads.length === 1 ? "" : "s"}`}
+      title={collapsed ? `${label} (${leads.length}) · pasa el cursor para expandir` : undefined}
       className={cn(
-        "flex h-full w-80 shrink-0 flex-col overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10",
+        "group/col relative flex h-full w-80 shrink-0 flex-col overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10",
+        "transition-[width,background-color,box-shadow] duration-200 ease-out motion-reduce:transition-none",
+        collapsed && "md:w-11 md:cursor-pointer md:bg-muted/30 md:hover:w-80 md:hover:bg-card",
         isOver && "bg-primary/5 ring-2 ring-primary/50",
         isDragging && !isOver && "ring-dashed ring-primary/30",
       )}
     >
-      <header className="shrink-0 border-b border-border px-3 py-3">
-        <div className="flex min-w-0 items-center gap-2">
+      <header
+        className={cn(
+          "shrink-0 border-b border-border px-3 py-3",
+          collapsed && "md:px-1.5 md:group-hover/col:px-3",
+        )}
+      >
+        <div
+          className={cn(
+            "flex min-w-0 items-center gap-2",
+            collapsed && "md:flex-col md:group-hover/col:flex-row",
+          )}
+        >
           <span className={cn("size-2 shrink-0 rounded-full", dot)} aria-hidden />
-          <span className={cn("min-w-0 flex-1 truncate text-sm font-semibold", tone)}>{label}</span>
+          <span
+            className={cn(
+              "min-w-0 flex-1 truncate text-sm font-semibold",
+              tone,
+              collapsed &&
+              "md:rotate-180 md:[writing-mode:vertical-rl] md:group-hover/col:rotate-0 md:group-hover/col:[writing-mode:horizontal-tb]",
+            )}
+          >
+            {label}
+          </span>
           <div className="flex shrink-0 items-center gap-1">
             {attention > 0 && (
               <Badge
                 variant="danger"
-                className="h-5 gap-1 text-[11px] tabular-nums"
+                className={cn(
+                  "h-5 gap-1 text-[11px] tabular-nums",
+                  collapsed && "md:hidden md:group-hover/col:inline-flex",
+                )}
                 title={`${attention} lead${attention === 1 ? "" : "s"} sin próxima acción o con el aviso vencido`}
               >
                 <AlertTriangle className="size-2.5" aria-hidden />
@@ -349,16 +435,48 @@ function Column({
             <Badge variant="neutral" className="h-5 text-[11px] tabular-nums">
               {leads.length}
             </Badge>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onToggleCompact();
+              }}
+              title={compact ? "Mantener siempre visible" : "Colapsar cuando no esté en uso"}
+              aria-label={compact ? "Mantener siempre visible" : "Colapsar cuando no esté en uso"}
+              className={cn(
+                "hidden shrink-0 rounded p-0.5 text-muted-foreground/50 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+                "md:group-hover/col:inline-flex",
+              )}
+            >
+              {compact ? <Maximize2 className="size-3" /> : <Minimize2 className="size-3" />}
+            </button>
           </div>
         </div>
-        <p className="mt-1.5 truncate pl-4 text-[11px] text-muted-foreground">{description}</p>
+        <p
+          className={cn(
+            "mt-1.5 truncate pl-4 text-[11px] text-muted-foreground",
+            collapsed && "md:hidden md:group-hover/col:block",
+          )}
+        >
+          {description}
+        </p>
         {total > 0 ? (
-          <p className="mt-2 pl-4 text-xs font-medium tabular-nums text-foreground/80">
+          <p
+            className={cn(
+              "mt-2 pl-4 text-xs font-medium tabular-nums text-foreground/80",
+              collapsed && "md:hidden md:group-hover/col:block",
+            )}
+          >
             {formatEUR(total)}
           </p>
         ) : null}
       </header>
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2.5 scroll-fade no-scrollbar">
+      <div
+        className={cn(
+          "flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2.5 scroll-fade no-scrollbar",
+          collapsed && "md:hidden md:group-hover/col:flex",
+        )}
+      >
         {leads.length === 0 ? (
           <p className="px-2 py-6 text-center text-xs text-muted-foreground">
             {isDragging ? "Soltar aquí" : "Sin leads"}
