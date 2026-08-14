@@ -28,6 +28,12 @@ const FILTER = {
   ],
 };
 
+const STATUS_FILTER = {
+  key: "status",
+  label: "Estado",
+  options: [{ value: "new", label: "Nuevo" }],
+};
+
 describe("ListControls avatar filter", () => {
   beforeEach(() => {
     navigation.params = new URLSearchParams();
@@ -55,12 +61,14 @@ describe("ListControls avatar filter", () => {
     expect(navigation.replace).toHaveBeenCalledWith("/leads", { scroll: false });
   });
 
-  it("shows each active filter as a removable chip in panel mode", () => {
-    navigation.params = new URLSearchParams("assignee=ana");
-    render(<ListControls filters={[FILTER]} presentation="panel" />);
+  it("moves secondary filters into a popover in panel mode", () => {
+    navigation.params = new URLSearchParams("status=new");
+    render(<ListControls filters={[FILTER, STATUS_FILTER]} presentation="panel" />);
 
-    fireEvent.click(screen.getByRole("button", { name: /responsable: ana pérez/i }));
+    fireEvent.click(screen.getByRole("button", { name: /filtros 1/i }));
 
+    expect(screen.getByRole("combobox", { name: "Estado" })).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Limpiar filtros" }));
     expect(navigation.replace).toHaveBeenCalledWith("/leads", { scroll: false });
   });
 });

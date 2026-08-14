@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { EntityCombobox } from "@/components/ui/entity-combobox";
 import { Input } from "@/components/ui/input";
 import { type AvatarMember, MemberAvatar } from "@/components/ui/member-avatar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, Download, Search, SlidersHorizontal, X } from "lucide-react";
@@ -67,7 +68,7 @@ export function ListControls({
 
   // Keep the latest router-related callbacks in a ref so the debounce effect
   // can depend only on `q` without re-creating the timeout on every render.
-  const commitRef = useRef<(value: string) => void>(() => {});
+  const commitRef = useRef<(value: string) => void>(() => { });
   commitRef.current = (value: string) => {
     const next = updateParams(params, { [searchKey]: value, page: null });
     const query = next.toString();
@@ -120,6 +121,11 @@ export function ListControls({
     const option = filter.options.find((item) => item.value === value);
     return option ? [{ key: filter.key, label: `${filter.label}: ${option.label}` }] : [];
   });
+  const avatarFilters = filters.filter((filter) => filter.display === "avatars");
+  const secondaryFilters = filters.filter((filter) => filter.display !== "avatars");
+  const activeSecondaryFilterCount = secondaryFilters.filter((filter) =>
+    Boolean(params.get(filter.key)),
+  ).length;
 
   const hasControls = searchKey || filters.length > 0;
   const hasPagination =
@@ -132,6 +138,203 @@ export function ListControls({
     : 1;
   const from = pagination ? (pagination.page - 1) * pagination.pageSize + 1 : 0;
   const to = pagination ? Math.min(pagination.page * pagination.pageSize, pagination.total) : 0;
+
+  if (isPanel) {
+    return (
+      <div className={cn("rounded-xl border border-border bg-card shadow-xs", className)}>
+        <div className="flex flex-wrap items-center gap-2 p-3 sm:p-4">
+          {searchKey ? (
+            <div className="relative w-full min-w-0 sm:w-auto sm:min-w-60 sm:flex-1 sm:max-w-sm">
+              <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder={searchPlaceholder}
+                className="h-9 rounded-lg border-border bg-background pl-8 pr-8 text-sm shadow-xs focus-visible:ring-primary/25"
+              />
+              {q ? (
+                <button
+                  type="button"
+                  onClick={() => setQ("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-0.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                  aria-label="Limpiar búsqueda"
+                >
+                  <X className="size-3.5" />
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+
+          {avatarFilters.map((filter) => {
+            const selectedValue = params.get(filter.key) ?? "";
+            return (
+              <div
+                key={filter.key}
+                className="flex h-9 shrink-0 items-center gap-1 rounded-lg border border-border bg-background px-1.5 shadow-xs"
+                aria-label={filter.label}
+              >
+                {filter.options.map((option) => {
+                  const isSelected = selectedValue === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      aria-pressed={isSelected}
+                      aria-label={
+                        isSelected
+                          ? `Quitar filtro de ${option.label}`
+                          : `Filtrar por ${option.label}`
+                      }
+                      title={option.label}
+                      onClick={() => setFilter(filter.key, isSelected ? "" : option.value)}
+                      className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                    >
+                      <MemberAvatar
+                        member={option.avatar ?? null}
+                        size="sm"
+                        className={cn(
+                          "transition-all",
+                          isSelected
+                            ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                            : "opacity-60 hover:scale-105 hover:opacity-100",
+                        )}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
+
+          {secondaryFilters.length > 0 ? (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className={cn(
+                    "h-9 shrink-0",
+                    activeSecondaryFilterCount > 0 && "border-primary/30 bg-primary/5 text-primary",
+                  )}
+                >
+                  <SlidersHorizontal className="size-3.5" />
+                  Filtros
+                  {activeSecondaryFilterCount > 0 ? (
+                    <span className="rounded-full bg-primary px-1.5 py-px text-[10px] leading-4 text-primary-foreground">
+                      {activeSecondaryFilterCount}
+                    </span>
+                  ) : null}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-[min(22rem,calc(100vw-2rem))] p-3">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold">Filtros de leads</p>
+                    <p className="text-xs text-muted-foreground">Acota el tablero por sus atributos.</p>
+                  </div>
+                  {hasActiveFilters ? (
+                    <Button type="button" variant="ghost" size="xs" onClick={clearFilters}>
+                      Limpiar filtros
+                    </Button>
+                  ) : null}
+                </div>
+                <div className="space-y-2">
+                  {secondaryFilters.map((filter) => {
+                    const selectedValue = params.get(filter.key) ?? "";
+                    return filter.searchable ? (
+                      <label key={filter.key} className="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-2">
+                        <span className="text-xs font-medium text-muted-foreground">{filter.label}</span>
+                        <EntityCombobox
+                          items={filter.options.map((option) => ({ id: option.value, label: option.label }))}
+                          value={selectedValue}
+                          onChange={(value) => setFilter(filter.key, value)}
+                          placeholder={`${filter.label}: todos`}
+                          aria-label={filter.label}
+                          className="h-9 text-xs"
+                        />
+                      </label>
+                    ) : (
+                      <label key={filter.key} className="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-2">
+                        <span className="text-xs font-medium text-muted-foreground">{filter.label}</span>
+                        <Select
+                          value={selectedValue}
+                          onChange={(event) => setFilter(filter.key, event.target.value)}
+                          aria-label={filter.label}
+                          className="h-9 text-xs"
+                        >
+                          <option value="">Todos</option>
+                          {filter.options.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </Select>
+                      </label>
+                    );
+                  })}
+                </div>
+              </PopoverContent>
+            </Popover>
+          ) : null}
+
+          <div className="ml-auto flex shrink-0 items-center gap-1">
+            {hasActiveFilters ? (
+              <Button
+                type="button"
+                size="icon-sm"
+                variant="ghost"
+                onClick={clearFilters}
+                aria-label="Limpiar todos los filtros"
+                title="Limpiar filtros"
+              >
+                <X className="size-3.5" />
+              </Button>
+            ) : null}
+            {onExport ? (
+              <Button
+                type="button"
+                size="icon-sm"
+                variant="ghost"
+                onClick={onExport}
+                aria-label="Exportar CSV"
+                title="Exportar CSV"
+              >
+                <Download className="size-3.5" />
+              </Button>
+            ) : null}
+            {pagination ? (
+              <>
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  {pagination.total === 0 ? "Sin resultados" : `${from}–${to} de ${pagination.total}`}
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  disabled={pagination.page <= 1}
+                  onClick={() => setPage(pagination.page - 1)}
+                  aria-label="Página anterior"
+                >
+                  <ChevronLeft className="size-4" />
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  disabled={pagination.page >= totalPages}
+                  onClick={() => setPage(pagination.page + 1)}
+                  aria-label="Página siguiente"
+                >
+                  <ChevronRight className="size-4" />
+                </Button>
+              </>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -208,7 +411,7 @@ export function ListControls({
                   className={cn(
                     "flex items-center gap-1",
                     isPanel &&
-                      "min-h-9 w-full rounded-lg border border-border bg-background px-2 shadow-xs lg:w-auto",
+                    "min-h-9 w-full rounded-lg border border-border bg-background px-2 shadow-xs lg:w-auto",
                   )}
                 >
                   <span className="mr-0.5 text-xs font-medium text-muted-foreground">
@@ -258,7 +461,7 @@ export function ListControls({
                 className={cn(
                   "min-w-30 max-w-45 flex-1 text-xs sm:flex-none",
                   isPanel &&
-                    "h-9 w-full max-w-none rounded-lg border-border bg-background shadow-xs lg:w-auto lg:max-w-45",
+                  "h-9 w-full max-w-none rounded-lg border-border bg-background shadow-xs lg:w-auto lg:max-w-45",
                   !isPanel && "h-8",
                 )}
               />
