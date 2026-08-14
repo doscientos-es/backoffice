@@ -71,7 +71,8 @@ export type ExportableTable = (typeof EXPORTABLE_TABLES)[number];
 export type ExportRecord = Record<string, unknown>;
 
 const PAGE_SIZE = 1_000;
-const SENSITIVE_KEY = /(?:password|passphrase|secret|token|api[_-]?key|private[_-]?key|credential)/i;
+const SENSITIVE_KEY =
+  /(?:pass(?:word|phrase)?|secret|token|api[_-]?key|private[_-]?key|credential)/i;
 
 export function isExportableTable(value: string | null): value is ExportableTable {
   return Boolean(value && EXPORTABLE_TABLES.includes(value as ExportableTable));
@@ -105,7 +106,10 @@ async function readTable(table: ExportableTable): Promise<ExportRecord[]> {
   const rows: ExportRecord[] = [];
 
   for (let from = 0; ; from += PAGE_SIZE) {
-    const { data, error } = await admin.from(table).select("*").range(from, from + PAGE_SIZE - 1);
+    const { data, error } = await admin
+      .from(table)
+      .select("*")
+      .range(from, from + PAGE_SIZE - 1);
     if (error) throw new Error(`No se pudo exportar ${table}: ${error.message}`);
     const page = (data ?? []) as ExportRecord[];
     rows.push(...page.map(sanitizeExportRecord));

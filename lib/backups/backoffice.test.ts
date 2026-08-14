@@ -15,7 +15,11 @@ const baseEnv = {
 
 describe("backoffice backup setup", () => {
   it("reports every missing required setting", () => {
-    const setup = getBackofficeBackupSetup({ ...baseEnv, BACKUP_DB_HOST: "", BACKUP_DB_PASSWORD: "" });
+    const setup = getBackofficeBackupSetup({
+      ...baseEnv,
+      BACKUP_DB_HOST: "",
+      BACKUP_DB_PASSWORD: "",
+    });
     expect(setup).toEqual({ configured: false, missing: ["BACKUP_DB_HOST", "BACKUP_DB_PASSWORD"] });
   });
 

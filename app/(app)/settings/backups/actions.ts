@@ -7,7 +7,9 @@ import { backupsCacheTag } from "@/lib/filebrowser";
 import { consumeUserVerification } from "@/lib/security/user-verification";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
 
-export async function triggerBackofficeBackup(): Promise<{ ok: true } | { ok: false; error: string }> {
+export async function triggerBackofficeBackup(): Promise<
+  { ok: true } | { ok: false; error: string }
+> {
   try {
     const user = await requireRole(["owner", "admin"]);
     await consumeUserVerification(
@@ -18,6 +20,9 @@ export async function triggerBackofficeBackup(): Promise<{ ok: true } | { ok: fa
     revalidateTag(backupsCacheTag(BACKOFFICE_BACKUP_SLUG), "default");
     return { ok: true };
   } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : "No se pudo crear el backup" };
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "No se pudo crear el backup",
+    };
   }
 }

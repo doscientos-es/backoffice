@@ -1,7 +1,17 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Activity, Building2, DatabaseBackup, Mail, PlugZap, Shield, Target, User, Users } from "lucide-react";
+import {
+  Activity,
+  Building2,
+  DatabaseBackup,
+  Mail,
+  PlugZap,
+  Shield,
+  Target,
+  User,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 

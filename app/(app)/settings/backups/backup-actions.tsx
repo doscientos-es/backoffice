@@ -40,12 +40,23 @@ export function BackupActions({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
-        <Button type="button" variant="outline" onClick={forceBackup} disabled={!runnerConfigured || pending}>
-          {pending ? <Loader2 className="size-4 animate-spin" /> : <DatabaseBackup className="size-4" />}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={forceBackup}
+          disabled={!runnerConfigured || pending}
+        >
+          {pending ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <DatabaseBackup className="size-4" />
+          )}
           {pending ? "Creando copia…" : "Crear copia ahora"}
         </Button>
         {!runnerConfigured ? (
-          <span className="text-xs text-muted-foreground">La copia automática se activará al configurar el runner.</span>
+          <span className="text-xs text-muted-foreground">
+            La copia automática se activará al configurar el runner.
+          </span>
         ) : null}
       </div>
 

@@ -36,7 +36,8 @@ export default async function BackupSettingsPage() {
             <div>
               <CardTitle>Respaldo automático</CardTitle>
               <CardDescription>
-                Cada día se guarda un dump de PostgreSQL y una réplica de los archivos de Storage en el servidor de backups.
+                Cada día se guarda un dump de PostgreSQL y una réplica de los archivos de Storage en
+                el servidor de backups.
               </CardDescription>
             </div>
             <Badge variant={setup.configured ? "success" : "neutral"}>
@@ -46,7 +47,8 @@ export default async function BackupSettingsPage() {
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <p className="text-sm text-muted-foreground">
-            Se conservan las últimas {env.BACKUP_RETENTION_DAYS} copias diarias. Las credenciales nunca se muestran ni se incluyen en las exportaciones.
+            Se conservan las últimas {env.BACKUP_RETENTION_DAYS} copias diarias. Las credenciales
+            nunca se muestran ni se incluyen en las exportaciones.
           </p>
           <BackupActions runnerConfigured={setup.configured} tables={tables} />
         </CardContent>
@@ -58,7 +60,9 @@ export default async function BackupSettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Historial de copias</CardTitle>
-            <CardDescription>Configura FileBrowser para consultar y descargar las copias del servidor.</CardDescription>
+            <CardDescription>
+              Configura FileBrowser para consultar y descargar las copias del servidor.
+            </CardDescription>
           </CardHeader>
         </Card>
       )}
@@ -67,11 +71,13 @@ export default async function BackupSettingsPage() {
         <CardHeader>
           <CardTitle>Exportación local</CardTitle>
           <CardDescription>
-            JSON descarga el conjunto completo de datos operativos. Los CSV se descargan por tabla para abrirlos fácilmente en Excel.
+            JSON descarga el conjunto completo de datos operativos. Los CSV se descargan por tabla
+            para abrirlos fácilmente en Excel.
           </CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
-          Los archivos físicos de Supabase Storage se incluyen en la copia automática; la exportación local contiene sus metadatos y rutas, no los binarios.
+          Los archivos físicos de Supabase Storage se incluyen en la copia automática; la
+          exportación local contiene sus metadatos y rutas, no los binarios.
         </CardContent>
       </Card>
     </div>

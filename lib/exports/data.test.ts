@@ -4,7 +4,12 @@ import { dataToCsv, sanitizeExportRecord } from "./data";
 describe("data exports", () => {
   it("removes access credentials from manual exports", () => {
     expect(
-      sanitizeExportRecord({ id: "row-1", name: "Cliente", portal_token: "private", db_pass_encrypted: "cipher" }),
+      sanitizeExportRecord({
+        id: "row-1",
+        name: "Cliente",
+        portal_token: "private",
+        db_pass_encrypted: "cipher",
+      }),
     ).toEqual({ id: "row-1", name: "Cliente" });
   });
 

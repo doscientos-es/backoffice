@@ -23,17 +23,17 @@ export type BackofficeBackupEnvironment = {
 export type BackofficeBackupSetup =
   | { configured: false; missing: string[] }
   | {
-    configured: true;
-    runnerUrl: string;
-    runnerToken: string;
-    host: string;
-    port: number;
-    database: string;
-    user: string;
-    password: string;
-    retentionDays: number;
-    serviceRoleKey: string;
-  };
+      configured: true;
+      runnerUrl: string;
+      runnerToken: string;
+      host: string;
+      port: number;
+      database: string;
+      user: string;
+      password: string;
+      retentionDays: number;
+      serviceRoleKey: string;
+    };
 
 type RequiredBackupSetting =
   | "BACKUP_RUNNER_URL"
@@ -69,7 +69,9 @@ export function getBackofficeBackupSetup(env: BackofficeBackupEnvironment): Back
   };
 }
 
-export function buildBackofficeBackupPayload(setup: Extract<BackofficeBackupSetup, { configured: true }>) {
+export function buildBackofficeBackupPayload(
+  setup: Extract<BackofficeBackupSetup, { configured: true }>,
+) {
   return {
     clientSlug: BACKOFFICE_BACKUP_SLUG,
     host: setup.host,

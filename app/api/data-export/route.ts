@@ -38,7 +38,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     if (format === "json") {
       const data = await exportAllOperationalData();
       log.info({ tables: Object.keys(data.tables).length }, "operational_data_exported_json");
-      return download(JSON.stringify(data, null, 2), "application/json; charset=utf-8", `doscientos-datos-${stamp}.json`);
+      return download(
+        JSON.stringify(data, null, 2),
+        "application/json; charset=utf-8",
+        `doscientos-datos-${stamp}.json`,
+      );
     }
 
     const table = searchParams.get("table");
@@ -48,7 +52,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     const rows = await exportTable(table);
     log.info({ table, count: rows.length }, "operational_data_exported_csv");
-    return download(`\uFEFF${dataToCsv(rows)}`, "text/csv; charset=utf-8", `doscientos-${table}-${stamp}.csv`);
+    return download(
+      `\uFEFF${dataToCsv(rows)}`,
+      "text/csv; charset=utf-8",
+      `doscientos-${table}-${stamp}.csv`,
+    );
   } catch (error) {
     log.error({ err: error }, "operational_data_export_failed");
     return NextResponse.json({ error: "No se pudo generar la exportación" }, { status: 500 });
