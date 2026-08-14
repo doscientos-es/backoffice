@@ -1,0 +1,30 @@
+name: Send daily responsibility summary
+
+on:
+  schedule:
+    # Weekdays at 09:15 UTC+2 (07:15 UTC). The endpoint is idempotent per member/day.
+    - cron: "15 7 * * 1-5"
+  workflow_dispatch:
+
+jobs:
+  notify:
+    name: Send each member their pending work
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Call the daily responsibility endpoint
+        run: |
+          STATUS=$(curl --silent --output /tmp/daily-responsibilities.json \
+                        --write-out "%{http_code}" \
+                        --max-time 60 \
+                        -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+                        "${{ secrets.APP_URL }}/api/cron/daily-responsibilities")
+
+          echo "HTTP status: $STATUS"
+          cat /tmp/daily-responsibilities.json | python3 -m json.tool || true
+
+          if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 300 ]; then
+            echo "::error::El endpoint devolvió HTTP $STATUS"
+            exit 1
+          fi

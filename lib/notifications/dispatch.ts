@@ -11,6 +11,7 @@ export type NotificationEvent =
   | "task_comment"
   | "task_mention"
   | "task_assigned"
+  | "daily_responsibilities"
   | "invoice_paid"
   | "invoice_payment"
   | "invoice_requested"
@@ -29,6 +30,7 @@ const TITLES: Record<NotificationEvent, string> = {
   task_comment: "💬 Nuevo comentario",
   task_mention: "💬 Te han mencionado",
   task_assigned: "✅ Tarea asignada",
+  daily_responsibilities: "📋 Tu resumen diario",
   invoice_paid: "💰 Factura cobrada",
   invoice_payment: "💰 Pago recibido",
   invoice_requested: "🧾 Solicitud de facturación",
