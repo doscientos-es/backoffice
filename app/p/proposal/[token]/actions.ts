@@ -1,7 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import {
   ensureClientForProposal,
   ensureProjectForProposal,
@@ -24,6 +22,8 @@ import {
   ProposalRejectionReason,
 } from "@/lib/schemas/proposal";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 const log = scopedLogger("portal.proposal");
 
@@ -31,13 +31,13 @@ type ActionResult = { ok: true } | { ok: false; error: string };
 
 export type PaymentInitResult =
   | {
-      ok: true;
-      demo?: boolean;
-      url: string;
-      signatureVersion: string;
-      merchantParameters: string;
-      signature: string;
-    }
+    ok: true;
+    demo?: boolean;
+    url: string;
+    signatureVersion: string;
+    merchantParameters: string;
+    signature: string;
+  }
   | { ok: false; error: string };
 
 /**
@@ -341,7 +341,7 @@ export async function initiateProposalPayment(
     ? paymentInitialPercentage(paymentSchedule.data)
     : null;
   if (initialPercentage === null) {
-    return { ok: false, error: "La forma de pago personalizada no admite cobro automático" };
+    return { ok: false, error: "La forma de pago seleccionada no admite cobro automático" };
   }
   const amount = Math.round(Number(proposal.total) * initialPercentage) / 100;
 

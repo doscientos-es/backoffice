@@ -4,6 +4,7 @@ import type { LeadStatus } from "@/lib/status";
 import { notDeleted } from "@/lib/supabase/filters";
 import { createServerClient } from "@/lib/supabase/server";
 import { escapeIlike } from "@/lib/utils/search-params";
+import { suggestedCallDurationMinutes } from "./meeting-duration";
 import {
   LEAD_BOARD_LIMIT,
   LEAD_LIST_PAGE_SIZE,
@@ -117,9 +118,10 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
 
   const rows = data ?? [];
   const leadIds = rows.map((r) => r.id as string);
-  const [interactionsByLead, remindersByLead] = await Promise.all([
+  const [interactionsByLead, remindersByLead, durationsByLead] = await Promise.all([
     loadRecentInteractions(leadIds),
     loadLeadReminders(leadIds),
+    loadScheduledMeetingDurations(leadIds),
   ]);
 
   const leads: LeadListItem[] = rows.map((l) => ({
@@ -157,6 +159,7 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
     recent_interactions: interactionsByLead.get(l.id as string) ?? [],
     next_action: remindersByLead.nextActions.get(l.id as string) ?? null,
     scheduled_meeting_at: remindersByLead.scheduledMeetings.get(l.id as string) ?? null,
+    scheduled_meeting_duration_minutes: durationsByLead.get(l.id as string) ?? null,
   }));
 
   return { leads, count: count ?? 0, error: error?.message ?? null };
@@ -207,6 +210,31 @@ async function loadLeadReminders(leadIds: string[]): Promise<{
     }
   }
   return { nextActions, scheduledMeetings };
+}
+
+async function loadScheduledMeetingDurations(leadIds: string[]): Promise<Map<string, number>> {
+  const durationsByLead = new Map<string, number>();
+  if (leadIds.length === 0) return durationsByLead;
+
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("lead_interactions")
+    .select("lead_id, type, payload")
+    .in("lead_id", leadIds)
+    .eq("type", "meeting");
+
+  const interactionsByLead = new Map<string, Array<{ type: string; payload: unknown }>>();
+  for (const interaction of data ?? []) {
+    const leadId = interaction.lead_id as string;
+    const interactions = interactionsByLead.get(leadId) ?? [];
+    interactions.push({ type: interaction.type as string, payload: interaction.payload });
+    interactionsByLead.set(leadId, interactions);
+  }
+  for (const [leadId, interactions] of interactionsByLead) {
+    const duration = suggestedCallDurationMinutes(interactions);
+    if (duration !== null) durationsByLead.set(leadId, duration);
+  }
+  return durationsByLead;
 }
 
 async function loadRecentInteractions(leadIds: string[]): Promise<Map<string, LeadInteraction[]>> {

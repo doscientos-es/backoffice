@@ -76,6 +76,8 @@ export type LeadListItem = {
   next_action: LeadNextAction | null;
   /** Earliest future call or meeting, independently of the soonest next action. */
   scheduled_meeting_at: string | null;
+  /** Duration from today's latest scheduled meeting, used to prefill call logging. */
+  scheduled_meeting_duration_minutes: number | null;
 };
 
 export type LeadListView = "board" | "list";

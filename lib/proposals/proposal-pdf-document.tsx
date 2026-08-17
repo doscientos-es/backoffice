@@ -1,3 +1,11 @@
+import type { KeyPoint } from "@/lib/proposals/key-points";
+import type { MaintenanceOffer } from "@/lib/proposals/maintenance";
+import {
+  PAYMENT_SCHEDULE_LABELS,
+  scopeModuleDurationText,
+  type PaymentSchedule,
+  type ScopeModule,
+} from "@/lib/proposals/scope";
 import {
   Document,
   Font,
@@ -8,13 +16,6 @@ import {
   Text,
   View,
 } from "@react-pdf/renderer";
-import type { KeyPoint } from "@/lib/proposals/key-points";
-import type { MaintenanceOffer } from "@/lib/proposals/maintenance";
-import {
-  PAYMENT_SCHEDULE_LABELS,
-  type PaymentSchedule,
-  type ScopeModule,
-} from "@/lib/proposals/scope";
 
 const BRAND = "#2A4227";
 const INK = "#183017";
@@ -302,6 +303,9 @@ function ScopeModuleList({ modules }: { modules: ScopeModule[] }) {
             style={styles.pointTitle}
           >{`${String(index + 1).padStart(2, "0")} · ${module.title}`}</Text>
           {module.description ? <Text style={styles.pointText}>{module.description}</Text> : null}
+          {scopeModuleDurationText(module) ? (
+            <Text style={styles.pointText}>{`Plazo estimado: ${scopeModuleDurationText(module)}`}</Text>
+          ) : null}
           {module.included.length > 0 ? (
             <Text style={[styles.pointText, { color: BRAND, fontFamily: "Helvetica-Bold" }]}>
               Incluido
@@ -458,11 +462,11 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
           style={styles.section}
           break={Boolean(
             data.context ||
-              data.problems.length ||
-              data.solutions.length ||
-              data.scopeModules.length ||
-              deliverables ||
-              acceptanceCriteria,
+            data.problems.length ||
+            data.solutions.length ||
+            data.scopeModules.length ||
+            deliverables ||
+            acceptanceCriteria,
           )}
         >
           <Text style={styles.sectionLabel}>Propuesta económica</Text>

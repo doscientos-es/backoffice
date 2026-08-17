@@ -1,3 +1,13 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { groupResendInteractions, interactionDate } from "@/lib/leads/interaction-utils";
+import type {
+  LeadDetailInteraction,
+  LeadRelatedInvoice,
+  LeadRelatedProject,
+  LeadRelatedProposal,
+  LeadRelatedTask,
+} from "@/lib/leads/types";
+import { formatEUR, relativeTime } from "@/lib/utils";
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -9,16 +19,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { groupResendInteractions } from "@/lib/leads/interaction-utils";
-import type {
-  LeadDetailInteraction,
-  LeadRelatedInvoice,
-  LeadRelatedProject,
-  LeadRelatedProposal,
-  LeadRelatedTask,
-} from "@/lib/leads/types";
-import { formatEUR, relativeTime } from "@/lib/utils";
 
 type TimelineEvent = {
   id: string;
@@ -65,15 +65,15 @@ function eventList({
   const interactionEvents = groupResendInteractions(interactions).map(
     ({ interaction: item, count }) => ({
       id: `interaction-${item.id}`,
-      date: item.created_at,
+      date: interactionDate(item),
       title: interactionLabel(item.type),
       detail: [
         item.subject ??
-          item.body
-            ?.replace(/<[^>]+>/g, " ")
-            .replace(/\s+/g, " ")
-            .trim() ??
-          null,
+        item.body
+          ?.replace(/<[^>]+>/g, " ")
+          .replace(/\s+/g, " ")
+          .trim() ??
+        null,
         count > 1 ? `${count} eventos` : null,
       ]
         .filter(Boolean)

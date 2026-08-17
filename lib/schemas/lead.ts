@@ -1,3 +1,4 @@
+import { todayIsoLocal } from "@/lib/utils/date";
 import { z } from "zod";
 import { assignableUuid, optionalEmail, optionalText, requiredText } from "./common";
 
@@ -109,6 +110,23 @@ const CALL_OUTCOMES_WITHOUT_DETAILS = new Set<CallOutcome>([
   "wrong_number",
 ]);
 
+function isCalendarDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const year = Number(value.slice(0, 4));
+  const month = Number(value.slice(5, 7));
+  const day = Number(value.slice(8, 10));
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+}
+
+const CallDate = z
+  .string()
+  .refine(isCalendarDate, "Fecha de llamada no válida")
+  .refine(
+    (value) => value <= todayIsoLocal(),
+    "La fecha de la llamada no puede ser posterior a hoy",
+  );
+
 export const StartLeadCallInput = z.object({
   leadId: z.string().uuid(),
 });
@@ -120,6 +138,8 @@ export const LogCallInput = z
     transcript: optionalText(50000),
     durationMinutes: z.coerce.number().int().min(0).max(600).optional(),
     outcome: z.enum(CALL_OUTCOMES).optional(),
+    /** The calendar date when the actual call happened, not when it was logged. */
+    callDate: CallDate.default(() => todayIsoLocal()),
   })
   .refine(
     (v) =>

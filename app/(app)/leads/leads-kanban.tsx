@@ -39,13 +39,17 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import {
   boardColumnForLead,
   countLeadsNeedingAttention,
-  DEFAULT_COMPACT_LEAD_KANBAN_COLUMNS,
   groupLeadsForKanban,
   LEAD_KANBAN_COLUMNS,
   type LeadKanbanColumnId,
   nextActionForKanban,
   sumLeadEstimatedValue,
 } from "@/lib/leads/kanban-policy";
+import {
+  type LeadKanbanColumnPreferences,
+  leadKanbanColumnIds,
+  resolveCompactLeadKanbanColumns,
+} from "@/lib/leads/kanban-preferences";
 import {
   isRotting,
   nextActionState,
@@ -113,18 +117,30 @@ const STATUS_BY_COLUMN: Record<Exclude<LeadKanbanColumnId, "meeting">, LeadStatu
 
 const COMPACT_COLUMNS_KEY = "leads-kanban:compact-columns";
 
-function loadColumnSet(key: string): Set<LeadKanbanColumnId> | null {
+function loadColumnPreferences(key: string): LeadKanbanColumnPreferences | null {
   try {
     const raw = localStorage.getItem(key);
-    return raw ? new Set(JSON.parse(raw) as LeadKanbanColumnId[]) : null;
+    if (!raw) return null;
+    const stored: unknown = JSON.parse(raw);
+    if (Array.isArray(stored)) {
+      // Legacy storage only recorded compact columns, so it could not retain
+      // an explicit "keep visible" choice for columns closed by default.
+      return { compact: leadKanbanColumnIds(stored), expanded: [] };
+    }
+    if (!stored || typeof stored !== "object") return null;
+    const preferences = stored as Record<string, unknown>;
+    return {
+      compact: leadKanbanColumnIds(preferences.compact),
+      expanded: leadKanbanColumnIds(preferences.expanded),
+    };
   } catch {
     return null;
   }
 }
 
-function saveColumnSet(key: string, value: ReadonlySet<LeadKanbanColumnId>) {
+function saveColumnPreferences(key: string, value: LeadKanbanColumnPreferences) {
   try {
-    localStorage.setItem(key, JSON.stringify([...value]));
+    localStorage.setItem(key, JSON.stringify(value));
   } catch {
     // The preference is optional when browser storage is unavailable.
   }
@@ -152,21 +168,35 @@ export function LeadsKanban({
       ? state.filter((l) => l.id !== action.id)
       : state.map((l) => (l.id === action.id ? { ...l, status: action.status } : l)),
   );
-  const [compactColumns, setCompactColumns] = useState<ReadonlySet<LeadKanbanColumnId>>(
-    () => new Set(DEFAULT_COMPACT_LEAD_KANBAN_COLUMNS),
-  );
+  const [columnPreferences, setColumnPreferences] = useState<LeadKanbanColumnPreferences>({
+    compact: [],
+    expanded: [],
+  });
   useEffect(() => {
-    const storedCompact = loadColumnSet(COMPACT_COLUMNS_KEY);
-    if (storedCompact) setCompactColumns(storedCompact);
+    const storedPreferences = loadColumnPreferences(COMPACT_COLUMNS_KEY);
+    if (storedPreferences) setColumnPreferences(storedPreferences);
   }, []);
 
   const toggleColumnCompact = (id: LeadKanbanColumnId) => {
-    setCompactColumns((previous) => {
-      const next = new Set(previous);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      saveColumnSet(COMPACT_COLUMNS_KEY, next);
-      return next;
+    setColumnPreferences((previous) => {
+      const compact = resolveCompactLeadKanbanColumns(previous);
+      const next = {
+        compact: new Set(previous.compact),
+        expanded: new Set(previous.expanded),
+      };
+      if (compact.has(id)) {
+        next.compact.delete(id);
+        next.expanded.add(id);
+      } else {
+        next.expanded.delete(id);
+        next.compact.add(id);
+      }
+      const preferences = {
+        compact: [...next.compact],
+        expanded: [...next.expanded],
+      };
+      saveColumnPreferences(COMPACT_COLUMNS_KEY, preferences);
+      return preferences;
     });
   };
   const handleRefresh = () => {
@@ -258,6 +288,7 @@ export function LeadsKanban({
   };
 
   const grouped = groupLeadsForKanban(optimistic);
+  const compactColumns = resolveCompactLeadKanbanColumns(columnPreferences);
   const active = activeId ? optimistic.find((lead) => lead.id === activeId) : null;
   const refreshLabel = isRefreshing
     ? "Actualizando leads"
@@ -413,8 +444,9 @@ function Column({
             className={cn(
               "min-w-0 flex-1 truncate text-sm font-semibold",
               tone,
-              collapsed &&
-                "md:rotate-180 md:[writing-mode:vertical-rl] md:group-hover/col:rotate-0 md:group-hover/col:[writing-mode:horizontal-tb]",
+              collapsed
+                ? "md:rotate-180 md:[writing-mode:vertical-rl] md:group-hover/col:rotate-0 md:group-hover/col:[writing-mode:horizontal-tb]"
+                : undefined,
             )}
           >
             {label}

@@ -1,5 +1,3 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -12,12 +10,15 @@ import { isAIEnabled } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { CONVERSION_STEP_LABEL } from "@/lib/conversion-events/labels";
 import { formatLeadBriefingForAI } from "@/lib/leads/ai-context";
-import { groupResendInteractions } from "@/lib/leads/interaction-utils";
+import { groupResendInteractions, interactionDate } from "@/lib/leads/interaction-utils";
+import { suggestedCallDurationMinutes } from "@/lib/leads/meeting-duration";
 import { getLeadDetail } from "@/lib/leads/queries";
 import { leadDisplayName } from "@/lib/leads/utils";
 import { listActiveMembers } from "@/lib/members/queries";
 import { LEAD_STATUS, TASK_STATUS, type TaskStatus } from "@/lib/status";
 import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { TaskCreateDialog } from "../../tasks/task-create-dialog";
 import { CallInteractionDetails } from "./call-interaction-details";
 import { Lead360Timeline } from "./lead-360-timeline";
@@ -174,6 +175,7 @@ export default async function LeadDetailPage({
     reminders,
     attachments,
   });
+  const defaultDurationMinutes = suggestedCallDurationMinutes(interactions);
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -482,7 +484,7 @@ export default async function LeadDetailPage({
                         </div>
                         <div className="flex shrink-0 flex-col items-end gap-0.5 text-xs text-muted-foreground">
                           <span className="tabular-nums">
-                            {relativeTime(i.created_at as string)}
+                            {relativeTime(interactionDate(i))}
                           </span>
                           {i.performer ? (
                             <MemberLabel
@@ -519,6 +521,7 @@ export default async function LeadDetailPage({
               senderName={user.name}
               canEdit={canEdit}
               openCallInitially={query?.feedback === "call"}
+              defaultDurationMinutes={defaultDurationMinutes}
               aiEnabled={aiEnabled}
               scheduleMembers={members}
             />

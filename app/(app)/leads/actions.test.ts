@@ -377,6 +377,7 @@ describe("logLeadCall", () => {
       transcript: "Comentamos alcance y presupuesto.",
       durationMinutes: 25,
       outcome: "connected",
+      callDate: "2026-08-10",
     });
 
     expect(result.ok).toBe(true);
@@ -388,6 +389,7 @@ describe("logLeadCall", () => {
         transcript: "Comentamos alcance y presupuesto.",
         duration_minutes: 25,
         outcome: "connected",
+        call_date: "2026-08-10",
       },
     });
     expect(db.updatedRows).toContainEqual(

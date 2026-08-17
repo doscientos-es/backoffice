@@ -1,14 +1,17 @@
 "use client";
 
-import { ChevronDown, ChevronUp, ClipboardPaste, Plus, Trash2, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
   createEmptyScopeModule,
+  SCOPE_MODULE_DURATION_WEEKS,
   SCOPE_MODULE_LIMITS,
+  scopeModuleDurationLabel,
   type ScopeModule,
 } from "@/lib/proposals/scope";
+import { ChevronDown, ChevronUp, ClipboardPaste, Plus, Trash2, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 type Props = {
   modules: ScopeModule[];
@@ -341,6 +344,63 @@ export function ScopeModulesEditor({ modules, onChange, locked = false }: Props)
                   aria-label={`Nombre del módulo ${index + 1}`}
                   className="h-8 text-sm font-medium"
                 />
+                <div className="grid gap-1">
+                  <label
+                    htmlFor={`scope-module-duration-${module.id}`}
+                    className="text-xs font-medium text-muted-foreground"
+                  >
+                    Plazo estimado
+                  </label>
+                  <Select
+                    id={`scope-module-duration-${module.id}`}
+                    value={
+                      module.duration_mode === "custom"
+                        ? "custom"
+                        : String(module.duration_weeks ?? 1)
+                    }
+                    onChange={(event) => {
+                      if (event.target.value === "custom") {
+                        update(index, {
+                          duration_mode: "custom",
+                          duration_weeks: undefined,
+                          duration_custom: module.duration_custom ?? "",
+                        });
+                        return;
+                      }
+                      update(index, {
+                        duration_mode: "weeks",
+                        duration_weeks: Number(event.target.value),
+                        duration_custom: undefined,
+                      });
+                    }}
+                    disabled={disabled}
+                    aria-label={`Plazo estimado del módulo ${index + 1}`}
+                    className="h-8 text-sm"
+                  >
+                    {SCOPE_MODULE_DURATION_WEEKS.map((weeks) => (
+                      <option key={weeks} value={weeks}>
+                        {scopeModuleDurationLabel(weeks)}
+                      </option>
+                    ))}
+                    <option value="custom">Personalizado</option>
+                  </Select>
+                  {module.duration_mode === "custom" ? (
+                    <Input
+                      value={module.duration_custom ?? ""}
+                      onChange={(event) => update(index, { duration_custom: event.target.value })}
+                      disabled={disabled}
+                      maxLength={32}
+                      placeholder="p. ej. 3 meses"
+                      aria-label={`Duración personalizada del módulo ${index + 1}`}
+                      className="h-8 text-sm"
+                    />
+                  ) : null}
+                  {module.duration_mode === "custom" ? (
+                    <p className="text-xs text-muted-foreground">
+                      Formato: 10 días, 2 semanas o 3 meses.
+                    </p>
+                  ) : null}
+                </div>
                 <Textarea
                   value={module.description ?? ""}
                   onChange={(event) => update(index, { description: event.target.value })}

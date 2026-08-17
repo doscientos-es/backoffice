@@ -1,8 +1,5 @@
 "use client";
 
-import { Brain, Mail, MessageCircle, Phone, Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { type ReactNode, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,8 +20,13 @@ import type { LeadInteraction, LeadListItem } from "@/lib/leads/types";
 import { buildLeadWhatsAppMessage, buildWhatsAppUrl } from "@/lib/leads/whatsapp";
 import type { CallOutcome } from "@/lib/schemas/lead";
 import { relativeTime } from "@/lib/utils";
+import { todayIsoLocal } from "@/lib/utils/date";
+import { Brain, Mail, MessageCircle, Phone, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { type ReactNode, useEffect, useState } from "react";
 import { MomTestQuickDialog } from "./[id]/mom-test-quick-dialog";
 import { logLeadCall, logLeadEmail } from "./actions";
+import { CallDateField } from "./call-date-field";
 import { CallDigestDialog } from "./call-digest-dialog";
 
 export type FastInteraction = LeadInteraction;
@@ -142,6 +144,7 @@ export function LeadFastActions({ lead, aiEnabled, senderName }: Props) {
         leadPhone={lead.phone}
         senderName={senderName}
         aiEnabled={aiEnabled}
+        defaultDurationMinutes={lead.scheduled_meeting_duration_minutes}
       />
       <EmailDialog leadId={lead.id} leadEmail={lead.email} />
       <MemoryHoverCard lead={lead} aiEnabled={aiEnabled} />
@@ -202,6 +205,7 @@ function CallDialog({
   leadPhone,
   senderName,
   aiEnabled,
+  defaultDurationMinutes,
 }: {
   leadId: string;
   leadName: string;
@@ -209,6 +213,7 @@ function CallDialog({
   leadPhone: string | null;
   senderName: string;
   aiEnabled: boolean;
+  defaultDurationMinutes: number | null;
 }) {
   const [open, setOpen] = useState(false);
   const [digestOpen, setDigestOpen] = useState(false);
@@ -217,10 +222,15 @@ function CallDialog({
   const [momTestAccessible, setMomTestAccessible] = useState<boolean | null>(null);
   const [whatsappOpen, setWhatsappOpen] = useState(false);
   const [notes, setNotes] = useState("");
-  const [duration, setDuration] = useState("");
+  const [duration, setDuration] = useState(() => defaultDurationMinutes?.toString() ?? "");
+  const [callDate, setCallDate] = useState(todayIsoLocal);
   const [outcome, setOutcome] = useState<CallOutcome>("connected");
   const feedback = useFormFeedback();
   const router = useRouter();
+
+  useEffect(() => {
+    if (open) setDuration(defaultDurationMinutes?.toString() ?? "");
+  }, [defaultDurationMinutes, open]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -230,11 +240,13 @@ function CallDialog({
       notes: notes || undefined,
       durationMinutes: duration ? Number(duration) : undefined,
       outcome,
+      callDate,
     });
     if (!res.ok) return feedback.setError(res.error);
     feedback.setSuccess("Llamada registrada");
     setNotes("");
-    setDuration("");
+    setDuration(defaultDurationMinutes?.toString() ?? "");
+    setCallDate(todayIsoLocal());
     setDigestKey((key) => key + 1);
     if (res.noAnswerStreak >= 3) setWhatsappOpen(true);
     router.refresh();
@@ -291,6 +303,11 @@ function CallDialog({
                 placeholder="0"
               />
             </div>
+            <CallDateField
+              id={`fast-call-date-${leadId}`}
+              value={callDate}
+              onChange={setCallDate}
+            />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor={`fast-call-notes-${leadId}`} className="text-xs font-medium">

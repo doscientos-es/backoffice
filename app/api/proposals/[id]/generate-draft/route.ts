@@ -4,8 +4,6 @@
  * it once it has received a valid structured response.
  */
 
-import { type NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { AI_MODELS, isAIEnabled, runAIObject } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { formatLeadBriefingForAI } from "@/lib/leads/ai-context";
@@ -19,6 +17,8 @@ import {
 } from "@/lib/proposals/scope";
 import { rateLimit } from "@/lib/ratelimit";
 import { createServerClient } from "@/lib/supabase/server";
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -71,7 +71,7 @@ deliverables, acceptance_criteria, payment_schedule, payment_terms y change_mana
   briefing deja fuera o que requieren una fase/valoración adicional. Devuelve [] solo si no hay base.
 - deliverables y acceptance_criteria: Markdown breve y editable. Propónlos únicamente a partir del
   alcance observable; deja "" si el briefing no permite concretarlos.
-- payment_schedule: "upfront", "half_half", "30_40_30" o "custom". Respeta una forma de pago
+- payment_schedule: "upfront", "half_half", "30_40_30", "per_module_upfront" o "custom". Respeta una forma de pago
   explícita; si no existe, usa "half_half" como plantilla comercial revisable.
 - payment_terms: explica el calendario elegido de forma breve. Si no consta en el briefing, usa el
   texto de plantilla sin presentarlo como una condición ya acordada.

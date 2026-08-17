@@ -4,18 +4,6 @@
 // Única fuente de verdad para las 3 fast actions (llamada, email, nota)
 // con opción de agendar follow-up. Todas refrescan el router tras éxito.
 
-import {
-  FileText,
-  Loader2,
-  Mail,
-  MessageCircle,
-  NotebookPen,
-  Phone,
-  Send,
-  Video,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
-import { type SubmitEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -39,11 +27,25 @@ import { publicEnv } from "@/lib/env";
 import { buildLeadWhatsAppMessage, buildWhatsAppUrl } from "@/lib/leads/whatsapp";
 import { defaultFollowUpDateTime } from "@/lib/reminders/date-presets";
 import type { CallOutcome } from "@/lib/schemas/lead";
+import { todayIsoLocal } from "@/lib/utils/date";
 import { addMinutesToDatetimeLocal, datetimeLocalToIso } from "@/lib/utils/date-time";
+import {
+  FileText,
+  Loader2,
+  Mail,
+  MessageCircle,
+  NotebookPen,
+  Phone,
+  Send,
+  Video,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { type SubmitEvent, useEffect, useState } from "react";
 import { createReminder } from "../reminders/actions";
 import { EmailComposer } from "./[id]/email-composer";
 import { MomTestQuickDialog } from "./[id]/mom-test-quick-dialog";
 import { logLeadCall, logLeadEmail, logLeadNote, scheduleLeadMeeting } from "./actions";
+import { CallDateField } from "./call-date-field";
 import { CallDigestDialog } from "./call-digest-dialog";
 
 // ─── QMeetDialog ──────────────────────────────────────────────────────────────
@@ -523,6 +525,7 @@ export function QCallDialog({
   senderName,
   aiEnabled,
   openInitially = false,
+  defaultDurationMinutes = null,
 }: {
   leadId: string;
   leadName: string;
@@ -531,6 +534,7 @@ export function QCallDialog({
   senderName: string;
   aiEnabled?: boolean;
   openInitially?: boolean;
+  defaultDurationMinutes?: number | null;
 }) {
   const [open, setOpen] = useState(false);
   const [digestOpen, setDigestOpen] = useState(false);
@@ -539,7 +543,8 @@ export function QCallDialog({
   const [momTestAccessible, setMomTestAccessible] = useState<boolean | null>(null);
   const [whatsappOpen, setWhatsappOpen] = useState(false);
   const [outcome, setOutcome] = useState<CallOutcome>("connected");
-  const [duration, setDuration] = useState("");
+  const [duration, setDuration] = useState(() => defaultDurationMinutes?.toString() ?? "");
+  const [callDate, setCallDate] = useState(todayIsoLocal);
   const [notes, setNotes] = useState("");
   const [transcript, setTranscript] = useState("");
   const [followUpEnabled, setFollowUpEnabled] = useState(false);
@@ -555,6 +560,10 @@ export function QCallDialog({
   useEffect(() => {
     if (openInitially) setOpen(true);
   }, [openInitially]);
+
+  useEffect(() => {
+    if (open) setDuration(defaultDurationMinutes?.toString() ?? "");
+  }, [defaultDurationMinutes, open]);
 
   async function handleImportNotes() {
     setImporting(true);
@@ -586,6 +595,7 @@ export function QCallDialog({
       transcript: transcript || undefined,
       durationMinutes: duration ? Number(duration) : undefined,
       outcome,
+      callDate,
     });
     if (!res.ok) return feedback.setError(res.error);
     if (followUpEnabled && followUpAt) {
@@ -598,7 +608,8 @@ export function QCallDialog({
     feedback.setSuccess("Llamada registrada");
     setNotes("");
     setTranscript("");
-    setDuration("");
+    setDuration(defaultDurationMinutes?.toString() ?? "");
+    setCallDate(todayIsoLocal());
     setFollowUpEnabled(false);
     setDigestKey((key) => key + 1);
     if (res.noAnswerStreak >= 3) setWhatsappOpen(true);
@@ -657,6 +668,11 @@ export function QCallDialog({
                   placeholder="0"
                 />
               </div>
+              <CallDateField
+                id={`qa-call-date-${leadId}`}
+                value={callDate}
+                onChange={setCallDate}
+              />
             </div>
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">

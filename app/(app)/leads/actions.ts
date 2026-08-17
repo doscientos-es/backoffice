@@ -660,7 +660,7 @@ export const logLeadCall = defineAction<
   schema: LogCallInput,
   revalidate: (_payload, input) => [`/leads/${input.leadId}`],
   handler: async (data, { user }) => {
-    const { leadId, notes, transcript, durationMinutes, outcome } = data;
+    const { leadId, notes, transcript, durationMinutes, outcome, callDate } = data;
 
     const supabase = await createServerClient();
     const { error } = await supabase.from("lead_interactions").insert({
@@ -673,6 +673,7 @@ export const logLeadCall = defineAction<
         transcript: transcript?.trim() || null,
         duration_minutes: durationMinutes ?? null,
         outcome: outcome ?? null,
+        call_date: callDate,
       },
     });
     if (error) throw new Error(error.message);

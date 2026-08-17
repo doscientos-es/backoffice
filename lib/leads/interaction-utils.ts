@@ -2,6 +2,7 @@ export type CallInteractionDetails = {
   transcript: string | null;
   durationMinutes: number | null;
   outcome: string | null;
+  callDate: string | null;
 };
 
 export type LeadInteractionForAI = {
@@ -46,7 +47,7 @@ export function groupResendInteractions<T extends ResendInteraction>(interaction
 /** Safely reads the structured metadata stored on a call interaction. */
 export function getCallInteractionDetails(payload: unknown): CallInteractionDetails {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
-    return { transcript: null, durationMinutes: null, outcome: null };
+    return { transcript: null, durationMinutes: null, outcome: null, callDate: null };
   }
 
   const data = payload as Record<string, unknown>;
@@ -56,17 +57,28 @@ export function getCallInteractionDetails(payload: unknown): CallInteractionDeta
       ? data.duration_minutes
       : null;
   const outcome = typeof data.outcome === "string" ? data.outcome : null;
+  const callDate =
+    typeof data.call_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(data.call_date)
+      ? data.call_date
+      : null;
 
   return {
     transcript: transcript || null,
     durationMinutes,
     outcome,
+    callDate,
   };
+}
+
+/** Returns the business date of an interaction, falling back to its audit timestamp. */
+export function interactionDate(interaction: LeadInteractionForAI): string {
+  if (interaction.type !== "call") return interaction.created_at;
+  return getCallInteractionDetails(interaction.payload).callDate ?? interaction.created_at;
 }
 
 /** Formats one interaction for the lead-analysis prompt without losing calls' transcripts. */
 export function formatInteractionForAI(interaction: LeadInteractionForAI): string {
-  const date = new Date(interaction.created_at).toISOString().slice(0, 10);
+  const date = interactionDate(interaction).slice(0, 10);
   const subject = interaction.subject?.trim();
   const notes = interaction.body?.trim()?.slice(0, 300);
   const callDetails =
@@ -74,11 +86,11 @@ export function formatInteractionForAI(interaction: LeadInteractionForAI): strin
   const transcript = callDetails?.transcript?.slice(0, 2000);
   const callMetadata = callDetails
     ? [
-        callDetails.outcome ? `Resultado: ${callDetails.outcome}` : null,
-        callDetails.durationMinutes != null ? `Duración: ${callDetails.durationMinutes} min` : null,
-      ]
-        .filter(Boolean)
-        .join(" · ")
+      callDetails.outcome ? `Resultado: ${callDetails.outcome}` : null,
+      callDetails.durationMinutes != null ? `Duración: ${callDetails.durationMinutes} min` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ")
     : "";
   const meetingData =
     interaction.type === "meeting" && interaction.payload && typeof interaction.payload === "object"
@@ -88,9 +100,7 @@ export function formatInteractionForAI(interaction: LeadInteractionForAI): strin
     ? `Reunión: ${String(meetingData.start)}${meetingData.end ? ` → ${String(meetingData.end)}` : ""}`
     : "";
 
-  return `- ${date} | ${interaction.type}${subject ? ` | "${subject}"` : ""}${
-    notes ? ` | Notas: ${notes}` : ""
-  }${callMetadata ? ` | ${callMetadata}` : ""}${meetingTime ? ` | ${meetingTime}` : ""}${
-    transcript ? ` | Transcripción: ${transcript}` : ""
-  }`;
+  return `- ${date} | ${interaction.type}${subject ? ` | "${subject}"` : ""}${notes ? ` | Notas: ${notes}` : ""
+    }${callMetadata ? ` | ${callMetadata}` : ""}${meetingTime ? ` | ${meetingTime}` : ""}${transcript ? ` | Transcripción: ${transcript}` : ""
+    }`;
 }

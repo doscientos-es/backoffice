@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import {
   AssignLeadOwnerInput,
   CALL_OUTCOMES,
@@ -14,6 +13,7 @@ import {
   UpdateLeadMomTestInput,
   UpdateLeadStatusInput,
 } from "@/lib/schemas/lead";
+import { describe, expect, it } from "vitest";
 
 const uuid = "11111111-1111-1111-1111-111111111111";
 
@@ -131,9 +131,30 @@ describe("LogCallInput", () => {
     expect(LogCallInput.safeParse({ leadId: uuid, outcome: "wrong_number" }).success).toBe(true);
   });
   it("coerces duration and validates outcome", () => {
-    const out = LogCallInput.parse({ leadId: uuid, notes: "x", durationMinutes: "12" });
+    const out = LogCallInput.parse({
+      leadId: uuid,
+      notes: "x",
+      durationMinutes: "12",
+      callDate: "2026-08-10",
+    });
     expect(out.durationMinutes).toBe(12);
+    expect(out.callDate).toBe("2026-08-10");
     expect(CALL_OUTCOMES).toContain("voicemail");
+  });
+  it("accepts past call dates and rejects invalid or future dates", () => {
+    expect(LogCallInput.safeParse({ leadId: uuid, notes: "x", callDate: "2026-08-10" }).success).toBe(
+      true,
+    );
+    expect(LogCallInput.safeParse({ leadId: uuid, notes: "x", callDate: "2026-02-30" }).success).toBe(
+      false,
+    );
+    expect(LogCallInput.safeParse({ leadId: uuid, notes: "x", callDate: "9999-01-01" }).success).toBe(
+      false,
+    );
+  });
+  it("defaults the call date to today when legacy callers omit it", () => {
+    const result = LogCallInput.parse({ leadId: uuid, notes: "x" });
+    expect(result.callDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 });
 

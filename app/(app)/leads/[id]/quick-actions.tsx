@@ -1,9 +1,9 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { CalendarClock, Hand, ListTodo } from "lucide-react";
 import { type ReactNode, useState, useTransition } from "react";
 import { sileo } from "sileo";
-import { Button } from "@/components/ui/button";
 import {
   type ScheduleMember,
   ScheduleReminderDialog,
@@ -28,6 +28,7 @@ type Props = {
   leadPhone: string | null;
   senderName: string;
   openCallInitially?: boolean;
+  defaultDurationMinutes?: number | null;
   claimable?: boolean;
   aiEnabled?: boolean;
   googleEnabled?: boolean;
@@ -45,6 +46,7 @@ export function LeadQuickActions({
   leadPhone,
   senderName,
   openCallInitially,
+  defaultDurationMinutes,
   claimable,
   aiEnabled,
   googleEnabled,
@@ -64,6 +66,7 @@ export function LeadQuickActions({
         senderName={senderName}
         aiEnabled={aiEnabled}
         openInitially={openCallInitially}
+        defaultDurationMinutes={defaultDurationMinutes}
       />
       <QSendEmailDialog leadId={leadId} leadEmail={leadEmail} aiEnabled={aiEnabled} />
       <QEmailDialog leadId={leadId} leadEmail={leadEmail} />

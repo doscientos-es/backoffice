@@ -1,7 +1,7 @@
+import type { ScopeModule } from "@/lib/proposals/scope";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
-import type { ScopeModule } from "@/lib/proposals/scope";
 import { ScopeModulesEditor } from "./scope-modules-editor";
 
 const module: ScopeModule = {
@@ -82,6 +82,35 @@ describe("ScopeModulesEditor", () => {
       expect.objectContaining({
         excluded: ["Migración histórica", "Integraciones adicionales", "Formación"],
       }),
+    ]);
+  });
+
+  it("updates the estimated duration of a module", () => {
+    const onChange = vi.fn();
+    render(<ControlledEditor onChange={onChange} />);
+
+    fireEvent.change(screen.getByLabelText("Plazo estimado del módulo 1"), {
+      target: { value: "4" },
+    });
+
+    expect(onChange).toHaveBeenLastCalledWith([
+      expect.objectContaining({ duration_weeks: 4 }),
+    ]);
+  });
+
+  it("accepts a custom duration in the documented format", () => {
+    const onChange = vi.fn();
+    render(<ControlledEditor onChange={onChange} />);
+
+    fireEvent.change(screen.getByLabelText("Plazo estimado del módulo 1"), {
+      target: { value: "custom" },
+    });
+    fireEvent.change(screen.getByLabelText("Duración personalizada del módulo 1"), {
+      target: { value: "3 meses" },
+    });
+
+    expect(onChange).toHaveBeenLastCalledWith([
+      expect.objectContaining({ duration_mode: "custom", duration_custom: "3 meses" }),
     ]);
   });
 });

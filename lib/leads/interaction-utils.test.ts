@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupResendInteractions } from "./interaction-utils";
+import { getCallInteractionDetails, groupResendInteractions, interactionDate } from "./interaction-utils";
 
 describe("groupResendInteractions", () => {
   it("groups repeated Resend callbacks for the same email and event type", () => {
@@ -15,5 +15,21 @@ describe("groupResendInteractions", () => {
       { interaction: expect.objectContaining({ id: "sent-1" }), count: 1 },
       { interaction: expect.objectContaining({ id: "manual" }), count: 1 },
     ]);
+  });
+});
+
+describe("call interaction dates", () => {
+  it("uses the call date stored in metadata and otherwise keeps the audit timestamp", () => {
+    const interaction = {
+      type: "call",
+      subject: "Llamada",
+      body: null,
+      created_at: "2026-08-17T10:00:00.000Z",
+      payload: { call_date: "2026-08-10" },
+    };
+
+    expect(getCallInteractionDetails(interaction.payload).callDate).toBe("2026-08-10");
+    expect(interactionDate(interaction)).toBe("2026-08-10");
+    expect(interactionDate({ ...interaction, payload: {} })).toBe(interaction.created_at);
   });
 });

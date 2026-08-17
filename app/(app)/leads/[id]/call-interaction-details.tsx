@@ -1,7 +1,5 @@
 "use client";
 
-import { Eye, FileText } from "lucide-react";
-import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +13,8 @@ import {
 import { MemberLabel } from "@/components/ui/member-avatar";
 import { getCallInteractionDetails } from "@/lib/leads/interaction-utils";
 import type { LeadDetailInteraction } from "@/lib/leads/types";
+import { Eye, FileText } from "lucide-react";
+import { useState } from "react";
 
 const CALL_OUTCOME_LABEL: Record<string, string> = {
   connected: "Contactado",
@@ -29,6 +29,9 @@ export function CallInteractionDetails({ interaction }: { interaction: LeadDetai
   const details = getCallInteractionDetails(interaction.payload);
   const hasNotes = Boolean(interaction.body?.trim());
   const hasTranscript = Boolean(details.transcript);
+  const callDate = details.callDate
+    ? new Date(`${details.callDate}T12:00:00`).toLocaleDateString("es-ES")
+    : null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -47,7 +50,9 @@ export function CallInteractionDetails({ interaction }: { interaction: LeadDetai
         <DialogHeader className="shrink-0">
           <DialogTitle>{interaction.subject ?? "Llamada"}</DialogTitle>
           <DialogDescription className="flex flex-wrap items-center gap-2">
-            <span>{new Date(interaction.created_at).toLocaleString("es-ES")}</span>
+            <span>
+              {callDate ? `Fecha de llamada: ${callDate}` : new Date(interaction.created_at).toLocaleString("es-ES")}
+            </span>
             {interaction.performer ? (
               <MemberLabel member={interaction.performer} size="xs" />
             ) : null}

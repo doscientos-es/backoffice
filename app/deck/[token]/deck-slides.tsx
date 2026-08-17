@@ -1,16 +1,20 @@
-import { ArrowRight, Download } from "lucide-react";
-import type { ReactNode } from "react";
 import { LogoMark } from "@/components/branding";
 import { Markdown } from "@/components/ui/markdown";
 import {
   BILLING_CYCLE_LABELS,
-  type BillingCycle,
   computeProposalTotals,
+  type BillingCycle,
   type ProposalTotals,
 } from "@/lib/finance";
 import type { KeyPoint } from "@/lib/proposals/key-points";
-import { PAYMENT_SCHEDULE_LABELS, type ScopeModule } from "@/lib/proposals/scope";
+import {
+  PAYMENT_SCHEDULE_LABELS,
+  scopeModuleDurationText,
+  type ScopeModule,
+} from "@/lib/proposals/scope";
 import { formatDate, formatEUR } from "@/lib/utils";
+import { ArrowRight, Download } from "lucide-react";
+import type { ReactNode } from "react";
 import type { DeckProposal, DeckProposalItem, DeckTeamMember } from "./page";
 
 function buildTotals(items: DeckProposalItem[]): ProposalTotals {
@@ -259,6 +263,11 @@ function ScopeModuleSlide({ module, index }: { module: ScopeModule; index: numbe
         {module.description ? (
           <p className="mb-6 text-base leading-relaxed text-zinc-600 sm:text-lg">
             {module.description}
+          </p>
+        ) : null}
+        {scopeModuleDurationText(module) ? (
+          <p className="mb-6 text-sm font-medium text-zinc-500">
+            Plazo estimado: {scopeModuleDurationText(module)}
           </p>
         ) : null}
         <div className="grid gap-6 sm:grid-cols-2">
