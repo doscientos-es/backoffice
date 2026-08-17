@@ -1,32 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { EntityAvatar } from "@/components/ui/entity-avatar";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { MemberAvatar } from "@/components/ui/member-avatar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-  boardColumnForLead,
-  countLeadsNeedingAttention,
-  DEFAULT_COMPACT_LEAD_KANBAN_COLUMNS,
-  groupLeadsForKanban,
-  LEAD_KANBAN_COLUMNS,
-  type LeadKanbanColumnId,
-  nextActionForKanban,
-  sumLeadEstimatedValue,
-} from "@/lib/leads/kanban-policy";
-import {
-  isRotting,
-  nextActionState,
-  STAGE_ROT_DAYS,
-  waitingForReplySince,
-} from "@/lib/leads/pipeline";
-import type { LeadListItem, LeadMemberRef } from "@/lib/leads/types";
-import { leadDisplayName } from "@/lib/leads/utils";
-import type { MemberOption } from "@/lib/members/queries";
-import type { LeadStatus } from "@/lib/status";
-import { cn, formatEUR, relativeTime } from "@/lib/utils";
 import {
   DndContext,
   type DragEndEvent,
@@ -57,6 +30,33 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useOptimistic, useState, useTransition } from "react";
+import { Badge } from "@/components/ui/badge";
+import { EntityAvatar } from "@/components/ui/entity-avatar";
+import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { MemberAvatar } from "@/components/ui/member-avatar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  boardColumnForLead,
+  countLeadsNeedingAttention,
+  DEFAULT_COMPACT_LEAD_KANBAN_COLUMNS,
+  groupLeadsForKanban,
+  LEAD_KANBAN_COLUMNS,
+  type LeadKanbanColumnId,
+  nextActionForKanban,
+  sumLeadEstimatedValue,
+} from "@/lib/leads/kanban-policy";
+import {
+  isRotting,
+  nextActionState,
+  STAGE_ROT_DAYS,
+  waitingForReplySince,
+} from "@/lib/leads/pipeline";
+import type { LeadListItem, LeadMemberRef } from "@/lib/leads/types";
+import { leadDisplayName } from "@/lib/leads/utils";
+import type { MemberOption } from "@/lib/members/queries";
+import type { LeadStatus } from "@/lib/status";
+import { cn, formatEUR, relativeTime } from "@/lib/utils";
 import { ScheduleReminderDialog } from "../reminders/schedule-reminder-dialog";
 import { LeadCallLink } from "./[id]/phone-actions";
 import { deleteLead, updateLeadStatus } from "./actions";
@@ -414,7 +414,7 @@ function Column({
               "min-w-0 flex-1 truncate text-sm font-semibold",
               tone,
               collapsed &&
-              "md:rotate-180 md:[writing-mode:vertical-rl] md:group-hover/col:rotate-0 md:group-hover/col:[writing-mode:horizontal-tb]",
+                "md:rotate-180 md:[writing-mode:vertical-rl] md:group-hover/col:rotate-0 md:group-hover/col:[writing-mode:horizontal-tb]",
             )}
           >
             {label}
