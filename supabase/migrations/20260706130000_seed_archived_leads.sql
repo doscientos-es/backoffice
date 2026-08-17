@@ -1,7 +1,7 @@
 -- ============================================================
 -- Seed: leads archivados importados del CRM anterior
 -- ============================================================
--- Fuente: private/opportunities.csv (exportado de HighLevel/GHL)
+-- Fuente: private/opportunities.csv (exportado del CRM anterior)
 -- Todos entran con status='archived' y external_source='legacy_crm'.
 -- external_id = Opportunity ID original → permite re-ejecutar sin duplicados.
 

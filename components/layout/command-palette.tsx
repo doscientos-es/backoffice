@@ -1,32 +1,19 @@
 "use client";
 import {
-  Archive,
-  BarChart3,
-  Bell,
-  CalendarDays,
   Check,
   CheckSquare,
   Clock,
   Copy,
   Eye,
   EyeOff,
-  FileSignature,
-  FileText,
   FolderKanban,
-  Globe,
-  Home,
   Inbox,
   KeyRound,
   Loader2,
   Lock,
-  Megaphone,
   Plus,
   Receipt,
-  Repeat,
-  Settings,
-  Share2,
   Users,
-  Wallet,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -52,6 +39,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { NAVIGATION_GROUPS } from "@/lib/navigation/navigation";
 import {
   CREATE_SHORTCUTS,
   mergeRecentItems,
@@ -78,43 +66,11 @@ const TYPE_LABEL: Record<SearchResultItem["type"], string> = {
   vault: "Bóveda",
 };
 
-const NAV_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
-  "/inicio": Home,
-  "/calendar": CalendarDays,
-  "/leads": Inbox,
-  "/clients": Users,
-  "/projects": FolderKanban,
-  "/proposals": FileSignature,
-  "/invoices": Receipt,
-  "/subscriptions": Repeat,
-  "/finance": Wallet,
-  "/finance/expenses": Wallet,
-  "/finance/portfolio": BarChart3,
-  "/tasks": CheckSquare,
-  "/reminders": Bell,
-  "/marketing": Megaphone,
-  "/social": Share2,
-  "/documents": FileText,
-  "/internal-docs": Archive,
-  "/settings": Settings,
-  "/webs": Globe,
-  "/vault": KeyRound,
-};
-
-/**
- * Lista unificada de navegación: NAV_SHORTCUTS (con chord) + páginas extra.
- * Sin duplicados, sin EXTRA_LINKS separado.
- */
-const ALL_NAV: Array<{ href: string; label: string; key?: string }> = [
-  ...NAV_SHORTCUTS,
-  { href: "/calendar", label: "Agenda" },
-  { href: "/social", label: "Social" },
-  { href: "/finance", label: "Finanzas" },
-  { href: "/finance/portfolio", label: "Portfolio" },
-  { href: "/documents", label: "Documentos" },
-  { href: "/internal-docs", label: "Docs internos" },
-  { href: "/settings", label: "Ajustes" },
-];
+const NAVIGATION_KEYS = new Map(NAV_SHORTCUTS.map(({ href, key }) => [href, key]));
+const ALL_NAV = NAVIGATION_GROUPS.flatMap((group) => group.items).map((item) => ({
+  ...item,
+  key: NAVIGATION_KEYS.get(item.href),
+}));
 
 function loadRecents(): RecentItem[] {
   if (typeof window === "undefined") return [];
@@ -491,7 +447,7 @@ export function CommandPalette() {
 
               <CommandGroup heading="Ir a…">
                 {ALL_NAV.map((l) => {
-                  const Icon = NAV_ICON[l.href] ?? Home;
+                  const Icon = l.icon;
                   return (
                     <CommandItem key={l.href} value={`ir a ${l.label}`} onSelect={() => go(l.href)}>
                       <Icon className="size-4 shrink-0 text-muted-foreground" />

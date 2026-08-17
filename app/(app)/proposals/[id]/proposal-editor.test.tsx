@@ -1,6 +1,6 @@
-import { DEFAULT_MAINTENANCE_OFFER } from "@/lib/proposals/maintenance";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { DEFAULT_MAINTENANCE_OFFER } from "@/lib/proposals/maintenance";
 
 vi.mock("@/components/finance/line-items-table", () => ({ LineItemsTable: () => null }));
 vi.mock("@/components/proposals/maintenance-offer-editor", () => ({
@@ -11,6 +11,7 @@ vi.mock("@/components/proposals/problem-solution-editor", () => ({
 }));
 vi.mock("@/components/proposals/scope-modules-editor", () => ({ ScopeModulesEditor: () => null }));
 vi.mock("../actions", () => ({ updateProposal: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
 import { updateProposal } from "../actions";
 import { ProposalEditor } from "./proposal-editor";

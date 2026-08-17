@@ -1,12 +1,12 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { requireRole, requireUser } from "@/lib/auth";
 import { serverEnv } from "@/lib/env";
 import { consumeUserVerification } from "@/lib/security/user-verification";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { createServerClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
-import { z } from "zod";
 
 const ProfileInput = z.object({
   email_alias: z

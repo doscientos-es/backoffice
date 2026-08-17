@@ -16,12 +16,12 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
-import { suggestedReminderDateTime } from "@/lib/reminders/date-presets";
 import {
   REMINDER_ACTION_TYPE_LABEL,
   REMINDER_ACTION_TYPES,
   type ReminderActionType,
 } from "@/lib/reminders/action-types";
+import { suggestedReminderDateTime } from "@/lib/reminders/date-presets";
 import { datetimeLocalToIso, toDatetimeLocalValue } from "@/lib/utils/date-time";
 import { createReminder } from "./actions";
 

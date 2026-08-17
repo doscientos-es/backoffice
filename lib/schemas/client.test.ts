@@ -18,8 +18,9 @@ describe("CreateClientInput", () => {
 });
 
 describe("UpdateClientInput", () => {
-  it("extends create with a required id", () => {
+  it("requires an id and optimistic-lock version", () => {
     expect(UpdateClientInput.safeParse({ name: "X" }).success).toBe(false);
-    expect(UpdateClientInput.parse({ id: uuid, name: "X" }).id).toBe(uuid);
+    expect(UpdateClientInput.safeParse({ id: uuid, name: "X" }).success).toBe(false);
+    expect(UpdateClientInput.parse({ id: uuid, name: "X", expected_version: 1 }).id).toBe(uuid);
   });
 });

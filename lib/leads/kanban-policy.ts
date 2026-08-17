@@ -125,9 +125,9 @@ export function sumLeadEstimatedValue(leads: LeadListItem[]): number {
   return leads.reduce((total, lead) => total + (lead.estimated_value ?? 0), 0);
 }
 
-export function countLeadsNeedingAttention(leads: LeadListItem[]): number {
+export function countLeadsNeedingAttention(leads: LeadListItem[], now = new Date()): number {
   return leads.filter((lead) => {
-    const state = nextActionState(lead.status, lead.next_action);
+    const state = nextActionState(lead.status, lead.next_action, now);
     return state === "overdue" || state === "missing";
   }).length;
 }

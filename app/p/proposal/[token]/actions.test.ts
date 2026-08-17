@@ -88,7 +88,7 @@ describe("portal proposal actions", () => {
 
   it("rejects malformed tokens without touching the DB", async () => {
     const { acceptProposal, sendProposalQuestion } = await import(
-      "@/app/p/proposal/[token]/actions",
+      "@/app/p/proposal/[token]/actions"
     );
     const result = await acceptProposal("short");
     expect(result).toEqual({ ok: false, error: "Token inválido" });

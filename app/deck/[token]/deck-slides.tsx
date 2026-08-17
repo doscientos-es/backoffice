@@ -1,3 +1,5 @@
+import { ArrowRight, Download } from "lucide-react";
+import type { ReactNode } from "react";
 import { LogoMark } from "@/components/branding";
 import { Markdown } from "@/components/ui/markdown";
 import {
@@ -9,8 +11,6 @@ import {
 import type { KeyPoint } from "@/lib/proposals/key-points";
 import { PAYMENT_SCHEDULE_LABELS, type ScopeModule } from "@/lib/proposals/scope";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { ArrowRight, Download } from "lucide-react";
-import type { ReactNode } from "react";
 import type { DeckProposal, DeckProposalItem, DeckTeamMember } from "./page";
 
 function buildTotals(items: DeckProposalItem[]): ProposalTotals {
@@ -316,19 +316,13 @@ function DeliverySlide({ proposal }: { proposal: DeckProposal }) {
         {deliverables ? (
           <div>
             <p className="mb-3 text-sm font-semibold text-zinc-900">Entregables</p>
-            <Markdown
-              source={deliverables}
-              className="deck-markdown text-sm text-zinc-600"
-            />
+            <Markdown source={deliverables} className="deck-markdown text-sm text-zinc-600" />
           </div>
         ) : null}
         {acceptanceCriteria ? (
           <div>
             <p className="mb-3 text-sm font-semibold text-zinc-900">Criterios de aceptación</p>
-            <Markdown
-              source={acceptanceCriteria}
-              className="deck-markdown text-sm text-zinc-600"
-            />
+            <Markdown source={acceptanceCriteria} className="deck-markdown text-sm text-zinc-600" />
           </div>
         ) : null}
       </div>

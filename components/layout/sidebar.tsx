@@ -1,30 +1,6 @@
 "use client";
 
-import {
-  Archive,
-  BarChart3,
-  Bell,
-  CalendarDays,
-  CheckSquare,
-  ChevronDown,
-  FileSignature,
-  FolderKanban,
-  Globe,
-  Home,
-  Images,
-  Inbox,
-  KeyRound,
-  LifeBuoy,
-  Mail,
-  Megaphone,
-  MousePointerClick,
-  Receipt,
-  Repeat,
-  Settings,
-  Share2,
-  Users,
-  Wallet,
-} from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -35,103 +11,14 @@ import { UserMenu } from "@/components/layout/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
-import type { CurrentUser, MemberRole } from "@/lib/auth";
+import type { CurrentUser } from "@/lib/auth";
+import {
+  type NavigationGroup,
+  type NavigationItem,
+  visibleNavigationGroups,
+} from "@/lib/navigation/navigation";
 import { cn } from "@/lib/utils";
 import { version } from "../../package.json";
-
-type NavItem = {
-  href: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  /** Si se indica, solo los roles listados ven este item. Sin restricción = todos. */
-  allowedRoles?: MemberRole[];
-};
-
-type NavGroup = {
-  /** Etiqueta de sección. undefined = sin cabecera (p.ej. Inicio). */
-  label?: string;
-  items: NavItem[];
-  /** Si false, el grupo empieza colapsado (a menos que haya un item activo). Default: true. */
-  defaultOpen?: boolean;
-};
-
-const ADMIN_ROLES: MemberRole[] = ["owner", "admin"];
-
-/**
- * Navegación principal agrupada por flujo de negocio.
- * Orden: Inicio → Ventas → Entrega → Finanzas → Growth → Empresa.
- */
-const NAV_GROUPS: NavGroup[] = [
-  {
-    items: [
-      { href: "/inicio", label: "Inicio", icon: Home },
-      { href: "/calendar", label: "Agenda", icon: CalendarDays },
-    ],
-  },
-  {
-    label: "Ventas",
-    items: [
-      { href: "/leads", label: "Leads", icon: Inbox },
-      { href: "/leads/recovery", label: "Repesca", icon: LifeBuoy },
-      { href: "/clients", label: "Clientes", icon: Users },
-      { href: "/proposals", label: "Propuestas", icon: FileSignature },
-    ],
-  },
-  {
-    label: "Entrega",
-    items: [
-      { href: "/projects", label: "Proyectos", icon: FolderKanban },
-      { href: "/tasks", label: "Tareas", icon: CheckSquare },
-      { href: "/webs", label: "Webs", icon: Globe, allowedRoles: ADMIN_ROLES },
-    ],
-  },
-  {
-    label: "Finanzas",
-    defaultOpen: false,
-    items: [
-      { href: "/invoices", label: "Facturas", icon: Receipt, allowedRoles: ADMIN_ROLES },
-      { href: "/subscriptions", label: "Suscripciones", icon: Repeat, allowedRoles: ADMIN_ROLES },
-      { href: "/finance", label: "Finanzas", icon: Wallet, allowedRoles: ADMIN_ROLES },
-      {
-        href: "/finance/portfolio",
-        label: "Portfolio",
-        icon: BarChart3,
-        allowedRoles: ADMIN_ROLES,
-      },
-    ],
-  },
-  {
-    label: "Growth",
-    defaultOpen: false,
-    items: [
-      { href: "/marketing", label: "Publicidad", icon: Megaphone, allowedRoles: ADMIN_ROLES },
-      {
-        href: "/marketing/newsletters",
-        label: "Newsletters",
-        icon: Mail,
-        allowedRoles: ADMIN_ROLES,
-      },
-      {
-        href: "/marketing/events",
-        label: "Eventos",
-        icon: MousePointerClick,
-        allowedRoles: ADMIN_ROLES,
-      },
-      { href: "/social", label: "Social", icon: Share2, allowedRoles: ADMIN_ROLES },
-    ],
-  },
-  {
-    label: "Empresa",
-    defaultOpen: false,
-    items: [
-      { href: "/reminders", label: "Recordatorios", icon: Bell },
-      { href: "/internal-docs", label: "Docs internos", icon: Archive },
-      { href: "/brand", label: "Marca", icon: Images },
-      { href: "/vault", label: "Bóveda", icon: KeyRound, allowedRoles: ADMIN_ROLES },
-      { href: "/settings", label: "Ajustes", icon: Settings },
-    ],
-  },
-];
 
 function NavLink({
   href,
@@ -174,7 +61,7 @@ function NavSection({
   group,
   isActive,
 }: {
-  group: NavGroup & { items: NavItem[] };
+  group: NavigationGroup & { items: NavigationItem[] };
   isActive: (href: string) => boolean;
 }) {
   const hasActive = group.items.some((i) => isActive(i.href));
@@ -186,14 +73,22 @@ function NavSection({
 
   useEffect(() => {
     if (hasActive) return;
-    const stored = localStorage.getItem(`nav-section-${group.label}`);
-    if (stored !== null) setOpen(stored === "1");
+    try {
+      const stored = localStorage.getItem(`nav-section-${group.label}`);
+      if (stored !== null) setOpen(stored === "1");
+    } catch {
+      // Keep the deterministic default when browser storage is unavailable.
+    }
   }, [group.label, hasActive]);
 
   function toggle() {
     const next = !open;
     setOpen(next);
-    localStorage.setItem(`nav-section-${group.label}`, next ? "1" : "0");
+    try {
+      localStorage.setItem(`nav-section-${group.label}`, next ? "1" : "0");
+    } catch {
+      // The in-memory state remains usable without persistence.
+    }
   }
 
   return (
@@ -233,10 +128,7 @@ export function Sidebar({
 }) {
   const pathname = usePathname();
 
-  const visibleGroups = NAV_GROUPS.map((g) => ({
-    ...g,
-    items: g.items.filter((item) => !item.allowedRoles || item.allowedRoles.includes(user.role)),
-  })).filter((g) => g.items.length > 0);
+  const visibleGroups = visibleNavigationGroups(user.role);
 
   const isActive = (href: string) => {
     if (pathname === href) return true;

@@ -31,13 +31,13 @@ type ActionResult = { ok: true } | { ok: false; error: string };
 
 export type PaymentInitResult =
   | {
-    ok: true;
-    demo?: boolean;
-    url: string;
-    signatureVersion: string;
-    merchantParameters: string;
-    signature: string;
-  }
+      ok: true;
+      demo?: boolean;
+      url: string;
+      signatureVersion: string;
+      merchantParameters: string;
+      signature: string;
+    }
   | { ok: false; error: string };
 
 /**

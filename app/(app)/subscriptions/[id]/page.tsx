@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { notFound, redirect } from "next/navigation";
 import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,8 +11,6 @@ import { computeLineTotals } from "@/lib/finance";
 import { SUBSCRIPTION_STATUS, type SubscriptionStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
-import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
 import { deleteSubscription } from "../actions";
 import { SubscriptionEditForm } from "./subscription-edit-form";
 import { type SubscriptionInvoice, SubscriptionInvoices } from "./subscription-invoices";

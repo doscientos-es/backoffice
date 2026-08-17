@@ -1,5 +1,7 @@
 "use client";
 
+import { Check, ClipboardList, Loader2, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -10,8 +12,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { Check, ClipboardList, Loader2, Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
 import { createTask } from "../tasks/actions";
 import { EmailComposer } from "./[id]/email-composer";
 

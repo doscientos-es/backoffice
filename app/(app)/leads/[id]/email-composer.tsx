@@ -1,5 +1,7 @@
 "use client";
 
+import { Sparkles } from "lucide-react";
+import { useState } from "react";
 import { AiNotice } from "@/components/ui/ai-notice";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
@@ -8,8 +10,6 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles } from "lucide-react";
-import { useState } from "react";
 import { sendEmailToLead } from "../actions";
 
 /** Idiomas soportados para el borrador generado por IA. */

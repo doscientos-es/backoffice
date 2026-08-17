@@ -1,7 +1,7 @@
+import { notFound, redirect } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
-import { notFound, redirect } from "next/navigation";
 import { InvoiceEditor } from "./invoice-editor";
 
 export const dynamic = "force-dynamic";

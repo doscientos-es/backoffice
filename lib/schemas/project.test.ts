@@ -64,8 +64,11 @@ describe("ProjectInput github refinement", () => {
 });
 
 describe("UpdateProjectInput", () => {
-  it("requires a valid id", () => {
+  it("requires a valid id and optimistic-lock version", () => {
     expect(UpdateProjectInput.safeParse(base).success).toBe(false);
-    expect(UpdateProjectInput.safeParse({ ...base, id: uuid }).success).toBe(true);
+    expect(UpdateProjectInput.safeParse({ ...base, id: uuid }).success).toBe(false);
+    expect(UpdateProjectInput.safeParse({ ...base, id: uuid, expected_version: 1 }).success).toBe(
+      true,
+    );
   });
 });

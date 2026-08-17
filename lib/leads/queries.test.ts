@@ -122,6 +122,7 @@ describe("listLeads client avatar enrichment", () => {
       id: "task-1",
       title: "Llamar",
       remind_at: "2026-07-20T09:00:00.000Z",
+      action_type: "follow_up",
     });
     expect(result.leads[1]?.next_action).toBeNull();
   });

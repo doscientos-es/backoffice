@@ -1,5 +1,19 @@
 "use client";
 
+import {
+  BellRing,
+  CheckCircle2,
+  ChevronRight,
+  Flame,
+  Inbox,
+  ListTodo,
+  type LucideIcon,
+  PartyPopper,
+  Phone,
+  UserRound,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { claimLead } from "@/app/(app)/leads/actions";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,20 +24,6 @@ import { useOptimisticRemoval } from "@/lib/hooks/use-optimistic-removal";
 import { leadDisplayName } from "@/lib/leads/utils";
 import { LEAD_STATUS, TASK_STATUS } from "@/lib/status";
 import { relativeTime } from "@/lib/utils";
-import {
-  BellRing,
-  CheckCircle2,
-  ChevronRight,
-  Flame,
-  Inbox,
-  ListTodo,
-  PartyPopper,
-  Phone,
-  UserRound,
-  type LucideIcon,
-} from "lucide-react";
-import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { LeadCallLink } from "../leads/[id]/phone-actions";
 import { ClaimLeadButton } from "./_components/claim-lead-button";
 

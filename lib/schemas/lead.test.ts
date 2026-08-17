@@ -43,9 +43,10 @@ describe("CreateLeadInput", () => {
 });
 
 describe("UpdateLeadInput", () => {
-  it("requires a valid id", () => {
+  it("requires a valid id and optimistic-lock version", () => {
     expect(UpdateLeadInput.safeParse({ name: "X" }).success).toBe(false);
-    expect(UpdateLeadInput.parse({ id: uuid, name: "X" }).id).toBe(uuid);
+    expect(UpdateLeadInput.safeParse({ id: uuid, name: "X" }).success).toBe(false);
+    expect(UpdateLeadInput.parse({ id: uuid, name: "X", expected_version: 1 }).id).toBe(uuid);
   });
 });
 

@@ -33,11 +33,11 @@ describe("lead kanban policy", () => {
       lead({ id: "missing" }),
     ];
     expect(
-      groupLeadsForKanban(leads)
+      groupLeadsForKanban(leads, new Date("2026-08-14T10:00:00.000Z"))
         .get("new")
         ?.map((item) => item.id),
     ).toEqual(["missing", "scheduled"]);
-    expect(countLeadsNeedingAttention(leads)).toBe(1);
+    expect(countLeadsNeedingAttention(leads, new Date("2026-08-14T10:00:00.000Z"))).toBe(1);
   });
 
   it("sums only the known estimated value", () => {

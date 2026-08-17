@@ -67,14 +67,14 @@ function request(origin = "https://landing.example") {
     headers: { "x-forwarded-for": "203.0.113.10" },
     body: JSON.stringify({
       email: "ana@example.com",
-       answers: {
-         proceso: "Pasar pedidos de email a Excel",
-         personas: 2,
-         minutos_por_vez: 15,
-         veces_por_semana: 5,
-         coste_hora: 25,
-         impacto: "Retrasos y seguimiento manual",
-       },
+      answers: {
+        proceso: "Pasar pedidos de email a Excel",
+        personas: 2,
+        minutos_por_vez: 15,
+        veces_por_semana: 5,
+        coste_hora: 25,
+        impacto: "Retrasos y seguimiento manual",
+      },
       metrics: {
         monthlyHours: 8,
         yearlyHours: 96,

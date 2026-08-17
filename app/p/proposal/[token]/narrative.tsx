@@ -1,5 +1,5 @@
-import type { KeyPoint } from "@/lib/proposals/key-points";
 import type { ReactNode } from "react";
+import type { KeyPoint } from "@/lib/proposals/key-points";
 
 /**
  * Portal-side rendering primitives for the proposal narrative

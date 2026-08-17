@@ -36,12 +36,16 @@ export async function replyToProposalMessage(
   });
   if (insertError) return { ok: false, error: "No se pudo enviar la respuesta" };
 
-  const client = (proposal as unknown as {
-    clients: { name: string; email: string | null } | null;
-  }).clients;
-  const lead = (proposal as unknown as {
-    leads: { name: string; email: string | null } | null;
-  }).leads;
+  const client = (
+    proposal as unknown as {
+      clients: { name: string; email: string | null } | null;
+    }
+  ).clients;
+  const lead = (
+    proposal as unknown as {
+      leads: { name: string; email: string | null } | null;
+    }
+  ).leads;
   const recipient = client?.email ?? lead?.email;
   const recipientName = client?.name ?? lead?.name ?? "Hola";
   if (recipient && proposal.portal_token) {

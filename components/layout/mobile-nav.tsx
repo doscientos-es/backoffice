@@ -1,30 +1,6 @@
 "use client";
 
-import {
-  Archive,
-  BarChart3,
-  Bell,
-  CalendarDays,
-  CheckSquare,
-  ChevronDown,
-  FileSignature,
-  FolderKanban,
-  Globe,
-  Home,
-  Images,
-  Inbox,
-  KeyRound,
-  Megaphone,
-  Menu,
-  MousePointerClick,
-  Receipt,
-  Repeat,
-  Settings,
-  Share2,
-  Users,
-  Wallet,
-  X,
-} from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -35,89 +11,14 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Drawer, DrawerClose, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
-import type { CurrentUser, MemberRole } from "@/lib/auth";
+import type { CurrentUser } from "@/lib/auth";
+import {
+  type NavigationGroup,
+  type NavigationItem,
+  visibleNavigationGroups,
+} from "@/lib/navigation/navigation";
 import { cn } from "@/lib/utils";
 import { version } from "../../package.json";
-
-type NavItem = {
-  href: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  allowedRoles?: MemberRole[];
-};
-
-type NavGroup = {
-  label?: string;
-  items: NavItem[];
-  defaultOpen?: boolean;
-};
-
-const ADMIN_ROLES: MemberRole[] = ["owner", "admin"];
-
-const NAV_GROUPS: NavGroup[] = [
-  {
-    items: [
-      { href: "/inicio", label: "Inicio", icon: Home },
-      { href: "/calendar", label: "Agenda", icon: CalendarDays },
-    ],
-  },
-  {
-    label: "Ventas",
-    items: [
-      { href: "/leads", label: "Leads", icon: Inbox },
-      { href: "/clients", label: "Clientes", icon: Users },
-      { href: "/proposals", label: "Propuestas", icon: FileSignature },
-    ],
-  },
-  {
-    label: "Entrega",
-    items: [
-      { href: "/projects", label: "Proyectos", icon: FolderKanban },
-      { href: "/tasks", label: "Tareas", icon: CheckSquare },
-      { href: "/webs", label: "Webs", icon: Globe, allowedRoles: ADMIN_ROLES },
-    ],
-  },
-  {
-    label: "Finanzas",
-    defaultOpen: false,
-    items: [
-      { href: "/invoices", label: "Facturas", icon: Receipt, allowedRoles: ADMIN_ROLES },
-      { href: "/subscriptions", label: "Suscripciones", icon: Repeat, allowedRoles: ADMIN_ROLES },
-      { href: "/finance", label: "Finanzas", icon: Wallet, allowedRoles: ADMIN_ROLES },
-      {
-        href: "/finance/portfolio",
-        label: "Portfolio",
-        icon: BarChart3,
-        allowedRoles: ADMIN_ROLES,
-      },
-    ],
-  },
-  {
-    label: "Growth",
-    defaultOpen: false,
-    items: [
-      { href: "/marketing", label: "Publicidad", icon: Megaphone, allowedRoles: ADMIN_ROLES },
-      {
-        href: "/marketing/events",
-        label: "Eventos",
-        icon: MousePointerClick,
-        allowedRoles: ADMIN_ROLES,
-      },
-      { href: "/social", label: "Social", icon: Share2, allowedRoles: ADMIN_ROLES },
-    ],
-  },
-  {
-    label: "Empresa",
-    defaultOpen: false,
-    items: [
-      { href: "/reminders", label: "Recordatorios", icon: Bell },
-      { href: "/internal-docs", label: "Docs internos", icon: Archive },
-      { href: "/brand", label: "Marca", icon: Images },
-      { href: "/vault", label: "Bóveda", icon: KeyRound, allowedRoles: ADMIN_ROLES },
-      { href: "/settings", label: "Ajustes", icon: Settings },
-    ],
-  },
-];
 
 function NavLink({
   href,
@@ -161,7 +62,7 @@ function NavSection({
   isActive,
   onNavClick,
 }: {
-  group: NavGroup & { items: NavItem[] };
+  group: NavigationGroup & { items: NavigationItem[] };
   isActive: (href: string) => boolean;
   onNavClick: () => void;
 }) {
@@ -169,7 +70,12 @@ function NavSection({
   const fallback = group.defaultOpen ?? true;
   const [open, setOpen] = useState(() => {
     if (typeof window === "undefined") return fallback;
-    const stored = localStorage.getItem(`nav-section-mobile-${group.label}`);
+    let stored: string | null = null;
+    try {
+      stored = localStorage.getItem(`nav-section-mobile-${group.label}`);
+    } catch {
+      // Keep the deterministic default when browser storage is unavailable.
+    }
     if (hasActive) return true;
     return stored === null ? fallback : stored === "1";
   });
@@ -177,7 +83,11 @@ function NavSection({
   function toggle() {
     const next = !open;
     setOpen(next);
-    localStorage.setItem(`nav-section-mobile-${group.label}`, next ? "1" : "0");
+    try {
+      localStorage.setItem(`nav-section-mobile-${group.label}`, next ? "1" : "0");
+    } catch {
+      // The in-memory state remains usable without persistence.
+    }
   }
 
   return (
@@ -225,10 +135,7 @@ export function MobileNav({
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  const visibleGroups = NAV_GROUPS.map((g) => ({
-    ...g,
-    items: g.items.filter((item) => !item.allowedRoles || item.allowedRoles.includes(user.role)),
-  })).filter((g) => g.items.length > 0);
+  const visibleGroups = visibleNavigationGroups(user.role);
 
   const isActive = (href: string) => {
     if (pathname === href) return true;

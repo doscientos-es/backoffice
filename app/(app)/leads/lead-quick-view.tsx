@@ -1,5 +1,26 @@
 "use client";
 
+import {
+  ArrowUpRight,
+  Building2,
+  CalendarPlus,
+  Clock,
+  Hand,
+  Loader2,
+  Mail,
+  Phone,
+  Timer,
+  Trash2,
+  TriangleAlert,
+  UserRound,
+  Users,
+  Wallet,
+  Wrench,
+  X,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { type ReactNode, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,27 +46,6 @@ import { leadDisplayName } from "@/lib/leads/utils";
 import type { MemberOption } from "@/lib/members/queries";
 import { LEAD_STATUS } from "@/lib/status";
 import { formatEUR, relativeTime } from "@/lib/utils";
-import {
-  ArrowUpRight,
-  Building2,
-  CalendarPlus,
-  Clock,
-  Hand,
-  Loader2,
-  Mail,
-  Phone,
-  Timer,
-  Trash2,
-  TriangleAlert,
-  UserRound,
-  Users,
-  Wallet,
-  Wrench,
-  X,
-} from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { type ReactNode, useState, useTransition } from "react";
 import { ScheduleReminderDialog } from "../reminders/schedule-reminder-dialog";
 import { GmailSyncButton } from "./[id]/gmail-sync-button";
 import { LeadEditDialog } from "./[id]/lead-edit-dialog";
@@ -248,34 +248,34 @@ function Body({
           lead.first_landing_path ||
           lead.last_utm_source ||
           lead.last_utm_campaign) && (
-            <section className="flex flex-col gap-1.5 text-xs">
-              <Heading>Atribución</Heading>
-              {(lead.last_utm_source || lead.source) && (
-                <Row icon={<ArrowUpRight className="size-3.5" />}>
-                  Fuente: {lead.last_utm_source || lead.source}
-                </Row>
-              )}
-              {lead.last_utm_campaign && (
-                <Row icon={<ArrowUpRight className="size-3.5" />}>
-                  Campaña: {lead.last_utm_campaign}
-                </Row>
-              )}
-              {(lead.first_landing_path || lead.landing_path) && (
-                <Row icon={<ArrowUpRight className="size-3.5" />}>
-                  Entrada: {lead.first_landing_path || lead.landing_path}
-                </Row>
-              )}
-              {lead.conversion_step && (
-                <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.conversion_step}</Row>
-              )}
-              {lead.landing_ref && (
-                <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_ref}</Row>
-              )}
-              {lead.landing_subject && (
-                <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_subject}</Row>
-              )}
-            </section>
-          )}
+          <section className="flex flex-col gap-1.5 text-xs">
+            <Heading>Atribución</Heading>
+            {(lead.last_utm_source || lead.source) && (
+              <Row icon={<ArrowUpRight className="size-3.5" />}>
+                Fuente: {lead.last_utm_source || lead.source}
+              </Row>
+            )}
+            {lead.last_utm_campaign && (
+              <Row icon={<ArrowUpRight className="size-3.5" />}>
+                Campaña: {lead.last_utm_campaign}
+              </Row>
+            )}
+            {(lead.first_landing_path || lead.landing_path) && (
+              <Row icon={<ArrowUpRight className="size-3.5" />}>
+                Entrada: {lead.first_landing_path || lead.landing_path}
+              </Row>
+            )}
+            {lead.conversion_step && (
+              <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.conversion_step}</Row>
+            )}
+            {lead.landing_ref && (
+              <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_ref}</Row>
+            )}
+            {lead.landing_subject && (
+              <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_subject}</Row>
+            )}
+          </section>
+        )}
         {lead.notes && (
           <section className="flex flex-col gap-1.5">
             <Heading>Notas</Heading>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { DeckProposal } from "./page";
 import { buildSlides } from "./deck-slides";
+import type { DeckProposal } from "./page";
 
 const proposal: DeckProposal = {
   id: "proposal-1",

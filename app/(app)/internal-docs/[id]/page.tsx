@@ -1,3 +1,6 @@
+import { Download } from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -11,9 +14,6 @@ import type { InternalDocCategory, InternalDocVisibility } from "@/lib/schemas/i
 import { getStorage } from "@/lib/storage";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
-import { Download } from "lucide-react";
-import Link from "next/link";
-import { notFound } from "next/navigation";
 import { deleteInternalDoc, reindexInternalDoc } from "../actions";
 import { InternalDocEditDialog } from "./internal-doc-edit-dialog";
 import { type InternalDocEvent, InternalDocHistory } from "./internal-doc-history";
@@ -56,13 +56,15 @@ function extractionFeedback(extraction: ExtractionStatus | null) {
   if (extraction.status === "no_text") {
     return {
       label: "No hemos encontrado texto digital",
-      detail: "Parece un PDF escaneado. El archivo original sigue disponible, pero hace falta OCR para buscar en su contenido.",
+      detail:
+        "Parece un PDF escaneado. El archivo original sigue disponible, pero hace falta OCR para buscar en su contenido.",
     };
   }
   if (extraction.status === "unsupported") {
     return {
       label: "Este formato todavía no se puede consultar por contenido",
-      detail: "Puedes abrir o descargar el archivo original; el asistente solo podrá encontrarlo por nombre y metadatos.",
+      detail:
+        "Puedes abrir o descargar el archivo original; el asistente solo podrá encontrarlo por nombre y metadatos.",
     };
   }
   if (extraction.status === "processing") {
@@ -73,7 +75,8 @@ function extractionFeedback(extraction: ExtractionStatus | null) {
   }
   return {
     label: "No hemos podido preparar el contenido todavía",
-    detail: "El archivo original sigue intacto. Prueba a prepararlo de nuevo o ábrelo para revisarlo manualmente.",
+    detail:
+      "El archivo original sigue intacto. Prueba a prepararlo de nuevo o ábrelo para revisarlo manualmente.",
   };
 }
 

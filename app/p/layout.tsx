@@ -1,5 +1,5 @@
-import { Logo } from "@/components/branding";
 import Link from "next/link";
+import { Logo } from "@/components/branding";
 
 export const metadata = {
   title: "Portal · doscientos",

@@ -1,5 +1,7 @@
 "use client";
 
+import { ChevronDown, ChevronUp, ClipboardPaste, Plus, Trash2, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -7,8 +9,6 @@ import {
   SCOPE_MODULE_LIMITS,
   type ScopeModule,
 } from "@/lib/proposals/scope";
-import { ChevronDown, ChevronUp, ClipboardPaste, Plus, Trash2, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 
 type Props = {
   modules: ScopeModule[];

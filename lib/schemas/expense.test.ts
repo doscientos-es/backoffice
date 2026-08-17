@@ -54,9 +54,12 @@ describe("ExpenseInput payer refinement", () => {
 });
 
 describe("UpdateExpenseInput / ExpenseIdInput", () => {
-  it("extends the base shape with an id", () => {
+  it("requires an id and optimistic-lock version", () => {
     expect(UpdateExpenseInput.safeParse(baseFields).success).toBe(false);
-    expect(UpdateExpenseInput.safeParse({ ...baseFields, id: uuid }).success).toBe(true);
+    expect(UpdateExpenseInput.safeParse({ ...baseFields, id: uuid }).success).toBe(false);
+    expect(
+      UpdateExpenseInput.safeParse({ ...baseFields, id: uuid, expected_version: 1 }).success,
+    ).toBe(true);
   });
   it("validates a bare uuid id", () => {
     expect(ExpenseIdInput.safeParse({ id: uuid }).success).toBe(true);

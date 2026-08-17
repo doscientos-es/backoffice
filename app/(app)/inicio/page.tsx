@@ -1,3 +1,5 @@
+import { Hand } from "lucide-react";
+import type { Metadata } from "next";
 import {
   AccountsReceivableSkeleton,
   AccountsReceivableWidget,
@@ -12,8 +14,6 @@ import { canViewFinance, requireUser } from "@/lib/auth";
 import { getCrossModulePulse } from "@/lib/dashboard/cross-module";
 import { hasRegisteredPasskey } from "@/lib/security/webauthn";
 import { getGreeting, parseDashboardRange } from "@/lib/utils/date";
-import { Hand } from "lucide-react";
-import type { Metadata } from "next";
 import { AvisosWidget } from "./_components/avisos-widget";
 import { BusinessFlow } from "./_components/business-flow";
 import { EnablePushBanner } from "./_components/enable-push-banner";
