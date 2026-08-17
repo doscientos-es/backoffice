@@ -4,10 +4,10 @@
 // start_at = remind_at, description = notes. The reminders table is kept for
 // legacy data until the migration has run on all environments.
 
-import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { CreateReminderInput, ReminderIdInput } from "@/lib/schemas/reminder";
 import { createServerClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
 
 type ActionResult = { ok: true } | { ok: false; error: string };
 type CreateReminderResult = { ok: true; id: string } | { ok: false; error: string };
@@ -71,6 +71,7 @@ export async function createReminder(input: unknown): Promise<CreateReminderResu
 
   revalidatePath("/inicio");
   revalidatePath("/reminders");
+  if (leadId) revalidatePath("/leads");
   if (leadId) revalidatePath(`/leads/${leadId}`);
   if (clientId) revalidatePath(`/clients/${clientId}`);
   if (projectId) revalidatePath(`/projects/${projectId}`);

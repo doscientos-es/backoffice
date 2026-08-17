@@ -74,6 +74,8 @@ export type LeadListItem = {
   recent_interactions: LeadInteraction[];
   /** Soonest pending reminder; drives the "próxima acción" chip on the board. */
   next_action: LeadNextAction | null;
+  /** Earliest future call or meeting, independently of the soonest next action. */
+  scheduled_meeting_at: string | null;
 };
 
 export type LeadListView = "board" | "list";

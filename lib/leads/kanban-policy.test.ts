@@ -83,4 +83,19 @@ describe("lead kanban policy", () => {
     expect(boardColumnForLead(call, now)).toBe("meeting");
     expect(boardColumnForLead(meeting, now)).toBe("meeting");
   });
+
+  it("keeps a booked meeting on the board when another action is sooner", () => {
+    const leadWithEarlierEmail = lead({
+      status: "contacted",
+      next_action: {
+        remind_at: "2026-08-15T10:00:00.000Z",
+        action_type: "email",
+      },
+      scheduled_meeting_at: "2026-08-18T10:00:00.000Z",
+    });
+
+    expect(boardColumnForLead(leadWithEarlierEmail, new Date("2026-08-14T10:00:00.000Z"))).toBe(
+      "meeting",
+    );
+  });
 });

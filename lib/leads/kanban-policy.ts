@@ -108,10 +108,12 @@ export function boardColumnForLead(lead: LeadListItem, now = new Date()): LeadKa
   if (isTerminalLeadStatus(lead.status)) {
     return lead.status as "won" | "lost" | "not_interested" | "archived";
   }
-  if (
-    (lead.next_action?.action_type === "call" || lead.next_action?.action_type === "meeting") &&
-    new Date(lead.next_action.remind_at).getTime() >= now.getTime()
-  ) {
+  const scheduledMeetingAt =
+    lead.scheduled_meeting_at ??
+    (lead.next_action?.action_type === "call" || lead.next_action?.action_type === "meeting"
+      ? lead.next_action.remind_at
+      : null);
+  if (scheduledMeetingAt && new Date(scheduledMeetingAt).getTime() >= now.getTime()) {
     return "meeting";
   }
 

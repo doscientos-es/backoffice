@@ -103,8 +103,20 @@ describe("listLeads client avatar enrichment", () => {
     ];
     // Ordered ascending by the query: only the first reminder per lead counts.
     state.tasks = [
-      { id: "task-1", lead_id: "lead-1", title: "Llamar", start_at: "2026-07-20T09:00:00.000Z" },
-      { id: "task-2", lead_id: "lead-1", title: "Email", start_at: "2026-07-22T09:00:00.000Z" },
+      {
+        id: "task-1",
+        lead_id: "lead-1",
+        title: "Enviar email",
+        start_at: "2026-07-20T09:00:00.000Z",
+        action_type: "email",
+      },
+      {
+        id: "task-2",
+        lead_id: "lead-1",
+        title: "Reunión",
+        start_at: "2099-07-22T09:00:00.000Z",
+        action_type: "meeting",
+      },
     ];
 
     const result = await listLeads({
@@ -120,10 +132,11 @@ describe("listLeads client avatar enrichment", () => {
 
     expect(result.leads[0]?.next_action).toEqual({
       id: "task-1",
-      title: "Llamar",
+      title: "Enviar email",
       remind_at: "2026-07-20T09:00:00.000Z",
-      action_type: "follow_up",
+      action_type: "email",
     });
+    expect(result.leads[0]?.scheduled_meeting_at).toBe("2099-07-22T09:00:00.000Z");
     expect(result.leads[1]?.next_action).toBeNull();
   });
 });

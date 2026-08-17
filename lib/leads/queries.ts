@@ -117,9 +117,9 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
 
   const rows = data ?? [];
   const leadIds = rows.map((r) => r.id as string);
-  const [interactionsByLead, nextActionByLead] = await Promise.all([
+  const [interactionsByLead, remindersByLead] = await Promise.all([
     loadRecentInteractions(leadIds),
-    loadNextActions(leadIds),
+    loadLeadReminders(leadIds),
   ]);
 
   const leads: LeadListItem[] = rows.map((l) => ({
@@ -155,19 +155,24 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
     client: mapClientRef(l.client),
     assignee: mapMemberRef(l.assignee),
     recent_interactions: interactionsByLead.get(l.id as string) ?? [],
-    next_action: nextActionByLead.get(l.id as string) ?? null,
+    next_action: remindersByLead.nextActions.get(l.id as string) ?? null,
+    scheduled_meeting_at: remindersByLead.scheduledMeetings.get(l.id as string) ?? null,
   }));
 
   return { leads, count: count ?? 0, error: error?.message ?? null };
 }
 
 /**
- * Soonest pending reminder per lead. `action_type` keeps the commercial
- * agenda distinct from the lead pipeline without inferring intent from titles.
+ * Pending reminders per lead. The next action remains the soonest reminder,
+ * while scheduled calls and meetings are tracked independently for the board.
  */
-async function loadNextActions(leadIds: string[]): Promise<Map<string, LeadNextAction>> {
-  const byLead = new Map<string, LeadNextAction>();
-  if (leadIds.length === 0) return byLead;
+async function loadLeadReminders(leadIds: string[]): Promise<{
+  nextActions: Map<string, LeadNextAction>;
+  scheduledMeetings: Map<string, string>;
+}> {
+  const nextActions = new Map<string, LeadNextAction>();
+  const scheduledMeetings = new Map<string, string>();
+  if (leadIds.length === 0) return { nextActions, scheduledMeetings };
 
   const supabase = await createServerClient();
   const { data } = await supabase
@@ -179,17 +184,29 @@ async function loadNextActions(leadIds: string[]): Promise<Map<string, LeadNextA
     .is("deleted_at", null)
     .order("start_at", { ascending: true });
 
+  const now = Date.now();
   for (const r of data ?? []) {
     const leadId = r.lead_id as string;
-    if (byLead.has(leadId)) continue;
-    byLead.set(leadId, {
-      id: r.id as string,
-      title: r.title as string,
-      remind_at: r.start_at as string,
-      action_type: (r.action_type as LeadNextAction["action_type"] | null) ?? "follow_up",
-    });
+    const remindAt = r.start_at as string;
+    const actionType = (r.action_type as LeadNextAction["action_type"] | null) ?? "follow_up";
+
+    if (!nextActions.has(leadId)) {
+      nextActions.set(leadId, {
+        id: r.id as string,
+        title: r.title as string,
+        remind_at: remindAt,
+        action_type: actionType,
+      });
+    }
+    if (
+      !scheduledMeetings.has(leadId) &&
+      (actionType === "call" || actionType === "meeting") &&
+      new Date(remindAt).getTime() >= now
+    ) {
+      scheduledMeetings.set(leadId, remindAt);
+    }
   }
-  return byLead;
+  return { nextActions, scheduledMeetings };
 }
 
 async function loadRecentInteractions(leadIds: string[]): Promise<Map<string, LeadInteraction[]>> {
