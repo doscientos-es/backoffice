@@ -13,7 +13,6 @@ import {
   UpdateLeadCallInput,
   UpdateLeadInput,
   UpdateLeadMomTestInput,
-  UpdateLeadNoteInput,
   UpdateLeadStatusInput,
 } from "@/lib/schemas/lead";
 import { describe, expect, it } from "vitest";
@@ -196,10 +195,7 @@ describe("manual interaction edits", () => {
     ).toBe(false);
   });
 
-  it("requires valid ids and content for editable or deletable interactions", () => {
-    expect(
-      UpdateLeadNoteInput.safeParse({ interactionId: uuid, leadId: uuid, content: "" }).success,
-    ).toBe(false);
+  it("requires valid ids to delete an interaction", () => {
     expect(DeleteLeadInteractionInput.safeParse({ interactionId: uuid, leadId: uuid }).success).toBe(
       true,
     );

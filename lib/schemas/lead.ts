@@ -194,12 +194,6 @@ export const LogNoteInput = z.object({
 
 export type LogNoteInputType = z.infer<typeof LogNoteInput>;
 
-export const UpdateLeadNoteInput = z.object({
-  interactionId: z.string().uuid(),
-  leadId: z.string().uuid(),
-  content: requiredText(8000, "La nota no puede estar vacía"),
-});
-
 export const DeleteLeadInteractionInput = z.object({
   interactionId: z.string().uuid(),
   leadId: z.string().uuid(),

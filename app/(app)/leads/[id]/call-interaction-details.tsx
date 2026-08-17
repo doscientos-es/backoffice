@@ -1,5 +1,8 @@
 "use client";
 
+import { Eye, FileText, Pencil } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { type FormEvent, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,9 +22,6 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { getCallInteractionDetails } from "@/lib/leads/interaction-utils";
 import type { LeadDetailInteraction } from "@/lib/leads/types";
-import { Eye, FileText, Pencil } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { type FormEvent, useState } from "react";
 import { updateLeadCall } from "../actions";
 import { CallDateField } from "../call-date-field";
 import { DeleteLeadInteractionButton } from "./delete-lead-interaction-button";
@@ -152,7 +152,11 @@ export function CallInteractionDetails({
                   onChange={(event) => setDuration(event.target.value)}
                 />
               </div>
-              <CallDateField id={`call-date-${interaction.id}`} value={callDate} onChange={setCallDate} />
+              <CallDateField
+                id={`call-date-${interaction.id}`}
+                value={callDate}
+                onChange={setCallDate}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor={`call-notes-${interaction.id}`}>Notas</Label>
@@ -187,7 +191,9 @@ export function CallInteractionDetails({
             <div className="flex flex-wrap gap-2">
               {details.outcome ? (
                 <Badge variant="neutral">
-                  {CALL_OUTCOME_LABEL[details.outcome] ?? details.outcome}
+                  {isCallOutcome(details.outcome)
+                    ? CALL_OUTCOME_LABEL[details.outcome]
+                    : details.outcome}
                 </Badge>
               ) : null}
               {details.durationMinutes != null ? (
@@ -227,7 +233,11 @@ export function CallInteractionDetails({
                   <Pencil className="size-3.5" />
                   Editar
                 </Button>
-                <DeleteLeadInteractionButton leadId={leadId} interactionId={interaction.id} label="llamada" />
+                <DeleteLeadInteractionButton
+                  leadId={leadId}
+                  interactionId={interaction.id}
+                  label="llamada"
+                />
               </div>
             ) : null}
           </div>

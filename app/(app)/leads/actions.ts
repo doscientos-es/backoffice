@@ -43,7 +43,6 @@ import {
   UpdateLeadCallInput,
   UpdateLeadInput,
   UpdateLeadMomTestInput,
-  UpdateLeadNoteInput,
   UpdateLeadStatusInput,
 } from "@/lib/schemas/lead";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -987,23 +986,6 @@ export const logLeadNote = defineAction({
       body: content.trim(),
       performed_by: user.id,
     });
-    if (error) throw new Error(error.message);
-  },
-});
-
-export const updateLeadNote = defineAction({
-  name: "leads.updateNote",
-  schema: UpdateLeadNoteInput,
-  roles: ["owner", "admin", "member"],
-  revalidate: (_payload, input) => [`/leads/${input.leadId}`],
-  handler: async (data) => {
-    const supabase = await createServerClient();
-    const { error } = await supabase
-      .from("lead_interactions")
-      .update({ body: data.content.trim() })
-      .eq("id", data.interactionId)
-      .eq("lead_id", data.leadId)
-      .eq("type", "note");
     if (error) throw new Error(error.message);
   },
 });
