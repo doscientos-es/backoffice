@@ -663,6 +663,100 @@ type SendPreviewResult =
   | { ok: true; portalUrl: string; mocked: boolean }
   | { ok: false; error: string };
 
+type ProposalEmailPreviewResult =
+  | { ok: true; subject: string; html: string }
+  | { ok: false; error: string };
+
+type ProposalEmailData = {
+  id: string;
+  number: string | null;
+  title: string;
+  total: number;
+  valid_until: string | null;
+  portal_token: string | null;
+  clients: { name: string; email: string | null } | null;
+  leads: { name: string; email: string | null } | null;
+};
+
+async function renderProposalPreview(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  proposal: ProposalEmailData,
+  message: string | undefined,
+): Promise<
+  | { ok: true; proposalNumber: string; portalUrl: string; subject: string; html: string }
+  | { ok: false; error: string }
+> {
+  const portalToken = proposal.portal_token;
+  if (!portalToken) return { ok: false, error: "La propuesta no tiene token de portal" };
+
+  const proposalNumber = proposal.number ?? (await nextProposalNumber(supabase));
+  const { data: specs } = await supabase
+    .from("proposal_specs")
+    .select("title, portal_token")
+    .eq("proposal_id", proposal.id)
+    .eq("is_client_visible", true)
+    .not("portal_token", "is", null);
+
+  const specLinks = ((specs ?? []) as Array<{ title: string; portal_token: string }>)
+    .filter((spec) => spec.portal_token)
+    .map((spec) => ({
+      title: spec.title,
+      url: `${publicEnv.NEXT_PUBLIC_APP_URL}/p/spec/${spec.portal_token}`,
+    }));
+  const portalUrl = `${publicEnv.NEXT_PUBLIC_APP_URL}/p/proposal/${portalToken}`;
+  const html = await renderEmail(
+    ProposalEmail({
+      clientName: proposal.clients?.name ?? proposal.leads?.name ?? "Hola",
+      proposalTitle: proposal.title,
+      proposalNumber,
+      total: formatEUR(proposal.total),
+      validUntil: proposal.valid_until ? formatDate(proposal.valid_until) : undefined,
+      portalUrl,
+      deckUrl: `${publicEnv.NEXT_PUBLIC_APP_URL}/deck/${portalToken}`,
+      appUrl: publicEnv.NEXT_PUBLIC_APP_URL,
+      message,
+      specs: specLinks,
+    }),
+  );
+
+  return {
+    ok: true,
+    proposalNumber,
+    portalUrl,
+    subject: `Propuesta ${proposalNumber} · ${proposal.title}`,
+    html,
+  };
+}
+
+/** Renders the exact proposal email for review without delivering it. */
+export async function previewProposalEmail(input: unknown): Promise<ProposalEmailPreviewResult> {
+  await requireUser();
+
+  const parsed = SendProposalPreviewInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+  }
+
+  const supabase = await createServerClient();
+  const { data: proposal, error } = await supabase
+    .from("proposals")
+    .select(
+      "id, number, title, total, portal_token, valid_until, clients(name, email), leads(name, email)",
+    )
+    .eq("id", parsed.data.id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (error || !proposal) return { ok: false, error: "Propuesta no encontrada" };
+
+  const rendered = await renderProposalPreview(
+    supabase,
+    proposal as unknown as ProposalEmailData,
+    parsed.data.message,
+  );
+  if (!rendered.ok) return rendered;
+  return { ok: true, subject: rendered.subject, html: rendered.html };
+}
+
 /**
  * Sends the public portal URL of a proposal to the client via Resend and
  * transitions the proposal from `draft` → `sent` (setting `sent_at`).
@@ -691,55 +785,15 @@ export async function sendPreviewLink(input: unknown): Promise<SendPreviewResult
   // Recipient: prefer the explicit override, otherwise fall back to the
   // client email and finally to the lead email when the proposal targets a
   // lead that hasn't yet been upgraded to a client.
-  const client = (proposal as unknown as { clients: { name: string; email: string | null } | null })
-    .clients;
-  const lead = (proposal as unknown as { leads: { name: string; email: string | null } | null })
-    .leads;
+  const proposalEmailData = proposal as unknown as ProposalEmailData;
+  const client = proposalEmailData.clients;
+  const lead = proposalEmailData.leads;
   const recipient = overrideTo ?? client?.email ?? lead?.email ?? null;
   if (!recipient) return { ok: false, error: "El destinatario no tiene email registrado" };
 
-  const portalToken = proposal.portal_token as string | null;
-  if (!portalToken) return { ok: false, error: "La propuesta no tiene token de portal" };
-
-  // Assign the legal proposal number on the first transition to `sent`. This
-  // keeps drafts out of the official series so cancelled proposals don't
-  // leave gaps in the numbering exposed to the customer.
-  let proposalNumber = proposal.number as string | null;
-  if (!proposalNumber) {
-    proposalNumber = await nextProposalNumber(supabase);
-  }
-
-  // Fetch client-visible technical specs so the email can link to them.
-  const { data: specs } = await supabase
-    .from("proposal_specs")
-    .select("title, portal_token")
-    .eq("proposal_id", id)
-    .eq("is_client_visible", true)
-    .not("portal_token", "is", null);
-
-  const specLinks = ((specs ?? []) as Array<{ title: string; portal_token: string }>)
-    .filter((s) => s.portal_token)
-    .map((s) => ({
-      title: s.title,
-      url: `${publicEnv.NEXT_PUBLIC_APP_URL}/p/spec/${s.portal_token}`,
-    }));
-
-  const portalUrl = `${publicEnv.NEXT_PUBLIC_APP_URL}/p/proposal/${portalToken}`;
-  const deckUrl = `${publicEnv.NEXT_PUBLIC_APP_URL}/deck/${portalToken}`;
-  const html = await renderEmail(
-    ProposalEmail({
-      clientName: client?.name ?? lead?.name ?? "Hola",
-      proposalTitle: proposal.title as string,
-      proposalNumber,
-      total: formatEUR(proposal.total as number),
-      validUntil: proposal.valid_until ? formatDate(proposal.valid_until as string) : undefined,
-      portalUrl,
-      deckUrl,
-      appUrl: publicEnv.NEXT_PUBLIC_APP_URL,
-      message,
-      specs: specLinks,
-    }),
-  );
+  const rendered = await renderProposalPreview(supabase, proposalEmailData, message);
+  if (!rendered.ok) return rendered;
+  const { proposalNumber, portalUrl, subject, html } = rendered;
 
   let mocked = false;
   try {
@@ -748,7 +802,7 @@ export async function sendPreviewLink(input: unknown): Promise<SendPreviewResult
       fromAlias: user.emailAlias ?? "propuestas",
       to: recipient,
       replyTo: user.contactEmail ?? user.email,
-      subject: `Propuesta ${proposalNumber} · ${proposal.title as string}`,
+      subject,
       html,
       tags: { proposal_id: id, kind: "proposal_preview" },
     });
