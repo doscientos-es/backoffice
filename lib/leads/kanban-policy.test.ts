@@ -4,6 +4,7 @@ import {
   countLeadsNeedingAttention,
   DEFAULT_COMPACT_LEAD_KANBAN_COLUMNS,
   groupLeadsForKanban,
+  nextActionForKanban,
   sumLeadEstimatedValue,
 } from "./kanban-policy";
 
@@ -97,5 +98,25 @@ describe("lead kanban policy", () => {
     expect(boardColumnForLead(leadWithEarlierEmail, new Date("2026-08-14T10:00:00.000Z"))).toBe(
       "meeting",
     );
+  });
+
+  it("shows a booked meeting instead of an older overdue reminder", () => {
+    const leadWithBookedMeeting = lead({
+      status: "contacted",
+      next_action: {
+        id: "old-reminder",
+        title: "Primer contacto",
+        remind_at: "2026-08-09T10:00:00.000Z",
+        action_type: "follow_up",
+      },
+      scheduled_meeting_at: "2026-08-18T10:00:00.000Z",
+    });
+    const now = new Date("2026-08-14T10:00:00.000Z");
+
+    expect(nextActionForKanban(leadWithBookedMeeting, now)).toMatchObject({
+      title: "Reunión agendada",
+      remind_at: "2026-08-18T10:00:00.000Z",
+    });
+    expect(countLeadsNeedingAttention([leadWithBookedMeeting], now)).toBe(0);
   });
 });

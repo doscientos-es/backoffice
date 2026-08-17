@@ -13,6 +13,7 @@ import {
   groupLeadsForKanban,
   LEAD_KANBAN_COLUMNS,
   type LeadKanbanColumnId,
+  nextActionForKanban,
   sumLeadEstimatedValue,
 } from "@/lib/leads/kanban-policy";
 import {
@@ -24,7 +25,7 @@ import {
 import type { LeadListItem, LeadMemberRef } from "@/lib/leads/types";
 import { leadDisplayName } from "@/lib/leads/utils";
 import type { MemberOption } from "@/lib/members/queries";
-import { LEAD_STATUS, type LeadStatus } from "@/lib/status";
+import type { LeadStatus } from "@/lib/status";
 import { cn, formatEUR, relativeTime } from "@/lib/utils";
 import {
   DndContext,
@@ -637,13 +638,6 @@ function Card({
       ) : null}
       <div className="flex items-center justify-between gap-1.5 pl-8">
         <div className="flex items-center gap-1.5">
-          <Badge
-            variant="neutral"
-            className="h-4 max-w-24 truncate px-1.5 text-[10px]"
-            title={`Estado comercial: ${LEAD_STATUS[lead.status].label}`}
-          >
-            {LEAD_STATUS[lead.status].label}
-          </Badge>
           {lead.score != null && (
             <Badge variant="neutral" className="tabular-nums text-[10px] h-4 px-1.5">
               {lead.score}
@@ -669,7 +663,8 @@ function Card({
  * also says since when we are waiting.
  */
 function NextActionChip({ lead }: { lead: KanbanLead }) {
-  const state = nextActionState(lead.status, lead.next_action);
+  const next = nextActionForKanban(lead);
+  const state = nextActionState(lead.status, next);
   if (state === "none") return null;
 
   const waitingSince = waitingForReplySince(lead.recent_interactions);
@@ -696,7 +691,6 @@ function NextActionChip({ lead }: { lead: KanbanLead }) {
     );
   }
 
-  const next = lead.next_action;
   if (!next) return null;
   const tone =
     state === "overdue"

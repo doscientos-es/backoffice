@@ -108,11 +108,7 @@ export function boardColumnForLead(lead: LeadListItem, now = new Date()): LeadKa
   if (isTerminalLeadStatus(lead.status)) {
     return lead.status as "won" | "lost" | "not_interested" | "archived";
   }
-  const scheduledMeetingAt =
-    lead.scheduled_meeting_at ??
-    (lead.next_action?.action_type === "call" || lead.next_action?.action_type === "meeting"
-      ? lead.next_action.remind_at
-      : null);
+  const scheduledMeetingAt = scheduledMeetingAtForLead(lead);
   if (scheduledMeetingAt && new Date(scheduledMeetingAt).getTime() >= now.getTime()) {
     return "meeting";
   }
@@ -123,23 +119,57 @@ export function boardColumnForLead(lead: LeadListItem, now = new Date()): LeadKa
   return "in_conversation";
 }
 
+/**
+ * A booked call or meeting supersedes an older pending reminder on the board.
+ * The original reminder is still retained for its own task workflow; this only
+ * makes the Kanban represent the action currently driving the opportunity.
+ */
+export function nextActionForKanban(
+  lead: LeadListItem,
+  now = new Date(),
+): LeadListItem["next_action"] {
+  const scheduledMeetingAt = scheduledMeetingAtForLead(lead);
+  if (!scheduledMeetingAt || new Date(scheduledMeetingAt).getTime() < now.getTime()) {
+    return lead.next_action;
+  }
+  if (lead.next_action?.remind_at === scheduledMeetingAt) return lead.next_action;
+
+  return {
+    id: `scheduled-meeting:${lead.id}`,
+    title: "Reunión agendada",
+    remind_at: scheduledMeetingAt,
+    action_type: "meeting",
+  };
+}
+
 export function sumLeadEstimatedValue(leads: LeadListItem[]): number {
   return leads.reduce((total, lead) => total + (lead.estimated_value ?? 0), 0);
 }
 
 export function countLeadsNeedingAttention(leads: LeadListItem[], now = new Date()): number {
   return leads.filter((lead) => {
-    const state = nextActionState(lead.status, lead.next_action, now);
+    const state = nextActionState(lead.status, nextActionForKanban(lead, now), now);
     return state === "overdue" || state === "missing";
   }).length;
 }
 
 function compareLeadsByUrgency(a: LeadListItem, b: LeadListItem, now: Date): number {
-  const rankA = nextActionRank(nextActionState(a.status, a.next_action, now));
-  const rankB = nextActionRank(nextActionState(b.status, b.next_action, now));
+  const nextActionA = nextActionForKanban(a, now);
+  const nextActionB = nextActionForKanban(b, now);
+  const rankA = nextActionRank(nextActionState(a.status, nextActionA, now));
+  const rankB = nextActionRank(nextActionState(b.status, nextActionB, now));
   if (rankA !== rankB) return rankA - rankB;
-  const dueA = a.next_action ? new Date(a.next_action.remind_at).getTime() : 0;
-  const dueB = b.next_action ? new Date(b.next_action.remind_at).getTime() : 0;
+  const dueA = nextActionA ? new Date(nextActionA.remind_at).getTime() : 0;
+  const dueB = nextActionB ? new Date(nextActionB.remind_at).getTime() : 0;
   if (dueA !== dueB) return dueA - dueB;
   return new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+}
+
+function scheduledMeetingAtForLead(lead: LeadListItem): string | null {
+  return (
+    lead.scheduled_meeting_at ??
+    (lead.next_action?.action_type === "call" || lead.next_action?.action_type === "meeting"
+      ? lead.next_action.remind_at
+      : null)
+  );
 }
