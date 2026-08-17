@@ -21,6 +21,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { TaskCreateDialog } from "../../tasks/task-create-dialog";
 import { CallInteractionDetails } from "./call-interaction-details";
+import { DeleteLeadInteractionButton } from "./delete-lead-interaction-button";
 import { Lead360Timeline } from "./lead-360-timeline";
 import { LeadAiPanel } from "./lead-ai-panel";
 import { LeadCommercial } from "./lead-commercial";
@@ -493,7 +494,16 @@ export default async function LeadDetailPage({
                               className="gap-1 text-[11px] text-muted-foreground/70"
                             />
                           ) : null}
-                          {type === "call" ? <CallInteractionDetails interaction={i} /> : null}
+                          {type === "call" ? (
+                            <CallInteractionDetails interaction={i} leadId={lead.id} canEdit={canEdit} />
+                          ) : null}
+                          {type === "note" && canEdit ? (
+                            <DeleteLeadInteractionButton
+                              leadId={lead.id}
+                              interactionId={i.id}
+                              label="nota"
+                            />
+                          ) : null}
                         </div>
                       </li>
                     );

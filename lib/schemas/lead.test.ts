@@ -3,14 +3,17 @@ import {
   CALL_OUTCOMES,
   ConvertLeadInput,
   CreateLeadInput,
+  DeleteLeadInteractionInput,
   LeadStatus,
   LogCallInput,
   LogEmailInput,
   LogNoteInput,
   MOM_TEST_SIGNALS,
   SendEmailToLeadInput,
+  UpdateLeadCallInput,
   UpdateLeadInput,
   UpdateLeadMomTestInput,
+  UpdateLeadNoteInput,
   UpdateLeadStatusInput,
 } from "@/lib/schemas/lead";
 import { describe, expect, it } from "vitest";
@@ -170,6 +173,39 @@ describe("LogEmailInput / LogNoteInput", () => {
   it("requires note content", () => {
     expect(LogNoteInput.safeParse({ leadId: uuid, content: "" }).success).toBe(false);
     expect(LogNoteInput.safeParse({ leadId: uuid, content: "ok" }).success).toBe(true);
+  });
+});
+
+describe("manual interaction edits", () => {
+  it("validates changes to a historic call without allowing a future date", () => {
+    expect(
+      UpdateLeadCallInput.safeParse({
+        interactionId: uuid,
+        leadId: uuid,
+        notes: "Rectificamos el resultado.",
+        callDate: "2026-08-10",
+      }).success,
+    ).toBe(true);
+    expect(
+      UpdateLeadCallInput.safeParse({
+        interactionId: uuid,
+        leadId: uuid,
+        notes: "x",
+        callDate: "9999-01-01",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("requires valid ids and content for editable or deletable interactions", () => {
+    expect(
+      UpdateLeadNoteInput.safeParse({ interactionId: uuid, leadId: uuid, content: "" }).success,
+    ).toBe(false);
+    expect(DeleteLeadInteractionInput.safeParse({ interactionId: uuid, leadId: uuid }).success).toBe(
+      true,
+    );
+    expect(DeleteLeadInteractionInput.safeParse({ interactionId: "bad", leadId: uuid }).success).toBe(
+      false,
+    );
   });
 });
 
