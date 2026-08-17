@@ -12,6 +12,37 @@ export type LeadInteractionForAI = {
   created_at: string;
 };
 
+type ResendInteraction = {
+  resend_email_id: string | null;
+  type: string;
+};
+
+/** Groups repeated provider callbacks while retaining a count for the UI. */
+export function groupResendInteractions<T extends ResendInteraction>(interactions: T[]) {
+  const groups = new Map<string, { interaction: T; count: number }>();
+  const result: Array<{ interaction: T; count: number }> = [];
+
+  for (const interaction of interactions) {
+    if (!interaction.resend_email_id) {
+      result.push({ interaction, count: 1 });
+      continue;
+    }
+
+    const key = `${interaction.resend_email_id}:${interaction.type}`;
+    const group = groups.get(key);
+    if (group) {
+      group.count++;
+      continue;
+    }
+
+    const next = { interaction, count: 1 };
+    groups.set(key, next);
+    result.push(next);
+  }
+
+  return result;
+}
+
 /** Safely reads the structured metadata stored on a call interaction. */
 export function getCallInteractionDetails(payload: unknown): CallInteractionDetails {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {

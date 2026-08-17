@@ -253,7 +253,7 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
     notDeleted(supabase.from("leads").select(DETAIL_COLUMNS).eq("id", id)).maybeSingle(),
     supabase
       .from("lead_interactions")
-      .select(`id, type, subject, body, created_at, payload, ${PERFORMER_EMBED}`)
+      .select(`id, type, subject, body, created_at, payload, resend_email_id, ${PERFORMER_EMBED}`)
       .eq("lead_id", id)
       .order("created_at", { ascending: false })
       .limit(50),
@@ -341,6 +341,7 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
     created_at: i.created_at as string,
     performer: mapMemberRef((i as Record<string, unknown>).performer),
     payload: i.payload ?? null,
+    resend_email_id: (i.resend_email_id as string | null) ?? null,
   }));
 
   return {

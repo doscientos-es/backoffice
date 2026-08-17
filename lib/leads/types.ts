@@ -175,6 +175,7 @@ export type LeadDetail = {
 
 export type LeadDetailInteraction = LeadInteraction & {
   payload: unknown;
+  resend_email_id: string | null;
 };
 
 /** Related records shown as commercial shortcuts on the lead detail page. */

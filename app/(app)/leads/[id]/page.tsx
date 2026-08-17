@@ -12,6 +12,7 @@ import { isAIEnabled } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { CONVERSION_STEP_LABEL } from "@/lib/conversion-events/labels";
 import { formatLeadBriefingForAI } from "@/lib/leads/ai-context";
+import { groupResendInteractions } from "@/lib/leads/interaction-utils";
 import { getLeadDetail } from "@/lib/leads/queries";
 import { leadDisplayName } from "@/lib/leads/utils";
 import { listActiveMembers } from "@/lib/members/queries";
@@ -459,14 +460,17 @@ export default async function LeadDetailPage({
                 </p>
               ) : (
                 <ol className="divide-y divide-border">
-                  {interactions.map((i) => {
+                  {groupResendInteractions(interactions).map(({ interaction: i, count }) => {
                     const type = i.type as string;
                     const subject = i.subject as string | null;
                     const snippet = excerpt(i.body as string | null);
                     return (
                       <li key={i.id as string} className="flex items-start gap-3 px-6 py-3">
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium">{INTERACTION_LABEL[type] ?? type}</p>
+                          <p className="text-sm font-medium">
+                            {INTERACTION_LABEL[type] ?? type}
+                            {count > 1 ? ` · ${count} eventos` : null}
+                          </p>
                           {subject ? (
                             <p className="truncate text-xs text-muted-foreground">{subject}</p>
                           ) : null}

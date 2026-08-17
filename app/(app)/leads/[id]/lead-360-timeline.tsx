@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { groupResendInteractions } from "@/lib/leads/interaction-utils";
 import type {
   LeadDetailInteraction,
   LeadRelatedInvoice,
@@ -33,8 +34,15 @@ function interactionLabel(type: string): string {
   const labels: Record<string, string> = {
     email_sent: "Email enviado",
     email_received: "Email recibido",
+    email_delivered: "Email entregado",
     email_opened: "Email abierto",
     email_clicked: "Email con clic",
+    email_bounced: "Email rebotado",
+    email_complained: "Email marcado como spam",
+    email_scheduled: "Email programado",
+    email_delivery_delayed: "Entrega de email retrasada",
+    email_failed: "Error al enviar el email",
+    email_suppressed: "Email suprimido",
     call: "Llamada registrada",
     meeting: "Reunión registrada",
     note: "Nota añadida",
@@ -54,19 +62,26 @@ function eventList({
   invoices: LeadRelatedInvoice[];
   tasks: LeadRelatedTask[];
 }): TimelineEvent[] {
-  const interactionEvents = interactions.map((item) => ({
-    id: `interaction-${item.id}`,
-    date: item.created_at,
-    title: interactionLabel(item.type),
-    detail:
-      item.subject ??
-      item.body
-        ?.replace(/<[^>]+>/g, " ")
-        .replace(/\s+/g, " ")
-        .trim(),
-    icon: Mail,
-    color: "text-blue-500 bg-blue-500/10",
-  }));
+  const interactionEvents = groupResendInteractions(interactions).map(
+    ({ interaction: item, count }) => ({
+      id: `interaction-${item.id}`,
+      date: item.created_at,
+      title: interactionLabel(item.type),
+      detail: [
+        item.subject ??
+          item.body
+            ?.replace(/<[^>]+>/g, " ")
+            .replace(/\s+/g, " ")
+            .trim() ??
+          null,
+        count > 1 ? `${count} eventos` : null,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+      icon: Mail,
+      color: "text-blue-500 bg-blue-500/10",
+    }),
+  );
   const proposalEvents = proposals.flatMap((item) => {
     const date = item.responded_at ?? item.viewed_at ?? item.sent_at;
     if (!date) return [];
