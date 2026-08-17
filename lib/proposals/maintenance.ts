@@ -24,11 +24,22 @@ export const maintenancePlanInput = z.object({
     .default([]),
 });
 
-export const maintenanceOfferInput = z.object({
-  heading: z.string().trim().min(1).max(120),
-  intro: z.string().trim().min(1).max(800),
-  plans: z.array(maintenancePlanInput).min(1).max(MAINTENANCE_LIMITS.maxPlans),
-});
+export const maintenanceOfferInput = z
+  .object({
+    heading: z.string().trim().min(1).max(120),
+    intro: z.string().trim().min(1).max(800),
+    plans: z.array(maintenancePlanInput).min(1).max(MAINTENANCE_LIMITS.maxPlans),
+    recommended_plan_id: z.string().min(1).max(64).optional(),
+  })
+  .superRefine((offer, ctx) => {
+    if (offer.recommended_plan_id && !offer.plans.some((plan) => plan.id === offer.recommended_plan_id)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["recommended_plan_id"],
+        message: "El plan recomendado debe existir en la propuesta",
+      });
+    }
+  });
 
 export type MaintenancePlan = z.infer<typeof maintenancePlanInput>;
 export type MaintenanceOffer = z.infer<typeof maintenanceOfferInput>;
@@ -38,6 +49,7 @@ export const DEFAULT_MAINTENANCE_OFFER: MaintenanceOffer = {
   heading: "Mantenimiento web",
   intro:
     "Tu web al día, sin sorpresas. Seguridad, soporte y mejoras con un alcance claro para que elijas cuánto quieres que nos impliquemos.",
+  recommended_plan_id: "growth",
   plans: [
     {
       id: "essential",
@@ -100,9 +112,21 @@ export const DEFAULT_MAINTENANCE_OFFER: MaintenanceOffer = {
   ],
 };
 
+/** Keeps legacy offers on the second plan while allowing each proposal to override it. */
+export function recommendedMaintenancePlanId(offer: MaintenanceOffer): string | null {
+  if (offer.recommended_plan_id && offer.plans.some((plan) => plan.id === offer.recommended_plan_id)) {
+    return offer.recommended_plan_id;
+  }
+  return offer.plans[1]?.id ?? offer.plans[0]?.id ?? null;
+}
+
 export function parseMaintenanceOffer(value: unknown): MaintenanceOffer {
   const parsed = maintenanceOfferInput.safeParse(value);
-  return parsed.success ? parsed.data : DEFAULT_MAINTENANCE_OFFER;
+  if (!parsed.success) return DEFAULT_MAINTENANCE_OFFER;
+  return {
+    ...parsed.data,
+    recommended_plan_id: recommendedMaintenancePlanId(parsed.data) ?? undefined,
+  };
 }
 
 export function selectedMaintenancePlan(

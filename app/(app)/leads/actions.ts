@@ -31,6 +31,7 @@ import {
   CheckMeetingSlotInput,
   ConvertLeadInput,
   CreateLeadInput,
+  DeleteLeadInteractionInput,
   LogCallInput,
   LogEmailInput,
   LogNoteInput,
@@ -39,8 +40,10 @@ import {
   SendEmailToLeadInput,
   StartLeadCallInput,
   SyncLeadGmailInput,
+  UpdateLeadCallInput,
   UpdateLeadInput,
   UpdateLeadMomTestInput,
+  UpdateLeadNoteInput,
   UpdateLeadStatusInput,
 } from "@/lib/schemas/lead";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -803,6 +806,47 @@ export const logLeadCall = defineAction<
   },
 });
 
+function interactionPayload(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? { ...(value as Record<string, unknown>) }
+    : {};
+}
+
+export const updateLeadCall = defineAction({
+  name: "leads.updateCall",
+  schema: UpdateLeadCallInput,
+  roles: ["owner", "admin", "member"],
+  revalidate: (_payload, input) => [`/leads/${input.leadId}`],
+  handler: async (data) => {
+    const supabase = await createServerClient();
+    const { data: interaction, error: readError } = await supabase
+      .from("lead_interactions")
+      .select("type, payload")
+      .eq("id", data.interactionId)
+      .eq("lead_id", data.leadId)
+      .maybeSingle();
+    if (readError) throw new Error(readError.message);
+    if (!interaction || interaction.type !== "call") throw new Error("Llamada no encontrada");
+
+    const { error } = await supabase
+      .from("lead_interactions")
+      .update({
+        subject: data.outcome ? `Llamada · ${CALL_OUTCOME_LABEL[data.outcome]}` : "Llamada",
+        body: data.notes?.trim() || null,
+        payload: {
+          ...interactionPayload(interaction.payload),
+          transcript: data.transcript?.trim() || null,
+          duration_minutes: data.durationMinutes ?? null,
+          outcome: data.outcome ?? null,
+          call_date: data.callDate,
+        },
+      })
+      .eq("id", data.interactionId)
+      .eq("lead_id", data.leadId);
+    if (error) throw new Error(error.message);
+  },
+});
+
 export const logLeadEmail = defineAction({
   name: "leads.logEmail",
   schema: LogEmailInput,
@@ -943,6 +987,50 @@ export const logLeadNote = defineAction({
       body: content.trim(),
       performed_by: user.id,
     });
+    if (error) throw new Error(error.message);
+  },
+});
+
+export const updateLeadNote = defineAction({
+  name: "leads.updateNote",
+  schema: UpdateLeadNoteInput,
+  roles: ["owner", "admin", "member"],
+  revalidate: (_payload, input) => [`/leads/${input.leadId}`],
+  handler: async (data) => {
+    const supabase = await createServerClient();
+    const { error } = await supabase
+      .from("lead_interactions")
+      .update({ body: data.content.trim() })
+      .eq("id", data.interactionId)
+      .eq("lead_id", data.leadId)
+      .eq("type", "note");
+    if (error) throw new Error(error.message);
+  },
+});
+
+export const deleteLeadInteraction = defineAction({
+  name: "leads.deleteInteraction",
+  schema: DeleteLeadInteractionInput,
+  roles: ["owner", "admin", "member"],
+  revalidate: (_payload, input) => [`/leads/${input.leadId}`],
+  handler: async (data) => {
+    const supabase = await createServerClient();
+    const { data: interaction, error: readError } = await supabase
+      .from("lead_interactions")
+      .select("type")
+      .eq("id", data.interactionId)
+      .eq("lead_id", data.leadId)
+      .maybeSingle();
+    if (readError) throw new Error(readError.message);
+    if (!interaction || (interaction.type !== "call" && interaction.type !== "note")) {
+      throw new Error("Solo se pueden eliminar llamadas y notas manuales");
+    }
+
+    const { error } = await supabase
+      .from("lead_interactions")
+      .delete()
+      .eq("id", data.interactionId)
+      .eq("lead_id", data.leadId);
     if (error) throw new Error(error.message);
   },
 });

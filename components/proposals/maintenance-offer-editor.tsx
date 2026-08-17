@@ -5,7 +5,11 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MAINTENANCE_LIMITS, type MaintenanceOffer } from "@/lib/proposals/maintenance";
+import {
+  MAINTENANCE_LIMITS,
+  recommendedMaintenancePlanId,
+  type MaintenanceOffer,
+} from "@/lib/proposals/maintenance";
 import { formatEUR } from "@/lib/utils";
 
 type Props = {
@@ -98,6 +102,7 @@ export function MaintenanceOfferEditor({
   onSelectedPlanChange,
   locked,
 }: Props) {
+  const recommendedPlanId = recommendedMaintenancePlanId(offer);
   const patchPlan = (index: number, patch: Partial<MaintenanceOffer["plans"][number]>) => {
     onChange({
       ...offer,
@@ -140,6 +145,7 @@ export function MaintenanceOfferEditor({
       <div className="flex flex-col gap-4">
         {offer.plans.map((plan, index) => {
           const selected = selectedPlanId === plan.id;
+          const recommended = recommendedPlanId === plan.id;
           return (
             <article
               key={plan.id}
@@ -157,11 +163,25 @@ export function MaintenanceOfferEditor({
                     </p>
                   </div>
                 </div>
-                {selected ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-                    <Check className="size-3.5" aria-hidden /> Seleccionado
-                  </span>
-                ) : null}
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <label className="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                    <input
+                      type="radio"
+                      name="recommended-maintenance-plan"
+                      checked={recommended}
+                      onChange={() => onChange({ ...offer, recommended_plan_id: plan.id })}
+                      disabled={locked}
+                      aria-label={`Recomendar el plan ${plan.name}`}
+                      className="size-3.5 accent-primary"
+                    />
+                    Recomendado al cliente
+                  </label>
+                  {selected ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                      <Check className="size-3.5" aria-hidden /> Seleccionado
+                    </span>
+                  ) : null}
+                </div>
               </header>
               <div className="grid gap-5 p-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
                 <div className="flex flex-col gap-4">

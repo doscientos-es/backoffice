@@ -2,7 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import type { MaintenanceOffer } from "@/lib/proposals/maintenance";
+import {
+  recommendedMaintenancePlanId,
+  type MaintenanceOffer,
+} from "@/lib/proposals/maintenance";
 import { formatEUR } from "@/lib/utils";
 import { Check } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -24,6 +27,7 @@ export function ProposalMaintenanceOptions({
   const feedback = useFormFeedback({ successResetMs: 0 });
   const [selected, setSelected] = useState(selectedPlanId);
   const selectedPlan = offer.plans.find((plan) => plan.id === selected) ?? null;
+  const recommendedPlanId = recommendedMaintenancePlanId(offer);
 
   const choose = async (planId: string | null) => {
     if (disabled) return;
@@ -51,9 +55,9 @@ export function ProposalMaintenanceOptions({
         </p>
       </header>
       <div className="mt-5 grid gap-3 lg:grid-cols-3">
-        {offer.plans.map((plan, index) => {
+        {offer.plans.map((plan) => {
           const active = selected === plan.id;
-          const recommended = index === Math.floor(offer.plans.length / 2);
+          const recommended = recommendedPlanId === plan.id;
           return (
             <article
               key={plan.id}

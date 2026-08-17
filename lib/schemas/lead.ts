@@ -154,6 +154,29 @@ export const LogCallInput = z
 
 export type LogCallInputType = z.infer<typeof LogCallInput>;
 
+export const UpdateLeadCallInput = z
+  .object({
+    interactionId: z.string().uuid(),
+    leadId: z.string().uuid(),
+    notes: optionalText(8000),
+    transcript: optionalText(50000),
+    durationMinutes: z.coerce.number().int().min(0).max(600).optional(),
+    outcome: z.enum(CALL_OUTCOMES).optional(),
+    callDate: CallDate,
+  })
+  .refine(
+    (v) =>
+      (v.outcome !== undefined && CALL_OUTCOMES_WITHOUT_DETAILS.has(v.outcome)) ||
+      (v.notes?.trim().length ?? 0) > 0 ||
+      (v.transcript?.trim().length ?? 0) > 0,
+    {
+      message: "Añade unas notas o la transcripción de la llamada",
+      path: ["notes"],
+    },
+  );
+
+export type UpdateLeadCallInputType = z.infer<typeof UpdateLeadCallInput>;
+
 export const LogEmailInput = z.object({
   leadId: z.string().uuid(),
   direction: z.enum(["incoming", "outgoing"]),
@@ -170,6 +193,17 @@ export const LogNoteInput = z.object({
 });
 
 export type LogNoteInputType = z.infer<typeof LogNoteInput>;
+
+export const UpdateLeadNoteInput = z.object({
+  interactionId: z.string().uuid(),
+  leadId: z.string().uuid(),
+  content: requiredText(8000, "La nota no puede estar vacía"),
+});
+
+export const DeleteLeadInteractionInput = z.object({
+  interactionId: z.string().uuid(),
+  leadId: z.string().uuid(),
+});
 
 export const SendEmailToLeadInput = z.object({
   leadId: z.string().uuid(),

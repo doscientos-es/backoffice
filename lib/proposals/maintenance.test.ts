@@ -3,6 +3,7 @@ import {
   DEFAULT_MAINTENANCE_OFFER,
   maintenancePlanAsLineItem,
   parseMaintenanceOffer,
+  recommendedMaintenancePlanId,
   selectedMaintenancePlan,
 } from "./maintenance";
 
@@ -21,6 +22,20 @@ describe("proposal maintenance offer", () => {
     expect(
       parseMaintenanceOffer(legacyOffer).plans.every((plan) => plan.exclusions.length === 0),
     ).toBe(true);
+  });
+
+  it("defaults legacy offers to their second plan and preserves a configured recommendation", () => {
+    const legacyOffer = {
+      ...DEFAULT_MAINTENANCE_OFFER,
+      recommended_plan_id: undefined,
+    };
+    expect(recommendedMaintenancePlanId(parseMaintenanceOffer(legacyOffer))).toBe("growth");
+    expect(
+      recommendedMaintenancePlanId({
+        ...DEFAULT_MAINTENANCE_OFFER,
+        recommended_plan_id: "essential",
+      }),
+    ).toBe("essential");
   });
 
   it("turns the selected plan into a monthly proposal line", () => {

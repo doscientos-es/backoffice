@@ -1,6 +1,6 @@
+import { DEFAULT_MAINTENANCE_OFFER } from "@/lib/proposals/maintenance";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { DEFAULT_MAINTENANCE_OFFER } from "@/lib/proposals/maintenance";
 import { MaintenanceOfferEditor } from "./maintenance-offer-editor";
 
 describe("MaintenanceOfferEditor", () => {
@@ -33,6 +33,25 @@ describe("MaintenanceOfferEditor", () => {
           }),
         ]),
       }),
+    );
+  });
+
+  it("lets the team choose the plan recommended to the client", () => {
+    const onChange = vi.fn();
+    render(
+      <MaintenanceOfferEditor
+        offer={DEFAULT_MAINTENANCE_OFFER}
+        selectedPlanId={null}
+        onChange={onChange}
+        onSelectedPlanChange={vi.fn()}
+        locked={false}
+      />,
+    );
+
+    fireEvent.click(screen.getByLabelText("Recomendar el plan Esencial"));
+
+    expect(onChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ recommended_plan_id: "essential" }),
     );
   });
 });

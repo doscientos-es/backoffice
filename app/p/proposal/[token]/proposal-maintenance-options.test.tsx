@@ -1,6 +1,6 @@
+import { DEFAULT_MAINTENANCE_OFFER } from "@/lib/proposals/maintenance";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { DEFAULT_MAINTENANCE_OFFER } from "@/lib/proposals/maintenance";
 import { ProposalMaintenanceOptions } from "./proposal-maintenance-options";
 
 const { refresh, selectProposalMaintenance } = vi.hoisted(() => ({
@@ -23,7 +23,8 @@ describe("ProposalMaintenanceOptions", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Elige la cobertura que prefieras" })).toBeDefined();
-    expect(screen.getByText("Recomendado")).toBeDefined();
+    const growthPlan = screen.getByRole("heading", { name: "Crecimiento" }).closest("article");
+    expect(within(growthPlan!).getByText("Recomendado")).toBeDefined();
     expect(screen.getAllByText("Incluye")).toHaveLength(DEFAULT_MAINTENANCE_OFFER.plans.length);
     expect(screen.getAllByText("No incluye")).toHaveLength(DEFAULT_MAINTENANCE_OFFER.plans.length);
 
