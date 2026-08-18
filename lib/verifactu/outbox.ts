@@ -44,6 +44,7 @@ export type OutboxDelivery = {
   processed: boolean;
   status: VerifactuSubmitResult["status"] | "skipped" | "deferred";
   csv: string | null;
+  warnings: Array<{ code: string | null; message: string }>;
 };
 
 export const MISSING_DURABLE_FISCAL_RECORD_MESSAGE =
@@ -130,6 +131,8 @@ function sanitizeResponse(response: unknown): Record<string, unknown> {
     "waitSeconds",
     "error",
     "errorCode",
+    "aeatStatus",
+    "warnings",
   ];
   return Object.fromEntries(
     allowed

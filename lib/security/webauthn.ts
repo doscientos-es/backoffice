@@ -1,6 +1,7 @@
 import "server-only";
 
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { publicEnv, serverEnv } from "@/lib/env";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type {
   AuthenticationResponseJSON,
   AuthenticatorTransportFuture,
@@ -13,8 +14,7 @@ import {
   verifyRegistrationResponse,
 } from "@simplewebauthn/server";
 import { cookies } from "next/headers";
-import { publicEnv, serverEnv } from "@/lib/env";
-import { createServerClient } from "@/lib/supabase/server";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { grantUserVerification } from "./user-verification";
 import type { UserVerificationScope } from "./user-verification-scope";
 
@@ -111,7 +111,9 @@ function validTransports(transports: string[] | null): AuthenticatorTransportFut
 }
 
 async function credentialsFor(userId: string): Promise<CredentialRow[]> {
-  const supabase = await createServerClient();
+  // Credentials are security factors: direct browser writes are blocked by RLS.
+  // This server-only lookup is safe because every caller supplies the current user.
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("webauthn_credentials")
     .select("credential_id, public_key, counter, transports")
@@ -122,7 +124,7 @@ async function credentialsFor(userId: string): Promise<CredentialRow[]> {
 
 /** Returns whether the current user has at least one registered passkey. */
 export async function hasRegisteredPasskey(userId: string): Promise<boolean> {
-  const supabase = await createServerClient();
+  const supabase = createAdminClient();
   const { count, error } = await supabase
     .from("webauthn_credentials")
     .select("id", { count: "exact", head: true })
@@ -177,7 +179,9 @@ export async function verifyPasskeyRegistration(
   }
 
   const { credential, credentialBackedUp, credentialDeviceType } = verification.registrationInfo;
-  const supabase = await createServerClient();
+  // RLS blocks client writes. Only this server-side code reaches service_role,
+  // after validating the signed registration response and consuming its challenge.
+  const supabase = createAdminClient();
   const { error } = await supabase.from("webauthn_credentials").insert({
     user_id: userId,
     credential_id: credential.id,
@@ -252,7 +256,8 @@ export async function verifyPasskeyAuthentication(
     throw new Error("No se ha podido verificar la biometría o el bloqueo del dispositivo");
   }
 
-  const supabase = await createServerClient();
+  // The signature counter can advance only after a successful assertion.
+  const supabase = createAdminClient();
   const { error } = await supabase
     .from("webauthn_credentials")
     .update({

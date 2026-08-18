@@ -46,5 +46,18 @@ describe("runVerifactuMockDiagnostic", () => {
       expect.objectContaining({ created_by: "member-1", status: "passed" }),
     );
   });
-});
 
+  it("persists a failed run so it invalidates a previous passing diagnostic", async () => {
+    registerInvoice.mockResolvedValue({
+      status: "error",
+      hash: "A".repeat(64),
+      response: { mock: false },
+      errorMessage: "XML no conforme",
+    });
+
+    const result = await runVerifactuMockDiagnostic("member-1");
+
+    expect(result.ok).toBe(false);
+    expect(insert).toHaveBeenCalledWith(expect.objectContaining({ status: "failed" }));
+  });
+});

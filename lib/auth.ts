@@ -110,7 +110,24 @@ export async function requireUser(opts?: RequireUserOptions): Promise<CurrentUse
 export async function requireRole(roles: MemberRole[]): Promise<CurrentUser> {
   const u = await requireUser();
   if (!roles.includes(u.role)) redirect("/inicio?error=forbidden");
+  if (u.role === "owner" || u.role === "admin") await requireAal2();
   return u;
+}
+
+/**
+ * Require a Supabase MFA-upgraded session for administrative access. The
+ * security settings page deliberately uses requireUser(), so an admin at aal1
+ * can still enroll TOTP instead of being locked out.
+ */
+export async function requireAal2(): Promise<void> {
+  const supabase = await createServerClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel(
+    session?.access_token,
+  );
+  if (error || data?.currentLevel !== "aal2") redirect("/settings/security");
 }
 
 /**

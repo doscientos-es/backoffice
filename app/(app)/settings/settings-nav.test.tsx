@@ -25,8 +25,8 @@ vi.mock("next/link", () => ({
 
 // ── SUT (imported after mocks are in place) ──────────────────────────────────
 
-import { usePathname } from "next/navigation";
 import { SettingsNav } from "@/app/(app)/settings/settings-nav";
+import { usePathname } from "next/navigation";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -62,14 +62,14 @@ describe("SettingsNav – item visibility", () => {
     expect(screen.getByText("Equipo")).toBeTruthy();
   });
 
-  it("renders exactly 2 links for non-admin (Perfil + Legal)", () => {
+  it("renders exactly 3 links for non-admin (Perfil + Seguridad + Legal)", () => {
     renderNav(false);
-    expect(screen.getAllByRole("link")).toHaveLength(2);
+    expect(screen.getAllByRole("link")).toHaveLength(3);
   });
 
-  it("renders all 9 links for admin", () => {
+  it("renders all 10 links for admin", () => {
     renderNav(true);
-    expect(screen.getAllByRole("link")).toHaveLength(9);
+    expect(screen.getAllByRole("link")).toHaveLength(10);
   });
 
   it("shows Plantillas email when canManageTeam is true", () => {

@@ -56,46 +56,57 @@ export async function runVerifactuMockDiagnostic(memberId: string): Promise<{
   detail: string;
 }> {
   const now = new Date();
-  const config = verifactuConfigFromEnv();
-  const client = createVerifactuClient({ ...config, environment: "mock" });
   const testNumber = `DIAG-${now.toISOString().slice(0, 10).replaceAll("-", "")}`;
-  const result = await client.registerInvoice({
-    nif: "B12345678",
-    invoiceNumber: testNumber,
-    invoiceType: "F1",
-    issueDate: now,
-    taxAmount: 21,
-    total: 121,
-    previousHash: null,
-    generatedAt: now,
-    emisorName: "Emisor de prueba VERI*FACTU",
-    clientNif: "B87654321",
-    clientName: "Destinatario de prueba VERI*FACTU",
-    descriptionOperacion: "Diagnóstico sintético VERI*FACTU; no es una factura.",
-    vatLines: [{ rate: 21, base: 100, tax: 21 }],
-    previousInvoiceNumber: null,
-    previousIssueDate: null,
-  });
-  const qrUrl = client.buildQrUrl({
-    nif: "B12345678",
-    invoiceNumber: testNumber,
-    issueDate: now,
-    total: 121,
-  });
-  const checks: DiagnosticCheck[] = [
-    { key: "sif_config", ok: true, detail: "Configuración SIF válida" },
-    {
-      key: "xml_xsd_hash",
-      ok: result.status === "accepted" && /^[A-F0-9]{64}$/.test(result.hash),
-      detail: result.errorMessage ?? "XML, XSD y huella SHA-256 válidos",
-    },
-    {
-      key: "mock_delivery",
-      ok: result.status === "accepted" && result.response.mock === true,
-      detail: result.errorMessage ?? "Entrega mock aceptada sin conexión a AEAT",
-    },
-    { key: "qr", ok: Boolean(qrUrl), detail: "URL QR de verificación generada" },
-  ];
+  let checks: DiagnosticCheck[];
+  try {
+    const config = verifactuConfigFromEnv();
+    const client = createVerifactuClient({ ...config, environment: "mock" });
+    const result = await client.registerInvoice({
+      nif: "B12345678",
+      invoiceNumber: testNumber,
+      invoiceType: "F1",
+      issueDate: now,
+      taxAmount: 21,
+      total: 121,
+      previousHash: null,
+      generatedAt: now,
+      emisorName: "Emisor de prueba VERI*FACTU",
+      clientNif: "B87654321",
+      clientName: "Destinatario de prueba VERI*FACTU",
+      descriptionOperacion: "Diagnóstico sintético VERI*FACTU; no es una factura.",
+      vatLines: [{ rate: 21, base: 100, tax: 21 }],
+      previousInvoiceNumber: null,
+      previousIssueDate: null,
+    });
+    const qrUrl = client.buildQrUrl({
+      nif: "B12345678",
+      invoiceNumber: testNumber,
+      issueDate: now,
+      total: 121,
+    });
+    checks = [
+      { key: "sif_config", ok: true, detail: "Configuración SIF válida" },
+      {
+        key: "xml_xsd_hash",
+        ok: result.status === "accepted" && /^[A-F0-9]{64}$/.test(result.hash),
+        detail: result.errorMessage ?? "XML, XSD y huella SHA-256 válidos",
+      },
+      {
+        key: "mock_delivery",
+        ok: result.status === "accepted" && result.response.mock === true,
+        detail: result.errorMessage ?? "Entrega mock aceptada sin conexión a AEAT",
+      },
+      { key: "qr", ok: Boolean(qrUrl), detail: "URL QR de verificación generada" },
+    ];
+  } catch {
+    checks = [
+      {
+        key: "sif_config",
+        ok: false,
+        detail: "La configuración SIF no permite completar la suite sintética",
+      },
+    ];
+  }
   const ok = checks.every((check) => check.ok);
   const admin = createAdminClient();
   const { error } = await admin.from("verifactu_diagnostic_runs").insert({

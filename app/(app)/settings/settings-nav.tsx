@@ -24,6 +24,7 @@ type Item = {
 
 const ITEMS: readonly Item[] = [
   { href: "/settings/profile", label: "Perfil", icon: User, requiresAdmin: false },
+  { href: "/settings/security", label: "Seguridad", icon: Shield, requiresAdmin: false },
   { href: "/settings/company", label: "Empresa", icon: Building2, requiresAdmin: true },
   { href: "/settings/team", label: "Equipo", icon: Users, requiresAdmin: true },
   { href: "/settings/goals", label: "Metas", icon: Target, requiresAdmin: true },
