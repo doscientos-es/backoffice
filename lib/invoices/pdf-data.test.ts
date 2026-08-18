@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
 import type { BuildInvoicePdfInput } from "@/lib/invoices/pdf-data";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 const ORIGINAL_NIF = process.env.VERIFACTU_NIF_EMISOR;
 
@@ -9,6 +9,7 @@ function makeInput(overrides: Partial<BuildInvoicePdfInput["invoice"]> = {}): Bu
       full_number: "FAC-2025-001",
       invoice_type: "ordinaria",
       status: "issued",
+      verifactu_status: "accepted",
       issue_date: "2025-01-05",
       due_date: "2025-02-05",
       idfact: "IDFACT-1",
@@ -82,7 +83,13 @@ describe("buildInvoicePdfData", () => {
     expect(data.qrDataUrl).toBeNull();
   });
 
-  it("builds a QR data URL for a complete, issued invoice", async () => {
+  it("omits the QR until AEAT accepts the invoice", async () => {
+    const { buildInvoicePdfData } = await importPdfData("B11111111");
+    const data = await buildInvoicePdfData(makeInput({ verifactu_status: "pending" }));
+    expect(data.qrDataUrl).toBeNull();
+  });
+
+  it("builds a QR data URL for a complete, accepted invoice", async () => {
     const { buildInvoicePdfData } = await importPdfData("B11111111");
     const data = await buildInvoicePdfData(makeInput());
     expect(data.qrDataUrl?.startsWith("data:image/png;base64,")).toBe(true);

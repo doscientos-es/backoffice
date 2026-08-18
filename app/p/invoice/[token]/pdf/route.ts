@@ -1,9 +1,9 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { renderInvoicePdf } from "@/lib/invoices/invoice-pdf-document";
 import { buildInvoicePdfData, invoicePdfFilename } from "@/lib/invoices/pdf-data";
 import { isPortalUnlocked } from "@/lib/portal/access";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
@@ -86,6 +86,7 @@ export async function GET(
       full_number: (invoice.full_number as string | null) ?? null,
       invoice_type: (invoice.invoice_type as string | null) ?? null,
       status: (invoice.status as string | null) ?? null,
+      verifactu_status: (invoice.verifactu_status as string | null) ?? null,
       issue_date: (invoice.issue_date as string | null) ?? null,
       due_date: (invoice.due_date as string | null) ?? null,
       idfact: (invoice.idfact as string | null) ?? null,
@@ -112,12 +113,12 @@ export async function GET(
     }>,
     settings: settings
       ? {
-          company_name: (settings.company_name as string | null) ?? null,
-          company_nif: (settings.company_nif as string | null) ?? null,
-          company_address: (settings.company_address as string | null) ?? null,
-          iban: (settings.iban as string | null) ?? null,
-          payment_terms: (settings.payment_terms as string | null) ?? null,
-        }
+        company_name: (settings.company_name as string | null) ?? null,
+        company_nif: (settings.company_nif as string | null) ?? null,
+        company_address: (settings.company_address as string | null) ?? null,
+        iban: (settings.iban as string | null) ?? null,
+        payment_terms: (settings.payment_terms as string | null) ?? null,
+      }
       : null,
     workLogs,
   });

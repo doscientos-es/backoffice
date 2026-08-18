@@ -1,9 +1,9 @@
 import "server-only";
 
-import { buildQrDataUrl, buildQrUrl } from "@doscientos/verifactu";
 import { formatAddress } from "@/lib/address";
 import { buildVatBreakdown, type VatBreakdownRow } from "@/lib/finance";
 import { verifactuConfigFromEnv } from "@/lib/verifactu/config";
+import { buildQrDataUrl, buildQrUrl } from "@doscientos/verifactu";
 
 /**
  * Normalised, render-ready snapshot of an invoice for the PDF document.
@@ -76,6 +76,7 @@ export type BuildInvoicePdfInput = {
     full_number: string | null;
     invoice_type: string | null;
     status: string | null;
+    verifactu_status: string | null;
     issue_date: string | null;
     due_date: string | null;
     idfact: string | null;
@@ -115,8 +116,8 @@ export type BuildInvoicePdfInput = {
 
 /**
  * Build the Verifactu QR data URL when the invoice carries the required fiscal
- * data. Mirrors the logic used by the HTML invoice views. Returns `null` when
- * the emisor NIF is missing or the invoice is incomplete.
+ * data and has been accepted by AEAT. Mirrors the logic used by the HTML
+ * invoice views. Returns `null` otherwise.
  */
 async function buildInvoiceQr(
   invoice: BuildInvoicePdfInput["invoice"],
@@ -125,6 +126,7 @@ async function buildInvoiceQr(
   if (
     !emisorNif ||
     invoice.status === "draft" ||
+    invoice.verifactu_status !== "accepted" ||
     !invoice.full_number ||
     !invoice.issue_date ||
     invoice.total == null
@@ -197,11 +199,11 @@ export async function buildInvoicePdfData(input: BuildInvoicePdfInput): Promise<
       }) || null,
     company: settings
       ? {
-          name: settings.company_name,
-          nif: settings.company_nif,
-          address: settings.company_address || null,
-          iban: settings.iban,
-        }
+        name: settings.company_name,
+        nif: settings.company_nif,
+        address: settings.company_address || null,
+        iban: settings.iban,
+      }
       : null,
     items: normalisedItems,
     subtotal: Number(invoice.subtotal ?? 0),

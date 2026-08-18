@@ -1,8 +1,3 @@
-import { buildQrDataUrl, buildQrUrl } from "@doscientos/verifactu";
-import { AlertTriangle } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import { notFound } from "next/navigation";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { CopyPortalLink } from "@/components/portal/copy-portal-link";
@@ -19,6 +14,11 @@ import { buildVatBreakdown } from "@/lib/finance";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { verifactuConfigFromEnv } from "@/lib/verifactu/config";
+import { buildQrDataUrl, buildQrUrl } from "@doscientos/verifactu";
+import { AlertTriangle } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { updateInvoicePortalAccess } from "../actions";
 import { InvoiceActions } from "./invoice-actions";
 import { RefreshClientSnapshotButton } from "./refresh-client-snapshot-button";
@@ -81,6 +81,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
   const emisorNif = (settings?.company_nif as string | null) ?? "";
   if (
     emisorNif &&
+    invoice.verifactu_status === "accepted" &&
     invoice.status !== "draft" &&
     invoice.full_number &&
     invoice.issue_date &&
