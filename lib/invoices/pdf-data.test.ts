@@ -83,10 +83,10 @@ describe("buildInvoicePdfData", () => {
     expect(data.qrDataUrl).toBeNull();
   });
 
-  it("omits the QR until AEAT accepts the invoice", async () => {
+  it("builds the QR as soon as the invoice is issued, even before AEAT answers", async () => {
     const { buildInvoicePdfData } = await importPdfData("B11111111");
     const data = await buildInvoicePdfData(makeInput({ verifactu_status: "pending" }));
-    expect(data.qrDataUrl).toBeNull();
+    expect(data.qrDataUrl?.startsWith("data:image/png;base64,")).toBe(true);
   });
 
   it("builds a QR data URL for a complete, accepted invoice", async () => {

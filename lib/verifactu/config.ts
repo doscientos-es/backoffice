@@ -1,6 +1,11 @@
-import type { VerifactuConfig } from "@doscientos/verifactu";
 import { isDemoMode } from "@/lib/demo";
 import { serverEnv } from "@/lib/env";
+import type { VerifactuConfig } from "@doscientos/verifactu";
+
+/** Serializable safe subset persisted with the immutable fiscal record. */
+export function verifactuSoftwareSnapshotFromEnv(): VerifactuConfig["software"] {
+  return verifactuConfigFromEnv().software;
+}
 
 /**
  * App-specific adapter for the Verifactu package.
@@ -26,10 +31,14 @@ export function verifactuConfigFromEnv(): VerifactuConfig {
       password: env.VERIFACTU_CERT_PASSWORD,
     },
     software: {
+      producerName: env.VERIFACTU_PRODUCER_NAME,
+      producerNif: env.VERIFACTU_PRODUCER_NIF,
       name: env.VERIFACTU_SOFTWARE_NAME,
       id: env.VERIFACTU_SOFTWARE_ID,
       version: env.VERIFACTU_SOFTWARE_VERSION,
       installationNumber: env.VERIFACTU_INSTALLATION_NUMBER,
+      onlyVerifactu: true,
+      multipleTaxpayers: false,
     },
     appUrl: env.NEXT_PUBLIC_APP_URL,
   };

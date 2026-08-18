@@ -4,6 +4,18 @@
 // Única fuente de verdad para las 3 fast actions (llamada, email, nota)
 // con opción de agendar follow-up. Todas refrescan el router tras éxito.
 
+import {
+  FileText,
+  Loader2,
+  Mail,
+  MessageCircle,
+  NotebookPen,
+  Phone,
+  Send,
+  Video,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { type SubmitEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -25,22 +37,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { defaultMeetingEnd, defaultMeetingStart } from "@/lib/calendar/date-presets";
 import { publicEnv } from "@/lib/env";
 import { buildLeadWhatsAppMessage, buildWhatsAppUrl } from "@/lib/leads/whatsapp";
+import { buildBookingUrl } from "@/lib/recovery/utils";
 import { defaultFollowUpDateTime } from "@/lib/reminders/date-presets";
 import type { CallOutcome } from "@/lib/schemas/lead";
 import { todayIsoLocal } from "@/lib/utils/date";
 import { addMinutesToDatetimeLocal, datetimeLocalToIso } from "@/lib/utils/date-time";
-import {
-  FileText,
-  Loader2,
-  Mail,
-  MessageCircle,
-  NotebookPen,
-  Phone,
-  Send,
-  Video,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
-import { type SubmitEvent, useEffect, useState } from "react";
 import { createReminder } from "../reminders/actions";
 import { EmailComposer } from "./[id]/email-composer";
 import { MomTestQuickDialog } from "./[id]/mom-test-quick-dialog";
@@ -53,12 +54,13 @@ import { CallDigestDialog } from "./call-digest-dialog";
 /** Shape passed for Meet invitee selection — subset of team_members with email. */
 export type MeetMember = { id: string; name: string; email: string };
 
-function WhatsAppFollowUp({
+function LastAttemptDialog({
   leadId,
   leadName,
   leadEmail,
   leadPhone,
   senderName,
+  aiEnabled,
   open,
   onOpenChange,
 }: {
@@ -67,9 +69,11 @@ function WhatsAppFollowUp({
   leadEmail: string | null;
   leadPhone: string | null;
   senderName: string;
+  aiEnabled?: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const [channel, setChannel] = useState<"whatsapp" | "email">("whatsapp");
   const [message, setMessage] = useState(() =>
     buildLeadWhatsAppMessage(
       { id: leadId, name: leadName, email: leadEmail },
@@ -77,33 +81,98 @@ function WhatsAppFollowUp({
       publicEnv.NEXT_PUBLIC_CAL_LINK,
     ),
   );
-  if (!leadPhone) return null;
-  const href = buildWhatsAppUrl(leadPhone, message);
+  const firstName = leadName.split(" ")[0] || leadName;
+  const bookingUrl = buildBookingUrl(publicEnv.NEXT_PUBLIC_CAL_LINK, {
+    id: leadId,
+    name: leadName,
+    email: leadEmail,
+  });
+  const emailSubject = `¿Hablamos sobre lo que necesitas, ${firstName}?`;
+  const emailBody = [
+    `Hola ${firstName},`,
+    `\nSoy ${senderName || "el equipo"}, de Doscientos.`,
+    "\nNos dejaste tus datos al completar un formulario en uno de nuestros anuncios de Meta. Te escribo porque he intentado llamarte varias veces, pero no he conseguido localizarte.",
+    "\nNos gustaría entender qué necesitas y ver si podemos ayudarte.",
+    bookingUrl
+      ? `\nPuedes responderme a este email o, si te va mejor, agendar directamente una reunión aquí: ${bookingUrl}`
+      : "\nPuedes responderme a este email y buscamos un momento para hablar.",
+    "\n¿Qué opción te resulta más cómoda?",
+    "\nUn saludo,",
+    senderName || "El equipo de Doscientos",
+  ].join("\n");
+  const href = leadPhone ? buildWhatsAppUrl(leadPhone, message) : "#";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Preparar WhatsApp</DialogTitle>
+          <DialogTitle>Último intento de contacto</DialogTitle>
           <DialogDescription>
-            Has registrado 3 llamadas seguidas sin respuesta. Revisa el mensaje antes de abrir
-            WhatsApp.
+            Has registrado 3 llamadas seguidas sin respuesta. Revisa y corrige el mensaje que
+            prefieras usar. No se envía nada automáticamente.
           </DialogDescription>
         </DialogHeader>
-        <Textarea
-          value={message}
-          onChange={(event) => setMessage(event.target.value)}
-          rows={9}
-          aria-label="Mensaje de WhatsApp"
-        />
-        <div className="flex justify-end">
-          <Button asChild className="gap-2">
-            <a href={href} target="_blank" rel="noreferrer">
-              <MessageCircle className="size-4" />
-              Abrir WhatsApp
-            </a>
-          </Button>
+        <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
+          <button
+            type="button"
+            onClick={() => setChannel("whatsapp")}
+            className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+              channel === "whatsapp" ? "bg-background shadow-sm" : "text-muted-foreground"
+            }`}
+          >
+            WhatsApp
+          </button>
+          <button
+            type="button"
+            onClick={() => setChannel("email")}
+            className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+              channel === "email" ? "bg-background shadow-sm" : "text-muted-foreground"
+            }`}
+          >
+            Email
+          </button>
         </div>
+        {channel === "whatsapp" ? (
+          leadPhone ? (
+            <>
+              <Textarea
+                value={message}
+                onChange={(event) => setMessage(event.target.value)}
+                rows={9}
+                aria-label="Mensaje de WhatsApp"
+              />
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs text-muted-foreground">
+                  Se abrirá WhatsApp con el texto preparado.
+                </p>
+                <Button asChild className="shrink-0 gap-2">
+                  <a href={href} target="_blank" rel="noreferrer">
+                    <MessageCircle className="size-4" />
+                    Abrir WhatsApp
+                  </a>
+                </Button>
+              </div>
+            </>
+          ) : (
+            <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
+              Este lead no tiene teléfono registrado. Puedes cambiar a Email si tiene una dirección
+              disponible.
+            </div>
+          )
+        ) : (
+          <EmailComposer
+            leadId={leadId}
+            defaultTo={leadEmail ?? ""}
+            defaultSubject={emailSubject}
+            defaultBody={emailBody}
+            draftKind="no_answer_recovery"
+            draftInstructions="El lead no ha respondido a tres llamadas. Mantén un tono breve, humano y no insistente. Explica que sus datos proceden de un formulario de un anuncio de Meta y ofrece responder o agendar una reunión."
+            disabled={!leadEmail}
+            disabledReason="Este lead no tiene email registrado."
+            aiEnabled={aiEnabled}
+            onSuccess={() => onOpenChange(false)}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -612,7 +681,7 @@ export function QCallDialog({
     setCallDate(todayIsoLocal());
     setFollowUpEnabled(false);
     setDigestKey((key) => key + 1);
-    if (res.noAnswerStreak >= 3) setWhatsappOpen(true);
+    if (res.noAnswerStreak === 3) setWhatsappOpen(true);
     router.refresh();
     setOpen(false);
     if (res.showMomTestPrompt) {
@@ -771,12 +840,13 @@ export function QCallDialog({
         onOpenChange={setMomTestOpen}
         accessible={momTestAccessible}
       />
-      <WhatsAppFollowUp
+      <LastAttemptDialog
         leadId={leadId}
         leadName={leadName}
         leadEmail={leadEmail}
         leadPhone={leadPhone}
         senderName={senderName}
+        aiEnabled={aiEnabled}
         open={whatsappOpen}
         onOpenChange={setWhatsappOpen}
       />

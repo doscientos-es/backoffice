@@ -1,16 +1,18 @@
+import { scopedLogger } from "@/lib/logger";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   createVerifactuClient,
+  type VerifactuSoftware,
   type VerifactuSubmitInput,
   type VerifactuSubmitResult,
 } from "@doscientos/verifactu";
-import { scopedLogger } from "@/lib/logger";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { verifactuConfigFromEnv } from "./config";
 
 const log = scopedLogger("verifactu.outbox");
 
 type LedgerRow = {
   record_type: "alta" | "anulacion";
+  issuer_nif: string;
   current_hash: string;
   record_payload: Record<string, unknown>;
 };
@@ -35,11 +37,12 @@ type CancellationInput = {
   previousIssueDate: Date | null;
   sinRegistroPrevio: "S" | "N";
   rechazoPrevio: "S" | "N";
+  incidence?: boolean;
 };
 
 export type OutboxDelivery = {
   processed: boolean;
-  status: VerifactuSubmitResult["status"] | "skipped";
+  status: VerifactuSubmitResult["status"] | "skipped" | "deferred";
   csv: string | null;
 };
 
@@ -101,6 +104,7 @@ function sanitizeResponse(response: unknown): Record<string, unknown> {
     "aeatCode",
     "aeatDescription",
     "soapFault",
+    "waitSeconds",
     "error",
     "errorCode",
   ];
@@ -125,13 +129,13 @@ export async function assertDurableVerifactuPackage(requireCancellation = false)
   const hashes = (await import("@doscientos/verifactu")) as unknown as HashModule;
   if (!hashes.computeInvoiceHash) {
     throw new Error(
-      "Falta publicar @doscientos/verifactu 0.1.11 antes de activar VERI*FACTU durable",
+      "El paquete @doscientos/verifactu no implementa el cálculo de huella requerido por VERI*FACTU durable",
     );
   }
   if (!requireCancellation) return;
   const client = createVerifactuClient(verifactuConfigFromEnv()) as unknown as CancellableClient;
   if (!client.cancelInvoice || !hashes.computeCancellationHash) {
-    throw new Error("Falta publicar @doscientos/verifactu 0.1.11 con RegistroAnulacion");
+    throw new Error("El paquete @doscientos/verifactu no implementa RegistroAnulacion durable");
   }
 }
 
@@ -179,11 +183,30 @@ function cancellationInput(payload: Record<string, unknown>): CancellationInput 
   };
 }
 
+function softwareSnapshot(payload: Record<string, unknown>): VerifactuSoftware {
+  const software = asRecord(payload.software);
+  const boolean = (key: string): boolean => {
+    const value = software[key];
+    if (typeof value !== "boolean") throw new Error(`Payload fiscal inválido: software.${key}`);
+    return value;
+  };
+  return {
+    producerName: text(software, "producerName"),
+    producerNif: text(software, "producerNif"),
+    name: text(software, "name"),
+    id: text(software, "id"),
+    version: text(software, "version"),
+    installationNumber: text(software, "installationNumber"),
+    onlyVerifactu: boolean("onlyVerifactu"),
+    multipleTaxpayers: boolean("multipleTaxpayers"),
+  };
+}
+
 async function getLedger(ledgerId: string): Promise<LedgerRow> {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("verifactu_ledger")
-    .select("record_type, current_hash, record_payload")
+    .select("record_type, issuer_nif, current_hash, record_payload")
     .eq("id", ledgerId)
     .maybeSingle();
   if (error || !data) throw new Error(error?.message ?? "Registro fiscal no encontrado");
@@ -198,6 +221,31 @@ async function getLedger(ledgerId: string): Promise<LedgerRow> {
   return row;
 }
 
+async function outboxIncident(outboxId: string): Promise<boolean> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("verifactu_outbox")
+    .select("incidence")
+    .eq("id", outboxId)
+    .maybeSingle();
+  if (error || !data) throw new Error(error?.message ?? "Outbox VERI*FACTU no encontrado");
+  const row = data as { incidence?: unknown };
+  return row.incidence === true;
+}
+
+export function isRetryableVerifactuDelivery(result: VerifactuSubmitResult | null): boolean {
+  if (result?.status !== "error") return false;
+  if (result.errorCode === "network_error" || result.errorCode === "response_invalid") return true;
+  if (result.errorCode !== "http_error") return false;
+  const status = (result.response as { httpStatus?: unknown }).httpStatus;
+  return typeof status === "number" && (status === 408 || status === 429 || status >= 500);
+}
+
+function waitSeconds(result: VerifactuSubmitResult | null): number | null {
+  const value = (result?.response as { waitSeconds?: unknown } | undefined)?.waitSeconds;
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : null;
+}
+
 async function complete(
   outboxId: string,
   workerId: string,
@@ -208,7 +256,7 @@ async function complete(
   const status = result?.status ?? "error";
   const explicitError = error instanceof Error ? error.message : "Error de envío a AEAT";
   const message = formatOutboxError(error ? explicitError : null, result);
-  const { error: completionError } = await admin.rpc("complete_verifactu_outbox", {
+  const { error: completionError } = await admin.rpc("complete_verifactu_outbox_v2", {
     p_outbox_id: outboxId,
     p_worker_id: workerId,
     p_result: status,
@@ -218,6 +266,8 @@ async function complete(
       ? sanitizeResponse({ ...result.response, errorCode: result.errorCode })
       : { kind: "delivery_error" },
     p_error: message,
+    p_retryable: isRetryableVerifactuDelivery(result),
+    p_wait_seconds: waitSeconds(result),
   });
   if (completionError) throw new Error(completionError.message);
   return { processed: true, status, csv: result?.csv ?? null };
@@ -230,19 +280,41 @@ async function deliverClaimed(
 ): Promise<OutboxDelivery> {
   try {
     const ledger = await getLedger(ledgerId);
-    const client = createVerifactuClient(verifactuConfigFromEnv(), log);
+    const software = softwareSnapshot(ledger.record_payload);
     const hashes = (await import("@doscientos/verifactu")) as unknown as HashModule;
+    const incidence = await outboxIncident(outboxId);
+    const admin = createAdminClient();
+    const { data: slot, error: slotError } = await admin.rpc("reserve_verifactu_submission_slot", {
+      p_issuer_nif: ledger.issuer_nif,
+    });
+    if (slotError) throw new Error(slotError.message);
+    const reservation = (Array.isArray(slot) ? slot[0] : slot) as {
+      allowed?: unknown;
+      next_allowed_at?: unknown;
+    } | null;
+    if (reservation?.allowed !== true) {
+      const next = reservation?.next_allowed_at;
+      if (typeof next !== "string") throw new Error("Control de flujo AEAT inválido");
+      const { error: deferError } = await admin.rpc("defer_verifactu_outbox", {
+        p_outbox_id: outboxId,
+        p_worker_id: workerId,
+        p_next_attempt_at: next,
+      });
+      if (deferError) throw new Error(deferError.message);
+      return { processed: false, status: "deferred", csv: null };
+    }
+    const client = createVerifactuClient({ ...verifactuConfigFromEnv(), software }, log);
     let result: VerifactuSubmitResult;
 
     if (ledger.record_type === "alta") {
-      const input = altaInput(ledger.record_payload);
+      const input = { ...altaInput(ledger.record_payload), incidence };
       const hash = hashes.computeInvoiceHash?.(input);
       if (!hash) throw new Error("Falta computeInvoiceHash en @doscientos/verifactu 0.1.11");
       if (hash !== ledger.current_hash)
         throw new Error("La huella del ledger no coincide con su payload");
       result = await client.registerInvoice(input);
     } else {
-      const input = cancellationInput(ledger.record_payload);
+      const input = { ...cancellationInput(ledger.record_payload), incidence };
       const cancellable = client as unknown as CancellableClient;
       const hash = hashes.computeCancellationHash?.(input);
       if (!hash || !cancellable.cancelInvoice) {

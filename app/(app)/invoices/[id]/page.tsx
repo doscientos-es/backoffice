@@ -81,7 +81,6 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
   const emisorNif = (settings?.company_nif as string | null) ?? "";
   if (
     emisorNif &&
-    invoice.verifactu_status === "accepted" &&
     invoice.status !== "draft" &&
     invoice.full_number &&
     invoice.issue_date &&

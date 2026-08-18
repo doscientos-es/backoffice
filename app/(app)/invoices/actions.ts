@@ -1,7 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { after } from "next/server";
 import { InvoiceEmail } from "@/components/email";
 import { defineAction } from "@/lib/actions/define-action";
 import { requireRole } from "@/lib/auth";
@@ -47,6 +45,7 @@ import { consumeUserVerification } from "@/lib/security/user-verification";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
+import { verifactuSoftwareSnapshotFromEnv } from "@/lib/verifactu/config";
 import {
   assertDurableVerifactuPackage,
   deliverInvoiceVerifactu,
@@ -54,6 +53,8 @@ import {
   type OutboxDelivery,
   syncInvoiceQrFromLedger,
 } from "@/lib/verifactu/outbox";
+import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 
 const log = scopedLogger("invoices.actions");
 
@@ -72,7 +73,10 @@ async function enqueueFiscalRecord(invoiceId: string, cancellation = false): Pro
   const functionName = cancellation
     ? "cancel_invoice_with_verifactu_outbox"
     : "issue_invoice_with_verifactu_outbox";
-  const { data, error } = await supabase.rpc(functionName, { p_invoice_id: invoiceId });
+  const { data, error } = await supabase.rpc(functionName, {
+    p_invoice_id: invoiceId,
+    p_software: verifactuSoftwareSnapshotFromEnv(),
+  });
   if (error) throw new Error(error.message);
   return outboxIdFromRpc(data);
 }

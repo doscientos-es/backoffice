@@ -34,6 +34,18 @@ vi.mock("@/lib/verifactu/outbox", () => ({
   deliverVerifactuOutbox,
   syncInvoiceQrFromLedger,
 }));
+vi.mock("@/lib/verifactu/config", () => ({
+  verifactuSoftwareSnapshotFromEnv: () => ({
+    producerName: "Test producer",
+    producerNif: "B12345678",
+    name: "Test SIF",
+    id: "T1",
+    version: "1.0.0",
+    installationNumber: "00000001",
+    onlyVerifactu: true,
+    multipleTaxpayers: false,
+  }),
+}));
 vi.mock("@/lib/logger", () => ({
   scopedLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),
 }));
@@ -62,6 +74,7 @@ describe("updateInvoiceStatus fiscal flow", () => {
     expect(result).toEqual({ ok: true, fiscalDeliveryStatus: "accepted" });
     expect(rpc).toHaveBeenCalledWith("issue_invoice_with_verifactu_outbox", {
       p_invoice_id: INVOICE_ID,
+      p_software: expect.objectContaining({ producerNif: "B12345678" }),
     });
     expect(deliverVerifactuOutbox).toHaveBeenCalledWith(
       "outbox-1",
@@ -77,6 +90,7 @@ describe("updateInvoiceStatus fiscal flow", () => {
     expect(result).toEqual({ ok: true, fiscalDeliveryStatus: "accepted" });
     expect(rpc).toHaveBeenCalledWith("cancel_invoice_with_verifactu_outbox", {
       p_invoice_id: INVOICE_ID,
+      p_software: expect.objectContaining({ producerNif: "B12345678" }),
     });
     expect(backupInvoiceToDrive).not.toHaveBeenCalled();
     expect(syncInvoiceQrFromLedger).not.toHaveBeenCalled();
@@ -90,6 +104,7 @@ describe("updateInvoiceStatus fiscal flow", () => {
     expect(result).toEqual({ ok: true, fiscalDeliveryStatus: "error" });
     expect(rpc).toHaveBeenCalledWith("issue_invoice_with_verifactu_outbox", {
       p_invoice_id: INVOICE_ID,
+      p_software: expect.objectContaining({ producerNif: "B12345678" }),
     });
   });
 

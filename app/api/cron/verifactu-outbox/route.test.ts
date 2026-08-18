@@ -46,6 +46,7 @@ describe("GET /api/cron/verifactu-outbox", () => {
       rejected: 0,
       error: 1,
       skipped: 1,
+      deferred: 0,
     });
     expect(retryDueVerifactuOutbox).toHaveBeenCalledWith(10);
   });

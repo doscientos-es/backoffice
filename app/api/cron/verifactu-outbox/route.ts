@@ -1,7 +1,7 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { scopedLogger } from "@/lib/logger";
 import { retryDueVerifactuOutbox } from "@/lib/verifactu/outbox";
+import { type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   try {
     const deliveries = await retryDueVerifactuOutbox(BATCH_SIZE);
-    const summary = { accepted: 0, rejected: 0, error: 0, skipped: 0 };
+    const summary = { accepted: 0, rejected: 0, error: 0, skipped: 0, deferred: 0 };
     for (const delivery of deliveries) summary[delivery.status] += 1;
     log.info({ total: deliveries.length, ...summary }, "verifactu outbox cron executed");
     return NextResponse.json({ total: deliveries.length, ...summary }, { status: 200 });

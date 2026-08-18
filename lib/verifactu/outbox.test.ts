@@ -19,6 +19,7 @@ vi.mock("@/lib/supabase/admin", () => ({
 import {
   deliverInvoiceVerifactu,
   formatOutboxError,
+  isRetryableVerifactuDelivery,
   MISSING_DURABLE_FISCAL_RECORD_MESSAGE,
 } from "./outbox";
 
@@ -38,6 +39,42 @@ describe("formatOutboxError", () => {
 
   it("preserves a technical error without inventing an AEAT code", () => {
     expect(formatOutboxError("Certificado P12 inválido", null)).toBe("Certificado P12 inválido");
+  });
+});
+
+describe("isRetryableVerifactuDelivery", () => {
+  const error = (errorCode: "configuration_invalid" | "network_error" | "response_invalid") => ({
+    status: "error" as const,
+    csv: null,
+    hash: "A".repeat(64),
+    idfact: "B12345678-A-1-20260101",
+    response: {},
+    errorMessage: "test error",
+    errorCode,
+    aeatCode: null,
+  });
+
+  it("retries only failures where AEAT may not have produced a durable result", () => {
+    expect(isRetryableVerifactuDelivery(error("network_error"))).toBe(true);
+    expect(isRetryableVerifactuDelivery(error("response_invalid"))).toBe(true);
+    expect(isRetryableVerifactuDelivery(error("configuration_invalid"))).toBe(false);
+  });
+
+  it("retries only transient HTTP responses", () => {
+    expect(
+      isRetryableVerifactuDelivery({
+        ...error("network_error"),
+        errorCode: "http_error",
+        response: { httpStatus: 503 },
+      }),
+    ).toBe(true);
+    expect(
+      isRetryableVerifactuDelivery({
+        ...error("network_error"),
+        errorCode: "http_error",
+        response: { httpStatus: 400 },
+      }),
+    ).toBe(false);
   });
 });
 

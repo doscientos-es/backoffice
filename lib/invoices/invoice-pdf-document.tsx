@@ -1,5 +1,7 @@
 import "server-only";
 
+import { INVOICE_STATUS, type InvoiceStatus } from "@/lib/status";
+import { formatDate, formatEUR } from "@/lib/utils";
 import {
   Circle,
   Document,
@@ -12,8 +14,6 @@ import {
   Text,
   View,
 } from "@react-pdf/renderer";
-import { INVOICE_STATUS, type InvoiceStatus } from "@/lib/status";
-import { formatDate, formatEUR } from "@/lib/utils";
 import type { InvoicePdfData } from "./pdf-data";
 
 const BRAND = "#2A4227";
@@ -24,6 +24,7 @@ const INK = "#18181b";
 
 const styles = StyleSheet.create({
   page: { paddingTop: 40, paddingBottom: 64, paddingHorizontal: 40, fontSize: 9, color: INK },
+  fiscalQrHeader: { marginBottom: 10, alignItems: "flex-start" },
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
   brandRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   brandName: { fontSize: 11, fontFamily: "Helvetica-Bold", letterSpacing: 1, color: BRAND },
@@ -73,8 +74,9 @@ const styles = StyleSheet.create({
   fiscalInfo: { flex: 1 },
   mono: { fontFamily: "Courier", fontSize: 7, color: MUTED, marginTop: 2 },
   qrWrap: { alignItems: "center" },
-  qr: { width: 78, height: 78 },
-  qrCaption: { fontSize: 6, color: FAINT, marginTop: 3 },
+  // 88 pt = 31.0 mm. AEAT permits 30–40 mm for printed/viewable invoices.
+  qr: { width: 88, height: 88 },
+  qrCaption: { fontSize: 7, color: FAINT, marginTop: 3 },
   payment: {
     marginTop: 20,
     padding: 12,
@@ -148,6 +150,14 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
   return (
     <Document title={`Factura ${data.fullNumber}`} author="doscientos">
       <Page size="A4" style={styles.page}>
+        {data.qrDataUrl ? (
+          <View style={styles.fiscalQrHeader}>
+            <View style={styles.qrWrap}>
+              <Image style={styles.qr} src={data.qrDataUrl} />
+              <Text style={styles.qrCaption}>VERI*FACTU · Verificar en AEAT</Text>
+            </View>
+          </View>
+        ) : null}
         <View style={styles.header}>
           <View>
             <View style={styles.brandRow}>
@@ -240,7 +250,7 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
         </View>
 
         {(data.company?.iban || data.dueDate || data.portalUrl || data.paymentTerms) &&
-        data.status !== "cancelled" ? (
+          data.status !== "cancelled" ? (
           <View style={styles.payment}>
             <Text style={styles.paymentTitle}>Instrucciones de pago</Text>
 
@@ -292,20 +302,14 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
                 <Text style={styles.mono}>CSV AEAT: {data.verifactuCsv}</Text>
               ) : null}
             </View>
-            {data.qrDataUrl ? (
-              <View style={styles.qrWrap}>
-                <Image style={styles.qr} src={data.qrDataUrl} />
-                <Text style={styles.qrCaption}>Verificar en AEAT</Text>
-              </View>
-            ) : null}
           </View>
         ) : null}
 
         <View style={styles.footer} fixed>
           <Text style={styles.footerText}>
-            Factura verificable en la sede electrónica de la AEAT mediante el código QR. Sistema de
-            emisión conforme al Reglamento Verifactu (RD 1007/2023). Conserve esta factura conforme
-            a la normativa fiscal aplicable.
+            {data.qrDataUrl
+              ? "VERI*FACTU · Factura verificable en la sede electrónica de la AEAT mediante el código QR."
+              : "Factura en borrador: no constituye un documento fiscal emitido."}
           </Text>
         </View>
       </Page>

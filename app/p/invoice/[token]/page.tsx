@@ -98,7 +98,7 @@ export default async function PortalInvoicePage({
   const emisorNif = (settings?.company_nif as string | null) ?? null;
   if (
     emisorNif &&
-    invoice.verifactu_status === "accepted" &&
+    invoice.status !== "draft" &&
     invoice.full_number &&
     invoice.issue_date &&
     invoice.total != null

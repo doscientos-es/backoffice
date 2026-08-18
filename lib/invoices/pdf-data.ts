@@ -116,8 +116,8 @@ export type BuildInvoicePdfInput = {
 
 /**
  * Build the Verifactu QR data URL when the invoice carries the required fiscal
- * data and has been accepted by AEAT. Mirrors the logic used by the HTML
- * invoice views. Returns `null` otherwise.
+ * data and has been emitted. A temporary delivery incident must never remove
+ * the statutory QR from an already-issued invoice.
  */
 async function buildInvoiceQr(
   invoice: BuildInvoicePdfInput["invoice"],
@@ -126,7 +126,6 @@ async function buildInvoiceQr(
   if (
     !emisorNif ||
     invoice.status === "draft" ||
-    invoice.verifactu_status !== "accepted" ||
     !invoice.full_number ||
     !invoice.issue_date ||
     invoice.total == null
