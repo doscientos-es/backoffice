@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "@doscientos/ui/styles.css";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
@@ -102,6 +103,7 @@ html[data-startup-splash-seen] #startup-splash {
     opacity: 0;
     transform: scale(0.9) translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -112,12 +114,14 @@ html[data-startup-splash-seen] #startup-splash {
   from {
     transform: translateX(-110%);
   }
+
   to {
     transform: translateX(250%);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   #startup-splash,
   #startup-splash .startup-splash-mark-shell,
   #startup-splash .startup-splash-progress i {
@@ -173,6 +177,7 @@ html[data-startup-splash-seen] #startup-splash {
   --border: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
 }
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -202,13 +207,16 @@ html[data-startup-splash-seen] #startup-splash {
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 }
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   html {
     @apply font-sans;
   }
+
   body {
     @apply bg-background text-foreground selection:bg-primary selection:text-primary-foreground;
   }
@@ -244,55 +252,72 @@ table,
 
 /* Auth page animated mesh blobs — long, organic, drifting motion */
 @keyframes auth-blob-1 {
+
   0%,
   100% {
     transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
   }
+
   25% {
     transform: translate3d(15vw, 8vh, 0) scale(1.15) rotate(40deg);
   }
+
   50% {
     transform: translate3d(8vw, 20vh, 0) scale(0.9) rotate(-20deg);
   }
+
   75% {
     transform: translate3d(-10vw, 12vh, 0) scale(1.1) rotate(25deg);
   }
 }
+
 @keyframes auth-blob-2 {
+
   0%,
   100% {
     transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
   }
+
   30% {
     transform: translate3d(-18vw, -10vh, 0) scale(1.2) rotate(-30deg);
   }
+
   60% {
     transform: translate3d(-8vw, -22vh, 0) scale(0.85) rotate(45deg);
   }
+
   85% {
     transform: translate3d(10vw, -8vh, 0) scale(1.05) rotate(-15deg);
   }
 }
+
 @keyframes auth-blob-3 {
+
   0%,
   100% {
     transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
   }
+
   35% {
     transform: translate3d(-20vw, 15vh, 0) scale(1.25) rotate(60deg);
   }
+
   70% {
     transform: translate3d(5vw, 25vh, 0) scale(0.9) rotate(-40deg);
   }
 }
+
 @keyframes auth-blob-4 {
+
   0%,
   100% {
     transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
   }
+
   40% {
     transform: translate3d(20vw, -15vh, 0) scale(1.2) rotate(-50deg);
   }
+
   75% {
     transform: translate3d(-5vw, -20vh, 0) scale(0.95) rotate(30deg);
   }
@@ -304,6 +329,7 @@ table,
   0% {
     background-position: 150% 0;
   }
+
   100% {
     background-position: -150% 0;
   }
@@ -313,12 +339,10 @@ table,
   --skeleton-base: color-mix(in oklab, var(--foreground) 8%, transparent);
   --skeleton-highlight: color-mix(in oklab, var(--foreground) 14%, transparent);
   background-color: var(--skeleton-base);
-  background-image: linear-gradient(
-    90deg,
-    transparent 0%,
-    var(--skeleton-highlight) 50%,
-    transparent 100%
-  );
+  background-image: linear-gradient(90deg,
+      transparent 0%,
+      var(--skeleton-highlight) 50%,
+      transparent 100%);
   background-repeat: no-repeat;
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.6s ease-in-out infinite;
@@ -342,15 +366,18 @@ table,
   .no-print {
     display: none;
   }
+
   body {
     background: white;
     color: black;
     font-size: 11pt;
   }
+
   .print-content {
     max-width: 100%;
     padding: 0;
   }
+
   tr {
     page-break-inside: avoid;
   }
