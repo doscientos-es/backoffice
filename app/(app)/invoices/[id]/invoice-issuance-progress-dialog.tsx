@@ -17,7 +17,7 @@ import {
   FileCheck2,
   Loader2,
   TriangleAlert,
-  XCircle
+  XCircle,
 } from "lucide-react";
 
 export type InvoiceIssuancePhase =
