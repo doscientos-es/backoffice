@@ -48,6 +48,7 @@ import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { verifactuSoftwareSnapshotFromEnv } from "@/lib/verifactu/config";
+import { assertVerifactuDiagnosticGate } from "@/lib/verifactu/diagnostics";
 import {
   assertDurableVerifactuPackage,
   deliverInvoiceVerifactu,
@@ -106,6 +107,7 @@ export const updateInvoiceStatus = defineAction<
     );
     if (status === "issued" || status === "cancelled") {
       await assertDurableVerifactuPackage(status === "cancelled");
+      await assertVerifactuDiagnosticGate();
       const outboxId = await enqueueFiscalRecord(id, status === "cancelled");
       if (status === "issued") await syncInvoiceQrFromLedger(id);
       const delivery = await deliverVerifactuOutbox(outboxId, `action:${crypto.randomUUID()}`);

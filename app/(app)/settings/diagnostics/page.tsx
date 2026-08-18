@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { requireRole } from "@/lib/auth";
 import { getSystemStatus } from "@/lib/diagnostics/system-status";
 import { hasRegisteredPasskey } from "@/lib/security/webauthn";
+import { getVerifactuDiagnosticGate } from "@/lib/verifactu/diagnostics";
 import { DiagnosticsPanel } from "./diagnostics-panel";
 
 export const metadata = { title: "Diagnóstico · Ajustes · doscientos" };
@@ -14,6 +15,7 @@ export default async function DiagnosticsSettingsPage() {
   const user = await requireRole(["owner", "admin"]);
   const status = getSystemStatus();
   const passkeyConfigured = await hasRegisteredPasskey(user.id);
+  const verifactuGate = await getVerifactuDiagnosticGate();
 
   const byKey = (key: string) =>
     status.integrations.find((i) => i.key === key)?.configured ?? false;
@@ -21,6 +23,7 @@ export default async function DiagnosticsSettingsPage() {
     telegramBot: byKey("telegram_bot"),
     telegramChat: byKey("telegram_chat"),
     ai: byKey("ai"),
+    verifactuGate,
   };
 
   return (

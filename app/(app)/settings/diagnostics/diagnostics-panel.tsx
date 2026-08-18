@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertCircle, CheckCircle2, Loader2, Play } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFormFeedback } from "@/components/ui/form-feedback";
@@ -14,12 +15,18 @@ import {
   testSupabaseConnection,
   testTelegramBot,
   testTelegramLeadMessage,
+  testVerifactuMockSuite,
 } from "./actions";
 
 export type DiagnosticsConfig = {
   telegramBot: boolean;
   telegramChat: boolean;
   ai: boolean;
+  verifactuGate: {
+    status: "missing" | "expired" | "failed" | "passed";
+    ranAt: string | null;
+    expiresAt: string | null;
+  };
 };
 
 type Test = {
@@ -28,6 +35,7 @@ type Test = {
   run: () => Promise<TestResult>;
   disabled?: boolean;
   disabledHint?: string;
+  onSuccess?: () => void;
 };
 
 function TestRow({ test }: { test: Test }) {
@@ -38,8 +46,10 @@ function TestRow({ test }: { test: Test }) {
     fb.setPending();
     try {
       const r = await test.run();
-      if (r.ok) fb.setSuccess(r.detail);
-      else fb.setError(r.error);
+      if (r.ok) {
+        fb.setSuccess(r.detail);
+        test.onSuccess?.();
+      } else fb.setError(r.error);
     } catch (e) {
       fb.setError(e instanceof Error ? e.message : "Error inesperado");
     }
@@ -91,6 +101,7 @@ function TestRow({ test }: { test: Test }) {
 }
 
 export function DiagnosticsPanel({ config }: { config: DiagnosticsConfig }) {
+  const router = useRouter();
   const { permission, requestPermission } = useBrowserNotifications();
   const { subscribe } = useWebPush();
 
@@ -145,6 +156,15 @@ export function DiagnosticsPanel({ config }: { config: DiagnosticsConfig }) {
       run: testAI,
       disabled: !config.ai,
       disabledHint: "IA no configurada",
+    },
+    {
+      title: "VERI*FACTU · suite sintética obligatoria",
+      description:
+        config.verifactuGate.status === "passed"
+          ? "Última suite válida. La emisión real está habilitada durante 7 días."
+          : "Genera XML/XSD, huella, QR y una entrega mock. No crea facturas ni llama a AEAT.",
+      run: testVerifactuMockSuite,
+      onSuccess: router.refresh,
     },
   ];
 

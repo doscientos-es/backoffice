@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
+  assertVerifactuDiagnosticGate,
   backupInvoiceToDrive,
   deliverVerifactuOutbox,
   findInvoiceForEdit,
@@ -8,6 +9,7 @@ const {
   rpc,
   syncInvoiceQrFromLedger,
 } = vi.hoisted(() => ({
+  assertVerifactuDiagnosticGate: vi.fn(),
   backupInvoiceToDrive: vi.fn(),
   deliverVerifactuOutbox: vi.fn(),
   findInvoiceForEdit: vi.fn(),
@@ -46,6 +48,7 @@ vi.mock("@/lib/verifactu/config", () => ({
     multipleTaxpayers: false,
   }),
 }));
+vi.mock("@/lib/verifactu/diagnostics", () => ({ assertVerifactuDiagnosticGate }));
 vi.mock("@/lib/logger", () => ({
   scopedLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),
 }));
@@ -57,6 +60,8 @@ import { revertInvoicePayment, updateInvoiceStatus } from "./actions";
 const INVOICE_ID = "11111111-1111-1111-1111-111111111111";
 
 beforeEach(() => {
+  assertVerifactuDiagnosticGate.mockReset();
+  assertVerifactuDiagnosticGate.mockResolvedValue(undefined);
   deliverVerifactuOutbox.mockReset();
   rpc.mockReset();
   rpc.mockResolvedValue({ data: [{ outbox_id: "outbox-1" }], error: null });
@@ -82,6 +87,7 @@ describe("updateInvoiceStatus fiscal flow", () => {
     );
     expect(syncInvoiceQrFromLedger).toHaveBeenCalledWith(INVOICE_ID);
     expect(backupInvoiceToDrive).toHaveBeenCalledWith(INVOICE_ID, "admin@example.test");
+    expect(assertVerifactuDiagnosticGate).toHaveBeenCalledOnce();
   });
 
   it("creates a RegistroAnulacion outbox instead of directly cancelling", async () => {
