@@ -1,7 +1,5 @@
 import "server-only";
 
-import { INVOICE_STATUS, type InvoiceStatus } from "@/lib/status";
-import { formatDate, formatEUR } from "@/lib/utils";
 import {
   Circle,
   Document,
@@ -14,6 +12,8 @@ import {
   Text,
   View,
 } from "@react-pdf/renderer";
+import { INVOICE_STATUS, type InvoiceStatus } from "@/lib/status";
+import { formatDate, formatEUR } from "@/lib/utils";
 import type { InvoicePdfData } from "./pdf-data";
 
 const BRAND = "#2A4227";
@@ -147,6 +147,9 @@ function statusLabel(status: string): string {
 /** Professional A4 invoice document mirroring the HTML portal view. */
 function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
   const { company } = data;
+  const showPaymentInstructions =
+    data.status !== "cancelled" &&
+    Boolean(data.company?.iban || data.dueDate || data.portalUrl || data.paymentTerms);
   return (
     <Document title={`Factura ${data.fullNumber}`} author="doscientos">
       <Page size="A4" style={styles.page}>
@@ -249,8 +252,7 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
           </View>
         </View>
 
-        {(data.company?.iban || data.dueDate || data.portalUrl || data.paymentTerms) &&
-          data.status !== "cancelled" ? (
+        {showPaymentInstructions ? (
           <View style={styles.payment}>
             <Text style={styles.paymentTitle}>Instrucciones de pago</Text>
 
