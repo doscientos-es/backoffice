@@ -9,7 +9,7 @@ function makeInput(overrides: Partial<BuildInvoicePdfInput["invoice"]> = {}): Bu
       full_number: "FAC-2025-001",
       invoice_type: "ordinaria",
       status: "issued",
-      verifactu_status: "accepted",
+      verifactu_status: "pending",
       issue_date: "2025-01-05",
       due_date: "2025-02-05",
       idfact: "IDFACT-1",
@@ -91,7 +91,7 @@ describe("buildInvoicePdfData", () => {
 
   it("builds a QR data URL for a complete, accepted invoice", async () => {
     const { buildInvoicePdfData } = await importPdfData("B11111111");
-    const data = await buildInvoicePdfData(makeInput());
+    const data = await buildInvoicePdfData(makeInput({ verifactu_status: "accepted" }));
     expect(data.qrDataUrl?.startsWith("data:image/png;base64,")).toBe(true);
   });
 });
