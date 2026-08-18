@@ -25,6 +25,19 @@ import { RefreshClientSnapshotButton } from "./refresh-client-snapshot-button";
 
 export const dynamic = "force-dynamic";
 
+function verifactuWarnings(value: unknown): Array<{ code: string | null; message: string }> {
+  if (!value || typeof value !== "object" || !Array.isArray((value as { warnings?: unknown }).warnings)) {
+    return [];
+  }
+  return (value as { warnings: unknown[] }).warnings.flatMap((warning) => {
+    if (!warning || typeof warning !== "object") return [];
+    const message = (warning as { message?: unknown }).message;
+    if (typeof message !== "string" || message.trim().length === 0) return [];
+    const code = (warning as { code?: unknown }).code;
+    return [{ code: typeof code === "string" ? code : null, message }];
+  });
+}
+
 export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   await requireUser();
@@ -63,6 +76,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
   const confirmedPayments = (payments ?? []).filter((p) => p.status === "confirmed");
   const amountPaid = confirmedPayments.reduce((sum, p) => sum + Number(p.amount ?? 0), 0);
   const amountDue = Math.max(0, Number(invoice.total ?? 0) - amountPaid);
+  const aeatWarnings = verifactuWarnings(invoice.verifactu_response);
 
   const client = (
     invoice as unknown as { clients: { id: string; name: string; email: string | null } | null }
@@ -126,6 +140,25 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           </div>
         </div>
       )}
+
+      {invoice.verifactu_status === "accepted" && aeatWarnings.length > 0 ? (
+        <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800/40 dark:bg-amber-950/30 dark:text-amber-200">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+          <div className="min-w-0">
+            <p className="font-semibold">AEAT aceptó la factura con avisos</p>
+            <ul className="mt-1 list-disc pl-4">
+              {aeatWarnings.map((warning, index) => (
+                <li key={`${warning.code ?? "warning"}-${index}`} className="wrap-break-word">
+                  {warning.code ? `${warning.code}: ` : ""}{warning.message}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-1 text-xs text-amber-800/80 dark:text-amber-300/80">
+              El registro está aceptado y conserva su CSV, pero conviene revisar estos avisos.
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       <PageHeader
         title={`Factura ${(invoice.full_number as string | null) ?? "Borrador"}`}
