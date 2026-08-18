@@ -14,14 +14,10 @@ import {
   CheckCircle2,
   Circle,
   Clock3,
-  DatabaseZap,
   FileCheck2,
   Loader2,
-  QrCode,
-  Send,
-  ShieldCheck,
   TriangleAlert,
-  XCircle,
+  XCircle
 } from "lucide-react";
 
 export type InvoiceIssuancePhase =
@@ -35,12 +31,14 @@ export type InvoiceIssuancePhase =
 
 type StepState = "active" | "complete" | "error" | "pending" | "warning";
 
-type Step = { title: string; detail: string; icon: typeof ShieldCheck; state: StepState };
+type Step = { title: string; detail: string; state: StepState };
 
 function stepStyle(state: StepState) {
-  if (state === "complete") return "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
+  if (state === "complete")
+    return "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
   if (state === "active") return "border-primary/30 bg-primary/10 text-primary";
-  if (state === "warning") return "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300";
+  if (state === "warning")
+    return "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300";
   if (state === "error") return "border-destructive/30 bg-destructive/10 text-destructive";
   return "border-border bg-muted/50 text-muted-foreground";
 }
@@ -51,8 +49,10 @@ function stepsFor(phase: InvoiceIssuancePhase, error: string | null): Step[] {
   return [
     {
       title: "Confirmación de seguridad",
-      detail: phase === "verifying" ? "Solicitando confirmación con tu passkey" : "Acción sensible autorizada",
-      icon: ShieldCheck,
+      detail:
+        phase === "verifying"
+          ? "Solicitando confirmación con tu passkey"
+          : "Acción sensible autorizada",
       state: phase === "verifying" ? "active" : failedBeforeIssue ? "error" : "complete",
     },
     {
@@ -62,13 +62,20 @@ function stepsFor(phase: InvoiceIssuancePhase, error: string | null): Step[] {
         : phase === "processing"
           ? "Validando el SIF y creando la evidencia durable"
           : "Registro y encadenamiento SHA-256 creados",
-      icon: DatabaseZap,
-      state: phase === "processing" ? "active" : failedBeforeIssue ? "error" : completed ? "complete" : "pending",
+      state:
+        phase === "processing"
+          ? "active"
+          : failedBeforeIssue
+            ? "error"
+            : completed
+              ? "complete"
+              : "pending",
     },
     {
       title: "Código QR verificable",
-      detail: completed ? "QR fiscal sincronizado con el RegistroAlta" : "Se genera tras crear el RegistroAlta",
-      icon: QrCode,
+      detail: completed
+        ? "QR fiscal sincronizado con el RegistroAlta"
+        : "Se genera tras crear el RegistroAlta",
       state: completed ? "complete" : "pending",
     },
     {
@@ -85,7 +92,6 @@ function stepsFor(phase: InvoiceIssuancePhase, error: string | null): Step[] {
                 : phase === "processing"
                   ? "Enviando o dejando la entrega preparada en la cola durable"
                   : "Pendiente hasta que el registro fiscal esté creado",
-      icon: Send,
       state:
         phase === "accepted"
           ? "complete"
@@ -126,7 +132,9 @@ export function InvoiceIssuanceProgressDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {phase === "accepted" ? <FileCheck2 className="size-5 text-emerald-600" /> : null}
-            {phase === "rejected" || phase === "error" ? <TriangleAlert className="size-5 text-destructive" /> : null}
+            {phase === "rejected" || phase === "error" ? (
+              <TriangleAlert className="size-5 text-destructive" />
+            ) : null}
             {busy ? <Loader2 className="size-5 animate-spin text-primary" /> : null}
             {title}
           </DialogTitle>
@@ -135,19 +143,52 @@ export function InvoiceIssuanceProgressDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-2" aria-label="Progreso de emisión fiscal">
-          <div className="h-1.5 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuemax={4} aria-valuemin={0} aria-valuenow={complete}>
-            <div className="h-full bg-primary transition-all duration-500" style={{ width: `${(complete / 4) * 100}%` }} />
+        <div className="space-y-2">
+          <div
+            className="h-1.5 overflow-hidden rounded-full bg-muted"
+            role="progressbar"
+            aria-label="Progreso de emisión fiscal"
+            aria-valuemax={4}
+            aria-valuemin={0}
+            aria-valuenow={complete}
+          >
+            <div
+              className="h-full bg-primary transition-all duration-500"
+              style={{ width: `${(complete / 4) * 100}%` }}
+            />
           </div>
-          <p className="text-right text-xs tabular-nums text-muted-foreground">{complete} de 4 comprobaciones completadas</p>
+          <p className="text-right text-xs tabular-nums text-muted-foreground">
+            {complete} de 4 comprobaciones completadas
+          </p>
         </div>
 
         <ol className="space-y-2">
           {steps.map((step) => {
-            const Icon = step.state === "active" ? Loader2 : step.state === "complete" ? CheckCircle2 : step.state === "error" ? XCircle : step.state === "warning" ? Clock3 : Circle;
+            const Icon =
+              step.state === "active"
+                ? Loader2
+                : step.state === "complete"
+                  ? CheckCircle2
+                  : step.state === "error"
+                    ? XCircle
+                    : step.state === "warning"
+                      ? Clock3
+                      : Circle;
             return (
-              <li key={step.title} className={cn("flex gap-3 rounded-xl border p-3 transition-colors", stepStyle(step.state))}>
-                <Icon className={cn("mt-0.5 size-4 shrink-0", step.state === "active" && "animate-spin")} aria-hidden />
+              <li
+                key={step.title}
+                className={cn(
+                  "flex gap-3 rounded-xl border p-3 transition-colors",
+                  stepStyle(step.state),
+                )}
+              >
+                <Icon
+                  className={cn(
+                    "mt-0.5 size-4 shrink-0",
+                    step.state === "active" && "animate-spin",
+                  )}
+                  aria-hidden
+                />
                 <div className="min-w-0">
                   <p className="text-sm font-medium">{step.title}</p>
                   <p className="mt-0.5 text-xs opacity-80">{step.detail}</p>
@@ -157,11 +198,15 @@ export function InvoiceIssuanceProgressDialog({
           })}
         </ol>
 
-        {csv ? <p className="rounded-md bg-muted px-3 py-2 font-mono text-xs">CSV AEAT · {csv}</p> : null}
+        {csv ? (
+          <p className="rounded-md bg-muted px-3 py-2 font-mono text-xs">CSV AEAT · {csv}</p>
+        ) : null}
 
         {!busy ? (
           <DialogFooter>
-            <Button size="sm" onClick={onClose}>Cerrar</Button>
+            <Button size="sm" onClick={onClose}>
+              Cerrar
+            </Button>
           </DialogFooter>
         ) : null}
       </DialogContent>

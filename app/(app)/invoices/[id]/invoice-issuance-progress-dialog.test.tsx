@@ -33,6 +33,8 @@ describe("InvoiceIssuanceProgressDialog", () => {
       />,
     );
 
-    expect(screen.getByText("En cola: se reintentará respetando el control de flujo")).toBeDefined();
+    expect(
+      screen.getByText("En cola: se reintentará respetando el control de flujo"),
+    ).toBeDefined();
   });
 });

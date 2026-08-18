@@ -76,7 +76,11 @@ describe("updateInvoiceStatus fiscal flow", () => {
   it("creates an Alta ledger/outbox before attempting immediate delivery", async () => {
     const result = await updateInvoiceStatus({ id: INVOICE_ID, status: "issued" });
 
-    expect(result).toEqual({ ok: true, fiscalDeliveryCsv: "CSV-1", fiscalDeliveryStatus: "accepted" });
+    expect(result).toEqual({
+      ok: true,
+      fiscalDeliveryCsv: "CSV-1",
+      fiscalDeliveryStatus: "accepted",
+    });
     expect(rpc).toHaveBeenCalledWith("issue_invoice_with_verifactu_outbox", {
       p_invoice_id: INVOICE_ID,
       p_software: expect.objectContaining({ producerNif: "B12345678" }),
@@ -93,7 +97,11 @@ describe("updateInvoiceStatus fiscal flow", () => {
   it("creates a RegistroAnulacion outbox instead of directly cancelling", async () => {
     const result = await updateInvoiceStatus({ id: INVOICE_ID, status: "cancelled" });
 
-    expect(result).toEqual({ ok: true, fiscalDeliveryCsv: "CSV-1", fiscalDeliveryStatus: "accepted" });
+    expect(result).toEqual({
+      ok: true,
+      fiscalDeliveryCsv: "CSV-1",
+      fiscalDeliveryStatus: "accepted",
+    });
     expect(rpc).toHaveBeenCalledWith("cancel_invoice_with_verifactu_outbox", {
       p_invoice_id: INVOICE_ID,
       p_software: expect.objectContaining({ producerNif: "B12345678" }),

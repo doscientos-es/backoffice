@@ -47,8 +47,8 @@ import {
   updateInvoiceStatus,
 } from "../actions";
 import {
-  InvoiceIssuanceProgressDialog,
   type InvoiceIssuancePhase,
+  InvoiceIssuanceProgressDialog,
 } from "./invoice-issuance-progress-dialog";
 import { SendAeatButton } from "./send-aeat-button";
 import { SendInvoiceButton } from "./send-invoice-button";
