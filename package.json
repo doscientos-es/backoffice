@@ -9,7 +9,8 @@
   },
   "scripts": {
     "dev": "next dev --turbo",
-    "prebuild": "node -e \"if(!process.env.CI) process.exit(1)\" || pnpm env:example",
+    "predev": "node scripts/verify-verifactu-package.mjs",
+    "prebuild": "node scripts/verify-verifactu-package.mjs && (node -e \"if(!process.env.CI) process.exit(1)\" || pnpm env:example)",
     "build": "next build",
     "start": "next start",
     "lint": "biome check .",

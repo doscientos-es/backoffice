@@ -1,5 +1,14 @@
 "use client";
 
+import {
+  CheckCircle2,
+  Circle,
+  Clock3,
+  FileCheck2,
+  Loader2,
+  TriangleAlert,
+  XCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,15 +19,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import {
-  CheckCircle2,
-  Circle,
-  Clock3,
-  FileCheck2,
-  Loader2,
-  TriangleAlert,
-  XCircle,
-} from "lucide-react";
 
 export type InvoiceIssuancePhase =
   | "verifying"

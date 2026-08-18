@@ -1,5 +1,20 @@
 "use client";
 
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Download,
+  FileEdit,
+  FileMinus2,
+  Loader2,
+  MoreHorizontal,
+  Send,
+  Trash2,
+  XCircle,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,21 +40,6 @@ import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { verifyWithPasskey } from "@/lib/security/webauthn-client";
 import { INVOICE_STATUS, VERIFACTU_STATUS } from "@/lib/status";
 import {
-  AlertTriangle,
-  CheckCircle2,
-  Download,
-  FileEdit,
-  FileMinus2,
-  Loader2,
-  MoreHorizontal,
-  Send,
-  Trash2,
-  XCircle,
-} from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import {
   createRectification,
   deleteInvoice,
   markAsUncollectible,
@@ -47,8 +47,8 @@ import {
   updateInvoiceStatus,
 } from "../actions";
 import {
-  InvoiceIssuanceProgressDialog,
   type InvoiceIssuancePhase,
+  InvoiceIssuanceProgressDialog,
 } from "./invoice-issuance-progress-dialog";
 import { SendAeatButton } from "./send-aeat-button";
 import { SendInvoiceButton } from "./send-invoice-button";
@@ -437,8 +437,8 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
 
       {/* AEAT Button if already issued */}
       {!isDraft &&
-        invoice.verifactu_status !== "accepted" &&
-        invoice.verifactu_status !== "excluded" ? (
+      invoice.verifactu_status !== "accepted" &&
+      invoice.verifactu_status !== "excluded" ? (
         <SendAeatButton
           invoiceId={invoice.id}
           label={
