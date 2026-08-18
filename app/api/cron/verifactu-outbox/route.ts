@@ -11,7 +11,10 @@ const BATCH_SIZE = 10;
 
 function authenticate(request: NextRequest): boolean {
   const { CRON_SECRET } = serverEnv();
-  if (!CRON_SECRET) return true;
+  // A missing secret must fail closed. An unprotected delivery endpoint could
+  // be used to force retries, amplify traffic to AEAT, or expose operational
+  // state through timing and response behaviour.
+  if (!CRON_SECRET) return false;
   const authorization = request.headers.get("authorization") ?? "";
   const token = authorization.startsWith("Bearer ") ? authorization.slice(7) : authorization;
   return token === CRON_SECRET;

@@ -5,7 +5,7 @@
  *  - Form renders correctly (fields, labels, button)
  *  - Password visibility toggle works
  *  - URL ?error param maps to a readable Spanish message
- *  - Successful login calls signInWithPassword + navigates
+ *  - Successful login calls the protected password endpoint + navigates
  *  - Auth failure shows a friendly in-form error
  *  - Form is disabled while the request is in-flight
  */
@@ -15,10 +15,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── mutable state shared across mocks ─────────────────────────────────────────
 
-const { supabaseState, searchParams } = vi.hoisted(() => ({
-  supabaseState: {
-    signInResult: { error: null } as { error: { message: string } | null },
-  },
+const { searchParams } = vi.hoisted(() => ({
   searchParams: { next: null as string | null, error: null as string | null },
 }));
 
@@ -27,8 +24,8 @@ const { supabaseState, searchParams } = vi.hoisted(() => ({
 vi.mock("@/lib/supabase/browser", () => ({
   getBrowserClient: () => ({
     auth: {
-      signInWithPassword: vi.fn().mockImplementation(async () => supabaseState.signInResult),
       signOut: vi.fn().mockResolvedValue({}),
+      signInWithOAuth: vi.fn().mockResolvedValue({ error: null }),
     },
   }),
 }));
@@ -86,7 +83,7 @@ function submitButton() {
 // ── tests ─────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
-  supabaseState.signInResult = { error: null };
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true }) }));
   searchParams.next = null;
   searchParams.error = null;
 });
@@ -152,12 +149,16 @@ function fill(input: HTMLElement, value: string) {
 }
 
 describe("LoginForm – submit flow", () => {
-  it("calls signInWithPassword with the typed credentials", async () => {
+  it("sends the typed credentials through the protected login endpoint", async () => {
     const { assignSpy } = setup();
     fill(emailInput(), "pol@doscientos.es");
     fill(passwordInput(), "secret123");
     fireEvent.submit(submitButton());
     await waitFor(() => expect(assignSpy).toHaveBeenCalledWith("/inicio"));
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/auth/password-login",
+      expect.objectContaining({ method: "POST" }),
+    );
   });
 
   it("defaults redirect to /inicio when no ?next param", async () => {
@@ -178,7 +179,13 @@ describe("LoginForm – submit flow", () => {
   });
 
   it("shows a friendly error when credentials are wrong", async () => {
-    supabaseState.signInResult = { error: { message: "Invalid login credentials" } };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        json: async () => ({ error: "invalid_credentials" }),
+      }),
+    );
     setup();
     fill(emailInput(), "pol@doscientos.es");
     fill(passwordInput(), "wrong");
@@ -189,13 +196,33 @@ describe("LoginForm – submit flow", () => {
   });
 
   it("shows a rate-limit message when too many attempts", async () => {
-    supabaseState.signInResult = { error: { message: "rate limit exceeded" } };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: false, json: async () => ({ error: "rate_limited" }) }),
+    );
     setup();
     fill(emailInput(), "x@x.com");
     fill(passwordInput(), "x");
     fireEvent.submit(submitButton());
     await waitFor(() =>
       expect(screen.getByRole("alert").textContent).toMatch(/Demasiados intentos/i),
+    );
+  });
+
+  it("asks for CAPTCHA after the server escalates the challenge", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        json: async () => ({ error: "captcha_required", captchaRequired: true }),
+      }),
+    );
+    setup();
+    fill(emailInput(), "x@x.com");
+    fill(passwordInput(), "x");
+    fireEvent.submit(submitButton());
+    await waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toMatch(/completa el captcha/i),
     );
   });
 });

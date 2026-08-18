@@ -31,6 +31,13 @@ describe("GET /api/cron/verifactu-outbox", () => {
     expect(retryDueVerifactuOutbox).not.toHaveBeenCalled();
   });
 
+  it("fails closed when the cron secret is not configured", async () => {
+    serverEnv.mockReturnValue({ CRON_SECRET: "" });
+    const response = await GET(request("anything") as never);
+    expect(response.status).toBe(401);
+    expect(retryDueVerifactuOutbox).not.toHaveBeenCalled();
+  });
+
   it("reports the delivery summary", async () => {
     retryDueVerifactuOutbox.mockResolvedValue([
       { processed: true, status: "accepted", csv: "CSV-1" },

@@ -119,6 +119,7 @@ describe("proxy – public paths (always pass through)", () => {
     ["/auth/confirm?token_hash=abc&type=invite&next=/onboarding"],
     ["/api/webhooks/stripe"],
     ["/api/email/webhook"],
+    ["/api/auth/password-login"],
     ["/api/public/status"],
     ["/api/cron/web-backups"],
     ["/api/crm/follow-ups"],

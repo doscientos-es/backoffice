@@ -26,6 +26,7 @@ export function LoginForm() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaRequired, setCaptchaRequired] = useState(false);
   const [showEmailForm, setShowEmailForm] = useState(false);
   const hcaptchaRef = useRef<HCaptcha>(null);
 
@@ -44,21 +45,31 @@ export function LoginForm() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setFormError(null);
-    if (publicEnv.NEXT_PUBLIC_HCAPTCHA_SITE_KEY && !captchaToken) {
+    if (captchaRequired && !captchaToken) {
       setFormError("Por favor, completa el captcha.");
       return;
     }
     setLoading(true);
-    const supabase = getBrowserClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-      options: { captchaToken: captchaToken ?? undefined },
-    });
-    if (authError) {
+    try {
+      const response = await fetch("/api/auth/password-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, captchaToken: captchaToken ?? undefined }),
+      });
+      const result = (await response.json().catch(() => null)) as {
+        error?: string;
+        captchaRequired?: boolean;
+      } | null;
+      if (!response.ok) {
+        setLoading(false);
+        if (result?.captchaRequired) setCaptchaRequired(true);
+        setFormError(friendlyError(result?.error ?? ""));
+        hcaptchaRef.current?.resetCaptcha();
+        return;
+      }
+    } catch {
       setLoading(false);
-      setFormError(friendlyError(authError.message));
-      hcaptchaRef.current?.resetCaptcha();
+      setFormError("No se pudo iniciar sesión. Comprueba tu conexión e inténtalo de nuevo.");
       return;
     }
     // Hard navigation (not router.replace + refresh): forces the browser to
@@ -207,7 +218,7 @@ export function LoginForm() {
                 </div>
               </Field>
             </FieldGroup>
-            {publicEnv.NEXT_PUBLIC_HCAPTCHA_SITE_KEY && (
+            {publicEnv.NEXT_PUBLIC_HCAPTCHA_SITE_KEY && captchaRequired && (
               <div className="flex justify-center">
                 <HCaptcha
                   ref={hcaptchaRef}
@@ -246,6 +257,9 @@ function safeNext(raw: string | null): string {
 
 function friendlyError(raw: string): string {
   const m = raw.toLowerCase();
+  if (m === "captcha_required") return "Completa el captcha para continuar.";
+  if (m === "invalid_credentials") return "Email o contraseña incorrectos.";
+  if (m === "rate_limited") return "Demasiados intentos. Inténtalo en unos minutos.";
   if (m.includes("invalid login credentials")) return "Email o contraseña incorrectos.";
   if (m.includes("email not confirmed")) return "Tu email aún no está confirmado.";
   if (m.includes("rate limit")) return "Demasiados intentos. Inténtalo en unos minutos.";
