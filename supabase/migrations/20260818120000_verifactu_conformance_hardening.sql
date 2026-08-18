@@ -42,6 +42,9 @@ declare
   v_hash text;
   v_vat_lines jsonb;
   v_description text;
+  v_rectified public.invoices%rowtype;
+  v_rectified_ledger public.verifactu_ledger%rowtype;
+  v_rectification_method text;
   v_ledger_id uuid;
   v_outbox_id uuid;
 begin
@@ -73,8 +76,21 @@ begin
   if found then ledger_id := v_ledger_id; outbox_id := v_outbox_id; return next; return; end if;
   if v_invoice.status <> 'draft' then raise exception 'Solo se puede emitir una factura en borrador'; end if;
   if v_invoice.verifactu_status = 'excluded' then raise exception 'Esta factura está excluida de VERI*FACTU'; end if;
-  if v_invoice.invoice_type not in ('F1', 'F2') then
-    raise exception 'El tipo de factura % aún no está soportado por VERI*FACTU', v_invoice.invoice_type;
+  if v_invoice.invoice_type not in ('F1', 'F2', 'R1', 'R2', 'R3', 'R4', 'R5') then
+    raise exception 'El tipo de factura % no está soportado por VERI*FACTU', v_invoice.invoice_type;
+  end if;
+  if v_invoice.invoice_type::text like 'R%' then
+    if not coalesce(v_invoice.is_rectification, false) or v_invoice.rectified_invoice_id is null then
+      raise exception 'Una factura R1-R5 debe identificar la factura rectificada';
+    end if;
+    select * into v_rectified from public.invoices
+      where id = v_invoice.rectified_invoice_id and deleted_at is null;
+    if not found then raise exception 'Factura rectificada no encontrada'; end if;
+    select * into v_rectified_ledger from public.verifactu_ledger
+      where invoice_id = v_rectified.id and record_type = 'alta';
+    if not found then raise exception 'La factura rectificada no tiene RegistroAlta'; end if;
+    v_rectification_method := case when coalesce(v_invoice.rectification_type, '') in ('S', 'I')
+      then v_invoice.rectification_type else 'I' end;
   end if;
 
   select * into v_client from public.clients where id = v_invoice.client_id;
@@ -130,6 +146,15 @@ begin
       'generatedAt', v_generated_at, 'emisorName', v_company_name, 'clientNif', v_client.nif,
       'clientName', v_client.name, 'descriptionOperacion', v_description, 'vatLines', v_vat_lines,
       'previousInvoiceNumber', v_previous.invoice_number, 'previousIssueDate', v_previous.invoice_issue_date,
+      'externalReference', v_invoice.id::text,
+      'operationDate', v_invoice.issue_date,
+      'subsanacion', 'N', 'rechazoPrevio', 'N',
+      'rectificationMethod', v_rectification_method,
+      'rectifiedInvoiceNumber', case when v_rectified.id is null then null else v_rectified.full_number end,
+      'rectifiedInvoiceIssueDate', case when v_rectified.id is null then null else v_rectified.issue_date end,
+      'rectifiedInvoiceNif', case when v_rectified.id is null then null else v_nif end,
+      'rectificationAmounts', case when v_rectified.id is null then null else
+        jsonb_build_object('base', v_invoice.subtotal, 'tax', v_invoice.tax_amount) end,
       'software', p_software
     ), auth.uid()
   ) returning id into v_ledger_id;

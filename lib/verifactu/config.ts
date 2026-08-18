@@ -24,8 +24,24 @@ export function verifactuSoftwareSnapshotFromEnv(): VerifactuConfig["software"] 
  */
 export function verifactuConfigFromEnv(): VerifactuConfig {
   const env = serverEnv();
+  const environment = isDemoMode() ? "mock" : env.VERIFACTU_ENV;
+  if (environment === "prod") {
+    if (!env.VERIFACTU_PRODUCER_NIF.trim()) {
+      throw new Error("VERIFACTU_PRODUCER_NIF es obligatorio en producción");
+    }
+    if (!env.VERIFACTU_CERT_P12_BASE64 || !env.VERIFACTU_CERT_PASSWORD) {
+      throw new Error("El certificado P12 de VERI*FACTU es obligatorio en producción");
+    }
+    if (!env.VERIFACTU_CERT_EXPIRES_AT) {
+      throw new Error("VERIFACTU_CERT_EXPIRES_AT es obligatorio en producción");
+    }
+    const expiresAt = new Date(env.VERIFACTU_CERT_EXPIRES_AT);
+    if (Number.isNaN(expiresAt.getTime()) || expiresAt.getTime() <= Date.now()) {
+      throw new Error("El certificado P12 de VERI*FACTU está caducado o tiene una fecha inválida");
+    }
+  }
   return {
-    environment: isDemoMode() ? "mock" : env.VERIFACTU_ENV,
+    environment,
     certificate: {
       p12Base64: env.VERIFACTU_CERT_P12_BASE64,
       password: env.VERIFACTU_CERT_PASSWORD,

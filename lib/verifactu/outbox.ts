@@ -93,6 +93,29 @@ function nullableText(payload: Record<string, unknown>, key: string): string | n
   return value;
 }
 
+function optionalEnum<T extends string>(
+  payload: Record<string, unknown>,
+  key: string,
+  values: readonly T[],
+): T | undefined {
+  const value = payload[key];
+  if (value === null || value === undefined || value === "") return undefined;
+  if (typeof value !== "string" || !values.includes(value as T)) {
+    throw new Error(`Payload fiscal inválido: ${key}`);
+  }
+  return value as T;
+}
+
+function references(payload: Record<string, unknown>, key: string) {
+  const value = payload[key];
+  if (value === null || value === undefined) return undefined;
+  if (!Array.isArray(value)) throw new Error(`Payload fiscal inválido: ${key}`);
+  return value.map((entry) => {
+    const row = asRecord(entry);
+    return { invoiceNumber: text(row, "invoiceNumber"), issueDate: date(row, "issueDate") };
+  });
+}
+
 function sanitizeResponse(response: unknown): Record<string, unknown> {
   if (!response || typeof response !== "object" || Array.isArray(response)) {
     return { kind: "unknown_response" };
@@ -142,10 +165,34 @@ export async function assertDurableVerifactuPackage(requireCancellation = false)
 function altaInput(payload: Record<string, unknown>): VerifactuSubmitInput {
   const vatLines = payload.vatLines;
   if (!Array.isArray(vatLines)) throw new Error("Payload fiscal inválido: vatLines");
-  return {
+  const input = {
     nif: text(payload, "nif"),
     invoiceNumber: text(payload, "invoiceNumber"),
     invoiceType: text(payload, "invoiceType"),
+    externalReference: nullableText(payload, "externalReference") ?? undefined,
+    rectificationType: optionalEnum(payload, "rectificationMethod", ["S", "I"] as const),
+    rectifiedInvoices: references(payload, "rectifiedInvoices") ?? (
+      payload.rectifiedInvoiceNumber
+        ? [{
+            invoiceNumber: text(payload, "rectifiedInvoiceNumber"),
+            issueDate: date(payload, "rectifiedInvoiceIssueDate"),
+          }]
+        : undefined
+    ),
+    rectificationAmounts:
+      payload.rectificationAmounts && typeof payload.rectificationAmounts === "object"
+        ? (() => {
+            const value = asRecord(payload.rectificationAmounts);
+            return {
+              base: amount(value, "base"),
+              tax: amount(value, "tax"),
+              surcharge: value.surcharge === undefined ? undefined : amount(value, "surcharge"),
+            };
+          })()
+        : undefined,
+    operationDate: payload.operationDate ? date(payload, "operationDate") : undefined,
+    subsanacion: optionalEnum(payload, "subsanacion", ["S", "N"] as const),
+    rechazoPrevio: optionalEnum(payload, "rechazoPrevio", ["N", "S", "X"] as const),
     issueDate: date(payload, "issueDate"),
     taxAmount: amount(payload, "taxAmount"),
     total: amount(payload, "total"),
@@ -166,6 +213,10 @@ function altaInput(payload: Record<string, unknown>): VerifactuSubmitInput {
     previousInvoiceNumber: nullableText(payload, "previousInvoiceNumber"),
     previousIssueDate: nullableDate(payload, "previousIssueDate"),
   };
+  // Keep the adapter source-compatible with an older installed copy during a
+  // rolling deployment; production must deploy @doscientos/verifactu >=0.1.12
+  // so these fields are rendered into the AEAT XML.
+  return input as VerifactuSubmitInput;
 }
 
 function cancellationInput(payload: Record<string, unknown>): CancellationInput {
@@ -309,7 +360,7 @@ async function deliverClaimed(
     if (ledger.record_type === "alta") {
       const input = { ...altaInput(ledger.record_payload), incidence };
       const hash = hashes.computeInvoiceHash?.(input);
-      if (!hash) throw new Error("Falta computeInvoiceHash en @doscientos/verifactu 0.1.11");
+      if (!hash) throw new Error("Falta computeInvoiceHash en @doscientos/verifactu 0.1.12");
       if (hash !== ledger.current_hash)
         throw new Error("La huella del ledger no coincide con su payload");
       result = await client.registerInvoice(input);
@@ -318,7 +369,7 @@ async function deliverClaimed(
       const cancellable = client as unknown as CancellableClient;
       const hash = hashes.computeCancellationHash?.(input);
       if (!hash || !cancellable.cancelInvoice) {
-        throw new Error("Falta RegistroAnulacion en @doscientos/verifactu 0.1.11");
+        throw new Error("Falta RegistroAnulacion en @doscientos/verifactu 0.1.12");
       }
       if (hash !== ledger.current_hash)
         throw new Error("La huella de anulación no coincide con su payload");
