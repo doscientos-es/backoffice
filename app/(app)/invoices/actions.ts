@@ -1,7 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { after } from "next/server";
 import { InvoiceEmail } from "@/components/email";
 import { defineAction } from "@/lib/actions/define-action";
 import { requireRole } from "@/lib/auth";
@@ -56,6 +54,8 @@ import {
   type OutboxDelivery,
   syncInvoiceQrFromLedger,
 } from "@/lib/verifactu/outbox";
+import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 
 const log = scopedLogger("invoices.actions");
 
@@ -93,7 +93,7 @@ async function enqueueFiscalRecord(invoiceId: string, cancellation = false): Pro
  */
 export const updateInvoiceStatus = defineAction<
   typeof UpdateInvoiceStatusInput,
-  { fiscalDeliveryStatus: OutboxDelivery["status"] | null }
+  { fiscalDeliveryCsv: string | null; fiscalDeliveryStatus: OutboxDelivery["status"] | null }
 >({
   name: "invoices.updateStatus",
   schema: UpdateInvoiceStatusInput,
@@ -118,7 +118,7 @@ export const updateInvoiceStatus = defineAction<
         );
       }
       if (status === "issued") void backupInvoiceToDrive(id, user.email);
-      return { fiscalDeliveryStatus: delivery.status };
+      return { fiscalDeliveryStatus: delivery.status, fiscalDeliveryCsv: delivery.csv };
     }
 
     const now = new Date().toISOString();
@@ -156,7 +156,7 @@ export const updateInvoiceStatus = defineAction<
       });
     }
 
-    return { fiscalDeliveryStatus: null };
+    return { fiscalDeliveryStatus: null, fiscalDeliveryCsv: null };
   },
 });
 

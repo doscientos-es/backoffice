@@ -173,7 +173,7 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
         return;
       }
       const phase = issuancePhaseForDelivery(res.fiscalDeliveryStatus);
-      setIssuanceProgress({ phase, error: null, csv: res.fiscalDeliveryStatus === "accepted" ? null : null });
+      setIssuanceProgress({ phase, error: null, csv: res.fiscalDeliveryCsv });
       if (phase === "accepted") {
         feedback.setSuccess("Factura emitida y aceptada por AEAT");
       } else if (phase === "rejected") {

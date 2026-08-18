@@ -15,6 +15,7 @@ type Enrollment = { id: string; qrCode: string };
 export function MfaTotpCard({ required }: Props) {
   const [loading, setLoading] = useState(true);
   const [verified, setVerified] = useState(false);
+  const [challengeFactorId, setChallengeFactorId] = useState<string | null>(null);
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -22,9 +23,16 @@ export function MfaTotpCard({ required }: Props) {
   useEffect(() => {
     void (async () => {
       const supabase = getBrowserClient();
-      const { data, error } = await supabase.auth.mfa.listFactors();
-      if (error) setError("No se pudo consultar el estado de MFA.");
-      setVerified(Boolean(data?.totp.some((factor) => factor.status === "verified")));
+      const [factorsResult, assuranceResult] = await Promise.all([
+        supabase.auth.mfa.listFactors(),
+        supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+      ]);
+      if (factorsResult.error || assuranceResult.error) {
+        setError("No se pudo consultar el estado de MFA.");
+      }
+      const factor = factorsResult.data?.totp.find((candidate) => candidate.status === "verified");
+      setVerified(Boolean(factor));
+      if (factor && assuranceResult.data?.currentLevel !== "aal2") setChallengeFactorId(factor.id);
       setLoading(false);
     })();
   }, []);
@@ -49,11 +57,12 @@ export function MfaTotpCard({ required }: Props) {
 
   async function verifyEnrollment(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!enrollment) return;
+    const factorId = enrollment?.id ?? challengeFactorId;
+    if (!factorId) return;
     setError(null);
     setLoading(true);
     const { error } = await getBrowserClient().auth.mfa.challengeAndVerify({
-      factorId: enrollment.id,
+      factorId,
       code: code.replaceAll(" ", ""),
     });
     if (error) {
@@ -123,6 +132,28 @@ export function MfaTotpCard({ required }: Props) {
             </Field>
             <Button type="submit" disabled={loading || code.length < 6}>
               {loading ? <Loader2 className="size-4 animate-spin" /> : null} Verificar y activar
+            </Button>
+          </form>
+        ) : challengeFactorId ? (
+          <form onSubmit={verifyEnrollment} className="flex max-w-sm flex-col gap-3">
+            <p className="text-sm text-muted-foreground">
+              Introduce el código de tu aplicación autenticadora para desbloquear las áreas de
+              administración.
+            </p>
+            <Field>
+              <FieldLabel htmlFor="mfa-code">Código de verificación</FieldLabel>
+              <Input
+                id="mfa-code"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={8}
+                value={code}
+                onChange={(event) => setCode(event.target.value)}
+                required
+              />
+            </Field>
+            <Button type="submit" disabled={loading || code.length < 6}>
+              {loading ? <Loader2 className="size-4 animate-spin" /> : null} Verificar acceso
             </Button>
           </form>
         ) : verified ? (

@@ -6,6 +6,7 @@ const { mfa } = vi.hoisted(() => ({
     listFactors: vi.fn(),
     enroll: vi.fn(),
     challengeAndVerify: vi.fn(),
+    getAuthenticatorAssuranceLevel: vi.fn(),
   },
 }));
 
@@ -23,6 +24,10 @@ describe("MfaTotpCard", () => {
       error: null,
     });
     mfa.challengeAndVerify.mockReset().mockResolvedValue({ error: null });
+    mfa.getAuthenticatorAssuranceLevel.mockReset().mockResolvedValue({
+      data: { currentLevel: "aal1", nextLevel: "aal1" },
+      error: null,
+    });
   });
 
   it("explains that MFA is required for administrators and starts enrollment", async () => {
@@ -42,9 +47,23 @@ describe("MfaTotpCard", () => {
       data: { totp: [{ id: "factor-1", status: "verified" }] },
       error: null,
     });
+    mfa.getAuthenticatorAssuranceLevel.mockResolvedValue({
+      data: { currentLevel: "aal2", nextLevel: "aal2" },
+      error: null,
+    });
     render(<MfaTotpCard required={false} />);
 
     expect(await screen.findByText("Activa")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /configurar mfa/i })).toBeNull();
+  });
+
+  it("asks a verified administrator to upgrade an aal1 session", async () => {
+    mfa.listFactors.mockResolvedValue({
+      data: { totp: [{ id: "factor-1", status: "verified" }] },
+      error: null,
+    });
+    render(<MfaTotpCard required />);
+
+    expect(await screen.findByRole("button", { name: /verificar acceso/i })).toBeTruthy();
   });
 });
