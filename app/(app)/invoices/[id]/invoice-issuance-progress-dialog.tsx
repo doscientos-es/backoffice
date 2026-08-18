@@ -1,5 +1,15 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import {
   CheckCircle2,
   Circle,
@@ -13,22 +23,13 @@ import {
   TriangleAlert,
   XCircle,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
 
 export type InvoiceIssuancePhase =
   | "verifying"
   | "processing"
   | "accepted"
   | "deferred"
+  | "delivery_error"
   | "rejected"
   | "error";
 
@@ -45,7 +46,7 @@ function stepStyle(state: StepState) {
 }
 
 function stepsFor(phase: InvoiceIssuancePhase, error: string | null): Step[] {
-  const completed = ["accepted", "deferred", "rejected"].includes(phase);
+  const completed = ["accepted", "deferred", "delivery_error", "rejected"].includes(phase);
   const failedBeforeIssue = phase === "error";
   return [
     {
@@ -77,22 +78,26 @@ function stepsFor(phase: InvoiceIssuancePhase, error: string | null): Step[] {
           ? "Registro aceptado por AEAT"
           : phase === "deferred"
             ? "En cola: se reintentará respetando el control de flujo"
-            : phase === "rejected"
-              ? "AEAT rechazó el registro; revisa el motivo antes de continuar"
-              : phase === "processing"
-                ? "Enviando o dejando la entrega preparada en la cola durable"
-                : "Pendiente hasta que el registro fiscal esté creado",
+            : phase === "delivery_error"
+              ? "Error técnico registrado; consulta el estado antes de reintentar"
+              : phase === "rejected"
+                ? "AEAT rechazó el registro; revisa el motivo antes de continuar"
+                : phase === "processing"
+                  ? "Enviando o dejando la entrega preparada en la cola durable"
+                  : "Pendiente hasta que el registro fiscal esté creado",
       icon: Send,
       state:
         phase === "accepted"
           ? "complete"
           : phase === "deferred"
             ? "warning"
-            : phase === "rejected"
-              ? "error"
-              : phase === "processing"
-                ? "active"
-                : "pending",
+            : phase === "delivery_error"
+              ? "warning"
+              : phase === "rejected"
+                ? "error"
+                : phase === "processing"
+                  ? "active"
+                  : "pending",
     },
   ];
 }

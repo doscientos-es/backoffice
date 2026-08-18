@@ -1,20 +1,5 @@
 "use client";
 
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Download,
-  FileEdit,
-  FileMinus2,
-  Loader2,
-  MoreHorizontal,
-  Send,
-  Trash2,
-  XCircle,
-} from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -40,12 +25,31 @@ import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { verifyWithPasskey } from "@/lib/security/webauthn-client";
 import { INVOICE_STATUS, VERIFACTU_STATUS } from "@/lib/status";
 import {
+  AlertTriangle,
+  CheckCircle2,
+  Download,
+  FileEdit,
+  FileMinus2,
+  Loader2,
+  MoreHorizontal,
+  Send,
+  Trash2,
+  XCircle,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import {
   createRectification,
   deleteInvoice,
   markAsUncollectible,
   restoreInvoice,
   updateInvoiceStatus,
 } from "../actions";
+import {
+  InvoiceIssuanceProgressDialog,
+  type InvoiceIssuancePhase,
+} from "./invoice-issuance-progress-dialog";
 import { SendAeatButton } from "./send-aeat-button";
 import { SendInvoiceButton } from "./send-invoice-button";
 
@@ -83,6 +87,13 @@ interface Props {
   clientEmail?: string | null;
 }
 
+function issuancePhaseForDelivery(status: string | null): InvoiceIssuancePhase {
+  if (status === "accepted") return "accepted";
+  if (status === "rejected") return "rejected";
+  if (status === "error") return "delivery_error";
+  return "deferred";
+}
+
 export function InvoiceActions({ invoice, clientEmail }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -95,6 +106,12 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
   const [showRectification, setShowRectification] = useState(false);
   const [rectType, setRectType] = useState<"R1" | "R4">("R1");
   const [rectReason, setRectReason] = useState("");
+  const [issuanceOpen, setIssuanceOpen] = useState(false);
+  const [issuanceProgress, setIssuanceProgress] = useState<{
+    phase: InvoiceIssuancePhase;
+    error: string | null;
+    csv: string | null;
+  }>({ phase: "verifying", error: null, csv: null });
 
   // Soft-delete (reversible via `deleted_at`): frictionless delete with a
   // "Deshacer" toast instead of a blocking confirm dialog.
@@ -132,6 +149,43 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
       }
     });
   };
+
+  async function handleIssue() {
+    feedback.setPending();
+    setIssuanceProgress({ phase: "verifying", error: null, csv: null });
+    setIssuanceOpen(true);
+    const verification = await verifyWithPasskey(
+      userVerificationScope("invoice.status.update", `invoice:${invoice.id}:status:issued`),
+    );
+    if (!verification.ok) {
+      feedback.setError(verification.error);
+      setIssuanceProgress({ phase: "error", error: verification.error, csv: null });
+      return;
+    }
+    setPendingStatus("issued");
+    setIssuanceProgress({ phase: "processing", error: null, csv: null });
+    startTransition(async () => {
+      const res = await updateInvoiceStatus({ id: invoice.id, status: "issued" });
+      setPendingStatus(null);
+      if (!res.ok) {
+        feedback.setError(res.error);
+        setIssuanceProgress({ phase: "error", error: res.error, csv: null });
+        return;
+      }
+      const phase = issuancePhaseForDelivery(res.fiscalDeliveryStatus);
+      setIssuanceProgress({ phase, error: null, csv: res.fiscalDeliveryStatus === "accepted" ? null : null });
+      if (phase === "accepted") {
+        feedback.setSuccess("Factura emitida y aceptada por AEAT");
+      } else if (phase === "rejected") {
+        feedback.setError("La factura se emitió, pero AEAT rechazó el registro fiscal.");
+      } else if (phase === "delivery_error") {
+        feedback.setError("La factura se emitió; la entrega fiscal requiere atención.");
+      } else {
+        feedback.setSuccess("Factura emitida. La entrega fiscal sigue en la cola durable.");
+      }
+      router.refresh();
+    });
+  }
 
   const handleMarkUncollectible = () => {
     startTransition(async () => {
@@ -247,8 +301,8 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
         <Button
           className="col-span-2 w-full justify-center whitespace-nowrap sm:w-auto"
           size="sm"
-          disabled={pending}
-          onClick={() => handleStatusUpdate("issued")}
+          disabled={pending || issuanceOpen}
+          onClick={handleIssue}
         >
           {pendingStatus === "issued" ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -383,8 +437,8 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
 
       {/* AEAT Button if already issued */}
       {!isDraft &&
-      invoice.verifactu_status !== "accepted" &&
-      invoice.verifactu_status !== "excluded" ? (
+        invoice.verifactu_status !== "accepted" &&
+        invoice.verifactu_status !== "excluded" ? (
         <SendAeatButton
           invoiceId={invoice.id}
           label={
@@ -558,6 +612,14 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <InvoiceIssuanceProgressDialog
+        open={issuanceOpen}
+        phase={issuanceProgress.phase}
+        error={issuanceProgress.error}
+        csv={issuanceProgress.csv}
+        onClose={() => setIssuanceOpen(false)}
+      />
     </div>
   );
 }
