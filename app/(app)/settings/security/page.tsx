@@ -1,6 +1,6 @@
+import { PageHeader } from "@/components/layout/page-header";
 import { MfaTotpCard } from "@/components/security/mfa-totp-card";
 import { PasskeyStatusCard } from "@/components/security/passkey-status-card";
-import { PageHeader } from "@/components/layout/page-header";
 import { requireUser } from "@/lib/auth";
 import { hasRegisteredPasskey } from "@/lib/security/webauthn";
 
@@ -14,7 +14,10 @@ export default async function SecuritySettingsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Seguridad" description="Gestiona los factores que protegen tu cuenta y las acciones sensibles." />
+      <PageHeader
+        title="Seguridad"
+        description="Gestiona los factores que protegen tu cuenta y las acciones sensibles."
+      />
       <MfaTotpCard required={required} />
       <PasskeyStatusCard configured={passkeyConfigured} />
     </div>

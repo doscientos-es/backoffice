@@ -20,16 +20,14 @@ export function MfaTotpCard({ required }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void loadStatus();
+    void (async () => {
+      const supabase = getBrowserClient();
+      const { data, error } = await supabase.auth.mfa.listFactors();
+      if (error) setError("No se pudo consultar el estado de MFA.");
+      setVerified(Boolean(data?.totp.some((factor) => factor.status === "verified")));
+      setLoading(false);
+    })();
   }, []);
-
-  async function loadStatus() {
-    const supabase = getBrowserClient();
-    const { data, error } = await supabase.auth.mfa.listFactors();
-    if (error) setError("No se pudo consultar el estado de MFA.");
-    setVerified(Boolean(data?.totp.some((factor) => factor.status === "verified")));
-    setLoading(false);
-  }
 
   async function startEnrollment() {
     setError(null);
@@ -87,26 +85,58 @@ export function MfaTotpCard({ required }: Props) {
               </CardDescription>
             </div>
           </div>
-          <Badge variant={verified ? "success" : "neutral"}>{verified ? "Activa" : "Pendiente"}</Badge>
+          <Badge variant={verified ? "success" : "neutral"}>
+            {verified ? "Activa" : "Pendiente"}
+          </Badge>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4 pt-0">
-        {error ? <p role="alert" className="text-sm text-destructive">{error}</p> : null}
+        {error ? (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        ) : null}
         {enrollment ? (
           <form onSubmit={verifyEnrollment} className="flex max-w-sm flex-col gap-3">
-            <p className="text-sm text-muted-foreground">Escanea el código con tu aplicación autenticadora y confirma el código de seis dígitos.</p>
-            <img src={enrollment.qrCode} alt="Código QR para configurar MFA" className="size-44 rounded-md border bg-white p-2" />
+            <p className="text-sm text-muted-foreground">
+              Escanea el código con tu aplicación autenticadora y confirma el código de seis
+              dígitos.
+            </p>
+            {/* The QR is a short-lived data URI returned by Supabase, not a remote image Next can optimize. */}
+            {/* biome-ignore lint/performance/noImgElement: TOTP QR data URI must remain client-local. */}
+            <img
+              src={enrollment.qrCode}
+              alt="Código QR para configurar MFA"
+              className="size-44 rounded-md border bg-white p-2"
+            />
             <Field>
               <FieldLabel htmlFor="mfa-code">Código de verificación</FieldLabel>
-              <Input id="mfa-code" inputMode="numeric" autoComplete="one-time-code" maxLength={8} value={code} onChange={(event) => setCode(event.target.value)} required />
+              <Input
+                id="mfa-code"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={8}
+                value={code}
+                onChange={(event) => setCode(event.target.value)}
+                required
+              />
             </Field>
-            <Button type="submit" disabled={loading || code.length < 6}>{loading ? <Loader2 className="size-4 animate-spin" /> : null} Verificar y activar</Button>
+            <Button type="submit" disabled={loading || code.length < 6}>
+              {loading ? <Loader2 className="size-4 animate-spin" /> : null} Verificar y activar
+            </Button>
           </form>
         ) : verified ? (
-          <p className="text-sm text-muted-foreground">Tu próxima sesión requerirá un código además de tu acceso habitual.</p>
+          <p className="text-sm text-muted-foreground">
+            Tu próxima sesión requerirá un código además de tu acceso habitual.
+          </p>
         ) : (
           <Button type="button" className="w-fit" onClick={startEnrollment} disabled={loading}>
-            {loading ? <Loader2 className="size-4 animate-spin" /> : <Smartphone className="size-4" />} Configurar MFA
+            {loading ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Smartphone className="size-4" />
+            )}{" "}
+            Configurar MFA
           </Button>
         )}
       </CardContent>

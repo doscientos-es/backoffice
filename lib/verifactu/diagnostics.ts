@@ -1,4 +1,3 @@
-import { createAdminClient } from "@/lib/supabase/admin";
 import { createVerifactuClient } from "@doscientos/verifactu";
 import { verifactuConfigFromEnv } from "./config";
 
@@ -18,6 +17,11 @@ type DiagnosticRun = {
   created_at: string;
 };
 
+async function createDiagnosticAdminClient() {
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  return createAdminClient();
+}
+
 function gateFromRun(run: DiagnosticRun | null): VerifactuDiagnosticGate {
   if (!run) return { status: "missing", ranAt: null, expiresAt: null };
   if (run.status !== "passed") {
@@ -31,7 +35,7 @@ function gateFromRun(run: DiagnosticRun | null): VerifactuDiagnosticGate {
 }
 
 export async function getVerifactuDiagnosticGate(): Promise<VerifactuDiagnosticGate> {
-  const admin = createAdminClient();
+  const admin = await createDiagnosticAdminClient();
   const { data, error } = await admin
     .from("verifactu_diagnostic_runs")
     .select("status, created_at, expires_at")
@@ -108,7 +112,7 @@ export async function runVerifactuMockDiagnostic(memberId: string): Promise<{
     ];
   }
   const ok = checks.every((check) => check.ok);
-  const admin = createAdminClient();
+  const admin = await createDiagnosticAdminClient();
   const { error } = await admin.from("verifactu_diagnostic_runs").insert({
     status: ok ? "passed" : "failed",
     checks,

@@ -25,8 +25,8 @@ vi.mock("next/link", () => ({
 
 // ── SUT (imported after mocks are in place) ──────────────────────────────────
 
-import { SettingsNav } from "@/app/(app)/settings/settings-nav";
 import { usePathname } from "next/navigation";
+import { SettingsNav } from "@/app/(app)/settings/settings-nav";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 

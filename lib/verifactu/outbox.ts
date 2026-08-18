@@ -310,21 +310,32 @@ async function complete(
   const status = result?.status ?? "error";
   const explicitError = error instanceof Error ? error.message : "Error de envío a AEAT";
   const message = formatOutboxError(error ? explicitError : null, result);
+  const enrichedResponse = result
+    ? sanitizeResponse({
+        ...result.response,
+        errorCode: result.errorCode,
+        aeatStatus: (result as VerifactuSubmitResult & { aeatStatus?: unknown }).aeatStatus,
+        warnings: (result as VerifactuSubmitResult & { warnings?: unknown }).warnings,
+      })
+    : { kind: "delivery_error" };
   const { error: completionError } = await admin.rpc("complete_verifactu_outbox_v2", {
     p_outbox_id: outboxId,
     p_worker_id: workerId,
     p_result: status,
     p_csv: result?.csv ?? null,
     p_aeat_code: result?.aeatCode ?? null,
-    p_response: result
-      ? sanitizeResponse({ ...result.response, errorCode: result.errorCode })
-      : { kind: "delivery_error" },
+    p_response: enrichedResponse,
     p_error: message,
     p_retryable: isRetryableVerifactuDelivery(result),
     p_wait_seconds: waitSeconds(result),
   });
   if (completionError) throw new Error(completionError.message);
-  return { processed: true, status, csv: result?.csv ?? null };
+  return {
+    processed: true,
+    status,
+    csv: result?.csv ?? null,
+    warnings: (result as VerifactuSubmitResult & { warnings?: Array<{ code: string | null; message: string }> } | null)?.warnings ?? [],
+  };
 }
 
 async function deliverClaimed(
@@ -355,7 +366,7 @@ async function deliverClaimed(
         p_next_attempt_at: next,
       });
       if (deferError) throw new Error(deferError.message);
-      return { processed: false, status: "deferred", csv: null };
+      return { processed: false, status: "deferred", csv: null, warnings: [] };
     }
     const client = createVerifactuClient({ ...verifactuConfigFromEnv(), software }, log);
     let result: VerifactuSubmitResult;
@@ -399,7 +410,7 @@ export async function deliverVerifactuOutbox(
     p_worker_id: workerId,
   });
   if (error) throw new Error(error.message);
-  if (!ledgerId) return { processed: false, status: "skipped", csv: null };
+  if (!ledgerId) return { processed: false, status: "skipped", csv: null, warnings: [] };
   return deliverClaimed(outboxId, ledgerId as string, workerId);
 }
 
