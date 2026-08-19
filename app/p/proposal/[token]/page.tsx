@@ -726,6 +726,15 @@ export default async function PortalProposalPage({
           ) : null}
         </article>
         <aside className="flex flex-col gap-4 self-start lg:sticky lg:top-6">
+          {!isDraft && !responded ? (
+            <div className="hidden lg:block">
+              <ProposalActions
+                token={token}
+                needsFiscal={needsFiscal}
+                fiscalPrefill={fiscalPrefill}
+              />
+            </div>
+          ) : null}
           <ProposalMessageThread
             messages={proposalMessages}
             submit={sendProposalQuestion.bind(null, token)}
@@ -802,7 +811,9 @@ export default async function PortalProposalPage({
           )}
         </div>
       ) : !isDraft ? (
-        <ProposalActions token={token} needsFiscal={needsFiscal} fiscalPrefill={fiscalPrefill} />
+        <div className="lg:hidden">
+          <ProposalActions token={token} needsFiscal={needsFiscal} fiscalPrefill={fiscalPrefill} />
+        </div>
       ) : null}
     </div>
   );
