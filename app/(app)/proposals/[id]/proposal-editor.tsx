@@ -43,7 +43,6 @@ import { AlertCircle, Check, ChevronLeft, ChevronRight, Save, Sparkles } from "l
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { setProposalTeamMembers, updateProposal } from "../actions";
-import { type ProposalTeamMember } from "./proposal-team-selector";
 
 export type EditableItem = LineItem;
 
@@ -53,6 +52,8 @@ const EDITOR_STEPS = [
   { label: "Precio", description: "Partidas y condiciones" },
   { label: "Revisión", description: "Equipo y comprobación final" },
 ] as const;
+
+type ProposalTeamMember = { id: string; name: string; job_title: string | null };
 
 export type ProposalEditorProps = {
   id: string;
@@ -725,15 +726,35 @@ export function ProposalEditor({
                 />
                 <section className="rounded-xl border border-border bg-card p-5">
                   <h2 className="text-base font-semibold">Equipo que verá el cliente</h2>
-                  <div className="mt-3">
-                    <ProposalTeamSelector
-                      proposalId={id}
-                      members={teamMembers}
-                      initialMemberIds={initialTeamMemberIds}
-                      value={teamMemberIds}
-                      onChange={setTeamMemberIds}
-                      locked={locked}
-                    />
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Selecciona quién aparecerá junto a la propuesta y en el portal del cliente.
+                  </p>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {teamMembers.map((member) => (
+                      <label
+                        key={member.id}
+                        className="flex cursor-pointer items-center gap-3 rounded-lg border border-border p-3"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={teamMemberIds.includes(member.id)}
+                          disabled={locked}
+                          onChange={(event) =>
+                            setTeamMemberIds(
+                              event.target.checked
+                                ? [...teamMemberIds, member.id]
+                                : teamMemberIds.filter((memberId) => memberId !== member.id),
+                            )
+                          }
+                        />
+                        <span>
+                          <span className="block text-sm font-medium">{member.name}</span>
+                          <span className="block text-xs text-muted-foreground">
+                            {member.job_title ?? "Equipo Doscientos"}
+                          </span>
+                        </span>
+                      </label>
+                    ))}
                   </div>
                 </section>
                 <section className="rounded-xl border border-primary/20 bg-primary/5 p-5">

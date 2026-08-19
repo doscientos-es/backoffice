@@ -61,7 +61,7 @@ describe("ProposalEditor", () => {
     fireEvent.change(screen.getByLabelText("Título"), { target: { value: "Propuesta revisada" } });
     expect(saveProposal).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole("button", { name: "Guardar y ver propuesta" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "Guardar y ver propuesta" })[0]);
 
     await waitFor(() =>
       expect(saveProposal).toHaveBeenCalledWith(
