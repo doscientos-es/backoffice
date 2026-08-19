@@ -16,7 +16,13 @@ import { requireUser } from "@/lib/auth";
 import { isAIEnabled } from "@/lib/env";
 import { parseKeyPoints, toEditableKeyPoints } from "@/lib/proposals/key-points";
 import { parseMaintenanceOffer } from "@/lib/proposals/maintenance";
-import { type PaymentSchedule, parseScopeModules } from "@/lib/proposals/scope";
+import {
+  type PaymentSchedule,
+  parsePaymentPlan,
+  parseScopeModules,
+  paymentPlanForSchedule,
+  paymentScheduleInput,
+} from "@/lib/proposals/scope";
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
@@ -32,6 +38,7 @@ import { MarkAcceptedButton } from "./mark-accepted-button";
 import { replyToProposalMessage } from "./message-actions";
 import { type EditableItem, ProposalEditor } from "./proposal-editor";
 import { ProposalFollowUpAssistant } from "./proposal-follow-up-assistant";
+import { ProposalPaymentPlan } from "./proposal-payment-plan";
 import { type ProposalSpec, ProposalSpecs } from "./proposal-specs";
 import { ProposalTeamSelector } from "./proposal-team-selector";
 import { ReopenProposalButton } from "./reopen-proposal-button";
@@ -152,6 +159,14 @@ export default async function ProposalDetailPage({
     .eq("proposal_id", id)
     .order("created_at", { ascending: false });
 
+  const { data: paymentPlanInvoices } = await supabase
+    .from("invoices")
+    .select("id, full_number, status, proposal_payment_plan_item_id")
+    .eq("proposal_id", id)
+    .is("deleted_at", null)
+    .not("proposal_payment_plan_item_id", "is", null)
+    .order("created_at", { ascending: true });
+
   const { data: clientFull } = await supabase
     .from("proposals")
     .select("clients(email), leads(email)")
@@ -172,6 +187,14 @@ export default async function ProposalDetailPage({
 
   const status = proposal.status as ProposalStatus;
   const locked = status === "accepted" || status === "rejected";
+  const configuredPaymentPlan = parsePaymentPlan(proposal.payment_plan);
+  const paymentSchedule = paymentScheduleInput.safeParse(proposal.payment_schedule);
+  const paymentPlan =
+    configuredPaymentPlan.length > 0
+      ? configuredPaymentPlan
+      : paymentSchedule.success
+        ? paymentPlanForSchedule(paymentSchedule.data)
+        : [];
   // Drafts authored against a lead never receive a series number until the
   // first transition to `sent` (see `sendPreviewLink`). The header falls back
   // to a human label so the page never renders `null` in the title.
@@ -234,6 +257,7 @@ export default async function ProposalDetailPage({
               <GenerateInvoiceButton
                 proposalId={id}
                 canGenerateInvoice={["owner", "admin"].includes(user.role)}
+                paymentPlan={paymentPlan}
               />
             ) : status !== "rejected" ? (
               <MarkAcceptedButton proposalId={id} />
@@ -260,6 +284,7 @@ export default async function ProposalDetailPage({
           initialDeliverables={(proposal.deliverables as string | null) ?? null}
           initialAcceptanceCriteria={(proposal.acceptance_criteria as string | null) ?? null}
           initialPaymentSchedule={(proposal.payment_schedule as PaymentSchedule | null) ?? null}
+          initialPaymentPlan={paymentPlan}
           initialPaymentTerms={(proposal.payment_terms as string | null) ?? null}
           initialChangeManagementTerms={(proposal.change_management_terms as string | null) ?? null}
           initialMaintenanceOptions={parseMaintenanceOffer(proposal.maintenance_options)}
@@ -273,6 +298,26 @@ export default async function ProposalDetailPage({
           locked={locked}
         />
       </SectionBoundary>
+
+      {status === "accepted" ? (
+        <ProposalPaymentPlan
+          proposalId={id}
+          initialPlan={paymentPlan}
+          initialVersion={Number(proposal.version)}
+          total={Number(proposal.total ?? 0)}
+          canEdit={user.role !== "viewer"}
+          invoices={((paymentPlanInvoices ?? []) as Array<Record<string, unknown>>).flatMap((invoice) => {
+            const planItemId = invoice.proposal_payment_plan_item_id as string | null;
+            if (!planItemId) return [];
+            return [{
+              id: invoice.id as string,
+              planItemId,
+              number: (invoice.full_number as string | null) ?? "Borrador",
+              status: invoice.status as string,
+            }];
+          })}
+        />
+      ) : null}
 
       <Card>
         <CardHeader>

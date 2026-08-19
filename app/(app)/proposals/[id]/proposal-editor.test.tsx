@@ -1,6 +1,6 @@
+import { DEFAULT_MAINTENANCE_OFFER } from "@/lib/proposals/maintenance";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_MAINTENANCE_OFFER } from "@/lib/proposals/maintenance";
 
 vi.mock("@/components/finance/line-items-table", () => ({ LineItemsTable: () => null }));
 vi.mock("@/components/proposals/maintenance-offer-editor", () => ({
@@ -31,6 +31,7 @@ const props = {
   initialDeliverables: null,
   initialAcceptanceCriteria: null,
   initialPaymentSchedule: null,
+  initialPaymentPlan: [],
   initialPaymentTerms: null,
   initialChangeManagementTerms: null,
   initialMaintenanceOptions: DEFAULT_MAINTENANCE_OFFER,

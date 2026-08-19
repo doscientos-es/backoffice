@@ -1,10 +1,8 @@
 "use client";
 
-import { AlertCircle, Check, ChevronLeft, ChevronRight, Save, Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LineItemsTable } from "@/components/finance/line-items-table";
 import { MaintenanceOfferEditor } from "@/components/proposals/maintenance-offer-editor";
+import { PaymentPlanEditor } from "@/components/proposals/payment-plan-editor";
 import { ProblemSolutionEditor } from "@/components/proposals/problem-solution-editor";
 import { ScopeModulesEditor } from "@/components/proposals/scope-modules-editor";
 import { AiNotice } from "@/components/ui/ai-notice";
@@ -35,10 +33,15 @@ import {
   DEFAULT_CHANGE_MANAGEMENT_TERMS,
   PAYMENT_SCHEDULE_LABELS,
   PAYMENT_SCHEDULE_TEMPLATES,
+  paymentPlanForSchedule,
+  type PaymentPlanItem,
   type PaymentSchedule,
   type ScopeModule,
 } from "@/lib/proposals/scope";
 import { formatEUR } from "@/lib/utils";
+import { AlertCircle, Check, ChevronLeft, ChevronRight, Save, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { updateProposal } from "../actions";
 
 export type EditableItem = LineItem;
@@ -63,6 +66,7 @@ export type ProposalEditorProps = {
   initialDeliverables: string | null;
   initialAcceptanceCriteria: string | null;
   initialPaymentSchedule: PaymentSchedule | null;
+  initialPaymentPlan: PaymentPlanItem[];
   initialPaymentTerms: string | null;
   initialChangeManagementTerms: string | null;
   initialMaintenanceOptions: MaintenanceOffer | null;
@@ -101,6 +105,7 @@ export function ProposalEditor({
   initialDeliverables,
   initialAcceptanceCriteria,
   initialPaymentSchedule,
+  initialPaymentPlan,
   initialPaymentTerms,
   initialChangeManagementTerms,
   initialMaintenanceOptions,
@@ -133,6 +138,11 @@ export function ProposalEditor({
   const [acceptanceCriteria, setAcceptanceCriteria] = useState(initialAcceptanceCriteria ?? "");
   const [paymentSchedule, setPaymentSchedule] = useState<PaymentSchedule>(
     initialPaymentSchedule ?? "half_half",
+  );
+  const [paymentPlan, setPaymentPlan] = useState<PaymentPlanItem[]>(
+    initialPaymentPlan.length > 0
+      ? initialPaymentPlan
+      : paymentPlanForSchedule(initialPaymentSchedule ?? "half_half"),
   );
   const [paymentTerms, setPaymentTerms] = useState(
     initialPaymentTerms ?? PAYMENT_SCHEDULE_TEMPLATES.half_half,
@@ -169,6 +179,7 @@ export function ProposalEditor({
       deliverables: deliverables || null,
       acceptance_criteria: acceptanceCriteria || null,
       payment_schedule: paymentSchedule,
+      payment_plan: paymentPlan,
       payment_terms: paymentTerms || null,
       change_management_terms: changeManagementTerms || null,
       maintenance_options: maintenanceOptions,
@@ -188,6 +199,7 @@ export function ProposalEditor({
     deliverables,
     acceptanceCriteria,
     paymentSchedule,
+    paymentPlan,
     paymentTerms,
     changeManagementTerms,
     maintenanceOptions,
@@ -260,6 +272,7 @@ export function ProposalEditor({
   function handlePaymentScheduleChange(value: PaymentSchedule) {
     setPaymentSchedule(value);
     if (value !== "custom") setPaymentTerms(PAYMENT_SCHEDULE_TEMPLATES[value]);
+    setPaymentPlan(paymentPlanForSchedule(value));
   }
 
   const handleGenerateDraft = useCallback(async () => {
@@ -570,6 +583,18 @@ export function ProposalEditor({
                       placeholder="- Diseño validado\n- Desarrollo de los módulos acordados\n- Formación y documentación"
                     />
                   </FormRow>
+                  <div className="rounded-lg border border-border bg-muted/20 p-3">
+                    <p className="mb-1 text-sm font-medium">Facturación por plazos</p>
+                    <p className="mb-3 text-xs text-muted-foreground">
+                      Se crearán borradores editables para estos cobros al aceptar la propuesta.
+                    </p>
+                    <PaymentPlanEditor
+                      plan={paymentPlan}
+                      total={proposalTotals.oneTime.total}
+                      onChange={setPaymentPlan}
+                      locked={locked}
+                    />
+                  </div>
                   <details className="rounded-lg border border-border bg-muted/20 p-3">
                     <summary className="cursor-pointer text-sm font-medium">
                       Añadir criterios de aceptación

@@ -1,7 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { after } from "next/server";
 import { InvoiceEmail } from "@/components/email";
 import { defineAction } from "@/lib/actions/define-action";
 import { requireRole } from "@/lib/auth";
@@ -14,6 +12,7 @@ import { backupInvoiceToDrive } from "@/lib/google/backup";
 import { pushMetaConversion } from "@/lib/integrations/meta-capi";
 import {
   findClientInfo,
+  findInvoicedProposalPaymentPlanIds,
   findInvoiceForEdit,
   findInvoiceForEmail,
   findInvoiceSeries,
@@ -30,9 +29,16 @@ import { getMonthlyBillingWindow } from "@/lib/invoices/workflows";
 import { scopedLogger } from "@/lib/logger";
 import { dispatchNotifications } from "@/lib/notifications/dispatch";
 import { buildPortalAccessPatch } from "@/lib/portal/access";
+import {
+  parsePaymentPlan,
+  paymentPlanForSchedule,
+  paymentScheduleInput,
+  splitItemsForPaymentPlan,
+} from "@/lib/proposals/scope";
 import { uuidIdInput } from "@/lib/schemas/common";
 import {
   CreateInvoiceFromProposalInput,
+  CreateInvoicesFromProposalPlanInput,
   CreateMonthlyHourlyInvoiceInput,
   CreateRectificationInput,
   MarkUncollectibleInput,
@@ -56,6 +62,8 @@ import {
   type OutboxDelivery,
   syncInvoiceQrFromLedger,
 } from "@/lib/verifactu/outbox";
+import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 
 const log = scopedLogger("invoices.actions");
 
@@ -358,6 +366,85 @@ export const createInvoiceFromProposal = defineAction<
     );
 
     return { id };
+  },
+});
+
+/**
+ * Creates only the missing draft invoices for a proposal payment plan. Each
+ * draft is linked to its plan item, which makes repeated clicks idempotent.
+ */
+export const createInvoicesFromProposalPlan = defineAction<
+  typeof CreateInvoicesFromProposalPlanInput,
+  { ids: string[]; created: number }
+>({
+  name: "invoices.createFromProposalPlan",
+  schema: CreateInvoicesFromProposalPlanInput,
+  roles: ["owner", "admin"],
+  revalidate: (_p, input) => ["/invoices", `/proposals/${input.proposalId}`],
+  handler: async ({ proposalId }, { user }) => {
+    const proposal = await findProposalForInvoice(proposalId);
+    if (!proposal) throw new Error("Propuesta no encontrada");
+    if (proposal.status !== "accepted") {
+      throw new Error("Solo se puede facturar una propuesta aceptada");
+    }
+
+    const configuredPlan = parsePaymentPlan(proposal.payment_plan);
+    const schedule = paymentScheduleInput.safeParse(proposal.payment_schedule);
+    const plan = configuredPlan.length > 0 ? configuredPlan : schedule.success ? paymentPlanForSchedule(schedule.data) : [];
+    if (plan.length === 0) {
+      throw new Error("Configura los plazos de pago antes de preparar las facturas");
+    }
+
+    const allItems = await findProposalItems(proposalId);
+    const items = allItems.filter((item) => (item.billing_cycle ?? "none") === "none");
+    if (items.length === 0) {
+      throw new Error("Esta propuesta solo contiene líneas recurrentes; crea la factura manualmente");
+    }
+
+    const [client, series, invoicedPlanIds] = await Promise.all([
+      findClientInfo(proposal.client_id),
+      findInvoiceSeries(),
+      findInvoicedProposalPaymentPlanIds(proposalId),
+    ]);
+    const ids: string[] = [];
+    for (const [index, milestone] of plan.entries()) {
+      if (invoicedPlanIds.has(milestone.id)) continue;
+      const invoiceItems = splitItemsForPaymentPlan(items, plan, index);
+      if (invoiceItems.length === 0) {
+        throw new Error(`El plazo «${milestone.title}» no tiene importe facturable`);
+      }
+      const nextNumber = await findNextInvoiceNumberForSeries(series);
+      const { subtotal, taxAmount, total } = computeLineTotals(invoiceItems);
+      const { id } = await insertInvoiceWithItems(
+        {
+          client_id: proposal.client_id,
+          project_id: proposal.project_id,
+          proposal_id: proposal.id,
+          proposal_payment_plan_item_id: milestone.id,
+          series,
+          number: nextNumber,
+          status: "draft",
+          currency: "EUR",
+          subtotal,
+          tax_amount: taxAmount,
+          total,
+          due_date: milestone.due_date ?? null,
+          client_nif: client?.nif ?? null,
+          client_name: client?.name ?? null,
+          client_address_street: client?.billing_address_street ?? null,
+          client_address_zip: client?.billing_address_zip ?? null,
+          client_address_city: client?.billing_address_city ?? null,
+          client_address_province: client?.billing_address_province ?? null,
+          client_address_country: client?.billing_address_country ?? null,
+          notes: proposal.notes,
+          payment_terms: `${milestone.title} · ${milestone.percentage} %`,
+          created_by: user.id,
+        },
+        invoiceItems.map((item, position) => ({ ...item, position })),
+      );
+      ids.push(id);
+    }
+    return { ids, created: ids.length };
   },
 });
 

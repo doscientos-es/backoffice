@@ -438,7 +438,8 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
  * to a draft or issued invoice stay frozen in the plan to prevent divergence.
  */
 export async function updateProposalPaymentPlan(input: unknown): Promise<UpdateResult> {
-  await requireUser();
+  const user = await requireUser();
+  if (user.role === "viewer") return { ok: false, error: "No tienes permiso para editar el calendario" };
   const parsed = UpdateProposalPaymentPlanInput.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: formatProposalValidationIssues(parsed.error.issues).join("\n") };

@@ -1,56 +1,42 @@
 import { describe, expect, it } from "vitest";
 import {
-  DEFAULT_CHANGE_MANAGEMENT_TERMS,
-  parseScopeModules,
-  paymentInitialPercentage,
-  paymentScheduleInput,
-  scopeModulesInput,
+  parsePaymentPlan,
+  paymentPlanForSchedule,
+  paymentPlanInput,
+  splitItemsForPaymentPlan,
 } from "./scope";
 
-describe("proposal commercial scope", () => {
-  const module = {
-    id: "scope-1",
-    title: "Portal de clientes",
-    description: "Un espacio privado para cada cliente.",
-    included: ["Acceso con usuarios"],
-    excluded: ["Migración histórica"],
-    notes: null,
-  };
+describe("payment plans", () => {
+  it("creates an immediately useful 50/50 plan", () => {
+    expect(paymentPlanForSchedule("half_half")).toEqual([
+      expect.objectContaining({ id: "acceptance", percentage: 50 }),
+      expect.objectContaining({ id: "delivery", percentage: 50 }),
+    ]);
+  });
 
-  it("validates the structured included and excluded scope of a module", () => {
-    expect(scopeModulesInput.parse([module])).toEqual([module]);
-    expect(scopeModulesInput.safeParse([{ ...module, duration_weeks: 6 }]).success).toBe(true);
-    expect(scopeModulesInput.safeParse([{ ...module, duration_weeks: 7 }]).success).toBe(false);
+  it("requires configured plans to total exactly 100 percent", () => {
     expect(
-      scopeModulesInput.safeParse([
-        { ...module, duration_mode: "custom", duration_custom: "3 meses" },
-      ]).success,
-    ).toBe(true);
-    expect(
-      scopeModulesInput.safeParse([
-        { ...module, duration_mode: "custom", duration_custom: "tres meses" },
+      paymentPlanInput.safeParse([
+        { id: "one", title: "Señal", percentage: 60, due_date: null },
+        { id: "two", title: "Final", percentage: 30, due_date: null },
       ]).success,
     ).toBe(false);
-    expect(scopeModulesInput.safeParse([{ ...module, title: "" }]).success).toBe(false);
   });
 
-  it("returns no modules for legacy or malformed JSONB", () => {
-    expect(parseScopeModules(null)).toEqual([]);
-    expect(parseScopeModules([{ ...module, included: "not-an-array" }])).toEqual([]);
+  it("allocates every source-line cent across the payment plan", () => {
+    const plan = paymentPlanForSchedule("30_40_30");
+    const totals = plan.map((_, index) =>
+      splitItemsForPaymentPlan(
+        [{ description: "Servicio", quantity: 1, unit_price: 100.01, vat_rate: 21 }],
+        plan,
+        index,
+      ).reduce((sum, item) => sum + item.unit_price, 0),
+    );
+
+    expect(totals).toEqual([30, 40, 30.01]);
   });
 
-  it("only accepts supported payment templates", () => {
-    expect(paymentScheduleInput.parse("30_40_30")).toBe("30_40_30");
-    expect(paymentScheduleInput.parse("per_module_upfront")).toBe("per_module_upfront");
-    expect(paymentScheduleInput.safeParse("60_40").success).toBe(false);
-    expect(DEFAULT_CHANGE_MANAGEMENT_TERMS).toContain("excedan el alcance");
-  });
-
-  it("calculates only the automatic first payment of standard schedules", () => {
-    expect(paymentInitialPercentage("upfront")).toBe(100);
-    expect(paymentInitialPercentage("half_half")).toBe(50);
-    expect(paymentInitialPercentage("30_40_30")).toBe(30);
-    expect(paymentInitialPercentage("per_module_upfront")).toBeNull();
-    expect(paymentInitialPercentage("custom")).toBeNull();
+  it("treats malformed legacy JSON as an unconfigured plan", () => {
+    expect(parsePaymentPlan([{ id: "bad", title: "", percentage: 100 }])).toEqual([]);
   });
 });

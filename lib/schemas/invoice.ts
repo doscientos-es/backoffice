@@ -38,6 +38,9 @@ export const CreateInvoiceFromProposalInput = z.object({
 });
 export type CreateInvoiceFromProposalInputType = z.infer<typeof CreateInvoiceFromProposalInput>;
 
+/** Creates the missing draft invoices for the proposal's configured payment plan. */
+export const CreateInvoicesFromProposalPlanInput = CreateInvoiceFromProposalInput;
+
 /**
  * Generate a draft invoice for an hourly project from the hours logged in a
  * given calendar month. `month` is `YYYY-MM`.
