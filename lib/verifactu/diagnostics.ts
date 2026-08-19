@@ -1,4 +1,3 @@
-import { createVerifactuClient } from "@doscientos/verifactu";
 import { verifactuConfigFromEnv } from "./config";
 
 const DIAGNOSTIC_TTL_DAYS = 7;
@@ -64,6 +63,7 @@ export async function runVerifactuMockDiagnostic(memberId: string): Promise<{
   let checks: DiagnosticCheck[];
   try {
     const config = verifactuConfigFromEnv();
+    const { createVerifactuClient } = await import("@doscientos/verifactu");
     const client = createVerifactuClient({ ...config, environment: "mock" });
     const result = await client.registerInvoice({
       nif: "B12345678",
