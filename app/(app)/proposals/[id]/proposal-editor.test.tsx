@@ -10,14 +10,15 @@ vi.mock("@/components/proposals/problem-solution-editor", () => ({
   ProblemSolutionEditor: () => null,
 }));
 vi.mock("@/components/proposals/scope-modules-editor", () => ({ ScopeModulesEditor: () => null }));
-vi.mock("../actions", () => ({ updateProposal: vi.fn() }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
+vi.mock("../actions", () => ({ setProposalTeamMembers: vi.fn(), updateProposal: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }));
 
-import { updateProposal } from "../actions";
+import { setProposalTeamMembers, updateProposal } from "../actions";
 import { ProposalEditor } from "./proposal-editor";
 
 const ID = "494d62cb-fd56-4650-b131-9e3a927a20ad";
 const saveProposal = vi.mocked(updateProposal);
+const saveTeam = vi.mocked(setProposalTeamMembers);
 const props = {
   id: ID,
   initialTitle: "Propuesta inicial",
@@ -36,6 +37,8 @@ const props = {
   initialChangeManagementTerms: null,
   initialMaintenanceOptions: DEFAULT_MAINTENANCE_OFFER,
   initialMaintenanceSelectedPlanId: null,
+  teamMembers: [],
+  initialTeamMemberIds: [],
   initialItems: [],
   initialVersion: 1,
   locked: false,
@@ -47,22 +50,25 @@ const props = {
 describe("ProposalEditor", () => {
   beforeEach(() => {
     saveProposal.mockReset();
+    saveTeam.mockReset();
     saveProposal.mockResolvedValue({ ok: true, version: 2 });
+    saveTeam.mockResolvedValue({ ok: true });
   });
 
-  it("only saves proposal edits when the user presses Guardar cambios", async () => {
+  it("saves proposal edits and team together when the user returns to the overview", async () => {
     render(<ProposalEditor {...props} />);
 
     fireEvent.change(screen.getByLabelText("Título"), { target: { value: "Propuesta revisada" } });
     expect(saveProposal).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Guardar y ver propuesta" }));
 
     await waitFor(() =>
       expect(saveProposal).toHaveBeenCalledWith(
         expect.objectContaining({ id: ID, title: "Propuesta revisada" }),
       ),
     );
+    expect(saveTeam).toHaveBeenCalledWith({ proposal_id: ID, member_ids: [] });
   });
 
   it("guides the user through the proposal steps", () => {
