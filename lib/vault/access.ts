@@ -47,7 +47,9 @@ export async function grantVaultUnlock(passwordHash: string): Promise<void> {
   const store = await cookies();
   store.set(VAULT_COOKIE, vaultFingerprint(passwordHash), {
     httpOnly: true,
-    secure: true,
+    // A Secure cookie cannot be persisted over local HTTP, so it would make
+    // the next server action appear locked immediately after unlocking.
+    secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
     maxAge: COOKIE_MAX_AGE,

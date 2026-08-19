@@ -198,7 +198,7 @@ export function VaultClient({
         if (r.ok && "secret" in r) {
           setRevealed((rv) => ({ ...rv, [item.id]: r.secret as string }));
         } else {
-          sileo.error({ title: "No se pudo revelar el secreto" });
+          sileo.error({ title: "error" in r ? r.error : "No se pudo revelar el secreto" });
         }
         setRevealingId(null);
       });
@@ -225,7 +225,7 @@ export function VaultClient({
       if (r.ok && "secret" in r) {
         setRevealed((rv) => ({ ...rv, [item.id]: r.secret as string }));
       } else {
-        sileo.error({ title: "No se pudo revelar el secreto" });
+        sileo.error({ title: "error" in r ? r.error : "No se pudo revelar el secreto" });
       }
       setRevealingId(null);
     });
