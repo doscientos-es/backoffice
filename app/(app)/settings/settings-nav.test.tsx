@@ -125,3 +125,14 @@ describe("SettingsNav – active state", () => {
     expect(screen.getByRole("link", { name: /perfil/i }).getAttribute("aria-current")).toBeNull();
   });
 });
+
+describe("SettingsNav – responsive layout", () => {
+  it("keeps a horizontal scrollable nav until the desktop layout is available", () => {
+    const { container } = renderNav(true);
+    const nav = container.querySelector('nav[aria-label="Ajustes"]');
+
+    expect(nav?.className).toContain("overflow-x-auto");
+    expect(nav?.className).toContain("lg:flex-col");
+    expect(nav?.className).not.toContain("md:flex-col");
+  });
+});

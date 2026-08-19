@@ -21,7 +21,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <Sidebar user={user} verifactuMode={verifactuMode} demoMode={demoMode} />
       <div className="flex flex-1 flex-col min-h-0 min-w-0">
         {/* Mobile Header (Topbar replacement) */}
-        <header className="flex h-12 items-center justify-between border-b border-border bg-card px-4 md:hidden">
+        <header className="flex h-12 items-center justify-between border-b border-border bg-card px-4 lg:hidden">
           <MobileNav user={user} verifactuMode={verifactuMode} demoMode={demoMode} />
           <Logo size="sm" />
           <CommandPaletteTrigger variant="icon" />

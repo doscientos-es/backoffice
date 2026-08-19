@@ -1,6 +1,3 @@
-import { Plus } from "lucide-react";
-import type { Metadata } from "next";
-import Link from "next/link";
 import { ListPage } from "@/components/layout/list-page";
 import { Button } from "@/components/ui/button";
 import { ClientAvatar } from "@/components/ui/client-avatar";
@@ -15,6 +12,9 @@ import {
   parseSortParam,
   parseStringParam,
 } from "@/lib/utils/search-params";
+import { Plus } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = { title: "Propuestas · doscientos" };
 export const dynamic = "force-dynamic";
@@ -129,16 +129,17 @@ export default async function ProposalsPage({
         { key: "expiry", label: "Vencimiento", options: EXPIRY_FILTER_OPTIONS },
         { key: "followup", label: "Seguimiento", options: FOLLOW_UP_FILTER_OPTIONS },
       ]}
+      controlsPresentation="panel"
       pagination={{ page, pageSize: PAGE_SIZE, total: count ?? 0 }}
       headers={[
-        { label: "Número", sortKey: "number" },
-        { label: "Título", sortKey: "title" },
-        { label: "Cliente / Lead" },
-        { label: "Proyecto" },
-        { label: "Estado", sortKey: "status" },
-        "Seguimiento",
-        { label: "Importe", align: "right", sortKey: "total" },
-        { label: "Válida hasta", sortKey: "valid_until" },
+        { label: "Número", sortKey: "number", minWidth: "8.5rem" },
+        { label: "Título", sortKey: "title", minWidth: "15rem" },
+        { label: "Cliente / Lead", minWidth: "13rem" },
+        { label: "Proyecto", minWidth: "10rem" },
+        { label: "Estado", sortKey: "status", minWidth: "7rem" },
+        { label: "Seguimiento", minWidth: "7.5rem" },
+        { label: "Importe", align: "right", sortKey: "total", minWidth: "7rem" },
+        { label: "Válida hasta", sortKey: "valid_until", minWidth: "7.5rem" },
       ]}
       align={["left", "left", "left", "left", "left", "left", "right", "left"]}
       exportFilename="propuestas"

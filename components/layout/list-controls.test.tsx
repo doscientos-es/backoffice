@@ -67,6 +67,7 @@ describe("ListControls avatar filter", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /filtros 1/i }));
 
+    expect(screen.getByText("Filtrar el listado")).toBeDefined();
     expect(screen.getByRole("combobox", { name: "Estado" })).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "Limpiar filtros" }));
     expect(navigation.replace).toHaveBeenCalledWith("/leads", { scroll: false });

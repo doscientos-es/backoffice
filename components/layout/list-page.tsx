@@ -1,6 +1,16 @@
 "use client";
 
 import {
+  type FilterConfig,
+  ListControls,
+  type ListControlsProps,
+} from "@/components/layout/list-controls";
+import { type BreadcrumbEntry, PageHeader } from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
+import { cn } from "@/lib/utils";
+import {
   type ColumnDef,
   flexRender,
   getCoreRowModel,
@@ -12,16 +22,6 @@ import { ArrowDown, ArrowRight, ArrowUp, ArrowUpDown, Download, Plus } from "luc
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
-import {
-  type FilterConfig,
-  ListControls,
-  type ListControlsProps,
-} from "@/components/layout/list-controls";
-import { type BreadcrumbEntry, PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
-import { cn } from "@/lib/utils";
 
 export type { BreadcrumbEntry };
 
@@ -31,19 +31,19 @@ export type ListAlign = "left" | "right";
 export type ListHeader =
   | string
   | {
-      label: string;
-      /** Activa la ordenación cliente (requiere `sortValues` en las filas). */
-      sortable?: boolean;
-      /**
-       * Clave de columna DB para ordenación en el servidor.
-       * Al hacer clic actualiza los URL params `sort` + `dir` y resetea `page`.
-       * Tiene preferencia sobre `sortable`.
-       */
-      sortKey?: string;
-      align?: ListAlign;
-      /** Ancho mínimo CSS para la columna (ej. "8rem"). Evita wrapping en celdas cortas. */
-      minWidth?: string;
-    };
+    label: string;
+    /** Activa la ordenación cliente (requiere `sortValues` en las filas). */
+    sortable?: boolean;
+    /**
+     * Clave de columna DB para ordenación en el servidor.
+     * Al hacer clic actualiza los URL params `sort` + `dir` y resetea `page`.
+     * Tiene preferencia sobre `sortable`.
+     */
+    sortKey?: string;
+    align?: ListAlign;
+    /** Ancho mínimo CSS para la columna (ej. "8rem"). Evita wrapping en celdas cortas. */
+    minWidth?: string;
+  };
 
 export type ListRow = {
   id: string;
@@ -289,6 +289,11 @@ export function ListPage({
               filters={filters}
               pagination={pagination}
               presentation={controlsPresentation}
+              className={
+                controlsPresentation === "panel"
+                  ? "rounded-none border-x-0 border-t-0 shadow-none"
+                  : undefined
+              }
               onExport={
                 exportFilename ? () => exportToCSV(headers, rows, exportFilename) : undefined
               }

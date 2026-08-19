@@ -1,121 +1,18 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 import { Logo } from "@/components/branding";
 import { CommandPaletteTrigger } from "@/components/layout/command-palette-trigger";
+import { NavigationTree } from "@/components/layout/navigation-tree";
 import { NotificationsBell } from "@/components/layout/notifications-bell";
 import { UserMenu } from "@/components/layout/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import type { CurrentUser } from "@/lib/auth";
-import {
-  type NavigationGroup,
-  type NavigationItem,
-  visibleNavigationGroups,
-} from "@/lib/navigation/navigation";
-import { cn } from "@/lib/utils";
+import { visibleNavigationGroups } from "@/lib/navigation/navigation";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { version } from "../../package.json";
-
-function NavLink({
-  href,
-  label,
-  icon: Icon,
-  active,
-  indented = false,
-}: {
-  href: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  active: boolean;
-  indented?: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      aria-current={active ? "page" : undefined}
-      className={cn(
-        "group relative flex items-center gap-2.5 rounded-md text-sm transition-colors",
-        "before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-r-full before:bg-primary before:transition-opacity",
-        indented ? "py-2 pl-9 pr-2.5" : "px-2.5 py-2",
-        active
-          ? "bg-secondary text-foreground font-medium before:opacity-100"
-          : "text-muted-foreground before:opacity-0 hover:bg-secondary/60 hover:text-foreground",
-      )}
-    >
-      <Icon
-        className={cn(
-          "h-4 w-4 shrink-0 transition-colors",
-          active ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
-        )}
-      />
-      <span className="truncate">{label}</span>
-    </Link>
-  );
-}
-
-function NavSection({
-  group,
-  isActive,
-}: {
-  group: NavigationGroup & { items: NavigationItem[] };
-  isActive: (href: string) => boolean;
-}) {
-  const hasActive = group.items.some((i) => isActive(i.href));
-  const fallback = group.defaultOpen ?? true;
-  // Deterministic from `pathname`/`defaultOpen` alone (same on server and
-  // client) to avoid a hydration mismatch. The persisted preference in
-  // localStorage is only browser-accessible, so it's applied after mount.
-  const [open, setOpen] = useState(hasActive || fallback);
-
-  useEffect(() => {
-    if (hasActive) return;
-    try {
-      const stored = localStorage.getItem(`nav-section-${group.label}`);
-      if (stored !== null) setOpen(stored === "1");
-    } catch {
-      // Keep the deterministic default when browser storage is unavailable.
-    }
-  }, [group.label, hasActive]);
-
-  function toggle() {
-    const next = !open;
-    setOpen(next);
-    try {
-      localStorage.setItem(`nav-section-${group.label}`, next ? "1" : "0");
-    } catch {
-      // The in-memory state remains usable without persistence.
-    }
-  }
-
-  return (
-    <div className="flex flex-col gap-0.5">
-      <button
-        type="button"
-        onClick={toggle}
-        aria-expanded={open}
-        className="group flex w-full items-center justify-between rounded-md px-2.5 py-1 transition-colors hover:bg-secondary/40"
-      >
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 select-none group-hover:text-muted-foreground transition-colors">
-          {group.label}
-        </span>
-        <ChevronDown
-          className={cn(
-            "h-3 w-3 text-muted-foreground/40 transition-transform group-hover:text-muted-foreground",
-            open ? "rotate-0" : "-rotate-90",
-          )}
-        />
-      </button>
-      {open &&
-        group.items.map(({ href, label, icon }) => (
-          <NavLink key={href} href={href} label={label} icon={icon} active={isActive(href)} />
-        ))}
-    </div>
-  );
-}
 
 export function Sidebar({
   user,
@@ -130,22 +27,8 @@ export function Sidebar({
 
   const visibleGroups = visibleNavigationGroups(user.role);
 
-  const isActive = (href: string) => {
-    if (pathname === href) return true;
-    if (!pathname.startsWith(`${href}/`)) return false;
-    // Don't activate parent if a more specific sibling item already matches
-    return !visibleGroups.some((g) =>
-      g.items.some(
-        (i) =>
-          i.href !== href &&
-          i.href.startsWith(`${href}/`) &&
-          (pathname === i.href || pathname.startsWith(`${i.href}/`)),
-      ),
-    );
-  };
-
   return (
-    <aside className="hidden w-56 shrink-0 border-r border-border bg-card md:flex md:flex-col">
+    <aside className="hidden w-56 shrink-0 border-r border-border bg-card lg:flex lg:flex-col">
       <div className="px-4 py-5">
         <Link
           href="/inicio"
@@ -162,25 +45,7 @@ export function Sidebar({
         className="flex flex-1 flex-col overflow-y-auto px-2 py-1 scroll-fade no-scrollbar"
         aria-label="Navegación principal"
       >
-        {visibleGroups.map((group, gi) => (
-          <div key={group.label ?? "__home"} className={cn(gi > 0 && "mt-3")}>
-            {group.label ? (
-              <NavSection group={group} isActive={isActive} />
-            ) : (
-              <div className="flex flex-col gap-0.5">
-                {group.items.map(({ href, label, icon }) => (
-                  <NavLink
-                    key={href}
-                    href={href}
-                    label={label}
-                    icon={icon}
-                    active={isActive(href)}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
+        <NavigationTree groups={visibleGroups} pathname={pathname} />
       </nav>
 
       <footer className="flex flex-col border-t border-border p-2 gap-2">

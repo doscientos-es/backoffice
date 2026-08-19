@@ -1,9 +1,5 @@
 "use client";
 
-import { ChevronDown, Menu, X } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
 import { Logo } from "@/components/branding";
 import { NotificationsBell } from "@/components/layout/notifications-bell";
 import { UserMenu } from "@/components/layout/user-menu";
@@ -12,116 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { Drawer, DrawerClose, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import type { CurrentUser } from "@/lib/auth";
-import {
-  type NavigationGroup,
-  type NavigationItem,
-  visibleNavigationGroups,
-} from "@/lib/navigation/navigation";
-import { cn } from "@/lib/utils";
+import { visibleNavigationGroups } from "@/lib/navigation/navigation";
+import { Menu, X } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { version } from "../../package.json";
-
-function NavLink({
-  href,
-  label,
-  icon: Icon,
-  active,
-  onClick,
-}: {
-  href: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <Link
-      href={href}
-      onClick={onClick}
-      aria-current={active ? "page" : undefined}
-      className={cn(
-        "group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
-        "before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-r-full before:bg-primary before:transition-opacity",
-        active
-          ? "bg-secondary text-foreground font-medium before:opacity-100"
-          : "text-muted-foreground before:opacity-0 hover:bg-secondary/60 hover:text-foreground",
-      )}
-    >
-      <Icon
-        className={cn(
-          "h-4 w-4 shrink-0 transition-colors",
-          active ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
-        )}
-      />
-      <span className="truncate">{label}</span>
-    </Link>
-  );
-}
-
-function NavSection({
-  group,
-  isActive,
-  onNavClick,
-}: {
-  group: NavigationGroup & { items: NavigationItem[] };
-  isActive: (href: string) => boolean;
-  onNavClick: () => void;
-}) {
-  const hasActive = group.items.some((i) => isActive(i.href));
-  const fallback = group.defaultOpen ?? true;
-  const [open, setOpen] = useState(() => {
-    if (typeof window === "undefined") return fallback;
-    let stored: string | null = null;
-    try {
-      stored = localStorage.getItem(`nav-section-mobile-${group.label}`);
-    } catch {
-      // Keep the deterministic default when browser storage is unavailable.
-    }
-    if (hasActive) return true;
-    return stored === null ? fallback : stored === "1";
-  });
-
-  function toggle() {
-    const next = !open;
-    setOpen(next);
-    try {
-      localStorage.setItem(`nav-section-mobile-${group.label}`, next ? "1" : "0");
-    } catch {
-      // The in-memory state remains usable without persistence.
-    }
-  }
-
-  return (
-    <div className="flex flex-col gap-0.5">
-      <button
-        type="button"
-        onClick={toggle}
-        aria-expanded={open}
-        className="group flex w-full items-center justify-between rounded-md px-2.5 py-1 transition-colors hover:bg-secondary/40"
-      >
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 select-none group-hover:text-muted-foreground transition-colors">
-          {group.label}
-        </span>
-        <ChevronDown
-          className={cn(
-            "h-3 w-3 text-muted-foreground/40 transition-transform group-hover:text-muted-foreground",
-            open ? "rotate-0" : "-rotate-90",
-          )}
-        />
-      </button>
-      {open &&
-        group.items.map(({ href, label, icon }) => (
-          <NavLink
-            key={href}
-            href={href}
-            label={label}
-            icon={icon}
-            active={isActive(href)}
-            onClick={onNavClick}
-          />
-        ))}
-    </div>
-  );
-}
 
 export function MobileNav({
   user,
@@ -137,21 +29,8 @@ export function MobileNav({
 
   const visibleGroups = visibleNavigationGroups(user.role);
 
-  const isActive = (href: string) => {
-    if (pathname === href) return true;
-    if (!pathname.startsWith(`${href}/`)) return false;
-    return !visibleGroups.some((g) =>
-      g.items.some(
-        (i) =>
-          i.href !== href &&
-          i.href.startsWith(`${href}/`) &&
-          (pathname === i.href || pathname.startsWith(`${i.href}/`)),
-      ),
-    );
-  };
-
   return (
-    <div className="flex items-center gap-2 md:hidden">
+    <div className="flex items-center gap-2 lg:hidden">
       <Drawer direction="left" open={open} onOpenChange={setOpen}>
         <DrawerTrigger asChild>
           <button
@@ -185,30 +64,11 @@ export function MobileNav({
               className="flex flex-1 flex-col px-2 py-3 overflow-y-auto scroll-fade no-scrollbar"
               aria-label="Navegación principal"
             >
-              {visibleGroups.map((group, gi) => (
-                <div key={group.label ?? "__home"} className={cn(gi > 0 && "mt-3")}>
-                  {group.label ? (
-                    <NavSection
-                      group={group}
-                      isActive={isActive}
-                      onNavClick={() => setOpen(false)}
-                    />
-                  ) : (
-                    <div className="flex flex-col gap-0.5">
-                      {group.items.map(({ href, label, icon }) => (
-                        <NavLink
-                          key={href}
-                          href={href}
-                          label={label}
-                          icon={icon}
-                          active={isActive(href)}
-                          onClick={() => setOpen(false)}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
+              <NavigationTree
+                groups={visibleGroups}
+                pathname={pathname}
+                onNavigate={() => setOpen(false)}
+              />
             </nav>
 
             {/* Footer */}
