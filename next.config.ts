@@ -1,5 +1,5 @@
-import type { NextConfig } from "next";
 import path from "node:path";
+import type { NextConfig } from "next";
 
 const config: NextConfig = {
   reactStrictMode: true,
@@ -10,9 +10,9 @@ const config: NextConfig = {
   turbopack: {
     root: path.join(__dirname, "../.."),
   },
-  // @react-pdf/renderer ships its own bundler-unfriendly deps; keep it as a
-  // server-side external so PDFs render inside route handlers without RSC issues.
-  serverExternalPackages: ["@react-pdf/renderer"],
+  // These packages use Node.js runtime APIs and bundled filesystem resources;
+  // keep them external to avoid Turbopack resolving those resources at build time.
+  serverExternalPackages: ["@doscientos/verifactu", "@react-pdf/renderer"],
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "hnzyllbksqvamqfubhri.supabase.co" },
