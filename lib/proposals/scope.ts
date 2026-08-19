@@ -1,3 +1,4 @@
+import { roundCurrency } from "@/lib/finance";
 import { z } from "zod";
 
 export const SCOPE_MODULE_LIMITS = {
@@ -78,6 +79,97 @@ export const PAYMENT_SCHEDULES = [
 ] as const;
 export const paymentScheduleInput = z.enum(PAYMENT_SCHEDULES);
 export type PaymentSchedule = z.infer<typeof paymentScheduleInput>;
+
+/** A billable portion of the one-time amount of a proposal. */
+export const paymentPlanItemInput = z.object({
+  id: z.string().min(1).max(64),
+  title: z.string().trim().min(1, "El concepto del plazo es obligatorio").max(160),
+  percentage: z.coerce.number().positive("El porcentaje debe ser mayor que 0").max(100),
+  due_date: z.string().date().nullable().optional(),
+});
+export type PaymentPlanItem = z.infer<typeof paymentPlanItemInput>;
+
+/** Empty means the commercial has not configured a bespoke schedule yet. */
+export const paymentPlanInput = z
+  .array(paymentPlanItemInput)
+  .max(12, "Puedes crear como máximo 12 plazos")
+  .superRefine((plan, ctx) => {
+    if (new Set(plan.map((item) => item.id)).size !== plan.length) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Los plazos no pueden repetirse" });
+    }
+    if (plan.length > 0) {
+      const total = plan.reduce((sum, item) => sum + item.percentage, 0);
+      if (Math.abs(total - 100) > 0.001) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Los porcentajes de los plazos deben sumar 100 %",
+        });
+      }
+    }
+  });
+
+/** Safely reads legacy or malformed payment-plan JSONB. */
+export function parsePaymentPlan(value: unknown): PaymentPlanItem[] {
+  const parsed = paymentPlanInput.safeParse(value);
+  return parsed.success ? parsed.data.map((item) => ({ ...item, due_date: item.due_date ?? null })) : [];
+}
+
+/**
+ * Sensible, stable ids for legacy proposals. New proposal plans keep these ids
+ * too, making generation idempotent even before the proposal is re-saved.
+ */
+export function paymentPlanForSchedule(schedule: PaymentSchedule): PaymentPlanItem[] {
+  const templates: Partial<Record<PaymentSchedule, PaymentPlanItem[]>> = {
+    upfront: [{ id: "acceptance", title: "Pago a la aceptación", percentage: 100, due_date: null }],
+    half_half: [
+      { id: "acceptance", title: "Primer pago · aceptación", percentage: 50, due_date: null },
+      { id: "delivery", title: "Pago final · entrega", percentage: 50, due_date: null },
+    ],
+    "30_40_30": [
+      { id: "acceptance", title: "Primer pago · aceptación", percentage: 30, due_date: null },
+      { id: "progress", title: "Segundo pago · avance", percentage: 40, due_date: null },
+      { id: "delivery", title: "Pago final · entrega", percentage: 30, due_date: null },
+    ],
+  };
+  return templates[schedule]?.map((item) => ({ ...item })) ?? [];
+}
+
+type BillableItem = {
+  description: string | null;
+  quantity: number;
+  unit_price: number;
+  vat_rate: number;
+};
+
+/**
+ * Allocates each source line in cents. The last payment receives the remainder,
+ * so all generated draft bases add up exactly to the original proposal bases.
+ */
+export function splitItemsForPaymentPlan(
+  items: readonly BillableItem[],
+  plan: readonly PaymentPlanItem[],
+  itemIndex: number,
+) {
+  const milestone = plan[itemIndex];
+  if (!milestone) return [];
+  return items.flatMap((item) => {
+    const sourceCents = Math.round(roundCurrency(item.quantity * item.unit_price) * 100);
+    const allocatedBefore = plan
+      .slice(0, itemIndex)
+      .reduce((sum, previous) => sum + Math.round(sourceCents * (previous.percentage / 100)), 0);
+    const cents =
+      itemIndex === plan.length - 1
+        ? sourceCents - allocatedBefore
+        : Math.round(sourceCents * (milestone.percentage / 100));
+    if (cents <= 0) return [];
+    return [{
+      description: `${item.description ?? "Partida"} · ${milestone.title} (${milestone.percentage} %)`,
+      quantity: 1,
+      unit_price: cents / 100,
+      vat_rate: item.vat_rate,
+    }];
+  });
+}
 
 export const PAYMENT_SCHEDULE_LABELS: Record<PaymentSchedule, string> = {
   upfront: "100 % al aceptar",

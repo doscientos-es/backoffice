@@ -163,6 +163,8 @@ export type ProposalForInvoice = {
   status: string;
   title: string | null;
   notes: string | null;
+  payment_schedule: string | null;
+  payment_plan: unknown;
 };
 
 /** Proposal line item shape used during invoice creation. */
@@ -283,6 +285,7 @@ export type NewInvoiceData = {
   client_id: string;
   project_id: string | null;
   proposal_id?: string | null;
+  proposal_payment_plan_item_id?: string | null;
   series: string;
   number: number;
   status: "draft";
@@ -290,6 +293,7 @@ export type NewInvoiceData = {
   subtotal: number;
   tax_amount: number;
   total: number;
+  due_date?: string | null;
   client_nif: string | null;
   client_name: string | null;
   client_address_street: string | null;

@@ -180,12 +180,12 @@ export async function getInvoiceDetail(id: string): Promise<InvoiceDetailResult>
     })),
     settings: settings
       ? {
-          company_name: (settings.company_name as string | null) ?? null,
-          company_nif: (settings.company_nif as string | null) ?? null,
-          company_address: (settings.company_address as string | null) ?? null,
-          iban: (settings.iban as string | null) ?? null,
-          payment_terms: (settings.payment_terms as string | null) ?? null,
-        }
+        company_name: (settings.company_name as string | null) ?? null,
+        company_nif: (settings.company_nif as string | null) ?? null,
+        company_address: (settings.company_address as string | null) ?? null,
+        iban: (settings.iban as string | null) ?? null,
+        payment_terms: (settings.payment_terms as string | null) ?? null,
+      }
       : null,
   };
 }
@@ -205,9 +205,9 @@ export async function findInvoiceTimestamps(id: string): Promise<InvoiceTimestam
     .maybeSingle();
   return data
     ? {
-        issued_at: (data.issued_at as string | null) ?? null,
-        client_id: (data.client_id as string | null) ?? null,
-      }
+      issued_at: (data.issued_at as string | null) ?? null,
+      client_id: (data.client_id as string | null) ?? null,
+    }
     : null;
 }
 
@@ -365,7 +365,7 @@ export async function findProposalForInvoice(
   const supabase = await createServerClient();
   const { data } = await supabase
     .from("proposals")
-    .select("id, client_id, project_id, status, title, notes")
+    .select("id, client_id, project_id, status, title, notes, payment_schedule, payment_plan")
     .eq("id", proposalId)
     .is("deleted_at", null)
     .maybeSingle();
@@ -377,7 +377,26 @@ export async function findProposalForInvoice(
     status: data.status as string,
     title: (data.title as string | null) ?? null,
     notes: (data.notes as string | null) ?? null,
+    payment_schedule: (data.payment_schedule as string | null) ?? null,
+    payment_plan: data.payment_plan,
   };
+}
+
+/** Plan item ids which already own a non-deleted invoice for this proposal. */
+export async function findInvoicedProposalPaymentPlanIds(proposalId: string): Promise<Set<string>> {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("invoices")
+    .select("proposal_payment_plan_item_id")
+    .eq("proposal_id", proposalId)
+    .is("deleted_at", null)
+    .not("proposal_payment_plan_item_id", "is", null);
+  if (error) throw new Error(error.message);
+  return new Set(
+    (data ?? [])
+      .map((invoice) => invoice.proposal_payment_plan_item_id as string | null)
+      .filter((id): id is string => Boolean(id)),
+  );
 }
 
 /** Returns all line items for a proposal, ordered by position. */

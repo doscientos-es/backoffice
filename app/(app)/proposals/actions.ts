@@ -1,8 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { z } from "zod";
 import { ProposalEmail } from "@/components/email";
 import { requireRole, requireUser } from "@/lib/auth";
 import { renderEmail } from "@/lib/email/render";
@@ -18,6 +15,7 @@ import {
   isProposalEditable,
 } from "@/lib/proposals/items";
 import { parseMaintenanceOffer, selectedMaintenancePlan } from "@/lib/proposals/maintenance";
+import { parsePaymentPlan } from "@/lib/proposals/scope";
 import { formatProposalValidationIssues } from "@/lib/proposals/validation";
 import { UpdatePortalAccessInput } from "@/lib/schemas/portal";
 import {
@@ -25,10 +23,14 @@ import {
   DuplicateProposalInput,
   SendProposalPreviewInput,
   UpdateProposalInput,
+  UpdateProposalPaymentPlanInput,
   UpdateProposalTeamInput,
 } from "@/lib/schemas/proposal";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
 
 const log = scopedLogger("proposals");
 
@@ -369,6 +371,7 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
   if (rest.deliverables !== undefined) patch.deliverables = rest.deliverables;
   if (rest.acceptance_criteria !== undefined) patch.acceptance_criteria = rest.acceptance_criteria;
   if (rest.payment_schedule !== undefined) patch.payment_schedule = rest.payment_schedule;
+  if (rest.payment_plan !== undefined) patch.payment_plan = rest.payment_plan;
   if (rest.payment_terms !== undefined) patch.payment_terms = rest.payment_terms;
   if (rest.change_management_terms !== undefined) {
     patch.change_management_terms = rest.change_management_terms;
@@ -428,6 +431,67 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
   }
 
   return { ok: true, version: expected_version };
+}
+
+/**
+ * Updates only the payment calendar after acceptance. Amounts already attached
+ * to a draft or issued invoice stay frozen in the plan to prevent divergence.
+ */
+export async function updateProposalPaymentPlan(input: unknown): Promise<UpdateResult> {
+  await requireUser();
+  const parsed = UpdateProposalPaymentPlanInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: formatProposalValidationIssues(parsed.error.issues).join("\n") };
+  }
+
+  const { id, expected_version, payment_plan } = parsed.data;
+  const supabase = await createServerClient();
+  const { data: proposal, error: proposalError } = await supabase
+    .from("proposals")
+    .select("status, payment_plan")
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (proposalError || !proposal) return { ok: false, error: "Propuesta no encontrada" };
+  if (proposal.status === "rejected") return { ok: false, error: "La propuesta está rechazada" };
+
+  const { data: invoices, error: invoicesError } = await supabase
+    .from("invoices")
+    .select("proposal_payment_plan_item_id")
+    .eq("proposal_id", id)
+    .is("deleted_at", null)
+    .not("proposal_payment_plan_item_id", "is", null);
+  if (invoicesError) return { ok: false, error: invoicesError.message };
+
+  const oldPlan = new Map(parsePaymentPlan(proposal.payment_plan).map((item) => [item.id, item]));
+  const nextPlan = new Map(payment_plan.map((item) => [item.id, item]));
+  for (const invoice of invoices ?? []) {
+    const itemId = invoice.proposal_payment_plan_item_id as string | null;
+    if (!itemId) continue;
+    const previous = oldPlan.get(itemId);
+    const next = nextPlan.get(itemId);
+    if (!previous || !next || next.percentage !== previous.percentage) {
+      return {
+        ok: false,
+        error: "No puedes cambiar el importe ni eliminar un plazo que ya tiene una factura preparada",
+      };
+    }
+  }
+
+  const { data, error: updateError } = await supabase
+    .from("proposals")
+    .update({ payment_plan })
+    .eq("id", id)
+    .eq("version", expected_version)
+    .select("version")
+    .maybeSingle();
+  if (updateError) return { ok: false, error: updateError.message };
+  if (!data) {
+    return { ok: false, code: "conflict", error: "Este registro ha cambiado mientras lo editabas." };
+  }
+
+  revalidatePath(`/proposals/${id}`);
+  return { ok: true, version: Number(data.version) };
 }
 
 // ---------------- LINK PROJECT ----------------

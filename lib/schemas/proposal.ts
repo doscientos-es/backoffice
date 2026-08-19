@@ -1,7 +1,7 @@
-import { z } from "zod";
 import { KEY_POINTS_LIMITS } from "@/lib/proposals/key-points";
 import { maintenanceOfferInput } from "@/lib/proposals/maintenance";
-import { paymentScheduleInput, scopeModulesInput } from "@/lib/proposals/scope";
+import { paymentPlanInput, paymentScheduleInput, scopeModulesInput } from "@/lib/proposals/scope";
+import { z } from "zod";
 import {
   emptyToUndef,
   lineItemInput,
@@ -102,6 +102,7 @@ export const UpdateProposalInput = z.object({
   deliverables: proposalMarkdownField(20_000),
   acceptance_criteria: proposalMarkdownField(20_000),
   payment_schedule: paymentScheduleInput.optional(),
+  payment_plan: paymentPlanInput.optional(),
   payment_terms: proposalMarkdownField(8_000),
   change_management_terms: proposalMarkdownField(8_000),
   maintenance_options: maintenanceOfferInput.nullable().optional(),
@@ -109,6 +110,13 @@ export const UpdateProposalInput = z.object({
   items: z.array(lineItemInput).min(1).optional(),
 });
 export type UpdateProposalInputType = z.infer<typeof UpdateProposalInput>;
+
+/** Calendar-only update allowed after acceptance for unbilled future payments. */
+export const UpdateProposalPaymentPlanInput = z.object({
+  id: z.string().uuid(),
+  expected_version: z.coerce.number().int().positive(),
+  payment_plan: paymentPlanInput,
+});
 
 export const UpdateProposalTeamInput = z.object({
   proposal_id: z.string().uuid(),
