@@ -6,10 +6,12 @@ vi.mock("@/components/finance/line-items-table", () => ({ LineItemsTable: () => 
 vi.mock("@/components/proposals/maintenance-offer-editor", () => ({
   MaintenanceOfferEditor: () => null,
 }));
+vi.mock("@/components/proposals/payment-plan-editor", () => ({ PaymentPlanEditor: () => null }));
 vi.mock("@/components/proposals/problem-solution-editor", () => ({
   ProblemSolutionEditor: () => null,
 }));
 vi.mock("@/components/proposals/scope-modules-editor", () => ({ ScopeModulesEditor: () => null }));
+vi.mock("@/components/ui/select", () => ({ Select: () => null }));
 vi.mock("../actions", () => ({ setProposalTeamMembers: vi.fn(), updateProposal: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }));
 
