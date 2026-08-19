@@ -1,7 +1,7 @@
 import "server-only";
 
-import { serverEnv } from "@/lib/env";
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "node:crypto";
+import { serverEnv } from "@/lib/env";
 
 /**
  * AES-256-GCM symmetric encryption for vault secrets.
@@ -39,7 +39,7 @@ function getDecryptionKeys(): Buffer[] {
   if (process.env.NODE_ENV === "production") {
     throw new Error(
       "VAULT_ENCRYPTION_KEY is required in production. " +
-      "Generate one with: openssl rand -base64 32",
+        "Generate one with: openssl rand -base64 32",
     );
   }
   // Dev/test convenience fallback only.
