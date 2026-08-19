@@ -27,12 +27,11 @@ import {
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { CheckCircle2, Clock, FileText, Presentation, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, FileText, Pencil, Presentation, XCircle } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { updateProposalPortalAccess } from "../actions";
-import { DeleteProposalButton } from "./delete-proposal-button";
-import { DuplicateProposalButton } from "./duplicate-proposal-button";
+import { ProposalMoreActions } from "./delete-proposal-button";
 import { GenerateInvoiceButton } from "./generate-invoice-button";
 import { LinkProjectButton } from "./link-project-button";
 import { MarkAcceptedButton } from "./mark-accepted-button";
@@ -235,11 +234,13 @@ export default async function ProposalDetailPage({
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title={`${proposalNumber} — ${proposal.title as string}`}
+        title={proposal.title as string}
+        eyebrow={proposalNumber}
+        titleClassName="text-pretty"
         description={recipientName}
         back={<BackLink href="/proposals" label="Volver a propuestas" />}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <CopySummaryButton
               lines={(() => {
                 const parts: string[] = [];
@@ -262,13 +263,13 @@ export default async function ProposalDetailPage({
             {!locked ? (
               <Button variant="outline" size="sm" asChild>
                 <Link href={editing ? `/proposals/${id}` : `/proposals/${id}?mode=edit`}>
-                  {editing ? "Ver propuesta" : "Editar propuesta"}
+                  <Pencil aria-hidden />
+                  {editing ? "Ver" : "Editar"}
                 </Link>
               </Button>
             ) : null}
             {!editing ? (
               <>
-                <DuplicateProposalButton proposalId={id} />
                 {status === "accepted" ? (
                   <GenerateInvoiceButton
                     proposalId={id}
@@ -279,7 +280,7 @@ export default async function ProposalDetailPage({
                   <MarkAcceptedButton proposalId={id} />
                 ) : null}
                 {locked && <ReopenProposalButton proposalId={id} />}
-                <DeleteProposalButton proposalId={id} />
+                <ProposalMoreActions proposalId={id} />
               </>
             ) : null}
           </div>

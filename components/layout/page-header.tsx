@@ -17,22 +17,27 @@ export type BreadcrumbEntry = {
 
 export type PageHeaderProps = {
   title: string;
+  /** Small contextual label rendered above the page title. */
+  eyebrow?: ReactNode;
   description?: string;
   /** Optional icon/avatar rendered to the left of the title. */
   icon?: ReactNode;
   back?: ReactNode;
   breadcrumbs?: BreadcrumbEntry[];
   actions?: ReactNode;
+  titleClassName?: string;
   className?: string;
 };
 
 export function PageHeader({
   title,
+  eyebrow,
   description,
   icon,
   back,
   breadcrumbs,
   actions,
+  titleClassName,
   className,
 }: PageHeaderProps) {
   const hasCrumbs = breadcrumbs && breadcrumbs.length > 0;
@@ -72,7 +77,15 @@ export function PageHeader({
         <div className="flex min-w-0 sm:flex-1 items-center gap-3">
           {icon ? <div className="shrink-0">{icon}</div> : null}
           <div className="min-w-0">
-            <h1 className="wrap-break-word text-2xl font-semibold tracking-tight text-foreground">
+            {eyebrow ? (
+              <div className="mb-0.5 text-sm font-medium text-muted-foreground">{eyebrow}</div>
+            ) : null}
+            <h1
+              className={cn(
+                "wrap-break-word text-2xl font-semibold tracking-tight text-foreground",
+                titleClassName,
+              )}
+            >
               {title}
             </h1>
             {description ? (

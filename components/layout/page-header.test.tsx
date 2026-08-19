@@ -1,6 +1,6 @@
+import { PageHeader } from "@/components/layout/page-header";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { PageHeader } from "@/components/layout/page-header";
 
 vi.mock("next/link", () => ({
   default: ({ children, href }: { children: React.ReactNode; href: string }) => (
@@ -13,6 +13,21 @@ describe("PageHeader", () => {
     render(<PageHeader title="Test Title" description="Test Description" />);
     expect(screen.getByText("Test Title")).toBeDefined();
     expect(screen.getByText("Test Description")).toBeDefined();
+  });
+
+  it("renders a compact eyebrow separately from a pretty title", () => {
+    render(
+      <PageHeader
+        title="Aplicación a medida Kache Envios"
+        eyebrow="P-2026-0015"
+        titleClassName="text-pretty"
+      />,
+    );
+
+    expect(screen.getByText("P-2026-0015").className).toContain("text-muted-foreground");
+    expect(
+      screen.getByRole("heading", { name: "Aplicación a medida Kache Envios" }).className,
+    ).toContain("text-pretty");
   });
 
   it("renders breadcrumbs when provided", () => {
