@@ -1,8 +1,8 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 
 /** Keeps a failed proposal detail isolated from the rest of the app shell. */
 export default function ProposalDetailError({

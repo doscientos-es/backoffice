@@ -8,6 +8,7 @@ import {
 } from "@/components/proposals/proposal-message-thread";
 import { AttachmentSection } from "@/components/ui/attachment-section";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CopySummaryButton } from "@/components/ui/copy-summary-button";
 import { SectionBoundary } from "@/components/ui/error-boundary";
@@ -38,6 +39,7 @@ import { MarkAcceptedButton } from "./mark-accepted-button";
 import { replyToProposalMessage } from "./message-actions";
 import { type EditableItem, ProposalEditor } from "./proposal-editor";
 import { ProposalFollowUpAssistant } from "./proposal-follow-up-assistant";
+import { ProposalOverview } from "./proposal-overview";
 import { ProposalPaymentPlan } from "./proposal-payment-plan";
 import { type ProposalSpec, ProposalSpecs } from "./proposal-specs";
 import { ReopenProposalButton } from "./reopen-proposal-button";

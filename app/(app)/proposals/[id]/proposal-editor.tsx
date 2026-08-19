@@ -269,7 +269,8 @@ export function ProposalEditor({
       }
       const teamResult = await setProposalTeamMembers({ proposal_id: id, member_ids: teamMemberIds });
       if (!teamResult.ok) {
-        saveFeedback.setError(teamResult.error);
+        setExpectedVersion(result.version);
+        saveFeedback.setError(`La propuesta se guardó, pero no se pudo actualizar el equipo: ${teamResult.error}`);
         return;
       }
       setExpectedVersion(result.version);
