@@ -7,7 +7,6 @@ import {
 } from "@/components/proposals/proposal-message-thread";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Markdown } from "@/components/ui/markdown";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { formatAddress } from "@/lib/address";
 import { getCurrentUser } from "@/lib/auth";
 import { BILLING_CYCLE_LABELS, type BillingCycle, computeProposalTotals } from "@/lib/finance";
@@ -26,7 +25,7 @@ import {
   paymentInitialPercentage,
   scopeModuleDurationText,
 } from "@/lib/proposals/scope";
-import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
+import type { ProposalStatus } from "@/lib/status";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { CheckCircle2, Download, FileText, Presentation, XCircle } from "lucide-react";
@@ -249,6 +248,16 @@ export default async function PortalProposalPage({
   ).leads;
   const status = proposal.status as ProposalStatus;
   const responded = status === "accepted" || status === "rejected";
+  const statusLabel =
+    status === "draft"
+      ? "Vista previa del equipo"
+      : status === "accepted"
+        ? "Aceptada"
+        : status === "rejected"
+          ? "No aceptada"
+          : status === "expired"
+            ? "Caducada"
+            : "Pendiente de tu respuesta";
 
   // The lead branch always asks for fiscal data (no `clients` row exists yet).
   // The client branch only asks when the legal minimum (name + NIF + billing
@@ -370,42 +379,46 @@ export default async function PortalProposalPage({
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
         <article className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-800">
           {/* Document header */}
-          <div className="flex flex-col gap-6 border-b border-zinc-200 px-6 py-7 dark:border-zinc-800 sm:flex-row sm:items-start sm:justify-between sm:px-8">
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-2 mb-1">
-                <LogoMark size={20} className="text-[#2A4227] dark:text-[#9CC196]" />
-                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                  doscientos
-                </span>
+          <header className="border-b border-zinc-200 px-6 py-6 dark:border-zinc-800 sm:px-8">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex min-w-0 flex-col gap-1">
+                <div className="mb-1 flex items-center gap-2">
+                  <LogoMark size={20} className="text-[#2A4227] dark:text-[#9CC196]" />
+                  <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    doscientos
+                  </span>
+                </div>
+                <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
+                  Propuesta · {proposalNumber}
+                </p>
               </div>
-              <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
-                Presupuesto · {proposalNumber}
-              </p>
+              <span className="shrink-0 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+                {statusLabel}
+              </span>
             </div>
-            <div className="flex flex-col items-start sm:items-end gap-1.5">
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+            <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div className="min-w-0">
+                <h1 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-2xl">
                   {proposal.title as string}
                 </h1>
-                <StatusBadge meta={PROPOSAL_STATUS} value={status} />
+                {proposal.valid_until ? (
+                  <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+                    Válida hasta el{" "}
+                    <strong className="text-zinc-700 dark:text-zinc-300">
+                      {formatDate(proposal.valid_until as string)}
+                    </strong>
+                  </p>
+                ) : null}
               </div>
-              {proposal.valid_until ? (
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Válida hasta:{" "}
-                  <strong className="text-zinc-700 dark:text-zinc-300">
-                    {formatDate(proposal.valid_until as string)}
-                  </strong>
-                </p>
-              ) : null}
               <a
                 href={`/p/proposal/${token}/pdf`}
-                className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-[#2A4227] transition-colors hover:border-[#2A4227] hover:bg-[#2A4227]/5 dark:border-zinc-700 dark:bg-zinc-900 dark:text-[#9CC196] dark:hover:border-[#9CC196]"
+                className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-[#2A4227] transition-colors hover:border-[#2A4227] hover:bg-[#2A4227]/5 dark:border-zinc-700 dark:bg-zinc-900 dark:text-[#9CC196] dark:hover:border-[#9CC196]"
               >
                 <Download className="size-3.5" />
                 Descargar PDF
               </a>
             </div>
-          </div>
+          </header>
 
           {/* Recipient */}
           <div className="border-b border-zinc-100 bg-zinc-50 px-6 py-5 dark:border-zinc-800/60 dark:bg-zinc-900/50 sm:px-8">
