@@ -40,7 +40,6 @@ import { type EditableItem, ProposalEditor } from "./proposal-editor";
 import { ProposalFollowUpAssistant } from "./proposal-follow-up-assistant";
 import { ProposalPaymentPlan } from "./proposal-payment-plan";
 import { type ProposalSpec, ProposalSpecs } from "./proposal-specs";
-import { ProposalTeamSelector } from "./proposal-team-selector";
 import { ReopenProposalButton } from "./reopen-proposal-button";
 import { SendPreviewButton } from "./send-preview-button";
 import { ShareLinks } from "./share-links";
@@ -54,10 +53,10 @@ export default async function ProposalDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ ai_draft?: string }>;
+  searchParams: Promise<{ ai_draft?: string; mode?: string }>;
 }) {
   const { id } = await params;
-  const { ai_draft } = await searchParams;
+  const { ai_draft, mode } = await searchParams;
   const user = await requireUser();
   const supabase = await createServerClient();
 
@@ -187,6 +186,7 @@ export default async function ProposalDetailPage({
 
   const status = proposal.status as ProposalStatus;
   const locked = status === "accepted" || status === "rejected";
+  const editing = !locked && (mode === "edit" || ai_draft === "1");
   const configuredPaymentPlan = parsePaymentPlan(proposal.payment_plan);
   const paymentSchedule = paymentScheduleInput.safeParse(proposal.payment_schedule);
   const paymentPlan =
@@ -224,6 +224,11 @@ export default async function ProposalDetailPage({
   const selectedTeamIds = ((proposalTeam ?? []) as Array<{ member_id: string }>).map(
     (member) => member.member_id,
   );
+  const visibleTeam = ((teamMembers ?? []) as Array<{
+    id: string;
+    name: string;
+    job_title: string | null;
+  }>).filter((member) => selectedTeamIds.includes(member.id));
 
   return (
     <div className="flex flex-col gap-6">

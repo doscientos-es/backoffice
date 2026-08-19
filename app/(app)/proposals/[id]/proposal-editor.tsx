@@ -42,7 +42,8 @@ import { formatEUR } from "@/lib/utils";
 import { AlertCircle, Check, ChevronLeft, ChevronRight, Save, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { updateProposal } from "../actions";
+import { setProposalTeamMembers, updateProposal } from "../actions";
+import { type ProposalTeamMember } from "./proposal-team-selector";
 
 export type EditableItem = LineItem;
 
@@ -50,7 +51,7 @@ const EDITOR_STEPS = [
   { label: "Datos", description: "Base de la propuesta" },
   { label: "Alcance", description: "Qué vamos a entregar" },
   { label: "Precio", description: "Partidas y condiciones" },
-  { label: "Revisión", description: "Mantenimiento y resumen" },
+  { label: "Revisión", description: "Equipo y comprobación final" },
 ] as const;
 
 export type ProposalEditorProps = {
@@ -71,6 +72,8 @@ export type ProposalEditorProps = {
   initialChangeManagementTerms: string | null;
   initialMaintenanceOptions: MaintenanceOffer | null;
   initialMaintenanceSelectedPlanId: string | null;
+  teamMembers: ProposalTeamMember[];
+  initialTeamMemberIds: string[];
   initialItems: EditableItem[];
   /** Optimistic-concurrency token captured with the record. */
   initialVersion: number;
@@ -110,6 +113,8 @@ export function ProposalEditor({
   initialChangeManagementTerms,
   initialMaintenanceOptions,
   initialMaintenanceSelectedPlanId,
+  teamMembers,
+  initialTeamMemberIds,
   initialItems,
   initialVersion,
   locked,
@@ -156,6 +161,7 @@ export function ProposalEditor({
   const [maintenanceSelectedPlanId, setMaintenanceSelectedPlanId] = useState<string | null>(
     initialMaintenanceSelectedPlanId,
   );
+  const [teamMemberIds, setTeamMemberIds] = useState(initialTeamMemberIds);
   const [activeStep, setActiveStep] = useState(0);
   const [items, setItems] = useState<EditableItem[]>(
     initialItems.length > 0
@@ -260,8 +266,14 @@ export function ProposalEditor({
         else saveFeedback.setError(result.error);
         return;
       }
+      const teamResult = await setProposalTeamMembers({ proposal_id: id, member_ids: teamMemberIds });
+      if (!teamResult.ok) {
+        saveFeedback.setError(teamResult.error);
+        return;
+      }
       setExpectedVersion(result.version);
       saveFeedback.setSuccess("Propuesta guardada");
+      router.push(`/proposals/${id}`);
     } catch (error) {
       saveFeedback.setError(
         error instanceof Error ? error.message : "No se pudo guardar la propuesta",
@@ -383,7 +395,7 @@ export function ProposalEditor({
               <FormFeedback state={saveFeedback.state} pendingLabel="Guardando propuesta…" />
               <Button onClick={handleSave} disabled={saveFeedback.pending}>
                 <Save className="size-4" aria-hidden />
-                {saveFeedback.pending ? "Guardando…" : "Guardar"}
+                {saveFeedback.pending ? "Guardando…" : "Guardar y ver propuesta"}
               </Button>
             </div>
           ) : null}
@@ -711,11 +723,24 @@ export function ProposalEditor({
                   onSelectedPlanChange={setMaintenanceSelectedPlanId}
                   locked={locked}
                 />
+                <section className="rounded-xl border border-border bg-card p-5">
+                  <h2 className="text-base font-semibold">Equipo que verá el cliente</h2>
+                  <div className="mt-3">
+                    <ProposalTeamSelector
+                      proposalId={id}
+                      members={teamMembers}
+                      initialMemberIds={initialTeamMemberIds}
+                      value={teamMemberIds}
+                      onChange={setTeamMemberIds}
+                      locked={locked}
+                    />
+                  </div>
+                </section>
                 <section className="rounded-xl border border-primary/20 bg-primary/5 p-5">
                   <h2 className="text-base font-semibold">Lista para revisar</h2>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Comprueba el resumen, guarda los cambios y abre la vista del cliente antes de
-                    enviar.
+                    Comprueba el resumen y guarda para volver a la vista de propuesta. Desde allí
+                    podrás enviar o marcarla como enviada.
                   </p>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     <div className="rounded-lg bg-background p-3">
@@ -818,7 +843,7 @@ export function ProposalEditor({
             {activeStep === EDITOR_STEPS.length - 1 ? (
               <>
                 <Save className="size-4" aria-hidden />
-                {saveFeedback.pending ? "Guardando…" : "Guardar y revisar"}
+                {saveFeedback.pending ? "Guardando…" : "Guardar y ver propuesta"}
               </>
             ) : (
               <>
