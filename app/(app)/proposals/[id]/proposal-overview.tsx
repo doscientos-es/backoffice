@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Markdown } from "@/components/ui/markdown";
-import { type PaymentPlanItem, type ScopeModule } from "@/lib/proposals/scope";
+import type { PaymentPlanItem, ScopeModule } from "@/lib/proposals/scope";
 import { formatDate, formatEUR } from "@/lib/utils";
 
 type Item = {
