@@ -1,14 +1,13 @@
-import path from "node:path";
 import type { NextConfig } from "next";
 
 const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   typedRoutes: true,
-  // @doscientos/ui is linked locally during development and built as a shared package.
+  // Keep Turbopack's resolution root aligned with Vercel's tracing root.
   transpilePackages: ["@doscientos/ui"],
   turbopack: {
-    root: path.join(__dirname, "../.."),
+    root: __dirname,
   },
   // These packages use Node.js runtime APIs and bundled filesystem resources;
   // keep them external to avoid Turbopack resolving those resources at build time.
