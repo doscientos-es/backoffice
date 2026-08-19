@@ -34,6 +34,12 @@ describe("buildSlides", () => {
     expect(slides).not.toContainEqual(expect.objectContaining({ key: "delivery" }));
   });
 
+  it("omits the context slide when context only contains whitespace", () => {
+    const slides = buildSlides({ ...proposal, context_markdown: " \n " }, [], "portal-token");
+
+    expect(slides).not.toContainEqual(expect.objectContaining({ key: "context" }));
+  });
+
   it("includes the delivery slide when either field has meaningful content", () => {
     const slides = buildSlides(
       { ...proposal, deliverables: "- Sitio web publicado" },

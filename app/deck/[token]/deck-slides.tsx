@@ -625,7 +625,7 @@ export function buildSlides(
   // Narrative (Context → Problems → Solutions) always lands before the
   // price so the client reads the framing first. Each block only renders
   // if it has content, so an empty proposal still flows naturally.
-  if (proposal.context_markdown) {
+  if (proposal.context_markdown?.trim()) {
     slides.push({
       key: "context",
       label: "Contexto",

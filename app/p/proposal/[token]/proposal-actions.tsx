@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useState } from "react";
 import { acceptProposal, rejectProposal } from "./actions";
 
 type FiscalForm = {
@@ -138,16 +138,17 @@ export function ProposalActions({ token, needsFiscal, fiscalPrefill }: Props) {
               />
             </div>
           </div>
-          <div className="flex items-center justify-end gap-3">
+          <div className="flex flex-col gap-2">
             <FormFeedback state={feedback.state} pendingLabel="Procesando…" />
             <Button
               variant="ghost"
+              className="w-full"
               onClick={() => setShowAccept(false)}
               disabled={feedback.pending}
             >
               Cancelar
             </Button>
-            <Button onClick={onAcceptWithFiscal} disabled={feedback.pending}>
+            <Button className="w-full" onClick={onAcceptWithFiscal} disabled={feedback.pending}>
               {feedback.pending ? "Procesando…" : "Confirmar y aceptar"}
             </Button>
           </div>
@@ -175,16 +176,17 @@ export function ProposalActions({ token, needsFiscal, fiscalPrefill }: Props) {
               disabled={feedback.pending}
             />
           </div>
-          <div className="flex items-center justify-end gap-3">
+          <div className="flex flex-col gap-2">
             <FormFeedback state={feedback.state} pendingLabel="Enviando…" />
             <Button
               variant="ghost"
+              className="w-full"
               onClick={() => setShowReject(false)}
               disabled={feedback.pending}
             >
               Cancelar
             </Button>
-            <Button variant="destructive" onClick={onReject} disabled={feedback.pending}>
+            <Button className="w-full" variant="destructive" onClick={onReject} disabled={feedback.pending}>
               {feedback.pending ? "Enviando…" : "Confirmar rechazo"}
             </Button>
           </div>
@@ -198,16 +200,17 @@ export function ProposalActions({ token, needsFiscal, fiscalPrefill }: Props) {
       <CardHeader>
         <CardTitle>Tu respuesta</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <CardContent className="flex flex-col gap-4">
         <p className="text-sm text-muted-foreground">
           Acepta o rechaza esta propuesta. Esta acción es definitiva.
         </p>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-2">
           <FormFeedback state={feedback.state} pendingLabel="Procesando…" />
-          <Button variant="outline" onClick={() => setShowReject(true)} disabled={feedback.pending}>
+          <Button className="w-full" variant="outline" onClick={() => setShowReject(true)} disabled={feedback.pending}>
             Rechazar
           </Button>
           <Button
+            className="w-full"
             onClick={needsFiscal ? () => setShowAccept(true) : onAcceptDirect}
             disabled={feedback.pending}
           >

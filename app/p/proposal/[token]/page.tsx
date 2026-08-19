@@ -290,7 +290,7 @@ export default async function PortalProposalPage({
     portal_token: string;
   }>;
   const proposalMessages = (messages ?? []) as unknown as ProposalMessage[];
-  const contextMarkdown = (proposal.context_markdown as string | null) ?? null;
+  const contextMarkdown = ((proposal.context_markdown as string | null) ?? "").trim();
   const problems = parseKeyPoints(proposal.problems);
   const solutions = parseKeyPoints(proposal.solutions);
   const terms = (proposal.terms as string | null) ?? null;
