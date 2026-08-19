@@ -1,6 +1,11 @@
 "use client";
 
+import { Menu, X } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { Logo } from "@/components/branding";
+import { NavigationTree } from "@/components/layout/navigation-tree";
 import { NotificationsBell } from "@/components/layout/notifications-bell";
 import { UserMenu } from "@/components/layout/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -9,10 +14,6 @@ import { Drawer, DrawerClose, DrawerContent, DrawerTrigger } from "@/components/
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import type { CurrentUser } from "@/lib/auth";
 import { visibleNavigationGroups } from "@/lib/navigation/navigation";
-import { Menu, X } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
 import { version } from "../../package.json";
 
 export function MobileNav({

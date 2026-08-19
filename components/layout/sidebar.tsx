@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Logo } from "@/components/branding";
 import { CommandPaletteTrigger } from "@/components/layout/command-palette-trigger";
 import { NavigationTree } from "@/components/layout/navigation-tree";
@@ -10,8 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import type { CurrentUser } from "@/lib/auth";
 import { visibleNavigationGroups } from "@/lib/navigation/navigation";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { version } from "../../package.json";
 
 export function Sidebar({

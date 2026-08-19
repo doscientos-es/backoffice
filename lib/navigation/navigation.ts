@@ -43,13 +43,18 @@ const ADMIN_ROLES: MemberRole[] = ["owner", "admin"];
 /** Single source of truth for sidebar, mobile drawer and command palette. */
 export const NAVIGATION_GROUPS: NavigationGroup[] = [
   {
+    items: [{ href: "/inicio", label: "Inicio", icon: Home }],
+  },
+  {
+    label: "Trabajo diario",
     items: [
-      { href: "/inicio", label: "Inicio", icon: Home },
       { href: "/calendar", label: "Agenda", icon: CalendarDays },
+      { href: "/tasks", label: "Tareas", icon: CheckSquare },
+      { href: "/reminders", label: "Recordatorios", icon: Bell },
     ],
   },
   {
-    label: "Ventas",
+    label: "Comercial",
     items: [
       { href: "/leads", label: "Leads", icon: Inbox },
       { href: "/leads/recovery", label: "Repesca", icon: LifeBuoy },
@@ -61,7 +66,6 @@ export const NAVIGATION_GROUPS: NavigationGroup[] = [
     label: "Entrega",
     items: [
       { href: "/projects", label: "Proyectos", icon: FolderKanban },
-      { href: "/tasks", label: "Tareas", icon: CheckSquare },
       { href: "/webs", label: "Webs", icon: Globe, allowedRoles: ADMIN_ROLES },
     ],
   },
@@ -101,10 +105,9 @@ export const NAVIGATION_GROUPS: NavigationGroup[] = [
     ],
   },
   {
-    label: "Empresa",
+    label: "Espacio de trabajo",
     defaultOpen: false,
     items: [
-      { href: "/reminders", label: "Recordatorios", icon: Bell },
       { href: "/internal-docs", label: "Docs internos", icon: Archive },
       { href: "/brand", label: "Marca", icon: Images },
       { href: "/vault", label: "Bóveda", icon: KeyRound, allowedRoles: ADMIN_ROLES },

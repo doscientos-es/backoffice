@@ -81,6 +81,7 @@ export type ListPageProps = {
   searchPlaceholder?: string;
   filters?: FilterConfig[];
   pagination?: ListControlsProps["pagination"];
+  /** Presentación de controles; usa el panel compacto por defecto. */
   controlsPresentation?: ListControlsProps["presentation"];
   onRowClick?: (row: ListRow) => void;
   addHref?: string;
@@ -151,7 +152,7 @@ export function ListPage({
   searchPlaceholder,
   filters,
   pagination,
-  controlsPresentation,
+  controlsPresentation = "panel",
   onRowClick,
   addHref,
   addLabel,

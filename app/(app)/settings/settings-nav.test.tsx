@@ -1,10 +1,13 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 // ── mocks (hoisted before imports) ──────────────────────────────────────────
 
+const { push } = vi.hoisted(() => ({ push: vi.fn() }));
+
 vi.mock("next/navigation", () => ({
   usePathname: vi.fn().mockReturnValue("/settings/profile"),
+  useRouter: vi.fn().mockReturnValue({ push }),
 }));
 
 vi.mock("next/link", () => ({
@@ -39,27 +42,27 @@ function renderNav(canManageTeam: boolean) {
 describe("SettingsNav – item visibility", () => {
   it("always shows Perfil", () => {
     renderNav(false);
-    expect(screen.getByText("Perfil")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Perfil" })).toBeTruthy();
   });
 
   it("hides Empresa when canManageTeam is false (viewer / member)", () => {
     renderNav(false);
-    expect(screen.queryByText("Empresa")).toBeNull();
+    expect(screen.queryByRole("link", { name: "Empresa" })).toBeNull();
   });
 
   it("shows Empresa when canManageTeam is true (admin / owner)", () => {
     renderNav(true);
-    expect(screen.getByText("Empresa")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Empresa" })).toBeTruthy();
   });
 
   it("hides Equipo when canManageTeam is false (viewer / member)", () => {
     renderNav(false);
-    expect(screen.queryByText("Equipo")).toBeNull();
+    expect(screen.queryByRole("link", { name: "Equipo" })).toBeNull();
   });
 
   it("shows Equipo when canManageTeam is true (admin / owner)", () => {
     renderNav(true);
-    expect(screen.getByText("Equipo")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Equipo" })).toBeTruthy();
   });
 
   it("renders exactly 3 links for non-admin (Perfil + Seguridad + Legal)", () => {
@@ -74,30 +77,30 @@ describe("SettingsNav – item visibility", () => {
 
   it("shows Plantillas email when canManageTeam is true", () => {
     renderNav(true);
-    expect(screen.getByText("Plantillas email")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Plantillas email" })).toBeTruthy();
   });
 
   it("hides Plantillas email when canManageTeam is false", () => {
     renderNav(false);
-    expect(screen.queryByText("Plantillas email")).toBeNull();
+    expect(screen.queryByRole("link", { name: "Plantillas email" })).toBeNull();
   });
 
   it("shows Diagnóstico when canManageTeam is true", () => {
     renderNav(true);
-    expect(screen.getByText("Diagnóstico")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Diagnóstico" })).toBeTruthy();
   });
 
   it("hides Diagnóstico when canManageTeam is false", () => {
     renderNav(false);
-    expect(screen.queryByText("Diagnóstico")).toBeNull();
+    expect(screen.queryByRole("link", { name: "Diagnóstico" })).toBeNull();
   });
 
   it("shows Legal / Verifactu regardless of canManageTeam", () => {
     renderNav(false);
-    expect(screen.getByText("Legal / Verifactu")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Legal / Verifactu" })).toBeTruthy();
     cleanup();
     renderNav(true);
-    expect(screen.getByText("Legal / Verifactu")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Legal / Verifactu" })).toBeTruthy();
   });
 });
 
@@ -127,12 +130,21 @@ describe("SettingsNav – active state", () => {
 });
 
 describe("SettingsNav – responsive layout", () => {
-  it("keeps a horizontal scrollable nav until the desktop layout is available", () => {
+  it("uses a labelled section selector until the desktop layout is available", () => {
     const { container } = renderNav(true);
     const nav = container.querySelector('nav[aria-label="Ajustes"]');
 
-    expect(nav?.className).toContain("overflow-x-auto");
+    expect(screen.getByRole("combobox", { name: "Sección de ajustes" })).toBeTruthy();
     expect(nav?.className).toContain("lg:flex-col");
-    expect(nav?.className).not.toContain("md:flex-col");
+    expect(nav?.className).toContain("hidden");
+  });
+
+  it("navigates when the compact selector changes", () => {
+    renderNav(true);
+    fireEvent.change(screen.getByRole("combobox", { name: "Sección de ajustes" }), {
+      target: { value: "/settings/team" },
+    });
+
+    expect(push).toHaveBeenCalledWith("/settings/team");
   });
 });

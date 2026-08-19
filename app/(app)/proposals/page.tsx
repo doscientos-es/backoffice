@@ -129,7 +129,6 @@ export default async function ProposalsPage({
         { key: "expiry", label: "Vencimiento", options: EXPIRY_FILTER_OPTIONS },
         { key: "followup", label: "Seguimiento", options: FOLLOW_UP_FILTER_OPTIONS },
       ]}
-      controlsPresentation="panel"
       pagination={{ page, pageSize: PAGE_SIZE, total: count ?? 0 }}
       headers={[
         { label: "Número", sortKey: "number", minWidth: "8.5rem" },

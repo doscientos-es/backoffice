@@ -4,11 +4,7 @@ import { ChevronDown, Pin, PinOff } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { NavigationGroup, NavigationItem } from "@/lib/navigation/navigation";
-import {
-  mergeRecentItems,
-  RECENTS_STORAGE_KEY,
-  type RecentItem,
-} from "@/lib/navigation/shortcuts";
+import { mergeRecentItems, RECENTS_STORAGE_KEY, type RecentItem } from "@/lib/navigation/shortcuts";
 import { cn } from "@/lib/utils";
 
 type VisibleNavigationGroup = NavigationGroup & { items: NavigationItem[] };
@@ -19,7 +15,9 @@ function readStringList(key: string): string[] {
   if (typeof window === "undefined") return [];
   try {
     const value: unknown = JSON.parse(window.localStorage.getItem(key) ?? "[]");
-    return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+    return Array.isArray(value)
+      ? value.filter((item): item is string => typeof item === "string")
+      : [];
   } catch {
     return [];
   }
@@ -28,6 +26,29 @@ function readStringList(key: string): string[] {
 function saveStringList(key: string, values: string[]) {
   try {
     window.localStorage.setItem(key, JSON.stringify(values));
+  } catch {
+    // La navegación sigue funcionando si el almacenamiento no está disponible.
+  }
+}
+
+function readSectionStates(key: string): Record<string, boolean> {
+  if (typeof window === "undefined") return {};
+  try {
+    const value: unknown = JSON.parse(window.localStorage.getItem(key) ?? "{}");
+    if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+    return Object.fromEntries(
+      Object.entries(value).filter(
+        (entry): entry is [string, boolean] => typeof entry[1] === "boolean",
+      ),
+    );
+  } catch {
+    return {};
+  }
+}
+
+function saveSectionStates(key: string, states: Record<string, boolean>) {
+  try {
+    window.localStorage.setItem(key, JSON.stringify(states));
   } catch {
     // La navegación sigue funcionando si el almacenamiento no está disponible.
   }
@@ -104,7 +125,7 @@ function NavigationLink({
         aria-label={`${pinned ? "Desfijar" : "Fijar"} ${item.label}`}
         className={cn(
           "absolute right-1 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus-visible:opacity-100",
-          pinned ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+          pinned ? "opacity-100" : "opacity-100 lg:opacity-0 lg:group-hover:opacity-100",
         )}
       >
         {pinned ? <PinOff className="size-3.5" /> : <Pin className="size-3.5" />}
@@ -135,15 +156,17 @@ function NavigationSection({
 
   useEffect(() => {
     if (hasActive) return;
-    setOpen(readStringList(storageKey).includes(group.label ?? ""));
+    const stored = readSectionStates(storageKey);
+    const label = group.label ?? "";
+    const savedOpen = stored[label];
+    if (typeof savedOpen === "boolean") setOpen(savedOpen);
   }, [group.label, hasActive, storageKey]);
 
   function toggle() {
     const next = !open;
     setOpen(next);
-    const sections = readStringList(storageKey);
     const label = group.label ?? "";
-    saveStringList(storageKey, next ? [...new Set([...sections, label])] : sections.filter((item) => item !== label));
+    saveSectionStates(storageKey, { ...readSectionStates(storageKey), [label]: next });
   }
 
   return (
@@ -166,18 +189,18 @@ function NavigationSection({
       </button>
       {open
         ? group.items.map((item) => (
-            <NavigationLink
-              key={item.href}
-              item={item}
-              active={isNavigationItemActive(pathname, item.href, groups)}
-              pinned={pinnedHrefs.includes(item.href)}
-              onNavigate={() => {
-                trackRecent(item);
-                onNavigate?.();
-              }}
-              onTogglePin={() => onTogglePin(item.href)}
-            />
-          ))
+          <NavigationLink
+            key={item.href}
+            item={item}
+            active={isNavigationItemActive(pathname, item.href, groups)}
+            pinned={pinnedHrefs.includes(item.href)}
+            onNavigate={() => {
+              trackRecent(item);
+              onNavigate?.();
+            }}
+            onTogglePin={() => onTogglePin(item.href)}
+          />
+        ))
         : null}
     </div>
   );
@@ -200,7 +223,9 @@ export function NavigationTree({
 
   function togglePin(href: string) {
     setPinnedHrefs((current) => {
-      const next = current.includes(href) ? current.filter((item) => item !== href) : [...current, href];
+      const next = current.includes(href)
+        ? current.filter((item) => item !== href)
+        : [...current, href];
       saveStringList(NAVIGATION_PINS_STORAGE_KEY, next);
       return next;
     });
