@@ -1,14 +1,24 @@
-import {
-  createVerifactuClient,
-  type VerifactuSoftware,
-  type VerifactuSubmitInput,
-  type VerifactuSubmitResult,
-} from "@doscientos/verifactu";
 import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type {
+  VerifactuConfig,
+  VerifactuSoftware,
+  VerifactuSubmitInput,
+  VerifactuSubmitResult,
+} from "@doscientos/verifactu";
 import { verifactuConfigFromEnv } from "./config";
 
 const log = scopedLogger("verifactu.outbox");
+
+/**
+ * The VERI*FACTU package includes an optional native XML validator. Keep it out
+ * of unrelated Server Action bundles (such as proposal detail) and load it
+ * only when a fiscal delivery or QR generation is actually requested.
+ */
+async function createVerifactuClient(config: VerifactuConfig) {
+  const { createVerifactuClient } = await import("@doscientos/verifactu");
+  return createVerifactuClient(config, log);
+}
 
 type LedgerRow = {
   record_type: "alta" | "anulacion";
@@ -159,7 +169,9 @@ export async function assertDurableVerifactuPackage(requireCancellation = false)
     );
   }
   if (!requireCancellation) return;
-  const client = createVerifactuClient(verifactuConfigFromEnv()) as unknown as CancellableClient;
+  const client = (await createVerifactuClient(
+    verifactuConfigFromEnv(),
+  )) as unknown as CancellableClient;
   if (!client.cancelInvoice || !hashes.computeCancellationHash) {
     throw new Error("El paquete @doscientos/verifactu no implementa RegistroAnulacion durable");
   }
@@ -177,21 +189,21 @@ function altaInput(payload: Record<string, unknown>): VerifactuSubmitInput {
     rectifiedInvoices: references(payload, "rectifiedInvoices") ?? (
       payload.rectifiedInvoiceNumber
         ? [{
-            invoiceNumber: text(payload, "rectifiedInvoiceNumber"),
-            issueDate: date(payload, "rectifiedInvoiceIssueDate"),
-          }]
+          invoiceNumber: text(payload, "rectifiedInvoiceNumber"),
+          issueDate: date(payload, "rectifiedInvoiceIssueDate"),
+        }]
         : undefined
     ),
     rectificationAmounts:
       payload.rectificationAmounts && typeof payload.rectificationAmounts === "object"
         ? (() => {
-            const value = asRecord(payload.rectificationAmounts);
-            return {
-              base: amount(value, "base"),
-              tax: amount(value, "tax"),
-              surcharge: value.surcharge === undefined ? undefined : amount(value, "surcharge"),
-            };
-          })()
+          const value = asRecord(payload.rectificationAmounts);
+          return {
+            base: amount(value, "base"),
+            tax: amount(value, "tax"),
+            surcharge: value.surcharge === undefined ? undefined : amount(value, "surcharge"),
+          };
+        })()
         : undefined,
     operationDate: payload.operationDate ? date(payload, "operationDate") : undefined,
     subsanacion: optionalEnum(payload, "subsanacion", ["S", "N"] as const),
@@ -312,11 +324,11 @@ async function complete(
   const message = formatOutboxError(error ? explicitError : null, result);
   const enrichedResponse = result
     ? sanitizeResponse({
-        ...result.response,
-        errorCode: result.errorCode,
-        aeatStatus: (result as VerifactuSubmitResult & { aeatStatus?: unknown }).aeatStatus,
-        warnings: (result as VerifactuSubmitResult & { warnings?: unknown }).warnings,
-      })
+      ...result.response,
+      errorCode: result.errorCode,
+      aeatStatus: (result as VerifactuSubmitResult & { aeatStatus?: unknown }).aeatStatus,
+      warnings: (result as VerifactuSubmitResult & { warnings?: unknown }).warnings,
+    })
     : { kind: "delivery_error" };
   const { error: completionError } = await admin.rpc("complete_verifactu_outbox_v2", {
     p_outbox_id: outboxId,
@@ -368,7 +380,7 @@ async function deliverClaimed(
       if (deferError) throw new Error(deferError.message);
       return { processed: false, status: "deferred", csv: null, warnings: [] };
     }
-    const client = createVerifactuClient({ ...verifactuConfigFromEnv(), software }, log);
+    const client = await createVerifactuClient({ ...verifactuConfigFromEnv(), software });
     let result: VerifactuSubmitResult;
 
     if (ledger.record_type === "alta") {
@@ -454,7 +466,8 @@ export async function syncInvoiceQrFromLedger(invoiceId: string): Promise<void> 
     throw new Error(error?.message ?? "No se encontró el RegistroAlta para generar el QR");
 
   const input = altaInput((data as { record_payload: Record<string, unknown> }).record_payload);
-  const qrUrl = createVerifactuClient(verifactuConfigFromEnv()).buildQrUrl({
+  const client = await createVerifactuClient(verifactuConfigFromEnv());
+  const qrUrl = client.buildQrUrl({
     nif: input.nif as string,
     invoiceNumber: input.invoiceNumber as string,
     issueDate: input.issueDate as Date,
