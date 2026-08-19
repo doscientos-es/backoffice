@@ -3,7 +3,6 @@ import "server-only";
 import { formatAddress } from "@/lib/address";
 import { buildVatBreakdown, type VatBreakdownRow } from "@/lib/finance";
 import { verifactuConfigFromEnv } from "@/lib/verifactu/config";
-import { buildQrDataUrl, buildQrUrl } from "@doscientos/verifactu";
 
 /**
  * Normalised, render-ready snapshot of an invoice for the PDF document.
@@ -132,6 +131,10 @@ async function buildInvoiceQr(
   ) {
     return null;
   }
+  // The package contains an optional native XML binding. Load it only for an
+  // actual PDF QR request so Server Action bundles unrelated to PDF rendering
+  // do not evaluate that binding during page render.
+  const { buildQrDataUrl, buildQrUrl } = await import("@doscientos/verifactu");
   const qrUrl = buildQrUrl(
     {
       nif: emisorNif,

@@ -1,6 +1,12 @@
 import type { BuildInvoicePdfInput } from "@/lib/invoices/pdf-data";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@doscientos/verifactu", () => ({
+  buildQrDataUrl: (url: string) => `data:image/png;base64,${Buffer.from(url).toString("base64")}`,
+  buildQrUrl: ({ invoiceNumber }: { invoiceNumber: string }) =>
+    `https://example.test/qr/${invoiceNumber}`,
+}));
+
 const ORIGINAL_NIF = process.env.VERIFACTU_NIF_EMISOR;
 
 function makeInput(overrides: Partial<BuildInvoicePdfInput["invoice"]> = {}): BuildInvoicePdfInput {

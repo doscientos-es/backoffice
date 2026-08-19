@@ -52,6 +52,8 @@ describe("isRetryableVerifactuDelivery", () => {
     errorMessage: "test error",
     errorCode,
     aeatCode: null,
+    aeatStatus: null,
+    warnings: [],
   });
 
   it("retries only failures where AEAT may not have produced a durable result", () => {
