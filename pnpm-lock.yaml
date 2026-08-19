@@ -29,6 +29,9 @@ importers:
       '@dnd-kit/utilities':
         specifier: ^3.2.2
         version: 3.2.2(react@19.2.6)
+      '@doscientos/ui':
+        specifier: link:..\..\modules\ui
+        version: link:../../modules/ui
       '@doscientos/verifactu':
         specifier: file:..\..\modules\verifactu
         version: file:../../modules/verifactu(date-fns@4.3.0)
