@@ -2,11 +2,13 @@
 
 import { Send } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { useFormFeedback } from "@/components/ui/form-feedback";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { verifyWithPasskey } from "@/lib/security/webauthn-client";
 import { sendToAeat } from "../actions";
+import { VerifactuIssueDialog } from "./verifactu-issue-dialog";
 
 export function SendAeatButton({
   invoiceId,
@@ -19,6 +21,11 @@ export function SendAeatButton({
 }) {
   const router = useRouter();
   const feedback = useFormFeedback();
+  const [issue, setIssue] = useState<{ error: string; status: "error" | "rejected" } | null>(null);
+
+  function showIssue(error: string, status: "error" | "rejected" = "error") {
+    setIssue({ error, status });
+  }
 
   async function onClick() {
     feedback.setPending();
@@ -27,6 +34,7 @@ export function SendAeatButton({
     );
     if (!verification.ok) {
       feedback.setError(verification.error);
+      showIssue(verification.error);
       return;
     }
     const fd = new FormData();
@@ -39,27 +47,26 @@ export function SendAeatButton({
         feedback.setError(
           "AEAT rechazó el registro. Consulta el motivo fiscal antes de continuar.",
         );
+        showIssue(
+          "AEAT rechazó el registro. Consulta el motivo fiscal antes de continuar.",
+          "rejected",
+        );
       } else if (result.status === "error") {
         feedback.setError("El envío a AEAT falló; se reintentará automáticamente.");
+        showIssue("El envío a AEAT falló; se reintentará automáticamente.");
       } else {
         feedback.setSuccess("El registro fiscal ya está siendo gestionado.");
       }
       router.refresh();
     } else {
       feedback.setError(result.error);
+      showIssue(result.error);
       router.refresh();
     }
   }
 
   return (
-    <div className="col-span-2 flex min-w-0 w-full flex-col gap-1.5 sm:w-auto sm:flex-row sm:items-center">
-      {feedback.state.status !== "idle" ? (
-        <FormFeedback
-          state={feedback.state}
-          pendingLabel="Enviando…"
-          className="min-w-0 max-w-full"
-        />
-      ) : null}
+    <div className="col-span-2 flex min-w-0 w-full sm:w-auto">
       <Button
         type="button"
         size="sm"
@@ -71,6 +78,14 @@ export function SendAeatButton({
         <Send className="size-4" />
         {feedback.pending ? "Enviando…" : label}
       </Button>
+      {issue ? (
+        <VerifactuIssueDialog
+          open
+          status={issue.status}
+          error={issue.error}
+          onOpenChange={(open) => !open && setIssue(null)}
+        />
+      ) : null}
     </div>
   );
 }

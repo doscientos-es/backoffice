@@ -1,20 +1,5 @@
 "use client";
 
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Download,
-  FileEdit,
-  FileMinus2,
-  Loader2,
-  MoreHorizontal,
-  Send,
-  Trash2,
-  XCircle,
-} from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -40,6 +25,21 @@ import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { verifyWithPasskey } from "@/lib/security/webauthn-client";
 import { INVOICE_STATUS, VERIFACTU_STATUS } from "@/lib/status";
 import {
+  AlertTriangle,
+  CheckCircle2,
+  Download,
+  FileEdit,
+  FileMinus2,
+  Loader2,
+  MoreHorizontal,
+  Send,
+  Trash2,
+  XCircle,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import {
   createRectification,
   deleteInvoice,
   markAsUncollectible,
@@ -52,6 +52,7 @@ import {
 } from "./invoice-issuance-progress-dialog";
 import { SendAeatButton } from "./send-aeat-button";
 import { SendInvoiceButton } from "./send-invoice-button";
+import { VerifactuIssueDetailsButton } from "./verifactu-issue-dialog";
 
 /** Builds the `{ id }` FormData both delete and restore invoice actions expect. */
 function idFormData(invoiceId: string): FormData {
@@ -78,6 +79,7 @@ interface Props {
     id: string;
     status: string;
     verifactu_status: string;
+    verifactu_error: string | null;
     /** Whether this invoice is itself a rectification (can't be rectified again). */
     is_rectification?: boolean;
     /** Whether this invoice has already been marked as uncollectible. */
@@ -233,6 +235,7 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
   // Marcar incobrable: solo facturas emitidas/vencidas no pagadas (art. 80.Tres LIVA)
   const canMarkUncollectible = (isIssued || isOverdue) && !invoice.is_uncollectible;
   const canCancel = isIssued || isOverdue;
+  const shouldSendToAeat = !isDraft && invoice.verifactu_status !== "accepted" && invoice.verifactu_status !== "excluded";
   // Las facturas aceptadas por la AEAT son inmutables por ley (RD 1007/2023).
   // Nunca pueden eliminarse; debe emitirse una factura rectificativa en su lugar.
   const canDelete = invoice.verifactu_status !== "accepted";
@@ -250,6 +253,12 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
           className="text-[10px] py-0 h-4"
           labelPrefix="Verifactu: "
         />
+        {invoice.verifactu_status === "error" || invoice.verifactu_status === "rejected" ? (
+          <VerifactuIssueDetailsButton
+            status={invoice.verifactu_status}
+            error={invoice.verifactu_error}
+          />
+        ) : null}
       </div>
 
       {/* Subtle vertical separator */}
@@ -436,9 +445,7 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
       )}
 
       {/* AEAT Button if already issued */}
-      {!isDraft &&
-      invoice.verifactu_status !== "accepted" &&
-      invoice.verifactu_status !== "excluded" ? (
+      {shouldSendToAeat ? (
         <SendAeatButton
           invoiceId={invoice.id}
           label={

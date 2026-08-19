@@ -1,9 +1,15 @@
 import type { NextConfig } from "next";
+import path from "node:path";
 
 const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   typedRoutes: true,
+  // @doscientos/ui is linked locally during development and built as a shared package.
+  transpilePackages: ["@doscientos/ui"],
+  turbopack: {
+    root: path.join(__dirname, "../.."),
+  },
   // @react-pdf/renderer ships its own bundler-unfriendly deps; keep it as a
   // server-side external so PDFs render inside route handlers without RSC issues.
   serverExternalPackages: ["@react-pdf/renderer"],

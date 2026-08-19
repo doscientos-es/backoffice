@@ -33,4 +33,20 @@ describe("PageHeader", () => {
     render(<PageHeader title="Detail" back={<span data-testid="back">Back</span>} />);
     expect(screen.getByTestId("back")).toBeDefined();
   });
+
+  it("keeps the title area flexible when the actions are wide", () => {
+    const { container } = render(
+      <PageHeader
+        title="Factura 2026-000006"
+        actions={<button type="button">Acción extensa</button>}
+      />,
+    );
+
+    expect(
+      screen.getByText("Factura 2026-000006").parentElement?.parentElement?.className,
+    ).toContain("sm:flex-1");
+    expect(container.querySelector("header > div > div:last-child")?.className).toContain(
+      "sm:max-w-1/2",
+    );
+  });
 });

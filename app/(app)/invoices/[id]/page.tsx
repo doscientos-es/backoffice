@@ -26,7 +26,11 @@ import { RefreshClientSnapshotButton } from "./refresh-client-snapshot-button";
 export const dynamic = "force-dynamic";
 
 function verifactuWarnings(value: unknown): Array<{ code: string | null; message: string }> {
-  if (!value || typeof value !== "object" || !Array.isArray((value as { warnings?: unknown }).warnings)) {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    !Array.isArray((value as { warnings?: unknown }).warnings)
+  ) {
     return [];
   }
   return (value as { warnings: unknown[] }).warnings.flatMap((warning) => {
@@ -118,29 +122,6 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="flex flex-col gap-6">
-      {(invoice.verifactu_status === "rejected" || invoice.verifactu_status === "error") && (
-        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-800/40 dark:bg-red-950/30 dark:text-red-300">
-          <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-          <div className="min-w-0">
-            <p className="font-semibold">
-              {invoice.verifactu_status === "error"
-                ? "Error técnico al enviar a VERI*FACTU"
-                : "AEAT rechazó la factura"}
-            </p>
-            {(invoice.verifactu_error as string | null) ? (
-              <p className="mt-1 wrap-break-word text-red-700 dark:text-red-400">
-                {invoice.verifactu_error as string}
-              </p>
-            ) : null}
-            <p className="mt-1 text-xs text-red-600/80 dark:text-red-400/70">
-              {invoice.verifactu_status === "error"
-                ? "El sistema reintentará el envío automáticamente. Puedes usar «Reintentar envío» si necesitas hacerlo ahora."
-                : "No se reintentará este registro automáticamente. Revisa el motivo de AEAT y aplica el procedimiento fiscal que corresponda."}
-            </p>
-          </div>
-        </div>
-      )}
-
       {invoice.verifactu_status === "accepted" && aeatWarnings.length > 0 ? (
         <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800/40 dark:bg-amber-950/30 dark:text-amber-200">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" />
@@ -149,7 +130,8 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             <ul className="mt-1 list-disc pl-4">
               {aeatWarnings.map((warning, index) => (
                 <li key={`${warning.code ?? "warning"}-${index}`} className="wrap-break-word">
-                  {warning.code ? `${warning.code}: ` : ""}{warning.message}
+                  {warning.code ? `${warning.code}: ` : ""}
+                  {warning.message}
                 </li>
               ))}
             </ul>
@@ -176,6 +158,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                 id: invoice.id as string,
                 status: invoice.status as string,
                 verifactu_status: invoice.verifactu_status as string,
+                verifactu_error: (invoice.verifactu_error as string | null) ?? null,
                 is_rectification: Boolean(invoice.is_rectification),
                 is_uncollectible: Boolean(invoice.is_uncollectible),
               }}

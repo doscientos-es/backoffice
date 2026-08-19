@@ -69,7 +69,7 @@ export function PageHeader({
         <div className="text-sm">{back}</div>
       ) : null}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-        <div className="flex min-w-0 items-center gap-3">
+        <div className="flex min-w-0 sm:flex-1 items-center gap-3">
           {icon ? <div className="shrink-0">{icon}</div> : null}
           <div className="min-w-0">
             <h1 className="wrap-break-word text-2xl font-semibold tracking-tight text-foreground">
@@ -81,7 +81,7 @@ export function PageHeader({
           </div>
         </div>
         {actions ? (
-          <div className="flex w-full shrink-0 flex-wrap items-center gap-2 sm:w-auto">
+          <div className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:max-w-1/2 sm:justify-end">
             {actions}
           </div>
         ) : null}
