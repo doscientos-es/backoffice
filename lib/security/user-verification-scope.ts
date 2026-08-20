@@ -7,6 +7,7 @@ export const USER_VERIFICATION_INTENTS = [
   "invoice.status.update",
   "invoice.payment.revert",
   "invoice.send_aeat",
+  "invoice.verifactu_regularize",
   "team.member.role.update",
   "team.member.deactivate",
   "team.member.delete",

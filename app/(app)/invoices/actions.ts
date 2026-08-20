@@ -92,6 +92,16 @@ async function enqueueFiscalRecord(invoiceId: string, cancellation = false): Pro
   return outboxIdFromRpc(data);
 }
 
+async function enqueueVerifactuRegularization(invoiceId: string): Promise<string> {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase.rpc("regularize_verifactu_invoice", {
+    p_invoice_id: invoiceId,
+    p_software: verifactuSoftwareSnapshotFromEnv(),
+  });
+  if (error) throw new Error(error.message);
+  return outboxIdFromRpc(data);
+}
+
 // ─── Status ───────────────────────────────────────────────────────────────────
 
 /**
@@ -359,6 +369,35 @@ export const sendToAeat = defineAction<
     );
     await assertDurableVerifactuPackage();
     const delivery = await deliverInvoiceVerifactu(id, `manual:${crypto.randomUUID()}`);
+    return { csv: delivery.csv, status: delivery.status, error: delivery.error ?? null };
+  },
+});
+
+/**
+ * Creates the AEAT "alta por rechazo" recovery record. The failed immutable
+ * record remains in the ledger; this appends Subsanacion=S/RechazoPrevio=X
+ * and immediately attempts delivery with the currently configured SIF cert.
+ */
+export const regularizeVerifactu = defineAction<
+  typeof SendInvoiceInput,
+  { csv: string | null; status: OutboxDelivery["status"]; error: string | null }
+>({
+  name: "invoices.regularizeVerifactu",
+  schema: SendInvoiceInput,
+  roles: ["owner", "admin"],
+  revalidate: (_p, input) => [`/invoices/${input.id}`, "/invoices", "/inicio"],
+  handler: async (input, { user }) => {
+    await consumeUserVerification(
+      user.id,
+      userVerificationScope("invoice.verifactu_regularize", `invoice:${input.id}`),
+    );
+    await assertDurableVerifactuPackage();
+    await assertVerifactuDiagnosticGate();
+    const outboxId = await enqueueVerifactuRegularization(input.id);
+    const delivery = await deliverVerifactuOutbox(
+      outboxId,
+      `regularize:${crypto.randomUUID()}`,
+    );
     return { csv: delivery.csv, status: delivery.status, error: delivery.error ?? null };
   },
 });

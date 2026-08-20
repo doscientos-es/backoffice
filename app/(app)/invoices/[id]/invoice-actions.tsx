@@ -53,6 +53,7 @@ import {
   type InvoiceIssuancePhase,
   InvoiceIssuanceProgressDialog,
 } from "./invoice-issuance-progress-dialog";
+import { RegularizeAeatButton } from "./regularize-aeat-button";
 import { SendAeatButton } from "./send-aeat-button";
 import { SendInvoiceButton } from "./send-invoice-button";
 import { VerifactuIssueDetailsButton } from "./verifactu-issue-dialog";
@@ -519,6 +520,10 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
                   : "Enviar a AEAT"
             }
           />
+        ) : null}
+
+        {invoice.verifactu_status === "error" || invoice.verifactu_status === "rejected" ? (
+          <RegularizeAeatButton invoiceId={invoice.id} />
         ) : null}
 
         {(canCancel || canDelete || canRectify || canMarkUncollectible) && (

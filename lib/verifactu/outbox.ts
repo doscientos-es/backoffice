@@ -454,6 +454,8 @@ export async function deliverInvoiceVerifactu(
     .select("id")
     .eq("invoice_id", invoiceId)
     .eq("record_type", "alta")
+    .order("chain_sequence", { ascending: false })
+    .limit(1)
     .maybeSingle();
   if (ledgerError) throw new Error(ledgerError.message);
   const ledgerId = (ledger as { id?: unknown } | null)?.id;
