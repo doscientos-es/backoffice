@@ -71,7 +71,7 @@ export function SendAeatButton({
   }
 
   return (
-    <div className="flex min-w-0">
+    <div className="inline-flex min-w-0">
       <Button
         type="button"
         size="sm"

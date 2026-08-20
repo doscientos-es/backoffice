@@ -126,51 +126,49 @@ export function InvoiceMoreActions({
 
   return (
     <>
-      <div className="flex justify-end">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <IconButton variant="outline" label="Más acciones">
-              <MoreHorizontal className="h-4 w-4" />
-            </IconButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {canRectify ? (
-              <DropdownMenuItem onClick={() => setRectificationOpen(true)}>
-                <FileMinus2 className="mr-2 h-4 w-4" /> Emitir factura rectificativa
-              </DropdownMenuItem>
-            ) : null}
-            {canMarkUncollectible ? (
-              <DropdownMenuItem className="text-warning" onClick={() => setUncollectibleOpen(true)}>
-                <AlertTriangle className="mr-2 h-4 w-4" /> Marcar como incobrable
-              </DropdownMenuItem>
-            ) : null}
-            {(canRectify || canMarkUncollectible) && (canCancel || canDelete) ? (
-              <DropdownMenuSeparator />
-            ) : null}
-            {canCancel ? (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <IconButton variant="outline" label="Más acciones">
+            <MoreHorizontal className="h-4 w-4" />
+          </IconButton>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {canRectify ? (
+            <DropdownMenuItem onClick={() => setRectificationOpen(true)}>
+              <FileMinus2 className="mr-2 h-4 w-4" /> Emitir factura rectificativa
+            </DropdownMenuItem>
+          ) : null}
+          {canMarkUncollectible ? (
+            <DropdownMenuItem className="text-warning" onClick={() => setUncollectibleOpen(true)}>
+              <AlertTriangle className="mr-2 h-4 w-4" /> Marcar como incobrable
+            </DropdownMenuItem>
+          ) : null}
+          {(canRectify || canMarkUncollectible) && (canCancel || canDelete) ? (
+            <DropdownMenuSeparator />
+          ) : null}
+          {canCancel ? (
+            <DropdownMenuItem
+              className="text-destructive"
+              disabled={pending}
+              onClick={cancelInvoice}
+            >
+              <XCircle className="mr-2 h-4 w-4" /> Anular factura
+            </DropdownMenuItem>
+          ) : null}
+          {canDelete ? (
+            <>
+              {canCancel ? <DropdownMenuSeparator /> : null}
               <DropdownMenuItem
                 className="text-destructive"
-                disabled={pending}
-                onClick={cancelInvoice}
+                disabled={pending || deletePending}
+                onClick={deleteInvoiceWithUndo}
               >
-                <XCircle className="mr-2 h-4 w-4" /> Anular factura
+                <Trash2 className="mr-2 h-4 w-4" /> Eliminar
               </DropdownMenuItem>
-            ) : null}
-            {canDelete ? (
-              <>
-                {canCancel ? <DropdownMenuSeparator /> : null}
-                <DropdownMenuItem
-                  className="text-destructive"
-                  disabled={pending || deletePending}
-                  onClick={deleteInvoiceWithUndo}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" /> Eliminar
-                </DropdownMenuItem>
-              </>
-            ) : null}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+            </>
+          ) : null}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <Dialog open={rectificationOpen} onOpenChange={setRectificationOpen}>
         <DialogContent className="sm:max-w-md">

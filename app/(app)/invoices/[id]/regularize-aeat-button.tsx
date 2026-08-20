@@ -15,7 +15,10 @@ import {
 } from "@/components/ui/dialog";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { grantUserVerificationFromMfa } from "@/lib/security/webauthn-actions";
-import { verifyWithPasskey } from "@/lib/security/webauthn-client";
+import {
+  completePasskeyAuthentication,
+  preparePasskeyAuthentication,
+} from "@/lib/security/webauthn-client";
 import { regularizeVerifactu } from "../actions";
 
 /**
@@ -31,6 +34,19 @@ export function RegularizeAeatButton({ invoiceId }: { invoiceId: string }) {
   const [message, setMessage] = useState<string | null>(null);
   const [csv, setCsv] = useState<string | null>(null);
   const [mfaOpen, setMfaOpen] = useState(false);
+  const [passkeyOptions, setPasskeyOptions] = useState<unknown | null>(null);
+  const scope = userVerificationScope("invoice.verifactu_regularize", `invoice:${invoiceId}`);
+
+  function openConfirmation() {
+    setPhase("confirm");
+    setMessage(null);
+    setCsv(null);
+    setPasskeyOptions(null);
+    setOpen(true);
+    void preparePasskeyAuthentication(scope).then((result) => {
+      if (result.ok) setPasskeyOptions(result.options);
+    });
+  }
 
   async function sendRegularization() {
     setPhase("sending");
@@ -58,9 +74,12 @@ export function RegularizeAeatButton({ invoiceId }: { invoiceId: string }) {
     setPhase("verifying");
     setMessage(null);
     setCsv(null);
-    const verification = await verifyWithPasskey(
-      userVerificationScope("invoice.verifactu_regularize", `invoice:${invoiceId}`),
-    );
+    const prepared = passkeyOptions;
+    const verification = prepared
+      ? await completePasskeyAuthentication(scope, prepared)
+      : await preparePasskeyAuthentication(scope).then((result) =>
+          result.ok ? completePasskeyAuthentication(scope, result.options) : result,
+        );
     if (!verification.ok) {
       setPhase("error");
       setMessage(verification.error);
@@ -94,10 +113,7 @@ export function RegularizeAeatButton({ invoiceId }: { invoiceId: string }) {
         variant="secondary"
         className="justify-center whitespace-nowrap"
         onClick={() => {
-          setPhase("confirm");
-          setMessage(null);
-          setCsv(null);
-          setOpen(true);
+          openConfirmation();
         }}
       >
         <RotateCcw className="size-4" />

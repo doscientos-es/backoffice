@@ -59,7 +59,7 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
         </div>
       ) : null}
 
-      <div className="flex w-full items-center justify-end gap-2">
+      <div className="flex max-w-full flex-wrap items-center justify-end gap-2">
         <IconButton variant="outline" label="Descargar PDF" className="shrink-0" asChild>
           <a href={`/api/invoices/${invoice.id}/pdf`}>
             <Download className="h-4 w-4" />
@@ -77,7 +77,7 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
         ) : null}
       </div>
 
-      <div className="flex w-full flex-wrap justify-end gap-2">
+      <div className="flex max-w-full flex-wrap items-center justify-end gap-2">
         {policy.canIssue ? (
           <InvoiceIssuanceAction
             invoiceId={invoice.id}

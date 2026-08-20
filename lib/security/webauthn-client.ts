@@ -9,6 +9,7 @@ import {
 } from "./webauthn-actions";
 
 type Result = { ok: true } | { ok: false; error: string };
+type StartedAuthentication = { ok: true; options: unknown } | { ok: false; error: string };
 
 function unavailable(): Result | null {
   if (typeof window === "undefined" || !window.PublicKeyCredential) {
@@ -26,13 +27,28 @@ function browserError(error: unknown): Result {
 
 /** Runs a complete, server-verified WebAuthn step-up flow for one explicit intent. */
 export async function verifyWithPasskey(scope: UserVerificationScope): Promise<Result> {
-  const supportError = unavailable();
-  if (supportError) return supportError;
-
-  const started = await beginPasskeyAuthentication(scope);
+  const started = await preparePasskeyAuthentication(scope);
   if (!started.ok) return started;
+  return completePasskeyAuthentication(scope, started.options);
+}
+
+/** Prepares the challenge before a confirmation click so Windows Hello keeps user activation. */
+export async function preparePasskeyAuthentication(
+  scope: UserVerificationScope,
+): Promise<StartedAuthentication> {
+  const supportError = unavailable();
+  if (supportError) return { ok: false, error: "Este navegador no permite biometría ni passkeys" };
+
+  return beginPasskeyAuthentication(scope);
+}
+
+/** Starts the browser prompt using an already prepared challenge. */
+export async function completePasskeyAuthentication(
+  scope: UserVerificationScope,
+  options: unknown,
+): Promise<Result> {
   try {
-    const response = await startAuthentication({ optionsJSON: started.options as never });
+    const response = await startAuthentication({ optionsJSON: options as never });
     return await finishPasskeyAuthentication(scope, response);
   } catch (error) {
     return browserError(error);
