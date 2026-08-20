@@ -43,9 +43,9 @@ import {
   createRectification,
   deleteInvoice,
   markAsUncollectible,
+  recordInvoicePayment,
   restoreInvoice,
   updateInvoiceStatus,
-  recordInvoicePayment,
 } from "../actions";
 import {
   type InvoiceIssuancePhase,
