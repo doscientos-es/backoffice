@@ -97,19 +97,19 @@ vi.mock("@/lib/supabase/server", () => ({
           Promise.resolve(
             table === "invoice_items"
               ? {
-                  data: db.itemsError
-                    ? null
-                    : [
-                        {
-                          position: 0,
-                          description: "Servicio",
-                          quantity: 1,
-                          unit_price: 100,
-                          vat_rate: 21,
-                        },
-                      ],
-                  error: db.itemsError ? { message: db.itemsError } : null,
-                }
+                data: db.itemsError
+                  ? null
+                  : [
+                    {
+                      position: 0,
+                      description: "Servicio",
+                      quantity: 1,
+                      unit_price: 100,
+                      vat_rate: 21,
+                    },
+                  ],
+                error: db.itemsError ? { message: db.itemsError } : null,
+              }
               : { data: null, error: null },
           ),
         // other methods used by different actions — unused here
@@ -145,7 +145,7 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/logger", () => ({
   scopedLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),
 }));
-vi.mock("@/lib/verifactu/config", () => ({ verifactuConfigFromEnv: vi.fn() }));
+vi.mock("@/lib/verifactu/config", () => ({ verifactuInvoiceConfigFromEnv: vi.fn() }));
 vi.mock("@doscientos/verifactu", () => ({ createVerifactuClient: vi.fn() }));
 vi.mock("@/lib/google/backup", () => ({ backupInvoiceToDrive: vi.fn() }));
 vi.mock("@/lib/email/resend", () => ({ sendEmail: vi.fn() }));

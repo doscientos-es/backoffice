@@ -12,7 +12,6 @@ export default async function LegalPage() {
   const softwareName = env.VERIFACTU_SOFTWARE_NAME;
   const softwareId = env.VERIFACTU_SOFTWARE_ID;
   const softwareVersion = env.VERIFACTU_SOFTWARE_VERSION;
-  const verifactuEnv = env.VERIFACTU_ENV;
 
   const today = new Date().toLocaleDateString("es-ES", {
     day: "2-digit",
@@ -51,19 +50,10 @@ export default async function LegalPage() {
               <dd className="font-medium">{softwareVersion}</dd>
             </div>
             <div className="flex flex-col gap-0.5">
-              <dt className="text-muted-foreground">Entorno Verifactu</dt>
+              <dt className="text-muted-foreground">Entornos Verifactu</dt>
               <dd>
-                <Badge
-                  variant={
-                    verifactuEnv === "prod"
-                      ? "default"
-                      : verifactuEnv === "test"
-                        ? "secondary"
-                        : "outline"
-                  }
-                >
-                  {verifactuEnv}
-                </Badge>
+                <Badge variant="default">Facturación: producción</Badge>
+                <Badge className="ml-2" variant="secondary">Diagnóstico: pruebas AEAT</Badge>
               </dd>
             </div>
           </dl>

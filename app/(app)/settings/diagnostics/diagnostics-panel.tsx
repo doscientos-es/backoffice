@@ -15,7 +15,7 @@ import {
   testSupabaseConnection,
   testTelegramBot,
   testTelegramLeadMessage,
-  testVerifactuMockSuite,
+  testVerifactuAeatSuite,
 } from "./actions";
 
 export type DiagnosticsConfig = {
@@ -162,8 +162,8 @@ export function DiagnosticsPanel({ config }: { config: DiagnosticsConfig }) {
       description:
         config.verifactuGate.status === "passed"
           ? "Última suite válida. La emisión real está habilitada durante 7 días."
-          : "Genera XML/XSD, huella, QR y una entrega mock. No crea facturas ni llama a AEAT.",
-      run: testVerifactuMockSuite,
+          : "Genera XML/XSD, huella y QR, y envía un registro sintético a la AEAT de pruebas. No crea una factura operativa.",
+      run: testVerifactuAeatSuite,
       onSuccess: router.refresh,
     },
   ];

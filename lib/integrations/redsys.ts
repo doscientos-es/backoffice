@@ -57,11 +57,23 @@ function deriveOrderKey(order: string): Buffer {
  * Generates the parameters and signature for a Redsys form.
  */
 export function createRedsysPayment(params: RedsysParams) {
-  const merchantParameters = Buffer.from(JSON.stringify(params)).toString("base64");
+  // Redsys expects both values in URL-safe Base64. Standard Base64 is not
+  // safe in an application/x-www-form-urlencoded POST: `+` can be decoded as
+  // a space, and Redsys explicitly rejects `+`, `/` and `=` in the payload.
+  const toBase64Url = (value: Buffer | string) =>
+    (Buffer.isBuffer(value) ? value : Buffer.from(value))
+      .toString("base64")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/g, "");
+
+  const merchantParameters = toBase64Url(JSON.stringify(params));
 
   // HMAC_SHA256_V1: derive a per-order key with 3DES, then HMAC the params.
   const derivedKey = deriveOrderKey(params.Ds_Merchant_Order);
-  const signature = createHmac("sha256", derivedKey).update(merchantParameters).digest("base64");
+  const signature = toBase64Url(
+    createHmac("sha256", derivedKey).update(merchantParameters).digest(),
+  );
 
   return {
     Ds_SignatureVersion: "HMAC_SHA256_V1",
@@ -80,11 +92,11 @@ export function verifyRedsysSignature(merchantParameters: string, signature: str
   if (!order) return false;
 
   const derivedKey = deriveOrderKey(order);
-  const expected = createHmac("sha256", derivedKey).update(merchantParameters).digest("base64");
+  const expected = createHmac("sha256", derivedKey).update(merchantParameters).digest();
 
   // Redsys sends URL-safe base64 in notifications; normalize both before comparing.
-  const normalize = (s: string) => s.replace(/\+/g, "-").replace(/\//g, "_");
-  return normalize(expected) === normalize(signature);
+  const normalize = (s: string) => s.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  return normalize(expected.toString("base64")) === normalize(signature);
 }
 
 export function parseRedsysResponse(merchantParameters: string) {

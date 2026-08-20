@@ -70,8 +70,12 @@ export function getSystemStatus(): SystemStatus {
     {
       key: "verifactu",
       label: "VeriFactu",
-      configured: has(env.VERIFACTU_CERT_P12_BASE64),
-      detail: env.VERIFACTU_ENV,
+      configured:
+        has(env.VERIFACTU_PRODUCER_NIF) &&
+        has(env.VERIFACTU_CERT_P12_BASE64) &&
+        has(env.VERIFACTU_CERT_PASSWORD) &&
+        has(env.VERIFACTU_CERT_EXPIRES_AT),
+      detail: "Diagnóstico: AEAT test · Facturación: AEAT prod",
     },
     {
       key: "redsys",
@@ -90,7 +94,11 @@ export function getSystemStatus(): SystemStatus {
 
   const runtime: RuntimeInfo[] = [
     { key: "app_url", label: "URL de la app", value: publicEnv.NEXT_PUBLIC_APP_URL },
-    { key: "verifactu_env", label: "Entorno VeriFactu", value: env.VERIFACTU_ENV },
+    {
+      key: "verifactu_env",
+      label: "Entornos VeriFactu",
+      value: "Diagnóstico: test · Facturación: prod",
+    },
     { key: "redsys_env", label: "Entorno Redsys", value: env.REDSYS_ENVIRONMENT },
     { key: "log_level", label: "Nivel de log", value: env.LOG_LEVEL },
   ];

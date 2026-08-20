@@ -13,8 +13,8 @@ import { isPublicDemoMode } from "@/lib/demo";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
-  const verifactuMode = (process.env.VERIFACTU_ENV ?? "mock").toUpperCase();
   const demoMode = isPublicDemoMode();
+  const verifactuMode = demoMode ? "MOCK" : "PROD";
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">

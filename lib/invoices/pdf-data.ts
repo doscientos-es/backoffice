@@ -2,7 +2,7 @@ import "server-only";
 
 import { formatAddress } from "@/lib/address";
 import { buildVatBreakdown, type VatBreakdownRow } from "@/lib/finance";
-import { verifactuConfigFromEnv } from "@/lib/verifactu/config";
+import { verifactuInvoiceConfigFromEnv } from "@/lib/verifactu/config";
 
 /**
  * Normalised, render-ready snapshot of an invoice for the PDF document.
@@ -142,7 +142,7 @@ async function buildInvoiceQr(
       issueDate: new Date(invoice.issue_date),
       total: invoice.total,
     },
-    verifactuConfigFromEnv(),
+    verifactuInvoiceConfigFromEnv(),
   );
   return buildQrDataUrl(qrUrl);
 }

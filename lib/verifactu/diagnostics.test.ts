@@ -1,50 +1,57 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { buildQrUrl, insert, registerInvoice, verifactuConfigFromEnv } = vi.hoisted(() => ({
-  buildQrUrl: vi.fn(),
-  insert: vi.fn(),
-  registerInvoice: vi.fn(),
-  verifactuConfigFromEnv: vi.fn(),
-}));
+const { buildQrUrl, createVerifactuClient, insert, registerInvoice, verifactuDiagnosticConfigFromEnv } =
+  vi.hoisted(() => ({
+    buildQrUrl: vi.fn(),
+    createVerifactuClient: vi.fn(),
+    insert: vi.fn(),
+    registerInvoice: vi.fn(),
+    verifactuDiagnosticConfigFromEnv: vi.fn(),
+  }));
 
 vi.mock("@doscientos/verifactu", () => ({
-  createVerifactuClient: vi.fn(() => ({ buildQrUrl, registerInvoice })),
+  createVerifactuClient,
 }));
 vi.mock("./config", () => ({
-  verifactuConfigFromEnv,
+  verifactuDiagnosticConfigFromEnv,
 }));
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({ from: () => ({ insert }) }),
 }));
 
-import { runVerifactuMockDiagnostic } from "./diagnostics";
+import { runVerifactuAeatTestDiagnostic } from "./diagnostics";
 
-describe("runVerifactuMockDiagnostic", () => {
+describe("runVerifactuAeatTestDiagnostic", () => {
   beforeEach(() => {
-    verifactuConfigFromEnv.mockReset();
-    verifactuConfigFromEnv.mockReturnValue({
-      environment: "prod",
-      certificate: { p12Base64: "not-used-by-mock", password: "not-used-by-mock" },
+    verifactuDiagnosticConfigFromEnv.mockReset();
+    verifactuDiagnosticConfigFromEnv.mockReturnValue({
+      environment: "test",
+      certificate: { p12Base64: "not-used-by-test", password: "not-used-by-test" },
       software: {},
       appUrl: "https://backoffice.example.test",
     });
     buildQrUrl.mockReset();
     buildQrUrl.mockReturnValue("https://backoffice.example.test/api/verifactu/verify");
+    createVerifactuClient.mockReset();
+    createVerifactuClient.mockReturnValue({ buildQrUrl, registerInvoice });
     insert.mockReset();
     insert.mockResolvedValue({ error: null });
     registerInvoice.mockReset();
     registerInvoice.mockResolvedValue({
       status: "accepted",
       hash: "A".repeat(64),
-      response: { mock: true },
+      response: { acceptedBy: "aeat-test" },
       errorMessage: null,
     });
   });
 
-  it("uses an in-memory mock record and stores only a passing health result", async () => {
-    const result = await runVerifactuMockDiagnostic("member-1");
+  it("uses AEAT pre-production and stores only a passing health result", async () => {
+    const result = await runVerifactuAeatTestDiagnostic("member-1");
 
     expect(result.ok).toBe(true);
+    expect(createVerifactuClient).toHaveBeenCalledWith(
+      expect.objectContaining({ environment: "test" }),
+    );
     expect(insert).toHaveBeenCalledWith(
       expect.objectContaining({ created_by: "member-1", status: "passed" }),
     );
@@ -58,23 +65,23 @@ describe("runVerifactuMockDiagnostic", () => {
       errorMessage: "XML no conforme",
     });
 
-    const result = await runVerifactuMockDiagnostic("member-1");
+    const result = await runVerifactuAeatTestDiagnostic("member-1");
 
     expect(result.ok).toBe(false);
     expect(insert).toHaveBeenCalledWith(expect.objectContaining({ status: "failed" }));
   });
 
   it("reports a safe, actionable SIF configuration failure", async () => {
-    verifactuConfigFromEnv.mockImplementation(() => {
-      throw new Error("El certificado P12 de VERI*FACTU es obligatorio en producción");
+    verifactuDiagnosticConfigFromEnv.mockImplementation(() => {
+      throw new Error("El certificado P12 de VERI*FACTU es obligatorio para conectar con AEAT");
     });
 
-    const result = await runVerifactuMockDiagnostic("member-1");
+    const result = await runVerifactuAeatTestDiagnostic("member-1");
 
     expect(result).toEqual({
       ok: false,
       detail:
-        "La suite VERI*FACTU falló: El certificado P12 de VERI*FACTU es obligatorio en producción. La facturación real permanece bloqueada.",
+        "La suite VERI*FACTU falló: El certificado P12 de VERI*FACTU es obligatorio para conectar con AEAT. La facturación real permanece bloqueada.",
     });
     expect(insert).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -83,7 +90,7 @@ describe("runVerifactuMockDiagnostic", () => {
           {
             key: "sif_config",
             ok: false,
-            detail: "El certificado P12 de VERI*FACTU es obligatorio en producción",
+            detail: "El certificado P12 de VERI*FACTU es obligatorio para conectar con AEAT",
           },
         ],
       }),

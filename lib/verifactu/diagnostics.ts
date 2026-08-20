@@ -1,4 +1,4 @@
-import { verifactuConfigFromEnv } from "./config";
+import { verifactuDiagnosticConfigFromEnv } from "./config";
 
 const DIAGNOSTIC_TTL_DAYS = 7;
 
@@ -17,9 +17,9 @@ type DiagnosticRun = {
 };
 
 const SAFE_SIF_CONFIGURATION_ERRORS = new Set([
-  "VERIFACTU_PRODUCER_NIF es obligatorio en producción",
-  "El certificado P12 de VERI*FACTU es obligatorio en producción",
-  "VERIFACTU_CERT_EXPIRES_AT es obligatorio en producción",
+  "VERIFACTU_PRODUCER_NIF es obligatorio para operar con VERI*FACTU",
+  "El certificado P12 de VERI*FACTU es obligatorio para conectar con AEAT",
+  "VERIFACTU_CERT_EXPIRES_AT es obligatorio para conectar con AEAT",
   "El certificado P12 de VERI*FACTU está caducado o tiene una fecha inválida",
 ]);
 
@@ -67,17 +67,17 @@ export async function assertVerifactuDiagnosticGate(): Promise<void> {
   }
 }
 
-export async function runVerifactuMockDiagnostic(memberId: string): Promise<{
+export async function runVerifactuAeatTestDiagnostic(memberId: string): Promise<{
   ok: boolean;
   detail: string;
 }> {
   const now = new Date();
-  const testNumber = `DIAG-${now.toISOString().slice(0, 10).replaceAll("-", "")}`;
+  const testNumber = `DIAG-${now.toISOString().replace(/[-:.TZ]/g, "")}`;
   let checks: DiagnosticCheck[];
   try {
-    const config = verifactuConfigFromEnv();
+    const config = verifactuDiagnosticConfigFromEnv();
     const { createVerifactuClient } = await import("@doscientos/verifactu");
-    const client = createVerifactuClient({ ...config, environment: "mock" });
+    const client = createVerifactuClient(config);
     const result = await client.registerInvoice({
       nif: "B12345678",
       invoiceNumber: testNumber,
@@ -109,9 +109,9 @@ export async function runVerifactuMockDiagnostic(memberId: string): Promise<{
         detail: result.errorMessage ?? "XML, XSD y huella SHA-256 válidos",
       },
       {
-        key: "mock_delivery",
-        ok: result.status === "accepted" && result.response.mock === true,
-        detail: result.errorMessage ?? "Entrega mock aceptada sin conexión a AEAT",
+        key: "aeat_test_delivery",
+        ok: result.status === "accepted",
+        detail: result.errorMessage ?? "Entrega aceptada por la AEAT de pruebas",
       },
       { key: "qr", ok: Boolean(qrUrl), detail: "URL QR de verificación generada" },
     ];

@@ -71,7 +71,6 @@ export const ServerSchema = PublicSchema.extend({
   GOOGLE_CLOUD_PROJECT_ID: z.string().optional().default(""),
   // Región EU por defecto (GDPR): los datos del lead no salen de la UE.
   GOOGLE_CLOUD_LOCATION: z.string().optional().default("europe-west1"),
-  VERIFACTU_ENV: z.enum(["mock", "test", "prod"]).default("mock"),
   VERIFACTU_CERT_P12_BASE64: z.string().optional().default(""),
   VERIFACTU_CERT_PASSWORD: z.string().optional().default(""),
   VERIFACTU_CERT_EXPIRES_AT: z.string().optional().default(""),

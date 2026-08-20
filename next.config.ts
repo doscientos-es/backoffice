@@ -12,6 +12,12 @@ const config: NextConfig = {
   // These packages use Node.js runtime APIs and bundled filesystem resources;
   // keep them external to avoid Turbopack resolving those resources at build time.
   serverExternalPackages: ["@doscientos/verifactu", "@react-pdf/renderer"],
+  // `libxmljs2` resolves its platform-specific `xmljs.node` binding at runtime.
+  // Include it explicitly so Vercel's output tracing retains the Linux binding
+  // used by the AEAT XSD validation path.
+  outputFileTracingIncludes: {
+    "/*": ["./node_modules/libxmljs2/**/*"],
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "hnzyllbksqvamqfubhri.supabase.co" },

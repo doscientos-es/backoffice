@@ -1261,13 +1261,7 @@ Endpoints AEAT (SOAP over HTTPS):
 - Test (homologacion): https://prewww1.aeat.es/wlpl/TIKE-WFCS/ws/VeriFactu/RecepcionFacturas
 - Produccion:          https://www1.aeat.es/wlpl/TIKE-WFCS/ws/VeriFactu/RecepcionFacturas
 
-La variable `VERIFACTU_ENV = 'mock' | 'test' | 'prod'` determina cuál usar:
-
-- **`mock`** (default en desarrollo y mientras no haya certificado sandbox FNMT): el cliente SOAP no hace petición real. `lib/verifactu/client.ts` devuelve respuestas simuladas (`accepted` aleatorio 90%, `rejected` 5%, `error` de red 5%) con CSV ficticio. Permite probar todo el flujo UI sin depender de AEAT. Toda la lógica de firma, hash chain y persistencia se ejecuta igual.
-- **`test`**: endpoint de homologación AEAT (`https://prewww1.aeat.es/...`). Requiere certificado FNMT de pruebas o real.
-- **`prod`**: endpoint de producción. Solo activar tras validar el flujo completo en `test`.
-
-El feature flag se respeta en el badge del header (`MOCK` / `TEST` / `PROD` en color naranja/azul/verde) para que el equipo siempre sepa contra qué entorno está operando.
+El backoffice selecciona el endpoint por flujo: el diagnóstico remite un registro sintético al entorno de pruebas AEAT y la emisión o anulación de facturas remite siempre a producción. El modo demo usa `mock` y no realiza peticiones externas.
 
 #### 7.6.3 Flujo de emision de una factura
 
@@ -1886,7 +1880,7 @@ export async function sendToAeat(invoiceId: string) {
   const signedXml = signXml(xml, cert, process.env.VERIFACTU_CERT_PASSWORD!)
 
   try {
-    const response = await sendToAeatSoap(signedXml, process.env.VERIFACTU_ENV as 'test' | 'prod')
+    const response = await sendToAeatSoap(signedXml, 'prod')
 
     if (response.code === '0000') {
       await supabase.from('invoices').update({
@@ -2324,9 +2318,7 @@ OPENAI_API_KEY=
 VERIFACTU_CERT_P12_BASE64=
 # Contrasena del certificado .p12
 VERIFACTU_CERT_PASSWORD=
-# 'test' = endpoint de homologacion AEAT | 'prod' = produccion AEAT
-# Empezar siempre en 'test'. Cambiar a 'prod' tras validar con Hacienda.
-VERIFACTU_ENV=test
+# El diagnóstico usa siempre el endpoint de homologación AEAT y la facturación producción.
 # NIF del emisor (debe coincidir con el certificado digital)
 VERIFACTU_NIF_EMISOR=
 
@@ -2969,7 +2961,7 @@ funcionalidad que puede desplegarse y usarse en producción de forma independien
 - Panel "Avisos": Verifactu pendiente/error + aviso certificado a 30 días
 - QR PNG en Supabase Storage bucket `invoices-qr` (público) + QR en portal e impresión
 - Flujo UI: factura rectificativa (botón, modal, serie R-YYYY-NNN)
-- Toggle VERIFACTU_ENV test/prod en settings de la app
+- Diagnóstico contra AEAT de pruebas y facturación contra producción
 
 ### Step 6 — IA y dashboard
 - API route `summarize-lead` (GPT-4o-mini): resumen + temperatura hot/warm/cold

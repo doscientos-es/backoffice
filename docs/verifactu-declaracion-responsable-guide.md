@@ -98,8 +98,8 @@ Al incorporar Verifactu a un proyecto de cliente, seguir este orden:
 
 - [ ] **Elegir `IdSistemaInformatico`** — 2 chars alfanuméricos, únicos entre todos los productos Doscientos. Registrar en tabla interna para no repetir.
 - [ ] **Obtener certificado P12** del cliente (FNMT o Camerfirma). Confirmar que incluye capacidad de firma electrónica.
-- [ ] **Configurar env vars** en el proyecto: `VERIFACTU_SOFTWARE_*`, `VERIFACTU_CERT_P12_BASE64`, `VERIFACTU_CERT_PASSWORD`, `VERIFACTU_ENV=test`.
-- [ ] **Probar en entorno test** de la AEAT antes de pasar a `prod`.
+- [ ] **Configurar env vars** en el proyecto: `VERIFACTU_SOFTWARE_*`, `VERIFACTU_PRODUCER_NIF`, `VERIFACTU_CERT_P12_BASE64`, `VERIFACTU_CERT_PASSWORD` y `VERIFACTU_CERT_EXPIRES_AT`.
+- [ ] **Ejecutar el diagnóstico** para probar la AEAT de preproducción; las facturas operativas siempre se entregan a producción.
 - [ ] **Crear página `/legal` en el SIF** con la DR (puede ser esta misma ruta adaptada).
 - [ ] **Redactar la DR** usando el template de arriba y añadirla a la ruta `/legal`.
 - [ ] **Archivar copia** de la DR en `internal-docs` del backoffice (categoría "legal").

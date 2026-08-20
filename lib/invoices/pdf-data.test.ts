@@ -42,7 +42,6 @@ function makeInput(overrides: Partial<BuildInvoicePdfInput["invoice"]> = {}): Bu
 async function importPdfData(nif: string) {
   vi.resetModules();
   process.env.VERIFACTU_NIF_EMISOR = nif;
-  process.env.VERIFACTU_ENV = "mock";
   return import("@/lib/invoices/pdf-data");
 }
 

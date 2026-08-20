@@ -6,7 +6,7 @@ import type {
   VerifactuSubmitInput,
   VerifactuSubmitResult,
 } from "@doscientos/verifactu";
-import { verifactuConfigFromEnv } from "./config";
+import { verifactuInvoiceConfigFromEnv } from "./config";
 
 const log = scopedLogger("verifactu.outbox");
 
@@ -170,7 +170,7 @@ export async function assertDurableVerifactuPackage(requireCancellation = false)
   }
   if (!requireCancellation) return;
   const client = (await createVerifactuClient(
-    verifactuConfigFromEnv(),
+    verifactuInvoiceConfigFromEnv(),
   )) as unknown as CancellableClient;
   if (!client.cancelInvoice || !hashes.computeCancellationHash) {
     throw new Error("El paquete @doscientos/verifactu no implementa RegistroAnulacion durable");
@@ -380,7 +380,7 @@ async function deliverClaimed(
       if (deferError) throw new Error(deferError.message);
       return { processed: false, status: "deferred", csv: null, warnings: [] };
     }
-    const client = await createVerifactuClient({ ...verifactuConfigFromEnv(), software });
+    const client = await createVerifactuClient({ ...verifactuInvoiceConfigFromEnv(), software });
     let result: VerifactuSubmitResult;
 
     if (ledger.record_type === "alta") {
@@ -466,7 +466,7 @@ export async function syncInvoiceQrFromLedger(invoiceId: string): Promise<void> 
     throw new Error(error?.message ?? "No se encontró el RegistroAlta para generar el QR");
 
   const input = altaInput((data as { record_payload: Record<string, unknown> }).record_payload);
-  const client = await createVerifactuClient(verifactuConfigFromEnv());
+  const client = await createVerifactuClient(verifactuInvoiceConfigFromEnv());
   const qrUrl = client.buildQrUrl({
     nif: input.nif as string,
     invoiceNumber: input.invoiceNumber as string,

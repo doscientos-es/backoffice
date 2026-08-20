@@ -17,7 +17,7 @@ import { requireUser } from "@/lib/auth";
 import { buildVatBreakdown } from "@/lib/finance";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { verifactuConfigFromEnv } from "@/lib/verifactu/config";
+import { verifactuInvoiceConfigFromEnv } from "@/lib/verifactu/config";
 import { updateInvoicePortalAccess } from "../actions";
 import { InvoiceActions } from "./invoice-actions";
 import { RefreshClientSnapshotButton } from "./refresh-client-snapshot-button";
@@ -114,7 +114,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           issueDate: new Date(`${invoice.issue_date as string}T00:00:00`),
           total: invoice.total as number,
         },
-        verifactuConfigFromEnv(),
+        verifactuInvoiceConfigFromEnv(),
       );
       qrDataUrl = await buildQrDataUrl(qrUrl);
     } catch {

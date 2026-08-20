@@ -8,7 +8,7 @@ import { telegramGetMe, telegramSendMessage } from "@/lib/integrations/telegram"
 import { scopedLogger } from "@/lib/logger";
 import { sendWebPushToMembers } from "@/lib/push/web-push";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { runVerifactuMockDiagnostic } from "@/lib/verifactu/diagnostics";
+import { runVerifactuAeatTestDiagnostic } from "@/lib/verifactu/diagnostics";
 
 export type TestResult = { ok: true; detail: string } | { ok: false; error: string };
 
@@ -136,11 +136,11 @@ export async function testAI(): Promise<TestResult> {
   }
 }
 
-/** Runs the complete synthetic VERI*FACTU suite without creating an invoice or calling AEAT. */
-export async function testVerifactuMockSuite(): Promise<TestResult> {
+/** Submits a synthetic record to AEAT pre-production without creating an operational invoice. */
+export async function testVerifactuAeatSuite(): Promise<TestResult> {
   const user = await requireRole([...ADMIN]);
   try {
-    const result = await runVerifactuMockDiagnostic(user.id);
+    const result = await runVerifactuAeatTestDiagnostic(user.id);
     return result.ok ? { ok: true, detail: result.detail } : fail(result.detail);
   } catch (error) {
     log.error({ err: error }, "verifactu diagnostic failed");

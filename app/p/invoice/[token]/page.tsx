@@ -9,7 +9,7 @@ import { isPortalUnlocked } from "@/lib/portal/access";
 import { INVOICE_STATUS } from "@/lib/status";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { verifactuConfigFromEnv } from "@/lib/verifactu/config";
+import { verifactuInvoiceConfigFromEnv } from "@/lib/verifactu/config";
 import { buildQrDataUrl, buildQrUrl } from "@doscientos/verifactu";
 import { CheckCircle2, Download, XCircle } from "lucide-react";
 import type { Metadata } from "next";
@@ -110,7 +110,7 @@ export default async function PortalInvoicePage({
         issueDate: new Date(invoice.issue_date as string),
         total: invoice.total as number,
       },
-      verifactuConfigFromEnv(),
+      verifactuInvoiceConfigFromEnv(),
     );
     qrDataUrl = await buildQrDataUrl(qrUrl);
   }
