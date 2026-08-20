@@ -39,7 +39,7 @@ import {
   type ScopeModule,
 } from "@/lib/proposals/scope";
 import { formatEUR } from "@/lib/utils";
-import { WarningCircle as AlertCircle, CheckIcon as Check, CaretLeft as ChevronLeft, CaretRight as ChevronRight, FloppyDisk as Save, Sparkle as Sparkles } from "@phosphor-icons/react";
+import { WarningCircle as AlertCircle, CheckIcon as Check, CaretLeft as ChevronLeft, CaretRight as ChevronRight, FloppyDisk as Save, Sparkle as Sparkles } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { setProposalTeamMembers, updateProposal } from "../actions";

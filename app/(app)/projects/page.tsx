@@ -1,4 +1,4 @@
-import { PlusIcon as Plus } from "@phosphor-icons/react";
+import { PlusIcon as Plus } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";

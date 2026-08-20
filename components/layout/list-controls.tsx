@@ -7,7 +7,7 @@ import { type AvatarMember, MemberAvatar } from "@/components/ui/member-avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { CaretLeft as ChevronLeft, CaretRight as ChevronRight, DownloadIcon as Download, MagnifyingGlass as Search, SlidersHorizontalIcon as SlidersHorizontal, XIcon as X } from "@phosphor-icons/react";
+import { CaretLeft as ChevronLeft, CaretRight as ChevronRight, DownloadIcon as Download, MagnifyingGlass as Search, SlidersHorizontalIcon as SlidersHorizontal, XIcon as X } from "@phosphor-icons/react/ssr";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 

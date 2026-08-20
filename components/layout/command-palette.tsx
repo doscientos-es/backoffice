@@ -1,5 +1,5 @@
 "use client";
-import { CheckIcon as Check, CheckSquareIcon as CheckSquare, ClockIcon as Clock, CopyIcon as Copy, EyeIcon as Eye, EyeSlash as EyeOff, Folder as FolderKanban, Tray as Inbox, Key as KeyRound, CircleNotch as Loader2, LockIcon as Lock, PlusIcon as Plus, ReceiptIcon as Receipt, UsersIcon as Users } from "@phosphor-icons/react";
+import { CheckIcon as Check, CheckSquareIcon as CheckSquare, ClockIcon as Clock, CopyIcon as Copy, EyeIcon as Eye, EyeSlash as EyeOff, Folder as FolderKanban, Tray as Inbox, Key as KeyRound, CircleNotch as Loader2, LockIcon as Lock, PlusIcon as Plus, ReceiptIcon as Receipt, UsersIcon as Users } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { sileo } from "sileo";

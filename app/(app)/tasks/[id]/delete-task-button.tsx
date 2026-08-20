@@ -1,6 +1,6 @@
 "use client";
 
-import { DotsThree as MoreHorizontal, Trash as Trash2 } from "@phosphor-icons/react";
+import { DotsThree as MoreHorizontal, Trash as Trash2 } from "@phosphor-icons/react/ssr";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

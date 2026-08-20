@@ -1,4 +1,4 @@
-import { CalendarDots as CalendarClock, HeartIcon as Heart, ChatCircle as MessageCircle, ChatText as MessageSquareText, CursorClick as MousePointerClick } from "@phosphor-icons/react";
+import { CalendarDots as CalendarClock, HeartIcon as Heart, ChatCircle as MessageCircle, ChatText as MessageSquareText, CursorClick as MousePointerClick } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { PostListItem } from "@/lib/social/types";

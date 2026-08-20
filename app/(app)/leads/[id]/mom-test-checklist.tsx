@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckIcon as Check, XIcon as X } from "@phosphor-icons/react";
+import { CheckIcon as Check, XIcon as X } from "@phosphor-icons/react/ssr";
 import { useState, useTransition } from "react";
 import { sileo } from "sileo";
 import { Badge } from "@/components/ui/badge";

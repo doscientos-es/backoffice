@@ -1,4 +1,4 @@
-import { ArrowRightIcon as ArrowRight, Suitcase as BriefcaseBusiness, CurrencyCircleDollar as CircleDollarSign, FileText as FileSignature, Receipt as ReceiptText, Sparkle as Sparkles } from "@phosphor-icons/react";
+import { ArrowRightIcon as ArrowRight, Suitcase as BriefcaseBusiness, CurrencyCircleDollar as CircleDollarSign, FileText as FileSignature, Receipt as ReceiptText, Sparkle as Sparkles } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";

@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckIcon as Check, CopyIcon as Copy } from "@phosphor-icons/react";
+import { CheckIcon as Check, CopyIcon as Copy } from "@phosphor-icons/react/ssr";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { BrandAsset } from "./assets-grid";

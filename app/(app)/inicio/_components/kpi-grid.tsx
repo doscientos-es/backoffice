@@ -1,4 +1,4 @@
-import { FileText as FileSignature, Tray as Inbox, TargetIcon as Target, TrendUp as TrendingUp } from "@phosphor-icons/react";
+import { FileText as FileSignature, Tray as Inbox, TargetIcon as Target, TrendUp as TrendingUp } from "@phosphor-icons/react/ssr";
 import { StatCard } from "@/components/layout/stat-card";
 import { getCompanyGoals, getDashboardKpis } from "@/lib/dashboard/queries";
 import type { DashboardRange } from "@/lib/dashboard/types";

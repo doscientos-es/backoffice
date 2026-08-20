@@ -1,6 +1,6 @@
 "use client";
 
-import { Gear as Settings } from "@phosphor-icons/react";
+import { Gear as Settings } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/branding";

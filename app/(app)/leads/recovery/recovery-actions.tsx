@@ -1,6 +1,6 @@
 "use client";
 
-import { Prohibit as Ban, Envelope as Mail, ArrowCounterClockwise as RotateCcw } from "@phosphor-icons/react";
+import { Prohibit as Ban, Envelope as Mail, ArrowCounterClockwise as RotateCcw } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { sileo } from "sileo";

@@ -7,7 +7,7 @@ import {
   type MaintenanceOffer,
 } from "@/lib/proposals/maintenance";
 import { formatEUR } from "@/lib/utils";
-import { CheckIcon as Check } from "@phosphor-icons/react";
+import { CheckIcon as Check } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { selectProposalMaintenance } from "./actions";

@@ -1,6 +1,6 @@
 "use client";
 
-import { Warning as AlertTriangle, CheckIcon as Check, CopyIcon as Copy, ArrowSquareOut as ExternalLink, FileTextIcon as FileText, PresentationIcon as Presentation } from "@phosphor-icons/react";
+import { Warning as AlertTriangle, CheckIcon as Check, CopyIcon as Copy, ArrowSquareOut as ExternalLink, FileTextIcon as FileText, PresentationIcon as Presentation } from "@phosphor-icons/react/ssr";
 import { useState } from "react";
 import { sileo } from "sileo";
 import { Button } from "@/components/ui/button";

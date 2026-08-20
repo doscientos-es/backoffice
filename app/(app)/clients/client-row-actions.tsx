@@ -1,6 +1,6 @@
 "use client";
 
-import { PencilIcon as Pencil, Trash as Trash2 } from "@phosphor-icons/react";
+import { PencilIcon as Pencil, Trash as Trash2 } from "@phosphor-icons/react/ssr";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";

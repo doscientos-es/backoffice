@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { CircleNotch as Loader2 } from "@phosphor-icons/react";
+import { CircleNotch as Loader2 } from "@phosphor-icons/react/ssr";
 import { useFormStatus } from "react-dom";
 import { Button } from "./button";
 

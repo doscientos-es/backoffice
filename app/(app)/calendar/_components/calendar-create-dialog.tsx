@@ -1,6 +1,6 @@
 "use client";
 
-import { BellIcon as Bell, CheckSquareIcon as CheckSquare, PresentationIcon as Presentation, VideoIcon as Video } from "@phosphor-icons/react";
+import { BellIcon as Bell, CheckSquareIcon as CheckSquare, PresentationIcon as Presentation, VideoIcon as Video } from "@phosphor-icons/react/ssr";
 import { useEffect, useState, useTransition } from "react";
 import { scheduleLeadMeeting } from "@/app/(app)/leads/actions";
 import { Button } from "@/components/ui/button";

@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleNotch as Loader2, PaperPlaneTilt as Send } from "@phosphor-icons/react";
+import { CircleNotch as Loader2, PaperPlaneTilt as Send } from "@phosphor-icons/react/ssr";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { updateInvoiceStatus } from "../actions";

@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle as CheckCircle2, CircleIcon as Circle, Clock as Clock3, File as FileCheck2, CircleNotch as Loader2, Warning as TriangleAlert, XCircleIcon as XCircle } from "@phosphor-icons/react";
+import { CheckCircle as CheckCircle2, CircleIcon as Circle, Clock as Clock3, File as FileCheck2, CircleNotch as Loader2, Warning as TriangleAlert, XCircleIcon as XCircle } from "@phosphor-icons/react/ssr";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

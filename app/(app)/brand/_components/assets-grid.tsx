@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckIcon as Check, CopyIcon as Copy, DownloadIcon as Download, ImageIcon, Trash as Trash2 } from "@phosphor-icons/react";
+import { CheckIcon as Check, CopyIcon as Copy, DownloadIcon as Download, ImageIcon, Trash as Trash2 } from "@phosphor-icons/react/ssr";
 import { useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

@@ -7,7 +7,7 @@
  * For EU VAT VIES verification (clients), see app/(app)/clients/nif-input.tsx.
  */
 
-import { CheckCircleIcon as CheckCircle, XCircleIcon as XCircle } from "@phosphor-icons/react";
+import { CheckCircleIcon as CheckCircle, XCircleIcon as XCircle } from "@phosphor-icons/react/ssr";
 import { useState } from "react";
 import { validateNifEs } from "@/lib/vies/nif";
 import { Input } from "./input";

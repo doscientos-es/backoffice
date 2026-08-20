@@ -1,6 +1,6 @@
 "use client";
 
-import { LockIcon as Lock } from "@phosphor-icons/react";
+import { LockIcon as Lock } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { FileTextIcon as FileText, ImageIcon } from "@phosphor-icons/react";
+import { FileTextIcon as FileText, ImageIcon } from "@phosphor-icons/react/ssr";
 
 type Props = {
   /** Signed storage URL, generated server-side. Null = no preview. */

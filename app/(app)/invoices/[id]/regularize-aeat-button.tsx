@@ -1,6 +1,6 @@
 "use client";
 
-import { Warning as AlertTriangle, CheckCircle as CheckCircle2, CircleNotch as Loader2, ArrowCounterClockwise as RotateCcw } from "@phosphor-icons/react";
+import { Warning as AlertTriangle, CheckCircle as CheckCircle2, CircleNotch as Loader2, ArrowCounterClockwise as RotateCcw } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

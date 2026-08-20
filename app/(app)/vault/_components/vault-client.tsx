@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckIcon as Check, CaretDown as ChevronDown, CaretLeft as ChevronLeft, CaretRight as ChevronRight, CaretUpDown as ChevronsUpDown, CaretUp as ChevronUp, CopyIcon as Copy, EyeIcon as Eye, EyeSlash as EyeOff, FingerprintIcon as Fingerprint, CircleNotch as Loader2, LockIcon as Lock, LockOpenIcon as LockOpen, PencilIcon as Pencil, PlusIcon as Plus, MagnifyingGlass as Search, ShieldWarning as ShieldAlert, Trash as Trash2, XIcon as X } from "@phosphor-icons/react";
+import { CheckIcon as Check, CaretDown as ChevronDown, CaretLeft as ChevronLeft, CaretRight as ChevronRight, CaretUpDown as ChevronsUpDown, CaretUp as ChevronUp, CopyIcon as Copy, EyeIcon as Eye, EyeSlash as EyeOff, FingerprintIcon as Fingerprint, CircleNotch as Loader2, LockIcon as Lock, LockOpenIcon as LockOpen, PencilIcon as Pencil, PlusIcon as Plus, MagnifyingGlass as Search, ShieldWarning as ShieldAlert, Trash as Trash2, XIcon as X } from "@phosphor-icons/react/ssr";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { sileo } from "sileo";
 import { PageHeader } from "@/components/layout/page-header";

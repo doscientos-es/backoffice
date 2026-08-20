@@ -1,6 +1,6 @@
 "use client";
 
-import { Warning as AlertTriangle, Buildings as Building2, CheckCircleIcon as CheckCircle, CircleNotch as Loader2, MagnifyingGlass as Search, XCircleIcon as XCircle } from "@phosphor-icons/react";
+import { Warning as AlertTriangle, Buildings as Building2, CheckCircleIcon as CheckCircle, CircleNotch as Loader2, MagnifyingGlass as Search, XCircleIcon as XCircle } from "@phosphor-icons/react/ssr";
 import { useCallback, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import type { OpenMercantilOfficer } from "@/lib/openmercantil/client";

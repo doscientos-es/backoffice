@@ -1,6 +1,6 @@
 "use client";
 
-import { List as Menu, Gear as Settings, XIcon as X } from "@phosphor-icons/react";
+import { List as Menu, Gear as Settings, XIcon as X } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";

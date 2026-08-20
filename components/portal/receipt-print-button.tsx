@@ -1,6 +1,6 @@
 "use client";
 
-import { PrinterIcon as Printer } from "@phosphor-icons/react";
+import { PrinterIcon as Printer } from "@phosphor-icons/react/ssr";
 import { useEffect } from "react";
 
 /**

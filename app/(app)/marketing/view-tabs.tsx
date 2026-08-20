@@ -1,6 +1,6 @@
 "use client";
 
-import { MegaphoneIcon as Megaphone, TargetIcon as Target } from "@phosphor-icons/react";
+import { MegaphoneIcon as Megaphone, TargetIcon as Target } from "@phosphor-icons/react/ssr";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import type { MarketingView } from "@/lib/marketing/range";

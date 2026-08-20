@@ -1,6 +1,6 @@
 "use client";
 
-import { PlusIcon as Plus, Trash as Trash2 } from "@phosphor-icons/react";
+import { PlusIcon as Plus, Trash as Trash2 } from "@phosphor-icons/react/ssr";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { type PaymentPlanItem } from "@/lib/proposals/scope";

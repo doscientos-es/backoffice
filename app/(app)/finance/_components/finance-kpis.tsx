@@ -1,4 +1,4 @@
-import { HandCoinsIcon as HandCoins, HourglassIcon as Hourglass, PercentIcon as Percent, ReceiptIcon as Receipt, TrendDown as TrendingDown, TrendUp as TrendingUp } from "@phosphor-icons/react";
+import { HandCoinsIcon as HandCoins, HourglassIcon as Hourglass, PercentIcon as Percent, ReceiptIcon as Receipt, TrendDown as TrendingDown, TrendUp as TrendingUp } from "@phosphor-icons/react/ssr";
 import { StatCard } from "@/components/layout/stat-card";
 import { getFinanceKpis } from "@/lib/finance/queries";
 import { formatEUR } from "@/lib/utils";

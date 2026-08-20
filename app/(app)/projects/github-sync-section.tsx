@@ -1,6 +1,6 @@
 "use client";
 
-import { GithubLogo as Github, Link as Link2, ArrowsClockwise as RefreshCw } from "@phosphor-icons/react";
+import { GithubLogo as Github, Link as Link2, ArrowsClockwise as RefreshCw } from "@phosphor-icons/react/ssr";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";

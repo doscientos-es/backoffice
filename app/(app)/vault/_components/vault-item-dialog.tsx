@@ -1,6 +1,6 @@
 "use client";
 
-import { EyeIcon as Eye, EyeSlash as EyeOff } from "@phosphor-icons/react";
+import { EyeIcon as Eye, EyeSlash as EyeOff } from "@phosphor-icons/react/ssr";
 import { useState } from "react";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";

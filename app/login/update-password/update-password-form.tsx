@@ -1,6 +1,6 @@
 "use client";
 
-import { EyeIcon as Eye, EyeSlash as EyeOff, CircleNotch as Loader2 } from "@phosphor-icons/react";
+import { EyeIcon as Eye, EyeSlash as EyeOff, CircleNotch as Loader2 } from "@phosphor-icons/react/ssr";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";

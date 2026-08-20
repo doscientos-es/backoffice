@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleNotch as Loader2, PaperclipIcon as Paperclip } from "@phosphor-icons/react";
+import { CircleNotch as Loader2, PaperclipIcon as Paperclip } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";

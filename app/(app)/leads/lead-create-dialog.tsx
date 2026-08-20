@@ -1,6 +1,6 @@
 "use client";
 
-import { PlusIcon as Plus } from "@phosphor-icons/react";
+import { PlusIcon as Plus } from "@phosphor-icons/react/ssr";
 import { type ReactNode, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {

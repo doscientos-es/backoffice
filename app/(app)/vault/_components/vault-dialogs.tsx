@@ -1,6 +1,6 @@
 "use client";
 
-import { EyeIcon as Eye, EyeSlash as EyeOff, FingerprintIcon as Fingerprint } from "@phosphor-icons/react";
+import { EyeIcon as Eye, EyeSlash as EyeOff, FingerprintIcon as Fingerprint } from "@phosphor-icons/react/ssr";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";

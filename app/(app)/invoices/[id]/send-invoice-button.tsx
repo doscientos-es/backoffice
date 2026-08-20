@@ -1,6 +1,6 @@
 "use client";
 
-import { Envelope as Mail } from "@phosphor-icons/react";
+import { Envelope as Mail } from "@phosphor-icons/react/ssr";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {

@@ -1,6 +1,6 @@
 "use client";
 
-import { MagnifyingGlass as Search } from "@phosphor-icons/react";
+import { MagnifyingGlass as Search } from "@phosphor-icons/react/ssr";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";

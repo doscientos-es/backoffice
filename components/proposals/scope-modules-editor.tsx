@@ -10,7 +10,7 @@ import {
   scopeModuleDurationLabel,
   type ScopeModule,
 } from "@/lib/proposals/scope";
-import { CaretDown as ChevronDown, CaretUp as ChevronUp, ClipboardText as ClipboardPaste, PlusIcon as Plus, Trash as Trash2, XIcon as X } from "@phosphor-icons/react";
+import { CaretDown as ChevronDown, CaretUp as ChevronUp, ClipboardText as ClipboardPaste, PlusIcon as Plus, Trash as Trash2, XIcon as X } from "@phosphor-icons/react/ssr";
 import { useEffect, useRef, useState } from "react";
 
 type Props = {

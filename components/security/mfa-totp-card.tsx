@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleNotch as Loader2, ShieldCheckIcon as ShieldCheck, DeviceMobile as Smartphone } from "@phosphor-icons/react";
+import { CircleNotch as Loader2, ShieldCheckIcon as ShieldCheck, DeviceMobile as Smartphone } from "@phosphor-icons/react/ssr";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle as CheckCircle2, CircleNotch as Loader2, ArrowCounterClockwise as RotateCcw, Trash as Trash2 } from "@phosphor-icons/react";
+import { CheckCircle as CheckCircle2, CircleNotch as Loader2, ArrowCounterClockwise as RotateCcw, Trash as Trash2 } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { sileo } from "sileo";

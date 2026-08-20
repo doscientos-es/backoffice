@@ -1,4 +1,4 @@
-import { Warning as AlertTriangle, CheckCircle as CheckCircle2, ClockIcon as Clock, DownloadIcon as Download, ShieldWarning as ShieldAlert } from "@phosphor-icons/react";
+import { Warning as AlertTriangle, CheckCircle as CheckCircle2, ClockIcon as Clock, DownloadIcon as Download, ShieldWarning as ShieldAlert } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
 import { ListPage } from "@/components/layout/list-page";
 import { StatCard } from "@/components/layout/stat-card";

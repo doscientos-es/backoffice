@@ -1,4 +1,4 @@
-import { Money as Banknote, CaretRight as ChevronRight, FilePlus as FilePlus2, FileText as FileSignature, FlameIcon as Flame, ArrowCounterClockwise as RotateCcw } from "@phosphor-icons/react";
+import { Money as Banknote, CaretRight as ChevronRight, FilePlus as FilePlus2, FileText as FileSignature, FlameIcon as Flame, ArrowCounterClockwise as RotateCcw } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

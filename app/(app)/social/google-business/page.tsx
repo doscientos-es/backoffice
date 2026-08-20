@@ -1,4 +1,4 @@
-import { ArrowUpRightIcon as ArrowUpRight, ChartBar as BarChart3, MapPinIcon as MapPin, StarIcon as Star, Warning as TriangleAlert } from "@phosphor-icons/react";
+import { ArrowUpRightIcon as ArrowUpRight, ChartBar as BarChart3, MapPinIcon as MapPin, StarIcon as Star, Warning as TriangleAlert } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";

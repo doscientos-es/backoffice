@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckIcon as Check } from "@phosphor-icons/react";
+import { CheckIcon as Check } from "@phosphor-icons/react/ssr";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

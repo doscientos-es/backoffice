@@ -18,7 +18,7 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowDownIcon as ArrowDown, ArrowRightIcon as ArrowRight, ArrowUpIcon as ArrowUp, ArrowsDownUp as ArrowUpDown, DownloadIcon as Download, PlusIcon as Plus } from "@phosphor-icons/react";
+import { ArrowDownIcon as ArrowDown, ArrowRightIcon as ArrowRight, ArrowUpIcon as ArrowUp, ArrowsDownUp as ArrowUpDown, DownloadIcon as Download, PlusIcon as Plus } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";

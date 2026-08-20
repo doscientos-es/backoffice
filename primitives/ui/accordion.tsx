@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { CaretDown as ChevronDownIcon, CaretUp as ChevronUpIcon } from "@phosphor-icons/react";
+import { CaretDown as ChevronDownIcon, CaretUp as ChevronUpIcon } from "@phosphor-icons/react/ssr";
 import { Accordion as AccordionPrimitive } from "radix-ui";
 import type * as React from "react";
 import { cn } from "../lib/utils";

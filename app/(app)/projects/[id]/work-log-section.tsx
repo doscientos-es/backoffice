@@ -1,6 +1,6 @@
 "use client";
 
-import { CaretLeft as ChevronLeft, CaretRight as ChevronRight, ClipboardText as ClipboardCopy, DownloadIcon as Download, PencilIcon as Pencil, Trash as Trash2 } from "@phosphor-icons/react";
+import { CaretLeft as ChevronLeft, CaretRight as ChevronRight, ClipboardText as ClipboardCopy, DownloadIcon as Download, PencilIcon as Pencil, Trash as Trash2 } from "@phosphor-icons/react/ssr";
 import { useState, useTransition } from "react";
 import { sileo } from "sileo";
 import { Button } from "@/components/ui/button";

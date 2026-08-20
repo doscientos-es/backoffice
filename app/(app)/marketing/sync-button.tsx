@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircleIcon as CheckCircle, ArrowsClockwise as RefreshCw, XCircleIcon as XCircle } from "@phosphor-icons/react";
+import { CheckCircleIcon as CheckCircle, ArrowsClockwise as RefreshCw, XCircleIcon as XCircle } from "@phosphor-icons/react/ssr";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

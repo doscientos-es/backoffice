@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRightIcon as ArrowRight, EyeIcon as Eye, CursorClick as MousePointerClick, PaperPlaneTilt as Send } from "@phosphor-icons/react";
+import { ArrowRightIcon as ArrowRight, EyeIcon as Eye, CursorClick as MousePointerClick, PaperPlaneTilt as Send } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { ListPage, type ListPageProps } from "@/components/layout/list-page";
 import { MemberLabel } from "@/components/ui/member-avatar";

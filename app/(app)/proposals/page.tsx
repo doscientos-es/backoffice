@@ -12,7 +12,7 @@ import {
   parseSortParam,
   parseStringParam,
 } from "@/lib/utils/search-params";
-import { PlusIcon as Plus } from "@phosphor-icons/react";
+import { PlusIcon as Plus } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
 import Link from "next/link";
 

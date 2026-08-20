@@ -1,4 +1,4 @@
-﻿import { CaretRight as ChevronRightIcon, DotsThree as MoreHorizontalIcon } from "@phosphor-icons/react";
+﻿import { CaretRight as ChevronRightIcon, DotsThree as MoreHorizontalIcon } from "@phosphor-icons/react/ssr";
 import { Slot } from "radix-ui";
 import type * as React from "react";
 import { cn } from "../lib/utils";

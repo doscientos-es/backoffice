@@ -1,6 +1,6 @@
 "use client";
 
-import { UploadIcon as Upload, XIcon as X } from "@phosphor-icons/react";
+import { UploadIcon as Upload, XIcon as X } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

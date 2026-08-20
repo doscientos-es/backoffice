@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { CaretDown as ChevronDown, ShieldWarning as ShieldAlert } from "@phosphor-icons/react";
+import { CaretDown as ChevronDown, ShieldWarning as ShieldAlert } from "@phosphor-icons/react/ssr";
 import type * as React from "react";
 import { cn } from "../lib/utils";
 import { Card, CardContent } from "./card";

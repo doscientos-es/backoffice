@@ -1,4 +1,4 @@
-import { CheckCircle as CheckCircle2, DownloadIcon as Download, FileTextIcon as FileText, PresentationIcon as Presentation, XCircleIcon as XCircle } from "@phosphor-icons/react";
+import { CheckCircle as CheckCircle2, DownloadIcon as Download, FileTextIcon as FileText, PresentationIcon as Presentation, XCircleIcon as XCircle } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";

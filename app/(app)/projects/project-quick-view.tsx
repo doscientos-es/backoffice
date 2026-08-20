@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRightIcon as ArrowUpRight, Buildings as Building2, ClockIcon as Clock, ArrowSquareOut as ExternalLink, Trash as Trash2, XIcon as X } from "@phosphor-icons/react";
+import { ArrowUpRightIcon as ArrowUpRight, Buildings as Building2, ClockIcon as Clock, ArrowSquareOut as ExternalLink, Trash as Trash2, XIcon as X } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { type ReactNode, useState, useTransition } from "react";
 import { sileo } from "sileo";

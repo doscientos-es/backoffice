@@ -1,6 +1,6 @@
 "use client";
 
-import { HeartIcon as Heart, Chat as MessageSquare, ArrowBendUpLeft as Reply } from "@phosphor-icons/react";
+import { HeartIcon as Heart, Chat as MessageSquare, ArrowBendUpLeft as Reply } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

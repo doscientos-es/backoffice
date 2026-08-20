@@ -1,4 +1,4 @@
-import { Tray as Inbox, PlusIcon as Plus, Gear as Settings } from "@phosphor-icons/react";
+import { Tray as Inbox, PlusIcon as Plus, Gear as Settings } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ListControls } from "@/components/layout/list-controls";

@@ -1,6 +1,6 @@
 "use client";
 
-import { ImageSquare as ImagePlus, CircleNotch as Loader2, UploadIcon as Upload, XIcon as X } from "@phosphor-icons/react";
+import { ImageSquare as ImagePlus, CircleNotch as Loader2, UploadIcon as Upload, XIcon as X } from "@phosphor-icons/react/ssr";
 import { useRef, useState } from "react";
 import type { MediaItem } from "@/lib/social/core";
 import { cn } from "@/lib/utils";

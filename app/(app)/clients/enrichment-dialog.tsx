@@ -1,6 +1,6 @@
 "use client";
 
-import { Buildings as Building2, FileTextIcon as FileText, MapPinIcon as MapPin, UserIcon as User } from "@phosphor-icons/react";
+import { Buildings as Building2, FileTextIcon as FileText, MapPinIcon as MapPin, UserIcon as User } from "@phosphor-icons/react/ssr";
 import type * as React from "react";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";

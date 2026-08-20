@@ -1,4 +1,4 @@
-import { ChartBar as BarChart3, ArrowSquareOut as ExternalLink, Chat as MessageSquare } from "@phosphor-icons/react";
+import { ChartBar as BarChart3, ArrowSquareOut as ExternalLink, Chat as MessageSquare } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BackLink } from "@/components/layout/back-link";

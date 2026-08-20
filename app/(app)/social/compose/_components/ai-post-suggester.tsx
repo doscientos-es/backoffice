@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleNotch as Loader2, Sparkle as Sparkles } from "@phosphor-icons/react";
+import { CircleNotch as Loader2, Sparkle as Sparkles } from "@phosphor-icons/react/ssr";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";

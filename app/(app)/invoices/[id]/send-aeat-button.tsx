@@ -1,6 +1,6 @@
 "use client";
 
-import { PaperPlaneTilt as Send } from "@phosphor-icons/react";
+import { PaperPlaneTilt as Send } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

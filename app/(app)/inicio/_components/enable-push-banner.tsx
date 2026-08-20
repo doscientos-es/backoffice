@@ -1,6 +1,6 @@
 "use client";
 
-import { BellRinging as BellRing, XIcon as X } from "@phosphor-icons/react";
+import { BellRinging as BellRing, XIcon as X } from "@phosphor-icons/react/ssr";
 import { useEffect, useState } from "react";
 import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";

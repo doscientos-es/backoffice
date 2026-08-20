@@ -10,7 +10,7 @@ import { isGoogleEnabled } from "@/lib/env";
 import type { MemberOption } from "@/lib/members/queries";
 import { MEETING_PROJECT_STATUSES } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
-import { ArrowRightIcon as ArrowRight, Clock as Clock3, ArrowSquareOut as ExternalLink } from "@phosphor-icons/react";
+import { ArrowRightIcon as ArrowRight, Clock as Clock3, ArrowSquareOut as ExternalLink } from "@phosphor-icons/react/ssr";
 import { LeadQuickActions } from "./quick-actions";
 
 function formatJourneyTime(value: string): string {

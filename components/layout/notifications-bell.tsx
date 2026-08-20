@@ -1,6 +1,6 @@
 "use client";
 
-import { At as AtSign, BellIcon as Bell, BellSlash as BellOff, BellRinging as BellRing, Checks as CheckCheck, CurrencyCircleDollar as CircleDollarSign, EyeIcon as Eye, File as FileCheck, FileXIcon as FileX, Chat as MessageSquare, UserPlusIcon as UserPlus, Lightning as Zap } from "@phosphor-icons/react";
+import { At as AtSign, BellIcon as Bell, BellSlash as BellOff, BellRinging as BellRing, Checks as CheckCheck, CurrencyCircleDollar as CircleDollarSign, EyeIcon as Eye, File as FileCheck, FileXIcon as FileX, Chat as MessageSquare, UserPlusIcon as UserPlus, Lightning as Zap } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {

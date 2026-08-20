@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useUndoableDelete } from "@/lib/hooks/use-undoable-delete";
-import { CopyIcon as Copy, DotsThree as MoreHorizontal, Trash as Trash2 } from "@phosphor-icons/react";
+import { CopyIcon as Copy, DotsThree as MoreHorizontal, Trash as Trash2 } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { deleteProposal, duplicateProposal, restoreProposal } from "../actions";

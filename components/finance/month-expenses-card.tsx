@@ -1,4 +1,4 @@
-import { ChartPie as PieChart, ReceiptIcon as Receipt, Scales as Scale } from "@phosphor-icons/react";
+import { ChartPie as PieChart, ReceiptIcon as Receipt, Scales as Scale } from "@phosphor-icons/react/ssr";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getMonthFinanceSummary } from "@/lib/dashboard/queries";

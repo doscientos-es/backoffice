@@ -1,6 +1,6 @@
 "use client";
 
-import { Warning as AlertTriangle } from "@phosphor-icons/react";
+import { Warning as AlertTriangle } from "@phosphor-icons/react/ssr";
 import { Button } from "@/components/ui/button";
 
 export default function SettingsError({

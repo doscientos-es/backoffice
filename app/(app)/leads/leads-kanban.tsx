@@ -11,7 +11,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { Warning as AlertTriangle, CalendarDots as CalendarClock, CalendarPlusIcon as CalendarPlus, Funnel as Filter, DotsSixVertical as GripVertical, ClockCounterClockwise as HistoryIcon, HourglassIcon as Hourglass, Envelope as Mail, ArrowsOut as Maximize2, ArrowsIn as Minimize2, PhoneIcon as Phone, PlusIcon as Plus, ArrowsClockwise as RefreshCw, UserIcon as User } from "@phosphor-icons/react";
+import { Warning as AlertTriangle, CalendarDots as CalendarClock, CalendarPlusIcon as CalendarPlus, Funnel as Filter, DotsSixVertical as GripVertical, ClockCounterClockwise as HistoryIcon, HourglassIcon as Hourglass, Envelope as Mail, ArrowsOut as Maximize2, ArrowsIn as Minimize2, PhoneIcon as Phone, PlusIcon as Plus, ArrowsClockwise as RefreshCw, UserIcon as User } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useOptimistic, useState, useTransition } from "react";

@@ -1,6 +1,6 @@
 "use client";
 
-import { GlobeIcon as Globe, ImageSquare as ImagePlus, CircleNotch as Loader2, MagnifyingGlass as Search, XIcon as X } from "@phosphor-icons/react";
+import { GlobeIcon as Globe, ImageSquare as ImagePlus, CircleNotch as Loader2, MagnifyingGlass as Search, XIcon as X } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { getBrowserClient } from "@/lib/supabase/browser";

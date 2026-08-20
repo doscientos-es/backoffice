@@ -1,4 +1,4 @@
-import { FileX as FileX2 } from "@phosphor-icons/react";
+import { FileX as FileX2 } from "@phosphor-icons/react/ssr";
 
 export const metadata = { title: "Documento no encontrado · doscientos" };
 

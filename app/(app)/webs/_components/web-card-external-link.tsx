@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowSquareOut as ExternalLink } from "@phosphor-icons/react";
+import { ArrowSquareOut as ExternalLink } from "@phosphor-icons/react/ssr";
 
 export function WebCardExternalLink({ url, name }: { url: string; name: string }) {
   return (

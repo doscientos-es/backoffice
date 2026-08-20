@@ -1,6 +1,6 @@
 "use client";
 
-import { FileTextIcon as FileText, ArrowsOut as Maximize2 } from "@phosphor-icons/react";
+import { FileTextIcon as FileText, ArrowsOut as Maximize2 } from "@phosphor-icons/react/ssr";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
 import {

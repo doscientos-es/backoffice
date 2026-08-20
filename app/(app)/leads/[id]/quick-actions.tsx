@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { CalendarDots as CalendarClock, HandIcon as Hand, ListChecks as ListTodo } from "@phosphor-icons/react";
+import { CalendarDots as CalendarClock, HandIcon as Hand, ListChecks as ListTodo } from "@phosphor-icons/react/ssr";
 import { type ReactNode, useState, useTransition } from "react";
 import { sileo } from "sileo";
 import {

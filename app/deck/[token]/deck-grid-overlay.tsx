@@ -1,6 +1,6 @@
 "use client";
 
-import { XIcon as X } from "@phosphor-icons/react";
+import { XIcon as X } from "@phosphor-icons/react/ssr";
 import { useEffect, useRef } from "react";
 import type { DeckSlide } from "./deck-slides";
 

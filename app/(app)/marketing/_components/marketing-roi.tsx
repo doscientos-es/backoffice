@@ -1,4 +1,4 @@
-import { SealCheck as BadgeCheck, CoinsIcon as Coins, HandCoinsIcon as HandCoins, PercentIcon as Percent, TargetIcon as Target, TrendUp as TrendingUp } from "@phosphor-icons/react";
+import { SealCheck as BadgeCheck, CoinsIcon as Coins, HandCoinsIcon as HandCoins, PercentIcon as Percent, TargetIcon as Target, TrendUp as TrendingUp } from "@phosphor-icons/react/ssr";
 import { StatCard } from "@/components/layout/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getMarketingRoi } from "@/lib/marketing/queries";

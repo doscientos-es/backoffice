@@ -1,4 +1,4 @@
-import { WarningCircle as CircleAlert, Clock as Clock3, InstagramLogo as Instagram, ChatCircle as MessageCircle } from "@phosphor-icons/react";
+import { WarningCircle as CircleAlert, Clock as Clock3, InstagramLogo as Instagram, ChatCircle as MessageCircle } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BackLink } from "@/components/layout/back-link";

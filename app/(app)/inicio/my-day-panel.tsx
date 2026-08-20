@@ -1,9 +1,8 @@
 "use client";
 
-import type { IconProps } from "@phosphor-icons/react";
-import { BellRinging as BellRing, CheckCircle as CheckCircle2, CaretRight as ChevronRight, FlameIcon as Flame, Tray as Inbox, ListChecks as ListTodo, Confetti as PartyPopper, PhoneIcon as Phone, UserCircle as UserRound } from "@phosphor-icons/react";
+import { BellRinging as BellRing, CheckCircle as CheckCircle2, CaretRight as ChevronRight, FlameIcon as Flame, Tray as Inbox, ListChecks as ListTodo, Confetti as PartyPopper, PhoneIcon as Phone, UserCircle as UserRound } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
-import type { ComponentType } from "react";
+import type { ComponentType, SVGProps } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { claimLead } from "@/app/(app)/leads/actions";
 import { Badge } from "@/components/ui/badge";
@@ -35,7 +34,7 @@ function WeekStatsStrip({ weekStats }: { weekStats: WeekStats }) {
   const { tasksCompleted, leadsAttended, streakDays } = weekStats;
   if (tasksCompleted === 0 && leadsAttended === 0 && streakDays === 0) return null;
 
-  const items: { key: string; icon: ComponentType<IconProps>; tone: string; label: string }[] = [];
+  const items: { key: string; icon: ComponentType<SVGProps<SVGSVGElement>>; tone: string; label: string }[] = [];
   if (tasksCompleted > 0)
     items.push({
       key: "tasks",

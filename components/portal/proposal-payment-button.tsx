@@ -1,6 +1,6 @@
 "use client";
 
-import { CreditCardIcon as CreditCard, CircleNotch as Loader2 } from "@phosphor-icons/react";
+import { CreditCardIcon as CreditCard, CircleNotch as Loader2 } from "@phosphor-icons/react/ssr";
 import { useTransition } from "react";
 import { initiateProposalPayment } from "@/app/p/proposal/[token]/actions";
 import { Button } from "@/components/ui/button";

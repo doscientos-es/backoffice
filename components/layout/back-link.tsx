@@ -1,4 +1,4 @@
-import { CaretLeft as ChevronLeft } from "@phosphor-icons/react";
+import { CaretLeft as ChevronLeft } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 
 export type BackLinkProps = {

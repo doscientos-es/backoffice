@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowsClockwise as RefreshCw } from "@phosphor-icons/react";
+import { ArrowsClockwise as RefreshCw } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { sileo } from "sileo";

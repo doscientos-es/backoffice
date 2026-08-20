@@ -1,4 +1,4 @@
-import { Warning as AlertTriangle, ClockIcon as Clock, GlobeIcon as Globe, HardDrives as Server, ShieldWarning as ShieldAlert } from "@phosphor-icons/react";
+import { Warning as AlertTriangle, ClockIcon as Clock, GlobeIcon as Globe, HardDrives as Server, ShieldWarning as ShieldAlert } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { Suspense } from "react";
 import { HOSTING_PROVIDER_LABELS } from "@/lib/schemas/web-project";

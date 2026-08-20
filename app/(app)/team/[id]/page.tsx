@@ -1,4 +1,4 @@
-import { Suitcase as BriefcaseBusiness, CheckSquareIcon as CheckSquare, Clock as Clock3, GithubLogo as Github, Envelope as Mail, PhoneIcon as Phone, UsersIcon as Users } from "@phosphor-icons/react";
+import { Suitcase as BriefcaseBusiness, CheckSquareIcon as CheckSquare, Clock as Clock3, GithubLogo as Github, Envelope as Mail, PhoneIcon as Phone, UsersIcon as Users } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";

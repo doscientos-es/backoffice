@@ -1,4 +1,4 @@
-import { Warning as TriangleAlert } from "@phosphor-icons/react";
+import { Warning as TriangleAlert } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
 import { ListControls } from "@/components/layout/list-controls";
 import { PageHeader } from "@/components/layout/page-header";

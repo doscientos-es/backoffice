@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRightIcon as ArrowUpRight, FileTextIcon as FileText } from "@phosphor-icons/react";
+import { ArrowUpRightIcon as ArrowUpRight, FileTextIcon as FileText } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

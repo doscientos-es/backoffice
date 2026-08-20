@@ -1,4 +1,4 @@
-import { HandIcon as Hand } from "@phosphor-icons/react";
+import { HandIcon as Hand } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
 import {
   AccountsReceivableSkeleton,

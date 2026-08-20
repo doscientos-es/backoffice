@@ -1,4 +1,4 @@
-import { DownloadIcon as Download } from "@phosphor-icons/react";
+import { DownloadIcon as Download } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";

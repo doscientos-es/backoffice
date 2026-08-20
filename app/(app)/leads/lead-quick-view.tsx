@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRightIcon as ArrowUpRight, Buildings as Building2, CalendarPlusIcon as CalendarPlus, ClockIcon as Clock, HandIcon as Hand, CircleNotch as Loader2, Envelope as Mail, PhoneIcon as Phone, TimerIcon as Timer, Trash as Trash2, Warning as TriangleAlert, UserCircle as UserRound, UsersIcon as Users, WalletIcon as Wallet, WrenchIcon as Wrench, XIcon as X } from "@phosphor-icons/react";
+import { ArrowUpRightIcon as ArrowUpRight, Buildings as Building2, CalendarPlusIcon as CalendarPlus, ClockIcon as Clock, HandIcon as Hand, CircleNotch as Loader2, Envelope as Mail, PhoneIcon as Phone, TimerIcon as Timer, Trash as Trash2, Warning as TriangleAlert, UserCircle as UserRound, UsersIcon as Users, WalletIcon as Wallet, WrenchIcon as Wrench, XIcon as X } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useState, useTransition } from "react";

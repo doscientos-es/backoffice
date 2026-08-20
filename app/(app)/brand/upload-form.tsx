@@ -1,6 +1,6 @@
 "use client";
 
-import { ImageSquare as ImageUp, CircleNotch as Loader2 } from "@phosphor-icons/react";
+import { ImageSquare as ImageUp, CircleNotch as Loader2 } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";

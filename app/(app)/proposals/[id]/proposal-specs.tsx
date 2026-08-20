@@ -1,6 +1,6 @@
 "use client";
 
-import { EyeIcon as Eye, EyeSlash as EyeOff, PencilIcon as Pencil, FloppyDisk as Save, Sparkle as Sparkles, Trash as Trash2 } from "@phosphor-icons/react";
+import { EyeIcon as Eye, EyeSlash as EyeOff, PencilIcon as Pencil, FloppyDisk as Save, Sparkle as Sparkles, Trash as Trash2 } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { AiNotice } from "@/components/ui/ai-notice";

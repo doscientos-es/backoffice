@@ -1,7 +1,6 @@
-import type { IconProps } from "@phosphor-icons/react";
-import { ArrowDownRightIcon as ArrowDownRight, ArrowUpRightIcon as ArrowUpRight, MinusIcon as Minus } from "@phosphor-icons/react";
+import { ArrowDownRightIcon as ArrowDownRight, ArrowUpRightIcon as ArrowUpRight, MinusIcon as Minus } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
-import type { ComponentType } from "react";
+import type { ComponentType, SVGProps } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Trend } from "@/lib/dashboard/types";
 import { cn } from "@/lib/utils";
@@ -19,7 +18,7 @@ export type StatCardProps = {
   label: string;
   value: number | string;
   tone?: StatTone;
-  icon?: ComponentType<IconProps>;
+  icon?: ComponentType<SVGProps<SVGSVGElement>>;
   hint?: string;
   href?: string;
   trend?: Trend | null;

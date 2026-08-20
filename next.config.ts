@@ -8,6 +8,11 @@ const config: NextConfig = {
   transpilePackages: ["@doscientos/ui"],
   turbopack: {
     root: __dirname,
+    // Phosphor's default entrypoint uses React Context. Route it to its RSC-safe
+    // implementation so icons can render from both Server and Client Components.
+    resolveAlias: {
+      "@phosphor-icons/react": "@phosphor-icons/react/ssr",
+    },
   },
   // These packages use Node.js runtime APIs and bundled filesystem resources;
   // keep them external to avoid Turbopack resolving those resources at build time.

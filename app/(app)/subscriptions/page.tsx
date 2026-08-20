@@ -1,4 +1,4 @@
-import { FileTextIcon as FileText, PlusIcon as Plus } from "@phosphor-icons/react";
+import { FileTextIcon as FileText, PlusIcon as Plus } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
 import Link from "next/link";
 
