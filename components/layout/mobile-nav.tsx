@@ -80,20 +80,20 @@ export function MobileNav({
                     MODO DEMO
                   </Badge>
                 ) : null}
-                <Badge
-                  variant={
-                    verifactuMode === "PROD"
-                      ? "success"
-                      : verifactuMode === "TEST"
-                        ? "warning"
-                        : "neutral"
-                  }
-                  className="h-4 px-1 text-[9px] font-bold uppercase ml-1"
-                >
-                  AEAT {verifactuMode}
-                </Badge>
                 <div className="flex items-center gap-1">
                   <span className="px-2 text-xs text-muted-foreground -mr-1">v{version}</span>
+                  <Badge
+                    variant={
+                      verifactuMode === "PROD"
+                        ? "success"
+                        : verifactuMode === "TEST"
+                          ? "warning"
+                          : "neutral"
+                    }
+                    className="h-4 px-1 text-[9px] font-bold uppercase"
+                  >
+                    AEAT {verifactuMode}
+                  </Badge>
                   <ErrorBoundary fallback={() => null}>
                     <NotificationsBell memberId={user.id} />
                   </ErrorBoundary>
