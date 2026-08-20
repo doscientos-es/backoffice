@@ -6,13 +6,13 @@ import type { MemberRole } from "@/lib/auth";
 import { getBrowserClient } from "@/lib/supabase/browser";
 import { MfaChallengeDialog } from "./mfa-challenge-dialog";
 
-type Props = { role: MemberRole };
+type Props = { role: MemberRole; mfaVerified: boolean };
 
 /** Challenges administrative sessions in-place before they use protected areas. */
-export function MfaSessionGate({ role }: Props) {
+export function MfaSessionGate({ role, mfaVerified }: Props) {
   const pathname = usePathname();
   const router = useRouter();
-  const [verifiedPath, setVerifiedPath] = useState<string | null>(null);
+  const [verifiedPath, setVerifiedPath] = useState<string | null>(mfaVerified ? pathname : null);
   const requiresMfa =
     (role === "owner" || role === "admin") && pathname !== "/settings/security";
   const open = requiresMfa && verifiedPath !== pathname;

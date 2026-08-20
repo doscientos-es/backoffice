@@ -2,7 +2,7 @@ import { Warning as TriangleAlert } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
 import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";
-import { requireRole } from "@/lib/auth";
+import { requirePageRole } from "@/lib/auth";
 import { availablePlatforms } from "@/lib/social/service";
 import { ComposeForm } from "./_components/compose-form";
 
@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Nueva publicación · Social" };
 export const dynamic = "force-dynamic";
 
 export default async function ComposePage() {
-  await requireRole(["owner", "admin", "member"]);
+  await requirePageRole(["owner", "admin", "member"]);
   const available = availablePlatforms();
 
   return (

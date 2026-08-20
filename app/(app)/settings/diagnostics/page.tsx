@@ -2,7 +2,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { PasskeyStatusCard } from "@/components/security/passkey-status-card";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { requireRole } from "@/lib/auth";
+import { requirePageRole } from "@/lib/auth";
 import { getSystemStatus } from "@/lib/diagnostics/system-status";
 import { hasRegisteredPasskey } from "@/lib/security/webauthn";
 import { getVerifactuDiagnosticGate } from "@/lib/verifactu/diagnostics";
@@ -12,7 +12,7 @@ export const metadata = { title: "Diagnóstico · Ajustes · doscientos" };
 export const dynamic = "force-dynamic";
 
 export default async function DiagnosticsSettingsPage() {
-  const user = await requireRole(["owner", "admin"]);
+  const user = await requirePageRole(["owner", "admin"]);
   const status = getSystemStatus();
   const passkeyConfigured = await hasRegisteredPasskey(user.id);
   const verifactuGate = await getVerifactuDiagnosticGate();

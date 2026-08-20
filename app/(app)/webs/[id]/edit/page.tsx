@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { DangerZone } from "@/components/ui/danger-zone";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { requireRole } from "@/lib/auth";
+import { requirePageRole } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import { getWebProject } from "@/lib/webs/queries";
 import { VerifiedWebProjectForm } from "../../_components/verified-web-project-form";
@@ -24,7 +24,7 @@ export async function generateMetadata({
 }
 
 export default async function EditWebPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireRole(["owner", "admin"]);
+  await requirePageRole(["owner", "admin"]);
   const { id } = await params;
   const supabase = await createServerClient();
 

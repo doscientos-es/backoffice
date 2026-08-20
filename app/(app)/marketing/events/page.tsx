@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { requireRole } from "@/lib/auth";
+import { requirePageRole } from "@/lib/auth";
 import { groupIntoJourneys, type VisitorJourney } from "@/lib/conversion-events/journeys";
 import { eventLabel, stepLabel } from "@/lib/conversion-events/labels";
 import { type ConversionEventRow, listConversionEvents } from "@/lib/conversion-events/queries";
@@ -109,11 +109,10 @@ function JourneyCard({ journey }: { journey: VisitorJourney }) {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-3">
             <span
-              className={`flex size-9 shrink-0 items-center justify-center rounded-full ${
-                converted
+              className={`flex size-9 shrink-0 items-center justify-center rounded-full ${converted
                   ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                   : "bg-muted text-muted-foreground"
-              }`}
+                }`}
             >
               {converted ? (
                 <UserCheck className="size-4" aria-hidden />
@@ -227,7 +226,7 @@ export default async function ConversionEventsPage({
 }: {
   searchParams: SearchParams;
 }) {
-  await requireRole(["owner", "admin"]);
+  await requirePageRole(["owner", "admin"]);
   const sp = await searchParams;
   const eventName = param(sp.event);
   const visitorId = param(sp.visitor);

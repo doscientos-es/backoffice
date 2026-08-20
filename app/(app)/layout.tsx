@@ -6,12 +6,14 @@ import { QuickCreateButton } from "@/components/layout/quick-create-button";
 import { ShortcutsDialog } from "@/components/layout/shortcuts-dialog";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MfaSessionGate } from "@/components/security/mfa-session-gate";
-import { requireUser } from "@/lib/auth";
+import { hasAal2Session, requireUser } from "@/lib/auth";
 import { isPublicDemoMode } from "@/lib/demo";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
   const demoMode = isPublicDemoMode();
+  const mfaVerified =
+    user.role === "owner" || user.role === "admin" ? await hasAal2Session() : true;
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -25,7 +27,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <ShortcutsDialog />
       <QuickCreateButton />
       <CallReminderWatcher />
-      <MfaSessionGate role={user.role} />
+      <MfaSessionGate role={user.role} mfaVerified={mfaVerified} />
     </div>
   );
 }

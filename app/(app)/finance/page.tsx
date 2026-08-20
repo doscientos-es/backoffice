@@ -3,7 +3,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { SectionBoundary } from "@/components/ui/error-boundary";
-import { requireRole } from "@/lib/auth";
+import { requirePageRole } from "@/lib/auth";
 import { financeRangeToDates, parseFinanceRange } from "@/lib/finance/range";
 import { FinanceDetails } from "./_components/finance-details";
 import { FinanceKpis } from "./_components/finance-kpis";
@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 type SearchParams = Promise<{ range?: string }>;
 
 export default async function FinancePage({ searchParams }: { searchParams: SearchParams }) {
-  await requireRole(["owner", "admin"]);
+  await requirePageRole(["owner", "admin"]);
   const sp = await searchParams;
   const range = parseFinanceRange(sp.range);
   const { since, until, label: rangeLabel } = financeRangeToDates(range);

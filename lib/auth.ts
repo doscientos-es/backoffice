@@ -140,6 +140,18 @@ export async function requireAal2(): Promise<void> {
   if (error || data?.currentLevel !== "aal2") redirect("/settings/security");
 }
 
+/** Returns whether the current session has completed its MFA challenge. */
+export async function hasAal2Session(): Promise<boolean> {
+  const supabase = await createServerClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel(
+    session?.access_token,
+  );
+  return !error && data?.currentLevel === "aal2";
+}
+
 /**
  * Returns true only for roles that can see billing/financial data (owner, admin).
  * members and viewers should not see revenue, expenses, or accounts-receivable figures.

@@ -6,6 +6,14 @@ vi.mock("@doscientos/verifactu", () => ({
   buildQrUrl: ({ invoiceNumber }: { invoiceNumber: string }) =>
     `https://example.test/qr/${invoiceNumber}`,
 }));
+vi.mock("@/lib/verifactu/config", () => ({
+  verifactuInvoiceConfigFromEnv: () => ({
+    environment: "mock",
+    certificate: { p12Base64: "", password: "" },
+    software: {},
+    appUrl: "https://backoffice.example.test",
+  }),
+}));
 
 function makeInput(overrides: Partial<BuildInvoicePdfInput["invoice"]> = {}): BuildInvoicePdfInput {
   return {

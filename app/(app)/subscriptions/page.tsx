@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ListPage } from "@/components/layout/list-page";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { requireRole } from "@/lib/auth";
+import { requirePageRole } from "@/lib/auth";
 import {
   SUBSCRIPTION_BILLING_CYCLE,
   SUBSCRIPTION_STATUS,
@@ -43,7 +43,7 @@ export default async function SubscriptionsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await requireRole(["owner", "admin"]);
+  await requirePageRole(["owner", "admin"]);
   const sp = await searchParams;
 
   const q = parseStringParam(sp, "q");

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
-import { requireRole } from "@/lib/auth";
+import { requirePageRole } from "@/lib/auth";
 import { getExpenseDetail, getExpenseVendorSuggestions } from "@/lib/finance/queries";
 import { createServerClient } from "@/lib/supabase/server";
 import { NewExpenseForm } from "./new-expense-form";
@@ -14,7 +14,7 @@ export default async function NewExpensePage({
 }: {
   searchParams: Promise<{ from?: string }>;
 }) {
-  await requireRole(["owner", "admin"]);
+  await requirePageRole(["owner", "admin"]);
   const { from } = await searchParams;
 
   const supabase = await createServerClient();
@@ -46,21 +46,21 @@ export default async function NewExpensePage({
 
   const defaults = sourceExpense?.expense
     ? {
-        vendor: sourceExpense.expense.vendor,
-        description: sourceExpense.expense.description,
-        category: sourceExpense.expense.category,
-        status: sourceExpense.expense.status,
-        recurrence: sourceExpense.expense.recurrence,
-        currency: sourceExpense.expense.currency,
-        subtotal: sourceExpense.expense.subtotal,
-        tax_rate: sourceExpense.expense.tax_rate,
-        vendor_nif: sourceExpense.expense.vendor_nif,
-        invoice_reference: null, // don't copy invoice ref
-        project_id: sourceExpense.expense.project_id,
-        notes: sourceExpense.expense.notes,
-        payment_source: sourceExpense.expense.payment_source,
-        paid_by_member_id: sourceExpense.expense.paid_by_member_id,
-      }
+      vendor: sourceExpense.expense.vendor,
+      description: sourceExpense.expense.description,
+      category: sourceExpense.expense.category,
+      status: sourceExpense.expense.status,
+      recurrence: sourceExpense.expense.recurrence,
+      currency: sourceExpense.expense.currency,
+      subtotal: sourceExpense.expense.subtotal,
+      tax_rate: sourceExpense.expense.tax_rate,
+      vendor_nif: sourceExpense.expense.vendor_nif,
+      invoice_reference: null, // don't copy invoice ref
+      project_id: sourceExpense.expense.project_id,
+      notes: sourceExpense.expense.notes,
+      payment_source: sourceExpense.expense.payment_source,
+      paid_by_member_id: sourceExpense.expense.paid_by_member_id,
+    }
     : undefined;
 
   return (

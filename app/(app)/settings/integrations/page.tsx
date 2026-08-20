@@ -1,13 +1,13 @@
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { requireRole } from "@/lib/auth";
+import { requirePageRole } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import { GmailSyncForm } from "./gmail-sync-form";
 
 export const metadata = { title: "Integraciones · Ajustes · doscientos" };
 
 export default async function IntegrationsSettingsPage() {
-  await requireRole(["owner", "admin"]);
+  await requirePageRole(["owner", "admin"]);
   const supabase = await createServerClient();
   const { data: settings } = await supabase
     .from("settings")

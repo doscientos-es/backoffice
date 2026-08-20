@@ -2,7 +2,7 @@ import { BackupsCard } from "@/app/(app)/webs/_components/backups-card";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { requireRole } from "@/lib/auth";
+import { requirePageRole } from "@/lib/auth";
 import { BACKOFFICE_BACKUP_SLUG, getBackofficeBackupSetup } from "@/lib/backups/backoffice";
 import { serverEnv } from "@/lib/env";
 import { EXPORTABLE_TABLES } from "@/lib/exports/data";
@@ -17,7 +17,7 @@ function labelForTable(table: string) {
 }
 
 export default async function BackupSettingsPage() {
-  await requireRole(["owner", "admin"]);
+  await requirePageRole(["owner", "admin"]);
   const env = serverEnv();
   const setup = getBackofficeBackupSetup(env);
   const archiveConfigured = isFileBrowserConfigured();

@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
-import { type MemberRole, requireRole } from "@/lib/auth";
+import { type MemberRole, requirePageRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, memberAvatarUrl, relativeTime } from "@/lib/utils";
@@ -62,7 +62,7 @@ type MemberRow = {
 };
 
 export default async function TeamSettingsPage() {
-  const actor = await requireRole(["owner", "admin"]);
+  const actor = await requirePageRole(["owner", "admin"]);
   const [supabase, admin] = await Promise.all([
     createServerClient(),
     Promise.resolve(createAdminClient()),
@@ -222,7 +222,7 @@ export default async function TeamSettingsPage() {
                             <span
                               className={
                                 Date.now() - new Date(m.last_sign_in_at).getTime() >
-                                INACTIVE_THRESHOLD_MS
+                                  INACTIVE_THRESHOLD_MS
                                   ? "text-warning font-medium"
                                   : "text-(--text-secondary)"
                               }
