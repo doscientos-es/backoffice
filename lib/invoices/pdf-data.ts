@@ -201,11 +201,11 @@ export async function buildInvoicePdfData(input: BuildInvoicePdfInput): Promise<
       }) || null,
     company: settings
       ? {
-        name: settings.company_name,
-        nif: settings.company_nif,
-        address: settings.company_address || null,
-        iban: settings.iban,
-      }
+          name: settings.company_name,
+          nif: settings.company_nif,
+          address: settings.company_address || null,
+          iban: settings.iban,
+        }
       : null,
     items: normalisedItems,
     subtotal: Number(invoice.subtotal ?? 0),

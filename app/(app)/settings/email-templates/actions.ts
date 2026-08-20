@@ -63,7 +63,7 @@ export async function createEmailTemplate(
     .single();
 
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/settings/email-templates");
+  revalidatePath("/settings/email");
   return { ok: true, id: data.id as string };
 }
 
@@ -84,7 +84,7 @@ export async function updateEmailTemplate(
     .eq("id", id);
 
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/settings/email-templates");
+  revalidatePath("/settings/email");
   return { ok: true };
 }
 
@@ -100,7 +100,7 @@ export async function toggleEmailTemplateActive(
     .eq("id", id);
 
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/settings/email-templates");
+  revalidatePath("/settings/email");
   return { ok: true };
 }
 
@@ -112,6 +112,6 @@ export async function deleteEmailTemplate(
   const { error } = await supabase.from("email_templates").delete().eq("id", id);
 
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/settings/email-templates");
+  revalidatePath("/settings/email");
   return { ok: true };
 }

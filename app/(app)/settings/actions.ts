@@ -211,7 +211,7 @@ export async function updateGmailSyncMailboxes(
     .eq("id", 1);
   if (error) return { ok: false, error: error.message };
 
-  revalidatePath("/settings/integrations");
+  revalidatePath("/settings/email");
   revalidatePath("/leads");
   return { ok: true };
 }

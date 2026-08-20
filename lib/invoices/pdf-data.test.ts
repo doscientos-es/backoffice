@@ -1,5 +1,5 @@
-import type { BuildInvoicePdfInput } from "@/lib/invoices/pdf-data";
 import { describe, expect, it, vi } from "vitest";
+import type { BuildInvoicePdfInput } from "@/lib/invoices/pdf-data";
 
 vi.mock("@doscientos/verifactu", () => ({
   buildQrDataUrl: (url: string) => `data:image/png;base64,${Buffer.from(url).toString("base64")}`,

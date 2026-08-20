@@ -3,9 +3,9 @@
 import {
   ActivityIcon as Activity,
   Buildings as Building2,
+  CaretDownIcon as ChevronDown,
   Database as DatabaseBackup,
   Envelope as Mail,
-  Plug as PlugZap,
   ShieldIcon as Shield,
   TargetIcon as Target,
   UserIcon as User,
@@ -13,6 +13,15 @@ import {
 } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
 
 type Item = {
@@ -22,101 +31,162 @@ type Item = {
   requiresAdmin: boolean;
 };
 
-const ITEMS: readonly Item[] = [
+type Group = {
+  label: string;
+  items: readonly Item[];
+};
+
+const GROUPS: readonly Group[] = [
   {
-    href: "/settings/profile",
-    label: "Perfil",
-    icon: User,
-    requiresAdmin: false,
+    label: "Mi cuenta",
+    items: [
+      { href: "/settings/profile", label: "Perfil", icon: User, requiresAdmin: false },
+      { href: "/settings/security", label: "Seguridad", icon: Shield, requiresAdmin: false },
+    ],
   },
   {
-    href: "/settings/security",
-    label: "Seguridad",
-    icon: Shield,
-    requiresAdmin: false,
+    label: "Organización",
+    items: [
+      { href: "/settings/company", label: "Empresa", icon: Building2, requiresAdmin: true },
+      { href: "/settings/team", label: "Equipo", icon: Users, requiresAdmin: true },
+      { href: "/settings/goals", label: "Objetivos", icon: Target, requiresAdmin: true },
+    ],
   },
   {
-    href: "/settings/company",
-    label: "Empresa",
-    icon: Building2,
-    requiresAdmin: true,
+    label: "Comunicación",
+    items: [{ href: "/settings/email", label: "Correo", icon: Mail, requiresAdmin: true }],
   },
   {
-    href: "/settings/team",
-    label: "Equipo",
-    icon: Users,
-    requiresAdmin: true,
+    label: "Sistema",
+    items: [
+      {
+        href: "/settings/backups",
+        label: "Copias y exportaciones",
+        icon: DatabaseBackup,
+        requiresAdmin: true,
+      },
+      { href: "/settings/diagnostics", label: "Diagnóstico", icon: Activity, requiresAdmin: true },
+    ],
   },
   {
-    href: "/settings/goals",
-    label: "Metas",
-    icon: Target,
-    requiresAdmin: true,
-  },
-  {
-    href: "/settings/integrations",
-    label: "Integraciones",
-    icon: PlugZap,
-    requiresAdmin: true,
-  },
-  {
-    href: "/settings/email-templates",
-    label: "Plantillas email",
-    icon: Mail,
-    requiresAdmin: true,
-  },
-  {
-    href: "/settings/backups",
-    label: "Copias",
-    icon: DatabaseBackup,
-    requiresAdmin: true,
-  },
-  {
-    href: "/settings/diagnostics",
-    label: "Diagnóstico",
-    icon: Activity,
-    requiresAdmin: true,
-  },
-  {
-    href: "/settings/legal",
-    label: "Legal / Verifactu",
-    icon: Shield,
-    requiresAdmin: false,
+    label: "Cumplimiento",
+    items: [
+      { href: "/settings/legal", label: "Legal y Verifactu", icon: Shield, requiresAdmin: false },
+    ],
   },
 ] as const;
 
+function isActive(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function visibleGroups(canManageTeam: boolean) {
+  return GROUPS.flatMap((group) => {
+    const items = group.items.filter((item) => !item.requiresAdmin || canManageTeam);
+    return items.length > 0 ? [{ ...group, items }] : [];
+  });
+}
+
+function SettingsLinks({
+  groups,
+  pathname,
+  onNavigate,
+}: {
+  groups: ReturnType<typeof visibleGroups>;
+  pathname: string;
+  onNavigate?: () => void;
+}) {
+  return (
+    <>
+      {groups.map((group) => (
+        <section key={group.label} aria-labelledby={`settings-group-${group.label}`}>
+          <h2
+            id={`settings-group-${group.label}`}
+            className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70"
+          >
+            {group.label}
+          </h2>
+          <div className="flex flex-col gap-0.5">
+            {group.items.map(({ href, label, icon: Icon }) => {
+              const active = isActive(pathname, href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  aria-current={active ? "page" : undefined}
+                  onClick={onNavigate}
+                  className={cn(
+                    "group relative flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors",
+                    "before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-r-full before:bg-primary before:transition-opacity",
+                    active
+                      ? "bg-secondary font-medium text-foreground before:opacity-100"
+                      : "text-muted-foreground before:opacity-0 hover:bg-secondary/60 hover:text-foreground",
+                  )}
+                >
+                  <Icon
+                    className={cn(
+                      "size-4 shrink-0 transition-colors",
+                      active ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
+                    )}
+                  />
+                  <span className="truncate">{label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      ))}
+    </>
+  );
+}
+
 export function SettingsNav({ canManageTeam }: { canManageTeam: boolean }) {
   const pathname = usePathname();
-  const items = ITEMS.filter((i) => !i.requiresAdmin || canManageTeam);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const groups = visibleGroups(canManageTeam);
+  const activeItem = groups
+    .flatMap((group) => group.items)
+    .find((item) => isActive(pathname, item.href));
 
   return (
-    <nav aria-label="Ajustes" className="w-full overflow-x-auto pb-1 scroll-fade no-scrollbar">
-      <div className="flex w-max min-w-full items-center gap-1 rounded-lg border border-border bg-card p-1">
-        {items.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || pathname.startsWith(`${href}/`);
-          return (
-            <Link
-              key={href}
-              href={href}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "group inline-flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm transition-colors",
-                active
-                  ? "bg-secondary font-medium text-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground",
-              )}
+    <>
+      <nav
+        aria-label="Secciones de ajustes"
+        className="sticky top-0 hidden w-52 shrink-0 flex-col gap-5 lg:flex"
+      >
+        <SettingsLinks groups={groups} pathname={pathname} />
+      </nav>
+
+      <div className="lg:hidden">
+        <Drawer open={mobileOpen} onOpenChange={setMobileOpen}>
+          <DrawerTrigger asChild>
+            <button
+              type="button"
+              aria-label="Cambiar sección de ajustes"
+              className="flex w-full items-center justify-between rounded-lg border border-border bg-card px-3 py-2.5 text-left text-sm shadow-sm transition-colors hover:bg-secondary/60"
             >
-              <Icon
-                className={cn(
-                  "size-3.5 shrink-0 transition-colors",
-                  active ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
-                )}
+              <span className="text-muted-foreground">Ajustes</span>
+              <span className="flex items-center gap-2 font-medium text-foreground">
+                {activeItem?.label ?? "Secciones"}
+                <ChevronDown className="size-4 text-muted-foreground" aria-hidden />
+              </span>
+            </button>
+          </DrawerTrigger>
+          <DrawerContent className="max-h-[80svh] overflow-y-auto">
+            <DrawerHeader>
+              <DrawerTitle>Ajustes</DrawerTitle>
+              <DrawerDescription>Elige la sección que quieres gestionar.</DrawerDescription>
+            </DrawerHeader>
+            <nav aria-label="Secciones de ajustes" className="flex flex-col gap-5 px-3 pb-6">
+              <SettingsLinks
+                groups={groups}
+                pathname={pathname}
+                onNavigate={() => setMobileOpen(false)}
               />
-              <span>{label}</span>
-            </Link>
-          );
-        })}
+            </nav>
+          </DrawerContent>
+        </Drawer>
       </div>
-    </nav>
+    </>
   );
 }
