@@ -176,12 +176,7 @@ export const recordInvoicePayment = defineAction<typeof RecordInvoicePaymentInpu
   schema: RecordInvoicePaymentInput,
   roles: ["owner", "admin"],
   revalidate: (_p, input) => [`/invoices/${input.id}`, "/invoices", "/finance", "/inicio"],
-  handler: async (input, { user }) => {
-    await consumeUserVerification(
-      user.id,
-      userVerificationScope("invoice.payment.record", `invoice:${input.id}`),
-    );
-
+  handler: async (input) => {
     const admin = createAdminClient();
     const { data: invoice, error: invoiceError } = await admin
       .from("invoices")
