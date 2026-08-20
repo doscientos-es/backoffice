@@ -61,6 +61,12 @@ describe("ListControls avatar filter", () => {
     expect(navigation.replace).toHaveBeenCalledWith("/leads", { scroll: false });
   });
 
+  it("leaves space for the search icon in the default presentation", () => {
+    render(<ListControls searchPlaceholder="Buscar leads" />);
+
+    expect(screen.getByPlaceholderText("Buscar leads").className).toContain("pl-9");
+  });
+
   it("moves secondary filters into a popover in panel mode", () => {
     navigation.params = new URLSearchParams("status=new");
     render(<ListControls filters={[FILTER, STATUS_FILTER]} presentation="panel" />);

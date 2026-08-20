@@ -130,14 +130,13 @@ export default async function LeadsPage({
         members={members}
         senderName={user.name}
         title="Leads"
-        description="Oportunidades comerciales sin contrato firmado."
         actions={actions}
         error={error ?? undefined}
         empty={hasFilters ? "Sin coincidencias." : "Aún no hay leads."}
         emptyAction={<LeadCreateDialog />}
         searchKey="q"
         searchPlaceholder="Buscar por nombre, empresa o email…"
-        controlsPresentation="panel"
+        controlsPresentation="default"
         filters={[
           { key: "status", label: "Estado", options: STATUS_FILTER_OPTIONS },
           { key: "source", label: "Origen", options: SOURCE_FILTER_OPTIONS },
@@ -171,16 +170,12 @@ export default async function LeadsPage({
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-6 overflow-hidden">
-      <PageHeader
-        title="Leads"
-        description="Oportunidades comerciales sin contrato firmado."
-        actions={actions}
-      />
+      <PageHeader title="Leads" actions={actions} />
 
       <ListControls
         searchKey="q"
         searchPlaceholder="Buscar por nombre, empresa, email o teléfono…"
-        presentation="panel"
+        presentation="default"
         filters={[
           { key: "source", label: "Origen", options: SOURCE_FILTER_OPTIONS },
           { key: "solution", label: "Necesidad", options: SOLUTION_FILTER_OPTIONS },

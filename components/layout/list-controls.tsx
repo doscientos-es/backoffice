@@ -389,7 +389,7 @@ export function ListControls({
                 "text-sm",
                 isPanel
                   ? "h-9 rounded-lg border-border bg-background pl-8 pr-8 shadow-xs focus-visible:ring-primary/25"
-                  : "h-8 pl-7",
+                  : "h-8 pl-9",
               )}
             />
             {isPanel && q ? (
