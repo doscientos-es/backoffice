@@ -45,6 +45,7 @@ import {
   markAsUncollectible,
   restoreInvoice,
   updateInvoiceStatus,
+  recordInvoicePayment,
 } from "../actions";
 import {
   type InvoiceIssuancePhase,
@@ -84,6 +85,8 @@ interface Props {
     is_rectification?: boolean;
     /** Whether this invoice has already been marked as uncollectible. */
     is_uncollectible?: boolean;
+    total: number;
+    amountPaid: number;
   };
   /** Client email, prefilled as the default recipient in the send dialog. */
   clientEmail?: string | null;
@@ -104,6 +107,7 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
   const [confirmUncollected, setConfirmUncollected] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethodType>("transfer");
+  const [paymentAmount, setPaymentAmount] = useState("");
   const [showUncollectibleDialog, setShowUncollectibleDialog] = useState(false);
   const [showRectification, setShowRectification] = useState(false);
   const [rectType, setRectType] = useState<"R1" | "R4">("R1");
@@ -146,6 +150,30 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
       setPendingStatus(null);
       if (res.ok) {
         feedback.setSuccess(opts?.successLabel ?? "Factura pagada");
+      } else {
+        feedback.setError(res.error);
+      }
+    });
+  };
+
+  const openPaymentDialog = () => {
+    const due = Math.max(0, invoice.total - invoice.amountPaid);
+    setPaymentAmount(due.toFixed(2));
+    setShowPaymentDialog(true);
+  };
+
+  const handleRecordPayment = () => {
+    startTransition(async () => {
+      feedback.setPending();
+      const res = await recordInvoicePayment({
+        id: invoice.id,
+        amount: paymentAmount,
+        paymentMethod: selectedPaymentMethod,
+      });
+      if (res.ok) {
+        setShowPaymentDialog(false);
+        feedback.setSuccess(res.fullyPaid ? "Factura pagada" : "Cobro parcial registrado");
+        router.refresh();
       } else {
         feedback.setError(res.error);
       }
@@ -243,7 +271,7 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
   const canRectify = (isIssued || isPaid || isOverdue) && !invoice.is_rectification;
 
   return (
-    <div className="grid w-full min-w-0 grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap sm:gap-2">
+    <div className="grid w-full min-w-0 grid-cols-2 items-center gap-2 sm:flex sm:w-auto sm:max-w-full sm:flex-wrap sm:justify-end sm:gap-2">
       {/* Status badges — lives here so the page header actions slot stays compact */}
       <div className="col-span-2 flex shrink-0 flex-wrap items-center gap-2 sm:mr-1 sm:flex-col sm:items-end sm:gap-1">
         <StatusBadge meta={INVOICE_STATUS} value={invoice.status} />
@@ -328,7 +356,7 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
             variant="outline"
             size="sm"
             disabled={pending}
-            onClick={() => setShowPaymentDialog(true)}
+            onClick={openPaymentDialog}
             className="w-full justify-center whitespace-nowrap text-success-foreground hover:text-success-foreground sm:w-auto"
           >
             {pendingStatus === "paid" ? (
@@ -336,17 +364,28 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
             ) : (
               <CheckCircle2 className="h-4 w-4" />
             )}
-            {pendingStatus === "paid" ? "Guardando…" : "Pagada"}
+            {pendingStatus === "paid" ? "Guardando…" : "Registrar cobro"}
           </Button>
           <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
             <DialogContent className="sm:max-w-sm">
               <DialogHeader>
                 <DialogTitle>Registrar cobro</DialogTitle>
                 <DialogDescription>
-                  Selecciona el medio de pago utilizado para cobrar esta factura.
+                  Registra el importe recibido. Por defecto se propone todo el pendiente; puedes
+                  cambiarlo para pagos a plazos.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-2 py-2">
+                <Label htmlFor="paymentAmount">Importe cobrado (€)</Label>
+                <input
+                  id="paymentAmount"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={paymentAmount}
+                  onChange={(event) => setPaymentAmount(event.target.value)}
+                  className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                />
                 <Label>Medio de cobro</Label>
                 <div className="space-y-1.5">
                   {(Object.keys(PAYMENT_METHOD_LABELS) as PaymentMethodType[]).map((method) => (
@@ -380,11 +419,10 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
                   size="sm"
                   disabled={pending}
                   onClick={() => {
-                    setShowPaymentDialog(false);
-                    handleStatusUpdate("paid", { paymentMethod: selectedPaymentMethod });
+                    handleRecordPayment();
                   }}
                 >
-                  Confirmar cobro
+                  Registrar cobro
                 </Button>
               </DialogFooter>
             </DialogContent>

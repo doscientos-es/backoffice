@@ -17,11 +17,9 @@ import { version } from "../../package.json";
 
 export function Sidebar({
   user,
-  verifactuMode,
   demoMode,
 }: {
   user: CurrentUser;
-  verifactuMode: string;
   demoMode: boolean;
 }) {
   const pathname = usePathname();
@@ -57,34 +55,22 @@ export function Sidebar({
                 MODO DEMO
               </Badge>
             ) : null}
-            <div className="flex items-center gap-1">
+            <div className="ml-auto flex items-center gap-1">
               <span className="px-2 text-xs text-muted-foreground -mr-1">v{version}</span>
-              <Badge
-                variant={
-                  verifactuMode === "PROD"
-                    ? "success"
-                    : verifactuMode === "TEST"
-                      ? "warning"
-                      : "neutral"
-                }
-                className="h-4 px-1 text-[9px] font-bold uppercase"
-              >
-                AEAT {verifactuMode}
-              </Badge>
-              <NotificationsBell memberId={user.id} />
               <ThemeToggle />
+              <NotificationsBell memberId={user.id} />
+              <Link
+                href="/settings"
+                aria-label="Ajustes"
+                aria-current={pathname.startsWith("/settings") ? "page" : undefined}
+                title="Ajustes"
+                className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:bg-secondary aria-[current=page]:text-foreground"
+              >
+                <Settings className="size-4" aria-hidden />
+              </Link>
             </div>
           </div>
           <UserMenu user={user} showSettings={false} />
-          <Link
-            href="/settings"
-            aria-label="Ajustes"
-            aria-current={pathname.startsWith("/settings") ? "page" : undefined}
-            title="Ajustes"
-            className="flex size-8 items-center justify-center self-start rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:bg-secondary aria-[current=page]:text-foreground"
-          >
-            <Settings className="size-4" aria-hidden />
-          </Link>
         </ErrorBoundary>
       </footer>
     </aside>

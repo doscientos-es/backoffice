@@ -80,6 +80,12 @@ export const UpdateInvoiceStatusInput = z.object({
 });
 export type UpdateInvoiceStatusInputType = z.infer<typeof UpdateInvoiceStatusInput>;
 
+export const RecordInvoicePaymentInput = z.object({
+  id: z.string().uuid(),
+  amount: z.coerce.number().finite().positive(),
+  paymentMethod: PaymentMethod,
+});
+
 export const MarkUncollectibleInput = z.object({
   id: z.string().uuid(),
 });

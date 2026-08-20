@@ -14,15 +14,14 @@ import { isPublicDemoMode } from "@/lib/demo";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
   const demoMode = isPublicDemoMode();
-  const verifactuMode = demoMode ? "MOCK" : "PROD";
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar user={user} verifactuMode={verifactuMode} demoMode={demoMode} />
+      <Sidebar user={user} demoMode={demoMode} />
       <div className="flex flex-1 flex-col min-h-0 min-w-0">
         {/* Mobile Header (Topbar replacement) */}
         <header className="flex h-12 items-center justify-between border-b border-border bg-card px-4 lg:hidden">
-          <MobileNav user={user} verifactuMode={verifactuMode} demoMode={demoMode} />
+          <MobileNav user={user} demoMode={demoMode} />
           <Logo size="sm" />
           <CommandPaletteTrigger variant="icon" />
         </header>

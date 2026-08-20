@@ -15,6 +15,7 @@ import {
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
 import { buildVatBreakdown } from "@/lib/finance";
+import { PAYMENT_METHOD_LABELS, type PaymentMethodType } from "@/lib/schemas/invoice";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { verifactuInvoiceConfigFromEnv } from "@/lib/verifactu/config";
@@ -65,7 +66,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
 
   const { data: payments } = await supabase
     .from("invoice_payments")
-    .select("id, amount, status, ds_authorisation_code, created_at, confirmed_at")
+    .select("id, amount, status, payment_method, ds_authorisation_code, created_at, confirmed_at")
     .eq("invoice_id", id)
     .order("created_at", { ascending: false });
 
@@ -154,7 +155,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           { label: (invoice.full_number as string | null) ?? "Borrador" },
         ]}
         actions={
-          <div className="w-full min-w-0 sm:w-auto">
+          <div className="w-full min-w-0 sm:w-auto sm:max-w-full">
             <InvoiceActions
               invoice={{
                 id: invoice.id as string,
@@ -163,6 +164,8 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                 verifactu_error: (invoice.verifactu_error as string | null) ?? null,
                 is_rectification: Boolean(invoice.is_rectification),
                 is_uncollectible: Boolean(invoice.is_uncollectible),
+                total: Number(invoice.total ?? 0),
+                amountPaid,
               }}
               clientEmail={client?.email ?? null}
             />
@@ -384,6 +387,11 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                           {(p.ds_authorisation_code as string | null) ? (
                             <span className="ml-2 font-mono text-[10px] text-muted-foreground">
                               aut. {p.ds_authorisation_code as string}
+                            </span>
+                          ) : null}
+                          {(p.payment_method as PaymentMethodType | null) ? (
+                            <span className="ml-2 text-xs text-muted-foreground">
+                              {PAYMENT_METHOD_LABELS[p.payment_method as PaymentMethodType]}
                             </span>
                           ) : null}
                         </div>

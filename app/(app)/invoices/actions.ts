@@ -42,6 +42,7 @@ import {
   CreateMonthlyHourlyInvoiceInput,
   CreateRectificationInput,
   MarkUncollectibleInput,
+  RecordInvoicePaymentInput,
   SendInvoiceEmailInput,
   SendInvoiceInput,
   UpdateInvoiceInput as UpdateInvoiceInputSchema,
@@ -165,6 +166,72 @@ export const updateInvoiceStatus = defineAction<
     }
 
     return { fiscalDeliveryStatus: null, fiscalDeliveryCsv: null };
+  },
+});
+
+/** Records a manual or gateway payment and closes the invoice when fully paid. */
+export const recordInvoicePayment = defineAction({
+  name: "invoices.recordPayment",
+  schema: RecordInvoicePaymentInput,
+  roles: ["owner", "admin"],
+  revalidate: (_p, input) => [`/invoices/${input.id}`, "/invoices", "/finance", "/inicio"],
+  handler: async (input, { user }) => {
+    await consumeUserVerification(
+      user.id,
+      userVerificationScope("invoice.payment.record", `invoice:${input.id}`),
+    );
+
+    const supabase = await createServerClient();
+    const { data: invoice, error: invoiceError } = await supabase
+      .from("invoices")
+      .select("status, total")
+      .eq("id", input.id)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (invoiceError || !invoice) throw new Error("Factura no encontrada");
+    if (!["issued", "overdue"].includes(invoice.status as string)) {
+      throw new Error("Solo se pueden registrar cobros de facturas pendientes");
+    }
+
+    const amountCents = Math.round(input.amount * 100);
+    const totalCents = Math.round(Number(invoice.total) * 100);
+    if (amountCents <= 0) throw new Error("El importe debe ser mayor que cero");
+
+    const { data: confirmed, error: paymentsError } = await supabase
+      .from("invoice_payments")
+      .select("amount")
+      .eq("invoice_id", input.id)
+      .eq("status", "confirmed");
+    if (paymentsError) throw new Error(paymentsError.message);
+
+    const paidCents = Math.round(
+      (confirmed ?? []).reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0) * 100,
+    );
+    const remainingCents = Math.max(0, totalCents - paidCents);
+    if (amountCents > remainingCents) {
+      throw new Error(`El importe supera el pendiente (${(remainingCents / 100).toFixed(2)} €)`);
+    }
+
+    const now = new Date().toISOString();
+    const { error: insertError } = await supabase.from("invoice_payments").insert({
+      invoice_id: input.id,
+      amount: amountCents / 100,
+      status: "confirmed",
+      payment_method: input.paymentMethod,
+      ds_response: "MANUAL",
+      confirmed_at: now,
+    });
+    if (insertError) throw new Error(insertError.message);
+
+    const fullyPaid = paidCents + amountCents >= totalCents;
+    await patchInvoiceStatus(input.id, {
+      updated_at: now,
+      ...(fullyPaid
+        ? { status: "paid", paid_at: now, payment_method: input.paymentMethod }
+        : { payment_method: input.paymentMethod }),
+    });
+
+    return { fullyPaid };
   },
 });
 
