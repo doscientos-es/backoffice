@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Pin, PinOff } from "lucide-react";
+import { Pin, PinOff } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { NavigationGroup, NavigationItem } from "@/lib/navigation/navigation";
@@ -26,29 +26,6 @@ function readStringList(key: string): string[] {
 function saveStringList(key: string, values: string[]) {
   try {
     window.localStorage.setItem(key, JSON.stringify(values));
-  } catch {
-    // La navegación sigue funcionando si el almacenamiento no está disponible.
-  }
-}
-
-function readSectionStates(key: string): Record<string, boolean> {
-  if (typeof window === "undefined") return {};
-  try {
-    const value: unknown = JSON.parse(window.localStorage.getItem(key) ?? "{}");
-    if (!value || typeof value !== "object" || Array.isArray(value)) return {};
-    return Object.fromEntries(
-      Object.entries(value).filter(
-        (entry): entry is [string, boolean] => typeof entry[1] === "boolean",
-      ),
-    );
-  } catch {
-    return {};
-  }
-}
-
-function saveSectionStates(key: string, states: Record<string, boolean>) {
-  try {
-    window.localStorage.setItem(key, JSON.stringify(states));
   } catch {
     // La navegación sigue funcionando si el almacenamiento no está disponible.
   }
@@ -134,78 +111,6 @@ function NavigationLink({
   );
 }
 
-function NavigationSection({
-  group,
-  pathname,
-  groups,
-  storageKey,
-  pinnedHrefs,
-  onNavigate,
-  onTogglePin,
-}: {
-  group: VisibleNavigationGroup;
-  pathname: string;
-  groups: VisibleNavigationGroup[];
-  storageKey: string;
-  pinnedHrefs: string[];
-  onNavigate?: () => void;
-  onTogglePin: (href: string) => void;
-}) {
-  const hasActive = group.items.some((item) => isNavigationItemActive(pathname, item.href, groups));
-  const [open, setOpen] = useState(hasActive || group.defaultOpen || false);
-
-  useEffect(() => {
-    if (hasActive) return;
-    const stored = readSectionStates(storageKey);
-    const label = group.label ?? "";
-    const savedOpen = stored[label];
-    if (typeof savedOpen === "boolean") setOpen(savedOpen);
-  }, [group.label, hasActive, storageKey]);
-
-  function toggle() {
-    const next = !open;
-    setOpen(next);
-    const label = group.label ?? "";
-    saveSectionStates(storageKey, { ...readSectionStates(storageKey), [label]: next });
-  }
-
-  return (
-    <div className="flex flex-col gap-0.5">
-      <button
-        type="button"
-        onClick={toggle}
-        aria-expanded={open}
-        className="group flex w-full items-center justify-between rounded-md px-2.5 py-1 text-left transition-colors hover:bg-secondary/40"
-      >
-        <span className="select-none text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 transition-colors group-hover:text-muted-foreground">
-          {group.label}
-        </span>
-        <ChevronDown
-          className={cn(
-            "size-3 text-muted-foreground/40 transition-transform group-hover:text-muted-foreground",
-            open ? "rotate-0" : "-rotate-90",
-          )}
-        />
-      </button>
-      {open
-        ? group.items.map((item) => (
-          <NavigationLink
-            key={item.href}
-            item={item}
-            active={isNavigationItemActive(pathname, item.href, groups)}
-            pinned={pinnedHrefs.includes(item.href)}
-            onNavigate={() => {
-              trackRecent(item);
-              onNavigate?.();
-            }}
-            onTogglePin={() => onTogglePin(item.href)}
-          />
-        ))
-        : null}
-    </div>
-  );
-}
-
 export function NavigationTree({
   groups,
   pathname,
@@ -256,15 +161,24 @@ export function NavigationTree({
       {groups.map((group, index) =>
         group.label ? (
           <div key={group.label} className={cn(index > 0 && "mt-3")}>
-            <NavigationSection
-              group={group}
-              pathname={pathname}
-              groups={groups}
-              storageKey="doscientos:navigation-open-sections"
-              pinnedHrefs={pinnedHrefs}
-              onNavigate={onNavigate}
-              onTogglePin={togglePin}
-            />
+            <div className="flex flex-col gap-0.5">
+              <span className="select-none px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                {group.label}
+              </span>
+              {group.items.map((item) => (
+                <NavigationLink
+                  key={item.href}
+                  item={item}
+                  active={isNavigationItemActive(pathname, item.href, groups)}
+                  pinned={pinnedHrefs.includes(item.href)}
+                  onNavigate={() => {
+                    trackRecent(item);
+                    onNavigate?.();
+                  }}
+                  onTogglePin={() => togglePin(item.href)}
+                />
+              ))}
+            </div>
           </div>
         ) : (
           <div key="root" className="flex flex-col gap-0.5">

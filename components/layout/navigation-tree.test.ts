@@ -1,6 +1,12 @@
+import { NavigationTree, isNavigationItemActive } from "@/components/layout/navigation-tree";
+import { render, screen } from "@testing-library/react";
 import { User } from "lucide-react";
-import { describe, expect, it } from "vitest";
-import { isNavigationItemActive } from "@/components/layout/navigation-tree";
+import { createElement, type ReactNode } from "react";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("next/link", () => ({
+  default: ({ children }: { children: ReactNode }) => children,
+}));
 
 const groups = [
   {
@@ -22,5 +28,13 @@ describe("isNavigationItemActive", () => {
 
   it("keeps a parent active when it has no more specific child", () => {
     expect(isNavigationItemActive("/marketing/campaigns", "/marketing", groups)).toBe(true);
+  });
+
+  it("keeps every navigation section open", () => {
+    render(createElement(NavigationTree, { groups, pathname: "/inicio" }));
+
+    expect(screen.getByText("Publicidad")).toBeTruthy();
+    expect(screen.getByText("Newsletters")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Growth" })).toBeNull();
   });
 });

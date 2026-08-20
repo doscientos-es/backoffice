@@ -1,3 +1,4 @@
+import type { MemberRole } from "@/lib/auth";
 import {
   Archive,
   BarChart3,
@@ -23,7 +24,6 @@ import {
   Wallet,
 } from "lucide-react";
 import type { ComponentType } from "react";
-import type { MemberRole } from "@/lib/auth";
 
 export type NavigationItem = {
   href: string;
@@ -35,7 +35,6 @@ export type NavigationItem = {
 export type NavigationGroup = {
   label?: string;
   items: NavigationItem[];
-  defaultOpen?: boolean;
 };
 
 const ADMIN_ROLES: MemberRole[] = ["owner", "admin"];
@@ -71,7 +70,6 @@ export const NAVIGATION_GROUPS: NavigationGroup[] = [
   },
   {
     label: "Finanzas",
-    defaultOpen: false,
     items: [
       { href: "/invoices", label: "Facturas", icon: Receipt, allowedRoles: ADMIN_ROLES },
       { href: "/subscriptions", label: "Suscripciones", icon: Repeat, allowedRoles: ADMIN_ROLES },
@@ -86,7 +84,6 @@ export const NAVIGATION_GROUPS: NavigationGroup[] = [
   },
   {
     label: "Growth",
-    defaultOpen: false,
     items: [
       { href: "/marketing", label: "Publicidad", icon: Megaphone, allowedRoles: ADMIN_ROLES },
       {
@@ -106,7 +103,6 @@ export const NAVIGATION_GROUPS: NavigationGroup[] = [
   },
   {
     label: "Espacio de trabajo",
-    defaultOpen: false,
     items: [
       { href: "/internal-docs", label: "Docs internos", icon: Archive },
       { href: "/brand", label: "Marca", icon: Images },

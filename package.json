@@ -36,6 +36,7 @@
     "@doscientos/verifactu": "^0.1.16",
     "@hcaptcha/react-hcaptcha": "^2.0.2",
     "@hookform/resolvers": "^3.9.1",
+    "@phosphor-icons/react": "^2.1.10",
     "@react-email/components": "latest",
     "@react-pdf/renderer": "^4.5.1",
     "@simplewebauthn/browser": "^13.3.0",
