@@ -213,9 +213,8 @@ export async function buildInvoicePdfData(input: BuildInvoicePdfInput): Promise<
     vatBreakdown: buildVatBreakdown(
       normalisedItems.map((i) => ({ vat_rate: i.vatRate, subtotal: i.subtotal })),
     ),
-    // Use the same NIF that sendToAeat uses (company_nif from DB settings).
-    // process.env.VERIFACTU_NIF_EMISOR is intentionally NOT used here to keep a
-    // single source of truth and ensure the QR matches the AEAT submission.
+    // Use the same NIF that sendToAeat uses (company_nif from DB settings) so
+    // the QR remains aligned with the AEAT submission.
     qrDataUrl: await buildInvoiceQr(invoice, settings?.company_nif || null),
     portalUrl:
       invoice.portal_token && process.env.NEXT_PUBLIC_APP_URL

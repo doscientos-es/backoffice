@@ -5,6 +5,7 @@ import { NavProgress } from "@/components/layout/nav-progress";
 import { QuickCreateButton } from "@/components/layout/quick-create-button";
 import { ShortcutsDialog } from "@/components/layout/shortcuts-dialog";
 import { Sidebar } from "@/components/layout/sidebar";
+import { MfaSessionGate } from "@/components/security/mfa-session-gate";
 import { requireUser } from "@/lib/auth";
 import { isPublicDemoMode } from "@/lib/demo";
 
@@ -24,6 +25,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <ShortcutsDialog />
       <QuickCreateButton />
       <CallReminderWatcher />
+      <MfaSessionGate role={user.role} />
     </div>
   );
 }

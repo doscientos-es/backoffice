@@ -15,9 +15,21 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { getBrowserClient } from "@/lib/supabase/browser";
 
-type Props = { open: boolean; onOpenChange: (open: boolean) => void; onVerified: () => void };
+type Props = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onVerified: () => void;
+  dismissible?: boolean;
+  setupHref?: string;
+};
 
-export function MfaChallengeDialog({ open, onOpenChange, onVerified }: Props) {
+export function MfaChallengeDialog({
+  open,
+  onOpenChange,
+  onVerified,
+  dismissible = true,
+  setupHref,
+}: Props) {
   const [factorId, setFactorId] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -59,7 +71,12 @@ export function MfaChallengeDialog({ open, onOpenChange, onVerified }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent
+        className="sm:max-w-sm"
+        showCloseButton={dismissible}
+        onEscapeKeyDown={dismissible ? undefined : (event) => event.preventDefault()}
+        onPointerDownOutside={dismissible ? undefined : (event) => event.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShieldCheck className="size-5 text-primary" /> Confirmar acción
@@ -85,15 +102,22 @@ export function MfaChallengeDialog({ open, onOpenChange, onVerified }: Props) {
             />
           </Field>
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          {error && setupHref ? (
+            <a className="text-sm text-primary underline underline-offset-4" href={setupHref}>
+              Configurar MFA en Seguridad
+            </a>
+          ) : null}
           <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-              disabled={loading}
-            >
-              Cancelar
-            </Button>
+            {dismissible ? (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => onOpenChange(false)}
+                disabled={loading}
+              >
+                Cancelar
+              </Button>
+            ) : null}
             <Button
               type="submit"
               disabled={loading || !factorId || code.replaceAll(" ", "").length < 6}

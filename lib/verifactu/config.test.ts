@@ -8,11 +8,7 @@ const { isDemoMode, serverEnv } = vi.hoisted(() => ({
 vi.mock("@/lib/demo", () => ({ isDemoMode }));
 vi.mock("@/lib/env", () => ({ serverEnv }));
 
-import {
-  verifactuDiagnosticConfigFromEnv,
-  verifactuDiagnosticIssuerFromEnv,
-  verifactuInvoiceConfigFromEnv,
-} from "./config";
+import { verifactuDiagnosticConfigFromEnv, verifactuInvoiceConfigFromEnv } from "./config";
 
 const operationalEnv = {
   NEXT_PUBLIC_APP_URL: "https://backoffice.example.test",
@@ -20,8 +16,6 @@ const operationalEnv = {
   VERIFACTU_CERT_P12_BASE64: "certificate",
   VERIFACTU_CERT_PASSWORD: "password",
   VERIFACTU_CERT_EXPIRES_AT: "2099-01-01T00:00:00.000Z",
-  VERIFACTU_NIF_EMISOR: "B12345670",
-  VERIFACTU_EMISOR_NAME: "Issuer Test S.L.",
   VERIFACTU_PRODUCER_NAME: "Doscientos",
   VERIFACTU_SOFTWARE_NAME: "Backoffice",
   VERIFACTU_SOFTWARE_ID: "D1",
@@ -40,13 +34,6 @@ describe("VERI*FACTU environment selection", () => {
   it("uses AEAT production for operational invoices and AEAT test for diagnostics", () => {
     expect(verifactuInvoiceConfigFromEnv().environment).toBe("prod");
     expect(verifactuDiagnosticConfigFromEnv().environment).toBe("test");
-  });
-
-  it("uses the configured taxpayer identity for the synthetic diagnostic", () => {
-    expect(verifactuDiagnosticIssuerFromEnv()).toEqual({
-      nif: "B12345670",
-      name: "Issuer Test S.L.",
-    });
   });
 
   it("uses mock mode only for demo", () => {

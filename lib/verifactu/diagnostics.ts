@@ -1,4 +1,4 @@
-import { verifactuDiagnosticConfigFromEnv, verifactuDiagnosticIssuerFromEnv } from "./config";
+import { verifactuDiagnosticConfigFromEnv } from "./config";
 
 const DIAGNOSTIC_TTL_DAYS = 7;
 
@@ -21,7 +21,8 @@ const SAFE_SIF_CONFIGURATION_ERRORS = new Set([
   "El certificado P12 de VERI*FACTU es obligatorio para conectar con AEAT",
   "VERIFACTU_CERT_EXPIRES_AT es obligatorio para conectar con AEAT",
   "El certificado P12 de VERI*FACTU está caducado o tiene una fecha inválida",
-  "VERIFACTU_NIF_EMISOR es obligatorio para ejecutar el diagnóstico VERI*FACTU",
+  "Los datos fiscales de la empresa (NIF y razón social) son obligatorios para ejecutar el diagnóstico VERI*FACTU",
+  "No se pudieron consultar los datos fiscales de la empresa",
 ]);
 
 function safeSifConfigurationDetail(error: unknown): string {
@@ -33,6 +34,25 @@ function safeSifConfigurationDetail(error: unknown): string {
 async function createDiagnosticAdminClient() {
   const { createAdminClient } = await import("@/lib/supabase/admin");
   return createAdminClient();
+}
+
+async function findDiagnosticIssuer(): Promise<{ nif: string; name: string }> {
+  const admin = await createDiagnosticAdminClient();
+  const { data, error } = await admin
+    .from("settings")
+    .select("company_nif, company_name")
+    .eq("id", 1)
+    .maybeSingle();
+  if (error) throw new Error("No se pudieron consultar los datos fiscales de la empresa");
+
+  const nif = (data?.company_nif ?? "").trim();
+  const name = (data?.company_name ?? "").trim();
+  if (!nif || !name) {
+    throw new Error(
+      "Los datos fiscales de la empresa (NIF y razón social) son obligatorios para ejecutar el diagnóstico VERI*FACTU",
+    );
+  }
+  return { nif, name };
 }
 
 function gateFromRun(run: DiagnosticRun | null): VerifactuDiagnosticGate {
@@ -77,7 +97,7 @@ export async function runVerifactuAeatTestDiagnostic(memberId: string): Promise<
   let checks: DiagnosticCheck[];
   try {
     const config = verifactuDiagnosticConfigFromEnv();
-    const issuer = verifactuDiagnosticIssuerFromEnv();
+    const issuer = await findDiagnosticIssuer();
     const { createVerifactuClient } = await import("@doscientos/verifactu");
     const client = createVerifactuClient(config);
     const result = await client.registerInvoice({

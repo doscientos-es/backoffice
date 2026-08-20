@@ -2319,8 +2319,6 @@ VERIFACTU_CERT_P12_BASE64=
 # Contrasena del certificado .p12
 VERIFACTU_CERT_PASSWORD=
 # El diagnóstico usa siempre el endpoint de homologación AEAT y la facturación producción.
-# NIF del emisor (debe coincidir con el certificado digital)
-VERIFACTU_NIF_EMISOR=
 
 # GitHub App (integracion bidireccional tareas <-> issues)
 GITHUB_APP_ID=

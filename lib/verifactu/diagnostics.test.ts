@@ -6,14 +6,14 @@ const {
   insert,
   registerInvoice,
   verifactuDiagnosticConfigFromEnv,
-  verifactuDiagnosticIssuerFromEnv,
+  settingsMaybeSingle,
 } = vi.hoisted(() => ({
   buildQrUrl: vi.fn(),
   createVerifactuClient: vi.fn(),
   insert: vi.fn(),
   registerInvoice: vi.fn(),
   verifactuDiagnosticConfigFromEnv: vi.fn(),
-  verifactuDiagnosticIssuerFromEnv: vi.fn(),
+  settingsMaybeSingle: vi.fn(),
 }));
 
 vi.mock("@doscientos/verifactu", () => ({
@@ -21,10 +21,14 @@ vi.mock("@doscientos/verifactu", () => ({
 }));
 vi.mock("./config", () => ({
   verifactuDiagnosticConfigFromEnv,
-  verifactuDiagnosticIssuerFromEnv,
 }));
 vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: () => ({ from: () => ({ insert }) }),
+  createAdminClient: () => ({
+    from: (table: string) =>
+      table === "settings"
+        ? { select: () => ({ eq: () => ({ maybeSingle: settingsMaybeSingle }) }) }
+        : { insert },
+  }),
 }));
 
 import { runVerifactuAeatTestDiagnostic } from "./diagnostics";
@@ -38,10 +42,10 @@ describe("runVerifactuAeatTestDiagnostic", () => {
       software: {},
       appUrl: "https://backoffice.example.test",
     });
-    verifactuDiagnosticIssuerFromEnv.mockReset();
-    verifactuDiagnosticIssuerFromEnv.mockReturnValue({
-      nif: "B12345670",
-      name: "Issuer Test S.L.",
+    settingsMaybeSingle.mockReset();
+    settingsMaybeSingle.mockResolvedValue({
+      data: { company_nif: "B12345670", company_name: "Issuer Test S.L." },
+      error: null,
     });
     buildQrUrl.mockReset();
     buildQrUrl.mockReturnValue("https://backoffice.example.test/api/verifactu/verify");
@@ -90,6 +94,30 @@ describe("runVerifactuAeatTestDiagnostic", () => {
 
     expect(result.ok).toBe(false);
     expect(insert).toHaveBeenCalledWith(expect.objectContaining({ status: "failed" }));
+  });
+
+  it("uses the company fiscal profile rather than diagnostic environment variables", async () => {
+    await runVerifactuAeatTestDiagnostic("member-1");
+
+    expect(registerInvoice).toHaveBeenCalledWith(
+      expect.objectContaining({ nif: "B12345670", emisorName: "Issuer Test S.L." }),
+    );
+  });
+
+  it("reports missing company fiscal data without submitting to AEAT", async () => {
+    settingsMaybeSingle.mockResolvedValue({
+      data: { company_nif: null, company_name: "Issuer Test S.L." },
+      error: null,
+    });
+
+    const result = await runVerifactuAeatTestDiagnostic("member-1");
+
+    expect(result).toEqual({
+      ok: false,
+      detail:
+        "La suite VERI*FACTU falló: Los datos fiscales de la empresa (NIF y razón social) son obligatorios para ejecutar el diagnóstico VERI*FACTU. La facturación real permanece bloqueada.",
+    });
+    expect(registerInvoice).not.toHaveBeenCalled();
   });
 
   it("reports a safe, actionable SIF configuration failure", async () => {

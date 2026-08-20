@@ -74,9 +74,6 @@ export const ServerSchema = PublicSchema.extend({
   VERIFACTU_CERT_P12_BASE64: z.string().optional().default(""),
   VERIFACTU_CERT_PASSWORD: z.string().optional().default(""),
   VERIFACTU_CERT_EXPIRES_AT: z.string().optional().default(""),
-  // Taxpayer identity used solely by the synthetic AEAT diagnostic.
-  VERIFACTU_NIF_EMISOR: z.string().optional().default(""),
-  VERIFACTU_EMISOR_NAME: z.string().optional().default(""),
   // SistemaInformatico (required in every RegistroAlta submission).
   // For production, register the software at AEAT Sede Electrónica first:
   //   https://www.agenciatributaria.gob.es/AEAT.sede/tramitacion/Z65.shtml

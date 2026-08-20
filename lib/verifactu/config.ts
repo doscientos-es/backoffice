@@ -2,11 +2,6 @@ import type { VerifactuConfig } from "@doscientos/verifactu";
 import { isDemoMode } from "@/lib/demo";
 import { serverEnv } from "@/lib/env";
 
-export type VerifactuDiagnosticIssuer = {
-  nif: string;
-  name: string;
-};
-
 /** Serializable safe subset persisted with the immutable fiscal record. */
 export function verifactuSoftwareSnapshotFromEnv(): VerifactuConfig["software"] {
   return verifactuInvoiceConfigFromEnv().software;
@@ -75,17 +70,4 @@ export function verifactuInvoiceConfigFromEnv(): VerifactuConfig {
 /** Configuration for the synthetic record submitted to AEAT pre-production. */
 export function verifactuDiagnosticConfigFromEnv(): VerifactuConfig {
   return verifactuConfigFromEnv("test");
-}
-
-/** Taxpayer identity for the synthetic AEAT diagnostic; never persisted as an invoice. */
-export function verifactuDiagnosticIssuerFromEnv(): VerifactuDiagnosticIssuer {
-  const env = serverEnv();
-  const nif = env.VERIFACTU_NIF_EMISOR.trim();
-  if (!nif) {
-    throw new Error("VERIFACTU_NIF_EMISOR es obligatorio para ejecutar el diagnóstico VERI*FACTU");
-  }
-  return {
-    nif,
-    name: env.VERIFACTU_EMISOR_NAME.trim() || env.VERIFACTU_PRODUCER_NAME,
-  };
 }

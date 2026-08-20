@@ -1,6 +1,6 @@
-import { redirect } from "next/navigation";
 import { scopedLogger } from "@/lib/logger";
 import { createServerClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
 const log = scopedLogger("auth");
 
@@ -111,6 +111,16 @@ export async function requireRole(roles: MemberRole[]): Promise<CurrentUser> {
   const u = await requireUser();
   if (!roles.includes(u.role)) redirect("/inicio?error=forbidden");
   if (u.role === "owner" || u.role === "admin") await requireAal2();
+  return u;
+}
+
+/**
+ * Guard for Server Components that only checks the user's role. MFA is
+ * challenged by the app-level dialog so navigation stays on the current page.
+ */
+export async function requirePageRole(roles: MemberRole[]): Promise<CurrentUser> {
+  const u = await requireUser();
+  if (!roles.includes(u.role)) redirect("/inicio?error=forbidden");
   return u;
 }
 

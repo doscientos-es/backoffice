@@ -1,13 +1,11 @@
 import type { BuildInvoicePdfInput } from "@/lib/invoices/pdf-data";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@doscientos/verifactu", () => ({
   buildQrDataUrl: (url: string) => `data:image/png;base64,${Buffer.from(url).toString("base64")}`,
   buildQrUrl: ({ invoiceNumber }: { invoiceNumber: string }) =>
     `https://example.test/qr/${invoiceNumber}`,
 }));
-
-const ORIGINAL_NIF = process.env.VERIFACTU_NIF_EMISOR;
 
 function makeInput(overrides: Partial<BuildInvoicePdfInput["invoice"]> = {}): BuildInvoicePdfInput {
   return {
@@ -39,20 +37,13 @@ function makeInput(overrides: Partial<BuildInvoicePdfInput["invoice"]> = {}): Bu
   };
 }
 
-async function importPdfData(nif: string) {
-  vi.resetModules();
-  process.env.VERIFACTU_NIF_EMISOR = nif;
+async function importPdfData() {
   return import("@/lib/invoices/pdf-data");
 }
 
-afterEach(() => {
-  process.env.VERIFACTU_NIF_EMISOR = ORIGINAL_NIF;
-  vi.resetModules();
-});
-
 describe("buildInvoicePdfData", () => {
   it("normalises items, coercing null fields to safe numbers", async () => {
-    const { buildInvoicePdfData } = await importPdfData("");
+    const { buildInvoicePdfData } = await importPdfData();
     const data = await buildInvoicePdfData(makeInput());
     expect(data.items).toHaveLength(2);
     expect(data.items[1]).toEqual({
@@ -69,33 +60,33 @@ describe("buildInvoicePdfData", () => {
   });
 
   it("returns null company when settings are absent", async () => {
-    const { buildInvoicePdfData } = await importPdfData("");
+    const { buildInvoicePdfData } = await importPdfData();
     const input = { ...makeInput(), settings: null };
     const data = await buildInvoicePdfData(input);
     expect(data.company).toBeNull();
   });
 
   it("omits the QR when the emisor NIF is not configured", async () => {
-    const { buildInvoicePdfData } = await importPdfData("");
+    const { buildInvoicePdfData } = await importPdfData();
     const input = { ...makeInput(), settings: { ...makeInput().settings!, company_nif: null } };
     const data = await buildInvoicePdfData(input);
     expect(data.qrDataUrl).toBeNull();
   });
 
   it("omits the QR for draft invoices even with a NIF", async () => {
-    const { buildInvoicePdfData } = await importPdfData("B11111111");
+    const { buildInvoicePdfData } = await importPdfData();
     const data = await buildInvoicePdfData(makeInput({ status: "draft" }));
     expect(data.qrDataUrl).toBeNull();
   });
 
   it("builds the QR as soon as the invoice is issued, even before AEAT answers", async () => {
-    const { buildInvoicePdfData } = await importPdfData("B11111111");
+    const { buildInvoicePdfData } = await importPdfData();
     const data = await buildInvoicePdfData(makeInput({ verifactu_status: "pending" }));
     expect(data.qrDataUrl?.startsWith("data:image/png;base64,")).toBe(true);
   });
 
   it("builds a QR data URL for a complete, accepted invoice", async () => {
-    const { buildInvoicePdfData } = await importPdfData("B11111111");
+    const { buildInvoicePdfData } = await importPdfData();
     const data = await buildInvoicePdfData(makeInput({ verifactu_status: "accepted" }));
     expect(data.qrDataUrl?.startsWith("data:image/png;base64,")).toBe(true);
   });
@@ -103,11 +94,11 @@ describe("buildInvoicePdfData", () => {
 
 describe("invoicePdfFilename", () => {
   it("uses the full number when present", async () => {
-    const { invoicePdfFilename } = await importPdfData("");
+    const { invoicePdfFilename } = await importPdfData();
     expect(invoicePdfFilename("FAC 2025/001", "abc")).toBe("factura-FAC-2025-001.pdf");
   });
   it("falls back to the id when the number is null or sanitises to empty", async () => {
-    const { invoicePdfFilename } = await importPdfData("");
+    const { invoicePdfFilename } = await importPdfData();
     expect(invoicePdfFilename(null, "abc")).toBe("factura-abc.pdf");
     expect(invoicePdfFilename("///", "abc")).toBe("factura-abc.pdf");
   });
