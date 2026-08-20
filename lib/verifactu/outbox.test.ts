@@ -8,6 +8,8 @@ vi.mock("@/lib/supabase/admin", () => ({
       select: () => {
         const query = {
           eq: () => query,
+          order: () => query,
+          limit: () => query,
           maybeSingle,
         };
         return query;
