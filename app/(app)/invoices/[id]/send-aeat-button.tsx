@@ -52,8 +52,13 @@ export function SendAeatButton({
           "rejected",
         );
       } else if (result.status === "error") {
-        feedback.setError("El envío a AEAT falló; se reintentará automáticamente.");
-        showIssue("El envío a AEAT falló; se reintentará automáticamente.");
+        const detail = result.error ?? "El envío a AEAT falló; se reintentará automáticamente.";
+        feedback.setError(detail);
+        showIssue(detail);
+      } else if (result.status === "skipped" || result.status === "deferred") {
+        const detail = result.error ?? "El registro sigue pendiente de entrega a AEAT.";
+        feedback.setError(detail);
+        showIssue(detail);
       } else {
         feedback.setSuccess("El registro fiscal ya está siendo gestionado.");
       }

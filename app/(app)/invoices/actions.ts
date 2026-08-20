@@ -345,7 +345,7 @@ export const restoreInvoice = defineAction({
  */
 export const sendToAeat = defineAction<
   typeof SendInvoiceInput,
-  { csv: string | null; status: OutboxDelivery["status"] }
+  { csv: string | null; status: OutboxDelivery["status"]; error: string | null }
 >({
   name: "invoices.sendToAeat",
   schema: SendInvoiceInput,
@@ -359,7 +359,7 @@ export const sendToAeat = defineAction<
     );
     await assertDurableVerifactuPackage();
     const delivery = await deliverInvoiceVerifactu(id, `manual:${crypto.randomUUID()}`);
-    return { csv: delivery.csv, status: delivery.status };
+    return { csv: delivery.csv, status: delivery.status, error: delivery.error ?? null };
   },
 });
 

@@ -54,6 +54,8 @@ export type OutboxDelivery = {
   processed: boolean;
   status: VerifactuSubmitResult["status"] | "skipped" | "deferred";
   csv: string | null;
+  /** Last actionable delivery error, preserved for the retry UI. */
+  error?: string | null;
   warnings: Array<{ code: string | null; message: string }>;
 };
 
@@ -346,6 +348,7 @@ async function complete(
     processed: true,
     status,
     csv: result?.csv ?? null,
+    error: message,
     warnings: (result as VerifactuSubmitResult & { warnings?: Array<{ code: string | null; message: string }> } | null)?.warnings ?? [],
   };
 }
@@ -378,7 +381,13 @@ async function deliverClaimed(
         p_next_attempt_at: next,
       });
       if (deferError) throw new Error(deferError.message);
-      return { processed: false, status: "deferred", csv: null, warnings: [] };
+      return {
+        processed: false,
+        status: "deferred",
+        csv: null,
+        error: "El envío se ha aplazado para respetar el control de flujo de AEAT.",
+        warnings: [],
+      };
     }
     const client = await createVerifactuClient({ ...verifactuInvoiceConfigFromEnv(), software });
     let result: VerifactuSubmitResult;
@@ -422,7 +431,15 @@ export async function deliverVerifactuOutbox(
     p_worker_id: workerId,
   });
   if (error) throw new Error(error.message);
-  if (!ledgerId) return { processed: false, status: "skipped", csv: null, warnings: [] };
+  if (!ledgerId) {
+    return {
+      processed: false,
+      status: "skipped",
+      csv: null,
+      error: "El registro anterior de la cadena aún no ha sido aceptado por AEAT.",
+      warnings: [],
+    };
+  }
   return deliverClaimed(outboxId, ledgerId as string, workerId);
 }
 

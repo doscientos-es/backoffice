@@ -1,5 +1,21 @@
 "use client";
 
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Download,
+  FileEdit,
+  FileMinus2,
+  Loader2,
+  MoreHorizontal,
+  Send,
+  Trash2,
+  XCircle,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { MfaChallengeDialog } from "@/components/security/mfa-challenge-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,21 +40,7 @@ import { PAYMENT_METHOD_LABELS, type PaymentMethodType } from "@/lib/schemas/inv
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { verifyWithPasskey } from "@/lib/security/webauthn-client";
 import { INVOICE_STATUS, VERIFACTU_STATUS } from "@/lib/status";
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Download,
-  FileEdit,
-  FileMinus2,
-  Loader2,
-  MoreHorizontal,
-  Send,
-  Trash2,
-  XCircle,
-} from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { getBrowserClient } from "@/lib/supabase/browser";
 import {
   createRectification,
   deleteInvoice,
@@ -106,6 +108,8 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
   const feedback = useFormFeedback();
   const [confirmUncollected, setConfirmUncollected] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [mfaOpen, setMfaOpen] = useState(false);
+  const [mfaResolver, setMfaResolver] = useState<((verified: boolean) => void) | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethodType>("transfer");
   const [paymentAmount, setPaymentAmount] = useState("");
   const [showUncollectibleDialog, setShowUncollectibleDialog] = useState(false);
@@ -132,6 +136,7 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
     status: "issued" | "paid" | "cancelled",
     opts?: { paymentMethod?: PaymentMethodType; successLabel?: string },
   ) => {
+    if (!(await ensureAal2())) return;
     feedback.setPending();
     const verification = await verifyWithPasskey(
       userVerificationScope("invoice.status.update", `invoice:${invoice.id}:status:${status}`),
@@ -153,6 +158,15 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
       } else {
         feedback.setError(res.error);
       }
+    });
+  };
+
+  const ensureAal2 = async (): Promise<boolean> => {
+    const { data, error } = await getBrowserClient().auth.mfa.getAuthenticatorAssuranceLevel();
+    if (!error && data?.currentLevel === "aal2") return true;
+    return new Promise((resolve) => {
+      setMfaResolver(() => resolve);
+      setMfaOpen(true);
     });
   };
 
@@ -181,6 +195,7 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
   };
 
   async function handleIssue() {
+    if (!(await ensureAal2())) return;
     feedback.setPending();
     setIssuanceProgress({ phase: "verifying", error: null, csv: null });
     setIssuanceOpen(true);
@@ -263,7 +278,8 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
   // Marcar incobrable: solo facturas emitidas/vencidas no pagadas (art. 80.Tres LIVA)
   const canMarkUncollectible = (isIssued || isOverdue) && !invoice.is_uncollectible;
   const canCancel = isIssued || isOverdue;
-  const shouldSendToAeat = !isDraft && invoice.verifactu_status !== "accepted" && invoice.verifactu_status !== "excluded";
+  const shouldSendToAeat =
+    !isDraft && invoice.verifactu_status !== "accepted" && invoice.verifactu_status !== "excluded";
   // Las facturas aceptadas por la AEAT son inmutables por ley (RD 1007/2023).
   // Nunca pueden eliminarse; debe emitirse una factura rectificativa en su lugar.
   const canDelete = invoice.verifactu_status !== "accepted";
@@ -272,6 +288,21 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-2 sm:w-auto sm:items-end">
+      <MfaChallengeDialog
+        open={mfaOpen}
+        onOpenChange={(open) => {
+          setMfaOpen(open);
+          if (!open) {
+            mfaResolver?.(false);
+            setMfaResolver(null);
+          }
+        }}
+        onVerified={() => {
+          setMfaOpen(false);
+          mfaResolver?.(true);
+          setMfaResolver(null);
+        }}
+      />
       <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
         <StatusBadge meta={INVOICE_STATUS} value={invoice.status} />
         <StatusBadge
