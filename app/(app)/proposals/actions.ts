@@ -6,6 +6,7 @@ import { renderEmail } from "@/lib/email/render";
 import { sendEmail } from "@/lib/email/resend";
 import { publicEnv } from "@/lib/env";
 import { backupProposalToDrive } from "@/lib/google/backup";
+import { createProposalDraftInvoices } from "@/lib/invoices/proposal-drafts";
 import { buildLeadStatusPatch } from "@/lib/leads/status-transitions";
 import { scopedLogger } from "@/lib/logger";
 import { buildPortalAccessPatch } from "@/lib/portal/access";
@@ -26,6 +27,7 @@ import {
   UpdateProposalPaymentPlanInput,
   UpdateProposalTeamInput,
 } from "@/lib/schemas/proposal";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
@@ -961,8 +963,16 @@ export async function markProposalAsAccepted(
   // Best-effort Drive backup — fires as the acting user.
   void backupProposalToDrive(id, user.email);
 
+  try {
+    const result = await createProposalDraftInvoices(createAdminClient(), id, user.id);
+    log.info({ proposalId: id, created: result.created }, "proposal_invoice_drafts_created");
+  } catch (err) {
+    log.warn({ err, proposalId: id }, "proposal_invoice_drafts_failed");
+  }
+
   revalidatePath(`/proposals/${id}`);
   revalidatePath("/proposals");
+  revalidatePath("/invoices");
   return { ok: true };
 }
 

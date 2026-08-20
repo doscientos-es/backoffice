@@ -10,6 +10,7 @@ import { isDemoMode } from "@/lib/demo";
 import { publicEnv, serverEnv } from "@/lib/env";
 import { backupProposalToDrive } from "@/lib/google/backup";
 import { createRedsysPayment, getRedsysUrl } from "@/lib/integrations/redsys";
+import { createProposalDraftInvoices } from "@/lib/invoices/proposal-drafts";
 import { scopedLogger } from "@/lib/logger";
 import { dispatchNotifications } from "@/lib/notifications/dispatch";
 import { unlockPortalResource } from "@/lib/portal/access";
@@ -48,7 +49,8 @@ export type PaymentInitResult =
  *   2. Promote `lead → client` (or patch missing client fields).
  *   3. Snapshot the accepted fiscal data on the proposal for audit.
  *   4. Flip status to `accepted` (`responded_at` set).
- *   5. Auto-generate the project and promote the originating lead to `won`.
+ *   5. Auto-generate the project, prepare invoice drafts and promote the
+ *      originating lead to `won`.
  *
  * Steps 1–3 are required: any failure aborts before we flip the status, so
  * an accepted proposal always has a billable client behind it. Steps 4 and
@@ -169,7 +171,15 @@ async function acceptWithFiscal(token: string, fiscalInput: unknown): Promise<Ac
     log.warn({ err, proposalId: proposal.id }, "proposal_accepted_side_effects_failed");
   }
 
+  try {
+    const result = await createProposalDraftInvoices(admin, proposal.id as string, null);
+    log.info({ proposalId: proposal.id, created: result.created }, "proposal_invoice_drafts_created");
+  } catch (err) {
+    log.warn({ err, proposalId: proposal.id }, "proposal_invoice_drafts_failed");
+  }
+
   revalidatePath(`/p/proposal/${parsed.data}`);
+  revalidatePath("/invoices");
   return { ok: true };
 }
 
