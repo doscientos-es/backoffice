@@ -33,7 +33,7 @@
     "@dnd-kit/sortable": "^8.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@doscientos/ui": "^0.1.0",
-    "@doscientos/verifactu": "^0.1.14",
+    "@doscientos/verifactu": "^0.1.16",
     "@hcaptcha/react-hcaptcha": "^2.0.2",
     "@hookform/resolvers": "^3.9.1",
     "@react-email/components": "latest",

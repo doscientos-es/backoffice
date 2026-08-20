@@ -14,7 +14,6 @@ import { buildVatBreakdown } from "@/lib/finance";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { verifactuConfigFromEnv } from "@/lib/verifactu/config";
-import { buildQrDataUrl, buildQrUrl } from "@doscientos/verifactu";
 import { AlertTriangle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -105,6 +104,9 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
     invoice.total != null
   ) {
     try {
+      // The package also exports an optional native XSD validator. Load it only
+      // when a QR is needed so its initialization cannot block this page.
+      const { buildQrDataUrl, buildQrUrl } = await import("@doscientos/verifactu");
       const qrUrl = buildQrUrl(
         {
           nif: emisorNif,
