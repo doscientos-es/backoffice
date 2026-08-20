@@ -1,19 +1,6 @@
 "use client";
 
-import {
-  AtSign,
-  Bell,
-  BellOff,
-  BellRing,
-  CheckCheck,
-  CircleDollarSign,
-  Eye,
-  FileCheck,
-  FileX,
-  MessageSquare,
-  UserPlus,
-  Zap,
-} from "lucide-react";
+import { At as AtSign, BellIcon as Bell, BellSlash as BellOff, BellRinging as BellRing, Checks as CheckCheck, CurrencyCircleDollar as CircleDollarSign, EyeIcon as Eye, File as FileCheck, FileXIcon as FileX, Chat as MessageSquare, UserPlusIcon as UserPlus, Lightning as Zap } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {

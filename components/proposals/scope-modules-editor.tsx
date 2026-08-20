@@ -10,7 +10,7 @@ import {
   scopeModuleDurationLabel,
   type ScopeModule,
 } from "@/lib/proposals/scope";
-import { ChevronDown, ChevronUp, ClipboardPaste, Plus, Trash2, X } from "lucide-react";
+import { CaretDown as ChevronDown, CaretUp as ChevronUp, ClipboardText as ClipboardPaste, PlusIcon as Plus, Trash as Trash2, XIcon as X } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 
 type Props = {

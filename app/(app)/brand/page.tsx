@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { PlusIcon as Plus } from "@phosphor-icons/react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";

@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ClipboardList, Loader2, Sparkles } from "lucide-react";
+import { CheckIcon as Check, ClipboardText as ClipboardList, CircleNotch as Loader2, Sparkle as Sparkles } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";

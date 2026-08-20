@@ -1,4 +1,4 @@
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle as CheckCircle2 } from "@phosphor-icons/react";
 import { LogoMark } from "@/components/branding";
 import { ReceiptPrintButton } from "@/components/portal/receipt-print-button";
 import { formatDate, formatEUR } from "@/lib/utils";

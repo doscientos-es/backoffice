@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, Pencil, Trash2 } from "lucide-react";
+import { CopyIcon as Copy, PencilIcon as Pencil, Trash as Trash2 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";

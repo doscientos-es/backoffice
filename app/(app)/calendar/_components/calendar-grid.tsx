@@ -13,7 +13,7 @@ import {
   startOfWeek,
 } from "date-fns";
 import { es } from "date-fns/locale";
-import { ChevronDown, ChevronUp, Moon } from "lucide-react";
+import { CaretDown as ChevronDown, CaretUp as ChevronUp, MoonIcon as Moon } from "@phosphor-icons/react";
 import {
   createContext,
   useContext,

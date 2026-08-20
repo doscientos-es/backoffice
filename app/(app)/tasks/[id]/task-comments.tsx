@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { Trash as Trash2 } from "@phosphor-icons/react";
 import { useCallback, useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { addComment, deleteComment } from "@/app/(app)/tasks/comment-actions";
 import { getBrowserClient } from "@/lib/supabase/browser";

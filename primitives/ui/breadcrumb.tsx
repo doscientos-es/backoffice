@@ -1,4 +1,4 @@
-﻿import { ChevronRightIcon, MoreHorizontalIcon } from "lucide-react";
+﻿import { CaretRight as ChevronRightIcon, DotsThree as MoreHorizontalIcon } from "@phosphor-icons/react";
 import { Slot } from "radix-ui";
 import type * as React from "react";
 import { cn } from "../lib/utils";

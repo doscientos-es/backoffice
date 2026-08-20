@@ -1,6 +1,10 @@
 "use client";
 
-import { Pin, PinOff } from "lucide-react";
+import {
+  CaretDownIcon as ChevronDown,
+  PushPinIcon as Pin,
+  PushPinSlashIcon as PinOff,
+} from "@phosphor-icons/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { NavigationGroup, NavigationItem } from "@/lib/navigation/navigation";
@@ -111,6 +115,64 @@ function NavigationLink({
   );
 }
 
+function NavigationSection({
+  group,
+  pathname,
+  groups,
+  pinnedHrefs,
+  onNavigate,
+  onTogglePin,
+}: {
+  group: VisibleNavigationGroup;
+  pathname: string;
+  groups: VisibleNavigationGroup[];
+  pinnedHrefs: string[];
+  onNavigate?: () => void;
+  onTogglePin: (href: string) => void;
+}) {
+  const [open, setOpen] = useState(true);
+
+  function toggle() {
+    setOpen((current) => !current);
+  }
+
+  return (
+    <div className="flex flex-col gap-0.5">
+      <button
+        type="button"
+        onClick={toggle}
+        aria-expanded={open}
+        className="group flex w-full items-center justify-between rounded-md px-2.5 py-1 text-left transition-colors hover:bg-secondary/40"
+      >
+        <span className="select-none text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 transition-colors group-hover:text-muted-foreground">
+          {group.label}
+        </span>
+        <ChevronDown
+          className={cn(
+            "size-3 text-muted-foreground/40 transition-transform group-hover:text-muted-foreground",
+            open ? "rotate-0" : "-rotate-90",
+          )}
+        />
+      </button>
+      {open
+        ? group.items.map((item) => (
+          <NavigationLink
+            key={item.href}
+            item={item}
+            active={isNavigationItemActive(pathname, item.href, groups)}
+            pinned={pinnedHrefs.includes(item.href)}
+            onNavigate={() => {
+              trackRecent(item);
+              onNavigate?.();
+            }}
+            onTogglePin={() => onTogglePin(item.href)}
+          />
+        ))
+        : null}
+    </div>
+  );
+}
+
 export function NavigationTree({
   groups,
   pathname,
@@ -161,24 +223,14 @@ export function NavigationTree({
       {groups.map((group, index) =>
         group.label ? (
           <div key={group.label} className={cn(index > 0 && "mt-3")}>
-            <div className="flex flex-col gap-0.5">
-              <span className="select-none px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
-                {group.label}
-              </span>
-              {group.items.map((item) => (
-                <NavigationLink
-                  key={item.href}
-                  item={item}
-                  active={isNavigationItemActive(pathname, item.href, groups)}
-                  pinned={pinnedHrefs.includes(item.href)}
-                  onNavigate={() => {
-                    trackRecent(item);
-                    onNavigate?.();
-                  }}
-                  onTogglePin={() => togglePin(item.href)}
-                />
-              ))}
-            </div>
+            <NavigationSection
+              group={group}
+              pathname={pathname}
+              groups={groups}
+              pinnedHrefs={pinnedHrefs}
+              onNavigate={onNavigate}
+              onTogglePin={togglePin}
+            />
           </div>
         ) : (
           <div key="root" className="flex flex-col gap-0.5">

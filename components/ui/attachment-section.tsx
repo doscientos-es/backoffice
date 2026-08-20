@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Download,
-  ExternalLink,
-  FolderSymlink,
-  Loader2,
-  Paperclip,
-  UploadCloud,
-} from "lucide-react";
+import { DownloadIcon as Download, ArrowSquareOut as ExternalLink, Folder as FolderSymlink, CircleNotch as Loader2, PaperclipIcon as Paperclip, UploadSimple as UploadCloud } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";

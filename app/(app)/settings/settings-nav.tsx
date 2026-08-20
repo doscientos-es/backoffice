@@ -1,16 +1,6 @@
 "use client";
 
-import {
-  Activity,
-  Building2,
-  DatabaseBackup,
-  Mail,
-  PlugZap,
-  Shield,
-  Target,
-  User,
-  Users,
-} from "lucide-react";
+import { ActivityIcon as Activity, Buildings as Building2, Database as DatabaseBackup, Envelope as Mail, Plug as PlugZap, ShieldIcon as Shield, TargetIcon as Target, UserIcon as User, UsersIcon as Users } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Select } from "@/components/ui/select";

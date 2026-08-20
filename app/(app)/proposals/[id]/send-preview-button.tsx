@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCheck, Loader2, Send } from "lucide-react";
+import { Checks as CheckCheck, CircleNotch as Loader2, PaperPlaneTilt as Send } from "@phosphor-icons/react";
 import { type FormEvent, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {

@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { Command as CommandPrimitive } from "cmdk";
-import { CheckIcon, SearchIcon } from "lucide-react";
+import { Check as CheckIcon, MagnifyingGlass as SearchIcon } from "@phosphor-icons/react";
 import type * as React from "react";
 import { cn } from "../lib/utils";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./dialog";

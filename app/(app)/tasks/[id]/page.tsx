@@ -1,4 +1,4 @@
-import { ArrowUpRight, ExternalLink } from "lucide-react";
+import { ArrowUpRightIcon as ArrowUpRight, ArrowSquareOut as ExternalLink } from "@phosphor-icons/react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BackLink } from "@/components/layout/back-link";

@@ -1,4 +1,4 @@
-import { FileText, Plus } from "lucide-react";
+import { FileTextIcon as FileText, PlusIcon as Plus } from "@phosphor-icons/react";
 import type { Metadata } from "next";
 import Link from "next/link";
 

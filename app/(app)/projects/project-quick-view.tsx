@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, Building2, Clock, ExternalLink, Trash2, X } from "lucide-react";
+import { ArrowUpRightIcon as ArrowUpRight, Buildings as Building2, ClockIcon as Clock, ArrowSquareOut as ExternalLink, Trash as Trash2, XIcon as X } from "@phosphor-icons/react";
 import Link from "next/link";
 import { type ReactNode, useState, useTransition } from "react";
 import { sileo } from "sileo";

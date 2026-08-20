@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { CaretDown as ChevronDownIcon, CaretUp as ChevronUpIcon } from "@phosphor-icons/react";
 import { Accordion as AccordionPrimitive } from "radix-ui";
 import type * as React from "react";
 import { cn } from "../lib/utils";

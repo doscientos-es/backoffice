@@ -1,6 +1,6 @@
 "use client";
 
-import { Printer } from "lucide-react";
+import { PrinterIcon as Printer } from "@phosphor-icons/react";
 import { useEffect } from "react";
 
 /**

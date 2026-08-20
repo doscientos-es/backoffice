@@ -1,7 +1,7 @@
 "use client";
 
 import HCaptcha from "@hcaptcha/react-hcaptcha";
-import { ChevronDown, Eye, EyeOff, Loader2 } from "lucide-react";
+import { CaretDown as ChevronDown, EyeIcon as Eye, EyeSlash as EyeOff, CircleNotch as Loader2 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";

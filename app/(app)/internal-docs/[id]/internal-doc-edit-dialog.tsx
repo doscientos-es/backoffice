@@ -1,6 +1,6 @@
 "use client";
 
-import { Paperclip, Pencil, X } from "lucide-react";
+import { PaperclipIcon as Paperclip, PencilIcon as Pencil, XIcon as X } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";

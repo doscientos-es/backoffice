@@ -13,7 +13,7 @@ import {
   type ScopeModule,
 } from "@/lib/proposals/scope";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { ArrowRight, Download } from "lucide-react";
+import { ArrowRightIcon as ArrowRight, DownloadIcon as Download } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import type { DeckProposal, DeckProposalItem, DeckTeamMember } from "./page";
 

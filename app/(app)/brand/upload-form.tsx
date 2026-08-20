@@ -1,6 +1,6 @@
 "use client";
 
-import { ImageUp, Loader2 } from "lucide-react";
+import { ImageSquare as ImageUp, CircleNotch as Loader2 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";

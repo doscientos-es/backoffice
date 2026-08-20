@@ -1,4 +1,4 @@
-import { MousePointerClick, TrendingUp, Users, Wallet } from "lucide-react";
+import { CursorClick as MousePointerClick, TrendUp as TrendingUp, UsersIcon as Users, WalletIcon as Wallet } from "@phosphor-icons/react";
 import { StatCard } from "@/components/layout/stat-card";
 import { getMarketingOverview } from "@/lib/marketing/queries";
 import type { MarketingSort, MarketingView } from "@/lib/marketing/range";

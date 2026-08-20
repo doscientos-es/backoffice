@@ -1,4 +1,4 @@
-import { CheckCircle, Edit, ExternalLink, Globe, XCircle } from "lucide-react";
+import { CheckCircleIcon as CheckCircle, PencilSimple as Edit, ArrowSquareOut as ExternalLink, GlobeIcon as Globe, XCircleIcon as XCircle } from "@phosphor-icons/react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";

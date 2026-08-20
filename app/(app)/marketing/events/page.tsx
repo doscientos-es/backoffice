@@ -1,18 +1,7 @@
-import {
-  ChevronRight,
-  CircleDot,
-  ClipboardList,
-  ExternalLink,
-  Eye,
-  FileText,
-  type LucideIcon,
-  MessageCircle,
-  MousePointerClick,
-  Send,
-  UserCheck,
-  Users,
-} from "lucide-react";
+import type { IconProps } from "@phosphor-icons/react";
+import { CaretRight as ChevronRight, DotOutline as CircleDot, ClipboardText as ClipboardList, ArrowSquareOut as ExternalLink, EyeIcon as Eye, FileTextIcon as FileText, ChatCircle as MessageCircle, CursorClick as MousePointerClick, PaperPlaneTilt as Send, UserCheckIcon as UserCheck, UsersIcon as Users } from "@phosphor-icons/react";
 import Link from "next/link";
+import type { ComponentType } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/layout/stat-card";
 import {
@@ -48,7 +37,7 @@ function EventBadge({ name }: { name: string }) {
   return <Badge variant={variant}>{eventLabel(name)}</Badge>;
 }
 
-function eventIcon(name: string): LucideIcon {
+function eventIcon(name: string): ComponentType<IconProps> {
   if (name === "page_view") return Eye;
   if (name === "whatsapp_click") return MessageCircle;
   if (name === "cta_click") return MousePointerClick;
@@ -109,11 +98,10 @@ function JourneyCard({ journey }: { journey: VisitorJourney }) {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-3">
             <span
-              className={`flex size-9 shrink-0 items-center justify-center rounded-full ${
-                converted
+              className={`flex size-9 shrink-0 items-center justify-center rounded-full ${converted
                   ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                   : "bg-muted text-muted-foreground"
-              }`}
+                }`}
             >
               {converted ? (
                 <UserCheck className="size-4" aria-hidden />

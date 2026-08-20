@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, ClipboardCopy, Download, Pencil, Trash2 } from "lucide-react";
+import { CaretLeft as ChevronLeft, CaretRight as ChevronRight, ClipboardText as ClipboardCopy, DownloadIcon as Download, PencilIcon as Pencil, Trash as Trash2 } from "@phosphor-icons/react";
 import { useState, useTransition } from "react";
 import { sileo } from "sileo";
 import { Button } from "@/components/ui/button";

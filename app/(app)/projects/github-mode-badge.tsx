@@ -1,4 +1,4 @@
-import { Github, Link2, RefreshCw } from "lucide-react";
+import { GithubLogo as Github, Link as Link2, ArrowsClockwise as RefreshCw } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import type { GitHubSyncMode } from "./github-sync-section";
 

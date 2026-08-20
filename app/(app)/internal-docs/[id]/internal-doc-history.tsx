@@ -1,4 +1,4 @@
-import { FilePlus2, FileUp, PencilLine, Trash2 } from "lucide-react";
+import { FilePlus as FilePlus2, FileArrowUp as FileUp, PencilLineIcon as PencilLine, Trash as Trash2 } from "@phosphor-icons/react";
 import { formatDateTime } from "@/lib/utils";
 
 export type InternalDocEvent = {

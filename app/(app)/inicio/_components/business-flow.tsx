@@ -1,11 +1,4 @@
-import {
-  ArrowRight,
-  BriefcaseBusiness,
-  CircleDollarSign,
-  FileSignature,
-  ReceiptText,
-  Sparkles,
-} from "lucide-react";
+import { ArrowRightIcon as ArrowRight, Suitcase as BriefcaseBusiness, CurrencyCircleDollar as CircleDollarSign, FileText as FileSignature, Receipt as ReceiptText, Sparkle as Sparkles } from "@phosphor-icons/react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";

@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { Combobox as ComboboxPrimitive } from "@base-ui/react";
-import { CheckIcon, ChevronDownIcon, XIcon } from "lucide-react";
+import { Check as CheckIcon, CaretDown as ChevronDownIcon, X as XIcon } from "@phosphor-icons/react";
 import * as React from "react";
 import { cn } from "../lib/utils";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "./input-group";

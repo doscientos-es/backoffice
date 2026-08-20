@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, FileEdit } from "lucide-react";
+import { DownloadIcon as Download, FileText as FileEdit } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";

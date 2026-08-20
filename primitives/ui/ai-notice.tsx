@@ -6,7 +6,7 @@
  *   import { AiNotice } from "./ai-notice"
  *   if (!isAIEnabled()) return <AiNotice />
  */
-import { Sparkles } from "lucide-react";
+import { Sparkle as Sparkles } from "@phosphor-icons/react";
 
 interface AiNoticeProps {
   /** Mensaje personalizado. Por defecto explica que la IA no está activada. */

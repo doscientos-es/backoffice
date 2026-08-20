@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, FileText } from "lucide-react";
+import { ArrowUpRightIcon as ArrowUpRight, FileTextIcon as FileText } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

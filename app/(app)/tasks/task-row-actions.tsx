@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Loader2, Trash2 } from "lucide-react";
+import { CheckCircle as CheckCircle2, CircleNotch as Loader2, Trash as Trash2 } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Button } from "@/components/ui/button";

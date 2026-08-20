@@ -1,6 +1,6 @@
 "use client";
 
-import { Globe, ImagePlus, Loader2, Search, X } from "lucide-react";
+import { GlobeIcon as Globe, ImageSquare as ImagePlus, CircleNotch as Loader2, MagnifyingGlass as Search, XIcon as X } from "@phosphor-icons/react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { getBrowserClient } from "@/lib/supabase/browser";

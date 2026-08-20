@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { ChevronDown, ShieldAlert } from "lucide-react";
+import { CaretDown as ChevronDown, ShieldWarning as ShieldAlert } from "@phosphor-icons/react";
 import type * as React from "react";
 import { cn } from "../lib/utils";
 import { Card, CardContent } from "./card";

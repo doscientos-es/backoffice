@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Send } from "lucide-react";
+import { CircleNotch as Loader2, PaperPlaneTilt as Send } from "@phosphor-icons/react";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { updateInvoiceStatus } from "../actions";

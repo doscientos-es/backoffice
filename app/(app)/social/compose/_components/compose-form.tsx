@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarClock, FileText, MessageCircle, Send } from "lucide-react";
+import { CalendarDots as CalendarClock, FileTextIcon as FileText, ChatCircle as MessageCircle, PaperPlaneTilt as Send } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState, useTransition } from "react";

@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  CheckCircle2,
-  Circle,
-  Clock3,
-  FileCheck2,
-  Loader2,
-  TriangleAlert,
-  XCircle,
-} from "lucide-react";
+import { CheckCircle as CheckCircle2, CircleIcon as Circle, Clock as Clock3, File as FileCheck2, CircleNotch as Loader2, Warning as TriangleAlert, XCircleIcon as XCircle } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

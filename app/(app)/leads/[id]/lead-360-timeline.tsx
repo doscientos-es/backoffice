@@ -8,16 +8,7 @@ import type {
   LeadRelatedTask,
 } from "@/lib/leads/types";
 import { formatEUR, relativeTime } from "@/lib/utils";
-import {
-  ArrowRight,
-  BriefcaseBusiness,
-  CheckSquare2,
-  CircleDollarSign,
-  FileSignature,
-  Mail,
-  ReceiptText,
-  Sparkles,
-} from "lucide-react";
+import { ArrowRightIcon as ArrowRight, Suitcase as BriefcaseBusiness, CheckSquare as CheckSquare2, CurrencyCircleDollar as CircleDollarSign, FileText as FileSignature, Envelope as Mail, Receipt as ReceiptText, Sparkle as Sparkles } from "@phosphor-icons/react";
 import Link from "next/link";
 
 type TimelineEvent = {

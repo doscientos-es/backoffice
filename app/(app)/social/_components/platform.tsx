@@ -1,4 +1,4 @@
-import { Facebook, Instagram, Linkedin, Store } from "lucide-react";
+import { FacebookLogo as Facebook, InstagramLogo as Instagram, LinkedinLogo as Linkedin, Storefront as Store } from "@phosphor-icons/react";
 import type { ComponentType } from "react";
 import { PLATFORM_LABELS, type SocialPlatform } from "@/lib/social/core";
 import { cn } from "@/lib/utils";

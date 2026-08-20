@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, CheckCircle2, Loader2, Play } from "lucide-react";
+import { WarningCircle as AlertCircle, CheckCircle as CheckCircle2, CircleNotch as Loader2, PlayIcon as Play } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

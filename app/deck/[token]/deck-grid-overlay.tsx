@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { XIcon as X } from "@phosphor-icons/react";
 import { useEffect, useRef } from "react";
 import type { DeckSlide } from "./deck-slides";
 

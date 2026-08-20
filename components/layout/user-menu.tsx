@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, LogOut, Settings, ShieldCheck, Users } from "lucide-react";
+import { WarningCircle as AlertCircle, SignOut as LogOut, Gear as Settings, ShieldCheckIcon as ShieldCheck, UsersIcon as Users } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

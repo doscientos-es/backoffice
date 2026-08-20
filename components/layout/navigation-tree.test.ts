@@ -1,6 +1,6 @@
-import { NavigationTree, isNavigationItemActive } from "@/components/layout/navigation-tree";
-import { render, screen } from "@testing-library/react";
-import { User } from "lucide-react";
+import { isNavigationItemActive, NavigationTree } from "@/components/layout/navigation-tree";
+import { UserIcon as User } from "@phosphor-icons/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -30,11 +30,17 @@ describe("isNavigationItemActive", () => {
     expect(isNavigationItemActive("/marketing/campaigns", "/marketing", groups)).toBe(true);
   });
 
-  it("keeps every navigation section open", () => {
+  it("starts navigation sections open and lets users collapse them", () => {
     render(createElement(NavigationTree, { groups, pathname: "/inicio" }));
 
     expect(screen.getByText("Publicidad")).toBeTruthy();
     expect(screen.getByText("Newsletters")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Growth" })).toBeNull();
+    const section = screen.getByRole("button", { name: "Growth" });
+    expect(section.getAttribute("aria-expanded")).toBe("true");
+
+    fireEvent.click(section);
+
+    expect(screen.queryByText("Publicidad")).toBeNull();
+    expect(section.getAttribute("aria-expanded")).toBe("false");
   });
 });

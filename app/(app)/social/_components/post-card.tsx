@@ -1,10 +1,4 @@
-import {
-  CalendarClock,
-  Heart,
-  MessageCircle,
-  MessageSquareText,
-  MousePointerClick,
-} from "lucide-react";
+import { CalendarDots as CalendarClock, HeartIcon as Heart, ChatCircle as MessageCircle, ChatText as MessageSquareText, CursorClick as MousePointerClick } from "@phosphor-icons/react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { PostListItem } from "@/lib/social/types";

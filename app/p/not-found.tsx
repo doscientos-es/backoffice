@@ -1,4 +1,4 @@
-import { FileX2 } from "lucide-react";
+import { FileX as FileX2 } from "@phosphor-icons/react";
 
 export const metadata = { title: "Documento no encontrado · doscientos" };
 

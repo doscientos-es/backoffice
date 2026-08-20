@@ -1,4 +1,4 @@
-import { Star } from "lucide-react";
+import { StarIcon as Star } from "@phosphor-icons/react";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";

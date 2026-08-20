@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarClock, CheckCircle2, ListTodo, Loader2 } from "lucide-react";
+import { CalendarDots as CalendarClock, CheckCircle as CheckCircle2, ListChecks as ListTodo, CircleNotch as Loader2 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";

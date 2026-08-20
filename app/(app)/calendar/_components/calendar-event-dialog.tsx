@@ -2,21 +2,7 @@
 
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import {
-  ArrowUpRight,
-  Briefcase,
-  CalendarDays,
-  CheckCircle2,
-  Circle,
-  Clock,
-  Layers,
-  Loader2,
-  MapPin,
-  Tag,
-  Trash2,
-  User,
-  Users,
-} from "lucide-react";
+import { ArrowUpRightIcon as ArrowUpRight, BriefcaseIcon as Briefcase, CalendarBlank as CalendarDays, CheckCircle as CheckCircle2, CircleIcon as Circle, ClockIcon as Clock, Stack as Layers, CircleNotch as Loader2, MapPinIcon as MapPin, TagIcon as Tag, Trash as Trash2, UserIcon as User, UsersIcon as Users } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useTransition } from "react";
 import { sileo } from "sileo";

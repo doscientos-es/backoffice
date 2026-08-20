@@ -28,7 +28,7 @@ import {
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { CheckCircle2, Clock, FileText, Pencil, Presentation, XCircle } from "lucide-react";
+import { CheckCircle as CheckCircle2, ClockIcon as Clock, FileTextIcon as FileText, PencilIcon as Pencil, PresentationIcon as Presentation, XCircleIcon as XCircle } from "@phosphor-icons/react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { updateProposalPortalAccess } from "../actions";

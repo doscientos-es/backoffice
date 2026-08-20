@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, EyeOff, KeyRound, LockOpen } from "lucide-react";
+import { EyeIcon as Eye, EyeSlash as EyeOff, Key as KeyRound, LockOpenIcon as LockOpen } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";

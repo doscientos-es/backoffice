@@ -1,4 +1,4 @@
-import { BriefcaseBusiness, CheckSquare, Clock3, Github, Mail, Phone, Users } from "lucide-react";
+import { Suitcase as BriefcaseBusiness, CheckSquareIcon as CheckSquare, Clock as Clock3, GithubLogo as Github, Envelope as Mail, PhoneIcon as Phone, UsersIcon as Users } from "@phosphor-icons/react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";

@@ -6,7 +6,7 @@
  */
 
 import { isValidIBAN } from "ibantools";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircleIcon as CheckCircle, XCircleIcon as XCircle } from "@phosphor-icons/react";
 import { useState } from "react";
 import { Input } from "./input";
 

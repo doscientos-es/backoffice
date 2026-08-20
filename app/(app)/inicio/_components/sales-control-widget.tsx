@@ -1,4 +1,4 @@
-import { AlertTriangle, Clock3, FileText, Users } from "lucide-react";
+import { Warning as AlertTriangle, Clock as Clock3, FileTextIcon as FileText, UsersIcon as Users } from "@phosphor-icons/react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

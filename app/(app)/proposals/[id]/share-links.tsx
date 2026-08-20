@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Check, Copy, ExternalLink, FileText, Presentation } from "lucide-react";
+import { Warning as AlertTriangle, CheckIcon as Check, CopyIcon as Copy, ArrowSquareOut as ExternalLink, FileTextIcon as FileText, PresentationIcon as Presentation } from "@phosphor-icons/react";
 import { useState } from "react";
 import { sileo } from "sileo";
 import { Button } from "@/components/ui/button";

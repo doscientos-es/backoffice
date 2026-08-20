@@ -1,7 +1,7 @@
 "use client";
 
 import HCaptcha from "@hcaptcha/react-hcaptcha";
-import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowLeftIcon as ArrowLeft, CheckCircle as CheckCircle2, CircleNotch as Loader2 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";

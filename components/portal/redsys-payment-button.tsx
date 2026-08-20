@@ -1,6 +1,6 @@
 "use client";
 
-import { CreditCard, Loader2 } from "lucide-react";
+import { CreditCardIcon as CreditCard, CircleNotch as Loader2 } from "@phosphor-icons/react";
 import { useState, useTransition } from "react";
 import { initiatePayment, type PaymentMode } from "@/app/p/invoice/[token]/actions";
 import { Button } from "@/components/ui/button";

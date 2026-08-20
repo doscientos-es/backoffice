@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, X } from "lucide-react";
+import { CheckIcon as Check, XIcon as X } from "@phosphor-icons/react";
 import { useState, useTransition } from "react";
 import { sileo } from "sileo";
 import { Badge } from "@/components/ui/badge";

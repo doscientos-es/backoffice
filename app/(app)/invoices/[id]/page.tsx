@@ -1,4 +1,4 @@
-import { AlertTriangle } from "lucide-react";
+import { Warning as AlertTriangle } from "@phosphor-icons/react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";

@@ -1,4 +1,4 @@
-import { Fingerprint, ShieldCheck } from "lucide-react";
+import { FingerprintIcon as Fingerprint, ShieldCheckIcon as ShieldCheck } from "@phosphor-icons/react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

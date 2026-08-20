@@ -11,7 +11,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { AlertTriangle, Plus, TriangleAlert } from "lucide-react";
+import { Warning as AlertTriangle, PlusIcon as Plus, Warning as TriangleAlert } from "@phosphor-icons/react";
 import Link from "next/link";
 import type React from "react";
 import { useOptimistic, useState, useTransition } from "react";

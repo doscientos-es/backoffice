@@ -1,4 +1,4 @@
-import { HeartHandshake, MailX, TriangleAlert, Users } from "lucide-react";
+import { HandHeart as HeartHandshake, Envelope as MailX, Warning as TriangleAlert, UsersIcon as Users } from "@phosphor-icons/react";
 import { StatCard } from "@/components/layout/stat-card";
 import type { RecoveryKpis as RecoveryKpisData } from "@/lib/recovery/types";
 import { formatEUR } from "@/lib/utils";

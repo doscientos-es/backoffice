@@ -54,6 +54,14 @@ const user: CurrentUser = {
 };
 
 describe("Sidebar actions", () => {
+  it("remains visible as part of the layout at every viewport size", () => {
+    const { container } = render(<Sidebar user={user} demoMode={false} />);
+
+    const sidebar = container.querySelector("aside");
+    expect(sidebar?.className).toContain("flex");
+    expect(sidebar?.className).not.toContain("hidden");
+  });
+
   it("places theme, notifications, and settings together above the profile menu", () => {
     render(<Sidebar user={user} demoMode={false} />);
 

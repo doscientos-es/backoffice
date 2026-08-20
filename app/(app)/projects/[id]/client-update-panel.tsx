@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, Check, Copy, Sparkles } from "lucide-react";
+import { WarningCircle as AlertCircle, CheckIcon as Check, CopyIcon as Copy, Sparkle as Sparkles } from "@phosphor-icons/react";
 import { useState } from "react";
 import { AiNotice } from "@/components/ui/ai-notice";
 import { Badge } from "@/components/ui/badge";

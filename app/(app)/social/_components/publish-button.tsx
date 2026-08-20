@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle, Send, XCircle } from "lucide-react";
+import { CheckCircleIcon as CheckCircle, PaperPlaneTilt as Send, XCircleIcon as XCircle } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { sileo } from "sileo";

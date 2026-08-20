@@ -4,16 +4,7 @@
 // Única fuente de verdad para las 3 fast actions (llamada, email, nota)
 // con opción de agendar follow-up. Todas refrescan el router tras éxito.
 
-import {
-  FileText,
-  Loader2,
-  Mail,
-  MessageCircle,
-  NotebookPen,
-  Phone,
-  Send,
-  Video,
-} from "lucide-react";
+import { FileTextIcon as FileText, CircleNotch as Loader2, Envelope as Mail, ChatCircle as MessageCircle, Notebook as NotebookPen, PhoneIcon as Phone, PaperPlaneTilt as Send, VideoIcon as Video } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { type SubmitEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";

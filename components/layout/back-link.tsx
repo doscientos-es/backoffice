@@ -1,4 +1,4 @@
-import { ChevronLeft } from "lucide-react";
+import { CaretLeft as ChevronLeft } from "@phosphor-icons/react";
 import Link from "next/link";
 
 export type BackLinkProps = {

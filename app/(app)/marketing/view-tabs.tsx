@@ -1,6 +1,6 @@
 "use client";
 
-import { Megaphone, Target } from "lucide-react";
+import { MegaphoneIcon as Megaphone, TargetIcon as Target } from "@phosphor-icons/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import type { MarketingView } from "@/lib/marketing/range";

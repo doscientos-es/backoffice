@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { Loader2 } from "lucide-react";
+import { CircleNotch as Loader2 } from "@phosphor-icons/react";
 import { useFormStatus } from "react-dom";
 import { Button } from "./button";
 

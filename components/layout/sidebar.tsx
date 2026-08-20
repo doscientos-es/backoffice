@@ -1,6 +1,6 @@
 "use client";
 
-import { Settings } from "lucide-react";
+import { Gear as Settings } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/branding";
@@ -22,7 +22,7 @@ export function Sidebar({ user, demoMode }: { user: CurrentUser; demoMode: boole
   const visibleGroups = visibleNavigationGroups(user.role);
 
   return (
-    <aside className="hidden w-56 shrink-0 border-r border-border bg-card lg:flex lg:flex-col">
+    <aside className="flex h-full w-56 shrink-0 flex-col border-r border-border bg-card">
       <div className="px-4 py-5">
         <Link
           href="/inicio"

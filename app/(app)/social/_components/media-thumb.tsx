@@ -1,4 +1,4 @@
-import { ImageIcon, Play } from "lucide-react";
+import { Image as ImageIcon, PlayIcon as Play } from "@phosphor-icons/react";
 import type { MediaItem } from "@/lib/social/core";
 import { cn } from "@/lib/utils";
 

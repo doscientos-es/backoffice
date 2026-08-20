@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Maximize2 } from "lucide-react";
+import { FileTextIcon as FileText, ArrowsOut as Maximize2 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
 import {

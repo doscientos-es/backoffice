@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { type PaymentPlanItem } from "@/lib/proposals/scope";
-import { FileText, Send } from "lucide-react";
+import { FileTextIcon as FileText, PaperPlaneTilt as Send } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { createInvoicesFromProposalPlan, requestInvoiceFromProposal } from "../../invoices/actions";

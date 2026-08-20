@@ -21,7 +21,7 @@ import { buildLeadWhatsAppMessage, buildWhatsAppUrl } from "@/lib/leads/whatsapp
 import type { CallOutcome } from "@/lib/schemas/lead";
 import { relativeTime } from "@/lib/utils";
 import { todayIsoLocal } from "@/lib/utils/date";
-import { Brain, Mail, MessageCircle, Phone, Sparkles } from "lucide-react";
+import { BrainIcon as Brain, Envelope as Mail, ChatCircle as MessageCircle, PhoneIcon as Phone, Sparkle as Sparkles } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 import { MomTestQuickDialog } from "./[id]/mom-test-quick-dialog";

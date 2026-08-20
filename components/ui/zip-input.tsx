@@ -8,7 +8,7 @@
  * and city (when known) via offline server action. Fields remain editable.
  */
 
-import { Loader2 } from "lucide-react";
+import { CircleNotch as Loader2 } from "@phosphor-icons/react";
 import { useRef, useState } from "react";
 import { lookupSpanishPostalCode } from "@/lib/address/actions";
 import { cn } from "@/lib/utils";

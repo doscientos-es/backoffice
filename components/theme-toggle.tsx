@@ -1,6 +1,6 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import { MoonIcon as Moon, SunIcon as Sun } from "@phosphor-icons/react";
 import { useTheme } from "next-themes";
 import { IconButton } from "@/components/ui/icon-button";
 

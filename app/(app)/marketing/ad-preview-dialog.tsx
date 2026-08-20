@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, Eye, Loader2 } from "lucide-react";
+import { ArrowSquareOut as ExternalLink, EyeIcon as Eye, CircleNotch as Loader2 } from "@phosphor-icons/react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {

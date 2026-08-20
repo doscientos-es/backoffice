@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, Mail, MessageCircle, Phone, Sparkles } from "lucide-react";
+import { CheckIcon as Check, CopyIcon as Copy, Envelope as Mail, ChatCircle as MessageCircle, PhoneIcon as Phone, Sparkle as Sparkles } from "@phosphor-icons/react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

@@ -1,9 +1,6 @@
-import { Logo } from "@/components/branding";
 import { CallReminderWatcher } from "@/components/layout/call-reminder-watcher";
 import { CommandPalette } from "@/components/layout/command-palette";
-import { CommandPaletteTrigger } from "@/components/layout/command-palette-trigger";
 import { KeyboardShortcuts } from "@/components/layout/keyboard-shortcuts";
-import { MobileNav } from "@/components/layout/mobile-nav";
 import { NavProgress } from "@/components/layout/nav-progress";
 import { QuickCreateButton } from "@/components/layout/quick-create-button";
 import { ShortcutsDialog } from "@/components/layout/shortcuts-dialog";
@@ -19,13 +16,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar user={user} demoMode={demoMode} />
       <div className="flex flex-1 flex-col min-h-0 min-w-0">
-        {/* Mobile Header (Topbar replacement) */}
-        <header className="flex h-12 items-center justify-between border-b border-border bg-card px-4 lg:hidden">
-          <MobileNav user={user} demoMode={demoMode} />
-          <Logo size="sm" />
-          <CommandPaletteTrigger variant="icon" />
-        </header>
-
         <main className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">{children}</main>
       </div>
       <NavProgress />

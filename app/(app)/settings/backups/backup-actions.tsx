@@ -1,6 +1,6 @@
 "use client";
 
-import { DatabaseBackup, Download, Loader2 } from "lucide-react";
+import { Database as DatabaseBackup, DownloadIcon as Download, CircleNotch as Loader2 } from "@phosphor-icons/react";
 import { useState, useTransition } from "react";
 import { sileo } from "sileo";
 import { Button } from "@/components/ui/button";

@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { CalendarClock, Hand, ListTodo } from "lucide-react";
+import { CalendarDots as CalendarClock, HandIcon as Hand, ListChecks as ListTodo } from "@phosphor-icons/react";
 import { type ReactNode, useState, useTransition } from "react";
 import { sileo } from "sileo";
 import {

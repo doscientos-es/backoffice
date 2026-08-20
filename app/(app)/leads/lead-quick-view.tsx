@@ -1,23 +1,6 @@
 "use client";
 
-import {
-  ArrowUpRight,
-  Building2,
-  CalendarPlus,
-  Clock,
-  Hand,
-  Loader2,
-  Mail,
-  Phone,
-  Timer,
-  Trash2,
-  TriangleAlert,
-  UserRound,
-  Users,
-  Wallet,
-  Wrench,
-  X,
-} from "lucide-react";
+import { ArrowUpRightIcon as ArrowUpRight, Buildings as Building2, CalendarPlusIcon as CalendarPlus, ClockIcon as Clock, HandIcon as Hand, CircleNotch as Loader2, Envelope as Mail, PhoneIcon as Phone, TimerIcon as Timer, Trash as Trash2, Warning as TriangleAlert, UserCircle as UserRound, UsersIcon as Users, WalletIcon as Wallet, WrenchIcon as Wrench, XIcon as X } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useState, useTransition } from "react";

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronUp, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
+import { CaretDown as ChevronDown, CaretUp as ChevronUp, CircleNotch as Loader2, PlusIcon as Plus, Sparkle as Sparkles, Trash as Trash2 } from "@phosphor-icons/react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { createEmptyPair, type EditablePair, KEY_POINTS_LIMITS } from "@/lib/proposals/key-points";

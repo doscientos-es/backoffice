@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { WarningCircle as AlertCircle, CheckCircle as CheckCircle2, CircleNotch as Loader2, XCircleIcon as XCircle } from "@phosphor-icons/react";
 import { useMemo, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";

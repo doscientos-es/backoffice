@@ -1,6 +1,6 @@
 "use client";
 
-import { Link2, X } from "lucide-react";
+import { Link as Link2, XIcon as X } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";

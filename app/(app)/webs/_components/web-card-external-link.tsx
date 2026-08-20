@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink } from "lucide-react";
+import { ArrowSquareOut as ExternalLink } from "@phosphor-icons/react";
 
 export function WebCardExternalLink({ url, name }: { url: string; name: string }) {
   return (

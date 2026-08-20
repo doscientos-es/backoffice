@@ -1,5 +1,5 @@
 import { buildQrDataUrl, buildQrUrl } from "@doscientos/verifactu";
-import { CheckCircle2, Download, XCircle } from "lucide-react";
+import { CheckCircle as CheckCircle2, DownloadIcon as Download, XCircleIcon as XCircle } from "@phosphor-icons/react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
