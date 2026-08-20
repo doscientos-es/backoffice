@@ -1,4 +1,3 @@
-import { LogoMark } from "@/components/branding";
 import { PortalPasswordGate } from "@/components/portal/password-gate";
 import { ProposalPaymentButton } from "@/components/portal/proposal-payment-button";
 import {
@@ -377,18 +376,12 @@ export default async function PortalProposalPage({
         </Alert>
       )}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
-        <article className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-800">
+        <article className="overflow-hidden border-y border-zinc-200 dark:border-zinc-800">
           {/* Document header */}
           <header className="border-b border-zinc-200 px-6 py-6 dark:border-zinc-800 sm:px-8">
             <div className="flex items-center justify-between gap-4">
               <div className="flex min-w-0 flex-col gap-1">
-                <div className="mb-1 flex items-center gap-2">
-                  <LogoMark size={20} className="text-[#2A4227] dark:text-[#9CC196]" />
-                  <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                    doscientos
-                  </span>
-                </div>
-                <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
                   Propuesta · {proposalNumber}
                 </p>
               </div>

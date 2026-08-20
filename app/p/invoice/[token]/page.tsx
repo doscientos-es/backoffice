@@ -1,4 +1,3 @@
-import { LogoMark } from "@/components/branding";
 import { PortalPasswordGate } from "@/components/portal/password-gate";
 import { RedsysPaymentButton } from "@/components/portal/redsys-payment-button";
 import { Button } from "@/components/ui/button";
@@ -143,7 +142,7 @@ export default async function PortalInvoicePage({
     : [];
 
   return (
-    <div className="flex flex-col gap-6 max-w-4xl mx-auto py-10 px-4 sm:px-6">
+    <div className="mx-auto flex max-w-5xl flex-col gap-5 py-6 sm:py-8">
       {success === "1" && (
         <div className="flex items-center gap-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 p-4 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300">
           <CheckCircle2 className="h-5 w-5 shrink-0" />
@@ -210,17 +209,11 @@ export default async function PortalInvoicePage({
         </div>
       )}
 
-      <article className="rounded-xl bg-white dark:bg-zinc-900 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-800 overflow-hidden">
+      <article className="overflow-hidden border-y border-zinc-200 dark:border-zinc-800">
         {/* Document header */}
-        <div className="border-b border-zinc-200 dark:border-zinc-800 px-8 py-7 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-6 border-b border-zinc-200 px-6 py-6 dark:border-zinc-800 sm:flex-row sm:items-start sm:justify-between sm:px-8">
           <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2 mb-1">
-              <LogoMark size={20} className="text-[#2A4227] dark:text-[#9CC196]" />
-              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                doscientos
-              </span>
-            </div>
-            <p className="text-xs text-zinc-400 dark:text-zinc-500">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
               {invoice.invoice_type as string}
             </p>
           </div>
