@@ -271,9 +271,8 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
   const canRectify = (isIssued || isPaid || isOverdue) && !invoice.is_rectification;
 
   return (
-    <div className="grid w-full min-w-0 grid-cols-2 items-center gap-2 sm:flex sm:w-auto sm:max-w-full sm:flex-wrap sm:justify-end sm:gap-2">
-      {/* Status badges — lives here so the page header actions slot stays compact */}
-      <div className="col-span-2 flex shrink-0 flex-wrap items-center gap-2 sm:mr-1 sm:flex-col sm:items-end sm:gap-1">
+    <div className="flex w-full min-w-0 flex-col gap-2 sm:w-auto sm:items-end">
+      <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
         <StatusBadge meta={INVOICE_STATUS} value={invoice.status} />
         <StatusBadge
           meta={VERIFACTU_STATUS}
@@ -289,270 +288,265 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
         ) : null}
       </div>
 
-      {/* Subtle vertical separator */}
-      <div className="hidden h-7 w-px shrink-0 bg-border sm:block sm:mx-0.5" aria-hidden />
-
       {feedback.state.status !== "idle" ? (
-        <div className="col-span-2 min-w-0 max-w-full sm:flex-1">
+        <div className="min-w-0 max-w-full">
           <FormFeedback state={feedback.state} className="max-w-full min-w-0" />
         </div>
       ) : null}
 
-      {/* Icon-only secondary actions */}
-      <Button
-        variant="outline"
-        size="sm"
-        className="w-full justify-start gap-2 sm:w-auto sm:justify-center sm:gap-0 sm:px-2"
-        title="Descargar PDF"
-        aria-label="Descargar PDF"
-        asChild
-      >
-        <a href={`/api/invoices/${invoice.id}/pdf`}>
-          <Download className="h-4 w-4" />
-          <span className="sm:hidden">Descargar PDF</span>
-        </a>
-      </Button>
-
-      {canEdit && (
+      <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
         <Button
           variant="outline"
           size="sm"
-          className="w-full justify-start gap-2 sm:w-auto sm:justify-center sm:gap-0 sm:px-2"
-          title="Editar factura"
-          aria-label="Editar factura"
+          className="size-9 shrink-0 p-0"
+          title="Descargar PDF"
+          aria-label="Descargar PDF"
           asChild
         >
-          <Link href={`/invoices/${invoice.id}/edit`}>
-            <FileEdit className="h-4 w-4" />
-            <span className="sm:hidden">Editar</span>
-          </Link>
+          <a href={`/api/invoices/${invoice.id}/pdf`}>
+            <Download className="h-4 w-4" />
+          </a>
         </Button>
-      )}
 
-      {canSendEmail && (
-        <SendInvoiceButton invoiceId={invoice.id} defaultEmail={clientEmail} iconOnly />
-      )}
-
-      {/* Primary CTA — keep text for clarity */}
-      {canIssue && (
-        <Button
-          className="col-span-2 w-full justify-center whitespace-nowrap sm:w-auto"
-          size="sm"
-          disabled={pending || issuanceOpen}
-          onClick={handleIssue}
-        >
-          {pendingStatus === "issued" ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Send className="h-4 w-4" />
-          )}
-          {pendingStatus === "issued" ? "Emitiendo…" : "Emitir"}
-        </Button>
-      )}
-
-      {canMarkPaid && (
-        <>
+        {canEdit && (
           <Button
             variant="outline"
             size="sm"
-            disabled={pending}
-            onClick={openPaymentDialog}
-            className="w-full justify-center whitespace-nowrap text-success-foreground hover:text-success-foreground sm:w-auto"
+            className="size-9 shrink-0 p-0"
+            title="Editar factura"
+            aria-label="Editar factura"
+            asChild
           >
-            {pendingStatus === "paid" ? (
+            <Link href={`/invoices/${invoice.id}/edit`}>
+              <FileEdit className="h-4 w-4" />
+            </Link>
+          </Button>
+        )}
+
+        {canSendEmail && (
+          <SendInvoiceButton invoiceId={invoice.id} defaultEmail={clientEmail} iconOnly />
+        )}
+
+        {canIssue && (
+          <Button
+            className="ml-auto w-full justify-center whitespace-nowrap sm:ml-0 sm:w-auto"
+            size="sm"
+            disabled={pending || issuanceOpen}
+            onClick={handleIssue}
+          >
+            {pendingStatus === "issued" ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <CheckCircle2 className="h-4 w-4" />
+              <Send className="h-4 w-4" />
             )}
-            {pendingStatus === "paid" ? "Guardando…" : "Registrar cobro"}
+            {pendingStatus === "issued" ? "Emitiendo…" : "Emitir"}
           </Button>
-          <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-            <DialogContent className="sm:max-w-sm">
-              <DialogHeader>
-                <DialogTitle>Registrar cobro</DialogTitle>
-                <DialogDescription>
-                  Registra el importe recibido. Por defecto se propone todo el pendiente; puedes
-                  cambiarlo para pagos a plazos.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-2 py-2">
-                <Label htmlFor="paymentAmount">Importe cobrado (€)</Label>
-                <input
-                  id="paymentAmount"
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={paymentAmount}
-                  onChange={(event) => setPaymentAmount(event.target.value)}
-                  className="h-9 w-full rounded-md border bg-background px-3 text-sm"
-                />
-                <Label>Medio de cobro</Label>
-                <div className="space-y-1.5">
-                  {(Object.keys(PAYMENT_METHOD_LABELS) as PaymentMethodType[]).map((method) => (
-                    <label
-                      key={method}
-                      className="flex items-center gap-3 rounded-md border p-3 cursor-pointer has-checked:border-primary"
-                    >
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value={method}
-                        checked={selectedPaymentMethod === method}
-                        onChange={() => setSelectedPaymentMethod(method)}
-                        className="mt-0"
-                      />
-                      <span className="text-sm font-medium">{PAYMENT_METHOD_LABELS[method]}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={pending}
-                  onClick={() => setShowPaymentDialog(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  size="sm"
-                  disabled={pending}
-                  onClick={() => {
-                    handleRecordPayment();
-                  }}
-                >
-                  Registrar cobro
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </>
-      )}
+        )}
 
-      {canMarkUncollected && (
-        <>
-          <Button
-            variant="outline"
-            size="sm"
-            className="col-span-2 w-full justify-start gap-2 sm:w-auto sm:justify-center sm:gap-0 sm:px-2"
-            disabled={pending}
-            title="Revertir cobro"
-            aria-label="Revertir cobro"
-            onClick={() => setConfirmUncollected(true)}
-          >
-            <XCircle className="h-4 w-4" />
-            <span className="sm:hidden">Revertir cobro</span>
-          </Button>
-          <Dialog open={confirmUncollected} onOpenChange={setConfirmUncollected}>
-            <DialogContent className="sm:max-w-sm">
-              <DialogHeader>
-                <DialogTitle>¿Revertir cobro de la factura?</DialogTitle>
-                <DialogDescription>
-                  Esto eliminará la fecha de cobro y devolverá la factura al estado{" "}
-                  <strong>Emitida</strong>. Esta acción debería usarse solo para corregir errores,
-                  nunca para anular un cobro real.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="flex justify-end gap-2 pt-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={pending}
-                  onClick={() => setConfirmUncollected(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  disabled={pending}
-                  onClick={() => {
-                    setConfirmUncollected(false);
-                    handleStatusUpdate("issued", {
-                      successLabel: "Factura marcada como no cobrada",
-                    });
-                  }}
-                >
-                  Confirmar reversión
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </>
-      )}
-
-      {/* AEAT Button if already issued */}
-      {shouldSendToAeat ? (
-        <SendAeatButton
-          invoiceId={invoice.id}
-          label={
-            invoice.verifactu_status === "rejected"
-              ? "Reintentar AEAT"
-              : invoice.verifactu_status === "error"
-                ? "Reintentar envío"
-                : "Enviar a AEAT"
-          }
-        />
-      ) : null}
-
-      {(canCancel || canDelete || canRectify || canMarkUncollectible) && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        {canMarkPaid && (
+          <>
             <Button
               variant="outline"
               size="sm"
-              className="col-span-2 w-full justify-center gap-2 sm:w-auto sm:justify-self-auto sm:gap-0 sm:border-0"
+              disabled={pending}
+              onClick={openPaymentDialog}
+              className="ml-auto w-full justify-center whitespace-nowrap text-success-foreground hover:text-success-foreground sm:ml-0 sm:w-auto"
             >
-              <MoreHorizontal className="h-4 w-4" />
-              <span className="sm:hidden">Más acciones</span>
+              {pendingStatus === "paid" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4" />
+              )}
+              {pendingStatus === "paid" ? "Guardando…" : "Registrar cobro"}
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {canRectify && (
-              <DropdownMenuItem onClick={() => setShowRectification(true)}>
-                <FileMinus2 className="mr-2 h-4 w-4" />
-                Emitir factura rectificativa
-              </DropdownMenuItem>
-            )}
-            {canMarkUncollectible && (
-              <DropdownMenuItem
-                className="text-warning"
-                onClick={() => setShowUncollectibleDialog(true)}
+            <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+              <DialogContent className="sm:max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>Registrar cobro</DialogTitle>
+                  <DialogDescription>
+                    Registra el importe recibido. Por defecto se propone todo el pendiente; puedes
+                    cambiarlo para pagos a plazos.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-2 py-2">
+                  <Label htmlFor="paymentAmount">Importe cobrado (€)</Label>
+                  <input
+                    id="paymentAmount"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={paymentAmount}
+                    onChange={(event) => setPaymentAmount(event.target.value)}
+                    className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                  />
+                  <Label>Medio de cobro</Label>
+                  <div className="space-y-1.5">
+                    {(Object.keys(PAYMENT_METHOD_LABELS) as PaymentMethodType[]).map((method) => (
+                      <label
+                        key={method}
+                        className="flex items-center gap-3 rounded-md border p-3 cursor-pointer has-checked:border-primary"
+                      >
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value={method}
+                          checked={selectedPaymentMethod === method}
+                          onChange={() => setSelectedPaymentMethod(method)}
+                          className="mt-0"
+                        />
+                        <span className="text-sm font-medium">{PAYMENT_METHOD_LABELS[method]}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={pending}
+                    onClick={() => setShowPaymentDialog(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    size="sm"
+                    disabled={pending}
+                    onClick={() => {
+                      handleRecordPayment();
+                    }}
+                  >
+                    Registrar cobro
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </>
+        )}
+
+        {canMarkUncollected && (
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              className="size-9 shrink-0 p-0"
+              disabled={pending}
+              title="Revertir cobro"
+              aria-label="Revertir cobro"
+              onClick={() => setConfirmUncollected(true)}
+            >
+              <XCircle className="h-4 w-4" />
+            </Button>
+            <Dialog open={confirmUncollected} onOpenChange={setConfirmUncollected}>
+              <DialogContent className="sm:max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>¿Revertir cobro de la factura?</DialogTitle>
+                  <DialogDescription>
+                    Esto eliminará la fecha de cobro y devolverá la factura al estado{" "}
+                    <strong>Emitida</strong>. Esta acción debería usarse solo para corregir errores,
+                    nunca para anular un cobro real.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex justify-end gap-2 pt-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={pending}
+                    onClick={() => setConfirmUncollected(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={pending}
+                    onClick={() => {
+                      setConfirmUncollected(false);
+                      handleStatusUpdate("issued", {
+                        successLabel: "Factura marcada como no cobrada",
+                      });
+                    }}
+                  >
+                    Confirmar reversión
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </>
+        )}
+
+        {/* AEAT Button if already issued */}
+        {shouldSendToAeat ? (
+          <SendAeatButton
+            invoiceId={invoice.id}
+            label={
+              invoice.verifactu_status === "rejected"
+                ? "Reintentar AEAT"
+                : invoice.verifactu_status === "error"
+                  ? "Reintentar envío"
+                  : "Enviar a AEAT"
+            }
+          />
+        ) : null}
+
+        {(canCancel || canDelete || canRectify || canMarkUncollectible) && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="size-9 shrink-0 p-0"
+                title="Más acciones"
+                aria-label="Más acciones"
               >
-                <AlertTriangle className="mr-2 h-4 w-4" />
-                Marcar como incobrable
-              </DropdownMenuItem>
-            )}
-            {(canRectify || canMarkUncollectible) && (canCancel || canDelete) && (
-              <DropdownMenuSeparator />
-            )}
-            {canCancel && (
-              <DropdownMenuItem
-                className="text-destructive"
-                disabled={pending}
-                onClick={() => handleStatusUpdate("cancelled")}
-              >
-                <XCircle className="mr-2 h-4 w-4" />
-                Anular factura
-              </DropdownMenuItem>
-            )}
-            {canDelete && (
-              <>
-                {canCancel && <DropdownMenuSeparator />}
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {canRectify && (
+                <DropdownMenuItem onClick={() => setShowRectification(true)}>
+                  <FileMinus2 className="mr-2 h-4 w-4" />
+                  Emitir factura rectificativa
+                </DropdownMenuItem>
+              )}
+              {canMarkUncollectible && (
+                <DropdownMenuItem
+                  className="text-warning"
+                  onClick={() => setShowUncollectibleDialog(true)}
+                >
+                  <AlertTriangle className="mr-2 h-4 w-4" />
+                  Marcar como incobrable
+                </DropdownMenuItem>
+              )}
+              {(canRectify || canMarkUncollectible) && (canCancel || canDelete) && (
+                <DropdownMenuSeparator />
+              )}
+              {canCancel && (
                 <DropdownMenuItem
                   className="text-destructive"
-                  disabled={pending || deletePending}
-                  onClick={handleDelete}
+                  disabled={pending}
+                  onClick={() => handleStatusUpdate("cancelled")}
                 >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Eliminar
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Anular factura
                 </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
+              )}
+              {canDelete && (
+                <>
+                  {canCancel && <DropdownMenuSeparator />}
+                  <DropdownMenuItem
+                    className="text-destructive"
+                    disabled={pending || deletePending}
+                    onClick={handleDelete}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Eliminar
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
 
       {/* Rectification modal */}
       <Dialog open={showRectification} onOpenChange={setShowRectification}>

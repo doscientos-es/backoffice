@@ -174,9 +174,11 @@ export const updateInvoiceStatus = defineAction<
 export const recordInvoicePayment = defineAction<typeof RecordInvoicePaymentInput, { fullyPaid: boolean }>({
   name: "invoices.recordPayment",
   schema: RecordInvoicePaymentInput,
-  roles: ["owner", "admin"],
   revalidate: (_p, input) => [`/invoices/${input.id}`, "/invoices", "/finance", "/inicio"],
-  handler: async (input) => {
+  handler: async (input, { user }) => {
+    if (user.role !== "owner" && user.role !== "admin") {
+      throw new Error("No tienes permisos para registrar cobros");
+    }
     const admin = createAdminClient();
     const { data: invoice, error: invoiceError } = await admin
       .from("invoices")

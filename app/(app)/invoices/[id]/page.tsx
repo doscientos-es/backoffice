@@ -155,21 +155,19 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           { label: (invoice.full_number as string | null) ?? "Borrador" },
         ]}
         actions={
-          <div className="w-full min-w-0 sm:w-auto sm:max-w-full">
-            <InvoiceActions
-              invoice={{
-                id: invoice.id as string,
-                status: invoice.status as string,
-                verifactu_status: invoice.verifactu_status as string,
-                verifactu_error: (invoice.verifactu_error as string | null) ?? null,
-                is_rectification: Boolean(invoice.is_rectification),
-                is_uncollectible: Boolean(invoice.is_uncollectible),
-                total: Number(invoice.total ?? 0),
-                amountPaid,
-              }}
-              clientEmail={client?.email ?? null}
-            />
-          </div>
+          <InvoiceActions
+            invoice={{
+              id: invoice.id as string,
+              status: invoice.status as string,
+              verifactu_status: invoice.verifactu_status as string,
+              verifactu_error: (invoice.verifactu_error as string | null) ?? null,
+              is_rectification: Boolean(invoice.is_rectification),
+              is_uncollectible: Boolean(invoice.is_uncollectible),
+              total: Number(invoice.total ?? 0),
+              amountPaid,
+            }}
+            clientEmail={client?.email ?? null}
+          />
         }
       />
 

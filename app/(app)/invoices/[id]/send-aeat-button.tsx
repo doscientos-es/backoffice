@@ -66,7 +66,7 @@ export function SendAeatButton({
   }
 
   return (
-    <div className="col-span-2 flex min-w-0 w-full sm:w-auto">
+    <div className="flex min-w-0 w-full sm:w-auto">
       <Button
         type="button"
         size="sm"
