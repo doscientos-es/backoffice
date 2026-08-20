@@ -3,6 +3,8 @@
 import type { AuthenticationResponseJSON, RegistrationResponseJSON } from "@simplewebauthn/server";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
+import { createServerClient } from "@/lib/supabase/server";
+import { grantUserVerification } from "./user-verification";
 import { USER_VERIFICATION_INTENTS, type UserVerificationScope } from "./user-verification-scope";
 import {
   createPasskeyAuthenticationOptions,
@@ -94,6 +96,30 @@ export async function finishPasskeyAuthentication(
       scope.data as UserVerificationScope,
       response.data as AuthenticationResponseJSON,
     );
+    return { ok: true };
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+/** Grants the same one-shot proof after the user has completed Supabase MFA. */
+export async function grantUserVerificationFromMfa(rawScope: unknown): Promise<Result> {
+  const parsed = verificationScopeSchema.safeParse(rawScope);
+  if (!parsed.success) return { ok: false, error: "Acción protegida no válida" };
+
+  try {
+    const user = await requireUser();
+    const supabase = await createServerClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel(
+      session?.access_token,
+    );
+    if (error || data?.currentLevel !== "aal2") {
+      throw new Error("La verificación MFA no se ha podido confirmar");
+    }
+    await grantUserVerification(user.id, parsed.data as UserVerificationScope);
     return { ok: true };
   } catch (error) {
     return failure(error);

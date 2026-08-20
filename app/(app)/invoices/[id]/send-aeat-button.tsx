@@ -71,12 +71,12 @@ export function SendAeatButton({
   }
 
   return (
-    <div className="flex min-w-0 w-full">
+    <div className="flex min-w-0">
       <Button
         type="button"
         size="sm"
         variant="default"
-        className="w-full justify-center whitespace-nowrap"
+        className="justify-center whitespace-nowrap"
         disabled={disabled || feedback.pending}
         onClick={onClick}
       >

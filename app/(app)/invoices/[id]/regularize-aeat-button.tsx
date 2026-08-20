@@ -3,6 +3,7 @@
 import { AlertTriangle, CheckCircle2, Loader2, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { MfaChallengeDialog } from "@/components/security/mfa-challenge-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
+import { grantUserVerificationFromMfa } from "@/lib/security/webauthn-actions";
 import { verifyWithPasskey } from "@/lib/security/webauthn-client";
 import { regularizeVerifactu } from "../actions";
 
@@ -28,6 +30,28 @@ export function RegularizeAeatButton({ invoiceId }: { invoiceId: string }) {
   );
   const [message, setMessage] = useState<string | null>(null);
   const [csv, setCsv] = useState<string | null>(null);
+  const [mfaOpen, setMfaOpen] = useState(false);
+
+  async function sendRegularization() {
+    setPhase("sending");
+    const fd = new FormData();
+    fd.set("id", invoiceId);
+    const result = await regularizeVerifactu(fd);
+    if (result.ok) {
+      if (result.status === "accepted") {
+        setPhase("success");
+        setCsv(result.csv);
+        setMessage("La factura ha quedado aceptada por AEAT y la cadena puede continuar.");
+      } else {
+        setPhase("error");
+        setMessage(result.error ?? "La regularización quedó pendiente de envío.");
+      }
+    } else {
+      setPhase("error");
+      setMessage(result.error);
+    }
+    router.refresh();
+  }
 
   async function onClick() {
     setOpen(true);
@@ -43,25 +67,21 @@ export function RegularizeAeatButton({ invoiceId }: { invoiceId: string }) {
       return;
     }
 
-    setPhase("sending");
-    const fd = new FormData();
-    fd.set("id", invoiceId);
-    const result = await regularizeVerifactu(fd);
-    if (result.ok) {
-      if (result.status === "accepted") {
-        setPhase("success");
-        setCsv(result.csv);
-        setMessage("La factura ha quedado aceptada por AEAT y la cadena puede continuar.");
-      } else {
-        setPhase("error");
-        setMessage(result.error ?? "La regularización quedó pendiente de envío.");
-      }
-      router.refresh();
+    await sendRegularization();
+  }
+
+  async function handleMfaVerification() {
+    setMfaOpen(false);
+    setPhase("verifying");
+    const result = await grantUserVerificationFromMfa(
+      userVerificationScope("invoice.verifactu_regularize", `invoice:${invoiceId}`),
+    );
+    if (!result.ok) {
+      setPhase("error");
+      setMessage(result.error);
       return;
     }
-    setPhase("error");
-    setMessage(result.error);
-    router.refresh();
+    await sendRegularization();
   }
 
   const busy = phase === "verifying" || phase === "sending";
@@ -72,7 +92,7 @@ export function RegularizeAeatButton({ invoiceId }: { invoiceId: string }) {
         type="button"
         size="sm"
         variant="secondary"
-        className="w-full justify-center whitespace-nowrap"
+        className="justify-center whitespace-nowrap"
         onClick={() => {
           setPhase("confirm");
           setMessage(null);
@@ -145,7 +165,17 @@ export function RegularizeAeatButton({ invoiceId }: { invoiceId: string }) {
                 </div>
               ) : null}
               <DialogFooter>
-                <Button onClick={() => setOpen(false)}>Cerrar</Button>
+                <Button variant="ghost" onClick={() => setPhase("confirm")}>
+                  Reintentar passkey
+                </Button>
+                <Button
+                  onClick={() => {
+                    setOpen(false);
+                    setMfaOpen(true);
+                  }}
+                >
+                  Usar código MFA
+                </Button>
               </DialogFooter>
             </>
           ) : null}
@@ -168,6 +198,11 @@ export function RegularizeAeatButton({ invoiceId }: { invoiceId: string }) {
           ) : null}
         </DialogContent>
       </Dialog>
+      <MfaChallengeDialog
+        open={mfaOpen}
+        onOpenChange={setMfaOpen}
+        onVerified={() => void handleMfaVerification()}
+      />
     </>
   );
 }

@@ -1,0 +1,268 @@
+"use client";
+
+import { AlertTriangle, FileMinus2, Loader2, MoreHorizontal, Trash2, XCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { IconButton } from "@/components/ui/icon-button";
+import { Label } from "@/components/ui/label";
+import { useUndoableDelete } from "@/lib/hooks/use-undoable-delete";
+import {
+  createRectification,
+  deleteInvoice,
+  markAsUncollectible,
+  restoreInvoice,
+  updateInvoiceStatus,
+} from "../actions";
+import type { InvoiceFeedback, VerifyInvoiceStatusChange } from "./invoice-action-contracts";
+
+const RECTIFICATION_TYPES = [
+  {
+    value: "R1",
+    label: "R1 – Error en datos o devolución",
+    description: "Importe incorrecto, datos erróneos del cliente, devolución parcial o total.",
+  },
+  {
+    value: "R4",
+    label: "R4 – Otras causas",
+    description: "Cualquier otra corrección no contemplada en R1.",
+  },
+] as const;
+
+function idFormData(invoiceId: string): FormData {
+  const formData = new FormData();
+  formData.append("id", invoiceId);
+  return formData;
+}
+
+interface Props {
+  invoiceId: string;
+  canCancel: boolean;
+  canDelete: boolean;
+  canRectify: boolean;
+  canMarkUncollectible: boolean;
+  feedback: InvoiceFeedback;
+  verifyStatusChange: VerifyInvoiceStatusChange;
+}
+
+/** Groups destructive and legally exceptional invoice operations behind one menu. */
+export function InvoiceMoreActions({
+  invoiceId,
+  canCancel,
+  canDelete,
+  canRectify,
+  canMarkUncollectible,
+  feedback,
+  verifyStatusChange,
+}: Props) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [rectificationOpen, setRectificationOpen] = useState(false);
+  const [uncollectibleOpen, setUncollectibleOpen] = useState(false);
+  const [rectType, setRectType] = useState<"R1" | "R4">("R1");
+  const [rectReason, setRectReason] = useState("");
+  const { run: deleteInvoiceWithUndo, pending: deletePending } = useUndoableDelete({
+    successMessage: "Factura eliminada",
+    onDelete: () => deleteInvoice(idFormData(invoiceId)),
+    onRestore: () => restoreInvoice(idFormData(invoiceId)),
+    redirectTo: "/invoices",
+  });
+
+  if (!(canCancel || canDelete || canRectify || canMarkUncollectible)) return null;
+
+  const cancelInvoice = async () => {
+    if (!(await verifyStatusChange("cancelled"))) return;
+    feedback.setPending();
+    startTransition(async () => {
+      const result = await updateInvoiceStatus({ id: invoiceId, status: "cancelled" });
+      if (result.ok) feedback.setSuccess("Factura anulada");
+      else feedback.setError(result.error);
+    });
+  };
+
+  const markUncollectible = () => {
+    startTransition(async () => {
+      feedback.setPending();
+      const result = await markAsUncollectible({ id: invoiceId });
+      setUncollectibleOpen(false);
+      if (result.ok) feedback.setSuccess("Factura marcada como incobrable");
+      else feedback.setError(result.error);
+    });
+  };
+
+  const createInvoiceRectification = () => {
+    if (!rectReason.trim()) return;
+    startTransition(async () => {
+      feedback.setPending();
+      const result = await createRectification({
+        originalInvoiceId: invoiceId,
+        rectificationType: rectType,
+        reason: rectReason.trim(),
+      });
+      if (!result.ok) {
+        feedback.setError(result.error);
+        return;
+      }
+      setRectificationOpen(false);
+      setRectReason("");
+      router.push(`/invoices/${result.id}`);
+    });
+  };
+
+  return (
+    <>
+      <div className="flex justify-end">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <IconButton variant="outline" label="Más acciones">
+              <MoreHorizontal className="h-4 w-4" />
+            </IconButton>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {canRectify ? (
+              <DropdownMenuItem onClick={() => setRectificationOpen(true)}>
+                <FileMinus2 className="mr-2 h-4 w-4" /> Emitir factura rectificativa
+              </DropdownMenuItem>
+            ) : null}
+            {canMarkUncollectible ? (
+              <DropdownMenuItem className="text-warning" onClick={() => setUncollectibleOpen(true)}>
+                <AlertTriangle className="mr-2 h-4 w-4" /> Marcar como incobrable
+              </DropdownMenuItem>
+            ) : null}
+            {(canRectify || canMarkUncollectible) && (canCancel || canDelete) ? (
+              <DropdownMenuSeparator />
+            ) : null}
+            {canCancel ? (
+              <DropdownMenuItem
+                className="text-destructive"
+                disabled={pending}
+                onClick={cancelInvoice}
+              >
+                <XCircle className="mr-2 h-4 w-4" /> Anular factura
+              </DropdownMenuItem>
+            ) : null}
+            {canDelete ? (
+              <>
+                {canCancel ? <DropdownMenuSeparator /> : null}
+                <DropdownMenuItem
+                  className="text-destructive"
+                  disabled={pending || deletePending}
+                  onClick={deleteInvoiceWithUndo}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" /> Eliminar
+                </DropdownMenuItem>
+              </>
+            ) : null}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <Dialog open={rectificationOpen} onOpenChange={setRectificationOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Factura rectificativa</DialogTitle>
+            <DialogDescription>
+              Se creará un borrador en serie R con los mismos importes y líneas. Podrás editarlo
+              antes de enviarlo a la AEAT.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Tipo de rectificación</Label>
+              {RECTIFICATION_TYPES.map((type) => (
+                <label
+                  key={type.value}
+                  className="flex cursor-pointer items-start gap-3 rounded-md border p-3 has-checked:border-primary"
+                >
+                  <input
+                    type="radio"
+                    name="rectType"
+                    value={type.value}
+                    checked={rectType === type.value}
+                    onChange={() => setRectType(type.value)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    <span className="block text-sm font-medium">{type.label}</span>
+                    <span className="block text-xs text-muted-foreground">{type.description}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="rectReason">
+                Motivo de la rectificación <span className="text-destructive">*</span>
+              </Label>
+              <textarea
+                id="rectReason"
+                className="min-h-20 w-full resize-none rounded-md border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                placeholder="Describe el motivo de la rectificación (requerido por ley)"
+                value={rectReason}
+                onChange={(event) => setRectReason(event.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={pending}
+              onClick={() => setRectificationOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              size="sm"
+              disabled={pending || !rectReason.trim()}
+              onClick={createInvoiceRectification}
+            >
+              {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Crear borrador
+              rectificativa
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={uncollectibleOpen} onOpenChange={setUncollectibleOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Marcar como incobrable</DialogTitle>
+            <DialogDescription>
+              Esta acción declara el crédito como incobrable según el art. 80.Tres LIVA. Podrás
+              recuperar el IVA emitiendo una <strong>factura rectificativa R4</strong>. ¿Confirmar?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={pending}
+              onClick={() => setUncollectibleOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button variant="destructive" size="sm" disabled={pending} onClick={markUncollectible}>
+              {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Confirmar
+              incobrable
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
