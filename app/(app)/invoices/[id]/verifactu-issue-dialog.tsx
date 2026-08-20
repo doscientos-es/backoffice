@@ -18,13 +18,13 @@ type VerifactuIssueStatus = "error" | "rejected";
 const issueCopy = {
   error: {
     title: "Error técnico de VERI*FACTU",
-    trigger: "Error VERI*FACTU",
+    trigger: "Ver detalle",
     guidance:
       "El sistema volverá a intentarlo automáticamente. Puedes reintentar el envío desde la cabecera si lo necesitas.",
   },
   rejected: {
     title: "Factura rechazada por AEAT",
-    trigger: "VERI*FACTU rechazada",
+    trigger: "Ver detalle",
     guidance:
       "Revisa el motivo fiscal antes de volver a enviar el registro o aplicar el procedimiento correspondiente.",
   },

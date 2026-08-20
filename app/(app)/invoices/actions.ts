@@ -387,11 +387,7 @@ export const regularizeVerifactu = defineAction<
   schema: SendInvoiceInput,
   roles: ["owner", "admin"],
   revalidate: (_p, input) => [`/invoices/${input.id}`, "/invoices", "/inicio"],
-  handler: async (input, { user }) => {
-    await consumeUserVerification(
-      user.id,
-      userVerificationScope("invoice.verifactu_regularize", `invoice:${input.id}`),
-    );
+  handler: async (input) => {
     await assertDurableVerifactuPackage();
     await assertVerifactuDiagnosticGate();
     const outboxId = await enqueueVerifactuRegularization(input.id);

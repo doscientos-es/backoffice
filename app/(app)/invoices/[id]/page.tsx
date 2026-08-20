@@ -21,6 +21,7 @@ import { formatDate, formatEUR } from "@/lib/utils";
 import { verifactuInvoiceConfigFromEnv } from "@/lib/verifactu/config";
 import { updateInvoicePortalAccess } from "../actions";
 import { InvoiceActions } from "./invoice-actions";
+import { InvoiceStatus } from "./invoice-status";
 import { RefreshClientSnapshotButton } from "./refresh-client-snapshot-button";
 
 export const dynamic = "force-dynamic";
@@ -148,6 +149,13 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
       <PageHeader
         title={`Factura ${(invoice.full_number as string | null) ?? "Borrador"}`}
         description={client?.name}
+        meta={
+          <InvoiceStatus
+            status={invoice.status as string}
+            verifactuStatus={invoice.verifactu_status as string}
+            verifactuError={(invoice.verifactu_error as string | null) ?? null}
+          />
+        }
         breadcrumbs={[
           { label: "Facturas", href: "/invoices" },
           ...(client ? [{ label: client.name, href: `/clients/${client.id}` }] : []),

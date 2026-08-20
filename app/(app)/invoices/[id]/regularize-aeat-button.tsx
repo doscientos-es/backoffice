@@ -3,7 +3,6 @@
 import { AlertTriangle, CheckCircle2, Loader2, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { MfaChallengeDialog } from "@/components/security/mfa-challenge-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,12 +12,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { userVerificationScope } from "@/lib/security/user-verification-scope";
-import { grantUserVerificationFromMfa } from "@/lib/security/webauthn-actions";
-import {
-  completePasskeyAuthentication,
-  preparePasskeyAuthentication,
-} from "@/lib/security/webauthn-client";
 import { regularizeVerifactu } from "../actions";
 
 /**
@@ -33,19 +26,11 @@ export function RegularizeAeatButton({ invoiceId }: { invoiceId: string }) {
   );
   const [message, setMessage] = useState<string | null>(null);
   const [csv, setCsv] = useState<string | null>(null);
-  const [mfaOpen, setMfaOpen] = useState(false);
-  const [passkeyOptions, setPasskeyOptions] = useState<unknown | null>(null);
-  const scope = userVerificationScope("invoice.verifactu_regularize", `invoice:${invoiceId}`);
-
   function openConfirmation() {
     setPhase("confirm");
     setMessage(null);
     setCsv(null);
-    setPasskeyOptions(null);
     setOpen(true);
-    void preparePasskeyAuthentication(scope).then((result) => {
-      if (result.ok) setPasskeyOptions(result.options);
-    });
   }
 
   async function sendRegularization() {
@@ -71,35 +56,9 @@ export function RegularizeAeatButton({ invoiceId }: { invoiceId: string }) {
 
   async function onClick() {
     setOpen(true);
-    setPhase("verifying");
+    setPhase("sending");
     setMessage(null);
     setCsv(null);
-    const prepared = passkeyOptions;
-    const verification = prepared
-      ? await completePasskeyAuthentication(scope, prepared)
-      : await preparePasskeyAuthentication(scope).then((result) =>
-          result.ok ? completePasskeyAuthentication(scope, result.options) : result,
-        );
-    if (!verification.ok) {
-      setPhase("error");
-      setMessage(verification.error);
-      return;
-    }
-
-    await sendRegularization();
-  }
-
-  async function handleMfaVerification() {
-    setMfaOpen(false);
-    setPhase("verifying");
-    const result = await grantUserVerificationFromMfa(
-      userVerificationScope("invoice.verifactu_regularize", `invoice:${invoiceId}`),
-    );
-    if (!result.ok) {
-      setPhase("error");
-      setMessage(result.error);
-      return;
-    }
     await sendRegularization();
   }
 
@@ -181,17 +140,7 @@ export function RegularizeAeatButton({ invoiceId }: { invoiceId: string }) {
                 </div>
               ) : null}
               <DialogFooter>
-                <Button variant="ghost" onClick={() => setPhase("confirm")}>
-                  Reintentar passkey
-                </Button>
-                <Button
-                  onClick={() => {
-                    setOpen(false);
-                    setMfaOpen(true);
-                  }}
-                >
-                  Usar código MFA
-                </Button>
+                <Button onClick={() => setOpen(false)}>Cerrar</Button>
               </DialogFooter>
             </>
           ) : null}
@@ -214,11 +163,6 @@ export function RegularizeAeatButton({ invoiceId }: { invoiceId: string }) {
           ) : null}
         </DialogContent>
       </Dialog>
-      <MfaChallengeDialog
-        open={mfaOpen}
-        onOpenChange={setMfaOpen}
-        onVerified={() => void handleMfaVerification()}
-      />
     </>
   );
 }
