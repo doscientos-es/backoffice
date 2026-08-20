@@ -287,7 +287,7 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
   const canRectify = (isIssued || isPaid || isOverdue) && !invoice.is_rectification;
 
   return (
-    <div className="flex w-full min-w-0 flex-col gap-2 sm:w-auto sm:items-end">
+    <div className="flex w-full min-w-0 flex-col gap-2 sm:w-[min(100%,34rem)] sm:items-end">
       <MfaChallengeDialog
         open={mfaOpen}
         onOpenChange={(open) => {
@@ -325,7 +325,7 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
         </div>
       ) : null}
 
-      <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+      <div className="flex w-full items-center justify-end gap-2">
         <Button
           variant="outline"
           size="sm"
@@ -357,10 +357,12 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
         {canSendEmail && (
           <SendInvoiceButton invoiceId={invoice.id} defaultEmail={clientEmail} iconOnly />
         )}
+      </div>
 
+      <div className="flex w-full flex-col gap-2">
         {canIssue && (
           <Button
-            className="ml-auto w-full justify-center whitespace-nowrap sm:ml-0 sm:w-auto"
+            className="w-full justify-center whitespace-nowrap"
             size="sm"
             disabled={pending || issuanceOpen}
             onClick={handleIssue}
@@ -381,7 +383,7 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
               size="sm"
               disabled={pending}
               onClick={openPaymentDialog}
-              className="ml-auto w-full justify-center whitespace-nowrap text-success-foreground hover:text-success-foreground sm:ml-0 sm:w-auto"
+              className="w-full justify-center whitespace-nowrap text-success-foreground hover:text-success-foreground"
             >
               {pendingStatus === "paid" ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -520,62 +522,64 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
         ) : null}
 
         {(canCancel || canDelete || canRectify || canMarkUncollectible) && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="size-9 shrink-0 p-0"
-                title="Más acciones"
-                aria-label="Más acciones"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {canRectify && (
-                <DropdownMenuItem onClick={() => setShowRectification(true)}>
-                  <FileMinus2 className="mr-2 h-4 w-4" />
-                  Emitir factura rectificativa
-                </DropdownMenuItem>
-              )}
-              {canMarkUncollectible && (
-                <DropdownMenuItem
-                  className="text-warning"
-                  onClick={() => setShowUncollectibleDialog(true)}
+          <div className="flex justify-end">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="size-9 shrink-0 p-0"
+                  title="Más acciones"
+                  aria-label="Más acciones"
                 >
-                  <AlertTriangle className="mr-2 h-4 w-4" />
-                  Marcar como incobrable
-                </DropdownMenuItem>
-              )}
-              {(canRectify || canMarkUncollectible) && (canCancel || canDelete) && (
-                <DropdownMenuSeparator />
-              )}
-              {canCancel && (
-                <DropdownMenuItem
-                  className="text-destructive"
-                  disabled={pending}
-                  onClick={() => handleStatusUpdate("cancelled")}
-                >
-                  <XCircle className="mr-2 h-4 w-4" />
-                  Anular factura
-                </DropdownMenuItem>
-              )}
-              {canDelete && (
-                <>
-                  {canCancel && <DropdownMenuSeparator />}
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {canRectify && (
+                  <DropdownMenuItem onClick={() => setShowRectification(true)}>
+                    <FileMinus2 className="mr-2 h-4 w-4" />
+                    Emitir factura rectificativa
+                  </DropdownMenuItem>
+                )}
+                {canMarkUncollectible && (
+                  <DropdownMenuItem
+                    className="text-warning"
+                    onClick={() => setShowUncollectibleDialog(true)}
+                  >
+                    <AlertTriangle className="mr-2 h-4 w-4" />
+                    Marcar como incobrable
+                  </DropdownMenuItem>
+                )}
+                {(canRectify || canMarkUncollectible) && (canCancel || canDelete) && (
+                  <DropdownMenuSeparator />
+                )}
+                {canCancel && (
                   <DropdownMenuItem
                     className="text-destructive"
-                    disabled={pending || deletePending}
-                    onClick={handleDelete}
+                    disabled={pending}
+                    onClick={() => handleStatusUpdate("cancelled")}
                   >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Eliminar
+                    <XCircle className="mr-2 h-4 w-4" />
+                    Anular factura
                   </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                )}
+                {canDelete && (
+                  <>
+                    {canCancel && <DropdownMenuSeparator />}
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      disabled={pending || deletePending}
+                      onClick={handleDelete}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Eliminar
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         )}
       </div>
 
