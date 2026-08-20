@@ -1,4 +1,4 @@
-import { verifactuDiagnosticConfigFromEnv } from "./config";
+import { verifactuDiagnosticConfigFromEnv, verifactuDiagnosticIssuerFromEnv } from "./config";
 
 const DIAGNOSTIC_TTL_DAYS = 7;
 
@@ -21,6 +21,7 @@ const SAFE_SIF_CONFIGURATION_ERRORS = new Set([
   "El certificado P12 de VERI*FACTU es obligatorio para conectar con AEAT",
   "VERIFACTU_CERT_EXPIRES_AT es obligatorio para conectar con AEAT",
   "El certificado P12 de VERI*FACTU está caducado o tiene una fecha inválida",
+  "VERIFACTU_NIF_EMISOR es obligatorio para ejecutar el diagnóstico VERI*FACTU",
 ]);
 
 function safeSifConfigurationDetail(error: unknown): string {
@@ -76,10 +77,11 @@ export async function runVerifactuAeatTestDiagnostic(memberId: string): Promise<
   let checks: DiagnosticCheck[];
   try {
     const config = verifactuDiagnosticConfigFromEnv();
+    const issuer = verifactuDiagnosticIssuerFromEnv();
     const { createVerifactuClient } = await import("@doscientos/verifactu");
     const client = createVerifactuClient(config);
     const result = await client.registerInvoice({
-      nif: "B12345678",
+      nif: issuer.nif,
       invoiceNumber: testNumber,
       invoiceType: "F1",
       issueDate: now,
@@ -87,16 +89,16 @@ export async function runVerifactuAeatTestDiagnostic(memberId: string): Promise<
       total: 121,
       previousHash: null,
       generatedAt: now,
-      emisorName: "Emisor de prueba VERI*FACTU",
-      clientNif: "B87654321",
-      clientName: "Destinatario de prueba VERI*FACTU",
+      emisorName: issuer.name,
+      clientNif: null,
+      clientName: null,
       descriptionOperacion: "Diagnóstico sintético VERI*FACTU; no es una factura.",
       vatLines: [{ rate: 21, base: 100, tax: 21 }],
       previousInvoiceNumber: null,
       previousIssueDate: null,
     });
     const qrUrl = client.buildQrUrl({
-      nif: "B12345678",
+      nif: issuer.nif,
       invoiceNumber: testNumber,
       issueDate: now,
       total: 121,

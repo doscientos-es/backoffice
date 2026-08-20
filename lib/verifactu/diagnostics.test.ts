@@ -1,19 +1,27 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { buildQrUrl, createVerifactuClient, insert, registerInvoice, verifactuDiagnosticConfigFromEnv } =
-  vi.hoisted(() => ({
-    buildQrUrl: vi.fn(),
-    createVerifactuClient: vi.fn(),
-    insert: vi.fn(),
-    registerInvoice: vi.fn(),
-    verifactuDiagnosticConfigFromEnv: vi.fn(),
-  }));
+const {
+  buildQrUrl,
+  createVerifactuClient,
+  insert,
+  registerInvoice,
+  verifactuDiagnosticConfigFromEnv,
+  verifactuDiagnosticIssuerFromEnv,
+} = vi.hoisted(() => ({
+  buildQrUrl: vi.fn(),
+  createVerifactuClient: vi.fn(),
+  insert: vi.fn(),
+  registerInvoice: vi.fn(),
+  verifactuDiagnosticConfigFromEnv: vi.fn(),
+  verifactuDiagnosticIssuerFromEnv: vi.fn(),
+}));
 
 vi.mock("@doscientos/verifactu", () => ({
   createVerifactuClient,
 }));
 vi.mock("./config", () => ({
   verifactuDiagnosticConfigFromEnv,
+  verifactuDiagnosticIssuerFromEnv,
 }));
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({ from: () => ({ insert }) }),
@@ -29,6 +37,11 @@ describe("runVerifactuAeatTestDiagnostic", () => {
       certificate: { p12Base64: "not-used-by-test", password: "not-used-by-test" },
       software: {},
       appUrl: "https://backoffice.example.test",
+    });
+    verifactuDiagnosticIssuerFromEnv.mockReset();
+    verifactuDiagnosticIssuerFromEnv.mockReturnValue({
+      nif: "B12345670",
+      name: "Issuer Test S.L.",
     });
     buildQrUrl.mockReset();
     buildQrUrl.mockReturnValue("https://backoffice.example.test/api/verifactu/verify");
@@ -51,6 +64,14 @@ describe("runVerifactuAeatTestDiagnostic", () => {
     expect(result.ok).toBe(true);
     expect(createVerifactuClient).toHaveBeenCalledWith(
       expect.objectContaining({ environment: "test" }),
+    );
+    expect(registerInvoice).toHaveBeenCalledWith(
+      expect.objectContaining({
+        nif: "B12345670",
+        emisorName: "Issuer Test S.L.",
+        clientNif: null,
+        clientName: null,
+      }),
     );
     expect(insert).toHaveBeenCalledWith(
       expect.objectContaining({ created_by: "member-1", status: "passed" }),
