@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  CopyIcon as Copy,
+  DotsThree as MoreHorizontal,
+  Trash as Trash2,
+} from "@phosphor-icons/react/ssr";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,9 +16,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useUndoableDelete } from "@/lib/hooks/use-undoable-delete";
-import { CopyIcon as Copy, DotsThree as MoreHorizontal, Trash as Trash2 } from "@phosphor-icons/react/ssr";
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
 import { deleteProposal, duplicateProposal, restoreProposal } from "../actions";
 
 /** Builds the `{ id }` FormData both delete and restore proposal actions expect. */

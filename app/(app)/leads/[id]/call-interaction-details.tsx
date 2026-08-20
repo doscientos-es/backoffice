@@ -1,6 +1,10 @@
 "use client";
 
-import { EyeIcon as Eye, FileTextIcon as FileText, PencilIcon as Pencil } from "@phosphor-icons/react/ssr";
+import {
+  EyeIcon as Eye,
+  FileTextIcon as FileText,
+  PencilIcon as Pencil,
+} from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { Badge } from "@/components/ui/badge";

@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   MAINTENANCE_LIMITS,
-  recommendedMaintenancePlanId,
   type MaintenanceOffer,
+  recommendedMaintenancePlanId,
 } from "@/lib/proposals/maintenance";
 import { formatEUR } from "@/lib/utils";
 

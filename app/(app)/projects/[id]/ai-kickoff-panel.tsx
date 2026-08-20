@@ -1,6 +1,11 @@
 "use client";
 
-import { CheckIcon as Check, ClipboardText as ClipboardCheck, CircleNotch as Loader2, Sparkle as Sparkles } from "@phosphor-icons/react/ssr";
+import {
+  CheckIcon as Check,
+  ClipboardText as ClipboardCheck,
+  CircleNotch as Loader2,
+  Sparkle as Sparkles,
+} from "@phosphor-icons/react/ssr";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";

@@ -1,4 +1,9 @@
-import { FilePlus as FilePlus2, FileArrowUp as FileUp, PencilLineIcon as PencilLine, Trash as Trash2 } from "@phosphor-icons/react/ssr";
+import {
+  FilePlus as FilePlus2,
+  FileArrowUp as FileUp,
+  PencilLineIcon as PencilLine,
+  Trash as Trash2,
+} from "@phosphor-icons/react/ssr";
 import { formatDateTime } from "@/lib/utils";
 
 export type InternalDocEvent = {

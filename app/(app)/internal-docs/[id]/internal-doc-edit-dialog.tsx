@@ -1,6 +1,10 @@
 "use client";
 
-import { PaperclipIcon as Paperclip, PencilIcon as Pencil, XIcon as X } from "@phosphor-icons/react/ssr";
+import {
+  PaperclipIcon as Paperclip,
+  PencilIcon as Pencil,
+  XIcon as X,
+} from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";

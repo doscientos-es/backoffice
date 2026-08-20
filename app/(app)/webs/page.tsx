@@ -1,4 +1,8 @@
-import { GlobeIcon as Globe, PlusIcon as Plus, ShieldWarning as ShieldAlert } from "@phosphor-icons/react/ssr";
+import {
+  GlobeIcon as Globe,
+  PlusIcon as Plus,
+  ShieldWarning as ShieldAlert,
+} from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";

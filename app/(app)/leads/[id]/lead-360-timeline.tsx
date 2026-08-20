@@ -1,3 +1,14 @@
+import {
+  ArrowRightIcon as ArrowRight,
+  Suitcase as BriefcaseBusiness,
+  CheckSquare as CheckSquare2,
+  CurrencyCircleDollar as CircleDollarSign,
+  FileText as FileSignature,
+  Envelope as Mail,
+  Receipt as ReceiptText,
+  Sparkle as Sparkles,
+} from "@phosphor-icons/react/ssr";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { groupResendInteractions, interactionDate } from "@/lib/leads/interaction-utils";
 import type {
@@ -8,8 +19,6 @@ import type {
   LeadRelatedTask,
 } from "@/lib/leads/types";
 import { formatEUR, relativeTime } from "@/lib/utils";
-import { ArrowRightIcon as ArrowRight, Suitcase as BriefcaseBusiness, CheckSquare as CheckSquare2, CurrencyCircleDollar as CircleDollarSign, FileText as FileSignature, Envelope as Mail, Receipt as ReceiptText, Sparkle as Sparkles } from "@phosphor-icons/react/ssr";
-import Link from "next/link";
 
 type TimelineEvent = {
   id: string;
@@ -60,11 +69,11 @@ function eventList({
       title: interactionLabel(item.type),
       detail: [
         item.subject ??
-        item.body
-          ?.replace(/<[^>]+>/g, " ")
-          .replace(/\s+/g, " ")
-          .trim() ??
-        null,
+          item.body
+            ?.replace(/<[^>]+>/g, " ")
+            .replace(/\s+/g, " ")
+            .trim() ??
+          null,
         count > 1 ? `${count} eventos` : null,
       ]
         .filter(Boolean)

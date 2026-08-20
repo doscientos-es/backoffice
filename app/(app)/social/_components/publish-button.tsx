@@ -1,6 +1,10 @@
 "use client";
 
-import { CheckCircleIcon as CheckCircle, PaperPlaneTilt as Send, XCircleIcon as XCircle } from "@phosphor-icons/react/ssr";
+import {
+  CheckCircleIcon as CheckCircle,
+  PaperPlaneTilt as Send,
+  XCircleIcon as XCircle,
+} from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { sileo } from "sileo";

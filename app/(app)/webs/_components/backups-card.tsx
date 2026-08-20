@@ -1,6 +1,13 @@
 "use client";
 
-import { CaretLeft as ChevronLeft, DownloadIcon as Download, FolderOpenIcon as FolderOpen, HardDriveIcon as HardDrive, ArrowsClockwise as RefreshCw, Trash as Trash2 } from "@phosphor-icons/react/ssr";
+import {
+  CaretLeft as ChevronLeft,
+  DownloadIcon as Download,
+  FolderOpenIcon as FolderOpen,
+  HardDriveIcon as HardDrive,
+  ArrowsClockwise as RefreshCw,
+  Trash as Trash2,
+} from "@phosphor-icons/react/ssr";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { sileo } from "sileo";
 import { Badge } from "@/components/ui/badge";

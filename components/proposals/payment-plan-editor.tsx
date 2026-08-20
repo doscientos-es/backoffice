@@ -3,7 +3,7 @@
 import { PlusIcon as Plus, Trash as Trash2 } from "@phosphor-icons/react/ssr";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { type PaymentPlanItem } from "@/lib/proposals/scope";
+import type { PaymentPlanItem } from "@/lib/proposals/scope";
 import { formatEUR } from "@/lib/utils";
 
 type Props = {
@@ -41,7 +41,10 @@ export function PaymentPlanEditor({
       {plan.map((item, index) => {
         const itemLocked = locked || lockedIds.has(item.id);
         return (
-          <div key={item.id} className="grid gap-2 rounded-lg border border-border p-3 md:grid-cols-[minmax(0,1fr)_7rem_10rem_auto]">
+          <div
+            key={item.id}
+            className="grid gap-2 rounded-lg border border-border p-3 md:grid-cols-[minmax(0,1fr)_7rem_10rem_auto]"
+          >
             <Input
               aria-label={`Concepto del plazo ${index + 1}`}
               value={item.title}
@@ -95,10 +98,20 @@ export function PaymentPlanEditor({
         </p>
       ) : null}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className={balanced ? "text-sm text-muted-foreground" : "text-sm font-medium text-destructive"}>
+        <p
+          className={
+            balanced ? "text-sm text-muted-foreground" : "text-sm font-medium text-destructive"
+          }
+        >
           {plan.length === 0 ? "Sin plazos configurados" : `Total: ${percentage.toFixed(2)} %`}
         </p>
-        <Button type="button" size="sm" variant="outline" onClick={add} disabled={locked || plan.length >= 12}>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={add}
+          disabled={locked || plan.length >= 12}
+        >
           <Plus aria-hidden /> Añadir plazo
         </Button>
       </div>

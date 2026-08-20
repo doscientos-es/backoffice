@@ -1,8 +1,8 @@
-import { isNavigationItemActive, NavigationTree } from "@/components/layout/navigation-tree";
 import { UserIcon as User } from "@phosphor-icons/react/ssr";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
+import { isNavigationItemActive, NavigationTree } from "@/components/layout/navigation-tree";
 
 vi.mock("next/link", () => ({
   default: ({ children }: { children: ReactNode }) => children,

@@ -1,6 +1,10 @@
 "use client";
 
-import { Database as DatabaseBackup, DownloadIcon as Download, CircleNotch as Loader2 } from "@phosphor-icons/react/ssr";
+import {
+  Database as DatabaseBackup,
+  DownloadIcon as Download,
+  CircleNotch as Loader2,
+} from "@phosphor-icons/react/ssr";
 import { useState, useTransition } from "react";
 import { sileo } from "sileo";
 import { Button } from "@/components/ui/button";

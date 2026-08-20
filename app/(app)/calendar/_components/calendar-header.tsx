@@ -1,8 +1,15 @@
 "use client";
 
+import {
+  CheckIcon as Check,
+  CaretLeft as ChevronLeft,
+  CaretRight as ChevronRight,
+  CopyIcon as Copy,
+  PlusIcon as Plus,
+  SlidersHorizontalIcon as SlidersHorizontal,
+} from "@phosphor-icons/react/ssr";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { CheckIcon as Check, CaretLeft as ChevronLeft, CaretRight as ChevronRight, CopyIcon as Copy, PlusIcon as Plus, SlidersHorizontalIcon as SlidersHorizontal } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";

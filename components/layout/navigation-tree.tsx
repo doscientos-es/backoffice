@@ -156,18 +156,18 @@ function NavigationSection({
       </button>
       {open
         ? group.items.map((item) => (
-          <NavigationLink
-            key={item.href}
-            item={item}
-            active={isNavigationItemActive(pathname, item.href, groups)}
-            pinned={pinnedHrefs.includes(item.href)}
-            onNavigate={() => {
-              trackRecent(item);
-              onNavigate?.();
-            }}
-            onTogglePin={() => onTogglePin(item.href)}
-          />
-        ))
+            <NavigationLink
+              key={item.href}
+              item={item}
+              active={isNavigationItemActive(pathname, item.href, groups)}
+              pinned={pinnedHrefs.includes(item.href)}
+              onNavigate={() => {
+                trackRecent(item);
+                onNavigate?.();
+              }}
+              onTogglePin={() => onTogglePin(item.href)}
+            />
+          ))
         : null}
     </div>
   );

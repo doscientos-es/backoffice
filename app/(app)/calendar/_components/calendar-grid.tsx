@@ -2,6 +2,11 @@
 
 import { DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import {
+  CaretDown as ChevronDown,
+  CaretUp as ChevronUp,
+  MoonIcon as Moon,
+} from "@phosphor-icons/react/ssr";
+import {
   addDays,
   eachDayOfInterval,
   endOfWeek,
@@ -13,7 +18,6 @@ import {
   startOfWeek,
 } from "date-fns";
 import { es } from "date-fns/locale";
-import { CaretDown as ChevronDown, CaretUp as ChevronUp, MoonIcon as Moon } from "@phosphor-icons/react/ssr";
 import {
   createContext,
   useContext,

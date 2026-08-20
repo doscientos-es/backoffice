@@ -11,6 +11,10 @@ describe("navigation", () => {
     );
   });
 
+  it("keeps settings out of the main navigation because it has a footer shortcut", () => {
+    expect(routes(NAVIGATION_GROUPS)).not.toContain("/settings");
+  });
+
   it("hides admin-only routes for collaborators", () => {
     const visible = routes(visibleNavigationGroups("member"));
     expect(visible).not.toContain("/vault");

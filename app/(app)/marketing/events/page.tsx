@@ -1,4 +1,16 @@
-import { CaretRight as ChevronRight, DotOutline as CircleDot, ClipboardText as ClipboardList, ArrowSquareOut as ExternalLink, EyeIcon as Eye, FileTextIcon as FileText, ChatCircle as MessageCircle, CursorClick as MousePointerClick, PaperPlaneTilt as Send, UserCheckIcon as UserCheck, UsersIcon as Users } from "@phosphor-icons/react/ssr";
+import {
+  CaretRight as ChevronRight,
+  DotOutline as CircleDot,
+  ClipboardText as ClipboardList,
+  ArrowSquareOut as ExternalLink,
+  EyeIcon as Eye,
+  FileTextIcon as FileText,
+  ChatCircle as MessageCircle,
+  CursorClick as MousePointerClick,
+  PaperPlaneTilt as Send,
+  UserCheckIcon as UserCheck,
+  UsersIcon as Users,
+} from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import type { ComponentType, SVGProps } from "react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -97,10 +109,11 @@ function JourneyCard({ journey }: { journey: VisitorJourney }) {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-3">
             <span
-              className={`flex size-9 shrink-0 items-center justify-center rounded-full ${converted
-                ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                : "bg-muted text-muted-foreground"
-                }`}
+              className={`flex size-9 shrink-0 items-center justify-center rounded-full ${
+                converted
+                  ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                  : "bg-muted text-muted-foreground"
+              }`}
             >
               {converted ? (
                 <UserCheck className="size-4" aria-hidden />

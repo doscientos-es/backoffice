@@ -1,6 +1,13 @@
 "use client";
 
-import { BriefcaseIcon as Briefcase, FileTextIcon as FileText, ListChecksIcon as ListChecks, PlusIcon as Plus, UserIcon as User, UsersIcon as Users } from "@phosphor-icons/react/ssr";
+import {
+  BriefcaseIcon as Briefcase,
+  FileTextIcon as FileText,
+  ListChecksIcon as ListChecks,
+  PlusIcon as Plus,
+  UserIcon as User,
+  UsersIcon as Users,
+} from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

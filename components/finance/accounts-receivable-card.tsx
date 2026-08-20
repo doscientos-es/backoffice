@@ -1,4 +1,8 @@
-import { Warning as AlertTriangle, HandCoinsIcon as HandCoins, HourglassIcon as Hourglass } from "@phosphor-icons/react/ssr";
+import {
+  Warning as AlertTriangle,
+  HandCoinsIcon as HandCoins,
+  HourglassIcon as Hourglass,
+} from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";

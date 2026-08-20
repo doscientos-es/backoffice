@@ -1,6 +1,10 @@
 "use client";
 
-import { CheckIcon as Check, CopyIcon as Copy, GitBranchIcon as GitBranch } from "@phosphor-icons/react/ssr";
+import {
+  CheckIcon as Check,
+  CopyIcon as Copy,
+  GitBranchIcon as GitBranch,
+} from "@phosphor-icons/react/ssr";
 import { useState } from "react";
 
 /**

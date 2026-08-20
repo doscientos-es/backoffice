@@ -1,5 +1,15 @@
 "use client";
 
+import {
+  CaretLeft as ChevronLeft,
+  CaretRight as ChevronRight,
+  DownloadIcon as Download,
+  MagnifyingGlass as Search,
+  SlidersHorizontalIcon as SlidersHorizontal,
+  XIcon as X,
+} from "@phosphor-icons/react/ssr";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EntityCombobox } from "@/components/ui/entity-combobox";
 import { Input } from "@/components/ui/input";
@@ -7,9 +17,6 @@ import { type AvatarMember, MemberAvatar } from "@/components/ui/member-avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { CaretLeft as ChevronLeft, CaretRight as ChevronRight, DownloadIcon as Download, MagnifyingGlass as Search, SlidersHorizontalIcon as SlidersHorizontal, XIcon as X } from "@phosphor-icons/react/ssr";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
 
 export type FilterOption = { value: string; label: string; avatar?: AvatarMember };
 
@@ -68,7 +75,7 @@ export function ListControls({
 
   // Keep the latest router-related callbacks in a ref so the debounce effect
   // can depend only on `q` without re-creating the timeout on every render.
-  const commitRef = useRef<(value: string) => void>(() => { });
+  const commitRef = useRef<(value: string) => void>(() => {});
   commitRef.current = (value: string) => {
     const next = updateParams(params, { [searchKey]: value, page: null });
     const query = next.toString();
@@ -427,7 +434,7 @@ export function ListControls({
                   className={cn(
                     "flex items-center gap-1",
                     isPanel &&
-                    "min-h-9 w-full rounded-lg border border-border bg-background px-2 shadow-xs lg:w-auto",
+                      "min-h-9 w-full rounded-lg border border-border bg-background px-2 shadow-xs lg:w-auto",
                   )}
                 >
                   <span className="mr-0.5 text-xs font-medium text-muted-foreground">
@@ -477,7 +484,7 @@ export function ListControls({
                 className={cn(
                   "min-w-30 max-w-45 flex-1 text-xs sm:flex-none",
                   isPanel &&
-                  "h-9 w-full max-w-none rounded-lg border-border bg-background shadow-xs lg:w-auto lg:max-w-45",
+                    "h-9 w-full max-w-none rounded-lg border-border bg-background shadow-xs lg:w-auto lg:max-w-45",
                   !isPanel && "h-8",
                 )}
               />

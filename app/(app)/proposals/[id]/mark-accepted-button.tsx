@@ -53,7 +53,10 @@ export function MarkAcceptedButton({
   };
 
   const handleConfirm = () => {
-    if (needsFiscal && (!fiscal.name.trim() || !fiscal.nif.trim() || !fiscal.billing_address.trim())) {
+    if (
+      needsFiscal &&
+      (!fiscal.name.trim() || !fiscal.nif.trim() || !fiscal.billing_address.trim())
+    ) {
       feedback.setError("Completa razón social, NIF y dirección de facturación");
       return;
     }
@@ -63,13 +66,13 @@ export function MarkAcceptedButton({
         id: proposalId,
         fiscal: needsFiscal
           ? {
-            name: fiscal.name.trim(),
-            nif: fiscal.nif.trim(),
-            billing_address: fiscal.billing_address.trim(),
-            contact_person: fiscal.contact_person.trim() || undefined,
-            email: fiscal.email.trim() || undefined,
-            phone: fiscal.phone.trim() || undefined,
-          }
+              name: fiscal.name.trim(),
+              nif: fiscal.nif.trim(),
+              billing_address: fiscal.billing_address.trim(),
+              contact_person: fiscal.contact_person.trim() || undefined,
+              email: fiscal.email.trim() || undefined,
+              phone: fiscal.phone.trim() || undefined,
+            }
           : undefined,
       });
       if (!res.ok) {
@@ -92,7 +95,9 @@ export function MarkAcceptedButton({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{alreadyAccepted ? "Completar datos fiscales" : "Marcar como aceptada"}</DialogTitle>
+          <DialogTitle>
+            {alreadyAccepted ? "Completar datos fiscales" : "Marcar como aceptada"}
+          </DialogTitle>
           <DialogDescription>
             {alreadyAccepted
               ? "Crea la ficha fiscal necesaria para preparar las facturas de esta propuesta."
@@ -171,7 +176,11 @@ export function MarkAcceptedButton({
             Cancelar
           </Button>
           <Button size="sm" onClick={handleConfirm} disabled={pending}>
-            {pending ? "Guardando…" : alreadyAccepted ? "Guardar datos fiscales" : "Confirmar aceptación"}
+            {pending
+              ? "Guardando…"
+              : alreadyAccepted
+                ? "Guardar datos fiscales"
+                : "Confirmar aceptación"}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,6 +1,28 @@
-import type { MemberRole } from "@/lib/auth";
-import { ArchiveIcon as Archive, ChartBar as BarChart3, BellIcon as Bell, CalendarBlank as CalendarDays, CheckSquareIcon as CheckSquare, FileText as FileSignature, Folder as FolderKanban, GlobeIcon as Globe, House as Home, ImagesIcon as Images, Tray as Inbox, Key as KeyRound, Lifebuoy as LifeBuoy, Envelope as Mail, MegaphoneIcon as Megaphone, CursorClick as MousePointerClick, ReceiptIcon as Receipt, RepeatIcon as Repeat, Gear as Settings, ShareNetwork as Share2, UsersIcon as Users, WalletIcon as Wallet } from "@phosphor-icons/react/ssr";
+import {
+  ArchiveIcon as Archive,
+  ChartBar as BarChart3,
+  BellIcon as Bell,
+  CalendarBlank as CalendarDays,
+  CheckSquareIcon as CheckSquare,
+  FileText as FileSignature,
+  Folder as FolderKanban,
+  GlobeIcon as Globe,
+  House as Home,
+  ImagesIcon as Images,
+  Tray as Inbox,
+  Key as KeyRound,
+  Lifebuoy as LifeBuoy,
+  Envelope as Mail,
+  MegaphoneIcon as Megaphone,
+  CursorClick as MousePointerClick,
+  ReceiptIcon as Receipt,
+  RepeatIcon as Repeat,
+  ShareNetwork as Share2,
+  UsersIcon as Users,
+  WalletIcon as Wallet,
+} from "@phosphor-icons/react/ssr";
 import type { ComponentType } from "react";
+import type { MemberRole } from "@/lib/auth";
 
 export type NavigationItem = {
   href: string;
@@ -84,7 +106,6 @@ export const NAVIGATION_GROUPS: NavigationGroup[] = [
       { href: "/internal-docs", label: "Docs internos", icon: Archive },
       { href: "/brand", label: "Marca", icon: Images },
       { href: "/vault", label: "Bóveda", icon: KeyRound, allowedRoles: ADMIN_ROLES },
-      { href: "/settings", label: "Ajustes", icon: Settings },
     ],
   },
 ];

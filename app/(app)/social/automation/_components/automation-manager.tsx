@@ -1,6 +1,12 @@
 "use client";
 
-import { ActivityIcon as Activity, FacebookLogo as Facebook, InstagramLogo as Instagram, ChatCircle as MessageCircle, Trash as Trash2 } from "@phosphor-icons/react/ssr";
+import {
+  ActivityIcon as Activity,
+  FacebookLogo as Facebook,
+  InstagramLogo as Instagram,
+  ChatCircle as MessageCircle,
+  Trash as Trash2,
+} from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";

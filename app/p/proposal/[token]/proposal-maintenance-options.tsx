@@ -1,15 +1,12 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import {
-  recommendedMaintenancePlanId,
-  type MaintenanceOffer,
-} from "@/lib/proposals/maintenance";
-import { formatEUR } from "@/lib/utils";
 import { CheckIcon as Check } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { type MaintenanceOffer, recommendedMaintenancePlanId } from "@/lib/proposals/maintenance";
+import { formatEUR } from "@/lib/utils";
 import { selectProposalMaintenance } from "./actions";
 
 export function ProposalMaintenanceOptions({
@@ -50,8 +47,7 @@ export function ProposalMaintenanceOptions({
         </h2>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{offer.intro}</p>
         <p className="mt-3 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-          Compara qué cubre cada plan y selecciona como máximo uno antes de confirmar
-          la propuesta.
+          Compara qué cubre cada plan y selecciona como máximo uno antes de confirmar la propuesta.
         </p>
       </header>
       <div className="mt-5 grid gap-3 lg:grid-cols-3">

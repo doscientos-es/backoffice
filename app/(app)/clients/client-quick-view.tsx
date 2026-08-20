@@ -1,6 +1,16 @@
 "use client";
 
-import { ArrowUpRightIcon as ArrowUpRight, Buildings as Building2, FileTextIcon as FileText, Envelope as Mail, MapPinIcon as MapPin, PhoneIcon as Phone, Trash as Trash2, UserIcon as User, XIcon as X } from "@phosphor-icons/react/ssr";
+import {
+  ArrowUpRightIcon as ArrowUpRight,
+  Buildings as Building2,
+  FileTextIcon as FileText,
+  Envelope as Mail,
+  MapPinIcon as MapPin,
+  PhoneIcon as Phone,
+  Trash as Trash2,
+  UserIcon as User,
+  XIcon as X,
+} from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { type ReactNode, useState } from "react";
 import { Badge } from "@/components/ui/badge";

@@ -1,6 +1,25 @@
 "use client";
 
 import {
+  ArrowDownIcon as ArrowDown,
+  ArrowRightIcon as ArrowRight,
+  ArrowUpIcon as ArrowUp,
+  ArrowsDownUp as ArrowUpDown,
+  DownloadIcon as Download,
+  PlusIcon as Plus,
+} from "@phosphor-icons/react/ssr";
+import {
+  type ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  type SortingState,
+  useReactTable,
+} from "@tanstack/react-table";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
+import {
   type FilterConfig,
   ListControls,
   type ListControlsProps,
@@ -10,18 +29,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
-import {
-  type ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  type SortingState,
-  useReactTable,
-} from "@tanstack/react-table";
-import { ArrowDownIcon as ArrowDown, ArrowRightIcon as ArrowRight, ArrowUpIcon as ArrowUp, ArrowsDownUp as ArrowUpDown, DownloadIcon as Download, PlusIcon as Plus } from "@phosphor-icons/react/ssr";
-import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
 
 export type { BreadcrumbEntry };
 
@@ -31,19 +38,19 @@ export type ListAlign = "left" | "right";
 export type ListHeader =
   | string
   | {
-    label: string;
-    /** Activa la ordenación cliente (requiere `sortValues` en las filas). */
-    sortable?: boolean;
-    /**
-     * Clave de columna DB para ordenación en el servidor.
-     * Al hacer clic actualiza los URL params `sort` + `dir` y resetea `page`.
-     * Tiene preferencia sobre `sortable`.
-     */
-    sortKey?: string;
-    align?: ListAlign;
-    /** Ancho mínimo CSS para la columna (ej. "8rem"). Evita wrapping en celdas cortas. */
-    minWidth?: string;
-  };
+      label: string;
+      /** Activa la ordenación cliente (requiere `sortValues` en las filas). */
+      sortable?: boolean;
+      /**
+       * Clave de columna DB para ordenación en el servidor.
+       * Al hacer clic actualiza los URL params `sort` + `dir` y resetea `page`.
+       * Tiene preferencia sobre `sortable`.
+       */
+      sortKey?: string;
+      align?: ListAlign;
+      /** Ancho mínimo CSS para la columna (ej. "8rem"). Evita wrapping en celdas cortas. */
+      minWidth?: string;
+    };
 
 export type ListRow = {
   id: string;

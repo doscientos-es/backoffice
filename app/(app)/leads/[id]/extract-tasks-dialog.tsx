@@ -1,6 +1,11 @@
 "use client";
 
-import { WarningCircle as AlertCircle, Checks as CheckCheck, ListChecks as ListTodo, Sparkle as Sparkles } from "@phosphor-icons/react/ssr";
+import {
+  WarningCircle as AlertCircle,
+  Checks as CheckCheck,
+  ListChecks as ListTodo,
+  Sparkle as Sparkles,
+} from "@phosphor-icons/react/ssr";
 import { useEffect, useState } from "react";
 import { sileo } from "sileo";
 import { Badge } from "@/components/ui/badge";

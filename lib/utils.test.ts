@@ -1,13 +1,14 @@
-import { describe, expect, it } from "vitest";
 import {
   cn,
   formatDate,
   formatDateTime,
   formatEUR,
   memberAvatarUrl,
+  pluralize,
   relativeTime,
   truncate,
 } from "@/lib/utils";
+import { describe, expect, it } from "vitest";
 
 describe("cn", () => {
   it("merges Tailwind classes", () => {
@@ -29,6 +30,14 @@ describe("formatEUR", () => {
     expect(formatEUR(undefined)).toBe("—");
     expect(formatEUR(Number.POSITIVE_INFINITY)).toBe("—");
     expect(formatEUR("abc")).toBe("—");
+  });
+});
+
+describe("pluralize", () => {
+  it("returns the singular form only for one item", () => {
+    expect(pluralize(1, "tarea", "tareas")).toBe("tarea");
+    expect(pluralize(0, "tarea", "tareas")).toBe("tareas");
+    expect(pluralize(2, "tarea", "tareas")).toBe("tareas");
   });
 });
 

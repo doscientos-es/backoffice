@@ -1,3 +1,13 @@
+import {
+  CheckCircle as CheckCircle2,
+  ClockIcon as Clock,
+  FileTextIcon as FileText,
+  PencilIcon as Pencil,
+  PresentationIcon as Presentation,
+  XCircleIcon as XCircle,
+} from "@phosphor-icons/react/ssr";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { BackLink } from "@/components/layout/back-link";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
@@ -28,9 +38,6 @@ import {
 import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { CheckCircle as CheckCircle2, ClockIcon as Clock, FileTextIcon as FileText, PencilIcon as Pencil, PresentationIcon as Presentation, XCircleIcon as XCircle } from "@phosphor-icons/react/ssr";
-import Link from "next/link";
-import { notFound } from "next/navigation";
 import { updateProposalPortalAccess } from "../actions";
 import { ProposalMoreActions } from "./delete-proposal-button";
 import { GenerateInvoiceButton } from "./generate-invoice-button";
@@ -135,11 +142,11 @@ export default async function ProposalDetailPage({
   const clientId = (proposal.client_id as string | null) ?? null;
   const { data: availableProjects } = clientId
     ? await supabase
-      .from("projects")
-      .select("id, name")
-      .eq("client_id", clientId)
-      .is("deleted_at", null)
-      .order("name")
+        .from("projects")
+        .select("id, name")
+        .eq("client_id", clientId)
+        .is("deleted_at", null)
+        .order("name")
     : { data: [] };
 
   const [{ data: teamMembers }, { data: proposalTeam }] = await Promise.all([
@@ -202,21 +209,21 @@ export default async function ProposalDetailPage({
   const needsFiscal = !client || !hasCompleteFiscalData(client);
   const fiscalPrefill = client
     ? {
-      name: client.name ?? "",
-      nif: client.nif ?? "",
-      billing_address: client.billing_address_street ?? "",
-      contact_person: client.contact_person ?? "",
-      email: client.email ?? "",
-      phone: client.phone ?? "",
-    }
+        name: client.name ?? "",
+        nif: client.nif ?? "",
+        billing_address: client.billing_address_street ?? "",
+        contact_person: client.contact_person ?? "",
+        email: client.email ?? "",
+        phone: client.phone ?? "",
+      }
     : {
-      name: lead?.company ?? lead?.name ?? "",
-      nif: "",
-      billing_address: "",
-      contact_person: lead?.name ?? "",
-      email: lead?.email ?? "",
-      phone: lead?.phone ?? "",
-    };
+        name: lead?.company ?? lead?.name ?? "",
+        nif: "",
+        billing_address: "",
+        contact_person: lead?.name ?? "",
+        email: lead?.email ?? "",
+        phone: lead?.phone ?? "",
+      };
   const locked = status === "accepted" || status === "rejected";
   const editing = !locked && (mode === "edit" || ai_draft === "1");
   const configuredPaymentPlan = parsePaymentPlan(proposal.payment_plan);
@@ -256,11 +263,13 @@ export default async function ProposalDetailPage({
   const selectedTeamIds = ((proposalTeam ?? []) as Array<{ member_id: string }>).map(
     (member) => member.member_id,
   );
-  const visibleTeam = ((teamMembers ?? []) as Array<{
-    id: string;
-    name: string;
-    job_title: string | null;
-  }>).filter((member) => selectedTeamIds.includes(member.id));
+  const visibleTeam = (
+    (teamMembers ?? []) as Array<{
+      id: string;
+      name: string;
+      job_title: string | null;
+    }>
+  ).filter((member) => selectedTeamIds.includes(member.id));
 
   return (
     <div className="flex flex-col gap-6">
@@ -281,7 +290,7 @@ export default async function ProposalDetailPage({
                     client ? `Cliente: ${client.name}` : lead ? `Lead: ${lead.name}` : null,
                     `Estado: ${PROPOSAL_STATUS[status]?.label ?? status}`,
                     Number(proposal.total ?? 0) > 0 &&
-                    `Total: ${formatEUR(Number(proposal.total))}`,
+                      `Total: ${formatEUR(Number(proposal.total))}`,
                   ]
                     .filter(Boolean)
                     .join(" · "),
@@ -350,7 +359,9 @@ export default async function ProposalDetailPage({
             initialPaymentSchedule={(proposal.payment_schedule as PaymentSchedule | null) ?? null}
             initialPaymentPlan={paymentPlan}
             initialPaymentTerms={(proposal.payment_terms as string | null) ?? null}
-            initialChangeManagementTerms={(proposal.change_management_terms as string | null) ?? null}
+            initialChangeManagementTerms={
+              (proposal.change_management_terms as string | null) ?? null
+            }
             initialMaintenanceOptions={parseMaintenanceOffer(proposal.maintenance_options)}
             initialMaintenanceSelectedPlanId={
               (proposal.maintenance_selected_plan_id as string | null) ?? null
@@ -392,54 +403,62 @@ export default async function ProposalDetailPage({
           initialVersion={Number(proposal.version)}
           total={Number(proposal.total ?? 0)}
           canEdit={user.role !== "viewer"}
-          invoices={((paymentPlanInvoices ?? []) as Array<Record<string, unknown>>).flatMap((invoice) => {
-            const planItemId = invoice.proposal_payment_plan_item_id as string | null;
-            if (!planItemId) return [];
-            return [{
-              id: invoice.id as string,
-              planItemId,
-              number: (invoice.full_number as string | null) ?? "Borrador",
-              status: invoice.status as string,
-            }];
-          })}
+          invoices={((paymentPlanInvoices ?? []) as Array<Record<string, unknown>>).flatMap(
+            (invoice) => {
+              const planItemId = invoice.proposal_payment_plan_item_id as string | null;
+              if (!planItemId) return [];
+              return [
+                {
+                  id: invoice.id as string,
+                  planItemId,
+                  number: (invoice.full_number as string | null) ?? "Borrador",
+                  status: invoice.status as string,
+                },
+              ];
+            },
+          )}
         />
       ) : null}
 
-      {!editing ? <Card>
-        <CardHeader>
-          <CardTitle>Consultas del cliente</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ProposalMessageThread
-            messages={(messages ?? []) as unknown as ProposalMessage[]}
-            submit={replyToProposalMessage.bind(null, id)}
-          />
-        </CardContent>
-      </Card> : null}
-
-      {!editing ? <SectionBoundary label="No se pudo cargar la documentación técnica">
+      {!editing ? (
         <Card>
           <CardHeader>
-            <CardTitle>Documentación técnica</CardTitle>
+            <CardTitle>Consultas del cliente</CardTitle>
           </CardHeader>
           <CardContent>
-            <ProposalSpecs
-              proposalId={id}
-              specs={((specs ?? []) as unknown as ProposalSpec[]).map((s) => ({
-                id: s.id,
-                title: s.title,
-                body_markdown: s.body_markdown,
-                is_client_visible: s.is_client_visible,
-                portal_token: s.portal_token,
-                updated_at: s.updated_at,
-                version: s.version,
-              }))}
-              aiEnabled={isAIEnabled()}
-              locked={locked}
+            <ProposalMessageThread
+              messages={(messages ?? []) as unknown as ProposalMessage[]}
+              submit={replyToProposalMessage.bind(null, id)}
             />
           </CardContent>
         </Card>
-      </SectionBoundary> : null}
+      ) : null}
+
+      {!editing ? (
+        <SectionBoundary label="No se pudo cargar la documentación técnica">
+          <Card>
+            <CardHeader>
+              <CardTitle>Documentación técnica</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ProposalSpecs
+                proposalId={id}
+                specs={((specs ?? []) as unknown as ProposalSpec[]).map((s) => ({
+                  id: s.id,
+                  title: s.title,
+                  body_markdown: s.body_markdown,
+                  is_client_visible: s.is_client_visible,
+                  portal_token: s.portal_token,
+                  updated_at: s.updated_at,
+                  version: s.version,
+                }))}
+                aiEnabled={isAIEnabled()}
+                locked={locked}
+              />
+            </CardContent>
+          </Card>
+        </SectionBoundary>
+      ) : null}
 
       {!editing && isAIEnabled() && ["sent", "viewed"].includes(status) ? (
         <Card>
@@ -520,8 +539,12 @@ export default async function ProposalDetailPage({
                     availableProjects={(availableProjects ?? []) as { id: string; name: string }[]}
                   />
                 </DetailRow>
-                <DetailRow label="Enviada">{formatDate(proposal.sent_at as string | null)}</DetailRow>
-                <DetailRow label="Vista">{formatDate(proposal.viewed_at as string | null)}</DetailRow>
+                <DetailRow label="Enviada">
+                  {formatDate(proposal.sent_at as string | null)}
+                </DetailRow>
+                <DetailRow label="Vista">
+                  {formatDate(proposal.viewed_at as string | null)}
+                </DetailRow>
                 <DetailRow label="Respondida">
                   {formatDate(proposal.responded_at as string | null)}
                 </DetailRow>

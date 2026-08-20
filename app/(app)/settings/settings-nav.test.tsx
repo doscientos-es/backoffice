@@ -1,13 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 // ── mocks (hoisted before imports) ──────────────────────────────────────────
 
-const { push } = vi.hoisted(() => ({ push: vi.fn() }));
-
 vi.mock("next/navigation", () => ({
   usePathname: vi.fn().mockReturnValue("/settings/profile"),
-  useRouter: vi.fn().mockReturnValue({ push }),
 }));
 
 vi.mock("next/link", () => ({
@@ -129,22 +126,21 @@ describe("SettingsNav – active state", () => {
   });
 });
 
-describe("SettingsNav – responsive layout", () => {
-  it("uses a labelled section selector until the desktop layout is available", () => {
+describe("SettingsNav – tab layout", () => {
+  it("uses a horizontally scrollable tab navigation at every viewport size", () => {
     const { container } = renderNav(true);
     const nav = container.querySelector('nav[aria-label="Ajustes"]');
 
-    expect(screen.getByRole("combobox", { name: "Sección de ajustes" })).toBeTruthy();
-    expect(nav?.className).toContain("lg:flex-col");
-    expect(nav?.className).toContain("hidden");
+    expect(nav?.className).toContain("overflow-x-auto");
+    expect(nav?.className).not.toContain("flex-col");
+    expect(screen.queryByRole("combobox")).toBeNull();
   });
 
-  it("navigates when the compact selector changes", () => {
+  it("keeps each tab as a direct settings route", () => {
     renderNav(true);
-    fireEvent.change(screen.getByRole("combobox", { name: "Sección de ajustes" }), {
-      target: { value: "/settings/team" },
-    });
 
-    expect(push).toHaveBeenCalledWith("/settings/team");
+    expect(screen.getByRole("link", { name: "Equipo" }).getAttribute("href")).toBe(
+      "/settings/team",
+    );
   });
 });

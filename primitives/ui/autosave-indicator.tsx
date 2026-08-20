@@ -1,6 +1,10 @@
 "use client";
 
-import { WarningCircle as AlertCircle, CheckIcon as Check, CircleNotch as Loader2 } from "@phosphor-icons/react/ssr";
+import {
+  WarningCircle as AlertCircle,
+  CheckIcon as Check,
+  CircleNotch as Loader2,
+} from "@phosphor-icons/react/ssr";
 import { useEffect, useState } from "react";
 import type { AutosaveStatus } from "../hooks/use-autosave";
 import { cn } from "../lib/utils";

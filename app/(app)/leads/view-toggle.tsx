@@ -1,6 +1,11 @@
 "use client";
 
-import { ChartLineUp as ChartNoAxesCombined, SquaresFour as LayoutGrid, ListIcon as List, CircleNotch as Loader2 } from "@phosphor-icons/react/ssr";
+import {
+  ChartLineUp as ChartNoAxesCombined,
+  SquaresFour as LayoutGrid,
+  ListIcon as List,
+  CircleNotch as Loader2,
+} from "@phosphor-icons/react/ssr";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";

@@ -1,5 +1,14 @@
 "use client";
 
+import {
+  CaretDown as ChevronDown,
+  CaretUp as ChevronUp,
+  ClipboardText as ClipboardPaste,
+  PlusIcon as Plus,
+  Trash as Trash2,
+  XIcon as X,
+} from "@phosphor-icons/react/ssr";
+import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,11 +16,9 @@ import {
   createEmptyScopeModule,
   SCOPE_MODULE_DURATION_WEEKS,
   SCOPE_MODULE_LIMITS,
-  scopeModuleDurationLabel,
   type ScopeModule,
+  scopeModuleDurationLabel,
 } from "@/lib/proposals/scope";
-import { CaretDown as ChevronDown, CaretUp as ChevronUp, ClipboardText as ClipboardPaste, PlusIcon as Plus, Trash as Trash2, XIcon as X } from "@phosphor-icons/react/ssr";
-import { useEffect, useRef, useState } from "react";
 
 type Props = {
   modules: ScopeModule[];

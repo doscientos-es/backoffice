@@ -9,7 +9,7 @@ export default async function SettingsLayout({ children }: { children: React.Rea
   const canManageTeam = user.role === "owner" || user.role === "admin";
 
   return (
-    <div className="mx-auto flex w-full max-md:flex-col gap-6">
+    <div className="mx-auto flex w-full flex-col gap-6">
       <SettingsNav canManageTeam={canManageTeam} />
       <div className="min-w-0 flex-1">{children}</div>
     </div>

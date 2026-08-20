@@ -1,5 +1,15 @@
 "use client";
 
+import {
+  WarningCircle as AlertCircle,
+  CheckIcon as Check,
+  CaretLeft as ChevronLeft,
+  CaretRight as ChevronRight,
+  FloppyDisk as Save,
+  Sparkle as Sparkles,
+} from "@phosphor-icons/react/ssr";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LineItemsTable } from "@/components/finance/line-items-table";
 import { MaintenanceOfferEditor } from "@/components/proposals/maintenance-offer-editor";
 import { PaymentPlanEditor } from "@/components/proposals/payment-plan-editor";
@@ -33,15 +43,12 @@ import {
   DEFAULT_CHANGE_MANAGEMENT_TERMS,
   PAYMENT_SCHEDULE_LABELS,
   PAYMENT_SCHEDULE_TEMPLATES,
-  paymentPlanForSchedule,
   type PaymentPlanItem,
   type PaymentSchedule,
+  paymentPlanForSchedule,
   type ScopeModule,
 } from "@/lib/proposals/scope";
 import { formatEUR } from "@/lib/utils";
-import { WarningCircle as AlertCircle, CheckIcon as Check, CaretLeft as ChevronLeft, CaretRight as ChevronRight, FloppyDisk as Save, Sparkle as Sparkles } from "@phosphor-icons/react/ssr";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { setProposalTeamMembers, updateProposal } from "../actions";
 
 export type EditableItem = LineItem;
@@ -267,10 +274,15 @@ export function ProposalEditor({
         else saveFeedback.setError(result.error);
         return;
       }
-      const teamResult = await setProposalTeamMembers({ proposal_id: id, member_ids: teamMemberIds });
+      const teamResult = await setProposalTeamMembers({
+        proposal_id: id,
+        member_ids: teamMemberIds,
+      });
       if (!teamResult.ok) {
         setExpectedVersion(result.version);
-        saveFeedback.setError(`La propuesta se guardó, pero no se pudo actualizar el equipo: ${teamResult.error}`);
+        saveFeedback.setError(
+          `La propuesta se guardó, pero no se pudo actualizar el equipo: ${teamResult.error}`,
+        );
         return;
       }
       setExpectedVersion(result.version);

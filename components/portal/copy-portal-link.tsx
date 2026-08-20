@@ -1,6 +1,11 @@
 "use client";
 
-import { CheckIcon as Check, CopyIcon as Copy, ArrowSquareOut as ExternalLink, Link as Link2 } from "@phosphor-icons/react/ssr";
+import {
+  CheckIcon as Check,
+  CopyIcon as Copy,
+  ArrowSquareOut as ExternalLink,
+  Link as Link2,
+} from "@phosphor-icons/react/ssr";
 import { useState } from "react";
 import { sileo } from "sileo";
 import { Button } from "@/components/ui/button";

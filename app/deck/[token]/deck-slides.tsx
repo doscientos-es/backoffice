@@ -1,20 +1,20 @@
+import { ArrowRightIcon as ArrowRight, DownloadIcon as Download } from "@phosphor-icons/react/ssr";
+import type { ReactNode } from "react";
 import { LogoMark } from "@/components/branding";
 import { Markdown } from "@/components/ui/markdown";
 import {
   BILLING_CYCLE_LABELS,
-  computeProposalTotals,
   type BillingCycle,
+  computeProposalTotals,
   type ProposalTotals,
 } from "@/lib/finance";
 import type { KeyPoint } from "@/lib/proposals/key-points";
 import {
   PAYMENT_SCHEDULE_LABELS,
-  scopeModuleDurationText,
   type ScopeModule,
+  scopeModuleDurationText,
 } from "@/lib/proposals/scope";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { ArrowRightIcon as ArrowRight, DownloadIcon as Download } from "@phosphor-icons/react/ssr";
-import type { ReactNode } from "react";
 import type { DeckProposal, DeckProposalItem, DeckTeamMember } from "./page";
 
 function buildTotals(items: DeckProposalItem[]): ProposalTotals {

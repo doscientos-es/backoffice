@@ -1,6 +1,15 @@
 "use client";
 
-import { WarningCircle as AlertCircle, CalendarDots as CalendarClock, CheckIcon as Check, CopyIcon as Copy, Envelope as Mail, ChatCircle as MessageCircle, PhoneIcon as Phone, Sparkle as Sparkles } from "@phosphor-icons/react/ssr";
+import {
+  WarningCircle as AlertCircle,
+  CalendarDots as CalendarClock,
+  CheckIcon as Check,
+  CopyIcon as Copy,
+  Envelope as Mail,
+  ChatCircle as MessageCircle,
+  PhoneIcon as Phone,
+  Sparkle as Sparkles,
+} from "@phosphor-icons/react/ssr";
 import { useState } from "react";
 import { AiNotice } from "@/components/ui/ai-notice";
 import { Badge } from "@/components/ui/badge";

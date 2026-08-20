@@ -1,6 +1,10 @@
 "use client";
 
-import { ArrowBendUpLeft as Reply, StarIcon as Star, Trash as Trash2 } from "@phosphor-icons/react/ssr";
+import {
+  ArrowBendUpLeft as Reply,
+  StarIcon as Star,
+  Trash as Trash2,
+} from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

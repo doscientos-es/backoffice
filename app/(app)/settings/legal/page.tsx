@@ -53,7 +53,9 @@ export default async function LegalPage() {
               <dt className="text-muted-foreground">Entornos Verifactu</dt>
               <dd>
                 <Badge variant="default">Facturación: producción</Badge>
-                <Badge className="ml-2" variant="secondary">Diagnóstico: pruebas AEAT</Badge>
+                <Badge className="ml-2" variant="secondary">
+                  Diagnóstico: pruebas AEAT
+                </Badge>
               </dd>
             </div>
           </dl>

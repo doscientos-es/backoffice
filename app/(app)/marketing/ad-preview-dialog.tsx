@@ -1,6 +1,10 @@
 "use client";
 
-import { ArrowSquareOut as ExternalLink, EyeIcon as Eye, CircleNotch as Loader2 } from "@phosphor-icons/react/ssr";
+import {
+  ArrowSquareOut as ExternalLink,
+  EyeIcon as Eye,
+  CircleNotch as Loader2,
+} from "@phosphor-icons/react/ssr";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {

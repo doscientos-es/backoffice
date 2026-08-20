@@ -1,7 +1,11 @@
 "use client";
 
 import HCaptcha from "@hcaptcha/react-hcaptcha";
-import { ArrowLeftIcon as ArrowLeft, CheckCircle as CheckCircle2, CircleNotch as Loader2 } from "@phosphor-icons/react/ssr";
+import {
+  ArrowLeftIcon as ArrowLeft,
+  CheckCircle as CheckCircle2,
+  CircleNotch as Loader2,
+} from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
