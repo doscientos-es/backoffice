@@ -44,7 +44,13 @@ const ROLE_VARIANT: Record<MemberRole, "default" | "info" | "neutral"> = {
   viewer: "neutral",
 };
 
-export function UserMenu({ user }: { user: CurrentUser }) {
+export function UserMenu({
+  user,
+  showSettings = true,
+}: {
+  user: CurrentUser;
+  showSettings?: boolean;
+}) {
   const router = useRouter();
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const canManageTeam = user.role === "owner" || user.role === "admin";
@@ -91,12 +97,14 @@ export function UserMenu({ user }: { user: CurrentUser }) {
           </Badge>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/settings">
-            <Settings className="h-4 w-4" aria-hidden />
-            Ajustes
-          </Link>
-        </DropdownMenuItem>
+        {showSettings ? (
+          <DropdownMenuItem asChild>
+            <Link href="/settings">
+              <Settings className="h-4 w-4" aria-hidden />
+              Ajustes
+            </Link>
+          </DropdownMenuItem>
+        ) : null}
         {canManageTeam ? (
           <DropdownMenuItem asChild>
             <Link href="/settings/team">

@@ -1,5 +1,6 @@
 "use client";
 
+import { Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/branding";
@@ -74,7 +75,16 @@ export function Sidebar({
               <ThemeToggle />
             </div>
           </div>
-          <UserMenu user={user} />
+          <UserMenu user={user} showSettings={false} />
+          <Link
+            href="/settings"
+            aria-label="Ajustes"
+            aria-current={pathname.startsWith("/settings") ? "page" : undefined}
+            title="Ajustes"
+            className="flex size-8 items-center justify-center self-start rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:bg-secondary aria-[current=page]:text-foreground"
+          >
+            <Settings className="size-4" aria-hidden />
+          </Link>
         </ErrorBoundary>
       </footer>
     </aside>

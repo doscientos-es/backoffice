@@ -16,6 +16,19 @@ type DiagnosticRun = {
   created_at: string;
 };
 
+const SAFE_SIF_CONFIGURATION_ERRORS = new Set([
+  "VERIFACTU_PRODUCER_NIF es obligatorio en producción",
+  "El certificado P12 de VERI*FACTU es obligatorio en producción",
+  "VERIFACTU_CERT_EXPIRES_AT es obligatorio en producción",
+  "El certificado P12 de VERI*FACTU está caducado o tiene una fecha inválida",
+]);
+
+function safeSifConfigurationDetail(error: unknown): string {
+  const message = error instanceof Error ? error.message : "";
+  if (SAFE_SIF_CONFIGURATION_ERRORS.has(message)) return message;
+  return "La configuración SIF no permite completar la suite sintética";
+}
+
 async function createDiagnosticAdminClient() {
   const { createAdminClient } = await import("@/lib/supabase/admin");
   return createAdminClient();
@@ -102,12 +115,12 @@ export async function runVerifactuMockDiagnostic(memberId: string): Promise<{
       },
       { key: "qr", ok: Boolean(qrUrl), detail: "URL QR de verificación generada" },
     ];
-  } catch {
+  } catch (error) {
     checks = [
       {
         key: "sif_config",
         ok: false,
-        detail: "La configuración SIF no permite completar la suite sintética",
+        detail: safeSifConfigurationDetail(error),
       },
     ];
   }
@@ -124,6 +137,6 @@ export async function runVerifactuMockDiagnostic(memberId: string): Promise<{
     ok,
     detail: ok
       ? `Suite VERI*FACTU superada. Habilita facturación durante ${DIAGNOSTIC_TTL_DAYS} días.`
-      : "La suite VERI*FACTU falló; la facturación real permanece bloqueada.",
+      : `La suite VERI*FACTU falló: ${checks.find((check) => !check.ok)?.detail ?? "comprobación no superada"}. La facturación real permanece bloqueada.`,
   };
 }
