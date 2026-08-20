@@ -6,6 +6,7 @@ export const USER_VERIFICATION_INTENTS = [
   "vault.unlock",
   "invoice.status.update",
   "invoice.payment.revert",
+  "invoice.payment.record",
   "invoice.send_aeat",
   "team.member.role.update",
   "team.member.deactivate",

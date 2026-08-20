@@ -167,7 +167,7 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
       feedback.setPending();
       const res = await recordInvoicePayment({
         id: invoice.id,
-        amount: paymentAmount,
+        amount: Number(paymentAmount),
         paymentMethod: selectedPaymentMethod,
       });
       if (res.ok) {

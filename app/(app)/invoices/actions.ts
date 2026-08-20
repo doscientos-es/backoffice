@@ -53,6 +53,7 @@ import { UpdatePortalAccessInput } from "@/lib/schemas/portal";
 import { consumeUserVerification } from "@/lib/security/user-verification";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { createServerClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { verifactuSoftwareSnapshotFromEnv } from "@/lib/verifactu/config";
 import { assertVerifactuDiagnosticGate } from "@/lib/verifactu/diagnostics";
@@ -170,7 +171,7 @@ export const updateInvoiceStatus = defineAction<
 });
 
 /** Records a manual or gateway payment and closes the invoice when fully paid. */
-export const recordInvoicePayment = defineAction({
+export const recordInvoicePayment = defineAction<typeof RecordInvoicePaymentInput, { fullyPaid: boolean }>({
   name: "invoices.recordPayment",
   schema: RecordInvoicePaymentInput,
   roles: ["owner", "admin"],
@@ -181,8 +182,8 @@ export const recordInvoicePayment = defineAction({
       userVerificationScope("invoice.payment.record", `invoice:${input.id}`),
     );
 
-    const supabase = await createServerClient();
-    const { data: invoice, error: invoiceError } = await supabase
+    const admin = createAdminClient();
+    const { data: invoice, error: invoiceError } = await admin
       .from("invoices")
       .select("status, total")
       .eq("id", input.id)
@@ -197,7 +198,7 @@ export const recordInvoicePayment = defineAction({
     const totalCents = Math.round(Number(invoice.total) * 100);
     if (amountCents <= 0) throw new Error("El importe debe ser mayor que cero");
 
-    const { data: confirmed, error: paymentsError } = await supabase
+    const { data: confirmed, error: paymentsError } = await admin
       .from("invoice_payments")
       .select("amount")
       .eq("invoice_id", input.id)
@@ -213,7 +214,7 @@ export const recordInvoicePayment = defineAction({
     }
 
     const now = new Date().toISOString();
-    const { error: insertError } = await supabase.from("invoice_payments").insert({
+    const { error: insertError } = await admin.from("invoice_payments").insert({
       invoice_id: input.id,
       amount: amountCents / 100,
       status: "confirmed",
@@ -226,8 +227,10 @@ export const recordInvoicePayment = defineAction({
     const fullyPaid = paidCents + amountCents >= totalCents;
     await patchInvoiceStatus(input.id, {
       updated_at: now,
+      status: fullyPaid ? "paid" : (invoice.status as string),
+      paid_at: fullyPaid ? now : null,
       ...(fullyPaid
-        ? { status: "paid", paid_at: now, payment_method: input.paymentMethod }
+        ? { payment_method: input.paymentMethod }
         : { payment_method: input.paymentMethod }),
     });
 

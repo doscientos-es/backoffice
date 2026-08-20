@@ -17,14 +17,18 @@ vi.mock("@/components/layout/command-palette-trigger", () => ({
   CommandPaletteTrigger: () => <button type="button">Buscar</button>,
 }));
 vi.mock("@/components/layout/navigation-tree", () => ({ NavigationTree: () => <div /> }));
-vi.mock("@/components/layout/notifications-bell", () => ({ NotificationsBell: () => <div /> }));
+vi.mock("@/components/layout/notifications-bell", () => ({
+  NotificationsBell: () => <button type="button" aria-label="Notificaciones" />,
+}));
 vi.mock("@/components/layout/user-menu", () => ({
   UserMenu: ({ showSettings: value }: { showSettings?: boolean }) => {
     showSettings = value;
     return <div data-testid="user-menu" />;
   },
 }));
-vi.mock("@/components/theme-toggle", () => ({ ThemeToggle: () => <div /> }));
+vi.mock("@/components/theme-toggle", () => ({
+  ThemeToggle: () => <button type="button" aria-label="Cambiar tema" />,
+}));
 vi.mock("@/components/ui/badge", () => ({
   Badge: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
 }));
@@ -47,21 +51,26 @@ const user: CurrentUser = {
   contactEmail: null,
 };
 
-describe("Sidebar settings link", () => {
-  it("places the settings icon below the profile menu", () => {
-    render(<Sidebar user={user} verifactuMode="TEST" demoMode={false} />);
+describe("Sidebar actions", () => {
+  it("places theme, notifications, and settings together above the profile menu", () => {
+    render(<Sidebar user={user} demoMode={false} />);
 
     const settings = screen.getByRole("link", { name: "Ajustes" });
+    const theme = screen.getByRole("button", { name: "Cambiar tema" });
+    const notifications = screen.getByRole("button", { name: "Notificaciones" });
     expect(settings.getAttribute("href")).toBe("/settings");
     expect(showSettings).toBe(false);
-    expect(screen.getByTestId("user-menu").compareDocumentPosition(settings)).toBe(
+    expect(settings.parentElement).toBe(theme.parentElement);
+    expect(settings.parentElement).toBe(notifications.parentElement);
+    expect(settings.compareDocumentPosition(screen.getByTestId("user-menu"))).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
+    expect(screen.queryByText(/^AEAT /)).toBeNull();
   });
 
   it("marks the settings icon as active in settings routes", () => {
     pathname = "/settings/profile";
-    render(<Sidebar user={user} verifactuMode="TEST" demoMode={false} />);
+    render(<Sidebar user={user} demoMode={false} />);
 
     expect(screen.getByRole("link", { name: "Ajustes" }).getAttribute("aria-current")).toBe("page");
     pathname = "/inicio";

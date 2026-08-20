@@ -16,13 +16,7 @@ import type { CurrentUser } from "@/lib/auth";
 import { visibleNavigationGroups } from "@/lib/navigation/navigation";
 import { version } from "../../package.json";
 
-export function MobileNav({
-  user,
-  demoMode,
-}: {
-  user: CurrentUser;
-  demoMode: boolean;
-}) {
+export function MobileNav({ user, demoMode }: { user: CurrentUser; demoMode: boolean }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 

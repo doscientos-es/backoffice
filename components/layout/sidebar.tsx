@@ -15,13 +15,7 @@ import type { CurrentUser } from "@/lib/auth";
 import { visibleNavigationGroups } from "@/lib/navigation/navigation";
 import { version } from "../../package.json";
 
-export function Sidebar({
-  user,
-  demoMode,
-}: {
-  user: CurrentUser;
-  demoMode: boolean;
-}) {
+export function Sidebar({ user, demoMode }: { user: CurrentUser; demoMode: boolean }) {
   const pathname = usePathname();
 
   const visibleGroups = visibleNavigationGroups(user.role);
