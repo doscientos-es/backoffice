@@ -6,7 +6,7 @@ const { state } = vi.hoisted(() => ({
       id: "494d62cb-fd56-4650-b131-9e3a927a20ad",
       status: "accepted",
       title: "Automatización comercial",
-      client_id: "client-1",
+      client_id: "client-1" as string | null,
       project_id: null,
       notes: null,
       payment_schedule: "half_half",
@@ -36,7 +36,7 @@ vi.mock("@/lib/invoices/queries", () => ({
   findClientInfo: vi.fn(async () => ({
     name: "Acme",
     nif: "B12345678",
-    billing_address_street: null,
+    billing_address_street: "Calle de prueba 1",
     billing_address_zip: null,
     billing_address_city: null,
     billing_address_province: null,
@@ -90,6 +90,7 @@ const PROPOSAL_ID = "494d62cb-fd56-4650-b131-9e3a927a20ad";
 
 beforeEach(() => {
   state.proposal.status = "accepted";
+  state.proposal.client_id = "client-1";
   state.role = "member";
   state.notifications = [];
   state.invoicedPlanIds = [];
@@ -110,6 +111,19 @@ describe("createInvoicesFromProposalPlan", () => {
       status: "draft",
       total: 605,
     });
+  });
+
+  it("explains the missing fiscal link instead of attempting an invalid insert", async () => {
+    state.role = "admin";
+    state.proposal.client_id = null;
+
+    const result = await createInvoicesFromProposalPlan({ proposalId: PROPOSAL_ID });
+
+    expect(result).toEqual({
+      ok: false,
+      error: "La propuesta aceptada no tiene datos fiscales; completa la ficha fiscal antes de facturar",
+    });
+    expect(state.insertedInvoices).toEqual([]);
   });
 });
 

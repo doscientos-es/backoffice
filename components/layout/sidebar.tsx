@@ -11,6 +11,7 @@ import { UserMenu } from "@/components/layout/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { IconButton } from "@/components/ui/icon-button";
 import type { CurrentUser } from "@/lib/auth";
 import { visibleNavigationGroups } from "@/lib/navigation/navigation";
 import { version } from "../../package.json";
@@ -53,15 +54,15 @@ export function Sidebar({ user, demoMode }: { user: CurrentUser; demoMode: boole
               <span className="px-2 text-xs text-muted-foreground -mr-1">v{version}</span>
               <ThemeToggle />
               <NotificationsBell memberId={user.id} />
-              <Link
-                href="/settings"
-                aria-label="Ajustes"
+              <IconButton
+                asChild
+                label="Ajustes"
                 aria-current={pathname.startsWith("/settings") ? "page" : undefined}
-                title="Ajustes"
-                className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:bg-secondary aria-[current=page]:text-foreground"
               >
-                <Settings className="size-4" aria-hidden />
-              </Link>
+                <Link href="/settings">
+                  <Settings className="size-4" aria-hidden />
+                </Link>
+              </IconButton>
             </div>
           </div>
           <UserMenu user={user} showSettings={false} />

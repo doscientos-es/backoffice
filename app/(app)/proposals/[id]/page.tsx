@@ -14,6 +14,7 @@ import { CopySummaryButton } from "@/components/ui/copy-summary-button";
 import { SectionBoundary } from "@/components/ui/error-boundary";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
+import { hasCompleteFiscalData } from "@/lib/crm/conversion";
 import { isAIEnabled } from "@/lib/env";
 import { parseKeyPoints, toEditableKeyPoints } from "@/lib/proposals/key-points";
 import { parseMaintenanceOffer } from "@/lib/proposals/maintenance";
@@ -63,7 +64,9 @@ export default async function ProposalDetailPage({
 
   const { data: proposal } = await supabase
     .from("proposals")
-    .select("*, clients(id, name), leads(id, name, company), projects(id, name)")
+    .select(
+      "*, clients(id, name, nif, billing_address_street, email, phone, contact_person), leads(id, name, company, email, phone), projects(id, name)",
+    )
     .eq("id", id)
     .is("deleted_at", null)
     .maybeSingle();
@@ -167,25 +170,53 @@ export default async function ProposalDetailPage({
     .not("proposal_payment_plan_item_id", "is", null)
     .order("created_at", { ascending: true });
 
-  const { data: clientFull } = await supabase
-    .from("proposals")
-    .select("clients(email), leads(email)")
-    .eq("id", id)
-    .maybeSingle();
-
-  const client = (proposal as unknown as { clients: { id: string; name: string } | null }).clients;
+  const client = (
+    proposal as unknown as {
+      clients: {
+        id: string;
+        name: string;
+        nif: string | null;
+        billing_address_street: string | null;
+        email: string | null;
+        phone: string | null;
+        contact_person: string | null;
+      } | null;
+    }
+  ).clients;
   const lead = (
-    proposal as unknown as { leads: { id: string; name: string; company: string | null } | null }
+    proposal as unknown as {
+      leads: {
+        id: string;
+        name: string;
+        company: string | null;
+        email: string | null;
+        phone: string | null;
+      } | null;
+    }
   ).leads;
   const project = (proposal as unknown as { projects: { id: string; name: string } | null })
     .projects;
-  const recipientEmail =
-    (clientFull as unknown as { clients: { email: string | null } | null } | null)?.clients
-      ?.email ??
-    (clientFull as unknown as { leads: { email: string | null } | null } | null)?.leads?.email ??
-    null;
+  const recipientEmail = client?.email ?? lead?.email ?? null;
 
   const status = proposal.status as ProposalStatus;
+  const needsFiscal = !client || !hasCompleteFiscalData(client);
+  const fiscalPrefill = client
+    ? {
+      name: client.name ?? "",
+      nif: client.nif ?? "",
+      billing_address: client.billing_address_street ?? "",
+      contact_person: client.contact_person ?? "",
+      email: client.email ?? "",
+      phone: client.phone ?? "",
+    }
+    : {
+      name: lead?.company ?? lead?.name ?? "",
+      nif: "",
+      billing_address: "",
+      contact_person: lead?.name ?? "",
+      email: lead?.email ?? "",
+      phone: lead?.phone ?? "",
+    };
   const locked = status === "accepted" || status === "rejected";
   const editing = !locked && (mode === "edit" || ai_draft === "1");
   const configuredPaymentPlan = parsePaymentPlan(proposal.payment_plan);
@@ -271,13 +302,26 @@ export default async function ProposalDetailPage({
             {!editing ? (
               <>
                 {status === "accepted" ? (
-                  <GenerateInvoiceButton
-                    proposalId={id}
-                    canGenerateInvoice={["owner", "admin"].includes(user.role)}
-                    paymentPlan={paymentPlan}
-                  />
+                  needsFiscal ? (
+                    <MarkAcceptedButton
+                      proposalId={id}
+                      needsFiscal={needsFiscal}
+                      fiscalPrefill={fiscalPrefill}
+                      alreadyAccepted
+                    />
+                  ) : (
+                    <GenerateInvoiceButton
+                      proposalId={id}
+                      canGenerateInvoice={["owner", "admin"].includes(user.role)}
+                      paymentPlan={paymentPlan}
+                    />
+                  )
                 ) : status !== "rejected" ? (
-                  <MarkAcceptedButton proposalId={id} />
+                  <MarkAcceptedButton
+                    proposalId={id}
+                    needsFiscal={needsFiscal}
+                    fiscalPrefill={fiscalPrefill}
+                  />
                 ) : null}
                 {locked && <ReopenProposalButton proposalId={id} />}
                 <ProposalMoreActions proposalId={id} />

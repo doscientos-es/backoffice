@@ -2,6 +2,12 @@
 
 import { ProposalEmail } from "@/components/email";
 import { requireRole, requireUser } from "@/lib/auth";
+import {
+  ensureClientForProposal,
+  ensureProjectForProposal,
+  hasCompleteFiscalData,
+  promoteLeadFromClient,
+} from "@/lib/crm/conversion";
 import { renderEmail } from "@/lib/email/render";
 import { sendEmail } from "@/lib/email/resend";
 import { publicEnv } from "@/lib/env";
@@ -20,6 +26,7 @@ import { parsePaymentPlan } from "@/lib/proposals/scope";
 import { formatProposalValidationIssues } from "@/lib/proposals/validation";
 import { UpdatePortalAccessInput } from "@/lib/schemas/portal";
 import {
+  AcceptProposalFiscalData,
   CreateProposalInput,
   DuplicateProposalInput,
   SendProposalPreviewInput,
@@ -926,32 +933,64 @@ export async function markProposalAsAccepted(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const user = await requireRole(["owner", "admin"]);
 
-  const parsed = z.object({ id: z.string().uuid() }).safeParse(input);
+  const parsed = z
+    .object({ id: z.string().uuid(), fiscal: AcceptProposalFiscalData.optional() })
+    .safeParse(input);
   if (!parsed.success) return { ok: false, error: "ID inválido" };
   const { id } = parsed.data;
 
   const supabase = await createServerClient();
   const { data: proposal, error: readError } = await supabase
     .from("proposals")
-    .select("id, number, status")
+    .select("id, number, status, client_id, lead_id, clients(name, nif, billing_address_street)")
     .eq("id", id)
     .is("deleted_at", null)
     .maybeSingle();
 
   if (readError || !proposal) return { ok: false, error: "Propuesta no encontrada" };
-  if (proposal.status === "accepted") return { ok: true };
   if (proposal.status === "rejected")
     return { ok: false, error: "No se puede aceptar una propuesta rechazada" };
 
+  const client = (
+    proposal as unknown as {
+      clients: {
+        name: string | null;
+        nif: string | null;
+        billing_address_street: string | null;
+      } | null;
+    }
+  ).clients;
+  const needsFiscal = proposal.lead_id != null || !client || !hasCompleteFiscalData(client);
+  if (proposal.status === "accepted" && !needsFiscal) return { ok: true };
+  let fiscal: z.infer<typeof AcceptProposalFiscalData> | undefined;
+  if (needsFiscal) {
+    const fiscalResult = AcceptProposalFiscalData.safeParse(parsed.data.fiscal);
+    if (!fiscalResult.success) {
+      return {
+        ok: false,
+        error: fiscalResult.error.errors[0]?.message ?? "Datos fiscales no válidos",
+      };
+    }
+    fiscal = fiscalResult.data;
+
+    const ensured = await ensureClientForProposal(supabase, id, fiscal);
+    if ("error" in ensured) return { ok: false, error: ensured.error };
+  }
+
   // Ensure it has a number (drafts that were never sent won't have one yet).
-  const number = (proposal.number as string | null) ?? (await nextProposalNumber(supabase));
+  const number =
+    proposal.status === "accepted"
+      ? (proposal.number as string | null)
+      : ((proposal.number as string | null) ?? (await nextProposalNumber(supabase)));
 
   const { error } = await supabase
     .from("proposals")
     .update({
-      number,
-      status: "accepted",
-      responded_at: new Date().toISOString(),
+      ...(number ? { number } : {}),
+      ...(proposal.status === "accepted"
+        ? {}
+        : { status: "accepted", responded_at: new Date().toISOString() }),
+      accepted_fiscal_data: fiscal ?? null,
     })
     .eq("id", id);
 
@@ -962,6 +1001,18 @@ export async function markProposalAsAccepted(
 
   // Best-effort Drive backup — fires as the acting user.
   void backupProposalToDrive(id, user.email);
+
+  try {
+    await ensureProjectForProposal(supabase, id);
+    const { data: full } = await supabase
+      .from("proposals")
+      .select("client_id")
+      .eq("id", id)
+      .maybeSingle();
+    if (full?.client_id) await promoteLeadFromClient(supabase, full.client_id as string);
+  } catch (err) {
+    log.warn({ err, proposalId: id }, "manual_proposal_accept_side_effects_failed");
+  }
 
   try {
     const result = await createProposalDraftInvoices(createAdminClient(), id, user.id);

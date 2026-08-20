@@ -34,6 +34,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty-state";
+import { IconButton } from "@/components/ui/icon-button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useBrowserNotifications } from "@/lib/hooks/use-browser-notifications";
 import { useWebPush } from "@/lib/hooks/use-web-push";
@@ -278,10 +279,11 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button
+        <IconButton
           type="button"
-          className="relative flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          aria-label={`Notificaciones${unread.length > 0 ? ` (${unread.length} sin leer)` : ""}`}
+          variant="ghost"
+          label={`Notificaciones${unread.length > 0 ? ` (${unread.length} sin leer)` : ""}`}
+          className="relative"
         >
           <Bell className="h-4 w-4 text-muted-foreground" />
           {unread.length > 0 && (
@@ -289,7 +291,7 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
               {unread.length > 9 ? "9+" : unread.length}
             </span>
           )}
-        </button>
+        </IconButton>
       </PopoverTrigger>
 
       <PopoverContent align="end" sideOffset={8} className="w-96 p-0">

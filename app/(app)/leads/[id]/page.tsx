@@ -144,11 +144,6 @@ export default async function LeadDetailPage({
     return new Date(a.when).getTime() - new Date(b.when).getTime();
   });
 
-  const canConvert =
-    !linkedClientId &&
-    lead.status !== "won" &&
-    lead.status !== "lost" &&
-    lead.status !== "archived";
   const displayName = leadDisplayName(lead);
   const alias = (lead.alias as string | null)?.trim() || null;
   const firstTouch = compactParts([
@@ -237,11 +232,7 @@ export default async function LeadDetailPage({
                 }}
               />
             ) : null}
-            {canConvert ? (
-              <Button asChild size="sm">
-                <Link href={`/leads/${lead.id}/convert`}>Convertir a cliente</Link>
-              </Button>
-            ) : linkedClientId ? (
+            {linkedClientId ? (
               <Button asChild variant="outline" size="sm">
                 <Link href={`/clients/${linkedClientId}`}>Ver cliente</Link>
               </Button>

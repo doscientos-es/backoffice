@@ -4,6 +4,7 @@ import { InvoiceEmail } from "@/components/email";
 import { defineAction } from "@/lib/actions/define-action";
 import { requireRole } from "@/lib/auth";
 import { VersionConflictError } from "@/lib/concurrency/version-conflict";
+import { hasCompleteFiscalData } from "@/lib/crm/conversion";
 import { renderEmail } from "@/lib/email/render";
 import { sendEmail } from "@/lib/email/resend";
 import { publicEnv } from "@/lib/env";
@@ -52,8 +53,8 @@ import {
 import { UpdatePortalAccessInput } from "@/lib/schemas/portal";
 import { consumeUserVerification } from "@/lib/security/user-verification";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
-import { createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { verifactuSoftwareSnapshotFromEnv } from "@/lib/verifactu/config";
 import { assertVerifactuDiagnosticGate } from "@/lib/verifactu/diagnostics";
@@ -421,6 +422,8 @@ export const createInvoiceFromProposal = defineAction<
     if (!proposal) throw new Error("Propuesta no encontrada");
     if (proposal.status !== "accepted")
       throw new Error("Solo se puede facturar una propuesta aceptada");
+    if (!proposal.client_id)
+      throw new Error("La propuesta aceptada no tiene datos fiscales; completa la ficha fiscal antes de facturar");
 
     const allItems = await findProposalItems(proposalId);
     if (allItems.length === 0) throw new Error("La propuesta no tiene líneas para facturar");
@@ -437,6 +440,9 @@ export const createInvoiceFromProposal = defineAction<
       findClientInfo(proposal.client_id),
       findInvoiceSeries(),
     ]);
+    if (!client || !hasCompleteFiscalData(client)) {
+      throw new Error("La propuesta aceptada no tiene datos fiscales; completa la ficha fiscal antes de facturar");
+    }
     const nextNumber = await findNextInvoiceNumberForSeries(series);
     const { subtotal, taxAmount, total } = computeLineTotals(items);
 
@@ -493,6 +499,9 @@ export const createInvoicesFromProposalPlan = defineAction<
     if (proposal.status !== "accepted") {
       throw new Error("Solo se puede facturar una propuesta aceptada");
     }
+    if (!proposal.client_id) {
+      throw new Error("La propuesta aceptada no tiene datos fiscales; completa la ficha fiscal antes de facturar");
+    }
 
     const configuredPlan = parsePaymentPlan(proposal.payment_plan);
     const schedule = paymentScheduleInput.safeParse(proposal.payment_schedule);
@@ -512,6 +521,9 @@ export const createInvoicesFromProposalPlan = defineAction<
       findInvoiceSeries(),
       findInvoicedProposalPaymentPlanIds(proposalId),
     ]);
+    if (!client || !hasCompleteFiscalData(client)) {
+      throw new Error("La propuesta aceptada no tiene datos fiscales; completa la ficha fiscal antes de facturar");
+    }
     const ids: string[] = [];
     for (const [index, milestone] of plan.entries()) {
       if (invoicedPlanIds.has(milestone.id)) continue;

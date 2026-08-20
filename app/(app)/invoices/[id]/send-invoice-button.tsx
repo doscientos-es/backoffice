@@ -13,6 +13,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -57,15 +58,9 @@ export function SendInvoiceButton({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {iconOnly ? (
-          <Button
-            variant="outline"
-            size="sm"
-            className="size-9 shrink-0 p-0"
-            title="Enviar email al cliente"
-            aria-label="Enviar email al cliente"
-          >
+          <IconButton variant="outline" label="Enviar email al cliente">
             <Mail className="h-4 w-4" />
-          </Button>
+          </IconButton>
         ) : (
           <Button variant="outline" size="sm">
             <Mail className="mr-2 h-4 w-4" />

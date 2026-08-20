@@ -33,6 +33,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { IconButton } from "@/components/ui/icon-button";
 import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useUndoableDelete } from "@/lib/hooks/use-undoable-delete";
@@ -327,32 +328,18 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
       ) : null}
 
       <div className="flex w-full items-center justify-end gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className="size-9 shrink-0 p-0"
-          title="Descargar PDF"
-          aria-label="Descargar PDF"
-          asChild
-        >
+        <IconButton variant="outline" label="Descargar PDF" className="shrink-0" asChild>
           <a href={`/api/invoices/${invoice.id}/pdf`}>
             <Download className="h-4 w-4" />
           </a>
-        </Button>
+        </IconButton>
 
         {canEdit && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="size-9 shrink-0 p-0"
-            title="Editar factura"
-            aria-label="Editar factura"
-            asChild
-          >
+          <IconButton variant="outline" label="Editar factura" className="shrink-0" asChild>
             <Link href={`/invoices/${invoice.id}/edit`}>
               <FileEdit className="h-4 w-4" />
             </Link>
-          </Button>
+          </IconButton>
         )}
 
         {canSendEmail && (
@@ -459,17 +446,15 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
 
         {canMarkUncollected && (
           <>
-            <Button
+            <IconButton
               variant="outline"
-              size="sm"
-              className="size-9 shrink-0 p-0"
+              label="Revertir cobro"
+              className="shrink-0"
               disabled={pending}
-              title="Revertir cobro"
-              aria-label="Revertir cobro"
               onClick={() => setConfirmUncollected(true)}
             >
               <XCircle className="h-4 w-4" />
-            </Button>
+            </IconButton>
             <Dialog open={confirmUncollected} onOpenChange={setConfirmUncollected}>
               <DialogContent className="sm:max-w-sm">
                 <DialogHeader>
@@ -530,15 +515,9 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
           <div className="flex justify-end">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="size-9 shrink-0 p-0"
-                  title="Más acciones"
-                  aria-label="Más acciones"
-                >
+                <IconButton variant="outline" label="Más acciones" className="shrink-0">
                   <MoreHorizontal className="h-4 w-4" />
-                </Button>
+                </IconButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 {canRectify && (

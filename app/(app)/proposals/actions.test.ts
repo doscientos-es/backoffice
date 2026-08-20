@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { state } = vi.hoisted(() => ({
+const { crm, state } = vi.hoisted(() => ({
+  crm: {
+    ensureClientForProposal: vi.fn(),
+    ensureProjectForProposal: vi.fn(),
+    hasCompleteFiscalData: vi.fn(),
+    promoteLeadFromClient: vi.fn(),
+  },
   state: {
     rpcArgs: null as Record<string, unknown> | null,
     rpcResult: {
@@ -17,15 +23,22 @@ const { state } = vi.hoisted(() => ({
       version: 1,
       lead_id: "f4e5d6c7-b8a9-4012-8012-123456789abc",
       client_id: null as string | null,
+      clients: null as { name: string | null; nif: string | null; billing_address_street: string | null } | null,
     },
     leadStatus: "in_conversation",
   },
 }));
 
 vi.mock("@/lib/auth", () => ({
-  requireRole: vi.fn(),
+  requireRole: vi.fn(async () => ({ id: "member-1", email: "member@example.test" })),
   requireUser: vi.fn(async () => ({ id: "member-1" })),
 }));
+
+vi.mock("@/lib/crm/conversion", () => crm);
+vi.mock("@/lib/invoices/proposal-drafts", () => ({
+  createProposalDraftInvoices: vi.fn(async () => ({ ids: [], created: 0 })),
+}));
+vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: vi.fn(() => ({})) }));
 
 vi.mock("@/lib/supabase/server", () => ({
   createServerClient: vi.fn(async () => ({
@@ -69,7 +82,7 @@ vi.mock("@/lib/google/backup", () => ({ backupProposalToDrive: vi.fn() }));
 vi.mock("@/lib/email/render", () => ({ renderEmail: vi.fn() }));
 vi.mock("@/lib/email/resend", () => ({ sendEmail: vi.fn() }));
 
-import { markProposalAsSent, updateProposal } from "./actions";
+import { markProposalAsAccepted, markProposalAsSent, updateProposal } from "./actions";
 
 const ID = "494d62cb-fd56-4650-b131-9e3a927a20ad";
 
@@ -87,6 +100,7 @@ describe("updateProposal", () => {
       title: "Automatización comercial",
       lead_id: "f4e5d6c7-b8a9-4012-8012-123456789abc",
       client_id: null,
+      clients: null,
     };
     state.leadStatus = "in_conversation";
   });
@@ -248,6 +262,67 @@ describe("markProposalAsSent", () => {
         type: "status_change",
         payload: expect.objectContaining({ to: "quoted", proposal_id: ID }),
       }),
+    );
+  });
+});
+
+describe("markProposalAsAccepted", () => {
+  beforeEach(() => {
+    state.inserts = [];
+    state.updates = [];
+    state.proposal = {
+      id: ID,
+      number: null,
+      status: "sent",
+      title: "Automatización comercial",
+      version: 1,
+      lead_id: "f4e5d6c7-b8a9-4012-8012-123456789abc",
+      client_id: null,
+      clients: null,
+    };
+    crm.hasCompleteFiscalData.mockReturnValue(false);
+    crm.ensureClientForProposal.mockResolvedValue({ clientId: "client-1", created: true });
+    crm.ensureProjectForProposal.mockResolvedValue({ projectId: "project-1", created: true });
+    crm.promoteLeadFromClient.mockResolvedValue({ leadId: null, promoted: false });
+  });
+
+  it("creates and links the fiscal client before accepting a lead-first proposal", async () => {
+    const fiscal = {
+      name: "Godoy Abogados Patrimoniales",
+      nif: "B12345678",
+      billing_address: "Calle Mayor 1",
+      contact_person: "Ana Godoy",
+      email: "ana@example.test",
+      phone: "600000000",
+    };
+
+    const result = await markProposalAsAccepted({ id: ID, fiscal });
+
+    expect(result).toEqual({ ok: true });
+    expect(crm.ensureClientForProposal).toHaveBeenCalledWith(expect.anything(), ID, fiscal);
+    expect(state.updates).toContainEqual(
+      expect.objectContaining({
+        table: "proposals",
+        status: "accepted",
+        accepted_fiscal_data: fiscal,
+      }),
+    );
+  });
+
+  it("repairs an already accepted lead-first proposal when fiscal data is provided", async () => {
+    state.proposal.status = "accepted";
+    const fiscal = {
+      name: "Godoy Abogados Patrimoniales",
+      nif: "B12345678",
+      billing_address: "Calle Mayor 1",
+    };
+
+    const result = await markProposalAsAccepted({ id: ID, fiscal });
+
+    expect(result).toEqual({ ok: true });
+    expect(crm.ensureClientForProposal).toHaveBeenCalledWith(expect.anything(), ID, fiscal);
+    expect(state.updates).toContainEqual(
+      expect.objectContaining({ table: "proposals", accepted_fiscal_data: fiscal }),
     );
   });
 });
