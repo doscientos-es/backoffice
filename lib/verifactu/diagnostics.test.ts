@@ -73,8 +73,8 @@ describe("runVerifactuAeatTestDiagnostic", () => {
       expect.objectContaining({
         nif: "B12345670",
         emisorName: "Issuer Test S.L.",
-        clientNif: "00000000T",
-        clientName: "DESTINATARIO DE PRUEBAS VERI*FACTU",
+        clientNif: "B88873393",
+        clientName: "DOSCIENTOS DESARROLLO TECNOLOGICO, S.L.",
       }),
     );
     expect(insert).toHaveBeenCalledWith(
