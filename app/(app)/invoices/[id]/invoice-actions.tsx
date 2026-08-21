@@ -56,6 +56,15 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
         {policy.canSendEmail ? (
           <SendInvoiceButton invoiceId={invoice.id} defaultEmail={clientEmail} iconOnly />
         ) : null}
+        <InvoiceMoreActions
+          invoiceId={invoice.id}
+          canCancel={policy.canCancel}
+          canDelete={policy.canDelete}
+          canRectify={policy.canRectify}
+          canMarkUncollectible={policy.canMarkUncollectible}
+          feedback={feedback}
+          verifyStatusChange={verifyStatusChange}
+        />
       </div>
 
       <div className="flex max-w-full flex-wrap items-center justify-end gap-2">
@@ -84,15 +93,6 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
           />
         ) : null}
         {policy.hasFiscalProblem ? <RegularizeAeatButton invoiceId={invoice.id} /> : null}
-        <InvoiceMoreActions
-          invoiceId={invoice.id}
-          canCancel={policy.canCancel}
-          canDelete={policy.canDelete}
-          canRectify={policy.canRectify}
-          canMarkUncollectible={policy.canMarkUncollectible}
-          feedback={feedback}
-          verifyStatusChange={verifyStatusChange}
-        />
       </div>
     </div>
   );
