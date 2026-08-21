@@ -33,8 +33,8 @@ importers:
         specifier: ^0.1.7
         version: 0.1.7(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@doscientos/verifactu':
-        specifier: ^0.1.16
-        version: 0.1.16(date-fns@4.3.0)
+        specifier: file:vendor\doscientos-verifactu-0.1.18.tgz
+        version: file:vendor/doscientos-verifactu-0.1.18.tgz(date-fns@4.3.0)
       '@hcaptcha/react-hcaptcha':
         specifier: ^2.0.2
         version: 2.0.2
@@ -518,8 +518,9 @@ packages:
       react: '>=18.3.0'
       react-dom: '>=18.3.0'
 
-  '@doscientos/verifactu@0.1.16':
-    resolution: {integrity: sha512-X+21T2AHza3UnSKtMReGcCo+fW760AihSW9XQn6/bSrY6GByeqw8qYFupX+zGDmuTSEbo/3kEM4wMM5bLIBZ7g==}
+  '@doscientos/verifactu@file:vendor/doscientos-verifactu-0.1.18.tgz':
+    resolution: {integrity: sha512-sbVtOjRj/aGHLY+gnLvTe4YFnF2yFnHdGBJQ+zvOpYp8Jyn0YqFIBXEf8Lj0P7JnLaq3fl13+zNh4vdsdl+a6A==, tarball: file:vendor/doscientos-verifactu-0.1.18.tgz}
+    version: 0.1.18
     engines: {node: '>=22.18'}
 
   '@dotenvx/dotenvx@1.69.1':
@@ -5811,7 +5812,7 @@ snapshots:
       react-dom: 19.2.6(react@19.2.6)
       tailwind-merge: 3.6.0
 
-  '@doscientos/verifactu@0.1.16(date-fns@4.3.0)':
+  '@doscientos/verifactu@file:vendor/doscientos-verifactu-0.1.18.tgz(date-fns@4.3.0)':
     dependencies:
       '@richhouse83/xsd-validator': 1.0.0
       date-fns-tz: 3.2.0(date-fns@4.3.0)
