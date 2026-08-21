@@ -1,7 +1,9 @@
-import https from "node:https";
 import { XMLParser } from "fast-xml-parser";
+import https from "node:https";
 
-const ENDPOINT = "https://www1.agenciatributaria.gob.es/wlpl/BURT-JDIT/ws/VNifV2SOAP";
+// AEAT migrated VALNIF to this production endpoint in 2026. Its published
+// VNifV2 schemas and SOAP action remain unchanged.
+const ENDPOINT = "https://ws.ia.aeat.es/wlpl/SUWS-JDIT/ws/valnifws/VALNIFV3SOAP";
 const NAMESPACE =
   "http://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/burt/jdit/ws/VNifV2Ent.xsd";
 
@@ -58,6 +60,14 @@ export function interpretAeatNifResponse(xml: string): AeatNifValidation {
         aeatName,
         aeatResult: result,
         message: "Identificado en el censo de AEAT.",
+      };
+    }
+    if (normalizedResult(result) === "NO PROCESADO") {
+      return {
+        status: "unavailable",
+        aeatName,
+        aeatResult: result,
+        message: "AEAT no ha procesado la consulta. Inténtalo de nuevo antes de emitir.",
       };
     }
     return {

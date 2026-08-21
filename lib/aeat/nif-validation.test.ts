@@ -15,6 +15,12 @@ describe("AEAT NIF census validation", () => {
     });
   });
 
+  it("does not treat an unprocessed consultation as a census mismatch", () => {
+    expect(interpretAeatNifResponse(response("No procesado"))).toMatchObject({
+      status: "unavailable",
+    });
+  });
+
   it("escapes user-controlled fiscal input in the SOAP envelope", () => {
     expect(buildAeatNifEnvelope({ nif: "B12345678", name: "A & B <SL>" })).toContain(
       "A &amp; B &lt;SL&gt;",

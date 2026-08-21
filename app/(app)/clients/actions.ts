@@ -131,6 +131,7 @@ export const validateClientFiscalIdentity = defineAction<
 >({
   name: "clients.validateFiscalIdentity",
   schema: ValidateClientFiscalIdentityInput,
+  roles: ["owner", "admin", "member"],
   revalidate: (_payload, input) => [`/clients/${input.clientId}`, "/clients"],
   handler: async ({ clientId }, { user }) => {
     const supabase = await createServerClient();
@@ -183,7 +184,7 @@ export const validateClientFiscalIdentity = defineAction<
     const admin = createAdminClient();
     const { error: recordError } = await admin.rpc("record_client_fiscal_verification", {
       p_client_id: clientId,
-      p_submitted_nif: submittedNif,
+      p_submitted_nif: aeatNif,
       p_submitted_name: name,
       p_status: status,
       p_aeat_name: aeatName,

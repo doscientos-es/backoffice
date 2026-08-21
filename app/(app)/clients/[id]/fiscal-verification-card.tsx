@@ -25,14 +25,22 @@ const labels: Record<FiscalStatus, string> = {
 export function FiscalVerificationCard({
   clientId,
   initialStatus,
+  initialVerifiedAt,
+  canValidate,
 }: {
   clientId: string;
   initialStatus: FiscalStatus;
+  initialVerifiedAt: string | null;
+  canValidate: boolean;
 }) {
   const [status, setStatus] = useState(initialStatus);
+  const [verifiedAt, setVerifiedAt] = useState(initialVerifiedAt);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const verified = status === "verified";
+  const verified =
+    status === "verified" &&
+    verifiedAt !== null &&
+    Date.now() - new Date(verifiedAt).getTime() < 24 * 60 * 60 * 1000;
 
   async function validate() {
     setPending(true);
@@ -40,6 +48,7 @@ export function FiscalVerificationCard({
     setPending(false);
     if (!result.ok) return setMessage(result.error);
     setStatus(result.status);
+    setVerifiedAt(result.status === "verified" ? new Date().toISOString() : null);
     setMessage(result.message);
   }
 
@@ -53,22 +62,28 @@ export function FiscalVerificationCard({
         )}
         <div>
           <p className="font-medium">Identificación fiscal</p>
-          <p className="text-sm text-muted-foreground">{labels[status]}</p>
+          <p className="text-sm text-muted-foreground">
+            {status === "verified" && !verified
+              ? "Revalidación AEAT requerida antes de emitir"
+              : labels[status]}
+          </p>
         </div>
       </div>
       {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
-      <div>
-        <Button
-          type="button"
-          size="sm"
-          variant={verified ? "outline" : "default"}
-          onClick={validate}
-          disabled={pending}
-        >
-          {pending ? <LoaderCircle className="animate-spin" /> : null}
-          Validar con AEAT
-        </Button>
-      </div>
+      {canValidate ? (
+        <div>
+          <Button
+            type="button"
+            size="sm"
+            variant={verified ? "outline" : "default"}
+            onClick={validate}
+            disabled={pending}
+          >
+            {pending ? <LoaderCircle className="animate-spin" /> : null}
+            Validar con AEAT
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }
