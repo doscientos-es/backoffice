@@ -10,12 +10,12 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { sileo } from "sileo";
+import { usePasskeyVerification } from "@/components/security/use-passkey-verification";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { usePasskeyVerification } from "@/components/security/use-passkey-verification";
 import type { FileBrowserItem, FileBrowserListing } from "@/lib/filebrowser";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { ForceBackupButton } from "./force-backup-button";

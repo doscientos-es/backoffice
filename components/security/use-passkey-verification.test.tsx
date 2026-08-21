@@ -52,10 +52,12 @@ describe("usePasskeyVerification", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Confirmar con biometría" }));
 
-    await waitFor(() => expect(completePasskeyAuthentication).toHaveBeenCalledWith(
-      { intent: "vault.unlock", resource: "vault" },
-      options,
-    ));
+    await waitFor(() =>
+      expect(completePasskeyAuthentication).toHaveBeenCalledWith(
+        { intent: "vault.unlock", resource: "vault" },
+        options,
+      ),
+    );
     await waitFor(() => expect(document.body.dataset.verification).toBe("complete"));
   });
 });
