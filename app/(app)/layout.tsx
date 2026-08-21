@@ -27,7 +27,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <ShortcutsDialog />
       <QuickCreateButton />
       <CallReminderWatcher />
-      <MfaSessionGate role={user.role} mfaVerified={mfaVerified} />
+      <MfaSessionGate memberRole={user.role} mfaVerified={mfaVerified} />
     </div>
   );
 }

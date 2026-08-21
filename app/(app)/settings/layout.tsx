@@ -9,9 +9,9 @@ export default async function SettingsLayout({ children }: { children: React.Rea
   const canManageTeam = user.role === "owner" || user.role === "admin";
 
   return (
-    <div className="mx-auto grid w-full gap-6 lg:grid-cols-[13rem_minmax(0,1fr)] lg:items-start">
+    <div className="mx-auto grid w-full max-w-7xl gap-6 xl:grid-cols-[15rem_minmax(0,1fr)] xl:items-start xl:gap-8">
       <SettingsNav canManageTeam={canManageTeam} />
-      <div className="min-w-0 flex-1">{children}</div>
+      <div className="min-w-0 w-full max-w-4xl">{children}</div>
     </div>
   );
 }

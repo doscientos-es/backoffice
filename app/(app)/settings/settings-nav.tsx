@@ -140,6 +140,40 @@ function SettingsLinks({
   );
 }
 
+function SettingsQuickLinks({
+  groups,
+  pathname,
+}: {
+  groups: ReturnType<typeof visibleGroups>;
+  pathname: string;
+}) {
+  return (
+    <div className="flex w-max min-w-full gap-2 px-1">
+      {groups
+        .flatMap((group) => group.items)
+        .map(({ href, label, icon: Icon }) => {
+          const active = isActive(pathname, href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "flex shrink-0 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+                active
+                  ? "border-primary/25 bg-primary/10 text-primary"
+                  : "border-border bg-card text-muted-foreground hover:bg-secondary hover:text-foreground",
+              )}
+            >
+              <Icon className="size-4 shrink-0" aria-hidden />
+              <span>{label}</span>
+            </Link>
+          );
+        })}
+    </div>
+  );
+}
+
 export function SettingsNav({ canManageTeam }: { canManageTeam: boolean }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -152,12 +186,19 @@ export function SettingsNav({ canManageTeam }: { canManageTeam: boolean }) {
     <>
       <nav
         aria-label="Secciones de ajustes"
-        className="sticky top-0 hidden w-52 shrink-0 flex-col gap-5 lg:flex"
+        className="sticky top-0 hidden w-60 shrink-0 flex-col gap-5 xl:flex"
       >
         <SettingsLinks groups={groups} pathname={pathname} />
       </nav>
 
-      <div className="lg:hidden">
+      <nav
+        aria-label="Accesos rápidos de ajustes"
+        className="hidden overflow-x-auto pb-1 no-scrollbar sm:block xl:hidden"
+      >
+        <SettingsQuickLinks groups={groups} pathname={pathname} />
+      </nav>
+
+      <div className="sm:hidden">
         <Drawer open={mobileOpen} onOpenChange={setMobileOpen}>
           <DrawerTrigger asChild>
             <button

@@ -40,6 +40,12 @@ function desktopNav(container: HTMLElement) {
   return within(nav);
 }
 
+function quickNav(container: HTMLElement) {
+  const nav = container.querySelector<HTMLElement>('nav[aria-label="Accesos rápidos de ajustes"]');
+  if (!nav) throw new Error("Expected compact settings navigation");
+  return within(nav);
+}
+
 // ── tests ─────────────────────────────────────────────────────────────────────
 
 describe("SettingsNav – item visibility", () => {
@@ -152,8 +158,16 @@ describe("SettingsNav – responsive layout", () => {
     const nav = container.querySelector('nav[aria-label="Secciones de ajustes"].sticky');
 
     expect(nav?.className).toContain("flex-col");
-    expect(nav?.className).toContain("lg:flex");
+    expect(nav?.className).toContain("xl:flex");
     expect(nav?.className).not.toContain("overflow-x-auto");
+  });
+
+  it("shows direct, scrollable section links before the desktop sidebar has room", () => {
+    const { container } = renderNav(true);
+    const nav = quickNav(container);
+
+    expect(nav.getByRole("link", { name: "Perfil" })).toBeTruthy();
+    expect(nav.getByRole("link", { name: "Legal y Verifactu" })).toBeTruthy();
   });
 
   it("offers a compact mobile section picker", () => {
