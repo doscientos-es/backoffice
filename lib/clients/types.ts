@@ -8,6 +8,14 @@ export const CLIENT_LIST_PAGE_SIZE = 25;
 export const CLIENT_PROJECTS_LIMIT = 20;
 export const CLIENT_RELATED_LIMIT = 10;
 
+export type FiscalVerificationStatus =
+  | "unverified"
+  | "verified"
+  | "mismatch"
+  | "unavailable"
+  | "invalid"
+  | "not_applicable";
+
 // ─── List ─────────────────────────────────────────────────────────────────────
 
 export type ClientListItem = {
@@ -96,6 +104,8 @@ export type ClientDetail = {
   billing_address_country: string | null;
   notes: string | null;
   logo_url: string | null;
+  fiscal_verification_status: FiscalVerificationStatus;
+  fiscal_verified_at: string | null;
   created_at: string | null;
   updated_at: string | null;
 };

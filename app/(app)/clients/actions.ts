@@ -1,17 +1,26 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { defineAction } from "@/lib/actions/define-action";
+import { validateSpanishFiscalIdentity } from "@/lib/aeat/nif-validation";
 import { requireUser } from "@/lib/auth";
+import type { FiscalVerificationStatus } from "@/lib/clients/types";
 import { VersionConflictError } from "@/lib/concurrency/version-conflict";
+import { assertExternalActionAllowed } from "@/lib/demo";
 import { findCompanyByCif, getCompanyDetails, isCifNumber } from "@/lib/openmercantil/client";
-import { CreateClientInput, UpdateClientInput } from "@/lib/schemas/client";
+import {
+  CreateClientInput,
+  UpdateClientInput,
+  ValidateClientFiscalIdentityInput,
+} from "@/lib/schemas/client";
 import { uuidIdInput } from "@/lib/schemas/common";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
+import { verifactuInvoiceConfigFromEnv } from "@/lib/verifactu/config";
 import { type ViesResult, validateVatVies } from "@/lib/vies/client";
 import { validateNifEs } from "@/lib/vies/nif";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 // ---------- CREATE ----------
 // Kept as a redirect-based form action: `<form action={createClient}>`.
@@ -113,6 +122,77 @@ export const updateClient = defineAction({
     if (error) throw new Error(error.message);
     if (!data) throw new VersionConflictError();
     return { version: Number(data.version) };
+  },
+});
+
+export const validateClientFiscalIdentity = defineAction<
+  typeof ValidateClientFiscalIdentityInput,
+  { status: FiscalVerificationStatus; aeatName: string | null; message: string }
+>({
+  name: "clients.validateFiscalIdentity",
+  schema: ValidateClientFiscalIdentityInput,
+  revalidate: (_payload, input) => [`/clients/${input.clientId}`, "/clients"],
+  handler: async ({ clientId }, { user }) => {
+    const supabase = await createServerClient();
+    const { data: client, error } = await supabase
+      .from("clients")
+      .select("id, nif, name, billing_address_country")
+      .eq("id", clientId)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (error || !client) throw new Error(error?.message ?? "Cliente no encontrado");
+
+    const submittedNif = String(client.nif ?? "")
+      .trim()
+      .toUpperCase()
+      .replace(/[\s.-]/g, "");
+    const aeatNif = submittedNif.startsWith("ES") ? submittedNif.slice(2) : submittedNif;
+    const name = String(client.name ?? "").trim();
+    const country = String(client.billing_address_country ?? "ES")
+      .trim()
+      .toUpperCase();
+    let status: Exclude<FiscalVerificationStatus, "unverified">;
+    let aeatName: string | null = null;
+    let aeatResult: string | null = null;
+    let message: string;
+
+    if (country !== "ES") {
+      status = "not_applicable";
+      message = "La comprobación VNifV2 solo cubre destinatarios españoles.";
+    } else if (!submittedNif || !name) {
+      status = "invalid";
+      message = "Introduce NIF y razón social antes de validar.";
+    } else {
+      const local = validateNifEs(aeatNif);
+      if (!local.valid) {
+        status = "invalid";
+        message = local.message;
+      } else {
+        assertExternalActionAllowed("La validación censal con AEAT");
+        const result = await validateSpanishFiscalIdentity(
+          { nif: aeatNif, name },
+          verifactuInvoiceConfigFromEnv().certificate,
+        );
+        status = result.status;
+        aeatName = result.aeatName;
+        aeatResult = result.aeatResult;
+        message = result.message;
+      }
+    }
+
+    const admin = createAdminClient();
+    const { error: recordError } = await admin.rpc("record_client_fiscal_verification", {
+      p_client_id: clientId,
+      p_submitted_nif: submittedNif,
+      p_submitted_name: name,
+      p_status: status,
+      p_aeat_name: aeatName,
+      p_aeat_result: aeatResult,
+      p_detail: message,
+      p_checked_by: user.id,
+    });
+    if (recordError) throw new Error(recordError.message);
+    return { status, aeatName, message };
   },
 });
 

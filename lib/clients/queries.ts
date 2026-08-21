@@ -137,6 +137,9 @@ export async function getClientDetail(id: string): Promise<ClientDetailResult> {
       billing_address_country: (client.billing_address_country as string | null) ?? null,
       notes: (client.notes as string | null) ?? null,
       logo_url: (client.logo_url as string | null) ?? null,
+      fiscal_verification_status:
+        client.fiscal_verification_status as import("./types").FiscalVerificationStatus,
+      fiscal_verified_at: (client.fiscal_verified_at as string | null) ?? null,
       created_at: (client.created_at as string | null) ?? null,
       updated_at: (client.updated_at as string | null) ?? null,
     },

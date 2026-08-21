@@ -36,3 +36,7 @@ export const UpdateClientInput = CreateClientInput.extend({
 });
 
 export type UpdateClientInputType = z.infer<typeof UpdateClientInput>;
+
+export const ValidateClientFiscalIdentityInput = z.object({
+  clientId: z.string().uuid(),
+});

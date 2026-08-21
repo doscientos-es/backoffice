@@ -28,6 +28,7 @@ import { ScheduleReminderDialog } from "../../reminders/schedule-reminder-dialog
 import { TaskCreateDialog } from "../../tasks/task-create-dialog";
 import { ClientEditDialog } from "./client-edit-dialog";
 import { DeleteClientButton } from "./delete-client-button";
+import { FiscalVerificationCard } from "./fiscal-verification-card";
 
 export const dynamic = "force-dynamic";
 
@@ -190,6 +191,18 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
               <p className="whitespace-pre-wrap text-sm">{client.notes as string}</p>
             </div>
           ) : null}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Validación fiscal</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FiscalVerificationCard
+            clientId={client.id}
+            initialStatus={client.fiscal_verification_status}
+          />
         </CardContent>
       </Card>
 
