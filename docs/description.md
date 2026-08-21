@@ -50,7 +50,7 @@ Produccion:
 - zustand@^5
 - sileo
 - tailwindcss@^4, clsx@^2, tailwind-merge@^3, class-variance-authority@^0.7
-- @phosphor-icons/react@^2.1
+- lucide-react@^1.11
 - recharts@^2
 
 Opcional (recomendado activar tras la primera versión estable):

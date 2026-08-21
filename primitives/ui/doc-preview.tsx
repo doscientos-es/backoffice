@@ -43,7 +43,7 @@ function Fallback({
   mimeType: string | null;
   reason: "no-url" | "unsupported";
 }) {
-  const Icon = mimeType?.startsWith("image/") ? ImageIcon : FileText;
+  const Icon = mimeType?.startsWith("image/") ? Image : FileText;
   return (
     <div className="flex flex-col items-center justify-center gap-2 py-14 text-muted-foreground">
       <Icon className="size-9 opacity-30" />

@@ -83,7 +83,7 @@ function AssetCard({ asset, isAdmin }: { asset: BrandAsset; isAdmin: boolean }) 
             className={cn("max-h-full max-w-full object-contain p-4", isSvg && "w-full h-full")}
           />
         ) : (
-          <ImageIcon className="size-10 text-muted-foreground/40" />
+          <Image className="size-10 text-muted-foreground/40" />
         )}
       </div>
       <div className="flex flex-col gap-2 p-3">
