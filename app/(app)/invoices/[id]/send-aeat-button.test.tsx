@@ -28,7 +28,7 @@ describe("SendAeatButton", () => {
     sendToAeat.mockResolvedValue({ ok: true, status: "accepted", csv: "CSV-123" });
   });
 
-  it("prepares the challenge before a distinct click starts Windows Hello", async () => {
+  it("prepares the challenge before a distinct click starts device authentication", async () => {
     render(<SendAeatButton invoiceId="invoice-1" label="Reintentar envío" />);
 
     fireEvent.click(screen.getByRole("button", { name: "Reintentar envío" }));
@@ -41,7 +41,7 @@ describe("SendAeatButton", () => {
     );
     expect(completePasskeyAuthentication).not.toHaveBeenCalled();
 
-    fireEvent.click(await screen.findByRole("button", { name: "Confirmar con Windows Hello" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Confirmar con biometría" }));
 
     await waitFor(() =>
       expect(completePasskeyAuthentication).toHaveBeenCalledWith(

@@ -59,8 +59,8 @@ export function SendAeatButton({
   async function confirmWithPasskey() {
     if (!passkeyOptions) return;
 
-    // This browser call must start directly from this click so Windows Hello
-    // retains the user activation after the server challenge was prepared.
+    // This browser call must start directly from this click so the device
+    // authenticator retains user activation after the server challenge was prepared.
     feedback.setPending();
     const verification = await completePasskeyAuthentication(scope, passkeyOptions);
     if (!verification.ok) {
@@ -139,7 +139,7 @@ export function SendAeatButton({
               Cancelar
             </Button>
             <Button onClick={confirmWithPasskey} disabled={feedback.pending}>
-              Confirmar con Windows Hello
+              Confirmar con biometría
             </Button>
           </DialogFooter>
         </DialogContent>
