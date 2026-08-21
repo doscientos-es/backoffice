@@ -1,14 +1,10 @@
 "use client";
 
-import {
-  Database as DatabaseBackup,
-  Download as Download,
-  LoaderCircle as Loader2,
-} from "lucide-react";
+import { Database as DatabaseBackup, Download, LoaderCircle as Loader2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { sileo } from "sileo";
-import { Button } from "@/components/ui/button";
 import { usePasskeyVerification } from "@/components/security/use-passkey-verification";
+import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { triggerBackofficeBackup } from "./actions";

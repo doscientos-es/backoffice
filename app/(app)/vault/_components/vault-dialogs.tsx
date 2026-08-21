@@ -1,11 +1,8 @@
 "use client";
 
-import {
-  Eye as Eye,
-  EyeOff as EyeOff,
-  Fingerprint as Fingerprint,
-} from "lucide-react";
+import { Eye, EyeOff, Fingerprint } from "lucide-react";
 import { useState } from "react";
+import { usePasskeyVerification } from "@/components/security/use-passkey-verification";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,7 +12,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { usePasskeyVerification } from "@/components/security/use-passkey-verification";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";

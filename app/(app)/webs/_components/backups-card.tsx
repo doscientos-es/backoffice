@@ -1,11 +1,11 @@
 "use client";
 
 import {
-  ChevronLeft as ChevronLeft,
-  Download as Download,
-  FolderOpen as FolderOpen,
-  HardDrive as HardDrive,
-  RefreshCw as RefreshCw,
+  ChevronLeft,
+  Download,
+  FolderOpen,
+  HardDrive,
+  RefreshCw,
   Trash as Trash2,
 } from "lucide-react";
 import { useCallback, useEffect, useState, useTransition } from "react";
