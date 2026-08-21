@@ -53,13 +53,23 @@ describe("InvoiceActions", () => {
     );
 
     const root = container.firstElementChild as HTMLDivElement;
-    const [iconActions, primaryActions] = root.querySelectorAll(":scope > div");
+    const actionGroups = Array.from(root.children).filter(
+      (child): child is HTMLDivElement =>
+        child instanceof HTMLDivElement && child.classList.contains("justify-end"),
+    );
+    const [iconActions, primaryActions] = actionGroups;
+
+    if (!iconActions || !primaryActions) throw new Error("Missing invoice action groups");
 
     expect(within(iconActions).getByRole("button", { name: "Descargar PDF" })).toBeTruthy();
-    expect(within(iconActions).getByRole("button", { name: "Enviar email al cliente" })).toBeTruthy();
+    expect(
+      within(iconActions).getByRole("button", { name: "Enviar email al cliente" }),
+    ).toBeTruthy();
     expect(within(iconActions).getByRole("button", { name: "Más acciones" })).toBeTruthy();
     expect(within(primaryActions).getByRole("button", { name: "Registrar cobro" })).toBeTruthy();
     expect(within(primaryActions).getByRole("button", { name: "Reintentar envío" })).toBeTruthy();
-    expect(within(primaryActions).getByRole("button", { name: "Regularizar y enviar" })).toBeTruthy();
+    expect(
+      within(primaryActions).getByRole("button", { name: "Regularizar y enviar" }),
+    ).toBeTruthy();
   });
 });

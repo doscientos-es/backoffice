@@ -6,7 +6,7 @@ import {
   LoaderCircle as Loader2,
   Ellipsis as MoreHorizontal,
   Trash as Trash2,
-  XCircle as XCircle,
+  XCircle,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -139,15 +139,21 @@ export function InvoiceMoreActions({
             <MoreHorizontal className="h-4 w-4" />
           </IconButton>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" className="w-64">
           {canRectify ? (
-            <DropdownMenuItem onClick={() => setRectificationOpen(true)}>
-              <FileMinus2 className="mr-2 h-4 w-4" /> Emitir factura rectificativa
+            <DropdownMenuItem
+              className="min-h-9 gap-2 px-2 py-2 focus:bg-muted focus:text-foreground data-[highlighted]:bg-muted"
+              onClick={() => setRectificationOpen(true)}
+            >
+              <FileMinus2 className="h-4 w-4" /> Emitir factura rectificativa
             </DropdownMenuItem>
           ) : null}
           {canMarkUncollectible ? (
-            <DropdownMenuItem className="text-warning" onClick={() => setUncollectibleOpen(true)}>
-              <AlertTriangle className="mr-2 h-4 w-4" /> Marcar como incobrable
+            <DropdownMenuItem
+              className="min-h-9 gap-2 px-2 py-2 text-warning focus:bg-warning/10 focus:text-warning data-[highlighted]:bg-warning/10"
+              onClick={() => setUncollectibleOpen(true)}
+            >
+              <AlertTriangle className="h-4 w-4" /> Marcar como incobrable
             </DropdownMenuItem>
           ) : null}
           {(canRectify || canMarkUncollectible) && (canCancel || canDelete) ? (
@@ -155,22 +161,22 @@ export function InvoiceMoreActions({
           ) : null}
           {canCancel ? (
             <DropdownMenuItem
-              className="text-destructive"
+              className="min-h-9 gap-2 px-2 py-2 text-destructive focus:bg-destructive/10 focus:text-destructive data-[highlighted]:bg-destructive/10"
               disabled={pending}
               onClick={cancelInvoice}
             >
-              <XCircle className="mr-2 h-4 w-4" /> Anular factura
+              <XCircle className="h-4 w-4" /> Anular factura
             </DropdownMenuItem>
           ) : null}
           {canDelete ? (
             <>
               {canCancel ? <DropdownMenuSeparator /> : null}
               <DropdownMenuItem
-                className="text-destructive"
+                className="min-h-9 gap-2 px-2 py-2 text-destructive focus:bg-destructive/10 focus:text-destructive data-[highlighted]:bg-destructive/10"
                 disabled={pending || deletePending}
                 onClick={deleteInvoiceWithUndo}
               >
-                <Trash2 className="mr-2 h-4 w-4" /> Eliminar
+                <Trash2 className="h-4 w-4" /> Eliminar
               </DropdownMenuItem>
             </>
           ) : null}
