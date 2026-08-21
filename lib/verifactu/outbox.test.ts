@@ -65,7 +65,7 @@ describe("resolveVerifactuSoftwareSnapshot", () => {
 
   it("fails closed when a stored software snapshot is malformed", () => {
     expect(() => resolveVerifactuSoftwareSnapshot({ software: {} }, fallback)).toThrow(
-      "Payload fiscal inválido: software.producerName",
+      "Payload fiscal inválido: producerName",
     );
   });
 });
