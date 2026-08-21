@@ -12,21 +12,21 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import {
-  Warning as AlertTriangle,
-  CalendarDots as CalendarClock,
-  CalendarPlusIcon as CalendarPlus,
+  TriangleAlert as AlertTriangle,
+  CalendarDays as CalendarClock,
+  CalendarPlus as CalendarPlus,
   Funnel as Filter,
-  DotsSixVertical as GripVertical,
-  ClockCounterClockwise as HistoryIcon,
-  HourglassIcon as Hourglass,
-  Envelope as Mail,
-  ArrowsOut as Maximize2,
-  ArrowsIn as Minimize2,
-  PhoneIcon as Phone,
-  PlusIcon as Plus,
-  ArrowsClockwise as RefreshCw,
-  UserIcon as User,
-} from "@phosphor-icons/react/ssr";
+  GripVertical as GripVertical,
+  History as HistoryIcon,
+  Hourglass as Hourglass,
+  Mail as Mail,
+  Maximize2 as Maximize2,
+  Minimize2 as Minimize2,
+  Phone as Phone,
+  Plus as Plus,
+  RefreshCw as RefreshCw,
+  User as User,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useOptimistic, useState, useTransition } from "react";

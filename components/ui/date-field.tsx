@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarBlank as CalendarDays } from "@phosphor-icons/react/ssr";
+import { CalendarDays as CalendarDays } from "lucide-react";
 import type * as React from "react";
 import { useEffect, useId, useRef, useState } from "react";
 import { InputGroup, InputGroupAddon, InputGroupButton } from "@/components/ui/input-group";

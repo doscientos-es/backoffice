@@ -1,15 +1,15 @@
 "use client";
 
 import {
-  CaretLeft as ChevronLeft,
-  CaretRight as ChevronRight,
-  SquaresFour as Grid3x3,
-  Question as HelpCircle,
-  ArrowsOut as Maximize2,
-  ArrowsIn as Minimize2,
-  PrinterIcon as Printer,
-  XIcon as X,
-} from "@phosphor-icons/react/ssr";
+  ChevronLeft as ChevronLeft,
+  ChevronRight as ChevronRight,
+  LayoutGrid as Grid3x3,
+  CircleHelp as HelpCircle,
+  Maximize2 as Maximize2,
+  Minimize2 as Minimize2,
+  Printer as Printer,
+  X as X,
+} from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";

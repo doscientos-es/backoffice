@@ -1,8 +1,8 @@
 import {
-  CheckCircle as CheckCircle2,
-  FlameIcon as Flame,
-  Tray as Inbox,
-} from "@phosphor-icons/react/ssr";
+  CircleCheck as CheckCircle2,
+  Flame as Flame,
+  Inbox as Inbox,
+} from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import type { WeekStats } from "@/lib/dashboard/types";
 import { pluralize } from "@/lib/utils";

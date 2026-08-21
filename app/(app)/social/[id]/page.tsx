@@ -1,8 +1,8 @@
 import {
   ChartBar as BarChart3,
-  ArrowSquareOut as ExternalLink,
-  Chat as MessageSquare,
-} from "@phosphor-icons/react/ssr";
+  ExternalLink as ExternalLink,
+  MessageSquare as MessageSquare,
+} from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BackLink } from "@/components/layout/back-link";

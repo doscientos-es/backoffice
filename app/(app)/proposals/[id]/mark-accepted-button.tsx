@@ -1,6 +1,6 @@
 "use client";
 
-import { Checks as CheckCheck } from "@phosphor-icons/react/ssr";
+import { CheckCheck as CheckCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ChangeEvent, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";

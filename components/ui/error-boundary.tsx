@@ -1,6 +1,6 @@
 "use client";
 
-import { Warning as AlertTriangle, ArrowsClockwise as RefreshCw } from "@phosphor-icons/react/ssr";
+import { TriangleAlert as AlertTriangle, RefreshCw as RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Component, type ErrorInfo, type ReactNode, Suspense } from "react";
 import { Button } from "./button";

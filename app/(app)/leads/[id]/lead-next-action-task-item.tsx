@@ -1,11 +1,11 @@
 "use client";
 
 import {
-  CalendarDots as CalendarClock,
-  CheckCircle as CheckCircle2,
-  ListChecks as ListTodo,
-  CircleNotch as Loader2,
-} from "@phosphor-icons/react/ssr";
+  CalendarDays as CalendarClock,
+  CircleCheck as CheckCircle2,
+  ListTodo as ListTodo,
+  LoaderCircle as Loader2,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";

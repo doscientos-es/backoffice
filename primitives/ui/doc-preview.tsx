@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { FileTextIcon as FileText, ImageIcon } from "@phosphor-icons/react/ssr";
+import { FileText as FileText, Image } from "lucide-react";
 
 type Props = {
   /** Signed storage URL, generated server-side. Null = no preview. */

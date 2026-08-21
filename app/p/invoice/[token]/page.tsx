@@ -1,9 +1,9 @@
 import { buildQrDataUrl, buildQrUrl } from "@doscientos/verifactu";
 import {
-  CheckCircle as CheckCircle2,
-  DownloadIcon as Download,
-  XCircleIcon as XCircle,
-} from "@phosphor-icons/react/ssr";
+  CircleCheck as CheckCircle2,
+  Download as Download,
+  XCircle as XCircle,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";

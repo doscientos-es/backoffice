@@ -1,20 +1,20 @@
 "use client";
 import {
-  CheckIcon as Check,
-  CheckSquareIcon as CheckSquare,
-  ClockIcon as Clock,
-  CopyIcon as Copy,
-  EyeIcon as Eye,
-  EyeSlash as EyeOff,
+  Check as Check,
+  CheckSquare as CheckSquare,
+  Clock as Clock,
+  Copy as Copy,
+  Eye as Eye,
+  EyeOff as EyeOff,
   Folder as FolderKanban,
-  Tray as Inbox,
+  Inbox as Inbox,
   Key as KeyRound,
-  CircleNotch as Loader2,
-  LockIcon as Lock,
-  PlusIcon as Plus,
-  ReceiptIcon as Receipt,
-  UsersIcon as Users,
-} from "@phosphor-icons/react/ssr";
+  LoaderCircle as Loader2,
+  Lock as Lock,
+  Plus as Plus,
+  Receipt as Receipt,
+  Users as Users,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { sileo } from "sileo";

@@ -1,6 +1,6 @@
 "use client";
 
-import { Warning as AlertTriangle } from "@phosphor-icons/react/ssr";
+import { TriangleAlert as AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 

@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  CaretDownIcon as ChevronDown,
-  PushPinIcon as Pin,
-  PushPinSlashIcon as PinOff,
-} from "@phosphor-icons/react/ssr";
+  ChevronDown as ChevronDown,
+  Pin as Pin,
+  PinOff as PinOff,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { NavigationGroup, NavigationItem } from "@/lib/navigation/navigation";

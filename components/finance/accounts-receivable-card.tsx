@@ -1,8 +1,8 @@
 import {
-  Warning as AlertTriangle,
-  HandCoinsIcon as HandCoins,
-  HourglassIcon as Hourglass,
-} from "@phosphor-icons/react/ssr";
+  TriangleAlert as AlertTriangle,
+  HandCoins as HandCoins,
+  Hourglass as Hourglass,
+} from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";

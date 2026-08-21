@@ -1,6 +1,6 @@
 "use client";
 
-import { ChatCircle as MessageCircle } from "@phosphor-icons/react/ssr";
+import { MessageCircle as MessageCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

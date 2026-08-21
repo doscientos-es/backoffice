@@ -251,7 +251,16 @@ function cancellationInput(payload: Record<string, unknown>): CancellationInput 
   };
 }
 
-function softwareSnapshot(payload: Record<string, unknown>): VerifactuSoftware {
+export function resolveVerifactuSoftwareSnapshot(
+  payload: Record<string, unknown>,
+  legacyFallback: VerifactuSoftware,
+): VerifactuSoftware {
+  // Durable rows created before the SIF snapshot was added have no `software`
+  // property. Their hash and fiscal invoice data remain valid, so use the
+  // current bound SIF only for this legacy shape. A present but malformed value
+  // must still fail closed rather than silently changing fiscal evidence.
+  if (payload.software === undefined || payload.software === null) return legacyFallback;
+
   const software = asRecord(payload.software);
   const boolean = (key: string): boolean => {
     const value = software[key];
@@ -360,7 +369,8 @@ async function deliverClaimed(
 ): Promise<OutboxDelivery> {
   try {
     const ledger = await getLedger(ledgerId);
-    const software = softwareSnapshot(ledger.record_payload);
+    const config = verifactuInvoiceConfigFromEnv();
+    const software = resolveVerifactuSoftwareSnapshot(ledger.record_payload, config.software);
     const hashes = (await import("@doscientos/verifactu")) as unknown as HashModule;
     const incidence = await outboxIncident(outboxId);
     const admin = createAdminClient();
@@ -389,7 +399,7 @@ async function deliverClaimed(
         warnings: [],
       };
     }
-    const client = await createVerifactuClient({ ...verifactuInvoiceConfigFromEnv(), software });
+    const client = await createVerifactuClient({ ...config, software });
     let result: VerifactuSubmitResult;
 
     if (ledger.record_type === "alta") {

@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckIcon as Check, ShareNetwork as Share2 } from "@phosphor-icons/react/ssr";
+import { Check as Check, Share2 as Share2 } from "lucide-react";
 import { useState } from "react";
 import { sileo } from "sileo";
 import { cn } from "@/lib/utils";

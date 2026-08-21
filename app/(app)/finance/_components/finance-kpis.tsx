@@ -1,11 +1,11 @@
 import {
-  HandCoinsIcon as HandCoins,
-  HourglassIcon as Hourglass,
-  PercentIcon as Percent,
-  ReceiptIcon as Receipt,
-  TrendDown as TrendingDown,
-  TrendUp as TrendingUp,
-} from "@phosphor-icons/react/ssr";
+  HandCoins as HandCoins,
+  Hourglass as Hourglass,
+  Percent as Percent,
+  Receipt as Receipt,
+  TrendingDown as TrendingDown,
+  TrendingUp as TrendingUp,
+} from "lucide-react";
 import { StatCard } from "@/components/layout/stat-card";
 import { getFinanceKpis } from "@/lib/finance/queries";
 import { formatEUR } from "@/lib/utils";

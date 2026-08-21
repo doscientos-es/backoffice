@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  CheckCircleIcon as CheckCircle,
-  ArrowsClockwise as RefreshCw,
-  XCircleIcon as XCircle,
-} from "@phosphor-icons/react/ssr";
+  CheckCircle as CheckCircle,
+  RefreshCw as RefreshCw,
+  XCircle as XCircle,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

@@ -1,6 +1,6 @@
 "use client";
 
-import { Envelope as Mail } from "@phosphor-icons/react/ssr";
+import { Mail as Mail } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {

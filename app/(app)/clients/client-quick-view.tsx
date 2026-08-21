@@ -1,16 +1,16 @@
 "use client";
 
 import {
-  ArrowUpRightIcon as ArrowUpRight,
-  Buildings as Building2,
-  FileTextIcon as FileText,
-  Envelope as Mail,
-  MapPinIcon as MapPin,
-  PhoneIcon as Phone,
+  ArrowUpRight as ArrowUpRight,
+  Building2 as Building2,
+  FileText as FileText,
+  Mail as Mail,
+  MapPin as MapPin,
+  Phone as Phone,
   Trash as Trash2,
-  UserIcon as User,
-  XIcon as X,
-} from "@phosphor-icons/react/ssr";
+  User as User,
+  X as X,
+} from "lucide-react";
 import Link from "next/link";
 import { type ReactNode, useState } from "react";
 import { Badge } from "@/components/ui/badge";

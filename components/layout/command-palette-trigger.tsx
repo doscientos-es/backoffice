@@ -1,6 +1,6 @@
 "use client";
 
-import { MagnifyingGlass as Search } from "@phosphor-icons/react/ssr";
+import { Search as Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /** Evento global para abrir el command palette desde cualquier botón. */

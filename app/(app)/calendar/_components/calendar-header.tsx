@@ -1,13 +1,13 @@
 "use client";
 
 import {
-  CheckIcon as Check,
-  CaretLeft as ChevronLeft,
-  CaretRight as ChevronRight,
-  CopyIcon as Copy,
-  PlusIcon as Plus,
-  SlidersHorizontalIcon as SlidersHorizontal,
-} from "@phosphor-icons/react/ssr";
+  Check as Check,
+  ChevronLeft as ChevronLeft,
+  ChevronRight as ChevronRight,
+  Copy as Copy,
+  Plus as Plus,
+  SlidersHorizontal as SlidersHorizontal,
+} from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import Link from "next/link";

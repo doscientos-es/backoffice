@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  CopyIcon as Copy,
-  DotsThree as MoreHorizontal,
+  Copy as Copy,
+  Ellipsis as MoreHorizontal,
   Trash as Trash2,
-} from "@phosphor-icons/react/ssr";
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Button } from "@/components/ui/button";

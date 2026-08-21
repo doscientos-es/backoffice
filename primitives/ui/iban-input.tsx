@@ -5,7 +5,7 @@
  * Shows a success/error badge without any network call.
  */
 
-import { CheckCircleIcon as CheckCircle, XCircleIcon as XCircle } from "@phosphor-icons/react/ssr";
+import { CheckCircle as CheckCircle, XCircle as XCircle } from "lucide-react";
 import { isValidIBAN } from "ibantools";
 import { useState } from "react";
 import { Input } from "./input";

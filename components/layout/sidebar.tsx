@@ -1,6 +1,6 @@
 "use client";
 
-import { Gear as Settings } from "@phosphor-icons/react/ssr";
+import { Settings as Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/branding";

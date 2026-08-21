@@ -1,8 +1,8 @@
 import {
-  GithubLogo as Github,
+  GitBranch as Github,
   Link as Link2,
-  ArrowsClockwise as RefreshCw,
-} from "@phosphor-icons/react/ssr";
+  RefreshCw as RefreshCw,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { GitHubSyncMode } from "./github-sync-section";
 

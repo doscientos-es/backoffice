@@ -1,4 +1,4 @@
-import { Chat as MessageSquare } from "@phosphor-icons/react/ssr";
+import { MessageSquare as MessageSquare } from "lucide-react";
 import type { Metadata } from "next";
 import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";

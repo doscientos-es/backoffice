@@ -1,4 +1,4 @@
-import { UserCircle as UserRoundX } from "@phosphor-icons/react/ssr";
+import { CircleUser as UserRoundX } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 

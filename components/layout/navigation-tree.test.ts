@@ -1,4 +1,4 @@
-import { UserIcon as User } from "@phosphor-icons/react/ssr";
+import { User as User } from "lucide-react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";

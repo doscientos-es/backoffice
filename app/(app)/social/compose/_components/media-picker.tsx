@@ -1,11 +1,11 @@
 "use client";
 
 import {
-  ImageSquare as ImagePlus,
-  CircleNotch as Loader2,
-  UploadIcon as Upload,
-  XIcon as X,
-} from "@phosphor-icons/react/ssr";
+  ImageUp as ImagePlus,
+  LoaderCircle as Loader2,
+  Upload as Upload,
+  X as X,
+} from "lucide-react";
 import { useRef, useState } from "react";
 import type { MediaItem } from "@/lib/social/core";
 import { cn } from "@/lib/utils";

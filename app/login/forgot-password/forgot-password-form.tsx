@@ -2,10 +2,10 @@
 
 import HCaptcha from "@hcaptcha/react-hcaptcha";
 import {
-  ArrowLeftIcon as ArrowLeft,
-  CheckCircle as CheckCircle2,
-  CircleNotch as Loader2,
-} from "@phosphor-icons/react/ssr";
+  ArrowLeft as ArrowLeft,
+  CircleCheck as CheckCircle2,
+  LoaderCircle as Loader2,
+} from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";

@@ -1,11 +1,11 @@
 "use client";
 
 import {
-  CaretDown as ChevronDown,
-  CaretUp as ChevronUp,
-  PlusIcon as Plus,
+  ChevronDown as ChevronDown,
+  ChevronUp as ChevronUp,
+  Plus as Plus,
   Trash as Trash2,
-} from "@phosphor-icons/react/ssr";
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {

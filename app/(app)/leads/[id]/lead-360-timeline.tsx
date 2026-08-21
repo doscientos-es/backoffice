@@ -1,13 +1,13 @@
 import {
-  ArrowRightIcon as ArrowRight,
-  Suitcase as BriefcaseBusiness,
-  CheckSquare as CheckSquare2,
-  CurrencyCircleDollar as CircleDollarSign,
+  ArrowRight as ArrowRight,
+  BriefcaseBusiness as BriefcaseBusiness,
+  SquareCheck as CheckSquare2,
+  CircleDollarSign as CircleDollarSign,
   FileText as FileSignature,
-  Envelope as Mail,
+  Mail as Mail,
   Receipt as ReceiptText,
   Sparkle as Sparkles,
-} from "@phosphor-icons/react/ssr";
+} from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { groupResendInteractions, interactionDate } from "@/lib/leads/interaction-utils";

@@ -1,4 +1,4 @@
-import { CaretRight as ChevronRight } from "@phosphor-icons/react/ssr";
+import { ChevronRight as ChevronRight } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";

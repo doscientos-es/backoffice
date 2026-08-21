@@ -1,11 +1,11 @@
 import {
-  CheckCircle as CheckCircle2,
-  ClockIcon as Clock,
-  FileTextIcon as FileText,
-  PencilIcon as Pencil,
-  PresentationIcon as Presentation,
-  XCircleIcon as XCircle,
-} from "@phosphor-icons/react/ssr";
+  CircleCheck as CheckCircle2,
+  Clock as Clock,
+  FileText as FileText,
+  Pencil as Pencil,
+  Presentation as Presentation,
+  XCircle as XCircle,
+} from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BackLink } from "@/components/layout/back-link";

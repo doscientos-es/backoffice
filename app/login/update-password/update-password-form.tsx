@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  EyeIcon as Eye,
-  EyeSlash as EyeOff,
-  CircleNotch as Loader2,
-} from "@phosphor-icons/react/ssr";
+  Eye as Eye,
+  EyeOff as EyeOff,
+  LoaderCircle as Loader2,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";

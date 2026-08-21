@@ -1,6 +1,6 @@
 "use client";
 
-import { PencilIcon as Pencil, PlusIcon as Plus, Trash as Trash2 } from "@phosphor-icons/react/ssr";
+import { Pencil as Pencil, Plus as Plus, Trash as Trash2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";

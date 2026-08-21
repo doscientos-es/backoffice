@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRightIcon as ArrowRight, PlusIcon as Plus } from "@phosphor-icons/react/ssr";
+import { ArrowRight as ArrowRight, Plus as Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";

@@ -2,10 +2,10 @@
 
 import { DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import {
-  CaretDown as ChevronDown,
-  CaretUp as ChevronUp,
-  MoonIcon as Moon,
-} from "@phosphor-icons/react/ssr";
+  ChevronDown as ChevronDown,
+  ChevronUp as ChevronUp,
+  Moon as Moon,
+} from "lucide-react";
 import {
   addDays,
   eachDayOfInterval,

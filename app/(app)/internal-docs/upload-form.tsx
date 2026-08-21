@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleNotch as Loader2, PaperclipIcon as Paperclip } from "@phosphor-icons/react/ssr";
+import { LoaderCircle as Loader2, Paperclip as Paperclip } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";

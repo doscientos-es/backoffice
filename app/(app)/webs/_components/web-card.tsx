@@ -1,10 +1,10 @@
 import {
-  Warning as AlertTriangle,
-  ClockIcon as Clock,
-  GlobeIcon as Globe,
-  HardDrives as Server,
-  ShieldWarning as ShieldAlert,
-} from "@phosphor-icons/react/ssr";
+  TriangleAlert as AlertTriangle,
+  Clock as Clock,
+  Globe as Globe,
+  HardDrive as Server,
+  ShieldAlert as ShieldAlert,
+} from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { HOSTING_PROVIDER_LABELS } from "@/lib/schemas/web-project";

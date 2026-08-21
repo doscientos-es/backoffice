@@ -1,12 +1,12 @@
 "use client";
 
 import {
-  ActivityIcon as Activity,
-  FacebookLogo as Facebook,
-  InstagramLogo as Instagram,
-  ChatCircle as MessageCircle,
+  Activity as Activity,
+  Globe2 as Facebook,
+  Camera as Instagram,
+  MessageCircle as MessageCircle,
   Trash as Trash2,
-} from "@phosphor-icons/react/ssr";
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";

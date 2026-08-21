@@ -1,9 +1,9 @@
 import {
   FilePlus as FilePlus2,
-  FileArrowUp as FileUp,
-  PencilLineIcon as PencilLine,
+  FileUp as FileUp,
+  PencilLine as PencilLine,
   Trash as Trash2,
-} from "@phosphor-icons/react/ssr";
+} from "lucide-react";
 import { formatDateTime } from "@/lib/utils";
 
 export type InternalDocEvent = {

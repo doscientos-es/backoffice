@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  CheckCircle as CheckCircle2,
-  CircleNotch as Loader2,
-  XCircleIcon as XCircle,
-} from "@phosphor-icons/react/ssr";
+  CircleCheck as CheckCircle2,
+  LoaderCircle as Loader2,
+  XCircle as XCircle,
+} from "lucide-react";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {

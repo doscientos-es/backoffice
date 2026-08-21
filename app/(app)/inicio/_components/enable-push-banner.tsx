@@ -1,6 +1,6 @@
 "use client";
 
-import { BellRinging as BellRing, XIcon as X } from "@phosphor-icons/react/ssr";
+import { BellRing as BellRing, X as X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";

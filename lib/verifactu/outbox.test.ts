@@ -23,6 +23,7 @@ import {
   formatOutboxError,
   isRetryableVerifactuDelivery,
   MISSING_DURABLE_FISCAL_RECORD_MESSAGE,
+  resolveVerifactuSoftwareSnapshot,
 } from "./outbox";
 
 beforeEach(() => {
@@ -41,6 +42,31 @@ describe("formatOutboxError", () => {
 
   it("preserves a technical error without inventing an AEAT code", () => {
     expect(formatOutboxError("Certificado P12 inválido", null)).toBe("Certificado P12 inválido");
+  });
+});
+
+describe("resolveVerifactuSoftwareSnapshot", () => {
+  const fallback = {
+    producerName: "Doscientos",
+    producerNif: "B12345678",
+    name: "Backoffice",
+    id: "D1",
+    version: "1.0.0",
+    installationNumber: "00000001",
+    onlyVerifactu: true,
+    multipleTaxpayers: false,
+  };
+
+  it("uses the bound SIF only for durable payloads created before snapshots existed", () => {
+    expect(resolveVerifactuSoftwareSnapshot({ invoiceNumber: "2026-000008" }, fallback)).toBe(
+      fallback,
+    );
+  });
+
+  it("fails closed when a stored software snapshot is malformed", () => {
+    expect(() => resolveVerifactuSoftwareSnapshot({ software: {} }, fallback)).toThrow(
+      "Payload fiscal inválido: software.producerName",
+    );
   });
 });
 

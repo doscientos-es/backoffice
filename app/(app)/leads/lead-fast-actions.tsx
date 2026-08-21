@@ -1,12 +1,12 @@
 "use client";
 
 import {
-  BrainIcon as Brain,
-  Envelope as Mail,
-  ChatCircle as MessageCircle,
-  PhoneIcon as Phone,
+  Brain as Brain,
+  Mail as Mail,
+  MessageCircle as MessageCircle,
+  Phone as Phone,
   Sparkle as Sparkles,
-} from "@phosphor-icons/react/ssr";
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";

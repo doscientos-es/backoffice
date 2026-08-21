@@ -1,6 +1,6 @@
 "use client";
 
-import { HandIcon as Hand } from "@phosphor-icons/react/ssr";
+import { Hand as Hand } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 /**

@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  Prohibit as Ban,
-  Envelope as Mail,
-  ArrowCounterClockwise as RotateCcw,
-} from "@phosphor-icons/react/ssr";
+  Ban as Ban,
+  Mail as Mail,
+  Undo2 as RotateCcw,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { sileo } from "sileo";

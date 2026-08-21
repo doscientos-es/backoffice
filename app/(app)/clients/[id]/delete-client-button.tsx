@@ -1,6 +1,6 @@
 "use client";
 
-import { DotsThree as MoreHorizontal, Trash as Trash2 } from "@phosphor-icons/react/ssr";
+import { Ellipsis as MoreHorizontal, Trash as Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

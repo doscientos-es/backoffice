@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  CircleNotch as Loader2,
-  ShieldCheckIcon as ShieldCheck,
-  DeviceMobile as Smartphone,
-} from "@phosphor-icons/react/ssr";
+  LoaderCircle as Loader2,
+  ShieldCheck as ShieldCheck,
+  Smartphone as Smartphone,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

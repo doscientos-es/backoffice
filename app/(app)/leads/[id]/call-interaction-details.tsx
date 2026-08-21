@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  EyeIcon as Eye,
-  FileTextIcon as FileText,
-  PencilIcon as Pencil,
-} from "@phosphor-icons/react/ssr";
+  Eye as Eye,
+  FileText as FileText,
+  Pencil as Pencil,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { Badge } from "@/components/ui/badge";

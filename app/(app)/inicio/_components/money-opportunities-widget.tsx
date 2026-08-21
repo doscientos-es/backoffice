@@ -1,11 +1,11 @@
 import {
-  Money as Banknote,
-  CaretRight as ChevronRight,
+  Banknote as Banknote,
+  ChevronRight as ChevronRight,
   FilePlus as FilePlus2,
   FileText as FileSignature,
-  FlameIcon as Flame,
-  ArrowCounterClockwise as RotateCcw,
-} from "@phosphor-icons/react/ssr";
+  Flame as Flame,
+  Undo2 as RotateCcw,
+} from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

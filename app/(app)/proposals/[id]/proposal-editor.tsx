@@ -1,13 +1,13 @@
 "use client";
 
 import {
-  WarningCircle as AlertCircle,
-  CheckIcon as Check,
-  CaretLeft as ChevronLeft,
-  CaretRight as ChevronRight,
-  FloppyDisk as Save,
+  CircleAlert as AlertCircle,
+  Check as Check,
+  ChevronLeft as ChevronLeft,
+  ChevronRight as ChevronRight,
+  Save as Save,
   Sparkle as Sparkles,
-} from "@phosphor-icons/react/ssr";
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LineItemsTable } from "@/components/finance/line-items-table";

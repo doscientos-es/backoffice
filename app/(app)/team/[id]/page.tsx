@@ -1,12 +1,12 @@
 import {
-  Suitcase as BriefcaseBusiness,
-  CheckSquareIcon as CheckSquare,
+  BriefcaseBusiness as BriefcaseBusiness,
+  CheckSquare as CheckSquare,
   Clock as Clock3,
-  GithubLogo as Github,
-  Envelope as Mail,
-  PhoneIcon as Phone,
-  UsersIcon as Users,
-} from "@phosphor-icons/react/ssr";
+  GitBranch as Github,
+  Mail as Mail,
+  Phone as Phone,
+  Users as Users,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";

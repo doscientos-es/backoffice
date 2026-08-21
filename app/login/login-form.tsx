@@ -2,11 +2,11 @@
 
 import HCaptcha from "@hcaptcha/react-hcaptcha";
 import {
-  CaretDown as ChevronDown,
-  EyeIcon as Eye,
-  EyeSlash as EyeOff,
-  CircleNotch as Loader2,
-} from "@phosphor-icons/react/ssr";
+  ChevronDown as ChevronDown,
+  Eye as Eye,
+  EyeOff as EyeOff,
+  LoaderCircle as Loader2,
+} from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";

@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash as Trash2 } from "@phosphor-icons/react/ssr";
+import { Trash as Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { sileo } from "sileo";

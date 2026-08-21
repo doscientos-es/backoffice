@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkle as Sparkles } from "@phosphor-icons/react/ssr";
+import { Sparkle as Sparkles } from "lucide-react";
 import { useState } from "react";
 import { AiNotice } from "@/components/ui/ai-notice";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";

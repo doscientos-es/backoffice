@@ -1,6 +1,6 @@
 "use client";
 
-import { SquaresFour as LayoutGrid, ListIcon as List } from "@phosphor-icons/react/ssr";
+import { LayoutGrid as LayoutGrid, List as List } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Button } from "@/components/ui/button";

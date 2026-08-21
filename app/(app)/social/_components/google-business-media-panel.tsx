@@ -1,6 +1,6 @@
 "use client";
 
-import { UploadIcon as Upload, XIcon as X } from "@phosphor-icons/react/ssr";
+import { Upload as Upload, X as X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

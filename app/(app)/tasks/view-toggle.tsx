@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  SquaresFour as LayoutGrid,
-  ListIcon as List,
-  CircleNotch as Loader2,
-} from "@phosphor-icons/react/ssr";
+  LayoutGrid as LayoutGrid,
+  List as List,
+  LoaderCircle as Loader2,
+} from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";

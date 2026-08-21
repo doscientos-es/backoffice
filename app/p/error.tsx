@@ -1,6 +1,6 @@
 "use client";
 
-import { Warning as AlertTriangle } from "@phosphor-icons/react/ssr";
+import { TriangleAlert as AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function PortalError({

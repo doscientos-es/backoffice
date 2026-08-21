@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRightIcon as ArrowRight } from "@phosphor-icons/react/ssr";
+import { ArrowRight as ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { ListPage, type ListPageProps } from "@/components/layout/list-page";

@@ -1,8 +1,8 @@
 import {
-  GlobeIcon as Globe,
-  PlusIcon as Plus,
-  ShieldWarning as ShieldAlert,
-} from "@phosphor-icons/react/ssr";
+  Globe as Globe,
+  Plus as Plus,
+  ShieldAlert as ShieldAlert,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";

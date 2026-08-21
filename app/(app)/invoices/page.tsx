@@ -1,10 +1,10 @@
 import {
-  Warning as AlertTriangle,
-  CheckCircle as CheckCircle2,
-  ClockIcon as Clock,
-  DownloadIcon as Download,
-  ShieldWarning as ShieldAlert,
-} from "@phosphor-icons/react/ssr";
+  TriangleAlert as AlertTriangle,
+  CircleCheck as CheckCircle2,
+  Clock as Clock,
+  Download as Download,
+  ShieldAlert as ShieldAlert,
+} from "lucide-react";
 import type { Metadata } from "next";
 import { ListPage } from "@/components/layout/list-page";
 import { StatCard } from "@/components/layout/stat-card";

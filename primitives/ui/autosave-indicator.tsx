@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  WarningCircle as AlertCircle,
-  CheckIcon as Check,
-  CircleNotch as Loader2,
-} from "@phosphor-icons/react/ssr";
+  CircleAlert as AlertCircle,
+  Check as Check,
+  LoaderCircle as Loader2,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import type { AutosaveStatus } from "../hooks/use-autosave";
 import { cn } from "../lib/utils";

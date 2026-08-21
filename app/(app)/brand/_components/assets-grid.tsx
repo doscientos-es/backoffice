@@ -1,12 +1,12 @@
 "use client";
 
 import {
-  CheckIcon as Check,
-  CopyIcon as Copy,
-  DownloadIcon as Download,
-  ImageIcon,
+  Check as Check,
+  Copy as Copy,
+  Download as Download,
+  Image,
   Trash as Trash2,
-} from "@phosphor-icons/react/ssr";
+} from "lucide-react";
 import { useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

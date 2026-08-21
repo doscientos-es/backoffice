@@ -1,8 +1,8 @@
 import {
-  ArrowDownRightIcon as ArrowDownRight,
-  ArrowUpRightIcon as ArrowUpRight,
-  MinusIcon as Minus,
-} from "@phosphor-icons/react/ssr";
+  ArrowDownRight as ArrowDownRight,
+  ArrowUpRight as ArrowUpRight,
+  Minus as Minus,
+} from "lucide-react";
 import Link from "next/link";
 import type { ComponentType, SVGProps } from "react";
 import { Card, CardContent } from "@/components/ui/card";

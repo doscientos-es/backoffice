@@ -1,4 +1,4 @@
-import { ArrowSquareOut as ExternalLink, ShieldIcon as Shield } from "@phosphor-icons/react/ssr";
+import { ExternalLink as ExternalLink, Shield as Shield } from "lucide-react";
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";

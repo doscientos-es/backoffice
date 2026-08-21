@@ -1,15 +1,15 @@
 "use client";
 
 import {
-  WarningCircle as AlertCircle,
-  CalendarDots as CalendarClock,
-  CheckIcon as Check,
-  CopyIcon as Copy,
-  Envelope as Mail,
-  ChatCircle as MessageCircle,
-  PhoneIcon as Phone,
+  CircleAlert as AlertCircle,
+  CalendarDays as CalendarClock,
+  Check as Check,
+  Copy as Copy,
+  Mail as Mail,
+  MessageCircle as MessageCircle,
+  Phone as Phone,
   Sparkle as Sparkles,
-} from "@phosphor-icons/react/ssr";
+} from "lucide-react";
 import { useState } from "react";
 import { AiNotice } from "@/components/ui/ai-notice";
 import { Badge } from "@/components/ui/badge";

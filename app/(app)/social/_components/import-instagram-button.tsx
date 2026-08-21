@@ -1,11 +1,11 @@
 "use client";
 
 import {
-  CheckCircleIcon as CheckCircle,
-  DownloadIcon as Download,
-  ArrowsClockwise as RefreshCw,
-  XCircleIcon as XCircle,
-} from "@phosphor-icons/react/ssr";
+  CheckCircle as CheckCircle,
+  Download as Download,
+  RefreshCw as RefreshCw,
+  XCircle as XCircle,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

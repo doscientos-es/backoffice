@@ -1,4 +1,4 @@
-import { ArrowSquareOut as ExternalLink } from "@phosphor-icons/react/ssr";
+import { ExternalLink as ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

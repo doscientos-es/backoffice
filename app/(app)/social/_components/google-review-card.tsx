@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  ArrowBendUpLeft as Reply,
-  StarIcon as Star,
+  Undo2 as Reply,
+  Star as Star,
   Trash as Trash2,
-} from "@phosphor-icons/react/ssr";
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

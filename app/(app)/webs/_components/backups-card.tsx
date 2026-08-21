@@ -1,13 +1,13 @@
 "use client";
 
 import {
-  CaretLeft as ChevronLeft,
-  DownloadIcon as Download,
-  FolderOpenIcon as FolderOpen,
-  HardDriveIcon as HardDrive,
-  ArrowsClockwise as RefreshCw,
+  ChevronLeft as ChevronLeft,
+  Download as Download,
+  FolderOpen as FolderOpen,
+  HardDrive as HardDrive,
+  RefreshCw as RefreshCw,
   Trash as Trash2,
-} from "@phosphor-icons/react/ssr";
+} from "lucide-react";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { sileo } from "sileo";
 import { Badge } from "@/components/ui/badge";

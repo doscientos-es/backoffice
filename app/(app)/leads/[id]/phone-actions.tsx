@@ -1,6 +1,6 @@
 "use client";
 
-import { ChatCircle as MessageCircle, QrCodeIcon as QrCode } from "@phosphor-icons/react/ssr";
+import { MessageCircle as MessageCircle, QrCode as QrCode } from "lucide-react";
 import Image from "next/image";
 import { toDataURL } from "qrcode";
 import { useEffect, useState } from "react";

@@ -1,4 +1,4 @@
-import { ArrowRightIcon as ArrowRight, DownloadIcon as Download } from "@phosphor-icons/react/ssr";
+import { ArrowRight as ArrowRight, Download as Download } from "lucide-react";
 import type { ReactNode } from "react";
 import { LogoMark } from "@/components/branding";
 import { Markdown } from "@/components/ui/markdown";

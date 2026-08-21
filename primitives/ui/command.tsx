@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { Check as CheckIcon, MagnifyingGlass as SearchIcon } from "@phosphor-icons/react/ssr";
+import { Check as CheckIcon, Search as SearchIcon } from "lucide-react";
 import { Command as CommandPrimitive } from "cmdk";
 import type * as React from "react";
 import { cn } from "../lib/utils";

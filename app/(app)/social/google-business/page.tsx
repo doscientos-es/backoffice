@@ -1,10 +1,10 @@
 import {
-  ArrowUpRightIcon as ArrowUpRight,
+  ArrowUpRight as ArrowUpRight,
   ChartBar as BarChart3,
-  MapPinIcon as MapPin,
-  StarIcon as Star,
-  Warning as TriangleAlert,
-} from "@phosphor-icons/react/ssr";
+  MapPin as MapPin,
+  Star as Star,
+  TriangleAlert as TriangleAlert,
+} from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";

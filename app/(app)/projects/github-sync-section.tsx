@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  GithubLogo as Github,
+  GitBranch as Github,
   Link as Link2,
-  ArrowsClockwise as RefreshCw,
-} from "@phosphor-icons/react/ssr";
+  RefreshCw as RefreshCw,
+} from "lucide-react";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";

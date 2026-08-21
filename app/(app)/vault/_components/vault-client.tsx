@@ -1,26 +1,26 @@
 "use client";
 
 import {
-  CheckIcon as Check,
-  CaretDown as ChevronDown,
-  CaretLeft as ChevronLeft,
-  CaretRight as ChevronRight,
-  CaretUpDown as ChevronsUpDown,
-  CaretUp as ChevronUp,
-  CopyIcon as Copy,
-  EyeIcon as Eye,
-  EyeSlash as EyeOff,
-  FingerprintIcon as Fingerprint,
-  CircleNotch as Loader2,
-  LockIcon as Lock,
-  LockOpenIcon as LockOpen,
-  PencilIcon as Pencil,
-  PlusIcon as Plus,
-  MagnifyingGlass as Search,
-  ShieldWarning as ShieldAlert,
+  Check as Check,
+  ChevronDown as ChevronDown,
+  ChevronLeft as ChevronLeft,
+  ChevronRight as ChevronRight,
+  ChevronsUpDown as ChevronsUpDown,
+  ChevronUp as ChevronUp,
+  Copy as Copy,
+  Eye as Eye,
+  EyeOff as EyeOff,
+  Fingerprint as Fingerprint,
+  LoaderCircle as Loader2,
+  Lock as Lock,
+  LockOpen as LockOpen,
+  Pencil as Pencil,
+  Plus as Plus,
+  Search as Search,
+  ShieldAlert as ShieldAlert,
   Trash as Trash2,
-  XIcon as X,
-} from "@phosphor-icons/react/ssr";
+  X as X,
+} from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { sileo } from "sileo";
 import { PageHeader } from "@/components/layout/page-header";

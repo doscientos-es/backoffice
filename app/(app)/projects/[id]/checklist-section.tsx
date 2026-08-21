@@ -1,11 +1,11 @@
 "use client";
 
 import {
-  CheckCircle as CheckCircle2,
-  CircleIcon as Circle,
-  PlusIcon as Plus,
+  CircleCheck as CheckCircle2,
+  Circle as Circle,
+  Plus as Plus,
   Trash as Trash2,
-} from "@phosphor-icons/react/ssr";
+} from "lucide-react";
 import { useRef, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

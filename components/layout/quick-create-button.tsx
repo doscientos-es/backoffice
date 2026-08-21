@@ -1,13 +1,13 @@
 "use client";
 
 import {
-  BriefcaseIcon as Briefcase,
-  FileTextIcon as FileText,
-  ListChecksIcon as ListChecks,
-  PlusIcon as Plus,
-  UserIcon as User,
-  UsersIcon as Users,
-} from "@phosphor-icons/react/ssr";
+  Briefcase as Briefcase,
+  FileText as FileText,
+  ListChecks as ListChecks,
+  Plus as Plus,
+  User as User,
+  Users as Users,
+} from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

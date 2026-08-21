@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  CheckCircleIcon as CheckCircle,
-  PaperPlaneTilt as Send,
-  XCircleIcon as XCircle,
-} from "@phosphor-icons/react/ssr";
+  CheckCircle as CheckCircle,
+  Send as Send,
+  XCircle as XCircle,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { sileo } from "sileo";

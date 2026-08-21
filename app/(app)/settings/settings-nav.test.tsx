@@ -40,12 +40,6 @@ function desktopNav(container: HTMLElement) {
   return within(nav);
 }
 
-function quickNav(container: HTMLElement) {
-  const nav = container.querySelector<HTMLElement>('nav[aria-label="Accesos rápidos de ajustes"]');
-  if (!nav) throw new Error("Expected compact settings navigation");
-  return within(nav);
-}
-
 // ── tests ─────────────────────────────────────────────────────────────────────
 
 describe("SettingsNav – item visibility", () => {
@@ -153,21 +147,22 @@ describe("SettingsNav – active state", () => {
 });
 
 describe("SettingsNav – responsive layout", () => {
-  it("uses a grouped, vertical desktop navigation instead of horizontal tabs", () => {
+  it("uses a grouped, vertical sub-sidebar instead of horizontal tabs", () => {
     const { container } = renderNav(true);
     const nav = container.querySelector('nav[aria-label="Secciones de ajustes"].sticky');
 
     expect(nav?.className).toContain("flex-col");
-    expect(nav?.className).toContain("xl:flex");
+    expect(nav?.className).toContain("flex");
     expect(nav?.className).not.toContain("overflow-x-auto");
+    expect(nav?.parentElement?.className).toContain("sm:block");
   });
 
-  it("shows direct, scrollable section links before the desktop sidebar has room", () => {
+  it("keeps the sub-sidebar and mobile picker in one layout item", () => {
     const { container } = renderNav(true);
-    const nav = quickNav(container);
+    const sidebar = container.querySelector("aside");
 
-    expect(nav.getByRole("link", { name: "Perfil" })).toBeTruthy();
-    expect(nav.getByRole("link", { name: "Legal y Verifactu" })).toBeTruthy();
+    expect(sidebar?.className).toContain("min-w-0");
+    expect(within(sidebar as HTMLElement).getByRole("link", { name: "Perfil" })).toBeTruthy();
   });
 
   it("offers a compact mobile section picker", () => {

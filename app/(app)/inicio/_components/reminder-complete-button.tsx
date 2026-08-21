@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckIcon as Check } from "@phosphor-icons/react/ssr";
+import { Check as Check } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";

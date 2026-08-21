@@ -1,9 +1,9 @@
 import {
-  ArrowDownRightIcon as ArrowDownRight,
-  ChartLineUp as ChartNoAxesCombined,
-  TrophyIcon as Trophy,
-  UsersIcon as Users,
-} from "@phosphor-icons/react/ssr";
+  ArrowDownRight as ArrowDownRight,
+  ChartLine as ChartNoAxesCombined,
+  Trophy as Trophy,
+  Users as Users,
+} from "lucide-react";
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";

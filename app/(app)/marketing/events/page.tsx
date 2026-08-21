@@ -1,16 +1,16 @@
 import {
-  CaretRight as ChevronRight,
-  DotOutline as CircleDot,
-  ClipboardText as ClipboardList,
-  ArrowSquareOut as ExternalLink,
-  EyeIcon as Eye,
-  FileTextIcon as FileText,
-  ChatCircle as MessageCircle,
-  CursorClick as MousePointerClick,
-  PaperPlaneTilt as Send,
-  UserCheckIcon as UserCheck,
-  UsersIcon as Users,
-} from "@phosphor-icons/react/ssr";
+  ChevronRight as ChevronRight,
+  Circle as CircleDot,
+  Clipboard as ClipboardList,
+  ExternalLink as ExternalLink,
+  Eye as Eye,
+  FileText as FileText,
+  MessageCircle as MessageCircle,
+  MousePointerClick as MousePointerClick,
+  Send as Send,
+  UserCheck as UserCheck,
+  Users as Users,
+} from "lucide-react";
 import Link from "next/link";
 import type { ComponentType, SVGProps } from "react";
 import { PageHeader } from "@/components/layout/page-header";

@@ -1,13 +1,13 @@
 "use client";
 
 import {
-  Warning as AlertTriangle,
+  TriangleAlert as AlertTriangle,
   FileMinus as FileMinus2,
-  CircleNotch as Loader2,
-  DotsThree as MoreHorizontal,
+  LoaderCircle as Loader2,
+  Ellipsis as MoreHorizontal,
   Trash as Trash2,
-  XCircleIcon as XCircle,
-} from "@phosphor-icons/react/ssr";
+  XCircle as XCircle,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";

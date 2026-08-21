@@ -1,11 +1,11 @@
 "use client";
 
 import {
-  BellIcon as Bell,
-  CheckSquareIcon as CheckSquare,
-  PresentationIcon as Presentation,
-  VideoIcon as Video,
-} from "@phosphor-icons/react/ssr";
+  Bell as Bell,
+  CheckSquare as CheckSquare,
+  Presentation as Presentation,
+  Video as Video,
+} from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { scheduleLeadMeeting } from "@/app/(app)/leads/actions";
 import { Button } from "@/components/ui/button";

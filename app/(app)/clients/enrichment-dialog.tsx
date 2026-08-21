@@ -1,11 +1,11 @@
 "use client";
 
 import {
-  Buildings as Building2,
-  FileTextIcon as FileText,
-  MapPinIcon as MapPin,
-  UserIcon as User,
-} from "@phosphor-icons/react/ssr";
+  Building2 as Building2,
+  FileText as FileText,
+  MapPin as MapPin,
+  User as User,
+} from "lucide-react";
 import type * as React from "react";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";

@@ -1,6 +1,10 @@
 import { verifactuDiagnosticConfigFromEnv } from "./config";
 
 const DIAGNOSTIC_TTL_DAYS = 7;
+const DIAGNOSTIC_RECIPIENT = {
+  nif: "B88873393",
+  name: "DOSCIENTOS DESARROLLO TECNOLOGICO, S.L.",
+} as const;
 
 type DiagnosticCheck = { key: string; ok: boolean; detail: string };
 
@@ -110,8 +114,8 @@ export async function runVerifactuAeatTestDiagnostic(memberId: string): Promise<
       previousHash: null,
       generatedAt: now,
       emisorName: issuer.name,
-      clientNif: null,
-      clientName: null,
+      clientNif: DIAGNOSTIC_RECIPIENT.nif,
+      clientName: DIAGNOSTIC_RECIPIENT.name,
       descriptionOperacion: "Diagnóstico sintético VERI*FACTU; no es una factura.",
       vatLines: [{ rate: 21, base: 100, tax: 21 }],
       previousInvoiceNumber: null,

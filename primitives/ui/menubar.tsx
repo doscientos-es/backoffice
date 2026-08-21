@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { Check as CheckIcon, CaretRight as ChevronRightIcon } from "@phosphor-icons/react/ssr";
+import { Check as CheckIcon, ChevronRight as ChevronRightIcon } from "lucide-react";
 import { Menubar as MenubarPrimitive } from "radix-ui";
 import type * as React from "react";
 import { cn } from "../lib/utils";

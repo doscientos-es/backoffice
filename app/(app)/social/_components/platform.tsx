@@ -1,9 +1,9 @@
 import {
-  FacebookLogo as Facebook,
-  InstagramLogo as Instagram,
-  LinkedinLogo as Linkedin,
-  Storefront as Store,
-} from "@phosphor-icons/react/ssr";
+  Globe2 as Facebook,
+  Camera as Instagram,
+  BriefcaseBusiness as Linkedin,
+  Store as Store,
+} from "lucide-react";
 import type { ComponentType } from "react";
 import { PLATFORM_LABELS, type SocialPlatform } from "@/lib/social/core";
 import { cn } from "@/lib/utils";

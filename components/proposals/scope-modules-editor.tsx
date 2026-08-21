@@ -1,13 +1,13 @@
 "use client";
 
 import {
-  CaretDown as ChevronDown,
-  CaretUp as ChevronUp,
-  ClipboardText as ClipboardPaste,
-  PlusIcon as Plus,
+  ChevronDown as ChevronDown,
+  ChevronUp as ChevronUp,
+  Clipboard as ClipboardPaste,
+  Plus as Plus,
   Trash as Trash2,
-  XIcon as X,
-} from "@phosphor-icons/react/ssr";
+  X as X,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";

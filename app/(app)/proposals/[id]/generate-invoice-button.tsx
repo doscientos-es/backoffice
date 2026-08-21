@@ -1,6 +1,6 @@
 "use client";
 
-import { FileTextIcon as FileText, PaperPlaneTilt as Send } from "@phosphor-icons/react/ssr";
+import { FileText as FileText, Send as Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Button } from "@/components/ui/button";

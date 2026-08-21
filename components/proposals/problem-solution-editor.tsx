@@ -1,13 +1,13 @@
 "use client";
 
 import {
-  CaretDown as ChevronDown,
-  CaretUp as ChevronUp,
-  CircleNotch as Loader2,
-  PlusIcon as Plus,
+  ChevronDown as ChevronDown,
+  ChevronUp as ChevronUp,
+  LoaderCircle as Loader2,
+  Plus as Plus,
   Sparkle as Sparkles,
   Trash as Trash2,
-} from "@phosphor-icons/react/ssr";
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { createEmptyPair, type EditablePair, KEY_POINTS_LIMITS } from "@/lib/proposals/key-points";

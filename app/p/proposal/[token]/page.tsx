@@ -1,10 +1,10 @@
 import {
-  CheckCircle as CheckCircle2,
-  DownloadIcon as Download,
-  FileTextIcon as FileText,
-  PresentationIcon as Presentation,
-  XCircleIcon as XCircle,
-} from "@phosphor-icons/react/ssr";
+  CircleCheck as CheckCircle2,
+  Download as Download,
+  FileText as FileText,
+  Presentation as Presentation,
+  XCircle as XCircle,
+} from "lucide-react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";

@@ -1,13 +1,13 @@
 "use client";
 
 import {
-  CaretLeft as ChevronLeft,
-  CaretRight as ChevronRight,
-  DownloadIcon as Download,
-  MagnifyingGlass as Search,
-  SlidersHorizontalIcon as SlidersHorizontal,
-  XIcon as X,
-} from "@phosphor-icons/react/ssr";
+  ChevronLeft as ChevronLeft,
+  ChevronRight as ChevronRight,
+  Download as Download,
+  Search as Search,
+  SlidersHorizontal as SlidersHorizontal,
+  X as X,
+} from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";

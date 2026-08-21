@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  CheckIcon as Check,
-  CopyIcon as Copy,
-  GitBranchIcon as GitBranch,
-} from "@phosphor-icons/react/ssr";
+  Check as Check,
+  Copy as Copy,
+  GitBranch as GitBranch,
+} from "lucide-react";
 import { useState } from "react";
 
 /**

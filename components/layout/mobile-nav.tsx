@@ -1,6 +1,6 @@
 "use client";
 
-import { List as Menu, Gear as Settings, XIcon as X } from "@phosphor-icons/react/ssr";
+import { List as Menu, Settings as Settings, X as X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";

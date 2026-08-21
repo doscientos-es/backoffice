@@ -12,10 +12,10 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import {
-  Warning as AlertTriangle,
-  PlusIcon as Plus,
-  Warning as TriangleAlert,
-} from "@phosphor-icons/react/ssr";
+  TriangleAlert as AlertTriangle,
+  Plus as Plus,
+  TriangleAlert as TriangleAlert,
+} from "lucide-react";
 import Link from "next/link";
 import type React from "react";
 import { useOptimistic, useState, useTransition } from "react";

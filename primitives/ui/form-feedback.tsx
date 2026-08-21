@@ -1,10 +1,10 @@
 ﻿"use client";
 
 import {
-  WarningCircle as AlertCircle,
-  CheckCircle as CheckCircle2,
-  CircleNotch as Loader2,
-} from "@phosphor-icons/react/ssr";
+  CircleAlert as AlertCircle,
+  CircleCheck as CheckCircle2,
+  LoaderCircle as Loader2,
+} from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "../lib/utils";
 

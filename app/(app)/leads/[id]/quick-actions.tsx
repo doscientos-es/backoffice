@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  CalendarDots as CalendarClock,
-  HandIcon as Hand,
-  ListChecks as ListTodo,
-} from "@phosphor-icons/react/ssr";
+  CalendarDays as CalendarClock,
+  Hand as Hand,
+  ListTodo as ListTodo,
+} from "lucide-react";
 import { type ReactNode, useState, useTransition } from "react";
 import { sileo } from "sileo";
 import { Button } from "@/components/ui/button";

@@ -1,6 +1,6 @@
 "use client";
 
-import { PencilIcon as Pencil } from "@phosphor-icons/react/ssr";
+import { Pencil as Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

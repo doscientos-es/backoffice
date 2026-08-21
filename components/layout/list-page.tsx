@@ -1,13 +1,13 @@
 "use client";
 
 import {
-  ArrowDownIcon as ArrowDown,
-  ArrowRightIcon as ArrowRight,
-  ArrowUpIcon as ArrowUp,
-  ArrowsDownUp as ArrowUpDown,
-  DownloadIcon as Download,
-  PlusIcon as Plus,
-} from "@phosphor-icons/react/ssr";
+  ArrowDown as ArrowDown,
+  ArrowRight as ArrowRight,
+  ArrowUp as ArrowUp,
+  ArrowDownUp as ArrowUpDown,
+  Download as Download,
+  Plus as Plus,
+} from "lucide-react";
 import {
   type ColumnDef,
   flexRender,

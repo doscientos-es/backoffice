@@ -1,11 +1,11 @@
 "use client";
 
 import {
-  WarningCircle as AlertCircle,
-  Checks as CheckCheck,
-  ListChecks as ListTodo,
+  CircleAlert as AlertCircle,
+  CheckCheck as CheckCheck,
+  ListTodo as ListTodo,
   Sparkle as Sparkles,
-} from "@phosphor-icons/react/ssr";
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { sileo } from "sileo";
 import { Badge } from "@/components/ui/badge";

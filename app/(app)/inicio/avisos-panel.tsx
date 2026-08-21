@@ -1,9 +1,9 @@
 import {
-  Warning as AlertTriangle,
-  BellRinging as BellRing,
+  TriangleAlert as AlertTriangle,
+  BellRing as BellRing,
   FileText as FileWarning,
-  ShieldWarning as ShieldAlert,
-} from "@phosphor-icons/react/ssr";
+  ShieldAlert as ShieldAlert,
+} from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";

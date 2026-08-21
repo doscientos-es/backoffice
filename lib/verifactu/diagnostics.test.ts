@@ -62,7 +62,7 @@ describe("runVerifactuAeatTestDiagnostic", () => {
     });
   });
 
-  it("uses AEAT pre-production and stores only a passing health result", async () => {
+  it("uses AEAT pre-production with a synthetic F1 recipient and stores only a passing health result", async () => {
     const result = await runVerifactuAeatTestDiagnostic("member-1");
 
     expect(result.ok).toBe(true);
@@ -73,8 +73,8 @@ describe("runVerifactuAeatTestDiagnostic", () => {
       expect.objectContaining({
         nif: "B12345670",
         emisorName: "Issuer Test S.L.",
-        clientNif: null,
-        clientName: null,
+        clientNif: "00000000T",
+        clientName: "DESTINATARIO DE PRUEBAS VERI*FACTU",
       }),
     );
     expect(insert).toHaveBeenCalledWith(

@@ -1,4 +1,4 @@
-import { Buildings as Building2 } from "@phosphor-icons/react/ssr";
+import { Building2 as Building2 } from "lucide-react";
 import Link from "next/link";
 import { ListPage } from "@/components/layout/list-page";
 import { Button } from "@/components/ui/button";
