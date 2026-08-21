@@ -1,6 +1,7 @@
 "use client";
 
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import { usePasskeyVerification } from "@/components/security/use-passkey-verification";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { IbanInput } from "@/components/ui/iban-input";
 import { Input } from "@/components/ui/input";
@@ -11,7 +12,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { ZipInput } from "@/components/ui/zip-input";
 import { COUNTRY_OPTIONS } from "@/lib/address";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
-import { verifyWithPasskey } from "@/lib/security/webauthn-client";
 import { updateCompanySettings } from "./actions";
 
 interface Props {
@@ -44,6 +44,7 @@ export function CompanyForm({
   paymentTerms,
 }: Props) {
   const feedback = useFormFeedback();
+  const { challenge, verifyWithPasskey } = usePasskeyVerification();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -211,6 +212,7 @@ export function CompanyForm({
           Guardar empresa
         </SubmitButton>
       </div>
+      {challenge}
     </form>
   );
 }

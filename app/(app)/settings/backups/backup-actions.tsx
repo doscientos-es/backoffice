@@ -8,9 +8,9 @@ import {
 import { useState, useTransition } from "react";
 import { sileo } from "sileo";
 import { Button } from "@/components/ui/button";
+import { usePasskeyVerification } from "@/components/security/use-passkey-verification";
 import { Select } from "@/components/ui/select";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
-import { verifyWithPasskey } from "@/lib/security/webauthn-client";
 import { triggerBackofficeBackup } from "./actions";
 
 type ExportTable = { value: string; label: string };
@@ -28,6 +28,7 @@ export function BackupActions({
 }) {
   const [pending, startTransition] = useTransition();
   const [table, setTable] = useState(tables[0]?.value ?? "");
+  const { challenge, verifyWithPasskey } = usePasskeyVerification();
   const csvHref = `/api/data-export?format=csv&table=${encodeURIComponent(table)}`;
 
   function forceBackup() {
@@ -98,6 +99,7 @@ export function BackupActions({
           </Button>
         </div>
       ) : null}
+      {challenge}
     </div>
   );
 }

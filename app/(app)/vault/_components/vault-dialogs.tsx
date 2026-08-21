@@ -7,12 +7,21 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { usePasskeyVerification } from "@/components/security/use-passkey-verification";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
-import { registerPasskey, verifyWithPasskey } from "@/lib/security/webauthn-client";
+import { registerPasskey } from "@/lib/security/webauthn-client";
 import { cn } from "@/lib/utils";
 import {
   beginVaultPasskeyRegistration,
@@ -87,6 +96,7 @@ export function UnlockForm({
 }) {
   const feedback = useFormFeedback();
   const [showPassword, setShowPassword] = useState(false);
+  const { challenge, verifyWithPasskey } = usePasskeyVerification();
 
   async function handlePasskeyUnlock() {
     feedback.setPending();
@@ -177,6 +187,7 @@ export function UnlockForm({
           </SubmitButton>
         </div>
       </div>
+      {challenge}
     </form>
   );
 }
@@ -185,16 +196,26 @@ export function UnlockForm({
 export function EnrollPasskeyForm({ onClose }: { onClose: () => void }) {
   const feedback = useFormFeedback();
   const [password, setPassword] = useState("");
+  const [preparing, setPreparing] = useState(false);
+  const [registrationOptions, setRegistrationOptions] = useState<unknown>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    feedback.setPending();
+    setPreparing(true);
     const started = await beginVaultPasskeyRegistration({ password });
+    setPreparing(false);
     if (!started.ok) {
       feedback.setError(started.error);
       return;
     }
-    const result = await registerPasskey(started.options);
+    setRegistrationOptions(started.options);
+  }
+
+  async function confirmRegistration() {
+    if (!registrationOptions) return;
+
+    feedback.setPending();
+    const result = await registerPasskey(registrationOptions);
     if (!result.ok) {
       feedback.setError(result.error);
       return;
@@ -226,10 +247,36 @@ export function EnrollPasskeyForm({ onClose }: { onClose: () => void }) {
       </p>
       <div className="flex items-center justify-end gap-2 border-t border-border pt-3">
         <FormFeedback state={feedback.state} successLabel="Activada" />
-        <SubmitButton loading={feedback.pending} pendingLabel="Abriendo biometría…">
+        <SubmitButton loading={preparing || feedback.pending} pendingLabel="Preparando…">
           Activar
         </SubmitButton>
       </div>
+      <Dialog
+        open={registrationOptions !== null}
+        onOpenChange={(open) => !open && !feedback.pending && setRegistrationOptions(null)}
+      >
+        <DialogContent showCloseButton={!feedback.pending}>
+          <DialogHeader>
+            <DialogTitle>Confirmar identidad</DialogTitle>
+            <DialogDescription>
+              Usa el método de autenticación disponible en este dispositivo para activar la
+              biometría.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              disabled={feedback.pending}
+              onClick={() => setRegistrationOptions(null)}
+            >
+              Cancelar
+            </Button>
+            <Button disabled={feedback.pending} onClick={confirmRegistration}>
+              Activar con biometría
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 }

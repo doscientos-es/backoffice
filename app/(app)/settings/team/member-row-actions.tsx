@@ -2,11 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { usePasskeyVerification } from "@/components/security/use-passkey-verification";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Select } from "@/components/ui/select";
 import type { MemberRole } from "@/lib/auth";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
-import { verifyWithPasskey } from "@/lib/security/webauthn-client";
 import {
   deactivateMember,
   deleteMember,
@@ -39,6 +39,7 @@ export function MemberRowActions({
 }: Props) {
   const feedback = useFormFeedback();
   const router = useRouter();
+  const { challenge, verifyWithPasskey } = usePasskeyVerification();
   const canEditOwner = actorRole === "owner";
   const targetIsOwner = role === "owner";
   const disabledRoleSelect = isSelf || isDeactivated || (targetIsOwner && !canEditOwner);
@@ -134,6 +135,7 @@ export function MemberRowActions({
 
   return (
     <div className="flex items-center justify-end gap-2">
+      {challenge}
       <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
       {canEditLeads ? (
         <Button

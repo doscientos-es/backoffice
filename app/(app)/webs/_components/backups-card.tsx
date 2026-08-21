@@ -15,9 +15,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePasskeyVerification } from "@/components/security/use-passkey-verification";
 import type { FileBrowserItem, FileBrowserListing } from "@/lib/filebrowser";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
-import { verifyWithPasskey } from "@/lib/security/webauthn-client";
 import { ForceBackupButton } from "./force-backup-button";
 
 // Session-scoped stale-while-revalidate cache. Keyed by `slug:subPath`, it lets
@@ -80,6 +80,7 @@ function FileRow({
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pending, startTransition] = useTransition();
+  const { challenge, verifyWithPasskey } = usePasskeyVerification();
 
   function onConfirmDelete() {
     startTransition(async () => {
@@ -146,6 +147,7 @@ function FileRow({
           />
         </>
       )}
+      {challenge}
     </div>
   );
 }

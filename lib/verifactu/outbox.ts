@@ -1,11 +1,11 @@
-import { scopedLogger } from "@/lib/logger";
-import { createAdminClient } from "@/lib/supabase/admin";
 import type {
   VerifactuConfig,
   VerifactuSoftware,
   VerifactuSubmitInput,
   VerifactuSubmitResult,
 } from "@doscientos/verifactu";
+import { scopedLogger } from "@/lib/logger";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { verifactuInvoiceConfigFromEnv } from "./config";
 
 const log = scopedLogger("verifactu.outbox");
@@ -199,22 +199,22 @@ function altaInput(payload: Record<string, unknown>): VerifactuSubmitInput {
       references(payload, "rectifiedInvoices") ??
       (payload.rectifiedInvoiceNumber
         ? [
-          {
-            invoiceNumber: text(payload, "rectifiedInvoiceNumber"),
-            issueDate: date(payload, "rectifiedInvoiceIssueDate"),
-          },
-        ]
+            {
+              invoiceNumber: text(payload, "rectifiedInvoiceNumber"),
+              issueDate: date(payload, "rectifiedInvoiceIssueDate"),
+            },
+          ]
         : undefined),
     rectificationAmounts:
       payload.rectificationAmounts && typeof payload.rectificationAmounts === "object"
         ? (() => {
-          const value = asRecord(payload.rectificationAmounts);
-          return {
-            base: amount(value, "base"),
-            tax: amount(value, "tax"),
-            surcharge: value.surcharge === undefined ? undefined : amount(value, "surcharge"),
-          };
-        })()
+            const value = asRecord(payload.rectificationAmounts);
+            return {
+              base: amount(value, "base"),
+              tax: amount(value, "tax"),
+              surcharge: value.surcharge === undefined ? undefined : amount(value, "surcharge"),
+            };
+          })()
         : undefined,
     operationDate: payload.operationDate ? date(payload, "operationDate") : undefined,
     subsanacion: optionalEnum(payload, "subsanacion", ["S", "N"] as const),
@@ -344,11 +344,11 @@ async function complete(
   const message = formatOutboxError(error ? explicitError : null, result);
   const enrichedResponse = result
     ? sanitizeResponse({
-      ...result.response,
-      errorCode: result.errorCode,
-      aeatStatus: (result as VerifactuSubmitResult & { aeatStatus?: unknown }).aeatStatus,
-      warnings: (result as VerifactuSubmitResult & { warnings?: unknown }).warnings,
-    })
+        ...result.response,
+        errorCode: result.errorCode,
+        aeatStatus: (result as VerifactuSubmitResult & { aeatStatus?: unknown }).aeatStatus,
+        warnings: (result as VerifactuSubmitResult & { warnings?: unknown }).warnings,
+      })
     : { kind: "delivery_error" };
   const { error: completionError } = await admin.rpc("complete_verifactu_outbox_v2", {
     p_outbox_id: outboxId,
@@ -370,8 +370,8 @@ async function complete(
     warnings:
       (
         result as
-        | (VerifactuSubmitResult & { warnings?: Array<{ code: string | null; message: string }> })
-        | null
+          | (VerifactuSubmitResult & { warnings?: Array<{ code: string | null; message: string }> })
+          | null
       )?.warnings ?? [],
   };
 }

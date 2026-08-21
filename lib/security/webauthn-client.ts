@@ -25,14 +25,7 @@ function browserError(error: unknown): Result {
   return { ok: false, error: "No se ha podido completar la verificación biométrica" };
 }
 
-/** Runs a complete, server-verified WebAuthn step-up flow for one explicit intent. */
-export async function verifyWithPasskey(scope: UserVerificationScope): Promise<Result> {
-  const started = await preparePasskeyAuthentication(scope);
-  if (!started.ok) return started;
-  return completePasskeyAuthentication(scope, started.options);
-}
-
-/** Prepares the challenge before a confirmation click so Windows Hello keeps user activation. */
+/** Prepares the challenge before a confirmation click preserves user activation. */
 export async function preparePasskeyAuthentication(
   scope: UserVerificationScope,
 ): Promise<StartedAuthentication> {

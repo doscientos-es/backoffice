@@ -4,8 +4,8 @@ import { Database as DatabaseBackup, LoaderCircle as Loader2 } from "lucide-reac
 import { useTransition } from "react";
 import { sileo } from "sileo";
 import { Button } from "@/components/ui/button";
+import { usePasskeyVerification } from "@/components/security/use-passkey-verification";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
-import { verifyWithPasskey } from "@/lib/security/webauthn-client";
 import { triggerWebBackup } from "../actions";
 
 type Props = {
@@ -20,6 +20,7 @@ type Props = {
  */
 export function ForceBackupButton({ projectId, slug }: Props) {
   const [pending, startTransition] = useTransition();
+  const { challenge, verifyWithPasskey } = usePasskeyVerification();
 
   function onClick() {
     startTransition(async () => {
@@ -40,13 +41,16 @@ export function ForceBackupButton({ projectId, slug }: Props) {
   }
 
   return (
-    <Button type="button" variant="outline" size="sm" onClick={onClick} disabled={pending}>
-      {pending ? (
-        <Loader2 className="mr-1.5 size-4 animate-spin" />
-      ) : (
-        <DatabaseBackup className="mr-1.5 size-4" />
-      )}
-      Forzar backup
-    </Button>
+    <>
+      <Button type="button" variant="outline" size="sm" onClick={onClick} disabled={pending}>
+        {pending ? (
+          <Loader2 className="mr-1.5 size-4 animate-spin" />
+        ) : (
+          <DatabaseBackup className="mr-1.5 size-4" />
+        )}
+        Forzar backup
+      </Button>
+      {challenge}
+    </>
   );
 }

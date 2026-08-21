@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { MfaChallengeDialog } from "@/components/security/mfa-challenge-dialog";
+import { usePasskeyVerification } from "@/components/security/use-passkey-verification";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
-import { verifyWithPasskey } from "@/lib/security/webauthn-client";
 import { getBrowserClient } from "@/lib/supabase/browser";
 import type { InvoiceFeedback, InvoiceStatusChange } from "./invoice-action-contracts";
 
@@ -11,6 +11,7 @@ import type { InvoiceFeedback, InvoiceStatusChange } from "./invoice-action-cont
 export function useInvoiceStatusVerification(invoiceId: string, feedback: InvoiceFeedback) {
   const [mfaOpen, setMfaOpen] = useState(false);
   const [resolver, setResolver] = useState<((verified: boolean) => void) | null>(null);
+  const { challenge: passkeyChallenge, verifyWithPasskey } = usePasskeyVerification();
 
   const ensureAal2 = async (): Promise<boolean> => {
     const { data, error } = await getBrowserClient().auth.mfa.getAuthenticatorAssuranceLevel();
@@ -32,21 +33,24 @@ export function useInvoiceStatusVerification(invoiceId: string, feedback: Invoic
   };
 
   const challenge = (
-    <MfaChallengeDialog
-      open={mfaOpen}
-      onOpenChange={(open) => {
-        setMfaOpen(open);
-        if (!open) {
-          resolver?.(false);
+    <>
+      {passkeyChallenge}
+      <MfaChallengeDialog
+        open={mfaOpen}
+        onOpenChange={(open) => {
+          setMfaOpen(open);
+          if (!open) {
+            resolver?.(false);
+            setResolver(null);
+          }
+        }}
+        onVerified={() => {
+          setMfaOpen(false);
+          resolver?.(true);
           setResolver(null);
-        }
-      }}
-      onVerified={() => {
-        setMfaOpen(false);
-        resolver?.(true);
-        setResolver(null);
-      }}
-    />
+        }}
+      />
+    </>
   );
 
   return { challenge, verifyStatusChange };

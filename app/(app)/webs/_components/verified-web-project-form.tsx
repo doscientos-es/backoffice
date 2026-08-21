@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
+import { usePasskeyVerification } from "@/components/security/use-passkey-verification";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
 import type { ActionResult } from "@/lib/actions/types";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
-import { verifyWithPasskey } from "@/lib/security/webauthn-client";
 import type { WebProjectDetail } from "@/lib/webs/types";
 import { createWebProject, updateWebProject } from "../actions";
 import { WebFormFields } from "./web-form-fields";
@@ -23,6 +23,7 @@ type Props = {
 export function VerifiedWebProjectForm({ clients, mode, projectId, defaults }: Props) {
   const feedback = useFormFeedback();
   const [pending, startTransition] = useTransition();
+  const { challenge, verifyWithPasskey } = usePasskeyVerification();
   const isCreate = mode === "create";
   const resource = isCreate ? "web:create" : `web:${projectId}`;
 
@@ -65,6 +66,7 @@ export function VerifiedWebProjectForm({ clients, mode, projectId, defaults }: P
           {isCreate ? "Crear web" : "Guardar cambios"}
         </SubmitButton>
       </div>
+      {challenge}
     </form>
   );
 }
