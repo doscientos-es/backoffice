@@ -23,6 +23,7 @@ import {
   formatOutboxError,
   isRetryableVerifactuDelivery,
   MISSING_DURABLE_FISCAL_RECORD_MESSAGE,
+  normalizeAltaRechazoPrevio,
   resolveVerifactuSoftwareSnapshot,
 } from "./outbox";
 
@@ -67,6 +68,14 @@ describe("resolveVerifactuSoftwareSnapshot", () => {
     expect(() => resolveVerifactuSoftwareSnapshot({ software: {} }, fallback)).toThrow(
       "Payload fiscal inválido: producerName",
     );
+  });
+});
+
+describe("normalizeAltaRechazoPrevio", () => {
+  it("omits the normal marker and preserves recovery markers", () => {
+    expect(normalizeAltaRechazoPrevio("N")).toBeUndefined();
+    expect(normalizeAltaRechazoPrevio("S")).toBe("S");
+    expect(normalizeAltaRechazoPrevio("X")).toBe("X");
   });
 });
 
