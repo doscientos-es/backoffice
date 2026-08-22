@@ -47,9 +47,11 @@ const ROLE_VARIANT: Record<MemberRole, "default" | "info" | "neutral"> = {
 export function UserMenu({
   user,
   showSettings = true,
+  avatarOnly = false,
 }: {
   user: CurrentUser;
   showSettings?: boolean;
+  avatarOnly?: boolean;
 }) {
   const router = useRouter();
   const [signOutError, setSignOutError] = useState<string | null>(null);
@@ -74,8 +76,8 @@ export function UserMenu({
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          size="sm"
-          className="h-8 gap-2 pr-2 pl-1"
+          size={avatarOnly ? "icon" : "sm"}
+          className={avatarOnly ? "p-0" : "h-8 gap-2 pr-2 pl-1"}
           aria-label="Menú de usuario"
         >
           <Avatar size="sm">
@@ -84,7 +86,9 @@ export function UserMenu({
             ) : null}
             <AvatarFallback>{initials(user.name)}</AvatarFallback>
           </Avatar>
-          <span className="hidden text-xs font-medium text-primary md:inline">{user.name}</span>
+          {!avatarOnly ? (
+            <span className="hidden text-xs font-medium text-primary md:inline">{user.name}</span>
+          ) : null}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={6} className="w-56">

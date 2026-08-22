@@ -5,6 +5,7 @@ import { Sidebar } from "./sidebar";
 
 let pathname = "/inicio";
 let showSettings: boolean | undefined;
+let avatarOnly: boolean | undefined;
 
 vi.mock("next/link", () => ({
   default: ({ children, href, ...props }: React.ComponentProps<"a">) => (
@@ -23,9 +24,16 @@ vi.mock("@/components/layout/notifications-bell", () => ({
   NotificationsBell: () => <button type="button" aria-label="Notificaciones" />,
 }));
 vi.mock("@/components/layout/user-menu", () => ({
-  UserMenu: ({ showSettings: value }: { showSettings?: boolean }) => {
-    showSettings = value;
-    return <div data-testid="user-menu" />;
+  UserMenu: ({
+    showSettings: showSettingsValue,
+    avatarOnly: avatarOnlyValue,
+  }: {
+    showSettings?: boolean;
+    avatarOnly?: boolean;
+  }) => {
+    showSettings = showSettingsValue;
+    avatarOnly = avatarOnlyValue;
+    return <div data-testid="user-menu" data-avatar-only={avatarOnlyValue} />;
   },
 }));
 vi.mock("@/components/theme-toggle", () => ({
@@ -62,7 +70,7 @@ describe("Sidebar actions", () => {
     expect(sidebar?.className).not.toContain("hidden");
   });
 
-  it("places theme, notifications, and settings together above the profile menu", () => {
+  it("places the avatar-only profile menu beside the utility actions", () => {
     render(<Sidebar user={user} demoMode={false} />);
 
     const settings = screen.getByRole("link", { name: "Ajustes" });
@@ -70,11 +78,10 @@ describe("Sidebar actions", () => {
     const notifications = screen.getByRole("button", { name: "Notificaciones" });
     expect(settings.getAttribute("href")).toBe("/settings");
     expect(showSettings).toBe(false);
+    expect(avatarOnly).toBe(true);
     expect(settings.parentElement).toBe(theme.parentElement);
     expect(settings.parentElement).toBe(notifications.parentElement);
-    expect(settings.compareDocumentPosition(screen.getByTestId("user-menu"))).toBe(
-      Node.DOCUMENT_POSITION_FOLLOWING,
-    );
+    expect(settings.parentElement).toBe(screen.getByTestId("user-menu").parentElement);
     expect(screen.queryByText(/^AEAT /)).toBeNull();
   });
 
