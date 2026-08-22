@@ -1,6 +1,7 @@
 import "server-only";
 
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { publicEnv, serverEnv } from "@/lib/env";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type {
   AuthenticationResponseJSON,
   AuthenticatorTransportFuture,
@@ -12,15 +13,16 @@ import {
   verifyAuthenticationResponse,
   verifyRegistrationResponse,
 } from "@simplewebauthn/server";
-import { cookies } from "next/headers";
-import { publicEnv, serverEnv } from "@/lib/env";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { cookies, headers } from "next/headers";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { grantUserVerification } from "./user-verification";
 import type { UserVerificationScope } from "./user-verification-scope";
 
 const CHALLENGE_COOKIE = "webauthn_challenge";
 const CHALLENGE_MAX_AGE_SECONDS = 5 * 60;
 const TRANSPORTS = ["ble", "cable", "hybrid", "internal", "nfc", "smart-card", "usb"] as const;
+const PRODUCTION_ORIGIN = "https://app.doscientos.es";
+const PRODUCTION_RP_ID = "app.doscientos.es";
 
 type ChallengeKind = "registration" | "authentication";
 type Challenge = {
@@ -28,6 +30,8 @@ type Challenge = {
   userId: string;
   kind: ChallengeKind;
   scope?: UserVerificationScope;
+  expectedOrigin: string;
+  rpID: string;
   expiresAt: number;
 };
 type WebAuthnUser = { id: string; email: string; name: string };
@@ -35,12 +39,50 @@ type CredentialRow = {
   credential_id: string;
   public_key: string;
   counter: number;
+  rp_id: string | null;
   transports: string[] | null;
 };
 
-function config() {
-  const appUrl = new URL(publicEnv.NEXT_PUBLIC_APP_URL);
-  return { expectedOrigin: appUrl.origin, rpID: appUrl.hostname, rpName: "Doscientos" };
+type RequestOrigin = { origin: string | null; host: string | null; protocol: string | null };
+type WebAuthnConfig = { expectedOrigin: string; rpID: string; rpName: string };
+
+function requestOrigin({ origin, host, protocol }: RequestOrigin): string | null {
+  if (origin) return origin;
+  if (!host) return null;
+  return `${protocol?.split(",")[0]?.trim() || (host.startsWith("localhost") ? "http" : "https")}://${host}`;
+}
+
+/** Resolves only origins that are deliberately allowed to perform WebAuthn ceremonies. */
+export function resolveWebAuthnConfig(request: RequestOrigin): WebAuthnConfig {
+  const origin = requestOrigin(request);
+  if (origin === PRODUCTION_ORIGIN) {
+    return { expectedOrigin: PRODUCTION_ORIGIN, rpID: PRODUCTION_RP_ID, rpName: "Doscientos" };
+  }
+
+  try {
+    const url = new URL(origin ?? "");
+    if (url.protocol === "http:" && url.hostname === "localhost") {
+      return { expectedOrigin: url.origin, rpID: "localhost", rpName: "Doscientos (local)" };
+    }
+
+    const demoUrl = new URL(publicEnv.NEXT_PUBLIC_APP_URL);
+    if (publicEnv.NEXT_PUBLIC_DEMO_MODE === "true" && url.origin === demoUrl.origin) {
+      return { expectedOrigin: demoUrl.origin, rpID: demoUrl.hostname, rpName: "Doscientos demo" };
+    }
+  } catch {
+    // Fall through to the generic, non-sensitive configuration error below.
+  }
+
+  throw new Error("La biometría solo está disponible en el dominio seguro configurado");
+}
+
+async function config(): Promise<WebAuthnConfig> {
+  const requestHeaders = await headers();
+  return resolveWebAuthnConfig({
+    origin: requestHeaders.get("origin"),
+    host: requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host"),
+    protocol: requestHeaders.get("x-forwarded-proto"),
+  });
 }
 
 function sign(value: string): string {
@@ -110,36 +152,33 @@ function validTransports(transports: string[] | null): AuthenticatorTransportFut
   return result.length > 0 ? result : undefined;
 }
 
-async function credentialsFor(userId: string): Promise<CredentialRow[]> {
+async function credentialsFor(userId: string, rpID: string): Promise<CredentialRow[]> {
   // Credentials are security factors: direct browser writes are blocked by RLS.
   // This server-only lookup is safe because every caller supplies the current user.
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("webauthn_credentials")
-    .select("credential_id, public_key, counter, transports")
+    .select("credential_id, public_key, counter, rp_id, transports")
     .eq("user_id", userId);
   if (error) throw new Error("No se han podido consultar las credenciales biométricas");
-  return (data as CredentialRow[] | null) ?? [];
+  return ((data as CredentialRow[] | null) ?? []).filter(
+    (credential) => credential.rp_id === rpID || (!credential.rp_id && rpID === PRODUCTION_RP_ID),
+  );
 }
 
 /** Returns whether the current user has at least one registered passkey. */
 export async function hasRegisteredPasskey(userId: string): Promise<boolean> {
-  const supabase = createAdminClient();
-  const { count, error } = await supabase
-    .from("webauthn_credentials")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId);
-  if (error) throw new Error("No se han podido consultar las credenciales biométricas");
-  return (count ?? 0) > 0;
+  const { rpID } = await config();
+  return (await credentialsFor(userId, rpID)).length > 0;
 }
 
 /** Creates an attestation challenge after the caller has applied its enrollment policy. */
 export async function createPasskeyRegistrationOptions(user: WebAuthnUser) {
-  const { rpID, rpName } = config();
-  const existing = await credentialsFor(user.id);
+  const webauthn = await config();
+  const existing = await credentialsFor(user.id, webauthn.rpID);
   const options = await generateRegistrationOptions({
-    rpName,
-    rpID,
+    rpName: webauthn.rpName,
+    rpID: webauthn.rpID,
     userName: user.email,
     userDisplayName: user.name,
     userID: new TextEncoder().encode(user.id),
@@ -155,6 +194,8 @@ export async function createPasskeyRegistrationOptions(user: WebAuthnUser) {
     challenge: options.challenge,
     userId: user.id,
     kind: "registration",
+    expectedOrigin: webauthn.expectedOrigin,
+    rpID: webauthn.rpID,
     expiresAt: Date.now() + CHALLENGE_MAX_AGE_SECONDS * 1000,
   });
   return options;
@@ -166,12 +207,15 @@ export async function verifyPasskeyRegistration(
   response: RegistrationResponseJSON,
 ): Promise<void> {
   const challenge = await consumeChallenge(userId, "registration");
-  const { expectedOrigin, rpID } = config();
+  const webauthn = await config();
+  if (challenge.expectedOrigin !== webauthn.expectedOrigin || challenge.rpID !== webauthn.rpID) {
+    throw new Error("La verificación no corresponde a este sitio");
+  }
   const verification = await verifyRegistrationResponse({
     response,
     expectedChallenge: challenge.challenge,
-    expectedOrigin,
-    expectedRPID: rpID,
+    expectedOrigin: webauthn.expectedOrigin,
+    expectedRPID: webauthn.rpID,
     requireUserVerification: true,
   });
   if (!verification.verified || !verification.registrationInfo?.userVerified) {
@@ -190,6 +234,7 @@ export async function verifyPasskeyRegistration(
     transports: response.response.transports ?? [],
     device_type: credentialDeviceType,
     backed_up: credentialBackedUp,
+    rp_id: webauthn.rpID,
   });
   if (error) throw new Error("No se ha podido guardar la credencial biométrica");
 }
@@ -199,12 +244,12 @@ export async function createPasskeyAuthenticationOptions(
   userId: string,
   scope: UserVerificationScope,
 ) {
-  const { rpID } = config();
-  const existing = await credentialsFor(userId);
+  const webauthn = await config();
+  const existing = await credentialsFor(userId, webauthn.rpID);
   if (existing.length === 0) throw new Error("No tienes biometría configurada en esta cuenta");
 
   const options = await generateAuthenticationOptions({
-    rpID,
+    rpID: webauthn.rpID,
     timeout: CHALLENGE_MAX_AGE_SECONDS * 1000,
     userVerification: "required",
     allowCredentials: existing.map((credential) => ({
@@ -217,6 +262,8 @@ export async function createPasskeyAuthenticationOptions(
     userId,
     kind: "authentication",
     scope,
+    expectedOrigin: webauthn.expectedOrigin,
+    rpID: webauthn.rpID,
     expiresAt: Date.now() + CHALLENGE_MAX_AGE_SECONDS * 1000,
   });
   return options;
@@ -233,17 +280,20 @@ export async function verifyPasskeyAuthentication(
     throw new Error("La verificación no corresponde a esta acción");
   }
 
-  const credential = (await credentialsFor(userId)).find(
+  const webauthn = await config();
+  if (challenge.expectedOrigin !== webauthn.expectedOrigin || challenge.rpID !== webauthn.rpID) {
+    throw new Error("La verificación no corresponde a este sitio");
+  }
+  const credential = (await credentialsFor(userId, webauthn.rpID)).find(
     (candidate) => candidate.credential_id === response.id,
   );
   if (!credential) throw new Error("La credencial biométrica no está autorizada");
 
-  const { expectedOrigin, rpID } = config();
   const verification = await verifyAuthenticationResponse({
     response,
     expectedChallenge: challenge.challenge,
-    expectedOrigin,
-    expectedRPID: rpID,
+    expectedOrigin: webauthn.expectedOrigin,
+    expectedRPID: webauthn.rpID,
     requireUserVerification: true,
     credential: {
       id: credential.credential_id,
@@ -263,6 +313,7 @@ export async function verifyPasskeyAuthentication(
     .update({
       counter: verification.authenticationInfo.newCounter,
       last_used_at: new Date().toISOString(),
+      rp_id: webauthn.rpID,
     })
     .eq("user_id", userId)
     .eq("credential_id", credential.credential_id);

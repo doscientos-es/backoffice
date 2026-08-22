@@ -66,7 +66,8 @@ function browserError(error: unknown): Result {
   if (name === "UnknownError") {
     return {
       ok: false,
-      error: "El autenticador del dispositivo no ha podido procesar la passkey. Inténtalo de nuevo o añade otra desde Bóveda.",
+      error:
+        "El autenticador del dispositivo no ha podido procesar la passkey. Inténtalo de nuevo o añade otra desde Bóveda.",
     };
   }
   return { ok: false, error: "No se ha podido completar la verificación biométrica" };
