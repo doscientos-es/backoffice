@@ -1,8 +1,9 @@
 import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const migration = (name: string) =>
-  readFileSync(new URL(`../../supabase/migrations/${name}`, import.meta.url), "utf8");
+  readFileSync(join(process.cwd(), "supabase", "migrations", name), "utf8");
 
 describe("VERI*FACTU recovery migrations", () => {
   it("uses Alta por rechazo and only unblocks rejected predecessors for X", () => {

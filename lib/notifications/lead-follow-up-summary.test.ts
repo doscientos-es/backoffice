@@ -1,5 +1,5 @@
-import type { FollowUps } from "@/lib/integrations/follow-ups";
 import { describe, expect, it } from "vitest";
+import type { FollowUps } from "@/lib/integrations/follow-ups";
 import { collectLeadFollowUpSummaries, formatLeadFollowUpSummary } from "./lead-follow-up-summary";
 
 const base: FollowUps = {
