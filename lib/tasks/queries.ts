@@ -42,6 +42,7 @@ export async function listTasksBoard(params: TaskBoardParams): Promise<TaskBoard
   if (params.q && params.q.length > 0) query = query.ilike("title", `%${escapeIlike(params.q)}%`);
   if (params.priority) query = query.eq("priority", params.priority);
   if (params.projectId) query = query.eq("project_id", params.projectId);
+  if (params.assigneeId) query = query.eq("assignee_id", params.assigneeId);
 
   const { data, error } = await query
     .order("kanban_order", { ascending: true, nullsFirst: false })
@@ -84,6 +85,7 @@ export async function listTasksList(params: TaskListParams): Promise<TaskListRes
   if (params.status) query = query.eq("status", params.status);
   if (params.priority) query = query.eq("priority", params.priority);
   if (params.projectId) query = query.eq("project_id", params.projectId);
+  if (params.assigneeId) query = query.eq("assignee_id", params.assigneeId);
 
   const sortCol = params.sort ?? "priority";
   const ascending = params.sort ? params.dir !== "desc" : sortCol !== "priority";

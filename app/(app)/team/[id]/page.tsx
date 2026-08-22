@@ -3,8 +3,11 @@ import {
   CheckSquare,
   Clock as Clock3,
   GitBranch as Github,
+  ListTodo,
   Mail,
+  MessageSquare,
   Phone,
+  TriangleAlert,
   Users,
 } from "lucide-react";
 import type { Metadata } from "next";
@@ -20,6 +23,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { type MemberRole, requireUser } from "@/lib/auth";
+import { ACTIVE_LEAD_STATUSES } from "@/lib/leads/pipeline";
 import { LEAD_STATUS, PROJECT_STATUS, TASK_STATUS } from "@/lib/status";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, memberAvatarUrl, relativeTime } from "@/lib/utils";
@@ -98,6 +102,7 @@ type TaskCommentRow = {
 
 type MemberActivity = {
   id: string;
+  kind: "interaction" | "comment" | "work_log";
   title: string;
   detail: string;
   created_at: string;
@@ -112,6 +117,12 @@ const INTERACTION_LABELS: Record<string, string> = {
   owner_change: "Cambió el responsable",
   status_change: "Cambió el estado",
 };
+
+const ACTIVITY_ICONS = {
+  interaction: MessageSquare,
+  comment: ListTodo,
+  work_log: Clock3,
+} as const;
 
 function initials(name: string): string {
   return (
@@ -172,6 +183,7 @@ export default async function TeamMemberDetailPage({
     { data: proposalMembersData },
     { data: interactionsData },
     { data: taskCommentsData },
+    { count: staleLeadCount },
   ] = await Promise.all([
     supabase
       .from("team_members")
@@ -218,6 +230,13 @@ export default async function TeamMemberDetailPage({
       .eq("author_id", id)
       .order("created_at", { ascending: false })
       .limit(20),
+    supabase
+      .from("leads")
+      .select("id", { count: "exact", head: true })
+      .eq("assigned_to", id)
+      .in("status", ACTIVE_LEAD_STATUSES as unknown as string[])
+      .lt("updated_at", new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString())
+      .is("deleted_at", null),
   ]);
 
   if (!memberData) notFound();
@@ -231,11 +250,11 @@ export default async function TeamMemberDetailPage({
 
   const { data: collaboratorTasksData } = collaboratorTaskIds.length
     ? await supabase
-        .from("tasks")
-        .select("id, title, status, due_date, project_id, projects(id, name, status)")
-        .in("id", collaboratorTaskIds)
-        .is("deleted_at", null)
-        .order("updated_at", { ascending: false })
+      .from("tasks")
+      .select("id, title, status, due_date, project_id, projects(id, name, status)")
+      .in("id", collaboratorTaskIds)
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false })
     : { data: [] };
 
   const tasks = [...directTasks, ...((collaboratorTasksData ?? []) as unknown as TaskRow[])];
@@ -246,10 +265,10 @@ export default async function TeamMemberDetailPage({
 
   const { data: proposalRowsData } = proposalIds.length
     ? await supabase
-        .from("proposals")
-        .select("project_id")
-        .in("id", proposalIds)
-        .is("deleted_at", null)
+      .from("proposals")
+      .select("project_id")
+      .in("id", proposalIds)
+      .is("deleted_at", null)
     : { data: [] };
 
   const projectIds = [
@@ -264,11 +283,11 @@ export default async function TeamMemberDetailPage({
 
   const { data: projectData } = projectIds.length
     ? await supabase
-        .from("projects")
-        .select("id, name, status, clients(name)")
-        .in("id", projectIds)
-        .is("deleted_at", null)
-        .order("updated_at", { ascending: false })
+      .from("projects")
+      .select("id, name, status, clients(name)")
+      .in("id", projectIds)
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false })
     : { data: [] };
 
   const projects = (projectData ?? []).map((row) =>
@@ -279,6 +298,17 @@ export default async function TeamMemberDetailPage({
     const hours = typeof log.hours === "string" ? Number.parseFloat(log.hours) : log.hours;
     return total + (Number.isFinite(hours) ? hours : 0);
   }, 0);
+  const openTasks = tasks.filter((task) => task.status !== "done" && task.status !== "cancelled");
+  const today = new Date().toISOString().slice(0, 10);
+  const overdueTasks = openTasks.filter((task) => task.due_date && task.due_date < today).length;
+  const weekStart = new Date();
+  weekStart.setDate(weekStart.getDate() - 6);
+  const weekStartDate = weekStart.toISOString().slice(0, 10);
+  const weeklyHours = workLogs.reduce((total, log) => {
+    if (log.work_date < weekStartDate) return total;
+    const hours = typeof log.hours === "string" ? Number.parseFloat(log.hours) : log.hours;
+    return total + (Number.isFinite(hours) ? hours : 0);
+  }, 0);
   const avatarUrl = memberAvatarUrl({
     avatarUrl: member.avatar_url,
     githubHandle: member.github_handle,
@@ -286,6 +316,7 @@ export default async function TeamMemberDetailPage({
   const recentActivity: MemberActivity[] = [
     ...interactions.map((interaction) => ({
       id: `interaction-${interaction.id}`,
+      kind: "interaction" as const,
       title: INTERACTION_LABELS[interaction.type] ?? "Registró una interacción",
       detail: interaction.subject ?? interaction.leads?.name ?? "Lead",
       created_at: interaction.created_at,
@@ -293,6 +324,7 @@ export default async function TeamMemberDetailPage({
     })),
     ...taskComments.map((comment) => ({
       id: `comment-${comment.id}`,
+      kind: "comment" as const,
       title: "Comentó una tarea",
       detail: comment.tasks?.title ?? "Tarea",
       created_at: comment.created_at,
@@ -300,6 +332,7 @@ export default async function TeamMemberDetailPage({
     })),
     ...workLogs.map((log) => ({
       id: `work-log-${log.id}`,
+      kind: "work_log" as const,
       title: `Registró ${hoursLabel(Number(log.hours) || 0)}`,
       detail: projectById.get(log.project_id)?.name ?? log.projects?.name ?? "Proyecto",
       created_at: log.work_date,
@@ -331,6 +364,7 @@ export default async function TeamMemberDetailPage({
           value={leadCount ?? leadsData?.length ?? 0}
           icon={Users}
           tone="info"
+          href={`/leads?view=list&assignee=${member.id}`}
         />
         <StatCard
           label="Proyectos"
@@ -338,9 +372,47 @@ export default async function TeamMemberDetailPage({
           icon={BriefcaseBusiness}
           tone="success"
         />
-        <StatCard label="Tareas" value={tasks.length} icon={CheckSquare} tone="warning" />
-        <StatCard label="Horas registradas" value={hoursLabel(totalHours)} icon={Clock3} />
+        <StatCard
+          label="Tareas abiertas"
+          value={openTasks.length}
+          icon={CheckSquare}
+          tone={overdueTasks > 0 ? "warning" : "default"}
+          hint={overdueTasks > 0 ? `${overdueTasks} vencida${overdueTasks === 1 ? "" : "s"}` : undefined}
+          href={`/tasks?view=list&assignee=${member.id}`}
+        />
+        <StatCard label="Horas esta semana" value={hoursLabel(weeklyHours)} icon={Clock3} />
       </div>
+
+      <Card className="border-amber-500/20 bg-amber-500/[0.03]">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TriangleAlert className="size-4 text-amber-600 dark:text-amber-400" aria-hidden />
+            Requiere atención
+          </CardTitle>
+          <CardDescription>Señales que conviene revisar antes de que bloqueen el trabajo.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-2">
+          {overdueTasks > 0 ? (
+            <Link
+              href={`/tasks?view=list&assignee=${member.id}`}
+              className="rounded-md bg-background px-3 py-2 text-sm font-medium shadow-xs transition-colors hover:bg-muted"
+            >
+              {overdueTasks} tarea{overdueTasks === 1 ? "" : "s"} vencida{overdueTasks === 1 ? "" : "s"}
+            </Link>
+          ) : null}
+          {(staleLeadCount ?? 0) > 0 ? (
+            <Link
+              href={`/leads?view=list&assignee=${member.id}&attention=stale`}
+              className="rounded-md bg-background px-3 py-2 text-sm font-medium shadow-xs transition-colors hover:bg-muted"
+            >
+              {staleLeadCount} lead{staleLeadCount === 1 ? "" : "s"} estancado{staleLeadCount === 1 ? "" : "s"}
+            </Link>
+          ) : null}
+          {overdueTasks === 0 && (staleLeadCount ?? 0) === 0 ? (
+            <p className="text-sm text-muted-foreground">Sin bloqueos detectados en tareas o leads.</p>
+          ) : null}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
         <Card>
@@ -458,8 +530,12 @@ export default async function TeamMemberDetailPage({
           ) : (
             <ol className="divide-y divide-border">
               {recentActivity.map((activity) => {
+                const ActivityIcon = ACTIVITY_ICONS[activity.kind];
                 const content = (
                   <>
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                      <ActivityIcon className="size-3.5" aria-hidden />
+                    </span>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{activity.title}</p>
                       <p className="truncate text-xs text-muted-foreground">{activity.detail}</p>
@@ -478,12 +554,12 @@ export default async function TeamMemberDetailPage({
                     {activity.href ? (
                       <Link
                         href={activity.href}
-                        className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-muted/50"
+                        className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50"
                       >
                         {content}
                       </Link>
                     ) : (
-                      <div className="flex items-center justify-between gap-3 px-4 py-3">
+                      <div className="flex items-center gap-3 px-4 py-3">
                         {content}
                       </div>
                     )}
@@ -498,7 +574,12 @@ export default async function TeamMemberDetailPage({
       <div className="grid gap-6 xl:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Leads asignados</CardTitle>
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle>Leads asignados</CardTitle>
+              <Link href={`/leads?view=list&assignee=${member.id}`} className="text-xs font-medium text-primary hover:underline">
+                Ver todos
+              </Link>
+            </div>
             <CardDescription>
               {leadCount ?? leadsData?.length ?? 0} {leadCount === 1 ? "lead" : "leads"} en total.
             </CardDescription>
@@ -533,7 +614,12 @@ export default async function TeamMemberDetailPage({
 
         <Card>
           <CardHeader>
-            <CardTitle>Tareas</CardTitle>
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle>Tareas</CardTitle>
+              <Link href={`/tasks?view=list&assignee=${member.id}`} className="text-xs font-medium text-primary hover:underline">
+                Ver asignadas
+              </Link>
+            </div>
             <CardDescription>Asignadas directamente o como colaborador.</CardDescription>
           </CardHeader>
           <CardContent className="px-0">

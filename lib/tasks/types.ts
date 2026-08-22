@@ -23,6 +23,7 @@ export type TaskBoardParams = {
   q?: string;
   priority?: string;
   projectId?: string;
+  assigneeId?: string;
 };
 
 export type TaskBoardResult = {
@@ -52,6 +53,7 @@ export type TaskListParams = {
   status?: string;
   priority?: string;
   projectId?: string;
+  assigneeId?: string;
   page?: number;
   sort?: string;
   dir?: "asc" | "desc";

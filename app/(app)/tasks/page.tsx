@@ -42,6 +42,7 @@ export default async function TasksPage({
   const status = parseStringParam(sp, "status");
   const priority = parseStringParam(sp, "priority");
   const projectId = parseStringParam(sp, "project");
+  const assigneeParam = parseStringParam(sp, "assignee");
   const page = parsePage(sp);
   const { sort, dir } = parseSortParam(sp, TASK_SORT_COLUMNS, "priority", "desc");
 
@@ -63,9 +64,16 @@ export default async function TasksPage({
   const membersList = (members ?? []) as Array<{ id: string; name: string }>;
 
   const PROJECT_OPTIONS = projectsList.map((p) => ({ value: p.id, label: p.name }));
+  const ASSIGNEE_OPTIONS = membersList.map((member) => ({ value: member.id, label: member.name }));
+  const assigneeId = membersList.some((member) => member.id === assigneeParam) ? assigneeParam : "";
 
   if (view === "board") {
-    const { items, capped, error: boardErr } = await listTasksBoard({ q, priority, projectId });
+    const { items, capped, error: boardErr } = await listTasksBoard({
+      q,
+      priority,
+      projectId,
+      assigneeId,
+    });
     const tasks = items as KanbanTask[];
 
     return (
@@ -93,6 +101,7 @@ export default async function TasksPage({
             filters={[
               { key: "project", label: "Proyecto", options: PROJECT_OPTIONS, searchable: true },
               { key: "priority", label: "Prioridad", options: PRIORITY_OPTIONS },
+              { key: "assignee", label: "Responsable", options: ASSIGNEE_OPTIONS, searchable: true },
             ]}
             className="border-b-0"
           />
@@ -119,6 +128,7 @@ export default async function TasksPage({
     status,
     priority,
     projectId,
+    assigneeId,
     page,
     sort,
     dir,
@@ -172,7 +182,7 @@ export default async function TasksPage({
     <ListPage
       title="Tareas"
       description="Organiza el trabajo del equipo y relaciónalo opcionalmente con proyectos, leads o clientes."
-      empty={q || status || priority || projectId ? "Sin coincidencias." : "Aún no hay tareas."}
+      empty={q || status || priority || projectId || assigneeId ? "Sin coincidencias." : "Aún no hay tareas."}
       error={error ?? undefined}
       searchKey="q"
       searchPlaceholder="Buscar por título…"
@@ -180,6 +190,7 @@ export default async function TasksPage({
         { key: "project", label: "Proyecto", options: PROJECT_OPTIONS },
         { key: "status", label: "Estado", options: STATUS_OPTIONS },
         { key: "priority", label: "Prioridad", options: PRIORITY_OPTIONS },
+        { key: "assignee", label: "Responsable", options: ASSIGNEE_OPTIONS, searchable: true },
       ]}
       pagination={{ page, pageSize: TASK_LIST_PAGE_SIZE, total: count }}
       actions={
