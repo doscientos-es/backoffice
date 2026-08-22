@@ -56,6 +56,8 @@ export function Sidebar({ user, demoMode }: { user: CurrentUser; demoMode: boole
               <NotificationsBell memberId={user.id} />
               <IconButton
                 asChild
+                variant="ghost"
+                className="border-0"
                 label="Ajustes"
                 aria-current={pathname.startsWith("/settings") ? "page" : undefined}
               >

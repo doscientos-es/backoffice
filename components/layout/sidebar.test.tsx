@@ -77,6 +77,8 @@ describe("Sidebar actions", () => {
     const theme = screen.getByRole("button", { name: "Cambiar tema" });
     const notifications = screen.getByRole("button", { name: "Notificaciones" });
     expect(settings.getAttribute("href")).toBe("/settings");
+    expect(settings.getAttribute("data-variant")).toBe("ghost");
+    expect(settings.className).toContain("border-0");
     expect(showSettings).toBe(false);
     expect(avatarOnly).toBe(true);
     expect(settings.parentElement).toBe(theme.parentElement);

@@ -283,7 +283,7 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
           type="button"
           variant="ghost"
           label={`Notificaciones${unread.length > 0 ? ` (${unread.length} sin leer)` : ""}`}
-          className="relative"
+          className="relative border-0"
         >
           <Bell className="h-4 w-4 text-muted-foreground" />
           {unread.length > 0 && (
