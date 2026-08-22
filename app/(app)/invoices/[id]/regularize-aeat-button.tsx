@@ -17,12 +17,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { regularizeVerifactu } from "../actions";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import {
   completePasskeyAuthentication,
   preparePasskeyAuthentication,
 } from "@/lib/security/webauthn-client";
+import { regularizeVerifactu } from "../actions";
 
 /**
  * Recovery action for a record confirmed absent from AEAT. It deliberately
@@ -143,7 +143,7 @@ export function RegularizeAeatButton({ invoiceId }: { invoiceId: string }) {
                 </DialogTitle>
                 <DialogDescription>
                   {phase === "verifying"
-                    ? "Confirma la operación con tu passkey o MFA."
+                    ? "Confirma la operación con tu passkey."
                     : "Estamos generando el nuevo registro y enviándolo a AEAT. No cierres esta ventana."}
                 </DialogDescription>
               </DialogHeader>
