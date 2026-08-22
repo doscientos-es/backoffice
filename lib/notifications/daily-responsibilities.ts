@@ -81,11 +81,11 @@ export function formatDailyResponsibilityBody(summary: DailyResponsibility): str
   const items = [
     summary.overdueTasks && formatCount(summary.overdueTasks, "tarea vencida", "tareas vencidas"),
     summary.tasksDueToday &&
-    formatCount(summary.tasksDueToday, "tarea para hoy", "tareas para hoy"),
+      formatCount(summary.tasksDueToday, "tarea para hoy", "tareas para hoy"),
     summary.pendingReminders &&
-    formatCount(summary.pendingReminders, "recordatorio pendiente", "recordatorios pendientes"),
+      formatCount(summary.pendingReminders, "recordatorio pendiente", "recordatorios pendientes"),
     summary.staleLeads &&
-    formatCount(summary.staleLeads, "lead sin seguimiento", "leads sin seguimiento"),
+      formatCount(summary.staleLeads, "lead sin seguimiento", "leads sin seguimiento"),
   ].filter((item): item is string => Boolean(item));
   return `Tienes ${items.join(", ")}.`;
 }

@@ -80,7 +80,6 @@ export default async function InicioPage({ searchParams }: PageProps) {
       <section className="flex flex-col gap-5" aria-labelledby="inicio-prioridades">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Ahora</p>
             <h2 id="inicio-prioridades" className="mt-1 text-xl font-semibold tracking-tight">
               Prioridades para avanzar
             </h2>

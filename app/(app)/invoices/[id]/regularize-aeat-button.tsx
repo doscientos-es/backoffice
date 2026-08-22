@@ -6,6 +6,7 @@ import {
   LoaderCircle as Loader2,
   Undo2 as RotateCcw,
 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,15 @@ import { regularizeVerifactu } from "../actions";
  * Recovery action for an AEAT-rejected record. It deliberately asks for
  * confirmation because it appends a new immutable fiscal record.
  */
-export function RegularizeAeatButton({ invoiceId }: { invoiceId: string }) {
+export function RegularizeAeatButton({
+  invoiceId,
+  clientId,
+  recipientFiscalReady = true,
+}: {
+  invoiceId: string;
+  clientId?: string | null;
+  recipientFiscalReady?: boolean;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<"confirm" | "verifying" | "sending" | "success" | "error">(
@@ -116,21 +125,33 @@ export function RegularizeAeatButton({ invoiceId }: { invoiceId: string }) {
           {phase === "confirm" ? (
             <>
               <DialogHeader>
-                <DialogTitle>Regularizar rechazo de AEAT</DialogTitle>
+                <DialogTitle>
+                  {recipientFiscalReady
+                    ? "Regularizar rechazo de AEAT"
+                    : "Valida el destinatario antes de regularizar"}
+                </DialogTitle>
                 <DialogDescription>
-                  AEAT rechazó el RegistroAlta original. No se reenviará ni modificará: se
-                  conservará como evidencia y se generará un nuevo registro de subsanación. Antes,
-                  confirma que los datos fiscales ya están corregidos.
+                  {recipientFiscalReady
+                    ? "AEAT rechazó el RegistroAlta original. No se reenviará ni modificará: se conservará como evidencia y se generará un nuevo registro de subsanación. Antes, confirma que los datos fiscales ya están corregidos."
+                    : "El NIF y la razón social deben validarse con el censo AEAT en las últimas 24 horas. Corrige los datos en la ficha del cliente y pulsa «Validar con AEAT» antes de volver aquí."}
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
                 <Button variant="ghost" onClick={() => setOpen(false)}>
                   Cancelar
                 </Button>
-                <Button onClick={passkeyOptions ? confirmWithPasskey : prepareVerification}>
-                  <RotateCcw className="size-4" />
-                  {passkeyOptions ? "Confirmar con biometría" : "Continuar con la regularización"}
-                </Button>
+                {recipientFiscalReady ? (
+                  <Button onClick={passkeyOptions ? confirmWithPasskey : prepareVerification}>
+                    <RotateCcw className="size-4" />
+                    {passkeyOptions
+                      ? "Confirmar con biometría"
+                      : "Continuar con la regularización"}
+                  </Button>
+                ) : clientId ? (
+                  <Button asChild>
+                    <Link href={`/clients/${clientId}`}>Ir al cliente y validar</Link>
+                  </Button>
+                ) : null}
               </DialogFooter>
             </>
           ) : null}

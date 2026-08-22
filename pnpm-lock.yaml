@@ -513,7 +513,7 @@ packages:
       react: '>=16.8.0'
 
   '@doscientos/ui@file:vendor/doscientos-ui-0.1.8.tgz':
-    resolution: {integrity: sha512-Z9bAF3q3Gdp9ocd+Poo9cRws+kFP/o7jCYu1iEYsiIggeZrxhG0nr2srK5rary5rzb7k5XvczBQBZbuKTQSmmA==, tarball: file:vendor/doscientos-ui-0.1.8.tgz}
+    resolution: {integrity: sha512-MhiKT18wuEAdnUa1nhz2dj6e/Z79egySf4VKNeub0OLrwweHAOU2r6yRrhHlQ29qRt/VwRhAkT4/It21XJSMDw==, tarball: file:vendor/doscientos-ui-0.1.8.tgz}
     version: 0.1.8
     peerDependencies:
       react: '>=18.3.0'

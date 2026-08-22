@@ -191,19 +191,14 @@ export function SendAeatButton({
               >
                 Usar código de autenticación
               </Button>
-              <Button
-                onClick={preparePasskeyVerification}
-                disabled={preparing || feedback.pending}
-              >
+              <Button onClick={preparePasskeyVerification} disabled={preparing || feedback.pending}>
                 {preparing ? "Preparando…" : "Usar biometría"}
               </Button>
             </>
           )
         }
       >
-        {verificationError ? (
-          <p className="text-sm text-destructive">{verificationError}</p>
-        ) : null}
+        {verificationError ? <p className="text-sm text-destructive">{verificationError}</p> : null}
       </ModalDialog>
       <MfaChallengeDialog
         open={mfaOpen}

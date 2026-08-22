@@ -18,6 +18,8 @@ import { useInvoiceStatusVerification } from "./use-invoice-status-verification"
 interface Props {
   invoice: InvoiceActionInvoice;
   clientEmail?: string | null;
+  clientId?: string | null;
+  recipientFiscalReady?: boolean;
 }
 
 /**
@@ -25,7 +27,7 @@ interface Props {
  * financial workflows live in focused modules so this component only declares
  * the visible action surface.
  */
-export function InvoiceActions({ invoice, clientEmail }: Props) {
+export function InvoiceActions({ invoice, clientEmail, clientId, recipientFiscalReady }: Props) {
   const router = useRouter();
   const feedback = useFormFeedback();
   const policy = getInvoiceActionPolicy(invoice);
@@ -97,7 +99,13 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
             }
           />
         ) : null}
-        {policy.shouldRegularizeAeat ? <RegularizeAeatButton invoiceId={invoice.id} /> : null}
+        {policy.shouldRegularizeAeat ? (
+          <RegularizeAeatButton
+            invoiceId={invoice.id}
+            clientId={clientId}
+            recipientFiscalReady={recipientFiscalReady}
+          />
+        ) : null}
       </div>
     </div>
   );

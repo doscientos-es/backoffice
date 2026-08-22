@@ -18,7 +18,7 @@ interface CopyButtonProps {
 }
 
 /**
- * Small icon-only button that copies `text` to the clipboard.
+ * Small button that copies `text` to the clipboard; icon-only by default.
  * Shows a ✓ tick for 1.5 s after a successful copy.
  */
 export function CopyButton({

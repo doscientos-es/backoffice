@@ -10,8 +10,12 @@ describe("VERI*FACTU recovery migrations", () => {
     const sql = migration("20260822130000_fix_verifactu_alta_por_rechazo.sql");
 
     expect(sql).toContain("v_right constant text := $right$'rechazoPrevio', 'X'");
-    expect(sql).toContain("$new$l.record_payload->>'rechazoPrevio' = 'X'$new$");
-    expect(sql).not.toContain("$new$l.record_payload->>'rechazoPrevio' in ('S', 'X')$new$");
+    expect(sql).toContain(
+      "v_right constant text := $right$l.record_payload->>'rechazoPrevio' = 'X'$right$",
+    );
+    expect(sql).toContain(
+      "v_wrong constant text := $wrong$l.record_payload->>'rechazoPrevio' in ('S', 'X')$wrong$",
+    );
   });
 
   it("applies the fresh AEAT recipient preflight to every regularization path", () => {

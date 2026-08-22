@@ -12,6 +12,33 @@ const base: FollowUps = {
 };
 
 describe("lead follow-up summaries", () => {
+  it("turns ten pending leads for one person into one summary", () => {
+    const summaries = collectLeadFollowUpSummaries(
+      {
+        ...base,
+        staleLeads: Array.from({ length: 10 }, (_, index) => ({
+          id: `lead-${index}`,
+          name: `Lead ${index}`,
+          company: null,
+          phone: null,
+          email: null,
+          status: "contacted",
+          statusLabel: "Contactado",
+          assignedTo: "member-1",
+          since: "2026-08-20T10:00:00.000Z",
+          hoursSince: 48,
+          url: `/leads/lead-${index}`,
+        })),
+      },
+      [],
+    );
+
+    expect(summaries).toHaveLength(1);
+    expect(formatLeadFollowUpSummary(summaries[0]!)).toBe(
+      "Tienes 10 leads pendientes: 10 sin seguimiento.",
+    );
+  });
+
   it("groups each lead once per recipient and escalates at-risk leads to admins", () => {
     const summaries = collectLeadFollowUpSummaries(
       {

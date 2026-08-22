@@ -30,7 +30,9 @@ describe("invoice line item UI", () => {
     fireEvent.click(screen.getByRole("button", { name: "Duplicar línea 1" }));
 
     expect(onChange).toHaveBeenCalledOnce();
-    const nextItems = onChange.mock.calls[0][0];
+    const call = onChange.mock.calls[0];
+    if (!call) throw new Error("Expected onChange to be called");
+    const nextItems = call[0];
     expect(nextItems).toHaveLength(2);
     expect(nextItems[1]).toMatchObject({
       description: item.description,
