@@ -62,10 +62,10 @@ const user: CurrentUser = {
 };
 
 describe("MobileNav actions", () => {
-  it("exposes the hamburger navigation only below the desktop breakpoint", () => {
+  it("exposes the hamburger navigation only below the medium breakpoint", () => {
     const { container } = render(<MobileNav user={user} demoMode={false} />);
 
-    expect(container.firstElementChild?.className).toContain("lg:hidden");
+    expect(container.firstElementChild?.className).toContain("md:hidden");
     expect(screen.getByRole("button", { name: "Abrir menú" })).toBeTruthy();
   });
 

@@ -109,20 +109,25 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
     (items ?? []) as Array<{ vat_rate: number | string | null; subtotal: number | string | null }>,
   );
 
-  // Build QR using the same NIF that sendToAeat uses (company_nif from DB settings)
-  // so the QR always matches the AEAT-registered record.
+  // New issued invoices persist the QR URL from their immutable RegistroAlta.
+  // Rebuilding it is a legacy fallback only, because company settings may later change.
   let qrDataUrl: string | null = null;
-  const emisorNif = (settings?.company_nif as string | null) ?? "";
-  if (
-    emisorNif &&
-    invoice.status !== "draft" &&
-    invoice.full_number &&
-    invoice.issue_date &&
-    invoice.total != null
-  ) {
-    try {
-      // The package also exports an optional native XSD validator. Load it only
-      // when a QR is needed so its initialization cannot block this page.
+  try {
+    const persistedQrUrl = typeof invoice.qr_url === "string" ? invoice.qr_url.trim() : "";
+    if (persistedQrUrl) {
+      const { buildQrDataUrl } = await import("@doscientos/verifactu");
+      qrDataUrl = await buildQrDataUrl(persistedQrUrl);
+    } else {
+      const emisorNif = (settings?.company_nif as string | null) ?? "";
+      if (
+        !emisorNif ||
+        invoice.status === "draft" ||
+        !invoice.full_number ||
+        !invoice.issue_date ||
+        invoice.total == null
+      ) {
+        throw new Error("No hay datos para reconstruir el QR histórico");
+      }
       const { buildQrDataUrl, buildQrUrl } = await import("@doscientos/verifactu");
       const qrUrl = buildQrUrl(
         {
@@ -134,9 +139,10 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         verifactuInvoiceConfigFromEnv(),
       );
       qrDataUrl = await buildQrDataUrl(qrUrl);
-    } catch {
-      // QR generation is non-critical; degrade silently
     }
+  } catch {
+    // QR rendering is non-critical; a historic QR without its persisted URL
+    // may be unavailable until its legacy fiscal configuration is restored.
   }
 
   return (

@@ -80,6 +80,7 @@ export type BuildInvoicePdfInput = {
     due_date: string | null;
     idfact: string | null;
     verifactu_csv: string | null;
+    qr_url?: string | null;
     subtotal: number | null;
     total: number | null;
     client_nif: string | null;
@@ -122,6 +123,11 @@ async function buildInvoiceQr(
   invoice: BuildInvoicePdfInput["invoice"],
   emisorNif: string | null,
 ): Promise<string | null> {
+  const persistedQrUrl = invoice.qr_url?.trim();
+  if (persistedQrUrl) {
+    const { buildQrDataUrl } = await import("@doscientos/verifactu");
+    return buildQrDataUrl(persistedQrUrl);
+  }
   if (
     !emisorNif ||
     invoice.status === "draft" ||
@@ -201,11 +207,11 @@ export async function buildInvoicePdfData(input: BuildInvoicePdfInput): Promise<
       }) || null,
     company: settings
       ? {
-          name: settings.company_name,
-          nif: settings.company_nif,
-          address: settings.company_address || null,
-          iban: settings.iban,
-        }
+        name: settings.company_name,
+        nif: settings.company_nif,
+        address: settings.company_address || null,
+        iban: settings.iban,
+      }
       : null,
     items: normalisedItems,
     subtotal: Number(invoice.subtotal ?? 0),
@@ -213,8 +219,8 @@ export async function buildInvoicePdfData(input: BuildInvoicePdfInput): Promise<
     vatBreakdown: buildVatBreakdown(
       normalisedItems.map((i) => ({ vat_rate: i.vatRate, subtotal: i.subtotal })),
     ),
-    // Use the same NIF that sendToAeat uses (company_nif from DB settings) so
-    // the QR remains aligned with the AEAT submission.
+    // New issued invoices persist this URL from the immutable RegistroAlta.
+    // The legacy fallback only supports invoices emitted before qr_url existed.
     qrDataUrl: await buildInvoiceQr(invoice, settings?.company_nif || null),
     portalUrl:
       invoice.portal_token && process.env.NEXT_PUBLIC_APP_URL

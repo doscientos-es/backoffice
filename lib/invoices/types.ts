@@ -91,6 +91,7 @@ export type InvoiceDetail = {
   status: string | null;
   verifactu_status: string | null;
   verifactu_csv: string | null;
+  qr_url: string | null;
   subtotal: number | null;
   total: number | null;
   issue_date: string | null;

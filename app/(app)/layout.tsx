@@ -20,10 +20,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     user.role === "owner" || user.role === "admin" ? await hasAal2Session() : true;
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background lg:flex-row">
+    <div className="flex h-screen flex-col overflow-hidden bg-background md:flex-row">
       <Sidebar user={user} demoMode={demoMode} />
       <div className="flex flex-1 flex-col min-h-0 min-w-0">
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3 lg:hidden">
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3 md:hidden">
           <MobileNav user={user} demoMode={demoMode} />
           <Link
             href="/inicio"

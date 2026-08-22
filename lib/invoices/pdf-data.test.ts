@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
 import type { BuildInvoicePdfInput } from "@/lib/invoices/pdf-data";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@doscientos/verifactu", () => ({
   buildQrDataUrl: (url: string) => `data:image/png;base64,${Buffer.from(url).toString("base64")}`,
@@ -26,6 +26,7 @@ function makeInput(overrides: Partial<BuildInvoicePdfInput["invoice"]> = {}): Bu
       due_date: "2025-02-05",
       idfact: "IDFACT-1",
       verifactu_csv: "CSV-1",
+      qr_url: null,
       subtotal: 1000,
       total: 1210,
       client_nif: "12345678Z",
@@ -97,6 +98,17 @@ describe("buildInvoicePdfData", () => {
     const { buildInvoicePdfData } = await importPdfData();
     const data = await buildInvoicePdfData(makeInput({ verifactu_status: "accepted" }));
     expect(data.qrDataUrl?.startsWith("data:image/png;base64,")).toBe(true);
+  });
+
+  it("uses the persisted fiscal QR instead of rebuilding it from current settings", async () => {
+    const { buildInvoicePdfData } = await importPdfData();
+    const data = await buildInvoicePdfData(
+      makeInput({ qr_url: "https://sede.example.test/verifactu/immutable-record" }),
+    );
+
+    expect(Buffer.from(data.qrDataUrl!.split(",")[1], "base64").toString("utf8")).toBe(
+      "https://sede.example.test/verifactu/immutable-record",
+    );
   });
 });
 

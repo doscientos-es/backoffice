@@ -23,7 +23,7 @@ export function MobileNav({ user, demoMode }: { user: CurrentUser; demoMode: boo
   const visibleGroups = visibleNavigationGroups(user.role);
 
   return (
-    <div className="flex items-center gap-2 lg:hidden">
+    <div className="flex items-center gap-2 md:hidden">
       <Drawer direction="left" open={open} onOpenChange={setOpen}>
         <DrawerTrigger asChild>
           <button
