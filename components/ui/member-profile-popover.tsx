@@ -1,10 +1,10 @@
 "use client";
 
-import { UserRound as UserRound } from "lucide-react";
+import { UserRound } from "lucide-react";
 import Link from "next/link";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { ReactNode } from "react";
 import type { AvatarMember } from "@/components/ui/member-avatar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export type ProfiledMember = AvatarMember & { id: string };
 

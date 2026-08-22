@@ -1,4 +1,3 @@
-import type { MemberRole } from "@/lib/auth";
 import {
   Archive,
   ChartBar as BarChart3,
@@ -23,6 +22,7 @@ import {
   Wallet,
 } from "lucide-react";
 import type { ComponentType } from "react";
+import type { MemberRole } from "@/lib/auth";
 
 export type NavigationItem = {
   href: string;

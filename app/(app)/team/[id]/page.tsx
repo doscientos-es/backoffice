@@ -231,11 +231,11 @@ export default async function TeamMemberDetailPage({
 
   const { data: collaboratorTasksData } = collaboratorTaskIds.length
     ? await supabase
-      .from("tasks")
-      .select("id, title, status, due_date, project_id, projects(id, name, status)")
-      .in("id", collaboratorTaskIds)
-      .is("deleted_at", null)
-      .order("updated_at", { ascending: false })
+        .from("tasks")
+        .select("id, title, status, due_date, project_id, projects(id, name, status)")
+        .in("id", collaboratorTaskIds)
+        .is("deleted_at", null)
+        .order("updated_at", { ascending: false })
     : { data: [] };
 
   const tasks = [...directTasks, ...((collaboratorTasksData ?? []) as unknown as TaskRow[])];
@@ -246,10 +246,10 @@ export default async function TeamMemberDetailPage({
 
   const { data: proposalRowsData } = proposalIds.length
     ? await supabase
-      .from("proposals")
-      .select("project_id")
-      .in("id", proposalIds)
-      .is("deleted_at", null)
+        .from("proposals")
+        .select("project_id")
+        .in("id", proposalIds)
+        .is("deleted_at", null)
     : { data: [] };
 
   const projectIds = [
@@ -264,11 +264,11 @@ export default async function TeamMemberDetailPage({
 
   const { data: projectData } = projectIds.length
     ? await supabase
-      .from("projects")
-      .select("id, name, status, clients(name)")
-      .in("id", projectIds)
-      .is("deleted_at", null)
-      .order("updated_at", { ascending: false })
+        .from("projects")
+        .select("id, name, status, clients(name)")
+        .in("id", projectIds)
+        .is("deleted_at", null)
+        .order("updated_at", { ascending: false })
     : { data: [] };
 
   const projects = (projectData ?? []).map((row) =>
@@ -483,7 +483,9 @@ export default async function TeamMemberDetailPage({
                         {content}
                       </Link>
                     ) : (
-                      <div className="flex items-center justify-between gap-3 px-4 py-3">{content}</div>
+                      <div className="flex items-center justify-between gap-3 px-4 py-3">
+                        {content}
+                      </div>
                     )}
                   </li>
                 );
