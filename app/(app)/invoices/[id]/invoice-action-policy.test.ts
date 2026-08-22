@@ -26,9 +26,12 @@ describe("getInvoiceActionPolicy", () => {
     ).toMatchObject({ canDelete: false, canRectify: true, canRevertPayment: true });
   });
 
-  it("uses retry labels only when fiscal delivery needs attention", () => {
+  it("keeps a definitive AEAT rejection out of the normal retry flow", () => {
     expect(aeatDeliveryLabel("pending")).toBe("Enviar a AEAT");
     expect(aeatDeliveryLabel("error")).toBe("Reintentar envío");
-    expect(aeatDeliveryLabel("rejected")).toBe("Reintentar AEAT");
+    expect(aeatDeliveryLabel("rejected")).toBe("Regularizar AEAT");
+    expect(
+      getInvoiceActionPolicy({ ...invoice, status: "paid", verifactu_status: "rejected" }),
+    ).toMatchObject({ hasFiscalProblem: true, shouldSendToAeat: false });
   });
 });

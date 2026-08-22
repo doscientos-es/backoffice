@@ -24,6 +24,7 @@ import {
   isRetryableVerifactuDelivery,
   MISSING_DURABLE_FISCAL_RECORD_MESSAGE,
   normalizeAltaRechazoPrevio,
+  REJECTED_RECORD_REQUIRES_REGULARIZATION_MESSAGE,
   resolveVerifactuSoftwareSnapshot,
 } from "./outbox";
 
@@ -124,5 +125,17 @@ describe("deliverInvoiceVerifactu", () => {
     await expect(deliverInvoiceVerifactu("invoice-1", "worker-1")).rejects.toThrow(
       MISSING_DURABLE_FISCAL_RECORD_MESSAGE,
     );
+  });
+
+  it("does not misreport a definitive AEAT rejection as a blocked predecessor", async () => {
+    maybeSingle
+      .mockResolvedValueOnce({ data: { id: "ledger-1" }, error: null })
+      .mockResolvedValueOnce({ data: { id: "outbox-1", state: "rejected" }, error: null });
+
+    await expect(deliverInvoiceVerifactu("invoice-1", "worker-1")).resolves.toMatchObject({
+      processed: false,
+      status: "rejected",
+      error: REJECTED_RECORD_REQUIRES_REGULARIZATION_MESSAGE,
+    });
   });
 });

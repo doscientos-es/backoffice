@@ -25,13 +25,14 @@ export function getInvoiceActionPolicy(invoice: InvoiceActionInvoice) {
     shouldSendToAeat:
       !isDraft &&
       invoice.verifactu_status !== "accepted" &&
-      invoice.verifactu_status !== "excluded",
+      invoice.verifactu_status !== "excluded" &&
+      invoice.verifactu_status !== "rejected",
     hasFiscalProblem,
   };
 }
 
 export function aeatDeliveryLabel(verifactuStatus: string): string {
-  if (verifactuStatus === "rejected") return "Reintentar AEAT";
+  if (verifactuStatus === "rejected") return "Regularizar AEAT";
   if (verifactuStatus === "error") return "Reintentar envío";
   return "Enviar a AEAT";
 }
