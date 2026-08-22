@@ -49,7 +49,6 @@ export function SendAeatButton({
     setPreparing(false);
     if (!started.ok) {
       feedback.setError(started.error);
-      showIssue(started.error);
       return;
     }
     setPasskeyOptions(started.options);
@@ -66,7 +65,6 @@ export function SendAeatButton({
     if (!verification.ok) {
       setConfirmOpen(false);
       feedback.setError(verification.error);
-      showIssue(verification.error);
       return;
     }
     setConfirmOpen(false);

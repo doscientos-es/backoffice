@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const {
   assertVerifactuDiagnosticGate,
   backupInvoiceToDrive,
+  consumeUserVerification,
   deliverVerifactuOutbox,
   findInvoiceForEdit,
   patchInvoiceStatus,
@@ -11,6 +12,7 @@ const {
 } = vi.hoisted(() => ({
   assertVerifactuDiagnosticGate: vi.fn(),
   backupInvoiceToDrive: vi.fn(),
+  consumeUserVerification: vi.fn(),
   deliverVerifactuOutbox: vi.fn(),
   findInvoiceForEdit: vi.fn(),
   patchInvoiceStatus: vi.fn(),
@@ -28,7 +30,7 @@ vi.mock("@/lib/invoices/queries", async (importOriginal) => ({
   findInvoiceForEdit,
   patchInvoiceStatus,
 }));
-vi.mock("@/lib/security/user-verification", () => ({ consumeUserVerification: vi.fn() }));
+vi.mock("@/lib/security/user-verification", () => ({ consumeUserVerification }));
 vi.mock("@/lib/supabase/server", () => ({ createServerClient: async () => ({ rpc }) }));
 vi.mock("@/lib/verifactu/outbox", () => ({
   assertDurableVerifactuPackage: vi.fn(),
@@ -55,13 +57,15 @@ vi.mock("@/lib/logger", () => ({
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/server", () => ({ after: vi.fn() }));
 
-import { revertInvoicePayment, updateInvoiceStatus } from "./actions";
+import { regularizeVerifactu, revertInvoicePayment, updateInvoiceStatus } from "./actions";
 
 const INVOICE_ID = "11111111-1111-1111-1111-111111111111";
 
 beforeEach(() => {
   assertVerifactuDiagnosticGate.mockReset();
   assertVerifactuDiagnosticGate.mockResolvedValue(undefined);
+  consumeUserVerification.mockReset();
+  consumeUserVerification.mockResolvedValue(undefined);
   deliverVerifactuOutbox.mockReset();
   rpc.mockReset();
   rpc.mockResolvedValue({ data: [{ outbox_id: "outbox-1" }], error: null });
@@ -132,5 +136,19 @@ describe("updateInvoiceStatus fiscal flow", () => {
     );
     expect(rpc).not.toHaveBeenCalled();
     expect(deliverVerifactuOutbox).not.toHaveBeenCalled();
+  });
+
+  it("requires an intent-scoped proof before regularizing a fiscal record", async () => {
+    const result = await regularizeVerifactu({ id: INVOICE_ID });
+
+    expect(result).toEqual({ ok: true, csv: "CSV-1", status: "accepted", error: null });
+    expect(consumeUserVerification).toHaveBeenCalledWith("user-1", {
+      intent: "invoice.verifactu_regularize",
+      resource: `invoice:${INVOICE_ID}`,
+    });
+    expect(rpc).toHaveBeenCalledWith("regularize_verifactu_invoice", {
+      p_invoice_id: INVOICE_ID,
+      p_software: expect.objectContaining({ producerNif: "B12345678" }),
+    });
   });
 });

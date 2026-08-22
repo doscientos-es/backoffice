@@ -18,6 +18,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { regularizeVerifactu } from "../actions";
+import { userVerificationScope } from "@/lib/security/user-verification-scope";
+import {
+  completePasskeyAuthentication,
+  preparePasskeyAuthentication,
+} from "@/lib/security/webauthn-client";
 
 /**
  * Recovery action for a record confirmed absent from AEAT. It deliberately
@@ -31,10 +36,13 @@ export function RegularizeAeatButton({ invoiceId }: { invoiceId: string }) {
   );
   const [message, setMessage] = useState<string | null>(null);
   const [csv, setCsv] = useState<string | null>(null);
+  const [passkeyOptions, setPasskeyOptions] = useState<unknown>(null);
+  const scope = userVerificationScope("invoice.verifactu_regularize", `invoice:${invoiceId}`);
   function openConfirmation() {
     setPhase("confirm");
     setMessage(null);
     setCsv(null);
+    setPasskeyOptions(null);
     setOpen(true);
   }
 
@@ -59,11 +67,30 @@ export function RegularizeAeatButton({ invoiceId }: { invoiceId: string }) {
     router.refresh();
   }
 
-  async function onClick() {
-    setOpen(true);
-    setPhase("sending");
+  async function prepareVerification() {
+    setPhase("verifying");
     setMessage(null);
     setCsv(null);
+    const started = await preparePasskeyAuthentication(scope);
+    if (!started.ok) {
+      setPhase("error");
+      setMessage(started.error);
+      return;
+    }
+    setPasskeyOptions(started.options);
+    setPhase("confirm");
+  }
+
+  async function confirmWithPasskey() {
+    if (!passkeyOptions) return;
+
+    setPhase("verifying");
+    const verification = await completePasskeyAuthentication(scope, passkeyOptions);
+    if (!verification.ok) {
+      setPhase("error");
+      setMessage(verification.error);
+      return;
+    }
     await sendRegularization();
   }
 
@@ -100,9 +127,9 @@ export function RegularizeAeatButton({ invoiceId }: { invoiceId: string }) {
                 <Button variant="ghost" onClick={() => setOpen(false)}>
                   Cancelar
                 </Button>
-                <Button onClick={onClick}>
+                <Button onClick={passkeyOptions ? confirmWithPasskey : prepareVerification}>
                   <RotateCcw className="size-4" />
-                  Confirmar y continuar
+                  {passkeyOptions ? "Confirmar con biometría" : "Confirmar y continuar"}
                 </Button>
               </DialogFooter>
             </>

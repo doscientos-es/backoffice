@@ -53,4 +53,19 @@ describe("SendAeatButton", () => {
     const [formData] = sendToAeat.mock.calls[0] as [FormData];
     expect(formData.get("id")).toBe("invoice-1");
   });
+
+  it("does not report a passkey failure as a VERI*FACTU delivery error", async () => {
+    completePasskeyAuthentication.mockResolvedValue({
+      ok: false,
+      error: "Esta passkey no corresponde a este sitio.",
+    });
+    render(<SendAeatButton invoiceId="invoice-1" label="Reintentar envío" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Reintentar envío" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Confirmar con biometría" }));
+
+    await waitFor(() => expect(completePasskeyAuthentication).toHaveBeenCalledOnce());
+    expect(screen.queryByText("Error técnico de VERI*FACTU")).toBeNull();
+    expect(sendToAeat).not.toHaveBeenCalled();
+  });
 });

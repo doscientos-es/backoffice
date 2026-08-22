@@ -1,7 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { after } from "next/server";
 import { InvoiceEmail } from "@/components/email";
 import { defineAction } from "@/lib/actions/define-action";
 import { requireRole } from "@/lib/auth";
@@ -67,6 +65,8 @@ import {
   type OutboxDelivery,
   syncInvoiceQrFromLedger,
 } from "@/lib/verifactu/outbox";
+import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 
 const log = scopedLogger("invoices.actions");
 
@@ -390,7 +390,11 @@ export const regularizeVerifactu = defineAction<
   schema: SendInvoiceInput,
   roles: ["owner", "admin"],
   revalidate: (_p, input) => [`/invoices/${input.id}`, "/invoices", "/inicio"],
-  handler: async (input) => {
+  handler: async (input, { user }) => {
+    await consumeUserVerification(
+      user.id,
+      userVerificationScope("invoice.verifactu_regularize", `invoice:${input.id}`),
+    );
     await assertDurableVerifactuPackage();
     await assertVerifactuDiagnosticGate();
     const outboxId = await enqueueVerifactuRegularization(input.id);

@@ -11,6 +11,13 @@ import {
 type Result = { ok: true } | { ok: false; error: string };
 type StartedAuthentication = { ok: true; options: unknown } | { ok: false; error: string };
 
+type BrowserError = {
+  code?: unknown;
+  cause?: unknown;
+  message?: unknown;
+  name?: unknown;
+};
+
 function unavailable(): Result | null {
   if (typeof window === "undefined" || !window.PublicKeyCredential) {
     return { ok: false, error: "Este navegador no permite biometría ni passkeys" };
@@ -19,8 +26,48 @@ function unavailable(): Result | null {
 }
 
 function browserError(error: unknown): Result {
-  if (error instanceof DOMException && error.name === "NotAllowedError") {
-    return { ok: false, error: "La verificación se ha cancelado o ha caducado" };
+  // SimpleWebAuthn wraps browser DOMExceptions in WebAuthnError and keeps the
+  // original exception in `cause`. Read both layers so a credential tied to a
+  // different RP ID is not mistaken for an AEAT delivery failure.
+  const outer = error as BrowserError;
+  const cause = outer?.cause as BrowserError | undefined;
+  const name = typeof cause?.name === "string" ? cause.name : outer?.name;
+  const code = typeof outer?.code === "string" ? outer.code : undefined;
+  const message = typeof outer?.message === "string" ? outer.message : "";
+
+  if (name === "AbortError") return { ok: false, error: "La verificación se ha cancelado" };
+  if (name === "NotAllowedError") {
+    return {
+      ok: false,
+      error: "La verificación se ha cancelado, ha caducado o no hay una passkey disponible",
+    };
+  }
+  if (
+    name === "SecurityError" ||
+    code === "ERROR_INVALID_RP_ID" ||
+    code === "ERROR_INVALID_DOMAIN" ||
+    /RP ID|invalid domain/i.test(message)
+  ) {
+    return {
+      ok: false,
+      error:
+        "Esta passkey no corresponde a este sitio. Entra en Bóveda, desbloquéala con tu contraseña maestra y pulsa «Añadir passkey».",
+    };
+  }
+  if (name === "NotSupportedError" || /WebAuthn is not supported/i.test(message)) {
+    return { ok: false, error: "Este navegador o dispositivo no permite usar esta passkey" };
+  }
+  if (name === "InvalidStateError") {
+    return {
+      ok: false,
+      error: "La passkey ya no está disponible en este dispositivo. Añade una nueva desde Bóveda.",
+    };
+  }
+  if (name === "UnknownError") {
+    return {
+      ok: false,
+      error: "El autenticador del dispositivo no ha podido procesar la passkey. Inténtalo de nuevo o añade otra desde Bóveda.",
+    };
   }
   return { ok: false, error: "No se ha podido completar la verificación biométrica" };
 }
