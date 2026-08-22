@@ -81,7 +81,9 @@ describe("SendAeatButton", () => {
 
     await waitFor(() => expect(completePasskeyAuthentication).toHaveBeenCalledOnce());
     expect(screen.queryByText("Error técnico de VERI*FACTU")).toBeNull();
-    expect(screen.getByRole("button", { name: "Usar código de Google Authenticator" })).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Usar código de Google Authenticator" }),
+    ).toBeDefined();
     expect(sendToAeat).not.toHaveBeenCalled();
   });
 
