@@ -9,7 +9,7 @@ describe("MemberProfilePopover", () => {
     render(
       <MemberProfilePopover
         member={{ id: "member-1", name: "Ada Lovelace", avatar_url: null, github_handle: null }}
-        avatar={<span>AL</span>}
+        renderAvatar={() => <span>AL</span>}
       />,
     );
 

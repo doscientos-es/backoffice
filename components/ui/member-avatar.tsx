@@ -69,7 +69,9 @@ export function MemberLabel({
         <MemberProfilePopover
           member={member}
           size={size}
-          avatar={<MemberAvatar member={member} size={size} />}
+          renderAvatar={(avatarSize, avatarClassName) => (
+            <MemberAvatar member={member} size={avatarSize} className={avatarClassName} />
+          )}
         />
       ) : (
         <MemberAvatar member={member} size={size} />
