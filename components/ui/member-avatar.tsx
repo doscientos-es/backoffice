@@ -1,5 +1,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MemberProfilePopover } from "@/components/ui/member-profile-popover";
+import {
+  MemberProfilePopover,
+  type ProfiledMember,
+} from "@/components/ui/member-profile-popover";
 import { cn, memberAvatarUrl } from "@/lib/utils";
 
 /** Member shape this component needs to resolve an avatar + initials fallback. */
@@ -16,6 +19,10 @@ function initials(name: string): string {
   const letters =
     parts.length >= 2 ? `${parts[0]?.[0] ?? ""}${parts[1]?.[0] ?? ""}` : parts[0]?.[0];
   return (letters ?? "?").toUpperCase();
+}
+
+function hasProfile(member: AvatarMember | null): member is ProfiledMember {
+  return Boolean(member?.id);
 }
 
 /**
@@ -65,7 +72,7 @@ export function MemberLabel({
 }) {
   return (
     <span className={cn("inline-flex items-center gap-2 min-w-0", className)}>
-      {member?.id ? (
+      {hasProfile(member) ? (
         <MemberProfilePopover
           member={member}
           size={size}
