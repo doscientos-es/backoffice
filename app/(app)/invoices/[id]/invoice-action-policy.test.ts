@@ -32,6 +32,6 @@ describe("getInvoiceActionPolicy", () => {
     expect(aeatDeliveryLabel("rejected")).toBe("Regularizar AEAT");
     expect(
       getInvoiceActionPolicy({ ...invoice, status: "paid", verifactu_status: "rejected" }),
-    ).toMatchObject({ hasFiscalProblem: true, shouldSendToAeat: false });
+    ).toMatchObject({ hasFiscalProblem: true, shouldSendToAeat: false, shouldRegularizeAeat: true });
   });
 });

@@ -25,8 +25,8 @@ import {
 import { regularizeVerifactu } from "../actions";
 
 /**
- * Recovery action for a record confirmed absent from AEAT. It deliberately
- * asks for confirmation because it appends a new immutable fiscal record.
+ * Recovery action for an AEAT-rejected record. It deliberately asks for
+ * confirmation because it appends a new immutable fiscal record.
  */
 export function RegularizeAeatButton({ invoiceId }: { invoiceId: string }) {
   const router = useRouter();
@@ -108,7 +108,7 @@ export function RegularizeAeatButton({ invoiceId }: { invoiceId: string }) {
         }}
       >
         <RotateCcw className="size-4" />
-        Regularizar y enviar
+        Regularizar rechazo AEAT
       </Button>
 
       <Dialog open={open} onOpenChange={(nextOpen) => !busy && setOpen(nextOpen)}>
@@ -116,11 +116,11 @@ export function RegularizeAeatButton({ invoiceId }: { invoiceId: string }) {
           {phase === "confirm" ? (
             <>
               <DialogHeader>
-                <DialogTitle>Regularizar envío VERI*FACTU</DialogTitle>
+                <DialogTitle>Regularizar rechazo de AEAT</DialogTitle>
                 <DialogDescription>
-                  Usa esta opción solo si has confirmado que AEAT no tiene registrado el alta
-                  anterior. Se conservará el intento original y se generará un nuevo registro de
-                  subsanación con el certificado actual.
+                  AEAT rechazó el RegistroAlta original. No se reenviará ni modificará: se
+                  conservará como evidencia y se generará un nuevo registro de subsanación. Antes,
+                  confirma que los datos fiscales ya están corregidos.
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
@@ -129,7 +129,7 @@ export function RegularizeAeatButton({ invoiceId }: { invoiceId: string }) {
                 </Button>
                 <Button onClick={passkeyOptions ? confirmWithPasskey : prepareVerification}>
                   <RotateCcw className="size-4" />
-                  {passkeyOptions ? "Confirmar con biometría" : "Confirmar y continuar"}
+                  {passkeyOptions ? "Confirmar con biometría" : "Continuar con la regularización"}
                 </Button>
               </DialogFooter>
             </>

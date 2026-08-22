@@ -27,6 +27,7 @@ export function getInvoiceActionPolicy(invoice: InvoiceActionInvoice) {
       invoice.verifactu_status !== "accepted" &&
       invoice.verifactu_status !== "excluded" &&
       invoice.verifactu_status !== "rejected",
+    shouldRegularizeAeat: invoice.verifactu_status === "rejected",
     hasFiscalProblem,
   };
 }

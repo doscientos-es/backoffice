@@ -92,7 +92,7 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
             label={aeatDeliveryLabel(invoice.verifactu_status)}
           />
         ) : null}
-        {policy.hasFiscalProblem ? <RegularizeAeatButton invoiceId={invoice.id} /> : null}
+        {policy.shouldRegularizeAeat ? <RegularizeAeatButton invoiceId={invoice.id} /> : null}
       </div>
     </div>
   );

@@ -30,8 +30,8 @@ describe("RegularizeAeatButton", () => {
   it("requires a scoped passkey verification before creating a regularization", async () => {
     render(<RegularizeAeatButton invoiceId="invoice-1" />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Regularizar y enviar" }));
-    fireEvent.click(screen.getByRole("button", { name: "Confirmar y continuar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Regularizar rechazo AEAT" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continuar con la regularización" }));
 
     await waitFor(() =>
       expect(preparePasskeyAuthentication).toHaveBeenCalledWith({
