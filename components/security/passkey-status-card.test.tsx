@@ -35,6 +35,14 @@ describe("PasskeyStatusCard", () => {
     );
   });
 
+  it("links to security settings when displayed elsewhere", () => {
+    render(<PasskeyStatusCard configured={false} setupHref="/settings/security" />);
+
+    expect(screen.getByRole("link", { name: /configurar biometría/i }).getAttribute("href")).toBe(
+      "/settings/security",
+    );
+  });
+
   it("shows the configured state without presenting another setup CTA", () => {
     render(<PasskeyStatusCard configured vaultPasswordSet />);
 

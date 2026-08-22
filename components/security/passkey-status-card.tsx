@@ -19,9 +19,12 @@ import { PasskeyEnrollmentForm } from "./passkey-enrollment-form";
 export function PasskeyStatusCard({
   configured,
   vaultPasswordSet,
+  setupHref,
 }: {
   configured: boolean;
-  vaultPasswordSet: boolean;
+  vaultPasswordSet?: boolean;
+  /** Use when this card is shown outside Security, where enrollment is managed. */
+  setupHref?: string;
 }) {
   const [enrolling, setEnrolling] = useState(false);
 
@@ -50,31 +53,41 @@ export function PasskeyStatusCard({
         </CardHeader>
         {!configured ? (
           <CardContent className="pt-0">
-            <Button size="sm" onClick={() => setEnrolling(true)}>
-              <Fingerprint className="size-3.5" /> Configurar biometría
-            </Button>
+            {setupHref ? (
+              <Button asChild size="sm">
+                <Link href={setupHref}>
+                  <Fingerprint className="size-3.5" /> Configurar biometría
+                </Link>
+              </Button>
+            ) : (
+              <Button size="sm" onClick={() => setEnrolling(true)}>
+                <Fingerprint className="size-3.5" /> Configurar biometría
+              </Button>
+            )}
           </CardContent>
         ) : null}
       </Card>
-      <Dialog open={enrolling} onOpenChange={setEnrolling}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Configurar biometría</DialogTitle>
-            <DialogDescription>
-              {vaultPasswordSet
-                ? "Confirma tu contraseña maestra antes de registrar la passkey de este dispositivo."
-                : "Antes de activar la biometría, configura una contraseña maestra para la bóveda."}
-            </DialogDescription>
-          </DialogHeader>
-          {vaultPasswordSet ? (
-            <PasskeyEnrollmentForm onClose={() => setEnrolling(false)} />
-          ) : (
-            <Button asChild>
-              <Link href="/vault">Configurar contraseña maestra</Link>
-            </Button>
-          )}
-        </DialogContent>
-      </Dialog>
+      {!setupHref ? (
+        <Dialog open={enrolling} onOpenChange={setEnrolling}>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Configurar biometría</DialogTitle>
+              <DialogDescription>
+                {vaultPasswordSet
+                  ? "Confirma tu contraseña maestra antes de registrar la passkey de este dispositivo."
+                  : "Antes de activar la biometría, configura una contraseña maestra para la bóveda."}
+              </DialogDescription>
+            </DialogHeader>
+            {vaultPasswordSet ? (
+              <PasskeyEnrollmentForm onClose={() => setEnrolling(false)} />
+            ) : (
+              <Button asChild>
+                <Link href="/vault">Configurar contraseña maestra</Link>
+              </Button>
+            )}
+          </DialogContent>
+        </Dialog>
+      ) : null}
     </>
   );
 }

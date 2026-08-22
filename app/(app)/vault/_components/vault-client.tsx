@@ -168,10 +168,6 @@ export function VaultClient({
 
   function handleUnlockSuccess() {
     setLocalUnlocked(true);
-    if (shouldSetUpPasskey) {
-      setDialog("passkey");
-      return;
-    }
     if (pendingEditItem) {
       setEditItem(pendingEditItem);
       setPendingEditItem(null);

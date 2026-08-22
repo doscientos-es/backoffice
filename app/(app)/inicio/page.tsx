@@ -72,7 +72,9 @@ export default async function InicioPage({ searchParams }: PageProps) {
 
       <div className="flex flex-col gap-3">
         <EnablePushBanner />
-        {!passkeyConfigured ? <PasskeyStatusCard configured={false} /> : null}
+        {!passkeyConfigured ? (
+          <PasskeyStatusCard configured={false} setupHref="/settings/security" />
+        ) : null}
       </div>
 
       <section className="flex flex-col gap-5" aria-labelledby="inicio-prioridades">

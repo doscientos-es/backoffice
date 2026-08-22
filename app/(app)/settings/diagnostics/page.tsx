@@ -69,7 +69,7 @@ export default async function DiagnosticsSettingsPage() {
         </CardContent>
       </Card>
 
-      <PasskeyStatusCard configured={passkeyConfigured} />
+      <PasskeyStatusCard configured={passkeyConfigured} setupHref="/settings/security" />
 
       <DiagnosticsPanel config={config} />
     </div>
