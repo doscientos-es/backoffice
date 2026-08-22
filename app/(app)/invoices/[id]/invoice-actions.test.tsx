@@ -22,7 +22,7 @@ vi.mock("./invoice-payment-actions", () => ({
   InvoicePaymentActions: () => <button type="button">Registrar cobro</button>,
 }));
 vi.mock("./regularize-aeat-button", () => ({
-  RegularizeAeatButton: () => <button type="button">Regularizar y enviar</button>,
+  RegularizeAeatButton: () => <button type="button">Regularizar rechazo AEAT</button>,
 }));
 vi.mock("./send-aeat-button", () => ({
   SendAeatButton: ({ label }: { label: string }) => <button type="button">{label}</button>,
@@ -69,7 +69,44 @@ describe("InvoiceActions", () => {
     expect(within(primaryActions).getByRole("button", { name: "Registrar cobro" })).toBeTruthy();
     expect(within(primaryActions).getByRole("button", { name: "Reintentar envío" })).toBeTruthy();
     expect(
-      within(primaryActions).getByRole("button", { name: "Regularizar y enviar" }),
-    ).toBeTruthy();
+      within(primaryActions).queryByRole("button", { name: "Regularizar rechazo AEAT" }),
+    ).toBeNull();
+  });
+
+  it("labels a queued rejection recovery as an AEAT regularization", () => {
+    const { getByRole, queryByRole } = render(
+      <InvoiceActions
+        invoice={{
+          id: "invoice-1",
+          status: "paid",
+          verifactu_status: "submitted",
+          verifactu_error: null,
+          is_regularization_pending: true,
+          total: 100,
+          amountPaid: 100,
+        }}
+      />,
+    );
+
+    expect(getByRole("button", { name: "Enviar regularización a AEAT" })).toBeTruthy();
+    expect(queryByRole("button", { name: "Regularizar rechazo AEAT" })).toBeNull();
+  });
+
+  it("offers regularization instead of a normal resend after an AEAT rejection", () => {
+    const { getByRole, queryByRole } = render(
+      <InvoiceActions
+        invoice={{
+          id: "invoice-1",
+          status: "paid",
+          verifactu_status: "rejected",
+          verifactu_error: "AEAT rechazó el registro",
+          total: 100,
+          amountPaid: 100,
+        }}
+      />,
+    );
+
+    expect(getByRole("button", { name: "Regularizar rechazo AEAT" })).toBeTruthy();
+    expect(queryByRole("button", { name: "Enviar a AEAT" })).toBeNull();
   });
 });

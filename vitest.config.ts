@@ -11,6 +11,7 @@ export default defineConfig({
       "tests/**/*.test.{ts,tsx}",
       "lib/**/*.test.{ts,tsx}",
       "components/**/*.test.{ts,tsx}",
+      "primitives/**/*.test.{ts,tsx}",
       "app/**/*.test.{ts,tsx}",
     ],
     // Safety net for slow tests (e.g. file-upload tests allocating large buffers).

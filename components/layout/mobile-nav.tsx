@@ -12,9 +12,9 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Drawer, DrawerClose, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { IconButton } from "@/components/ui/icon-button";
 import type { CurrentUser } from "@/lib/auth";
 import { visibleNavigationGroups } from "@/lib/navigation/navigation";
-import { version } from "../../package.json";
 
 export function MobileNav({ user, demoMode }: { user: CurrentUser; demoMode: boolean }) {
   const pathname = usePathname();
@@ -73,25 +73,26 @@ export function MobileNav({ user, demoMode }: { user: CurrentUser; demoMode: boo
                   </Badge>
                 ) : null}
                 <div className="ml-auto flex items-center gap-1">
-                  <span className="px-2 text-xs text-muted-foreground -mr-1">v{version}</span>
                   <ThemeToggle />
                   <ErrorBoundary fallback={() => null}>
                     <NotificationsBell memberId={user.id} />
                   </ErrorBoundary>
-                  <Link
-                    href="/settings"
-                    aria-label="Ajustes"
+                  <IconButton
+                    asChild
+                    variant="ghost"
+                    className="border-0"
+                    label="Ajustes"
                     aria-current={pathname.startsWith("/settings") ? "page" : undefined}
-                    title="Ajustes"
-                    className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:bg-secondary aria-[current=page]:text-foreground"
                   >
-                    <Settings className="size-4" aria-hidden />
-                  </Link>
+                    <Link href="/settings" onClick={() => setOpen(false)}>
+                      <Settings className="size-4" aria-hidden />
+                    </Link>
+                  </IconButton>
+                  <ErrorBoundary fallback={() => null}>
+                    <UserMenu user={user} showSettings={false} avatarOnly />
+                  </ErrorBoundary>
                 </div>
               </div>
-              <ErrorBoundary fallback={() => null}>
-                <UserMenu user={user} />
-              </ErrorBoundary>
             </div>
           </div>
         </DrawerContent>

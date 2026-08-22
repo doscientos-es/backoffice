@@ -26,10 +26,12 @@ import { VerifactuIssueDialog } from "./verifactu-issue-dialog";
 export function SendAeatButton({
   invoiceId,
   disabled,
+  isRegularization = false,
   label = "Enviar a AEAT",
 }: {
   invoiceId: string;
   disabled?: boolean;
+  isRegularization?: boolean;
   label?: string;
 }) {
   const router = useRouter();
@@ -157,11 +159,17 @@ export function SendAeatButton({
       >
         <DialogContent showCloseButton={!feedback.pending}>
           <DialogHeader>
-            <DialogTitle>Confirmar reenvío a VERI*FACTU</DialogTitle>
+            <DialogTitle>
+              {isRegularization
+                ? "Confirmar envío de regularización a AEAT"
+                : "Confirmar reenvío a VERI*FACTU"}
+            </DialogTitle>
             <DialogDescription>
               {passkeyOptions
                 ? "Usa la biometría o el bloqueo del dispositivo para continuar."
-                : "Elige cómo quieres confirmar tu identidad para reenviar este registro fiscal a AEAT."}
+                : isRegularization
+                  ? "Elige cómo confirmar tu identidad para enviar el registro de subsanación a AEAT."
+                  : "Elige cómo quieres confirmar tu identidad para reenviar este registro fiscal a AEAT."}
             </DialogDescription>
           </DialogHeader>
           {verificationError ? (

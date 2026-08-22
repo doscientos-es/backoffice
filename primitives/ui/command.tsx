@@ -5,7 +5,6 @@ import { Check as CheckIcon, Search as SearchIcon } from "lucide-react";
 import type * as React from "react";
 import { cn } from "../lib/utils";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./dialog";
-import { InputGroup, InputGroupAddon } from "./input-group";
 
 function Command({ className, ...props }: React.ComponentProps<typeof CommandPrimitive>) {
   return (
@@ -37,10 +36,9 @@ function CommandDialog({
     <Dialog {...props}>
       <DialogContent
         className={cn(
-          // Desktop: centrado, 1/3 desde arriba, redondeado
-          "top-1/3 translate-y-0 overflow-hidden rounded-xl! p-0",
+          "overflow-hidden rounded-xl! p-0",
           // Mobile: anclado arriba, ancho completo, solo redondeado abajo
-          "max-sm:top-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:max-w-none max-sm:rounded-t-none! max-sm:rounded-b-2xl!",
+          "max-sm:top-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:max-w-none max-sm:rounded-t-none! max-sm:rounded-b-2xl!",
           className,
         )}
         showCloseButton={showCloseButton}
@@ -61,19 +59,20 @@ function CommandInput({
 }: React.ComponentProps<typeof CommandPrimitive.Input>) {
   return (
     <div data-slot="command-border-wrapper" className="p-1.5 pb-0">
-      <InputGroup className="h-8! max-sm:h-12! rounded-lg! border-border/30 bg-border/30 shadow-none! *:data-[slot=input-group-addon]:pl-2!">
+      <div className="relative">
+        <SearchIcon
+          aria-hidden="true"
+          className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground"
+        />
         <CommandPrimitive.Input
           data-slot="command-border"
           className={cn(
-            "w-full text-sm max-sm:text-base outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
+            "h-8 w-full rounded-lg border border-border bg-background py-1 pr-3 pl-8 text-sm text-foreground shadow-xs outline-none placeholder:text-muted-foreground focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50",
             className,
           )}
           {...props}
         />
-        <InputGroupAddon>
-          <SearchIcon className="size-4 max-sm:size-5 shrink-0 opacity-50" />
-        </InputGroupAddon>
-      </InputGroup>
+      </div>
     </div>
   );
 }

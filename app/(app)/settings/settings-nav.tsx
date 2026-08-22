@@ -23,6 +23,7 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
+import { version } from "../../../package.json";
 
 type Item = {
   href: string;
@@ -153,6 +154,7 @@ export function SettingsNav({ canManageTeam }: { canManageTeam: boolean }) {
       <div className="hidden sm:block">
         <nav aria-label="Secciones de ajustes" className="sticky top-0 flex w-full flex-col gap-5">
           <SettingsLinks groups={groups} pathname={pathname} />
+          <span className="px-3 text-xs text-muted-foreground">v{version}</span>
         </nav>
       </div>
 
@@ -182,6 +184,7 @@ export function SettingsNav({ canManageTeam }: { canManageTeam: boolean }) {
                 pathname={pathname}
                 onNavigate={() => setMobileOpen(false)}
               />
+              <span className="px-3 text-xs text-muted-foreground">v{version}</span>
             </nav>
           </DrawerContent>
         </Drawer>

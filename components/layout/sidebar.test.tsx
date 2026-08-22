@@ -62,12 +62,12 @@ const user: CurrentUser = {
 };
 
 describe("Sidebar actions", () => {
-  it("remains visible as part of the layout at every viewport size", () => {
+  it("is only displayed as the persistent navigation from the desktop breakpoint", () => {
     const { container } = render(<Sidebar user={user} demoMode={false} />);
 
     const sidebar = container.querySelector("aside");
-    expect(sidebar?.className).toContain("flex");
-    expect(sidebar?.className).not.toContain("hidden");
+    expect(sidebar?.className).toContain("hidden");
+    expect(sidebar?.className).toContain("lg:flex");
   });
 
   it("places the avatar-only profile menu beside the utility actions", () => {

@@ -89,7 +89,12 @@ export function InvoiceActions({ invoice, clientEmail }: Props) {
         {policy.shouldSendToAeat ? (
           <SendAeatButton
             invoiceId={invoice.id}
-            label={aeatDeliveryLabel(invoice.verifactu_status)}
+            isRegularization={invoice.is_regularization_pending}
+            label={
+              invoice.is_regularization_pending
+                ? "Enviar regularización a AEAT"
+                : aeatDeliveryLabel(invoice.verifactu_status)
+            }
           />
         ) : null}
         {policy.shouldRegularizeAeat ? <RegularizeAeatButton invoiceId={invoice.id} /> : null}

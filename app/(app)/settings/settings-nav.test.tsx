@@ -170,6 +170,11 @@ describe("SettingsNav – responsive layout", () => {
     expect(screen.getByRole("button", { name: "Cambiar sección de ajustes" })).toBeTruthy();
   });
 
+  it("shows the application version in the settings navigation", () => {
+    const { container } = renderNav(true);
+    expect(desktopNav(container).getByText(/^v[0-9]+\.[0-9]+\.[0-9]+$/)).toBeTruthy();
+  });
+
   it("keeps Correo as a direct settings route", () => {
     const { container } = renderNav(true);
 

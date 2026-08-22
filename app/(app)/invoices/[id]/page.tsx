@@ -78,10 +78,25 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
     .is("deleted_at", null)
     .order("work_date", { ascending: true });
 
+  const { data: latestFiscalRecord } = await supabase
+    .from("verifactu_ledger")
+    .select("record_payload")
+    .eq("invoice_id", id)
+    .order("chain_sequence", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
   const confirmedPayments = (payments ?? []).filter((p) => p.status === "confirmed");
   const amountPaid = confirmedPayments.reduce((sum, p) => sum + Number(p.amount ?? 0), 0);
   const amountDue = Math.max(0, Number(invoice.total ?? 0) - amountPaid);
   const aeatWarnings = verifactuWarnings(invoice.verifactu_response);
+  const fiscalPayload = latestFiscalRecord?.record_payload as
+    | { subsanacion?: unknown; rechazoPrevio?: unknown }
+    | undefined;
+  const isRegularizationPending =
+    invoice.verifactu_status === "submitted" &&
+    fiscalPayload?.subsanacion === "S" &&
+    fiscalPayload.rechazoPrevio === "X";
 
   const client = (
     invoice as unknown as { clients: { id: string; name: string; email: string | null } | null }
@@ -169,6 +184,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
               status: invoice.status as string,
               verifactu_status: invoice.verifactu_status as string,
               verifactu_error: (invoice.verifactu_error as string | null) ?? null,
+              is_regularization_pending: isRegularizationPending,
               is_rectification: Boolean(invoice.is_rectification),
               is_uncollectible: Boolean(invoice.is_uncollectible),
               total: Number(invoice.total ?? 0),

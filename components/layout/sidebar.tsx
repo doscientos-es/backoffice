@@ -14,7 +14,6 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { IconButton } from "@/components/ui/icon-button";
 import type { CurrentUser } from "@/lib/auth";
 import { visibleNavigationGroups } from "@/lib/navigation/navigation";
-import { version } from "../../package.json";
 
 export function Sidebar({ user, demoMode }: { user: CurrentUser; demoMode: boolean }) {
   const pathname = usePathname();
@@ -22,7 +21,7 @@ export function Sidebar({ user, demoMode }: { user: CurrentUser; demoMode: boole
   const visibleGroups = visibleNavigationGroups(user.role);
 
   return (
-    <aside className="flex h-full w-56 shrink-0 flex-col border-r border-border bg-card">
+    <aside className="hidden h-full w-56 shrink-0 flex-col border-r border-border bg-card lg:flex">
       <div className="px-4 py-5">
         <Link
           href="/inicio"
@@ -51,7 +50,6 @@ export function Sidebar({ user, demoMode }: { user: CurrentUser; demoMode: boole
               </Badge>
             ) : null}
             <div className="ml-auto flex items-center gap-1">
-              <span className="px-2 text-xs text-muted-foreground -mr-1">v{version}</span>
               <ThemeToggle />
               <NotificationsBell memberId={user.id} />
               <IconButton
