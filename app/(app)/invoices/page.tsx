@@ -1,7 +1,11 @@
 import {
+  Activity,
   TriangleAlert as AlertTriangle,
   CircleCheck as CheckCircle2,
   Clock,
+  KeyRound,
+  RefreshCcw,
+  Send,
   ShieldAlert,
 } from "lucide-react";
 import type { Metadata } from "next";
@@ -14,6 +18,7 @@ import { INVOICE_LIST_PAGE_SIZE, INVOICE_SORT_COLUMNS } from "@/lib/invoices/typ
 import { INVOICE_STATUS, VERIFACTU_STATUS } from "@/lib/status";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { parsePage, parseSortParam, parseStringParam } from "@/lib/utils/search-params";
+import { getVerifactuOperationalHealth } from "@/lib/verifactu/health";
 import { InvoiceRegisterExport } from "./monthly-register-export";
 
 export const metadata: Metadata = { title: "Facturas · doscientos" };
@@ -49,14 +54,10 @@ export default async function InvoicesPage({
   const page = parsePage(sp);
   const { sort, dir } = parseSortParam(sp, INVOICE_SORT_COLUMNS, "issue_date", "desc");
 
-  const { data, count, stats, error } = await listInvoices({
-    q,
-    status,
-    verifactu,
-    page,
-    sort,
-    dir,
-  });
+  const [{ data, count, stats, error }, aeatHealth] = await Promise.all([
+    listInvoices({ q, status, verifactu, page, sort, dir }),
+    getVerifactuOperationalHealth(),
+  ]);
 
   const {
     pendingTotal,
@@ -75,38 +76,96 @@ export default async function InvoicesPage({
       title="Facturas"
       description="Consulta el estado de cobro y el envío de cada factura a Verifactu."
       summary={
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard
-            label="Pendientes de cobro"
-            value={formatEUR(pendingTotal)}
-            tone="info"
-            icon={Clock}
-            hint={`${pendingCount} ${pendingCount === 1 ? "factura emitida" : "facturas emitidas"}`}
-            href="/invoices?status=issued"
-          />
-          <StatCard
-            label="Vencidas"
-            value={formatEUR(overdueTotal)}
-            tone="danger"
-            icon={AlertTriangle}
-            hint={`${overdueCount} ${overdueCount === 1 ? "factura vencida" : "facturas vencidas"}`}
-            href="/invoices?status=overdue"
-          />
-          <StatCard
-            label="Cobrado este mes"
-            value={formatEUR(paidMonthTotal)}
-            tone="success"
-            icon={CheckCircle2}
-            hint={`Desde ${formatDate(monthStart)}`}
-          />
-          <StatCard
-            label="Verifactu KO"
-            value={verifactuKoCount}
-            tone={verifactuKoCount > 0 ? "danger" : "default"}
-            icon={ShieldAlert}
-            hint="Rechazadas por AEAT"
-            href="/invoices?verifactu=rejected"
-          />
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <StatCard
+              label="Pendientes de cobro"
+              value={formatEUR(pendingTotal)}
+              tone="info"
+              icon={Clock}
+              hint={`${pendingCount} ${pendingCount === 1 ? "factura emitida" : "facturas emitidas"}`}
+              href="/invoices?status=issued"
+            />
+            <StatCard
+              label="Vencidas"
+              value={formatEUR(overdueTotal)}
+              tone="danger"
+              icon={AlertTriangle}
+              hint={`${overdueCount} ${overdueCount === 1 ? "factura vencida" : "facturas vencidas"}`}
+              href="/invoices?status=overdue"
+            />
+            <StatCard
+              label="Cobrado este mes"
+              value={formatEUR(paidMonthTotal)}
+              tone="success"
+              icon={CheckCircle2}
+              hint={`Desde ${formatDate(monthStart)}`}
+            />
+            <StatCard
+              label="Verifactu KO"
+              value={verifactuKoCount}
+              tone={verifactuKoCount > 0 ? "danger" : "default"}
+              icon={ShieldAlert}
+              hint="Rechazadas por AEAT"
+              href="/invoices?verifactu=rejected"
+            />
+          </div>
+          <section aria-labelledby="aeat-health-title" className="space-y-2">
+            <h2 id="aeat-health-title" className="text-sm font-semibold">
+              Salud operativa AEAT
+            </h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+              <StatCard
+                label="Cola pendiente"
+                value={aeatHealth.queueAvailable ? aeatHealth.pending : "—"}
+                tone={aeatHealth.pending > 0 ? "warning" : "default"}
+                icon={Send}
+                hint="En espera o procesando"
+              />
+              <StatCard
+                label="Reintentos"
+                value={aeatHealth.queueAvailable ? aeatHealth.retrying : "—"}
+                tone={aeatHealth.retrying > 0 ? "warning" : "default"}
+                icon={RefreshCcw}
+                hint="Errores técnicos recuperables"
+                href="/invoices?verifactu=error"
+              />
+              <StatCard
+                label="Bloqueadas"
+                value={aeatHealth.queueAvailable ? aeatHealth.blocked : "—"}
+                tone={aeatHealth.blocked > 0 ? "danger" : "default"}
+                icon={AlertTriangle}
+                hint="Rechazo o error definitivo"
+                href="/invoices?verifactu=rejected"
+              />
+              <StatCard
+                label="Diagnóstico AEAT"
+                value={aeatHealth.diagnostic.status === "passed" ? "Vigente" : "Revisar"}
+                tone={aeatHealth.diagnostic.status === "passed" ? "success" : "danger"}
+                icon={Activity}
+                hint="Suite sintética obligatoria"
+                href="/settings/diagnostics"
+              />
+              <StatCard
+                label="Certificado"
+                value={
+                  aeatHealth.certificate.daysRemaining === null
+                    ? "Sin fecha"
+                    : `${aeatHealth.certificate.daysRemaining} días`
+                }
+                tone={
+                  aeatHealth.certificate.status === "ok"
+                    ? "success"
+                    : aeatHealth.certificate.status === "warning"
+                      ? "warning"
+                      : "danger"
+                }
+                icon={KeyRound}
+                hint="Vigencia del certificado P12"
+                href="/settings"
+              />
+            </div>
+          </section>
         </div>
       }
       empty={q || status || verifactu ? "Sin coincidencias." : "Aún no hay facturas."}
@@ -122,6 +181,7 @@ export default async function InvoicesPage({
       headers={[
         { label: "Nº", sortKey: "full_number", minWidth: "8rem" },
         { label: "Cliente", sortKey: "client_name", minWidth: "10rem" },
+        { label: "Conceptos", minWidth: "14rem" },
         "IDFACT",
         { label: "Estado", sortKey: "status" },
         "Verifactu",
@@ -129,7 +189,7 @@ export default async function InvoicesPage({
         { label: "Emisión", sortKey: "issue_date", minWidth: "7rem" },
         { label: "Vencimiento", sortKey: "due_date", minWidth: "7rem" },
       ]}
-      align={["left", "left", "left", "left", "left", "right", "left", "left"]}
+      align={["left", "left", "left", "left", "left", "left", "right", "left", "left"]}
       exportFilename="facturas"
       rows={data.map((i) => ({
         id: i.id,
@@ -141,6 +201,15 @@ export default async function InvoicesPage({
           i.client_name ? (
             <span key="client" className="font-medium text-foreground">
               {i.client_name}
+            </span>
+          ) : null,
+          i.concepts.length > 0 ? (
+            <span
+              key="concepts"
+              className="line-clamp-2 max-w-72 text-sm leading-5 text-foreground/80"
+              title={i.concepts.join("\n")}
+            >
+              {i.concepts.join(" · ")}
             </span>
           ) : null,
           <span key="idfact" className="font-mono text-xs" title={i.idfact ?? undefined}>
@@ -161,6 +230,7 @@ export default async function InvoicesPage({
         csvValues: [
           i.full_number ?? "",
           i.client_name ?? "",
+          i.concepts.join(" | "),
           i.idfact ?? "",
           i.status ?? "",
           i.verifactu_status ?? "",

@@ -10,6 +10,7 @@ export type InvoiceListItem = {
   id: string;
   full_number: string | null;
   idfact: string | null;
+  concepts: string[];
   status: string | null;
   verifactu_status: string | null;
   total: number | null;

@@ -29,6 +29,21 @@ import {
 
 const log = scopedLogger("invoices.queries");
 
+type InvoiceConceptRow = {
+  description: string | null;
+  position: number | null;
+};
+
+export function invoiceConcepts(items: InvoiceConceptRow[] | null | undefined): string[] {
+  return [...(items ?? [])]
+    .sort(
+      (a, b) =>
+        (a.position ?? Number.MAX_SAFE_INTEGER) - (b.position ?? Number.MAX_SAFE_INTEGER),
+    )
+    .map((item) => item.description?.trim() ?? "")
+    .filter(Boolean);
+}
+
 export async function listInvoices(params: InvoiceListParams): Promise<InvoiceListResult> {
   const supabase = await createServerClient();
   const page = Math.max(1, params.page ?? 1);
@@ -44,7 +59,7 @@ export async function listInvoices(params: InvoiceListParams): Promise<InvoiceLi
         supabase
           .from("invoices")
           .select(
-            "id, full_number, idfact, status, verifactu_status, total, issue_date, due_date, client_name",
+            "id, full_number, idfact, status, verifactu_status, total, issue_date, due_date, client_name, invoice_items(description, position)",
             { count: "exact" },
           ),
       );
@@ -91,6 +106,13 @@ export async function listInvoices(params: InvoiceListParams): Promise<InvoiceLi
       id: i.id as string,
       full_number: (i.full_number as string | null) ?? null,
       idfact: (i.idfact as string | null) ?? null,
+      concepts: invoiceConcepts(
+        (
+          i as unknown as {
+            invoice_items: InvoiceConceptRow[] | null;
+          }
+        ).invoice_items,
+      ),
       status: (i.status as string | null) ?? null,
       verifactu_status: (i.verifactu_status as string | null) ?? null,
       total: i.total == null ? null : Number(i.total),

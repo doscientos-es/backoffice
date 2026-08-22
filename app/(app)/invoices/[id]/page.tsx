@@ -56,7 +56,7 @@ function InvoiceInfoField({
 }) {
   return (
     <div className={cn("min-w-0", className)}>
-      <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</dt>
+      <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
       <dd className={cn("mt-1 min-w-0 text-sm leading-5 text-foreground", valueClassName)}>
         {children ?? "—"}
       </dd>
@@ -126,13 +126,15 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
     .limit(1)
     .maybeSingle();
 
-  const { data: latestFiscalOutbox } = latestFiscalRecord?.id
-    ? await supabase
+  let latestFiscalOutbox = null;
+  if (latestFiscalRecord?.id) {
+    const result = await supabase
       .from("verifactu_outbox")
       .select("state, next_attempt_at, last_error")
       .eq("ledger_id", latestFiscalRecord.id)
-      .maybeSingle()
-    : { data: null };
+      .maybeSingle();
+    latestFiscalOutbox = result.data;
+  }
 
   const confirmedPayments = (payments ?? []).filter((p) => p.status === "confirmed");
   const amountPaid = confirmedPayments.reduce((sum, p) => sum + Number(p.amount ?? 0), 0);
