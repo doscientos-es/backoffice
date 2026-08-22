@@ -30,8 +30,8 @@ importers:
         specifier: ^3.2.2
         version: 3.2.2(react@19.2.6)
       '@doscientos/ui':
-        specifier: ^0.1.7
-        version: 0.1.7(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        specifier: file:vendor\doscientos-ui-0.1.8.tgz
+        version: file:vendor/doscientos-ui-0.1.8.tgz(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@doscientos/verifactu':
         specifier: file:vendor\doscientos-verifactu-0.1.18.tgz
         version: file:vendor/doscientos-verifactu-0.1.18.tgz(date-fns@4.3.0)
@@ -512,8 +512,9 @@ packages:
     peerDependencies:
       react: '>=16.8.0'
 
-  '@doscientos/ui@0.1.7':
-    resolution: {integrity: sha512-EoyWxDUOrTPmeIENzW8Q2ABVlyGSTk0f3MVBpjFS+BqveUk48Ti7r68fppgWVkV+hterjICj8ooReEneuUoKNw==}
+  '@doscientos/ui@file:vendor/doscientos-ui-0.1.8.tgz':
+    resolution: {integrity: sha512-Z9bAF3q3Gdp9ocd+Poo9cRws+kFP/o7jCYu1iEYsiIggeZrxhG0nr2srK5rary5rzb7k5XvczBQBZbuKTQSmmA==, tarball: file:vendor/doscientos-ui-0.1.8.tgz}
+    version: 0.1.8
     peerDependencies:
       react: '>=18.3.0'
       react-dom: '>=18.3.0'
@@ -1316,13 +1317,6 @@ packages:
   '@peculiar/x509@1.14.3':
     resolution: {integrity: sha512-C2Xj8FZ0uHWeCXXqX5B4/gVFQmtSkiuOolzAgutjTfseNOHT3pUjljDZsTSxXFGgio54bCzVFqmEOUrIVk8RDA==}
     engines: {node: '>=20.0.0'}
-
-  '@phosphor-icons/react@2.1.10':
-    resolution: {integrity: sha512-vt8Tvq8GLjheAZZYa+YG/pW7HDbov8El/MANW8pOAz4eGxrwhnbfrQZq0Cp4q8zBEu8NIhHdnr+r8thnfRSNYA==}
-    engines: {node: '>=10'}
-    peerDependencies:
-      react: '>= 16.8'
-      react-dom: '>= 16.8'
 
   '@pinojs/redact@0.4.0':
     resolution: {integrity: sha512-k2ENnmBugE/rzQfEcdWHcCY+/FM3VLzH9cYEsbdsoqrvzAKRhUZeRNhAZvB8OitQJ1TBed3yqWtdjzS6wJKBwg==}
@@ -5802,11 +5796,11 @@ snapshots:
       react: 19.2.6
       tslib: 2.8.1
 
-  '@doscientos/ui@0.1.7(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+  '@doscientos/ui@file:vendor/doscientos-ui-0.1.8.tgz(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
-      '@phosphor-icons/react': 2.1.10(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       class-variance-authority: 0.7.1
       clsx: 2.1.1
+      lucide-react: 1.33.0(react@19.2.6)
       react: 19.2.6
       react-aria-components: 1.20.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       react-dom: 19.2.6(react@19.2.6)
@@ -6469,11 +6463,6 @@ snapshots:
       reflect-metadata: 0.2.2
       tslib: 2.8.1
       tsyringe: 4.10.0
-
-  '@phosphor-icons/react@2.1.10(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
-    dependencies:
-      react: 19.2.6
-      react-dom: 19.2.6(react@19.2.6)
 
   '@pinojs/redact@0.4.0': {}
 

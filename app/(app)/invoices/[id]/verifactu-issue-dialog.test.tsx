@@ -19,5 +19,26 @@ describe("VerifactuIssueDetailsButton", () => {
     expect(screen.getByRole("dialog")).toBeDefined();
     expect(screen.getByText(error).className).toContain("wrap-break-word");
     expect(screen.getByText(error).className).toContain("overflow-auto");
+    expect(screen.queryByRole("link", { name: /catálogo oficial/i })).toBeNull();
+  });
+
+  it("adds the official effect and source for a recognized AEAT code", () => {
+    render(
+      <VerifactuIssueDetailsButton
+        status="rejected"
+        error="El NIF no está identificado en el censo de la AEAT"
+        aeatCode="1109"
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Ver detalle de Factura rechazada por AEAT" }),
+    );
+
+    expect(screen.getByText("Código AEAT 1109")).toBeDefined();
+    expect(screen.getByText(/rechaza la factura/i)).toBeDefined();
+    const source = screen.getByRole("link", { name: /catálogo oficial de AEAT/i });
+    expect(source.getAttribute("href")).toContain("aeat.es/");
+    expect(source.getAttribute("target")).toBe("_blank");
   });
 });

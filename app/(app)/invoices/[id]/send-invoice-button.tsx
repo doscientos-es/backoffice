@@ -3,19 +3,11 @@
 import { Mail } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModalDialog } from "@/components/ui/modal-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { sendInvoiceEmail } from "../actions";
 
@@ -55,27 +47,44 @@ export function SendInvoiceButton({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {iconOnly ? (
-          <IconButton variant="outline" label="Enviar email al cliente">
-            <Mail className="h-4 w-4" />
-          </IconButton>
-        ) : (
-          <Button variant="outline" size="sm">
-            <Mail className="mr-2 h-4 w-4" />
-            Enviar email
-          </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Enviar factura al cliente</DialogTitle>
-          <DialogDescription>
-            Se enviará un email con un botón «Ver y pagar» que abre el portal del cliente.
-          </DialogDescription>
-        </DialogHeader>
-
+    <>
+      {iconOnly ? (
+        <IconButton variant="outline" label="Enviar email al cliente" onClick={() => setOpen(true)}>
+          <Mail className="h-4 w-4" />
+        </IconButton>
+      ) : (
+        <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+          <Mail className="mr-2 h-4 w-4" />
+          Enviar email
+        </Button>
+      )}
+      <ModalDialog
+        open={open}
+        onOpenChange={setOpen}
+        title="Enviar factura al cliente"
+        description="Se enviará un email con un botón «Ver y pagar» que abre el portal del cliente."
+        size="md"
+        footerClassName="items-center sm:justify-between"
+        footer={
+          <>
+            <FormFeedback state={feedback.state} pendingLabel="Enviando…" />
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={feedback.pending}
+                onClick={() => setOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button size="sm" disabled={feedback.pending} onClick={onSend}>
+                <Mail className="mr-2 h-4 w-4" />
+                {feedback.pending ? "Enviando…" : "Enviar"}
+              </Button>
+            </div>
+          </>
+        }
+      >
         <div className="space-y-3 py-1">
           <div className="space-y-1.5">
             <Label htmlFor="invoice-email-to">Destinatario</Label>
@@ -101,25 +110,7 @@ export function SendInvoiceButton({
             />
           </div>
         </div>
-
-        <DialogFooter className="items-center gap-2 sm:justify-between">
-          <FormFeedback state={feedback.state} pendingLabel="Enviando…" />
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={feedback.pending}
-              onClick={() => setOpen(false)}
-            >
-              Cancelar
-            </Button>
-            <Button size="sm" disabled={feedback.pending} onClick={onSend}>
-              <Mail className="mr-2 h-4 w-4" />
-              {feedback.pending ? "Enviando…" : "Enviar"}
-            </Button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </ModalDialog>
+    </>
   );
 }

@@ -5,15 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { MfaChallengeDialog } from "@/components/security/mfa-challenge-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { useFormFeedback } from "@/components/ui/form-feedback";
+import { ModalDialog } from "@/components/ui/modal-dialog";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { grantUserVerificationFromMfa } from "@/lib/security/webauthn-actions";
 import {
@@ -147,7 +140,7 @@ export function SendAeatButton({
         <Send className="size-4" />
         {preparing ? "Preparando…" : feedback.pending ? "Enviando…" : label}
       </Button>
-      <Dialog
+      <ModalDialog
         open={confirmOpen}
         onOpenChange={(open) => {
           setConfirmOpen(open);
@@ -156,65 +149,62 @@ export function SendAeatButton({
             setVerificationError(null);
           }
         }}
+        title={
+          isRegularization
+            ? "Confirmar envío de regularización a AEAT"
+            : "Confirmar reenvío a VERI*FACTU"
+        }
+        description={
+          passkeyOptions
+            ? "Usa la biometría o el bloqueo del dispositivo para continuar."
+            : isRegularization
+              ? "Elige cómo confirmar tu identidad para enviar el registro de subsanación a AEAT."
+              : "Elige cómo quieres confirmar tu identidad para reenviar este registro fiscal a AEAT."
+        }
+        showCloseButton={!feedback.pending}
+        footer={
+          passkeyOptions ? (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setPasskeyOptions(null);
+                  setVerificationError(null);
+                }}
+                disabled={feedback.pending}
+              >
+                Elegir otro método
+              </Button>
+              <Button onClick={confirmWithPasskey} disabled={feedback.pending}>
+                Confirmar con biometría
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setConfirmOpen(false);
+                  setMfaOpen(true);
+                }}
+                disabled={preparing || feedback.pending}
+              >
+                Usar código de autenticación
+              </Button>
+              <Button
+                onClick={preparePasskeyVerification}
+                disabled={preparing || feedback.pending}
+              >
+                {preparing ? "Preparando…" : "Usar biometría"}
+              </Button>
+            </>
+          )
+        }
       >
-        <DialogContent showCloseButton={!feedback.pending}>
-          <DialogHeader>
-            <DialogTitle>
-              {isRegularization
-                ? "Confirmar envío de regularización a AEAT"
-                : "Confirmar reenvío a VERI*FACTU"}
-            </DialogTitle>
-            <DialogDescription>
-              {passkeyOptions
-                ? "Usa la biometría o el bloqueo del dispositivo para continuar."
-                : isRegularization
-                  ? "Elige cómo confirmar tu identidad para enviar el registro de subsanación a AEAT."
-                  : "Elige cómo quieres confirmar tu identidad para reenviar este registro fiscal a AEAT."}
-            </DialogDescription>
-          </DialogHeader>
-          {verificationError ? (
-            <p className="text-sm text-destructive">{verificationError}</p>
-          ) : null}
-          <DialogFooter>
-            {passkeyOptions ? (
-              <>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setPasskeyOptions(null);
-                    setVerificationError(null);
-                  }}
-                  disabled={feedback.pending}
-                >
-                  Elegir otro método
-                </Button>
-                <Button onClick={confirmWithPasskey} disabled={feedback.pending}>
-                  Confirmar con biometría
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setConfirmOpen(false);
-                    setMfaOpen(true);
-                  }}
-                  disabled={preparing || feedback.pending}
-                >
-                  Usar código de autenticación
-                </Button>
-                <Button
-                  onClick={preparePasskeyVerification}
-                  disabled={preparing || feedback.pending}
-                >
-                  {preparing ? "Preparando…" : "Usar biometría"}
-                </Button>
-              </>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        {verificationError ? (
+          <p className="text-sm text-destructive">{verificationError}</p>
+        ) : null}
+      </ModalDialog>
       <MfaChallengeDialog
         open={mfaOpen}
         onOpenChange={setMfaOpen}

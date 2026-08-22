@@ -6,10 +6,12 @@ export function InvoiceStatus({
   status,
   verifactuStatus,
   verifactuError,
+  verifactuAeatCode,
 }: {
   status: string;
   verifactuStatus: string;
   verifactuError: string | null;
+  verifactuAeatCode: string | null;
 }) {
   const hasFiscalProblem = verifactuStatus === "error" || verifactuStatus === "rejected";
 
@@ -21,6 +23,7 @@ export function InvoiceStatus({
         <VerifactuIssueDetailsButton
           status={verifactuStatus as "error" | "rejected"}
           error={verifactuError}
+          aeatCode={verifactuAeatCode}
         />
       ) : null}
     </div>

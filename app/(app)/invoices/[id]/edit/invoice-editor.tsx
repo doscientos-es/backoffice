@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { LineItemsTable } from "@/components/finance/line-items-table";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateField } from "@/components/ui/date-field";
 import { FormRow } from "@/components/ui/form-row";
 import { Textarea } from "@/components/ui/textarea";
@@ -117,7 +117,10 @@ export function InvoiceEditor({
         <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <Card className="min-w-0">
             <CardHeader>
-              <CardTitle>Líneas</CardTitle>
+              <CardTitle>Conceptos</CardTitle>
+              <CardDescription>
+                Añade cada servicio o producto. Los importes y el IVA se calculan automáticamente.
+              </CardDescription>
             </CardHeader>
             <CardContent className="px-0">
               <LineItemsTable items={items} onChange={setItems} locked={locked} />

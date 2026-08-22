@@ -11,8 +11,8 @@ describe("DialogFooter", () => {
       </DialogFooter>,
     );
 
-    expect(
-      screen.getByText("Usar código de autenticación").parentElement?.className,
-    ).toContain("sm:flex-wrap");
+    expect(screen.getByText("Usar código de autenticación").parentElement?.className).toContain(
+      "sm:flex-wrap",
+    );
   });
 });

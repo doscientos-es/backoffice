@@ -6,7 +6,9 @@ import { getFollowUps } from "./follow-ups";
 // Mock admin client
 const mockChain: any = {
   select: vi.fn(() => mockChain),
+  eq: vi.fn(() => mockChain),
   in: vi.fn(() => mockChain),
+  gte: vi.fn(() => mockChain),
   lt: vi.fn(() => mockChain),
   is: vi.fn(() => mockChain),
   not: vi.fn(() => mockChain),
@@ -89,6 +91,54 @@ describe("getFollowUps logic", () => {
     expect(lead.url).toBe("https://app.test/leads/lead-1");
     expect(lead.statusLabel).toBe("Nuevo");
 
+    vi.useRealTimers();
+  });
+
+  it("excludes leads that already have a future call or meeting", async () => {
+    const mockSupabase = createAdminClient() as any;
+    const now = new Date("2026-06-29T12:00:00Z").getTime();
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
+    const staleDate = new Date(now - 48 * 3600_000).toISOString();
+    const futureMeeting = new Date(now + 24 * 3600_000).toISOString();
+
+    const chain = (data: unknown[]) => {
+      const query: any = {
+        select: vi.fn(() => query),
+        eq: vi.fn(() => query),
+        in: vi.fn(() => query),
+        gte: vi.fn(() => query),
+        lt: vi.fn(() => query),
+        is: vi.fn(() => query),
+        not: vi.fn(() => query),
+        order: vi.fn(() => query),
+        limit: vi.fn(() => Promise.resolve({ data, error: null })),
+      };
+      return query;
+    };
+    const lead = {
+      id: "lead-with-meeting",
+      name: "Lead con reunión",
+      company: null,
+      phone: null,
+      email: null,
+      source: null,
+      status: "new",
+      assigned_to: "member-1",
+      updated_at: staleDate,
+      created_at: staleDate,
+    };
+    mockSupabase.from
+      .mockReturnValueOnce(chain([lead]))
+      .mockReturnValueOnce(chain([]))
+      .mockReturnValueOnce(chain([lead]))
+      .mockReturnValueOnce(
+        chain([{ lead_id: lead.id, action_type: "meeting", start_at: futureMeeting }]),
+      );
+
+    const res = await getFollowUps();
+    expect(res.staleLeads).toEqual([]);
+    expect(res.uncontactedLeads).toEqual([]);
     vi.useRealTimers();
   });
 

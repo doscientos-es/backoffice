@@ -3,6 +3,7 @@ import { CircleCheck as CheckCircle2, Download, XCircle } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { InvoiceItemsSummary } from "@/components/finance/invoice-items-summary";
 import { PortalPasswordGate } from "@/components/portal/password-gate";
 import { RedsysPaymentButton } from "@/components/portal/redsys-payment-button";
 import { Button } from "@/components/ui/button";
@@ -141,17 +142,17 @@ export default async function PortalInvoicePage({
 
   const payments = canPay
     ? ((
-      await admin
-        .from("invoice_payments")
-        .select("id, amount, ds_authorisation_code, confirmed_at")
-        .eq("invoice_id", invoice.id as string)
-        .eq("status", "confirmed")
-        .order("confirmed_at", { ascending: false })
-    ).data ?? [])
+        await admin
+          .from("invoice_payments")
+          .select("id, amount, ds_authorisation_code, confirmed_at")
+          .eq("invoice_id", invoice.id as string)
+          .eq("status", "confirmed")
+          .order("confirmed_at", { ascending: false })
+      ).data ?? [])
     : [];
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-5 py-6 sm:py-8">
+    <div className="mx-auto flex max-w-5xl flex-col gap-5 px-4 py-6 sm:px-6 sm:py-8">
       {success === "1" && (
         <div className="flex items-center gap-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 p-4 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300">
           <CheckCircle2 className="h-5 w-5 shrink-0" />
@@ -218,22 +219,20 @@ export default async function PortalInvoicePage({
         </div>
       )}
 
-      <article className="overflow-hidden border-y border-zinc-200 dark:border-zinc-800">
+      <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200 dark:bg-zinc-950 dark:ring-zinc-800">
         {/* Document header */}
-        <div className="flex flex-col gap-6 border-b border-zinc-200 px-6 py-6 dark:border-zinc-800 sm:flex-row sm:items-start sm:justify-between sm:px-8">
-          <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-5 border-b border-zinc-200 px-4 py-5 dark:border-zinc-800 sm:flex-row sm:items-start sm:justify-between sm:px-8 sm:py-7">
+          <div className="flex flex-col items-start gap-2">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
-              {invoice.invoice_type as string}
+              Factura · {invoice.invoice_type as string}
             </p>
-          </div>
-          <div className="flex flex-col items-start sm:items-end gap-1.5">
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+              <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
                 {invoice.full_number as string}
               </h1>
               <StatusBadge meta={INVOICE_STATUS} value={invoice.status as string} />
             </div>
-            <div className="flex flex-col items-start sm:items-end gap-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
               {invoice.issue_date ? (
                 <span>
                   Emitida:{" "}
@@ -251,7 +250,15 @@ export default async function PortalInvoicePage({
                 </span>
               ) : null}
             </div>
-            <Button variant="outline" size="sm" asChild className="mt-2">
+          </div>
+          <div className="flex w-full items-center justify-between gap-4 sm:w-auto sm:flex-col sm:items-end">
+            <div className="sm:text-right">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Total factura</p>
+              <p className="text-xl font-bold tabular-nums text-zinc-900 dark:text-zinc-100">
+                {formatEUR(Number(invoice.total ?? 0))}
+              </p>
+            </div>
+            <Button variant="outline" size="sm" asChild>
               <a href={`/p/invoice/${token}/pdf`}>
                 <Download className="mr-2 h-4 w-4" />
                 Descargar PDF
@@ -263,7 +270,7 @@ export default async function PortalInvoicePage({
         {/* Issuer + Recipient */}
         <div className="grid border-b border-zinc-100 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-900/50 sm:grid-cols-2">
           {settings ? (
-            <div className="px-8 py-5 border-b sm:border-b-0 sm:border-r border-zinc-100 dark:border-zinc-800/60">
+            <div className="border-b border-zinc-100 px-4 py-5 dark:border-zinc-800/60 sm:border-r sm:border-b-0 sm:px-8">
               <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-1">
                 Emitida por
               </p>
@@ -290,7 +297,7 @@ export default async function PortalInvoicePage({
               ) : null}
             </div>
           ) : null}
-          <div className="px-8 py-5">
+          <div className="px-4 py-5 sm:px-8">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-2">
               Facturado a
             </p>
@@ -313,7 +320,7 @@ export default async function PortalInvoicePage({
               </p>
             ) : null}
             {(invoice.client_address_street as string | null) ||
-              (invoice.client_address_city as string | null) ? (
+            (invoice.client_address_city as string | null) ? (
               <p className="text-xs text-zinc-500 dark:text-zinc-400 whitespace-pre-wrap">
                 {[
                   invoice.client_address_street,
@@ -332,92 +339,24 @@ export default async function PortalInvoicePage({
           </div>
         </div>
 
-        {/* Line items */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-zinc-200 dark:border-zinc-800">
-                <th className="px-8 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
-                  Descripción
-                </th>
-                <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
-                  Cant.
-                </th>
-                <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
-                  Precio
-                </th>
-                <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
-                  IVA
-                </th>
-                <th className="px-8 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
-                  Subtotal
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {safeItems.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-8 py-6 text-sm text-zinc-400 dark:text-zinc-600">
-                    Sin líneas.
-                  </td>
-                </tr>
-              ) : (
-                safeItems.map((item, i) => (
-                  <tr
-                    key={item.id}
-                    className={i > 0 ? "border-t border-zinc-100 dark:border-zinc-800/60" : ""}
-                  >
-                    <td className="px-8 py-3.5 text-zinc-800 dark:text-zinc-200">
-                      {item.description}
-                    </td>
-                    <td className="px-4 py-3.5 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
-                      {item.quantity}
-                    </td>
-                    <td className="px-4 py-3.5 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
-                      {formatEUR(item.unit_price)}
-                    </td>
-                    <td className="px-4 py-3.5 text-right tabular-nums text-zinc-600 dark:text-zinc-400">
-                      {item.vat_rate}%
-                    </td>
-                    <td className="px-8 py-3.5 text-right tabular-nums font-medium text-zinc-900 dark:text-zinc-100">
-                      {formatEUR(item.subtotal)}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-800 sm:px-8">
+          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Conceptos</h2>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+            {safeItems.length} {safeItems.length === 1 ? "concepto" : "conceptos"}
+          </span>
         </div>
-
-        {/* Totals (con desglose de IVA por tipo) */}
-        <div className="border-t border-zinc-200 dark:border-zinc-800 px-8 py-5 flex justify-end">
-          <div className="flex flex-col gap-1.5 w-72">
-            <div className="flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
-              <span>Base imponible</span>
-              <span className="tabular-nums">{formatEUR(invoice.subtotal as number)}</span>
-            </div>
-            {vatBreakdown.map((row) => (
-              <div
-                key={row.rate}
-                className="flex justify-between text-xs text-zinc-500 dark:text-zinc-400"
-              >
-                <span>
-                  IVA {row.rate}% sobre {formatEUR(row.base)}
-                </span>
-                <span className="tabular-nums">{formatEUR(row.tax)}</span>
-              </div>
-            ))}
-            <div className="flex justify-between text-sm font-bold text-zinc-900 dark:text-zinc-100 border-t border-zinc-200 dark:border-zinc-700 pt-2 mt-1">
-              <span>Total</span>
-              <span className="tabular-nums">{formatEUR(invoice.total as number)}</span>
-            </div>
-          </div>
-        </div>
+        <InvoiceItemsSummary
+          items={safeItems}
+          subtotal={Number(invoice.subtotal ?? 0)}
+          total={Number(invoice.total ?? 0)}
+          vatBreakdown={vatBreakdown}
+          variant="portal"
+        />
 
         {/* Fiscal info + QR */}
         {(invoice.idfact as string | null) ||
-          (invoice.verifactu_csv as string | null) ||
-          qrDataUrl ? (
+        (invoice.verifactu_csv as string | null) ||
+        qrDataUrl ? (
           <div className="border-t border-zinc-100 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-900/50 px-8 py-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex flex-col gap-1.5">
               <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-0.5">

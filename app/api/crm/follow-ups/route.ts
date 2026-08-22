@@ -15,14 +15,17 @@ import { getFollowUps } from "@/lib/integrations/follow-ups";
 import { telegramSendMessage } from "@/lib/integrations/telegram";
 import { scopedLogger } from "@/lib/logger";
 import { dispatchNotifications } from "@/lib/notifications/dispatch";
+import {
+  collectLeadFollowUpSummaries,
+  formatLeadFollowUpSummary,
+} from "@/lib/notifications/lead-follow-up-summary";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const log = scopedLogger("crm.follow-ups");
-const STALE_HOURS = 24;
-const AT_RISK_HOURS = 72;
+const SUMMARY_EVENT_TYPE = "lead_follow_up_summary";
 
 function authenticate(request: NextRequest): boolean {
   const { CRON_SECRET } = serverEnv();
@@ -88,73 +91,37 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
 async function dispatchLeadFollowUpNotifications(data: Awaited<ReturnType<typeof getFollowUps>>) {
   const supabase = createAdminClient();
-  const leads = [
-    ...data.uncontactedLeads.map((lead) => ({
-      ...lead,
-      eventType: "lead_uncontacted" as const,
-      body: `El lead “${lead.name}” lleva ${lead.hoursUncontacted} h sin primer contacto`,
-    })),
-    ...data.staleLeads
-      .filter((lead) => lead.hoursSince >= STALE_HOURS)
-      .map((lead) => ({
-        ...lead,
-        eventType:
-          lead.hoursSince >= AT_RISK_HOURS ? ("lead_at_risk" as const) : ("lead_stale" as const),
-        body:
-          lead.hoursSince >= AT_RISK_HOURS
-            ? `El lead “${lead.name}” lleva ${lead.hoursSince} h sin novedades y está en riesgo`
-            : `El lead “${lead.name}” lleva ${lead.hoursSince} h sin novedades`,
-      })),
-  ];
-  if (!leads.length) return;
-
-  const leadIds = leads.map((lead) => lead.id);
-  const { data: recentNotifications } = await supabase
-    .from("notifications")
-    .select("entity_id, event_type")
-    .in("entity_id", leadIds)
-    .in("event_type", ["lead_uncontacted", "lead_stale", "lead_at_risk"])
-    .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
-  const sent = new Set(
-    (recentNotifications ?? []).map(
-      (notification) => `${notification.event_type}:${notification.entity_id}`,
-    ),
-  );
-
-  const { data: admins } = await supabase
+  const { data: admins, error: adminsError } = await supabase
     .from("team_members")
     .select("id")
     .in("role", ["owner", "admin"])
     .is("deleted_at", null);
+  if (adminsError) throw new Error(adminsError.message);
   const adminIds = (admins ?? []).map((member) => member.id as string);
+  const summaries = collectLeadFollowUpSummaries(data, adminIds);
+  if (!summaries.length) return;
 
-  for (const lead of leads) {
-    const key = `${lead.eventType}:${lead.id}`;
-    if (sent.has(key)) continue;
+  const recipientIds = summaries.map((summary) => summary.recipientId);
+  const { data: recentNotifications, error: recentError } = await supabase
+    .from("notifications")
+    .select("recipient_id")
+    .eq("event_type", SUMMARY_EVENT_TYPE)
+    .in("recipient_id", recipientIds)
+    .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+  if (recentError) throw new Error(recentError.message);
+  const alreadySent = new Set(
+    (recentNotifications ?? []).map((notification) => notification.recipient_id),
+  );
 
-    const recipients =
-      lead.eventType === "lead_at_risk" || !lead.assignedTo
-        ? [...new Set([...(lead.assignedTo ? [lead.assignedTo] : []), ...adminIds])]
-        : [lead.assignedTo];
+  for (const summary of summaries) {
+    if (alreadySent.has(summary.recipientId)) continue;
     await dispatchNotifications({
-      recipientIds: recipients,
-      eventType: lead.eventType,
-      entityType: "lead",
-      entityId: lead.id,
-      body: lead.body,
-      link: `/leads/${lead.id}`,
-      actions: lead.phone
-        ? [
-            { action: "call", title: "Llamar" },
-            { action: "whatsapp", title: "WhatsApp" },
-            { action: "feedback", title: "Registrar resultado" },
-          ]
-        : [{ action: "feedback", title: "Registrar resultado" }],
-      data: {
-        callUrl: lead.phone ? `tel:${lead.phone.replace(/[^\d+#*]/g, "")}` : null,
-        whatsappUrl: lead.phone ? `https://wa.me/${lead.phone.replace(/\D/g, "")}` : null,
-        feedbackUrl: `/leads/${lead.id}?feedback=call`,
-      },
+      recipientIds: [summary.recipientId],
+      eventType: SUMMARY_EVENT_TYPE,
+      entityType: "lead_follow_up_summary",
+      entityId: summary.recipientId,
+      body: formatLeadFollowUpSummary(summary),
+      link: "/leads",
     });
   }
 }

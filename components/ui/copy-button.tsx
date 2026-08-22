@@ -12,6 +12,8 @@ interface CopyButtonProps {
   successMessage?: string;
   /** Accessible label for the button. */
   label?: string;
+  /** Shows a compact text label next to the icon. */
+  showLabel?: boolean;
   className?: string;
 }
 
@@ -23,6 +25,7 @@ export function CopyButton({
   text,
   successMessage = "Copiado al portapapeles",
   label = "Copiar",
+  showLabel = false,
   className,
 }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
@@ -45,7 +48,8 @@ export function CopyButton({
       aria-label={label}
       title={label}
       className={cn(
-        "inline-flex size-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+        "inline-flex items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+        showLabel ? "h-7 gap-1.5 px-2 text-xs font-medium" : "size-6",
         className,
       )}
     >
@@ -54,6 +58,7 @@ export function CopyButton({
       ) : (
         <Copy className="size-3.5" />
       )}
+      {showLabel ? <span>{copied ? "Copiado" : "Copiar"}</span> : null}
     </button>
   );
 }

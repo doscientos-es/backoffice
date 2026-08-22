@@ -1,5 +1,6 @@
 import { publicEnv } from "@/lib/env";
 import { ACTIVE_LEAD_STATUSES } from "@/lib/leads/pipeline";
+import { findLeadIdsWithScheduledContact } from "@/lib/leads/scheduled-contact";
 import { LEAD_STATUS, PROPOSAL_STATUS } from "@/lib/status";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -130,23 +131,35 @@ export async function getFollowUps(opts?: {
       .limit(LIST_LIMIT),
   ]);
 
-  const staleLeads: StaleLead[] = (leadsRes.data ?? []).map((r) => {
-    const status = r.status as keyof typeof LEAD_STATUS;
-    const since = (r.updated_at as string) ?? new Date(now).toISOString();
-    return {
-      id: r.id as string,
-      name: r.name as string,
-      company: (r.company as string | null) ?? null,
-      phone: (r.phone as string | null) ?? null,
-      email: (r.email as string | null) ?? null,
-      status,
-      statusLabel: LEAD_STATUS[status]?.label ?? status,
-      assignedTo: (r.assigned_to as string | null) ?? null,
-      since,
-      hoursSince: hoursBetween(since, now),
-      url: `${appUrl}/leads/${r.id}`,
-    };
-  });
+  const candidateLeadIds = [
+    ...(leadsRes.data ?? []).map((lead) => lead.id as string),
+    ...(uncontactedRes.data ?? []).map((lead) => lead.id as string),
+  ];
+  const scheduledContactLeadIds = await findLeadIdsWithScheduledContact(
+    supabase,
+    candidateLeadIds,
+    new Date(now),
+  );
+
+  const staleLeads: StaleLead[] = (leadsRes.data ?? [])
+    .filter((r) => !scheduledContactLeadIds.has(r.id as string))
+    .map((r) => {
+      const status = r.status as keyof typeof LEAD_STATUS;
+      const since = (r.updated_at as string) ?? new Date(now).toISOString();
+      return {
+        id: r.id as string,
+        name: r.name as string,
+        company: (r.company as string | null) ?? null,
+        phone: (r.phone as string | null) ?? null,
+        email: (r.email as string | null) ?? null,
+        status,
+        statusLabel: LEAD_STATUS[status]?.label ?? status,
+        assignedTo: (r.assigned_to as string | null) ?? null,
+        since,
+        hoursSince: hoursBetween(since, now),
+        url: `${appUrl}/leads/${r.id}`,
+      };
+    });
 
   const pendingProposals: PendingProposal[] = (proposalsRes.data ?? []).map((r) => {
     const status = r.status as keyof typeof PROPOSAL_STATUS;
@@ -164,21 +177,23 @@ export async function getFollowUps(opts?: {
     };
   });
 
-  const uncontactedLeads: UncontactedLead[] = (uncontactedRes.data ?? []).map((r) => {
-    const createdAt = (r.created_at as string) ?? new Date(now).toISOString();
-    return {
-      id: r.id as string,
-      name: r.name as string,
-      company: (r.company as string | null) ?? null,
-      phone: (r.phone as string | null) ?? null,
-      email: (r.email as string | null) ?? null,
-      source: (r.source as string | null) ?? null,
-      assignedTo: (r.assigned_to as string | null) ?? null,
-      createdAt,
-      hoursUncontacted: hoursBetween(createdAt, now),
-      url: `${appUrl}/leads/${r.id}`,
-    };
-  });
+  const uncontactedLeads: UncontactedLead[] = (uncontactedRes.data ?? [])
+    .filter((r) => !scheduledContactLeadIds.has(r.id as string))
+    .map((r) => {
+      const createdAt = (r.created_at as string) ?? new Date(now).toISOString();
+      return {
+        id: r.id as string,
+        name: r.name as string,
+        company: (r.company as string | null) ?? null,
+        phone: (r.phone as string | null) ?? null,
+        email: (r.email as string | null) ?? null,
+        source: (r.source as string | null) ?? null,
+        assignedTo: (r.assigned_to as string | null) ?? null,
+        createdAt,
+        hoursUncontacted: hoursBetween(createdAt, now),
+        url: `${appUrl}/leads/${r.id}`,
+      };
+    });
 
   return {
     generatedAt: new Date(now).toISOString(),

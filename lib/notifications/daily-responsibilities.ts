@@ -1,4 +1,5 @@
 import { ACTIVE_LEAD_STATUSES } from "@/lib/leads/pipeline";
+import { findLeadIdsWithScheduledContact } from "@/lib/leads/scheduled-contact";
 import { dispatchNotifications } from "@/lib/notifications/dispatch";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -80,11 +81,11 @@ export function formatDailyResponsibilityBody(summary: DailyResponsibility): str
   const items = [
     summary.overdueTasks && formatCount(summary.overdueTasks, "tarea vencida", "tareas vencidas"),
     summary.tasksDueToday &&
-      formatCount(summary.tasksDueToday, "tarea para hoy", "tareas para hoy"),
+    formatCount(summary.tasksDueToday, "tarea para hoy", "tareas para hoy"),
     summary.pendingReminders &&
-      formatCount(summary.pendingReminders, "recordatorio pendiente", "recordatorios pendientes"),
+    formatCount(summary.pendingReminders, "recordatorio pendiente", "recordatorios pendientes"),
     summary.staleLeads &&
-      formatCount(summary.staleLeads, "lead sin seguimiento", "leads sin seguimiento"),
+    formatCount(summary.staleLeads, "lead sin seguimiento", "leads sin seguimiento"),
   ].filter((item): item is string => Boolean(item));
   return `Tienes ${items.join(", ")}.`;
 }
@@ -126,7 +127,7 @@ export async function sendDailyResponsibilityNotifications(now = new Date()) {
       .is("deleted_at", null),
     admin
       .from("leads")
-      .select("assigned_to")
+      .select("id, assigned_to")
       .in("status", ACTIVE_LEAD_STATUSES)
       .not("assigned_to", "is", null)
       .lt("updated_at", followUpCutoff)
@@ -136,11 +137,19 @@ export async function sendDailyResponsibilityNotifications(now = new Date()) {
     if (result.error) throw new Error(result.error.message);
   }
 
+  const scheduledContactLeadIds = await findLeadIdsWithScheduledContact(
+    admin,
+    (leadsRes.data ?? []).map((lead) => lead.id),
+    now,
+  );
+
   const summaries = collectDailyResponsibilities({
     tasks: toAssignedWorkItems(tasksRes.data ?? []),
     reminders: toAssignedWorkItems(remindersRes.data ?? []),
     staleLeads: (leadsRes.data ?? []).flatMap((lead) =>
-      lead.assigned_to ? [{ assignedTo: lead.assigned_to }] : [],
+      lead.assigned_to && !scheduledContactLeadIds.has(lead.id)
+        ? [{ assignedTo: lead.assigned_to }]
+        : [],
     ),
     today,
   });

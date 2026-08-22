@@ -1,7 +1,12 @@
-import { TriangleAlert as AlertTriangle } from "lucide-react";
+import { TriangleAlert as AlertTriangle, ExternalLink } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { ReactNode } from "react";
+import {
+  type InvoiceDisplayItem,
+  InvoiceItemsSummary,
+} from "@/components/finance/invoice-items-summary";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { CopyPortalLink } from "@/components/portal/copy-portal-link";
@@ -12,12 +17,24 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { CopyButton } from "@/components/ui/copy-button";
 import { requireUser } from "@/lib/auth";
 import { buildVatBreakdown } from "@/lib/finance";
 import { PAYMENT_METHOD_LABELS, type PaymentMethodType } from "@/lib/schemas/invoice";
 import { createServerClient } from "@/lib/supabase/server";
-import { formatDate, formatEUR } from "@/lib/utils";
+import { cn, formatDate, formatEUR } from "@/lib/utils";
+import {
+  AEAT_VERIFACTU_ERROR_CATALOG_URL,
+  getAeatErrorMetadata,
+} from "@/lib/verifactu/aeat-errors";
 import { verifactuInvoiceConfigFromEnv } from "@/lib/verifactu/config";
 import { updateInvoicePortalAccess } from "../actions";
 import { InvoiceActions } from "./invoice-actions";
@@ -25,6 +42,27 @@ import { InvoiceStatus } from "./invoice-status";
 import { RefreshClientSnapshotButton } from "./refresh-client-snapshot-button";
 
 export const dynamic = "force-dynamic";
+
+function InvoiceInfoField({
+  label,
+  children,
+  className,
+  valueClassName,
+}: {
+  label: string;
+  children: ReactNode;
+  className?: string;
+  valueClassName?: string;
+}) {
+  return (
+    <div className={cn("min-w-0", className)}>
+      <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</dt>
+      <dd className={cn("mt-1 min-w-0 text-sm leading-5 text-foreground", valueClassName)}>
+        {children ?? "—"}
+      </dd>
+    </div>
+  );
+}
 
 function verifactuWarnings(value: unknown): Array<{ code: string | null; message: string }> {
   if (
@@ -88,16 +126,21 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
 
   const { data: latestFiscalOutbox } = latestFiscalRecord?.id
     ? await supabase
-      .from("verifactu_outbox")
-      .select("state, next_attempt_at, last_error")
-      .eq("ledger_id", latestFiscalRecord.id)
-      .maybeSingle()
+        .from("verifactu_outbox")
+        .select("state, next_attempt_at, last_error")
+        .eq("ledger_id", latestFiscalRecord.id)
+        .maybeSingle()
     : { data: null };
 
   const confirmedPayments = (payments ?? []).filter((p) => p.status === "confirmed");
   const amountPaid = confirmedPayments.reduce((sum, p) => sum + Number(p.amount ?? 0), 0);
   const amountDue = Math.max(0, Number(invoice.total ?? 0) - amountPaid);
   const aeatWarnings = verifactuWarnings(invoice.verifactu_response);
+  const responseAeatCode = (invoice.verifactu_response as { aeatCode?: unknown } | null)?.aeatCode;
+  const verifactuAeatCode = typeof responseAeatCode === "string" ? responseAeatCode : null;
+  const hasOfficialAeatWarnings = aeatWarnings.some((warning) =>
+    getAeatErrorMetadata(warning.code, warning.message),
+  );
   const fiscalPayload = latestFiscalRecord?.record_payload as
     | { subsanacion?: unknown; rechazoPrevio?: unknown }
     | undefined;
@@ -111,6 +154,27 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
   ).clients;
   const project = (invoice as unknown as { projects: { id: string; name: string } | null })
     .projects;
+  const issuerCopyText = [
+    `Razón social: ${(settings?.company_name as string | null) ?? "—"}`,
+    settings?.company_nif ? `NIF: ${settings.company_nif as string}` : null,
+    settings?.company_address ? `Domicilio: ${settings.company_address as string}` : null,
+    settings?.iban ? `IBAN: ${settings.iban as string}` : null,
+  ]
+    .filter((line): line is string => Boolean(line))
+    .join("\n");
+  const fiscalCopyText = [
+    `Nº factura: ${(invoice.full_number as string | null) ?? "—"}`,
+    invoice.idfact ? `IDFACT: ${invoice.idfact as string}` : null,
+    `Tipo: ${invoice.invoice_type as string}`,
+    `Cliente: ${client?.name ?? "—"}`,
+    project ? `Proyecto: ${project.name}` : null,
+    `Emisión: ${formatDate(invoice.issue_date as string)}`,
+    `Vencimiento: ${formatDate(invoice.due_date as string | null)}`,
+    invoice.client_nif ? `NIF cliente: ${invoice.client_nif as string}` : null,
+    invoice.verifactu_csv ? `CSV AEAT: ${invoice.verifactu_csv as string}` : null,
+  ]
+    .filter((line): line is string => Boolean(line))
+    .join("\n");
 
   // Group line items by VAT rate so we can show a proper desglose por tipo.
   const vatBreakdown = buildVatBreakdown(
@@ -161,16 +225,37 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           <div className="min-w-0">
             <p className="font-semibold">AEAT aceptó la factura con avisos</p>
             <ul className="mt-1 list-disc pl-4">
-              {aeatWarnings.map((warning, index) => (
-                <li key={`${warning.code ?? "warning"}-${index}`} className="wrap-break-word">
-                  {warning.code ? `${warning.code}: ` : ""}
-                  {warning.message}
-                </li>
-              ))}
+              {aeatWarnings.map((warning) => {
+                const metadata = getAeatErrorMetadata(warning.code, warning.message);
+                return (
+                  <li
+                    key={`${warning.code ?? "warning"}-${warning.message}`}
+                    className="wrap-break-word"
+                  >
+                    {warning.code ? `${warning.code}: ` : ""}
+                    {warning.message}
+                    {metadata ? (
+                      <span className="block text-xs">{metadata.effectLabel}</span>
+                    ) : null}
+                  </li>
+                );
+              })}
             </ul>
             <p className="mt-1 text-xs text-amber-800/80 dark:text-amber-300/80">
-              El registro está aceptado y conserva su CSV, pero conviene revisar estos avisos.
+              El registro está aceptado y conserva su CSV, pero estos avisos deben revisarse y
+              subsanarse.
             </p>
+            {hasOfficialAeatWarnings ? (
+              <a
+                href={AEAT_VERIFACTU_ERROR_CATALOG_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-2 inline-flex items-center gap-1 text-xs font-medium underline-offset-4 hover:underline"
+              >
+                Consultar catálogo oficial de errores AEAT
+                <ExternalLink className="size-3" aria-hidden />
+              </a>
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -183,6 +268,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             status={invoice.status as string}
             verifactuStatus={invoice.verifactu_status as string}
             verifactuError={(invoice.verifactu_error as string | null) ?? null}
+            verifactuAeatCode={verifactuAeatCode}
           />
         }
         breadcrumbs={[
@@ -213,80 +299,19 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         {/* Line items */}
         <Card className="min-w-0">
-          <CardHeader>
-            <CardTitle>Líneas</CardTitle>
+          <CardHeader className="border-b">
+            <CardTitle>Conceptos</CardTitle>
+            <CardDescription>
+              {items?.length ?? 0} {(items?.length ?? 0) === 1 ? "concepto" : "conceptos"}
+            </CardDescription>
           </CardHeader>
           <CardContent className="px-0">
-            {!items || items.length === 0 ? (
-              <p className="px-6 py-4 text-sm text-muted-foreground">Sin líneas.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                    <tr>
-                      <th className="px-5 py-2 font-medium">Descripción</th>
-                      <th className="px-5 py-2 font-medium text-right">Cant.</th>
-                      <th className="px-5 py-2 font-medium text-right">Precio</th>
-                      <th className="px-5 py-2 font-medium text-right">IVA %</th>
-                      <th className="px-5 py-2 font-medium text-right">Subtotal</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((item) => (
-                      <tr key={item.id as string} className="border-t border-border">
-                        <td className="px-5 py-2.5">{item.description as string}</td>
-                        <td className="px-5 py-2.5 text-right tabular-nums">
-                          {item.quantity as number}
-                        </td>
-                        <td className="px-5 py-2.5 text-right tabular-nums">
-                          {formatEUR(item.unit_price as number)}
-                        </td>
-                        <td className="px-5 py-2.5 text-right tabular-nums">
-                          {item.vat_rate as number}%
-                        </td>
-                        <td className="px-5 py-2.5 text-right tabular-nums font-medium">
-                          {formatEUR(item.subtotal as number)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot className="border-t-2 border-border">
-                    <tr>
-                      <td
-                        colSpan={4}
-                        className="px-5 py-2.5 text-right text-xs text-muted-foreground"
-                      >
-                        Base imponible
-                      </td>
-                      <td className="px-5 py-2.5 text-right tabular-nums">
-                        {formatEUR(invoice.subtotal as number)}
-                      </td>
-                    </tr>
-                    {vatBreakdown.map((row) => (
-                      <tr key={row.rate}>
-                        <td
-                          colSpan={4}
-                          className="px-5 py-2.5 text-right text-xs text-muted-foreground"
-                        >
-                          IVA {row.rate}% sobre {formatEUR(row.base)}
-                        </td>
-                        <td className="px-5 py-2.5 text-right tabular-nums">
-                          {formatEUR(row.tax)}
-                        </td>
-                      </tr>
-                    ))}
-                    <tr className="font-semibold">
-                      <td colSpan={4} className="px-5 py-2.5 text-right">
-                        Total
-                      </td>
-                      <td className="px-5 py-2.5 text-right tabular-nums">
-                        {formatEUR(invoice.total as number)}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            )}
+            <InvoiceItemsSummary
+              items={(items ?? []) as unknown as InvoiceDisplayItem[]}
+              subtotal={Number(invoice.subtotal ?? 0)}
+              total={Number(invoice.total ?? 0)}
+              vatBreakdown={vatBreakdown}
+            />
           </CardContent>
         </Card>
 
@@ -297,28 +322,39 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             <Card>
               <CardHeader>
                 <CardTitle>Emisor</CardTitle>
+                <CardAction>
+                  <CopyButton
+                    text={issuerCopyText}
+                    label="Copiar datos del emisor"
+                    successMessage="Datos del emisor copiados"
+                    showLabel
+                  />
+                </CardAction>
               </CardHeader>
               <CardContent>
-                <DetailGrid>
-                  <DetailRow label="Razón social">
+                <dl className="grid min-w-0 gap-4">
+                  <InvoiceInfoField label="Razón social">
                     {(settings.company_name as string | null) ?? "—"}
-                  </DetailRow>
+                  </InvoiceInfoField>
                   {(settings.company_nif as string | null) ? (
-                    <DetailRow label="NIF">{settings.company_nif as string}</DetailRow>
+                    <InvoiceInfoField label="NIF">
+                      {settings.company_nif as string}
+                    </InvoiceInfoField>
                   ) : null}
                   {(settings.company_address as string | null) ? (
-                    <DetailRow label="Domicilio">
-                      <span className="whitespace-pre-wrap">
-                        {settings.company_address as string}
-                      </span>
-                    </DetailRow>
+                    <InvoiceInfoField label="Domicilio" valueClassName="whitespace-pre-line">
+                      {settings.company_address as string}
+                    </InvoiceInfoField>
                   ) : null}
                   {(settings.iban as string | null) ? (
-                    <DetailRow label="IBAN">
-                      <span className="font-mono text-xs">{settings.iban as string}</span>
-                    </DetailRow>
+                    <InvoiceInfoField
+                      label="IBAN"
+                      valueClassName="overflow-x-auto whitespace-nowrap pb-1 font-mono text-xs"
+                    >
+                      {settings.iban as string}
+                    </InvoiceInfoField>
                   ) : null}
-                </DetailGrid>
+                </dl>
               </CardContent>
             </Card>
           ) : null}
@@ -326,24 +362,34 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           <Card>
             <CardHeader>
               <CardTitle>Información fiscal</CardTitle>
-              {invoice.status === "draft" && client?.id ? (
-                <CardAction>
+              <CardAction className="flex items-center gap-1">
+                <CopyButton
+                  text={fiscalCopyText}
+                  label="Copiar información fiscal"
+                  successMessage="Información fiscal copiada"
+                  showLabel
+                />
+                {invoice.status === "draft" && client?.id ? (
                   <RefreshClientSnapshotButton invoiceId={invoice.id as string} />
-                </CardAction>
-              ) : null}
+                ) : null}
+              </CardAction>
             </CardHeader>
             <CardContent>
-              <DetailGrid>
-                <DetailRow label="Nº factura">
+              <dl className="grid min-w-0 grid-cols-2 gap-x-4 gap-y-4">
+                <InvoiceInfoField label="Nº factura">
                   {(invoice.full_number as string | null) ?? "—"}
-                </DetailRow>
+                </InvoiceInfoField>
+                <InvoiceInfoField label="Tipo">{invoice.invoice_type as string}</InvoiceInfoField>
                 {(invoice.idfact as string | null) ? (
-                  <DetailRow label="IDFACT">
-                    <span className="break-all font-mono text-xs">{invoice.idfact as string}</span>
-                  </DetailRow>
+                  <InvoiceInfoField
+                    label="IDFACT"
+                    className="col-span-2"
+                    valueClassName="overflow-x-auto whitespace-nowrap pb-1 font-mono text-xs"
+                  >
+                    {invoice.idfact as string}
+                  </InvoiceInfoField>
                 ) : null}
-                <DetailRow label="Tipo">{invoice.invoice_type as string}</DetailRow>
-                <DetailRow label="Cliente">
+                <InvoiceInfoField label="Cliente" className="col-span-2">
                   {client ? (
                     <Link href={`/clients/${client.id}`} className="hover:underline">
                       {client.name}
@@ -351,29 +397,35 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                   ) : (
                     "—"
                   )}
-                </DetailRow>
+                </InvoiceInfoField>
                 {project ? (
-                  <DetailRow label="Proyecto">
+                  <InvoiceInfoField label="Proyecto" className="col-span-2">
                     <Link href={`/projects/${project.id}`} className="hover:underline">
                       {project.name}
                     </Link>
-                  </DetailRow>
+                  </InvoiceInfoField>
                 ) : null}
-                <DetailRow label="Emisión">{formatDate(invoice.issue_date as string)}</DetailRow>
-                <DetailRow label="Vencimiento">
+                <InvoiceInfoField label="Emisión">
+                  {formatDate(invoice.issue_date as string)}
+                </InvoiceInfoField>
+                <InvoiceInfoField label="Vencimiento">
                   {formatDate(invoice.due_date as string | null)}
-                </DetailRow>
+                </InvoiceInfoField>
                 {(invoice.client_nif as string | null) ? (
-                  <DetailRow label="NIF cliente">{invoice.client_nif as string}</DetailRow>
+                  <InvoiceInfoField label="NIF cliente" className="col-span-2">
+                    {invoice.client_nif as string}
+                  </InvoiceInfoField>
                 ) : null}
                 {(invoice.verifactu_csv as string | null) ? (
-                  <DetailRow label="CSV AEAT">
-                    <span className="break-all font-mono text-xs">
-                      {invoice.verifactu_csv as string}
-                    </span>
-                  </DetailRow>
+                  <InvoiceInfoField
+                    label="CSV AEAT"
+                    className="col-span-2"
+                    valueClassName="overflow-x-auto whitespace-nowrap pb-1 font-mono text-xs"
+                  >
+                    {invoice.verifactu_csv as string}
+                  </InvoiceInfoField>
                 ) : null}
-              </DetailGrid>
+              </dl>
             </CardContent>
           </Card>
 
