@@ -1,15 +1,17 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { completePasskeyAuthentication, grantUserVerificationFromMfa, preparePasskeyAuthentication, sendToAeat } =
-  vi.hoisted(() =>
-  ({
-    completePasskeyAuthentication: vi.fn(),
-    grantUserVerificationFromMfa: vi.fn(),
-    preparePasskeyAuthentication: vi.fn(),
-    sendToAeat: vi.fn(),
-  }),
-  );
+const {
+  completePasskeyAuthentication,
+  grantUserVerificationFromMfa,
+  preparePasskeyAuthentication,
+  sendToAeat,
+} = vi.hoisted(() => ({
+  completePasskeyAuthentication: vi.fn(),
+  grantUserVerificationFromMfa: vi.fn(),
+  preparePasskeyAuthentication: vi.fn(),
+  sendToAeat: vi.fn(),
+}));
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock("../actions", () => ({ sendToAeat }));
