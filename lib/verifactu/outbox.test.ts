@@ -26,6 +26,7 @@ import {
   normalizeAltaRechazoPrevio,
   REJECTED_RECORD_REQUIRES_REGULARIZATION_MESSAGE,
   resolveVerifactuSoftwareSnapshot,
+  TERMINAL_RECORD_REQUIRES_REGULARIZATION_MESSAGE,
 } from "./outbox";
 
 beforeEach(() => {
@@ -136,6 +137,21 @@ describe("deliverInvoiceVerifactu", () => {
       processed: false,
       status: "rejected",
       error: REJECTED_RECORD_REQUIRES_REGULARIZATION_MESSAGE,
+    });
+  });
+
+  it("explains that a terminal error requires regularization", async () => {
+    maybeSingle
+      .mockResolvedValueOnce({ data: { id: "ledger-1" }, error: null })
+      .mockResolvedValueOnce({
+        data: { id: "outbox-1", state: "terminal_error", last_error: "Configuración inválida" },
+        error: null,
+      });
+
+    await expect(deliverInvoiceVerifactu("invoice-1", "worker-1")).resolves.toMatchObject({
+      processed: false,
+      status: "error",
+      error: expect.stringContaining(TERMINAL_RECORD_REQUIRES_REGULARIZATION_MESSAGE),
     });
   });
 });

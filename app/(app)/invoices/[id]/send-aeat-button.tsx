@@ -176,13 +176,6 @@ export function SendAeatButton({
             <p className="text-sm text-destructive">{verificationError}</p>
           ) : null}
           <DialogFooter>
-            <Button
-              variant="ghost"
-              onClick={() => setConfirmOpen(false)}
-              disabled={feedback.pending}
-            >
-              Cancelar
-            </Button>
             {passkeyOptions ? (
               <>
                 <Button
@@ -209,7 +202,7 @@ export function SendAeatButton({
                   }}
                   disabled={preparing || feedback.pending}
                 >
-                  Usar código de Google Authenticator
+                  Usar código de autenticación
                 </Button>
                 <Button
                   onClick={preparePasskeyVerification}

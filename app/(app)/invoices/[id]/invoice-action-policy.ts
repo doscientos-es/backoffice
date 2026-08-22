@@ -11,6 +11,8 @@ export function getInvoiceActionPolicy(invoice: InvoiceActionInvoice) {
   const isOverdue = invoice.status === "overdue";
   const hasFiscalProblem =
     invoice.verifactu_status === "error" || invoice.verifactu_status === "rejected";
+  const requiresRegularization =
+    invoice.verifactu_status === "rejected" || invoice.fiscal_delivery_state === "terminal_error";
 
   return {
     canEdit: isDraft,
@@ -26,8 +28,8 @@ export function getInvoiceActionPolicy(invoice: InvoiceActionInvoice) {
       !isDraft &&
       invoice.verifactu_status !== "accepted" &&
       invoice.verifactu_status !== "excluded" &&
-      invoice.verifactu_status !== "rejected",
-    shouldRegularizeAeat: invoice.verifactu_status === "rejected",
+      !requiresRegularization,
+    shouldRegularizeAeat: requiresRegularization,
     hasFiscalProblem,
   };
 }

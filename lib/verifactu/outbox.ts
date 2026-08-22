@@ -1,11 +1,11 @@
+import { scopedLogger } from "@/lib/logger";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type {
   VerifactuConfig,
   VerifactuSoftware,
   VerifactuSubmitInput,
   VerifactuSubmitResult,
 } from "@doscientos/verifactu";
-import { scopedLogger } from "@/lib/logger";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { verifactuInvoiceConfigFromEnv } from "./config";
 
 const log = scopedLogger("verifactu.outbox");
@@ -63,6 +63,8 @@ export const MISSING_DURABLE_FISCAL_RECORD_MESSAGE =
   "Esta factura es anterior al registro fiscal durable y requiere regularización antes de enviarla a AEAT.";
 export const REJECTED_RECORD_REQUIRES_REGULARIZATION_MESSAGE =
   "AEAT rechazó este registro. No se puede reenviar el mismo RegistroAlta; usa «Regularizar y enviar».";
+export const TERMINAL_RECORD_REQUIRES_REGULARIZATION_MESSAGE =
+  "Este registro tiene un error definitivo y no admite reintentos. Usa «Regularizar y enviar» después de corregir la causa indicada.";
 
 function asRecord(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -201,22 +203,22 @@ function altaInput(payload: Record<string, unknown>): VerifactuSubmitInput {
       references(payload, "rectifiedInvoices") ??
       (payload.rectifiedInvoiceNumber
         ? [
-            {
-              invoiceNumber: text(payload, "rectifiedInvoiceNumber"),
-              issueDate: date(payload, "rectifiedInvoiceIssueDate"),
-            },
-          ]
+          {
+            invoiceNumber: text(payload, "rectifiedInvoiceNumber"),
+            issueDate: date(payload, "rectifiedInvoiceIssueDate"),
+          },
+        ]
         : undefined),
     rectificationAmounts:
       payload.rectificationAmounts && typeof payload.rectificationAmounts === "object"
         ? (() => {
-            const value = asRecord(payload.rectificationAmounts);
-            return {
-              base: amount(value, "base"),
-              tax: amount(value, "tax"),
-              surcharge: value.surcharge === undefined ? undefined : amount(value, "surcharge"),
-            };
-          })()
+          const value = asRecord(payload.rectificationAmounts);
+          return {
+            base: amount(value, "base"),
+            tax: amount(value, "tax"),
+            surcharge: value.surcharge === undefined ? undefined : amount(value, "surcharge"),
+          };
+        })()
         : undefined,
     operationDate: payload.operationDate ? date(payload, "operationDate") : undefined,
     subsanacion: optionalEnum(payload, "subsanacion", ["S", "N"] as const),
@@ -346,11 +348,11 @@ async function complete(
   const message = formatOutboxError(error ? explicitError : null, result);
   const enrichedResponse = result
     ? sanitizeResponse({
-        ...result.response,
-        errorCode: result.errorCode,
-        aeatStatus: (result as VerifactuSubmitResult & { aeatStatus?: unknown }).aeatStatus,
-        warnings: (result as VerifactuSubmitResult & { warnings?: unknown }).warnings,
-      })
+      ...result.response,
+      errorCode: result.errorCode,
+      aeatStatus: (result as VerifactuSubmitResult & { aeatStatus?: unknown }).aeatStatus,
+      warnings: (result as VerifactuSubmitResult & { warnings?: unknown }).warnings,
+    })
     : { kind: "delivery_error" };
   const { error: completionError } = await admin.rpc("complete_verifactu_outbox_v2", {
     p_outbox_id: outboxId,
@@ -372,8 +374,8 @@ async function complete(
     warnings:
       (
         result as
-          | (VerifactuSubmitResult & { warnings?: Array<{ code: string | null; message: string }> })
-          | null
+        | (VerifactuSubmitResult & { warnings?: Array<{ code: string | null; message: string }> })
+        | null
       )?.warnings ?? [],
   };
 }
@@ -489,11 +491,17 @@ export async function deliverInvoiceVerifactu(
 
   const { data: outbox, error: outboxError } = await admin
     .from("verifactu_outbox")
-    .select("id, state")
+    .select("id, state, next_attempt_at, aeat_csv, last_error")
     .eq("ledger_id", ledgerId)
     .maybeSingle();
   if (outboxError) throw new Error(outboxError.message);
-  const outboxRow = outbox as { id?: unknown; state?: unknown } | null;
+  const outboxRow = outbox as {
+    id?: unknown;
+    state?: unknown;
+    next_attempt_at?: unknown;
+    aeat_csv?: unknown;
+    last_error?: unknown;
+  } | null;
   const outboxId = outboxRow?.id;
   if (typeof outboxId !== "string") throw new Error("No se encontró la cola de envío fiscal");
   if (outboxRow?.state === "rejected") {
@@ -502,6 +510,49 @@ export async function deliverInvoiceVerifactu(
       status: "rejected",
       csv: null,
       error: REJECTED_RECORD_REQUIRES_REGULARIZATION_MESSAGE,
+      warnings: [],
+    };
+  }
+  if (outboxRow?.state === "terminal_error") {
+    return {
+      processed: false,
+      status: "error",
+      csv: null,
+      error:
+        typeof outboxRow.last_error === "string" && outboxRow.last_error.trim()
+          ? `${TERMINAL_RECORD_REQUIRES_REGULARIZATION_MESSAGE} Causa: ${outboxRow.last_error}`
+          : TERMINAL_RECORD_REQUIRES_REGULARIZATION_MESSAGE,
+      warnings: [],
+    };
+  }
+  if (outboxRow?.state === "accepted") {
+    return {
+      processed: false,
+      status: "accepted",
+      csv: typeof outboxRow.aeat_csv === "string" ? outboxRow.aeat_csv : null,
+      error: null,
+      warnings: [],
+    };
+  }
+  if (outboxRow?.state === "processing") {
+    return {
+      processed: false,
+      status: "skipped",
+      csv: null,
+      error: "AEAT ya está procesando este registro. No es necesario volver a enviarlo.",
+      warnings: [],
+    };
+  }
+  if (
+    outboxRow?.state === "retryable_error" &&
+    typeof outboxRow.next_attempt_at === "string" &&
+    new Date(outboxRow.next_attempt_at).getTime() > Date.now()
+  ) {
+    return {
+      processed: false,
+      status: "deferred",
+      csv: null,
+      error: "El reintento automático ya está programado y todavía no corresponde ejecutarlo.",
       warnings: [],
     };
   }

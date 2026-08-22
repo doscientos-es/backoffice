@@ -62,10 +62,10 @@ const user: CurrentUser = {
 };
 
 describe("MobileNav actions", () => {
-  it("exposes the hamburger navigation only below the medium breakpoint", () => {
+  it("uses the app mobile visibility rule for the hamburger navigation", () => {
     const { container } = render(<MobileNav user={user} demoMode={false} />);
 
-    expect(container.firstElementChild?.className).toContain("md:hidden");
+    expect(container.firstElementChild?.className).toContain("app-mobile-nav");
     expect(screen.getByRole("button", { name: "Abrir menú" })).toBeTruthy();
   });
 

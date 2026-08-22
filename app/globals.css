@@ -121,6 +121,7 @@ html[data-startup-splash-seen] #startup-splash {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   #startup-splash,
   #startup-splash .startup-splash-mark-shell,
   #startup-splash .startup-splash-progress i {
@@ -251,6 +252,7 @@ table,
 
 /* Auth page animated mesh blobs — long, organic, drifting motion */
 @keyframes auth-blob-1 {
+
   0%,
   100% {
     transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
@@ -270,6 +272,7 @@ table,
 }
 
 @keyframes auth-blob-2 {
+
   0%,
   100% {
     transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
@@ -289,6 +292,7 @@ table,
 }
 
 @keyframes auth-blob-3 {
+
   0%,
   100% {
     transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
@@ -304,6 +308,7 @@ table,
 }
 
 @keyframes auth-blob-4 {
+
   0%,
   100% {
     transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
@@ -334,12 +339,10 @@ table,
   --skeleton-base: color-mix(in oklab, var(--foreground) 8%, transparent);
   --skeleton-highlight: color-mix(in oklab, var(--foreground) 14%, transparent);
   background-color: var(--skeleton-base);
-  background-image: linear-gradient(
-    90deg,
-    transparent 0%,
-    var(--skeleton-highlight) 50%,
-    transparent 100%
-  );
+  background-image: linear-gradient(90deg,
+      transparent 0%,
+      var(--skeleton-highlight) 50%,
+      transparent 100%);
   background-repeat: no-repeat;
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.6s ease-in-out infinite;
@@ -377,5 +380,35 @@ table,
 
   tr {
     page-break-inside: avoid;
+  }
+}
+
+/* These rules must follow the imported UI utilities: that package defines
+   `.hidden` and `.flex` later than Tailwind's responsive variants. */
+.app-shell {
+  flex-direction: column;
+}
+
+.app-sidebar {
+  display: none;
+}
+
+.app-mobile-header,
+.app-mobile-nav {
+  display: flex;
+}
+
+@media (min-width: 48rem) {
+  .app-shell {
+    flex-direction: row;
+  }
+
+  .app-sidebar {
+    display: flex;
+  }
+
+  .app-mobile-header,
+  .app-mobile-nav {
+    display: none;
   }
 }

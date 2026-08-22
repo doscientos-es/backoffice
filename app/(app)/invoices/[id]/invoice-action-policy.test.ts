@@ -38,4 +38,15 @@ describe("getInvoiceActionPolicy", () => {
       shouldRegularizeAeat: true,
     });
   });
+
+  it("regularizes terminal delivery errors instead of offering an impossible retry", () => {
+    expect(
+      getInvoiceActionPolicy({
+        ...invoice,
+        status: "issued",
+        verifactu_status: "error",
+        fiscal_delivery_state: "terminal_error",
+      }),
+    ).toMatchObject({ shouldSendToAeat: false, shouldRegularizeAeat: true });
+  });
 });

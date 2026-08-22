@@ -20,7 +20,7 @@ const issueCopy = {
     title: "Error técnico de VERI*FACTU",
     trigger: "Ver detalle",
     guidance:
-      "El sistema volverá a intentarlo automáticamente. Puedes reintentar el envío desde la cabecera si lo necesitas.",
+      "Los fallos temporales se reintentan automáticamente. Si el detalle indica un error definitivo, corrige la causa y usa «Regularizar y enviar».",
   },
   rejected: {
     title: "Factura rechazada por AEAT",

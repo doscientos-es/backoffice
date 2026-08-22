@@ -5,6 +5,7 @@ export type InvoiceActionInvoice = {
   status: string;
   verifactu_status: string;
   verifactu_error: string | null;
+  fiscal_delivery_state?: string | null;
   is_regularization_pending?: boolean;
   is_rectification?: boolean;
   is_uncollectible?: boolean;

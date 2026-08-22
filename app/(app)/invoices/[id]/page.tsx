@@ -80,11 +80,19 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
 
   const { data: latestFiscalRecord } = await supabase
     .from("verifactu_ledger")
-    .select("record_payload")
+    .select("id, record_payload")
     .eq("invoice_id", id)
     .order("chain_sequence", { ascending: false })
     .limit(1)
     .maybeSingle();
+
+  const { data: latestFiscalOutbox } = latestFiscalRecord?.id
+    ? await supabase
+      .from("verifactu_outbox")
+      .select("state, next_attempt_at, last_error")
+      .eq("ledger_id", latestFiscalRecord.id)
+      .maybeSingle()
+    : { data: null };
 
   const confirmedPayments = (payments ?? []).filter((p) => p.status === "confirmed");
   const amountPaid = confirmedPayments.reduce((sum, p) => sum + Number(p.amount ?? 0), 0);
@@ -96,7 +104,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
   const isRegularizationPending =
     invoice.verifactu_status === "submitted" &&
     fiscalPayload?.subsanacion === "S" &&
-    fiscalPayload.rechazoPrevio === "X";
+    (fiscalPayload.rechazoPrevio === "S" || fiscalPayload.rechazoPrevio === "X");
 
   const client = (
     invoice as unknown as { clients: { id: string; name: string; email: string | null } | null }
@@ -190,6 +198,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
               status: invoice.status as string,
               verifactu_status: invoice.verifactu_status as string,
               verifactu_error: (invoice.verifactu_error as string | null) ?? null,
+              fiscal_delivery_state: (latestFiscalOutbox?.state as string | null) ?? null,
               is_regularization_pending: isRegularizationPending,
               is_rectification: Boolean(invoice.is_rectification),
               is_uncollectible: Boolean(invoice.is_uncollectible),
