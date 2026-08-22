@@ -35,10 +35,18 @@ export async function SalesControlWidget() {
   ];
 
   return (
-    <Card>
+    <Card className="border-primary/15 bg-gradient-to-br from-primary/[0.08] via-card to-card shadow-sm">
       <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
         <CardTitle className="flex items-center gap-2 text-sm">
-          <Users className="size-4 text-primary" /> Control comercial
+          <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <Users className="size-4" />
+          </span>
+          <span>
+            Control comercial
+            <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+              Señales que requieren coordinación
+            </span>
+          </span>
         </CardTitle>
         <Badge variant="neutral">Equipo</Badge>
       </CardHeader>
@@ -49,11 +57,13 @@ export async function SalesControlWidget() {
             <Link
               key={item.label}
               href={item.href}
-              className="flex items-center gap-3 rounded-lg border border-border p-3 transition-colors hover:bg-muted/60"
+              className="group flex items-center gap-3 rounded-xl border border-border/70 bg-background/65 p-3 transition-all hover:-translate-y-0.5 hover:border-primary/25 hover:bg-background hover:shadow-sm"
             >
-              <Icon className={`size-4 shrink-0 ${item.tone}`} />
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted/60">
+                <Icon className={`size-4 ${item.tone}`} />
+              </span>
               <span className="min-w-0">
-                <span className="block text-xl font-semibold tabular-nums">{item.value}</span>
+                <span className="block text-2xl font-semibold tabular-nums">{item.value}</span>
                 <span className="block truncate text-xs font-medium">{item.label}</span>
                 <span className="block text-[11px] text-muted-foreground">{item.detail}</span>
               </span>

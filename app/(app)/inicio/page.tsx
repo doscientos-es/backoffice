@@ -1,4 +1,4 @@
-import { Hand } from "lucide-react";
+import { CalendarDays, Hand } from "lucide-react";
 import type { Metadata } from "next";
 import {
   AccountsReceivableSkeleton,
@@ -45,24 +45,54 @@ export default async function InicioPage({ searchParams }: PageProps) {
   const firstName = user.name.split(" ")[0];
   const showFinance = canViewFinance(user.role);
   const showSalesControl = user.role === "owner" || user.role === "admin";
+  const today = new Intl.DateTimeFormat("es-ES", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(new Date());
 
   return (
-    <div className="flex flex-col gap-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {greeting}, {firstName} <Hand aria-hidden="true" className="inline-block size-5" />
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Aquí tienes lo que requiere tu atención.
-        </p>
+    <div className="flex flex-col gap-10 pb-4">
+      <header className="relative overflow-hidden rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/12 via-card to-card px-5 py-6 shadow-sm sm:px-7 sm:py-7">
+        <div className="pointer-events-none absolute -right-16 -top-20 size-64 rounded-full bg-primary/12 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 left-1/3 size-48 rounded-full bg-primary/8 blur-3xl" />
+        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+              Panel de mando
+            </p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+              {greeting}, {firstName} <Hand aria-hidden="true" className="inline-block size-6" />
+            </h1>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+              Empieza por lo urgente y mantén el pulso del negocio en una sola vista.
+            </p>
+          </div>
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-border/70 bg-background/70 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur-sm">
+            <CalendarDays aria-hidden="true" className="size-3.5 text-primary" />
+            <span className="capitalize">{today}</span>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex flex-col gap-3">
+        <EnablePushBanner />
+        {!passkeyConfigured ? <PasskeyStatusCard configured={false} /> : null}
       </div>
 
-      <EnablePushBanner />
+      <section className="flex flex-col gap-5" aria-labelledby="inicio-prioridades">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Ahora</p>
+            <h2 id="inicio-prioridades" className="mt-1 text-xl font-semibold tracking-tight">
+              Prioridades para avanzar
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Tareas, conversaciones y avisos que no conviene dejar pasar.
+            </p>
+          </div>
+        </div>
 
-      {!passkeyConfigured ? <PasskeyStatusCard configured={false} /> : null}
-
-      {/* Para hoy: tu cola de trabajo y los avisos que requieren acción */}
-      <div className="flex flex-col gap-4">
         <SectionBoundary pending={<MyDayWidgetSkeleton />} label="No se pudo cargar tu día">
           <MyDayWidget member={params.member} />
         </SectionBoundary>
@@ -72,62 +102,87 @@ export default async function InicioPage({ searchParams }: PageProps) {
         >
           <AvisosWidget showFinance={showFinance} />
         </SectionBoundary>
-      </div>
+      </section>
 
       {showSalesControl ? <SalesControlWidget /> : null}
 
-      <SectionBoundary
-        pending={<MoneyOpportunitiesWidgetSkeleton />}
-        label="No se pudieron cargar las oportunidades"
-      >
-        <MoneyOpportunitiesWidget />
-      </SectionBoundary>
-
-      {/* La empresa de un vistazo: KPIs comerciales + financieros (solo owner/admin) */}
-      <section className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-sm font-medium text-muted-foreground">La empresa de un vistazo</h2>
-          <SectionBoundary
-            pending={<RangeSelectorSkeleton />}
-            label="No se pudo cargar el selector"
-          >
-            <RangeSelector current={range} />
-          </SectionBoundary>
+      <section className="flex flex-col gap-4" aria-labelledby="inicio-oportunidades">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">
+            Crecimiento
+          </p>
+          <h2 id="inicio-oportunidades" className="mt-1 text-xl font-semibold tracking-tight">
+            Oportunidades que merecen seguimiento
+          </h2>
         </div>
-
         <SectionBoundary
-          key={range}
-          pending={<KpiGridSkeleton />}
-          label="No se pudieron cargar los KPIs"
+          pending={<MoneyOpportunitiesWidgetSkeleton />}
+          label="No se pudieron cargar las oportunidades"
         >
-          <KpiGrid range={range} showFinance={showFinance} />
+          <MoneyOpportunitiesWidget />
         </SectionBoundary>
+      </section>
 
-        {showFinance ? (
-          <>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <SectionBoundary
-                pending={<AccountsReceivableSkeleton />}
-                label="No se pudo cargar el cobro pendiente"
-              >
-                <AccountsReceivableWidget />
-              </SectionBoundary>
-              <SectionBoundary
-                pending={<MonthExpensesSkeleton />}
-                label="No se pudo cargar el gasto del mes"
-              >
-                <MonthExpensesWidget />
-              </SectionBoundary>
+      <section
+        className="relative overflow-hidden rounded-2xl border border-border bg-muted/30 p-4 sm:p-5 md:p-6"
+        aria-labelledby="inicio-negocio"
+      >
+        <div className="pointer-events-none absolute -right-20 -top-24 size-64 rounded-full bg-primary/8 blur-3xl" />
+        <div className="relative flex flex-col gap-5">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+                Visión general
+              </p>
+              <h2 id="inicio-negocio" className="mt-1 text-xl font-semibold tracking-tight">
+                La salud del negocio
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Una lectura clara de la actividad comercial y financiera.
+              </p>
             </div>
-
             <SectionBoundary
-              pending={<RevenueWidgetSkeleton />}
-              label="No se pudieron cargar los ingresos"
+              pending={<RangeSelectorSkeleton />}
+              label="No se pudo cargar el selector"
             >
-              <RevenueWidget />
+              <RangeSelector current={range} />
             </SectionBoundary>
-          </>
-        ) : null}
+          </div>
+
+          <SectionBoundary
+            key={range}
+            pending={<KpiGridSkeleton />}
+            label="No se pudieron cargar los KPIs"
+          >
+            <KpiGrid range={range} showFinance={showFinance} />
+          </SectionBoundary>
+
+          {showFinance ? (
+            <>
+              <div className="grid gap-4 lg:grid-cols-2">
+                <SectionBoundary
+                  pending={<AccountsReceivableSkeleton />}
+                  label="No se pudo cargar el cobro pendiente"
+                >
+                  <AccountsReceivableWidget />
+                </SectionBoundary>
+                <SectionBoundary
+                  pending={<MonthExpensesSkeleton />}
+                  label="No se pudo cargar el gasto del mes"
+                >
+                  <MonthExpensesWidget />
+                </SectionBoundary>
+              </div>
+
+              <SectionBoundary
+                pending={<RevenueWidgetSkeleton />}
+                label="No se pudieron cargar los ingresos"
+              >
+                <RevenueWidget />
+              </SectionBoundary>
+            </>
+          ) : null}
+        </div>
       </section>
     </div>
   );

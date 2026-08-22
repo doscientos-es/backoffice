@@ -34,27 +34,29 @@ export function AvisosPanel({
 
   if (empty) {
     return (
-      <Card>
+      <Card className="border-border/80 bg-card/90 shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BellRing className="size-4" /> Avisos
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">Sin avisos pendientes. Todo en orden.</p>
+          <p className="rounded-lg bg-emerald-500/8 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">
+            Sin avisos pendientes. Todo en orden.
+          </p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card>
+    <Card className="border-amber-500/20 bg-gradient-to-br from-amber-500/[0.07] via-card to-card shadow-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <BellRing className="size-4" /> Avisos
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col divide-y divide-border [&>div]:py-3 first:[&>div]:pt-0 last:[&>div]:pb-0">
+      <CardContent className="flex flex-col divide-y divide-border/70 [&>div]:py-3 first:[&>div]:pt-0 last:[&>div]:pb-0">
         {visibleCertExpiry ? (
           <div className="flex items-start gap-3">
             <ShieldAlert className="mt-0.5 size-4 shrink-0 text-amber-500" />
