@@ -53,16 +53,11 @@ export default async function InicioPage({ searchParams }: PageProps) {
 
   return (
     <div className="flex flex-col gap-10 pb-4">
-      <header className="relative overflow-hidden rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/12 via-card to-card px-5 py-6 shadow-sm sm:px-7 sm:py-7">
-        <div className="pointer-events-none absolute -right-16 -top-20 size-64 rounded-full bg-primary/12 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 left-1/3 size-48 rounded-full bg-primary/8 blur-3xl" />
+      <header className="relative overflow-hidden">
         <div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-              Panel de mando
-            </p>
             <h1 className="mt-2 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-              {greeting}, {firstName} <Hand aria-hidden="true" className="inline-block size-6" />
+              {greeting}, {firstName}
             </h1>
             <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
               Empieza por lo urgente y mantén el pulso del negocio en una sola vista.

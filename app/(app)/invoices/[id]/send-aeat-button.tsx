@@ -15,11 +15,11 @@ import {
 } from "@/components/ui/dialog";
 import { useFormFeedback } from "@/components/ui/form-feedback";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
+import { grantUserVerificationFromMfa } from "@/lib/security/webauthn-actions";
 import {
   completePasskeyAuthentication,
   preparePasskeyAuthentication,
 } from "@/lib/security/webauthn-client";
-import { grantUserVerificationFromMfa } from "@/lib/security/webauthn-actions";
 import { sendToAeat } from "../actions";
 import { VerifactuIssueDialog } from "./verifactu-issue-dialog";
 
@@ -118,6 +118,8 @@ export function SendAeatButton({
     if (!verification.ok) {
       feedback.setError(verification.error);
       setVerificationError(verification.error);
+      setMfaOpen(false);
+      setConfirmOpen(true);
       return;
     }
     setMfaOpen(false);
@@ -162,7 +164,9 @@ export function SendAeatButton({
                 : "Elige cómo quieres confirmar tu identidad para reenviar este registro fiscal a AEAT."}
             </DialogDescription>
           </DialogHeader>
-          {verificationError ? <p className="text-sm text-destructive">{verificationError}</p> : null}
+          {verificationError ? (
+            <p className="text-sm text-destructive">{verificationError}</p>
+          ) : null}
           <DialogFooter>
             <Button
               variant="ghost"
@@ -199,7 +203,10 @@ export function SendAeatButton({
                 >
                   Usar código de Google Authenticator
                 </Button>
-                <Button onClick={preparePasskeyVerification} disabled={preparing || feedback.pending}>
+                <Button
+                  onClick={preparePasskeyVerification}
+                  disabled={preparing || feedback.pending}
+                >
                   {preparing ? "Preparando…" : "Usar biometría"}
                 </Button>
               </>

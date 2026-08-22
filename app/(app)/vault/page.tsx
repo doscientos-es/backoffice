@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { hasRegisteredPasskey } from "@/lib/security/webauthn";
 import { createServerClient } from "@/lib/supabase/server";
@@ -14,6 +15,7 @@ type PageProps = {
 
 export default async function VaultPage({ searchParams }: PageProps) {
   const [user, params] = await Promise.all([requireUser(), searchParams]);
+  if (params.setup === "passkey") redirect("/settings/security");
   const supabase = await createServerClient();
 
   const [itemsResult, settingsResult, clientsResult, passkeyConfigured] = await Promise.all([
@@ -54,7 +56,6 @@ export default async function VaultPage({ searchParams }: PageProps) {
       passwordSet={!!passwordHash}
       unlocked={unlocked}
       passkeyConfigured={passkeyConfigured}
-      startPasskeySetup={params.setup === "passkey"}
       clients={(clientsResult.data as Array<{ id: string; name: string }> | null) ?? []}
       isAdmin={isAdmin}
     />

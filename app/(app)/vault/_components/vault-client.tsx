@@ -10,7 +10,6 @@ import {
   Copy,
   Eye,
   EyeOff,
-  Fingerprint,
   LoaderCircle as Loader2,
   Lock,
   LockOpen,
@@ -41,12 +40,12 @@ import { VAULT_SERVICE_LABELS, VAULT_SERVICES, type VaultService } from "@/lib/s
 import { cn } from "@/lib/utils";
 import { filterAndSortVaultItems, type VaultListItem, type VaultSortField } from "@/lib/vault/list";
 import { deleteVaultItem, lockVault, revealVaultSecret } from "../actions";
-import { EnrollPasskeyForm, SetPasswordForm, UnlockForm } from "./vault-dialogs";
+import { SetPasswordForm, UnlockForm } from "./vault-dialogs";
 import { VaultItemForm } from "./vault-item-dialog";
 
 type VaultItem = VaultListItem;
 type Client = { id: string; name: string };
-type Dialog_ = "add" | "edit" | "unlock" | "setPassword" | "passkey" | null;
+type Dialog_ = "add" | "edit" | "unlock" | "setPassword" | null;
 type SortField = VaultSortField;
 
 const PAGE_SIZE = 20;
@@ -68,7 +67,6 @@ export function VaultClient({
   passwordSet,
   unlocked,
   passkeyConfigured,
-  startPasskeySetup = false,
   clients,
   isAdmin,
 }: {
@@ -76,7 +74,6 @@ export function VaultClient({
   passwordSet: boolean;
   unlocked: boolean;
   passkeyConfigured: boolean;
-  startPasskeySetup?: boolean;
   clients: Client[];
   isAdmin: boolean;
 }) {
@@ -89,13 +86,6 @@ export function VaultClient({
   const [revealingId, setRevealingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
-  const shouldSetUpPasskey = startPasskeySetup && !passkeyConfigured;
-
-  useEffect(() => {
-    if (!shouldSetUpPasskey) return;
-    setDialog(localUnlocked ? "passkey" : passwordSet ? "unlock" : "setPassword");
-  }, [localUnlocked, passwordSet, shouldSetUpPasskey]);
-
   // ── filters / sort / pagination ────────────────────────────────────────────
   const [search, setSearch] = useState("");
   const [serviceFilter, setServiceFilter] = useState("");
@@ -298,12 +288,6 @@ export function VaultClient({
             ) : (
               <Button variant="outline" size="sm" onClick={() => setDialog("setPassword")}>
                 <ShieldAlert className="size-3.5" /> Activar contraseña
-              </Button>
-            )}
-            {passwordSet && localUnlocked && (
-              <Button variant="outline" size="sm" onClick={() => setDialog("passkey")}>
-                <Fingerprint className="size-3.5" />
-                {passkeyConfigured ? "Añadir passkey" : "Activar biometría"}
               </Button>
             )}
             {isAdmin && (
@@ -628,13 +612,10 @@ export function VaultClient({
       <Dialog open={dialog === "unlock"} onOpenChange={(o) => !o && setDialog(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>
-              {shouldSetUpPasskey ? "Verifica tu identidad" : "Desbloquear bóveda"}
-            </DialogTitle>
+            <DialogTitle>Desbloquear bóveda</DialogTitle>
             <DialogDescription>
-              {shouldSetUpPasskey
-                ? "Introduce la contraseña maestra para continuar con la activación de biometría."
-                : "Introduce la contraseña maestra para acceder a los secretos sensibles. La sesión dura 4 horas."}
+              Introduce la contraseña maestra para acceder a los secretos sensibles. La sesión dura 4
+              horas.
             </DialogDescription>
           </DialogHeader>
           <UnlockForm
@@ -642,20 +623,6 @@ export function VaultClient({
             onClose={() => setDialog(null)}
             onSuccess={handleUnlockSuccess}
           />
-        </DialogContent>
-      </Dialog>
-
-      {/* Passkey enrollment */}
-      <Dialog open={dialog === "passkey"} onOpenChange={(o) => !o && setDialog(null)}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Activar biometría</DialogTitle>
-            <DialogDescription>
-              Confirma la contraseña maestra y después usa la biometría o el bloqueo del
-              dispositivo.
-            </DialogDescription>
-          </DialogHeader>
-          <EnrollPasskeyForm onClose={() => setDialog(null)} />
         </DialogContent>
       </Dialog>
 
