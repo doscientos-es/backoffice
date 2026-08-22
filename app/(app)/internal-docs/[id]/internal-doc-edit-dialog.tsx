@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  Paperclip as Paperclip,
-  Pencil as Pencil,
-  X as X,
-} from "lucide-react";
+import { Paperclip, Pencil, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";

@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  GitBranch as Github,
-  Link as Link2,
-  RefreshCw as RefreshCw,
-} from "lucide-react";
+import { GitBranch as Github, Link as Link2, RefreshCw } from "lucide-react";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";

@@ -1,13 +1,13 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { PaymentPlanEditor } from "@/components/proposals/payment-plan-editor";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { type PaymentPlanItem } from "@/lib/proposals/scope";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import type { PaymentPlanItem } from "@/lib/proposals/scope";
 import { updateProposalPaymentPlan } from "../actions";
 
 type InvoiceRef = { id: string; planItemId: string; number: string; status: string };
@@ -59,8 +59,8 @@ export function ProposalPaymentPlan({
       <CardHeader>
         <CardTitle>Calendario de facturación</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Ajusta los próximos cobros sin modificar la propuesta aceptada. Los plazos ya facturados se
-          gestionan desde su factura.
+          Ajusta los próximos cobros sin modificar la propuesta aceptada. Los plazos ya facturados
+          se gestionan desde su factura.
         </p>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
@@ -86,7 +86,9 @@ export function ProposalPaymentPlan({
         ) : null}
         {canEdit ? (
           <div className="flex flex-wrap items-center gap-3">
-            <Button type="button" onClick={save} disabled={pending}>Guardar calendario</Button>
+            <Button type="button" onClick={save} disabled={pending}>
+              Guardar calendario
+            </Button>
             <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
           </div>
         ) : null}

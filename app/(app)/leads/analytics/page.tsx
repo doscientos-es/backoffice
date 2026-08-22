@@ -1,9 +1,4 @@
-import {
-  ArrowDownRight as ArrowDownRight,
-  ChartLine as ChartNoAxesCombined,
-  Trophy as Trophy,
-  Users as Users,
-} from "lucide-react";
+import { ArrowDownRight, ChartLine as ChartNoAxesCombined, Trophy, Users } from "lucide-react";
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";

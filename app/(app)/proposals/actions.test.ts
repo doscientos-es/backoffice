@@ -23,7 +23,11 @@ const { crm, state } = vi.hoisted(() => ({
       version: 1,
       lead_id: "f4e5d6c7-b8a9-4012-8012-123456789abc",
       client_id: null as string | null,
-      clients: null as { name: string | null; nif: string | null; billing_address_street: string | null } | null,
+      clients: null as {
+        name: string | null;
+        nif: string | null;
+        billing_address_street: string | null;
+      } | null,
     },
     leadStatus: "in_conversation",
   },

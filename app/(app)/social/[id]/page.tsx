@@ -1,8 +1,4 @@
-import {
-  ChartBar as BarChart3,
-  ExternalLink as ExternalLink,
-  MessageSquare as MessageSquare,
-} from "lucide-react";
+import { ChartBar as BarChart3, ExternalLink, MessageSquare } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BackLink } from "@/components/layout/back-link";

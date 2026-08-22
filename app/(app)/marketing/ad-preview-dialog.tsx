@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  ExternalLink as ExternalLink,
-  Eye as Eye,
-  LoaderCircle as Loader2,
-} from "lucide-react";
+import { ExternalLink, Eye, LoaderCircle as Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {

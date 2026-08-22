@@ -3,7 +3,7 @@
 import {
   CalendarDays as CalendarClock,
   CircleCheck as CheckCircle2,
-  ListTodo as ListTodo,
+  ListTodo,
   LoaderCircle as Loader2,
 } from "lucide-react";
 import Link from "next/link";

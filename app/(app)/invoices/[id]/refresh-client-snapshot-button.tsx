@@ -1,6 +1,6 @@
 "use client";
 
-import { RefreshCw as RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { sileo } from "sileo";

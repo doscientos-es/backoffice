@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  CircleCheck as CheckCircle2,
-  LoaderCircle as Loader2,
-  XCircle as XCircle,
-} from "lucide-react";
+import { CircleCheck as CheckCircle2, LoaderCircle as Loader2, XCircle } from "lucide-react";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {

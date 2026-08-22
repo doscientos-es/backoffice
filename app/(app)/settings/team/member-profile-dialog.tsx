@@ -4,8 +4,8 @@ import {
   CircleAlert as AlertCircle,
   CircleCheck as CheckCircle2,
   LoaderCircle as Loader2,
-  Pencil as Pencil,
-  XCircle as XCircle,
+  Pencil,
+  XCircle,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

@@ -7,7 +7,7 @@
  * For EU VAT VIES verification (clients), see app/(app)/clients/nif-input.tsx.
  */
 
-import { CheckCircle as CheckCircle, XCircle as XCircle } from "lucide-react";
+import { CheckCircle, XCircle } from "lucide-react";
 import { useState } from "react";
 import { validateNifEs } from "@/lib/vies/nif";
 import { Input } from "./input";

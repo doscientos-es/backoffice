@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Globe as Globe,
-  ImageUp as ImagePlus,
-  LoaderCircle as Loader2,
-  Search as Search,
-  X as X,
-} from "lucide-react";
+import { Globe, ImageUp as ImagePlus, LoaderCircle as Loader2, Search, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { getBrowserClient } from "@/lib/supabase/browser";

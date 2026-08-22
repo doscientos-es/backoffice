@@ -3,11 +3,11 @@
 import {
   CircleAlert as AlertCircle,
   CalendarDays as CalendarClock,
-  Check as Check,
-  Copy as Copy,
-  Mail as Mail,
-  MessageCircle as MessageCircle,
-  Phone as Phone,
+  Check,
+  Copy,
+  Mail,
+  MessageCircle,
+  Phone,
   Sparkle as Sparkles,
 } from "lucide-react";
 import { useState } from "react";

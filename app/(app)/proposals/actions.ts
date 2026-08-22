@@ -1,5 +1,8 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
 import { ProposalEmail } from "@/components/email";
 import { requireRole, requireUser } from "@/lib/auth";
 import {
@@ -37,9 +40,6 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { z } from "zod";
 
 const log = scopedLogger("proposals");
 
@@ -448,7 +448,8 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
  */
 export async function updateProposalPaymentPlan(input: unknown): Promise<UpdateResult> {
   const user = await requireUser();
-  if (user.role === "viewer") return { ok: false, error: "No tienes permiso para editar el calendario" };
+  if (user.role === "viewer")
+    return { ok: false, error: "No tienes permiso para editar el calendario" };
   const parsed = UpdateProposalPaymentPlanInput.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: formatProposalValidationIssues(parsed.error.issues).join("\n") };
@@ -483,7 +484,8 @@ export async function updateProposalPaymentPlan(input: unknown): Promise<UpdateR
     if (!previous || !next || next.percentage !== previous.percentage) {
       return {
         ok: false,
-        error: "No puedes cambiar el importe ni eliminar un plazo que ya tiene una factura preparada",
+        error:
+          "No puedes cambiar el importe ni eliminar un plazo que ya tiene una factura preparada",
       };
     }
   }
@@ -497,7 +499,11 @@ export async function updateProposalPaymentPlan(input: unknown): Promise<UpdateR
     .maybeSingle();
   if (updateError) return { ok: false, error: updateError.message };
   if (!data) {
-    return { ok: false, code: "conflict", error: "Este registro ha cambiado mientras lo editabas." };
+    return {
+      ok: false,
+      code: "conflict",
+      error: "Este registro ha cambiado mientras lo editabas.",
+    };
   }
 
   revalidatePath(`/proposals/${id}`);

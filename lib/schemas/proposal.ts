@@ -1,7 +1,7 @@
+import { z } from "zod";
 import { KEY_POINTS_LIMITS } from "@/lib/proposals/key-points";
 import { maintenanceOfferInput } from "@/lib/proposals/maintenance";
 import { paymentPlanInput, paymentScheduleInput, scopeModulesInput } from "@/lib/proposals/scope";
-import { z } from "zod";
 import {
   emptyToUndef,
   lineItemInput,

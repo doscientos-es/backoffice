@@ -2,10 +2,10 @@
 
 import {
   CircleAlert as AlertCircle,
-  Check as Check,
-  ChevronLeft as ChevronLeft,
-  ChevronRight as ChevronRight,
-  Save as Save,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Save,
   Sparkle as Sparkles,
 } from "lucide-react";
 import { useRouter } from "next/navigation";

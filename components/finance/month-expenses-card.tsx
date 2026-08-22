@@ -1,8 +1,4 @@
-import {
-  ChartPie as PieChart,
-  Receipt as Receipt,
-  Scale as Scale,
-} from "lucide-react";
+import { ChartPie as PieChart, Receipt, Scale } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getMonthFinanceSummary } from "@/lib/dashboard/queries";

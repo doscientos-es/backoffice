@@ -1,6 +1,6 @@
 "use client";
 
-import { LoaderCircle as Loader2, ShieldCheck as ShieldCheck } from "lucide-react";
+import { LoaderCircle as Loader2, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {

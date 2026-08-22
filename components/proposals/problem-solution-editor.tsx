@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  ChevronDown as ChevronDown,
-  ChevronUp as ChevronUp,
+  ChevronDown,
+  ChevronUp,
   LoaderCircle as Loader2,
-  Plus as Plus,
+  Plus,
   Sparkle as Sparkles,
   Trash as Trash2,
 } from "lucide-react";

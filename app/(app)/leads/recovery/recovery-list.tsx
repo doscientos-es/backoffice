@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  ArrowRight as ArrowRight,
-  Eye as Eye,
-  MousePointerClick as MousePointerClick,
-  Send as Send,
-} from "lucide-react";
+import { ArrowRight, Eye, MousePointerClick, Send } from "lucide-react";
 import Link from "next/link";
 import { ListPage, type ListPageProps } from "@/components/layout/list-page";
 import { MemberLabel } from "@/components/ui/member-avatar";

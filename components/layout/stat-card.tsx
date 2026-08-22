@@ -1,8 +1,4 @@
-import {
-  ArrowDownRight as ArrowDownRight,
-  ArrowUpRight as ArrowUpRight,
-  Minus as Minus,
-} from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 import Link from "next/link";
 import type { ComponentType, SVGProps } from "react";
 import { Card, CardContent } from "@/components/ui/card";

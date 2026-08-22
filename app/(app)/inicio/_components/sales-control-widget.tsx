@@ -1,9 +1,4 @@
-import {
-  TriangleAlert as AlertTriangle,
-  Clock as Clock3,
-  FileText as FileText,
-  Users as Users,
-} from "lucide-react";
+import { TriangleAlert as AlertTriangle, Clock as Clock3, FileText, Users } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

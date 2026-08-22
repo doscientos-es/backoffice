@@ -1,22 +1,22 @@
 "use client";
 
-import {
-  ArrowUpRight as ArrowUpRight,
-  Briefcase as Briefcase,
-  CalendarDays as CalendarDays,
-  CircleCheck as CheckCircle2,
-  Circle as Circle,
-  Clock as Clock,
-  Layers as Layers,
-  LoaderCircle as Loader2,
-  MapPin as MapPin,
-  Tag as Tag,
-  Trash as Trash2,
-  User as User,
-  Users as Users,
-} from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
+import {
+  ArrowUpRight,
+  Briefcase,
+  CalendarDays,
+  CircleCheck as CheckCircle2,
+  Circle,
+  Clock,
+  Layers,
+  LoaderCircle as Loader2,
+  MapPin,
+  Tag,
+  Trash as Trash2,
+  User,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { useTransition } from "react";
 import { sileo } from "sileo";

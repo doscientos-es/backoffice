@@ -11,7 +11,9 @@ import type { createAdminClient } from "@/lib/supabase/admin";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
-const fullPaymentPlan = [{ id: "full", title: "Importe completo", percentage: 100, due_date: null }];
+const fullPaymentPlan = [
+  { id: "full", title: "Importe completo", percentage: 100, due_date: null },
+];
 
 /**
  * Creates the missing editable invoice drafts for an accepted proposal.
@@ -30,7 +32,8 @@ export async function createProposalDraftInvoices(
     .maybeSingle();
   if (proposalError) throw new Error(proposalError.message);
   if (!proposal) throw new Error("Propuesta no encontrada");
-  if (proposal.status !== "accepted") throw new Error("Solo se puede facturar una propuesta aceptada");
+  if (proposal.status !== "accepted")
+    throw new Error("Solo se puede facturar una propuesta aceptada");
   if (!proposal.client_id) throw new Error("La propuesta aceptada no tiene cliente facturable");
 
   const configuredPlan = parsePaymentPlan(proposal.payment_plan);
@@ -125,11 +128,14 @@ export async function createProposalDraftInvoices(
       })
       .select("id")
       .single();
-    if (invoiceError || !invoice) throw new Error(invoiceError?.message ?? "No se pudo crear la factura");
+    if (invoiceError || !invoice)
+      throw new Error(invoiceError?.message ?? "No se pudo crear la factura");
 
     const { error: itemsError } = await supabase
       .from("invoice_items")
-      .insert(invoiceItems.map((item, position) => ({ ...item, position, invoice_id: invoice.id })));
+      .insert(
+        invoiceItems.map((item, position) => ({ ...item, position, invoice_id: invoice.id })),
+      );
     if (itemsError) throw new Error(itemsError.message);
     ids.push(invoice.id as string);
   }

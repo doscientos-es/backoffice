@@ -1,6 +1,6 @@
 "use client";
 
-import { Search as Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /** Evento global para abrir el command palette desde cualquier botón. */

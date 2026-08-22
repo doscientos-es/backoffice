@@ -1,28 +1,28 @@
+import type { MemberRole } from "@/lib/auth";
 import {
-  Archive as Archive,
+  Archive,
   ChartBar as BarChart3,
-  Bell as Bell,
-  CalendarDays as CalendarDays,
-  CheckSquare as CheckSquare,
+  Bell,
+  CalendarDays,
+  CheckSquare,
   FileText as FileSignature,
   Folder as FolderKanban,
-  Globe as Globe,
+  Globe,
   House as Home,
-  Images as Images,
-  Inbox as Inbox,
+  Images,
+  Inbox,
   Key as KeyRound,
-  LifeBuoy as LifeBuoy,
-  Mail as Mail,
-  Megaphone as Megaphone,
-  MousePointerClick as MousePointerClick,
-  Receipt as Receipt,
-  Repeat as Repeat,
-  Share2 as Share2,
-  Users as Users,
-  Wallet as Wallet,
+  LifeBuoy,
+  Mail,
+  Megaphone,
+  MousePointerClick,
+  Receipt,
+  Repeat,
+  Share2,
+  Users,
+  Wallet,
 } from "lucide-react";
 import type { ComponentType } from "react";
-import type { MemberRole } from "@/lib/auth";
 
 export type NavigationItem = {
   href: string;
@@ -105,6 +105,7 @@ export const NAVIGATION_GROUPS: NavigationGroup[] = [
     items: [
       { href: "/internal-docs", label: "Docs internos", icon: Archive },
       { href: "/brand", label: "Marca", icon: Images },
+      { href: "/settings/team", label: "Equipo", icon: Users, allowedRoles: ADMIN_ROLES },
       { href: "/vault", label: "Bóveda", icon: KeyRound, allowedRoles: ADMIN_ROLES },
     ],
   },

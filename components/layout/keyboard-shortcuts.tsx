@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight as ArrowRight, Plus as Plus } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";

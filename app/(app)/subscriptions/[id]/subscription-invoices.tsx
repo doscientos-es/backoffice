@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  ArrowUpRight as ArrowUpRight,
-  FileText as FileText,
-} from "lucide-react";
+import { ArrowUpRight, FileText } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

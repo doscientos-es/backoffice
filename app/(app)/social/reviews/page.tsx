@@ -1,4 +1,4 @@
-import { Star as Star } from "lucide-react";
+import { Star } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";

@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus as Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { type ReactNode, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {

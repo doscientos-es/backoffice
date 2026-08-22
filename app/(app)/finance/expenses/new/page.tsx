@@ -46,21 +46,21 @@ export default async function NewExpensePage({
 
   const defaults = sourceExpense?.expense
     ? {
-      vendor: sourceExpense.expense.vendor,
-      description: sourceExpense.expense.description,
-      category: sourceExpense.expense.category,
-      status: sourceExpense.expense.status,
-      recurrence: sourceExpense.expense.recurrence,
-      currency: sourceExpense.expense.currency,
-      subtotal: sourceExpense.expense.subtotal,
-      tax_rate: sourceExpense.expense.tax_rate,
-      vendor_nif: sourceExpense.expense.vendor_nif,
-      invoice_reference: null, // don't copy invoice ref
-      project_id: sourceExpense.expense.project_id,
-      notes: sourceExpense.expense.notes,
-      payment_source: sourceExpense.expense.payment_source,
-      paid_by_member_id: sourceExpense.expense.paid_by_member_id,
-    }
+        vendor: sourceExpense.expense.vendor,
+        description: sourceExpense.expense.description,
+        category: sourceExpense.expense.category,
+        status: sourceExpense.expense.status,
+        recurrence: sourceExpense.expense.recurrence,
+        currency: sourceExpense.expense.currency,
+        subtotal: sourceExpense.expense.subtotal,
+        tax_rate: sourceExpense.expense.tax_rate,
+        vendor_nif: sourceExpense.expense.vendor_nif,
+        invoice_reference: null, // don't copy invoice ref
+        project_id: sourceExpense.expense.project_id,
+        notes: sourceExpense.expense.notes,
+        payment_source: sourceExpense.expense.payment_source,
+        paid_by_member_id: sourceExpense.expense.paid_by_member_id,
+      }
     : undefined;
 
   return (

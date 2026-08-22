@@ -1,6 +1,6 @@
 "use client";
 
-import { Check as Check, Share2 as Share2 } from "lucide-react";
+import { Check, Share2 } from "lucide-react";
 import { useState } from "react";
 import { sileo } from "sileo";
 import { cn } from "@/lib/utils";

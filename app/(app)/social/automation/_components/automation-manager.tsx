@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  Activity as Activity,
+  Activity,
   Globe2 as Facebook,
   Camera as Instagram,
-  MessageCircle as MessageCircle,
+  MessageCircle,
   Trash as Trash2,
 } from "lucide-react";
 import Link from "next/link";

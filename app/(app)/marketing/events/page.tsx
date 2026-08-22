@@ -1,15 +1,15 @@
 import {
-  ChevronRight as ChevronRight,
+  ChevronRight,
   Circle as CircleDot,
   Clipboard as ClipboardList,
-  ExternalLink as ExternalLink,
-  Eye as Eye,
-  FileText as FileText,
-  MessageCircle as MessageCircle,
-  MousePointerClick as MousePointerClick,
-  Send as Send,
-  UserCheck as UserCheck,
-  Users as Users,
+  ExternalLink,
+  Eye,
+  FileText,
+  MessageCircle,
+  MousePointerClick,
+  Send,
+  UserCheck,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import type { ComponentType, SVGProps } from "react";
@@ -109,10 +109,11 @@ function JourneyCard({ journey }: { journey: VisitorJourney }) {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-3">
             <span
-              className={`flex size-9 shrink-0 items-center justify-center rounded-full ${converted
+              className={`flex size-9 shrink-0 items-center justify-center rounded-full ${
+                converted
                   ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                   : "bg-muted text-muted-foreground"
-                }`}
+              }`}
             >
               {converted ? (
                 <UserCheck className="size-4" aria-hidden />

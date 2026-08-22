@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  CheckCheck as CheckCheck,
-  LoaderCircle as Loader2,
-  Send as Send,
-} from "lucide-react";
+import { CheckCheck, LoaderCircle as Loader2, Send } from "lucide-react";
 import { type FormEvent, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {

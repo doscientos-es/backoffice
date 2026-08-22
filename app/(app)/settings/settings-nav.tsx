@@ -1,15 +1,15 @@
 "use client";
 
 import {
-  Activity as Activity,
-  Building2 as Building2,
-  ChevronDown as ChevronDown,
+  Activity,
+  Building2,
+  ChevronDown,
   Database as DatabaseBackup,
-  Mail as Mail,
-  Shield as Shield,
-  Target as Target,
-  User as User,
-  Users as Users,
+  Mail,
+  Shield,
+  Target,
+  User,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";

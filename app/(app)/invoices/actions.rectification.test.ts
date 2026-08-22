@@ -97,19 +97,19 @@ vi.mock("@/lib/supabase/server", () => ({
           Promise.resolve(
             table === "invoice_items"
               ? {
-                data: db.itemsError
-                  ? null
-                  : [
-                    {
-                      position: 0,
-                      description: "Servicio",
-                      quantity: 1,
-                      unit_price: 100,
-                      vat_rate: 21,
-                    },
-                  ],
-                error: db.itemsError ? { message: db.itemsError } : null,
-              }
+                  data: db.itemsError
+                    ? null
+                    : [
+                        {
+                          position: 0,
+                          description: "Servicio",
+                          quantity: 1,
+                          unit_price: 100,
+                          vat_rate: 21,
+                        },
+                      ],
+                  error: db.itemsError ? { message: db.itemsError } : null,
+                }
               : { data: null, error: null },
           ),
         // other methods used by different actions — unused here

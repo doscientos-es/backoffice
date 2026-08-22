@@ -1,4 +1,4 @@
-import { Inbox as Inbox, Plus as Plus, Settings as Settings } from "lucide-react";
+import { Inbox, Plus, Settings } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ListControls } from "@/components/layout/list-controls";

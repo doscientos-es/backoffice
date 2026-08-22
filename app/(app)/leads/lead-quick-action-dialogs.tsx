@@ -5,14 +5,14 @@
 // con opción de agendar follow-up. Todas refrescan el router tras éxito.
 
 import {
-  FileText as FileText,
+  FileText,
   LoaderCircle as Loader2,
-  Mail as Mail,
-  MessageCircle as MessageCircle,
+  Mail,
+  MessageCircle,
   Notebook as NotebookPen,
-  Phone as Phone,
-  Send as Send,
-  Video as Video,
+  Phone,
+  Send,
+  Video,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type SubmitEvent, useEffect, useState } from "react";

@@ -1,5 +1,5 @@
-import { todayIsoLocal } from "@/lib/utils/date";
 import { z } from "zod";
+import { todayIsoLocal } from "@/lib/utils/date";
 import { assignableUuid, optionalEmail, optionalText, requiredText } from "./common";
 
 /**
@@ -116,7 +116,9 @@ function isCalendarDate(value: string): boolean {
   const month = Number(value.slice(5, 7));
   const day = Number(value.slice(8, 10));
   const date = new Date(Date.UTC(year, month - 1, day));
-  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+  return (
+    date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
+  );
 }
 
 const CallDate = z

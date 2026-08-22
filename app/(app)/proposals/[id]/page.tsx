@@ -1,10 +1,10 @@
 import {
   CircleCheck as CheckCircle2,
-  Clock as Clock,
-  FileText as FileText,
-  Pencil as Pencil,
-  Presentation as Presentation,
-  XCircle as XCircle,
+  Clock,
+  FileText,
+  Pencil,
+  Presentation,
+  XCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";

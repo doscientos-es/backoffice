@@ -1,8 +1,4 @@
-import {
-  BellRing as BellRing,
-  ListTodo as ListTodo,
-  Phone as Phone,
-} from "lucide-react";
+import { BellRing, ListTodo, Phone } from "lucide-react";
 import Link from "next/link";
 import { LeadCallLink } from "@/app/(app)/leads/[id]/phone-actions";
 import { Badge } from "@/components/ui/badge";

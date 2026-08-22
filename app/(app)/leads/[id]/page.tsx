@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -17,8 +19,6 @@ import { leadDisplayName } from "@/lib/leads/utils";
 import { listActiveMembers } from "@/lib/members/queries";
 import { LEAD_STATUS, TASK_STATUS, type TaskStatus } from "@/lib/status";
 import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
-import Link from "next/link";
-import { notFound } from "next/navigation";
 import { TaskCreateDialog } from "../../tasks/task-create-dialog";
 import { CallInteractionDetails } from "./call-interaction-details";
 import { DeleteLeadInteractionButton } from "./delete-lead-interaction-button";
@@ -475,9 +475,7 @@ export default async function LeadDetailPage({
                           ) : null}
                         </div>
                         <div className="flex shrink-0 flex-col items-end gap-0.5 text-xs text-muted-foreground">
-                          <span className="tabular-nums">
-                            {relativeTime(interactionDate(i))}
-                          </span>
+                          <span className="tabular-nums">{relativeTime(interactionDate(i))}</span>
                           {i.performer ? (
                             <MemberLabel
                               member={i.performer}
@@ -486,7 +484,11 @@ export default async function LeadDetailPage({
                             />
                           ) : null}
                           {type === "call" ? (
-                            <CallInteractionDetails interaction={i} leadId={lead.id} canEdit={canEdit} />
+                            <CallInteractionDetails
+                              interaction={i}
+                              leadId={lead.id}
+                              canEdit={canEdit}
+                            />
                           ) : null}
                           {type === "note" && canEdit ? (
                             <DeleteLeadInteractionButton

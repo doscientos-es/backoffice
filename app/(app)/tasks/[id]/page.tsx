@@ -1,7 +1,4 @@
-import {
-  ArrowUpRight as ArrowUpRight,
-  ExternalLink as ExternalLink,
-} from "lucide-react";
+import { ArrowUpRight, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BackLink } from "@/components/layout/back-link";

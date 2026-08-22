@@ -1,10 +1,4 @@
-import {
-  CheckCircle as CheckCircle,
-  Pencil as Edit,
-  ExternalLink as ExternalLink,
-  Globe as Globe,
-  XCircle as XCircle,
-} from "lucide-react";
+import { CheckCircle, Pencil as Edit, ExternalLink, Globe, XCircle } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";

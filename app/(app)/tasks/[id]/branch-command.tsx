@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  Check as Check,
-  Copy as Copy,
-  GitBranch as GitBranch,
-} from "lucide-react";
+import { Check, Copy, GitBranch } from "lucide-react";
 import { useState } from "react";
 
 /**

@@ -1,6 +1,6 @@
 "use client";
 
-import { Check as Check, X as X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { useState, useTransition } from "react";
 import { sileo } from "sileo";
 import { Badge } from "@/components/ui/badge";

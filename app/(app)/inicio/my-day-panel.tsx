@@ -1,9 +1,9 @@
 "use client";
 
 import {
-  PartyPopper as PartyPopper,
-  Inbox as Inbox,
-  ListTodo as ListTodo,
+  Inbox,
+  ListTodo,
+  PartyPopper,
   CircleUser as UserRound,
 } from "lucide-react";
 import { claimLead } from "@/app/(app)/leads/actions";
@@ -12,7 +12,6 @@ import { MyDayColumn } from "./_components/my-day-column";
 import { getMyDayLeadsCopy, isTeamScope } from "./_components/my-day-copy";
 import { MyDayLeadItem, MyDayTaskItem } from "./_components/my-day-items";
 import { MyDayScopeSelector } from "./_components/my-day-scope-selector";
-import { MyDayWeekStats } from "./_components/my-day-week-stats";
 import type { MyDayPanelProps } from "./_components/my-day-types";
 
 export type { MyDayPanelProps } from "./_components/my-day-types";
@@ -20,7 +19,7 @@ export type { MyDayPanelProps } from "./_components/my-day-types";
 /**
  * "Tu día": a personal action queue, with an admin/owner scope selector.
  */
-export function MyDayPanel({ tasks, myLeads, unassignedLeads, weekStats, scope }: MyDayPanelProps) {
+export function MyDayPanel({ tasks, myLeads, unassignedLeads, scope }: MyDayPanelProps) {
   const { items: visibleUnassigned, remove: claimOptimistic } =
     useOptimisticRemoval(unassignedLeads);
   const teamScope = isTeamScope(scope);
@@ -28,10 +27,11 @@ export function MyDayPanel({ tasks, myLeads, unassignedLeads, weekStats, scope }
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <MyDayWeekStats weekStats={weekStats} />
-        {scope.canViewTeam ? <MyDayScopeSelector scope={scope} /> : null}
-      </div>
+      {scope.canViewTeam ? (
+        <div className="flex justify-end">
+          <MyDayScopeSelector scope={scope} />
+        </div>
+      ) : null}
       <div className="grid gap-4 lg:grid-cols-3">
         <MyDayColumn
           icon={<ListTodo className="size-4 text-blue-500" />}

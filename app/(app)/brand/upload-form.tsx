@@ -1,6 +1,6 @@
 "use client";
 
-import { ImageUp as ImageUp, LoaderCircle as Loader2 } from "lucide-react";
+import { ImageUp, LoaderCircle as Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";

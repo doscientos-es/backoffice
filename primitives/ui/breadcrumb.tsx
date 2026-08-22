@@ -1,7 +1,4 @@
-﻿import {
-  ChevronRight as ChevronRightIcon,
-  Ellipsis as MoreHorizontalIcon,
-} from "lucide-react";
+﻿import { ChevronRight as ChevronRightIcon, Ellipsis as MoreHorizontalIcon } from "lucide-react";
 import { Slot } from "radix-ui";
 import type * as React from "react";
 import { cn } from "../lib/utils";

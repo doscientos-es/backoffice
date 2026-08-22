@@ -1,9 +1,9 @@
+import { type NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { renderInvoicePdf } from "@/lib/invoices/invoice-pdf-document";
 import { buildInvoicePdfData, invoicePdfFilename } from "@/lib/invoices/pdf-data";
 import { isPortalUnlocked } from "@/lib/portal/access";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
@@ -113,12 +113,12 @@ export async function GET(
     }>,
     settings: settings
       ? {
-        company_name: (settings.company_name as string | null) ?? null,
-        company_nif: (settings.company_nif as string | null) ?? null,
-        company_address: (settings.company_address as string | null) ?? null,
-        iban: (settings.iban as string | null) ?? null,
-        payment_terms: (settings.payment_terms as string | null) ?? null,
-      }
+          company_name: (settings.company_name as string | null) ?? null,
+          company_nif: (settings.company_nif as string | null) ?? null,
+          company_address: (settings.company_address as string | null) ?? null,
+          iban: (settings.iban as string | null) ?? null,
+          payment_terms: (settings.payment_terms as string | null) ?? null,
+        }
       : null,
     workLogs,
   });

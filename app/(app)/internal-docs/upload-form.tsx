@@ -1,6 +1,6 @@
 "use client";
 
-import { LoaderCircle as Loader2, Paperclip as Paperclip } from "lucide-react";
+import { LoaderCircle as Loader2, Paperclip } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";

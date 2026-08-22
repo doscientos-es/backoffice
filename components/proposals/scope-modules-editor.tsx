@@ -1,12 +1,12 @@
 "use client";
 
 import {
-  ChevronDown as ChevronDown,
-  ChevronUp as ChevronUp,
+  ChevronDown,
+  ChevronUp,
   Clipboard as ClipboardPaste,
-  Plus as Plus,
+  Plus,
   Trash as Trash2,
-  X as X,
+  X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";

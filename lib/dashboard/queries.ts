@@ -23,7 +23,6 @@ import type {
   ReminderRow,
   RevenuePoint,
   VerifactuPendingRow,
-  WeekStats,
 } from "./types";
 
 const AVISOS_LIMIT = 5;
@@ -637,49 +636,14 @@ export async function getCompanyGoals(): Promise<CompanyGoals> {
 // "Tu día"
 // ---------------------------------------------------------------------------
 
-/** Returns the start of the current calendar week (Monday 00:00 local UTC). */
-function getWeekStart(): Date {
-  const now = new Date();
-  const dayOfWeek = now.getUTCDay(); // 0 = Sunday
-  const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  const monday = new Date(now);
-  monday.setUTCDate(now.getUTCDate() - daysFromMonday);
-  monday.setUTCHours(0, 0, 0, 0);
-  return monday;
-}
-
-/**
- * Computes consecutive days (backwards from today) on which the user completed
- * at least one task. Today counts if it already has a completion.
- */
-function computeStreak(rows: { updated_at: string | null | undefined }[]): number {
-  const days = new Set(rows.flatMap((r) => (r.updated_at ? [r.updated_at.slice(0, 10)] : [])));
-  const todayKey = new Date().toISOString().slice(0, 10);
-  // If nothing today yet, start streak check from yesterday
-  const startOffset = days.has(todayKey) ? 0 : 1;
-  let streak = 0;
-  for (let i = startOffset; i <= 30; i++) {
-    const d = new Date();
-    d.setUTCDate(d.getUTCDate() - i);
-    if (days.has(d.toISOString().slice(0, 10))) {
-      streak++;
-    } else {
-      break;
-    }
-  }
-  return streak;
-}
-
 /**
  * "Tu día": the personal action queue, or the whole team's queue when an
  * admin/owner explicitly requests it. Returns open tasks (soonest due first),
- * active owned leads (stalest first), unassigned leads, and weekly progress.
+ * active owned leads (stalest first), and unassigned leads.
  */
 export async function getMyDay({ assigneeId }: MyDayScope): Promise<MyDayData> {
   const supabase = await createServerClient();
   const leadFields = "id, name, alias, company, phone, email, status";
-  const weekStart = getWeekStart().toISOString();
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000).toISOString();
 
   let tasksQuery = supabase
     .from("tasks")
@@ -694,57 +658,26 @@ export async function getMyDay({ assigneeId }: MyDayScope): Promise<MyDayData> {
     .in("status", [...ACTIVE_LEAD_STATUSES])
     .is("deleted_at", null)
     .order("updated_at", { ascending: true });
-  let completedQuery = supabase
-    .from("tasks")
-    .select("id", { count: "exact", head: true })
-    .eq("status", "done")
-    .gte("updated_at", weekStart)
-    .is("deleted_at", null);
-  let attendedQuery = supabase
-    .from("leads")
-    .select("id", { count: "exact", head: true })
-    .gte("updated_at", weekStart)
-    .is("deleted_at", null);
-  let streakQuery = supabase
-    .from("tasks")
-    .select("updated_at")
-    .eq("status", "done")
-    .gte("updated_at", thirtyDaysAgo)
-    .is("deleted_at", null);
 
   if (assigneeId) {
     tasksQuery = tasksQuery.eq("assignee_id", assigneeId);
     ownedLeadsQuery = ownedLeadsQuery.eq("assigned_to", assigneeId);
-    completedQuery = completedQuery.eq("assignee_id", assigneeId);
-    attendedQuery = attendedQuery.eq("assigned_to", assigneeId);
-    streakQuery = streakQuery.eq("assignee_id", assigneeId);
   } else {
     ownedLeadsQuery = ownedLeadsQuery.not("assigned_to", "is", null);
   }
 
-  const [tasksRes, myLeadsRes, unassignedRes, completedRes, attendedRes, streakRes] =
-    await Promise.all([
-      tasksQuery.limit(MY_DAY_LIMIT * 4),
-      ownedLeadsQuery.limit(MY_DAY_LIMIT),
-      supabase
-        .from("leads")
-        .select(`${leadFields}, created_at, assignee:team_members!assigned_to(name)`)
-        .is("assigned_to", null)
-        .in("status", [...ACTIVE_LEAD_STATUSES])
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false })
-        .limit(MY_DAY_LIMIT),
-      completedQuery,
-      attendedQuery,
-      streakQuery.order("updated_at", { ascending: false }),
-    ]);
-
-  const weekStats: WeekStats = {
-    tasksCompleted: completedRes.count ?? 0,
-    leadsAttended: attendedRes.count ?? 0,
-    // A team-level streak would be misleading because it combines members.
-    streakDays: assigneeId ? computeStreak(streakRes.data ?? []) : 0,
-  };
+  const [tasksRes, myLeadsRes, unassignedRes] = await Promise.all([
+    tasksQuery.limit(MY_DAY_LIMIT * 4),
+    ownedLeadsQuery.limit(MY_DAY_LIMIT),
+    supabase
+      .from("leads")
+      .select(`${leadFields}, created_at, assignee:team_members!assigned_to(name)`)
+      .is("assigned_to", null)
+      .in("status", [...ACTIVE_LEAD_STATUSES])
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(MY_DAY_LIMIT),
+  ]);
 
   return {
     tasks: (tasksRes.data ?? [])
@@ -757,6 +690,5 @@ export async function getMyDay({ assigneeId }: MyDayScope): Promise<MyDayData> {
       .slice(0, MY_DAY_LIMIT),
     myLeads: (myLeadsRes.data ?? []).map((row) => toActionLead(row, "updated_at")),
     unassignedLeads: (unassignedRes.data ?? []).map((row) => toActionLead(row, "created_at")),
-    weekStats,
   };
 }

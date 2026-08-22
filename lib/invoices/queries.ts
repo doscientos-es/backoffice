@@ -180,12 +180,12 @@ export async function getInvoiceDetail(id: string): Promise<InvoiceDetailResult>
     })),
     settings: settings
       ? {
-        company_name: (settings.company_name as string | null) ?? null,
-        company_nif: (settings.company_nif as string | null) ?? null,
-        company_address: (settings.company_address as string | null) ?? null,
-        iban: (settings.iban as string | null) ?? null,
-        payment_terms: (settings.payment_terms as string | null) ?? null,
-      }
+          company_name: (settings.company_name as string | null) ?? null,
+          company_nif: (settings.company_nif as string | null) ?? null,
+          company_address: (settings.company_address as string | null) ?? null,
+          iban: (settings.iban as string | null) ?? null,
+          payment_terms: (settings.payment_terms as string | null) ?? null,
+        }
       : null,
   };
 }
@@ -205,9 +205,9 @@ export async function findInvoiceTimestamps(id: string): Promise<InvoiceTimestam
     .maybeSingle();
   return data
     ? {
-      issued_at: (data.issued_at as string | null) ?? null,
-      client_id: (data.client_id as string | null) ?? null,
-    }
+        issued_at: (data.issued_at as string | null) ?? null,
+        client_id: (data.client_id as string | null) ?? null,
+      }
     : null;
 }
 

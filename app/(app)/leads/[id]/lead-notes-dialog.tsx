@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText as FileText, Maximize2 as Maximize2 } from "lucide-react";
+import { FileText, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
 import {

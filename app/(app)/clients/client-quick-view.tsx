@@ -1,15 +1,15 @@
 "use client";
 
 import {
-  ArrowUpRight as ArrowUpRight,
-  Building2 as Building2,
-  FileText as FileText,
-  Mail as Mail,
-  MapPin as MapPin,
-  Phone as Phone,
+  ArrowUpRight,
+  Building2,
+  FileText,
+  Mail,
+  MapPin,
+  Phone,
   Trash as Trash2,
-  User as User,
-  X as X,
+  User,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { type ReactNode, useState } from "react";

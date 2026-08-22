@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  Building2 as Building2,
-  FileText as FileText,
-  MapPin as MapPin,
-  User as User,
-} from "lucide-react";
+import { Building2, FileText, MapPin, User } from "lucide-react";
 import type * as React from "react";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";

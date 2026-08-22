@@ -1,4 +1,4 @@
-import { ArrowRight as ArrowRight, Download as Download } from "lucide-react";
+import { ArrowRight, Download } from "lucide-react";
 import type { ReactNode } from "react";
 import { LogoMark } from "@/components/branding";
 import { Markdown } from "@/components/ui/markdown";

@@ -1,6 +1,6 @@
 "use client";
 
-import { LoaderCircle as Loader2, RefreshCw as RefreshCw } from "lucide-react";
+import { LoaderCircle as Loader2, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { sileo } from "sileo";

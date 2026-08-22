@@ -1,11 +1,11 @@
 "use client";
 
 import {
-  Download as Download,
-  ExternalLink as ExternalLink,
+  Download,
+  ExternalLink,
   Folder as FolderSymlink,
   LoaderCircle as Loader2,
-  Paperclip as Paperclip,
+  Paperclip,
   Upload as UploadCloud,
 } from "lucide-react";
 import Link from "next/link";

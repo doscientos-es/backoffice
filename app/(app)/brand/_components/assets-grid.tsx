@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Check as Check,
-  Copy as Copy,
-  Download as Download,
-  Image,
-  Trash as Trash2,
-} from "lucide-react";
+import { Check, Copy, Download, Image, Trash as Trash2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  LoaderCircle as Loader2,
-  ShieldCheck as ShieldCheck,
-  Smartphone as Smartphone,
-} from "lucide-react";
+import { LoaderCircle as Loader2, ShieldCheck, Smartphone } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

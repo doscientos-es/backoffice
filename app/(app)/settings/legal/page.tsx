@@ -1,4 +1,4 @@
-import { ExternalLink as ExternalLink, Shield as Shield } from "lucide-react";
+import { ExternalLink, Shield } from "lucide-react";
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";

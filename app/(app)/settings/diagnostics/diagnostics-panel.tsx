@@ -4,7 +4,7 @@ import {
   CircleAlert as AlertCircle,
   CircleCheck as CheckCircle2,
   LoaderCircle as Loader2,
-  Play as Play,
+  Play,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";

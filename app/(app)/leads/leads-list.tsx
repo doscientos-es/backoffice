@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight as ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { ListPage, type ListPageProps } from "@/components/layout/list-page";

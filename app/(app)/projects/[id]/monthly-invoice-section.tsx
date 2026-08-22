@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText as FileText } from "lucide-react";
+import { FileText } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";

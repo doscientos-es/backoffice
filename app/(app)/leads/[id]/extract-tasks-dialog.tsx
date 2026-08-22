@@ -2,8 +2,8 @@
 
 import {
   CircleAlert as AlertCircle,
-  CheckCheck as CheckCheck,
-  ListTodo as ListTodo,
+  CheckCheck,
+  ListTodo,
   Sparkle as Sparkles,
 } from "lucide-react";
 import { useEffect, useState } from "react";

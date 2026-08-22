@@ -1,8 +1,10 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { MemberProfilePopover } from "@/components/ui/member-profile-popover";
 import { cn, memberAvatarUrl } from "@/lib/utils";
 
 /** Member shape this component needs to resolve an avatar + initials fallback. */
 export type AvatarMember = {
+  id?: string;
   name: string;
   avatar_url: string | null;
   github_handle: string | null;
@@ -63,7 +65,15 @@ export function MemberLabel({
 }) {
   return (
     <span className={cn("inline-flex items-center gap-2 min-w-0", className)}>
-      <MemberAvatar member={member} size={size} />
+      {member?.id ? (
+        <MemberProfilePopover
+          member={member}
+          size={size}
+          avatar={<MemberAvatar member={member} size={size} />}
+        />
+      ) : (
+        <MemberAvatar member={member} size={size} />
+      )}
       <span className={cn("truncate", !member && "text-muted-foreground")}>
         {member ? member.name : "Sin asignar"}
       </span>

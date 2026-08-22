@@ -1,5 +1,5 @@
-import { User as User } from "lucide-react";
 import { fireEvent, render, screen } from "@testing-library/react";
+import { User } from "lucide-react";
 import { createElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { isNavigationItemActive, NavigationTree } from "@/components/layout/navigation-tree";

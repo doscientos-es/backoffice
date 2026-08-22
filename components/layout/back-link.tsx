@@ -1,4 +1,4 @@
-import { ChevronLeft as ChevronLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 
 export type BackLinkProps = {

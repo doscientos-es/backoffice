@@ -1,6 +1,6 @@
 "use client";
 
-import { Check as Check, Copy as Copy } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { sileo } from "sileo";
 import { cn } from "@/lib/utils";

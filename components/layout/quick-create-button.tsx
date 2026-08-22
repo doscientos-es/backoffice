@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Briefcase as Briefcase,
-  FileText as FileText,
-  ListChecks as ListChecks,
-  Plus as Plus,
-  User as User,
-  Users as Users,
-} from "lucide-react";
+import { Briefcase, FileText, ListChecks, Plus, User, Users } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

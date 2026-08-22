@@ -1,6 +1,6 @@
 "use client";
 
-import { CreditCard as CreditCard, LoaderCircle as Loader2 } from "lucide-react";
+import { CreditCard, LoaderCircle as Loader2 } from "lucide-react";
 import { useTransition } from "react";
 import { initiateProposalPayment } from "@/app/p/proposal/[token]/actions";
 import { Button } from "@/components/ui/button";

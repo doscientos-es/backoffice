@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  Undo2 as Reply,
-  Star as Star,
-  Trash as Trash2,
-} from "lucide-react";
+import { Undo2 as Reply, Star, Trash as Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

@@ -1,9 +1,4 @@
-import {
-  FileText as FileSignature,
-  Inbox as Inbox,
-  Target as Target,
-  TrendingUp as TrendingUp,
-} from "lucide-react";
+import { FileText as FileSignature, Inbox, Target, TrendingUp } from "lucide-react";
 import { StatCard } from "@/components/layout/stat-card";
 import { getCompanyGoals, getDashboardKpis } from "@/lib/dashboard/queries";
 import type { DashboardRange } from "@/lib/dashboard/types";

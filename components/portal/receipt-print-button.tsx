@@ -1,6 +1,6 @@
 "use client";
 
-import { Printer as Printer } from "lucide-react";
+import { Printer } from "lucide-react";
 import { useEffect } from "react";
 
 /**

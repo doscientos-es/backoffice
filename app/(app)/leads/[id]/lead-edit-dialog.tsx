@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil as Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { sileo } from "sileo";

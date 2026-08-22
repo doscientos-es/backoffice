@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Check as Check,
-  Copy as Copy,
-  Mail as Mail,
-  MessageCircle as MessageCircle,
-  Phone as Phone,
-  Sparkle as Sparkles,
-} from "lucide-react";
+import { Check, Copy, Mail, MessageCircle, Phone, Sparkle as Sparkles } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

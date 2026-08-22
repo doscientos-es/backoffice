@@ -1,8 +1,8 @@
 import {
   TriangleAlert as AlertTriangle,
-  BellRing as BellRing,
+  BellRing,
   FileText as FileWarning,
-  ShieldAlert as ShieldAlert,
+  ShieldAlert,
 } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

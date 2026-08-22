@@ -1,9 +1,4 @@
-import {
-  FilePlus as FilePlus2,
-  FileUp as FileUp,
-  PencilLine as PencilLine,
-  Trash as Trash2,
-} from "lucide-react";
+import { FilePlus as FilePlus2, FileUp, PencilLine, Trash as Trash2 } from "lucide-react";
 import { formatDateTime } from "@/lib/utils";
 
 export type InternalDocEvent = {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy as Copy, Pencil as Pencil, Trash as Trash2 } from "lucide-react";
+import { Copy, Pencil, Trash as Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";

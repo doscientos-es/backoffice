@@ -1,11 +1,4 @@
-import {
-  HandCoins as HandCoins,
-  Hourglass as Hourglass,
-  Percent as Percent,
-  Receipt as Receipt,
-  TrendingDown as TrendingDown,
-  TrendingUp as TrendingUp,
-} from "lucide-react";
+import { HandCoins, Hourglass, Percent, Receipt, TrendingDown, TrendingUp } from "lucide-react";
 import { StatCard } from "@/components/layout/stat-card";
 import { getFinanceKpis } from "@/lib/finance/queries";
 import { formatEUR } from "@/lib/utils";

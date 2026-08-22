@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil as Pencil, Trash as Trash2 } from "lucide-react";
+import { Pencil, Trash as Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";

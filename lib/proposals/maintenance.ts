@@ -32,7 +32,10 @@ export const maintenanceOfferInput = z
     recommended_plan_id: z.string().min(1).max(64).optional(),
   })
   .superRefine((offer, ctx) => {
-    if (offer.recommended_plan_id && !offer.plans.some((plan) => plan.id === offer.recommended_plan_id)) {
+    if (
+      offer.recommended_plan_id &&
+      !offer.plans.some((plan) => plan.id === offer.recommended_plan_id)
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["recommended_plan_id"],
@@ -114,7 +117,10 @@ export const DEFAULT_MAINTENANCE_OFFER: MaintenanceOffer = {
 
 /** Keeps legacy offers on the second plan while allowing each proposal to override it. */
 export function recommendedMaintenancePlanId(offer: MaintenanceOffer): string | null {
-  if (offer.recommended_plan_id && offer.plans.some((plan) => plan.id === offer.recommended_plan_id)) {
+  if (
+    offer.recommended_plan_id &&
+    offer.plans.some((plan) => plan.id === offer.recommended_plan_id)
+  ) {
     return offer.recommended_plan_id;
   }
   return offer.plans[1]?.id ?? offer.plans[0]?.id ?? null;

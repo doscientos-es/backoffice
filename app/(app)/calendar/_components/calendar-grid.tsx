@@ -2,11 +2,6 @@
 
 import { DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import {
-  ChevronDown as ChevronDown,
-  ChevronUp as ChevronUp,
-  Moon as Moon,
-} from "lucide-react";
-import {
   addDays,
   eachDayOfInterval,
   endOfWeek,
@@ -18,6 +13,7 @@ import {
   startOfWeek,
 } from "date-fns";
 import { es } from "date-fns/locale";
+import { ChevronDown, ChevronUp, Moon } from "lucide-react";
 import {
   createContext,
   useContext,

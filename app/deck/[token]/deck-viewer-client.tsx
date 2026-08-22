@@ -1,14 +1,14 @@
 "use client";
 
 import {
-  ChevronLeft as ChevronLeft,
-  ChevronRight as ChevronRight,
+  ChevronLeft,
+  ChevronRight,
   LayoutGrid as Grid3x3,
   CircleHelp as HelpCircle,
-  Maximize2 as Maximize2,
-  Minimize2 as Minimize2,
-  Printer as Printer,
-  X as X,
+  Maximize2,
+  Minimize2,
+  Printer,
+  X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";

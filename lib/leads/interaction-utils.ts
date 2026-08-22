@@ -86,11 +86,11 @@ export function formatInteractionForAI(interaction: LeadInteractionForAI): strin
   const transcript = callDetails?.transcript?.slice(0, 2000);
   const callMetadata = callDetails
     ? [
-      callDetails.outcome ? `Resultado: ${callDetails.outcome}` : null,
-      callDetails.durationMinutes != null ? `Duración: ${callDetails.durationMinutes} min` : null,
-    ]
-      .filter(Boolean)
-      .join(" · ")
+        callDetails.outcome ? `Resultado: ${callDetails.outcome}` : null,
+        callDetails.durationMinutes != null ? `Duración: ${callDetails.durationMinutes} min` : null,
+      ]
+        .filter(Boolean)
+        .join(" · ")
     : "";
   const meetingData =
     interaction.type === "meeting" && interaction.payload && typeof interaction.payload === "object"
@@ -100,7 +100,9 @@ export function formatInteractionForAI(interaction: LeadInteractionForAI): strin
     ? `Reunión: ${String(meetingData.start)}${meetingData.end ? ` → ${String(meetingData.end)}` : ""}`
     : "";
 
-  return `- ${date} | ${interaction.type}${subject ? ` | "${subject}"` : ""}${notes ? ` | Notas: ${notes}` : ""
-    }${callMetadata ? ` | ${callMetadata}` : ""}${meetingTime ? ` | ${meetingTime}` : ""}${transcript ? ` | Transcripción: ${transcript}` : ""
-    }`;
+  return `- ${date} | ${interaction.type}${subject ? ` | "${subject}"` : ""}${
+    notes ? ` | Notas: ${notes}` : ""
+  }${callMetadata ? ` | ${callMetadata}` : ""}${meetingTime ? ` | ${meetingTime}` : ""}${
+    transcript ? ` | Transcripción: ${transcript}` : ""
+  }`;
 }

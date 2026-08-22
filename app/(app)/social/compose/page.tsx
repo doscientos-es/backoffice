@@ -1,4 +1,4 @@
-import { TriangleAlert as TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 import type { Metadata } from "next";
 import { BackLink } from "@/components/layout/back-link";
 import { PageHeader } from "@/components/layout/page-header";

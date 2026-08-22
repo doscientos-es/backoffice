@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { getCallInteractionDetails, groupResendInteractions, interactionDate } from "./interaction-utils";
+import {
+  getCallInteractionDetails,
+  groupResendInteractions,
+  interactionDate,
+} from "./interaction-utils";
 
 describe("groupResendInteractions", () => {
   it("groups repeated Resend callbacks for the same email and event type", () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft as ArrowLeft, Save as Save } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";

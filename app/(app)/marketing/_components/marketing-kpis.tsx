@@ -1,9 +1,4 @@
-import {
-  MousePointerClick as MousePointerClick,
-  TrendingUp as TrendingUp,
-  Users as Users,
-  Wallet as Wallet,
-} from "lucide-react";
+import { MousePointerClick, TrendingUp, Users, Wallet } from "lucide-react";
 import { StatCard } from "@/components/layout/stat-card";
 import { getMarketingOverview } from "@/lib/marketing/queries";
 import type { MarketingSort, MarketingView } from "@/lib/marketing/range";

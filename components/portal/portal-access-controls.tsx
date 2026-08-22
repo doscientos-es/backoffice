@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  Eye as Eye,
-  EyeOff as EyeOff,
-  Key as KeyRound,
-  LockOpen as LockOpen,
-} from "lucide-react";
+import { Eye, EyeOff, Key as KeyRound, LockOpen } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";

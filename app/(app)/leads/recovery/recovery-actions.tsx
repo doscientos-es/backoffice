@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  Ban as Ban,
-  Mail as Mail,
-  Undo2 as RotateCcw,
-} from "lucide-react";
+import { Ban, Mail, Undo2 as RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { sileo } from "sileo";

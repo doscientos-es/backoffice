@@ -1,6 +1,6 @@
 "use client";
 
-import { LoaderCircle as Loader2, Send as Send } from "lucide-react";
+import { LoaderCircle as Loader2, Send } from "lucide-react";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { updateInvoiceStatus } from "../actions";

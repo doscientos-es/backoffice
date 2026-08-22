@@ -14,6 +14,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "biome check .",
+    "lint:changed": "biome check --changed",
+    "lint:staged": "biome check --staged",
     "lint:fix": "biome check --write --unsafe .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

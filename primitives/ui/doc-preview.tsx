@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { FileText as FileText, Image } from "lucide-react";
+import { FileText, Image } from "lucide-react";
 
 type Props = {
   /** Signed storage URL, generated server-side. Null = no preview. */

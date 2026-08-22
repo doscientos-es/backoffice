@@ -3,6 +3,7 @@
   "vcs": {
     "enabled": true,
     "clientKind": "git",
+    "defaultBranch": "main",
     "useIgnoreFile": true
   },
   "files": {
@@ -63,7 +64,11 @@
   },
   "overrides": [
     {
-      "includes": ["**/*.test.ts", "**/*.test.tsx", "**/scripts/**"],
+      "includes": [
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/scripts/**"
+      ],
       "linter": {
         "rules": {
           "suspicious": {

@@ -1,9 +1,9 @@
 import {
   CalendarDays as CalendarClock,
-  Heart as Heart,
-  MessageCircle as MessageCircle,
-  MessageSquareText as MessageSquareText,
-  MousePointerClick as MousePointerClick,
+  Heart,
+  MessageCircle,
+  MessageSquareText,
+  MousePointerClick,
 } from "lucide-react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/ui/status-badge";

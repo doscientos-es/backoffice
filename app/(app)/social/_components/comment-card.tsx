@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  Heart as Heart,
-  MessageSquare as MessageSquare,
-  Undo2 as Reply,
-} from "lucide-react";
+import { Heart, MessageSquare, Undo2 as Reply } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

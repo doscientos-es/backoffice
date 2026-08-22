@@ -1,8 +1,4 @@
-import {
-  GitBranch as Github,
-  Link as Link2,
-  RefreshCw as RefreshCw,
-} from "lucide-react";
+import { GitBranch as Github, Link as Link2, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { GitHubSyncMode } from "./github-sync-section";
 

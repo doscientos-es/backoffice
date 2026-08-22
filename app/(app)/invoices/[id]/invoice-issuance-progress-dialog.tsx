@@ -2,12 +2,12 @@
 
 import {
   CircleCheck as CheckCircle2,
-  Circle as Circle,
+  Circle,
   Clock as Clock3,
   File as FileCheck2,
   LoaderCircle as Loader2,
-  TriangleAlert as TriangleAlert,
-  XCircle as XCircle,
+  TriangleAlert,
+  XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {

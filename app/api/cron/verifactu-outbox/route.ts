@@ -1,7 +1,7 @@
+import { type NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { scopedLogger } from "@/lib/logger";
 import { retryDueVerifactuOutbox } from "@/lib/verifactu/outbox";
-import { type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

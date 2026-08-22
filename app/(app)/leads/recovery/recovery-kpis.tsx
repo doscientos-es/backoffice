@@ -1,9 +1,4 @@
-import {
-  HandHeart as HeartHandshake,
-  Mail as MailX,
-  TriangleAlert as TriangleAlert,
-  Users as Users,
-} from "lucide-react";
+import { HandHeart as HeartHandshake, Mail as MailX, TriangleAlert, Users } from "lucide-react";
 import { StatCard } from "@/components/layout/stat-card";
 import type { RecoveryKpis as RecoveryKpisData } from "@/lib/recovery/types";
 import { formatEUR } from "@/lib/utils";

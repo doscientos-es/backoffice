@@ -1,6 +1,6 @@
 "use client";
 
-import { List as Menu, Settings as Settings, X as X } from "lucide-react";
+import { List as Menu, Settings, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";

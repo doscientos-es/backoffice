@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  ArrowUpRight as ArrowUpRight,
-  Building2 as Building2,
-  Clock as Clock,
-  ExternalLink as ExternalLink,
-  Trash as Trash2,
-  X as X,
-} from "lucide-react";
+import { ArrowUpRight, Building2, Clock, ExternalLink, Trash as Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { type ReactNode, useState, useTransition } from "react";
 import { sileo } from "sileo";

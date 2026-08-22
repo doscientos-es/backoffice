@@ -1,12 +1,7 @@
 "use client";
 
 import HCaptcha from "@hcaptcha/react-hcaptcha";
-import {
-  ChevronDown as ChevronDown,
-  Eye as Eye,
-  EyeOff as EyeOff,
-  LoaderCircle as Loader2,
-} from "lucide-react";
+import { ChevronDown, Eye, EyeOff, LoaderCircle as Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";

@@ -5,8 +5,8 @@
  * Shows a success/error badge without any network call.
  */
 
-import { CheckCircle as CheckCircle, XCircle as XCircle } from "lucide-react";
 import { isValidIBAN } from "ibantools";
+import { CheckCircle, XCircle } from "lucide-react";
 import { useState } from "react";
 import { Input } from "./input";
 

@@ -1,9 +1,9 @@
 import {
   TriangleAlert as AlertTriangle,
   CircleCheck as CheckCircle2,
-  Clock as Clock,
-  Download as Download,
-  ShieldAlert as ShieldAlert,
+  Clock,
+  Download,
+  ShieldAlert,
 } from "lucide-react";
 import type { Metadata } from "next";
 import { ListPage } from "@/components/layout/list-page";

@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  CircleAlert as AlertCircle,
-  Check as Check,
-  Copy as Copy,
-  Sparkle as Sparkles,
-} from "lucide-react";
+import { CircleAlert as AlertCircle, Check, Copy, Sparkle as Sparkles } from "lucide-react";
 import { useState } from "react";
 import { AiNotice } from "@/components/ui/ai-notice";
 import { Badge } from "@/components/ui/badge";

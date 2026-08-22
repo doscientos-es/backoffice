@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays as CalendarDays } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import type * as React from "react";
 import { useEffect, useId, useRef, useState } from "react";
 import { InputGroup, InputGroupAddon, InputGroupButton } from "@/components/ui/input-group";

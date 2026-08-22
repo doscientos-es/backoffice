@@ -1,11 +1,7 @@
 "use client";
 
 import HCaptcha from "@hcaptcha/react-hcaptcha";
-import {
-  ArrowLeft as ArrowLeft,
-  CircleCheck as CheckCircle2,
-  LoaderCircle as Loader2,
-} from "lucide-react";
+import { ArrowLeft, CircleCheck as CheckCircle2, LoaderCircle as Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";

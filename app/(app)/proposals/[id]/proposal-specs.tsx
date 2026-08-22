@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Eye as Eye,
-  EyeOff as EyeOff,
-  Pencil as Pencil,
-  Save as Save,
-  Sparkle as Sparkles,
-  Trash as Trash2,
-} from "lucide-react";
+import { Eye, EyeOff, Pencil, Save, Sparkle as Sparkles, Trash as Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { AiNotice } from "@/components/ui/ai-notice";

@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  Check as Check,
+  Check,
   Clipboard as ClipboardCheck,
   LoaderCircle as Loader2,
   Sparkle as Sparkles,

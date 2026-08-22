@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Copy as Copy,
-  Pencil as Pencil,
-  Plus as Plus,
-  Power as Power,
-  Trash as Trash2,
-} from "lucide-react";
+import { Copy, Pencil, Plus, Power, Trash as Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useMemo, useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";

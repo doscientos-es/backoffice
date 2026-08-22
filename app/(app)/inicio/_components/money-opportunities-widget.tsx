@@ -1,9 +1,9 @@
 import {
-  Banknote as Banknote,
-  ChevronRight as ChevronRight,
+  Banknote,
+  ChevronRight,
   FilePlus as FilePlus2,
   FileText as FileSignature,
-  Flame as Flame,
+  Flame,
   Undo2 as RotateCcw,
 } from "lucide-react";
 import Link from "next/link";

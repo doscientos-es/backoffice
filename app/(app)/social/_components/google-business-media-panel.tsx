@@ -1,6 +1,6 @@
 "use client";
 
-import { Upload as Upload, X as X } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

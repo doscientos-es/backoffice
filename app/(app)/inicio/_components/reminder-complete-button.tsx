@@ -1,6 +1,6 @@
 "use client";
 
-import { Check as Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";

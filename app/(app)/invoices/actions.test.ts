@@ -31,7 +31,14 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/lib/invoices/queries", () => ({
   findProposalForInvoice: vi.fn(async () => state.proposal),
   findProposalItems: vi.fn(async () => [
-    { position: 0, description: "Implementación", quantity: 1, unit_price: 1000, vat_rate: 21, billing_cycle: "none" },
+    {
+      position: 0,
+      description: "Implementación",
+      quantity: 1,
+      unit_price: 1000,
+      vat_rate: 21,
+      billing_cycle: "none",
+    },
   ]),
   findClientInfo: vi.fn(async () => ({
     name: "Acme",
@@ -121,7 +128,8 @@ describe("createInvoicesFromProposalPlan", () => {
 
     expect(result).toEqual({
       ok: false,
-      error: "La propuesta aceptada no tiene datos fiscales; completa la ficha fiscal antes de facturar",
+      error:
+        "La propuesta aceptada no tiene datos fiscales; completa la ficha fiscal antes de facturar",
     });
     expect(state.insertedInvoices).toEqual([]);
   });

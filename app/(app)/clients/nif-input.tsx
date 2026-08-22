@@ -2,11 +2,11 @@
 
 import {
   TriangleAlert as AlertTriangle,
-  Building2 as Building2,
-  CheckCircle as CheckCircle,
+  Building2,
+  CheckCircle,
   LoaderCircle as Loader2,
-  Search as Search,
-  XCircle as XCircle,
+  Search,
+  XCircle,
 } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";

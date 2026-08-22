@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  CircleAlert as AlertCircle,
-  LogOut as LogOut,
-  Settings as Settings,
-  ShieldCheck as ShieldCheck,
-  Users as Users,
-} from "lucide-react";
+import { CircleAlert as AlertCircle, LogOut, Settings, ShieldCheck, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

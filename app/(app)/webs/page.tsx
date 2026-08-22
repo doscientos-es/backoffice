@@ -1,8 +1,4 @@
-import {
-  Globe as Globe,
-  Plus as Plus,
-  ShieldAlert as ShieldAlert,
-} from "lucide-react";
+import { Globe, Plus, ShieldAlert } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";

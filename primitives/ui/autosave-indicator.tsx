@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  CircleAlert as AlertCircle,
-  Check as Check,
-  LoaderCircle as Loader2,
-} from "lucide-react";
+import { CircleAlert as AlertCircle, Check, LoaderCircle as Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { AutosaveStatus } from "../hooks/use-autosave";
 import { cn } from "../lib/utils";

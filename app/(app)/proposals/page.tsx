@@ -1,4 +1,4 @@
-import { Plus as Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ListPage } from "@/components/layout/list-page";

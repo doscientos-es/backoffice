@@ -1,10 +1,4 @@
-import {
-  ArrowUpRight as ArrowUpRight,
-  ChartBar as BarChart3,
-  MapPin as MapPin,
-  Star as Star,
-  TriangleAlert as TriangleAlert,
-} from "lucide-react";
+import { ArrowUpRight, ChartBar as BarChart3, MapPin, Star, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";

@@ -1,6 +1,6 @@
 "use client";
 
-import { TriangleAlert as AlertTriangle, RefreshCw as RefreshCw } from "lucide-react";
+import { TriangleAlert as AlertTriangle, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Component, type ErrorInfo, type ReactNode, Suspense } from "react";
 import { Button } from "./button";

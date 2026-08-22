@@ -1,9 +1,4 @@
-import {
-  CircleAlert as CircleAlert,
-  Clock as Clock3,
-  Camera as Instagram,
-  MessageCircle as MessageCircle,
-} from "lucide-react";
+import { CircleAlert, Clock as Clock3, Camera as Instagram, MessageCircle } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BackLink } from "@/components/layout/back-link";

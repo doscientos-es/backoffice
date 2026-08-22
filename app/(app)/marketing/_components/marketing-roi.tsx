@@ -1,11 +1,4 @@
-import {
-  BadgeCheck as BadgeCheck,
-  Coins as Coins,
-  HandCoins as HandCoins,
-  Percent as Percent,
-  Target as Target,
-  TrendingUp as TrendingUp,
-} from "lucide-react";
+import { BadgeCheck, Coins, HandCoins, Percent, Target, TrendingUp } from "lucide-react";
 import { StatCard } from "@/components/layout/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getMarketingRoi } from "@/lib/marketing/queries";

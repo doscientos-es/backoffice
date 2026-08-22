@@ -1,9 +1,9 @@
 import {
   CircleCheck as CheckCircle2,
-  Download as Download,
-  FileText as FileText,
-  Presentation as Presentation,
-  XCircle as XCircle,
+  Download,
+  FileText,
+  Presentation,
+  XCircle,
 } from "lucide-react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";

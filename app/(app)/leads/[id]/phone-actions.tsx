@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageCircle as MessageCircle, QrCode as QrCode } from "lucide-react";
+import { MessageCircle, QrCode } from "lucide-react";
 import Image from "next/image";
 import { toDataURL } from "qrcode";
 import { useEffect, useState } from "react";

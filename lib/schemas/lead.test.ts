@@ -1,3 +1,4 @@
+import { describe, expect, it } from "vitest";
 import {
   AssignLeadOwnerInput,
   CALL_OUTCOMES,
@@ -15,7 +16,6 @@ import {
   UpdateLeadMomTestInput,
   UpdateLeadStatusInput,
 } from "@/lib/schemas/lead";
-import { describe, expect, it } from "vitest";
 
 const uuid = "11111111-1111-1111-1111-111111111111";
 
@@ -144,15 +144,15 @@ describe("LogCallInput", () => {
     expect(CALL_OUTCOMES).toContain("voicemail");
   });
   it("accepts past call dates and rejects invalid or future dates", () => {
-    expect(LogCallInput.safeParse({ leadId: uuid, notes: "x", callDate: "2026-08-10" }).success).toBe(
-      true,
-    );
-    expect(LogCallInput.safeParse({ leadId: uuid, notes: "x", callDate: "2026-02-30" }).success).toBe(
-      false,
-    );
-    expect(LogCallInput.safeParse({ leadId: uuid, notes: "x", callDate: "9999-01-01" }).success).toBe(
-      false,
-    );
+    expect(
+      LogCallInput.safeParse({ leadId: uuid, notes: "x", callDate: "2026-08-10" }).success,
+    ).toBe(true);
+    expect(
+      LogCallInput.safeParse({ leadId: uuid, notes: "x", callDate: "2026-02-30" }).success,
+    ).toBe(false);
+    expect(
+      LogCallInput.safeParse({ leadId: uuid, notes: "x", callDate: "9999-01-01" }).success,
+    ).toBe(false);
   });
   it("defaults the call date to today when legacy callers omit it", () => {
     const result = LogCallInput.parse({ leadId: uuid, notes: "x" });
@@ -196,12 +196,12 @@ describe("manual interaction edits", () => {
   });
 
   it("requires valid ids to delete an interaction", () => {
-    expect(DeleteLeadInteractionInput.safeParse({ interactionId: uuid, leadId: uuid }).success).toBe(
-      true,
-    );
-    expect(DeleteLeadInteractionInput.safeParse({ interactionId: "bad", leadId: uuid }).success).toBe(
-      false,
-    );
+    expect(
+      DeleteLeadInteractionInput.safeParse({ interactionId: uuid, leadId: uuid }).success,
+    ).toBe(true);
+    expect(
+      DeleteLeadInteractionInput.safeParse({ interactionId: "bad", leadId: uuid }).success,
+    ).toBe(false);
   });
 });
 

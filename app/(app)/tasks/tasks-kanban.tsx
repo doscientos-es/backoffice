@@ -11,11 +11,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import {
-  TriangleAlert as AlertTriangle,
-  Plus as Plus,
-  TriangleAlert as TriangleAlert,
-} from "lucide-react";
+import { TriangleAlert as AlertTriangle, Plus, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import type React from "react";
 import { useOptimistic, useState, useTransition } from "react";

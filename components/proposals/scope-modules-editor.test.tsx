@@ -1,7 +1,7 @@
-import type { ScopeModule } from "@/lib/proposals/scope";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
+import type { ScopeModule } from "@/lib/proposals/scope";
 import { ScopeModulesEditor } from "./scope-modules-editor";
 
 const module: ScopeModule = {
@@ -93,9 +93,7 @@ describe("ScopeModulesEditor", () => {
       target: { value: "4" },
     });
 
-    expect(onChange).toHaveBeenLastCalledWith([
-      expect.objectContaining({ duration_weeks: 4 }),
-    ]);
+    expect(onChange).toHaveBeenLastCalledWith([expect.objectContaining({ duration_weeks: 4 })]);
   });
 
   it("accepts a custom duration in the documented format", () => {

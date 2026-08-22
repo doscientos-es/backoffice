@@ -1,11 +1,11 @@
 "use client";
 
 import {
-  ChevronLeft as ChevronLeft,
-  ChevronRight as ChevronRight,
+  ChevronLeft,
+  ChevronRight,
   Clipboard as ClipboardCopy,
-  Download as Download,
-  Pencil as Pencil,
+  Download,
+  Pencil,
   Trash as Trash2,
 } from "lucide-react";
 import { useState, useTransition } from "react";

@@ -1,6 +1,6 @@
 "use client";
 
-import { Megaphone as Megaphone, Target as Target } from "lucide-react";
+import { Megaphone, Target } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import type { MarketingView } from "@/lib/marketing/range";

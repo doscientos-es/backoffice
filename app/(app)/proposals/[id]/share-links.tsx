@@ -2,11 +2,11 @@
 
 import {
   TriangleAlert as AlertTriangle,
-  Check as Check,
-  Copy as Copy,
-  ExternalLink as ExternalLink,
-  FileText as FileText,
-  Presentation as Presentation,
+  Check,
+  Copy,
+  ExternalLink,
+  FileText,
+  Presentation,
 } from "lucide-react";
 import { useState } from "react";
 import { sileo } from "sileo";

@@ -1,5 +1,5 @@
-import { roundCurrency } from "@/lib/finance";
 import { z } from "zod";
+import { roundCurrency } from "@/lib/finance";
 
 export const SCOPE_MODULE_LIMITS = {
   maxCount: 12,
@@ -21,10 +21,7 @@ const scopeBullet = z.string().trim().min(1).max(SCOPE_MODULE_LIMITS.maxBulletLe
 const customDuration = z
   .string()
   .trim()
-  .regex(
-    /^\d+\s+(días?|semanas?|mes|meses)$/,
-    "Usa un número y una unidad: días, semanas o meses",
-  )
+  .regex(/^\d+\s+(días?|semanas?|mes|meses)$/, "Usa un número y una unidad: días, semanas o meses")
   .max(32);
 
 export const scopeModuleInput = z
@@ -111,7 +108,9 @@ export const paymentPlanInput = z
 /** Safely reads legacy or malformed payment-plan JSONB. */
 export function parsePaymentPlan(value: unknown): PaymentPlanItem[] {
   const parsed = paymentPlanInput.safeParse(value);
-  return parsed.success ? parsed.data.map((item) => ({ ...item, due_date: item.due_date ?? null })) : [];
+  return parsed.success
+    ? parsed.data.map((item) => ({ ...item, due_date: item.due_date ?? null }))
+    : [];
 }
 
 /**
@@ -162,12 +161,14 @@ export function splitItemsForPaymentPlan(
         ? sourceCents - allocatedBefore
         : Math.round(sourceCents * (milestone.percentage / 100));
     if (cents <= 0) return [];
-    return [{
-      description: `${item.description ?? "Partida"} · ${milestone.title} (${milestone.percentage} %)`,
-      quantity: 1,
-      unit_price: cents / 100,
-      vat_rate: item.vat_rate,
-    }];
+    return [
+      {
+        description: `${item.description ?? "Partida"} · ${milestone.title} (${milestone.percentage} %)`,
+        quantity: 1,
+        unit_price: cents / 100,
+        vat_rate: item.vat_rate,
+      },
+    ];
   });
 }
 

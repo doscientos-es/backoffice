@@ -1,6 +1,6 @@
 "use client";
 
-import { Hand as Hand } from "lucide-react";
+import { Hand } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 /**

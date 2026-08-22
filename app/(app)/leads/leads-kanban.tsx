@@ -14,18 +14,18 @@ import {
 import {
   TriangleAlert as AlertTriangle,
   CalendarDays as CalendarClock,
-  CalendarPlus as CalendarPlus,
+  CalendarPlus,
   Funnel as Filter,
-  GripVertical as GripVertical,
+  GripVertical,
   History as HistoryIcon,
-  Hourglass as Hourglass,
-  Mail as Mail,
-  Maximize2 as Maximize2,
-  Minimize2 as Minimize2,
-  Phone as Phone,
-  Plus as Plus,
-  RefreshCw as RefreshCw,
-  User as User,
+  Hourglass,
+  Mail,
+  Maximize2,
+  Minimize2,
+  Phone,
+  Plus,
+  RefreshCw,
+  User,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -778,17 +778,23 @@ function MemberFilterPopover({ member }: { member: LeadMemberRef }) {
       </PopoverTrigger>
       <PopoverContent
         align="end"
-        className="w-52 p-1"
+        className="w-56 p-2"
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="truncate px-2 py-1.5 text-xs font-semibold text-foreground">{member.name}</p>
+        <div className="flex items-center gap-2 px-1 py-1.5">
+          <MemberAvatar member={member} size="default" className="size-8" />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-foreground">{member.name}</p>
+            <p className="text-xs text-muted-foreground">Responsable del lead</p>
+          </div>
+        </div>
         <Link
-          href="/settings/team"
-          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-foreground transition-colors hover:bg-muted"
+          href={`/team/${member.id}`}
+          className="mt-1 flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-foreground transition-colors hover:bg-muted"
         >
           <User className="size-3.5" aria-hidden />
-          Ver miembro
+          Ver perfil
         </Link>
         <button
           type="button"

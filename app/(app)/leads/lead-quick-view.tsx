@@ -1,22 +1,22 @@
 "use client";
 
 import {
-  ArrowUpRight as ArrowUpRight,
-  Building2 as Building2,
-  CalendarPlus as CalendarPlus,
-  Clock as Clock,
-  Hand as Hand,
+  ArrowUpRight,
+  Building2,
+  CalendarPlus,
+  Clock,
+  Hand,
   LoaderCircle as Loader2,
-  Mail as Mail,
-  Phone as Phone,
-  Timer as Timer,
+  Mail,
+  Phone,
+  Timer,
   Trash as Trash2,
-  TriangleAlert as TriangleAlert,
+  TriangleAlert,
   CircleUser as UserRound,
-  Users as Users,
-  Wallet as Wallet,
-  Wrench as Wrench,
-  X as X,
+  Users,
+  Wallet,
+  Wrench,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

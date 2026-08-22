@@ -1,6 +1,6 @@
 "use client";
 
-import { BellRing as BellRing, X as X } from "lucide-react";
+import { BellRing, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";

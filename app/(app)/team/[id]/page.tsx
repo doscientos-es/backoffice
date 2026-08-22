@@ -1,11 +1,11 @@
 import {
-  BriefcaseBusiness as BriefcaseBusiness,
-  CheckSquare as CheckSquare,
+  BriefcaseBusiness,
+  CheckSquare,
   Clock as Clock3,
   GitBranch as Github,
-  Mail as Mail,
-  Phone as Phone,
-  Users as Users,
+  Mail,
+  Phone,
+  Users,
 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -82,6 +82,37 @@ type WorkLogRow = {
   projects: { id: string; name: string; status: string | null } | null;
 };
 
+type LeadInteractionRow = {
+  id: string;
+  type: string;
+  subject: string | null;
+  created_at: string;
+  leads: { id: string; name: string } | null;
+};
+
+type TaskCommentRow = {
+  id: string;
+  created_at: string;
+  tasks: { id: string; title: string } | null;
+};
+
+type MemberActivity = {
+  id: string;
+  title: string;
+  detail: string;
+  created_at: string;
+  href: string | null;
+};
+
+const INTERACTION_LABELS: Record<string, string> = {
+  call: "Registró una llamada",
+  email_sent: "Envió un email",
+  meeting: "Registró una reunión",
+  note: "Añadió una nota",
+  owner_change: "Cambió el responsable",
+  status_change: "Cambió el estado",
+};
+
 function initials(name: string): string {
   return (
     name
@@ -139,6 +170,8 @@ export default async function TeamMemberDetailPage({
     { data: taskMembersData },
     { data: workLogsData },
     { data: proposalMembersData },
+    { data: interactionsData },
+    { data: taskCommentsData },
   ] = await Promise.all([
     supabase
       .from("team_members")
@@ -173,6 +206,18 @@ export default async function TeamMemberDetailPage({
       .is("deleted_at", null)
       .order("work_date", { ascending: false }),
     supabase.from("proposal_team_members").select("proposal_id").eq("member_id", id),
+    supabase
+      .from("lead_interactions")
+      .select("id, type, subject, created_at, leads(id, name)")
+      .eq("performed_by", id)
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("task_comments")
+      .select("id, created_at, tasks(id, title)")
+      .eq("author_id", id)
+      .order("created_at", { ascending: false })
+      .limit(20),
   ]);
 
   if (!memberData) notFound();
@@ -186,23 +231,25 @@ export default async function TeamMemberDetailPage({
 
   const { data: collaboratorTasksData } = collaboratorTaskIds.length
     ? await supabase
-        .from("tasks")
-        .select("id, title, status, due_date, project_id, projects(id, name, status)")
-        .in("id", collaboratorTaskIds)
-        .is("deleted_at", null)
-        .order("updated_at", { ascending: false })
+      .from("tasks")
+      .select("id, title, status, due_date, project_id, projects(id, name, status)")
+      .in("id", collaboratorTaskIds)
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false })
     : { data: [] };
 
   const tasks = [...directTasks, ...((collaboratorTasksData ?? []) as unknown as TaskRow[])];
   const workLogs = (workLogsData ?? []) as unknown as WorkLogRow[];
+  const interactions = (interactionsData ?? []) as unknown as LeadInteractionRow[];
+  const taskComments = (taskCommentsData ?? []) as unknown as TaskCommentRow[];
   const proposalIds = (proposalMembersData ?? []).map((row) => row.proposal_id as string);
 
   const { data: proposalRowsData } = proposalIds.length
     ? await supabase
-        .from("proposals")
-        .select("project_id")
-        .in("id", proposalIds)
-        .is("deleted_at", null)
+      .from("proposals")
+      .select("project_id")
+      .in("id", proposalIds)
+      .is("deleted_at", null)
     : { data: [] };
 
   const projectIds = [
@@ -217,11 +264,11 @@ export default async function TeamMemberDetailPage({
 
   const { data: projectData } = projectIds.length
     ? await supabase
-        .from("projects")
-        .select("id, name, status, clients(name)")
-        .in("id", projectIds)
-        .is("deleted_at", null)
-        .order("updated_at", { ascending: false })
+      .from("projects")
+      .select("id, name, status, clients(name)")
+      .in("id", projectIds)
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false })
     : { data: [] };
 
   const projects = (projectData ?? []).map((row) =>
@@ -236,6 +283,31 @@ export default async function TeamMemberDetailPage({
     avatarUrl: member.avatar_url,
     githubHandle: member.github_handle,
   });
+  const recentActivity: MemberActivity[] = [
+    ...interactions.map((interaction) => ({
+      id: `interaction-${interaction.id}`,
+      title: INTERACTION_LABELS[interaction.type] ?? "Registró una interacción",
+      detail: interaction.subject ?? interaction.leads?.name ?? "Lead",
+      created_at: interaction.created_at,
+      href: interaction.leads ? `/leads/${interaction.leads.id}` : null,
+    })),
+    ...taskComments.map((comment) => ({
+      id: `comment-${comment.id}`,
+      title: "Comentó una tarea",
+      detail: comment.tasks?.title ?? "Tarea",
+      created_at: comment.created_at,
+      href: comment.tasks ? `/tasks/${comment.tasks.id}` : null,
+    })),
+    ...workLogs.map((log) => ({
+      id: `work-log-${log.id}`,
+      title: `Registró ${hoursLabel(Number(log.hours) || 0)}`,
+      detail: projectById.get(log.project_id)?.name ?? log.projects?.name ?? "Proyecto",
+      created_at: log.work_date,
+      href: log.project_id ? `/projects/${log.project_id}` : null,
+    })),
+  ]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 12);
 
   return (
     <div className="flex flex-col gap-6">
@@ -369,6 +441,57 @@ export default async function TeamMemberDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Actividad reciente</CardTitle>
+          <CardDescription>
+            Últimas acciones registradas en leads, tareas y partes de horas.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="px-0">
+          {recentActivity.length === 0 ? (
+            <EmptySection
+              title="Sin actividad registrada"
+              description="Todavía no hay acciones registradas para este miembro."
+            />
+          ) : (
+            <ol className="divide-y divide-border">
+              {recentActivity.map((activity) => {
+                const content = (
+                  <>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{activity.title}</p>
+                      <p className="truncate text-xs text-muted-foreground">{activity.detail}</p>
+                    </div>
+                    <time
+                      dateTime={activity.created_at}
+                      title={formatDate(activity.created_at)}
+                      className="shrink-0 text-xs text-muted-foreground"
+                    >
+                      {relativeTime(activity.created_at)}
+                    </time>
+                  </>
+                );
+                return (
+                  <li key={activity.id}>
+                    {activity.href ? (
+                      <Link
+                        href={activity.href}
+                        className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-muted/50"
+                      >
+                        {content}
+                      </Link>
+                    ) : (
+                      <div className="flex items-center justify-between gap-3 px-4 py-3">{content}</div>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 xl:grid-cols-2">
         <Card>

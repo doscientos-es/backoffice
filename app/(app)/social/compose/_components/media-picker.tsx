@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  ImageUp as ImagePlus,
-  LoaderCircle as Loader2,
-  Upload as Upload,
-  X as X,
-} from "lucide-react";
+import { ImageUp as ImagePlus, LoaderCircle as Loader2, Upload, X } from "lucide-react";
 import { useRef, useState } from "react";
 import type { MediaItem } from "@/lib/social/core";
 import { cn } from "@/lib/utils";

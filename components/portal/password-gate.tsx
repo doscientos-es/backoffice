@@ -1,6 +1,6 @@
 "use client";
 
-import { Lock as Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

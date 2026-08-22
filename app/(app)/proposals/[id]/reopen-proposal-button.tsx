@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  TriangleAlert as AlertTriangle,
-  Undo2 as RotateCcw,
-} from "lucide-react";
+import { TriangleAlert as AlertTriangle, Undo2 as RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";

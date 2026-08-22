@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil as Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useState } from "react";
 import { Button } from "@/components/ui/button";

@@ -1,4 +1,4 @@
-import { FileText as FileText, Plus as Plus } from "lucide-react";
+import { FileText, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 

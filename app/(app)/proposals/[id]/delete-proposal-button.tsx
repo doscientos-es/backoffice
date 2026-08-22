@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  Copy as Copy,
-  Ellipsis as MoreHorizontal,
-  Trash as Trash2,
-} from "lucide-react";
+import { Copy, Ellipsis as MoreHorizontal, Trash as Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Button } from "@/components/ui/button";

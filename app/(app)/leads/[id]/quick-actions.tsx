@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  CalendarDays as CalendarClock,
-  Hand as Hand,
-  ListTodo as ListTodo,
-} from "lucide-react";
+import { CalendarDays as CalendarClock, Hand, ListTodo } from "lucide-react";
 import { type ReactNode, useState, useTransition } from "react";
 import { sileo } from "sileo";
 import { Button } from "@/components/ui/button";

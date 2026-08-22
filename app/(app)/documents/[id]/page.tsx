@@ -1,4 +1,4 @@
-import { Download as Download } from "lucide-react";
+import { Download } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";

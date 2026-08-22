@@ -1,9 +1,9 @@
 import {
   TriangleAlert as AlertTriangle,
-  Clock as Clock,
-  Globe as Globe,
+  Clock,
+  Globe,
   HardDrive as Server,
-  ShieldAlert as ShieldAlert,
+  ShieldAlert,
 } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";

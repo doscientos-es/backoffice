@@ -45,7 +45,9 @@ export function ProposalOverview({
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(20rem,0.8fr)]">
       <div className="flex min-w-0 flex-col gap-6">
         <Card>
-          <CardHeader><CardTitle>Inversión y condiciones</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Inversión y condiciones</CardTitle>
+          </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-lg bg-muted/40 p-4">
@@ -74,7 +76,9 @@ export function ProposalOverview({
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Partidas</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Partidas</CardTitle>
+          </CardHeader>
           <CardContent className="px-0">
             <ul className="divide-y divide-border text-sm">
               {items.map((item) => (
@@ -83,7 +87,9 @@ export function ProposalOverview({
                     <p className="font-medium">{item.description}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {item.quantity} × {formatEUR(item.unit_price)} · IVA {item.vat_rate} %
-                      {item.billing_cycle && item.billing_cycle !== "none" ? ` · ${item.billing_cycle}` : ""}
+                      {item.billing_cycle && item.billing_cycle !== "none"
+                        ? ` · ${item.billing_cycle}`
+                        : ""}
                     </p>
                   </div>
                   <span className="font-medium tabular-nums">{formatEUR(item.subtotal)}</span>
@@ -93,14 +99,18 @@ export function ProposalOverview({
           </CardContent>
         </Card>
 
-        {(scopeModules.length > 0 || deliverables || acceptanceCriteria || notes) ? (
+        {scopeModules.length > 0 || deliverables || acceptanceCriteria || notes ? (
           <Card>
-            <CardHeader><CardTitle>Alcance</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle>Alcance</CardTitle>
+            </CardHeader>
             <CardContent className="flex flex-col gap-4">
               {scopeModules.map((module) => (
                 <div key={module.id} className="rounded-lg border border-border p-3">
                   <p className="font-medium">{module.title}</p>
-                  {module.description ? <p className="mt-1 text-sm text-muted-foreground">{module.description}</p> : null}
+                  {module.description ? (
+                    <p className="mt-1 text-sm text-muted-foreground">{module.description}</p>
+                  ) : null}
                 </div>
               ))}
               {deliverables ? <Markdown source={deliverables} /> : null}
@@ -112,15 +122,22 @@ export function ProposalOverview({
       </div>
 
       <Card className="h-fit">
-        <CardHeader><CardTitle>Equipo del proyecto</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Equipo del proyecto</CardTitle>
+        </CardHeader>
         <CardContent>
           {team.length > 0 ? (
             <ul className="flex flex-col gap-3 text-sm">
               {team.map((member) => (
-                <li key={member.id}><p className="font-medium">{member.name}</p><p className="text-muted-foreground">{member.job_title ?? "Equipo Doscientos"}</p></li>
+                <li key={member.id}>
+                  <p className="font-medium">{member.name}</p>
+                  <p className="text-muted-foreground">{member.job_title ?? "Equipo Doscientos"}</p>
+                </li>
               ))}
             </ul>
-          ) : <p className="text-sm text-muted-foreground">Aún no hay personas asignadas.</p>}
+          ) : (
+            <p className="text-sm text-muted-foreground">Aún no hay personas asignadas.</p>
+          )}
         </CardContent>
       </Card>
     </div>

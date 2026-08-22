@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  Check as Check,
-  Copy as Copy,
-  ExternalLink as ExternalLink,
-  Link as Link2,
-} from "lucide-react";
+import { Check, Copy, ExternalLink, Link as Link2 } from "lucide-react";
 import { useState } from "react";
 import { sileo } from "sileo";
 import { Button } from "@/components/ui/button";

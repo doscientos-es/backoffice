@@ -1,5 +1,7 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { InvoiceEmail } from "@/components/email";
 import { defineAction } from "@/lib/actions/define-action";
 import { requireRole } from "@/lib/auth";
@@ -65,8 +67,6 @@ import {
   type OutboxDelivery,
   syncInvoiceQrFromLedger,
 } from "@/lib/verifactu/outbox";
-import { revalidatePath } from "next/cache";
-import { after } from "next/server";
 
 const log = scopedLogger("invoices.actions");
 
@@ -182,7 +182,10 @@ export const updateInvoiceStatus = defineAction<
 });
 
 /** Records a manual or gateway payment and closes the invoice when fully paid. */
-export const recordInvoicePayment = defineAction<typeof RecordInvoicePaymentInput, { fullyPaid: boolean }>({
+export const recordInvoicePayment = defineAction<
+  typeof RecordInvoicePaymentInput,
+  { fullyPaid: boolean }
+>({
   name: "invoices.recordPayment",
   schema: RecordInvoicePaymentInput,
   revalidate: (_p, input) => [`/invoices/${input.id}`, "/invoices", "/finance", "/inicio"],
@@ -391,10 +394,7 @@ export const regularizeVerifactu = defineAction<
     await assertDurableVerifactuPackage();
     await assertVerifactuDiagnosticGate();
     const outboxId = await enqueueVerifactuRegularization(input.id);
-    const delivery = await deliverVerifactuOutbox(
-      outboxId,
-      `regularize:${crypto.randomUUID()}`,
-    );
+    const delivery = await deliverVerifactuOutbox(outboxId, `regularize:${crypto.randomUUID()}`);
     return { csv: delivery.csv, status: delivery.status, error: delivery.error ?? null };
   },
 });
@@ -419,7 +419,9 @@ export const createInvoiceFromProposal = defineAction<
     if (proposal.status !== "accepted")
       throw new Error("Solo se puede facturar una propuesta aceptada");
     if (!proposal.client_id)
-      throw new Error("La propuesta aceptada no tiene datos fiscales; completa la ficha fiscal antes de facturar");
+      throw new Error(
+        "La propuesta aceptada no tiene datos fiscales; completa la ficha fiscal antes de facturar",
+      );
 
     const allItems = await findProposalItems(proposalId);
     if (allItems.length === 0) throw new Error("La propuesta no tiene líneas para facturar");
@@ -437,7 +439,9 @@ export const createInvoiceFromProposal = defineAction<
       findInvoiceSeries(),
     ]);
     if (!client || !hasCompleteFiscalData(client)) {
-      throw new Error("La propuesta aceptada no tiene datos fiscales; completa la ficha fiscal antes de facturar");
+      throw new Error(
+        "La propuesta aceptada no tiene datos fiscales; completa la ficha fiscal antes de facturar",
+      );
     }
     const nextNumber = await findNextInvoiceNumberForSeries(series);
     const { subtotal, taxAmount, total } = computeLineTotals(items);
@@ -496,12 +500,19 @@ export const createInvoicesFromProposalPlan = defineAction<
       throw new Error("Solo se puede facturar una propuesta aceptada");
     }
     if (!proposal.client_id) {
-      throw new Error("La propuesta aceptada no tiene datos fiscales; completa la ficha fiscal antes de facturar");
+      throw new Error(
+        "La propuesta aceptada no tiene datos fiscales; completa la ficha fiscal antes de facturar",
+      );
     }
 
     const configuredPlan = parsePaymentPlan(proposal.payment_plan);
     const schedule = paymentScheduleInput.safeParse(proposal.payment_schedule);
-    const plan = configuredPlan.length > 0 ? configuredPlan : schedule.success ? paymentPlanForSchedule(schedule.data) : [];
+    const plan =
+      configuredPlan.length > 0
+        ? configuredPlan
+        : schedule.success
+          ? paymentPlanForSchedule(schedule.data)
+          : [];
     if (plan.length === 0) {
       throw new Error("Configura los plazos de pago antes de preparar las facturas");
     }
@@ -509,7 +520,9 @@ export const createInvoicesFromProposalPlan = defineAction<
     const allItems = await findProposalItems(proposalId);
     const items = allItems.filter((item) => (item.billing_cycle ?? "none") === "none");
     if (items.length === 0) {
-      throw new Error("Esta propuesta solo contiene líneas recurrentes; crea la factura manualmente");
+      throw new Error(
+        "Esta propuesta solo contiene líneas recurrentes; crea la factura manualmente",
+      );
     }
 
     const [client, series, invoicedPlanIds] = await Promise.all([
@@ -518,7 +531,9 @@ export const createInvoicesFromProposalPlan = defineAction<
       findInvoicedProposalPaymentPlanIds(proposalId),
     ]);
     if (!client || !hasCompleteFiscalData(client)) {
-      throw new Error("La propuesta aceptada no tiene datos fiscales; completa la ficha fiscal antes de facturar");
+      throw new Error(
+        "La propuesta aceptada no tiene datos fiscales; completa la ficha fiscal antes de facturar",
+      );
     }
     const ids: string[] = [];
     for (const [index, milestone] of plan.entries()) {

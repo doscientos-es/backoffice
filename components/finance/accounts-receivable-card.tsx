@@ -1,8 +1,4 @@
-import {
-  TriangleAlert as AlertTriangle,
-  HandCoins as HandCoins,
-  Hourglass as Hourglass,
-} from "lucide-react";
+import { TriangleAlert as AlertTriangle, HandCoins, Hourglass } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";

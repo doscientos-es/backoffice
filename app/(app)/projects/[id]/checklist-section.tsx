@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  CircleCheck as CheckCircle2,
-  Circle as Circle,
-  Plus as Plus,
-  Trash as Trash2,
-} from "lucide-react";
+import { CircleCheck as CheckCircle2, Circle, Plus, Trash as Trash2 } from "lucide-react";
 import { useRef, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

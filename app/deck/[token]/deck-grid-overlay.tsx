@@ -1,6 +1,6 @@
 "use client";
 
-import { X as X } from "lucide-react";
+import { X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { DeckSlide } from "./deck-slides";
 

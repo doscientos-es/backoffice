@@ -4,6 +4,8 @@
  * it once it has received a valid structured response.
  */
 
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { AI_MODELS, isAIEnabled, runAIObject } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { formatLeadBriefingForAI } from "@/lib/leads/ai-context";
@@ -17,8 +19,6 @@ import {
 } from "@/lib/proposals/scope";
 import { rateLimit } from "@/lib/ratelimit";
 import { createServerClient } from "@/lib/supabase/server";
-import { type NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

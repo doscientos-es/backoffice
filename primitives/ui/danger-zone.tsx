@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { ChevronDown as ChevronDown, ShieldAlert as ShieldAlert } from "lucide-react";
+import { ChevronDown, ShieldAlert } from "lucide-react";
 import type * as React from "react";
 import { cn } from "../lib/utils";
 import { Card, CardContent } from "./card";

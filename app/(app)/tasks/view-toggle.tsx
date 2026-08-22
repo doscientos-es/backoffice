@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  LayoutGrid as LayoutGrid,
-  List as List,
-  LoaderCircle as Loader2,
-} from "lucide-react";
+import { LayoutGrid, List, LoaderCircle as Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";

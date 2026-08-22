@@ -2,8 +2,8 @@
 
 import {
   ChartLine as ChartNoAxesCombined,
-  LayoutGrid as LayoutGrid,
-  List as List,
+  LayoutGrid,
+  List,
   LoaderCircle as Loader2,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";

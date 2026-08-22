@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCheck as CheckCheck } from "lucide-react";
+import { CheckCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ChangeEvent, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";

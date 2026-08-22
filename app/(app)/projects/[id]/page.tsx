@@ -75,6 +75,7 @@ export default async function ProjectDetailPage({
   const workLogs: WorkLogRow[] = ((workLogsData ?? []) as Array<Record<string, unknown>>).map(
     (w) => {
       const m = w.team_members as {
+        id: string;
         name: string;
         avatar_url: string | null;
         github_handle: string | null;
@@ -88,10 +89,11 @@ export default async function ProjectDetailPage({
         note: (w.note as string | null) ?? null,
         member: m
           ? {
-              name: m.name,
-              avatar_url: m.avatar_url ?? null,
-              github_handle: m.github_handle ?? null,
-            }
+            id: m.id,
+            name: m.name,
+            avatar_url: m.avatar_url ?? null,
+            github_handle: m.github_handle ?? null,
+          }
           : null,
       };
     },
@@ -146,16 +148,16 @@ export default async function ProjectDetailPage({
                   [
                     `Estado: ${PROJECT_STATUS[project.status as keyof typeof PROJECT_STATUS]?.label ?? project.status}`,
                     (project.billing_type as string | null) &&
-                      `Facturación: ${project.billing_type as string}`,
+                    `Facturación: ${project.billing_type as string}`,
                   ]
                     .filter(Boolean)
                     .join(" · "),
                 );
                 const dates = [
                   (project.starts_at as string | null) &&
-                    `Inicio: ${formatDate(project.starts_at as string)}`,
+                  `Inicio: ${formatDate(project.starts_at as string)}`,
                   (project.ends_at as string | null) &&
-                    `Fin: ${formatDate(project.ends_at as string)}`,
+                  `Fin: ${formatDate(project.ends_at as string)}`,
                 ].filter(Boolean);
                 if (dates.length) parts.push(dates.join(" · "));
                 return parts;
@@ -390,11 +392,10 @@ export default async function ProjectDetailPage({
                 Margen
               </dt>
               <dd
-                className={`mt-1 text-2xl font-semibold tabular-nums ${
-                  profitability.margin >= 0
+                className={`mt-1 text-2xl font-semibold tabular-nums ${profitability.margin >= 0
                     ? "text-emerald-600 dark:text-emerald-400"
                     : "text-red-600 dark:text-red-400"
-                }`}
+                  }`}
               >
                 {formatEUR(profitability.margin)}
                 {profitability.marginPct !== null ? (

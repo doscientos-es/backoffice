@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  ChevronLeft as ChevronLeft,
-  ChevronRight as ChevronRight,
-  Download as Download,
-  Search as Search,
-  SlidersHorizontal as SlidersHorizontal,
-  X as X,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Search, SlidersHorizontal, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";

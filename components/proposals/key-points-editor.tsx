@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  ChevronDown as ChevronDown,
-  ChevronUp as ChevronUp,
-  Plus as Plus,
-  Trash as Trash2,
-} from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, Trash as Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {

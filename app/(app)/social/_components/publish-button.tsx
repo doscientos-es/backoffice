@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  CheckCircle as CheckCircle,
-  Send as Send,
-  XCircle as XCircle,
-} from "lucide-react";
+import { CheckCircle, Send, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { sileo } from "sileo";

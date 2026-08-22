@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink as ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 
 export function WebCardExternalLink({ url, name }: { url: string; name: string }) {
   return (

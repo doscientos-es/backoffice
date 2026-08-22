@@ -1,4 +1,4 @@
-import { Hand as Hand } from "lucide-react";
+import { Hand } from "lucide-react";
 import type { Metadata } from "next";
 import {
   AccountsReceivableSkeleton,
@@ -11,11 +11,9 @@ import {
 import { PasskeyStatusCard } from "@/components/security/passkey-status-card";
 import { SectionBoundary } from "@/components/ui/error-boundary";
 import { canViewFinance, requireUser } from "@/lib/auth";
-import { getCrossModulePulse } from "@/lib/dashboard/cross-module";
 import { hasRegisteredPasskey } from "@/lib/security/webauthn";
 import { getGreeting, parseDashboardRange } from "@/lib/utils/date";
 import { AvisosWidget } from "./_components/avisos-widget";
-import { BusinessFlow } from "./_components/business-flow";
 import { EnablePushBanner } from "./_components/enable-push-banner";
 import { KpiGrid } from "./_components/kpi-grid";
 import { MoneyOpportunitiesWidget } from "./_components/money-opportunities-widget";
@@ -40,11 +38,7 @@ type PageProps = {
 };
 
 export default async function InicioPage({ searchParams }: PageProps) {
-  const [user, params, crossModulePulse] = await Promise.all([
-    requireUser(),
-    searchParams,
-    getCrossModulePulse(),
-  ]);
+  const [user, params] = await Promise.all([requireUser(), searchParams]);
   const passkeyConfigured = await hasRegisteredPasskey(user.id);
   const range = parseDashboardRange(params.range);
   const greeting = getGreeting();
@@ -64,8 +58,6 @@ export default async function InicioPage({ searchParams }: PageProps) {
       </div>
 
       <EnablePushBanner />
-
-      <BusinessFlow pulse={crossModulePulse} />
 
       {!passkeyConfigured ? <PasskeyStatusCard configured={false} /> : null}
 

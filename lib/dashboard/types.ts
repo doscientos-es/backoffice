@@ -83,21 +83,6 @@ export type AvisosData = {
   certExpiresAt: string | null;
 };
 
-// ---------------------------------------------------------------------------
-// Week stats (personal progress — shown in "Tu día")
-// ---------------------------------------------------------------------------
-
-export type WeekStats = {
-  /** Tasks marked as done this calendar week (Mon–Sun). */
-  tasksCompleted: number;
-  /** Active leads owned by the member that were updated this week. */
-  leadsAttended: number;
-  /** Consecutive days (looking back from today) with at least one task completed. */
-  streakDays: number;
-};
-
-// ---------------------------------------------------------------------------
-
 /**
  * "Tu día" — the personal, action-oriented layer of the dashboard. Surfaces
  * what the logged-in member should act on today: their open tasks, the leads
@@ -133,7 +118,6 @@ export type MyDayData = {
   tasks: MyTaskRow[];
   myLeads: ActionLeadRow[];
   unassignedLeads: ActionLeadRow[];
-  weekStats: WeekStats;
 };
 
 /**

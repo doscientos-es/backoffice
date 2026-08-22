@@ -1,10 +1,10 @@
 import {
-  ArrowRight as ArrowRight,
-  BriefcaseBusiness as BriefcaseBusiness,
+  ArrowRight,
+  BriefcaseBusiness,
   SquareCheck as CheckSquare2,
-  CircleDollarSign as CircleDollarSign,
+  CircleDollarSign,
   FileText as FileSignature,
-  Mail as Mail,
+  Mail,
   Receipt as ReceiptText,
   Sparkle as Sparkles,
 } from "lucide-react";

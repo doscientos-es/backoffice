@@ -1,8 +1,4 @@
-import {
-  ArrowRight as ArrowRight,
-  Clock as Clock3,
-  ExternalLink as ExternalLink,
-} from "lucide-react";
+import { ArrowRight, Clock as Clock3, ExternalLink } from "lucide-react";
 import { createTask } from "@/app/(app)/tasks/actions";
 import { type AttachmentItem, AttachmentSection } from "@/components/ui/attachment-section";
 import { Badge } from "@/components/ui/badge";
