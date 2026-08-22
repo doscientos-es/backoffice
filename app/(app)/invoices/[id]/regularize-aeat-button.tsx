@@ -143,9 +143,7 @@ export function RegularizeAeatButton({
                 {recipientFiscalReady ? (
                   <Button onClick={passkeyOptions ? confirmWithPasskey : prepareVerification}>
                     <RotateCcw className="size-4" />
-                    {passkeyOptions
-                      ? "Confirmar con biometría"
-                      : "Continuar con la regularización"}
+                    {passkeyOptions ? "Confirmar con biometría" : "Continuar con la regularización"}
                   </Button>
                 ) : clientId ? (
                   <Button asChild>
