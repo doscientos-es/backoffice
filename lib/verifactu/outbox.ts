@@ -1,11 +1,11 @@
-import { scopedLogger } from "@/lib/logger";
-import { createAdminClient } from "@/lib/supabase/admin";
 import type {
   VerifactuConfig,
   VerifactuSoftware,
   VerifactuSubmitInput,
   VerifactuSubmitResult,
 } from "@doscientos/verifactu";
+import { scopedLogger } from "@/lib/logger";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { verifactuInvoiceConfigFromEnv } from "./config";
 
 const log = scopedLogger("verifactu.outbox");
