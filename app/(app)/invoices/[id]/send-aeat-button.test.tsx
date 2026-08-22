@@ -1,19 +1,30 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { completePasskeyAuthentication, preparePasskeyAuthentication, sendToAeat } = vi.hoisted(
-  () => ({
+const { completePasskeyAuthentication, grantUserVerificationFromMfa, preparePasskeyAuthentication, sendToAeat } =
+  vi.hoisted(() =>
+  ({
     completePasskeyAuthentication: vi.fn(),
+    grantUserVerificationFromMfa: vi.fn(),
     preparePasskeyAuthentication: vi.fn(),
     sendToAeat: vi.fn(),
   }),
-);
+  );
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock("../actions", () => ({ sendToAeat }));
 vi.mock("@/lib/security/webauthn-client", () => ({
   completePasskeyAuthentication,
   preparePasskeyAuthentication,
+}));
+vi.mock("@/lib/security/webauthn-actions", () => ({ grantUserVerificationFromMfa }));
+vi.mock("@/components/security/mfa-challenge-dialog", () => ({
+  MfaChallengeDialog: ({ open, onVerified }: { open: boolean; onVerified: () => void }) =>
+    open ? (
+      <button type="button" onClick={onVerified}>
+        Verificar código MFA
+      </button>
+    ) : null,
 }));
 
 import { SendAeatButton } from "./send-aeat-button";
@@ -25,6 +36,7 @@ describe("SendAeatButton", () => {
     vi.clearAllMocks();
     preparePasskeyAuthentication.mockResolvedValue({ ok: true, options });
     completePasskeyAuthentication.mockResolvedValue({ ok: true });
+    grantUserVerificationFromMfa.mockResolvedValue({ ok: true });
     sendToAeat.mockResolvedValue({ ok: true, status: "accepted", csv: "CSV-123" });
   });
 
@@ -32,6 +44,8 @@ describe("SendAeatButton", () => {
     render(<SendAeatButton invoiceId="invoice-1" label="Reintentar envío" />);
 
     fireEvent.click(screen.getByRole("button", { name: "Reintentar envío" }));
+
+    fireEvent.click(await screen.findByRole("button", { name: "Usar biometría" }));
 
     await waitFor(() =>
       expect(preparePasskeyAuthentication).toHaveBeenCalledWith({
@@ -62,10 +76,30 @@ describe("SendAeatButton", () => {
     render(<SendAeatButton invoiceId="invoice-1" label="Reintentar envío" />);
 
     fireEvent.click(screen.getByRole("button", { name: "Reintentar envío" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Usar biometría" }));
     fireEvent.click(await screen.findByRole("button", { name: "Confirmar con biometría" }));
 
     await waitFor(() => expect(completePasskeyAuthentication).toHaveBeenCalledOnce());
     expect(screen.queryByText("Error técnico de VERI*FACTU")).toBeNull();
     expect(sendToAeat).not.toHaveBeenCalled();
+  });
+
+  it("allows a verified Google Authenticator code to authorize the same invoice-scoped send", async () => {
+    render(<SendAeatButton invoiceId="invoice-1" label="Reintentar envío" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Reintentar envío" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Usar código de Google Authenticator" }),
+    );
+    fireEvent.click(await screen.findByRole("button", { name: "Verificar código MFA" }));
+
+    await waitFor(() =>
+      expect(grantUserVerificationFromMfa).toHaveBeenCalledWith({
+        intent: "invoice.send_aeat",
+        resource: "invoice:invoice-1",
+      }),
+    );
+    await waitFor(() => expect(sendToAeat).toHaveBeenCalledOnce());
+    expect(preparePasskeyAuthentication).not.toHaveBeenCalled();
   });
 });

@@ -3,6 +3,7 @@
 import { Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { MfaChallengeDialog } from "@/components/security/mfa-challenge-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,6 +19,7 @@ import {
   completePasskeyAuthentication,
   preparePasskeyAuthentication,
 } from "@/lib/security/webauthn-client";
+import { grantUserVerificationFromMfa } from "@/lib/security/webauthn-actions";
 import { sendToAeat } from "../actions";
 import { VerifactuIssueDialog } from "./verifactu-issue-dialog";
 
@@ -34,40 +36,32 @@ export function SendAeatButton({
   const feedback = useFormFeedback();
   const [issue, setIssue] = useState<{ error: string; status: "error" | "rejected" } | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [mfaOpen, setMfaOpen] = useState(false);
   const [preparing, setPreparing] = useState(false);
   const [passkeyOptions, setPasskeyOptions] = useState<unknown>(null);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
   const scope = userVerificationScope("invoice.send_aeat", `invoice:${invoiceId}`);
 
   function showIssue(error: string, status: "error" | "rejected" = "error") {
     setIssue({ error, status });
   }
 
-  async function prepareVerification() {
+  async function preparePasskeyVerification() {
     setPreparing(true);
     setPasskeyOptions(null);
+    setVerificationError(null);
     const started = await preparePasskeyAuthentication(scope);
     setPreparing(false);
     if (!started.ok) {
       feedback.setError(started.error);
+      setVerificationError(started.error);
       return;
     }
     setPasskeyOptions(started.options);
     setConfirmOpen(true);
   }
 
-  async function confirmWithPasskey() {
-    if (!passkeyOptions) return;
-
-    // This browser call must start directly from this click so the device
-    // authenticator retains user activation after the server challenge was prepared.
-    feedback.setPending();
-    const verification = await completePasskeyAuthentication(scope, passkeyOptions);
-    if (!verification.ok) {
-      setConfirmOpen(false);
-      feedback.setError(verification.error);
-      return;
-    }
-    setConfirmOpen(false);
+  async function sendVerifiedDelivery() {
     const fd = new FormData();
     fd.set("id", invoiceId);
     const result = await sendToAeat(fd);
@@ -101,6 +95,41 @@ export function SendAeatButton({
     }
   }
 
+  async function confirmWithPasskey() {
+    if (!passkeyOptions) return;
+
+    // This browser call must start directly from this click so the device
+    // authenticator retains user activation after the server challenge was prepared.
+    feedback.setPending();
+    const verification = await completePasskeyAuthentication(scope, passkeyOptions);
+    if (!verification.ok) {
+      feedback.setError(verification.error);
+      setVerificationError(verification.error);
+      setPasskeyOptions(null);
+      return;
+    }
+    setConfirmOpen(false);
+    await sendVerifiedDelivery();
+  }
+
+  async function confirmWithMfa() {
+    feedback.setPending();
+    const verification = await grantUserVerificationFromMfa(scope);
+    if (!verification.ok) {
+      feedback.setError(verification.error);
+      setVerificationError(verification.error);
+      return;
+    }
+    setMfaOpen(false);
+    await sendVerifiedDelivery();
+  }
+
+  function openVerificationMethods() {
+    setPasskeyOptions(null);
+    setVerificationError(null);
+    setConfirmOpen(true);
+  }
+
   return (
     <div className="inline-flex min-w-0">
       <Button
@@ -109,7 +138,7 @@ export function SendAeatButton({
         variant="default"
         className="justify-center whitespace-nowrap"
         disabled={disabled || preparing || feedback.pending}
-        onClick={prepareVerification}
+        onClick={openVerificationMethods}
       >
         <Send className="size-4" />
         {preparing ? "Preparando…" : feedback.pending ? "Enviando…" : label}
@@ -118,16 +147,22 @@ export function SendAeatButton({
         open={confirmOpen}
         onOpenChange={(open) => {
           setConfirmOpen(open);
-          if (!open) setPasskeyOptions(null);
+          if (!open) {
+            setPasskeyOptions(null);
+            setVerificationError(null);
+          }
         }}
       >
         <DialogContent showCloseButton={!feedback.pending}>
           <DialogHeader>
             <DialogTitle>Confirmar reenvío a VERI*FACTU</DialogTitle>
             <DialogDescription>
-              Confirma tu identidad para reenviar este registro fiscal a AEAT.
+              {passkeyOptions
+                ? "Usa la biometría o el bloqueo del dispositivo para continuar."
+                : "Elige cómo quieres confirmar tu identidad para reenviar este registro fiscal a AEAT."}
             </DialogDescription>
           </DialogHeader>
+          {verificationError ? <p className="text-sm text-destructive">{verificationError}</p> : null}
           <DialogFooter>
             <Button
               variant="ghost"
@@ -136,12 +171,48 @@ export function SendAeatButton({
             >
               Cancelar
             </Button>
-            <Button onClick={confirmWithPasskey} disabled={feedback.pending}>
-              Confirmar con biometría
-            </Button>
+            {passkeyOptions ? (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setPasskeyOptions(null);
+                    setVerificationError(null);
+                  }}
+                  disabled={feedback.pending}
+                >
+                  Elegir otro método
+                </Button>
+                <Button onClick={confirmWithPasskey} disabled={feedback.pending}>
+                  Confirmar con biometría
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setConfirmOpen(false);
+                    setMfaOpen(true);
+                  }}
+                  disabled={preparing || feedback.pending}
+                >
+                  Usar código de Google Authenticator
+                </Button>
+                <Button onClick={preparePasskeyVerification} disabled={preparing || feedback.pending}>
+                  {preparing ? "Preparando…" : "Usar biometría"}
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <MfaChallengeDialog
+        open={mfaOpen}
+        onOpenChange={setMfaOpen}
+        onVerified={() => void confirmWithMfa()}
+        setupHref="/settings/security"
+      />
       {issue ? (
         <VerifactuIssueDialog
           open
