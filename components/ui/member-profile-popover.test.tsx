@@ -1,11 +1,9 @@
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { MemberProfilePopover } from "./member-profile-popover";
 
 describe("MemberProfilePopover", () => {
   it("shows the member summary and profile link after clicking the avatar", async () => {
-    const user = userEvent.setup();
     render(
       <MemberProfilePopover
         member={{ id: "member-1", name: "Ada Lovelace", avatar_url: null, github_handle: null }}
@@ -13,7 +11,7 @@ describe("MemberProfilePopover", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: "Ver información de Ada Lovelace" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ver información de Ada Lovelace" }));
 
     expect(await screen.findByText("Miembro del equipo")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Ver perfil" }).getAttribute("href")).toBe(

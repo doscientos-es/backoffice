@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  Inbox,
-  ListTodo,
-  PartyPopper,
-  CircleUser as UserRound,
-} from "lucide-react";
+import { Inbox, ListTodo, PartyPopper, CircleUser as UserRound } from "lucide-react";
 import { claimLead } from "@/app/(app)/leads/actions";
 import { useOptimisticRemoval } from "@/lib/hooks/use-optimistic-removal";
 import { MyDayColumn } from "./_components/my-day-column";
