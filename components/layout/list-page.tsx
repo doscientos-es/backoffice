@@ -75,6 +75,8 @@ export type BulkAction = {
 export type ListPageProps = {
   title: string;
   description?: string;
+  /** Contexto visual entre la cabecera y el listado (p. ej. métricas de resumen). */
+  summary?: ReactNode;
   breadcrumbs?: BreadcrumbEntry[];
   headers: ListHeader[];
   /** Alineación por columna (backward-compat; también se puede poner en `headers`). */
@@ -147,6 +149,7 @@ function exportToCSV(headers: ListHeader[], rows: ListRow[], filename: string) {
 export function ListPage({
   title,
   description,
+  summary,
   breadcrumbs,
   headers,
   align,
@@ -287,6 +290,8 @@ export function ListPage({
         breadcrumbs={breadcrumbs}
         actions={actions}
       />
+
+      {summary}
 
       <Card>
         <CardContent className="px-0 pt-0">

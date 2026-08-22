@@ -145,12 +145,15 @@ export function ListControls({
         <div className="flex flex-wrap items-center gap-2 p-3 sm:p-4">
           {searchKey ? (
             <div className="relative w-full min-w-0 sm:w-auto sm:min-w-60 sm:flex-1 sm:max-w-sm">
-              <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden
+              />
               <Input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="h-9 rounded-lg border-border bg-background pl-8 pr-8 text-sm shadow-xs focus-visible:ring-primary/25"
+                className="h-9 rounded-lg border-border bg-background pl-10! pr-8 text-sm shadow-xs focus-visible:ring-primary/25"
               />
               {q ? (
                 <button
@@ -377,9 +380,10 @@ export function ListControls({
           >
             <Search
               className={cn(
-                "absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground",
+                "pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground",
                 isPanel && "size-4",
               )}
+              aria-hidden
             />
             <Input
               value={q}
@@ -388,8 +392,8 @@ export function ListControls({
               className={cn(
                 "text-sm",
                 isPanel
-                  ? "h-9 rounded-lg border-border bg-background pl-8 pr-8 shadow-xs focus-visible:ring-primary/25"
-                  : "h-8 pl-9",
+                  ? "h-9 rounded-lg border-border bg-background pl-10! pr-8 shadow-xs focus-visible:ring-primary/25"
+                  : "h-8 pl-10!",
               )}
             />
             {isPanel && q ? (

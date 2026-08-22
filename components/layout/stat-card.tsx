@@ -80,7 +80,7 @@ export function StatCard({
   const card = (
     <Card
       className={cn(
-        "transition-colors hover:bg-muted/80",
+        "h-full transition-colors hover:bg-muted/80",
         href && "cursor-pointer hover:ring-foreground/10",
       )}
     >
@@ -152,7 +152,7 @@ export function StatCard({
 
   if (href) {
     return (
-      <Link href={href} className="block">
+      <Link href={href} className="block h-full">
         {card}
       </Link>
     );

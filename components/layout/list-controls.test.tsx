@@ -13,6 +13,10 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => navigation.params,
 }));
 
+vi.mock("@/components/ui/input", () => ({
+  Input: (props: React.ComponentProps<"input">) => <input {...props} />,
+}));
+
 import { ListControls } from "@/components/layout/list-controls";
 
 const FILTER = {
@@ -64,7 +68,13 @@ describe("ListControls avatar filter", () => {
   it("leaves space for the search icon in the default presentation", () => {
     render(<ListControls searchPlaceholder="Buscar leads" />);
 
-    expect(screen.getByPlaceholderText("Buscar leads").className).toContain("pl-9");
+    expect(screen.getByPlaceholderText("Buscar leads").className).toContain("pl-10!");
+  });
+
+  it("leaves space for the search icon in the panel presentation", () => {
+    render(<ListControls searchPlaceholder="Buscar facturas" presentation="panel" />);
+
+    expect(screen.getByPlaceholderText("Buscar facturas").className).toContain("pl-10!");
   });
 
   it("moves secondary filters into a popover in panel mode", () => {

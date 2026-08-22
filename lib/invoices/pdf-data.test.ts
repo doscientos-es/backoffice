@@ -1,5 +1,5 @@
-import type { BuildInvoicePdfInput } from "@/lib/invoices/pdf-data";
 import { describe, expect, it, vi } from "vitest";
+import type { BuildInvoicePdfInput } from "@/lib/invoices/pdf-data";
 
 vi.mock("@doscientos/verifactu", () => ({
   buildQrDataUrl: (url: string) => `data:image/png;base64,${Buffer.from(url).toString("base64")}`,
@@ -105,8 +105,11 @@ describe("buildInvoicePdfData", () => {
     const data = await buildInvoicePdfData(
       makeInput({ qr_url: "https://sede.example.test/verifactu/immutable-record" }),
     );
+    const encodedQr = data.qrDataUrl?.split(",")[1];
 
-    expect(Buffer.from(data.qrDataUrl!.split(",")[1], "base64").toString("utf8")).toBe(
+    expect(encodedQr).toBeDefined();
+    if (!encodedQr) throw new Error("Missing QR payload");
+    expect(Buffer.from(encodedQr, "base64").toString("utf8")).toBe(
       "https://sede.example.test/verifactu/immutable-record",
     );
   });
