@@ -536,7 +536,7 @@ export default async function TeamMemberDetailPage({
                     <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
                       <ActivityIcon className="size-3.5" aria-hidden />
                     </span>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{activity.title}</p>
                       <p className="truncate text-xs text-muted-foreground">{activity.detail}</p>
                     </div>
