@@ -610,8 +610,8 @@ export function VaultClient({
           <DialogHeader>
             <DialogTitle>Desbloquear bóveda</DialogTitle>
             <DialogDescription>
-              Introduce la contraseña maestra para acceder a los secretos sensibles. La sesión dura 4
-              horas.
+              Introduce la contraseña maestra para acceder a los secretos sensibles. La sesión dura
+              4 horas.
             </DialogDescription>
           </DialogHeader>
           <UnlockForm

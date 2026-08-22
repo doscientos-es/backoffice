@@ -35,7 +35,11 @@ export function PasskeyStatusCard({
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-3">
               <div className="rounded-md bg-primary/10 p-2 text-primary">
-                {configured ? <ShieldCheck className="size-5" /> : <Fingerprint className="size-5" />}
+                {configured ? (
+                  <ShieldCheck className="size-5" />
+                ) : (
+                  <Fingerprint className="size-5" />
+                )}
               </div>
               <div>
                 <CardTitle>Biometría y passkeys</CardTitle>

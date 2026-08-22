@@ -30,9 +30,9 @@ describe("PasskeyStatusCard", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /configurar biometría/i }));
     expect(screen.getByText(/configura una contraseña maestra/i)).toBeDefined();
-    expect(screen.getByRole("link", { name: /configurar contraseña maestra/i }).getAttribute("href")).toBe(
-      "/vault",
-    );
+    expect(
+      screen.getByRole("link", { name: /configurar contraseña maestra/i }).getAttribute("href"),
+    ).toBe("/vault");
   });
 
   it("links to security settings when displayed elsewhere", () => {

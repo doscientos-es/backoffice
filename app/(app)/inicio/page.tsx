@@ -1,4 +1,4 @@
-import { CalendarDays, Hand } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import type { Metadata } from "next";
 import {
   AccountsReceivableSkeleton,

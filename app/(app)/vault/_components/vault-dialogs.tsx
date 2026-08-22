@@ -4,24 +4,13 @@ import { Eye, EyeOff, Fingerprint } from "lucide-react";
 import { useState } from "react";
 import { usePasskeyVerification } from "@/components/security/use-passkey-verification";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { cn } from "@/lib/utils";
-import {
-  setVaultPassword,
-  unlockVault,
-  unlockVaultWithPasskey,
-} from "../actions";
+import { setVaultPassword, unlockVault, unlockVaultWithPasskey } from "../actions";
 
 // ── Password strength ─────────────────────────────────────────────────────────
 type StrengthLevel = 0 | 1 | 2 | 3 | 4;
