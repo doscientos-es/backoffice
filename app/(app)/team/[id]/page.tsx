@@ -383,7 +383,7 @@ export default async function TeamMemberDetailPage({
         <StatCard label="Horas esta semana" value={hoursLabel(weeklyHours)} icon={Clock3} />
       </div>
 
-      <Card className="border-amber-500/20 bg-amber-500/[0.03]">
+      <Card className="border-amber-500/20 bg-amber-500/3">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TriangleAlert className="size-4 text-amber-600 dark:text-amber-400" aria-hidden />
