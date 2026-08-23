@@ -9,7 +9,6 @@ import {
   isRetryableVerifactuDelivery,
   normalizeAltaRechazoPrevio,
   parseDurableAltaPayload,
-  prepareDurableVerifactuRecord,
   resolveVerifactuSoftwareSnapshot,
   sanitizeVerifactuResponse,
   verifactuWaitSeconds,
@@ -185,26 +184,17 @@ async function deliverClaimed(
         warnings: [],
       };
     }
-    const prepared = prepareDurableVerifactuRecord(
+    const { deliverDurableVerifactuRecord } = await import("@doscientos/verifactu");
+    const result = await deliverDurableVerifactuRecord(
       {
         recordType: ledger.record_type,
         currentHash: ledger.current_hash,
         payload: ledger.record_payload,
         incidence,
       },
-      config.software,
+      config,
+      log,
     );
-    const client = await createVerifactuClient({ ...config, software: prepared.software });
-    let result: VerifactuSubmitResult;
-
-    if (prepared.recordType === "alta") {
-      result = await client.registerInvoice(prepared.input);
-    } else {
-      result = await client.cancelInvoice(prepared.input);
-    }
-    if (result.hash !== ledger.current_hash) {
-      throw new Error("La huella devuelta por VERI*FACTU no coincide con el ledger");
-    }
     return await complete(outboxId, workerId, result);
   } catch (error) {
     log.error({ err: error, outboxId, ledgerId }, "verifactu_outbox_delivery_failed");

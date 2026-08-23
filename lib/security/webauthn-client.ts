@@ -9,7 +9,10 @@ import {
 } from "./webauthn-actions";
 
 type Result = { ok: true } | { ok: false; error: string };
-type StartedAuthentication = { ok: true; options: unknown } | { ok: false; error: string };
+type StartedAuthentication =
+  | { ok: true; verified: true }
+  | { ok: true; verified: false; options: unknown }
+  | { ok: false; error: string };
 
 type BrowserError = {
   code?: unknown;
@@ -18,7 +21,7 @@ type BrowserError = {
   name?: unknown;
 };
 
-function unavailable(): Result | null {
+function unavailable(): { ok: false; error: string } | null {
   if (typeof window === "undefined" || !window.PublicKeyCredential) {
     return { ok: false, error: "Este navegador no permite biometría ni passkeys" };
   }
@@ -77,10 +80,12 @@ function browserError(error: unknown): Result {
 export async function preparePasskeyAuthentication(
   scope: UserVerificationScope,
 ): Promise<StartedAuthentication> {
-  const supportError = unavailable();
-  if (supportError) return { ok: false, error: "Este navegador no permite biometría ni passkeys" };
+  const started = await beginPasskeyAuthentication(scope);
+  if (!started.ok || started.verified) return started;
 
-  return beginPasskeyAuthentication(scope);
+  const supportError = unavailable();
+  if (supportError) return supportError;
+  return started;
 }
 
 /** Starts the browser prompt using an already prepared challenge. */

@@ -33,6 +33,7 @@ export function SendAeatButton({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [mfaOpen, setMfaOpen] = useState(false);
   const [preparing, setPreparing] = useState(false);
+  const [recentlyVerified, setRecentlyVerified] = useState(false);
   const [passkeyOptions, setPasskeyOptions] = useState<unknown>(null);
   const [verificationError, setVerificationError] = useState<string | null>(null);
   const scope = userVerificationScope("invoice.send_aeat", `invoice:${invoiceId}`);
@@ -41,8 +42,9 @@ export function SendAeatButton({
     setIssue({ error, status });
   }
 
-  async function preparePasskeyVerification() {
+  async function prepareVerification() {
     setPreparing(true);
+    setRecentlyVerified(false);
     setPasskeyOptions(null);
     setVerificationError(null);
     const started = await preparePasskeyAuthentication(scope);
@@ -50,6 +52,12 @@ export function SendAeatButton({
     if (!started.ok) {
       feedback.setError(started.error);
       setVerificationError(started.error);
+      setConfirmOpen(true);
+      return;
+    }
+    if (started.verified) {
+      setRecentlyVerified(true);
+      setConfirmOpen(true);
       return;
     }
     setPasskeyOptions(started.options);
@@ -57,6 +65,8 @@ export function SendAeatButton({
   }
 
   async function sendVerifiedDelivery() {
+    feedback.setPending();
+    setConfirmOpen(false);
     const fd = new FormData();
     fd.set("id", invoiceId);
     const result = await sendToAeat(fd);
@@ -121,12 +131,6 @@ export function SendAeatButton({
     await sendVerifiedDelivery();
   }
 
-  function openVerificationMethods() {
-    setPasskeyOptions(null);
-    setVerificationError(null);
-    setConfirmOpen(true);
-  }
-
   return (
     <div className="inline-flex min-w-0">
       <Button
@@ -135,7 +139,7 @@ export function SendAeatButton({
         variant="default"
         className="justify-center whitespace-nowrap"
         disabled={disabled || preparing || feedback.pending}
-        onClick={openVerificationMethods}
+        onClick={() => void prepareVerification()}
       >
         <Send className="size-4" />
         {preparing ? "Preparando…" : feedback.pending ? "Enviando…" : label}
@@ -157,13 +161,22 @@ export function SendAeatButton({
         description={
           passkeyOptions
             ? "Usa la biometría o el bloqueo del dispositivo para continuar."
-            : isRegularization
-              ? "Elige cómo confirmar tu identidad para enviar el registro de subsanación a AEAT."
-              : "Elige cómo quieres confirmar tu identidad para reenviar este registro fiscal a AEAT."
+            : recentlyVerified
+              ? "Tu identidad ya está verificada. Confirma el envío fiscal para continuar."
+              : isRegularization
+                ? "Elige cómo confirmar tu identidad para enviar el registro de subsanación a AEAT."
+                : "Elige cómo quieres confirmar tu identidad para reenviar este registro fiscal a AEAT."
         }
         showCloseButton={!feedback.pending}
         footer={
-          passkeyOptions ? (
+          recentlyVerified ? (
+            <>
+              <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={() => void sendVerifiedDelivery()}>Confirmar envío</Button>
+            </>
+          ) : passkeyOptions ? (
             <>
               <Button
                 variant="outline"
@@ -191,8 +204,8 @@ export function SendAeatButton({
               >
                 Usar código de autenticación
               </Button>
-              <Button onClick={preparePasskeyVerification} disabled={preparing || feedback.pending}>
-                {preparing ? "Preparando…" : "Usar biometría"}
+              <Button onClick={prepareVerification} disabled={preparing || feedback.pending}>
+                {preparing ? "Preparando…" : "Reintentar en este dispositivo"}
               </Button>
             </>
           )

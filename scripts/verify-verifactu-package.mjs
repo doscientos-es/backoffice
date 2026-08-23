@@ -6,6 +6,7 @@ const required = [
   "buildVerifactuXml",
   "buildVerifactuCancellationXml",
   "prepareDurableVerifactuRecord",
+  "deliverDurableVerifactuRecord",
   "validateSpanishFiscalIdentity",
   "getAeatErrorMetadata",
 ];
@@ -15,13 +16,13 @@ const missing = required.filter((name) => !(name in pkg));
 if (missing.length > 0) {
   throw new Error(
     `@doscientos/verifactu incompatible o antiguo. Faltan: ${missing.join(", ")}. ` +
-      "Instala la versión construida/publicada compatible con el backoffice.",
+    "Instala la versión construida/publicada compatible con el backoffice.",
   );
 }
 
-if (pkg.VERIFACTU_PACKAGE_VERSION !== "0.1.20") {
+if (pkg.VERIFACTU_PACKAGE_VERSION !== "0.1.21") {
   throw new Error(
-    `@doscientos/verifactu ${String(pkg.VERIFACTU_PACKAGE_VERSION)} no es compatible; se requiere 0.1.20.`,
+    `@doscientos/verifactu ${String(pkg.VERIFACTU_PACKAGE_VERSION)} no es compatible; se requiere 0.1.21.`,
   );
 }
 

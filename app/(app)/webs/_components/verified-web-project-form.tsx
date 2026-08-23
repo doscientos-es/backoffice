@@ -19,6 +19,32 @@ type Props = {
   defaults?: Partial<WebProjectDetail>;
 };
 
+function credentialsChanged(
+  formData: FormData,
+  defaults: Partial<WebProjectDetail> | undefined,
+  isCreate: boolean,
+): boolean {
+  const value = (name: string) => formData.get(name)?.toString().trim() ?? "";
+  const current = {
+    db_host: defaults?.db_host ?? "",
+    db_port: defaults?.db_port?.toString() ?? "",
+    db_name: defaults?.db_name ?? "",
+    db_user: defaults?.db_user ?? "",
+  };
+  const next = {
+    db_host: value("db_host"),
+    db_port: value("db_port"),
+    db_name: value("db_name"),
+    db_user: value("db_user"),
+  };
+  return (
+    value("db_pass").length > 0 ||
+    Object.entries(next).some(([key, nextValue]) =>
+      isCreate ? nextValue.length > 0 : nextValue !== current[key as keyof typeof current],
+    )
+  );
+}
+
 /** Handles the only UI path that can create or alter DB connection credentials. */
 export function VerifiedWebProjectForm({ clients, mode, projectId, defaults }: Props) {
   const feedback = useFormFeedback();
@@ -33,12 +59,14 @@ export function VerifiedWebProjectForm({ clients, mode, projectId, defaults }: P
     feedback.setPending();
 
     startTransition(async () => {
-      const verification = await verifyWithPasskey(
-        userVerificationScope("web.db_credentials.update", resource),
-      );
-      if (!verification.ok) {
-        feedback.setError(verification.error);
-        return;
+      if (credentialsChanged(formData, defaults, isCreate)) {
+        const verification = await verifyWithPasskey(
+          userVerificationScope("web.db_credentials.update", resource),
+        );
+        if (!verification.ok) {
+          feedback.setError(verification.error);
+          return;
+        }
       }
 
       const result = (
@@ -58,11 +86,11 @@ export function VerifiedWebProjectForm({ clients, mode, projectId, defaults }: P
         autoFocusName={isCreate}
       />
       <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
-        <FormFeedback state={feedback.state} pendingLabel="Verificando…" />
+        <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
         <Button asChild variant="ghost" size="sm">
           <Link href={isCreate ? "/webs" : `/webs/${projectId}`}>Cancelar</Link>
         </Button>
-        <SubmitButton pendingLabel="Verificando…" loading={pending || feedback.pending}>
+        <SubmitButton pendingLabel="Guardando…" loading={pending || feedback.pending}>
           {isCreate ? "Crear web" : "Guardar cambios"}
         </SubmitButton>
       </div>

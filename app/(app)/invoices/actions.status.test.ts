@@ -101,6 +101,25 @@ describe("updateInvoiceStatus fiscal flow", () => {
     expect(syncInvoiceQrFromLedger).toHaveBeenCalledWith(INVOICE_ID);
     expect(backupInvoiceToDrive).toHaveBeenCalledWith(INVOICE_ID, "admin@example.test");
     expect(assertVerifactuDiagnosticGate).toHaveBeenCalledOnce();
+    expect(consumeUserVerification).toHaveBeenCalledWith("user-1", {
+      intent: "invoice.status.update",
+      resource: `invoice:${INVOICE_ID}:status:issued`,
+    });
+  });
+
+  it("does not interrupt a routine paid status update with step-up verification", async () => {
+    const result = await updateInvoiceStatus({ id: INVOICE_ID, status: "paid" });
+
+    expect(result).toEqual({
+      ok: true,
+      fiscalDeliveryCsv: null,
+      fiscalDeliveryStatus: null,
+    });
+    expect(consumeUserVerification).not.toHaveBeenCalled();
+    expect(patchInvoiceStatus).toHaveBeenCalledWith(
+      INVOICE_ID,
+      expect.objectContaining({ status: "paid" }),
+    );
   });
 
   it("creates a RegistroAnulacion outbox instead of directly cancelling", async () => {

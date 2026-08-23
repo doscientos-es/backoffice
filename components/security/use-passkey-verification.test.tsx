@@ -38,7 +38,7 @@ describe("usePasskeyVerification", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     delete document.body.dataset.verification;
-    preparePasskeyAuthentication.mockResolvedValue({ ok: true, options });
+    preparePasskeyAuthentication.mockResolvedValue({ ok: true, verified: false, options });
     completePasskeyAuthentication.mockResolvedValue({ ok: true });
   });
 
@@ -50,7 +50,7 @@ describe("usePasskeyVerification", () => {
     await waitFor(() => expect(preparePasskeyAuthentication).toHaveBeenCalledOnce());
     expect(completePasskeyAuthentication).not.toHaveBeenCalled();
 
-    fireEvent.click(await screen.findByRole("button", { name: "Confirmar con biometría" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Confirmar en este dispositivo" }));
 
     await waitFor(() =>
       expect(completePasskeyAuthentication).toHaveBeenCalledWith(
@@ -59,5 +59,16 @@ describe("usePasskeyVerification", () => {
       ),
     );
     await waitFor(() => expect(document.body.dataset.verification).toBe("complete"));
+  });
+
+  it("continues without a dialog while the recent session is active", async () => {
+    preparePasskeyAuthentication.mockResolvedValue({ ok: true, verified: true });
+    render(<VerificationHarness />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Iniciar" }));
+
+    await waitFor(() => expect(document.body.dataset.verification).toBe("complete"));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(completePasskeyAuthentication).not.toHaveBeenCalled();
   });
 });

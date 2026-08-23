@@ -22,7 +22,7 @@ describe("RegularizeAeatButton", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    preparePasskeyAuthentication.mockResolvedValue({ ok: true, options });
+    preparePasskeyAuthentication.mockResolvedValue({ ok: true, verified: false, options });
     completePasskeyAuthentication.mockResolvedValue({ ok: true });
     regularizeVerifactu.mockResolvedValue({ ok: true, status: "accepted", csv: "CSV-123" });
   });
@@ -58,5 +58,16 @@ describe("RegularizeAeatButton", () => {
     fireEvent.click(screen.getByRole("button", { name: "Validar y continuar" }));
     fireEvent.click(await screen.findByRole("button", { name: "Confirmar con biometría" }));
     await waitFor(() => expect(regularizeVerifactu).toHaveBeenCalledOnce());
+  });
+
+  it("skips the device prompt when the recent verification is still valid", async () => {
+    preparePasskeyAuthentication.mockResolvedValue({ ok: true, verified: true });
+    render(<RegularizeAeatButton invoiceId="invoice-1" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Regularizar rechazo AEAT" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continuar con la regularización" }));
+
+    await waitFor(() => expect(regularizeVerifactu).toHaveBeenCalledOnce());
+    expect(completePasskeyAuthentication).not.toHaveBeenCalled();
   });
 });

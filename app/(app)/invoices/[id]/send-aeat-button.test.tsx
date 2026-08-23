@@ -36,7 +36,7 @@ describe("SendAeatButton", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    preparePasskeyAuthentication.mockResolvedValue({ ok: true, options });
+    preparePasskeyAuthentication.mockResolvedValue({ ok: true, verified: false, options });
     completePasskeyAuthentication.mockResolvedValue({ ok: true });
     grantUserVerificationFromMfa.mockResolvedValue({ ok: true });
     sendToAeat.mockResolvedValue({ ok: true, status: "accepted", csv: "CSV-123" });
@@ -46,8 +46,6 @@ describe("SendAeatButton", () => {
     render(<SendAeatButton invoiceId="invoice-1" label="Reintentar envío" />);
 
     fireEvent.click(screen.getByRole("button", { name: "Reintentar envío" }));
-
-    fireEvent.click(await screen.findByRole("button", { name: "Usar biometría" }));
 
     await waitFor(() =>
       expect(preparePasskeyAuthentication).toHaveBeenCalledWith({
@@ -78,7 +76,6 @@ describe("SendAeatButton", () => {
     render(<SendAeatButton invoiceId="invoice-1" label="Reintentar envío" />);
 
     fireEvent.click(screen.getByRole("button", { name: "Reintentar envío" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Usar biometría" }));
     fireEvent.click(await screen.findByRole("button", { name: "Confirmar con biometría" }));
 
     await waitFor(() => expect(completePasskeyAuthentication).toHaveBeenCalledOnce());
@@ -91,6 +88,7 @@ describe("SendAeatButton", () => {
     render(<SendAeatButton invoiceId="invoice-1" label="Reintentar envío" />);
 
     fireEvent.click(screen.getByRole("button", { name: "Reintentar envío" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Elegir otro método" }));
     fireEvent.click(await screen.findByRole("button", { name: "Usar código de autenticación" }));
     fireEvent.click(await screen.findByRole("button", { name: "Verificar código MFA" }));
 
@@ -101,6 +99,18 @@ describe("SendAeatButton", () => {
       }),
     );
     await waitFor(() => expect(sendToAeat).toHaveBeenCalledOnce());
-    expect(preparePasskeyAuthentication).not.toHaveBeenCalled();
+  });
+
+  it("keeps the fiscal confirmation but skips biometrics during a recent session", async () => {
+    preparePasskeyAuthentication.mockResolvedValue({ ok: true, verified: true });
+    render(<SendAeatButton invoiceId="invoice-1" label="Reintentar envío" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Reintentar envío" }));
+
+    expect(await screen.findByText(/Tu identidad ya está verificada/)).toBeDefined();
+    expect(sendToAeat).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar envío" }));
+    await waitFor(() => expect(sendToAeat).toHaveBeenCalledOnce());
+    expect(completePasskeyAuthentication).not.toHaveBeenCalled();
   });
 });

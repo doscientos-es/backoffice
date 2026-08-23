@@ -23,6 +23,7 @@ export function useInvoiceStatusVerification(invoiceId: string, feedback: Invoic
   };
 
   const verifyStatusChange = async (status: InvoiceStatusChange): Promise<boolean> => {
+    if (status === "paid") return true;
     if (!(await ensureAal2())) return false;
     const verification = await verifyWithPasskey(
       userVerificationScope("invoice.status.update", `invoice:${invoiceId}:status:${status}`),

@@ -83,6 +83,10 @@ export function RegularizeAeatButton({
       setMessage(started.error);
       return;
     }
+    if (started.verified) {
+      await sendRegularization();
+      return;
+    }
     setPasskeyOptions(started.options);
     setPhase("confirm");
   }

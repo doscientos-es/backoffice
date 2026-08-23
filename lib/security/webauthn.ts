@@ -269,7 +269,7 @@ export async function createPasskeyAuthenticationOptions(
   return options;
 }
 
-/** Verifies an assertion, advances its signature counter, and grants one scoped proof. */
+/** Verifies an assertion, advances its signature counter, and starts a recent session. */
 export async function verifyPasskeyAuthentication(
   userId: string,
   scope: UserVerificationScope,

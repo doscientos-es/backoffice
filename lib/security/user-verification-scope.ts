@@ -11,12 +11,8 @@ export const USER_VERIFICATION_INTENTS = [
   "team.member.role.update",
   "team.member.deactivate",
   "team.member.delete",
-  "company.settings.update",
-  "integrations.gmail_sync_mailboxes.update",
   "backup.delete",
   "web.db_credentials.update",
-  "web.backup.run",
-  "backoffice.backup.run",
 ] as const;
 
 export type UserVerificationIntent = (typeof USER_VERIFICATION_INTENTS)[number];

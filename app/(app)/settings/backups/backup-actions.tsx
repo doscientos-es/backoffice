@@ -3,10 +3,8 @@
 import { Database as DatabaseBackup, Download, LoaderCircle as Loader2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { sileo } from "sileo";
-import { usePasskeyVerification } from "@/components/security/use-passkey-verification";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
-import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { triggerBackofficeBackup } from "./actions";
 
 type ExportTable = { value: string; label: string };
@@ -24,18 +22,10 @@ export function BackupActions({
 }) {
   const [pending, startTransition] = useTransition();
   const [table, setTable] = useState(tables[0]?.value ?? "");
-  const { challenge, verifyWithPasskey } = usePasskeyVerification();
   const csvHref = `/api/data-export?format=csv&table=${encodeURIComponent(table)}`;
 
   function forceBackup() {
     startTransition(async () => {
-      const verification = await verifyWithPasskey(
-        userVerificationScope("backoffice.backup.run", "backoffice:production"),
-      );
-      if (!verification.ok) {
-        sileo.error({ title: verification.error });
-        return;
-      }
       const result = await triggerBackofficeBackup();
       if (result.ok) sileo.success({ title: "Copia de seguridad iniciada" });
       else sileo.error({ title: result.error });
@@ -95,7 +85,6 @@ export function BackupActions({
           </Button>
         </div>
       ) : null}
-      {challenge}
     </div>
   );
 }

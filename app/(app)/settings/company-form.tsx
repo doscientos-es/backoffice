@@ -1,6 +1,5 @@
 "use client";
 
-import { usePasskeyVerification } from "@/components/security/use-passkey-verification";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { IbanInput } from "@/components/ui/iban-input";
@@ -11,7 +10,6 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { ZipInput } from "@/components/ui/zip-input";
 import { COUNTRY_OPTIONS } from "@/lib/address";
-import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { updateCompanySettings } from "./actions";
 
 interface Props {
@@ -44,19 +42,11 @@ export function CompanyForm({
   paymentTerms,
 }: Props) {
   const feedback = useFormFeedback();
-  const { challenge, verifyWithPasskey } = usePasskeyVerification();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     feedback.setPending();
-    const verification = await verifyWithPasskey(
-      userVerificationScope("company.settings.update", "company:1"),
-    );
-    if (!verification.ok) {
-      feedback.setError(verification.error);
-      return;
-    }
     const result = await updateCompanySettings(fd);
     if (result.ok) feedback.setSuccess("Empresa guardada");
     else feedback.setError(result.error);
@@ -212,7 +202,6 @@ export function CompanyForm({
           Guardar empresa
         </SubmitButton>
       </div>
-      {challenge}
     </form>
   );
 }

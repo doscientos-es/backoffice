@@ -3,9 +3,7 @@
 import { Database as DatabaseBackup, LoaderCircle as Loader2 } from "lucide-react";
 import { useTransition } from "react";
 import { sileo } from "sileo";
-import { usePasskeyVerification } from "@/components/security/use-passkey-verification";
 import { Button } from "@/components/ui/button";
-import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { triggerWebBackup } from "../actions";
 
 type Props = {
@@ -20,17 +18,9 @@ type Props = {
  */
 export function ForceBackupButton({ projectId, slug }: Props) {
   const [pending, startTransition] = useTransition();
-  const { challenge, verifyWithPasskey } = usePasskeyVerification();
 
   function onClick() {
     startTransition(async () => {
-      const verification = await verifyWithPasskey(
-        userVerificationScope("web.backup.run", `web:${projectId}`),
-      );
-      if (!verification.ok) {
-        sileo.error({ title: verification.error });
-        return;
-      }
       const res = await triggerWebBackup({ id: projectId, slug });
       if (res.ok) {
         sileo.success({ title: "Backup completado" });
@@ -41,16 +31,13 @@ export function ForceBackupButton({ projectId, slug }: Props) {
   }
 
   return (
-    <>
-      <Button type="button" variant="outline" size="sm" onClick={onClick} disabled={pending}>
-        {pending ? (
-          <Loader2 className="mr-1.5 size-4 animate-spin" />
-        ) : (
-          <DatabaseBackup className="mr-1.5 size-4" />
-        )}
-        Forzar backup
-      </Button>
-      {challenge}
-    </>
+    <Button type="button" variant="outline" size="sm" onClick={onClick} disabled={pending}>
+      {pending ? (
+        <Loader2 className="mr-1.5 size-4 animate-spin" />
+      ) : (
+        <DatabaseBackup className="mr-1.5 size-4" />
+      )}
+      Forzar backup
+    </Button>
   );
 }

@@ -1,27 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { usePasskeyVerification } from "@/components/security/use-passkey-verification";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
-import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { updateGmailSyncMailboxes } from "../actions";
 
 export function GmailSyncForm({ mailboxes }: { mailboxes: string[] }) {
   const feedback = useFormFeedback();
   const [value, setValue] = useState(() => mailboxes.join("\n"));
-  const { challenge, verifyWithPasskey } = usePasskeyVerification();
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     feedback.setPending();
-    const verification = await verifyWithPasskey(
-      userVerificationScope("integrations.gmail_sync_mailboxes.update", "settings:1"),
-    );
-    if (!verification.ok) return feedback.setError(verification.error);
-
     const result = await updateGmailSyncMailboxes({
       mailboxes: value
         .split(/[\n,;]+/)
@@ -54,7 +46,6 @@ export function GmailSyncForm({ mailboxes }: { mailboxes: string[] }) {
         <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
         <SubmitButton loading={feedback.pending}>Guardar buzones</SubmitButton>
       </div>
-      {challenge}
     </form>
   );
 }

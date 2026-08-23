@@ -35,6 +35,9 @@ declare
             and l.record_payload->>'rechazoPrevio' = 'X'
             and coalesce(previous_outbox.state, '') in ('rejected', 'terminal_error')
           )$old$;
+  -- pg_get_functiondef preserves the deeper indentation used by the CTE in
+  -- claim_due_verifactu_outboxes, so support both canonical renderings.
+  v_old_deeper constant text := replace(v_old, E'\n          ', E'\n            ');
   v_new constant text := $new$coalesce(previous_outbox.state, '') not in ('accepted', 'rejected', 'terminal_error')$new$;
 begin
   foreach v_name in array array['claim_verifactu_outbox', 'claim_due_verifactu_outboxes'] loop
@@ -43,8 +46,13 @@ begin
      where n.nspname = 'public' and p.proname = v_name;
     if v_definition is null then raise exception 'No existe la función %', v_name; end if;
     if position(v_new in v_definition) = 0 then
-      if position(v_old in v_definition) = 0 then raise exception 'No se encontró el bloqueo anterior en %', v_name; end if;
-      execute replace(v_definition, v_old, v_new);
+      if position(v_old in v_definition) > 0 then
+        execute replace(v_definition, v_old, v_new);
+      elsif position(v_old_deeper in v_definition) > 0 then
+        execute replace(v_definition, v_old_deeper, v_new);
+      else
+        raise exception 'No se encontró el bloqueo anterior en %', v_name;
+      end if;
     end if;
   end loop;
 end;

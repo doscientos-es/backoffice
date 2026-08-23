@@ -123,10 +123,12 @@ export const updateInvoiceStatus = defineAction<
   revalidate: (_p, input) => [`/invoices/${input.id}`, "/invoices", "/inicio"],
   handler: async (input, { user }) => {
     const { id, status } = input;
-    await consumeUserVerification(
-      user.id,
-      userVerificationScope("invoice.status.update", `invoice:${id}:status:${status}`),
-    );
+    if (status === "issued" || status === "cancelled") {
+      await consumeUserVerification(
+        user.id,
+        userVerificationScope("invoice.status.update", `invoice:${id}:status:${status}`),
+      );
+    }
     if (status === "issued" || status === "cancelled") {
       await assertDurableVerifactuPackage(status === "cancelled");
       await assertVerifactuDiagnosticGate();

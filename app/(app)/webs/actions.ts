@@ -21,10 +21,12 @@ export const createWebProject = defineAction({
   roles: ["owner", "admin"],
   revalidate: ["/webs"],
   handler: async (input, { user }) => {
-    await consumeUserVerification(
-      user.id,
-      userVerificationScope("web.db_credentials.update", "web:create"),
-    );
+    if (input.db_host || input.db_port || input.db_name || input.db_user || input.db_pass) {
+      await consumeUserVerification(
+        user.id,
+        userVerificationScope("web.db_credentials.update", "web:create"),
+      );
+    }
     const supabase = await createServerClient();
     const { data, error } = await supabase
       .from("web_projects")
@@ -66,11 +68,27 @@ export const updateWebProject = defineAction({
   schema: UpdateWebProjectInput,
   roles: ["owner", "admin"],
   handler: async (input, { user }) => {
-    await consumeUserVerification(
-      user.id,
-      userVerificationScope("web.db_credentials.update", `web:${input.id}`),
-    );
     const supabase = await createServerClient();
+    const { data: current, error: lookupError } = await supabase
+      .from("web_projects")
+      .select("db_host, db_port, db_name, db_user")
+      .eq("id", input.id)
+      .maybeSingle();
+    if (lookupError) throw new Error(lookupError.message);
+    if (!current) throw new Error("No se ha encontrado el proyecto web");
+
+    const credentialsChanged =
+      (input.db_host ?? null) !== current.db_host ||
+      (input.db_port ?? null) !== current.db_port ||
+      (input.db_name ?? null) !== current.db_name ||
+      (input.db_user ?? null) !== current.db_user ||
+      Boolean(input.db_pass);
+    if (credentialsChanged) {
+      await consumeUserVerification(
+        user.id,
+        userVerificationScope("web.db_credentials.update", `web:${input.id}`),
+      );
+    }
     const { error } = await supabase
       .from("web_projects")
       .update({
@@ -121,11 +139,7 @@ export const triggerWebBackup = defineAction({
   name: "webs.backup",
   schema: z.object({ id: z.string().uuid(), slug: z.string().nullable().optional() }),
   roles: ["owner", "admin"],
-  handler: async (input, { user }) => {
-    await consumeUserVerification(
-      user.id,
-      userVerificationScope("web.backup.run", `web:${input.id}`),
-    );
+  handler: async (input) => {
     if (isDemoMode()) return;
 
     const env = serverEnv();

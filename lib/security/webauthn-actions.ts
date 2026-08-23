@@ -4,7 +4,7 @@ import type { AuthenticationResponseJSON, RegistrationResponseJSON } from "@simp
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
-import { grantUserVerification } from "./user-verification";
+import { grantUserVerification, hasRecentUserVerification } from "./user-verification";
 import { USER_VERIFICATION_INTENTS, type UserVerificationScope } from "./user-verification-scope";
 import {
   createPasskeyAuthenticationOptions,
@@ -63,23 +63,24 @@ export async function finishPasskeyRegistration(rawResponse: unknown): Promise<R
   }
 }
 
-/** Starts a reusable, intent-scoped WebAuthn step-up verification. */
+/** Reuses a recent verification or starts an intent-scoped WebAuthn challenge. */
 export async function beginPasskeyAuthentication(
   rawScope: unknown,
-): Promise<Result<{ options: unknown }>> {
+): Promise<Result<{ verified: true } | { verified: false; options: unknown }>> {
   const parsed = verificationScopeSchema.safeParse(rawScope);
   if (!parsed.success) return { ok: false, error: "Acción protegida no válida" };
 
   try {
     const user = await requireUser();
+    if (await hasRecentUserVerification(user.id)) return { ok: true, verified: true };
     const options = await createPasskeyAuthenticationOptions(user.id, parsed.data);
-    return { ok: true, options };
+    return { ok: true, verified: false, options };
   } catch (error) {
     return failure(error);
   }
 }
 
-/** Completes a reusable WebAuthn step-up verification and writes its scoped proof. */
+/** Completes WebAuthn and starts a recent-verification session. */
 export async function finishPasskeyAuthentication(
   rawScope: unknown,
   rawResponse: unknown,
@@ -102,7 +103,7 @@ export async function finishPasskeyAuthentication(
   }
 }
 
-/** Grants the same one-shot proof after the user has completed Supabase MFA. */
+/** Starts the same recent-verification session after Supabase MFA. */
 export async function grantUserVerificationFromMfa(rawScope: unknown): Promise<Result> {
   const parsed = verificationScopeSchema.safeParse(rawScope);
   if (!parsed.success) return { ok: false, error: "Acción protegida no válida" };

@@ -37,5 +37,7 @@ describe("VERI*FACTU recovery migrations", () => {
       "coalesce(previous_outbox.state, '') not in ('accepted', 'rejected', 'terminal_error')",
     );
     expect(sql).toContain("order by l.chain_sequence desc, l.created_at desc limit 1");
+    expect(sql).toContain("v_old_deeper constant text := replace(v_old");
+    expect(sql).toContain("elsif position(v_old_deeper in v_definition) > 0 then");
   });
 });
