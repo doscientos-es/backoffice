@@ -9,4 +9,3 @@ export type {
   AeatNifValidation,
   AeatNifValidationOptions
 } from "@doscientos/verifactu";
-

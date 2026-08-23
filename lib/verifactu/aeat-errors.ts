@@ -4,4 +4,3 @@ export {
   getAeatErrorMetadata
 } from "@doscientos/verifactu";
 export type { AeatErrorEffect, AeatErrorMetadata } from "@doscientos/verifactu";
-
