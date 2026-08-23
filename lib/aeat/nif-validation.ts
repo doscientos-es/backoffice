@@ -1,9 +1,13 @@
 import https from "node:https";
 import { XMLParser } from "fast-xml-parser";
 
-// AEAT migrated VALNIF to this production endpoint in 2026. Its published
-// VNifV2 schemas and SOAP action remain unchanged.
-const ENDPOINT = "https://ws.ia.aeat.es/wlpl/SUWS-JDIT/ws/valnifws/VALNIFV3SOAP";
+// AEAT announced VALNIFV3 in 2026, but that host is not resolvable from every
+// Internet network. The still-published VNifV2 WSDL declares www1/www10.
+export const AEAT_NIF_ENDPOINTS = [
+  "https://ws.ia.aeat.es/wlpl/SUWS-JDIT/ws/valnifws/VALNIFV3SOAP",
+  "https://www1.agenciatributaria.gob.es/wlpl/BURT-JDIT/ws/VNifV2SOAP",
+  "https://www10.agenciatributaria.gob.es/wlpl/BURT-JDIT/ws/VNifV2SOAP",
+] as const;
 const NAMESPACE =
   "http://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/burt/jdit/ws/VNifV2Ent.xsd";
 
@@ -88,11 +92,16 @@ export function interpretAeatNifResponse(xml: string): AeatNifValidation {
   }
 }
 
-function postSoap(xml: string, p12Base64: string, password: string): Promise<string> {
+function postSoap(
+  endpoint: string,
+  xml: string,
+  p12Base64: string,
+  password: string,
+): Promise<string> {
   return new Promise((resolve, reject) => {
     const body = Buffer.from(xml, "utf8");
     const request = https.request(
-      ENDPOINT,
+      endpoint,
       {
         method: "POST",
         headers: {
@@ -132,17 +141,20 @@ export async function validateSpanishFiscalIdentity(
   identity: AeatFiscalIdentity,
   certificate: { p12Base64: string; password: string },
 ): Promise<AeatNifValidation> {
-  try {
-    return interpretAeatNifResponse(
-      await postSoap(buildAeatNifEnvelope(identity), certificate.p12Base64, certificate.password),
-    );
-  } catch {
-    return {
-      status: "unavailable",
-      aeatName: null,
-      aeatResult: null,
-      message:
-        "No se pudo consultar AEAT. Revisa la autorización del certificado o inténtalo más tarde.",
-    };
+  const envelope = buildAeatNifEnvelope(identity);
+  for (const endpoint of AEAT_NIF_ENDPOINTS) {
+    try {
+      return interpretAeatNifResponse(
+        await postSoap(endpoint, envelope, certificate.p12Base64, certificate.password),
+      );
+    } catch {
+      // Try the next endpoint published by AEAT. All requests are read-only.
+    }
   }
+  return {
+    status: "unavailable",
+    aeatName: null,
+    aeatResult: null,
+    message: "No se pudo consultar AEAT. Inténtalo de nuevo antes de regularizar.",
+  };
 }

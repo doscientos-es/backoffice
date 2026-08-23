@@ -83,9 +83,7 @@ describe("SendAeatButton", () => {
 
     await waitFor(() => expect(completePasskeyAuthentication).toHaveBeenCalledOnce());
     expect(screen.queryByText("Error técnico de VERI*FACTU")).toBeNull();
-    expect(
-      screen.getByRole("button", { name: "Usar código de Google Authenticator" }),
-    ).toBeDefined();
+    expect(screen.getByRole("button", { name: "Usar código de autenticación" })).toBeDefined();
     expect(sendToAeat).not.toHaveBeenCalled();
   });
 
@@ -93,9 +91,7 @@ describe("SendAeatButton", () => {
     render(<SendAeatButton invoiceId="invoice-1" label="Reintentar envío" />);
 
     fireEvent.click(screen.getByRole("button", { name: "Reintentar envío" }));
-    fireEvent.click(
-      await screen.findByRole("button", { name: "Usar código de Google Authenticator" }),
-    );
+    fireEvent.click(await screen.findByRole("button", { name: "Usar código de autenticación" }));
     fireEvent.click(await screen.findByRole("button", { name: "Verificar código MFA" }));
 
     await waitFor(() =>

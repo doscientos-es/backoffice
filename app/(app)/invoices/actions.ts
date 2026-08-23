@@ -5,6 +5,7 @@ import { after } from "next/server";
 import { InvoiceEmail } from "@/components/email";
 import { defineAction } from "@/lib/actions/define-action";
 import { requireRole } from "@/lib/auth";
+import { ensureInvoiceRecipientVerified } from "@/lib/clients/fiscal-verification";
 import { VersionConflictError } from "@/lib/concurrency/version-conflict";
 import { hasCompleteFiscalData } from "@/lib/crm/conversion";
 import { renderEmail } from "@/lib/email/render";
@@ -397,6 +398,7 @@ export const regularizeVerifactu = defineAction<
     );
     await assertDurableVerifactuPackage();
     await assertVerifactuDiagnosticGate();
+    await ensureInvoiceRecipientVerified(input.id, user.id);
     const outboxId = await enqueueVerifactuRegularization(input.id);
     const delivery = await deliverVerifactuOutbox(outboxId, `regularize:${crypto.randomUUID()}`);
     return { csv: delivery.csv, status: delivery.status, error: delivery.error ?? null };

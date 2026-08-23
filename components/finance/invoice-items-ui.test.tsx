@@ -43,7 +43,7 @@ describe("invoice line item UI", () => {
     expect(nextItems[1].id).not.toBe(item.id);
   });
 
-  it("renders desktop columns, mobile concepts and the fiscal summary", () => {
+  it("renders every concept once in a responsive list with its fiscal summary", () => {
     render(
       <InvoiceItemsSummary
         items={[item]}
@@ -53,9 +53,16 @@ describe("invoice line item UI", () => {
       />,
     );
 
-    expect(screen.getByRole("table")).toBeDefined();
-    expect(screen.getByRole("columnheader", { name: "Precio unitario" })).toBeDefined();
-    expect(screen.getAllByText(item.description)).toHaveLength(2);
+    expect(screen.queryByRole("table")).toBeNull();
+    expect(screen.getByRole("list")).toBeDefined();
+    expect(screen.getAllByText(item.description)).toHaveLength(1);
+    expect(
+      screen.getByText(
+        (_, element) =>
+          element?.tagName === "P" &&
+          element.textContent?.replace(/\s+/g, " ").includes("2 × 100,00 € · IVA 21%") === true,
+      ),
+    ).toBeDefined();
     expect(screen.getByText("Base imponible")).toBeDefined();
     expect(screen.getByText("Total")).toBeDefined();
   });

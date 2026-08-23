@@ -30,12 +30,7 @@ export function getCertificateHealth(
   }
   const daysRemaining = Math.ceil((expiresAt.getTime() - now.getTime()) / DAY_MS);
   return {
-    status:
-      expiresAt.getTime() <= now.getTime()
-        ? "expired"
-        : daysRemaining <= 30
-          ? "warning"
-          : "ok",
+    status: expiresAt.getTime() <= now.getTime() ? "expired" : daysRemaining <= 30 ? "warning" : "ok",
     expiresAt: value,
     daysRemaining,
   };

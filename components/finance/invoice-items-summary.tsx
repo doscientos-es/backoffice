@@ -38,65 +38,23 @@ export function InvoiceItemsSummary({
 
   return (
     <section aria-label="Conceptos de la factura">
-      <div className="hidden overflow-x-auto md:block">
-        <table className="w-full min-w-170 text-sm">
-          <thead
-            className={
-              portal
-                ? "border-b border-zinc-200 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-900/60"
-                : "border-b border-border bg-muted/40"
-            }
-          >
-            <tr className={`text-xs font-medium ${muted}`}>
-              <th className="px-5 py-3 text-left">Descripción</th>
-              <th className="w-20 px-3 py-3 text-right">Cantidad</th>
-              <th className="w-32 px-3 py-3 text-right">Precio unitario</th>
-              <th className="w-20 px-3 py-3 text-right">IVA</th>
-              <th className="w-32 px-5 py-3 text-right">Importe</th>
-            </tr>
-          </thead>
-          <tbody className={`divide-y ${divider}`}>
-            {items.map((item) => (
-              <tr
-                key={item.id}
-                className={
-                  portal ? "hover:bg-zinc-50/70 dark:hover:bg-zinc-900/40" : "hover:bg-muted/25"
-                }
-              >
-                <td className="px-5 py-4 font-medium">{item.description}</td>
-                <td className={`px-3 py-4 text-right tabular-nums ${muted}`}>
-                  {quantityFormatter.format(Number(item.quantity ?? 0))}
-                </td>
-                <td className={`px-3 py-4 text-right tabular-nums ${muted}`}>
-                  {formatEUR(Number(item.unit_price ?? 0))}
-                </td>
-                <td className={`px-3 py-4 text-right tabular-nums ${muted}`}>
-                  {Number(item.vat_rate ?? 0)}%
-                </td>
-                <td className="px-5 py-4 text-right font-semibold tabular-nums">
-                  {formatEUR(Number(item.subtotal ?? 0))}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <ul className={`divide-y md:hidden ${divider}`}>
+      <ul className={`divide-y ${divider}`}>
         {items.map((item) => (
-          <li key={item.id} className="px-4 py-4">
-            <div className="flex items-start justify-between gap-4">
-              <p className="min-w-0 font-medium leading-snug">{item.description}</p>
+          <li key={item.id} className="px-4 py-3.5 sm:px-5">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
+              <div className="min-w-0">
+                <p className="font-medium leading-snug">{item.description}</p>
+                <p className={`mt-1 text-xs tabular-nums ${muted}`}>
+                  {quantityFormatter.format(Number(item.quantity ?? 0))} ×{" "}
+                  {formatEUR(Number(item.unit_price ?? 0))}
+                  <span aria-hidden="true"> · </span>
+                  IVA {Number(item.vat_rate ?? 0)}%
+                </p>
+              </div>
               <p className="shrink-0 font-semibold tabular-nums">
                 {formatEUR(Number(item.subtotal ?? 0))}
               </p>
             </div>
-            <p className={`mt-2 text-xs tabular-nums ${muted}`}>
-              {quantityFormatter.format(Number(item.quantity ?? 0))} ×{" "}
-              {formatEUR(Number(item.unit_price ?? 0))}
-              <span aria-hidden="true"> · </span>
-              IVA {Number(item.vat_rate ?? 0)}%
-            </p>
           </li>
         ))}
       </ul>

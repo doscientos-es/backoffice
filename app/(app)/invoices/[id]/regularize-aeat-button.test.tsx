@@ -50,22 +50,13 @@ describe("RegularizeAeatButton", () => {
     await waitFor(() => expect(regularizeVerifactu).toHaveBeenCalledOnce());
   });
 
-  it("guides the user to validate the recipient before starting regularization", () => {
-    render(
-      <RegularizeAeatButton
-        invoiceId="invoice-1"
-        clientId="client-1"
-        recipientFiscalReady={false}
-      />,
-    );
+  it("automatically validates an unverified recipient before regularization", async () => {
+    render(<RegularizeAeatButton invoiceId="invoice-1" recipientFiscalReady={false} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Regularizar rechazo AEAT" }));
-
-    expect(screen.getByText("Valida el destinatario antes de regularizar")).toBeDefined();
-    expect(screen.getByRole("link", { name: "Ir al cliente y validar" }).getAttribute("href")).toBe(
-      "/clients/client-1",
-    );
-    expect(preparePasskeyAuthentication).not.toHaveBeenCalled();
-    expect(regularizeVerifactu).not.toHaveBeenCalled();
+    expect(screen.getByText("Validar y regularizar el rechazo")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Validar y continuar" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Confirmar con biometría" }));
+    await waitFor(() => expect(regularizeVerifactu).toHaveBeenCalledOnce());
   });
 });

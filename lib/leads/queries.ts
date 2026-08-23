@@ -88,6 +88,7 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
 
   let query = notDeleted(supabase.from("leads").select(LIST_COLUMNS, { count: "exact" }));
 
+  if (params.ids?.length) query = query.in("id", params.ids);
   if (params.q.length > 0) {
     const pattern = `%${escapeIlike(params.q)}%`;
     query = query.or(

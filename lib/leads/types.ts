@@ -95,6 +95,7 @@ export const LEAD_SORT_COLUMNS = [
 
 export type LeadListParams = {
   view: LeadListView;
+  ids?: string[];
   q: string;
   status: LeadStatus | null;
   source: string | null;

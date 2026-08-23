@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { FollowUps } from "@/lib/integrations/follow-ups";
-import { collectLeadFollowUpSummaries, formatLeadFollowUpSummary } from "./lead-follow-up-summary";
+import {
+  buildLeadFollowUpLink,
+  collectLeadFollowUpSummaries,
+  formatLeadFollowUpSummary,
+  parseLeadFollowUpSummary,
+  shouldSendLeadFollowUpSummary,
+} from "./lead-follow-up-summary";
 
 const base: FollowUps = {
   generatedAt: "2026-08-22T10:00:00.000Z",
@@ -35,8 +41,9 @@ describe("lead follow-up summaries", () => {
 
     expect(summaries).toHaveLength(1);
     expect(formatLeadFollowUpSummary(summaries[0]!)).toBe(
-      "Tienes 10 leads pendientes: 10 sin seguimiento.",
+      "10 leads requieren atención: 10 sin seguimiento. Prioridad: Lead 0 (48 h), Lead 1 (48 h) y Lead 2 (48 h).",
     );
+    expect(summaries[0]?.leadIds).toHaveLength(10);
   });
 
   it("groups each lead once per recipient and escalates at-risk leads to admins", () => {
@@ -76,7 +83,7 @@ describe("lead follow-up summaries", () => {
       ["admin-1"],
     );
 
-    expect(summaries).toEqual([
+    expect(summaries).toMatchObject([
       {
         recipientId: "admin-1",
         pendingLeads: 1,
@@ -93,7 +100,90 @@ describe("lead follow-up summaries", () => {
       },
     ]);
     expect(formatLeadFollowUpSummary(summaries[1]!)).toBe(
-      "Tienes 1 lead pendiente: 1 sin primer contacto. 1 está en riesgo.",
+      "1 lead requiere atención: 1 sin primer contacto; 1 en riesgo. Prioridad: Lead 1 (72 h).",
+    );
+    expect(buildLeadFollowUpLink(summaries[1]!)).toBe("/leads?view=list&ids=lead-1");
+  });
+
+  it("prioritizes at-risk and uncontacted leads before less urgent follow-ups", () => {
+    const summaries = collectLeadFollowUpSummaries(
+      {
+        ...base,
+        staleLeads: [
+          {
+            id: "stale",
+            name: "Seguimiento",
+            company: null,
+            phone: null,
+            email: null,
+            status: "contacted",
+            statusLabel: "Contactado",
+            assignedTo: "member-1",
+            since: "2026-08-21T04:00:00.000Z",
+            hoursSince: 30,
+            url: "/leads/stale",
+          },
+        ],
+        uncontactedLeads: [
+          {
+            id: "urgent",
+            name: "Urgente",
+            company: null,
+            phone: null,
+            email: null,
+            source: null,
+            assignedTo: "member-1",
+            createdAt: "2026-08-18T10:00:00.000Z",
+            hoursUncontacted: 96,
+            url: "/leads/urgent",
+          },
+        ],
+      },
+      ["admin-1"],
+    );
+
+    expect(summaries[1]?.leadIds).toEqual(["urgent", "stale"]);
+    expect(summaries[1]?.priorityLeads[0]).toMatchObject({
+      id: "urgent",
+      uncontacted: true,
+      atRisk: true,
+    });
+    expect(summaries[0]?.leadIds).toEqual(["urgent"]);
+  });
+
+  it("suppresses unchanged summaries but sends material deteriorations during cooldown", () => {
+    const summary = collectLeadFollowUpSummaries(
+      {
+        ...base,
+        uncontactedLeads: [
+          {
+            id: "lead-1",
+            name: "Lead 1",
+            company: null,
+            phone: null,
+            email: null,
+            source: null,
+            assignedTo: "member-1",
+            createdAt: "2026-08-19T10:00:00.000Z",
+            hoursUncontacted: 72,
+            url: "/leads/lead-1",
+          },
+        ],
+      },
+      [],
+    )[0]!;
+    const currentBody = formatLeadFollowUpSummary(summary);
+
+    expect(parseLeadFollowUpSummary(currentBody)).toEqual({
+      pendingLeads: 1,
+      uncontactedLeads: 1,
+      staleLeads: 0,
+      atRiskLeads: 1,
+    });
+    expect(shouldSendLeadFollowUpSummary(summary, undefined)).toBe(true);
+    expect(shouldSendLeadFollowUpSummary(summary, currentBody)).toBe(false);
+    expect(shouldSendLeadFollowUpSummary(summary, "1 lead pendiente: 1 sin seguimiento.")).toBe(
+      true,
     );
   });
 });

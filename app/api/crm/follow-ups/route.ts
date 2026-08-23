@@ -16,8 +16,10 @@ import { telegramSendMessage } from "@/lib/integrations/telegram";
 import { scopedLogger } from "@/lib/logger";
 import { dispatchNotifications } from "@/lib/notifications/dispatch";
 import {
+  buildLeadFollowUpLink,
   collectLeadFollowUpSummaries,
   formatLeadFollowUpSummary,
+  shouldSendLeadFollowUpSummary,
 } from "@/lib/notifications/lead-follow-up-summary";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -104,24 +106,31 @@ async function dispatchLeadFollowUpNotifications(data: Awaited<ReturnType<typeof
   const recipientIds = summaries.map((summary) => summary.recipientId);
   const { data: recentNotifications, error: recentError } = await supabase
     .from("notifications")
-    .select("recipient_id")
+    .select("recipient_id, body")
     .eq("event_type", SUMMARY_EVENT_TYPE)
     .in("recipient_id", recipientIds)
-    .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+    .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+    .order("created_at", { ascending: false });
   if (recentError) throw new Error(recentError.message);
-  const alreadySent = new Set(
-    (recentNotifications ?? []).map((notification) => notification.recipient_id),
-  );
+  const previousBodies = new Map<string, string | null>();
+  for (const notification of recentNotifications ?? []) {
+    if (!previousBodies.has(notification.recipient_id)) {
+      previousBodies.set(notification.recipient_id, notification.body);
+    }
+  }
 
   for (const summary of summaries) {
-    if (alreadySent.has(summary.recipientId)) continue;
+    const previousBody = previousBodies.has(summary.recipientId)
+      ? previousBodies.get(summary.recipientId)
+      : undefined;
+    if (!shouldSendLeadFollowUpSummary(summary, previousBody)) continue;
     await dispatchNotifications({
       recipientIds: [summary.recipientId],
       eventType: SUMMARY_EVENT_TYPE,
       entityType: "lead_follow_up_summary",
       entityId: summary.recipientId,
       body: formatLeadFollowUpSummary(summary),
-      link: "/leads",
+      link: buildLeadFollowUpLink(summary),
     });
   }
 }

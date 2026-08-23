@@ -42,6 +42,8 @@ const ATTENTION_FILTER_OPTIONS: { value: LeadAttentionFilter; label: string }[] 
   { value: "urgent", label: "Urgencia inmediata" },
 ];
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export default async function LeadsPage({
   searchParams,
 }: {
@@ -53,6 +55,7 @@ export default async function LeadsPage({
     solution?: string;
     assignee?: string;
     attention?: string;
+    ids?: string;
     page?: string;
   }>;
 }) {
@@ -69,6 +72,9 @@ export default async function LeadsPage({
     ? (sp.solution as string)
     : null;
   const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
+  const leadIds = [
+    ...new Set((sp.ids ?? "").split(",").filter((id) => UUID_PATTERN.test(id))),
+  ].slice(0, 25);
   const { sort, dir } = parseSortParam(sp, LEAD_SORT_COLUMNS, "created_at", "desc");
 
   const user = await requireUser();
@@ -89,6 +95,7 @@ export default async function LeadsPage({
     error,
   } = await listLeads({
     view,
+    ids: leadIds,
     q,
     status,
     source,
@@ -121,7 +128,13 @@ export default async function LeadsPage({
 
   if (view === "list") {
     const hasFilters =
-      q.length > 0 || !!status || !!source || !!solutionType || !!assignee || !!attention;
+      leadIds.length > 0 ||
+      q.length > 0 ||
+      !!status ||
+      !!source ||
+      !!solutionType ||
+      !!assignee ||
+      !!attention;
     return (
       <LeadsList
         leads={enrichedLeads}
@@ -129,7 +142,7 @@ export default async function LeadsPage({
         canEdit={canEdit}
         members={members}
         senderName={user.name}
-        title="Leads"
+        title={leadIds.length ? "Leads pendientes del aviso" : "Leads"}
         actions={actions}
         error={error ?? undefined}
         empty={hasFilters ? "Sin coincidencias." : "Aún no hay leads."}

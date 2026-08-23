@@ -42,6 +42,7 @@ import { InvoiceStatus } from "./invoice-status";
 import { RefreshClientSnapshotButton } from "./refresh-client-snapshot-button";
 
 export const dynamic = "force-dynamic";
+const PAYMENTS_GRID_CLASS = "md:grid-cols-[minmax(12rem,0.7fr)_minmax(0,1.3fr)] md:items-start";
 
 function InvoiceInfoField({
   label,
@@ -323,75 +324,105 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
               amountPaid,
             }}
             clientEmail={client?.email ?? null}
-            clientId={client?.id ?? null}
             recipientFiscalReady={recipientFiscalReady}
           />
         }
       />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        {/* Line items */}
-        <Card className="min-w-0">
-          <CardHeader className="border-b">
-            <CardTitle>Conceptos</CardTitle>
-            <CardDescription>
-              {items?.length ?? 0} {(items?.length ?? 0) === 1 ? "concepto" : "conceptos"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="px-0">
-            <InvoiceItemsSummary
-              items={(items ?? []) as unknown as InvoiceDisplayItem[]}
-              subtotal={Number(invoice.subtotal ?? 0)}
-              total={Number(invoice.total ?? 0)}
-              vatBreakdown={vatBreakdown}
-            />
-          </CardContent>
-        </Card>
+        <div className="flex min-w-0 flex-col gap-6">
+          {/* Line items */}
+          <Card className="min-w-0">
+            <CardHeader className="border-b">
+              <CardTitle>Conceptos</CardTitle>
+              <CardDescription>
+                {items?.length ?? 0} {(items?.length ?? 0) === 1 ? "concepto" : "conceptos"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-0">
+              <InvoiceItemsSummary
+                items={(items ?? []) as unknown as InvoiceDisplayItem[]}
+                subtotal={Number(invoice.subtotal ?? 0)}
+                total={Number(invoice.total ?? 0)}
+                vatBreakdown={vatBreakdown}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Payment summary and history */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Cobros</CardTitle>
+              <CardDescription>
+                {payments && payments.length > 0
+                  ? `${payments.length} ${payments.length === 1 ? "movimiento" : "movimientos"}`
+                  : "Sin movimientos registrados"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent
+              className={cn("grid gap-4", Boolean(payments?.length) && PAYMENTS_GRID_CLASS)}
+            >
+              <DetailGrid className="max-w-sm grid-cols-[minmax(5rem,1fr)_auto]">
+                <DetailRow label="Cobrado">
+                  <span className="tabular-nums font-medium text-emerald-700 dark:text-emerald-400">
+                    {formatEUR(amountPaid)}
+                  </span>
+                </DetailRow>
+                <DetailRow label="Pendiente">
+                  <span className="tabular-nums font-medium">{formatEUR(amountDue)}</span>
+                </DetailRow>
+              </DetailGrid>
+              {payments && payments.length > 0 ? (
+                <ul className="flex min-w-0 flex-col divide-y divide-border border-t border-border md:border-t-0 md:border-l md:pl-4">
+                  {payments.map((p) => {
+                    const status = p.status as string;
+                    const tone =
+                      status === "confirmed"
+                        ? "text-emerald-700 dark:text-emerald-400"
+                        : status === "failed"
+                          ? "text-red-600 dark:text-red-400"
+                          : "text-muted-foreground";
+                    const label =
+                      status === "confirmed"
+                        ? "Confirmado"
+                        : status === "failed"
+                          ? "Rechazado"
+                          : "Pendiente";
+                    return (
+                      <li
+                        key={p.id as string}
+                        className="flex items-center justify-between gap-3 py-2 text-sm first:pt-0 last:pb-0"
+                      >
+                        <div className="min-w-0">
+                          <span className="tabular-nums font-medium">
+                            {formatEUR(p.amount as number)}
+                          </span>
+                          <span className="ml-2 text-xs text-muted-foreground">
+                            {formatDate((p.confirmed_at ?? p.created_at) as string)}
+                          </span>
+                          {(p.ds_authorisation_code as string | null) ? (
+                            <span className="ml-2 font-mono text-[10px] text-muted-foreground">
+                              aut. {p.ds_authorisation_code as string}
+                            </span>
+                          ) : null}
+                          {(p.payment_method as PaymentMethodType | null) ? (
+                            <span className="ml-2 text-xs text-muted-foreground">
+                              {PAYMENT_METHOD_LABELS[p.payment_method as PaymentMethodType]}
+                            </span>
+                          ) : null}
+                        </div>
+                        <span className={`shrink-0 text-xs font-medium ${tone}`}>{label}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : null}
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Sidebar */}
         <div className="flex min-w-0 flex-col gap-6">
-          {/* Issuer (datos del emisor) */}
-          {settings ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>Emisor</CardTitle>
-                <CardAction>
-                  <CopyButton
-                    text={issuerCopyText}
-                    label="Copiar datos del emisor"
-                    successMessage="Datos del emisor copiados"
-                    showLabel
-                  />
-                </CardAction>
-              </CardHeader>
-              <CardContent>
-                <dl className="grid min-w-0 gap-4">
-                  <InvoiceInfoField label="Razón social">
-                    {(settings.company_name as string | null) ?? "—"}
-                  </InvoiceInfoField>
-                  {(settings.company_nif as string | null) ? (
-                    <InvoiceInfoField label="NIF">
-                      {settings.company_nif as string}
-                    </InvoiceInfoField>
-                  ) : null}
-                  {(settings.company_address as string | null) ? (
-                    <InvoiceInfoField label="Domicilio" valueClassName="whitespace-pre-line">
-                      {settings.company_address as string}
-                    </InvoiceInfoField>
-                  ) : null}
-                  {(settings.iban as string | null) ? (
-                    <InvoiceInfoField
-                      label="IBAN"
-                      valueClassName="overflow-x-auto whitespace-nowrap pb-1 font-mono text-xs"
-                    >
-                      {settings.iban as string}
-                    </InvoiceInfoField>
-                  ) : null}
-                </dl>
-              </CardContent>
-            </Card>
-          ) : null}
-
           <Card>
             <CardHeader>
               <CardTitle>Información fiscal</CardTitle>
@@ -462,66 +493,44 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             </CardContent>
           </Card>
 
-          {/* Payment history */}
-          {payments && payments.length > 0 ? (
+          {/* Issuer (datos del emisor) */}
+          {settings ? (
             <Card>
               <CardHeader>
-                <CardTitle>Cobros</CardTitle>
+                <CardTitle>Emisor</CardTitle>
+                <CardAction>
+                  <CopyButton
+                    text={issuerCopyText}
+                    label="Copiar datos del emisor"
+                    successMessage="Datos del emisor copiados"
+                    showLabel
+                  />
+                </CardAction>
               </CardHeader>
-              <CardContent className="flex flex-col gap-3">
-                <DetailGrid>
-                  <DetailRow label="Cobrado">
-                    <span className="tabular-nums font-medium text-emerald-700 dark:text-emerald-400">
-                      {formatEUR(amountPaid)}
-                    </span>
-                  </DetailRow>
-                  <DetailRow label="Pendiente">
-                    <span className="tabular-nums font-medium">{formatEUR(amountDue)}</span>
-                  </DetailRow>
-                </DetailGrid>
-                <ul className="flex flex-col divide-y divide-border border-t border-border">
-                  {payments.map((p) => {
-                    const status = p.status as string;
-                    const tone =
-                      status === "confirmed"
-                        ? "text-emerald-700 dark:text-emerald-400"
-                        : status === "failed"
-                          ? "text-red-600 dark:text-red-400"
-                          : "text-muted-foreground";
-                    const label =
-                      status === "confirmed"
-                        ? "Confirmado"
-                        : status === "failed"
-                          ? "Rechazado"
-                          : "Pendiente";
-                    return (
-                      <li
-                        key={p.id as string}
-                        className="flex items-center justify-between gap-3 py-2 text-sm"
-                      >
-                        <div className="min-w-0">
-                          <span className="tabular-nums font-medium">
-                            {formatEUR(p.amount as number)}
-                          </span>
-                          <span className="ml-2 text-xs text-muted-foreground">
-                            {formatDate((p.confirmed_at ?? p.created_at) as string)}
-                          </span>
-                          {(p.ds_authorisation_code as string | null) ? (
-                            <span className="ml-2 font-mono text-[10px] text-muted-foreground">
-                              aut. {p.ds_authorisation_code as string}
-                            </span>
-                          ) : null}
-                          {(p.payment_method as PaymentMethodType | null) ? (
-                            <span className="ml-2 text-xs text-muted-foreground">
-                              {PAYMENT_METHOD_LABELS[p.payment_method as PaymentMethodType]}
-                            </span>
-                          ) : null}
-                        </div>
-                        <span className={`shrink-0 text-xs font-medium ${tone}`}>{label}</span>
-                      </li>
-                    );
-                  })}
-                </ul>
+              <CardContent>
+                <dl className="grid min-w-0 gap-4">
+                  <InvoiceInfoField label="Razón social">
+                    {(settings.company_name as string | null) ?? "—"}
+                  </InvoiceInfoField>
+                  {(settings.company_nif as string | null) ? (
+                    <InvoiceInfoField label="NIF">
+                      {settings.company_nif as string}
+                    </InvoiceInfoField>
+                  ) : null}
+                  {(settings.company_address as string | null) ? (
+                    <InvoiceInfoField label="Domicilio" valueClassName="whitespace-pre-line">
+                      {settings.company_address as string}
+                    </InvoiceInfoField>
+                  ) : null}
+                  {(settings.iban as string | null) ? (
+                    <InvoiceInfoField
+                      label="IBAN"
+                      valueClassName="overflow-x-auto whitespace-nowrap pb-1 font-mono text-xs"
+                    >
+                      {settings.iban as string}
+                    </InvoiceInfoField>
+                  ) : null}
+                </dl>
               </CardContent>
             </Card>
           ) : null}

@@ -4,6 +4,7 @@ const state = vi.hoisted(() => ({
   rows: [] as Record<string, unknown>[],
   tasks: [] as Record<string, unknown>[],
   leadSelect: "",
+  inCalls: [] as [string, unknown[]][],
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -24,7 +25,10 @@ vi.mock("@/lib/supabase/server", () => ({
         eq: () => builder,
         is: () => builder,
         order: () => builder,
-        in: () => builder,
+        in: (column: string, values: unknown[]) => {
+          if (table === "leads") state.inCalls.push([column, values]);
+          return builder;
+        },
         limit: async () => result,
         // biome-ignore lint/suspicious/noThenProperty: mock needs to be thenable to mimic Supabase query builder
         then: (resolve: (value: typeof result) => unknown) => resolve(result),
@@ -41,6 +45,7 @@ describe("listLeads client avatar enrichment", () => {
     state.rows = [];
     state.tasks = [];
     state.leadSelect = "";
+    state.inCalls = [];
   });
 
   it("maps the linked client logo and keeps unconverted leads without a client", async () => {
@@ -138,5 +143,21 @@ describe("listLeads client avatar enrichment", () => {
     });
     expect(result.leads[0]?.scheduled_meeting_at).toBe("2099-07-22T09:00:00.000Z");
     expect(result.leads[1]?.next_action).toBeNull();
+  });
+
+  it("limits a notification summary view to its lead ids", async () => {
+    await listLeads({
+      view: "board",
+      ids: ["lead-1", "lead-2"],
+      q: "",
+      status: null,
+      source: null,
+      solutionType: null,
+      assignee: null,
+      attention: null,
+      page: 1,
+    });
+
+    expect(state.inCalls).toContainEqual(["id", ["lead-1", "lead-2"]]);
   });
 });

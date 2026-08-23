@@ -5,6 +5,7 @@ const {
   backupInvoiceToDrive,
   consumeUserVerification,
   deliverVerifactuOutbox,
+  ensureInvoiceRecipientVerified,
   findInvoiceForEdit,
   patchInvoiceStatus,
   rpc,
@@ -14,6 +15,7 @@ const {
   backupInvoiceToDrive: vi.fn(),
   consumeUserVerification: vi.fn(),
   deliverVerifactuOutbox: vi.fn(),
+  ensureInvoiceRecipientVerified: vi.fn(),
   findInvoiceForEdit: vi.fn(),
   patchInvoiceStatus: vi.fn(),
   rpc: vi.fn(),
@@ -25,6 +27,7 @@ vi.mock("@/lib/auth", () => ({
   requireUser: async () => ({ id: "user-1", email: "admin@example.test", role: "admin" }),
 }));
 vi.mock("@/lib/google/backup", () => ({ backupInvoiceToDrive }));
+vi.mock("@/lib/clients/fiscal-verification", () => ({ ensureInvoiceRecipientVerified }));
 vi.mock("@/lib/invoices/queries", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/invoices/queries")>()),
   findInvoiceForEdit,
@@ -67,6 +70,8 @@ beforeEach(() => {
   consumeUserVerification.mockReset();
   consumeUserVerification.mockResolvedValue(undefined);
   deliverVerifactuOutbox.mockReset();
+  ensureInvoiceRecipientVerified.mockReset();
+  ensureInvoiceRecipientVerified.mockResolvedValue(undefined);
   rpc.mockReset();
   rpc.mockResolvedValue({ data: [{ outbox_id: "outbox-1" }], error: null });
   deliverVerifactuOutbox.mockResolvedValue({ processed: true, status: "accepted", csv: "CSV-1" });
@@ -146,9 +151,25 @@ describe("updateInvoiceStatus fiscal flow", () => {
       intent: "invoice.verifactu_regularize",
       resource: `invoice:${INVOICE_ID}`,
     });
+    expect(ensureInvoiceRecipientVerified).toHaveBeenCalledWith(INVOICE_ID, "user-1");
     expect(rpc).toHaveBeenCalledWith("regularize_verifactu_invoice", {
       p_invoice_id: INVOICE_ID,
       p_software: expect.objectContaining({ producerNif: "B12345678" }),
     });
+  });
+
+  it("does not create a regularization when AEAT cannot verify the recipient", async () => {
+    ensureInvoiceRecipientVerified.mockRejectedValueOnce(
+      new Error("No se ha podido validar el destinatario con AEAT"),
+    );
+
+    const result = await regularizeVerifactu({ id: INVOICE_ID });
+
+    expect(result).toEqual({
+      ok: false,
+      error: "No se ha podido validar el destinatario con AEAT",
+    });
+    expect(rpc).not.toHaveBeenCalled();
+    expect(deliverVerifactuOutbox).not.toHaveBeenCalled();
   });
 });
