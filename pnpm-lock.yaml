@@ -33,8 +33,8 @@ importers:
         specifier: file:vendor\doscientos-ui-0.1.8.tgz
         version: file:vendor/doscientos-ui-0.1.8.tgz(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@doscientos/verifactu':
-        specifier: file:vendor\doscientos-verifactu-0.1.20.tgz
-        version: file:vendor/doscientos-verifactu-0.1.20.tgz(date-fns@4.3.0)
+        specifier: file:vendor\doscientos-verifactu-0.1.20-r1.tgz
+        version: file:vendor/doscientos-verifactu-0.1.20-r1.tgz(date-fns@4.3.0)
       '@hcaptcha/react-hcaptcha':
         specifier: ^2.0.2
         version: 2.0.2
@@ -519,8 +519,8 @@ packages:
       react: '>=18.3.0'
       react-dom: '>=18.3.0'
 
-  '@doscientos/verifactu@file:vendor/doscientos-verifactu-0.1.20.tgz':
-    resolution: {integrity: sha512-SIDTNHOZN1M8CJI6+2u6ljUDfiFj/My/YmXd3PsnJCHk6ZNwYiTlXT4xt470luF680idHubUYrMdEqT7eT9f3w==, tarball: file:vendor/doscientos-verifactu-0.1.20.tgz}
+  '@doscientos/verifactu@file:vendor/doscientos-verifactu-0.1.20-r1.tgz':
+    resolution: {integrity: sha512-Vgf9z5UGtaka1lQnwVxo+tQAytOeDsVGbQYrExrClzwZXH4W4pv5kvhJRztrNqPQceAtEQIgfqyIcmzglfTDTQ==, tarball: file:vendor/doscientos-verifactu-0.1.20-r1.tgz}
     version: 0.1.20
     engines: {node: '>=22.18'}
 
@@ -5803,7 +5803,7 @@ snapshots:
       react-dom: 19.2.6(react@19.2.6)
       tailwind-merge: 3.6.0
 
-  '@doscientos/verifactu@file:vendor/doscientos-verifactu-0.1.20.tgz(date-fns@4.3.0)':
+  '@doscientos/verifactu@file:vendor/doscientos-verifactu-0.1.20-r1.tgz(date-fns@4.3.0)':
     dependencies:
       '@richhouse83/xsd-validator': 1.0.0
       date-fns-tz: 3.2.0(date-fns@4.3.0)

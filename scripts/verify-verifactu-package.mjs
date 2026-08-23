@@ -15,7 +15,7 @@ const missing = required.filter((name) => !(name in pkg));
 if (missing.length > 0) {
   throw new Error(
     `@doscientos/verifactu incompatible o antiguo. Faltan: ${missing.join(", ")}. ` +
-    "Instala la versión construida/publicada compatible con el backoffice.",
+      "Instala la versión construida/publicada compatible con el backoffice.",
   );
 }
 

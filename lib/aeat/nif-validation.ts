@@ -3,9 +3,10 @@ export {
   buildAeatNifEnvelope,
   interpretAeatNifResponse,
   validateSpanishFiscalIdentity
-} from "@doscientos/verifactu";
+} from "@doscientos/verifactu/nif";
 export type {
   AeatFiscalIdentity,
   AeatNifValidation,
   AeatNifValidationOptions
-} from "@doscientos/verifactu";
+} from "@doscientos/verifactu/nif";
+

@@ -1,6 +1,10 @@
 import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
+  type VerifactuConfig,
+  type VerifactuSubmitResult,
+} from "@doscientos/verifactu";
+import {
   formatVerifactuDeliveryError,
   isRetryableVerifactuDelivery,
   normalizeAltaRechazoPrevio,
@@ -9,9 +13,7 @@ import {
   resolveVerifactuSoftwareSnapshot,
   sanitizeVerifactuResponse,
   verifactuWaitSeconds,
-  type VerifactuConfig,
-  type VerifactuSubmitResult,
-} from "@doscientos/verifactu";
+} from "@doscientos/verifactu/durable";
 import { verifactuInvoiceConfigFromEnv } from "./config";
 
 export {
@@ -61,13 +63,14 @@ export const TERMINAL_RECORD_REQUIRES_REGULARIZATION_MESSAGE =
 export async function assertDurableVerifactuPackage(requireCancellation = false): Promise<void> {
   const pkg = await import("@doscientos/verifactu");
   if (typeof pkg.prepareDurableVerifactuRecord !== "function") {
-    throw new Error(
-      "El paquete @doscientos/verifactu no implementa el motor durable requerido",
-    );
+    throw new Error("El paquete @doscientos/verifactu no implementa el motor durable requerido");
   }
   if (!requireCancellation) return;
   const client = await createVerifactuClient(verifactuInvoiceConfigFromEnv());
-  if (typeof client.cancelInvoice !== "function" || typeof pkg.computeCancellationHash !== "function") {
+  if (
+    typeof client.cancelInvoice !== "function" ||
+    typeof pkg.computeCancellationHash !== "function"
+  ) {
     throw new Error("El paquete @doscientos/verifactu no implementa RegistroAnulacion durable");
   }
 }
