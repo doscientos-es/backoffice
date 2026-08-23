@@ -567,6 +567,9 @@ export async function syncInvoiceQrFromLedger(invoiceId: string): Promise<void> 
     .select("record_payload")
     .eq("invoice_id", invoiceId)
     .eq("record_type", "alta")
+    .order("chain_sequence", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
   if (error || !data)
     throw new Error(error?.message ?? "No se encontró el RegistroAlta para generar el QR");

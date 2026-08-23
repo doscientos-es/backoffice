@@ -27,4 +27,15 @@ describe("VERI*FACTU recovery migrations", () => {
     expect(sql).toContain("v_client.fiscal_verified_nif is distinct from");
     expect(sql).toContain("v_client.fiscal_verified_name is distinct from trim(v_client.name)");
   });
+
+  it("chains recoveries globally and resolves definitive predecessors without deadlock", () => {
+    const sql = migration("20260823120000_verifactu_chain_and_latest_alta.sql");
+
+    expect(sql).toContain("A recovery follows the global generation chain");
+    expect(sql).toContain("where issuer_nif = v_nif");
+    expect(sql).toContain(
+      "coalesce(previous_outbox.state, '') not in ('accepted', 'rejected', 'terminal_error')",
+    );
+    expect(sql).toContain("order by l.chain_sequence desc, l.created_at desc limit 1");
+  });
 });

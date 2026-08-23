@@ -1,6 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const maybeSingle = vi.hoisted(() => vi.fn());
+const { buildQrUrl, limit, maybeSingle, order, update, updateEq } = vi.hoisted(() => ({
+  buildQrUrl: vi.fn(),
+  limit: vi.fn(),
+  maybeSingle: vi.fn(),
+  order: vi.fn(),
+  update: vi.fn(),
+  updateEq: vi.fn(),
+}));
+
+vi.mock("@doscientos/verifactu", () => ({
+  createVerifactuClient: () => ({ buildQrUrl }),
+}));
+vi.mock("@/lib/verifactu/config", () => ({
+  verifactuInvoiceConfigFromEnv: () => ({}),
+  verifactuSoftwareSnapshotFromEnv: () => ({}),
+}));
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
@@ -8,11 +23,21 @@ vi.mock("@/lib/supabase/admin", () => ({
       select: () => {
         const query = {
           eq: () => query,
-          order: () => query,
-          limit: () => query,
+          order: (column: string, options?: { ascending?: boolean }) => {
+            order(column, options);
+            return query;
+          },
+          limit: (count: number) => {
+            limit(count);
+            return query;
+          },
           maybeSingle,
         };
         return query;
+      },
+      update: (value: unknown) => {
+        update(value);
+        return { eq: updateEq };
       },
     }),
   }),
@@ -26,11 +51,19 @@ import {
   normalizeAltaRechazoPrevio,
   REJECTED_RECORD_REQUIRES_REGULARIZATION_MESSAGE,
   resolveVerifactuSoftwareSnapshot,
+  syncInvoiceQrFromLedger,
   TERMINAL_RECORD_REQUIRES_REGULARIZATION_MESSAGE,
 } from "./outbox";
 
 beforeEach(() => {
   maybeSingle.mockReset();
+  order.mockReset();
+  limit.mockReset();
+  update.mockReset();
+  updateEq.mockReset();
+  updateEq.mockResolvedValue({ error: null });
+  buildQrUrl.mockReset();
+  buildQrUrl.mockReturnValue("https://aeat.test/qr");
 });
 
 describe("formatOutboxError", () => {
@@ -153,5 +186,30 @@ describe("deliverInvoiceVerifactu", () => {
       status: "error",
       error: expect.stringContaining(TERMINAL_RECORD_REQUIRES_REGULARIZATION_MESSAGE),
     });
+  });
+});
+
+describe("syncInvoiceQrFromLedger", () => {
+  it("uses the latest immutable Alta when regularizations exist", async () => {
+    maybeSingle.mockResolvedValue({
+      data: {
+        record_payload: {
+          nif: "B12345678",
+          invoiceNumber: "2026-000009",
+          issueDate: "2026-08-23",
+          total: 121,
+          generatedAt: "2026-08-23T10:00:00.000Z",
+          vatLines: [],
+        },
+      },
+      error: null,
+    });
+
+    await syncInvoiceQrFromLedger("invoice-9");
+
+    expect(order).toHaveBeenNthCalledWith(1, "chain_sequence", { ascending: false });
+    expect(order).toHaveBeenNthCalledWith(2, "created_at", { ascending: false });
+    expect(limit).toHaveBeenCalledWith(1);
+    expect(update).toHaveBeenCalledWith({ qr_url: "https://aeat.test/qr" });
   });
 });
