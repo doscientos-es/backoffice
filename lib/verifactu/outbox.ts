@@ -1,12 +1,26 @@
 import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type {
-  VerifactuConfig,
-  VerifactuSoftware,
-  VerifactuSubmitInput,
-  VerifactuSubmitResult,
+import {
+  formatVerifactuDeliveryError,
+  isRetryableVerifactuDelivery,
+  normalizeAltaRechazoPrevio,
+  parseDurableAltaPayload,
+  prepareDurableVerifactuRecord,
+  resolveVerifactuSoftwareSnapshot,
+  sanitizeVerifactuResponse,
+  verifactuWaitSeconds,
+  type VerifactuConfig,
+  type VerifactuSubmitResult,
 } from "@doscientos/verifactu";
 import { verifactuInvoiceConfigFromEnv } from "./config";
+
+export {
+  isRetryableVerifactuDelivery,
+  normalizeAltaRechazoPrevio,
+  resolveVerifactuSoftwareSnapshot
+};
+
+export const formatOutboxError = formatVerifactuDeliveryError;
 
 const log = scopedLogger("verifactu.outbox");
 
@@ -27,29 +41,6 @@ type LedgerRow = {
   record_payload: Record<string, unknown>;
 };
 
-type HashModule = {
-  computeInvoiceHash?: (input: VerifactuSubmitInput) => string;
-  computeCancellationHash?: (input: CancellationInput) => string;
-};
-
-type CancellableClient = {
-  cancelInvoice?: (input: CancellationInput) => Promise<VerifactuSubmitResult>;
-};
-
-type CancellationInput = {
-  nif: string;
-  cancelledInvoiceNumber: string;
-  cancelledInvoiceIssueDate: Date;
-  previousHash: string | null;
-  generatedAt: Date;
-  emisorName: string;
-  previousInvoiceNumber: string | null;
-  previousIssueDate: Date | null;
-  sinRegistroPrevio: "S" | "N";
-  rechazoPrevio: "S" | "N";
-  incidence?: boolean;
-};
-
 export type OutboxDelivery = {
   processed: boolean;
   status: VerifactuSubmitResult["status"] | "skipped" | "deferred";
@@ -66,230 +57,19 @@ export const REJECTED_RECORD_REQUIRES_REGULARIZATION_MESSAGE =
 export const TERMINAL_RECORD_REQUIRES_REGULARIZATION_MESSAGE =
   "Este registro tiene un error definitivo y no admite reintentos. Usa «Regularizar y enviar» después de corregir la causa indicada.";
 
-function asRecord(value: unknown): Record<string, unknown> {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    throw new Error("El registro fiscal almacenado no tiene un formato válido");
-  }
-  return value as Record<string, unknown>;
-}
-
-function text(payload: Record<string, unknown>, key: string): string {
-  const value = payload[key];
-  if (typeof value !== "string" || !value.trim())
-    throw new Error(`Payload fiscal inválido: ${key}`);
-  return value;
-}
-
-function amount(payload: Record<string, unknown>, key: string): number {
-  const value = payload[key];
-  if (typeof value !== "number" || !Number.isFinite(value)) {
-    throw new Error(`Payload fiscal inválido: ${key}`);
-  }
-  return value;
-}
-
-function date(payload: Record<string, unknown>, key: string): Date {
-  const value = new Date(text(payload, key));
-  if (Number.isNaN(value.getTime())) throw new Error(`Fecha fiscal inválida: ${key}`);
-  return value;
-}
-
-function nullableDate(payload: Record<string, unknown>, key: string): Date | null {
-  const value = payload[key];
-  if (value === null || value === undefined) return null;
-  if (typeof value !== "string") throw new Error(`Fecha fiscal inválida: ${key}`);
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) throw new Error(`Fecha fiscal inválida: ${key}`);
-  return parsed;
-}
-
-function nullableText(payload: Record<string, unknown>, key: string): string | null {
-  const value = payload[key];
-  if (value === null || value === undefined) return null;
-  if (typeof value !== "string") throw new Error(`Payload fiscal inválido: ${key}`);
-  return value;
-}
-
-function optionalEnum<T extends string>(
-  payload: Record<string, unknown>,
-  key: string,
-  values: readonly T[],
-): T | undefined {
-  const value = payload[key];
-  if (value === null || value === undefined || value === "") return undefined;
-  if (typeof value !== "string" || !values.includes(value as T)) {
-    throw new Error(`Payload fiscal inválido: ${key}`);
-  }
-  return value as T;
-}
-
-export function normalizeAltaRechazoPrevio(
-  value: "N" | "S" | "X" | undefined,
-): "S" | "X" | undefined {
-  return value === "N" ? undefined : value;
-}
-
-function references(payload: Record<string, unknown>, key: string) {
-  const value = payload[key];
-  if (value === null || value === undefined) return undefined;
-  if (!Array.isArray(value)) throw new Error(`Payload fiscal inválido: ${key}`);
-  return value.map((entry) => {
-    const row = asRecord(entry);
-    return { invoiceNumber: text(row, "invoiceNumber"), issueDate: date(row, "issueDate") };
-  });
-}
-
-function sanitizeResponse(response: unknown): Record<string, unknown> {
-  if (!response || typeof response !== "object" || Array.isArray(response)) {
-    return { kind: "unknown_response" };
-  }
-  const allowed = [
-    "kind",
-    "httpStatus",
-    "csv",
-    "aeatCode",
-    "aeatDescription",
-    "soapFault",
-    "waitSeconds",
-    "error",
-    "errorCode",
-    "aeatStatus",
-    "warnings",
-  ];
-  return Object.fromEntries(
-    allowed
-      .filter((key) => (response as Record<string, unknown>)[key] !== undefined)
-      .map((key) => [key, (response as Record<string, unknown>)[key]]),
-  );
-}
-
-export function formatOutboxError(
-  explicitError: string | null,
-  result: Pick<VerifactuSubmitResult, "aeatCode" | "errorMessage"> | null,
-): string | null {
-  const message = explicitError ?? result?.errorMessage ?? null;
-  if (!result?.aeatCode) return message;
-  return message ? `AEAT ${result.aeatCode}: ${message}` : `AEAT ${result.aeatCode}`;
-}
-
 /** Fails closed until the package carrying durable-flow support is deployed. */
 export async function assertDurableVerifactuPackage(requireCancellation = false): Promise<void> {
-  const hashes = (await import("@doscientos/verifactu")) as unknown as HashModule;
-  if (!hashes.computeInvoiceHash) {
+  const pkg = await import("@doscientos/verifactu");
+  if (typeof pkg.prepareDurableVerifactuRecord !== "function") {
     throw new Error(
-      "El paquete @doscientos/verifactu no implementa el cálculo de huella requerido por VERI*FACTU durable",
+      "El paquete @doscientos/verifactu no implementa el motor durable requerido",
     );
   }
   if (!requireCancellation) return;
-  const client = (await createVerifactuClient(
-    verifactuInvoiceConfigFromEnv(),
-  )) as unknown as CancellableClient;
-  if (!client.cancelInvoice || !hashes.computeCancellationHash) {
+  const client = await createVerifactuClient(verifactuInvoiceConfigFromEnv());
+  if (typeof client.cancelInvoice !== "function" || typeof pkg.computeCancellationHash !== "function") {
     throw new Error("El paquete @doscientos/verifactu no implementa RegistroAnulacion durable");
   }
-}
-
-function altaInput(payload: Record<string, unknown>): VerifactuSubmitInput {
-  const vatLines = payload.vatLines;
-  if (!Array.isArray(vatLines)) throw new Error("Payload fiscal inválido: vatLines");
-  const rechazoPrevio = optionalEnum(payload, "rechazoPrevio", ["N", "S", "X"] as const);
-  const input = {
-    nif: text(payload, "nif"),
-    invoiceNumber: text(payload, "invoiceNumber"),
-    invoiceType: text(payload, "invoiceType"),
-    externalReference: nullableText(payload, "externalReference") ?? undefined,
-    rectificationType: optionalEnum(payload, "rectificationMethod", ["S", "I"] as const),
-    rectifiedInvoices:
-      references(payload, "rectifiedInvoices") ??
-      (payload.rectifiedInvoiceNumber
-        ? [
-          {
-            invoiceNumber: text(payload, "rectifiedInvoiceNumber"),
-            issueDate: date(payload, "rectifiedInvoiceIssueDate"),
-          },
-        ]
-        : undefined),
-    rectificationAmounts:
-      payload.rectificationAmounts && typeof payload.rectificationAmounts === "object"
-        ? (() => {
-          const value = asRecord(payload.rectificationAmounts);
-          return {
-            base: amount(value, "base"),
-            tax: amount(value, "tax"),
-            surcharge: value.surcharge === undefined ? undefined : amount(value, "surcharge"),
-          };
-        })()
-        : undefined,
-    operationDate: payload.operationDate ? date(payload, "operationDate") : undefined,
-    subsanacion: optionalEnum(payload, "subsanacion", ["S", "N"] as const),
-    rechazoPrevio: normalizeAltaRechazoPrevio(rechazoPrevio),
-    issueDate: date(payload, "issueDate"),
-    taxAmount: amount(payload, "taxAmount"),
-    total: amount(payload, "total"),
-    previousHash: nullableText(payload, "previousHash"),
-    generatedAt: date(payload, "generatedAt"),
-    emisorName: text(payload, "emisorName"),
-    clientNif: nullableText(payload, "clientNif"),
-    clientName: nullableText(payload, "clientName"),
-    descriptionOperacion: text(payload, "descriptionOperacion"),
-    vatLines: vatLines.map((line) => {
-      const value = asRecord(line);
-      return {
-        rate: amount(value, "rate"),
-        base: amount(value, "base"),
-        tax: amount(value, "tax"),
-      };
-    }),
-    previousInvoiceNumber: nullableText(payload, "previousInvoiceNumber"),
-    previousIssueDate: nullableDate(payload, "previousIssueDate"),
-  };
-  // Keep the adapter source-compatible with an older installed copy during a
-  // rolling deployment; production must deploy @doscientos/verifactu >=0.1.12
-  // so these fields are rendered into the AEAT XML.
-  return input as VerifactuSubmitInput;
-}
-
-function cancellationInput(payload: Record<string, unknown>): CancellationInput {
-  return {
-    nif: text(payload, "nif"),
-    cancelledInvoiceNumber: text(payload, "cancelledInvoiceNumber"),
-    cancelledInvoiceIssueDate: date(payload, "cancelledInvoiceIssueDate"),
-    previousHash: nullableText(payload, "previousHash"),
-    generatedAt: date(payload, "generatedAt"),
-    emisorName: text(payload, "emisorName"),
-    previousInvoiceNumber: nullableText(payload, "previousInvoiceNumber"),
-    previousIssueDate: nullableDate(payload, "previousIssueDate"),
-    sinRegistroPrevio: payload.sinRegistroPrevio === "S" ? "S" : "N",
-    rechazoPrevio: payload.rechazoPrevio === "S" ? "S" : "N",
-  };
-}
-
-export function resolveVerifactuSoftwareSnapshot(
-  payload: Record<string, unknown>,
-  legacyFallback: VerifactuSoftware,
-): VerifactuSoftware {
-  // Durable rows created before the SIF snapshot was added have no `software`
-  // property. Their hash and fiscal invoice data remain valid, so use the
-  // current bound SIF only for this legacy shape. A present but malformed value
-  // must still fail closed rather than silently changing fiscal evidence.
-  if (payload.software === undefined || payload.software === null) return legacyFallback;
-
-  const software = asRecord(payload.software);
-  const boolean = (key: string): boolean => {
-    const value = software[key];
-    if (typeof value !== "boolean") throw new Error(`Payload fiscal inválido: software.${key}`);
-    return value;
-  };
-  return {
-    producerName: text(software, "producerName"),
-    producerNif: text(software, "producerNif"),
-    name: text(software, "name"),
-    id: text(software, "id"),
-    version: text(software, "version"),
-    installationNumber: text(software, "installationNumber"),
-    onlyVerifactu: boolean("onlyVerifactu"),
-    multipleTaxpayers: boolean("multipleTaxpayers"),
-  };
 }
 
 async function getLedger(ledgerId: string): Promise<LedgerRow> {
@@ -323,19 +103,6 @@ async function outboxIncident(outboxId: string): Promise<boolean> {
   return row.incidence === true;
 }
 
-export function isRetryableVerifactuDelivery(result: VerifactuSubmitResult | null): boolean {
-  if (result?.status !== "error") return false;
-  if (result.errorCode === "network_error" || result.errorCode === "response_invalid") return true;
-  if (result.errorCode !== "http_error") return false;
-  const status = (result.response as { httpStatus?: unknown }).httpStatus;
-  return typeof status === "number" && (status === 408 || status === 429 || status >= 500);
-}
-
-function waitSeconds(result: VerifactuSubmitResult | null): number | null {
-  const value = (result?.response as { waitSeconds?: unknown } | undefined)?.waitSeconds;
-  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : null;
-}
-
 async function complete(
   outboxId: string,
   workerId: string,
@@ -347,7 +114,7 @@ async function complete(
   const explicitError = error instanceof Error ? error.message : "Error de envío a AEAT";
   const message = formatOutboxError(error ? explicitError : null, result);
   const enrichedResponse = result
-    ? sanitizeResponse({
+    ? sanitizeVerifactuResponse({
       ...result.response,
       errorCode: result.errorCode,
       aeatStatus: (result as VerifactuSubmitResult & { aeatStatus?: unknown }).aeatStatus,
@@ -363,7 +130,7 @@ async function complete(
     p_response: enrichedResponse,
     p_error: message,
     p_retryable: isRetryableVerifactuDelivery(result),
-    p_wait_seconds: waitSeconds(result),
+    p_wait_seconds: verifactuWaitSeconds(result),
   });
   if (completionError) throw new Error(completionError.message);
   return {
@@ -388,8 +155,6 @@ async function deliverClaimed(
   try {
     const ledger = await getLedger(ledgerId);
     const config = verifactuInvoiceConfigFromEnv();
-    const software = resolveVerifactuSoftwareSnapshot(ledger.record_payload, config.software);
-    const hashes = (await import("@doscientos/verifactu")) as unknown as HashModule;
     const incidence = await outboxIncident(outboxId);
     const admin = createAdminClient();
     const { data: slot, error: slotError } = await admin.rpc("reserve_verifactu_submission_slot", {
@@ -417,26 +182,22 @@ async function deliverClaimed(
         warnings: [],
       };
     }
-    const client = await createVerifactuClient({ ...config, software });
+    const prepared = prepareDurableVerifactuRecord(
+      {
+        recordType: ledger.record_type,
+        currentHash: ledger.current_hash,
+        payload: ledger.record_payload,
+        incidence,
+      },
+      config.software,
+    );
+    const client = await createVerifactuClient({ ...config, software: prepared.software });
     let result: VerifactuSubmitResult;
 
-    if (ledger.record_type === "alta") {
-      const input = { ...altaInput(ledger.record_payload), incidence };
-      const hash = hashes.computeInvoiceHash?.(input);
-      if (!hash) throw new Error("Falta computeInvoiceHash en @doscientos/verifactu 0.1.12");
-      if (hash !== ledger.current_hash)
-        throw new Error("La huella del ledger no coincide con su payload");
-      result = await client.registerInvoice(input);
+    if (prepared.recordType === "alta") {
+      result = await client.registerInvoice(prepared.input);
     } else {
-      const input = { ...cancellationInput(ledger.record_payload), incidence };
-      const cancellable = client as unknown as CancellableClient;
-      const hash = hashes.computeCancellationHash?.(input);
-      if (!hash || !cancellable.cancelInvoice) {
-        throw new Error("Falta RegistroAnulacion en @doscientos/verifactu 0.1.12");
-      }
-      if (hash !== ledger.current_hash)
-        throw new Error("La huella de anulación no coincide con su payload");
-      result = await cancellable.cancelInvoice(input);
+      result = await client.cancelInvoice(prepared.input);
     }
     if (result.hash !== ledger.current_hash) {
       throw new Error("La huella devuelta por VERI*FACTU no coincide con el ledger");
@@ -574,7 +335,9 @@ export async function syncInvoiceQrFromLedger(invoiceId: string): Promise<void> 
   if (error || !data)
     throw new Error(error?.message ?? "No se encontró el RegistroAlta para generar el QR");
 
-  const input = altaInput((data as { record_payload: Record<string, unknown> }).record_payload);
+  const input = parseDurableAltaPayload(
+    (data as { record_payload: Record<string, unknown> }).record_payload,
+  );
   const client = await createVerifactuClient(verifactuInvoiceConfigFromEnv());
   const qrUrl = client.buildQrUrl({
     nif: input.nif as string,

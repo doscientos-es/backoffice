@@ -9,7 +9,8 @@ const { buildQrUrl, limit, maybeSingle, order, update, updateEq } = vi.hoisted((
   updateEq: vi.fn(),
 }));
 
-vi.mock("@doscientos/verifactu", () => ({
+vi.mock("@doscientos/verifactu", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@doscientos/verifactu")>()),
   createVerifactuClient: () => ({ buildQrUrl }),
 }));
 vi.mock("@/lib/verifactu/config", () => ({
