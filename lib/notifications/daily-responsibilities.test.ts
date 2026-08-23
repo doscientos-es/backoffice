@@ -34,7 +34,7 @@ describe("daily responsibility summaries", () => {
     ]);
   });
 
-  it("formats a concise actionable push body", () => {
+  it("prioritizes overdue work in a concise morning summary", () => {
     expect(
       formatDailyResponsibilityBody({
         recipientId: "member-a",
@@ -43,6 +43,20 @@ describe("daily responsibility summaries", () => {
         pendingReminders: 0,
         staleLeads: 3,
       }),
-    ).toBe("Tienes 2 tareas vencidas, 1 tarea para hoy, 3 leads sin seguimiento.");
+    ).toBe(
+      "Buenos días. Prioridad: tienes 2 tareas vencidas, 1 tarea para hoy y 3 leads por responder.",
+    );
+  });
+
+  it("uses a neutral greeting when there is no overdue work", () => {
+    expect(
+      formatDailyResponsibilityBody({
+        recipientId: "member-a",
+        overdueTasks: 0,
+        tasksDueToday: 1,
+        pendingReminders: 0,
+        staleLeads: 2,
+      }),
+    ).toBe("Buenos días. Tienes 1 tarea para hoy y 2 leads por responder.");
   });
 });

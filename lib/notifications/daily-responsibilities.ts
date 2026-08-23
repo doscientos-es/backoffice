@@ -77,17 +77,26 @@ function formatCount(count: number, singular: string, plural: string): string {
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
+function joinCounts(items: string[]): string {
+  if (items.length < 2) return items[0] ?? "";
+  return `${items.slice(0, -1).join(", ")} y ${items.at(-1)}`;
+}
+
 export function formatDailyResponsibilityBody(summary: DailyResponsibility): string {
   const items = [
     summary.overdueTasks && formatCount(summary.overdueTasks, "tarea vencida", "tareas vencidas"),
-    summary.tasksDueToday &&
-      formatCount(summary.tasksDueToday, "tarea para hoy", "tareas para hoy"),
-    summary.pendingReminders &&
-      formatCount(summary.pendingReminders, "recordatorio pendiente", "recordatorios pendientes"),
-    summary.staleLeads &&
-      formatCount(summary.staleLeads, "lead sin seguimiento", "leads sin seguimiento"),
+    summary.tasksDueToday
+      ? formatCount(summary.tasksDueToday, "tarea para hoy", "tareas para hoy")
+      : 0,
+    summary.pendingReminders
+      ? formatCount(summary.pendingReminders, "recordatorio pendiente", "recordatorios pendientes")
+      : 0,
+    summary.staleLeads
+      ? formatCount(summary.staleLeads, "lead por responder", "leads por responder")
+      : 0,
   ].filter((item): item is string => Boolean(item));
-  return `Tienes ${items.join(", ")}.`;
+  const priority = summary.overdueTasks > 0 ? "Prioridad: tienes" : "Tienes";
+  return `Buenos días. ${priority} ${joinCounts(items)}.`;
 }
 
 function toAssignedWorkItems(rows: unknown[]): AssignedWorkItem[] {

@@ -4,6 +4,7 @@ import {
   buildLeadFollowUpLink,
   collectLeadFollowUpSummaries,
   formatLeadFollowUpSummary,
+  hasNewUncontactedLeadBreach,
   parseLeadFollowUpSummary,
   shouldSendLeadFollowUpSummary,
 } from "./lead-follow-up-summary";
@@ -182,8 +183,27 @@ describe("lead follow-up summaries", () => {
     });
     expect(shouldSendLeadFollowUpSummary(summary, undefined)).toBe(true);
     expect(shouldSendLeadFollowUpSummary(summary, currentBody)).toBe(false);
+    expect(hasNewUncontactedLeadBreach(summary, undefined)).toBe(true);
+    expect(hasNewUncontactedLeadBreach(summary, currentBody)).toBe(false);
     expect(shouldSendLeadFollowUpSummary(summary, "1 lead pendiente: 1 sin seguimiento.")).toBe(
       true,
     );
+  });
+
+  it("leaves routine stale-lead growth for the daily digest", () => {
+    const routineSummary = {
+      recipientId: "member-1",
+      pendingLeads: 4,
+      uncontactedLeads: 0,
+      staleLeads: 4,
+      atRiskLeads: 0,
+      leadIds: ["lead-1", "lead-2", "lead-3", "lead-4"],
+      priorityLeads: [],
+    };
+
+    expect(shouldSendLeadFollowUpSummary(routineSummary, undefined)).toBe(false);
+    expect(
+      shouldSendLeadFollowUpSummary(routineSummary, "1 lead requiere atención: 1 sin seguimiento."),
+    ).toBe(false);
   });
 });

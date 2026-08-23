@@ -19,6 +19,7 @@ import {
   buildLeadFollowUpLink,
   collectLeadFollowUpSummaries,
   formatLeadFollowUpSummary,
+  hasNewUncontactedLeadBreach,
   shouldSendLeadFollowUpSummary,
 } from "@/lib/notifications/lead-follow-up-summary";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -51,14 +52,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   const data = await getFollowUps({ slaHours, leadHours, proposalHours });
 
+  let notifyTelegram = false;
   try {
-    await dispatchLeadFollowUpNotifications(data);
+    ({ notifyTelegram } = await dispatchLeadFollowUpNotifications(data));
   } catch (error) {
     log.error({ err: error }, "lead follow-up notifications failed");
   }
 
   // ── Telegram SLA alert ──────────────────────────────────────────────────────
-  if (data.uncontactedLeads.length > 0) {
+  if (notifyTelegram && data.uncontactedLeads.length > 0) {
     const lines = [
       `⚠️ *${data.uncontactedLeads.length} lead${data.uncontactedLeads.length > 1 ? "s" : ""} sin contacto (>${slaHours}h)*`,
       "",
@@ -101,7 +103,7 @@ async function dispatchLeadFollowUpNotifications(data: Awaited<ReturnType<typeof
   if (adminsError) throw new Error(adminsError.message);
   const adminIds = (admins ?? []).map((member) => member.id as string);
   const summaries = collectLeadFollowUpSummaries(data, adminIds);
-  if (!summaries.length) return;
+  if (!summaries.length) return { notifyTelegram: false };
 
   const recipientIds = summaries.map((summary) => summary.recipientId);
   const { data: recentNotifications, error: recentError } = await supabase
@@ -119,6 +121,7 @@ async function dispatchLeadFollowUpNotifications(data: Awaited<ReturnType<typeof
     }
   }
 
+  let notifyTelegram = false;
   for (const summary of summaries) {
     const previousBody = previousBodies.has(summary.recipientId)
       ? previousBodies.get(summary.recipientId)
@@ -132,5 +135,7 @@ async function dispatchLeadFollowUpNotifications(data: Awaited<ReturnType<typeof
       body: formatLeadFollowUpSummary(summary),
       link: buildLeadFollowUpLink(summary),
     });
+    notifyTelegram ||= hasNewUncontactedLeadBreach(summary, previousBody);
   }
+  return { notifyTelegram };
 }

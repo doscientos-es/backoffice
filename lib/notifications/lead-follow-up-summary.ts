@@ -146,17 +146,28 @@ export function parseLeadFollowUpSummary(body: string | null): SummaryCounts | n
   };
 }
 
-/** Within the daily cooldown, notify only when the situation materially worsens. */
+/** True when a speed-to-lead SLA breach is new or has increased. */
+export function hasNewUncontactedLeadBreach(
+  summary: LeadFollowUpSummary,
+  previousBody: string | null | undefined,
+): boolean {
+  if (previousBody === undefined) return summary.uncontactedLeads > 0;
+  const previous = parseLeadFollowUpSummary(previousBody);
+  return previous ? summary.uncontactedLeads > previous.uncontactedLeads : false;
+}
+
+/** Routine follow-ups stay in the daily digest; only urgent deterioration interrupts the day. */
 export function shouldSendLeadFollowUpSummary(
   summary: LeadFollowUpSummary,
   previousBody: string | null | undefined,
 ): boolean {
-  if (previousBody === undefined) return true;
+  if (previousBody === undefined) {
+    return summary.uncontactedLeads > 0 || summary.atRiskLeads > 0;
+  }
   const previous = parseLeadFollowUpSummary(previousBody);
   if (!previous) return false;
   return (
     summary.atRiskLeads > previous.atRiskLeads ||
-    summary.uncontactedLeads > previous.uncontactedLeads ||
-    summary.pendingLeads >= previous.pendingLeads + 3
+    summary.uncontactedLeads > previous.uncontactedLeads
   );
 }

@@ -2,8 +2,9 @@ name: Send daily responsibility summary
 
 on:
   schedule:
-    # Weekdays at 09:15 UTC+2 (07:15 UTC). The endpoint is idempotent per member/day.
-    - cron: "15 7 * * 1-5"
+    # 09:30 Europe/Madrid: one UTC slot for summer time and another for winter time.
+    - cron: "30 7 * * 1-5"
+    - cron: "30 8 * * 1-5"
   workflow_dispatch:
 
 jobs:
@@ -13,7 +14,23 @@ jobs:
     timeout-minutes: 5
 
     steps:
+      - name: Select the Europe/Madrid delivery slot
+        id: delivery-window
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          OFFSET=$(TZ=Europe/Madrid date +%z)
+          SHOULD_SEND=false
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] || \
+             { [ "$SCHEDULE" = "30 7 * * 1-5" ] && [ "$OFFSET" = "+0200" ]; } || \
+             { [ "$SCHEDULE" = "30 8 * * 1-5" ] && [ "$OFFSET" = "+0100" ]; }; then
+            SHOULD_SEND=true
+          fi
+          echo "should_send=$SHOULD_SEND" >> "$GITHUB_OUTPUT"
+
       - name: Call the daily responsibility endpoint
+        if: steps.delivery-window.outputs.should_send == 'true'
         run: |
           STATUS=$(curl --silent --output /tmp/daily-responsibilities.json \
                         --write-out "%{http_code}" \
