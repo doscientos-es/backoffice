@@ -22,17 +22,13 @@ export type LogoProps = HTMLAttributes<HTMLSpanElement> & {
   size?: LogoSize;
   /** Hide the wordmark and render the mark only. */
   markOnly?: boolean;
-  /** Override the brand tint applied to the mark. */
+  /** Additional classes applied to the mark container. */
   markClassName?: string;
   /** Override typography on the wordmark. */
   wordmarkClassName?: string;
 };
 
-/**
- * Brand lockup: mark + "doscientos" wordmark. The mark defaults to the
- * brand green in light mode and a softer green in dark mode; callers can
- * override via `markClassName` for contexts that need a mono tint.
- */
+/** Brand lockup: theme-aware mark + "doscientos" wordmark. */
 export function Logo({
   size = "md",
   markOnly = false,
@@ -43,10 +39,7 @@ export function Logo({
 }: LogoProps) {
   return (
     <span className={cn("inline-flex items-center", GAP_CLASS[size], className)} {...props}>
-      <LogoMark
-        size={MARK_PX[size]}
-        className={cn("text-[#2A4227] dark:text-[#9CC196]", markClassName)}
-      />
+      <LogoMark size={MARK_PX[size]} className={markClassName} />
       {markOnly ? null : <Wordmark className={cn(TEXT_CLASS[size], wordmarkClassName)} />}
     </span>
   );

@@ -22,6 +22,15 @@ export const metadata: Metadata = {
     title: "Doscientos",
   },
   icons: {
+    icon: [
+      {
+        url: "/brand/logo-light.svg",
+        type: "image/svg+xml",
+        media: "(prefers-color-scheme: light)",
+      },
+      { url: "/brand/logo.svg", type: "image/svg+xml", media: "(prefers-color-scheme: dark)" },
+    ],
+    shortcut: "/brand/logo.svg",
     apple: "/brand/apple-touch-icon.png",
   },
 };
@@ -45,7 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </Script>
         <div id="startup-splash" role="status" aria-label="Cargando Doscientos">
           <div className="startup-splash-mark-shell">
-            <LogoMark size={112} className="startup-splash-mark" />
+            <LogoMark size={112} variant="light" className="startup-splash-mark" />
           </div>
           <div className="startup-splash-copy">
             <strong>doscientos</strong>

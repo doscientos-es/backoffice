@@ -71,7 +71,7 @@ function CoverSlide({ proposal }: { proposal: DeckProposal }) {
   return (
     <div className="deck-slide bg-[#2A4227] text-white p-6 sm:p-10 md:p-16 lg:p-24 text-center">
       <Stagger i={0}>
-        <LogoMark size={56} className="text-white/80 mb-8 sm:mb-12 sm:size-[72px]" />
+        <LogoMark size={56} variant="brand" className="mb-8 opacity-80 sm:mb-12 sm:size-[72px]" />
       </Stagger>
       <Stagger i={1}>
         <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.25em] sm:tracking-[0.3em] text-white/50 mb-4 sm:mb-6">
@@ -564,7 +564,7 @@ function ClosingSlide({ proposal, token }: { proposal: DeckProposal; token: stri
   return (
     <div className="deck-slide bg-[#2A4227] text-white p-6 sm:p-10 md:p-16 lg:p-24 text-center">
       <Stagger i={0}>
-        <LogoMark size={48} className="text-white/60 mb-8 sm:mb-12 sm:size-[56px]" />
+        <LogoMark size={48} variant="brand" className="mb-8 opacity-60 sm:mb-12 sm:size-[56px]" />
       </Stagger>
       <Stagger i={1}>
         <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6 tracking-tight">

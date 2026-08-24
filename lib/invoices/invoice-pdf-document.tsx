@@ -6,6 +6,7 @@ import {
   Image,
   Page,
   Path,
+  Rect,
   renderToBuffer,
   StyleSheet,
   Svg,
@@ -126,16 +127,17 @@ function formatWorkLogHours(hours: number): string {
   return `${hrs} h ${mins} min`;
 }
 
-/** Brand mark recreated with react-pdf SVG primitives (matches LogoMark). */
+/** Brand mark recreated with react-pdf SVG primitives (matches the green logo asset). */
 function BrandMark() {
   return (
-    <Svg width={14} height={14} viewBox="0 0 256 256">
+    <Svg width={14} height={14} viewBox="0 0 859 858">
+      <Rect width="858.204" height="858" fill="#BDFF7B" />
       <Path
-        d="M30 88.0355C40.3711 88.0355 50.3174 92.1554 57.6508 99.4889C64.9843 106.822 69.1041 116.769 69.1041 127.14C69.1041 137.511 64.9843 147.457 57.6508 154.79C50.3174 162.124 40.3711 166.244 30 166.244L30 88.0355Z"
-        fill={BRAND}
+        d="M144.518 317.011C174.22 317.011 202.704 328.81 223.706 349.812C244.708 370.814 256.507 399.299 256.507 429C256.507 458.701 244.708 487.186 223.706 508.188C202.704 529.19 174.22 540.989 144.519 540.989H110.5V317.011L144.518 317.011Z"
+        fill="#0C110B"
       />
-      <Circle cx="115.632" cy="127.14" r="39.1041" fill={BRAND} />
-      <Circle cx="201.265" cy="127.14" r="39.1041" fill={BRAND} />
+      <Circle cx="389.757" cy="429" r="111.989" fill="#0C110B" />
+      <Circle cx="634.996" cy="429" r="111.989" fill="#0C110B" />
     </Svg>
   );
 }

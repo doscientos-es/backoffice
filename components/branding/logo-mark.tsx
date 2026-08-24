@@ -1,38 +1,55 @@
-import type { SVGProps } from "react";
+import type { CSSProperties, HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-export type LogoMarkProps = Omit<SVGProps<SVGSVGElement>, "viewBox" | "xmlns"> & {
+export type LogoMarkProps = Omit<HTMLAttributes<HTMLSpanElement>, "children"> & {
   /** Pixel size applied to both width and height. */
   size?: number;
   /** Accessible title; when omitted the mark is treated as decorative. */
   title?: string;
+  /** Select a fixed asset or follow the backoffice theme. */
+  variant?: "auto" | "brand" | "light";
 };
 
-/**
- * Pure SVG mark for the doscientos brand. Uses `currentColor` so callers
- * control the tint via Tailwind text utilities or inline `color`.
- */
-export function LogoMark({ size = 24, title, className, ...props }: LogoMarkProps) {
+/** Theme-aware mark backed by the canonical brand assets in `public/brand`. */
+export function LogoMark({
+  size = 24,
+  title,
+  variant = "auto",
+  className,
+  style,
+  ...props
+}: LogoMarkProps) {
   const decorative = !title;
+  const sizeStyle = { ...style, "--logo-mark-size": `${size}px` } as CSSProperties;
+
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 256 256"
-      xmlns="http://www.w3.org/2000/svg"
-      role={decorative ? undefined : "img"}
+    <span
+      role="img"
       aria-hidden={decorative ? true : undefined}
       aria-label={decorative ? undefined : title}
-      className={cn("shrink-0", className)}
+      className={cn(
+        "inline-block size-[var(--logo-mark-size)] shrink-0 overflow-hidden rounded-[22%]",
+        className,
+      )}
+      style={sizeStyle}
       {...props}
     >
-      {title ? <title>{title}</title> : null}
-      <path
-        d="M30 88.0355C40.3711 88.0355 50.3174 92.1554 57.6508 99.4889C64.9843 106.822 69.1041 116.769 69.1041 127.14C69.1041 137.511 64.9843 147.457 57.6508 154.79C50.3174 162.124 40.3711 166.244 30 166.244L30 88.0355Z"
-        fill="currentColor"
-      />
-      <circle cx="115.632" cy="127.14" r="39.1041" fill="currentColor" />
-      <circle cx="201.265" cy="127.14" r="39.1041" fill="currentColor" />
-    </svg>
+      {variant !== "brand" ? (
+        // biome-ignore lint/performance/noImgElement: SVG público pequeño sin beneficio de optimización.
+        <img
+          src="/brand/logo-light.svg"
+          alt=""
+          className={cn("size-full", variant === "auto" && "dark:hidden")}
+        />
+      ) : null}
+      {variant !== "light" ? (
+        // biome-ignore lint/performance/noImgElement: SVG público pequeño sin beneficio de optimización.
+        <img
+          src="/brand/logo.svg"
+          alt=""
+          className={cn("size-full", variant === "auto" && "hidden dark:block")}
+        />
+      ) : null}
+    </span>
   );
 }
