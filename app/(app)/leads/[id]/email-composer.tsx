@@ -1,8 +1,9 @@
 "use client";
 
-import { Sparkle as Sparkles } from "lucide-react";
-import { useState } from "react";
+import { LoaderCircle as Loader2, Sparkle as Sparkles } from "lucide-react";
+import { useId, useState } from "react";
 import { AiNotice } from "@/components/ui/ai-notice";
+import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
@@ -18,6 +19,8 @@ const EMAIL_LANGUAGES = [
   { value: "ca", label: "Català" },
   { value: "en", label: "English" },
 ] as const;
+
+const MAX_DRAFT_INSTRUCTIONS = 1000;
 
 export type EmailComposerProps = {
   leadId: string;
@@ -54,9 +57,19 @@ export function EmailComposer({
   const [subject, setSubject] = useState(defaultSubject ?? "");
   const [body, setBody] = useState(defaultBody ?? "");
   const [language, setLanguage] = useState<string>("es");
+  const [aiInstructions, setAiInstructions] = useState("");
   const [drafting, setDrafting] = useState(false);
+  const [hasGeneratedDraft, setHasGeneratedDraft] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const instructionsId = useId();
+  const languageId = useId();
   const feedback = useFormFeedback();
+  const baseDraftInstructions = draftInstructions?.trim() ?? "";
+  const instructionSeparatorLength = baseDraftInstructions ? 2 : 0;
+  const customInstructionLimit = Math.max(
+    0,
+    MAX_DRAFT_INSTRUCTIONS - baseDraftInstructions.length - instructionSeparatorLength,
+  );
 
   async function handleDraftWithAI() {
     setDrafting(true);
@@ -67,7 +80,9 @@ export function EmailComposer({
         body: JSON.stringify({
           lead_id: leadId,
           kind: draftKind,
-          instructions: draftInstructions,
+          instructions:
+            [baseDraftInstructions, aiInstructions.trim()].filter(Boolean).join("\n\n") ||
+            undefined,
           language,
         }),
       });
@@ -75,6 +90,7 @@ export function EmailComposer({
       if (!res.ok) throw new Error(json.error ?? "Error al generar el borrador.");
       setSubject(json.subject ?? "");
       setBody(json.body ?? "");
+      setHasGeneratedDraft(true);
     } catch (err) {
       feedback.setError(err instanceof Error ? err.message : "Error al generar el borrador.");
     } finally {
@@ -125,33 +141,81 @@ export function EmailComposer({
     <>
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
         {aiEnabled ? (
-          <div className="flex items-center justify-end gap-2">
-            <Label htmlFor="draft-language" className="sr-only">
-              Idioma del email
-            </Label>
-            <Select
-              id="draft-language"
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              disabled={drafting}
-              className="h-7 w-auto py-0 text-xs"
-              aria-label="Idioma del email"
-            >
-              {EMAIL_LANGUAGES.map((l) => (
-                <option key={l.value} value={l.value}>
-                  {l.label}
-                </option>
-              ))}
-            </Select>
-            <button
-              type="button"
-              onClick={handleDraftWithAI}
-              disabled={drafting}
-              className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground disabled:opacity-50"
-            >
-              <Sparkles className="h-3 w-3" />
-              {drafting ? "Generando…" : "Generar borrador con IA"}
-            </button>
+          <div className="rounded-lg border border-primary/20 bg-primary/[0.03] p-3">
+            <div className="flex items-start gap-2.5">
+              <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                <Sparkles className="size-3.5" aria-hidden />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium">Crear borrador con IA</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Describe el objetivo, los puntos clave o el tono. Podrás editarlo antes de enviar.
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 flex flex-col gap-1.5">
+              <Label htmlFor={instructionsId} className="text-xs font-medium">
+                ¿Qué quieres que diga el email?{" "}
+                <span className="text-muted-foreground">(opcional)</span>
+              </Label>
+              <Textarea
+                id={instructionsId}
+                value={aiInstructions}
+                onChange={(event) => setAiInstructions(event.target.value)}
+                disabled={drafting || customInstructionLimit === 0}
+                rows={3}
+                maxLength={customInstructionLimit}
+                placeholder="Ej.: resume los dos beneficios principales, usa un tono breve y cercano y termina proponiendo una llamada de 20 minutos."
+                aria-describedby={`${instructionsId}-hint`}
+              />
+              <div
+                id={`${instructionsId}-hint`}
+                className="flex items-center justify-between gap-3 text-[11px] text-muted-foreground"
+              >
+                <span>La IA usará también el contexto y el historial del lead.</span>
+                <span className="shrink-0 tabular-nums">
+                  {aiInstructions.length}/{customInstructionLimit}
+                </span>
+              </div>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+              <Label htmlFor={languageId} className="sr-only">
+                Idioma del email
+              </Label>
+              <Select
+                id={languageId}
+                value={language}
+                onChange={(event) => setLanguage(event.target.value)}
+                disabled={drafting}
+                className="h-8 w-auto py-0 text-xs"
+                aria-label="Idioma del email"
+              >
+                {EMAIL_LANGUAGES.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleDraftWithAI}
+                disabled={drafting}
+                className="gap-1.5"
+              >
+                {drafting ? (
+                  <Loader2 className="size-3.5 animate-spin" aria-hidden />
+                ) : (
+                  <Sparkles className="size-3.5" aria-hidden />
+                )}
+                {drafting
+                  ? "Generando…"
+                  : hasGeneratedDraft
+                    ? "Regenerar borrador"
+                    : "Generar borrador"}
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="flex justify-end">
