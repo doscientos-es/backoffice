@@ -108,11 +108,7 @@ function describeInteractionAge(
   return `hace aprox. ${years} año${years === 1 ? "" : "s"} (${days} días)`;
 }
 
-/** Formats one interaction for an AI prompt, optionally making its age explicit. */
-export function formatInteractionForAI(
-  interaction: LeadInteractionForAI,
-  relativeTo?: Date,
-): string {
+function formatInteraction(interaction: LeadInteractionForAI, relativeTo?: Date): string {
   const date = interactionDate(interaction).slice(0, 10);
   const age = relativeTo ? describeInteractionAge(interaction, relativeTo) : null;
   const subject = interaction.subject?.trim();
@@ -141,4 +137,17 @@ export function formatInteractionForAI(
   }${callMetadata ? ` | ${callMetadata}` : ""}${meetingTime ? ` | ${meetingTime}` : ""}${
     transcript ? ` | Transcripción: ${transcript}` : ""
   }`;
+}
+
+/** Formats one interaction for an AI prompt. */
+export function formatInteractionForAI(interaction: LeadInteractionForAI): string {
+  return formatInteraction(interaction);
+}
+
+/** Formats one interaction for an AI prompt and makes its age explicit. */
+export function formatDatedInteractionForAI(
+  interaction: LeadInteractionForAI,
+  relativeTo: Date,
+): string {
+  return formatInteraction(interaction, relativeTo);
 }

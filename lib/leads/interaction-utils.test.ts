@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  formatInteractionForAI,
+  formatDatedInteractionForAI,
   getCallInteractionDetails,
   groupResendInteractions,
   interactionDate,
@@ -48,11 +48,11 @@ describe("call interaction dates", () => {
     };
     const referenceDate = new Date("2026-08-24T12:00:00.000Z");
 
-    expect(formatInteractionForAI(baseInteraction, referenceDate)).toContain(
+    expect(formatDatedInteractionForAI(baseInteraction, referenceDate)).toContain(
       "2026-08-23 (ayer) | call",
     );
     expect(
-      formatInteractionForAI(
+      formatDatedInteractionForAI(
         { ...baseInteraction, created_at: "2026-06-24T10:00:00.000Z" },
         referenceDate,
       ),

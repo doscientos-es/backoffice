@@ -18,7 +18,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { AI_MODELS, isAIEnabled, runAIObject } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
-import { formatInteractionForAI } from "@/lib/leads/interaction-utils";
+import { formatDatedInteractionForAI } from "@/lib/leads/interaction-utils";
 import { scopedLogger } from "@/lib/logger";
 import { rateLimit } from "@/lib/ratelimit";
 import { createServerClient } from "@/lib/supabase/server";
@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
   const interactionsText = (interactions ?? [])
     .reverse()
     .map((i) =>
-      formatInteractionForAI(
+      formatDatedInteractionForAI(
         {
           type: i.type as string,
           subject: (i.subject as string | null) ?? null,
