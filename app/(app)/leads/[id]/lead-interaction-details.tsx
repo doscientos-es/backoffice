@@ -48,7 +48,11 @@ function emailMetadata(payload: unknown): Array<[string, string]> {
 
 function emailAddress(value: string | null): string | null {
   if (!value) return null;
-  return value.match(/<([^<>\s]+@[^<>\s]+)>/)?.[1] ?? value.match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/i)?.[0] ?? null;
+  return (
+    value.match(/<([^<>\s]+@[^<>\s]+)>/)?.[1] ??
+    value.match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/i)?.[0] ??
+    null
+  );
 }
 
 function replySubject(subject: string | null): string {
@@ -101,7 +105,7 @@ export function LeadInteractionDetails({
         <DialogHeader className="shrink-0 border-b bg-gradient-to-br from-primary/[0.07] via-background to-background p-5 pr-12 sm:p-6 sm:pr-14">
           <div className="flex items-start gap-3">
             <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
-              <Mail className="size-5" />
+              {isEmail ? <Mail className="size-5" /> : <Eye className="size-5" />}
             </span>
             <div className="min-w-0 space-y-1.5">
               <div className="flex flex-wrap items-center gap-2">
@@ -122,17 +126,6 @@ export function LeadInteractionDetails({
         <div className="min-h-0 overflow-y-auto p-4 sm:p-6">
           <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
             <div className="min-w-0 space-y-5">
-              <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
-                <div className="flex items-center justify-between gap-3 border-b bg-muted/20 px-4 py-3">
-                  <div>
-                    <h3 className="text-sm font-medium">Contenido completo</h3>
-                    <p className="text-xs text-muted-foreground">Formato original convertido a texto legible.</p>
-                  </div>
-                  <CopyButton text={body} label="Copiar contenido" showLabel className="shrink-0" />
-                </div>
-                <p className="whitespace-pre-wrap break-words p-4 text-sm leading-7 sm:p-5">{body}</p>
-              </section>
-
               {replying ? (
                 <section className="rounded-xl border border-primary/20 bg-card p-4 shadow-sm sm:p-5">
                   <div className="mb-4 flex items-start justify-between gap-3">
@@ -142,10 +135,16 @@ export function LeadInteractionDetails({
                         Respuesta rápida
                       </h3>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        La IA usará el mensaje completo como fuente prioritaria. Revisa siempre el borrador.
+                        La IA usará el mensaje completo como fuente prioritaria. Revisa siempre el
+                        borrador.
                       </p>
                     </div>
-                    <Button type="button" variant="ghost" size="sm" onClick={() => setReplying(false)}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setReplying(false)}
+                    >
                       Cerrar
                     </Button>
                   </div>
@@ -164,6 +163,21 @@ export function LeadInteractionDetails({
                   />
                 </section>
               ) : null}
+
+              <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
+                <div className="flex items-center justify-between gap-3 border-b bg-muted/20 px-4 py-3">
+                  <div>
+                    <h3 className="text-sm font-medium">Contenido completo</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Formato original convertido a texto legible.
+                    </p>
+                  </div>
+                  <CopyButton text={body} label="Copiar contenido" showLabel className="shrink-0" />
+                </div>
+                <p className="whitespace-pre-wrap break-words p-4 text-sm leading-7 sm:p-5">
+                  {body}
+                </p>
+              </section>
             </div>
 
             <aside className="space-y-4 lg:sticky lg:top-0">
@@ -196,7 +210,8 @@ export function LeadInteractionDetails({
                   <Sparkles className="size-5 text-primary" />
                   <h3 className="mt-3 text-sm font-semibold">Preparar respuesta</h3>
                   <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                    Responde manualmente o genera un borrador contextual con IA usando todo el email.
+                    Responde manualmente o genera un borrador contextual con IA usando todo el
+                    email.
                   </p>
                   <Button
                     type="button"
