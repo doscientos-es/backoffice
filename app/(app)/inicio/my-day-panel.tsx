@@ -2,6 +2,7 @@
 
 import { Inbox, ListTodo, PartyPopper, CircleUser as UserRound } from "lucide-react";
 import { claimLead } from "@/app/(app)/leads/actions";
+import { updateTaskStatus } from "@/app/(app)/tasks/actions";
 import { useOptimisticRemoval } from "@/lib/hooks/use-optimistic-removal";
 import { MyDayColumn } from "./_components/my-day-column";
 import { getMyDayLeadsCopy, isTeamScope } from "./_components/my-day-copy";
@@ -15,6 +16,7 @@ export type { MyDayPanelProps } from "./_components/my-day-types";
  * "Tu día": a personal action queue, with an admin/owner scope selector.
  */
 export function MyDayPanel({ tasks, myLeads, unassignedLeads, scope }: MyDayPanelProps) {
+  const { items: visibleTasks, remove: completeTaskOptimistic } = useOptimisticRemoval(tasks);
   const { items: visibleUnassigned, remove: claimOptimistic } =
     useOptimisticRemoval(unassignedLeads);
   const teamScope = isTeamScope(scope);
@@ -31,7 +33,7 @@ export function MyDayPanel({ tasks, myLeads, unassignedLeads, scope }: MyDayPane
         <MyDayColumn
           icon={<ListTodo className="size-4 text-blue-500" />}
           title="Qué hacer ahora"
-          count={tasks.length}
+          count={visibleTasks.length}
           href="/tasks"
           empty={
             <>
@@ -40,8 +42,15 @@ export function MyDayPanel({ tasks, myLeads, unassignedLeads, scope }: MyDayPane
             </>
           }
         >
-          {tasks.map((t) => (
-            <MyDayTaskItem key={t.id} task={t} showAssignee={teamScope} />
+          {visibleTasks.map((t) => (
+            <MyDayTaskItem
+              key={t.id}
+              task={t}
+              showAssignee={teamScope}
+              onCompleteAction={(id) =>
+                completeTaskOptimistic(id, () => updateTaskStatus({ taskId: id, status: "done" }))
+              }
+            />
           ))}
         </MyDayColumn>
 

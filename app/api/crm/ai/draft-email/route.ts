@@ -14,14 +14,14 @@
  * Auth: requireUser (viewer denegado). 503 si la IA no está configurada.
  */
 
-import { type NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { AI_MODELS, isAIEnabled, runAIObject } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { formatInteractionForAI } from "@/lib/leads/interaction-utils";
 import { scopedLogger } from "@/lib/logger";
 import { rateLimit } from "@/lib/ratelimit";
 import { createServerClient } from "@/lib/supabase/server";
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -56,6 +56,11 @@ innecesarios. Redacta el cuerpo en Markdown simple (párrafos, **negrita**,
 listas con "-"), sin encabezados ni HTML. Redacta TODO el email (asunto y
 cuerpo) íntegramente en ${LANGUAGE_NAMES[language]}, con gramática y
 expresiones naturales de ese idioma, no una traducción literal del español.
+
+Compara la fecha actual de referencia con las fechas y antigüedades de las
+interacciones. Adapta las referencias temporales y los tiempos verbales: no
+trates una llamada o reunión antigua como si acabara de ocurrir. Menciona la
+fecha o el tiempo transcurrido solo cuando resulte natural. No inventes fechas.
 
 - "subject": asunto del email (máx. 100 caracteres).
 - "body": cuerpo del email en Markdown.
@@ -111,6 +116,7 @@ export async function POST(req: NextRequest) {
     .order("created_at", { ascending: false })
     .limit(5);
 
+  const generatedAt = new Date();
   const interactionsText = (interactions ?? [])
     .reverse()
     .map((i) =>
@@ -120,11 +126,13 @@ export async function POST(req: NextRequest) {
         body: (i.body as string | null) ?? null,
         payload: i.payload,
         created_at: i.created_at as string,
-      }),
+      }, generatedAt),
     )
     .join("\n");
 
-  const userPrompt = `Lead: ${lead.name}
+  const userPrompt = `Fecha actual de referencia (UTC): ${generatedAt.toISOString()}
+
+Lead: ${lead.name}
 Empresa: ${lead.company ?? "—"}
 Email: ${lead.email ?? "—"}
 Origen: ${lead.source ?? "—"}

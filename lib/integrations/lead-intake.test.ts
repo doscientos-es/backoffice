@@ -19,7 +19,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── shared state ──────────────────────────────────────────────────────────────
 
-const { store } = vi.hoisted(() => ({
+const { notifyNewLead, sendLeadConfirmation, store } = vi.hoisted(() => ({
+  notifyNewLead: vi.fn().mockResolvedValue(undefined),
+  sendLeadConfirmation: vi.fn().mockResolvedValue(undefined),
   store: {
     existingById: null as Record<string, unknown> | null,
     existingByEmail: null as Record<string, unknown> | null,
@@ -44,7 +46,11 @@ vi.mock("@/lib/integrations/lead-pipeline", () => ({
 }));
 
 vi.mock("@/lib/integrations/notify-new-lead", () => ({
-  notifyNewLead: vi.fn().mockResolvedValue(undefined),
+  notifyNewLead,
+}));
+
+vi.mock("@/lib/integrations/send-lead-confirmation", () => ({
+  sendLeadConfirmation,
 }));
 
 vi.mock("@/lib/logger", () => ({
@@ -150,6 +156,8 @@ const calIntake = {
 // ── tests ─────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
+  notifyNewLead.mockClear();
+  sendLeadConfirmation.mockClear();
   store.existingById = null;
   store.existingByEmail = null;
   store.existingByPhone = null;
@@ -169,15 +177,30 @@ describe("ingestLead – new lead", () => {
       name: "María López",
       email: "maria@example.com",
     });
-    expect(store.insertedRows.find((row) => row.table === "lead_interactions")).toMatchObject({
-      lead_id: "new-lead-uuid",
-      type: "note",
-      subject: "Lead recibido desde Landing",
-    });
+    await vi.waitFor(() =>
+      expect(store.insertedRows.find((row) => row.table === "lead_interactions")).toMatchObject({
+        lead_id: "new-lead-uuid",
+        type: "note",
+        subject: "Lead recibido desde Landing",
+      }),
+    );
     expect(store.insertedRows.find((row) => row.table === "conversion_events")).toMatchObject({
       lead_id: "new-lead-uuid",
       event_name: "lead_created",
     });
+    await vi.waitFor(() =>
+      expect(sendLeadConfirmation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          leadId: "new-lead-uuid",
+          leadEmail: "maria@example.com",
+          leadSource: "Landing",
+        }),
+      ),
+    );
+    await vi.waitFor(() => expect(notifyNewLead).toHaveBeenCalledOnce());
+    expect(sendLeadConfirmation.mock.invocationCallOrder[0]).toBeLessThan(
+      notifyNewLead.mock.invocationCallOrder[0] as number,
+    );
   });
 
   it("returns ok:false when validation fails", async () => {

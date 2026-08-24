@@ -10,6 +10,7 @@ import { scopedLogger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { runLeadPipeline } from "./lead-pipeline";
 import { notifyNewLead } from "./notify-new-lead";
+import { sendLeadConfirmation } from "./send-lead-confirmation";
 
 // ── Input schema ──────────────────────────────────────────────────────────
 
@@ -454,6 +455,20 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
         }).catch((e) => log.error({ err: e, leadId }, "conversion events link failed")),
       );
     }
+
+    // Acknowledge the external form before alerting the team to make the first call.
+    await sendLeadConfirmation({
+      leadId,
+      leadName: row.name,
+      leadEmail: row.email,
+      leadSource: row.source,
+      internalTraffic: norm.context?.internalTraffic,
+      landingRef: row.landing_ref as string | null,
+      landingSubject: row.landing_subject as string | null,
+      resourceSlug: norm.context?.resourceSlug ?? null,
+      calculatorCost: row.calculator_cost as string | null,
+      calculatorHours: row.calculator_hours as string | null,
+    }).catch((e) => log.error({ err: e, leadId }, "lead confirmation failed"));
 
     await Promise.allSettled([
       ...(qualifiedLeadStageTask ? [qualifiedLeadStageTask] : []),

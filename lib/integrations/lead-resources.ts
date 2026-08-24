@@ -11,11 +11,11 @@ const SITE_URL = "https://doscientos.es";
 const RESOURCES = {
   "calculadora-coste-oculto": {
     slug: "calculadora-coste-oculto",
-    title: "Resumen para priorizar procesos manuales",
+    title: "Calculadora del coste del trabajo manual",
     description:
-      "Una guia corta para decidir si ese coste oculto merece automatizacion, mejora operativa o simplemente mejor control.",
-    href: `${SITE_URL}/recursos/automatizacion-procesos-empresariales?ref=email-recurso-calculadora`,
-    cta: "Abrir guia",
+      "Calcula cuántas horas y cuánto dinero consume cada año ese proceso repetitivo de tu equipo.",
+    href: `${SITE_URL}/automatizar-excel?ref=email-confirmacion#calculadora-coste`,
+    cta: "Abrir calculadora",
   },
   "recurso-checklist-crm-excel": {
     slug: "recurso-checklist-crm-excel",

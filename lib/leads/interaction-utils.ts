@@ -76,9 +76,42 @@ export function interactionDate(interaction: LeadInteractionForAI): string {
   return getCallInteractionDetails(interaction.payload).callDate ?? interaction.created_at;
 }
 
-/** Formats one interaction for the lead-analysis prompt without losing calls' transcripts. */
-export function formatInteractionForAI(interaction: LeadInteractionForAI): string {
+function describeInteractionAge(interaction: LeadInteractionForAI, relativeTo: Date): string | null {
+  const occurredAt = new Date(interactionDate(interaction));
+  if (Number.isNaN(occurredAt.getTime()) || Number.isNaN(relativeTo.getTime())) return null;
+
+  const dayMs = 24 * 60 * 60 * 1000;
+  const occurredDay = Date.UTC(
+    occurredAt.getUTCFullYear(),
+    occurredAt.getUTCMonth(),
+    occurredAt.getUTCDate(),
+  );
+  const relativeDay = Date.UTC(
+    relativeTo.getUTCFullYear(),
+    relativeTo.getUTCMonth(),
+    relativeTo.getUTCDate(),
+  );
+  const days = Math.floor((relativeDay - occurredDay) / dayMs);
+
+  if (days < 0) return `dentro de ${Math.abs(days)} día${days === -1 ? "" : "s"}`;
+  if (days === 0) return "hoy";
+  if (days === 1) return "ayer";
+  if (days < 30) return `hace ${days} días`;
+
+  const months = Math.round(days / 30);
+  if (days < 365) return `hace aprox. ${months} mes${months === 1 ? "" : "es"} (${days} días)`;
+
+  const years = Math.round(days / 365);
+  return `hace aprox. ${years} año${years === 1 ? "" : "s"} (${days} días)`;
+}
+
+/** Formats one interaction for an AI prompt, optionally making its age explicit. */
+export function formatInteractionForAI(
+  interaction: LeadInteractionForAI,
+  relativeTo?: Date,
+): string {
   const date = interactionDate(interaction).slice(0, 10);
+  const age = relativeTo ? describeInteractionAge(interaction, relativeTo) : null;
   const subject = interaction.subject?.trim();
   const notes = interaction.body?.trim()?.slice(0, 300);
   const callDetails =
@@ -86,11 +119,11 @@ export function formatInteractionForAI(interaction: LeadInteractionForAI): strin
   const transcript = callDetails?.transcript?.slice(0, 2000);
   const callMetadata = callDetails
     ? [
-        callDetails.outcome ? `Resultado: ${callDetails.outcome}` : null,
-        callDetails.durationMinutes != null ? `Duración: ${callDetails.durationMinutes} min` : null,
-      ]
-        .filter(Boolean)
-        .join(" · ")
+      callDetails.outcome ? `Resultado: ${callDetails.outcome}` : null,
+      callDetails.durationMinutes != null ? `Duración: ${callDetails.durationMinutes} min` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ")
     : "";
   const meetingData =
     interaction.type === "meeting" && interaction.payload && typeof interaction.payload === "object"
@@ -100,9 +133,7 @@ export function formatInteractionForAI(interaction: LeadInteractionForAI): strin
     ? `Reunión: ${String(meetingData.start)}${meetingData.end ? ` → ${String(meetingData.end)}` : ""}`
     : "";
 
-  return `- ${date} | ${interaction.type}${subject ? ` | "${subject}"` : ""}${
-    notes ? ` | Notas: ${notes}` : ""
-  }${callMetadata ? ` | ${callMetadata}` : ""}${meetingTime ? ` | ${meetingTime}` : ""}${
-    transcript ? ` | Transcripción: ${transcript}` : ""
-  }`;
+  return `- ${date}${age ? ` (${age})` : ""} | ${interaction.type}${subject ? ` | "${subject}"` : ""}${notes ? ` | Notas: ${notes}` : ""
+    }${callMetadata ? ` | ${callMetadata}` : ""}${meetingTime ? ` | ${meetingTime}` : ""}${transcript ? ` | Transcripción: ${transcript}` : ""
+    }`;
 }

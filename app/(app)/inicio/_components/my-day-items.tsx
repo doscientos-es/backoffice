@@ -1,7 +1,8 @@
-import { BellRing, ListTodo, Phone } from "lucide-react";
+import { BellRing, CircleCheck as CheckCircle2, ListTodo, Phone } from "lucide-react";
 import Link from "next/link";
 import { LeadCallLink } from "@/app/(app)/leads/[id]/phone-actions";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { ActionLeadRow, MyTaskRow } from "@/lib/dashboard/types";
 import { leadDisplayName } from "@/lib/leads/utils";
@@ -9,7 +10,15 @@ import { LEAD_STATUS, TASK_STATUS } from "@/lib/status";
 import { relativeTime } from "@/lib/utils";
 import { ClaimLeadButton } from "./claim-lead-button";
 
-export function MyDayTaskItem({ task, showAssignee }: { task: MyTaskRow; showAssignee: boolean }) {
+export function MyDayTaskItem({
+  task,
+  showAssignee,
+  onCompleteAction,
+}: {
+  task: MyTaskRow;
+  showAssignee: boolean;
+  onCompleteAction: (id: string) => void;
+}) {
   const overdue = task.action_at ? new Date(task.action_at) < new Date() : false;
 
   return (
@@ -30,11 +39,24 @@ export function MyDayTaskItem({ task, showAssignee }: { task: MyTaskRow; showAss
           <span className="block truncate text-xs text-muted-foreground">{task.assigneeName}</span>
         ) : null}
       </Link>
-      {task.action_at ? (
-        <Badge variant={overdue ? "danger" : "info"}>{relativeTime(task.action_at)}</Badge>
-      ) : (
-        <StatusBadge meta={TASK_STATUS} value={task.status} />
-      )}
+      <div className="flex shrink-0 items-center gap-1.5">
+        {task.action_at ? (
+          <Badge variant={overdue ? "danger" : "info"}>{relativeTime(task.action_at)}</Badge>
+        ) : (
+          <StatusBadge meta={TASK_STATUS} value={task.status} />
+        )}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          aria-label={`Marcar como completada: ${task.title}`}
+          title="Marcar como completada"
+          onClick={() => onCompleteAction(task.id)}
+          className="text-muted-foreground hover:text-green-600 dark:hover:text-green-500"
+        >
+          <CheckCircle2 className="size-3.5" aria-hidden />
+        </Button>
+      </div>
     </li>
   );
 }

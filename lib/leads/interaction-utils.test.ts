@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  formatInteractionForAI,
   getCallInteractionDetails,
   groupResendInteractions,
   interactionDate,
@@ -35,5 +36,26 @@ describe("call interaction dates", () => {
     expect(getCallInteractionDetails(interaction.payload).callDate).toBe("2026-08-10");
     expect(interactionDate(interaction)).toBe("2026-08-10");
     expect(interactionDate({ ...interaction, payload: {} })).toBe(interaction.created_at);
+  });
+
+  it("makes recent and old calls' elapsed time explicit when a reference date is provided", () => {
+    const baseInteraction = {
+      type: "call",
+      subject: "Seguimiento",
+      body: null,
+      payload: {},
+      created_at: "2026-08-23T10:00:00.000Z",
+    };
+    const referenceDate = new Date("2026-08-24T12:00:00.000Z");
+
+    expect(formatInteractionForAI(baseInteraction, referenceDate)).toContain(
+      "2026-08-23 (ayer) | call",
+    );
+    expect(
+      formatInteractionForAI(
+        { ...baseInteraction, created_at: "2026-06-24T10:00:00.000Z" },
+        referenceDate,
+      ),
+    ).toContain("2026-06-24 (hace aprox. 2 meses (61 días)) | call");
   });
 });

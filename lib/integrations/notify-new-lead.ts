@@ -72,13 +72,13 @@ export async function notifyNewLead(input: NotifyNewLeadInput): Promise<void> {
   const phoneDigits = input.leadPhone?.replace(/\D/g, "") ?? "";
   const callUrl = phoneDigits ? `tel:${phoneDigits}` : null;
   const whatsappUrl = phoneDigits ? `https://wa.me/${phoneDigits}` : null;
-  const notificationActions = input.leadPhone
-    ? [
-        { action: "call", title: "Llamar" },
-        { action: "whatsapp", title: "WhatsApp" },
-        { action: "feedback", title: "Registrar" },
-      ]
-    : [{ action: "feedback", title: "Registrar" }];
+  const notificationActions = [{ action: "feedback", title: "Registrar" }];
+  if (input.leadPhone) {
+    notificationActions.unshift(
+      { action: "call", title: "Llamar" },
+      { action: "whatsapp", title: "WhatsApp" },
+    );
+  }
 
   // ── 2. In-app notification + background Push ─────────────────────────────
   await dispatchNotifications({
@@ -188,9 +188,4 @@ export async function notifyNewLead(input: NotifyNewLeadInput): Promise<void> {
   } else {
     log.error({ leadId: input.leadId, err: tgRes.error }, "telegram lead notification failed");
   }
-
-  // Deliberately no automatic email is sent to the lead. The commercial team
-  // must review and confirm any external message first.
-  if (input.leadEmail)
-    log.info({ leadId: input.leadId }, "lead confirmation email skipped; manual approval required");
 }

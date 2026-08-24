@@ -5,6 +5,9 @@ import { EmailLayout } from "./email-layout";
 const BRAND = "#2A4227";
 const BRAND_LIGHT = "#edf3ec";
 const FONT = "'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+const CASES_URL = "https://doscientos.es/projects?ref=email-confirmacion";
+const CALCULATOR_URL =
+  "https://doscientos.es/automatizar-excel?ref=email-confirmacion#calculadora-coste";
 
 export type LeadConfirmationEmailProps = {
   /** Lead's first name or full name, used in the greeting. */
@@ -36,7 +39,7 @@ export function LeadConfirmationEmail({
 
   return (
     <EmailLayout
-      preview={`${firstName}, hemos recibido tu solicitud y te dejamos un recurso`}
+      preview={`${firstName}, hemos recibido tu solicitud y te contactaremos muy pronto`}
       appUrl={appUrl}
     >
       {/* Hero accent band */}
@@ -77,9 +80,26 @@ export function LeadConfirmationEmail({
       {/* Greeting */}
       <Text style={headingStyle}>Hola, {firstName}!</Text>
       <Text style={bodyStyle}>
-        Hemos recibido tu mensaje y ya está en manos de nuestro equipo. Nos pondremos en contacto
-        contigo en las próximas horas.
+        Hemos recibido tus datos a través de uno de nuestros formularios y ya están en manos de
+        nuestro equipo. Nos pondremos en contacto contigo en las próximas horas laborables.
       </Text>
+
+      <Section style={aboutStyle}>
+        <Text style={{ ...labelStyle, color: BRAND, marginBottom: 8 }}>Qué hacemos</Text>
+        <Text style={{ ...stepBodyStyle, marginBottom: 16 }}>
+          En doscientos creamos software a medida, automatizamos procesos y desarrollamos webs para
+          que las empresas ahorren tiempo, reduzcan errores y trabajen con más control.
+        </Text>
+        <Button href={CASES_URL} style={primaryButtonStyle}>
+          Ver casos de éxito
+        </Button>
+        <Text style={{ ...stepBodyStyle, margin: "12px 0 8px" }}>
+          También puedes estimar cuánto cuesta al año ese trabajo manual que se repite en tu equipo.
+        </Text>
+        <Button href={CALCULATOR_URL} style={secondaryButtonStyle}>
+          Probar la calculadora de costes
+        </Button>
+      </Section>
 
       {hasCalculatorSummary ? (
         <Section
@@ -94,7 +114,7 @@ export function LeadConfirmationEmail({
             Resultado de tu calculadora
           </Text>
           {calculatorHours ? (
-            <Text style={stepBodyStyle}>Horas estimadas al ano: {calculatorHours} h</Text>
+            <Text style={stepBodyStyle}>Horas estimadas al año: {calculatorHours} h</Text>
           ) : null}
           {calculatorCost ? (
             <Text style={{ ...stepBodyStyle, marginTop: 4 }}>
@@ -104,33 +124,23 @@ export function LeadConfirmationEmail({
         </Section>
       ) : null}
 
-      <Section
-        style={{
-          backgroundColor: BRAND_LIGHT,
-          borderRadius: 8,
-          padding: "18px 20px",
-          margin: "20px 0 24px",
-        }}
-      >
-        <Text style={{ ...labelStyle, color: BRAND, marginBottom: 8 }}>Recurso recomendado</Text>
-        <Text style={stepTitleStyle}>{resource.title}</Text>
-        <Text style={{ ...stepBodyStyle, marginBottom: 16 }}>{resource.description}</Text>
-        <Button
-          href={resource.href}
+      {resource.slug !== "calculadora-coste-oculto" ? (
+        <Section
           style={{
-            backgroundColor: BRAND,
-            color: "#ffffff",
+            backgroundColor: BRAND_LIGHT,
             borderRadius: 8,
-            fontFamily: FONT,
-            fontSize: 13,
-            fontWeight: 700,
-            padding: "10px 14px",
-            textDecoration: "none",
+            padding: "18px 20px",
+            margin: "20px 0 24px",
           }}
         >
-          {resource.cta}
-        </Button>
-      </Section>
+          <Text style={{ ...labelStyle, color: BRAND, marginBottom: 8 }}>Recurso recomendado</Text>
+          <Text style={stepTitleStyle}>{resource.title}</Text>
+          <Text style={{ ...stepBodyStyle, marginBottom: 16 }}>{resource.description}</Text>
+          <Button href={resource.href} style={primaryButtonStyle}>
+            {resource.cta}
+          </Button>
+        </Section>
+      ) : null}
 
       <Hr style={{ borderColor: "#e4e4e7", margin: "24px 0" }} />
 
@@ -175,16 +185,16 @@ export function LeadConfirmationEmail({
 
 const STEPS = [
   {
-    title: "Revisamos tu solicitud",
-    body: "Un miembro de nuestro equipo estudia tu caso y prepara la mejor propuesta para ti.",
+    title: "Entendemos tu caso",
+    body: "Revisamos la información para que la primera conversación sea concreta y útil.",
   },
   {
     title: "Te contactamos",
     body: "Te llamamos o escribimos para agendar una primera conversación sin compromiso.",
   },
   {
-    title: "Empezamos a trabajar",
-    body: "Definimos el alcance, los plazos y ponemos manos a la obra.",
+    title: "Acordamos el siguiente paso",
+    body: "Si podemos ayudarte, te explicamos una propuesta clara de alcance, plazos y prioridades.",
   },
 ];
 
@@ -205,6 +215,32 @@ const bodyStyle: React.CSSProperties = {
   color: "#3f3f46",
   lineHeight: "22px",
   margin: "0 0 12px",
+};
+
+const aboutStyle: React.CSSProperties = {
+  backgroundColor: "#fafafa",
+  border: "1px solid #e4e4e7",
+  borderRadius: 8,
+  padding: "18px 20px",
+  margin: "20px 0 24px",
+};
+
+const primaryButtonStyle: React.CSSProperties = {
+  backgroundColor: BRAND,
+  color: "#ffffff",
+  borderRadius: 8,
+  fontFamily: FONT,
+  fontSize: 13,
+  fontWeight: 700,
+  padding: "10px 14px",
+  textDecoration: "none",
+};
+
+const secondaryButtonStyle: React.CSSProperties = {
+  ...primaryButtonStyle,
+  backgroundColor: "#ffffff",
+  color: BRAND,
+  border: `1px solid ${BRAND}`,
 };
 
 const labelStyle: React.CSSProperties = {
