@@ -24,6 +24,7 @@ describe("EmailComposer AI draft", () => {
         leadId="00000000-0000-4000-8000-000000000001"
         defaultTo="lead@example.test"
         draftInstructions="Contexto automático del flujo."
+        draftInteractionId="00000000-0000-4000-8000-000000000099"
         aiEnabled
       />,
     );
@@ -37,6 +38,7 @@ describe("EmailComposer AI draft", () => {
     const request = fetchMock.mock.calls[0]?.[1] as RequestInit;
     expect(JSON.parse(String(request.body))).toMatchObject({
       lead_id: "00000000-0000-4000-8000-000000000001",
+      reply_to_interaction_id: "00000000-0000-4000-8000-000000000099",
       instructions:
         "Contexto automático del flujo.\n\nDestaca el ahorro de tiempo y propón una llamada breve.",
       language: "es",

@@ -495,6 +495,10 @@ export default async function LeadDetailPage({
                             <LeadInteractionDetails
                               interaction={i}
                               label={INTERACTION_LABEL[type] ?? type}
+                              leadId={lead.id}
+                              leadEmail={lead.email}
+                              canReply={canEdit}
+                              aiEnabled={aiEnabled}
                             />
                           ) : null}
                           {type === "note" && canEdit ? (

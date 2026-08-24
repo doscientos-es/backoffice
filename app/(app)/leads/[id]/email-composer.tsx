@@ -32,6 +32,8 @@ export type EmailComposerProps = {
   /** Kind and extra instructions sent to the optional AI drafting endpoint. */
   draftKind?: string;
   draftInstructions?: string;
+  /** Interaction loaded server-side as the complete source for a contextual reply. */
+  draftInteractionId?: string;
   /** Sends a copy to active owners and admins. Used for post-call summaries. */
   ccAdmins?: boolean;
   disabled?: boolean;
@@ -47,6 +49,7 @@ export function EmailComposer({
   defaultBody,
   draftKind = "follow_up",
   draftInstructions,
+  draftInteractionId,
   ccAdmins = false,
   disabled,
   disabledReason,
@@ -80,6 +83,7 @@ export function EmailComposer({
         body: JSON.stringify({
           lead_id: leadId,
           kind: draftKind,
+          reply_to_interaction_id: draftInteractionId,
           instructions:
             [baseDraftInstructions, aiInstructions.trim()].filter(Boolean).join("\n\n") ||
             undefined,
