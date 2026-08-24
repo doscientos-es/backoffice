@@ -3,6 +3,7 @@ import {
   formatDatedInteractionForAI,
   getCallInteractionDetails,
   groupResendInteractions,
+  interactionBodyText,
   interactionDate,
 } from "./interaction-utils";
 
@@ -20,6 +21,22 @@ describe("groupResendInteractions", () => {
       { interaction: expect.objectContaining({ id: "sent-1" }), count: 1 },
       { interaction: expect.objectContaining({ id: "manual" }), count: 1 },
     ]);
+  });
+});
+
+describe("interactionBodyText", () => {
+  it("turns stored email HTML into safe text and keeps meaningful line breaks", () => {
+    expect(
+      interactionBodyText(
+        "<p>Hola &amp; gracias</p><p>Primera línea<br>Segunda línea</p><script>bad()</script>",
+      ),
+    ).toBe("Hola & gracias\nPrimera línea\nSegunda línea");
+  });
+
+  it("keeps multiline plain text unchanged", () => {
+    expect(interactionBodyText("Primera línea\nSegunda línea")).toBe(
+      "Primera línea\nSegunda línea",
+    );
   });
 });
 

@@ -18,6 +18,48 @@ type ResendInteraction = {
   type: string;
 };
 
+const HTML_ENTITY: Record<string, string> = {
+  amp: "&",
+  apos: "'",
+  gt: ">",
+  lt: "<",
+  nbsp: " ",
+  quot: '"',
+};
+
+/** Converts stored email HTML into safe, readable text while preserving meaningful line breaks. */
+export function interactionBodyText(body: string | null): string | null {
+  if (!body?.trim()) return null;
+
+  const text = body
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/\s*(div|h[1-6]|li|p|pre|table|tr)\s*>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z]+);/gi, (entity, code: string) => {
+      const point = code.startsWith("#x")
+        ? Number.parseInt(code.slice(2), 16)
+        : code.startsWith("#")
+          ? Number.parseInt(code.slice(1), 10)
+          : null;
+      if (point !== null) {
+        return Number.isInteger(point) && point >= 0 && point <= 0x10ffff
+          ? String.fromCodePoint(point)
+          : entity;
+      }
+      return HTML_ENTITY[code.toLowerCase()] ?? entity;
+    })
+    .replace(/\r\n?/g, "\n")
+    .split("\n")
+    .map((line) => line.replace(/[\t ]+/g, " ").trim())
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  return text || null;
+}
+
 /** Groups repeated provider callbacks while retaining a count for the UI. */
 export function groupResendInteractions<T extends ResendInteraction>(interactions: T[]) {
   const groups = new Map<string, { interaction: T; count: number }>();
@@ -116,14 +158,12 @@ function formatInteraction(interaction: LeadInteractionForAI, relativeTo?: Date)
   const callDetails =
     interaction.type === "call" ? getCallInteractionDetails(interaction.payload) : null;
   const transcript = callDetails?.transcript?.slice(0, 2000);
-  const callMetadata = callDetails
-    ? [
-      callDetails.outcome ? `Resultado: ${callDetails.outcome}` : null,
-      callDetails.durationMinutes != null ? `Duración: ${callDetails.durationMinutes} min` : null,
-    ]
-      .filter(Boolean)
-      .join(" · ")
-    : "";
+  const callMetadata = [
+    callDetails?.outcome ? `Resultado: ${callDetails.outcome}` : null,
+    callDetails?.durationMinutes != null ? `Duración: ${callDetails.durationMinutes} min` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
   const meetingData =
     interaction.type === "meeting" && interaction.payload && typeof interaction.payload === "object"
       ? (interaction.payload as Record<string, unknown>)
@@ -131,10 +171,10 @@ function formatInteraction(interaction: LeadInteractionForAI, relativeTo?: Date)
   const meetingTime = meetingData?.start
     ? `Reunión: ${String(meetingData.start)}${meetingData.end ? ` → ${String(meetingData.end)}` : ""}`
     : "";
+  const notesDetail = notes ? ` | Notas: ${notes}` : "";
+  const transcriptDetail = transcript ? ` | Transcripción: ${transcript}` : "";
 
-  return `- ${date}${age ? ` (${age})` : ""} | ${interaction.type}${subject ? ` | "${subject}"` : ""}${notes ? ` | Notas: ${notes}` : ""
-    }${callMetadata ? ` | ${callMetadata}` : ""}${meetingTime ? ` | ${meetingTime}` : ""}${transcript ? ` | Transcripción: ${transcript}` : ""
-    }`;
+  return `- ${date}${age ? ` (${age})` : ""} | ${interaction.type}${subject ? ` | "${subject}"` : ""}${notesDetail}${callMetadata ? ` | ${callMetadata}` : ""}${meetingTime ? ` | ${meetingTime}` : ""}${transcriptDetail}`;
 }
 
 /** Formats one interaction for an AI prompt. */

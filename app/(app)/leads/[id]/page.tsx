@@ -12,7 +12,11 @@ import { isAIEnabled } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { CONVERSION_STEP_LABEL } from "@/lib/conversion-events/labels";
 import { formatLeadBriefingForAI } from "@/lib/leads/ai-context";
-import { groupResendInteractions, interactionDate } from "@/lib/leads/interaction-utils";
+import {
+  groupResendInteractions,
+  interactionBodyText,
+  interactionDate,
+} from "@/lib/leads/interaction-utils";
 import { suggestedCallDurationMinutes } from "@/lib/leads/meeting-duration";
 import { getLeadDetail } from "@/lib/leads/queries";
 import { leadDisplayName } from "@/lib/leads/utils";
@@ -32,6 +36,7 @@ import {
   LeadQuickActionsSection,
 } from "./lead-detail-async-sections";
 import { LeadEditDialog } from "./lead-edit-dialog";
+import { LeadInteractionDetails } from "./lead-interaction-details";
 import { LeadNextActionTaskItem } from "./lead-next-action-task-item";
 import { LeadNotesDialog } from "./lead-notes-dialog";
 import { MomTestChecklist } from "./mom-test-checklist";
@@ -75,11 +80,7 @@ type NextAction = {
  * Acepta HTML (emails) y texto plano (notas, transcripciones).
  */
 function excerpt(body: string | null, max = 160): string | null {
-  if (!body) return null;
-  const text = body
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  const text = interactionBodyText(body)?.replace(/\s+/g, " ").trim();
   if (!text) return null;
   return text.length > max ? `${text.slice(0, max)}…` : text;
 }
@@ -488,6 +489,12 @@ export default async function LeadDetailPage({
                               interaction={i}
                               leadId={lead.id}
                               canEdit={canEdit}
+                            />
+                          ) : null}
+                          {type !== "call" ? (
+                            <LeadInteractionDetails
+                              interaction={i}
+                              label={INTERACTION_LABEL[type] ?? type}
                             />
                           ) : null}
                           {type === "note" && canEdit ? (
