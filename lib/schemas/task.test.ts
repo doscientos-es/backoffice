@@ -57,14 +57,11 @@ describe("UpdateTaskStatusInput / MoveTaskInput", () => {
       true,
     );
   });
-  it("allows the quick-complete flow to handle the next action itself", () => {
-    expect(
-      UpdateTaskStatusInput.safeParse({
-        taskId: uuid,
-        status: "done",
-        suppressNextAction: true,
-      }).success,
-    ).toBe(true);
+  it("only returns the task status fields", () => {
+    expect(UpdateTaskStatusInput.parse({ taskId: uuid, status: "done" })).toEqual({
+      taskId: uuid,
+      status: "done",
+    });
   });
   it("accepts optional before/after ids and null", () => {
     const out = MoveTaskInput.parse({

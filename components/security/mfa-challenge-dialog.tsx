@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { OtpInput } from "@/components/ui/otp-input";
 import { getBrowserClient } from "@/lib/supabase/browser";
 
 type Props = {
@@ -59,7 +59,7 @@ export function MfaChallengeDialog({
     setLoading(true);
     const { error: verifyError } = await getBrowserClient().auth.mfa.challengeAndVerify({
       factorId,
-      code: code.replaceAll(" ", ""),
+      code,
     });
     setLoading(false);
     if (verifyError) {
@@ -89,19 +89,22 @@ export function MfaChallengeDialog({
         <form onSubmit={verify} className="flex flex-col gap-4">
           <Field>
             <FieldLabel htmlFor="invoice-mfa-code">Código de verificación</FieldLabel>
-            <Input
+            <OtpInput
               id="invoice-mfa-code"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              maxLength={8}
               autoFocus
               value={code}
-              onChange={(event) => setCode(event.target.value)}
+              onChange={setCode}
               disabled={loading || !factorId}
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? "invoice-mfa-code-error" : undefined}
               required
             />
           </Field>
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          {error ? (
+            <p id="invoice-mfa-code-error" role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          ) : null}
           {error && setupHref ? (
             <a className="text-sm text-primary underline underline-offset-4" href={setupHref}>
               Configurar MFA en Seguridad
@@ -118,10 +121,7 @@ export function MfaChallengeDialog({
                 Cancelar
               </Button>
             ) : null}
-            <Button
-              type="submit"
-              disabled={loading || !factorId || code.replaceAll(" ", "").length < 6}
-            >
+            <Button type="submit" disabled={loading || !factorId || code.length < 6}>
               {loading ? <Loader2 className="size-4 animate-spin" /> : null} Verificar y continuar
             </Button>
           </DialogFooter>

@@ -1,9 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { after } from "next/server";
-import { z } from "zod";
 import { defineAction } from "@/lib/actions/define-action";
 import { VersionConflictError } from "@/lib/concurrency/version-conflict";
 import { sendEmail } from "@/lib/email/resend";
@@ -51,6 +47,10 @@ import {
 } from "@/lib/schemas/lead";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { after } from "next/server";
+import { z } from "zod";
 
 const log = scopedLogger("leads.actions");
 
@@ -421,17 +421,17 @@ export const sendEmailToLead = defineAction({
     const renderedHtml = markdownToHtml(renderedMarkdown);
     const finalHtml = data.includeSignature
       ? appendSignature(
-          renderedHtml,
-          buildSignatureHtml(
-            {
-              name: user.name,
-              jobTitle: user.jobTitle ?? undefined,
-              phone: user.phone ?? undefined,
-              contactEmail: user.contactEmail ?? user.emailAlias ?? undefined,
-            },
-            publicEnv.NEXT_PUBLIC_APP_URL || "https://app.doscientos.es",
-          ),
-        )
+        renderedHtml,
+        buildSignatureHtml(
+          {
+            name: user.name,
+            jobTitle: user.jobTitle ?? undefined,
+            phone: user.phone ?? undefined,
+            contactEmail: user.contactEmail ?? user.emailAlias ?? undefined,
+          },
+          publicEnv.NEXT_PUBLIC_APP_URL || "https://app.doscientos.es",
+        ),
+      )
       : renderedHtml;
 
     const renderedSubject = renderTemplate(data.subject, {
@@ -636,10 +636,10 @@ export const notifyDueCallReminders = defineAction({
         link: `/leads/${task.lead_id as string}?feedback=call`,
         actions: taskLead?.phone
           ? [
-              { action: "call", title: "Llamar" },
-              { action: "whatsapp", title: "WhatsApp" },
-              { action: "feedback", title: "Registrar" },
-            ]
+            { action: "call", title: "Llamar" },
+            { action: "whatsapp", title: "WhatsApp" },
+            { action: "feedback", title: "Registrar" },
+          ]
           : [{ action: "feedback", title: "Registrar" }],
         data: {
           leadId: task.lead_id as string,
@@ -656,7 +656,12 @@ export const notifyDueCallReminders = defineAction({
 
 export const logLeadCall = defineAction<
   typeof LogCallInput,
-  { noAnswerStreak: number; showMomTestPrompt: boolean; accessible: boolean | null }
+  {
+    noAnswerStreak: number;
+    showMomTestPrompt: boolean;
+    accessible: boolean | null;
+    momTestValues: Record<MomTestSignal, boolean | null>;
+  }
 >({
   name: "leads.logCall",
   schema: LogCallInput,
@@ -766,7 +771,9 @@ export const logLeadCall = defineAction<
     const callSummary = summarizeCallOutcomes(Array.isArray(recentCalls) ? recentCalls : []);
     const { data: lead, error: leadError } = await supabase
       .from("leads")
-      .select("mom_test_accessible, mom_test_accessible_source")
+      .select(
+        "mom_test_real_problem, mom_test_aware_problem, mom_test_tried_solutions, mom_test_decision_power_or_budget, mom_test_accessible, mom_test_accessible_source",
+      )
       .eq("id", leadId)
       .maybeSingle();
     if (leadError || !lead) throw new Error(leadError?.message ?? "Lead no encontrado");
@@ -797,10 +804,22 @@ export const logLeadCall = defineAction<
       accessible = automaticValue;
     }
 
+    const momTestValues: Record<MomTestSignal, boolean | null> = {
+      real_problem: (lead.mom_test_real_problem as boolean | null) ?? null,
+      aware_problem: (lead.mom_test_aware_problem as boolean | null) ?? null,
+      tried_solutions: (lead.mom_test_tried_solutions as boolean | null) ?? null,
+      decision_power_or_budget: (lead.mom_test_decision_power_or_budget as boolean | null) ?? null,
+      accessible,
+    };
+
     return {
       noAnswerStreak: callSummary.noAnswerStreak,
-      showMomTestPrompt: outcome === "connected" && callSummary.connected === 1,
+      showMomTestPrompt:
+        outcome === "connected" &&
+        callSummary.connected === 1 &&
+        Object.values(momTestValues).some((value) => value === null),
       accessible,
+      momTestValues,
     };
   },
 });
@@ -1079,10 +1098,10 @@ export const assignLeadOwner = defineAction({
         link: `/leads/${data.leadId}`,
         actions: (current?.phone as string | null)
           ? [
-              { action: "call", title: "Llamar" },
-              { action: "whatsapp", title: "WhatsApp" },
-              { action: "feedback", title: "Registrar" },
-            ]
+            { action: "call", title: "Llamar" },
+            { action: "whatsapp", title: "WhatsApp" },
+            { action: "feedback", title: "Registrar" },
+          ]
           : [{ action: "feedback", title: "Registrar" }],
         data: {
           callUrl: current?.phone ? `tel:${normalizePhoneForCall(current.phone as string)}` : null,

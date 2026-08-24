@@ -24,6 +24,7 @@ import { buildLeadWhatsAppMessage, buildWhatsAppUrl } from "@/lib/leads/whatsapp
 import type { CallOutcome } from "@/lib/schemas/lead";
 import { relativeTime } from "@/lib/utils";
 import { todayIsoLocal } from "@/lib/utils/date";
+import type { MomTestValues } from "./[id]/mom-test-checklist";
 import { MomTestQuickDialog } from "./[id]/mom-test-quick-dialog";
 import { logLeadCall, logLeadEmail } from "./actions";
 import { CallDateField } from "./call-date-field";
@@ -219,7 +220,7 @@ function CallDialog({
   const [digestOpen, setDigestOpen] = useState(false);
   const [digestKey, setDigestKey] = useState(0);
   const [momTestOpen, setMomTestOpen] = useState(false);
-  const [momTestAccessible, setMomTestAccessible] = useState<boolean | null>(null);
+  const [momTestValues, setMomTestValues] = useState<MomTestValues | null>(null);
   const [whatsappOpen, setWhatsappOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const [duration, setDuration] = useState(() => defaultDurationMinutes?.toString() ?? "");
@@ -252,7 +253,7 @@ function CallDialog({
     router.refresh();
     setOpen(false);
     if (res.showMomTestPrompt) {
-      setMomTestAccessible(res.accessible);
+      setMomTestValues(res.momTestValues);
       setMomTestOpen(true);
     } else if (res.noAnswerStreak < 3) {
       setDigestOpen(true);
@@ -343,7 +344,7 @@ function CallDialog({
         leadId={leadId}
         open={momTestOpen}
         onOpenChange={setMomTestOpen}
-        accessible={momTestAccessible}
+        initialValues={momTestValues}
       />
       <WhatsAppFollowUp
         leadId={leadId}

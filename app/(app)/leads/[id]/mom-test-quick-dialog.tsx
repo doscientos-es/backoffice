@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, X } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { sileo } from "sileo";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
@@ -36,30 +36,36 @@ export function MomTestQuickDialog({
   leadId,
   open,
   onOpenChange,
-  accessible,
+  initialValues,
 }: {
   leadId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  accessible: boolean | null;
+  initialValues: MomTestValues | null;
 }) {
   const [values, setValues] = useState<MomTestValues>(EMPTY_VALUES);
-  const [pending, startTransition] = useTransition();
+  const [pendingSignals, setPendingSignals] = useState<Set<keyof MomTestValues>>(new Set());
 
   useEffect(() => {
-    if (open) setValues({ ...EMPTY_VALUES, accessible });
-  }, [accessible, open]);
+    if (open && initialValues) setValues(initialValues);
+  }, [initialValues, open]);
 
   function setSignal(key: keyof MomTestValues, next: boolean | null) {
     const previous = values[key];
     setValues((current) => ({ ...current, [key]: next }));
-    startTransition(async () => {
+    setPendingSignals((current) => new Set(current).add(key));
+    void (async () => {
       const result = await updateLeadMomTestSignal({ leadId, signal: key, value: next });
       if (!result.ok) {
         setValues((current) => ({ ...current, [key]: previous }));
         sileo.error({ title: result.error });
       }
-    });
+      setPendingSignals((current) => {
+        const updated = new Set(current);
+        updated.delete(key);
+        return updated;
+      });
+    })();
   }
 
   return (
@@ -74,6 +80,7 @@ export function MomTestQuickDialog({
         <ul className="flex flex-col gap-3">
           {SIGNALS.map((signal) => {
             const value = values[signal.key];
+            const pending = pendingSignals.has(signal.key);
             return (
               <li key={signal.key} className="flex items-center justify-between gap-3">
                 <span className="text-sm">{signal.label}</span>
@@ -85,7 +92,7 @@ export function MomTestQuickDialog({
                     disabled={pending}
                     className={cn(
                       value === true &&
-                        "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300",
+                      "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300",
                     )}
                     aria-pressed={value === true}
                     onClick={() => setSignal(signal.key, value === true ? null : true)}

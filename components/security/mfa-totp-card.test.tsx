@@ -40,6 +40,29 @@ describe("MfaTotpCard", () => {
     expect(screen.getByRole("img", { name: /código qr/i }).getAttribute("src")).toContain(
       "data:image/svg+xml,test",
     );
+    const codeInput = screen.getByRole("textbox", { name: /código de verificación/i });
+    expect(codeInput.getAttribute("autocomplete")).toBe("one-time-code");
+    expect(document.querySelectorAll('[data-slot="otp-input-slot"]')).toHaveLength(6);
+  });
+
+  it("normalizes the enrollment code before verification", async () => {
+    mfa.challengeAndVerify.mockResolvedValue({ error: new Error("invalid") });
+    render(<MfaTotpCard required />);
+    await screen.findByRole("button", { name: /configurar mfa/i });
+    fireEvent.click(screen.getByRole("button", { name: /configurar mfa/i }));
+    await screen.findByRole("img", { name: /código qr/i });
+
+    fireEvent.change(screen.getByRole("textbox", { name: /código de verificación/i }), {
+      target: { value: "12a3 45-6" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /verificar y activar/i }));
+
+    await waitFor(() =>
+      expect(mfa.challengeAndVerify).toHaveBeenCalledWith({
+        factorId: "factor-1",
+        code: "123456",
+      }),
+    );
   });
 
   it("shows an active state for a verified TOTP factor", async () => {

@@ -79,6 +79,7 @@ export * from "./ui/kbd";
 export * from "./ui/label";
 export * from "./ui/markdown";
 export * from "./ui/menubar";
+export * from "./ui/otp-input";
 export * from "./ui/page-header-skeleton";
 export * from "./ui/password-strength";
 export * from "./ui/popover";

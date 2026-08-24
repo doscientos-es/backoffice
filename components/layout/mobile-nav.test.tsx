@@ -3,9 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 import type { CurrentUser } from "@/lib/auth";
 import { MobileNav } from "./mobile-nav";
 
-let showSettings: boolean | undefined;
-let avatarOnly: boolean | undefined;
-
 vi.mock("next/link", () => ({
   default: ({ children, href, ...props }: React.ComponentProps<"a">) => (
     <a href={href} {...props}>
@@ -33,17 +30,7 @@ vi.mock("@/components/ui/error-boundary", () => ({
   ErrorBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 vi.mock("@/components/layout/user-menu", () => ({
-  UserMenu: ({
-    showSettings: showSettingsValue,
-    avatarOnly: avatarOnlyValue,
-  }: {
-    showSettings?: boolean;
-    avatarOnly?: boolean;
-  }) => {
-    showSettings = showSettingsValue;
-    avatarOnly = avatarOnlyValue;
-    return <div data-testid="user-menu" />;
-  },
+  UserMenu: () => <div data-testid="user-menu" />,
 }));
 vi.mock("@/lib/navigation/navigation", () => ({ visibleNavigationGroups: () => [] }));
 
@@ -69,12 +56,10 @@ describe("MobileNav actions", () => {
     expect(screen.getByRole("button", { name: "Abrir menú" })).toBeTruthy();
   });
 
-  it("places the avatar-only profile menu beside Settings", () => {
+  it("places the profile menu beside Settings", () => {
     render(<MobileNav user={user} demoMode={false} />);
 
     const settings = screen.getByRole("link", { name: "Ajustes" });
-    expect(showSettings).toBe(false);
-    expect(avatarOnly).toBe(true);
     expect(settings.parentElement).toBe(screen.getByTestId("user-menu").parentElement);
   });
 });

@@ -44,6 +44,7 @@ import { todayIsoLocal } from "@/lib/utils/date";
 import { addMinutesToDatetimeLocal, datetimeLocalToIso } from "@/lib/utils/date-time";
 import { createReminder } from "../reminders/actions";
 import { EmailComposer } from "./[id]/email-composer";
+import type { MomTestValues } from "./[id]/mom-test-checklist";
 import { MomTestQuickDialog } from "./[id]/mom-test-quick-dialog";
 import { logLeadCall, logLeadEmail, logLeadNote, scheduleLeadMeeting } from "./actions";
 import { CallDateField } from "./call-date-field";
@@ -116,18 +117,16 @@ function LastAttemptDialog({
           <button
             type="button"
             onClick={() => setChannel("whatsapp")}
-            className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-              channel === "whatsapp" ? "bg-background shadow-sm" : "text-muted-foreground"
-            }`}
+            className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${channel === "whatsapp" ? "bg-background shadow-sm" : "text-muted-foreground"
+              }`}
           >
             WhatsApp
           </button>
           <button
             type="button"
             onClick={() => setChannel("email")}
-            className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-              channel === "email" ? "bg-background shadow-sm" : "text-muted-foreground"
-            }`}
+            className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${channel === "email" ? "bg-background shadow-sm" : "text-muted-foreground"
+              }`}
           >
             Email
           </button>
@@ -609,7 +608,7 @@ export function QCallDialog({
   const [digestOpen, setDigestOpen] = useState(false);
   const [digestKey, setDigestKey] = useState(0);
   const [momTestOpen, setMomTestOpen] = useState(false);
-  const [momTestAccessible, setMomTestAccessible] = useState<boolean | null>(null);
+  const [momTestValues, setMomTestValues] = useState<MomTestValues | null>(null);
   const [whatsappOpen, setWhatsappOpen] = useState(false);
   const [outcome, setOutcome] = useState<CallOutcome>("connected");
   const [duration, setDuration] = useState(() => defaultDurationMinutes?.toString() ?? "");
@@ -685,7 +684,7 @@ export function QCallDialog({
     router.refresh();
     setOpen(false);
     if (res.showMomTestPrompt) {
-      setMomTestAccessible(res.accessible);
+      setMomTestValues(res.momTestValues);
       setMomTestOpen(true);
     } else if (res.noAnswerStreak < 3) {
       setDigestOpen(true);
@@ -838,7 +837,7 @@ export function QCallDialog({
         leadId={leadId}
         open={momTestOpen}
         onOpenChange={setMomTestOpen}
-        accessible={momTestAccessible}
+        initialValues={momTestValues}
       />
       <LastAttemptDialog
         leadId={leadId}

@@ -23,7 +23,11 @@ const { db, authUser, googleCalendar, sendEmail } = vi.hoisted(() => ({
     queryError: null as string | null,
     leadStatus: "new" as string,
     recentCallPayloads: [] as Array<{ payload: { outcome?: string | null } }>,
-    leadAccessibility: {
+    leadMomTest: {
+      mom_test_real_problem: null as boolean | null,
+      mom_test_aware_problem: null as boolean | null,
+      mom_test_tried_solutions: null as boolean | null,
+      mom_test_decision_power_or_budget: null as boolean | null,
       mom_test_accessible: null as boolean | null,
       mom_test_accessible_source: null as string | null,
     },
@@ -69,7 +73,7 @@ vi.mock("@/lib/supabase/server", () => ({
           return { data: db.recentCallPayloads, error: null };
         }
         if (table === "leads" && selectedColumns.includes("mom_test_accessible")) {
-          return { data: db.leadAccessibility, error: null };
+          return { data: db.leadMomTest, error: null };
         }
         if (table === "team_members") return { data: db.adminEmails, error: null };
         return {
@@ -220,7 +224,14 @@ beforeEach(() => {
   db.queryError = null;
   db.leadStatus = "new";
   db.recentCallPayloads = [];
-  db.leadAccessibility = { mom_test_accessible: null, mom_test_accessible_source: null };
+  db.leadMomTest = {
+    mom_test_real_problem: null,
+    mom_test_aware_problem: null,
+    mom_test_tried_solutions: null,
+    mom_test_decision_power_or_budget: null,
+    mom_test_accessible: null,
+    mom_test_accessible_source: null,
+  };
   db.adminEmails = [{ email: "admin@doscientos.es" }, { email: "owner@doscientos.es" }];
   authUser.role = "admin";
   authUser.emailAlias = "pol";
@@ -402,7 +413,17 @@ describe("logLeadCall", () => {
         payload: { from: "new", to: "contacted" },
       }),
     );
-    expect(result).toMatchObject({ showMomTestPrompt: true, accessible: true });
+    expect(result).toMatchObject({
+      showMomTestPrompt: true,
+      accessible: true,
+      momTestValues: {
+        real_problem: null,
+        aware_problem: null,
+        tried_solutions: null,
+        decision_power_or_budget: null,
+        accessible: true,
+      },
+    });
     expect(db.updatedRows).toContainEqual(
       expect.objectContaining({
         table: "leads",
@@ -424,7 +445,8 @@ describe("logLeadCall", () => {
   });
 
   it("never overwrites a manually decided accessibility signal", async () => {
-    db.leadAccessibility = { mom_test_accessible: false, mom_test_accessible_source: "manual" };
+    db.leadMomTest.mom_test_accessible = false;
+    db.leadMomTest.mom_test_accessible_source = "manual";
 
     await logLeadCall({
       leadId: "00000000-0000-0000-0000-000000000001",
@@ -432,6 +454,35 @@ describe("logLeadCall", () => {
     });
 
     expect(db.updatedRows.some((row) => row.mom_test_accessible === true)).toBe(false);
+  });
+
+  it("keeps existing Mom Test answers and skips the prompt when all are complete", async () => {
+    db.leadMomTest = {
+      mom_test_real_problem: true,
+      mom_test_aware_problem: true,
+      mom_test_tried_solutions: false,
+      mom_test_decision_power_or_budget: true,
+      mom_test_accessible: false,
+      mom_test_accessible_source: "manual",
+    };
+
+    const result = await logLeadCall({
+      leadId: "00000000-0000-0000-0000-000000000001",
+      notes: "Primera conversación registrada.",
+      outcome: "connected",
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      showMomTestPrompt: false,
+      momTestValues: {
+        real_problem: true,
+        aware_problem: true,
+        tried_solutions: false,
+        decision_power_or_budget: true,
+        accessible: false,
+      },
+    });
   });
 
   it("marks an accessibility selection as manual", async () => {

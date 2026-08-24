@@ -52,7 +52,6 @@ export function LeadNextActionTaskItem({ task, leadId, members, currentUserId }:
       const result = await updateTaskStatus({
         taskId: task.id,
         status: "done",
-        suppressNextAction: true,
       });
       if (!result.ok) {
         sileo.error({ title: result.error });

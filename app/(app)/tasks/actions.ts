@@ -6,7 +6,6 @@ import { defineAction } from "@/lib/actions/define-action";
 import { requireUser } from "@/lib/auth";
 import { VersionConflictError } from "@/lib/concurrency/version-conflict";
 import { autoSyncTaskIssue, syncTaskStatusToGitHub } from "@/lib/integrations/github-sync";
-import { ACTIVE_LEAD_STATUSES } from "@/lib/leads/pipeline";
 import { dispatchNotifications } from "@/lib/notifications/dispatch";
 import {
   CreateTaskInput,
@@ -17,91 +16,6 @@ import {
 import { createServerClient } from "@/lib/supabase/server";
 import { normalizeTaskMemberIds } from "@/lib/tasks/assignments";
 import { rankAfter, rankBetween } from "@/lib/utils/ranking";
-
-const NEXT_ACTION_REQUIRED_MARKER = "AUTO_NEXT_ACTION_REQUIRED";
-
-async function ensureLeadNextAction(
-  supabase: Awaited<ReturnType<typeof createServerClient>>,
-  taskId: string,
-  fallbackAssigneeId: string,
-): Promise<void> {
-  const { data: task } = await supabase
-    .from("tasks")
-    .select("lead_id, kind, description")
-    .eq("id", taskId)
-    .maybeSingle();
-  if (!task?.lead_id || !["task", "reminder"].includes(task.kind as string)) return;
-  if (task.description === NEXT_ACTION_REQUIRED_MARKER) return;
-
-  const { data: lead } = await supabase
-    .from("leads")
-    .select("id, name, phone, status, assigned_to")
-    .eq("id", task.lead_id as string)
-    .is("deleted_at", null)
-    .maybeSingle();
-  if (
-    !lead ||
-    !ACTIVE_LEAD_STATUSES.includes(lead.status as (typeof ACTIVE_LEAD_STATUSES)[number])
-  ) {
-    return;
-  }
-
-  const { data: openActions } = await supabase
-    .from("tasks")
-    .select("id, kind, status, completed_at")
-    .eq("lead_id", task.lead_id as string)
-    .is("deleted_at", null)
-    .neq("id", taskId)
-    .limit(50);
-  const hasOpenAction = (openActions ?? []).some((action) =>
-    action.kind === "reminder"
-      ? !action.completed_at
-      : !["done", "cancelled"].includes(action.status as string),
-  );
-  if (hasOpenAction) return;
-
-  const assigneeId = (lead.assigned_to as string | null) ?? fallbackAssigneeId;
-  const { data: reminder, error } = await supabase
-    .from("tasks")
-    .insert({
-      kind: "reminder",
-      title: `Definir siguiente paso · ${lead.name as string}`,
-      description: NEXT_ACTION_REQUIRED_MARKER,
-      start_at: new Date().toISOString(),
-      lead_id: lead.id as string,
-      created_by: fallbackAssigneeId,
-      assignee_id: assigneeId,
-      status: "todo",
-      priority: "high",
-    })
-    .select("id")
-    .maybeSingle();
-  if (error || !reminder) return;
-
-  const phone = lead.phone as string | null;
-  const digits = phone?.replace(/\D/g, "") ?? "";
-  await dispatchNotifications({
-    recipientIds: [assigneeId],
-    eventType: "lead_at_risk",
-    entityType: "lead",
-    entityId: lead.id as string,
-    body: `Has completado una acción de “${lead.name as string}” sin dejar un siguiente paso.`,
-    link: `/leads/${lead.id as string}`,
-    actions: phone
-      ? [
-          { action: "call", title: "Llamar" },
-          { action: "whatsapp", title: "WhatsApp" },
-          { action: "feedback", title: "Registrar" },
-        ]
-      : [{ action: "feedback", title: "Registrar" }],
-    data: {
-      taskId: reminder.id as string,
-      callUrl: digits ? `tel:${digits}` : null,
-      whatsappUrl: digits ? `https://wa.me/${digits}` : null,
-      feedbackUrl: `/leads/${lead.id as string}?feedback=call`,
-    },
-  });
-}
 
 export const createTask = defineAction<
   typeof CreateTaskInput,
@@ -217,8 +131,6 @@ export const updateTask = defineAction({
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!data) throw new VersionConflictError();
-    if (rest.status === "done") await ensureLeadNextAction(supabase, id, user.id);
-
     // Sync task_members: replace all existing entries
     const { error: deleteMembersError } = await supabase
       .from("task_members")
@@ -254,7 +166,7 @@ export const updateTaskStatus = defineAction({
   name: "tasks.updateStatus",
   schema: UpdateTaskStatusInput,
   revalidate: (_payload, input) => ["/tasks", `/tasks/${input.taskId}`],
-  handler: async (data, { user }) => {
+  handler: async (data) => {
     const supabase = await createServerClient();
     const updates: Record<string, unknown> = { status: data.status };
     if (data.status === "done") updates.completed_at = new Date().toISOString();
@@ -262,9 +174,6 @@ export const updateTaskStatus = defineAction({
 
     const { error } = await supabase.from("tasks").update(updates).eq("id", data.taskId);
     if (error) throw new Error(error.message);
-    if (data.status === "done" && !data.suppressNextAction) {
-      await ensureLeadNextAction(supabase, data.taskId, user.id);
-    }
     void syncTaskStatusToGitHub(data.taskId, data.status);
   },
 });
@@ -274,7 +183,7 @@ export const updateTaskStatus = defineAction({
 export async function moveTask(
   input: unknown,
 ): Promise<{ ok: true; kanbanOrder: string } | { ok: false; error: string }> {
-  const user = await requireUser();
+  await requireUser();
   const parsed = MoveTaskInput.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Movimiento no válido" };
 
@@ -312,10 +221,6 @@ export async function moveTask(
 
   const { error } = await supabase.from("tasks").update(updates).eq("id", parsed.data.taskId);
   if (error) return { ok: false, error: error.message };
-  if (parsed.data.status === "done") {
-    await ensureLeadNextAction(supabase, parsed.data.taskId, user.id);
-  }
-
   revalidatePath("/tasks");
   revalidatePath(`/tasks/${parsed.data.taskId}`);
   return { ok: true, kanbanOrder };

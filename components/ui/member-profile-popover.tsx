@@ -14,14 +14,12 @@ export type ProfiledMember = AvatarMember & { id: string };
  */
 export function MemberProfilePopover({
   member,
-  renderAvatar,
-  size = "sm",
-  className,
+  avatar,
+  profileAvatar,
 }: {
   member: ProfiledMember;
-  renderAvatar: (size: "xs" | "sm" | "default" | "lg", className?: string) => ReactNode;
-  size?: "xs" | "sm" | "default" | "lg";
-  className?: string;
+  avatar: ReactNode;
+  profileAvatar: ReactNode;
 }) {
   return (
     <Popover>
@@ -34,7 +32,7 @@ export function MemberProfilePopover({
           onClick={(event) => event.stopPropagation()}
           className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
         >
-          {renderAvatar(size, className)}
+          {avatar}
         </button>
       </PopoverTrigger>
       <PopoverContent
@@ -44,7 +42,7 @@ export function MemberProfilePopover({
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center gap-2 px-1 py-1.5">
-          {renderAvatar("default", "size-8")}
+          {profileAvatar}
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-foreground">{member.name}</p>
             <p className="text-xs text-muted-foreground">Miembro del equipo</p>

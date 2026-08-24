@@ -63,7 +63,7 @@ export function Sidebar({ user, demoMode }: { user: CurrentUser; demoMode: boole
                   <Settings className="size-4" aria-hidden />
                 </Link>
               </IconButton>
-              <UserMenu user={user} showSettings={false} avatarOnly />
+              <UserMenu user={user} />
             </div>
           </div>
         </ErrorBoundary>

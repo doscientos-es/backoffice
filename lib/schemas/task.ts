@@ -43,8 +43,6 @@ export type UpdateTaskInputType = z.infer<typeof UpdateTaskInput>;
 export const UpdateTaskStatusInput = z.object({
   taskId: z.string().uuid(),
   status: TaskStatus,
-  /** The lead detail quick-complete flow collects the next action in its own UI. */
-  suppressNextAction: z.boolean().optional().default(false),
 });
 
 export const MoveTaskInput = z.object({

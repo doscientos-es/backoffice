@@ -4,8 +4,6 @@ import type { CurrentUser } from "@/lib/auth";
 import { Sidebar } from "./sidebar";
 
 let pathname = "/inicio";
-let showSettings: boolean | undefined;
-let avatarOnly: boolean | undefined;
 
 vi.mock("next/link", () => ({
   default: ({ children, href, ...props }: React.ComponentProps<"a">) => (
@@ -24,17 +22,7 @@ vi.mock("@/components/layout/notifications-bell", () => ({
   NotificationsBell: () => <button type="button" aria-label="Notificaciones" />,
 }));
 vi.mock("@/components/layout/user-menu", () => ({
-  UserMenu: ({
-    showSettings: showSettingsValue,
-    avatarOnly: avatarOnlyValue,
-  }: {
-    showSettings?: boolean;
-    avatarOnly?: boolean;
-  }) => {
-    showSettings = showSettingsValue;
-    avatarOnly = avatarOnlyValue;
-    return <div data-testid="user-menu" data-avatar-only={avatarOnlyValue} />;
-  },
+  UserMenu: () => <div data-testid="user-menu" />,
 }));
 vi.mock("@/components/theme-toggle", () => ({
   ThemeToggle: () => <button type="button" aria-label="Cambiar tema" />,
@@ -69,7 +57,7 @@ describe("Sidebar actions", () => {
     expect(sidebar?.className).toContain("app-sidebar");
   });
 
-  it("places the avatar-only profile menu beside the utility actions", () => {
+  it("places the profile menu beside the utility actions", () => {
     render(<Sidebar user={user} demoMode={false} />);
 
     const settings = screen.getByRole("link", { name: "Ajustes" });
@@ -78,8 +66,6 @@ describe("Sidebar actions", () => {
     expect(settings.getAttribute("href")).toBe("/settings");
     expect(settings.getAttribute("data-variant")).toBe("ghost");
     expect(settings.className).toContain("border-0");
-    expect(showSettings).toBe(false);
-    expect(avatarOnly).toBe(true);
     expect(settings.parentElement).toBe(theme.parentElement);
     expect(settings.parentElement).toBe(notifications.parentElement);
     expect(settings.parentElement).toBe(screen.getByTestId("user-menu").parentElement);

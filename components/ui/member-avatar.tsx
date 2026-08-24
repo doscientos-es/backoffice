@@ -1,8 +1,7 @@
+"use client";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  MemberProfilePopover,
-  type ProfiledMember,
-} from "@/components/ui/member-profile-popover";
+import { MemberProfilePopover, type ProfiledMember } from "@/components/ui/member-profile-popover";
 import { cn, memberAvatarUrl } from "@/lib/utils";
 
 /** Member shape this component needs to resolve an avatar + initials fallback. */
@@ -75,10 +74,8 @@ export function MemberLabel({
       {hasProfile(member) ? (
         <MemberProfilePopover
           member={member}
-          size={size}
-          renderAvatar={(avatarSize, avatarClassName) => (
-            <MemberAvatar member={member} size={avatarSize} className={avatarClassName} />
-          )}
+          avatar={<MemberAvatar member={member} size={size} />}
+          profileAvatar={<MemberAvatar member={member} size="default" className="size-8" />}
         />
       ) : (
         <MemberAvatar member={member} size={size} />

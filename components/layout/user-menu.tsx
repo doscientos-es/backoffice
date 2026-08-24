@@ -1,6 +1,14 @@
 "use client";
 
-import { CircleAlert as AlertCircle, LogOut, Settings, ShieldCheck, Users } from "lucide-react";
+import {
+  CircleAlert as AlertCircle,
+  ChevronRight,
+  LogOut,
+  Shield,
+  ShieldCheck,
+  UserRound,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -44,15 +52,7 @@ const ROLE_VARIANT: Record<MemberRole, "default" | "info" | "neutral"> = {
   viewer: "neutral",
 };
 
-export function UserMenu({
-  user,
-  showSettings = true,
-  avatarOnly = false,
-}: {
-  user: CurrentUser;
-  showSettings?: boolean;
-  avatarOnly?: boolean;
-}) {
+export function UserMenu({ user }: { user: CurrentUser }) {
   const router = useRouter();
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const canManageTeam = user.role === "owner" || user.role === "admin";
@@ -76,50 +76,94 @@ export function UserMenu({
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          size={avatarOnly ? "icon" : "sm"}
-          className={avatarOnly ? "p-0" : "h-8 gap-2 pr-2 pl-1"}
+          size="icon"
+          className="rounded-full border-0 bg-transparent p-0 shadow-none"
           aria-label="Menú de usuario"
         >
-          <Avatar size="sm">
+          <Avatar>
             {avatarSrc ? (
               <AvatarImage src={avatarSrc} alt={user.name} referrerPolicy="no-referrer" />
             ) : null}
             <AvatarFallback>{initials(user.name)}</AvatarFallback>
           </Avatar>
-          {!avatarOnly ? (
-            <span className="hidden text-xs font-medium text-primary md:inline">{user.name}</span>
-          ) : null}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" sideOffset={6} className="w-56">
-        <DropdownMenuLabel className="flex flex-col gap-1 pb-2">
-          <span className="truncate text-sm font-medium text-primary">{user.name}</span>
-          <span className="truncate text-xs font-normal text-muted">{user.email}</span>
-          <Badge variant={ROLE_VARIANT[user.role]} className="mt-1 self-start">
-            <ShieldCheck className="h-3 w-3" aria-hidden />
-            {ROLE_LABELS[user.role]}
-          </Badge>
+      <DropdownMenuContent align="end" sideOffset={8} className="w-72 p-2">
+        <DropdownMenuLabel className="rounded-lg bg-muted/50 p-3 font-normal">
+          <div className="flex min-w-0 items-center gap-3">
+            <Avatar size="lg" className="shrink-0">
+              {avatarSrc ? (
+                <AvatarImage src={avatarSrc} alt="" referrerPolicy="no-referrer" />
+              ) : null}
+              <AvatarFallback>{initials(user.name)}</AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-semibold text-foreground">
+                {user.name}
+              </span>
+              <span className="block truncate text-xs text-muted-foreground">{user.email}</span>
+              <Badge variant={ROLE_VARIANT[user.role]} className="mt-1.5">
+                <ShieldCheck className="size-3" aria-hidden />
+                {ROLE_LABELS[user.role]}
+              </Badge>
+            </div>
+          </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {showSettings ? (
-          <DropdownMenuItem asChild>
-            <Link href="/settings">
-              <Settings className="h-4 w-4" aria-hidden />
-              Ajustes
-            </Link>
-          </DropdownMenuItem>
-        ) : null}
+        <DropdownMenuLabel className="px-2 pt-3 pb-1 text-[11px] uppercase tracking-wide">
+          Mi cuenta
+        </DropdownMenuLabel>
+        <DropdownMenuItem asChild className="rounded-lg p-2">
+          <Link href="/settings/profile" className="gap-3">
+            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground">
+              <UserRound className="size-4" aria-hidden />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-medium text-foreground">Mi perfil</span>
+              <span className="block truncate text-xs text-muted-foreground">
+                Datos personales y firma
+              </span>
+            </span>
+            <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild className="rounded-lg p-2">
+          <Link href="/settings/security" className="gap-3">
+            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground">
+              <Shield className="size-4" aria-hidden />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-medium text-foreground">Seguridad</span>
+              <span className="block truncate text-xs text-muted-foreground">
+                MFA, passkeys y acceso
+              </span>
+            </span>
+            <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
+          </Link>
+        </DropdownMenuItem>
         {canManageTeam ? (
-          <DropdownMenuItem asChild>
-            <Link href="/settings/team">
-              <Users className="h-4 w-4" aria-hidden />
-              Equipo
-            </Link>
-          </DropdownMenuItem>
+          <>
+            <DropdownMenuLabel className="px-2 pt-3 pb-1 text-[11px] uppercase tracking-wide">
+              Organización
+            </DropdownMenuLabel>
+            <DropdownMenuItem asChild className="rounded-lg p-2">
+              <Link href="/settings/team" className="gap-3">
+                <span className="grid size-8 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground">
+                  <Users className="size-4" aria-hidden />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-medium text-foreground">Equipo</span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    Miembros, roles y permisos
+                  </span>
+                </span>
+                <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
+              </Link>
+            </DropdownMenuItem>
+          </>
         ) : null}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={signOut} variant="destructive">
-          <LogOut className="h-4 w-4" aria-hidden />
+        <DropdownMenuSeparator className="my-2" />
+        <DropdownMenuItem onSelect={signOut} variant="destructive" className="gap-3 px-3 py-2">
+          <LogOut className="size-4" aria-hidden />
           Cerrar sesión
         </DropdownMenuItem>
         {signOutError ? (

@@ -89,7 +89,7 @@ export function MobileNav({ user, demoMode }: { user: CurrentUser; demoMode: boo
                     </Link>
                   </IconButton>
                   <ErrorBoundary fallback={() => null}>
-                    <UserMenu user={user} showSettings={false} avatarOnly />
+                    <UserMenu user={user} />
                   </ErrorBoundary>
                 </div>
               </div>

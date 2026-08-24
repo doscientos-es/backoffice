@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { OtpInput } from "@/components/ui/otp-input";
 import { getBrowserClient } from "@/lib/supabase/browser";
 
 type Props = { required: boolean };
@@ -63,7 +63,7 @@ export function MfaTotpCard({ required }: Props) {
     setLoading(true);
     const { error } = await getBrowserClient().auth.mfa.challengeAndVerify({
       factorId,
-      code: code.replaceAll(" ", ""),
+      code,
     });
     if (error) {
       setError("El código no es válido. Comprueba la hora de tu dispositivo e inténtalo de nuevo.");
@@ -101,7 +101,7 @@ export function MfaTotpCard({ required }: Props) {
       </CardHeader>
       <CardContent className="flex flex-col gap-4 pt-0">
         {error ? (
-          <p role="alert" className="text-sm text-destructive">
+          <p id="mfa-code-error" role="alert" className="text-sm text-destructive">
             {error}
           </p>
         ) : null}
@@ -120,13 +120,12 @@ export function MfaTotpCard({ required }: Props) {
             />
             <Field>
               <FieldLabel htmlFor="mfa-code">Código de verificación</FieldLabel>
-              <Input
+              <OtpInput
                 id="mfa-code"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={8}
                 value={code}
-                onChange={(event) => setCode(event.target.value)}
+                onChange={setCode}
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? "mfa-code-error" : undefined}
                 required
               />
             </Field>
@@ -142,13 +141,12 @@ export function MfaTotpCard({ required }: Props) {
             </p>
             <Field>
               <FieldLabel htmlFor="mfa-code">Código de verificación</FieldLabel>
-              <Input
+              <OtpInput
                 id="mfa-code"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={8}
                 value={code}
-                onChange={(event) => setCode(event.target.value)}
+                onChange={setCode}
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? "mfa-code-error" : undefined}
                 required
               />
             </Field>
