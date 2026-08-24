@@ -32,6 +32,9 @@ const EMPTY_VALUES: MomTestValues = {
   accessible: null,
 };
 
+const POSITIVE_SIGNAL_CLASS =
+  "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300";
+
 export function MomTestQuickDialog({
   leadId,
   open,
@@ -90,10 +93,7 @@ export function MomTestQuickDialog({
                     size="sm"
                     variant="outline"
                     disabled={pending}
-                    className={cn(
-                      value === true &&
-                      "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300",
-                    )}
+                    className={cn(value === true && POSITIVE_SIGNAL_CLASS)}
                     aria-pressed={value === true}
                     onClick={() => setSignal(signal.key, value === true ? null : true)}
                   >

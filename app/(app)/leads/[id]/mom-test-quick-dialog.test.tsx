@@ -25,7 +25,7 @@ function buttonsFor(label: string) {
 describe("MomTestQuickDialog", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    updateLeadMomTestSignal.mockImplementation(() => new Promise(() => { }));
+    updateLeadMomTestSignal.mockImplementation(() => new Promise<never>(() => undefined));
   });
 
   it("shows the answers that were already saved", () => {
