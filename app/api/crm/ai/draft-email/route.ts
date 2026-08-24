@@ -14,14 +14,14 @@
  * Auth: requireUser (viewer denegado). 503 si la IA no está configurada.
  */
 
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { AI_MODELS, isAIEnabled, runAIObject } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { formatInteractionForAI } from "@/lib/leads/interaction-utils";
 import { scopedLogger } from "@/lib/logger";
 import { rateLimit } from "@/lib/ratelimit";
 import { createServerClient } from "@/lib/supabase/server";
-import { type NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -120,13 +120,16 @@ export async function POST(req: NextRequest) {
   const interactionsText = (interactions ?? [])
     .reverse()
     .map((i) =>
-      formatInteractionForAI({
-        type: i.type as string,
-        subject: (i.subject as string | null) ?? null,
-        body: (i.body as string | null) ?? null,
-        payload: i.payload,
-        created_at: i.created_at as string,
-      }, generatedAt),
+      formatInteractionForAI(
+        {
+          type: i.type as string,
+          subject: (i.subject as string | null) ?? null,
+          body: (i.body as string | null) ?? null,
+          payload: i.payload,
+          created_at: i.created_at as string,
+        },
+        generatedAt,
+      ),
     )
     .join("\n");
 
