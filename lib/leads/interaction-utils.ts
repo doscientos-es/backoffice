@@ -118,11 +118,11 @@ function formatInteraction(interaction: LeadInteractionForAI, relativeTo?: Date)
   const transcript = callDetails?.transcript?.slice(0, 2000);
   const callMetadata = callDetails
     ? [
-        callDetails.outcome ? `Resultado: ${callDetails.outcome}` : null,
-        callDetails.durationMinutes != null ? `Duración: ${callDetails.durationMinutes} min` : null,
-      ]
-        .filter(Boolean)
-        .join(" · ")
+      callDetails.outcome ? `Resultado: ${callDetails.outcome}` : null,
+      callDetails.durationMinutes != null ? `Duración: ${callDetails.durationMinutes} min` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ")
     : "";
   const meetingData =
     interaction.type === "meeting" && interaction.payload && typeof interaction.payload === "object"
@@ -132,11 +132,9 @@ function formatInteraction(interaction: LeadInteractionForAI, relativeTo?: Date)
     ? `Reunión: ${String(meetingData.start)}${meetingData.end ? ` → ${String(meetingData.end)}` : ""}`
     : "";
 
-  return `- ${date}${age ? ` (${age})` : ""} | ${interaction.type}${subject ? ` | "${subject}"` : ""}${
-    notes ? ` | Notas: ${notes}` : ""
-  }${callMetadata ? ` | ${callMetadata}` : ""}${meetingTime ? ` | ${meetingTime}` : ""}${
-    transcript ? ` | Transcripción: ${transcript}` : ""
-  }`;
+  return `- ${date}${age ? ` (${age})` : ""} | ${interaction.type}${subject ? ` | "${subject}"` : ""}${notes ? ` | Notas: ${notes}` : ""
+    }${callMetadata ? ` | ${callMetadata}` : ""}${meetingTime ? ` | ${meetingTime}` : ""}${transcript ? ` | Transcripción: ${transcript}` : ""
+    }`;
 }
 
 /** Formats one interaction for an AI prompt. */
