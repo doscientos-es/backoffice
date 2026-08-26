@@ -78,7 +78,7 @@ export default async function ProjectPortalPage({
   const [{ data: tasks }, { data: requests }, { data: webProjects }] = await Promise.all([
     admin
       .from("tasks")
-      .select("id, title, status, due_date, completed_at")
+      .select("id, title, client_title, client_summary, status, due_date, completed_at")
       .eq("project_id", project.id as string)
       .eq("kind", "task")
       .eq("is_client_visible", true)
@@ -253,9 +253,16 @@ export default async function ProjectPortalPage({
                 >
                   <div className="flex min-w-0 items-start gap-3 sm:items-center">
                     <TaskStateIcon status={task.status as string} />
-                    <span className="min-w-0 break-words text-sm font-medium leading-5">
-                      {task.title as string}
-                    </span>
+                    <div className="min-w-0">
+                      <span className="block break-words text-sm font-medium leading-5">
+                        {(task.client_title as string | null) ?? (task.title as string)}
+                      </span>
+                      {task.client_summary ? (
+                        <span className="mt-0.5 block break-words text-xs leading-5 text-zinc-600 dark:text-zinc-400">
+                          {task.client_summary as string}
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
                   <div className="flex shrink-0 items-center justify-between gap-3 pl-8 sm:justify-end sm:pl-0">
                     {task.due_date ? (
