@@ -1,5 +1,7 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { defineAction } from "@/lib/actions/define-action";
 import { requireRole } from "@/lib/auth";
 import { VersionConflictError } from "@/lib/concurrency/version-conflict";
@@ -7,10 +9,12 @@ import { parseGithubRepoUrl } from "@/lib/integrations/github-sync";
 import { buildPortalAccessPatch } from "@/lib/portal/access";
 import { uuidIdInput } from "@/lib/schemas/common";
 import { UpdatePortalAccessInput } from "@/lib/schemas/portal";
-import { ProjectInput, UpdateProjectInput } from "@/lib/schemas/project";
+import {
+  ProjectInput,
+  UpdateProjectInput,
+  UpdateProjectWorkspacePathsInput,
+} from "@/lib/schemas/project";
 import { createServerClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 // biome-ignore lint/suspicious/noExplicitAny: complex dynamic payload from form
 function buildDbPayload(p: any) {
@@ -85,6 +89,26 @@ export const updateProject = defineAction({
       .update(buildDbPayload(input))
       .eq("id", id)
       .eq("version", expected_version)
+      .select("version")
+      .maybeSingle();
+
+    if (error) throw new Error(error.message);
+    if (!data) throw new VersionConflictError();
+    return { version: Number(data.version) };
+  },
+});
+
+export const updateProjectWorkspacePaths = defineAction({
+  name: "projects.updateWorkspacePaths",
+  schema: UpdateProjectWorkspacePathsInput,
+  revalidate: (_payload, input) => [`/projects/${input.id}`],
+  handler: async (input) => {
+    const supabase = await createServerClient();
+    const { data, error } = await supabase
+      .from("projects")
+      .update({ workspace_paths: input.workspace_paths })
+      .eq("id", input.id)
+      .eq("version", input.expected_version)
       .select("version")
       .maybeSingle();
 

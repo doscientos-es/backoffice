@@ -20,4 +20,12 @@ describe("project portal migrations", () => {
     expect(sql).toContain("to service_role");
     expect(sql).toContain("trg_sync_project_request_from_task");
   });
+
+  it("stores only safe repository-relative workspace paths", () => {
+    const sql = migration("20260826120000_project_workspace_paths.sql");
+    expect(sql).toContain("are_safe_project_workspace_paths");
+    expect(sql).toContain("^[A-Za-z]:");
+    expect(sql).toContain("(^|/)\\.\\.?(/|$)");
+    expect(sql).toContain("workspace_paths text[] not null");
+  });
 });

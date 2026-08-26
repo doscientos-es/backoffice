@@ -31,6 +31,7 @@ import { ProjectEditDialog } from "./project-edit-dialog";
 import { ProjectTasksViewToggle } from "./project-tasks-view-toggle";
 import { type KanbanTask, TasksKanban } from "./tasks/tasks-kanban";
 import { type WorkLogRow, WorkLogSection } from "./work-log-section";
+import { WorkspacePathsForm } from "./workspace-paths-form";
 
 export const dynamic = "force-dynamic";
 
@@ -265,6 +266,22 @@ export default async function ProjectDetailPage({
         </Card>
       ) : null}
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Ubicación del código</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <WorkspacePathsForm
+            projectId={project.id as string}
+            version={Number(project.version)}
+            paths={
+              Array.isArray(project.workspace_paths) ? (project.workspace_paths as string[]) : []
+            }
+            canEdit={canEdit}
+          />
+        </CardContent>
+      </Card>
+
       {canEdit && (proposals ?? []).some((proposal) => proposal.status === "accepted") ? (
         <Card>
           <CardHeader>
@@ -449,8 +466,8 @@ export default async function ProjectDetailPage({
               </dt>
               <dd
                 className={`mt-1 text-2xl font-semibold tabular-nums ${profitability.margin >= 0
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-red-600 dark:text-red-400"
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-red-600 dark:text-red-400"
                   }`}
               >
                 {formatEUR(profitability.margin)}

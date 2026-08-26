@@ -12,6 +12,37 @@ export type ProjectStatusType = z.infer<typeof ProjectStatus>;
 export const GithubSyncMode = z.enum(["none", "one_way", "bidirectional", "link_only"]);
 export type GithubSyncModeType = z.infer<typeof GithubSyncMode>;
 
+export const ProjectWorkspacePath = z
+  .string()
+  .trim()
+  .min(1, "La ruta no puede estar vacía")
+  .max(240, "La ruta es demasiado larga")
+  .superRefine((path, ctx) => {
+    const unsafe =
+      path.includes("\\") ||
+      path.startsWith("/") ||
+      path.startsWith("~") ||
+      path.endsWith("/") ||
+      path.includes("//") ||
+      /^[A-Za-z]:/.test(path) ||
+      path.split("/").some((segment) => segment === "." || segment === "..");
+    if (unsafe && path !== ".") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Usa una ruta relativa a la raíz del repositorio, sin '..' ni barras invertidas",
+      });
+    }
+  });
+
+export const UpdateProjectWorkspacePathsInput = z.object({
+  id: z.string().uuid("ID de proyecto inválido"),
+  expected_version: z.coerce.number().int().positive(),
+  workspace_paths: z
+    .array(ProjectWorkspacePath)
+    .max(20, "No puedes asociar más de 20 rutas")
+    .transform((paths) => [...new Set(paths)]),
+});
+
 /** Fixed-price vs. hourly engagement. Drives monthly invoice generation. */
 export const ProjectBillingType = z.enum(["fixed", "hourly"]);
 export type ProjectBillingTypeType = z.infer<typeof ProjectBillingType>;

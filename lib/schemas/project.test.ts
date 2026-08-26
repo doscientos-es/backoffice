@@ -4,6 +4,7 @@ import {
   ProjectInput,
   ProjectStatus,
   UpdateProjectInput,
+  UpdateProjectWorkspacePathsInput,
 } from "@/lib/schemas/project";
 
 const uuid = "11111111-1111-1111-1111-111111111111";
@@ -70,5 +71,32 @@ describe("UpdateProjectInput", () => {
     expect(UpdateProjectInput.safeParse({ ...base, id: uuid, expected_version: 1 }).success).toBe(
       true,
     );
+  });
+});
+
+describe("UpdateProjectWorkspacePathsInput", () => {
+  it("accepts portable repository-relative paths and removes duplicates", () => {
+    const parsed = UpdateProjectWorkspacePathsInput.parse({
+      id: uuid,
+      expected_version: 1,
+      workspace_paths: [
+        "clients/transporte-mascotas",
+        "internal/backoffice",
+        "internal/backoffice",
+      ],
+    });
+    expect(parsed.workspace_paths).toEqual(["clients/transporte-mascotas", "internal/backoffice"]);
+  });
+
+  it("rejects absolute, traversal and platform-specific paths", () => {
+    for (const path of ["C:\\dev\\project", "/srv/project", "../secret", "clients/../secret"]) {
+      expect(
+        UpdateProjectWorkspacePathsInput.safeParse({
+          id: uuid,
+          expected_version: 1,
+          workspace_paths: [path],
+        }).success,
+      ).toBe(false);
+    }
   });
 });
