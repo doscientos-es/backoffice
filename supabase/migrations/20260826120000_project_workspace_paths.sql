@@ -1,5 +1,5 @@
 -- Portable code locations for agents working from different local clones.
--- Paths are always relative to the repository root; absolute paths and
+-- Paths are always relative to the shared workspace root; absolute paths and
 -- traversal segments are rejected at the database boundary.
 
 create or replace function public.are_safe_project_workspace_paths(p_paths text[])
@@ -34,7 +34,7 @@ alter table public.projects
     check (public.are_safe_project_workspace_paths(workspace_paths));
 
 comment on column public.projects.workspace_paths is
-  'Repository-relative POSIX paths used by coding agents. Never stores developer-specific absolute paths.';
+  'Workspace-relative POSIX paths used by coding agents. Never stores developer-specific absolute paths.';
 
 -- Seed only unconfigured, unambiguous projects that live in this monorepo.
 update public.projects

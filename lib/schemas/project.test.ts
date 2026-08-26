@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import {
   GithubSyncMode,
   ProjectInput,
@@ -6,6 +5,7 @@ import {
   UpdateProjectInput,
   UpdateProjectWorkspacePathsInput,
 } from "@/lib/schemas/project";
+import { describe, expect, it } from "vitest";
 
 const uuid = "11111111-1111-1111-1111-111111111111";
 
@@ -75,7 +75,7 @@ describe("UpdateProjectInput", () => {
 });
 
 describe("UpdateProjectWorkspacePathsInput", () => {
-  it("accepts portable repository-relative paths and removes duplicates", () => {
+  it("accepts portable workspace-relative paths and removes duplicates", () => {
     const parsed = UpdateProjectWorkspacePathsInput.parse({
       id: uuid,
       expected_version: 1,

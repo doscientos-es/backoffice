@@ -45,7 +45,7 @@ export function WorkspacePathsForm({
       <div className="flex items-start gap-3 text-sm text-muted-foreground">
         <FolderGit2 className="mt-0.5 size-4 shrink-0" aria-hidden />
         <p>
-          Una ruta por línea, relativa a la raíz del repositorio. Funciona igual aunque cada persona
+          Una ruta por línea, relativa a la raíz del workspace. Funciona igual aunque cada persona
           clone o mueva el monorepo a una ubicación distinta.
         </p>
       </div>
