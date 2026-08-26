@@ -308,12 +308,11 @@ export function ListControls({
     if (!savedViewsConfig) return;
     const name = savedViewName.trim();
     if (!name) return;
-    const filters = Object.fromEntries(
-      savedViewsConfig.filterKeys.flatMap((key) => {
-        const value = params.get(key);
-        return value ? [[key, value]] : [];
-      }),
-    );
+    const filters: Record<string, string> = {};
+    for (const key of savedViewsConfig.filterKeys) {
+      const value = params.get(key);
+      if (value) filters[key] = value;
+    }
     if (Object.keys(filters).length === 0) return;
     const id = globalThis.crypto?.randomUUID?.() ?? `view-${Date.now()}`;
     setSavedViews((current) => {

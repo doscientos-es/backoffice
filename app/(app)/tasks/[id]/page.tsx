@@ -105,6 +105,8 @@ export default async function TaskDetailPage({
                   id: id,
                   title: task.title as string,
                   description: (task.description as string | null) ?? null,
+                  client_title: (task.client_title as string | null) ?? null,
+                  client_summary: (task.client_summary as string | null) ?? null,
                   status: task.status as string,
                   priority: task.priority as string,
                   member_ids: taskMemberIds,

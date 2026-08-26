@@ -28,4 +28,22 @@ describe("TaskFormFields client visibility", () => {
       screen.getByRole("checkbox", { name: /Visible en el portal del cliente/i }),
     ).toHaveProperty("checked", false);
   });
+
+  it("keeps optional client-facing content separate from internal description", () => {
+    render(
+      <form>
+        <TaskFormFields
+          defaults={{
+            title: "Título interno",
+            description: "Notas privadas",
+            client_title: "Título compartido",
+            client_summary: "Resumen compartido",
+          }}
+        />
+      </form>,
+    );
+
+    expect(screen.getByLabelText("Título para cliente")).toHaveValue("Título compartido");
+    expect(screen.getByLabelText("Resumen para cliente")).toHaveValue("Resumen compartido");
+  });
 });

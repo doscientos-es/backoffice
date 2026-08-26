@@ -77,6 +77,8 @@ export function TaskCreateDialog({
     const res = await createTask({
       title: fd.get("title")?.toString() ?? "",
       description: fd.get("description")?.toString() ?? "",
+      client_title: fd.get("client_title")?.toString() ?? "",
+      client_summary: fd.get("client_summary")?.toString() ?? "",
       project_id: projectId ?? fd.get("project_id")?.toString() ?? "",
       lead_id: leadId ?? fd.get("lead_id")?.toString() ?? "",
       client_id: clientId ?? fd.get("client_id")?.toString() ?? "",

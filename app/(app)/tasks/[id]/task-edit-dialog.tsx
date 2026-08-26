@@ -24,6 +24,8 @@ type Task = {
   id: string;
   title: string;
   description: string | null;
+  client_title: string | null;
+  client_summary: string | null;
   status: string;
   priority: string;
   member_ids: string[];
@@ -53,6 +55,8 @@ export function TaskEditDialog({ task, members }: Props) {
       expected_version: task.version,
       title: fd.get("title")?.toString() ?? "",
       description: fd.get("description")?.toString() ?? "",
+      client_title: fd.get("client_title")?.toString() ?? "",
+      client_summary: fd.get("client_summary")?.toString() ?? "",
       member_ids: fd
         .getAll("member_ids")
         .map((v) => v.toString())
@@ -108,6 +112,8 @@ export function TaskEditDialog({ task, members }: Props) {
               defaults={{
                 title: task.title,
                 description: task.description,
+                client_title: task.client_title,
+                client_summary: task.client_summary,
                 member_ids: task.member_ids,
                 status: task.status,
                 priority: task.priority,

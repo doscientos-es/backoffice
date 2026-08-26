@@ -27,6 +27,8 @@ export const TASK_PRIORITY_OPTIONS = [
 export type TaskFormDefaults = {
   title?: string;
   description?: string | null;
+  client_title?: string | null;
+  client_summary?: string | null;
   project_id?: string | null;
   lead_id?: string | null;
   client_id?: string | null;
@@ -95,6 +97,32 @@ export function TaskFormFields({
           defaultValue={d.description ?? ""}
         />
       </FormRow>
+      <div className="rounded-md border border-border/70 p-4">
+        <p className="text-sm font-medium">Contenido para cliente</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Opcional. Solo se muestra en el portal cuando la tarea es visible; si el título queda vacío,
+          se usará el título interno.
+        </p>
+        <div className="mt-4 grid gap-4">
+          <FormRow label="Título para cliente" htmlFor={`${idPrefix}-client_title`}>
+            <Input
+              id={`${idPrefix}-client_title`}
+              name="client_title"
+              maxLength={200}
+              defaultValue={d.client_title ?? ""}
+            />
+          </FormRow>
+          <FormRow label="Resumen para cliente" htmlFor={`${idPrefix}-client_summary`}>
+            <Textarea
+              id={`${idPrefix}-client_summary`}
+              name="client_summary"
+              rows={2}
+              maxLength={8000}
+              defaultValue={d.client_summary ?? ""}
+            />
+          </FormRow>
+        </div>
+      </div>
       <div className="grid gap-5 sm:grid-cols-2">
         {includeParentSelectors ? (
           <>
@@ -178,8 +206,8 @@ export function TaskFormFields({
         <span>
           <span className="block font-medium">Visible en el portal del cliente</span>
           <span className="block text-xs text-muted-foreground">
-            Solo se compartirán el título, el estado y la fecha. La descripción y los comentarios
-            seguirán siendo internos.
+            Se compartirán el título y resumen para cliente si los indicas; si no, se usará el título
+            normal. La descripción interna y los comentarios seguirán siendo privados.
           </span>
         </span>
       </label>

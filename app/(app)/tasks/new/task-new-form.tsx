@@ -34,6 +34,8 @@ export function TaskNewForm({ projects, leads, clients, members, defaults, curre
     const res = await createTask({
       title: fd.get("title")?.toString() ?? "",
       description: fd.get("description")?.toString() ?? "",
+      client_title: fd.get("client_title")?.toString() ?? "",
+      client_summary: fd.get("client_summary")?.toString() ?? "",
       project_id: fd.get("project_id")?.toString() ?? "",
       lead_id: fd.get("lead_id")?.toString() ?? "",
       client_id: fd.get("client_id")?.toString() ?? "",
