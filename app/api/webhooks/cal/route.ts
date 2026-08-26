@@ -88,8 +88,19 @@ export async function POST(request: NextRequest) {
 
     if (triggerEvent === "BOOKING_CREATED") {
       await recordConversionEvent({
+        event_id: intake.context?.eventId ?? null,
+        visitor_id: intake.context?.visitorId ?? null,
         lead_id: leadId,
         event_name: "calendar_booking_completed",
+        conversion_step: intake.context?.conversionStep ?? null,
+        landing_path: intake.context?.landingPath ?? null,
+        landing_ref: intake.context?.landingRef ?? null,
+        referrer: intake.context?.referrer ?? null,
+        utm_source: intake.utm?.source ?? null,
+        utm_medium: intake.utm?.medium ?? null,
+        utm_campaign: intake.utm?.campaign ?? null,
+        utm_term: intake.utm?.term ?? null,
+        utm_content: intake.utm?.content ?? null,
         payload: { provider: "cal.com", booking_id: payload.payload.uid },
       });
     }

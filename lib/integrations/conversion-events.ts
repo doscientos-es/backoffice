@@ -17,6 +17,7 @@ export const CONVERSION_EVENT_NAMES = [
   "form_submit_attempted",
   "form_validation_failed",
   "calendar_viewed",
+  "calendar_booking_clicked",
   "calendar_booking_completed",
   "whatsapp_click",
   "lead_created",
@@ -45,6 +46,7 @@ export const PUBLIC_TRACKABLE_EVENT_NAMES = [
   "form_submit_attempted",
   "form_validation_failed",
   "calendar_viewed",
+  "calendar_booking_clicked",
   "diagnostic_started",
   "diagnostic_step_completed",
 ] as const;
@@ -137,7 +139,7 @@ export async function linkConversionEventsToLead(input: {
       .from("conversion_events")
       .update({ lead_id: input.leadId })
       .eq("event_id", input.eventId)
-      .eq("event_name", "whatsapp_click")
+      .in("event_name", ["whatsapp_click", "calendar_booking_clicked"])
       .is("lead_id", null)
       .select("id");
     if (error) {
@@ -147,7 +149,7 @@ export async function linkConversionEventsToLead(input: {
     }
   }
 
-  // visitor_id is only a fallback for a WhatsApp click from another browser
+  // visitor_id is only a fallback for a tracked conversion from another browser
   // session. Refuse ambiguous matches so one visitor cannot attach an entire
   // browsing history to a later lead.
   if (linkedByEventId || !input.visitorId) return;
@@ -157,7 +159,7 @@ export async function linkConversionEventsToLead(input: {
     .from("conversion_events")
     .select("id")
     .eq("visitor_id", input.visitorId)
-    .eq("event_name", "whatsapp_click")
+    .in("event_name", ["whatsapp_click", "calendar_booking_clicked"])
     .is("lead_id", null)
     .gte("created_at", cutoff)
     .order("created_at", { ascending: false })

@@ -98,6 +98,9 @@ function buildChain(table: string) {
     gte(_col: string, _val: unknown) {
       return chain;
     },
+    in(_col: string, _values: unknown[]) {
+      return chain;
+    },
     limit(_n: number) {
       return chain;
     },
