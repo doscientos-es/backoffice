@@ -1,5 +1,5 @@
-import { SubmitProjectRequestInput } from "@/lib/schemas/project-portal";
 import { describe, expect, it } from "vitest";
+import { SubmitProjectRequestInput } from "@/lib/schemas/project-portal";
 
 const valid = {
   token: "a".repeat(48),
@@ -25,4 +25,3 @@ describe("SubmitProjectRequestInput", () => {
     expect(SubmitProjectRequestInput.safeParse({ ...valid, website: "spam" }).success).toBe(false);
   });
 });
-
