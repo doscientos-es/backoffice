@@ -4,12 +4,22 @@ import { MessageCircle, QrCode } from "lucide-react";
 import Image from "next/image";
 import { toDataURL } from "qrcode";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { publicEnv } from "@/lib/env";
 import { buildBookingUrl } from "@/lib/recovery/utils";
 import { cn } from "@/lib/utils";
 import { startLeadCall } from "../actions";
+import { WhatsAppComposer } from "../whatsapp-composer";
 
 /**
  * Normalises a raw phone string into a clean `tel:` URI value.
@@ -130,6 +140,7 @@ export function LeadWhatsAppButton({
   firstContactedAt?: string | null;
   senderName: string;
 }) {
+  const [open, setOpen] = useState(false);
   const bookingUrl = buildBookingUrl(publicEnv.NEXT_PUBLIC_CAL_LINK, {
     id: leadId,
     name: leadName,
@@ -148,21 +159,38 @@ export function LeadWhatsAppButton({
   const message = firstContactedAt
     ? `Hola, ${firstName}. Soy ${senderName || "el equipo"}, de Doscientos.`
     : initialMessage;
-  const digits = phone.replace(/\D/g, "");
-  const whatsappNumber = digits.length === 9 ? `34${digits}` : digits;
-  const href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      aria-label="Preparar WhatsApp"
-      title="Preparar WhatsApp"
-      className="inline-flex size-6 items-center justify-center rounded-md text-emerald-600 transition-colors hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-500/10"
-    >
-      <MessageCircle className="size-3.5" />
-    </a>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Preparar WhatsApp"
+          title="Preparar WhatsApp"
+          className="size-6 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-500/10"
+        >
+          <MessageCircle className="size-3.5" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Preparar WhatsApp</DialogTitle>
+          <DialogDescription>
+            Envía el mensaje en WhatsApp y confírmalo después para registrarlo.
+          </DialogDescription>
+        </DialogHeader>
+        <WhatsAppComposer
+          leadId={leadId}
+          leadName={leadName}
+          leadEmail={leadEmail}
+          leadPhone={phone}
+          senderName={senderName}
+          defaultMessage={message}
+          onSuccess={() => setOpen(false)}
+        />
+      </DialogContent>
+    </Dialog>
   );
 }
 

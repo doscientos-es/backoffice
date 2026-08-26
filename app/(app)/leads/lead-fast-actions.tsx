@@ -20,7 +20,6 @@ import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import type { LeadInteraction, LeadListItem } from "@/lib/leads/types";
-import { buildLeadWhatsAppMessage, buildWhatsAppUrl } from "@/lib/leads/whatsapp";
 import type { CallOutcome } from "@/lib/schemas/lead";
 import { relativeTime } from "@/lib/utils";
 import { todayIsoLocal } from "@/lib/utils/date";
@@ -29,6 +28,7 @@ import { MomTestQuickDialog } from "./[id]/mom-test-quick-dialog";
 import { logLeadCall, logLeadEmail } from "./actions";
 import { CallDateField } from "./call-date-field";
 import { CallDigestDialog } from "./call-digest-dialog";
+import { WhatsAppComposer } from "./whatsapp-composer";
 
 export type FastInteraction = LeadInteraction;
 
@@ -78,6 +78,7 @@ function WhatsAppFollowUp({
   leadEmail,
   leadPhone,
   senderName,
+  aiEnabled,
   open,
   onOpenChange,
 }: {
@@ -86,22 +87,13 @@ function WhatsAppFollowUp({
   leadEmail: string | null;
   leadPhone: string | null;
   senderName: string;
+  aiEnabled: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [message, setMessage] = useState(() =>
-    buildLeadWhatsAppMessage(
-      { id: leadId, name: leadName, email: leadEmail },
-      senderName,
-      undefined,
-    ),
-  );
-  if (!leadPhone) return null;
-  const href = buildWhatsAppUrl(leadPhone, message);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Preparar WhatsApp</DialogTitle>
           <DialogDescription>
@@ -109,20 +101,17 @@ function WhatsAppFollowUp({
             WhatsApp.
           </DialogDescription>
         </DialogHeader>
-        <Textarea
-          value={message}
-          onChange={(event) => setMessage(event.target.value)}
-          rows={9}
-          aria-label="Mensaje de WhatsApp"
+        <WhatsAppComposer
+          leadId={leadId}
+          leadName={leadName}
+          leadEmail={leadEmail}
+          leadPhone={leadPhone}
+          senderName={senderName}
+          aiEnabled={aiEnabled}
+          draftKind="no_answer_recovery"
+          draftInstructions="El lead no ha respondido a tres llamadas. Escribe un mensaje breve, humano y no insistente."
+          onSuccess={() => onOpenChange(false)}
         />
-        <div className="flex justify-end">
-          <Button asChild className="gap-2">
-            <a href={href} target="_blank" rel="noreferrer">
-              <MessageCircle className="size-4" />
-              Abrir WhatsApp
-            </a>
-          </Button>
-        </div>
       </DialogContent>
     </Dialog>
   );
@@ -147,9 +136,59 @@ export function LeadFastActions({ lead, aiEnabled, senderName }: Props) {
         aiEnabled={aiEnabled}
         defaultDurationMinutes={lead.scheduled_meeting_duration_minutes}
       />
+      <QuickWhatsAppDialog
+        leadId={lead.id}
+        leadName={lead.name}
+        leadEmail={lead.email}
+        leadPhone={lead.phone}
+        senderName={senderName}
+        aiEnabled={aiEnabled}
+      />
       <EmailDialog leadId={lead.id} leadEmail={lead.email} />
       <MemoryHoverCard lead={lead} aiEnabled={aiEnabled} />
     </div>
+  );
+}
+
+function QuickWhatsAppDialog({
+  leadId,
+  leadName,
+  leadEmail,
+  leadPhone,
+  senderName,
+  aiEnabled,
+}: {
+  leadId: string;
+  leadName: string;
+  leadEmail: string | null;
+  leadPhone: string | null;
+  senderName: string;
+  aiEnabled: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <FastDialog
+      trigger={
+        <IconTrigger label="Preparar WhatsApp">
+          <MessageCircle className="size-3.5 text-emerald-600" />
+        </IconTrigger>
+      }
+      title="Preparar WhatsApp"
+      description="Envía el mensaje en WhatsApp y confírmalo después para registrarlo."
+      open={open}
+      onOpenChange={setOpen}
+    >
+      <WhatsAppComposer
+        leadId={leadId}
+        leadName={leadName}
+        leadEmail={leadEmail}
+        leadPhone={leadPhone}
+        senderName={senderName}
+        aiEnabled={aiEnabled}
+        onSuccess={() => setOpen(false)}
+      />
+    </FastDialog>
   );
 }
 
@@ -220,6 +259,7 @@ function CallDialog({
   const [digestOpen, setDigestOpen] = useState(false);
   const [digestKey, setDigestKey] = useState(0);
   const [momTestOpen, setMomTestOpen] = useState(false);
+  const [digestAfterMomTest, setDigestAfterMomTest] = useState(false);
   const [momTestValues, setMomTestValues] = useState<MomTestValues | null>(null);
   const [whatsappOpen, setWhatsappOpen] = useState(false);
   const [notes, setNotes] = useState("");
@@ -249,14 +289,16 @@ function CallDialog({
     setDuration(defaultDurationMinutes?.toString() ?? "");
     setCallDate(todayIsoLocal());
     setDigestKey((key) => key + 1);
-    if (res.noAnswerStreak >= 3) setWhatsappOpen(true);
     router.refresh();
     setOpen(false);
     if (res.showMomTestPrompt) {
       setMomTestValues(res.momTestValues);
+      setDigestAfterMomTest(true);
       setMomTestOpen(true);
-    } else if (res.noAnswerStreak < 3) {
+    } else if (outcome === "connected") {
       setDigestOpen(true);
+    } else if (res.noAnswerStreak === 3) {
+      setWhatsappOpen(true);
     }
   }
 
@@ -335,6 +377,8 @@ function CallDialog({
         leadId={leadId}
         leadName={leadName}
         leadEmail={leadEmail}
+        leadPhone={leadPhone}
+        senderName={senderName}
         aiEnabled={aiEnabled}
         open={digestOpen}
         onOpenChange={setDigestOpen}
@@ -343,7 +387,13 @@ function CallDialog({
       <MomTestQuickDialog
         leadId={leadId}
         open={momTestOpen}
-        onOpenChange={setMomTestOpen}
+        onOpenChange={(nextOpen) => {
+          setMomTestOpen(nextOpen);
+          if (!nextOpen && digestAfterMomTest) {
+            setDigestAfterMomTest(false);
+            setDigestOpen(true);
+          }
+        }}
         initialValues={momTestValues}
       />
       <WhatsAppFollowUp
@@ -352,6 +402,7 @@ function CallDialog({
         leadEmail={leadEmail}
         leadPhone={leadPhone}
         senderName={senderName}
+        aiEnabled={aiEnabled}
         open={whatsappOpen}
         onOpenChange={setWhatsappOpen}
       />

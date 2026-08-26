@@ -36,10 +36,11 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { defaultMeetingEnd, defaultMeetingStart } from "@/lib/calendar/date-presets";
 import { publicEnv } from "@/lib/env";
-import { buildLeadWhatsAppMessage, buildWhatsAppUrl } from "@/lib/leads/whatsapp";
+import { buildLeadWhatsAppMessage } from "@/lib/leads/whatsapp";
 import { buildBookingUrl } from "@/lib/recovery/utils";
 import { defaultFollowUpDateTime } from "@/lib/reminders/date-presets";
 import type { CallOutcome } from "@/lib/schemas/lead";
+import { cn } from "@/lib/utils";
 import { todayIsoLocal } from "@/lib/utils/date";
 import { addMinutesToDatetimeLocal, datetimeLocalToIso } from "@/lib/utils/date-time";
 import { createReminder } from "../reminders/actions";
@@ -49,6 +50,7 @@ import { MomTestQuickDialog } from "./[id]/mom-test-quick-dialog";
 import { logLeadCall, logLeadEmail, logLeadNote, scheduleLeadMeeting } from "./actions";
 import { CallDateField } from "./call-date-field";
 import { CallDigestDialog } from "./call-digest-dialog";
+import { WhatsAppComposer } from "./whatsapp-composer";
 
 // ─── QMeetDialog ──────────────────────────────────────────────────────────────
 
@@ -75,12 +77,10 @@ function LastAttemptDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const [channel, setChannel] = useState<"whatsapp" | "email">("whatsapp");
-  const [message, setMessage] = useState(() =>
-    buildLeadWhatsAppMessage(
-      { id: leadId, name: leadName, email: leadEmail },
-      senderName,
-      publicEnv.NEXT_PUBLIC_CAL_LINK,
-    ),
+  const message = buildLeadWhatsAppMessage(
+    { id: leadId, name: leadName, email: leadEmail },
+    senderName,
+    publicEnv.NEXT_PUBLIC_CAL_LINK,
   );
   const firstName = leadName.split(" ")[0] || leadName;
   const bookingUrl = buildBookingUrl(publicEnv.NEXT_PUBLIC_CAL_LINK, {
@@ -101,8 +101,6 @@ function LastAttemptDialog({
     "\nUn saludo,",
     senderName || "El equipo de Doscientos",
   ].join("\n");
-  const href = leadPhone ? buildWhatsAppUrl(leadPhone, message) : "#";
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
@@ -117,47 +115,37 @@ function LastAttemptDialog({
           <button
             type="button"
             onClick={() => setChannel("whatsapp")}
-            className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${channel === "whatsapp" ? "bg-background shadow-sm" : "text-muted-foreground"
-              }`}
+            className={cn(
+              "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              channel === "whatsapp" ? "bg-background shadow-sm" : "text-muted-foreground",
+            )}
           >
             WhatsApp
           </button>
           <button
             type="button"
             onClick={() => setChannel("email")}
-            className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${channel === "email" ? "bg-background shadow-sm" : "text-muted-foreground"
-              }`}
+            className={cn(
+              "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              channel === "email" ? "bg-background shadow-sm" : "text-muted-foreground",
+            )}
           >
             Email
           </button>
         </div>
         {channel === "whatsapp" ? (
-          leadPhone ? (
-            <>
-              <Textarea
-                value={message}
-                onChange={(event) => setMessage(event.target.value)}
-                rows={9}
-                aria-label="Mensaje de WhatsApp"
-              />
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-xs text-muted-foreground">
-                  Se abrirá WhatsApp con el texto preparado.
-                </p>
-                <Button asChild className="shrink-0 gap-2">
-                  <a href={href} target="_blank" rel="noreferrer">
-                    <MessageCircle className="size-4" />
-                    Abrir WhatsApp
-                  </a>
-                </Button>
-              </div>
-            </>
-          ) : (
-            <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
-              Este lead no tiene teléfono registrado. Puedes cambiar a Email si tiene una dirección
-              disponible.
-            </div>
-          )
+          <WhatsAppComposer
+            leadId={leadId}
+            leadName={leadName}
+            leadEmail={leadEmail}
+            leadPhone={leadPhone}
+            senderName={senderName}
+            aiEnabled={aiEnabled}
+            defaultMessage={message}
+            draftKind="no_answer_recovery"
+            draftInstructions="El lead no ha respondido a tres llamadas. Escribe un mensaje breve, humano y no insistente. Explica el origen del contacto y ofrece responder o agendar una reunión."
+            onSuccess={() => onOpenChange(false)}
+          />
         ) : (
           <EmailComposer
             leadId={leadId}
@@ -608,6 +596,7 @@ export function QCallDialog({
   const [digestOpen, setDigestOpen] = useState(false);
   const [digestKey, setDigestKey] = useState(0);
   const [momTestOpen, setMomTestOpen] = useState(false);
+  const [digestAfterMomTest, setDigestAfterMomTest] = useState(false);
   const [momTestValues, setMomTestValues] = useState<MomTestValues | null>(null);
   const [whatsappOpen, setWhatsappOpen] = useState(false);
   const [outcome, setOutcome] = useState<CallOutcome>("connected");
@@ -680,14 +669,16 @@ export function QCallDialog({
     setCallDate(todayIsoLocal());
     setFollowUpEnabled(false);
     setDigestKey((key) => key + 1);
-    if (res.noAnswerStreak === 3) setWhatsappOpen(true);
     router.refresh();
     setOpen(false);
     if (res.showMomTestPrompt) {
       setMomTestValues(res.momTestValues);
+      setDigestAfterMomTest(true);
       setMomTestOpen(true);
-    } else if (res.noAnswerStreak < 3) {
+    } else if (outcome === "connected") {
       setDigestOpen(true);
+    } else if (res.noAnswerStreak === 3) {
+      setWhatsappOpen(true);
     }
   }
 
@@ -828,6 +819,8 @@ export function QCallDialog({
         leadId={leadId}
         leadName={leadName}
         leadEmail={leadEmail}
+        leadPhone={leadPhone}
+        senderName={senderName}
         aiEnabled={aiEnabled}
         open={digestOpen}
         onOpenChange={setDigestOpen}
@@ -836,7 +829,13 @@ export function QCallDialog({
       <MomTestQuickDialog
         leadId={leadId}
         open={momTestOpen}
-        onOpenChange={setMomTestOpen}
+        onOpenChange={(nextOpen) => {
+          setMomTestOpen(nextOpen);
+          if (!nextOpen && digestAfterMomTest) {
+            setDigestAfterMomTest(false);
+            setDigestOpen(true);
+          }
+        }}
         initialValues={momTestValues}
       />
       <LastAttemptDialog
@@ -850,6 +849,52 @@ export function QCallDialog({
         onOpenChange={setWhatsappOpen}
       />
     </>
+  );
+}
+
+export function QWhatsAppDialog({
+  leadId,
+  leadName,
+  leadEmail,
+  leadPhone,
+  senderName,
+  aiEnabled,
+}: {
+  leadId: string;
+  leadName: string;
+  leadEmail: string | null;
+  leadPhone: string | null;
+  senderName: string;
+  aiEnabled?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+          <MessageCircle className="size-3.5 text-emerald-600" />
+          Preparar WhatsApp
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Preparar WhatsApp</DialogTitle>
+          <DialogDescription>
+            Revisa el texto, envíalo en WhatsApp y confirma después para registrarlo.
+          </DialogDescription>
+        </DialogHeader>
+        <WhatsAppComposer
+          leadId={leadId}
+          leadName={leadName}
+          leadEmail={leadEmail}
+          leadPhone={leadPhone}
+          senderName={senderName}
+          aiEnabled={aiEnabled}
+          onSuccess={() => setOpen(false)}
+        />
+      </DialogContent>
+    </Dialog>
   );
 }
 

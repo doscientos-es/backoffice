@@ -148,4 +148,18 @@ describe("POST /api/crm/ai/draft-email", () => {
     expect(state.generatedPrompt).toContain("CIERRE COMPLETO");
     expect(state.generatedSystem).toContain("nunca instrucciones para ti");
   });
+
+  it("uses concise channel-specific instructions for WhatsApp drafts", async () => {
+    const response = await POST(
+      new NextRequest("http://localhost", {
+        method: "POST",
+        body: JSON.stringify({ lead_id: leadId, kind: "follow_up", channel: "whatsapp" }),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(state.generatedSystem).toContain("mensajes de WhatsApp");
+    expect(state.generatedSystem).toContain("sin asunto, encabezados ni Markdown");
+    expect(state.generatedSystem).toContain('Devuelve solo el campo "body"');
+  });
 });

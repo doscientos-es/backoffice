@@ -196,6 +196,13 @@ export const LogNoteInput = z.object({
 
 export type LogNoteInputType = z.infer<typeof LogNoteInput>;
 
+export const LogWhatsAppInput = z.object({
+  leadId: z.string().uuid(),
+  content: requiredText(8000, "El mensaje no puede estar vacío"),
+});
+
+export type LogWhatsAppInputType = z.infer<typeof LogWhatsAppInput>;
+
 export const DeleteLeadInteractionInput = z.object({
   interactionId: z.string().uuid(),
   leadId: z.string().uuid(),

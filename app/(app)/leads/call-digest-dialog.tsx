@@ -4,6 +4,8 @@ import {
   Check,
   Clipboard as ClipboardList,
   LoaderCircle as Loader2,
+  Mail,
+  MessageCircle,
   Sparkle as Sparkles,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -19,11 +21,14 @@ import {
 import { cn } from "@/lib/utils";
 import { createTask } from "../tasks/actions";
 import { EmailComposer } from "./[id]/email-composer";
+import { WhatsAppComposer } from "./whatsapp-composer";
 
 type Props = {
   leadId: string;
   leadName: string;
   leadEmail: string | null;
+  leadPhone: string | null;
+  senderName: string;
   aiEnabled?: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -32,42 +37,145 @@ type Props = {
 
 /**
  * Follow-up composer shown after a call is logged. Nothing is sent until the
- * operator reviews and submits the email from the shared composer.
+ * operator reviews and completes each selected channel from the shared composer.
  */
 export function CallDigestDialog({
   leadId,
   leadName,
   leadEmail,
+  leadPhone,
+  senderName,
   aiEnabled,
   open,
   onOpenChange,
   draftKey,
 }: Props) {
+  const [channel, setChannel] = useState<"email" | "whatsapp" | "both">(
+    leadPhone ? "whatsapp" : "email",
+  );
+  const [emailSent, setEmailSent] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setChannel(leadPhone ? "whatsapp" : "email");
+    setEmailSent(false);
+  }, [leadPhone, open]);
+
+  const whatsappDefault = [
+    `Hola, ${leadName.split(" ")[0] || leadName}.`,
+    "Gracias por la llamada. Te envío por aquí un breve seguimiento de lo que hemos comentado.",
+  ].join("\n\n");
+  const showEmail = channel === "email" || (channel === "both" && !emailSent);
+  const showWhatsApp = channel === "whatsapp" || (channel === "both" && emailSent);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Enviar resumen de la llamada</DialogTitle>
+          <DialogTitle>Seguimiento de la llamada</DialogTitle>
           <DialogDescription>
-            La llamada con {leadName} se ha registrado. Revisa el borrador antes de enviarlo.
+            La llamada con {leadName} se ha registrado. Elige el canal y revisa cada borrador.
           </DialogDescription>
         </DialogHeader>
         {aiEnabled ? <CallCopilot key={draftKey} leadId={leadId} open={open} /> : null}
-        <EmailComposer
-          key={draftKey}
-          leadId={leadId}
-          defaultTo={leadEmail ?? ""}
-          defaultSubject="Resumen de nuestra llamada · {{nombre}}"
-          disabled={!leadEmail}
-          disabledReason="Este lead no tiene email registrado. Puedes añadirlo desde la ficha del lead."
-          aiEnabled={aiEnabled}
-          draftKind="call_digest"
-          draftInstructions="Redacta un resumen posterior a la llamada. Incluye los temas tratados, acuerdos y próximos pasos que aparezcan en las notas o transcripción. No menciones notas internas, IA ni la transcripción como tal y no inventes información. Tono profesional, cercano y accionable."
-          ccAdmins
-          onSuccess={() => onOpenChange(false)}
-        />
+        <div className="grid grid-cols-3 gap-1 rounded-lg bg-muted p-1">
+          <ChannelButton
+            active={channel === "email"}
+            disabled={!leadEmail}
+            onClick={() => setChannel("email")}
+            icon={<Mail className="size-3.5" />}
+            label="Email"
+          />
+          <ChannelButton
+            active={channel === "whatsapp"}
+            disabled={!leadPhone}
+            onClick={() => setChannel("whatsapp")}
+            icon={<MessageCircle className="size-3.5" />}
+            label="WhatsApp"
+          />
+          <ChannelButton
+            active={channel === "both"}
+            disabled={!leadEmail || !leadPhone}
+            onClick={() => {
+              setChannel("both");
+              setEmailSent(false);
+            }}
+            icon={<Check className="size-3.5" />}
+            label="Ambos"
+          />
+        </div>
+        {channel === "both" ? (
+          <p className="text-xs text-muted-foreground">
+            {emailSent
+              ? "Email enviado · ahora completa WhatsApp."
+              : "Paso 1 de 2 · envía el email."}
+          </p>
+        ) : null}
+        {showEmail ? (
+          <EmailComposer
+            key={`email-${draftKey}`}
+            leadId={leadId}
+            defaultTo={leadEmail ?? ""}
+            defaultSubject="Resumen de nuestra llamada · {{nombre}}"
+            disabled={!leadEmail}
+            disabledReason="Este lead no tiene email registrado. Puedes añadirlo desde la ficha del lead."
+            aiEnabled={aiEnabled}
+            draftKind="call_digest"
+            draftInstructions="Redacta un resumen posterior a la llamada. Incluye los temas tratados, acuerdos y próximos pasos que aparezcan en las notas o transcripción. No menciones notas internas, IA ni la transcripción como tal y no inventes información. Tono profesional, cercano y accionable."
+            ccAdmins
+            onSuccess={() => {
+              if (channel === "both") setEmailSent(true);
+              else onOpenChange(false);
+            }}
+          />
+        ) : null}
+        {showWhatsApp ? (
+          <WhatsAppComposer
+            key={`whatsapp-${draftKey}`}
+            leadId={leadId}
+            leadName={leadName}
+            leadEmail={leadEmail}
+            leadPhone={leadPhone}
+            senderName={senderName}
+            aiEnabled={aiEnabled}
+            defaultMessage={whatsappDefault}
+            draftKind="call_digest"
+            draftInstructions="Resume la llamada en un WhatsApp breve y natural. Incluye solo acuerdos y próximos pasos presentes en las notas o transcripción, sin inventar información."
+            onSuccess={() => onOpenChange(false)}
+          />
+        ) : null}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ChannelButton({
+  active,
+  disabled,
+  onClick,
+  icon,
+  label,
+}: {
+  active: boolean;
+  disabled: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className={cn(
+        "flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-sm font-medium transition-colors",
+        active ? "bg-background shadow-sm" : "text-muted-foreground",
+        disabled && "cursor-not-allowed opacity-40",
+      )}
+    >
+      {icon}
+      {label}
+    </button>
   );
 }
 
@@ -239,7 +347,7 @@ function CallCopilot({ leadId, open }: { leadId: string; open: boolean }) {
           ) : null}
           {data.follow_up_focus ? (
             <p className="text-xs text-muted-foreground">
-              El email de abajo se puede orientar a: {data.follow_up_focus}
+              El seguimiento se puede orientar a: {data.follow_up_focus}
             </p>
           ) : null}
         </div>

@@ -9,6 +9,7 @@ import {
   LogCallInput,
   LogEmailInput,
   LogNoteInput,
+  LogWhatsAppInput,
   MOM_TEST_SIGNALS,
   SendEmailToLeadInput,
   UpdateLeadCallInput,
@@ -160,7 +161,7 @@ describe("LogCallInput", () => {
   });
 });
 
-describe("LogEmailInput / LogNoteInput", () => {
+describe("manual communication inputs", () => {
   it("validates email log shape", () => {
     expect(
       LogEmailInput.safeParse({ leadId: uuid, direction: "outgoing", subject: "Hi" }).success,
@@ -172,6 +173,10 @@ describe("LogEmailInput / LogNoteInput", () => {
   it("requires note content", () => {
     expect(LogNoteInput.safeParse({ leadId: uuid, content: "" }).success).toBe(false);
     expect(LogNoteInput.safeParse({ leadId: uuid, content: "ok" }).success).toBe(true);
+  });
+  it("requires a non-empty WhatsApp message", () => {
+    expect(LogWhatsAppInput.safeParse({ leadId: uuid, content: "" }).success).toBe(false);
+    expect(LogWhatsAppInput.safeParse({ leadId: uuid, content: "Hola" }).success).toBe(true);
   });
 });
 

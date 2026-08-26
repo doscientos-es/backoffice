@@ -199,6 +199,7 @@ import {
   createLead,
   deleteLead,
   logLeadCall,
+  logLeadWhatsApp,
   scheduleLeadMeeting,
   sendEmailToLead,
   updateLead,
@@ -498,6 +499,30 @@ describe("logLeadCall", () => {
         mom_test_accessible: false,
         mom_test_accessible_source: "manual",
       }),
+    );
+  });
+});
+
+describe("logLeadWhatsApp", () => {
+  it("records the confirmed message with its author and channel metadata", async () => {
+    const result = await logLeadWhatsApp({
+      leadId: "00000000-0000-0000-0000-000000000001",
+      content: "  Hola, te envío el resumen.  ",
+    });
+
+    expect(result.ok).toBe(true);
+    expect(db.insertedRows).toContainEqual(
+      expect.objectContaining({
+        table: "lead_interactions",
+        type: "note",
+        subject: "WhatsApp enviado",
+        body: "Hola, te envío el resumen.",
+        performed_by: "member-1",
+        payload: { manual: true, channel: "whatsapp", direction: "outgoing" },
+      }),
+    );
+    expect(db.updatedRows).toContainEqual(
+      expect.objectContaining({ table: "leads", first_contacted_at: expect.any(String) }),
     );
   });
 });

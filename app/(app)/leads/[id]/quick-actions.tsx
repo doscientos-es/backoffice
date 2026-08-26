@@ -17,6 +17,7 @@ import {
   QMeetNowDialog,
   QNoteDialog,
   QSendEmailDialog,
+  QWhatsAppDialog,
 } from "../lead-quick-action-dialogs";
 import { ExtractTasksDialog, type ExtractTasksDialogProps } from "./extract-tasks-dialog";
 import { GmailSyncButton } from "./gmail-sync-button";
@@ -67,6 +68,14 @@ export function LeadQuickActions({
         aiEnabled={aiEnabled}
         openInitially={openCallInitially}
         defaultDurationMinutes={defaultDurationMinutes}
+      />
+      <QWhatsAppDialog
+        leadId={leadId}
+        leadName={leadName}
+        leadEmail={leadEmail}
+        leadPhone={leadPhone}
+        senderName={senderName}
+        aiEnabled={aiEnabled}
       />
       <QSendEmailDialog leadId={leadId} leadEmail={leadEmail} aiEnabled={aiEnabled} />
       <QEmailDialog leadId={leadId} leadEmail={leadEmail} />

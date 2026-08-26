@@ -1,5 +1,9 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { after } from "next/server";
+import { z } from "zod";
 import { defineAction } from "@/lib/actions/define-action";
 import { VersionConflictError } from "@/lib/concurrency/version-conflict";
 import { sendEmail } from "@/lib/email/resend";
@@ -35,6 +39,7 @@ import {
   LogCallInput,
   LogEmailInput,
   LogNoteInput,
+  LogWhatsAppInput,
   type MomTestSignal,
   ScheduleLeadMeetingInput,
   SendEmailToLeadInput,
@@ -47,10 +52,6 @@ import {
 } from "@/lib/schemas/lead";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { after } from "next/server";
-import { z } from "zod";
 
 const log = scopedLogger("leads.actions");
 
@@ -1006,6 +1007,30 @@ export const logLeadNote = defineAction({
       performed_by: user.id,
     });
     if (error) throw new Error(error.message);
+  },
+});
+
+/**
+ * Records a WhatsApp message only after the operator confirms it was sent in
+ * WhatsApp. It remains a `note` until the interaction enum is migrated.
+ */
+export const logLeadWhatsApp = defineAction({
+  name: "leads.logWhatsApp",
+  schema: LogWhatsAppInput,
+  revalidate: (_payload, input) => ["/leads", `/leads/${input.leadId}`],
+  handler: async ({ leadId, content }, { user }) => {
+    const supabase = await createServerClient();
+    const { error } = await supabase.from("lead_interactions").insert({
+      lead_id: leadId,
+      type: "note",
+      subject: "WhatsApp enviado",
+      body: content.trim(),
+      performed_by: user.id,
+      payload: { manual: true, channel: "whatsapp", direction: "outgoing" },
+    });
+    if (error) throw new Error(error.message);
+
+    await markFirstContacted(supabase, leadId);
   },
 });
 
