@@ -8,6 +8,7 @@ const props = {
   firstContactedAt: "2026-08-01T10:00:00.000Z",
   phone: "600111222",
   interactions: [],
+  proposals: [],
   projects: [],
   invoices: [],
   tasks: [],
