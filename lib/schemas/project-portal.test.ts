@@ -25,3 +25,4 @@ describe("SubmitProjectRequestInput", () => {
     expect(SubmitProjectRequestInput.safeParse({ ...valid, website: "spam" }).success).toBe(false);
   });
 });
+
