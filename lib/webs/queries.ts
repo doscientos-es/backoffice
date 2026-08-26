@@ -11,7 +11,7 @@ export async function listWebProjects(): Promise<WebProjectListItem[]> {
     supabase
       .from("web_projects")
       .select(
-        "id, name, url, client_id, is_own, hosting_provider, domain_expires_at, tech_stack, updated_at, clients(name)",
+        "id, name, url, client_id, project_id, is_client_visible, is_own, hosting_provider, domain_expires_at, tech_stack, updated_at, clients(name), projects(name)",
       ),
   )
     .order("is_own", { ascending: false })
@@ -25,6 +25,9 @@ export async function listWebProjects(): Promise<WebProjectListItem[]> {
     url: r.url as string,
     client_id: (r.client_id as string | null) ?? null,
     client_name: (r as unknown as { clients: { name: string } | null }).clients?.name ?? null,
+    project_id: (r.project_id as string | null) ?? null,
+    project_name: (r as unknown as { projects: { name: string } | null }).projects?.name ?? null,
+    is_client_visible: Boolean(r.is_client_visible),
     is_own: (r.is_own as boolean) ?? false,
     hosting_provider: (r.hosting_provider as string | null) ?? null,
     domain_expires_at: (r.domain_expires_at as string | null) ?? null,
@@ -36,7 +39,7 @@ export async function listWebProjects(): Promise<WebProjectListItem[]> {
 export async function getWebProject(id: string): Promise<WebProjectDetail | null> {
   const supabase = await createServerClient();
   const { data, error } = await notDeleted(
-    supabase.from("web_projects").select("*").eq("id", id),
+    supabase.from("web_projects").select("*, projects(name)").eq("id", id),
   ).maybeSingle();
 
   if (error) log.error({ id, err: error.message }, "get_web_project_failed");
@@ -47,6 +50,9 @@ export async function getWebProject(id: string): Promise<WebProjectDetail | null
     name: data.name as string,
     url: data.url as string,
     client_id: (data.client_id as string | null) ?? null,
+    project_id: (data.project_id as string | null) ?? null,
+    project_name: (data as unknown as { projects: { name: string } | null }).projects?.name ?? null,
+    is_client_visible: Boolean(data.is_client_visible),
     is_own: (data.is_own as boolean) ?? false,
     hosting_provider: (data.hosting_provider as string | null) ?? null,
     hosting_url: (data.hosting_url as string | null) ?? null,

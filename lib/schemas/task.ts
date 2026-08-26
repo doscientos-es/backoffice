@@ -22,7 +22,7 @@ export const CreateTaskInput = z.object({
   status: TaskStatus.default("todo"),
   priority: TaskPriority.default("medium"),
   due_date: optionalDate,
-  is_client_visible: z.boolean().optional().default(false),
+  is_client_visible: z.boolean().optional().default(true),
 });
 
 export type CreateTaskInputType = z.infer<typeof CreateTaskInput>;

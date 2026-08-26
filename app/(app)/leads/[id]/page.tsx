@@ -26,6 +26,7 @@ import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
 import { TaskCreateDialog } from "../../tasks/task-create-dialog";
 import { CallInteractionDetails } from "./call-interaction-details";
 import { DeleteLeadInteractionButton } from "./delete-lead-interaction-button";
+import { EmailDeliveryStatuses } from "./email-delivery-statuses";
 import { Lead360Timeline } from "./lead-360-timeline";
 import { LeadAiPanel } from "./lead-ai-panel";
 import { LeadCommercial } from "./lead-commercial";
@@ -401,6 +402,9 @@ export default async function LeadDetailPage({
       <Lead360Timeline
         leadId={lead.id as string}
         leadStatus={lead.status as string}
+        firstContactedAt={lead.first_contacted_at}
+        phone={lead.phone}
+        reminders={reminders}
         interactions={interactions}
         proposals={proposals}
         projects={projects}
@@ -455,63 +459,73 @@ export default async function LeadDetailPage({
                 </p>
               ) : (
                 <ol className="divide-y divide-border">
-                  {groupResendInteractions(interactions).map(({ interaction: i, count }) => {
-                    const type = i.type as string;
-                    const subject = i.subject as string | null;
-                    const snippet = excerpt(i.body as string | null);
-                    return (
-                      <li key={i.id as string} className="flex items-start gap-3 px-6 py-3">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium">
-                            {INTERACTION_LABEL[type] ?? type}
-                            {count > 1 ? ` · ${count} eventos` : null}
-                          </p>
-                          {subject ? (
-                            <p className="truncate text-xs text-muted-foreground">{subject}</p>
-                          ) : null}
-                          {snippet ? (
-                            <p className="mt-1 line-clamp-2 text-xs text-muted-foreground/90">
-                              {snippet}
+                  {groupResendInteractions(interactions).map(
+                    ({ interaction: i, latestInteraction, statuses }) => {
+                      const type = i.type as string;
+                      const subject = i.subject as string | null;
+                      const snippet = excerpt(i.body as string | null);
+                      const label = i.resend_email_id
+                        ? statuses.includes("email_received")
+                          ? "Email recibido"
+                          : "Email enviado"
+                        : (INTERACTION_LABEL[type] ?? type);
+                      return (
+                        <li key={i.id as string} className="flex items-start gap-3 px-6 py-3">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium">
+                              {label}
                             </p>
-                          ) : null}
-                        </div>
-                        <div className="flex shrink-0 flex-col items-end gap-0.5 text-xs text-muted-foreground">
-                          <span className="tabular-nums">{relativeTime(interactionDate(i))}</span>
-                          {i.performer ? (
-                            <MemberLabel
-                              member={i.performer}
-                              size="xs"
-                              className="gap-1 text-[11px] text-muted-foreground/70"
-                            />
-                          ) : null}
-                          {type === "call" ? (
-                            <CallInteractionDetails
-                              interaction={i}
-                              leadId={lead.id}
-                              canEdit={canEdit}
-                            />
-                          ) : null}
-                          {type !== "call" ? (
-                            <LeadInteractionDetails
-                              interaction={i}
-                              label={INTERACTION_LABEL[type] ?? type}
-                              leadId={lead.id}
-                              leadEmail={lead.email}
-                              canReply={canEdit}
-                              aiEnabled={aiEnabled}
-                            />
-                          ) : null}
-                          {type === "note" && canEdit ? (
-                            <DeleteLeadInteractionButton
-                              leadId={lead.id}
-                              interactionId={i.id}
-                              label="nota"
-                            />
-                          ) : null}
-                        </div>
-                      </li>
-                    );
-                  })}
+                            {subject ? (
+                              <p className="truncate text-xs text-muted-foreground">{subject}</p>
+                            ) : null}
+                            <EmailDeliveryStatuses statuses={statuses} />
+                            {snippet ? (
+                              <p className="mt-1 line-clamp-2 text-xs text-muted-foreground/90">
+                                {snippet}
+                              </p>
+                            ) : null}
+                          </div>
+                          <div className="flex shrink-0 flex-col items-end gap-0.5 text-xs text-muted-foreground">
+                            <span className="tabular-nums">
+                              {relativeTime(interactionDate(latestInteraction))}
+                            </span>
+                            {i.performer ? (
+                              <MemberLabel
+                                member={i.performer}
+                                size="xs"
+                                className="gap-1 text-[11px] text-muted-foreground/70"
+                              />
+                            ) : null}
+                            {type === "call" ? (
+                              <CallInteractionDetails
+                                interaction={i}
+                                leadId={lead.id}
+                                canEdit={canEdit}
+                              />
+                            ) : null}
+                            {type !== "call" ? (
+                              <LeadInteractionDetails
+                                interaction={i}
+                                label={label}
+                                leadId={lead.id}
+                                leadEmail={lead.email}
+                                canReply={canEdit}
+                                aiEnabled={aiEnabled}
+                              />
+                            ) : null}
+                            {type === "note" && canEdit ? (
+                              <DeleteLeadInteractionButton
+                                leadId={lead.id}
+                                interactionId={i.id}
+                                label="nota"
+                              />
+                            ) : null}
+                          </div>
+                        </li>
+                      );
+                    },
+                  },
+                )}
                 </ol>
               )}
             </CardContent>
@@ -535,6 +549,7 @@ export default async function LeadDetailPage({
               senderName={user.name}
               canEdit={canEdit}
               openCallInitially={query?.feedback === "call"}
+              openScheduleInitially={query?.feedback === "schedule"}
               defaultDurationMinutes={defaultDurationMinutes}
               aiEnabled={aiEnabled}
               scheduleMembers={members}

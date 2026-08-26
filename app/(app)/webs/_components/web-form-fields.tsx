@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { DateField } from "@/components/ui/date-field";
 import { FormRow } from "@/components/ui/form-row";
 import { Input } from "@/components/ui/input";
@@ -10,6 +13,7 @@ type Defaults = Partial<WebProjectDetail>;
 
 interface Props {
   clients: Array<{ id: string; name: string }>;
+  projects: Array<{ id: string; name: string; client_id: string }>;
   defaults?: Defaults;
   idPrefix?: string;
   autoFocusName?: boolean;
@@ -20,10 +24,29 @@ interface Props {
  */
 export function WebFormFields({
   clients,
+  projects,
   defaults: d = {},
   idPrefix = "web",
   autoFocusName = false,
 }: Props) {
+  const [projectId, setProjectId] = useState(d.project_id ?? "");
+  const [clientId, setClientId] = useState(d.client_id ?? "");
+  const [clientVisible, setClientVisible] = useState(
+    d.project_id ? (d.is_client_visible ?? true) : false,
+  );
+
+  function selectProject(nextProjectId: string) {
+    const project = projects.find((item) => item.id === nextProjectId);
+    if (!project) {
+      setProjectId("");
+      setClientVisible(false);
+      return;
+    }
+    if (!projectId) setClientVisible(true);
+    setProjectId(project.id);
+    setClientId(project.client_id);
+  }
+
   return (
     <>
       <div className="grid gap-5 sm:grid-cols-2">
@@ -52,11 +75,36 @@ export function WebFormFields({
         </FormRow>
 
         <FormRow label="Cliente" htmlFor={`${idPrefix}-client_id`}>
-          <Select id={`${idPrefix}-client_id`} name="client_id" defaultValue={d.client_id ?? ""}>
+          <Select
+            id={`${idPrefix}-client_id`}
+            name="client_id"
+            value={clientId}
+            onChange={(event) => setClientId(event.target.value)}
+          >
             <option value="">— Sin cliente (web propia) —</option>
             {clients.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
+              </option>
+            ))}
+          </Select>
+        </FormRow>
+
+        <FormRow
+          label="Proyecto"
+          htmlFor={`${idPrefix}-project_id`}
+          hint="Opcional. Vincula esta web o demo con un proyecto."
+        >
+          <Select
+            id={`${idPrefix}-project_id`}
+            name="project_id"
+            value={projectId}
+            onChange={(event) => selectProject(event.target.value)}
+          >
+            <option value="">— Sin proyecto —</option>
+            {projects.map((project) => (
+              <option key={project.id} value={project.id}>
+                {project.name}
               </option>
             ))}
           </Select>
@@ -120,6 +168,22 @@ export function WebFormFields({
           />
         </FormRow>
       </div>
+
+      {projectId ? (
+        <FormRow label="Portal del proyecto" htmlFor={`${idPrefix}-is_client_visible`}>
+          <label className="flex cursor-pointer items-center gap-2 text-sm">
+            <input
+              id={`${idPrefix}-is_client_visible`}
+              type="checkbox"
+              name="is_client_visible"
+              checked={clientVisible}
+              onChange={(event) => setClientVisible(event.target.checked)}
+              className="h-4 w-4 accent-primary"
+            />
+            Mostrar esta web en el portal compartido con el cliente
+          </label>
+        </FormRow>
+      ) : null}
 
       <FormRow label="¿Web propia?" htmlFor={`${idPrefix}-is_own`}>
         <label className="flex items-center gap-2 text-sm cursor-pointer">

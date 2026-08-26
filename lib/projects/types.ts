@@ -40,6 +40,7 @@ export type ProjectListResult = {
 export type ProjectDetailClient = {
   id: string;
   name: string;
+  email: string | null;
 };
 
 export type ProjectDetailTask = {

@@ -16,7 +16,34 @@ export type LeadInteractionForAI = {
 type ResendInteraction = {
   resend_email_id: string | null;
   type: string;
+  body?: unknown;
+  created_at?: string;
 };
+
+const RESEND_STATUS_ORDER = [
+  "email_scheduled",
+  "email_sent",
+  "email_delivered",
+  "email_opened",
+  "email_clicked",
+  "email_received",
+  "email_delivery_delayed",
+  "email_bounced",
+  "email_complained",
+  "email_failed",
+  "email_suppressed",
+] as const;
+
+const resendStatusRank = new Map(RESEND_STATUS_ORDER.map((status, index) => [status, index]));
+
+function hasInteractionBody(interaction: ResendInteraction): boolean {
+  return typeof interaction.body === "string" && interaction.body.trim().length > 0;
+}
+
+function isNewerInteraction<T extends ResendInteraction>(candidate: T, current: T): boolean {
+  if (!candidate.created_at || !current.created_at) return false;
+  return new Date(candidate.created_at).getTime() > new Date(current.created_at).getTime();
+}
 
 const HTML_ENTITY: Record<string, string> = {
   amp: "&",
@@ -60,27 +87,54 @@ export function interactionBodyText(body: string | null): string | null {
   return text || null;
 }
 
-/** Groups repeated provider callbacks while retaining a count for the UI. */
+/** Groups the complete Resend lifecycle of an email into one timeline entry. */
 export function groupResendInteractions<T extends ResendInteraction>(interactions: T[]) {
-  const groups = new Map<string, { interaction: T; count: number }>();
-  const result: Array<{ interaction: T; count: number }> = [];
+  const groups = new Map<
+    string,
+    { interaction: T; latestInteraction: T; count: number; statuses: string[] }
+  >();
+  const result: Array<{
+    interaction: T;
+    latestInteraction: T;
+    count: number;
+    statuses: string[];
+  }> = [];
 
   for (const interaction of interactions) {
     if (!interaction.resend_email_id) {
-      result.push({ interaction, count: 1 });
+      result.push({ interaction, latestInteraction: interaction, count: 1, statuses: [] });
       continue;
     }
 
-    const key = `${interaction.resend_email_id}:${interaction.type}`;
-    const group = groups.get(key);
+    const group = groups.get(interaction.resend_email_id);
     if (group) {
       group.count++;
+      if (!group.statuses.includes(interaction.type)) group.statuses.push(interaction.type);
+      if (!hasInteractionBody(group.interaction) && hasInteractionBody(interaction)) {
+        group.interaction = interaction;
+      }
+      if (isNewerInteraction(interaction, group.latestInteraction)) {
+        group.latestInteraction = interaction;
+      }
       continue;
     }
 
-    const next = { interaction, count: 1 };
-    groups.set(key, next);
+    const next = {
+      interaction,
+      latestInteraction: interaction,
+      count: 1,
+      statuses: [interaction.type],
+    };
+    groups.set(interaction.resend_email_id, next);
     result.push(next);
+  }
+
+  for (const group of result) {
+    group.statuses.sort(
+      (a, b) =>
+        (resendStatusRank.get(a as (typeof RESEND_STATUS_ORDER)[number]) ?? Number.MAX_VALUE) -
+        (resendStatusRank.get(b as (typeof RESEND_STATUS_ORDER)[number]) ?? Number.MAX_VALUE),
+    );
   }
 
   return result;

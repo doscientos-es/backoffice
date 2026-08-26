@@ -83,6 +83,7 @@ export async function getClientDetail(id: string): Promise<ClientDetailResult> {
     { data: invoices },
     { data: tasks },
     { data: reminders },
+    { data: webs },
   ] = await Promise.all([
     notDeleted(supabase.from("projects").select("id, name, status").eq("client_id", id))
       .order("created_at", { ascending: false })
@@ -118,6 +119,12 @@ export async function getClientDetail(id: string): Promise<ClientDetailResult> {
       .is("deleted_at", null)
       .order("start_at", { ascending: true })
       .limit(CLIENT_RELATED_LIMIT),
+    notDeleted(
+      supabase
+        .from("web_projects")
+        .select("id, name, url, project_id, is_client_visible, projects(name)")
+        .eq("client_id", id),
+    ).order("name"),
   ]);
 
   return {
@@ -172,6 +179,15 @@ export async function getClientDetail(id: string): Promise<ClientDetailResult> {
       id: r.id as string,
       title: r.title as string,
       remind_at: r.start_at as string,
+    })),
+    webs: (webs ?? []).map((web) => ({
+      id: web.id as string,
+      name: web.name as string,
+      url: web.url as string,
+      project_id: (web.project_id as string | null) ?? null,
+      project_name:
+        (web as unknown as { projects: { name: string } | null }).projects?.name ?? null,
+      is_client_visible: Boolean(web.is_client_visible),
     })),
   };
 }

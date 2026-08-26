@@ -1,7 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import {
   ensureClientForProposal,
   ensureProjectForProposal,
@@ -12,6 +10,7 @@ import { isDemoMode } from "@/lib/demo";
 import { publicEnv, serverEnv } from "@/lib/env";
 import { backupProposalToDrive } from "@/lib/google/backup";
 import { createRedsysPayment, getRedsysUrl } from "@/lib/integrations/redsys";
+import { sendProposalAcceptedEmail } from "@/lib/integrations/send-proposal-accepted-email";
 import { createProposalDraftInvoices } from "@/lib/invoices/proposal-drafts";
 import { scopedLogger } from "@/lib/logger";
 import { dispatchNotifications } from "@/lib/notifications/dispatch";
@@ -25,6 +24,8 @@ import {
   ProposalRejectionReason,
 } from "@/lib/schemas/proposal";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 const log = scopedLogger("portal.proposal");
 
@@ -32,13 +33,13 @@ type ActionResult = { ok: true } | { ok: false; error: string };
 
 export type PaymentInitResult =
   | {
-      ok: true;
-      demo?: boolean;
-      url: string;
-      signatureVersion: string;
-      merchantParameters: string;
-      signature: string;
-    }
+    ok: true;
+    demo?: boolean;
+    url: string;
+    signatureVersion: string;
+    merchantParameters: string;
+    signature: string;
+  }
   | { ok: false; error: string };
 
 /**
@@ -180,6 +181,8 @@ async function acceptWithFiscal(token: string, fiscalInput: unknown): Promise<Ac
   } catch (err) {
     log.warn({ err, proposalId: proposal.id }, "proposal_invoice_drafts_failed");
   }
+
+  await sendProposalAcceptedEmail(proposal.id as string);
 
   revalidatePath(`/p/proposal/${parsed.data}`);
   revalidatePath("/invoices");

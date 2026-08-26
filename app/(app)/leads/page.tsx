@@ -42,6 +42,15 @@ const ATTENTION_FILTER_OPTIONS: { value: LeadAttentionFilter; label: string }[] 
   { value: "urgent", label: "Urgencia inmediata" },
 ];
 
+const LEAD_SAVED_VIEW_FILTER_KEYS = [
+  "q",
+  "status",
+  "source",
+  "solution",
+  "assignee",
+  "attention",
+];
+
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export default async function LeadsPage({
@@ -162,6 +171,10 @@ export default async function LeadsPage({
           },
           { key: "attention", label: "Atención", options: ATTENTION_FILTER_OPTIONS },
         ]}
+        savedViews={{
+          storageKey: "leads:saved-views:v1",
+          filterKeys: LEAD_SAVED_VIEW_FILTER_KEYS,
+        }}
         pagination={{ page, pageSize: LEAD_LIST_PAGE_SIZE, total: count }}
         headers={[
           { label: "Nombre", sortKey: "name" },
@@ -200,6 +213,10 @@ export default async function LeadsPage({
           },
           { key: "attention", label: "Atención", options: ATTENTION_FILTER_OPTIONS },
         ]}
+        savedViews={{
+          storageKey: "leads:saved-views:v1",
+          filterKeys: LEAD_SAVED_VIEW_FILTER_KEYS,
+        }}
       />
 
       {error ? (

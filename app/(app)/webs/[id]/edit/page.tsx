@@ -28,9 +28,14 @@ export default async function EditWebPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const supabase = await createServerClient();
 
-  const [site, { data: clients }] = await Promise.all([
+  const [site, { data: clients }, { data: projects }] = await Promise.all([
     getWebProject(id),
     supabase.from("clients").select("id, name").is("deleted_at", null).order("name"),
+    supabase
+      .from("projects")
+      .select("id, name, client_id")
+      .is("deleted_at", null)
+      .order("name"),
   ]);
 
   if (!site) notFound();
@@ -46,6 +51,9 @@ export default async function EditWebPage({ params }: { params: Promise<{ id: st
         <CardContent className="pt-6">
           <VerifiedWebProjectForm
             clients={(clients as Array<{ id: string; name: string }> | null) ?? []}
+            projects={
+              (projects as Array<{ id: string; name: string; client_id: string }> | null) ?? []
+            }
             defaults={site}
             mode="edit"
             projectId={id}

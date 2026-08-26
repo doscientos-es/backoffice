@@ -172,7 +172,7 @@ export function TaskFormFields({
         <input
           type="checkbox"
           name="is_client_visible"
-          defaultChecked={d.is_client_visible ?? false}
+          defaultChecked={d.is_client_visible ?? true}
           className="mt-0.5 size-4 accent-primary"
         />
         <span>

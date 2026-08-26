@@ -1,7 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { defineAction } from "@/lib/actions/define-action";
 import { requireRole } from "@/lib/auth";
 import { VersionConflictError } from "@/lib/concurrency/version-conflict";
@@ -15,6 +13,8 @@ import {
   UpdateProjectWorkspacePathsInput,
 } from "@/lib/schemas/project";
 import { createServerClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 // biome-ignore lint/suspicious/noExplicitAny: complex dynamic payload from form
 function buildDbPayload(p: any) {
@@ -179,4 +179,103 @@ export async function updateProjectPortalAccess(
 
   revalidatePath(`/projects/${parsed.data.id}`);
   return { ok: true };
+}
+
+const PublishProjectPortalInput = z.object({
+  id: z.string().uuid(),
+  message: z.string().trim().max(1000, "El mensaje es demasiado largo").optional(),
+  resend: z.boolean().optional(),
+});
+
+export async function publishProjectPortal(input: unknown) {
+  const user = await requireRole(["owner", "admin"]);
+  const parsed = PublishProjectPortalInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false as const, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+  }
+
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("projects")
+    .select(
+      "id, name, portal_token, is_client_visible, portal_invite_sent_at, portal_invite_recipient, portal_invite_resend_id, clients(name, email)",
+    )
+    .eq("id", parsed.data.id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (error || !data) return { ok: false as const, error: "Proyecto no encontrado" };
+
+  const project = data as unknown as {
+    id: string;
+    name: string;
+    portal_token: string | null;
+    is_client_visible: boolean;
+    portal_invite_sent_at: string | null;
+    portal_invite_recipient: string | null;
+    portal_invite_resend_id: string | null;
+    clients: { name: string; email: string | null } | null;
+  };
+  if (!project.portal_token) return { ok: false as const, error: "El proyecto no tiene enlace público" };
+  if (!project.clients?.email) return { ok: false as const, error: "El cliente no tiene email" };
+  if (project.portal_invite_sent_at && !parsed.data.resend) {
+    return { ok: true as const, sentAt: project.portal_invite_sent_at, alreadySent: true };
+  }
+
+  const claimedAt = new Date().toISOString();
+  let claim = supabase
+    .from("projects")
+    .update({
+      is_client_visible: true,
+      portal_invite_sent_at: claimedAt,
+      portal_invite_recipient: project.clients.email,
+      portal_invite_resend_id: null,
+    })
+    .eq("id", project.id);
+  if (!parsed.data.resend) claim = claim.is("portal_invite_sent_at", null);
+  const { data: claimed, error: claimError } = await claim.select("id").maybeSingle();
+  if (claimError || !claimed) {
+    return { ok: false as const, error: "El portal ya está siendo publicado" };
+  }
+
+  try {
+    const appUrl = publicEnv.NEXT_PUBLIC_APP_URL;
+    const portalUrl = `${appUrl}/p/project/${project.portal_token}`;
+    const html = await renderEmail(
+      ProjectKickoffEmail({
+        clientName: project.clients.name,
+        projectName: project.name,
+        portalUrl,
+        appUrl,
+        message: parsed.data.message || undefined,
+      }),
+    );
+    const sent = await sendEmail({
+      fromName: user.name,
+      fromAlias: user.email_alias,
+      to: project.clients.email,
+      replyTo: user.email,
+      subject: `Arrancamos con ${project.name}`,
+      html,
+      tags: { project_id: project.id, kind: "project_kickoff" },
+    });
+    await supabase
+      .from("projects")
+      .update({ portal_invite_resend_id: sent.id })
+      .eq("id", project.id)
+      .eq("portal_invite_sent_at", claimedAt);
+    revalidatePath(`/projects/${project.id}`);
+    return { ok: true as const, sentAt: claimedAt };
+  } catch {
+    await supabase
+      .from("projects")
+      .update({
+        is_client_visible: project.is_client_visible,
+        portal_invite_sent_at: project.portal_invite_sent_at,
+        portal_invite_recipient: project.portal_invite_recipient,
+        portal_invite_resend_id: project.portal_invite_resend_id,
+      })
+      .eq("id", project.id)
+      .eq("portal_invite_sent_at", claimedAt);
+    return { ok: false as const, error: "No se pudo enviar el email. El portal no se publicó." };
+  }
 }

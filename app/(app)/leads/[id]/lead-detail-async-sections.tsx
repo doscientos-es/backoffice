@@ -184,6 +184,7 @@ export async function LeadQuickActionsSection({
   senderName,
   canEdit,
   openCallInitially,
+  openScheduleInitially,
   defaultDurationMinutes,
   aiEnabled,
   scheduleMembers,
@@ -198,6 +199,7 @@ export async function LeadQuickActionsSection({
   senderName: string;
   canEdit: boolean;
   openCallInitially: boolean;
+  openScheduleInitially: boolean;
   defaultDurationMinutes: number | null;
   aiEnabled: boolean;
   scheduleMembers: MemberOption[];
@@ -206,18 +208,18 @@ export async function LeadQuickActionsSection({
   const supabase = await createServerClient();
   const projectsRequest = googleEnabled
     ? supabase
-        .from("projects")
-        .select("id, name")
-        .is("deleted_at", null)
-        .in("status", MEETING_PROJECT_STATUSES)
-        .order("name")
+      .from("projects")
+      .select("id, name")
+      .is("deleted_at", null)
+      .in("status", MEETING_PROJECT_STATUSES)
+      .order("name")
     : Promise.resolve({ data: [] as Array<{ id: string; name: string }>, error: null });
   const membersRequest = googleEnabled
     ? supabase.from("team_members").select("id, name, email").is("deleted_at", null).order("name")
     : Promise.resolve({
-        data: [] as Array<{ id: string; name: string; email: string }>,
-        error: null,
-      });
+      data: [] as Array<{ id: string; name: string; email: string }>,
+      error: null,
+    });
   const [projectsResult, membersResult] = await Promise.all([projectsRequest, membersRequest]);
 
   if (projectsResult.error) throw new Error(projectsResult.error.message);
@@ -236,6 +238,7 @@ export async function LeadQuickActionsSection({
           leadPhone={lead.phone}
           senderName={senderName}
           openCallInitially={openCallInitially}
+          openScheduleInitially={openScheduleInitially}
           defaultDurationMinutes={defaultDurationMinutes}
           claimable={canEdit && !lead.assigned_to}
           aiEnabled={aiEnabled}

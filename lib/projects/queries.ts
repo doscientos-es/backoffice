@@ -65,14 +65,15 @@ export async function getProjectDetail(
   const supabase = await createServerClient();
 
   const { data: project, error } = await notDeleted(
-    supabase.from("projects").select("*, clients(id, name)").eq("id", id),
+    supabase.from("projects").select("*, clients(id, name, email)").eq("id", id),
   ).maybeSingle();
 
   if (error) log.error({ projectId: id, err: error.message }, "get_project_detail_failed");
   if (!project) return null;
 
-  const clientRow = (project as unknown as { clients: { id: string; name: string } | null })
-    .clients;
+  const clientRow = (
+    project as unknown as { clients: { id: string; name: string; email: string | null } | null }
+  ).clients;
 
   const [clientsResult, { data: tasks }, { data: proposals }, { data: invoices }] =
     await Promise.all([
@@ -148,7 +149,7 @@ export async function getProjectWorkspace(
   const supabase = await createServerClient();
   const { data: project, error } = await supabase
     .from("projects")
-    .select("*, clients(id, name)")
+    .select("*, clients(id, name, email)")
     .eq("id", id)
     .is("deleted_at", null)
     .maybeSingle();
@@ -156,7 +157,9 @@ export async function getProjectWorkspace(
   if (error) log.error({ projectId: id, err: error.message }, "get_project_workspace_failed");
   if (!project) return null;
 
-  const client = (project as unknown as { clients: { id: string; name: string } | null }).clients;
+  const client = (
+    project as unknown as { clients: { id: string; name: string; email: string | null } | null }
+  ).clients;
   const clientsResult = options.includeClients
     ? await supabase.from("clients").select("id, name").is("deleted_at", null).order("name")
     : { data: [] as Array<{ id: string; name: string }> };
@@ -175,6 +178,7 @@ export async function getProjectWorkspace(
     { data: unlinkedProposals },
     { data: reminders },
     { data: clientRequests },
+    { data: webProjects },
   ] = await Promise.all([
     options.tasksView === "board"
       ? supabase
@@ -259,6 +263,12 @@ export async function getProjectWorkspace(
       .eq("project_id", id)
       .order("created_at", { ascending: false })
       .limit(25),
+    supabase
+      .from("web_projects")
+      .select("id, name, url, is_client_visible")
+      .eq("project_id", id)
+      .is("deleted_at", null)
+      .order("name"),
   ]);
 
   return {
@@ -278,5 +288,6 @@ export async function getProjectWorkspace(
     unlinkedProposals: unlinkedProposals ?? [],
     reminders: reminders ?? [],
     clientRequests: clientRequests ?? [],
+    webProjects: webProjects ?? [],
   };
 }

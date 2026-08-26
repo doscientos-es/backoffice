@@ -1,7 +1,7 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { pushMetaQualifiedLeadStage } from "@/lib/integrations/meta-capi";
 import { scopedLogger } from "@/lib/logger";
 import type { AcceptProposalFiscalDataType } from "@/lib/schemas/proposal";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 const log = scopedLogger("crm.conversion");
 
@@ -93,7 +93,7 @@ export async function promoteLeadFromClient(
 /**
  * Ensures the proposal has an associated project. If `proposals.project_id`
  * is null, creates an `active` project named after the proposal — copying
- * the narrative context, validity date and notes — and links it back.
+ * its narrative context and notes — and links it back.
  * Idempotent: returns the existing project_id when already set.
  *
  * Best-effort: errors are logged and swallowed.
@@ -105,7 +105,7 @@ export async function ensureProjectForProposal(
   try {
     const { data: proposal, error } = await client
       .from("proposals")
-      .select("client_id, project_id, title, context_markdown, notes, valid_until")
+      .select("client_id, project_id, title, context_markdown, notes")
       .eq("id", proposalId)
       .maybeSingle();
     if (error || !proposal?.client_id) return { projectId: null, created: false };
@@ -130,7 +130,8 @@ export async function ensureProjectForProposal(
         description,
         status: "active",
         starts_at: new Date().toISOString().slice(0, 10),
-        ends_at: (proposal.valid_until as string | null) ?? null,
+        // Proposal validity is a commercial deadline, not the project delivery date.
+        ends_at: null,
       })
       .select("id")
       .single();

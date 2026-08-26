@@ -13,7 +13,13 @@ import { MfaSessionGate } from "@/components/security/mfa-session-gate";
 import { hasAal2Session, requireUser } from "@/lib/auth";
 import { isPublicDemoMode } from "@/lib/demo";
 
-export default async function AppLayout({ children }: { children: React.ReactNode }) {
+export default async function AppLayout({
+  children,
+  modal,
+}: {
+  children: React.ReactNode;
+  modal: React.ReactNode;
+}) {
   const user = await requireUser();
   const demoMode = isPublicDemoMode();
   const mfaVerified =
@@ -36,6 +42,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </header>
         <main className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">{children}</main>
       </div>
+      {modal}
       <NavProgress />
       <CommandPalette />
       <KeyboardShortcuts />

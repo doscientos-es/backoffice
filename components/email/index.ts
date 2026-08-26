@@ -5,8 +5,14 @@ export { LeadConfirmationEmail, type LeadConfirmationEmailProps } from "./lead-c
 export { NewLeadEmail, type NewLeadEmailProps } from "./new-lead-email";
 export {
   PaymentReceiptEmail,
-  type PaymentReceiptEmailProps,
+  type PaymentReceiptEmailProps
 } from "./payment-receipt-email";
+export { ProjectKickoffEmail, type ProjectKickoffEmailProps } from "./project-kickoff-email";
+export {
+  ProposalAcceptedEmail,
+  type ProposalAcceptedEmailProps
+} from "./proposal-accepted-email";
 export { ProposalEmail, type ProposalEmailProps } from "./proposal-email";
 export { ProposalMessageEmail } from "./proposal-message-email";
 export { TeamInviteEmail, type TeamInviteEmailProps } from "./team-invite-email";
+

@@ -14,6 +14,7 @@ import { WebFormFields } from "./web-form-fields";
 
 type Props = {
   clients: Array<{ id: string; name: string }>;
+  projects: Array<{ id: string; name: string; client_id: string }>;
   mode: "create" | "edit";
   projectId?: string;
   defaults?: Partial<WebProjectDetail>;
@@ -46,7 +47,7 @@ function credentialsChanged(
 }
 
 /** Handles the only UI path that can create or alter DB connection credentials. */
-export function VerifiedWebProjectForm({ clients, mode, projectId, defaults }: Props) {
+export function VerifiedWebProjectForm({ clients, projects, mode, projectId, defaults }: Props) {
   const feedback = useFormFeedback();
   const [pending, startTransition] = useTransition();
   const { challenge, verifyWithPasskey } = usePasskeyVerification();
@@ -82,6 +83,7 @@ export function VerifiedWebProjectForm({ clients, mode, projectId, defaults }: P
       <WebFormFields
         idPrefix={isCreate ? "new" : "edit"}
         clients={clients}
+        projects={projects}
         defaults={defaults}
         autoFocusName={isCreate}
       />

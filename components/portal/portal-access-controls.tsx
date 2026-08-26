@@ -20,11 +20,13 @@ export function PortalAccessControls({
   initialVisible,
   hasPassword,
   action,
+  visibilityAction,
 }: {
   id: string;
   initialVisible: boolean;
   hasPassword: boolean;
   action: UpdateAction;
+  visibilityAction?: React.ReactNode;
 }) {
   const router = useRouter();
   const feedback = useFormFeedback();
@@ -64,17 +66,19 @@ export function PortalAccessControls({
             {initialVisible ? "Visible para el cliente" : "Oculta"}
           </Badge>
         </div>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={() =>
-            run({ is_client_visible: !initialVisible }, initialVisible ? "Oculta" : "Visible")
-          }
-        >
-          {initialVisible ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
-          {initialVisible ? "Ocultar" : "Mostrar"}
-        </Button>
+        {visibilityAction ?? (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() =>
+              run({ is_client_visible: !initialVisible }, initialVisible ? "Oculta" : "Visible")
+            }
+          >
+            {initialVisible ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+            {initialVisible ? "Ocultar" : "Mostrar"}
+          </Button>
+        )}
       </div>
 
       <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-3">

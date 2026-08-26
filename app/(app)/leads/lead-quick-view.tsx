@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   Building2,
   CalendarPlus,
+  ChevronDown,
   Clock,
   Hand,
   LoaderCircle as Loader2,
@@ -22,6 +23,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -538,12 +540,14 @@ function QuickActions({
   senderName: string;
   googleEnabled: boolean;
 }) {
+  const secondaryActionCount = googleEnabled ? 3 : 2;
+
   return (
     <div className="flex flex-col gap-2">
       <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
         Acciones rápidas
       </p>
-      <div className="flex flex-col gap-1.5">
+      <div className="grid grid-cols-2 gap-1.5 [&_button]:h-auto [&_button]:min-h-8 [&_button]:whitespace-normal [&_button]:px-2 [&_button]:text-left">
         <QCallDialog
           leadId={leadId}
           leadName={leadName}
@@ -558,19 +562,39 @@ function QuickActions({
           leadPhone={leadPhone}
           senderName={senderName}
         />
-        <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
-        <QNoteDialog leadId={leadId} />
-        {googleEnabled ? <GmailSyncButton leadId={leadId} leadEmail={leadEmail} /> : null}
-        <ScheduleReminderDialog
-          leadId={leadId}
-          defaultTitle={`Seguimiento de ${leadName}`}
-          trigger={
-            <Button type="button" size="sm" variant="outline" className="w-full justify-start">
-              Programar seguimiento
-            </Button>
-          }
-        />
+        <div className="col-span-2">
+          <ScheduleReminderDialog
+            leadId={leadId}
+            defaultTitle={`Seguimiento de ${leadName}`}
+            trigger={
+              <Button type="button" size="sm" variant="outline" className="w-full justify-start">
+                <CalendarPlus className="size-3.5 text-muted-foreground" />
+                Programar seguimiento
+              </Button>
+            }
+          />
+        </div>
       </div>
+      <Collapsible>
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" size="sm" className="group/more w-full justify-between px-2">
+            <span className="flex items-center gap-1.5">
+              Más acciones
+              <span className="text-xs font-normal text-muted-foreground">
+                {secondaryActionCount}
+              </span>
+            </span>
+            <ChevronDown className="size-4 text-muted-foreground transition-transform group-aria-expanded/more:rotate-180" />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-1.5">
+          <div className="flex flex-col gap-1.5 rounded-lg border bg-muted/20 p-2">
+            <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
+            <QNoteDialog leadId={leadId} />
+            {googleEnabled ? <GmailSyncButton leadId={leadId} leadEmail={leadEmail} /> : null}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 }

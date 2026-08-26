@@ -1,8 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { z } from "zod";
 import { ProposalEmail } from "@/components/email";
 import { requireRole, requireUser } from "@/lib/auth";
 import {
@@ -15,6 +12,7 @@ import { renderEmail } from "@/lib/email/render";
 import { sendEmail } from "@/lib/email/resend";
 import { publicEnv } from "@/lib/env";
 import { backupProposalToDrive } from "@/lib/google/backup";
+import { sendProposalAcceptedEmail } from "@/lib/integrations/send-proposal-accepted-email";
 import { createProposalDraftInvoices } from "@/lib/invoices/proposal-drafts";
 import { buildLeadStatusPatch } from "@/lib/leads/status-transitions";
 import { scopedLogger } from "@/lib/logger";
@@ -40,6 +38,9 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
 
 const log = scopedLogger("proposals");
 
@@ -1070,6 +1071,8 @@ export async function markProposalAsAccepted(
     log.warn({ err, proposalId: id }, "proposal_invoice_drafts_failed");
   }
 
+  await sendProposalAcceptedEmail(id);
+
   revalidatePath(`/proposals/${id}`);
   revalidatePath("/proposals");
   revalidatePath("/invoices");
@@ -1114,6 +1117,9 @@ export async function reopenProposal(
       responded_at: null,
       signature_data: null,
       accepted_fiscal_data: null,
+      acceptance_email_sent_at: null,
+      acceptance_email_recipient: null,
+      acceptance_email_resend_id: null,
     })
     .eq("id", id);
 

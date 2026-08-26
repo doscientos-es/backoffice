@@ -1,8 +1,5 @@
 "use server";
 
-import { revalidateTag } from "next/cache";
-import { redirect } from "next/navigation";
-import { z } from "zod";
 import { defineAction } from "@/lib/actions/define-action";
 import { isDemoMode } from "@/lib/demo";
 import { serverEnv } from "@/lib/env";
@@ -14,6 +11,38 @@ import { userVerificationScope } from "@/lib/security/user-verification-scope";
 import { createServerClient } from "@/lib/supabase/server";
 import { encryptSecret } from "@/lib/vault/crypto";
 import { getWebProjectDbCredentials } from "@/lib/webs/credentials";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
+
+type WebProjectContext = {
+  projectId: string | null;
+  clientId: string | null;
+};
+
+async function resolveWebProjectContext(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  projectId: string | undefined,
+  clientId: string | undefined,
+): Promise<WebProjectContext> {
+  if (!projectId) return { projectId: null, clientId: clientId ?? null };
+
+  const { data: project, error } = await supabase
+    .from("projects")
+    .select("id, client_id")
+    .eq("id", projectId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!project) throw new Error("No se ha encontrado el proyecto seleccionado");
+
+  return { projectId: project.id as string, clientId: project.client_id as string };
+}
+
+function revalidateWebContext(context: WebProjectContext) {
+  if (context.projectId) revalidatePath(`/projects/${context.projectId}`);
+  if (context.clientId) revalidatePath(`/clients/${context.clientId}`);
+}
 
 export const createWebProject = defineAction({
   name: "webs.create",
@@ -28,12 +57,15 @@ export const createWebProject = defineAction({
       );
     }
     const supabase = await createServerClient();
+    const context = await resolveWebProjectContext(supabase, input.project_id, input.client_id);
     const { data, error } = await supabase
       .from("web_projects")
       .insert({
         name: input.name,
         url: input.url,
-        client_id: input.client_id ?? null,
+        client_id: context.clientId,
+        project_id: context.projectId,
+        is_client_visible: Boolean(context.projectId && input.is_client_visible),
         is_own: input.is_own ?? false,
         hosting_provider: input.hosting_provider ?? null,
         hosting_url: input.hosting_url ?? null,
@@ -59,6 +91,7 @@ export const createWebProject = defineAction({
       await ensureClientBackupDir(input.backup_slug);
     }
 
+    revalidateWebContext(context);
     redirect(`/webs/${data.id}`);
   },
 });
@@ -71,7 +104,7 @@ export const updateWebProject = defineAction({
     const supabase = await createServerClient();
     const { data: current, error: lookupError } = await supabase
       .from("web_projects")
-      .select("db_host, db_port, db_name, db_user")
+      .select("db_host, db_port, db_name, db_user, project_id, client_id")
       .eq("id", input.id)
       .maybeSingle();
     if (lookupError) throw new Error(lookupError.message);
@@ -89,12 +122,15 @@ export const updateWebProject = defineAction({
         userVerificationScope("web.db_credentials.update", `web:${input.id}`),
       );
     }
+    const context = await resolveWebProjectContext(supabase, input.project_id, input.client_id);
     const { error } = await supabase
       .from("web_projects")
       .update({
         name: input.name,
         url: input.url,
-        client_id: input.client_id ?? null,
+        client_id: context.clientId,
+        project_id: context.projectId,
+        is_client_visible: Boolean(context.projectId && input.is_client_visible),
         is_own: input.is_own ?? false,
         hosting_provider: input.hosting_provider ?? null,
         hosting_url: input.hosting_url ?? null,
@@ -121,6 +157,12 @@ export const updateWebProject = defineAction({
       await ensureClientBackupDir(input.backup_slug);
     }
 
+    revalidateWebContext({
+      projectId: (current.project_id as string | null) ?? null,
+      clientId: (current.client_id as string | null) ?? null,
+    });
+    revalidateWebContext(context);
+    revalidatePath("/webs");
     redirect(`/webs/${input.id}`);
   },
 });

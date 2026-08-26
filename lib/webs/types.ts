@@ -4,6 +4,9 @@ export type WebProjectListItem = {
   url: string;
   client_id: string | null;
   client_name: string | null;
+  project_id: string | null;
+  project_name: string | null;
+  is_client_visible: boolean;
   is_own: boolean;
   hosting_provider: string | null;
   domain_expires_at: string | null;
@@ -16,6 +19,9 @@ export type WebProjectDetail = {
   name: string;
   url: string;
   client_id: string | null;
+  project_id: string | null;
+  project_name: string | null;
+  is_client_visible: boolean;
   is_own: boolean;
   hosting_provider: string | null;
   hosting_url: string | null;

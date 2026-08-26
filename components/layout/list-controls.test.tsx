@@ -42,6 +42,7 @@ describe("ListControls avatar filter", () => {
   beforeEach(() => {
     navigation.params = new URLSearchParams();
     navigation.replace.mockReset();
+    window.localStorage.clear();
   });
 
   it("selects a member and resets pagination", () => {
@@ -87,5 +88,37 @@ describe("ListControls avatar filter", () => {
     expect(screen.getByRole("combobox", { name: "Estado" })).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "Limpiar filtros" }));
     expect(navigation.replace).toHaveBeenCalledWith("/leads", { scroll: false });
+  });
+
+  it("saves, applies and deletes a browser-local view through URL filters", () => {
+    navigation.params = new URLSearchParams("status=new&source=web&page=2");
+    render(
+      <ListControls
+        filters={[STATUS_FILTER]}
+        savedViews={{
+          storageKey: "test:lead-views",
+          filterKeys: ["q", "status", "source"],
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Vistas" }));
+    fireEvent.click(screen.getByRole("button", { name: "Guardar filtros actuales" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Nombre de la vista" }), {
+      target: { value: "Leads nuevos" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
+
+    expect(JSON.parse(window.localStorage.getItem("test:lead-views") ?? "[]")).toMatchObject([
+      { name: "Leads nuevos", filters: { status: "new", source: "web" } },
+    ]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Leads nuevos" }));
+    expect(navigation.replace).toHaveBeenCalledWith("/leads?status=new&source=web", {
+      scroll: false,
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Eliminar vista Leads nuevos" }));
+    expect(JSON.parse(window.localStorage.getItem("test:lead-views") ?? "[]")).toEqual([]);
   });
 });

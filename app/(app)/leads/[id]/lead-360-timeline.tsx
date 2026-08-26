@@ -1,15 +1,18 @@
 import {
   ArrowRight,
   BriefcaseBusiness,
+  CalendarClock,
   SquareCheck as CheckSquare2,
   CircleDollarSign,
   FileText as FileSignature,
   Mail,
+  Phone,
   Receipt as ReceiptText,
   Sparkle as Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { ReminderRow } from "@/lib/dashboard/types";
 import { groupResendInteractions, interactionDate } from "@/lib/leads/interaction-utils";
 import type {
   LeadDetailInteraction,
@@ -18,13 +21,15 @@ import type {
   LeadRelatedProposal,
   LeadRelatedTask,
 } from "@/lib/leads/types";
-import { formatEUR, relativeTime } from "@/lib/utils";
+import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
+import { EmailDeliveryStatuses } from "./email-delivery-statuses";
 
 type TimelineEvent = {
   id: string;
   date: string;
   title: string;
   detail?: string | null;
+  emailStatuses?: string[];
   href?: string;
   icon: typeof Mail;
   color: string;
@@ -63,21 +68,22 @@ function eventList({
   tasks: LeadRelatedTask[];
 }): TimelineEvent[] {
   const interactionEvents = groupResendInteractions(interactions).map(
-    ({ interaction: item, count }) => ({
+    ({ interaction: item, latestInteraction, statuses }) => ({
       id: `interaction-${item.id}`,
-      date: interactionDate(item),
-      title: interactionLabel(item.type),
-      detail: [
+      date: interactionDate(latestInteraction),
+      title: item.resend_email_id
+        ? statuses.includes("email_received")
+          ? "Email recibido"
+          : "Email enviado"
+        : interactionLabel(item.type),
+      detail:
         item.subject ??
-          item.body
-            ?.replace(/<[^>]+>/g, " ")
-            .replace(/\s+/g, " ")
-            .trim() ??
-          null,
-        count > 1 ? `${count} eventos` : null,
-      ]
-        .filter(Boolean)
-        .join(" · "),
+        item.body
+          ?.replace(/<[^>]+>/g, " ")
+          .replace(/\s+/g, " ")
+          .trim() ??
+        null,
+      emailStatuses: item.resend_email_id ? statuses : undefined,
       icon: Mail,
       color: "text-blue-500 bg-blue-500/10",
     }),
@@ -137,31 +143,110 @@ type NextMove = {
   label: string;
   hint: string;
   href: string;
+  cta: string;
   icon: typeof Mail;
   tone: string;
 };
 
+function dayKey(value: string) {
+  const date = new Date(value);
+  return [date.getFullYear(), date.getMonth(), date.getDate()].join("-");
+}
+
+function dayLabel(value: string, now = new Date()) {
+  const date = new Date(value);
+  const currentDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const eventDay = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const elapsedDays = Math.round((currentDay - eventDay) / 86_400_000);
+  if (elapsedDays === 0) return "Hoy";
+  if (elapsedDays === 1) return "Ayer";
+  return formatDate(value);
+}
+
+function groupEventsByDay(events: TimelineEvent[]) {
+  const groups = new Map<string, { label: string; events: TimelineEvent[] }>();
+  for (const event of events) {
+    const key = dayKey(event.date);
+    const current = groups.get(key);
+    if (current) current.events.push(event);
+    else groups.set(key, { label: dayLabel(event.date), events: [event] });
+  }
+  return [...groups.entries()].map(([key, group]) => ({ key, ...group }));
+}
+
+function isActiveLeadStatus(status: string) {
+  return !["won", "lost", "not_interested", "archived"].includes(status);
+}
+
+function leadFeedbackHref(leadId: string, feedback: "call" | "schedule") {
+  return `/leads/${leadId}?feedback=${feedback}`;
+}
+
 function nextMove({
   leadId,
   leadStatus,
+  firstContactedAt,
+  phone,
+  reminders,
+  interactions,
   proposals,
   projects,
   invoices,
 }: {
   leadId: string;
   leadStatus: string;
+  firstContactedAt?: string | null;
+  phone?: string | null;
+  reminders?: ReminderRow[];
+  interactions?: LeadDetailInteraction[];
   proposals: LeadRelatedProposal[];
   projects: LeadRelatedProject[];
   invoices: LeadRelatedInvoice[];
 }): NextMove {
+  const now = new Date();
+  const scheduledReminders = reminders ?? [];
+  const overdueReminder = scheduledReminders.find(
+    (reminder) => new Date(reminder.remind_at).getTime() < now.getTime(),
+  );
+  const hasFutureReminder = scheduledReminders.some(
+    (reminder) => new Date(reminder.remind_at).getTime() >= now.getTime(),
+  );
+  const latestInteraction = interactions
+    ?.map(interactionDate)
+    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0];
+  const contactHref = leadFeedbackHref(leadId, phone ? "call" : "schedule");
+  const contactCta = phone ? "Registrar llamada" : "Agendar contacto";
   const overdueInvoice = invoices.find((item) => item.status === "overdue");
   if (overdueInvoice) {
     return {
       label: "Reclamar el cobro pendiente",
       hint: `La factura ${overdueInvoice.full_number ?? "vencida"} necesita seguimiento.`,
       href: `/invoices/${overdueInvoice.id}`,
+      cta: "Abrir factura",
       icon: ReceiptText,
       tone: "border-rose-500/20 bg-rose-500/[0.06] text-rose-700 dark:text-rose-300",
+    };
+  }
+
+  if (overdueReminder && isActiveLeadStatus(leadStatus)) {
+    return {
+      label: "Resolver seguimiento vencido",
+      hint: `“${overdueReminder.title}” venció ${relativeTime(overdueReminder.remind_at)}.`,
+      href: contactHref,
+      cta: contactCta,
+      icon: CalendarClock,
+      tone: "border-rose-500/20 bg-rose-500/[0.06] text-rose-700 dark:text-rose-300",
+    };
+  }
+
+  if (!firstContactedAt && isActiveLeadStatus(leadStatus)) {
+    return {
+      label: "Registrar el primer contacto",
+      hint: "Este lead todavía no tiene actividad comercial registrada.",
+      href: contactHref,
+      cta: contactCta,
+      icon: Phone,
+      tone: "border-primary/20 bg-primary/[0.06] text-primary",
     };
   }
 
@@ -171,6 +256,7 @@ function nextMove({
       label: "Completar y enviar la propuesta",
       hint: `${draftProposal.number ?? draftProposal.title ?? "La propuesta"} está en borrador.`,
       href: `/proposals/${draftProposal.id}`,
+      cta: "Abrir propuesta",
       icon: FileSignature,
       tone: "border-violet-500/20 bg-violet-500/[0.06] text-violet-700 dark:text-violet-300",
     };
@@ -182,6 +268,7 @@ function nextMove({
       label: "Hacer seguimiento de la propuesta",
       hint: `${openProposal.number ?? "La propuesta"} está en circulación.`,
       href: `/proposals/${openProposal.id}`,
+      cta: "Abrir propuesta",
       icon: FileSignature,
       tone: "border-violet-500/20 bg-violet-500/[0.06] text-violet-700 dark:text-violet-300",
     };
@@ -193,6 +280,7 @@ function nextMove({
       label: "Mantener al cliente al día",
       hint: `${activeProject.name} está en ejecución.`,
       href: `/projects/${activeProject.id}`,
+      cta: "Abrir proyecto",
       icon: BriefcaseBusiness,
       tone: "border-amber-500/20 bg-amber-500/[0.06] text-amber-700 dark:text-amber-300",
     };
@@ -204,15 +292,39 @@ function nextMove({
       label: "Preparar la entrega acordada",
       hint: `${acceptedProposal.number ?? acceptedProposal.title ?? "La propuesta"} ya está aceptada.`,
       href: `/proposals/${acceptedProposal.id}`,
+      cta: "Abrir propuesta",
       icon: FileSignature,
       tone: "border-emerald-500/20 bg-emerald-500/[0.06] text-emerald-700 dark:text-emerald-300",
     };
   }
 
+  if (latestInteraction && !hasFutureReminder && isActiveLeadStatus(leadStatus)) {
+    return {
+      label: "Retomar la conversación",
+      hint: `La última señal fue ${relativeTime(latestInteraction)} y no hay un seguimiento programado.`,
+      href: contactHref,
+      cta: contactCta,
+      icon: Phone,
+      tone: "border-amber-500/20 bg-amber-500/[0.06] text-amber-700 dark:text-amber-300",
+    };
+  }
+
+  if (!hasFutureReminder && isActiveLeadStatus(leadStatus)) {
+    return {
+      label: "Planificar el siguiente paso",
+      hint: "No hay ningún seguimiento programado para mantener viva la oportunidad.",
+      href: leadFeedbackHref(leadId, "schedule"),
+      cta: "Agendar seguimiento",
+      icon: CalendarClock,
+      tone: "border-primary/20 bg-primary/[0.06] text-primary",
+    };
+  }
+
   return {
-    label: leadStatus === "new" ? "Contactar cuanto antes" : "Crear la siguiente oportunidad",
+    label: "Crear la siguiente oportunidad",
     hint: "El flujo no tiene una transición abierta todavía.",
-    href: proposals.length ? `/proposals/new?lead_id=${leadId}` : `/leads/${leadId}?feedback=call`,
+    href: proposals.length ? `/proposals/new?lead_id=${leadId}` : `/leads/${leadId}`,
+    cta: proposals.length ? "Crear propuesta" : "Ver lead",
     icon: CircleDollarSign,
     tone: "border-primary/20 bg-primary/[0.06] text-primary",
   };
@@ -221,6 +333,9 @@ function nextMove({
 export function Lead360Timeline({
   leadId,
   leadStatus,
+  firstContactedAt,
+  phone,
+  reminders = [],
   interactions,
   proposals,
   projects,
@@ -229,6 +344,9 @@ export function Lead360Timeline({
 }: {
   leadId: string;
   leadStatus: string;
+  firstContactedAt?: string | null;
+  phone?: string | null;
+  reminders?: ReminderRow[];
   interactions: LeadDetailInteraction[];
   proposals: LeadRelatedProposal[];
   projects: LeadRelatedProject[];
@@ -236,7 +354,18 @@ export function Lead360Timeline({
   tasks: LeadRelatedTask[];
 }) {
   const events = eventList({ interactions, proposals, invoices, tasks });
-  const next = nextMove({ leadId, leadStatus, proposals, projects, invoices });
+  const eventGroups = groupEventsByDay(events);
+  const next = nextMove({
+    leadId,
+    leadStatus,
+    firstContactedAt,
+    phone,
+    reminders,
+    interactions,
+    proposals,
+    projects,
+    invoices,
+  });
   const NextIcon = next.icon;
 
   return (
@@ -253,9 +382,10 @@ export function Lead360Timeline({
                 Todo lo que ha pasado alrededor de esta oportunidad.
               </p>
             </div>
-            <span className="text-xs tabular-nums text-muted-foreground">
-              {events.length} señales
-            </span>
+            <div className="text-right text-xs tabular-nums text-muted-foreground">
+              <p>{events.length} señales</p>
+              {events[0] ? <p>Última {relativeTime(events[0].date)}</p> : null}
+            </div>
           </div>
         </CardHeader>
         <CardContent className="px-5 py-5">
@@ -264,42 +394,54 @@ export function Lead360Timeline({
               Aún no hay actividad cruzada registrada.
             </p>
           ) : (
-            <ol className="relative ml-2 border-l border-border">
-              {events.map((event) => {
-                const Icon = event.icon;
-                const content = (
-                  <div className="flex min-w-0 flex-1 items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium capitalize">{event.title}</p>
-                      {event.detail ? (
-                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                          {event.detail}
-                        </p>
-                      ) : null}
-                    </div>
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      {relativeTime(event.date)}
-                    </span>
-                  </div>
-                );
-                return (
-                  <li key={event.id} className="relative flex gap-3 pb-5 last:pb-0">
-                    <span
-                      className={`-ml-3.5 flex size-7 shrink-0 items-center justify-center rounded-full ring-4 ring-card ${event.color}`}
-                    >
-                      <Icon className="size-3.5" />
-                    </span>
-                    {event.href ? (
-                      <Link href={event.href} className="min-w-0 flex-1 hover:opacity-75">
-                        {content}
-                      </Link>
-                    ) : (
-                      content
-                    )}
-                  </li>
-                );
-              })}
-            </ol>
+            <div className="space-y-5">
+              {eventGroups.map((group) => (
+                <section key={group.key} aria-label={`Actividad: ${group.label}`}>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {group.label}
+                  </p>
+                  <ol className="relative ml-2 border-l border-border">
+                    {group.events.map((event) => {
+                      const Icon = event.icon;
+                      const content = (
+                        <div className="flex min-w-0 flex-1 items-start justify-between gap-4">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium capitalize">{event.title}</p>
+                            {event.detail ? (
+                              <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                                {event.detail}
+                              </p>
+                            ) : null}
+                            {event.emailStatuses ? (
+                              <EmailDeliveryStatuses statuses={event.emailStatuses} />
+                            ) : null}
+                          </div>
+                          <span className="shrink-0 text-xs text-muted-foreground">
+                            {relativeTime(event.date)}
+                          </span>
+                        </div>
+                      );
+                      return (
+                        <li key={event.id} className="relative flex gap-3 pb-5 last:pb-0">
+                          <span
+                            className={`-ml-3.5 flex size-7 shrink-0 items-center justify-center rounded-full ring-4 ring-card ${event.color}`}
+                          >
+                            <Icon className="size-3.5" />
+                          </span>
+                          {event.href ? (
+                            <Link href={event.href} className="min-w-0 flex-1 hover:opacity-75">
+                              {content}
+                            </Link>
+                          ) : (
+                            content
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ol>
+                </section>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
@@ -318,7 +460,7 @@ export function Lead360Timeline({
             href={next.href}
             className="mt-5 inline-flex items-center gap-2 text-sm font-medium hover:underline"
           >
-            Abrir contexto <ArrowRight className="size-4" />
+            {next.cta} <ArrowRight className="size-4" />
           </Link>
         </CardContent>
       </Card>

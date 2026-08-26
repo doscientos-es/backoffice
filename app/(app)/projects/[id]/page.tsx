@@ -171,6 +171,11 @@ export default async function ProjectDetailPage({
             />
             <GitHubModeBadge mode={(project.github_sync_mode as GitHubSyncMode | null) ?? "none"} />
             <StatusBadge meta={PROJECT_STATUS} value={project.status as string} />
+            {user.role === "owner" || user.role === "admin" ? (
+              <Button asChild size="sm" variant="outline">
+                <Link href={`/webs/new?project_id=${id}`}>Nueva web</Link>
+              </Button>
+            ) : null}
             {canEdit ? (
               <ProjectEditDialog
                 project={{

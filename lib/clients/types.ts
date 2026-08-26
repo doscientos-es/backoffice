@@ -84,6 +84,15 @@ export type ClientTaskItem = {
   due_date: string | null;
 };
 
+export type ClientWebItem = {
+  id: string;
+  name: string;
+  url: string;
+  project_id: string | null;
+  project_name: string | null;
+  is_client_visible: boolean;
+};
+
 // ─── Full client record ────────────────────────────────────────────────────────
 
 export type ClientDetail = {
@@ -119,4 +128,6 @@ export type ClientDetailResult = {
   tasks: ClientTaskItem[];
   /** Pending reminders scheduled against this client, soonest first. */
   reminders: ReminderRow[];
+  /** Web inventory entries assigned to this client. */
+  webs: ClientWebItem[];
 } | null;

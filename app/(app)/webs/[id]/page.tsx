@@ -187,6 +187,22 @@ export default async function WebDetailPage({ params }: { params: Promise<{ id: 
                     <Badge variant="neutral">Web de cliente</Badge>
                   )}
                 </DetailRow>
+                <DetailRow label="Proyecto">
+                  {site.project_id ? (
+                    <Link href={`/projects/${site.project_id}`} className="hover:underline">
+                      {site.project_name ?? "Ver proyecto"}
+                    </Link>
+                  ) : (
+                    "—"
+                  )}
+                </DetailRow>
+                {site.project_id ? (
+                  <DetailRow label="Portal del proyecto">
+                    <Badge variant={site.is_client_visible ? "success" : "neutral"}>
+                      {site.is_client_visible ? "Visible" : "Oculta"}
+                    </Badge>
+                  </DetailRow>
+                ) : null}
                 <DetailRow label="Hosting">
                   {site.hosting_url ? (
                     <a
@@ -205,10 +221,10 @@ export default async function WebDetailPage({ params }: { params: Promise<{ id: 
                 <DetailRow label="Vence dominio">
                   {site.domain_expires_at
                     ? new Date(site.domain_expires_at).toLocaleDateString("es-ES", {
-                        day: "2-digit",
-                        month: "long",
-                        year: "numeric",
-                      })
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    })
                     : "—"}
                 </DetailRow>
                 <DetailRow label="Tech stack">

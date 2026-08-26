@@ -9,14 +9,28 @@ import { VerifiedWebProjectForm } from "../_components/verified-web-project-form
 export const metadata: Metadata = { title: "Nueva web · doscientos" };
 export const dynamic = "force-dynamic";
 
-export default async function NewWebPage() {
+export default async function NewWebPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ project_id?: string; client_id?: string }>;
+}) {
   await requirePageRole(["owner", "admin"]);
   const supabase = await createServerClient();
-  const { data: clients } = await supabase
-    .from("clients")
-    .select("id, name")
-    .is("deleted_at", null)
-    .order("name");
+  const { project_id, client_id } = await searchParams;
+  const [{ data: clients }, { data: projects }] = await Promise.all([
+    supabase.from("clients").select("id, name").is("deleted_at", null).order("name"),
+    supabase
+      .from("projects")
+      .select("id, name, client_id")
+      .is("deleted_at", null)
+      .order("name"),
+  ]);
+  const projectOptions = (projects ?? []) as Array<{
+    id: string;
+    name: string;
+    client_id: string;
+  }>;
+  const selectedProject = projectOptions.find((project) => project.id === project_id);
 
   return (
     <div className="flex flex-col gap-6">
@@ -25,6 +39,12 @@ export default async function NewWebPage() {
         <CardContent className="pt-6">
           <VerifiedWebProjectForm
             clients={(clients as Array<{ id: string; name: string }> | null) ?? []}
+            projects={projectOptions}
+            defaults={{
+              project_id: selectedProject?.id ?? null,
+              client_id: selectedProject?.client_id ?? client_id ?? null,
+              is_client_visible: Boolean(selectedProject),
+            }}
             mode="create"
           />
         </CardContent>

@@ -1,6 +1,16 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Download, Search, SlidersHorizontal, X } from "lucide-react";
+import {
+  Bookmark,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Save,
+  Search,
+  SlidersHorizontal,
+  Trash2,
+  X,
+} from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -21,6 +31,13 @@ export type FilterConfig = {
   display?: "select" | "avatars";
 };
 
+export type SavedViewsConfig = {
+  /** Browser-only storage key. Views are local to the current device and browser. */
+  storageKey: string;
+  /** URL parameters that define the saved filter state. */
+  filterKeys: string[];
+};
+
 export type ListControlsProps = {
   searchKey?: string;
   searchPlaceholder?: string;
@@ -36,7 +53,11 @@ export type ListControlsProps = {
   presentation?: "default" | "panel";
   /** Si se provee, muestra un botón "Exportar CSV" que llama este callback. */
   onExport?: () => void;
+  /** Optional browser-local saved filter views. */
+  savedViews?: SavedViewsConfig;
 };
+
+type SavedView = { id: string; name: string; filters: Record<string, string> };
 
 function updateParams(
   current: URLSearchParams,
@@ -50,6 +71,151 @@ function updateParams(
   return next;
 }
 
+function readSavedViews(storageKey: string): SavedView[] {
+  try {
+    const raw: unknown = JSON.parse(localStorage.getItem(storageKey) ?? "[]");
+    if (!Array.isArray(raw)) return [];
+    return raw.flatMap((item): SavedView[] => {
+      if (!item || typeof item !== "object") return [];
+      const value = item as Record<string, unknown>;
+      if (typeof value.id !== "string" || typeof value.name !== "string") return [];
+      const filters = value.filters;
+      if (!filters || typeof filters !== "object" || Array.isArray(filters)) return [];
+      return [
+        {
+          id: value.id,
+          name: value.name.slice(0, 60),
+          filters: Object.fromEntries(
+            Object.entries(filters).filter(
+              ([key, filterValue]) => typeof key === "string" && typeof filterValue === "string",
+            ),
+          ),
+        },
+      ];
+    });
+  } catch {
+    return [];
+  }
+}
+
+function writeSavedViews(storageKey: string, views: SavedView[]) {
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(views));
+  } catch {
+    // Saved views remain optional if browser storage is unavailable.
+  }
+}
+
+function SavedViewsMenu({
+  views,
+  hasActiveFilters,
+  saving,
+  name,
+  onStartSaving,
+  onCancelSaving,
+  onNameChange,
+  onSave,
+  onApply,
+  onDelete,
+}: {
+  views: SavedView[];
+  hasActiveFilters: boolean;
+  saving: boolean;
+  name: string;
+  onStartSaving: () => void;
+  onCancelSaving: () => void;
+  onNameChange: (name: string) => void;
+  onSave: () => void;
+  onApply: (view: SavedView) => void;
+  onDelete: (id: string) => void;
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button type="button" size="sm" variant="outline" className="h-9 shrink-0">
+          <Bookmark className="size-3.5" />
+          Vistas
+          {views.length > 0 ? (
+            <span className="rounded-full bg-muted px-1.5 py-px text-[10px] leading-4 text-muted-foreground">
+              {views.length}
+            </span>
+          ) : null}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-[min(22rem,calc(100vw-2rem))] p-3">
+        <div className="mb-3">
+          <p className="text-sm font-semibold">Vistas guardadas</p>
+          <p className="text-xs text-muted-foreground">
+            Se guardan solo en este navegador.
+          </p>
+        </div>
+        {views.length > 0 ? (
+          <div className="mb-3 space-y-1">
+            {views.map((view) => (
+              <div key={view.id} className="flex items-center gap-1 rounded-md hover:bg-muted/60">
+                <button
+                  type="button"
+                  onClick={() => onApply(view)}
+                  className="min-w-0 flex-1 truncate px-2 py-1.5 text-left text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                >
+                  {view.name}
+                </button>
+                <Button
+                  type="button"
+                  size="icon-xs"
+                  variant="ghost"
+                  onClick={() => onDelete(view.id)}
+                  aria-label={`Eliminar vista ${view.name}`}
+                  title={`Eliminar ${view.name}`}
+                >
+                  <Trash2 className="size-3.5" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mb-3 rounded-md bg-muted/50 px-2 py-3 text-xs text-muted-foreground">
+            Guarda un conjunto de filtros para recuperarlo con un clic.
+          </p>
+        )}
+        {saving ? (
+          <div className="flex gap-2">
+            <Input
+              autoFocus
+              value={name}
+              onChange={(event) => onNameChange(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") onSave();
+                if (event.key === "Escape") onCancelSaving();
+              }}
+              aria-label="Nombre de la vista"
+              placeholder="Ej. Mis leads calientes"
+              maxLength={60}
+              className="h-9"
+            />
+            <Button type="button" size="sm" onClick={onSave} disabled={!name.trim()}>
+              Guardar
+            </Button>
+          </div>
+        ) : (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="w-full"
+            onClick={onStartSaving}
+            disabled={!hasActiveFilters}
+            title={hasActiveFilters ? undefined : "Aplica algún filtro antes de guardar una vista"}
+          >
+            <Save className="size-3.5" />
+            Guardar filtros actuales
+          </Button>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export function ListControls({
   searchKey = "q",
   searchPlaceholder = "Buscar…",
@@ -58,6 +224,7 @@ export function ListControls({
   className,
   presentation = "default",
   onExport,
+  savedViews: savedViewsConfig,
 }: ListControlsProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -65,10 +232,21 @@ export function ListControls({
 
   const urlQ = params.get(searchKey) ?? "";
   const [q, setQ] = useState(urlQ);
+  const [savedViews, setSavedViews] = useState<SavedView[]>([]);
+  const [isSavingView, setIsSavingView] = useState(false);
+  const [savedViewName, setSavedViewName] = useState("");
+  const savedViewKeys = savedViewsConfig?.filterKeys ?? [];
+  const managedFilterKeys = [...new Set([searchKey, ...filters.map((filter) => filter.key), ...savedViewKeys])];
+
+  useEffect(() => {
+    setSavedViews(savedViewsConfig ? readSavedViews(savedViewsConfig.storageKey) : []);
+    setIsSavingView(false);
+    setSavedViewName("");
+  }, [savedViewsConfig]);
 
   // Keep the latest router-related callbacks in a ref so the debounce effect
   // can depend only on `q` without re-creating the timeout on every render.
-  const commitRef = useRef<(value: string) => void>(() => {});
+  const commitRef = useRef<(value: string) => void>(() => { });
   commitRef.current = (value: string) => {
     const next = updateParams(params, { [searchKey]: value, page: null });
     const query = next.toString();
@@ -105,15 +283,62 @@ export function ListControls({
   );
 
   const clearFilters = useCallback(() => {
-    const keys = [searchKey, ...filters.map((filter) => filter.key), "page"];
     const next = new URLSearchParams(params.toString());
-    for (const key of keys) next.delete(key);
+    for (const key of [...managedFilterKeys, "page"]) next.delete(key);
+    setQ("");
     const query = next.toString();
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  }, [filters, params, pathname, router, searchKey]);
+  }, [managedFilterKeys, params, pathname, router]);
+
+  const applySavedView = useCallback(
+    (view: SavedView) => {
+      if (!savedViewsConfig) return;
+      const next = new URLSearchParams(params.toString());
+      for (const key of savedViewsConfig.filterKeys) next.delete(key);
+      for (const [key, value] of Object.entries(view.filters)) next.set(key, value);
+      next.delete("page");
+      setQ(view.filters[searchKey] ?? "");
+      const query = next.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    },
+    [params, pathname, router, savedViewsConfig, searchKey],
+  );
+
+  const saveCurrentView = useCallback(() => {
+    if (!savedViewsConfig) return;
+    const name = savedViewName.trim();
+    if (!name) return;
+    const filters = Object.fromEntries(
+      savedViewsConfig.filterKeys.flatMap((key) => {
+        const value = params.get(key);
+        return value ? [[key, value]] : [];
+      }),
+    );
+    if (Object.keys(filters).length === 0) return;
+    const id = globalThis.crypto?.randomUUID?.() ?? `view-${Date.now()}`;
+    setSavedViews((current) => {
+      const next = [...current, { id, name: name.slice(0, 60), filters }];
+      writeSavedViews(savedViewsConfig.storageKey, next);
+      return next;
+    });
+    setSavedViewName("");
+    setIsSavingView(false);
+  }, [params, savedViewName, savedViewsConfig]);
+
+  const deleteSavedView = useCallback(
+    (id: string) => {
+      if (!savedViewsConfig) return;
+      setSavedViews((current) => {
+        const next = current.filter((view) => view.id !== id);
+        writeSavedViews(savedViewsConfig.storageKey, next);
+        return next;
+      });
+    },
+    [savedViewsConfig],
+  );
 
   const hasActiveFilters =
-    Boolean(params.get(searchKey)) || filters.some((filter) => Boolean(params.get(filter.key)));
+    managedFilterKeys.some((key) => Boolean(params.get(key)));
   const isPanel = presentation === "panel";
   const activeFilters = filters.flatMap((filter) => {
     const value = params.get(filter.key);
@@ -138,6 +363,23 @@ export function ListControls({
     : 1;
   const from = pagination ? (pagination.page - 1) * pagination.pageSize + 1 : 0;
   const to = pagination ? Math.min(pagination.page * pagination.pageSize, pagination.total) : 0;
+  const savedViewsMenu = savedViewsConfig ? (
+    <SavedViewsMenu
+      views={savedViews}
+      hasActiveFilters={hasActiveFilters}
+      saving={isSavingView}
+      name={savedViewName}
+      onStartSaving={() => setIsSavingView(true)}
+      onCancelSaving={() => {
+        setSavedViewName("");
+        setIsSavingView(false);
+      }}
+      onNameChange={setSavedViewName}
+      onSave={saveCurrentView}
+      onApply={applySavedView}
+      onDelete={deleteSavedView}
+    />
+  ) : null;
 
   if (isPanel) {
     return (
@@ -295,6 +537,8 @@ export function ListControls({
             </Popover>
           ) : null}
 
+          {savedViewsMenu}
+
           <div className="ml-auto flex shrink-0 items-center gap-1">
             {hasActiveFilters ? (
               <Button
@@ -431,7 +675,7 @@ export function ListControls({
                   className={cn(
                     "flex items-center gap-1",
                     isPanel &&
-                      "min-h-9 w-full rounded-lg border border-border bg-background px-2 shadow-xs lg:w-auto",
+                    "min-h-9 w-full rounded-lg border border-border bg-background px-2 shadow-xs lg:w-auto",
                   )}
                 >
                   <span className="mr-0.5 text-xs font-medium text-muted-foreground">
@@ -481,7 +725,7 @@ export function ListControls({
                 className={cn(
                   "min-w-30 max-w-45 flex-1 text-xs sm:flex-none",
                   isPanel &&
-                    "h-9 w-full max-w-none rounded-lg border-border bg-background shadow-xs lg:w-auto lg:max-w-45",
+                  "h-9 w-full max-w-none rounded-lg border-border bg-background shadow-xs lg:w-auto lg:max-w-45",
                   !isPanel && "h-8",
                 )}
               />
@@ -509,6 +753,7 @@ export function ListControls({
               </Select>
             );
           })}
+          {savedViewsMenu}
         </div>
 
         <div

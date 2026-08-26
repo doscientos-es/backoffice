@@ -123,12 +123,19 @@ export function WebCard({ site }: { site: WebProjectListItem }) {
         <WebCardExternalLink url={site.url} name={site.name} />
       </div>
 
-      {/* Client name */}
-      {site.client_name ? (
+      {/* Client and linked delivery project */}
+      {site.client_name || site.project_name ? (
         <div className="px-4 pb-3">
-          <p className="truncate text-[11px] text-muted-foreground">
-            <span className="font-medium text-foreground/70">Cliente:</span> {site.client_name}
-          </p>
+          {site.client_name ? (
+            <p className="truncate text-[11px] text-muted-foreground">
+              <span className="font-medium text-foreground/70">Cliente:</span> {site.client_name}
+            </p>
+          ) : null}
+          {site.project_name ? (
+            <p className="truncate text-[11px] text-muted-foreground">
+              <span className="font-medium text-foreground/70">Proyecto:</span> {site.project_name}
+            </p>
+          ) : null}
         </div>
       ) : null}
 

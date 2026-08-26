@@ -1,5 +1,5 @@
-import { z } from "zod";
 import { optionalDate, optionalText, optionalUuid } from "@/lib/schemas/common";
+import { z } from "zod";
 
 export const HOSTING_PROVIDERS = [
   "vercel",
@@ -40,6 +40,12 @@ export const WebProjectInput = z.object({
   name: z.string().min(1, "Nombre obligatorio").max(200).trim(),
   url: z.string().url("URL no válida").max(2000),
   client_id: optionalUuid,
+  project_id: optionalUuid,
+  is_client_visible: z
+    .string()
+    .optional()
+    .transform((v) => v === "on" || v === "true")
+    .or(z.boolean()),
   is_own: z
     .string()
     .optional()
@@ -56,9 +62,9 @@ export const WebProjectInput = z.object({
     .transform((v) =>
       v
         ? v
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean)
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
         : [],
     ),
   notes: optionalText(4000),

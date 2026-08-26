@@ -8,19 +8,43 @@ import {
 } from "./interaction-utils";
 
 describe("groupResendInteractions", () => {
-  it("groups repeated Resend callbacks for the same email and event type", () => {
+  it("groups the complete Resend lifecycle by email and retains the original content", () => {
     const result = groupResendInteractions([
-      { id: "delivered-1", type: "email_delivered", resend_email_id: "email-1" },
-      { id: "delivered-2", type: "email_delivered", resend_email_id: "email-1" },
-      { id: "sent-1", type: "email_sent", resend_email_id: "email-1" },
+      {
+        id: "delivered-1",
+        type: "email_delivered",
+        resend_email_id: "email-1",
+        created_at: "2026-08-26T10:02:00.000Z",
+      },
+      {
+        id: "delivered-2",
+        type: "email_delivered",
+        resend_email_id: "email-1",
+        created_at: "2026-08-26T10:01:00.000Z",
+      },
+      {
+        id: "sent-1",
+        type: "email_sent",
+        resend_email_id: "email-1",
+        body: "Contenido original",
+        created_at: "2026-08-26T10:00:00.000Z",
+      },
       { id: "manual", type: "email_sent", resend_email_id: null },
     ]);
 
-    expect(result).toEqual([
-      { interaction: expect.objectContaining({ id: "delivered-1" }), count: 2 },
-      { interaction: expect.objectContaining({ id: "sent-1" }), count: 1 },
-      { interaction: expect.objectContaining({ id: "manual" }), count: 1 },
-    ]);
+    expect(result).toHaveLength(2);
+    expect(result[0]).toEqual({
+      interaction: expect.objectContaining({ id: "sent-1" }),
+      latestInteraction: expect.objectContaining({ id: "delivered-1" }),
+      count: 3,
+      statuses: ["email_sent", "email_delivered"],
+    });
+    expect(result[1]).toEqual({
+      interaction: expect.objectContaining({ id: "manual" }),
+      latestInteraction: expect.objectContaining({ id: "manual" }),
+      count: 1,
+      statuses: [],
+    });
   });
 });
 

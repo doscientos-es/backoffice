@@ -24,8 +24,15 @@ import { TaskStatusSelect } from "./task-status-select";
 
 export const dynamic = "force-dynamic";
 
-export default async function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function TaskDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{ display?: string }>;
+}) {
   const { id } = await params;
+  const displayMode = (await searchParams)?.display === "dialog" ? "dialog" : "page";
   const user = await requireUser();
   const supabase = await createServerClient();
 
@@ -62,7 +69,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
     supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
     supabase
       .from("task_comments")
-      .select("id, body, created_at, author:author_id(id, name)")
+      .select("id, body, created_at, author:author_id(id, name, avatar_url, github_handle)")
       .eq("task_id", id)
       .order("created_at", { ascending: true }),
     supabase.from("task_members").select("member_id").eq("task_id", id),
@@ -84,7 +91,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
       <PageHeader
         title={task.title as string}
         description={project?.name ?? lead?.name ?? client?.name ?? undefined}
-        back={<BackLink href={backHref} label={backLabel} />}
+        back={displayMode === "page" ? <BackLink href={backHref} label={backLabel} /> : undefined}
         actions={
           <div className="flex items-center gap-2">
             {canEdit ? (
@@ -208,7 +215,12 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
             <h2 className="mb-3 text-sm font-semibold">Comentarios</h2>
             <TaskComments
               taskId={id}
-              memberId={user.id}
+              currentMember={{
+                id: user.id,
+                name: user.name,
+                avatar_url: user.avatarUrl,
+                github_handle: user.githubHandle,
+              }}
               memberRole={user.role}
               initialComments={(commentsData as unknown as CommentItem[]) ?? []}
             />
