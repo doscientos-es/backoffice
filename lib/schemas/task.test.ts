@@ -30,6 +30,7 @@ describe("CreateTaskInput", () => {
     const out = CreateTaskInput.parse({ title: "T" });
     expect(out.status).toBe("todo");
     expect(out.priority).toBe("medium");
+    expect(out.is_client_visible).toBe(false);
   });
   it("rejects an empty title", () => {
     expect(CreateTaskInput.safeParse({ title: "", project_id: uuid }).success).toBe(false);

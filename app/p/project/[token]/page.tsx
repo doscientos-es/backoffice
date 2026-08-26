@@ -24,7 +24,11 @@ const REQUEST_STATUS: Record<string, string> = {
   closed: "Cerrada",
 };
 
-export default async function ProjectPortalPage({ params }: { params: Promise<{ token: string }> }) {
+export default async function ProjectPortalPage({
+  params,
+}: {
+  params: Promise<{ token: string }>;
+}) {
   const { token } = await params;
   const admin = createAdminClient();
   const auth = await getCurrentUser();
@@ -70,7 +74,8 @@ export default async function ProjectPortalPage({ params }: { params: Promise<{ 
 
   const visibleTasks = (tasks ?? []).filter((task) => task.status !== "cancelled");
   const completed = visibleTasks.filter((task) => task.status === "done").length;
-  const progress = visibleTasks.length === 0 ? 0 : Math.round((completed / visibleTasks.length) * 100);
+  const progress =
+    visibleTasks.length === 0 ? 0 : Math.round((completed / visibleTasks.length) * 100);
   const client = (project as unknown as { clients: { name: string } | null }).clients;
 
   return (
@@ -86,7 +91,9 @@ export default async function ProjectPortalPage({ params }: { params: Promise<{ 
           {client?.name ?? "Proyecto"}
         </p>
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{project.name as string}</h1>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            {project.name as string}
+          </h1>
           <StatusBadge meta={PROJECT_STATUS} value={project.status as string} />
         </div>
         <div className="mt-6">
@@ -147,7 +154,7 @@ export default async function ProjectPortalPage({ params }: { params: Promise<{ 
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="text-sm font-medium">{request.subject as string}</span>
                   <span className="text-xs text-zinc-500">
-                    {REQUEST_STATUS[request.status as string] ?? request.status as string} ·{" "}
+                    {REQUEST_STATUS[request.status as string] ?? (request.status as string)} ·{" "}
                     {formatDate(request.created_at as string)}
                   </span>
                 </div>

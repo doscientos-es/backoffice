@@ -38,15 +38,21 @@ export function ProjectRequestForm({ token }: { token: string }) {
   return (
     <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
       <div>
-        <label htmlFor="requester-name" className="mb-1 block text-sm font-medium">Nombre</label>
+        <label htmlFor="requester-name" className="mb-1 block text-sm font-medium">
+          Nombre
+        </label>
         <Input id="requester-name" name="requester_name" required maxLength={160} />
       </div>
       <div>
-        <label htmlFor="requester-email" className="mb-1 block text-sm font-medium">Email</label>
+        <label htmlFor="requester-email" className="mb-1 block text-sm font-medium">
+          Email
+        </label>
         <Input id="requester-email" name="requester_email" type="email" maxLength={254} />
       </div>
       <div>
-        <label htmlFor="request-category" className="mb-1 block text-sm font-medium">Tipo</label>
+        <label htmlFor="request-category" className="mb-1 block text-sm font-medium">
+          Tipo
+        </label>
         <Select id="request-category" name="category" defaultValue="question">
           <option value="question">Consulta</option>
           <option value="incident">Incidencia</option>
@@ -57,11 +63,15 @@ export function ProjectRequestForm({ token }: { token: string }) {
         </Select>
       </div>
       <div>
-        <label htmlFor="request-subject" className="mb-1 block text-sm font-medium">Asunto</label>
+        <label htmlFor="request-subject" className="mb-1 block text-sm font-medium">
+          Asunto
+        </label>
         <Input id="request-subject" name="subject" required maxLength={160} />
       </div>
       <div className="sm:col-span-2">
-        <label htmlFor="request-body" className="mb-1 block text-sm font-medium">Descripción</label>
+        <label htmlFor="request-body" className="mb-1 block text-sm font-medium">
+          Descripción
+        </label>
         <Textarea id="request-body" name="body" required rows={5} maxLength={4000} />
       </div>
       <div className="hidden" aria-hidden="true">
