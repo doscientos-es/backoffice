@@ -927,7 +927,50 @@ export async function sendPreviewLink(input: unknown): Promise<SendPreviewResult
   return { ok: true, portalUrl, mocked };
 }
 
-// ---------------- MARK AS ACCEPTED (manual) ----------------
+// ---------------- MANUAL RESPONSE ----------------
+
+/**
+ * Records a rejection communicated outside the client portal. Only proposals
+ * that have already been delivered can be rejected manually.
+ */
+export async function markProposalAsRejected(
+  input: unknown,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const user = await requireRole(["owner", "admin"]);
+
+  const parsed = z.object({ id: z.string().uuid() }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: "ID inválido" };
+  const { id } = parsed.data;
+
+  const supabase = await createServerClient();
+  const { data: proposal, error: readError } = await supabase
+    .from("proposals")
+    .select("id, status, number")
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (readError || !proposal) return { ok: false, error: "Propuesta no encontrada" };
+  if (proposal.status === "rejected") return { ok: true };
+  if (!["sent", "viewed", "expired"].includes(proposal.status as string)) {
+    return { ok: false, error: "Solo se pueden rechazar propuestas enviadas, vistas o expiradas" };
+  }
+
+  const { error } = await supabase
+    .from("proposals")
+    .update({ status: "rejected", responded_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) {
+    log.error({ err: error, id }, "mark_proposal_as_rejected_failed");
+    return { ok: false, error: error.message };
+  }
+
+  log.info({ id, number: proposal.number, by: user.email }, "proposal_manually_rejected");
+  revalidatePath(`/proposals/${id}`);
+  revalidatePath("/proposals");
+  return { ok: true };
+}
 
 /**
  * Allows team members to mark a proposal as accepted without the client

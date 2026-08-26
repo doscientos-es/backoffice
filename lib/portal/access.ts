@@ -1,10 +1,10 @@
 import "server-only";
 
-import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
-import { cookies } from "next/headers";
 import { serverEnv } from "@/lib/env";
 import { PortalUnlockInput, type UpdatePortalAccessInputType } from "@/lib/schemas/portal";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { cookies } from "next/headers";
+import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 
 /**
  * Password protection + unlock state for the public `/p/...` portal links.
@@ -109,7 +109,7 @@ export async function isPortalUnlocked(
  * refuses resources the admin has hidden from the client.
  */
 export async function unlockPortalResource(
-  table: "proposals" | "invoices",
+  table: "proposals" | "invoices" | "projects",
   input: unknown,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const parsed = PortalUnlockInput.safeParse(input);

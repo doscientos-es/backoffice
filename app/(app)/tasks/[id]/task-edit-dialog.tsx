@@ -28,6 +28,7 @@ type Task = {
   priority: string;
   member_ids: string[];
   due_date: string | null;
+  is_client_visible: boolean;
   version: number;
 };
 
@@ -59,6 +60,7 @@ export function TaskEditDialog({ task, members }: Props) {
       status: (fd.get("status")?.toString() ?? "todo") as TaskStatusType,
       priority: (fd.get("priority")?.toString() ?? "medium") as TaskPriorityType,
       due_date: fd.get("due_date")?.toString() ?? "",
+      is_client_visible: fd.get("is_client_visible") === "on",
     });
     if (!res.ok) {
       if (res.code === "conflict") setConflictOpen(true);
@@ -110,6 +112,7 @@ export function TaskEditDialog({ task, members }: Props) {
                 status: task.status,
                 priority: task.priority,
                 due_date: task.due_date,
+                is_client_visible: task.is_client_visible,
               }}
             />
           </div>

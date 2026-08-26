@@ -44,6 +44,7 @@ export function TaskNewForm({ projects, leads, clients, members, defaults, curre
       status: (fd.get("status")?.toString() ?? "todo") as TaskStatusType,
       priority: (fd.get("priority")?.toString() ?? "medium") as TaskPriorityType,
       due_date: fd.get("due_date")?.toString() ?? "",
+      is_client_visible: fd.get("is_client_visible") === "on",
     });
     if (!res.ok) return feedback.setError(res.error);
     router.push(`/tasks/${res.id}`);

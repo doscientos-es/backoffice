@@ -102,6 +102,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
                   priority: task.priority as string,
                   member_ids: taskMemberIds,
                   due_date: (task.due_date as string | null) ?? null,
+                  is_client_visible: Boolean(task.is_client_visible),
                   version: Number(task.version),
                 }}
                 members={(members ?? []) as Array<{ id: string; name: string }>}
@@ -148,6 +149,9 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
               <DetailRow label="Iniciada">{formatDate(task.started_at as string | null)}</DetailRow>
               <DetailRow label="Completada">
                 {formatDate(task.completed_at as string | null)}
+              </DetailRow>
+              <DetailRow label="Portal del cliente">
+                {task.is_client_visible ? "Visible" : "Interna"}
               </DetailRow>
               {task.github_issue_url ? (
                 <DetailRow label="GitHub">

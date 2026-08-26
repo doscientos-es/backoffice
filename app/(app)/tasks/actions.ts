@@ -1,7 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { defineAction } from "@/lib/actions/define-action";
 import { requireUser } from "@/lib/auth";
 import { VersionConflictError } from "@/lib/concurrency/version-conflict";
@@ -16,6 +14,8 @@ import {
 import { createServerClient } from "@/lib/supabase/server";
 import { normalizeTaskMemberIds } from "@/lib/tasks/assignments";
 import { rankAfter, rankBetween } from "@/lib/utils/ranking";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 export const createTask = defineAction<
   typeof CreateTaskInput,
@@ -118,6 +118,7 @@ export const updateTask = defineAction({
       status: rest.status,
       priority: rest.priority,
       due_date: rest.due_date ?? null,
+      is_client_visible: rest.is_client_visible,
     };
     if (rest.status === "done") updates.completed_at = new Date().toISOString();
     if (rest.status === "in_progress") updates.started_at = new Date().toISOString();

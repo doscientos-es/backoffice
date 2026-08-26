@@ -1,13 +1,16 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { defineAction } from "@/lib/actions/define-action";
+import { requireRole } from "@/lib/auth";
 import { VersionConflictError } from "@/lib/concurrency/version-conflict";
 import { parseGithubRepoUrl } from "@/lib/integrations/github-sync";
+import { buildPortalAccessPatch } from "@/lib/portal/access";
 import { uuidIdInput } from "@/lib/schemas/common";
+import { UpdatePortalAccessInput } from "@/lib/schemas/portal";
 import { ProjectInput, UpdateProjectInput } from "@/lib/schemas/project";
 import { createServerClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 // biome-ignore lint/suspicious/noExplicitAny: complex dynamic payload from form
 function buildDbPayload(p: any) {
@@ -130,3 +133,26 @@ export const restoreProject = defineAction({
     if (error) throw new Error(error.message);
   },
 });
+
+export async function updateProjectPortalAccess(
+  input: unknown,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    await requireRole(["owner", "admin", "member"]);
+  } catch {
+    return { ok: false, error: "No autorizado" };
+  }
+  const parsed = UpdatePortalAccessInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos no válidos" };
+  }
+  const patch = buildPortalAccessPatch(parsed.data);
+  if (Object.keys(patch).length === 0) return { ok: true };
+
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("projects").update(patch).eq("id", parsed.data.id);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/projects/${parsed.data.id}`);
+  return { ok: true };
+}

@@ -142,11 +142,11 @@ export default async function ProposalDetailPage({
   const clientId = (proposal.client_id as string | null) ?? null;
   const { data: availableProjects } = clientId
     ? await supabase
-        .from("projects")
-        .select("id, name")
-        .eq("client_id", clientId)
-        .is("deleted_at", null)
-        .order("name")
+      .from("projects")
+      .select("id, name")
+      .eq("client_id", clientId)
+      .is("deleted_at", null)
+      .order("name")
     : { data: [] };
 
   const [{ data: teamMembers }, { data: proposalTeam }] = await Promise.all([
@@ -209,21 +209,21 @@ export default async function ProposalDetailPage({
   const needsFiscal = !client || !hasCompleteFiscalData(client);
   const fiscalPrefill = client
     ? {
-        name: client.name ?? "",
-        nif: client.nif ?? "",
-        billing_address: client.billing_address_street ?? "",
-        contact_person: client.contact_person ?? "",
-        email: client.email ?? "",
-        phone: client.phone ?? "",
-      }
+      name: client.name ?? "",
+      nif: client.nif ?? "",
+      billing_address: client.billing_address_street ?? "",
+      contact_person: client.contact_person ?? "",
+      email: client.email ?? "",
+      phone: client.phone ?? "",
+    }
     : {
-        name: lead?.company ?? lead?.name ?? "",
-        nif: "",
-        billing_address: "",
-        contact_person: lead?.name ?? "",
-        email: lead?.email ?? "",
-        phone: lead?.phone ?? "",
-      };
+      name: lead?.company ?? lead?.name ?? "",
+      nif: "",
+      billing_address: "",
+      contact_person: lead?.name ?? "",
+      email: lead?.email ?? "",
+      phone: lead?.phone ?? "",
+    };
   const locked = status === "accepted" || status === "rejected";
   const editing = !locked && (mode === "edit" || ai_draft === "1");
   const configuredPaymentPlan = parsePaymentPlan(proposal.payment_plan);
@@ -290,7 +290,7 @@ export default async function ProposalDetailPage({
                     client ? `Cliente: ${client.name}` : lead ? `Lead: ${lead.name}` : null,
                     `Estado: ${PROPOSAL_STATUS[status]?.label ?? status}`,
                     Number(proposal.total ?? 0) > 0 &&
-                      `Total: ${formatEUR(Number(proposal.total))}`,
+                    `Total: ${formatEUR(Number(proposal.total))}`,
                   ]
                     .filter(Boolean)
                     .join(" · "),
@@ -333,7 +333,13 @@ export default async function ProposalDetailPage({
                   />
                 ) : null}
                 {locked && <ReopenProposalButton proposalId={id} />}
-                <ProposalMoreActions proposalId={id} />
+                <ProposalMoreActions
+                  proposalId={id}
+                  canReject={
+                    ["owner", "admin"].includes(user.role) &&
+                    ["sent", "viewed", "expired"].includes(status)
+                  }
+                />
               </>
             ) : null}
           </div>

@@ -86,7 +86,12 @@ vi.mock("@/lib/google/backup", () => ({ backupProposalToDrive: vi.fn() }));
 vi.mock("@/lib/email/render", () => ({ renderEmail: vi.fn() }));
 vi.mock("@/lib/email/resend", () => ({ sendEmail: vi.fn() }));
 
-import { markProposalAsAccepted, markProposalAsSent, updateProposal } from "./actions";
+import {
+  markProposalAsAccepted,
+  markProposalAsRejected,
+  markProposalAsSent,
+  updateProposal,
+} from "./actions";
 
 const ID = "494d62cb-fd56-4650-b131-9e3a927a20ad";
 
@@ -328,5 +333,46 @@ describe("markProposalAsAccepted", () => {
     expect(state.updates).toContainEqual(
       expect.objectContaining({ table: "proposals", accepted_fiscal_data: fiscal }),
     );
+  });
+});
+
+describe("markProposalAsRejected", () => {
+  beforeEach(() => {
+    state.updates = [];
+    state.proposal = {
+      id: ID,
+      number: "P-2026-001",
+      status: "viewed",
+      title: "Automatización comercial",
+      version: 1,
+      lead_id: "f4e5d6c7-b8a9-4012-8012-123456789abc",
+      client_id: null,
+      clients: null,
+    };
+  });
+
+  it("records an external client rejection and its response date", async () => {
+    const result = await markProposalAsRejected({ id: ID });
+
+    expect(result).toEqual({ ok: true });
+    expect(state.updates).toContainEqual(
+      expect.objectContaining({
+        table: "proposals",
+        status: "rejected",
+        responded_at: expect.any(String),
+      }),
+    );
+  });
+
+  it("does not reject a proposal that has not been delivered", async () => {
+    state.proposal.status = "draft";
+
+    const result = await markProposalAsRejected({ id: ID });
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Solo se pueden rechazar propuestas enviadas, vistas o expiradas",
+    });
+    expect(state.updates).toEqual([]);
   });
 });

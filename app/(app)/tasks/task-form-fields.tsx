@@ -35,6 +35,7 @@ export type TaskFormDefaults = {
   status?: string | null;
   priority?: string | null;
   due_date?: string | null;
+  is_client_visible?: boolean;
 };
 
 interface Props {
@@ -167,6 +168,21 @@ export function TaskFormFields({
           <DateField id={`${idPrefix}-due_date`} name="due_date" defaultValue={d.due_date ?? ""} />
         </FormRow>
       </div>
+      <label className="flex items-start gap-2 rounded-md border border-border/70 p-3 text-sm">
+        <input
+          type="checkbox"
+          name="is_client_visible"
+          defaultChecked={d.is_client_visible ?? false}
+          className="mt-0.5 size-4 accent-primary"
+        />
+        <span>
+          <span className="block font-medium">Visible en el portal del cliente</span>
+          <span className="block text-xs text-muted-foreground">
+            Solo se compartirán el título, el estado y la fecha. La descripción y los comentarios
+            seguirán siendo internos.
+          </span>
+        </span>
+      </label>
     </>
   );
 }

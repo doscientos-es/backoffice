@@ -174,23 +174,24 @@ export async function getProjectWorkspace(
     { data: checklistData },
     { data: unlinkedProposals },
     { data: reminders },
+    { data: clientRequests },
   ] = await Promise.all([
     options.tasksView === "board"
       ? supabase
-          .from("tasks")
-          .select(
-            "id, title, status, priority, due_date, kanban_order, team_members:assignee_id(id, name)",
-          )
-          .eq("project_id", id)
-          .is("deleted_at", null)
-          .order("kanban_order", { ascending: true })
+        .from("tasks")
+        .select(
+          "id, title, status, priority, due_date, kanban_order, team_members:assignee_id(id, name)",
+        )
+        .eq("project_id", id)
+        .is("deleted_at", null)
+        .order("kanban_order", { ascending: true })
       : supabase
-          .from("tasks")
-          .select("id, title, status")
-          .eq("project_id", id)
-          .is("deleted_at", null)
-          .order("created_at", { ascending: false })
-          .limit(PROJECT_TASKS_LIMIT),
+        .from("tasks")
+        .select("id, title, status")
+        .eq("project_id", id)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(PROJECT_TASKS_LIMIT),
     supabase
       .from("proposals")
       .select("id, number, title, status, total")
@@ -236,12 +237,12 @@ export async function getProjectWorkspace(
       .order("position"),
     client
       ? supabase
-          .from("proposals")
-          .select("id, number, title")
-          .eq("client_id", client.id)
-          .is("project_id", null)
-          .is("deleted_at", null)
-          .order("created_at", { ascending: false })
+        .from("proposals")
+        .select("id, number, title")
+        .eq("client_id", client.id)
+        .is("project_id", null)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
       : Promise.resolve({ data: [] }),
     supabase
       .from("tasks")
@@ -252,6 +253,12 @@ export async function getProjectWorkspace(
       .is("deleted_at", null)
       .order("start_at", { ascending: true })
       .limit(PROJECT_RELATED_LIMIT),
+    supabase
+      .from("project_requests")
+      .select("id, category, subject, body, status, requester_name, requester_email, created_at")
+      .eq("project_id", id)
+      .order("created_at", { ascending: false })
+      .limit(25),
   ]);
 
   return {
@@ -270,5 +277,6 @@ export async function getProjectWorkspace(
     checklistData: checklistData ?? [],
     unlinkedProposals: unlinkedProposals ?? [],
     reminders: reminders ?? [],
+    clientRequests: clientRequests ?? [],
   };
 }

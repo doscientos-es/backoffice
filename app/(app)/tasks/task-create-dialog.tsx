@@ -87,6 +87,7 @@ export function TaskCreateDialog({
       status: (fd.get("status")?.toString() ?? "todo") as TaskStatusType,
       priority: (fd.get("priority")?.toString() ?? "medium") as TaskPriorityType,
       due_date: fd.get("due_date")?.toString() ?? "",
+      is_client_visible: fd.get("is_client_visible") === "on",
     });
     if (!res.ok) return feedback.setError(res.error);
     feedback.setSuccess("Tarea creada");
@@ -137,6 +138,7 @@ export function TaskCreateDialog({
                 status: "todo",
                 priority: "medium",
                 member_ids: currentUserId ? [currentUserId] : [],
+                project_id: projectId,
               }}
             />
           </div>

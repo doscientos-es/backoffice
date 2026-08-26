@@ -1,9 +1,11 @@
 "use client";
 
-import { Copy, Ellipsis as MoreHorizontal, Trash as Trash2 } from "lucide-react";
+import { CircleX, Copy, Ellipsis as MoreHorizontal, Trash as Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
+import { sileo } from "sileo";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +14,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useUndoableDelete } from "@/lib/hooks/use-undoable-delete";
-import { deleteProposal, duplicateProposal, restoreProposal } from "../actions";
+import {
+  deleteProposal,
+  duplicateProposal,
+  markProposalAsRejected,
+  restoreProposal,
+} from "../actions";
 
 /** Builds the `{ id }` FormData both delete and restore proposal actions expect. */
 function idFormData(proposalId: string): FormData {
@@ -25,9 +32,17 @@ function idFormData(proposalId: string): FormData {
  * Groups secondary proposal operations so the header stays focused on the
  * next business action. Deletion remains reversible through the undo toast.
  */
-export function ProposalMoreActions({ proposalId }: { proposalId: string }) {
+export function ProposalMoreActions({
+  proposalId,
+  canReject,
+}: {
+  proposalId: string;
+  canReject: boolean;
+}) {
   const router = useRouter();
-  const [duplicating, startTransition] = useTransition();
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [duplicating, startDuplicate] = useTransition();
+  const [rejecting, startReject] = useTransition();
   const { run: onDelete, pending: deleting } = useUndoableDelete({
     successMessage: "Propuesta eliminada",
     onDelete: () => deleteProposal(idFormData(proposalId)),
@@ -36,36 +51,67 @@ export function ProposalMoreActions({ proposalId }: { proposalId: string }) {
   });
 
   const onDuplicate = () => {
-    startTransition(async () => {
+    startDuplicate(async () => {
       const res = await duplicateProposal({ id: proposalId });
       if (res.ok) router.push(`/proposals/${res.id}`);
     });
   };
 
+  const onReject = () => {
+    startReject(async () => {
+      const res = await markProposalAsRejected({ id: proposalId });
+      if (!res.ok) {
+        sileo.error({ title: res.error });
+        return;
+      }
+      setRejectOpen(false);
+      sileo.success({ title: "Propuesta rechazada" });
+      router.refresh();
+    });
+  };
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          disabled={duplicating || deleting}
-          aria-label="Más acciones de la propuesta"
-          title="Más acciones"
-        >
-          <MoreHorizontal aria-hidden />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuItem disabled={duplicating} onSelect={onDuplicate}>
-          <Copy aria-hidden />
-          {duplicating ? "Duplicando…" : "Duplicar"}
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem variant="destructive" disabled={deleting} onSelect={onDelete}>
-          <Trash2 aria-hidden />
-          Eliminar
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            disabled={duplicating || rejecting || deleting}
+            aria-label="Más acciones de la propuesta"
+            title="Más acciones"
+          >
+            <MoreHorizontal aria-hidden />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem disabled={duplicating} onSelect={onDuplicate}>
+            <Copy aria-hidden />
+            {duplicating ? "Duplicando…" : "Duplicar"}
+          </DropdownMenuItem>
+          {canReject ? (
+            <DropdownMenuItem variant="destructive" onSelect={() => setRejectOpen(true)}>
+              <CircleX aria-hidden />
+              Rechazar propuesta
+            </DropdownMenuItem>
+          ) : null}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem variant="destructive" disabled={deleting} onSelect={onDelete}>
+            <Trash2 aria-hidden />
+            Eliminar
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <ConfirmDialog
+        open={rejectOpen}
+        onOpenChange={setRejectOpen}
+        title="¿Rechazar esta propuesta?"
+        description="Se registrará como rechazada por el cliente y se guardará la fecha de respuesta. Podrás reabrirla después si fuera necesario."
+        confirmLabel={rejecting ? "Rechazando…" : "Rechazar propuesta"}
+        destructive
+        pending={rejecting}
+        onConfirm={onReject}
+      />
+    </>
   );
 }

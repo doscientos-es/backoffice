@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { RemindersSection } from "@/app/(app)/inicio/_components/reminders-section";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
+import { CopyPortalLink } from "@/components/portal/copy-portal-link";
+import { PortalAccessControls } from "@/components/portal/portal-access-controls";
 import { AttachmentSection } from "@/components/ui/attachment-section";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +18,7 @@ import { INVOICE_STATUS, PROJECT_STATUS, PROPOSAL_STATUS } from "@/lib/status";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { ScheduleReminderDialog } from "../../reminders/schedule-reminder-dialog";
 import { TaskCreateDialog } from "../../tasks/task-create-dialog";
+import { updateProjectPortalAccess } from "../actions";
 import { GitHubModeBadge } from "../github-mode-badge";
 import type { GitHubSyncMode } from "../github-sync-section";
 import { AiKickoffPanel } from "./ai-kickoff-panel";
@@ -64,6 +67,7 @@ export default async function ProjectDetailPage({
     checklistData,
     unlinkedProposals,
     reminders,
+    clientRequests,
   } = workspace;
 
   const pendingReminders = ((reminders ?? []) as Array<Record<string, unknown>>).map((r) => ({
@@ -89,11 +93,11 @@ export default async function ProjectDetailPage({
         note: (w.note as string | null) ?? null,
         member: m
           ? {
-              id: m.id,
-              name: m.name,
-              avatar_url: m.avatar_url ?? null,
-              github_handle: m.github_handle ?? null,
-            }
+            id: m.id,
+            name: m.name,
+            avatar_url: m.avatar_url ?? null,
+            github_handle: m.github_handle ?? null,
+          }
           : null,
       };
     },
@@ -148,16 +152,16 @@ export default async function ProjectDetailPage({
                   [
                     `Estado: ${PROJECT_STATUS[project.status as keyof typeof PROJECT_STATUS]?.label ?? project.status}`,
                     (project.billing_type as string | null) &&
-                      `Facturación: ${project.billing_type as string}`,
+                    `Facturación: ${project.billing_type as string}`,
                   ]
                     .filter(Boolean)
                     .join(" · "),
                 );
                 const dates = [
                   (project.starts_at as string | null) &&
-                    `Inicio: ${formatDate(project.starts_at as string)}`,
+                  `Inicio: ${formatDate(project.starts_at as string)}`,
                   (project.ends_at as string | null) &&
-                    `Fin: ${formatDate(project.ends_at as string)}`,
+                  `Fin: ${formatDate(project.ends_at as string)}`,
                 ].filter(Boolean);
                 if (dates.length) parts.push(dates.join(" · "));
                 return parts;
@@ -238,6 +242,28 @@ export default async function ProjectDetailPage({
           ) : null}
         </CardContent>
       </Card>
+
+      {(project.portal_token as string | null) ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Portal del cliente</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 lg:grid-cols-2">
+            <CopyPortalLink
+              path={`/p/project/${project.portal_token as string}`}
+              label="Enlace de seguimiento"
+            />
+            {canEdit ? (
+              <PortalAccessControls
+                id={project.id as string}
+                initialVisible={Boolean(project.is_client_visible)}
+                hasPassword={Boolean(project.portal_password_hash)}
+                action={updateProjectPortalAccess}
+              />
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
 
       {canEdit && (proposals ?? []).some((proposal) => proposal.status === "accepted") ? (
         <Card>
@@ -336,6 +362,36 @@ export default async function ProjectDetailPage({
 
       <Card>
         <CardHeader>
+          <CardTitle>Solicitudes del cliente</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!clientRequests || clientRequests.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Sin solicitudes recibidas.</p>
+          ) : (
+            <ul className="divide-y divide-border">
+              {clientRequests.map((request) => (
+                <li key={request.id as string} className="py-3 first:pt-0 last:pb-0">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-medium">{request.subject as string}</p>
+                    <span className="text-xs text-muted-foreground">
+                      {request.status as string} · {formatDate(request.created_at as string)}
+                    </span>
+                  </div>
+                  <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
+                    {request.body as string}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {request.requester_name as string} · {request.category as string}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Update para cliente</CardTitle>
         </CardHeader>
         <CardContent>
@@ -392,11 +448,10 @@ export default async function ProjectDetailPage({
                 Margen
               </dt>
               <dd
-                className={`mt-1 text-2xl font-semibold tabular-nums ${
-                  profitability.margin >= 0
+                className={`mt-1 text-2xl font-semibold tabular-nums ${profitability.margin >= 0
                     ? "text-emerald-600 dark:text-emerald-400"
                     : "text-red-600 dark:text-red-400"
-                }`}
+                  }`}
               >
                 {formatEUR(profitability.margin)}
                 {profitability.marginPct !== null ? (
