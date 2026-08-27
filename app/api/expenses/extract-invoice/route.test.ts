@@ -5,7 +5,12 @@ const { state } = vi.hoisted(() => ({
   state: {
     authThrows: false,
     role: "admin" as "owner" | "admin" | "member" | "viewer",
-    attachment: { id: ID, expense_id: "expense-1", mime_type: "application/pdf", storage_path: "expense/a.pdf" } as Record<string, unknown> | null,
+    attachment: {
+      id: "00000000-0000-4000-8000-000000000001",
+      expense_id: "expense-1",
+      mime_type: "application/pdf",
+      storage_path: "expense/a.pdf",
+    } as Record<string, unknown> | null,
     downloadError: null as string | null,
   },
 }));
@@ -29,11 +34,26 @@ vi.mock("@/lib/supabase/server", () => ({
   }),
 }));
 vi.mock("@/lib/storage", () => ({
-  getStorage: () => ({ download: async () => ({ data: state.downloadError ? null : new ArrayBuffer(8), error: state.downloadError }) }),
+  getStorage: () => ({
+    download: async () => ({
+      data: state.downloadError ? null : new ArrayBuffer(8),
+      error: state.downloadError,
+    }),
+  }),
 }));
 vi.mock("@/lib/finance/invoice-extraction", () => ({
   extractExpenseInvoice: vi.fn(async () => ({
-    suggestion: { vendor: "Agencia", description: null, expense_date: "2026-08-27", due_date: null, subtotal: 100, tax_rate: 21, vendor_nif: "B12345678", invoice_reference: "F-1", confidence: 0.9 },
+    suggestion: {
+      vendor: "Agencia",
+      description: null,
+      expense_date: "2026-08-27",
+      due_date: null,
+      subtotal: 100,
+      tax_rate: 21,
+      vendor_nif: "B12345678",
+      invoice_reference: "F-1",
+      confidence: 0.9,
+    },
     source: "ai",
     warning: null,
   })),
@@ -42,13 +62,23 @@ vi.mock("@/lib/finance/invoice-extraction", () => ({
 import { NextRequest } from "next/server";
 import { POST } from "./route";
 
-const request = (body: unknown) => new NextRequest("http://localhost/api/expenses/extract-invoice", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+const request = (body: unknown) =>
+  new NextRequest("http://localhost/api/expenses/extract-invoice", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
 
 describe("POST /api/expenses/extract-invoice", () => {
   beforeEach(() => {
     state.authThrows = false;
     state.role = "admin";
-    state.attachment = { id: ID, expense_id: "expense-1", mime_type: "application/pdf", storage_path: "expense/a.pdf" };
+    state.attachment = {
+      id: ID,
+      expense_id: "expense-1",
+      mime_type: "application/pdf",
+      storage_path: "expense/a.pdf",
+    };
     state.downloadError = null;
   });
 
@@ -58,13 +88,21 @@ describe("POST /api/expenses/extract-invoice", () => {
   });
 
   it("rejects an attachment that is not a stored PDF", async () => {
-    state.attachment = { id: ID, expense_id: "expense-1", mime_type: "image/jpeg", storage_path: "expense/a.jpg" };
+    state.attachment = {
+      id: ID,
+      expense_id: "expense-1",
+      mime_type: "image/jpeg",
+      storage_path: "expense/a.jpg",
+    };
     expect((await POST(request({ attachment_id: ID }))).status).toBe(400);
   });
 
   it("returns a reviewable suggestion without saving the expense", async () => {
     const response = await POST(request({ attachment_id: ID }));
     expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({ source: "ai", suggestion: { vendor: "Agencia", subtotal: 100 } });
+    expect(await response.json()).toMatchObject({
+      source: "ai",
+      suggestion: { vendor: "Agencia", subtotal: 100 },
+    });
   });
 });

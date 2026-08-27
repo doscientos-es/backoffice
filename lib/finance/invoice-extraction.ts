@@ -35,9 +35,7 @@ fechas, importes o NIF. No marques una factura como pagada.`;
 
 function toNumber(value: string): number | null {
   const compact = value.replace(/[^0-9,.-]/g, "");
-  const normalized = compact.includes(",")
-    ? compact.replace(/\./g, "").replace(",", ".")
-    : compact;
+  const normalized = compact.includes(",") ? compact.replace(/\./g, "").replace(",", ".") : compact;
   const parsed = Number(normalized);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 }
