@@ -5,12 +5,41 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Doscientos Backoffice",
     short_name: "Doscientos",
     description: "CRM interno de doscientos · Leads, propuestas, facturas Verifactu.",
-    start_url: "/",
+    id: "/inicio",
+    start_url: "/inicio",
+    scope: "/",
     display: "standalone",
+    display_override: ["window-controls-overlay", "standalone"],
+    launch_handler: { client_mode: "focus-existing" },
     background_color: "#fafafa",
     theme_color: "#2a4227",
     orientation: "any",
     categories: ["business", "productivity"],
+    shortcuts: [
+      {
+        name: "Nuevo lead",
+        short_name: "Nuevo lead",
+        description: "Registrar una nueva oportunidad",
+        url: "/leads/new",
+      },
+      {
+        name: "Tareas de hoy",
+        short_name: "Mis tareas",
+        description: "Abrir las tareas pendientes",
+        url: "/tasks",
+      },
+      {
+        name: "Agenda",
+        description: "Ver la agenda de trabajo",
+        url: "/calendar",
+      },
+    ],
+    share_target: {
+      action: "/share",
+      method: "POST",
+      enctype: "application/x-www-form-urlencoded",
+      params: { title: "title", text: "text", url: "url" },
+    },
     icons: [
       {
         src: "/brand/logo.svg",

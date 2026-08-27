@@ -50,7 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
       <body>
         <Script id="startup-splash-state" strategy="beforeInteractive">
-          {`try { if (sessionStorage.getItem("${STARTUP_SPLASH_SESSION_KEY}")) document.documentElement.dataset.startupSplashSeen = "true"; } catch {}`}
+          {`try { if (sessionStorage.getItem("${STARTUP_SPLASH_SESSION_KEY}")) document.documentElement.dataset.startupSplashSeen = "true"; } catch {} window.setTimeout(() => document.getElementById("startup-splash")?.classList.add("is-hidden"), 1200);`}
         </Script>
         <div id="startup-splash" role="status" aria-label="Cargando Doscientos">
           <div className="startup-splash-mark-shell">

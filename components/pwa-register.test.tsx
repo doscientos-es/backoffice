@@ -22,13 +22,12 @@ describe("PwaRegister", () => {
     vi.useRealTimers();
   });
 
-  it("records the first load and hides the splash after startup", () => {
+  it("records the first load and hides the splash as soon as it hydrates", () => {
     render(<PwaRegister />);
 
     expect(register).toHaveBeenCalledWith("/sw.js");
     expect(sessionStorage.getItem(STARTUP_SPLASH_SESSION_KEY)).toBe("1");
 
-    vi.advanceTimersByTime(450);
     expect(document.getElementById("startup-splash")?.classList.contains("is-hidden")).toBe(true);
   });
 });

@@ -10,6 +10,7 @@ import { QuickCreateButton } from "@/components/layout/quick-create-button";
 import { ShortcutsDialog } from "@/components/layout/shortcuts-dialog";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MfaSessionGate } from "@/components/security/mfa-session-gate";
+import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
 import { hasAal2Session, requireUser } from "@/lib/auth";
 import { isPublicDemoMode } from "@/lib/demo";
 
@@ -50,6 +51,7 @@ export default async function AppLayout({
       <QuickCreateButton />
       <CallReminderWatcher />
       <MfaSessionGate memberRole={user.role} mfaVerified={mfaVerified} />
+      <PwaInstallPrompt />
     </div>
   );
 }

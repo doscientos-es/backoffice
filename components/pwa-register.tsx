@@ -16,10 +16,9 @@ export function PwaRegister() {
       /* The splash still hides when sessionStorage is unavailable. */
     }
 
-    const timer = window.setTimeout(() => {
-      document.getElementById("startup-splash")?.classList.add("is-hidden");
-    }, 450);
-    return () => window.clearTimeout(timer);
+    // Do not keep the interface blocked after hydration. The inline fallback in
+    // the root layout covers failed or exceptionally slow client bootstraps.
+    document.getElementById("startup-splash")?.classList.add("is-hidden");
   }, []);
 
   return null;

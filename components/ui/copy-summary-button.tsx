@@ -35,11 +35,16 @@ export function CopySummaryButton({ lines, urlPath, label, className }: CopySumm
     const url = `${window.location.origin}${urlPath}`;
     const text = [...lines, `→ ${url}`].join("\n");
     try {
+      if (navigator.share) {
+        await navigator.share({ title: label ?? "Ficha de Doscientos", text, url });
+        return;
+      }
       await navigator.clipboard.writeText(text);
       setCopied(true);
       sileo.success({ title: "Ficha copiada al portapapeles" });
       setTimeout(() => setCopied(false), 1500);
-    } catch {
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
       sileo.error({ title: "No se pudo copiar" });
     }
   }

@@ -254,8 +254,12 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
 
   const unread = useMemo(() => notifs.filter((n) => !n.read_at), [notifs]);
   useEffect(() => {
-    const badge = navigator as Navigator & { setAppBadge?: (value?: number) => Promise<void> };
-    if (badge.setAppBadge) void badge.setAppBadge(unread.length);
+    const badge = navigator as Navigator & {
+      clearAppBadge?: () => Promise<void>;
+      setAppBadge?: (value?: number) => Promise<void>;
+    };
+    if (unread.length > 0 && badge.setAppBadge) void badge.setAppBadge(unread.length).catch(() => undefined);
+    if (unread.length === 0 && badge.clearAppBadge) void badge.clearAppBadge().catch(() => undefined);
   }, [unread.length]);
   const groups = useMemo(() => groupByDay(notifs), [notifs]);
 

@@ -1,6 +1,6 @@
 // Minimal service worker — satisfies PWA installability requirements.
 // No aggressive caching: backoffice data must always be fresh.
-const CACHE_NAME = "doscientos-bo-v1";
+const CACHE_NAME = "doscientos-bo-v2";
 
 self.addEventListener("push", (event) => {
   const payload = event.data?.json() ?? {};
@@ -90,7 +90,9 @@ self.addEventListener("fetch", (event) => {
         // Cache only successful responses for static assets (_next/static)
         if (response.ok && url.pathname.startsWith("/_next/static/")) {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          // Keep cache writes alive after responding, without holding up a
+          // route, RSC payload or any CRM data request.
+          event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(request, clone)).catch(() => undefined));
         }
         return response;
       })
