@@ -19,6 +19,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { formatDate, formatEUR } from "@/lib/utils";
 import { deleteExpense } from "../actions";
 import { ExpenseEditDialog } from "./expense-edit-dialog";
+import { ExpenseInvoiceExtractor } from "./expense-invoice-extractor";
 
 export const dynamic = "force-dynamic";
 
@@ -163,6 +164,40 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
           canEdit={canEdit}
           title="Facturas y justificantes"
         />
+        {canEdit ? (
+          <ExpenseInvoiceExtractor
+            expense={{
+              id: expense.id,
+              expected_version: Number(expense.version),
+              vendor: expense.vendor,
+              description: expense.description ?? "",
+              category: expense.category,
+              status: expense.status,
+              recurrence: expense.recurrence,
+              expense_date: expense.expense_date,
+              due_date: expense.due_date ?? "",
+              paid_at: expense.paid_at ?? "",
+              currency: expense.currency,
+              subtotal: expense.subtotal,
+              tax_rate: expense.tax_rate,
+              vendor_nif: expense.vendor_nif ?? "",
+              invoice_reference: expense.invoice_reference ?? "",
+              project_id: expense.project_id ?? "",
+              notes: expense.notes ?? "",
+              payment_source: expense.payment_source,
+              paid_by_member_id: expense.paid_by_member_id ?? "",
+              version: Number(expense.version),
+            }}
+            attachments={(attachments ?? [])
+              .filter((attachment) => attachment.mime_type === "application/pdf" && attachment.source !== "drive")
+              .map((attachment) => ({
+                id: attachment.id,
+                name: attachment.name,
+                mime_type: attachment.mime_type,
+                source: attachment.source,
+              }))}
+          />
+        ) : null}
       </div>
 
       {canDelete ? (
