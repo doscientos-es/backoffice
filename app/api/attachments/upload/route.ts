@@ -19,13 +19,14 @@ const ALLOWED_MIME_TYPES = [
   "text/csv",
 ];
 
-const ENTITY_FIELDS = ["lead_id", "project_id", "proposal_id", "client_id"] as const;
+const ENTITY_FIELDS = ["lead_id", "project_id", "proposal_id", "client_id", "expense_id"] as const;
 type EntityField = (typeof ENTITY_FIELDS)[number];
 const ENTITY_TYPE_MAP: Record<string, EntityField> = {
   lead: "lead_id",
   project: "project_id",
   proposal: "proposal_id",
   client: "client_id",
+  expense: "expense_id",
 };
 
 function sanitizeFilename(name: string): string {

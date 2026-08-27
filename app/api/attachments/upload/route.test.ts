@@ -6,6 +6,7 @@ const { state } = vi.hoisted(() => ({
     userRole: "member" as "owner" | "admin" | "member" | "viewer",
     storageUploadError: null as { message: string } | null,
     storageRemoveCalls: [] as string[][],
+    insertedAttachment: null as Record<string, unknown> | null,
     dbInsertResult: { data: { id: "att-1" }, error: null } as {
       data: { id: string } | null;
       error: { message: string } | null;
@@ -34,11 +35,14 @@ vi.mock("@/lib/storage", () => ({
 vi.mock("@/lib/supabase/server", () => ({
   createServerClient: vi.fn(async () => ({
     from: (_table: string) => ({
-      insert: () => ({
-        select: () => ({
-          single: async () => state.dbInsertResult,
-        }),
-      }),
+      insert: (input: Record<string, unknown>) => {
+        state.insertedAttachment = input;
+        return {
+          select: () => ({
+            single: async () => state.dbInsertResult,
+          }),
+        };
+      },
     }),
   })),
 }));
@@ -63,6 +67,7 @@ describe("POST /api/attachments/upload", () => {
     state.userRole = "member";
     state.storageUploadError = null;
     state.storageRemoveCalls = [];
+    state.insertedAttachment = null;
     state.dbInsertResult = { data: { id: "att-1" }, error: null };
     vi.resetModules();
   });
@@ -105,5 +110,13 @@ describe("POST /api/attachments/upload", () => {
     const res = await POST(uploadRequest(makePdf(), { entityType: "lead", entityId: "lead-1" }));
     expect(res.status).toBe(201);
     expect(await res.json()).toEqual({ id: "att-1" });
+  });
+
+  it("associates a received invoice with its expense", async () => {
+    const res = await POST(
+      uploadRequest(makePdf(), { entityType: "expense", entityId: "expense-1" }),
+    );
+    expect(res.status).toBe(201);
+    expect(state.insertedAttachment).toMatchObject({ expense_id: "expense-1" });
   });
 });

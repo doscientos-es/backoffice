@@ -35,6 +35,9 @@ export default async function FinancePage({ searchParams }: { searchParams: Sear
             <Button asChild variant="outline" size="sm">
               <Link href="/finance/expenses">Ver gastos</Link>
             </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/finance/received-invoices">Facturas recibidas</Link>
+            </Button>
             <Button asChild size="sm">
               <Link href="/finance/expenses/new">Nuevo gasto</Link>
             </Button>

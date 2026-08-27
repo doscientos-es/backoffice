@@ -38,7 +38,7 @@ export interface MetaMarketingAd {
     thumbnail_url?: string;
     call_to_action_type?: string;
     url_tags?: string;
-    object_url_spec?: { web_url?: string };
+    object_url?: string;
     object_story_spec?: {
       link_data?: {
         link?: string;
@@ -144,7 +144,7 @@ export function extractMetaCreativeDetails(ad: MetaMarketingAd): {
     creative?.object_story_spec?.link_data ?? creative?.object_story_spec?.template_data;
   return {
     creativeId: creative?.id ?? null,
-    destinationUrl: creative?.object_url_spec?.web_url ?? linkData?.link ?? null,
+    destinationUrl: creative?.object_url ?? linkData?.link ?? null,
     urlTags: creative?.url_tags ?? null,
     callToActionType: creative?.call_to_action_type ?? linkData?.call_to_action?.type ?? null,
     leadFormId: linkData?.call_to_action?.value?.lead_gen_form_id ?? null,
@@ -272,7 +272,7 @@ export async function getMetaAds(): Promise<MetaMarketingAd[]> {
 
   return fetchMetaMarketing<MetaMarketingAd>(`${env.META_AD_ACCOUNT_ID}/ads`, {
     fields:
-      "id,adset_id,campaign_id,name,status,creative{id,thumbnail_url,call_to_action_type,url_tags,object_url_spec,object_story_spec}",
+      "id,adset_id,campaign_id,name,status,creative{id,thumbnail_url,call_to_action_type,url_tags,object_url,object_story_spec}",
   });
 }
 

@@ -5,7 +5,7 @@
  * la referencia (fileId + webViewLink), nunca una copia del contenido. La UI
  * abre `web_view_link` directamente en Drive/Docs en vez de descargar nada.
  *
- * Body: { drive_url: string; entityType: "lead"|"project"|"proposal"|"client"; entityId: string }
+ * Body: { drive_url: string; entityType: "lead"|"project"|"proposal"|"client"|"expense"; entityId: string }
  * Auth: requireUser (viewer denegado)
  * Returns: { id: string }
  */
@@ -24,13 +24,14 @@ export const runtime = "nodejs";
 
 const log = scopedLogger("attachments.drive-link");
 
-const ENTITY_FIELDS = ["lead_id", "project_id", "proposal_id", "client_id"] as const;
+const ENTITY_FIELDS = ["lead_id", "project_id", "proposal_id", "client_id", "expense_id"] as const;
 type EntityField = (typeof ENTITY_FIELDS)[number];
 const ENTITY_TYPE_MAP: Record<string, EntityField> = {
   lead: "lead_id",
   project: "project_id",
   proposal: "proposal_id",
   client: "client_id",
+  expense: "expense_id",
 };
 
 const BodySchema = z.object({

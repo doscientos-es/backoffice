@@ -36,13 +36,14 @@ export type AttachmentItem = {
   web_view_link?: string | null;
 };
 
-type EntityType = "lead" | "project" | "proposal" | "client";
+type EntityType = "lead" | "project" | "proposal" | "client" | "expense";
 
 interface Props {
   entityType: EntityType;
   entityId: string;
   attachments: AttachmentItem[];
   canEdit: boolean;
+  title?: string;
 }
 
 const ACCEPTED = ".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg";
@@ -54,7 +55,13 @@ function formatSize(bytes: number | null): string {
   return `${(bytes / 1_048_576).toFixed(1)} MB`;
 }
 
-export function AttachmentSection({ entityType, entityId, attachments, canEdit }: Props) {
+export function AttachmentSection({
+  entityType,
+  entityId,
+  attachments,
+  canEdit,
+  title = "Adjuntos",
+}: Props) {
   const router = useRouter();
   const cameraRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -197,7 +204,7 @@ export function AttachmentSection({ entityType, entityId, attachments, canEdit }
         </div>
       )}
       <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
-        <CardTitle>Adjuntos</CardTitle>
+        <CardTitle>{title}</CardTitle>
         {canEdit && (
           <>
             <input

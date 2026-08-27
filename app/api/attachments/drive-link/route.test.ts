@@ -19,6 +19,7 @@ const { state } = vi.hoisted(() => ({
       iconLink: string | null;
     } | null,
     metadataError: null as Error | null,
+    insertedAttachment: null as Record<string, unknown> | null,
     dbInsertResult: { data: { id: "att-1" }, error: null } as {
       data: { id: string } | null;
       error: { message: string } | null;
@@ -58,11 +59,14 @@ vi.mock("@/lib/google/drive", () => ({
 vi.mock("@/lib/supabase/server", () => ({
   createServerClient: vi.fn(async () => ({
     from: (_table: string) => ({
-      insert: () => ({
-        select: () => ({
-          single: async () => state.dbInsertResult,
-        }),
-      }),
+      insert: (input: Record<string, unknown>) => {
+        state.insertedAttachment = input;
+        return {
+          select: () => ({
+            single: async () => state.dbInsertResult,
+          }),
+        };
+      },
     }),
   })),
 }));
@@ -97,6 +101,7 @@ describe("POST /api/attachments/drive-link", () => {
       iconLink: "https://drive-icon.example/doc.png",
     };
     state.metadataError = null;
+    state.insertedAttachment = null;
     state.dbInsertResult = { data: { id: "att-1" }, error: null };
     vi.resetModules();
   });
@@ -152,5 +157,13 @@ describe("POST /api/attachments/drive-link", () => {
     const res = await POST(driveLinkRequest(validBody));
     expect(res.status).toBe(201);
     expect(await res.json()).toEqual({ id: "att-1" });
+  });
+
+  it("associates a Drive invoice with its expense", async () => {
+    const res = await POST(
+      driveLinkRequest({ ...validBody, entityType: "expense", entityId: "expense-1" }),
+    );
+    expect(res.status).toBe(201);
+    expect(state.insertedAttachment).toMatchObject({ expense_id: "expense-1" });
   });
 });

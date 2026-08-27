@@ -35,6 +35,7 @@ describe("Meta marketing funnel metrics", () => {
         status: "ACTIVE",
         creative: {
           id: "creative",
+          object_url: "https://doscientos.es/direct-destination",
           url_tags: "utm_source=facebook",
           object_story_spec: {
             link_data: {
@@ -46,7 +47,7 @@ describe("Meta marketing funnel metrics", () => {
       }),
     ).toEqual({
       creativeId: "creative",
-      destinationUrl: "https://doscientos.es/contact",
+      destinationUrl: "https://doscientos.es/direct-destination",
       urlTags: "utm_source=facebook",
       callToActionType: "LEARN_MORE",
       leadFormId: "form",

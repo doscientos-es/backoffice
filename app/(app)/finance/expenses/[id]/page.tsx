@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
+import { type AttachmentItem, AttachmentSection } from "@/components/ui/attachment-section";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DangerZone } from "@/components/ui/danger-zone";
@@ -26,12 +27,20 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
   const user = await requirePageRole(["owner", "admin"]);
 
   const supabase = await createServerClient();
-  const [result, { data: teamMembersRaw }] = await Promise.all([
-    getExpenseDetail(id),
-    supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
-  ]);
+  const [result, { data: teamMembersRaw }, { data: attachments, error: attachmentsError }] =
+    await Promise.all([
+      getExpenseDetail(id),
+      supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
+      supabase
+        .from("attachments")
+        .select("id, name, mime_type, size_bytes, created_at, source, web_view_link")
+        .eq("expense_id", id)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false }),
+    ]);
 
   if (!result) notFound();
+  if (attachmentsError) throw new Error(attachmentsError.message);
   const { expense, projectOptions } = result;
   const project = expense.project;
   const teamMembers = (teamMembersRaw ?? []) as Array<{ id: string; name: string }>;
@@ -147,6 +156,13 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
             ) : null}
           </CardContent>
         </Card>
+        <AttachmentSection
+          entityType="expense"
+          entityId={id}
+          attachments={(attachments ?? []) as AttachmentItem[]}
+          canEdit={canEdit}
+          title="Facturas y justificantes"
+        />
       </div>
 
       {canDelete ? (
