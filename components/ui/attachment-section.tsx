@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Camera,
   Download,
   ExternalLink,
   Folder as FolderSymlink,
@@ -55,6 +56,7 @@ function formatSize(bytes: number | null): string {
 
 export function AttachmentSection({ entityType, entityId, attachments, canEdit }: Props) {
   const router = useRouter();
+  const cameraRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   // Tracks nested dragenter/dragleave so the overlay doesn't flicker over children.
   const dragDepth = useRef(0);
@@ -207,6 +209,26 @@ export function AttachmentSection({ entityType, entityId, attachments, canEdit }
               onChange={handleFileChange}
               disabled={uploading}
             />
+            <input
+              ref={cameraRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="sr-only"
+              onChange={handleFileChange}
+              disabled={uploading}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="sm:hidden"
+              disabled={uploading}
+              onClick={() => cameraRef.current?.click()}
+            >
+              <Camera className="size-3.5" />
+              Hacer foto
+            </Button>
             <Button
               type="button"
               variant="outline"

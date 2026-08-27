@@ -33,10 +33,11 @@ export function QuickCreateButton() {
           <DropdownMenuTrigger asChild>
             <Button
               size="lg"
-              className="h-12 w-12 rounded-full p-0 shadow-lg"
+              className="h-12 gap-2 rounded-full px-4 shadow-lg sm:w-12 sm:px-0"
               aria-label="Acciones rápidas (C + tecla)"
             >
               <Plus className={cn("h-5 w-5 transition-transform", isOpen && "rotate-45")} />
+              <span className="sm:hidden">Crear</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" side="top" sideOffset={8} className="min-w-56">

@@ -9,8 +9,8 @@ import { NavProgress } from "@/components/layout/nav-progress";
 import { QuickCreateButton } from "@/components/layout/quick-create-button";
 import { ShortcutsDialog } from "@/components/layout/shortcuts-dialog";
 import { Sidebar } from "@/components/layout/sidebar";
-import { MfaSessionGate } from "@/components/security/mfa-session-gate";
 import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
+import { MfaSessionGate } from "@/components/security/mfa-session-gate";
 import { hasAal2Session, requireUser } from "@/lib/auth";
 import { isPublicDemoMode } from "@/lib/demo";
 

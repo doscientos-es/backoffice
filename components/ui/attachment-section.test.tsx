@@ -55,6 +55,13 @@ describe("empty state with canEdit", () => {
     render(<AttachmentSection {...BASE_PROPS} />);
     expect(screen.getByText(/arrastra archivos/i)).toBeDefined();
   });
+
+  it("offers the device camera for mobile attachments", () => {
+    render(<AttachmentSection {...BASE_PROPS} />);
+
+    expect(screen.getByRole("button", { name: /hacer foto/i })).toBeDefined();
+    expect(document.querySelector('input[capture="environment"]')).toBeDefined();
+  });
 });
 
 // ── attachment list ───────────────────────────────────────────────────────────
