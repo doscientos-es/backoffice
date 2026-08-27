@@ -92,7 +92,12 @@ self.addEventListener("fetch", (event) => {
           const clone = response.clone();
           // Keep cache writes alive after responding, without holding up a
           // route, RSC payload or any CRM data request.
-          event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(request, clone)).catch(() => undefined));
+          event.waitUntil(
+            caches
+              .open(CACHE_NAME)
+              .then((cache) => cache.put(request, clone))
+              .catch(() => undefined),
+          );
         }
         return response;
       })

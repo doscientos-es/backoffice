@@ -1,12 +1,12 @@
 "use client";
 
 import { ClipboardPaste } from "lucide-react";
-import { useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useRef } from "react";
+import { sileo } from "sileo";
 import { Button } from "@/components/ui/button";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { sileo } from "sileo";
 import { parseLeadClipboard } from "@/lib/leads/clipboard";
 import { createLead } from "../actions";
 import { type LeadFormDefaults, LeadFormFields } from "../lead-form-fields";
@@ -14,7 +14,13 @@ import { type LeadFormDefaults, LeadFormFields } from "../lead-form-fields";
 /**
  * Standalone lead-creation form for `/leads/new`.
  */
-export function LeadNewForm({ defaults, shared = false }: { defaults?: LeadFormDefaults; shared?: boolean }) {
+export function LeadNewForm({
+  defaults,
+  shared = false,
+}: {
+  defaults?: LeadFormDefaults;
+  shared?: boolean;
+}) {
   const router = useRouter();
   const feedback = useFormFeedback();
   const formRef = useRef<HTMLFormElement>(null);

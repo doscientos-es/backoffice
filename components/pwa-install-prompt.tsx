@@ -54,10 +54,13 @@ export function PwaInstallPrompt() {
   async function install() {
     if (!installEvent) return;
     setPending(true);
-    await installEvent.prompt();
-    const choice = await installEvent.userChoice;
-    if (choice.outcome === "accepted") setStandalone(true);
-    setPending(false);
+    try {
+      await installEvent.prompt();
+      const choice = await installEvent.userChoice;
+      if (choice.outcome === "accepted") setStandalone(true);
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
@@ -76,7 +79,13 @@ export function PwaInstallPrompt() {
               {pending ? "Abriendo…" : "Instalar"}
             </Button>
           ) : null}
-          <Button type="button" size="icon-sm" variant="ghost" onClick={dismiss} aria-label="Descartar aviso de instalación">
+          <Button
+            type="button"
+            size="icon-sm"
+            variant="ghost"
+            onClick={dismiss}
+            aria-label="Descartar aviso de instalación"
+          >
             <X className="size-3.5" />
           </Button>
         </AlertAction>

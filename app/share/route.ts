@@ -6,7 +6,9 @@ const MAX_URL_LENGTH = 1000;
 
 function value(formData: FormData, name: string, maxLength: number): string {
   const raw = formData.get(name);
-  return typeof raw === "string" ? raw.replace(/\u0000/g, "").trim().slice(0, maxLength) : "";
+  return typeof raw === "string"
+    ? raw.replaceAll(String.fromCharCode(0), "").trim().slice(0, maxLength)
+    : "";
 }
 
 /** Converts a Web Share Target POST into a pre-filled, authenticated lead form. */

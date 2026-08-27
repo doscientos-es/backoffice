@@ -9,7 +9,7 @@ const PHONE_RE = /(?:\+?\d[\d .()-]{7,}\d)/;
 
 /** Extracts safe form hints from text explicitly pasted by the user. */
 export function parseLeadClipboard(text: string): LeadClipboardImport {
-  const trimmed = text.replace(/\u0000/g, "").trim().slice(0, 4000);
+  const trimmed = text.replaceAll(String.fromCharCode(0), "").trim().slice(0, 4000);
   const email = trimmed.match(EMAIL_RE)?.[0];
   const phone = trimmed.match(PHONE_RE)?.[0]?.trim();
   return { email, phone, notes: trimmed };
