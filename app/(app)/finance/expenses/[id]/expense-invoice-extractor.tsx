@@ -55,7 +55,12 @@ type Props = {
     paid_by_member_id: string;
     version: number;
   };
-  attachments: Array<{ id: string; name: string; mime_type: string | null; source?: string | null }>;
+  attachments: Array<{
+    id: string;
+    name: string;
+    mime_type: string | null;
+    source?: string | null;
+  }>;
 };
 
 const labels: Array<[keyof Omit<Suggestion, "confidence">, string]> = [
@@ -146,7 +151,11 @@ export function ExpenseInvoiceExtractor({ expense, attachments }: Props) {
         ))}
       </select>
       <Button type="button" variant="outline" size="sm" onClick={extract} disabled={pending}>
-        {pending ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
+        {pending ? (
+          <Loader2 className="size-3.5 animate-spin" />
+        ) : (
+          <Sparkles className="size-3.5" />
+        )}
         {pending ? "Analizando…" : "Extraer datos"}
       </Button>
       {error ? (
@@ -160,7 +169,9 @@ export function ExpenseInvoiceExtractor({ expense, attachments }: Props) {
           <DialogHeader>
             <DialogTitle>Datos extraídos</DialogTitle>
             <DialogDescription>
-              {source === "ai" ? "Propuesta generada con IA." : "Propuesta obtenida con reglas locales."}{" "}
+              {source === "ai"
+                ? "Propuesta generada con IA."
+                : "Propuesta obtenida con reglas locales."}{" "}
               Revisa los datos antes de aplicarlos.
             </DialogDescription>
           </DialogHeader>
@@ -179,7 +190,12 @@ export function ExpenseInvoiceExtractor({ expense, attachments }: Props) {
           </dl>
           {warning ? <p className="text-sm text-amber-700 dark:text-amber-300">{warning}</p> : null}
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setSuggestion(null)} disabled={pending}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setSuggestion(null)}
+              disabled={pending}
+            >
               Cancelar
             </Button>
             <Button type="button" onClick={apply} disabled={pending}>

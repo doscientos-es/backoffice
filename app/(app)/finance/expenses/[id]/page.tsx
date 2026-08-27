@@ -189,7 +189,10 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
               version: Number(expense.version),
             }}
             attachments={(attachments ?? [])
-              .filter((attachment) => attachment.mime_type === "application/pdf" && attachment.source !== "drive")
+              .filter(
+                (attachment) =>
+                  attachment.mime_type === "application/pdf" && attachment.source !== "drive",
+              )
               .map((attachment) => ({
                 id: attachment.id,
                 name: attachment.name,

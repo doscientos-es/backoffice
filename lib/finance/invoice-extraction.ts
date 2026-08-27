@@ -2,7 +2,11 @@ import { z } from "zod";
 import { AI_MODELS, isAIEnabled, runAIObject } from "@/lib/ai";
 import { extractPdfPages } from "@/lib/internal-documents/pdf-text";
 
-const InvoiceDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().default(null);
+const InvoiceDate = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .nullable()
+  .default(null);
 
 export const ExpenseInvoiceSuggestionSchema = z.object({
   vendor: z.string().max(160).nullable().default(null),
@@ -30,14 +34,19 @@ retenciones o no puedes determinar un valor, devuelve null para subtotal y tax_r
 fechas, importes o NIF. No marques una factura como pagada.`;
 
 function toNumber(value: string): number | null {
-  const normalized = value.replace(/\./g, "").replace(",", ".").replace(/[^0-9.-]/g, "");
+  const compact = value.replace(/[^0-9,.-]/g, "");
+  const normalized = compact.includes(",")
+    ? compact.replace(/\./g, "").replace(",", ".")
+    : compact;
   const parsed = Number(normalized);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 }
 
 function findAmount(text: string, labels: string[]): number | null {
   for (const label of labels) {
-    const match = text.match(new RegExp(`${label}\\s*[:=]?\\s*([0-9.]+,[0-9]{2}|[0-9]+(?:\\.[0-9]{2})?)`, "i"));
+    const match = text.match(
+      new RegExp(`${label}\\s*[:=]?\\s*([0-9.]+,[0-9]{2}|[0-9]+(?:\\.[0-9]{2})?)`, "i"),
+    );
     if (match?.[1]) return toNumber(match[1]);
   }
   return null;
@@ -45,7 +54,9 @@ function findAmount(text: string, labels: string[]): number | null {
 
 function findDate(text: string, labels: string[]): string | null {
   for (const label of labels) {
-    const match = text.match(new RegExp(`${label}\\s*[:=]?\\s*(\\d{1,2})[/-](\\d{1,2})[/-](\\d{4})`, "i"));
+    const match = text.match(
+      new RegExp(`${label}\\s*[:=]?\\s*(\\d{1,2})[/-](\\d{1,2})[/-](\\d{4})`, "i"),
+    );
     if (!match) continue;
     const [, day, month, year] = match;
     return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
@@ -55,16 +66,23 @@ function findDate(text: string, labels: string[]): string | null {
 
 /** Free, best-effort extraction for a digital invoice when AI is unavailable. */
 export function extractExpenseInvoiceWithRules(text: string): ExpenseInvoiceSuggestion {
-  const invoiceNumber = text.match(/(?:n[ºo°.]?\s*(?:de\s*)?factura|factura\s*(?:n[ºo°.]?)?)\s*[:#-]?\s*([A-Z0-9][A-Z0-9/_-]{2,79})/i)?.[1] ?? null;
+  const invoiceNumber =
+    text.match(
+      /(?:n[ºo°.]?\s*(?:de\s*)?factura|factura\s*(?:n[ºo°.]?)?)\s*[:#-]?\s*([A-Z0-9][A-Z0-9/_-]{2,79})/i,
+    )?.[1] ?? null;
   const nif = text.match(/\b(?:[A-Z]\d{7}[A-Z0-9]|\d{8}[A-Z])\b/i)?.[0]?.toUpperCase() ?? null;
   const taxRate = text.match(/(?:IVA|I\.V\.A\.)\s*(\d{1,2}(?:[,.]\d{1,2})?)\s*%/i)?.[1];
 
   return {
     vendor: null,
     description: null,
-    expense_date: findDate(text, ["fecha(?:\s+de)?\s+factura", "fecha\s+emisi[oó]n", "fecha"]),
-    due_date: findDate(text, ["vencimiento", "fecha\s+de\s+pago"]),
-    subtotal: findAmount(text, ["base\s+imponible", "subtotal", "base"]),
+    expense_date: findDate(text, [
+      String.raw`fecha(?:\s+de)?\s+factura`,
+      String.raw`fecha\s+emisi[oó]n`,
+      "fecha",
+    ]),
+    due_date: findDate(text, ["vencimiento", String.raw`fecha\s+de\s+pago`]),
+    subtotal: findAmount(text, [String.raw`base\s+imponible`, "subtotal", "base"]),
     tax_rate: taxRate ? toNumber(taxRate) : null,
     vendor_nif: nif,
     invoice_reference: invoiceNumber,
@@ -91,12 +109,16 @@ function mergeSuggestion(
 
 export async function extractExpenseInvoice(bytes: ArrayBuffer): Promise<ExpenseInvoiceExtraction> {
   const extracted = await extractPdfPages(bytes);
-  const text = extracted.pages.map((page) => page.content).join("\n").slice(0, 50_000);
+  const text = extracted.pages
+    .map((page) => page.content)
+    .join("\n")
+    .slice(0, 50_000);
   if (!text) {
     return {
       suggestion: ExpenseInvoiceSuggestionSchema.parse({}),
       source: "rules",
-      warning: "El PDF no contiene texto seleccionable. Podrás usar OCR cuando se añada un proveedor.",
+      warning:
+        "El PDF no contiene texto seleccionable. Podrás usar OCR cuando se añada un proveedor.",
     };
   }
 
@@ -122,7 +144,9 @@ export async function extractExpenseInvoice(bytes: ArrayBuffer): Promise<Expense
     return {
       suggestion: mergeSuggestion(rules, ai),
       source: "ai",
-      warning: extracted.truncated ? "El texto del PDF estaba truncado; revisa todos los datos." : null,
+      warning: extracted.truncated
+        ? "El texto del PDF estaba truncado; revisa todos los datos."
+        : null,
     };
   } catch {
     return {
