@@ -1,6 +1,9 @@
 ﻿"use client";
 
-import { Checkbox as SharedCheckbox, type CheckboxProps as SharedCheckboxProps } from "@doscientos/ui";
+import {
+  Checkbox as SharedCheckbox,
+  type CheckboxProps as SharedCheckboxProps,
+} from "@doscientos/ui";
 
 type CheckboxProps = Omit<
   SharedCheckboxProps,
@@ -11,7 +14,7 @@ type CheckboxProps = Omit<
   onCheckedChange?: (checked: boolean) => void;
 };
 
-/** @deprecated Migrate consumers to the state props exported by `@doscientos/ui`. */
+/** Maps the legacy backoffice state prop names onto the shared Checkbox. */
 function Checkbox({ checked, defaultChecked, onCheckedChange, ...props }: CheckboxProps) {
   return (
     <SharedCheckbox
