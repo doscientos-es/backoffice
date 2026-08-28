@@ -1,17 +1,11 @@
-import { spawn, spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { restorePublishedUi } from "./restore-published-ui.mjs";
 
 const backofficeRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const uiRoot = resolve(backofficeRoot, "../../modules/ui");
 const pnpm = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
-
-function runPnpm(args, cwd = backofficeRoot) {
-  const result = spawnSync(pnpm, args, { cwd, stdio: "inherit" });
-  if (result.status !== 0) process.exit(result.status ?? 1);
-}
 
 if (!existsSync(uiRoot)) {
   console.error(`No se encontró el paquete UI local en ${uiRoot}.`);
@@ -24,42 +18,21 @@ if (uiPackage.name !== "@doscientos/ui") {
   process.exit(1);
 }
 
-// Ensure dist exists before Next resolves the package, then keep it updated.
-runPnpm(["--dir", uiRoot, "build"]);
-runPnpm(["link", uiRoot]);
-console.log("Usando @doscientos/ui local; se restaurará npm al cerrar el servidor.");
+if (!existsSync(resolve(uiRoot, "node_modules/react-aria-components"))) {
+  console.error(`Faltan las dependencias de ${uiRoot}. Ejecuta pnpm install en ese directorio.`);
+  process.exit(1);
+}
+
+console.log("Usando el código fuente local de @doscientos/ui sin modificar pnpm-lock.yaml.");
 
 const environment = { ...process.env, DOSCIENTOS_UI_DEV_LINK: "true" };
-const processes = [
-  spawn(pnpm, ["--dir", uiRoot, "dev"], { env: environment, stdio: "inherit" }),
-  spawn(pnpm, ["exec", "next", "dev", "--turbo"], {
-    cwd: backofficeRoot,
-    env: environment,
-    stdio: "inherit",
-  }),
-];
+const next = spawn(pnpm, ["exec", "next", "dev", "--turbo"], {
+  cwd: backofficeRoot,
+  env: environment,
+  stdio: "inherit",
+});
 
-let stopping = false;
-let exitCode = 0;
-let remainingProcesses = processes.length;
-
-function stop(code = 0) {
-  if (stopping) return;
-  stopping = true;
-  exitCode = code;
-  for (const child of processes) child.kill();
-}
-
-function finish() {
-  if (!restorePublishedUi()) exitCode ||= 1;
-  process.exitCode = exitCode;
-}
-
-for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, () => stop(0));
-for (const child of processes) {
-  child.once("exit", (code) => {
-    if (!stopping) stop(code ?? 1);
-    remainingProcesses -= 1;
-    if (remainingProcesses === 0) finish();
-  });
-}
+for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, () => next.kill());
+next.once("exit", (code) => {
+  process.exitCode = code ?? 1;
+});

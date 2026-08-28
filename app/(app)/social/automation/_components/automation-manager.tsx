@@ -204,8 +204,9 @@ export function AutomationManager({ initialRules }: { initialRules: AutomationRu
                   </div>
                   <div className="flex items-center gap-2">
                     <Switch
-                      checked={rule.active}
-                      onCheckedChange={(active) => toggle(rule, active)}
+                      aria-label={`Activar regla ${rule.keyword}`}
+                      isSelected={rule.active}
+                      onChange={(active) => toggle(rule, active)}
                     />
                     <Button
                       type="button"

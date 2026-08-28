@@ -2,8 +2,11 @@ import path from "node:path";
 import type { NextConfig } from "next";
 
 const usesLocalUi = process.env.DOSCIENTOS_UI_DEV_LINK === "true";
+const localUiRoot = path.resolve(__dirname, "../../modules/ui");
 const localReactAliases = usesLocalUi
   ? {
+    "@doscientos/ui": path.join(localUiRoot, "src/index.ts"),
+    "@doscientos/ui/styles.css": path.join(localUiRoot, "src/styles.css"),
     react: path.join(__dirname, "node_modules/react"),
     "react-dom": path.join(__dirname, "node_modules/react-dom"),
     "react-dom/client": path.join(__dirname, "node_modules/react-dom/client"),
@@ -17,9 +20,7 @@ const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   typedRoutes: true,
-  // Only the local junction needs transpilation and a wider watch root.
-  // Production consumes the compiled package published to npm.
-  transpilePackages: usesLocalUi ? ["@doscientos/ui"] : [],
+  // Development resolves UI source directly, while production uses npm.
   turbopack: {
     root: usesLocalUi ? path.resolve(__dirname, "../..") : __dirname,
     resolveAlias: localReactAliases,

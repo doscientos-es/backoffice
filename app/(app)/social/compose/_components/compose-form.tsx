@@ -144,11 +144,11 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
     const automation =
       automationEnabled && automationPlatforms.length > 0
         ? {
-            keyword: automationKeyword,
-            publicReply: automationPublicReply,
-            privateMessage: automationPrivateMessage,
-            platforms: automationPlatforms,
-          }
+          keyword: automationKeyword,
+          publicReply: automationPublicReply,
+          privateMessage: automationPrivateMessage,
+          platforms: automationPlatforms,
+        }
         : undefined;
     feedback.setPending();
     startTransition(async () => {
@@ -191,11 +191,7 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
                 >
                   Personalizar por red
                 </Label>
-                <Switch
-                  id="per-platform-copy"
-                  checked={perPlatform}
-                  onCheckedChange={setPerPlatform}
-                />
+                <Switch id="per-platform-copy" isSelected={perPlatform} onChange={setPerPlatform} />
               </div>
             </div>
             <Textarea
@@ -274,8 +270,8 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
             </div>
             <Switch
               id="comment-automation"
-              checked={automationEnabled}
-              onCheckedChange={setAutomationEnabled}
+              isSelected={automationEnabled}
+              onChange={setAutomationEnabled}
             />
           </div>
 
