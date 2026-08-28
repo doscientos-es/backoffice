@@ -109,11 +109,10 @@ function JourneyCard({ journey }: { journey: VisitorJourney }) {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-3">
             <span
-              className={`flex size-9 shrink-0 items-center justify-center rounded-full ${
-                converted
+              className={`flex size-9 shrink-0 items-center justify-center rounded-full ${converted
                   ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                   : "bg-muted text-muted-foreground"
-              }`}
+                }`}
             >
               {converted ? (
                 <UserCheck className="size-4" aria-hidden />
@@ -194,8 +193,8 @@ function JourneyCard({ journey }: { journey: VisitorJourney }) {
         </div>
 
         {journey.events.length > 1 && (
-          <Accordion type="single" collapsible>
-            <AccordionItem value="timeline" className="border-b-0">
+          <Accordion allowsMultipleExpanded={false}>
+            <AccordionItem id="timeline" className="border-b-0">
               <AccordionTrigger className="py-0 text-xs text-muted-foreground hover:no-underline">
                 Ver cronología detallada
               </AccordionTrigger>

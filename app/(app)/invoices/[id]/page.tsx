@@ -575,8 +575,8 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
       {/* Work log breakdown */}
       {workLogs && workLogs.length > 0 ? (
         <div className="rounded-xl bg-card ring-1 ring-foreground/10 overflow-hidden">
-          <Accordion type="single" collapsible>
-            <AccordionItem value="work-logs" className="border-b-0">
+          <Accordion allowsMultipleExpanded={false}>
+            <AccordionItem id="work-logs" className="border-b-0">
               <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/50 active:bg-muted/80 transition-colors rounded-none border-0 cursor-pointer select-none">
                 <div className="flex flex-col gap-0.5">
                   <span className="text-base font-semibold">Desglose de actividad</span>
