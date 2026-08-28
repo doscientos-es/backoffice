@@ -2,7 +2,7 @@
   Alert,
   AlertAction,
   AlertDescription,
+  type AlertProps,
   AlertTitle,
   alertVariants,
-  type AlertProps,
 } from "@doscientos/ui";

@@ -1,1 +1,7 @@
-﻿export { Badge, BadgeLink, badgeVariants, type BadgeLinkProps, type BadgeProps } from "@doscientos/ui";
+﻿export {
+  Badge,
+  BadgeLink,
+  type BadgeLinkProps,
+  type BadgeProps,
+  badgeVariants,
+} from "@doscientos/ui";
