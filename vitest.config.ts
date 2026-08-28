@@ -85,8 +85,15 @@ export default defineConfig({
   },
 
   resolve: {
+    dedupe: ["react", "react-dom"],
     alias: {
       "@": path.resolve(__dirname, "."),
+      react: path.resolve(__dirname, "node_modules/react"),
+      "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
+      "react-dom/client": path.resolve(__dirname, "node_modules/react-dom/client"),
+      "react-dom/server": path.resolve(__dirname, "node_modules/react-dom/server"),
+      "react/jsx-runtime": path.resolve(__dirname, "node_modules/react/jsx-runtime"),
+      "react/jsx-dev-runtime": path.resolve(__dirname, "node_modules/react/jsx-dev-runtime"),
       // Marker packages provided by the Next.js bundler at build time; map them
       // to a no-op so server-guarded modules can be imported in tests.
       "server-only": path.resolve(__dirname, "tests/stubs/empty-module.ts"),

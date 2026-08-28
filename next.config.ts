@@ -2,6 +2,16 @@ import path from "node:path";
 import type { NextConfig } from "next";
 
 const usesLocalUi = process.env.DOSCIENTOS_UI_DEV_LINK === "true";
+const localReactAliases = usesLocalUi
+  ? {
+    react: path.join(__dirname, "node_modules/react"),
+    "react-dom": path.join(__dirname, "node_modules/react-dom"),
+    "react-dom/client": path.join(__dirname, "node_modules/react-dom/client"),
+    "react-dom/server": path.join(__dirname, "node_modules/react-dom/server"),
+    "react/jsx-runtime": path.join(__dirname, "node_modules/react/jsx-runtime"),
+    "react/jsx-dev-runtime": path.join(__dirname, "node_modules/react/jsx-dev-runtime"),
+  }
+  : undefined;
 
 const config: NextConfig = {
   reactStrictMode: true,
@@ -12,6 +22,7 @@ const config: NextConfig = {
   transpilePackages: ["@doscientos/ui"],
   turbopack: {
     root: usesLocalUi ? path.resolve(__dirname, "../..") : __dirname,
+    resolveAlias: localReactAliases,
   },
   // These packages use Node.js runtime APIs and bundled filesystem resources;
   // keep them external to avoid Turbopack resolving those resources at build time.
