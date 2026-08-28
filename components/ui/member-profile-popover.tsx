@@ -4,7 +4,7 @@ import { UserRound } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { AvatarMember } from "@/components/ui/member-avatar";
-import { PopoverContent, PopoverTrigger } from "@doscientos/ui";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export type ProfiledMember = AvatarMember & { id: string };
 
@@ -22,19 +22,21 @@ export function MemberProfilePopover({
   profileAvatar: ReactNode;
 }) {
   return (
-    <PopoverTrigger>
-      <button
-        type="button"
-        aria-label={`Ver información de ${member.name}`}
-        title={`Ver información de ${member.name}`}
-        onPointerDown={(event) => event.stopPropagation()}
-        onClick={(event) => event.stopPropagation()}
-        className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-      >
-        {avatar}
-      </button>
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label={`Ver información de ${member.name}`}
+          title={`Ver información de ${member.name}`}
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => event.stopPropagation()}
+          className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+        >
+          {avatar}
+        </button>
+      </PopoverTrigger>
       <PopoverContent
-        placement="bottom start"
+        align="start"
         className="w-56 p-2"
         onPointerDown={(event) => event.stopPropagation()}
         onClick={(event) => event.stopPropagation()}
@@ -54,6 +56,6 @@ export function MemberProfilePopover({
           Ver perfil
         </Link>
       </PopoverContent>
-    </PopoverTrigger>
+    </Popover>
   );
 }
