@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
 import { FormFeedback } from "./form-feedback";
 import { FormRow } from "./form-row";
 import { Kbd, KbdGroup } from "./kbd";
+import { Separator } from "./separator";
 
 describe("@doscientos/ui adapters", () => {
   it("renders accessible form feedback from the package", () => {
@@ -46,5 +47,11 @@ describe("@doscientos/ui adapters", () => {
 
     fireEvent.load(screen.getByRole("img", { name: "Ana" }));
     expect(screen.queryByText("AN")).toBeNull();
+  });
+
+  it("uses the package separator with its accessible orientation", () => {
+    render(<Separator orientation="vertical" />);
+
+    expect(screen.getByRole("separator").getAttribute("aria-orientation")).toBe("vertical");
   });
 });

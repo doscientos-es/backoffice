@@ -1,13 +1,17 @@
+import path from "node:path";
 import type { NextConfig } from "next";
+
+const usesLocalUi = process.env.DOSCIENTOS_UI_DEV_LINK === "true";
 
 const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   typedRoutes: true,
-  // Keep Turbopack's resolution root aligned with Vercel's tracing root.
+  // In local development, include the linked UI source in Turbopack's watch root.
+  // Production only resolves the registry package within the backoffice project.
   transpilePackages: ["@doscientos/ui"],
   turbopack: {
-    root: __dirname,
+    root: usesLocalUi ? path.resolve(__dirname, "../..") : __dirname,
   },
   // These packages use Node.js runtime APIs and bundled filesystem resources;
   // keep them external to avoid Turbopack resolving those resources at build time.
