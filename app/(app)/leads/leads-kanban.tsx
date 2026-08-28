@@ -151,11 +151,13 @@ type Action = { type: "move"; id: string; status: LeadStatus } | { type: "remove
 export function LeadsKanban({
   leads,
   canEdit = false,
+  aiEnabled = false,
   googleEnabled = false,
   members = [],
 }: {
   leads: KanbanLead[];
   canEdit?: boolean;
+  aiEnabled?: boolean;
   googleEnabled?: boolean;
   members?: MemberOption[];
 }) {
@@ -376,6 +378,7 @@ export function LeadsKanban({
       <LeadQuickView
         lead={quickViewId ? (optimistic.find((l) => l.id === quickViewId) ?? null) : null}
         canEdit={canEdit}
+        aiEnabled={aiEnabled}
         googleEnabled={googleEnabled}
         members={members}
         onDeleteAction={commitDelete}

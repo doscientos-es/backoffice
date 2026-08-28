@@ -82,6 +82,7 @@ export function PhoneQuickActions({
   leadEmail,
   firstContactedAt,
   senderName,
+  aiEnabled,
 }: {
   phone: string;
   leadId?: string;
@@ -89,6 +90,7 @@ export function PhoneQuickActions({
   leadEmail?: string | null;
   firstContactedAt?: string | null;
   senderName: string;
+  aiEnabled?: boolean;
 }) {
   const normalized = normalizePhone(phone);
   return (
@@ -119,6 +121,7 @@ export function PhoneQuickActions({
           phone={phone}
           firstContactedAt={firstContactedAt}
           senderName={senderName}
+          aiEnabled={aiEnabled}
         />
       )}
     </div>
@@ -132,6 +135,7 @@ export function LeadWhatsAppButton({
   phone,
   firstContactedAt,
   senderName,
+  aiEnabled,
 }: {
   leadId: string;
   leadName: string;
@@ -139,6 +143,7 @@ export function LeadWhatsAppButton({
   phone: string;
   firstContactedAt?: string | null;
   senderName: string;
+  aiEnabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const bookingUrl = buildBookingUrl(publicEnv.NEXT_PUBLIC_CAL_LINK, {
@@ -186,6 +191,7 @@ export function LeadWhatsAppButton({
           leadEmail={leadEmail}
           leadPhone={phone}
           senderName={senderName}
+          aiEnabled={aiEnabled}
           defaultMessage={message}
           onSuccess={() => setOpen(false)}
         />

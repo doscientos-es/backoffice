@@ -83,6 +83,7 @@ const INTERACTION_LABEL: Record<string, string> = {
 export function LeadQuickView({
   lead,
   canEdit = false,
+  aiEnabled = false,
   googleEnabled = false,
   members = [],
   senderName = "",
@@ -91,6 +92,7 @@ export function LeadQuickView({
 }: {
   lead: KanbanLead | null;
   canEdit?: boolean;
+  aiEnabled?: boolean;
   googleEnabled?: boolean;
   members?: MemberOption[];
   senderName?: string;
@@ -106,6 +108,7 @@ export function LeadQuickView({
             <Body
               lead={lead}
               canEdit={canEdit}
+              aiEnabled={aiEnabled}
               googleEnabled={googleEnabled}
               members={members}
               senderName={senderName}
@@ -121,6 +124,7 @@ export function LeadQuickView({
 function Body({
   lead,
   canEdit,
+  aiEnabled,
   googleEnabled,
   members,
   senderName,
@@ -128,6 +132,7 @@ function Body({
 }: {
   lead: KanbanLead;
   canEdit: boolean;
+  aiEnabled: boolean;
   googleEnabled: boolean;
   members: MemberOption[];
   senderName: string;
@@ -307,6 +312,7 @@ function Body({
           leadPhone={lead.phone}
           leadEmail={lead.email}
           senderName={senderName}
+          aiEnabled={aiEnabled}
           googleEnabled={googleEnabled}
         />
       </div>
@@ -531,6 +537,7 @@ function QuickActions({
   leadPhone,
   leadEmail,
   senderName,
+  aiEnabled,
   googleEnabled,
 }: {
   leadId: string;
@@ -538,6 +545,7 @@ function QuickActions({
   leadPhone: string | null;
   leadEmail: string | null;
   senderName: string;
+  aiEnabled: boolean;
   googleEnabled: boolean;
 }) {
   const secondaryActionCount = googleEnabled ? 3 : 2;
@@ -554,6 +562,7 @@ function QuickActions({
           leadPhone={leadPhone}
           leadEmail={leadEmail}
           senderName={senderName}
+          aiEnabled={aiEnabled}
         />
         <QWhatsAppDialog
           leadId={leadId}
@@ -561,6 +570,7 @@ function QuickActions({
           leadEmail={leadEmail}
           leadPhone={leadPhone}
           senderName={senderName}
+          aiEnabled={aiEnabled}
         />
         <div className="col-span-2">
           <ScheduleReminderDialog

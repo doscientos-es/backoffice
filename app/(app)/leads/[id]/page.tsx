@@ -297,6 +297,7 @@ export default async function LeadDetailPage({
                       leadEmail={(lead.email as string | null) ?? null}
                       firstContactedAt={(lead.first_contacted_at as string | null) ?? null}
                       senderName={user.name}
+                      aiEnabled={aiEnabled}
                     />
                   </DetailRow>
                 )}

@@ -111,6 +111,7 @@ export function LeadsList({
       <LeadQuickView
         lead={selectedLead}
         canEdit={canEdit}
+        aiEnabled={aiEnabled}
         members={members}
         senderName={senderName}
         onCloseAction={() => setSelectedLead(null)}

@@ -253,6 +253,7 @@ export default async function LeadsPage({
             <LeadsKanban
               leads={enrichedLeads}
               canEdit={canEdit}
+              aiEnabled={aiEnabled}
               googleEnabled={googleEnabled}
               members={members}
             />

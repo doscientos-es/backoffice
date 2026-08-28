@@ -877,7 +877,15 @@ export function QWhatsAppDialog({
           Preparar WhatsApp
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent
+        className="max-h-[90vh] overflow-y-auto sm:max-w-lg"
+        onInteractOutside={(event) => {
+          // Este diálogo se abre dentro del drawer del panel rápido. Evitamos
+          // que el clic exterior cierre ambas capas y cerramos solo el diálogo.
+          event.preventDefault();
+          setOpen(false);
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Preparar WhatsApp</DialogTitle>
           <DialogDescription>
