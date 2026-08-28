@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "node scripts/dev-with-local-ui.mjs",
     "predev": "node scripts/verify-verifactu-package.mjs",
-    "prebuild": "node scripts/verify-verifactu-package.mjs && (node -e \"if(!process.env.CI) process.exit(1)\" || pnpm env:example)",
+    "prebuild": "node scripts/restore-published-ui.mjs && node scripts/verify-verifactu-package.mjs && (node -e \"if(!process.env.CI) process.exit(1)\" || pnpm env:example)",
     "build": "next build",
     "start": "next start",
     "lint": "biome check .",

@@ -17,9 +17,9 @@ const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   typedRoutes: true,
-  // In local development, include the linked UI source in Turbopack's watch root.
-  // Production only resolves the registry package within the backoffice project.
-  transpilePackages: ["@doscientos/ui"],
+  // Only the local junction needs transpilation and a wider watch root.
+  // Production consumes the compiled package published to npm.
+  transpilePackages: usesLocalUi ? ["@doscientos/ui"] : [],
   turbopack: {
     root: usesLocalUi ? path.resolve(__dirname, "../..") : __dirname,
     resolveAlias: localReactAliases,
