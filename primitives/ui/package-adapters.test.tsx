@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
+import { ButtonGroup, ButtonGroupSeparator, ButtonGroupText } from "./button-group";
 import { FormFeedback } from "./form-feedback";
 import { FormRow } from "./form-row";
 import { Kbd, KbdGroup } from "./kbd";
@@ -53,5 +54,18 @@ describe("@doscientos/ui adapters", () => {
     render(<Separator orientation="vertical" />);
 
     expect(screen.getByRole("separator").getAttribute("aria-orientation")).toBe("vertical");
+  });
+
+  it("composes accessible button groups from the package", () => {
+    render(
+      <ButtonGroup aria-label="Paginación">
+        <ButtonGroupText>Página 1</ButtonGroupText>
+        <ButtonGroupSeparator />
+      </ButtonGroup>,
+    );
+
+    expect(screen.getByRole("group", { name: "Paginación" })).toBeTruthy();
+    expect(screen.getByText("Página 1").getAttribute("data-slot")).toBe("button-group-text");
+    expect(screen.getByRole("separator").getAttribute("data-slot")).toBe("button-group-separator");
   });
 });
