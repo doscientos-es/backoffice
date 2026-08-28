@@ -22,7 +22,7 @@ describe("QWhatsAppDialog", () => {
     fireEvent.click(screen.getByRole("button", { name: "Preparar WhatsApp" }));
     expect(screen.getByRole("dialog", { name: "Preparar WhatsApp" })).toBeTruthy();
 
-    fireEvent.pointerDown(document.querySelector("[data-slot=dialog-overlay]") as HTMLElement);
+    fireEvent.click(document.querySelector("[data-slot=dialog-overlay]") as HTMLElement);
 
     await waitFor(() =>
       expect(screen.queryByRole("dialog", { name: "Preparar WhatsApp" })).toBeNull(),

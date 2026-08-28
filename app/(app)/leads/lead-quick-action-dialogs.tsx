@@ -879,10 +879,10 @@ export function QWhatsAppDialog({
       </DialogTrigger>
       <DialogContent
         className="max-h-[90vh] overflow-y-auto sm:max-w-lg"
-        onInteractOutside={(event) => {
+        onOverlayClick={(event) => {
           // Este diálogo se abre dentro del drawer del panel rápido. Evitamos
           // que el clic exterior cierre ambas capas y cerramos solo el diálogo.
-          event.preventDefault();
+          event.stopPropagation();
           setOpen(false);
         }}
       >

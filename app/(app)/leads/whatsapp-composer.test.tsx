@@ -90,6 +90,10 @@ describe("WhatsAppComposer", () => {
       channel: "whatsapp",
       language: "ca",
     });
-    expect(await screen.findByDisplayValue("Hola María, ¿te va bien hablar esta semana?\n\n— Ana")).toBeTruthy();
+    await waitFor(() =>
+      expect((screen.getByLabelText("Mensaje") as HTMLTextAreaElement).value).toBe(
+        "Hola María, ¿te va bien hablar esta semana?\n\n— Ana",
+      ),
+    );
   });
 });
