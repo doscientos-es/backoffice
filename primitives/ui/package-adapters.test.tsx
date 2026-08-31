@@ -5,8 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from './avatar'
 import { ButtonGroup, ButtonGroupSeparator, ButtonGroupText } from './button-group'
 import { FormFeedback } from './form-feedback'
 import { FormRow } from './form-row'
-import { Kbd, KbdGroup } from '@doscientos/ui'
-import { Separator } from './separator'
+import { Kbd, KbdGroup, Separator } from '@doscientos/ui'
 
 describe('@doscientos/ui adapters', () => {
   it('renders accessible form feedback from the package', () => {
