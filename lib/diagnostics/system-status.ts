@@ -1,3 +1,4 @@
+import { externalAppUrl } from '@/lib/email/app-url'
 import { isAIEnabled, isGoogleEnabled, publicEnv, serverEnv } from '@/lib/env'
 
 /**
@@ -93,7 +94,7 @@ export function getSystemStatus(): SystemStatus {
   ]
 
   const runtime: RuntimeInfo[] = [
-    { key: 'app_url', label: 'URL de la app', value: publicEnv.NEXT_PUBLIC_APP_URL },
+    { key: 'app_url', label: 'URL de la app', value: externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL) },
     {
       key: 'verifactu_env',
       label: 'Entornos VeriFactu',

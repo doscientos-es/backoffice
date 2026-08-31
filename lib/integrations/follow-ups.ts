@@ -1,3 +1,4 @@
+import { externalAppUrl } from '@/lib/email/app-url'
 import { publicEnv } from '@/lib/env'
 import { ACTIVE_LEAD_STATUSES } from '@/lib/leads/pipeline'
 import { findLeadIdsWithScheduledContact } from '@/lib/leads/scheduled-contact'
@@ -94,7 +95,7 @@ export async function getFollowUps(opts?: {
   const proposalHours = opts?.proposalHours ?? DEFAULT_PROPOSAL_HOURS
   const slaHours = opts?.slaHours ?? DEFAULT_SLA_HOURS
   const supabase = createAdminClient()
-  const appUrl = publicEnv.NEXT_PUBLIC_APP_URL
+  const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
   const now = Date.now()
   const leadCutoff = new Date(now - leadHours * 3_600_000).toISOString()
   const proposalCutoff = new Date(now - proposalHours * 3_600_000).toISOString()

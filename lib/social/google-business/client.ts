@@ -1,4 +1,5 @@
 import { isDemoMode } from '@/lib/demo'
+import { externalAppUrl } from '@/lib/email/app-url'
 import { serverEnv } from '@/lib/env'
 import { PublishError } from '@/lib/social/core'
 
@@ -20,7 +21,7 @@ export function googleBusinessRedirectUri(): string {
   const env = serverEnv()
   return (
     env.GOOGLE_BUSINESS_REDIRECT_URI ||
-    `${env.NEXT_PUBLIC_APP_URL}/api/social/google-business/callback`
+    `${externalAppUrl(env.NEXT_PUBLIC_APP_URL)}/api/social/google-business/callback`
   )
 }
 
