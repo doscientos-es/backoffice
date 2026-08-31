@@ -402,18 +402,21 @@ function Column({
   onToggleCompact: () => void
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status })
+  const [isHovered, setIsHovered] = useState(false)
   const total = sumLeadEstimatedValue(leads)
   const attention = countLeadsNeedingAttention(leads)
-  const collapsed = compact && !isOver
+  const collapsed = compact && !isOver && !isHovered
   return (
     <section
       ref={setNodeRef}
+      onPointerEnter={() => setIsHovered(true)}
+      onPointerLeave={() => setIsHovered(false)}
       aria-label={`${label} · ${leads.length} lead${leads.length === 1 ? '' : 's'}`}
       title={collapsed ? `${label} (${leads.length}) · pasa el cursor para expandir` : undefined}
       className={cn(
-        'group/col relative flex h-full w-80 shrink-0 flex-col overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10',
+        'relative flex h-full w-80 shrink-0 flex-col overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10',
         'transition-[width,background-color,box-shadow] duration-200 ease-out motion-reduce:transition-none',
-        collapsed && 'md:w-11 md:cursor-pointer md:bg-muted/30 md:hover:w-80 md:hover:bg-card',
+        collapsed && 'md:w-11 md:cursor-pointer md:bg-muted/30',
         isOver && 'bg-primary/5 ring-2 ring-primary/50',
         isDragging && !isOver && 'ring-dashed ring-primary/30',
       )}
@@ -421,13 +424,13 @@ function Column({
       <header
         className={cn(
           'shrink-0 border-b border-border px-3 py-3',
-          collapsed && 'md:px-1.5 md:group-hover/col:px-3',
+          collapsed && 'md:px-1.5',
         )}
       >
         <div
           className={cn(
             'flex min-w-0 items-center gap-2',
-            collapsed && 'md:flex-col md:group-hover/col:flex-row',
+            collapsed && 'md:flex-col',
           )}
         >
           <span className={cn('size-2 shrink-0 rounded-full', dot)} aria-hidden />
@@ -436,7 +439,7 @@ function Column({
               'min-w-0 flex-1 truncate text-sm font-semibold',
               tone,
               collapsed
-                ? 'md:rotate-180 md:[writing-mode:vertical-rl] md:group-hover/col:rotate-0 md:group-hover/col:[writing-mode:horizontal-tb]'
+                ? 'md:rotate-180 md:[writing-mode:vertical-rl]'
                 : undefined,
             )}
           >
@@ -448,7 +451,7 @@ function Column({
                 variant="danger"
                 className={cn(
                   'h-5 gap-1 text-[11px] tabular-nums',
-                  collapsed && 'md:hidden md:group-hover/col:inline-flex',
+                  collapsed && 'md:hidden',
                 )}
                 title={`${attention} lead${attention === 1 ? '' : 's'} sin próxima acción o con el aviso vencido`}
               >
@@ -469,7 +472,7 @@ function Column({
               aria-label={compact ? 'Mantener siempre visible' : 'Colapsar cuando no esté en uso'}
               className={cn(
                 'hidden shrink-0 rounded p-0.5 text-muted-foreground/50 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
-                'md:group-hover/col:inline-flex',
+                isHovered && 'md:inline-flex',
               )}
             >
               {compact ? <Maximize2 className="size-3" /> : <Minimize2 className="size-3" />}
@@ -479,7 +482,7 @@ function Column({
         <p
           className={cn(
             'mt-1.5 truncate pl-4 text-[11px] text-muted-foreground',
-            collapsed && 'md:hidden md:group-hover/col:block',
+            collapsed && 'md:hidden',
           )}
         >
           {description}
@@ -488,7 +491,7 @@ function Column({
           <p
             className={cn(
               'mt-2 pl-4 text-xs font-medium tabular-nums text-foreground/80',
-              collapsed && 'md:hidden md:group-hover/col:block',
+              collapsed && 'md:hidden',
             )}
           >
             {formatEUR(total)}
@@ -498,7 +501,7 @@ function Column({
       <div
         className={cn(
           'flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2.5 scroll-fade no-scrollbar',
-          collapsed && 'md:hidden md:group-hover/col:flex',
+          collapsed && 'md:hidden',
         )}
       >
         {leads.length === 0 ? (

@@ -39,11 +39,20 @@ const QUALIFICATION_COLUMNS =
 const MOM_TEST_COLUMNS =
   'mom_test_real_problem, mom_test_aware_problem, mom_test_tried_solutions, mom_test_decision_power_or_budget, mom_test_accessible'
 
+const COMPANY_RESEARCH_COLUMNS = 'company_research, company_researched_at'
+
 const LIST_COLUMNS = `id, version, name, alias, company, email, phone, source, notes, status, created_at, updated_at, estimated_value, score, ${QUALIFICATION_COLUMNS}, ai_summary, ai_updated_at, lost_reason, lost_at, assigned_to, ${CLIENT_EMBED}, ${ASSIGNEE_EMBED}`
 
-const DETAIL_COLUMNS = `id, version, name, alias, email, phone, company, source, status, notes, estimated_value, score, ${QUALIFICATION_COLUMNS}, ${MOM_TEST_COLUMNS}, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_suggested_next_step_at, ai_temperature, ai_confidence, ai_updated_at, ai_tags, company_research, company_researched_at, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`
+const DETAIL_COLUMNS = `id, version, name, alias, email, phone, company, source, status, notes, estimated_value, score, ${QUALIFICATION_COLUMNS}, ${MOM_TEST_COLUMNS}, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_suggested_next_step_at, ai_temperature, ai_confidence, ai_updated_at, ai_tags, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`
 
 const log = scopedLogger('leads.queries')
+
+type CompanyResearchLoad = Pick<
+  LeadDetailResult['lead'],
+  'company_research' | 'company_researched_at'
+> & {
+  available: boolean
+}
 
 function sourceFilterValues(source: string): string[] {
   const aliases: Record<string, string[]> = {
@@ -101,6 +110,33 @@ async function loadMarketingCampaignNames(
     return new Map()
   }
   return new Map((data ?? []).map((campaign) => [campaign.id, campaign.name]))
+}
+
+/**
+ * Company research is an optional enhancement. It must not make an existing
+ * lead inaccessible while a deployment is waiting for its schema migration.
+ */
+async function loadCompanyResearch(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  id: string,
+): Promise<CompanyResearchLoad> {
+  const { data, error } = await notDeleted(
+    supabase
+      .from('leads')
+      .select(COMPANY_RESEARCH_COLUMNS)
+      .eq('id', id),
+  ).maybeSingle()
+
+  if (error) {
+    log.warn({ leadId: id, err: error.message }, 'company_research_query_failed')
+    return { available: false, company_research: null, company_researched_at: null }
+  }
+
+  return {
+    available: true,
+    company_research: (data?.company_research as LeadDetailResult['lead']['company_research']) ?? null,
+    company_researched_at: (data?.company_researched_at as string | null) ?? null,
+  }
 }
 
 export async function listLeads(params: LeadListParams): Promise<LeadListResult> {
@@ -296,13 +332,20 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
 
   const [
     { data: lead, error: leadErr },
+    companyResearch,
     { data: interactions },
     { data: linkedClient },
     { data: tasks },
     { data: reminders },
     { data: attachments },
   ] = await Promise.all([
-    notDeleted(supabase.from('leads').select(DETAIL_COLUMNS).eq('id', id)).maybeSingle(),
+    notDeleted(
+      supabase
+        .from('leads')
+        .select(DETAIL_COLUMNS)
+        .eq('id', id),
+    ).maybeSingle(),
+    loadCompanyResearch(supabase, id),
     supabase
       .from('lead_interactions')
       .select(`id, type, subject, body, created_at, payload, resend_email_id, ${PERFORMER_EMBED}`)
@@ -337,7 +380,10 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
       .limit(LEAD_RELATED_LIMIT),
   ])
 
-  if (leadErr) log.error({ leadId: id, err: leadErr.message }, 'lead_query_failed')
+  if (leadErr) {
+    log.error({ leadId: id, err: leadErr.message }, 'lead_query_failed')
+    throw new Error('No se pudo cargar el lead.')
+  }
   if (!lead) return null
 
   const campaignNames = await loadMarketingCampaignNames([
@@ -405,8 +451,11 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
   return {
     lead: {
       ...lead,
+      company_research: companyResearch.company_research,
+      company_researched_at: companyResearch.company_researched_at,
       marketing_campaign_name: marketingCampaignName,
     } as unknown as LeadDetailResult['lead'],
+    companyResearchAvailable: companyResearch.available,
     interactions: detailInteractions,
     linkedClientId,
     linkedClientName,

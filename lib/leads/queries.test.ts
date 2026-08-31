@@ -4,6 +4,10 @@ const state = vi.hoisted(() => ({
   rows: [] as Record<string, unknown>[],
   tasks: [] as Record<string, unknown>[],
   campaigns: [] as Record<string, unknown>[],
+  detailLead: null as Record<string, unknown> | null,
+  detailLeadError: null as string | null,
+  companyResearch: null as Record<string, unknown> | null,
+  companyResearchError: null as string | null,
   leadSelect: '',
   inCalls: [] as [string, unknown[]][],
 }))
@@ -11,6 +15,7 @@ const state = vi.hoisted(() => ({
 vi.mock('@/lib/supabase/server', () => ({
   createServerClient: async () => ({
     from: (table: string) => {
+      let selection = ''
       const result = {
         data:
           table === 'leads'
@@ -26,18 +31,35 @@ vi.mock('@/lib/supabase/server', () => ({
       // `then` makes the builder awaitable for chains that don't end in
       // `limit()` (the next-action query ends in `order()`).
       const builder = {
-        select(selection: string) {
-          if (table === 'leads') state.leadSelect = selection
+        select(selectedColumns: string) {
+          if (table === 'leads') state.leadSelect = selectedColumns
+          selection = selectedColumns
           return builder
         },
         eq: () => builder,
         is: () => builder,
         order: () => builder,
+        or: () => builder,
         in: (column: string, values: unknown[]) => {
           if (table === 'leads') state.inCalls.push([column, values])
           return builder
         },
         limit: async () => result,
+        async maybeSingle() {
+          if (table === 'leads' && selection.includes('company_research')) {
+            return {
+              data: state.companyResearch,
+              error: state.companyResearchError ? { message: state.companyResearchError } : null,
+            }
+          }
+          if (table === 'leads') {
+            return {
+              data: state.detailLead,
+              error: state.detailLeadError ? { message: state.detailLeadError } : null,
+            }
+          }
+          return { data: null, error: null }
+        },
         // biome-ignore lint/suspicious/noThenProperty: mock needs to be thenable to mimic Supabase query builder
         then: (resolve: (value: typeof result) => unknown) => resolve(result),
       }
@@ -46,13 +68,17 @@ vi.mock('@/lib/supabase/server', () => ({
   }),
 }))
 
-import { listLeads } from './queries'
+import { getLeadDetail, listLeads } from './queries'
 
 describe('listLeads client avatar enrichment', () => {
   beforeEach(() => {
     state.rows = []
     state.tasks = []
     state.campaigns = []
+    state.detailLead = null
+    state.detailLeadError = null
+    state.companyResearch = null
+    state.companyResearchError = null
     state.leadSelect = ''
     state.inCalls = []
   })
@@ -196,5 +222,35 @@ describe('listLeads client avatar enrichment', () => {
     })
 
     expect(state.inCalls).toContainEqual(['id', ['lead-1', 'lead-2']])
+  })
+})
+
+describe('getLeadDetail resilience', () => {
+  beforeEach(() => {
+    state.rows = []
+    state.tasks = []
+    state.campaigns = []
+    state.detailLead = { id: 'lead-1', name: 'María García', utm_campaign: null }
+    state.detailLeadError = null
+    state.companyResearch = null
+    state.companyResearchError = null
+    state.leadSelect = ''
+    state.inCalls = []
+  })
+
+  it('keeps an existing lead available when optional company-research fields are unavailable', async () => {
+    state.companyResearchError = 'column company_research does not exist'
+
+    const result = await getLeadDetail('lead-1')
+
+    expect(result?.lead.id).toBe('lead-1')
+    expect(result?.companyResearchAvailable).toBe(false)
+    expect(result?.lead.company_research).toBeNull()
+  })
+
+  it('throws a query failure instead of treating it as a missing lead', async () => {
+    state.detailLeadError = 'permission denied for table leads'
+
+    await expect(getLeadDetail('lead-1')).rejects.toThrow('No se pudo cargar el lead.')
   })
 })

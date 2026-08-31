@@ -61,6 +61,7 @@ export function LeadCompanyResearch({
   email,
   canEdit,
   aiEnabled,
+  available,
   initialResearch,
   initialResearchedAt,
 }: {
@@ -68,6 +69,7 @@ export function LeadCompanyResearch({
   email: string | null
   canEdit: boolean
   aiEnabled: boolean
+  available: boolean
   initialResearch: Research | null
   initialResearchedAt: string | null
 }) {
@@ -138,7 +140,7 @@ export function LeadCompanyResearch({
     }
   }
 
-  const canResearch = canEdit && aiEnabled && hasCorporateEmail(email)
+  const canResearch = available && canEdit && aiEnabled && hasCorporateEmail(email)
   const updated = researchedAt
     ? new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' }).format(
         new Date(researchedAt),
@@ -174,7 +176,9 @@ export function LeadCompanyResearch({
 
       {!research ? (
         <div className="border-border bg-muted/30 text-muted-foreground rounded-xl border border-dashed px-4 py-5 text-sm">
-          {aiEnabled && !hasCorporateEmail(email)
+          {!available
+            ? 'La investigación de empresa estará disponible cuando termine de actualizarse esta sección.'
+            : aiEnabled && !hasCorporateEmail(email)
             ? 'Disponible cuando el lead tenga un email corporativo.'
             : aiEnabled
               ? 'Aún no se ha investigado esta empresa.'

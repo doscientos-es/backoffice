@@ -250,6 +250,8 @@ export type LeadRelatedAttachment = {
 
 export type LeadDetailResult = {
   lead: LeadDetail
+  /** False when the optional company-research schema is unavailable. */
+  companyResearchAvailable: boolean
   interactions: LeadDetailInteraction[]
   linkedClientId: string | null
   linkedClientName: string | null

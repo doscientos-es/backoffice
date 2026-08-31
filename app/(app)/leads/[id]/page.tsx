@@ -116,6 +116,7 @@ export default async function LeadDetailPage({
   if (!result) notFound()
   const {
     lead,
+    companyResearchAvailable,
     interactions,
     linkedClientId,
     linkedClientName,
@@ -272,18 +273,21 @@ export default async function LeadDetailPage({
         invoices={invoices}
       />
 
-      <Card>
-        <CardContent className="pt-6">
-          <LeadCompanyResearch
-            leadId={lead.id as string}
-            email={(lead.email as string | null) ?? null}
-            canEdit={canEdit}
-            aiEnabled={aiEnabled}
-            initialResearch={(lead.company_research as LeadCompanyResearchData | null) ?? null}
-            initialResearchedAt={(lead.company_researched_at as string | null) ?? null}
-          />
-        </CardContent>
-      </Card>
+      <SectionBoundary label="No se pudo cargar la inteligencia de empresa">
+        <Card>
+          <CardContent className="pt-6">
+            <LeadCompanyResearch
+              leadId={lead.id as string}
+              email={(lead.email as string | null) ?? null}
+              canEdit={canEdit}
+              aiEnabled={aiEnabled}
+              available={companyResearchAvailable}
+              initialResearch={(lead.company_research as LeadCompanyResearchData | null) ?? null}
+              initialResearchedAt={(lead.company_researched_at as string | null) ?? null}
+            />
+          </CardContent>
+        </Card>
+      </SectionBoundary>
 
       <section className="grid gap-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(260px,0.75fr)]">
         <Card>
