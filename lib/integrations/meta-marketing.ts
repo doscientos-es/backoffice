@@ -78,12 +78,10 @@ export interface MetaMarketingInsight {
   cost_per_action_type?: MetaActionStat[]
 }
 
-/**
- * Meta lead action types. `lead` is the legacy single-event count;
- * `onsite_conversion.lead_grouped` is the modern grouped form-fill metric.
- * Campaigns usually report one or the other depending on objective.
- */
-const LEAD_ACTION_TYPES = new Set(['lead', 'onsite_conversion.lead_grouped'])
+/** Meta's current grouped form-fill metric, preferred over legacy `lead`. */
+const GROUPED_LEAD_ACTION_TYPE = 'onsite_conversion.lead_grouped'
+/** Backwards-compatible metric for campaigns that do not report the grouped action. */
+const LEGACY_LEAD_ACTION_TYPE = 'lead'
 const LANDING_PAGE_VIEW_ACTION_TYPES = new Set(['landing_page_view'])
 const OUTBOUND_CLICK_ACTION_TYPES = new Set(['outbound_click'])
 
@@ -96,16 +94,23 @@ function sumActionValues(
     .reduce((sum, action) => sum + (Number.parseFloat(action.value) || 0), 0)
 }
 
+function actionValue(actions: MetaActionStat[] | undefined, actionType: string): number | undefined {
+  const action = actions?.find((candidate) => candidate.action_type === actionType)
+  return action ? Number.parseFloat(action.value) || 0 : undefined
+}
+
 /**
  * Extracts lead count and computed cost-per-lead from a Meta insight row.
- * Cost is derived from `spend / totalLeads` rather than `cost_per_action_type`
- * to avoid double-counting when both action types coexist on the same row.
+ * Prefers Meta's grouped form-fill metric. The legacy `lead` action is only a
+ * fallback: Meta can return both for one conversion, so adding them inflates
+ * the reported count and understates CPL.
  */
 export function extractMetaLeads(
   actions: MetaActionStat[] | undefined,
   spend: number,
 ): { totalLeads: number; costPerLead: number } {
-  const totalLeads = sumActionValues(actions, LEAD_ACTION_TYPES)
+  const totalLeads =
+    actionValue(actions, GROUPED_LEAD_ACTION_TYPE) ?? actionValue(actions, LEGACY_LEAD_ACTION_TYPE) ?? 0
 
   return {
     totalLeads,

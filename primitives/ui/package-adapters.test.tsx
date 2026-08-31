@@ -79,14 +79,14 @@ describe('@doscientos/ui adapters', () => {
   it('uses the package submit button while a client form is loading', () => {
     render(
       <form>
-        <SubmitButton loading loadingLabel="Guardando…">
+        <SubmitButton loading pendingLabel="Guardando…">
           Guardar
         </SubmitButton>
       </form>,
     )
 
     const button = screen.getByRole('button', { name: 'Guardando…' })
-    expect(button).toBeDisabled()
-    expect(button).toHaveAttribute('aria-busy', 'true')
+    expect(button.hasAttribute('disabled')).toBe(true)
+    expect(button.getAttribute('aria-busy')).toBe('true')
   })
 })

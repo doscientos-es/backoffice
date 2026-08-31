@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { extractMetaCreativeDetails, extractMetaTrafficMetrics } from './meta-marketing'
+import { extractMetaCreativeDetails, extractMetaLeads, extractMetaTrafficMetrics } from './meta-marketing'
 import { getMarketingSyncErrorMessage, mapMetaAdForStorage } from '../marketing-sync'
 
 describe('Meta marketing funnel metrics', () => {
@@ -41,6 +41,25 @@ describe('Meta marketing funnel metrics', () => {
       url_tags: 'utm_source=facebook',
       call_to_action_type: 'LEARN_MORE',
       lead_form_id: 'form',
+    })
+  })
+
+  it('does not double-count legacy and grouped Meta lead actions', () => {
+    expect(
+      extractMetaLeads(
+        [
+          { action_type: 'lead', value: '3' },
+          { action_type: 'onsite_conversion.lead_grouped', value: '3' },
+        ],
+        30,
+      ),
+    ).toEqual({ totalLeads: 3, costPerLead: 10 })
+  })
+
+  it('uses the legacy lead action only when Meta has no grouped action', () => {
+    expect(extractMetaLeads([{ action_type: 'lead', value: '2' }], 10)).toEqual({
+      totalLeads: 2,
+      costPerLead: 5,
     })
   })
 
