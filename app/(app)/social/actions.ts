@@ -13,7 +13,7 @@ import {
   GoogleBusinessReviewReplyInput,
   PostIdInput,
   ReplyCommentInput,
-  UpdateScheduledPostMediaInput,
+  UpdateScheduledPostInput,
 } from '@/lib/schemas/social'
 import type { SocialPlatform } from '@/lib/social/core'
 import * as googleBusinessService from '@/lib/social/google-business/service'
@@ -75,10 +75,10 @@ export const publishPost = defineAction({
   },
 })
 
-/** Replace media on a scheduled post before the scheduler starts publishing it. */
-export const updateScheduledPostMedia = defineAction({
-  name: 'social.update-scheduled-media',
-  schema: UpdateScheduledPostMediaInput,
+/** Update a scheduled post before the scheduler starts publishing it. */
+export const updateScheduledPost = defineAction({
+  name: 'social.update-scheduled',
+  schema: UpdateScheduledPostInput,
   roles: [...WRITE_ROLES],
   revalidate: (_payload, input) => [
     '/social',
@@ -87,7 +87,7 @@ export const updateScheduledPostMedia = defineAction({
     `/social/${input.postId}/edit`,
   ],
   handler: async (input) => {
-    await repo.updateScheduledPostMedia(input.postId, input.media)
+    await repo.updateScheduledPost(input)
   },
 })
 

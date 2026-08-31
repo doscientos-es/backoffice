@@ -6,13 +6,13 @@ import { PageHeader } from '@/components/layout/page-header'
 import { requirePageRole } from '@/lib/auth'
 import { getPost } from '@/lib/social/repo'
 
-import { ScheduledPostMediaForm } from './scheduled-post-media-form'
+import { ScheduledPostForm } from './scheduled-post-media-form'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata: Metadata = { title: 'Cambiar imagen · Social' }
+export const metadata: Metadata = { title: 'Editar publicación · Social' }
 
-export default async function EditScheduledPostMediaPage({
+export default async function EditScheduledPostPage({
   params,
 }: {
   params: Promise<{ id: string }>
@@ -21,16 +21,21 @@ export default async function EditScheduledPostMediaPage({
   const { id } = await params
   const post = await getPost(id)
   if (!post) notFound()
-  if (post.status !== 'scheduled') redirect(`/social/${id}`)
+  if (post.status !== 'scheduled' || !post.scheduledAt) redirect(`/social/${id}`)
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Cambiar imagen"
-        description="Sustituye la imagen antes de que se publique."
+        title="Editar publicación programada"
+        description="Actualiza el texto, la imagen o la fecha antes de publicar."
         back={<BackLink href={`/social/${id}`} label="Volver al detalle" />}
       />
-      <ScheduledPostMediaForm postId={post.id} initialMedia={post.media} />
+      <ScheduledPostForm
+        postId={post.id}
+        initialCaption={post.caption}
+        initialMedia={post.media}
+        initialScheduledAt={post.scheduledAt}
+      />
     </div>
   )
 }

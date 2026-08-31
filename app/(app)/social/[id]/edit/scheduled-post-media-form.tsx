@@ -9,28 +9,47 @@ import { Card, CardContent } from '@/components/ui/card'
 import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
 import { FormRow } from '@/components/ui/form-row'
 import { SubmitButton } from '@/components/ui/submit-button'
+import { Textarea } from '@/components/ui/textarea'
 import type { MediaItem } from '@/lib/social/core'
+import { datetimeLocalToIso, toDatetimeLocalValue } from '@/lib/utils/date-time'
 
-import { updateScheduledPostMedia } from '../../actions'
+import { updateScheduledPost } from '../../actions'
 import { MediaPicker } from '../../compose/_components/media-picker'
 
-export function ScheduledPostMediaForm({
+export function ScheduledPostForm({
   postId,
+  initialCaption,
   initialMedia,
+  initialScheduledAt,
 }: {
   postId: string
+  initialCaption: string
   initialMedia: MediaItem[]
+  initialScheduledAt: string
 }) {
   const router = useRouter()
   const feedback = useFormFeedback()
   const [pending, startTransition] = useTransition()
+  const [caption, setCaption] = useState(initialCaption)
   const [media, setMedia] = useState(initialMedia)
+  const [scheduledLocal, setScheduledLocal] = useState(() =>
+    toDatetimeLocalValue(new Date(initialScheduledAt)),
+  )
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (!scheduledLocal) {
+      feedback.setError('Indica la fecha y hora de publicación')
+      return
+    }
     feedback.setPending()
     startTransition(async () => {
-      const result = await updateScheduledPostMedia({ postId, media })
+      const result = await updateScheduledPost({
+        postId,
+        caption,
+        media,
+        scheduledAt: datetimeLocalToIso(scheduledLocal),
+      })
       if (!result.ok) return feedback.setError(result.error)
       router.push(`/social/${postId}`)
       router.refresh()
@@ -40,11 +59,42 @@ export function ScheduledPostMediaForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="flex flex-col gap-5 pt-6">
+          <FormRow
+            label="Texto"
+            htmlFor="caption"
+            hint="Se aplicará como copy común de la publicación."
+          >
+            <div className="flex flex-col gap-1.5">
+              <Textarea
+                id="caption"
+                rows={6}
+                maxLength={3000}
+                value={caption}
+                onChange={(event) => setCaption(event.target.value)}
+                disabled={pending}
+                autoFocus
+              />
+              <span className="text-muted-foreground self-end text-[11px] tabular-nums">
+                {caption.length}/3000
+              </span>
+            </div>
+          </FormRow>
           <FormRow label="Imagen" htmlFor="media" hint="Imágenes o vídeo. Máximo 10 archivos.">
             <div id="media">
               <MediaPicker value={media} onChange={setMedia} disabled={pending} />
             </div>
+          </FormRow>
+          <FormRow label="Fecha y hora" htmlFor="scheduledAt" required>
+            <input
+              id="scheduledAt"
+              type="datetime-local"
+              value={scheduledLocal}
+              min={toDatetimeLocalValue(new Date())}
+              onChange={(event) => setScheduledLocal(event.target.value)}
+              disabled={pending}
+              className="border-border focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-border/30 w-full max-w-xs rounded-lg border bg-transparent px-2.5 py-2 text-sm outline-none focus-visible:ring-3 disabled:cursor-not-allowed disabled:opacity-50"
+            />
           </FormRow>
         </CardContent>
       </Card>
@@ -54,7 +104,7 @@ export function ScheduledPostMediaForm({
           <Link href={`/social/${postId}`}>Cancelar</Link>
         </Button>
         <SubmitButton loading={pending} pendingLabel="Guardando…">
-          Guardar imagen
+          Guardar cambios
         </SubmitButton>
       </div>
     </form>

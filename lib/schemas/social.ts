@@ -56,10 +56,12 @@ export type CreatePostSchemaType = z.infer<typeof CreatePostSchema>
 /** Publish an existing post now. */
 export const PostIdInput = z.object({ postId: z.string().uuid() })
 
-/** Replace the media of a post that has not been published yet. */
-export const UpdateScheduledPostMediaInput = z.object({
+/** Update a post while it remains scheduled and has not been published. */
+export const UpdateScheduledPostInput = z.object({
   postId: z.string().uuid(),
+  caption: z.string().max(3000, 'El texto no puede superar 3000 caracteres'),
   media: z.array(MediaItemInput).max(10, 'Máximo 10 archivos'),
+  scheduledAt: z.string().datetime(),
 })
 
 export const GoogleBusinessReviewReplyInput = z.object({

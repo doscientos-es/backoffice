@@ -314,20 +314,30 @@ export async function claimDueScheduledPost(postId: string, now: string): Promis
 }
 
 /**
- * Replace media only while the post is still scheduled. The status condition is
- * part of the update so a scheduler transition to publishing cannot race this.
+ * Update content while the post is still scheduled. The status condition is part
+ * of the update so a scheduler transition to publishing cannot race this.
  */
-export async function updateScheduledPostMedia(postId: string, media: MediaItem[]): Promise<void> {
+export async function updateScheduledPost(input: {
+  postId: string
+  caption: string
+  media: MediaItem[]
+  scheduledAt: string
+}): Promise<void> {
   const supabase = await createServerClient()
   const { data, error } = await supabase
     .from('social_posts')
-    .update({ media, media_kind: deriveMediaKind(media) })
-    .eq('id', postId)
+    .update({
+      caption: input.caption,
+      media: input.media,
+      media_kind: deriveMediaKind(input.media),
+      scheduled_at: input.scheduledAt,
+    })
+    .eq('id', input.postId)
     .eq('status', 'scheduled')
     .is('published_at', null)
     .select('id')
     .maybeSingle()
-  if (error) throw new Error(`No se pudo actualizar la imagen: ${error.message}`)
+  if (error) throw new Error(`No se pudo actualizar la publicación: ${error.message}`)
   if (!data) throw new Error('La publicación ya no está programada y no se puede modificar.')
 }
 

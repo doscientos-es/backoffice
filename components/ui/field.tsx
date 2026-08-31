@@ -1,1 +1,1 @@
-﻿export * from '@/primitives/ui/field'
+﻿export * from "@doscientos/ui";

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { markPublishing, updateScheduledPostMedia } from './posts'
+import { markPublishing, updateScheduledPost } from './posts'
 
 const state = vi.hoisted(() => ({
   client: { from: vi.fn() },
@@ -24,7 +24,7 @@ const media = [
   },
 ]
 
-describe('updateScheduledPostMedia', () => {
+describe('updateScheduledPost', () => {
   const builder = {
     update: vi.fn(),
     eq: vi.fn(),
@@ -46,11 +46,23 @@ describe('updateScheduledPostMedia', () => {
     state.client.from.mockReturnValue(builder)
   })
 
-  it('updates media only when the post is still scheduled and unpublished', async () => {
-    await expect(updateScheduledPostMedia('post-1', media)).resolves.toBeUndefined()
+  it('updates content only when the post is still scheduled and unpublished', async () => {
+    await expect(
+      updateScheduledPost({
+        postId: 'post-1',
+        caption: 'Nuevo copy',
+        media,
+        scheduledAt: '2026-09-04T08:50:00.000Z',
+      }),
+    ).resolves.toBeUndefined()
 
     expect(state.client.from).toHaveBeenCalledWith('social_posts')
-    expect(builder.update).toHaveBeenCalledWith({ media, media_kind: 'photo' })
+    expect(builder.update).toHaveBeenCalledWith({
+      caption: 'Nuevo copy',
+      media,
+      media_kind: 'photo',
+      scheduled_at: '2026-09-04T08:50:00.000Z',
+    })
     expect(builder.eq).toHaveBeenCalledWith('id', 'post-1')
     expect(builder.eq).toHaveBeenCalledWith('status', 'scheduled')
     expect(builder.is).toHaveBeenCalledWith('published_at', null)
@@ -59,9 +71,14 @@ describe('updateScheduledPostMedia', () => {
   it('rejects when the post is no longer scheduled', async () => {
     state.result = { data: null, error: null }
 
-    await expect(updateScheduledPostMedia('post-1', media)).rejects.toThrow(
-      'La publicación ya no está programada',
-    )
+    await expect(
+      updateScheduledPost({
+        postId: 'post-1',
+        caption: 'Nuevo copy',
+        media,
+        scheduledAt: '2026-09-04T08:50:00.000Z',
+      }),
+    ).rejects.toThrow('La publicación ya no está programada')
   })
 
   it('does not claim a post that is already publishing or published', async () => {
