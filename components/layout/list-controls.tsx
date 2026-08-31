@@ -12,7 +12,7 @@ import {
   X,
 } from 'lucide-react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { EntityCombobox } from '@/components/ui/entity-combobox'
@@ -232,10 +232,10 @@ export function ListControls({
   const [savedViews, setSavedViews] = useState<SavedView[]>([])
   const [isSavingView, setIsSavingView] = useState(false)
   const [savedViewName, setSavedViewName] = useState('')
-  const savedViewKeys = savedViewsConfig?.filterKeys ?? []
-  const managedFilterKeys = [
-    ...new Set([searchKey, ...filters.map((filter) => filter.key), ...savedViewKeys]),
-  ]
+  const managedFilterKeys = useMemo(
+    () => [...new Set([searchKey, ...filters.map((filter) => filter.key), ...(savedViewsConfig?.filterKeys ?? [])])],
+    [filters, savedViewsConfig?.filterKeys, searchKey],
+  )
 
   useEffect(() => {
     setSavedViews(savedViewsConfig ? readSavedViews(savedViewsConfig.storageKey) : [])

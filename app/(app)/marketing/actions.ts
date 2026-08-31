@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 
 import { requireUser } from '@/lib/auth'
 import { getMetaAdPreview, type MetaAdPreviewFormat } from '@/lib/integrations/meta-marketing'
+import { scopedLogger } from '@/lib/logger'
 import {
   getMarketingSyncErrorMessage,
   syncMetaCatalog,
@@ -12,6 +13,8 @@ import {
 } from '@/lib/marketing-sync'
 import { metaHistoryFloor, parseMarketingRange, rangeToDates } from '@/lib/marketing/range'
 
+const log = scopedLogger('marketing-actions')
+
 export async function syncMetaAction(
   rangeKey?: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
@@ -19,6 +22,7 @@ export async function syncMetaAction(
   try {
     const catalogResult = await syncMetaCatalog()
     if (!catalogResult.ok) {
+      log.error({ err: catalogResult.error }, 'meta_catalog_sync_action_failed')
       return { ok: false, error: catalogResult.error ?? 'Error al sincronizar catálogo' }
     }
 
@@ -36,6 +40,7 @@ export async function syncMetaAction(
 
     const insightsResult = await syncMetaInsights(since, today)
     if (!insightsResult.ok) {
+      log.error({ err: insightsResult.error, since, today }, 'meta_insights_sync_action_failed')
       return { ok: false, error: insightsResult.error ?? 'Error al sincronizar métricas' }
     }
 
@@ -44,6 +49,7 @@ export async function syncMetaAction(
     // sync (metrics are already persisted), so we log and continue.
     const spendResult = await syncMetaSpendToExpenses(since, today)
     if (!spendResult.ok) {
+      log.error({ err: spendResult.error, since, today }, 'meta_spend_sync_action_failed')
       return { ok: false, error: spendResult.error ?? 'Error al sincronizar el gasto en finanzas' }
     }
 
@@ -52,6 +58,7 @@ export async function syncMetaAction(
 
     return { ok: true }
   } catch (err) {
+    log.error({ err }, 'meta_sync_action_failed')
     return {
       ok: false,
       error: getMarketingSyncErrorMessage(err),
