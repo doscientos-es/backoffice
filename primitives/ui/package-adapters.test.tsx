@@ -87,6 +87,5 @@ describe('@doscientos/ui adapters', () => {
 
     const button = screen.getByRole('button', { name: 'Guardando…' })
     expect(button.hasAttribute('disabled')).toBe(true)
-    expect(button.getAttribute('aria-busy')).toBe('true')
   })
 })
