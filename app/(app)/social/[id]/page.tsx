@@ -1,10 +1,12 @@
-import { ChartBar as BarChart3, ExternalLink, MessageSquare } from 'lucide-react'
+import { ChartBar as BarChart3, ExternalLink, MessageSquare, Pencil } from 'lucide-react'
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { BackLink } from '@/components/layout/back-link'
 import { DetailGrid, DetailRow } from '@/components/layout/detail-grid'
 import { PageHeader } from '@/components/layout/page-header'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SectionBoundary } from '@/components/ui/error-boundary'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -30,7 +32,7 @@ export async function generateMetadata({
   return { title: post ? `${post.caption.slice(0, 20)}... · Social` : 'Post · Social' }
 }
 
-async function PostDetail({ id }: { id: string }) {
+async function PostDetail({ id, canEdit }: { id: string; canEdit: boolean }) {
   const post = await getPostDetail(id)
   if (!post) notFound()
 
@@ -203,6 +205,17 @@ async function PostDetail({ id }: { id: string }) {
                 )}
               </DetailGrid>
 
+              {canEdit && post.status === 'scheduled' && (
+                <div className="border-border mt-6 border-t pt-4">
+                  <Button asChild variant="outline" size="default" className="w-full">
+                    <Link href={`/social/${post.id}/edit`}>
+                      <Pencil className="size-4" />
+                      Cambiar imagen
+                    </Link>
+                  </Button>
+                </div>
+              )}
+
               {post.status === 'draft' && (
                 <div className="border-border mt-6 border-t pt-4">
                   <PublishButton
@@ -301,7 +314,7 @@ function DetailSkeleton() {
 }
 
 export default async function PostDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireUser()
+  const user = await requireUser()
   const { id } = await params
   return (
     <div className="flex flex-col gap-6">
@@ -312,7 +325,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
         actions={<SyncButton kind="social" label="Sincronizar datos" />}
       />
       <SectionBoundary pending={<DetailSkeleton />} label="No se pudo cargar el detalle">
-        <PostDetail id={id} />
+        <PostDetail id={id} canEdit={user.role !== 'viewer'} />
       </SectionBoundary>
     </div>
   )

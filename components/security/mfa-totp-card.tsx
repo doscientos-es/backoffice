@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldLabel } from '@/components/ui/field'
-import { OtpInput } from '@/components/ui/otp-input'
+import { OtpInput } from '@doscientos/ui'
 import { getBrowserClient } from '@/lib/supabase/browser'
 
 type Props = { required: boolean }

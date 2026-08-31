@@ -103,13 +103,17 @@ export async function importHistoricalInstagramPosts(): Promise<{
  * per-target outcome.
  */
 export async function publishPost(postId: string): Promise<FanOutResult> {
+  if (!(await repo.markPublishing(postId))) {
+    throw new Error('La publicación ya no está disponible para publicar.')
+  }
+  // Read after claiming the post, so editing can neither race a publication nor
+  // cause the publisher to use an earlier version of its media.
   const post = await repo.getPost(postId)
   if (!post) throw new Error('El post no existe.')
   const pendingTargets = post.targets.filter((t) => t.status !== 'published')
   const platforms = pendingTargets.map((t) => t.platform)
   if (platforms.length === 0) throw new Error('El post no tiene ninguna red seleccionada.')
 
-  await repo.markPublishing(postId)
   if (isDemoMode()) {
     const result: FanOutResult = {
       status: 'published',

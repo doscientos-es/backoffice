@@ -24,7 +24,7 @@ import { useRouter } from 'next/navigation'
 import { type ReactNode, useState, useTransition } from 'react'
 
 import { Button } from '@/components/ui/button'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@doscientos/ui'
 import {
   Dialog,
   DialogContent,

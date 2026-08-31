@@ -18,7 +18,7 @@ import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
 import { FormRow } from '@/components/ui/form-row'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
+import { Switch } from '@doscientos/ui'
 import { Textarea } from '@/components/ui/textarea'
 import type { AutomationRule, MetaPlatform } from '@/lib/social/automation/types'
 

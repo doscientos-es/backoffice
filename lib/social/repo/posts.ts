@@ -260,18 +260,47 @@ export async function getPost(id: string): Promise<PostListItem | null> {
 }
 
 /**
- * Flip a post + its not-yet-published targets into the `publishing` state.
- * Targets already `published` are left untouched so a retry (e.g. only
- * Google Business Profile failed) never re-fires already-succeeded networks.
+ * Replace media only while the post is still scheduled. The status condition is
+ * part of the update so a scheduler transition to publishing cannot race this.
  */
-export async function markPublishing(postId: string): Promise<void> {
+export async function updateScheduledPostMedia(postId: string, media: MediaItem[]): Promise<void> {
   const supabase = await createServerClient()
-  await supabase.from('social_posts').update({ status: 'publishing' }).eq('id', postId)
+  const { data, error } = await supabase
+    .from('social_posts')
+    .update({ media, media_kind: deriveMediaKind(media) })
+    .eq('id', postId)
+    .eq('status', 'scheduled')
+    .is('published_at', null)
+    .select('id')
+    .maybeSingle()
+  if (error) throw new Error(`No se pudo actualizar la imagen: ${error.message}`)
+  if (!data) throw new Error('La publicación ya no está programada y no se puede modificar.')
+}
+
+/**
+ * Atomically claim a publishable post, then flip its not-yet-published targets
+ * into `publishing`. Claiming first prevents concurrent editing or publishing.
+ */
+export async function markPublishing(postId: string): Promise<boolean> {
+  const supabase = await createServerClient()
+  const { data, error } = await supabase
+    .from('social_posts')
+    .update({ status: 'publishing' })
+    .eq('id', postId)
+    .in('status', ['draft', 'scheduled', 'failed', 'partially_failed'])
+    .select('id')
+    .maybeSingle()
+  if (error) throw new Error(`No se pudo iniciar la publicación: ${error.message}`)
+  if (!data) return false
+
+  // Targets already published are left untouched so a retry (e.g. only Google
+  // Business Profile failed) never re-fires successfully published networks.
   await supabase
     .from('social_post_targets')
     .update({ status: 'publishing', error: null })
     .eq('post_id', postId)
     .neq('status', 'published')
+  return true
 }
 
 /**
