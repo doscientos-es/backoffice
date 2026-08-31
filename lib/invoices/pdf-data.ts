@@ -41,6 +41,7 @@ export type InvoicePdfData = {
   fullNumber: string
   invoiceType: string | null
   status: string
+  verifactuStatus: string | null
   issueDate: string | null
   dueDate: string | null
   idfact: string | null
@@ -115,13 +116,14 @@ export type BuildInvoicePdfInput = {
 
 /**
  * Build the Verifactu QR data URL when the invoice carries the required fiscal
- * data and has been emitted. A temporary delivery incident must never remove
- * the statutory QR from an already-issued invoice.
+ * data and has been accepted by AEAT. A QR must never be displayed for a
+ * pending, rejected, or technically failed submission.
  */
 async function buildInvoiceQr(
   invoice: BuildInvoicePdfInput['invoice'],
   emisorNif: string | null,
 ): Promise<string | null> {
+  if (invoice.verifactu_status !== 'accepted') return null
   const persistedQrUrl = invoice.qr_url?.trim()
   if (persistedQrUrl) {
     const { buildQrDataUrl } = await import('@doscientos/verifactu')
@@ -189,6 +191,7 @@ export async function buildInvoicePdfData(input: BuildInvoicePdfInput): Promise<
     fullNumber: invoice.full_number ?? '',
     invoiceType: invoice.invoice_type,
     status: invoice.status ?? 'draft',
+    verifactuStatus: invoice.verifactu_status,
     issueDate: invoice.issue_date,
     dueDate: invoice.due_date ?? addDaysIso(invoice.issue_date, DEFAULT_DUE_DAYS),
     idfact: invoice.idfact,

@@ -35,5 +35,6 @@ describe('InvoiceIssuanceProgressDialog', () => {
     )
 
     expect(screen.getByText('En cola: se reintentará respetando el control de flujo')).toBeDefined()
+    expect(screen.getByText('Solo se sincroniza tras la aceptación de AEAT')).toBeDefined()
   })
 })

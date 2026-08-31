@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { DEFAULT_MAINTENANCE_OFFER } from '@/lib/proposals/maintenance'
+
 const revalidatePath = vi.fn()
 vi.mock('next/cache', () => ({ revalidatePath }))
 
 type ProposalRow = {
   id: string
   status: string
+  maintenance_options?: unknown
   lead_id?: string | null
   client_id?: string | null
   clients?: {
@@ -185,5 +188,23 @@ describe('portal proposal actions', () => {
     const result = await acceptProposal(VALID_TOKEN)
     expect(result).toEqual({ ok: false, error: 'No se pudo actualizar la propuesta' })
     expect(revalidatePath).not.toHaveBeenCalled()
+  })
+
+  it('rejects maintenance selection when the offer is disabled', async () => {
+    const { selectProposalMaintenance } = await import('@/app/p/proposal/[token]/actions')
+    state.fetchResult = {
+      data: {
+        id: 'p5',
+        status: 'sent',
+        maintenance_options: { ...DEFAULT_MAINTENANCE_OFFER, enabled: false },
+      },
+      error: null,
+    }
+
+    await expect(selectProposalMaintenance(VALID_TOKEN, null)).resolves.toEqual({
+      ok: false,
+      error: 'El mantenimiento no está disponible en esta propuesta',
+    })
+    expect(state.lastPatch).toBeNull()
   })
 })

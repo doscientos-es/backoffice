@@ -267,6 +267,9 @@ export async function selectProposalMaintenance(
   }
 
   const offer = parseMaintenanceOffer(proposal.maintenance_options)
+  if (!offer.enabled) {
+    return { ok: false, error: 'El mantenimiento no está disponible en esta propuesta' }
+  }
   if (planId && !selectedMaintenancePlan(offer, planId)) {
     return { ok: false, error: 'Este plan no está disponible en la propuesta' }
   }

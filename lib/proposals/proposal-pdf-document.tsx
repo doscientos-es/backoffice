@@ -539,7 +539,7 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
             <Text style={styles.body}>{printableMarkdown(data.notes)}</Text>
           </View>
         ) : null}
-        {data.maintenanceOffer.plans.length > 0 ? (
+        {data.maintenanceOffer.enabled && data.maintenanceOffer.plans.length > 0 ? (
           <View style={styles.section} break>
             <Text style={styles.sectionLabel}>Mantenimiento</Text>
             <Text style={styles.sectionTitle}>{data.maintenanceOffer.heading}</Text>

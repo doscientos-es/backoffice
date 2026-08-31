@@ -212,39 +212,41 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
   )
 
   // New issued invoices persist the QR URL from their immutable RegistroAlta.
-  // Rebuilding it is a legacy fallback only, because company settings may later change.
+  // Rebuilding it is a legacy fallback only after AEAT accepts the record.
   let qrDataUrl: string | null = null
-  try {
-    const persistedQrUrl = typeof invoice.qr_url === 'string' ? invoice.qr_url.trim() : ''
-    if (persistedQrUrl) {
-      const { buildQrDataUrl } = await import('@doscientos/verifactu')
-      qrDataUrl = await buildQrDataUrl(persistedQrUrl)
-    } else {
-      const emisorNif = (settings?.company_nif as string | null) ?? ''
-      if (
-        !emisorNif ||
-        invoice.status === 'draft' ||
-        !invoice.full_number ||
-        !invoice.issue_date ||
-        invoice.total == null
-      ) {
-        throw new Error('No hay datos para reconstruir el QR histórico')
+  if (invoice.verifactu_status === 'accepted') {
+    try {
+      const persistedQrUrl = typeof invoice.qr_url === 'string' ? invoice.qr_url.trim() : ''
+      if (persistedQrUrl) {
+        const { buildQrDataUrl } = await import('@doscientos/verifactu')
+        qrDataUrl = await buildQrDataUrl(persistedQrUrl)
+      } else {
+        const emisorNif = (settings?.company_nif as string | null) ?? ''
+        if (
+          !emisorNif ||
+          invoice.status === 'draft' ||
+          !invoice.full_number ||
+          !invoice.issue_date ||
+          invoice.total == null
+        ) {
+          throw new Error('No hay datos para reconstruir el QR histórico')
+        }
+        const { buildQrDataUrl, buildQrUrl } = await import('@doscientos/verifactu')
+        const qrUrl = buildQrUrl(
+          {
+            nif: emisorNif,
+            invoiceNumber: invoice.full_number as string,
+            issueDate: new Date(`${invoice.issue_date as string}T00:00:00`),
+            total: invoice.total as number,
+          },
+          verifactuInvoiceConfigFromEnv(),
+        )
+        qrDataUrl = await buildQrDataUrl(qrUrl)
       }
-      const { buildQrDataUrl, buildQrUrl } = await import('@doscientos/verifactu')
-      const qrUrl = buildQrUrl(
-        {
-          nif: emisorNif,
-          invoiceNumber: invoice.full_number as string,
-          issueDate: new Date(`${invoice.issue_date as string}T00:00:00`),
-          total: invoice.total as number,
-        },
-        verifactuInvoiceConfigFromEnv(),
-      )
-      qrDataUrl = await buildQrDataUrl(qrUrl)
+    } catch {
+      // QR rendering is non-critical; a historic QR without its persisted URL
+      // may be unavailable until its legacy fiscal configuration is restored.
     }
-  } catch {
-    // QR rendering is non-critical; a historic QR without its persisted URL
-    // may be unavailable until its legacy fiscal configuration is restored.
   }
 
   return (
@@ -637,12 +639,13 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         </div>
       ) : null}
 
-      {/* Legal footer (RD 1007/2023 — Verifactu) */}
-      <p className="text-muted-foreground border-border border-t pt-4 text-[11px] leading-relaxed">
-        Factura verificable en la sede electrónica de la AEAT mediante el código QR. Sistema de
-        emisión conforme al Reglamento Verifactu (RD 1007/2023). Conserve esta factura conforme a la
-        normativa fiscal aplicable.
-      </p>
+      {qrDataUrl ? (
+        <p className="text-muted-foreground border-border border-t pt-4 text-[11px] leading-relaxed">
+          Factura verificable en la sede electrónica de la AEAT mediante el código QR. Sistema de
+          emisión conforme al Reglamento Verifactu (RD 1007/2023). Conserve esta factura conforme a la
+          normativa fiscal aplicable.
+        </p>
+      ) : null}
     </div>
   )
 }

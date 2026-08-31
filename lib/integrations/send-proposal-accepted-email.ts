@@ -1,7 +1,7 @@
 import { ProposalAcceptedEmail } from '@/components/email'
+import { emailAppUrl } from '@/lib/email/app-url'
 import { renderEmail } from '@/lib/email/render'
 import { sendEmail } from '@/lib/email/resend'
-import { publicEnv } from '@/lib/env'
 import { scopedLogger } from '@/lib/logger'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -36,7 +36,7 @@ export async function sendProposalAcceptedEmail(proposalId: string): Promise<voi
   if (!claimed) return
 
   try {
-    const appUrl = publicEnv.NEXT_PUBLIC_APP_URL
+    const appUrl = emailAppUrl(process.env.NEXT_PUBLIC_APP_URL)
     const html = await renderEmail(
       ProposalAcceptedEmail({ clientName, proposalTitle: data.title as string, appUrl }),
     )

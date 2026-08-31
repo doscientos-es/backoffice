@@ -72,6 +72,26 @@ describe('ProposalEditor', () => {
     expect(saveTeam).toHaveBeenCalledWith({ proposal_id: ID, member_ids: [] })
   })
 
+  it('persists a proposal without maintenance', async () => {
+    render(
+      <ProposalEditor
+        {...props}
+        initialMaintenanceOptions={{ ...DEFAULT_MAINTENANCE_OFFER, enabled: false }}
+      />,
+    )
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Guardar y ver propuesta' })[0]!)
+
+    await waitFor(() =>
+      expect(saveProposal).toHaveBeenCalledWith(
+        expect.objectContaining({
+          maintenance_options: expect.objectContaining({ enabled: false }),
+          maintenance_selected_plan_id: null,
+        }),
+      ),
+    )
+  })
+
   it('guides the user through the proposal steps', () => {
     render(<ProposalEditor {...props} />)
 

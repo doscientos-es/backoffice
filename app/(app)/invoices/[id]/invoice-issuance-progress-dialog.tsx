@@ -47,6 +47,7 @@ function stepStyle(state: StepState) {
 function stepsFor(phase: InvoiceIssuancePhase, error: string | null): Step[] {
   const completed = ['accepted', 'deferred', 'delivery_error', 'rejected'].includes(phase)
   const failedBeforeIssue = phase === 'error'
+  const qrSynced = phase === 'accepted'
   return [
     {
       title: 'Confirmación de seguridad',
@@ -74,10 +75,10 @@ function stepsFor(phase: InvoiceIssuancePhase, error: string | null): Step[] {
     },
     {
       title: 'Código QR verificable',
-      detail: completed
+      detail: qrSynced
         ? 'QR fiscal sincronizado con el RegistroAlta'
-        : 'Se genera tras crear el RegistroAlta',
-      state: completed ? 'complete' : 'pending',
+        : 'Solo se sincroniza tras la aceptación de AEAT',
+      state: qrSynced ? 'complete' : 'pending',
     },
     {
       title: 'Entrega inicial a AEAT',

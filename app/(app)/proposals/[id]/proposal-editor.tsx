@@ -259,7 +259,7 @@ export function ProposalEditor({
     Boolean(title.trim() && validUntil),
     Boolean(contextMarkdown.trim() || pairs.length || scopeModules.length || deliverables.trim()),
     Boolean(items.some((item) => item.description.trim() && Number(item.quantity) > 0)),
-    Boolean(selectedMaintenance),
+    !maintenanceOptions.enabled || Boolean(selectedMaintenance),
   ]
   const currentStep = EDITOR_STEPS[activeStep] ?? EDITOR_STEPS[0]!
   const nextStep = EDITOR_STEPS[activeStep + 1] ?? currentStep
@@ -782,14 +782,16 @@ export function ProposalEditor({
                         {formatEUR(proposalTotals.oneTime.total)}
                       </p>
                     </div>
-                    <div className="bg-background rounded-lg p-3">
-                      <p className="text-muted-foreground text-xs">Mantenimiento</p>
-                      <p className="mt-1 text-lg font-semibold">
-                        {selectedMaintenance
-                          ? `${selectedMaintenance.name} · ${formatEUR(selectedMaintenance.monthly_price)}/mes`
-                          : 'Pendiente de elegir'}
-                      </p>
-                    </div>
+                    {maintenanceOptions.enabled ? (
+                      <div className="bg-background rounded-lg p-3">
+                        <p className="text-muted-foreground text-xs">Mantenimiento</p>
+                        <p className="mt-1 text-lg font-semibold">
+                          {selectedMaintenance
+                            ? `${selectedMaintenance.name} · ${formatEUR(selectedMaintenance.monthly_price)}/mes`
+                            : 'Pendiente de elegir'}
+                        </p>
+                      </div>
+                    ) : null}
                   </div>
                 </section>
               </div>
@@ -814,14 +816,16 @@ export function ProposalEditor({
                 <span className="text-muted-foreground">Vigencia</span>
                 <span className="font-medium">{validUntil || 'Pendiente'}</span>
               </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-muted-foreground">Mantenimiento</span>
-                <span className="text-right font-medium">
-                  {selectedMaintenance
-                    ? `${formatEUR(selectedMaintenance.monthly_price)}/mes`
-                    : 'Pendiente'}
-                </span>
-              </div>
+              {maintenanceOptions.enabled ? (
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-muted-foreground">Mantenimiento</span>
+                  <span className="text-right font-medium">
+                    {selectedMaintenance
+                      ? `${formatEUR(selectedMaintenance.monthly_price)}/mes`
+                      : 'Pendiente'}
+                  </span>
+                </div>
+              ) : null}
               {proposalTotals.monthly.total > 0 ? (
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-muted-foreground">Recurrente en partidas</span>

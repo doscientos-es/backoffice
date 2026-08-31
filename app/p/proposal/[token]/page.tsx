@@ -763,12 +763,14 @@ export default async function PortalProposalPage({
           </section>
         </aside>
 
-        <ProposalMaintenanceOptions
-          token={token}
-          offer={maintenanceOffer}
-          selectedPlanId={(proposal.maintenance_selected_plan_id as string | null) ?? null}
-          disabled={isDraft || responded || isTeam}
-        />
+        {maintenanceOffer.enabled ? (
+          <ProposalMaintenanceOptions
+            token={token}
+            offer={maintenanceOffer}
+            selectedPlanId={(proposal.maintenance_selected_plan_id as string | null) ?? null}
+            disabled={isDraft || responded || isTeam}
+          />
+        ) : null}
         <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 lg:hidden dark:bg-zinc-900 dark:ring-zinc-800">
           <p className="mb-3 text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
             Presentación

@@ -97,33 +97,35 @@ export default async function PortalInvoicePage({
   const vatBreakdown = buildVatBreakdown(safeItems)
 
   let qrDataUrl: string | null = null
-  try {
-    const persistedQrUrl = typeof invoice.qr_url === 'string' ? invoice.qr_url.trim() : ''
-    if (persistedQrUrl) {
-      qrDataUrl = await buildQrDataUrl(persistedQrUrl)
-    } else {
-      const emisorNif = (settings?.company_nif as string | null) ?? null
-      if (
-        emisorNif &&
-        invoice.status !== 'draft' &&
-        invoice.full_number &&
-        invoice.issue_date &&
-        invoice.total != null
-      ) {
-        const qrUrl = buildQrUrl(
-          {
-            nif: emisorNif,
-            invoiceNumber: invoice.full_number as string,
-            issueDate: new Date(invoice.issue_date as string),
-            total: invoice.total as number,
-          },
-          verifactuInvoiceConfigFromEnv(),
-        )
-        qrDataUrl = await buildQrDataUrl(qrUrl)
+  if (invoice.verifactu_status === 'accepted') {
+    try {
+      const persistedQrUrl = typeof invoice.qr_url === 'string' ? invoice.qr_url.trim() : ''
+      if (persistedQrUrl) {
+        qrDataUrl = await buildQrDataUrl(persistedQrUrl)
+      } else {
+        const emisorNif = (settings?.company_nif as string | null) ?? null
+        if (
+          emisorNif &&
+          invoice.status !== 'draft' &&
+          invoice.full_number &&
+          invoice.issue_date &&
+          invoice.total != null
+        ) {
+          const qrUrl = buildQrUrl(
+            {
+              nif: emisorNif,
+              invoiceNumber: invoice.full_number as string,
+              issueDate: new Date(invoice.issue_date as string),
+              total: invoice.total as number,
+            },
+            verifactuInvoiceConfigFromEnv(),
+          )
+          qrDataUrl = await buildQrDataUrl(qrUrl)
+        }
       }
+    } catch {
+      // A QR rendering failure must never make a customer-facing invoice unavailable.
     }
-  } catch {
-    // A QR rendering failure must never make a customer-facing invoice unavailable.
   }
 
   // Redsys: determine if payment is available and how much has been paid
@@ -356,9 +358,8 @@ export default async function PortalInvoicePage({
         />
 
         {/* Fiscal info + QR */}
-        {(invoice.idfact as string | null) ||
-        (invoice.verifactu_csv as string | null) ||
-        qrDataUrl ? (
+        {invoice.verifactu_status === 'accepted' &&
+        ((invoice.idfact as string | null) || (invoice.verifactu_csv as string | null) || qrDataUrl) ? (
           <div className="flex flex-col gap-4 border-t border-zinc-100 bg-zinc-50 px-8 py-5 sm:flex-row sm:items-start sm:justify-between dark:border-zinc-800/60 dark:bg-zinc-900/50">
             <div className="flex flex-col gap-1.5">
               <p className="mb-0.5 text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
@@ -451,14 +452,15 @@ export default async function PortalInvoicePage({
           </div>
         ) : null}
 
-        {/* Legal footer (RD 1007/2023 — Verifactu) */}
-        <div className="border-t border-zinc-200 px-8 py-4 dark:border-zinc-800">
-          <p className="text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">
-            Factura verificable en la sede electrónica de la AEAT mediante el código QR. Sistema de
-            emisión conforme al Reglamento Verifactu (RD 1007/2023). Conserve esta factura conforme
-            a la normativa fiscal aplicable.
-          </p>
-        </div>
+        {qrDataUrl ? (
+          <div className="border-t border-zinc-200 px-8 py-4 dark:border-zinc-800">
+            <p className="text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">
+              Factura verificable en la sede electrónica de la AEAT mediante el código QR. Sistema de
+              emisión conforme al Reglamento Verifactu (RD 1007/2023). Conserve esta factura conforme
+              a la normativa fiscal aplicable.
+            </p>
+          </div>
+        ) : null}
       </article>
     </div>
   )

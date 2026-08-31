@@ -9,9 +9,9 @@ import { requireRole } from '@/lib/auth'
 import { ensureInvoiceRecipientVerified } from '@/lib/clients/fiscal-verification'
 import { VersionConflictError } from '@/lib/concurrency/version-conflict'
 import { hasCompleteFiscalData } from '@/lib/crm/conversion'
+import { emailAppUrl } from '@/lib/email/app-url'
 import { renderEmail } from '@/lib/email/render'
 import { sendEmail } from '@/lib/email/resend'
-import { publicEnv } from '@/lib/env'
 import { computeLineTotals } from '@/lib/finance'
 import { backupInvoiceToDrive } from '@/lib/google/backup'
 import { pushMetaConversion } from '@/lib/integrations/meta-capi'
@@ -134,8 +134,10 @@ export const updateInvoiceStatus = defineAction<
       await assertDurableVerifactuPackage(status === 'cancelled')
       await assertVerifactuDiagnosticGate()
       const outboxId = await enqueueFiscalRecord(id, status === 'cancelled')
-      if (status === 'issued') await syncInvoiceQrFromLedger(id)
       const delivery = await deliverVerifactuOutbox(outboxId, `action:${crypto.randomUUID()}`)
+      if (status === 'issued' && delivery.status === 'accepted') {
+        await syncInvoiceQrFromLedger(id)
+      }
       if (delivery.status !== 'accepted') {
         log.warn(
           { invoiceId: id, status: delivery.status },
@@ -792,7 +794,8 @@ export const sendInvoiceEmail = defineAction<
     if (!invoice.portal_token) throw new Error('La factura no tiene token de portal')
 
     const invoiceNumber = invoice.full_number ?? '—'
-    const portalUrl = `${publicEnv.NEXT_PUBLIC_APP_URL}/p/invoice/${invoice.portal_token}`
+    const appUrl = emailAppUrl(process.env.NEXT_PUBLIC_APP_URL)
+    const portalUrl = `${appUrl}/p/invoice/${invoice.portal_token}`
     const html = await renderEmail(
       InvoiceEmail({
         clientName: invoice.client?.name ?? 'Hola',
@@ -800,7 +803,7 @@ export const sendInvoiceEmail = defineAction<
         total: formatEUR(invoice.total ?? 0),
         dueDate: invoice.due_date ? formatDate(invoice.due_date) : '—',
         portalUrl,
-        appUrl: publicEnv.NEXT_PUBLIC_APP_URL,
+        appUrl,
         message,
       }),
     )

@@ -56,4 +56,33 @@ describe('MaintenanceOfferEditor', () => {
       expect.objectContaining({ recommended_plan_id: 'essential' }),
     )
   })
+
+  it('disables maintenance for a punctual proposal and clears its selected plan', () => {
+    const onChange = vi.fn()
+    const onSelectedPlanChange = vi.fn()
+    const { rerender } = render(
+      <MaintenanceOfferEditor
+        offer={DEFAULT_MAINTENANCE_OFFER}
+        selectedPlanId="growth"
+        onChange={onChange}
+        onSelectedPlanChange={onSelectedPlanChange}
+        locked={false}
+      />,
+    )
+
+    fireEvent.click(screen.getByLabelText('Incluir mantenimiento en esta propuesta'))
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ enabled: false }))
+    expect(onSelectedPlanChange).toHaveBeenCalledWith(null)
+    rerender(
+      <MaintenanceOfferEditor
+        offer={{ ...DEFAULT_MAINTENANCE_OFFER, enabled: false }}
+        selectedPlanId={null}
+        onChange={onChange}
+        onSelectedPlanChange={onSelectedPlanChange}
+        locked={false}
+      />,
+    )
+    expect(screen.queryByLabelText('Título de mantenimiento')).toBeNull()
+  })
 })

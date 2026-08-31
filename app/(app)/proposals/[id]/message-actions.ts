@@ -5,9 +5,9 @@ import { z } from 'zod'
 
 import { ProposalMessageEmail } from '@/components/email'
 import { requireUser } from '@/lib/auth'
+import { emailAppUrl } from '@/lib/email/app-url'
 import { renderEmail } from '@/lib/email/render'
 import { sendEmail } from '@/lib/email/resend'
-import { publicEnv } from '@/lib/env'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function replyToProposalMessage(
@@ -51,7 +51,7 @@ export async function replyToProposalMessage(
   const recipientName = client?.name ?? lead?.name ?? 'Hola'
   if (recipient && proposal.portal_token) {
     try {
-      const appUrl = publicEnv.NEXT_PUBLIC_APP_URL
+      const appUrl = emailAppUrl(process.env.NEXT_PUBLIC_APP_URL)
       await sendEmail({
         fromName: user.name,
         fromAlias: user.emailAlias ?? 'propuestas',

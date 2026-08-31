@@ -89,10 +89,10 @@ describe('buildInvoicePdfData', () => {
     expect(data.qrDataUrl).toBeNull()
   })
 
-  it('builds the QR as soon as the invoice is issued, even before AEAT answers', async () => {
+  it.each(['pending', 'error', 'rejected'])('omits the QR when AEAT status is %s', async (status) => {
     const { buildInvoicePdfData } = await importPdfData()
-    const data = await buildInvoicePdfData(makeInput({ verifactu_status: 'pending' }))
-    expect(data.qrDataUrl?.startsWith('data:image/png;base64,')).toBe(true)
+    const data = await buildInvoicePdfData(makeInput({ verifactu_status: status }))
+    expect(data.qrDataUrl).toBeNull()
   })
 
   it('builds a QR data URL for a complete, accepted invoice', async () => {
@@ -104,7 +104,10 @@ describe('buildInvoicePdfData', () => {
   it('uses the persisted fiscal QR instead of rebuilding it from current settings', async () => {
     const { buildInvoicePdfData } = await importPdfData()
     const data = await buildInvoicePdfData(
-      makeInput({ qr_url: 'https://sede.example.test/verifactu/immutable-record' }),
+      makeInput({
+        verifactu_status: 'accepted',
+        qr_url: 'https://sede.example.test/verifactu/immutable-record',
+      }),
     )
     const encodedQr = data.qrDataUrl?.split(',')[1]
 

@@ -120,30 +120,51 @@ export function MaintenanceOfferEditor({
           aceptarla.
         </p>
       </header>
-      <div className="border-border bg-muted/20 grid gap-3 rounded-lg border p-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-        <div className="text-muted-foreground flex flex-col gap-1.5 text-xs font-medium">
-          <span>Título para el cliente</span>
-          <Input
-            value={offer.heading}
-            onChange={(event) => onChange({ ...offer, heading: event.target.value })}
-            disabled={locked}
-            aria-label="Título de mantenimiento"
-            className="bg-background"
-          />
-        </div>
-        <div className="text-muted-foreground flex flex-col gap-1.5 text-xs font-medium">
-          <span>Mensaje de introducción</span>
-          <Textarea
-            value={offer.intro}
-            onChange={(event) => onChange({ ...offer, intro: event.target.value })}
-            disabled={locked}
-            rows={2}
-            aria-label="Introducción de mantenimiento"
-            className="bg-background min-h-20 resize-y text-sm"
-          />
-        </div>
-      </div>
-      <div className="flex flex-col gap-4">
+      <label className="border-border bg-muted/20 flex cursor-pointer items-start gap-3 rounded-lg border p-3">
+        <input
+          type="checkbox"
+          checked={offer.enabled}
+          disabled={locked}
+          onChange={(event) => {
+            onChange({ ...offer, enabled: event.target.checked })
+            if (!event.target.checked) onSelectedPlanChange(null)
+          }}
+          aria-label="Incluir mantenimiento en esta propuesta"
+          className="accent-primary mt-0.5 size-4"
+        />
+        <span>
+          <span className="block text-sm font-medium">Incluir mantenimiento en esta propuesta</span>
+          <span className="text-muted-foreground mt-0.5 block text-xs">
+            Desactívalo para propuestas puntuales sin cuota ni opciones de mantenimiento.
+          </span>
+        </span>
+      </label>
+      {offer.enabled ? (
+        <>
+          <div className="border-border bg-muted/20 grid gap-3 rounded-lg border p-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+            <div className="text-muted-foreground flex flex-col gap-1.5 text-xs font-medium">
+              <span>Título para el cliente</span>
+              <Input
+                value={offer.heading}
+                onChange={(event) => onChange({ ...offer, heading: event.target.value })}
+                disabled={locked}
+                aria-label="Título de mantenimiento"
+                className="bg-background"
+              />
+            </div>
+            <div className="text-muted-foreground flex flex-col gap-1.5 text-xs font-medium">
+              <span>Mensaje de introducción</span>
+              <Textarea
+                value={offer.intro}
+                onChange={(event) => onChange({ ...offer, intro: event.target.value })}
+                disabled={locked}
+                rows={2}
+                aria-label="Introducción de mantenimiento"
+                className="bg-background min-h-20 resize-y text-sm"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-4">
         {offer.plans.map((plan, index) => {
           const selected = selectedPlanId === plan.id
           const recommended = recommendedPlanId === plan.id
@@ -272,12 +293,14 @@ export function MaintenanceOfferEditor({
             </article>
           )
         })}
-      </div>
-      <p className="text-muted-foreground text-xs">
-        {selectedPlanId
-          ? 'Este plan queda incluido como cuota mensual y se podrá cambiar hasta que la propuesta sea aceptada.'
-          : 'No se ha seleccionado ningún plan. La propuesta seguirá siendo válida sin mantenimiento.'}
-      </p>
+          </div>
+          <p className="text-muted-foreground text-xs">
+            {selectedPlanId
+              ? 'Este plan queda incluido como cuota mensual y se podrá cambiar hasta que la propuesta sea aceptada.'
+              : 'No se ha seleccionado ningún plan. La propuesta seguirá siendo válida sin mantenimiento.'}
+          </p>
+        </>
+      ) : null}
     </section>
   )
 }

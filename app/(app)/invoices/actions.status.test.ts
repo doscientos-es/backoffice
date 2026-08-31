@@ -148,6 +148,7 @@ describe('updateInvoiceStatus fiscal flow', () => {
       p_invoice_id: INVOICE_ID,
       p_software: expect.objectContaining({ producerNif: 'B12345678' }),
     })
+    expect(syncInvoiceQrFromLedger).not.toHaveBeenCalled()
   })
 
   it('reverts a payment without enqueuing a second fiscal record', async () => {

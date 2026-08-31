@@ -14,6 +14,16 @@ describe('proposal maintenance offer', () => {
     expect(parseMaintenanceOffer({ plans: [] })).toEqual(DEFAULT_MAINTENANCE_OFFER)
   })
 
+  it('keeps legacy offers enabled and excludes selected plans when disabled', () => {
+    const legacyOffer = { ...DEFAULT_MAINTENANCE_OFFER }
+    delete (legacyOffer as Partial<typeof legacyOffer>).enabled
+
+    expect(parseMaintenanceOffer(legacyOffer).enabled).toBe(true)
+    expect(
+      selectedMaintenancePlan({ ...DEFAULT_MAINTENANCE_OFFER, enabled: false }, 'growth'),
+    ).toBeNull()
+  })
+
   it('keeps legacy snapshots valid by defaulting their exclusions to an empty list', () => {
     const legacyOffer = {
       ...DEFAULT_MAINTENANCE_OFFER,

@@ -298,7 +298,7 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
           </View>
         ) : null}
 
-        {data.idfact || data.verifactuCsv || data.qrDataUrl ? (
+        {data.verifactuStatus === 'accepted' && (data.idfact || data.verifactuCsv || data.qrDataUrl) ? (
           <View style={styles.fiscal}>
             <View style={styles.fiscalInfo}>
               <Text style={styles.label}>Datos fiscales</Text>
@@ -314,7 +314,9 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
           <Text style={styles.footerText}>
             {data.qrDataUrl
               ? 'VERI*FACTU · Factura verificable en la sede electrónica de la AEAT mediante el código QR.'
-              : 'Factura en borrador: no constituye un documento fiscal emitido.'}
+              : data.status === 'draft'
+                ? 'Factura en borrador: no constituye un documento fiscal emitido.'
+                : 'Factura emitida. No está disponible la verificación mediante código QR.'}
           </Text>
         </View>
       </Page>

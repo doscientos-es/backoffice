@@ -7,11 +7,12 @@ import { z } from 'zod'
 
 import { defineAction } from '@/lib/actions/define-action'
 import { VersionConflictError } from '@/lib/concurrency/version-conflict'
+import { emailAppUrl } from '@/lib/email/app-url'
 import { sendEmail } from '@/lib/email/resend'
 import { buildSignatureHtml } from '@/lib/email/signature'
 import { appendSignature, markdownToHtml, renderTemplate } from '@/lib/email/templates'
 import { addEmailTracking } from '@/lib/email/tracking'
-import { isGoogleEnabled, publicEnv, serverEnv } from '@/lib/env'
+import { isGoogleEnabled, serverEnv } from '@/lib/env'
 import type { CalendarBusySlot } from '@/lib/google/calendar'
 import { findConflicts, insertEvent } from '@/lib/google/calendar'
 import { resolveSubject } from '@/lib/google/client'
@@ -414,6 +415,7 @@ export const sendEmailToLead = defineAction({
       .single()
     if (leadErr || !lead) throw new Error(leadErr?.message ?? 'Lead no encontrado')
 
+    const appUrl = emailAppUrl(process.env.NEXT_PUBLIC_APP_URL)
     const renderedMarkdown = renderTemplate(data.bodyHtml, {
       nombre: lead.name as string,
       empresa: (lead.company as string | null) ?? '',
@@ -431,7 +433,7 @@ export const sendEmailToLead = defineAction({
               phone: user.phone ?? undefined,
               contactEmail: user.contactEmail ?? user.emailAlias ?? undefined,
             },
-            publicEnv.NEXT_PUBLIC_APP_URL || 'https://app.doscientos.es',
+            appUrl,
           ),
         )
       : renderedHtml
@@ -469,11 +471,7 @@ export const sendEmailToLead = defineAction({
       throw new Error(sendErr?.message ?? 'No se pudo preparar el envío trackeado')
     }
 
-    const trackedHtml = addEmailTracking(
-      finalHtml,
-      publicEnv.NEXT_PUBLIC_APP_URL || 'https://app.doscientos.es',
-      sendRow.tracking_token as string,
-    )
+    const trackedHtml = addEmailTracking(finalHtml, appUrl, sendRow.tracking_token as string)
 
     let cc: string[] | undefined
     if (data.ccAdmins) {

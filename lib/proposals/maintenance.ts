@@ -27,6 +27,7 @@ export const maintenancePlanInput = z.object({
 
 export const maintenanceOfferInput = z
   .object({
+    enabled: z.boolean().default(true),
     heading: z.string().trim().min(1).max(120),
     intro: z.string().trim().min(1).max(800),
     plans: z.array(maintenancePlanInput).min(1).max(MAINTENANCE_LIMITS.maxPlans),
@@ -50,6 +51,7 @@ export type MaintenanceOffer = z.infer<typeof maintenanceOfferInput>
 
 /** Default proposal copy, based on https://doscientos.es/precios-mantenimiento. */
 export const DEFAULT_MAINTENANCE_OFFER: MaintenanceOffer = {
+  enabled: true,
   heading: 'Mantenimiento web',
   intro:
     'Tu web al día, sin sorpresas. Seguridad, soporte y mejoras con un alcance claro para que elijas cuánto quieres que nos impliquemos.',
@@ -140,7 +142,7 @@ export function selectedMaintenancePlan(
   offer: MaintenanceOffer,
   selectedPlanId: string | null | undefined,
 ): MaintenancePlan | null {
-  if (!selectedPlanId) return null
+  if (!offer.enabled || !selectedPlanId) return null
   return offer.plans.find((plan) => plan.id === selectedPlanId) ?? null
 }
 
