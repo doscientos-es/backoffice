@@ -19,7 +19,7 @@
  *  - DB error on items fetch → ok:false
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // ── shared mutable state ───────────────────────────────────────────────────────
 
@@ -35,32 +35,32 @@ const { db, authUser, rpc } = vi.hoisted(() => ({
     patchedStatus: null as Record<string, unknown> | null,
   },
   authUser: {
-    id: "user-1",
-    name: "Pol",
-    email: "pol@doscientos.es",
-    role: "admin" as "owner" | "admin" | "member" | "viewer",
+    id: 'user-1',
+    name: 'Pol',
+    email: 'pol@doscientos.es',
+    role: 'admin' as 'owner' | 'admin' | 'member' | 'viewer',
     avatarUrl: null,
     emailAlias: null,
     githubHandle: null,
-    onboardedAt: "2024-01-01",
+    onboardedAt: '2024-01-01',
     jobTitle: null,
     phone: null,
     contactEmail: null,
   },
   rpc: vi.fn(),
-}));
+}))
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock("@/lib/invoices/queries", () => ({
+vi.mock('@/lib/invoices/queries', () => ({
   findInvoiceForRectification: async () => db.original,
   findNextInvoiceNumberForSeries: async () => 1,
   insertRectificationWithItems: async (invoiceData: Record<string, unknown>) => {
-    db.insertedInvoice = invoiceData;
-    return { id: "rect-invoice-uuid" };
+    db.insertedInvoice = invoiceData
+    return { id: 'rect-invoice-uuid' }
   },
   patchInvoiceStatus: async (id: string, patch: Record<string, unknown>) => {
-    db.patchedStatus = { id, ...patch };
+    db.patchedStatus = { id, ...patch }
   },
   // Unused in this action but imported by the module — stub to avoid errors.
   findClientInfo: vi.fn(),
@@ -84,10 +84,10 @@ vi.mock("@/lib/invoices/queries", () => ({
   replaceInvoiceItems: vi.fn(),
   restoreDeletedInvoice: vi.fn(),
   softDeleteInvoice: vi.fn(),
-}));
+}))
 
 /** Minimal Supabase mock used for the inline invoice_items query inside the action. */
-vi.mock("@/lib/supabase/server", () => ({
+vi.mock('@/lib/supabase/server', () => ({
   createServerClient: async () => ({
     from: (table: string) => {
       const builder: Record<string, unknown> = {
@@ -95,21 +95,21 @@ vi.mock("@/lib/supabase/server", () => ({
         eq: () => builder,
         order: () =>
           Promise.resolve(
-            table === "invoice_items"
+            table === 'invoice_items'
               ? {
-                data: db.itemsError
-                  ? null
-                  : [
-                    {
-                      position: 0,
-                      description: "Servicio",
-                      quantity: 1,
-                      unit_price: 100,
-                      vat_rate: 21,
-                    },
-                  ],
-                error: db.itemsError ? { message: db.itemsError } : null,
-              }
+                  data: db.itemsError
+                    ? null
+                    : [
+                        {
+                          position: 0,
+                          description: 'Servicio',
+                          quantity: 1,
+                          unit_price: 100,
+                          vat_rate: 21,
+                        },
+                      ],
+                  error: db.itemsError ? { message: db.itemsError } : null,
+                }
               : { data: null, error: null },
           ),
         // other methods used by different actions — unused here
@@ -121,67 +121,67 @@ vi.mock("@/lib/supabase/server", () => ({
         // biome-ignore lint/suspicious/noThenProperty: intentional thenable for Supabase mock
         then: (fn: (v: unknown) => unknown, rej?: (e: unknown) => unknown) =>
           (Promise.resolve({ data: null, error: null }) as Promise<unknown>).then(fn, rej),
-      };
-      return builder;
+      }
+      return builder
     },
     rpc,
   }),
-}));
+}))
 
-vi.mock("@/lib/auth", () => ({
+vi.mock('@/lib/auth', () => ({
   requireUser: async () => authUser,
   requireRole: async (roles: string[]) => {
     if (!roles.includes(authUser.role)) {
       // Mirrors how Next.js redirect() works: defineAction re-throws NEXT_ errors.
-      const err = new Error("Forbidden") as Error & { digest?: string };
-      err.digest = "NEXT_REDIRECT";
-      throw err;
+      const err = new Error('Forbidden') as Error & { digest?: string }
+      err.digest = 'NEXT_REDIRECT'
+      throw err
     }
-    return authUser;
+    return authUser
   },
-}));
+}))
 
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
-vi.mock("@/lib/logger", () => ({
+vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
+vi.mock('@/lib/logger', () => ({
   scopedLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),
-}));
-vi.mock("@/lib/verifactu/config", () => ({ verifactuInvoiceConfigFromEnv: vi.fn() }));
-vi.mock("@doscientos/verifactu", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@doscientos/verifactu")>()),
+}))
+vi.mock('@/lib/verifactu/config', () => ({ verifactuInvoiceConfigFromEnv: vi.fn() }))
+vi.mock('@doscientos/verifactu', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@doscientos/verifactu')>()),
   createVerifactuClient: vi.fn(),
-}));
-vi.mock("@/lib/google/backup", () => ({ backupInvoiceToDrive: vi.fn() }));
-vi.mock("@/lib/email/resend", () => ({ sendEmail: vi.fn() }));
-vi.mock("@/lib/email/render", () => ({ renderEmail: vi.fn() }));
-vi.mock("@/lib/crm/conversion", () => ({ promoteLeadFromClient: vi.fn() }));
+}))
+vi.mock('@/lib/google/backup', () => ({ backupInvoiceToDrive: vi.fn() }))
+vi.mock('@/lib/email/resend', () => ({ sendEmail: vi.fn() }))
+vi.mock('@/lib/email/render', () => ({ renderEmail: vi.fn() }))
+vi.mock('@/lib/crm/conversion', () => ({ promoteLeadFromClient: vi.fn() }))
 
 // ── SUT ───────────────────────────────────────────────────────────────────────
 
-import { createRectification } from "@/app/(app)/invoices/actions";
+import { createRectification } from '@/app/(app)/invoices/actions'
 
 // ── fixtures ──────────────────────────────────────────────────────────────────
 
-const ORIG_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+const ORIG_ID = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
 
 function issuedInvoice(overrides: Partial<Record<string, unknown>> = {}) {
   return {
     id: ORIG_ID,
-    status: "issued",
-    verifactu_status: "pending",
-    invoice_type: "ordinaria",
-    full_number: "FAC-2025-001",
-    series: "A",
+    status: 'issued',
+    verifactu_status: 'pending',
+    invoice_type: 'ordinaria',
+    full_number: 'FAC-2025-001',
+    series: 'A',
     number: 1,
-    issue_date: "2025-01-01",
-    client_id: "client-uuid",
+    issue_date: '2025-01-01',
+    client_id: 'client-uuid',
     project_id: null,
-    client_nif: "12345678Z",
-    client_name: "Acme S.L.",
+    client_nif: '12345678Z',
+    client_name: 'Acme S.L.',
     client_address_street: null,
     client_address_zip: null,
     client_address_city: null,
     client_address_province: null,
-    client_address_country: "ES",
+    client_address_country: 'ES',
     notes: null,
     payment_terms: null,
     subtotal: 1000,
@@ -189,188 +189,188 @@ function issuedInvoice(overrides: Partial<Record<string, unknown>> = {}) {
     total: 1210,
     is_rectification: false,
     ...overrides,
-  };
+  }
 }
 
 const validInput = {
   originalInvoiceId: ORIG_ID,
-  rectificationType: "R1" as const,
-  reason: "Error en importe facturado",
-};
+  rectificationType: 'R1' as const,
+  reason: 'Error en importe facturado',
+}
 
 // ── lifecycle ─────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
-  db.original = issuedInvoice();
-  db.itemsError = null;
-  db.insertedInvoice = null;
-  db.patchedStatus = null;
-  authUser.role = "admin";
-  rpc.mockReset();
+  db.original = issuedInvoice()
+  db.itemsError = null
+  db.insertedInvoice = null
+  db.patchedStatus = null
+  authUser.role = 'admin'
+  rpc.mockReset()
   rpc.mockImplementation(async (_name: string, params: Record<string, unknown>) => {
-    if (db.itemsError) return { data: null, error: { message: db.itemsError } };
-    const original = db.original;
-    if (!original) return { data: null, error: { message: "Factura original no encontrada" } };
+    if (db.itemsError) return { data: null, error: { message: db.itemsError } }
+    const original = db.original
+    if (!original) return { data: null, error: { message: 'Factura original no encontrada' } }
     if (original.is_rectification) {
-      return { data: null, error: { message: "No se puede rectificar una factura rectificativa" } };
+      return { data: null, error: { message: 'No se puede rectificar una factura rectificativa' } }
     }
-    if (!["issued", "paid", "overdue"].includes(String(original.status))) {
+    if (!['issued', 'paid', 'overdue'].includes(String(original.status))) {
       return {
         data: null,
-        error: { message: "Solo pueden rectificarse facturas emitidas o pagadas" },
-      };
+        error: { message: 'Solo pueden rectificarse facturas emitidas o pagadas' },
+      }
     }
     db.insertedInvoice = {
       ...original,
-      series: "R",
+      series: 'R',
       is_rectification: true,
       rectified_invoice_id: original.id,
       invoice_type: params.p_rectification_type,
       rectification_reason: params.p_reason,
-    };
-    db.patchedStatus = { id: original.id, status: "rectified" };
-    return { data: "rect-invoice-uuid", error: null };
-  });
-});
+    }
+    db.patchedStatus = { id: original.id, status: 'rectified' }
+    return { data: 'rect-invoice-uuid', error: null }
+  })
+})
 
 // ── tests ─────────────────────────────────────────────────────────────────────
 
-describe("createRectification – happy path", () => {
-  it("returns ok:true with the new invoice id", async () => {
-    const res = await createRectification(validInput);
-    expect(res.ok).toBe(true);
+describe('createRectification – happy path', () => {
+  it('returns ok:true with the new invoice id', async () => {
+    const res = await createRectification(validInput)
+    expect(res.ok).toBe(true)
     // defineAction spreads payload into { ok:true, ...payload }
-    if (res.ok) expect((res as { ok: true; id: string }).id).toBe("rect-invoice-uuid");
-  });
+    if (res.ok) expect((res as { ok: true; id: string }).id).toBe('rect-invoice-uuid')
+  })
 
-  it("creates the rectification with series R and is_rectification:true", async () => {
-    await createRectification(validInput);
-    expect(rpc).toHaveBeenCalledWith("create_rectification_invoice", {
+  it('creates the rectification with series R and is_rectification:true', async () => {
+    await createRectification(validInput)
+    expect(rpc).toHaveBeenCalledWith('create_rectification_invoice', {
       p_original_invoice_id: ORIG_ID,
-      p_rectification_type: "R1",
+      p_rectification_type: 'R1',
       p_reason: validInput.reason,
-    });
-    expect(db.insertedInvoice?.series).toBe("R");
-    expect(db.insertedInvoice?.is_rectification).toBe(true);
-    expect(db.insertedInvoice?.rectified_invoice_id).toBe(ORIG_ID);
-    expect(db.insertedInvoice?.invoice_type).toBe("R1");
-  });
+    })
+    expect(db.insertedInvoice?.series).toBe('R')
+    expect(db.insertedInvoice?.is_rectification).toBe(true)
+    expect(db.insertedInvoice?.rectified_invoice_id).toBe(ORIG_ID)
+    expect(db.insertedInvoice?.invoice_type).toBe('R1')
+  })
 
-  it("copies financial totals from the original invoice", async () => {
-    await createRectification(validInput);
-    expect(db.insertedInvoice?.subtotal).toBe(1000);
-    expect(db.insertedInvoice?.tax_amount).toBe(210);
-    expect(db.insertedInvoice?.total).toBe(1210);
-  });
+  it('copies financial totals from the original invoice', async () => {
+    await createRectification(validInput)
+    expect(db.insertedInvoice?.subtotal).toBe(1000)
+    expect(db.insertedInvoice?.tax_amount).toBe(210)
+    expect(db.insertedInvoice?.total).toBe(1210)
+  })
 
-  it("stores the rectification reason", async () => {
-    await createRectification(validInput);
-    expect(db.insertedInvoice?.rectification_reason).toBe(validInput.reason);
-  });
+  it('stores the rectification reason', async () => {
+    await createRectification(validInput)
+    expect(db.insertedInvoice?.rectification_reason).toBe(validInput.reason)
+  })
 
-  it("marks the original invoice as rectified", async () => {
-    await createRectification(validInput);
-    expect(db.patchedStatus?.id).toBe(ORIG_ID);
-    expect(db.patchedStatus?.status).toBe("rectified");
-  });
+  it('marks the original invoice as rectified', async () => {
+    await createRectification(validInput)
+    expect(db.patchedStatus?.id).toBe(ORIG_ID)
+    expect(db.patchedStatus?.status).toBe('rectified')
+  })
 
-  it("works for R4 type as well", async () => {
-    const res = await createRectification({ ...validInput, rectificationType: "R4" });
-    expect(res.ok).toBe(true);
-    expect(db.insertedInvoice?.invoice_type).toBe("R4");
-  });
+  it('works for R4 type as well', async () => {
+    const res = await createRectification({ ...validInput, rectificationType: 'R4' })
+    expect(res.ok).toBe(true)
+    expect(db.insertedInvoice?.invoice_type).toBe('R4')
+  })
 
-  it("works for paid invoices", async () => {
-    db.original = issuedInvoice({ status: "paid" });
-    const res = await createRectification(validInput);
-    expect(res.ok).toBe(true);
-  });
+  it('works for paid invoices', async () => {
+    db.original = issuedInvoice({ status: 'paid' })
+    const res = await createRectification(validInput)
+    expect(res.ok).toBe(true)
+  })
 
-  it("works for overdue invoices", async () => {
-    db.original = issuedInvoice({ status: "overdue" });
-    const res = await createRectification(validInput);
-    expect(res.ok).toBe(true);
-  });
-});
+  it('works for overdue invoices', async () => {
+    db.original = issuedInvoice({ status: 'overdue' })
+    const res = await createRectification(validInput)
+    expect(res.ok).toBe(true)
+  })
+})
 
-describe("createRectification – business rule guards", () => {
-  it("fails when original invoice is not found", async () => {
-    db.original = null;
-    const res = await createRectification(validInput);
-    expect(res.ok).toBe(false);
-    if (!res.ok) expect(res.error).toMatch(/no encontrada/i);
-  });
+describe('createRectification – business rule guards', () => {
+  it('fails when original invoice is not found', async () => {
+    db.original = null
+    const res = await createRectification(validInput)
+    expect(res.ok).toBe(false)
+    if (!res.ok) expect(res.error).toMatch(/no encontrada/i)
+  })
 
-  it("fails when original is in draft status", async () => {
-    db.original = issuedInvoice({ status: "draft" });
-    const res = await createRectification(validInput);
-    expect(res.ok).toBe(false);
-    if (!res.ok) expect(res.error).toMatch(/emitidas/i);
-  });
+  it('fails when original is in draft status', async () => {
+    db.original = issuedInvoice({ status: 'draft' })
+    const res = await createRectification(validInput)
+    expect(res.ok).toBe(false)
+    if (!res.ok) expect(res.error).toMatch(/emitidas/i)
+  })
 
-  it("fails when original is cancelled", async () => {
-    db.original = issuedInvoice({ status: "cancelled" });
-    const res = await createRectification(validInput);
-    expect(res.ok).toBe(false);
-    if (!res.ok) expect(res.error).toMatch(/emitidas/i);
-  });
+  it('fails when original is cancelled', async () => {
+    db.original = issuedInvoice({ status: 'cancelled' })
+    const res = await createRectification(validInput)
+    expect(res.ok).toBe(false)
+    if (!res.ok) expect(res.error).toMatch(/emitidas/i)
+  })
 
-  it("fails when original is already rectified", async () => {
-    db.original = issuedInvoice({ status: "rectified" });
-    const res = await createRectification(validInput);
-    expect(res.ok).toBe(false);
-    if (!res.ok) expect(res.error).toMatch(/emitidas/i);
-  });
+  it('fails when original is already rectified', async () => {
+    db.original = issuedInvoice({ status: 'rectified' })
+    const res = await createRectification(validInput)
+    expect(res.ok).toBe(false)
+    if (!res.ok) expect(res.error).toMatch(/emitidas/i)
+  })
 
-  it("fails when the invoice is itself a rectification", async () => {
-    db.original = issuedInvoice({ is_rectification: true });
-    const res = await createRectification(validInput);
-    expect(res.ok).toBe(false);
-    if (!res.ok) expect(res.error).toMatch(/rectificativa/i);
-  });
-});
+  it('fails when the invoice is itself a rectification', async () => {
+    db.original = issuedInvoice({ is_rectification: true })
+    const res = await createRectification(validInput)
+    expect(res.ok).toBe(false)
+    if (!res.ok) expect(res.error).toMatch(/rectificativa/i)
+  })
+})
 
-describe("createRectification – role restriction", () => {
-  it("throws for viewer role (not in allowed list)", async () => {
-    authUser.role = "viewer";
-    await expect(createRectification(validInput)).rejects.toThrow();
-  });
+describe('createRectification – role restriction', () => {
+  it('throws for viewer role (not in allowed list)', async () => {
+    authUser.role = 'viewer'
+    await expect(createRectification(validInput)).rejects.toThrow()
+  })
 
-  it("allows owner role", async () => {
-    authUser.role = "owner";
-    const res = await createRectification(validInput);
-    expect(res.ok).toBe(true);
-  });
-});
+  it('allows owner role', async () => {
+    authUser.role = 'owner'
+    const res = await createRectification(validInput)
+    expect(res.ok).toBe(true)
+  })
+})
 
-describe("createRectification – input validation", () => {
-  it("fails when reason is empty", async () => {
-    const res = await createRectification({ ...validInput, reason: "" });
-    expect(res.ok).toBe(false);
-  });
+describe('createRectification – input validation', () => {
+  it('fails when reason is empty', async () => {
+    const res = await createRectification({ ...validInput, reason: '' })
+    expect(res.ok).toBe(false)
+  })
 
-  it("fails when originalInvoiceId is not a UUID", async () => {
+  it('fails when originalInvoiceId is not a UUID', async () => {
     const res = await createRectification({
       ...validInput,
-      originalInvoiceId: "not-a-uuid",
-    });
-    expect(res.ok).toBe(false);
-  });
+      originalInvoiceId: 'not-a-uuid',
+    })
+    expect(res.ok).toBe(false)
+  })
 
-  it("fails for invalid rectification type", async () => {
+  it('fails for invalid rectification type', async () => {
     const res = await createRectification({
       ...validInput,
-      rectificationType: "R2" as "R1",
-    });
-    expect(res.ok).toBe(false);
-  });
-});
+      rectificationType: 'R2' as 'R1',
+    })
+    expect(res.ok).toBe(false)
+  })
+})
 
-describe("createRectification – DB errors", () => {
-  it("returns ok:false when fetching items fails", async () => {
-    db.itemsError = "connection timeout";
-    const res = await createRectification(validInput);
-    expect(res.ok).toBe(false);
-    if (!res.ok) expect(res.error).toContain("connection timeout");
-  });
-});
+describe('createRectification – DB errors', () => {
+  it('returns ok:false when fetching items fails', async () => {
+    db.itemsError = 'connection timeout'
+    const res = await createRectification(validInput)
+    expect(res.ok).toBe(false)
+    if (!res.ok) expect(res.error).toContain('connection timeout')
+  })
+})

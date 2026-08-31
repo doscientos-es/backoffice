@@ -1,55 +1,56 @@
-import { optionalDate, optionalText, optionalUuid } from "@/lib/schemas/common";
-import { z } from "zod";
+import { z } from 'zod'
+
+import { optionalDate, optionalText, optionalUuid } from '@/lib/schemas/common'
 
 export const HOSTING_PROVIDERS = [
-  "vercel",
-  "netlify",
-  "cloudflare",
-  "hetzner",
-  "aws",
-  "digitalocean",
-  "render",
-  "railway",
-  "wordpress",
-  "other",
-] as const;
+  'vercel',
+  'netlify',
+  'cloudflare',
+  'hetzner',
+  'aws',
+  'digitalocean',
+  'render',
+  'railway',
+  'wordpress',
+  'other',
+] as const
 
-export type HostingProvider = (typeof HOSTING_PROVIDERS)[number];
+export type HostingProvider = (typeof HOSTING_PROVIDERS)[number]
 
 export const HOSTING_PROVIDER_LABELS: Record<HostingProvider, string> = {
-  vercel: "Vercel",
-  netlify: "Netlify",
-  cloudflare: "Cloudflare Pages",
-  hetzner: "Hetzner",
-  aws: "AWS",
-  digitalocean: "DigitalOcean",
-  render: "Render",
-  railway: "Railway",
-  wordpress: "WordPress.com",
-  other: "Otro",
-};
+  vercel: 'Vercel',
+  netlify: 'Netlify',
+  cloudflare: 'Cloudflare Pages',
+  hetzner: 'Hetzner',
+  aws: 'AWS',
+  digitalocean: 'DigitalOcean',
+  render: 'Render',
+  railway: 'Railway',
+  wordpress: 'WordPress.com',
+  other: 'Otro',
+}
 
 const optionalUrl = z
   .string()
-  .url("URL no válida")
+  .url('URL no válida')
   .max(2000)
   .optional()
-  .or(z.literal("").transform(() => undefined));
+  .or(z.literal('').transform(() => undefined))
 
 export const WebProjectInput = z.object({
-  name: z.string().min(1, "Nombre obligatorio").max(200).trim(),
-  url: z.string().url("URL no válida").max(2000),
+  name: z.string().min(1, 'Nombre obligatorio').max(200).trim(),
+  url: z.string().url('URL no válida').max(2000),
   client_id: optionalUuid,
   project_id: optionalUuid,
   is_client_visible: z
     .string()
     .optional()
-    .transform((v) => v === "on" || v === "true")
+    .transform((v) => v === 'on' || v === 'true')
     .or(z.boolean()),
   is_own: z
     .string()
     .optional()
-    .transform((v) => v === "on" || v === "true")
+    .transform((v) => v === 'on' || v === 'true')
     .or(z.boolean()),
   hosting_provider: optionalText(100),
   hosting_url: optionalUrl,
@@ -62,9 +63,9 @@ export const WebProjectInput = z.object({
     .transform((v) =>
       v
         ? v
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean)
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean)
         : [],
     ),
   notes: optionalText(4000),
@@ -81,12 +82,12 @@ export const WebProjectInput = z.object({
   db_user: optionalText(255),
   /** Plaintext from the form. Encrypted with AES-256-GCM before persisting. */
   db_pass: optionalText(500),
-});
+})
 
-export type WebProjectInputType = z.infer<typeof WebProjectInput>;
+export type WebProjectInputType = z.infer<typeof WebProjectInput>
 
 export const UpdateWebProjectInput = WebProjectInput.extend({
   id: z.string().uuid(),
-});
+})
 
-export type UpdateWebProjectInputType = z.infer<typeof UpdateWebProjectInput>;
+export type UpdateWebProjectInputType = z.infer<typeof UpdateWebProjectInput>

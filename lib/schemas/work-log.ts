@@ -1,14 +1,14 @@
-import { z } from "zod";
+import { z } from 'zod'
 
 /** Acepta "HH:MM" o "HH:MM:SS" en formato 24h. */
-const TimeString = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/, "Hora no válida");
+const TimeString = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/, 'Hora no válida')
 
 /**
  * Convierte una hora "HH:MM" en minutos desde medianoche.
  */
 function timeToMinutes(t: string): number {
-  const [h, m] = t.split(":");
-  return Number(h) * 60 + Number(m);
+  const [h, m] = t.split(':')
+  return Number(h) * 60 + Number(m)
 }
 
 /**
@@ -17,9 +17,9 @@ function timeToMinutes(t: string): number {
  * Devuelve `null` si el rango no es válido (fin <= inicio o > 24h).
  */
 export function computeHoursFromRange(start: string, end: string): number | null {
-  const mins = timeToMinutes(end) - timeToMinutes(start);
-  if (mins <= 0 || mins > 24 * 60) return null;
-  return Math.round((mins / 60) * 100) / 100;
+  const mins = timeToMinutes(end) - timeToMinutes(start)
+  if (mins <= 0 || mins > 24 * 60) return null
+  return Math.round((mins / 60) * 100) / 100
 }
 
 /**
@@ -30,7 +30,7 @@ export function computeHoursFromRange(start: string, end: string): number | null
 export const AddWorkLogInput = z
   .object({
     project_id: z.string().uuid(),
-    work_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha no válida"),
+    work_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha no válida'),
     start_time: TimeString,
     end_time: TimeString,
     note: z.string().max(500).optional(),
@@ -39,12 +39,12 @@ export const AddWorkLogInput = z
     if (computeHoursFromRange(v.start_time, v.end_time) === null) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ["end_time"],
-        message: "La hora de fin debe ser posterior a la de inicio.",
-      });
+        path: ['end_time'],
+        message: 'La hora de fin debe ser posterior a la de inicio.',
+      })
     }
-  });
-export type AddWorkLogInputType = z.infer<typeof AddWorkLogInput>;
+  })
+export type AddWorkLogInputType = z.infer<typeof AddWorkLogInput>
 
 /**
  * Edita una entrada existente. Si se envían `start_time` y `end_time`, se
@@ -60,25 +60,25 @@ export const UpdateWorkLogInput = z
     note: z.string().max(500).optional(),
   })
   .superRefine((v, ctx) => {
-    const hasStart = !!v.start_time;
-    const hasEnd = !!v.end_time;
+    const hasStart = !!v.start_time
+    const hasEnd = !!v.end_time
     if (hasStart !== hasEnd) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ["end_time"],
-        message: "Indica inicio y fin, o deja ambos vacíos.",
-      });
-      return;
+        path: ['end_time'],
+        message: 'Indica inicio y fin, o deja ambos vacíos.',
+      })
+      return
     }
     if (hasStart && hasEnd && computeHoursFromRange(v.start_time!, v.end_time!) === null) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ["end_time"],
-        message: "La hora de fin debe ser posterior a la de inicio.",
-      });
+        path: ['end_time'],
+        message: 'La hora de fin debe ser posterior a la de inicio.',
+      })
     }
-  });
-export type UpdateWorkLogInputType = z.infer<typeof UpdateWorkLogInput>;
+  })
+export type UpdateWorkLogInputType = z.infer<typeof UpdateWorkLogInput>
 
 /**
  * Soft-delete payload. `project_id` travels alongside `id` so the action can
@@ -87,5 +87,5 @@ export type UpdateWorkLogInputType = z.infer<typeof UpdateWorkLogInput>;
 export const DeleteWorkLogInput = z.object({
   id: z.string().uuid(),
   project_id: z.string().uuid(),
-});
-export type DeleteWorkLogInputType = z.infer<typeof DeleteWorkLogInput>;
+})
+export type DeleteWorkLogInputType = z.infer<typeof DeleteWorkLogInput>

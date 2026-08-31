@@ -1,9 +1,10 @@
-"use client";
+'use client'
 
-import { MessageSquarePlus, Send } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { MessageSquarePlus, Send } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -11,15 +12,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { submitProjectRequest } from "./actions";
+} from '@/components/ui/dialog'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+
+import { submitProjectRequest } from './actions'
 
 export function ProjectRequestDialog({ token }: { token: string }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -39,44 +41,44 @@ export function ProjectRequestDialog({ token }: { token: string }) {
         <ProjectRequestForm token={token} onSuccess={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
-  );
+  )
 }
 
 export function ProjectRequestForm({
   token,
   onSuccess,
 }: {
-  token: string;
-  onSuccess?: () => void;
+  token: string
+  onSuccess?: () => void
 }) {
-  const router = useRouter();
-  const feedback = useFormFeedback();
-  const [sent, setSent] = useState(false);
+  const router = useRouter()
+  const feedback = useFormFeedback()
+  const [sent, setSent] = useState(false)
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    feedback.setPending();
-    setSent(false);
-    const form = event.currentTarget;
-    const data = new FormData(form);
+    event.preventDefault()
+    feedback.setPending()
+    setSent(false)
+    const form = event.currentTarget
+    const data = new FormData(form)
     try {
       const result = await submitProjectRequest({
         token,
-        category: data.get("category")?.toString(),
-        subject: data.get("subject")?.toString(),
-        body: data.get("body")?.toString(),
-        requesterName: data.get("requester_name")?.toString(),
-        requesterEmail: data.get("requester_email")?.toString(),
-        website: data.get("website")?.toString(),
-      });
-      if (!result.ok) return feedback.setError(result.error);
-      form.reset();
-      setSent(true);
-      feedback.setSuccess("Solicitud enviada correctamente");
-      router.refresh();
-      onSuccess?.();
+        category: data.get('category')?.toString(),
+        subject: data.get('subject')?.toString(),
+        body: data.get('body')?.toString(),
+        requesterName: data.get('requester_name')?.toString(),
+        requesterEmail: data.get('requester_email')?.toString(),
+        website: data.get('website')?.toString(),
+      })
+      if (!result.ok) return feedback.setError(result.error)
+      form.reset()
+      setSent(true)
+      feedback.setSuccess('Solicitud enviada correctamente')
+      router.refresh()
+      onSuccess?.()
     } catch {
-      feedback.setError("No se pudo enviar. Comprueba tu conexión e inténtalo de nuevo.");
+      feedback.setError('No se pudo enviar. Comprueba tu conexión e inténtalo de nuevo.')
     }
   }
 
@@ -173,10 +175,10 @@ export function ProjectRequestForm({
           aria-busy={feedback.pending}
           className="h-10 rounded-xl px-4"
         >
-          {feedback.pending ? "Enviando…" : sent ? "Enviar otra solicitud" : "Enviar solicitud"}
+          {feedback.pending ? 'Enviando…' : sent ? 'Enviar otra solicitud' : 'Enviar solicitud'}
           <Send className="size-3.5" aria-hidden="true" />
         </Button>
       </div>
     </form>
-  );
+  )
 }

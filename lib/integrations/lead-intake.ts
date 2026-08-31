@@ -1,16 +1,18 @@
-import { after } from "next/server";
-import { z } from "zod";
+import { after } from 'next/server'
+import { z } from 'zod'
+
 import {
   linkConversionEventsToLead,
   recordConversionEvent,
-} from "@/lib/integrations/conversion-events";
-import { pushMetaConversion, pushMetaQualifiedLeadStage } from "@/lib/integrations/meta-capi";
-import { normalizeCompanySize, normalizeLeadSource, normalizeUrgency } from "@/lib/leads/constants";
-import { scopedLogger } from "@/lib/logger";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { runLeadPipeline } from "./lead-pipeline";
-import { notifyNewLead } from "./notify-new-lead";
-import { sendLeadConfirmation } from "./send-lead-confirmation";
+} from '@/lib/integrations/conversion-events'
+import { pushMetaConversion, pushMetaQualifiedLeadStage } from '@/lib/integrations/meta-capi'
+import { normalizeCompanySize, normalizeLeadSource, normalizeUrgency } from '@/lib/leads/constants'
+import { scopedLogger } from '@/lib/logger'
+import { createAdminClient } from '@/lib/supabase/admin'
+
+import { runLeadPipeline } from './lead-pipeline'
+import { notifyNewLead } from './notify-new-lead'
+import { sendLeadConfirmation } from './send-lead-confirmation'
 
 // ── Input schema ──────────────────────────────────────────────────────────
 
@@ -20,7 +22,7 @@ const utmSchema = z.object({
   campaign: z.string().optional().nullable(),
   term: z.string().optional().nullable(),
   content: z.string().optional().nullable(),
-});
+})
 
 const contextSchema = z.object({
   eventId: z.string().optional().nullable(),
@@ -56,7 +58,7 @@ const contextSchema = z.object({
   lastUtmCampaign: z.string().optional().nullable(),
   lastUtmTerm: z.string().optional().nullable(),
   lastUtmContent: z.string().optional().nullable(),
-});
+})
 
 /**
  * Validated schema for ingestLead() inputs.
@@ -65,8 +67,8 @@ const contextSchema = z.object({
  * Exporting lets adapters reuse it for unit tests.
  */
 export const LeadIntakeSchema = z.object({
-  name: z.string().trim().min(1, "name is required"),
-  email: z.string().email("invalid email").optional().nullable(),
+  name: z.string().trim().min(1, 'name is required'),
+  email: z.string().email('invalid email').optional().nullable(),
   phone: z.string().optional().nullable(),
   company: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
@@ -76,7 +78,7 @@ export const LeadIntakeSchema = z.object({
   companySize: z.string().optional().nullable(),
   solutionType: z.string().optional().nullable(),
   urgency: z.string().optional().nullable(),
-  source: z.string().trim().min(1, "source is required"),
+  source: z.string().trim().min(1, 'source is required'),
   /** Provider-side stable identifier (e.g. Meta leadgen_id). Used for idempotency. */
   externalId: z.string().optional().nullable(),
   /** Provider key. Must match externalId namespace, e.g. "Anuncios Meta". */
@@ -87,13 +89,13 @@ export const LeadIntakeSchema = z.object({
   context: contextSchema.optional(),
   /** Raw provider payload for audit / debugging. Stored as jsonb. */
   rawPayload: z.unknown().optional(),
-});
+})
 
-export type LeadIntake = z.infer<typeof LeadIntakeSchema>;
+export type LeadIntake = z.infer<typeof LeadIntakeSchema>
 
 export type LeadIntakeResult =
   | { ok: true; leadId: string; duplicate: boolean }
-  | { ok: false; error: string };
+  | { ok: false; error: string }
 
 /**
  * Parses a conservative numeric floor (EUR) from a free-text budget answer.
@@ -107,23 +109,23 @@ export type LeadIntakeResult =
  * identical regardless of how the lead reached us.
  */
 export function parseBudgetFloor(text: string | null | undefined): number | null {
-  if (!text?.trim()) return null;
+  if (!text?.trim()) return null
   const amounts = (text.match(/\d[\d.]*/g) ?? [])
-    .map((m) => Number.parseInt(m.replace(/\./g, ""), 10))
-    .filter((n) => Number.isFinite(n) && n > 0);
-  return amounts.length > 0 ? Math.min(...amounts) : null;
+    .map((m) => Number.parseInt(m.replace(/\./g, ''), 10))
+    .filter((n) => Number.isFinite(n) && n > 0)
+  return amounts.length > 0 ? Math.min(...amounts) : null
 }
 
 /** Lowercases and strips Spanish accents so keyword matching is diacritic-safe. */
 function normalize(text: string): string {
   return text
     .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "");
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
 }
 
 /** A question/answer pair extracted from a form ("¿Tamaño de empresa?" → "10-50"). */
-export type FormAnswer = { label: string; value: string };
+export type FormAnswer = { label: string; value: string }
 
 /**
  * Structured qualification signals derived from free-text form answers.
@@ -132,46 +134,46 @@ export type FormAnswer = { label: string; value: string };
  * how the lead reached us — enabling scoring and Kanban filtering.
  */
 export type QualificationFields = {
-  companySize: string | null;
-  solutionType: string | null;
-  urgency: string | null;
-};
+  companySize: string | null
+  solutionType: string | null
+  urgency: string | null
+}
 
 export function classifyFormAnswers(answers: FormAnswer[]): QualificationFields {
   const out: QualificationFields = {
     companySize: null,
     solutionType: null,
     urgency: null,
-  };
+  }
   for (const { label, value } of answers) {
-    const v = value?.trim();
-    if (!v) continue;
-    const key = normalize(label);
-    if (out.companySize == null && (key.includes("tamano") || key.includes("empleado"))) {
-      out.companySize = v;
+    const v = value?.trim()
+    if (!v) continue
+    const key = normalize(label)
+    if (out.companySize == null && (key.includes('tamano') || key.includes('empleado'))) {
+      out.companySize = v
     } else if (
       // Urgency is evaluated before solutionType because time-related questions
       // ("¿Para cuándo necesitas tener el proyecto listo?") share the "necesitas"
       // and "proyecto" tokens with solution questions. Matching the temporal
       // signal first keeps classification order-independent.
       out.urgency == null &&
-      (key.includes("cuando") ||
-        key.includes("plazo") ||
-        key.includes("urgen") ||
-        key.includes("empezar") ||
-        key.includes("inicio") ||
-        key.includes("solucionar") ||
-        key.includes("urgencia"))
+      (key.includes('cuando') ||
+        key.includes('plazo') ||
+        key.includes('urgen') ||
+        key.includes('empezar') ||
+        key.includes('inicio') ||
+        key.includes('solucionar') ||
+        key.includes('urgencia'))
     ) {
-      out.urgency = v;
+      out.urgency = v
     } else if (
       out.solutionType == null &&
-      (key.includes("solucion") || key.includes("necesitas") || key.includes("proyecto"))
+      (key.includes('solucion') || key.includes('necesitas') || key.includes('proyecto'))
     ) {
-      out.solutionType = v;
+      out.solutionType = v
     }
   }
-  return out;
+  return out
 }
 
 /**
@@ -179,22 +181,22 @@ export function classifyFormAnswers(answers: FormAnswer[]): QualificationFields 
  * parseBudgetFloor: "10-50 empleados" → 10, "Más de 200" → 200, "1-10" → 1.
  */
 export function parseEmployeeFloor(text: string | null | undefined): number | null {
-  if (!text?.trim()) return null;
+  if (!text?.trim()) return null
   const counts = (text.match(/\d[\d.]*/g) ?? [])
-    .map((m) => Number.parseInt(m.replace(/\./g, ""), 10))
-    .filter((n) => Number.isFinite(n) && n > 0);
-  return counts.length > 0 ? Math.min(...counts) : null;
+    .map((m) => Number.parseInt(m.replace(/\./g, ''), 10))
+    .filter((n) => Number.isFinite(n) && n > 0)
+  return counts.length > 0 ? Math.min(...counts) : null
 }
 
 /** Maps a free-text urgency answer to a 0–1 intent weight for scoring. */
 export function urgencyWeight(text: string | null | undefined): number {
-  if (!text) return 0;
-  const v = normalize(text);
-  if (v.includes("inmediat") || v.includes("urgent") || /\bya\b/.test(v)) return 1;
-  if (v.includes("mes")) return 0.7;
-  if (v.includes("trimestre") || v.includes("3 mes")) return 0.4;
-  if (v.includes("explor") || v.includes("solo informacion") || v.includes("sin prisa")) return 0.1;
-  return 0;
+  if (!text) return 0
+  const v = normalize(text)
+  if (v.includes('inmediat') || v.includes('urgent') || /\bya\b/.test(v)) return 1
+  if (v.includes('mes')) return 0.7
+  if (v.includes('trimestre') || v.includes('3 mes')) return 0.4
+  if (v.includes('explor') || v.includes('solo informacion') || v.includes('sin prisa')) return 0.1
+  return 0
 }
 
 /**
@@ -205,45 +207,45 @@ export function urgencyWeight(text: string | null | undefined): number {
  * notifications, because Cal.com always carries its own externalId (booking
  * uid) which is different from the landing-form dedupeKey.
  */
-const log = scopedLogger("lead-intake");
+const log = scopedLogger('lead-intake')
 
-const SOFT_DEDUPE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+const SOFT_DEDUPE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
 
 export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
   // ── 1. Validate & normalize ────────────────────────────────────────────
-  const parsed = LeadIntakeSchema.safeParse(input);
+  const parsed = LeadIntakeSchema.safeParse(input)
   if (!parsed.success) {
-    const firstError = parsed.error.errors[0]?.message ?? "invalid input";
-    log.warn({ errors: parsed.error.errors }, "ingestLead validation failed");
-    return { ok: false, error: firstError };
+    const firstError = parsed.error.errors[0]?.message ?? 'invalid input'
+    log.warn({ errors: parsed.error.errors }, 'ingestLead validation failed')
+    return { ok: false, error: firstError }
   }
-  const norm = parsed.data;
-  const normalizedSource = normalizeLeadSource(norm.source) ?? norm.source.trim();
-  const normalizedCompanySize = normalizeCompanySize(norm.companySize);
-  const normalizedUrgency = normalizeUrgency(norm.urgency);
+  const norm = parsed.data
+  const normalizedSource = normalizeLeadSource(norm.source) ?? norm.source.trim()
+  const normalizedCompanySize = normalizeCompanySize(norm.companySize)
+  const normalizedUrgency = normalizeUrgency(norm.urgency)
 
-  const supabase = createAdminClient();
+  const supabase = createAdminClient()
 
   // ── 2. Idempotency: externalId dedupe ──────────────────────────────────
   if (norm.externalId && norm.externalSource) {
     const { data: existing, error: lookupErr } = await supabase
-      .from("leads")
-      .select("id")
-      .eq("external_source", norm.externalSource)
-      .eq("external_id", norm.externalId)
-      .is("deleted_at", null)
-      .maybeSingle();
+      .from('leads')
+      .select('id')
+      .eq('external_source', norm.externalSource)
+      .eq('external_id', norm.externalId)
+      .is('deleted_at', null)
+      .maybeSingle()
     if (lookupErr) {
-      log.error({ err: lookupErr }, "lead lookup failed");
-      return { ok: false, error: lookupErr.message };
+      log.error({ err: lookupErr }, 'lead lookup failed')
+      return { ok: false, error: lookupErr.message }
     }
     if (existing?.id) {
       await linkConversionEventsToLead({
         leadId: existing.id as string,
         visitorId: norm.context?.visitorId,
         eventId: norm.context?.eventId,
-      });
-      return { ok: true, leadId: existing.id as string, duplicate: true };
+      })
+      return { ok: true, leadId: existing.id as string, duplicate: true }
     }
   }
 
@@ -251,14 +253,14 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
   // landing form. Prefer that deterministic link over soft matching by email.
   if (norm.mergeIntoLeadId) {
     const { data: existing, error: lookupErr } = await supabase
-      .from("leads")
-      .select("id")
-      .eq("id", norm.mergeIntoLeadId)
-      .is("deleted_at", null)
-      .maybeSingle();
+      .from('leads')
+      .select('id')
+      .eq('id', norm.mergeIntoLeadId)
+      .is('deleted_at', null)
+      .maybeSingle()
     if (lookupErr) {
-      log.error({ err: lookupErr, leadId: norm.mergeIntoLeadId }, "lead merge lookup failed");
-      return { ok: false, error: lookupErr.message };
+      log.error({ err: lookupErr, leadId: norm.mergeIntoLeadId }, 'lead merge lookup failed')
+      return { ok: false, error: lookupErr.message }
     }
     if (existing?.id) {
       await enrichLead(supabase, existing.id as string, {
@@ -266,14 +268,14 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
         source: normalizedSource,
         companySize: normalizedCompanySize,
         urgency: normalizedUrgency,
-      }).catch((e) => log.error({ err: e, leadId: existing.id }, "lead merge enrich failed"));
+      }).catch((e) => log.error({ err: e, leadId: existing.id }, 'lead merge enrich failed'))
       await linkConversionEventsToLead({
         leadId: existing.id as string,
         visitorId: norm.context?.visitorId,
         eventId: norm.context?.eventId,
-      });
-      log.info({ leadId: existing.id, source: normalizedSource }, "lead merged by explicit id");
-      return { ok: true, leadId: existing.id as string, duplicate: true };
+      })
+      log.info({ leadId: existing.id, source: normalizedSource }, 'lead merged by explicit id')
+      return { ok: true, leadId: existing.id as string, duplicate: true }
     }
   }
 
@@ -284,44 +286,44 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
   // existing lead (filling gaps + appending notes) and suppress the duplicate
   // notification by returning `duplicate: true`.
   {
-    const cutoff = new Date(Date.now() - SOFT_DEDUPE_WINDOW_MS).toISOString();
+    const cutoff = new Date(Date.now() - SOFT_DEDUPE_WINDOW_MS).toISOString()
 
-    let matchedId: string | null = null;
+    let matchedId: string | null = null
     if (norm.email) {
       const { data } = await supabase
-        .from("leads")
-        .select("id")
-        .eq("email", norm.email)
-        .is("deleted_at", null)
-        .gte("created_at", cutoff)
+        .from('leads')
+        .select('id')
+        .eq('email', norm.email)
+        .is('deleted_at', null)
+        .gte('created_at', cutoff)
         .limit(1)
-        .maybeSingle();
-      if (data?.id) matchedId = data.id as string;
+        .maybeSingle()
+      if (data?.id) matchedId = data.id as string
     } else if (norm.phone) {
       const { data } = await supabase
-        .from("leads")
-        .select("id")
-        .eq("phone", norm.phone)
-        .is("deleted_at", null)
-        .gte("created_at", cutoff)
+        .from('leads')
+        .select('id')
+        .eq('phone', norm.phone)
+        .is('deleted_at', null)
+        .gte('created_at', cutoff)
         .limit(1)
-        .maybeSingle();
-      if (data?.id) matchedId = data.id as string;
+        .maybeSingle()
+      if (data?.id) matchedId = data.id as string
     }
 
     if (matchedId) {
       await enrichLead(supabase, matchedId, norm).catch((e) =>
-        log.error({ err: e, leadId: matchedId }, "lead enrich failed"),
-      );
+        log.error({ err: e, leadId: matchedId }, 'lead enrich failed'),
+      )
       if (!norm.context?.internalTraffic) {
         await linkConversionEventsToLead({
           leadId: matchedId,
           visitorId: norm.context?.visitorId,
           eventId: norm.context?.eventId,
-        });
+        })
       }
-      log.info({ leadId: matchedId, source: norm.source }, "soft-dedupe hit, lead enriched");
-      return { ok: true, leadId: matchedId, duplicate: true };
+      log.info({ leadId: matchedId, source: norm.source }, 'soft-dedupe hit, lead enriched')
+      return { ok: true, leadId: matchedId, duplicate: true }
     }
   }
 
@@ -371,34 +373,34 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
     last_utm_term: norm.context?.lastUtmTerm ?? norm.utm?.term ?? null,
     last_utm_content: norm.context?.lastUtmContent ?? norm.utm?.content ?? null,
     raw_payload: (norm.rawPayload ?? null) as Record<string, unknown> | null,
-  };
+  }
 
-  const { data, error } = await supabase.from("leads").insert(row).select("id").single();
+  const { data, error } = await supabase.from('leads').insert(row).select('id').single()
 
   if (error || !data) {
     // Race condition: another concurrent webhook delivery beat us. Re-fetch.
-    if (error?.code === "23505" && norm.externalId && norm.externalSource) {
+    if (error?.code === '23505' && norm.externalId && norm.externalSource) {
       const { data: dup } = await supabase
-        .from("leads")
-        .select("id")
-        .eq("external_source", norm.externalSource)
-        .eq("external_id", norm.externalId)
-        .maybeSingle();
+        .from('leads')
+        .select('id')
+        .eq('external_source', norm.externalSource)
+        .eq('external_id', norm.externalId)
+        .maybeSingle()
       if (dup?.id) {
         await linkConversionEventsToLead({
           leadId: dup.id as string,
           visitorId: norm.context?.visitorId,
           eventId: norm.context?.eventId,
-        });
-        return { ok: true, leadId: dup.id as string, duplicate: true };
+        })
+        return { ok: true, leadId: dup.id as string, duplicate: true }
       }
     }
-    log.error({ err: error }, "lead insert failed");
-    return { ok: false, error: error?.message ?? "insert failed" };
+    log.error({ err: error }, 'lead insert failed')
+    return { ok: false, error: error?.message ?? 'insert failed' }
   }
 
-  const leadId = data.id as string;
-  log.info({ leadId, source: row.source, externalSource: row.external_source }, "lead ingested");
+  const leadId = data.id as string
+  log.info({ leadId, source: row.source, externalSource: row.external_source }, 'lead ingested')
 
   // ── 5 & 6. Background work (scored, auto-assigned, notified) ───────────────
   // Scheduled with `after()` so it is guaranteed to run once the response has
@@ -407,53 +409,53 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
   after(async () => {
     // CAPI only mirrors a consented landing submission; it must not re-send
     // Cal.com, instant-form, or CRM events as website leads.
-    let websiteCapiTask: Promise<void> | null = null;
-    let qualifiedLeadStageTask: Promise<void> | null = null;
+    let websiteCapiTask: Promise<void> | null = null
+    let qualifiedLeadStageTask: Promise<void> | null = null
     if (
-      norm.externalSource === "Landing" &&
+      norm.externalSource === 'Landing' &&
       norm.context?.marketingConsent === true &&
       !norm.context.internalTraffic
     ) {
       websiteCapiTask = pushMetaConversion({
-        eventName: "Lead",
+        eventName: 'Lead',
         eventId: (row.event_id as string | null) ?? `lead-${leadId}`,
         email: row.email,
         phone: row.phone,
         value: row.estimated_value,
-        actionSource: "website",
+        actionSource: 'website',
         eventSourceUrl: row.landing_path ? `https://doscientos.es${row.landing_path}` : undefined,
         clientIpAddress: row.ip as string | null,
         clientUserAgent: row.browser as string | null,
         fbc: norm.context.metaFbc,
         fbp: norm.context.metaFbp,
-      }).catch((e) => log.error({ err: e, leadId }, "meta capi lead push failed"));
+      }).catch((e) => log.error({ err: e, leadId }, 'meta capi lead push failed'))
     }
     // Meta instant-form leads need their initial CRM stage as well as later
     // transitions. The helper includes the provider's leadgen id as lead_id.
-    if (norm.externalSource === "Anuncios Meta") {
+    if (norm.externalSource === 'Anuncios Meta') {
       qualifiedLeadStageTask = pushMetaQualifiedLeadStage({
         leadId,
-        status: "new",
+        status: 'new',
         email: row.email,
         phone: row.phone,
         value: row.estimated_value,
         externalId: row.external_id,
         externalSource: row.external_source,
-      }).catch((e) => log.error({ err: e, leadId }, "meta qualified lead initial stage failed"));
+      }).catch((e) => log.error({ err: e, leadId }, 'meta qualified lead initial stage failed'))
     }
-    const conversionTasks: Promise<unknown>[] = [];
+    const conversionTasks: Promise<unknown>[] = []
     if (!norm.context?.internalTraffic) {
       conversionTasks.push(
         recordLeadCreatedEvent(leadId, row, {
           visitorId: norm.context?.visitorId,
           resourceSlug: norm.context?.resourceSlug,
-        }).catch((e) => log.error({ err: e, leadId }, "lead conversion event failed")),
+        }).catch((e) => log.error({ err: e, leadId }, 'lead conversion event failed')),
         linkConversionEventsToLead({
           leadId,
           visitorId: norm.context?.visitorId,
           eventId: norm.context?.eventId,
-        }).catch((e) => log.error({ err: e, leadId }, "conversion events link failed")),
-      );
+        }).catch((e) => log.error({ err: e, leadId }, 'conversion events link failed')),
+      )
     }
 
     // Acknowledge the external form before alerting the team to make the first call.
@@ -468,7 +470,7 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
       resourceSlug: norm.context?.resourceSlug ?? null,
       calculatorCost: row.calculator_cost as string | null,
       calculatorHours: row.calculator_hours as string | null,
-    }).catch((e) => log.error({ err: e, leadId }, "lead confirmation failed"));
+    }).catch((e) => log.error({ err: e, leadId }, 'lead confirmation failed'))
 
     await Promise.allSettled([
       ...(qualifiedLeadStageTask ? [qualifiedLeadStageTask] : []),
@@ -477,7 +479,7 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
         source: normalizedSource,
         companySize: normalizedCompanySize,
         urgency: normalizedUrgency,
-      }).catch((e) => log.error({ err: e }, "lead pipeline failed")),
+      }).catch((e) => log.error({ err: e }, 'lead pipeline failed')),
       notifyNewLead({
         leadId,
         leadName: row.name,
@@ -494,16 +496,16 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
         leadResourceSlug: norm.context?.resourceSlug ?? null,
         leadCalculatorCost: row.calculator_cost as string | null,
         leadCalculatorHours: row.calculator_hours as string | null,
-      }).catch((e) => log.error({ err: e }, "notifyNewLead failed")),
+      }).catch((e) => log.error({ err: e }, 'notifyNewLead failed')),
       logLeadCreatedInteraction(leadId, row).catch((e) =>
-        log.error({ err: e, leadId }, "lead intake interaction failed"),
+        log.error({ err: e, leadId }, 'lead intake interaction failed'),
       ),
       ...conversionTasks,
       ...(websiteCapiTask ? [websiteCapiTask] : []),
-    ]);
-  });
+    ])
+  })
 
-  return { ok: true, leadId, duplicate: false };
+  return { ok: true, leadId, duplicate: false }
 }
 
 async function recordLeadCreatedEvent(
@@ -515,7 +517,7 @@ async function recordLeadCreatedEvent(
     event_id: (row.event_id as string | null) ?? null,
     visitor_id: context?.visitorId ?? null,
     lead_id: leadId,
-    event_name: "lead_created",
+    event_name: 'lead_created',
     conversion_step: (row.conversion_step as string | null) ?? null,
     landing_path: (row.landing_path as string | null) ?? null,
     landing_ref: (row.landing_ref as string | null) ?? null,
@@ -532,26 +534,26 @@ async function recordLeadCreatedEvent(
       calculator_cost: row.calculator_cost ?? null,
       calculator_hours: row.calculator_hours ?? null,
     },
-  });
+  })
 }
 
 async function logLeadCreatedInteraction(
   leadId: string,
   row: Record<string, unknown>,
 ): Promise<void> {
-  const supabase = createAdminClient();
-  const landingPath = (row.landing_path as string | null) ?? null;
-  const step = (row.conversion_step as string | null) ?? null;
-  const source = (row.source as string | null) ?? "Lead";
+  const supabase = createAdminClient()
+  const landingPath = (row.landing_path as string | null) ?? null
+  const step = (row.conversion_step as string | null) ?? null
+  const source = (row.source as string | null) ?? 'Lead'
   const subject = step
     ? `Lead recibido · ${step}`
     : landingPath
       ? `Lead recibido desde ${landingPath}`
-      : `Lead recibido desde ${source}`;
+      : `Lead recibido desde ${source}`
 
-  await supabase.from("lead_interactions").insert({
+  await supabase.from('lead_interactions').insert({
     lead_id: leadId,
-    type: "note",
+    type: 'note',
     subject,
     body: [
       landingPath ? `Landing: ${landingPath}` : null,
@@ -561,7 +563,7 @@ async function logLeadCreatedInteraction(
       row.utm_campaign ? `UTM campaign: ${row.utm_campaign as string}` : null,
     ]
       .filter(Boolean)
-      .join("\n"),
+      .join('\n'),
     payload: {
       event_id: row.event_id ?? null,
       conversion_step: row.conversion_step ?? null,
@@ -577,7 +579,7 @@ async function logLeadCreatedInteraction(
       calculator_cost: row.calculator_cost ?? null,
       calculator_hours: row.calculator_hours ?? null,
     },
-  });
+  })
 }
 
 /**
@@ -596,84 +598,84 @@ async function enrichLead(
   norm: LeadIntake,
 ): Promise<void> {
   const { data: existing, error } = await supabase
-    .from("leads")
+    .from('leads')
     .select(
-      "email, phone, company, notes, estimated_value, company_size, solution_type, urgency, utm_source, utm_medium, utm_campaign, utm_term, utm_content, referrer, ip, device, browser, language, event_id, conversion_step, landing_path, landing_ref, landing_subject, calculator_cost, calculator_hours, first_landing_path, first_referrer, first_utm_source, first_utm_medium, first_utm_campaign, first_utm_term, first_utm_content, last_landing_path, last_referrer, last_utm_source, last_utm_medium, last_utm_campaign, last_utm_term, last_utm_content",
+      'email, phone, company, notes, estimated_value, company_size, solution_type, urgency, utm_source, utm_medium, utm_campaign, utm_term, utm_content, referrer, ip, device, browser, language, event_id, conversion_step, landing_path, landing_ref, landing_subject, calculator_cost, calculator_hours, first_landing_path, first_referrer, first_utm_source, first_utm_medium, first_utm_campaign, first_utm_term, first_utm_content, last_landing_path, last_referrer, last_utm_source, last_utm_medium, last_utm_campaign, last_utm_term, last_utm_content',
     )
-    .eq("id", leadId)
-    .maybeSingle();
-  if (error || !existing) return;
+    .eq('id', leadId)
+    .maybeSingle()
+  if (error || !existing) return
 
-  const updates: Record<string, unknown> = {};
+  const updates: Record<string, unknown> = {}
 
   // Fill a column only when the existing lead has no value for it yet.
   const fillGap = (column: string, current: unknown, incoming: string | null | undefined) => {
-    const value = incoming?.trim();
-    if (value && !current) updates[column] = value;
-  };
+    const value = incoming?.trim()
+    if (value && !current) updates[column] = value
+  }
 
-  fillGap("email", existing.email, norm.email);
-  fillGap("phone", existing.phone, norm.phone);
-  fillGap("company", existing.company, norm.company);
-  fillGap("company_size", existing.company_size, norm.companySize);
-  fillGap("solution_type", existing.solution_type, norm.solutionType);
-  fillGap("urgency", existing.urgency, norm.urgency);
-  fillGap("utm_source", existing.utm_source, norm.utm?.source);
-  fillGap("utm_medium", existing.utm_medium, norm.utm?.medium);
-  fillGap("utm_campaign", existing.utm_campaign, norm.utm?.campaign);
-  fillGap("utm_term", existing.utm_term, norm.utm?.term);
-  fillGap("utm_content", existing.utm_content, norm.utm?.content);
-  fillGap("referrer", existing.referrer, norm.context?.referrer);
-  fillGap("ip", existing.ip, norm.context?.ip);
-  fillGap("device", existing.device, norm.context?.device);
-  fillGap("browser", existing.browser, norm.context?.browser);
-  fillGap("language", existing.language, norm.context?.language);
-  fillGap("event_id", existing.event_id, norm.context?.eventId);
-  fillGap("conversion_step", existing.conversion_step, norm.context?.conversionStep);
-  fillGap("landing_path", existing.landing_path, norm.context?.landingPath);
-  fillGap("landing_ref", existing.landing_ref, norm.context?.landingRef);
-  fillGap("landing_subject", existing.landing_subject, norm.context?.landingSubject);
-  fillGap("calculator_cost", existing.calculator_cost, norm.context?.calculatorCost);
-  fillGap("calculator_hours", existing.calculator_hours, norm.context?.calculatorHours);
-  fillGap("first_landing_path", existing.first_landing_path, norm.context?.firstLandingPath);
-  fillGap("first_referrer", existing.first_referrer, norm.context?.firstReferrer);
-  fillGap("first_utm_source", existing.first_utm_source, norm.context?.firstUtmSource);
-  fillGap("first_utm_medium", existing.first_utm_medium, norm.context?.firstUtmMedium);
-  fillGap("first_utm_campaign", existing.first_utm_campaign, norm.context?.firstUtmCampaign);
-  fillGap("first_utm_term", existing.first_utm_term, norm.context?.firstUtmTerm);
-  fillGap("first_utm_content", existing.first_utm_content, norm.context?.firstUtmContent);
+  fillGap('email', existing.email, norm.email)
+  fillGap('phone', existing.phone, norm.phone)
+  fillGap('company', existing.company, norm.company)
+  fillGap('company_size', existing.company_size, norm.companySize)
+  fillGap('solution_type', existing.solution_type, norm.solutionType)
+  fillGap('urgency', existing.urgency, norm.urgency)
+  fillGap('utm_source', existing.utm_source, norm.utm?.source)
+  fillGap('utm_medium', existing.utm_medium, norm.utm?.medium)
+  fillGap('utm_campaign', existing.utm_campaign, norm.utm?.campaign)
+  fillGap('utm_term', existing.utm_term, norm.utm?.term)
+  fillGap('utm_content', existing.utm_content, norm.utm?.content)
+  fillGap('referrer', existing.referrer, norm.context?.referrer)
+  fillGap('ip', existing.ip, norm.context?.ip)
+  fillGap('device', existing.device, norm.context?.device)
+  fillGap('browser', existing.browser, norm.context?.browser)
+  fillGap('language', existing.language, norm.context?.language)
+  fillGap('event_id', existing.event_id, norm.context?.eventId)
+  fillGap('conversion_step', existing.conversion_step, norm.context?.conversionStep)
+  fillGap('landing_path', existing.landing_path, norm.context?.landingPath)
+  fillGap('landing_ref', existing.landing_ref, norm.context?.landingRef)
+  fillGap('landing_subject', existing.landing_subject, norm.context?.landingSubject)
+  fillGap('calculator_cost', existing.calculator_cost, norm.context?.calculatorCost)
+  fillGap('calculator_hours', existing.calculator_hours, norm.context?.calculatorHours)
+  fillGap('first_landing_path', existing.first_landing_path, norm.context?.firstLandingPath)
+  fillGap('first_referrer', existing.first_referrer, norm.context?.firstReferrer)
+  fillGap('first_utm_source', existing.first_utm_source, norm.context?.firstUtmSource)
+  fillGap('first_utm_medium', existing.first_utm_medium, norm.context?.firstUtmMedium)
+  fillGap('first_utm_campaign', existing.first_utm_campaign, norm.context?.firstUtmCampaign)
+  fillGap('first_utm_term', existing.first_utm_term, norm.context?.firstUtmTerm)
+  fillGap('first_utm_content', existing.first_utm_content, norm.context?.firstUtmContent)
 
   const setLastTouch = (column: string, incoming: string | null | undefined) => {
-    const value = incoming?.trim();
-    if (value) updates[column] = value;
-  };
-  setLastTouch("last_landing_path", norm.context?.lastLandingPath ?? norm.context?.landingPath);
-  setLastTouch("last_referrer", norm.context?.lastReferrer ?? norm.context?.referrer);
-  setLastTouch("last_utm_source", norm.context?.lastUtmSource ?? norm.utm?.source);
-  setLastTouch("last_utm_medium", norm.context?.lastUtmMedium ?? norm.utm?.medium);
-  setLastTouch("last_utm_campaign", norm.context?.lastUtmCampaign ?? norm.utm?.campaign);
-  setLastTouch("last_utm_term", norm.context?.lastUtmTerm ?? norm.utm?.term);
-  setLastTouch("last_utm_content", norm.context?.lastUtmContent ?? norm.utm?.content);
+    const value = incoming?.trim()
+    if (value) updates[column] = value
+  }
+  setLastTouch('last_landing_path', norm.context?.lastLandingPath ?? norm.context?.landingPath)
+  setLastTouch('last_referrer', norm.context?.lastReferrer ?? norm.context?.referrer)
+  setLastTouch('last_utm_source', norm.context?.lastUtmSource ?? norm.utm?.source)
+  setLastTouch('last_utm_medium', norm.context?.lastUtmMedium ?? norm.utm?.medium)
+  setLastTouch('last_utm_campaign', norm.context?.lastUtmCampaign ?? norm.utm?.campaign)
+  setLastTouch('last_utm_term', norm.context?.lastUtmTerm ?? norm.utm?.term)
+  setLastTouch('last_utm_content', norm.context?.lastUtmContent ?? norm.utm?.content)
 
   // Numeric gap: only set the parsed budget when no value has been assigned yet.
   if (norm.estimatedValue != null && existing.estimated_value == null) {
-    updates.estimated_value = norm.estimatedValue;
+    updates.estimated_value = norm.estimatedValue
   }
 
   // Append incoming notes unless they are already present (guards retries).
-  const incomingNotes = norm.notes?.trim();
-  const currentNotes = (existing.notes as string | null) ?? "";
+  const incomingNotes = norm.notes?.trim()
+  const currentNotes = (existing.notes as string | null) ?? ''
   if (incomingNotes && !currentNotes.includes(incomingNotes)) {
-    updates.notes = currentNotes ? `${currentNotes}\n\n---\n${incomingNotes}` : incomingNotes;
+    updates.notes = currentNotes ? `${currentNotes}\n\n---\n${incomingNotes}` : incomingNotes
   }
 
-  if (Object.keys(updates).length === 0) return;
+  if (Object.keys(updates).length === 0) return
 
-  updates.updated_at = new Date().toISOString();
-  const { error: updateErr } = await supabase.from("leads").update(updates).eq("id", leadId);
+  updates.updated_at = new Date().toISOString()
+  const { error: updateErr } = await supabase.from('leads').update(updates).eq('id', leadId)
   if (updateErr) {
-    log.error({ err: updateErr, leadId }, "enrichLead update failed");
+    log.error({ err: updateErr, leadId }, 'enrichLead update failed')
   } else {
-    log.info({ leadId, fields: Object.keys(updates) }, "lead enriched from duplicate intake");
+    log.info({ leadId, fields: Object.keys(updates) }, 'lead enriched from duplicate intake')
   }
 }

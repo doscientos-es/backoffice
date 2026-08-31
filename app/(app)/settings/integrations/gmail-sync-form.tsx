@@ -1,27 +1,29 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { SubmitButton } from "@/components/ui/submit-button";
-import { Textarea } from "@/components/ui/textarea";
-import { updateGmailSyncMailboxes } from "../actions";
+import { useState } from 'react'
+
+import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { SubmitButton } from '@/components/ui/submit-button'
+import { Textarea } from '@/components/ui/textarea'
+
+import { updateGmailSyncMailboxes } from '../actions'
 
 export function GmailSyncForm({ mailboxes }: { mailboxes: string[] }) {
-  const feedback = useFormFeedback();
-  const [value, setValue] = useState(() => mailboxes.join("\n"));
+  const feedback = useFormFeedback()
+  const [value, setValue] = useState(() => mailboxes.join('\n'))
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    feedback.setPending();
+    event.preventDefault()
+    feedback.setPending()
     const result = await updateGmailSyncMailboxes({
       mailboxes: value
         .split(/[\n,;]+/)
         .map((email) => email.trim())
         .filter(Boolean),
-    });
-    if (!result.ok) return feedback.setError(result.error);
-    feedback.setSuccess("Buzones Gmail guardados");
+    })
+    if (!result.ok) return feedback.setError(result.error)
+    feedback.setSuccess('Buzones Gmail guardados')
   }
 
   return (
@@ -47,5 +49,5 @@ export function GmailSyncForm({ mailboxes }: { mailboxes: string[] }) {
         <SubmitButton loading={feedback.pending}>Guardar buzones</SubmitButton>
       </div>
     </form>
-  );
+  )
 }

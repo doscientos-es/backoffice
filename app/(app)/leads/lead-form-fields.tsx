@@ -1,45 +1,45 @@
-import { FormRow } from "@/components/ui/form-row";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import type { MemberOption } from "@/lib/members/queries";
+import { FormRow } from '@/components/ui/form-row'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import type { MemberOption } from '@/lib/members/queries'
 
 export const SOLUTION_TYPES = [
-  "Software a medida",
-  "App móvil",
-  "Web corporativa",
-  "E-commerce",
-  "Consultoría técnica",
-  "Otro",
-] as const;
+  'Software a medida',
+  'App móvil',
+  'Web corporativa',
+  'E-commerce',
+  'Consultoría técnica',
+  'Otro',
+] as const
 
 export const LEAD_SOURCES = [
-  "Landing",
-  "Anuncios Meta",
-  "Cal.com",
-  "Referencia",
-  "Conocido",
-  "LinkedIn",
-  "Email",
-  "Evento",
-  "Otro",
-] as const;
+  'Landing',
+  'Anuncios Meta',
+  'Cal.com',
+  'Referencia',
+  'Conocido',
+  'LinkedIn',
+  'Email',
+  'Evento',
+  'Otro',
+] as const
 
 export type LeadFormDefaults = {
-  name?: string;
+  name?: string
   /** Optional short display name. Falls back to `name` when empty. */
-  alias?: string | null;
-  company?: string | null;
-  email?: string | null;
-  phone?: string | null;
-  source?: string | null;
-  notes?: string | null;
-  estimated_value?: number | null;
-  company_size?: string | null;
-  solution_type?: string | null;
-  urgency?: string | null;
-  assigned_to?: string | null;
-};
+  alias?: string | null
+  company?: string | null
+  email?: string | null
+  phone?: string | null
+  source?: string | null
+  notes?: string | null
+  estimated_value?: number | null
+  company_size?: string | null
+  solution_type?: string | null
+  urgency?: string | null
+  assigned_to?: string | null
+}
 
 /**
  * Shared lead form fields used by the create page and the edit dialog.
@@ -48,27 +48,27 @@ export type LeadFormDefaults = {
  */
 export function LeadFormFields({
   defaults,
-  idPrefix = "lead",
+  idPrefix = 'lead',
   includeEstimatedValue = false,
   autoFocusName = false,
   members = [],
 }: {
-  defaults?: LeadFormDefaults;
-  idPrefix?: string;
-  includeEstimatedValue?: boolean;
-  autoFocusName?: boolean;
-  members?: MemberOption[];
+  defaults?: LeadFormDefaults
+  idPrefix?: string
+  includeEstimatedValue?: boolean
+  autoFocusName?: boolean
+  members?: MemberOption[]
 }) {
-  const d = defaults ?? {};
-  const sourceValue = d.source ?? "";
-  const isCustomSource = sourceValue !== "" && !LEAD_SOURCES.includes(sourceValue as never);
-  const solutionValue = d.solution_type ?? "";
-  const isCustomSolution = solutionValue !== "" && !SOLUTION_TYPES.includes(solutionValue as never);
+  const d = defaults ?? {}
+  const sourceValue = d.source ?? ''
+  const isCustomSource = sourceValue !== '' && !LEAD_SOURCES.includes(sourceValue as never)
+  const solutionValue = d.solution_type ?? ''
+  const isCustomSolution = solutionValue !== '' && !SOLUTION_TYPES.includes(solutionValue as never)
   return (
     <div className="flex flex-col gap-6">
       {/* ── Contacto ─────────────────────────────────────────────────── */}
       <section className="flex flex-col gap-4">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <p className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">
           Contacto
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -79,7 +79,7 @@ export function LeadFormFields({
               required
               maxLength={160}
               autoFocus={autoFocusName}
-              defaultValue={d.name ?? ""}
+              defaultValue={d.name ?? ''}
               placeholder="Nombre y apellidos"
               autoComplete="name"
             />
@@ -93,7 +93,7 @@ export function LeadFormFields({
               id={`${idPrefix}-alias`}
               name="alias"
               maxLength={100}
-              defaultValue={d.alias ?? ""}
+              defaultValue={d.alias ?? ''}
               placeholder="Pepito"
             />
           </FormRow>
@@ -102,7 +102,7 @@ export function LeadFormFields({
               id={`${idPrefix}-company`}
               name="company"
               maxLength={160}
-              defaultValue={d.company ?? ""}
+              defaultValue={d.company ?? ''}
               placeholder="Acme S.L."
               autoComplete="organization"
             />
@@ -114,7 +114,7 @@ export function LeadFormFields({
               type="email"
               inputMode="email"
               maxLength={160}
-              defaultValue={d.email ?? ""}
+              defaultValue={d.email ?? ''}
               placeholder="nombre@empresa.com"
               autoComplete="email"
             />
@@ -126,7 +126,7 @@ export function LeadFormFields({
               type="tel"
               inputMode="tel"
               maxLength={40}
-              defaultValue={d.phone ?? ""}
+              defaultValue={d.phone ?? ''}
               placeholder="+34 600 000 000"
               autoComplete="tel"
             />
@@ -136,7 +136,7 @@ export function LeadFormFields({
 
       {/* ── Proyecto ─────────────────────────────────────────────────── */}
       <section className="flex flex-col gap-4">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <p className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">
           Proyecto
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -149,7 +149,7 @@ export function LeadFormFields({
             <Select
               id={`${idPrefix}-solution_type`}
               name="solution_type"
-              defaultValue={isCustomSolution ? "Otro" : solutionValue}
+              defaultValue={isCustomSolution ? 'Otro' : solutionValue}
             >
               <option value="">— Sin especificar —</option>
               {SOLUTION_TYPES.map((s) => (
@@ -173,7 +173,7 @@ export function LeadFormFields({
                 min={0}
                 max={99999999.99}
                 step="0.01"
-                defaultValue={d.estimated_value != null ? String(d.estimated_value) : ""}
+                defaultValue={d.estimated_value != null ? String(d.estimated_value) : ''}
                 placeholder="0.00"
               />
             </FormRow>
@@ -183,7 +183,7 @@ export function LeadFormFields({
             htmlFor={`${idPrefix}-urgency`}
             hint="Cuándo necesitan empezar."
           >
-            <Select id={`${idPrefix}-urgency`} name="urgency" defaultValue={d.urgency ?? ""}>
+            <Select id={`${idPrefix}-urgency`} name="urgency" defaultValue={d.urgency ?? ''}>
               <option value="">— Sin especificar —</option>
               <option value="Inmediata">Inmediata</option>
               <option value="Este mes">Este mes</option>
@@ -199,7 +199,7 @@ export function LeadFormFields({
             <Select
               id={`${idPrefix}-company_size`}
               name="company_size"
-              defaultValue={d.company_size ?? ""}
+              defaultValue={d.company_size ?? ''}
             >
               <option value="">— Sin especificar —</option>
               <option value="1-10 empleados">1–10 empleados</option>
@@ -213,7 +213,7 @@ export function LeadFormFields({
 
       {/* ── Gestión ──────────────────────────────────────────────────── */}
       <section className="flex flex-col gap-4">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <p className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">
           Gestión
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -225,7 +225,7 @@ export function LeadFormFields({
             <Select
               id={`${idPrefix}-source`}
               name="source"
-              defaultValue={isCustomSource ? "Otro" : sourceValue}
+              defaultValue={isCustomSource ? 'Otro' : sourceValue}
             >
               <option value="">— Sin especificar —</option>
               {LEAD_SOURCES.map((s) => (
@@ -244,7 +244,7 @@ export function LeadFormFields({
               <Select
                 id={`${idPrefix}-assigned_to`}
                 name="assigned_to"
-                defaultValue={d.assigned_to ?? ""}
+                defaultValue={d.assigned_to ?? ''}
               >
                 <option value="">— Sin asignar —</option>
                 {members.map((m) => (
@@ -260,7 +260,7 @@ export function LeadFormFields({
 
       {/* ── Notas ────────────────────────────────────────────────────── */}
       <section className="flex flex-col gap-4">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <p className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">
           Notas
         </p>
         <FormRow
@@ -274,11 +274,11 @@ export function LeadFormFields({
             rows={4}
             maxLength={4000}
             className="resize-y"
-            defaultValue={d.notes ?? ""}
+            defaultValue={d.notes ?? ''}
             placeholder="Reunión inicial el 14/03 — interesados en módulo de facturación…"
           />
         </FormRow>
       </section>
     </div>
-  );
+  )
 }

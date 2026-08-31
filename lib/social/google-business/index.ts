@@ -6,31 +6,28 @@ export {
   googleBusinessOAuthConfigured,
   googleBusinessProfileConfigured,
   googleBusinessRedirectUri,
-} from "./client";
-export { GoogleBusinessProfilePublisher } from "./google-business-publisher";
+} from './client'
+export { GoogleBusinessProfilePublisher } from './google-business-publisher'
 export {
   getGoogleLocalPostInsights,
   listGoogleLocalPosts,
   updateGoogleLocalPost,
-} from "./local-posts";
-export {
-  fetchGoogleBusinessPerformance,
-  GOOGLE_BUSINESS_DAILY_METRICS,
-} from "./performance";
+} from './local-posts'
+export { fetchGoogleBusinessPerformance, GOOGLE_BUSINESS_DAILY_METRICS } from './performance'
 export {
   createGoogleBusinessMedia,
   deleteGoogleBusinessMedia,
   getGoogleBusinessLocationProfile,
   listGoogleBusinessMedia,
-} from "./profile";
+} from './profile'
 export {
   deleteGoogleBusinessReviewReply,
   listGoogleBusinessReviews,
   replyToGoogleBusinessReview,
-} from "./reviews";
+} from './reviews'
 export {
   removeGoogleBusinessReviewReply,
   replyGoogleBusinessReview,
   syncGoogleBusinessPerformance,
   syncGoogleBusinessReviews,
-} from "./service";
+} from './service'

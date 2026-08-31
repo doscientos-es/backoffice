@@ -3,22 +3,23 @@ import {
   BellRing,
   FileText as FileWarning,
   ShieldAlert,
-} from "lucide-react";
-import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { StatusBadge } from "@/components/ui/status-badge";
+} from 'lucide-react'
+import Link from 'next/link'
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { StatusBadge } from '@/components/ui/status-badge'
 import type {
   AvisosData,
   OverdueInvoiceRow,
   ReminderRow,
   VerifactuPendingRow,
-} from "@/lib/dashboard/types";
-import { VERIFACTU_ALERT_STATUS } from "@/lib/status";
-import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
+} from '@/lib/dashboard/types'
+import { VERIFACTU_ALERT_STATUS } from '@/lib/status'
+import { formatDate, formatEUR, relativeTime } from '@/lib/utils'
 
-export type { AvisosData, OverdueInvoiceRow, ReminderRow, VerifactuPendingRow };
+export type { AvisosData, OverdueInvoiceRow, ReminderRow, VerifactuPendingRow }
 
-export type AvisosPanelProps = AvisosData & { showFinance?: boolean };
+export type AvisosPanelProps = AvisosData & { showFinance?: boolean }
 
 export function AvisosPanel({
   verifactuPending,
@@ -26,11 +27,11 @@ export function AvisosPanel({
   certExpiresAt,
   showFinance = true,
 }: AvisosPanelProps) {
-  const visibleVerifactu = showFinance ? verifactuPending : [];
-  const visibleOverdue = showFinance ? overdueInvoices : [];
-  const visibleCertExpiry = showFinance ? certExpiresAt : null;
+  const visibleVerifactu = showFinance ? verifactuPending : []
+  const visibleOverdue = showFinance ? overdueInvoices : []
+  const visibleCertExpiry = showFinance ? certExpiresAt : null
 
-  const empty = visibleVerifactu.length === 0 && visibleOverdue.length === 0 && !visibleCertExpiry;
+  const empty = visibleVerifactu.length === 0 && visibleOverdue.length === 0 && !visibleCertExpiry
 
   if (empty) {
     return (
@@ -46,24 +47,24 @@ export function AvisosPanel({
           </p>
         </CardContent>
       </Card>
-    );
+    )
   }
 
   return (
-    <Card className="border-amber-500/20 bg-gradient-to-br from-amber-500/[0.07] via-card to-card shadow-sm">
+    <Card className="via-card to-card border-amber-500/20 bg-gradient-to-br from-amber-500/[0.07] shadow-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <BellRing className="size-4" /> Avisos
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col divide-y divide-border/70 [&>div]:py-3 first:[&>div]:pt-0 last:[&>div]:pb-0">
+      <CardContent className="divide-border/70 flex flex-col divide-y [&>div]:py-3 first:[&>div]:pt-0 last:[&>div]:pb-0">
         {visibleCertExpiry ? (
           <div className="flex items-start gap-3">
             <ShieldAlert className="mt-0.5 size-4 shrink-0 text-amber-500" />
             <div className="flex-1">
               <p className="text-sm font-medium">Certificado Verifactu por caducar</p>
-              <p className="text-xs text-muted-foreground">
-                Caduca el {formatDate(visibleCertExpiry)} ({relativeTime(visibleCertExpiry)}).{" "}
+              <p className="text-muted-foreground text-xs">
+                Caduca el {formatDate(visibleCertExpiry)} ({relativeTime(visibleCertExpiry)}).{' '}
                 <Link href="/settings" className="underline">
                   Renovar
                 </Link>
@@ -108,8 +109,8 @@ export function AvisosPanel({
                       <span className="text-muted-foreground"> · {inv.client_name}</span>
                     ) : null}
                   </Link>
-                  <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                    {formatEUR(inv.total)} · venció{" "}
+                  <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
+                    {formatEUR(inv.total)} · venció{' '}
                     {relativeTime(inv.due_date ?? new Date().toISOString())}
                   </span>
                 </li>
@@ -119,7 +120,7 @@ export function AvisosPanel({
         ) : null}
       </CardContent>
     </Card>
-  );
+  )
 }
 
 function Section({
@@ -127,19 +128,19 @@ function Section({
   title,
   children,
 }: {
-  icon: React.ReactNode;
-  title: string;
-  children: React.ReactNode;
+  icon: React.ReactNode
+  title: string
+  children: React.ReactNode
 }) {
   return (
     <div>
       <div className="mb-2 flex items-center gap-2">
         {icon}
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <h3 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
           {title}
         </h3>
       </div>
       {children}
     </div>
-  );
+  )
 }

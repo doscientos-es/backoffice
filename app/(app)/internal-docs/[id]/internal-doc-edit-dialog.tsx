@@ -1,9 +1,10 @@
-"use client";
+'use client'
 
-import { Paperclip, Pencil, X } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Paperclip, Pencil, X } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useRef, useState } from 'react'
+
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -12,42 +13,43 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { FormRow } from "@/components/ui/form-row";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { SubmitButton } from "@/components/ui/submit-button";
-import { Textarea } from "@/components/ui/textarea";
+} from '@/components/ui/dialog'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { FormRow } from '@/components/ui/form-row'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { SubmitButton } from '@/components/ui/submit-button'
+import { Textarea } from '@/components/ui/textarea'
 import {
   INTERNAL_DOC_MAX_TAGS,
   type InternalDocCategory,
   type InternalDocVisibility,
-} from "@/lib/schemas/internal-doc";
-import { updateInternalDoc } from "../actions";
+} from '@/lib/schemas/internal-doc'
+
+import { updateInternalDoc } from '../actions'
 
 const CATEGORIES = [
-  { value: "legal", label: "Legal" },
-  { value: "hr", label: "RRHH" },
-  { value: "finance", label: "Finanzas" },
-  { value: "templates", label: "Plantillas" },
-  { value: "policies", label: "Políticas" },
-  { value: "meetings", label: "Actas" },
-  { value: "other", label: "Otro" },
-] as const;
+  { value: 'legal', label: 'Legal' },
+  { value: 'hr', label: 'RRHH' },
+  { value: 'finance', label: 'Finanzas' },
+  { value: 'templates', label: 'Plantillas' },
+  { value: 'policies', label: 'Políticas' },
+  { value: 'meetings', label: 'Actas' },
+  { value: 'other', label: 'Otro' },
+] as const
 
-const ACCEPTED = ".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg";
+const ACCEPTED = '.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg'
 
 type DocValues = {
-  id: string;
-  name: string;
-  description: string | null;
-  category: InternalDocCategory;
-  visibility: InternalDocVisibility;
-  tags: string[];
-  effective_date: string | null;
-  expires_at: string | null;
-};
+  id: string
+  name: string
+  description: string | null
+  category: InternalDocCategory
+  visibility: InternalDocVisibility
+  tags: string[]
+  effective_date: string | null
+  expires_at: string | null
+}
 
 /**
  * Edit dialog for an internal document. Metadata (name, description, category,
@@ -59,80 +61,80 @@ export function InternalDocEditDialog({
   doc,
   canEditVisibility,
 }: {
-  doc: DocValues;
-  canEditVisibility: boolean;
+  doc: DocValues
+  canEditVisibility: boolean
 }) {
-  const router = useRouter();
-  const feedback = useFormFeedback();
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [open, setOpen] = useState(false);
-  const [tags, setTags] = useState<string[]>(doc.tags ?? []);
-  const [draft, setDraft] = useState("");
-  const [fileName, setFileName] = useState<string | null>(null);
+  const router = useRouter()
+  const feedback = useFormFeedback()
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [open, setOpen] = useState(false)
+  const [tags, setTags] = useState<string[]>(doc.tags ?? [])
+  const [draft, setDraft] = useState('')
+  const [fileName, setFileName] = useState<string | null>(null)
 
   function addTag(raw: string) {
-    const value = raw.trim().slice(0, 40);
-    if (!value || tags.includes(value) || tags.length >= INTERNAL_DOC_MAX_TAGS) return;
-    setTags((prev) => [...prev, value]);
-    setDraft("");
+    const value = raw.trim().slice(0, 40)
+    if (!value || tags.includes(value) || tags.length >= INTERNAL_DOC_MAX_TAGS) return
+    setTags((prev) => [...prev, value])
+    setDraft('')
   }
 
   function onTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      addTag(draft);
-    } else if (e.key === "Backspace" && !draft && tags.length) {
-      setTags((prev) => prev.slice(0, -1));
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault()
+      addTag(draft)
+    } else if (e.key === 'Backspace' && !draft && tags.length) {
+      setTags((prev) => prev.slice(0, -1))
     }
   }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    feedback.setPending();
+    e.preventDefault()
+    const fd = new FormData(e.currentTarget)
+    feedback.setPending()
 
     // Replace the underlying file first (if a new one was picked) so the
     // metadata save still runs even when the file is unchanged.
-    const file = fileRef.current?.files?.[0];
+    const file = fileRef.current?.files?.[0]
     if (file) {
-      const body = new FormData();
-      body.set("file", file);
-      const res = await fetch(`/api/internal-docs/${doc.id}/replace`, { method: "POST", body });
+      const body = new FormData()
+      body.set('file', file)
+      const res = await fetch(`/api/internal-docs/${doc.id}/replace`, { method: 'POST', body })
       if (!res.ok) {
-        const json = (await res.json().catch(() => ({}))) as { error?: string };
-        return feedback.setError(json.error ?? "No se pudo reemplazar el archivo");
+        const json = (await res.json().catch(() => ({}))) as { error?: string }
+        return feedback.setError(json.error ?? 'No se pudo reemplazar el archivo')
       }
     }
 
     const result = await updateInternalDoc({
       id: doc.id,
-      name: fd.get("name")?.toString() ?? "",
-      description: fd.get("description")?.toString() ?? "",
-      category: (fd.get("category")?.toString() ?? doc.category) as DocValues["category"],
+      name: fd.get('name')?.toString() ?? '',
+      description: fd.get('description')?.toString() ?? '',
+      category: (fd.get('category')?.toString() ?? doc.category) as DocValues['category'],
       visibility: (canEditVisibility
-        ? (fd.get("visibility")?.toString() ?? doc.visibility)
-        : doc.visibility) as DocValues["visibility"],
+        ? (fd.get('visibility')?.toString() ?? doc.visibility)
+        : doc.visibility) as DocValues['visibility'],
       tags,
-      effective_date: fd.get("effective_date")?.toString() ?? "",
-      expires_at: fd.get("expires_at")?.toString() ?? "",
-    });
+      effective_date: fd.get('effective_date')?.toString() ?? '',
+      expires_at: fd.get('expires_at')?.toString() ?? '',
+    })
 
-    if (!result.ok) return feedback.setError(result.error);
-    feedback.setSuccess("Guardado");
-    router.refresh();
-    setTimeout(() => setOpen(false), 400);
+    if (!result.ok) return feedback.setError(result.error)
+    feedback.setSuccess('Guardado')
+    router.refresh()
+    setTimeout(() => setOpen(false), 400)
   }
 
   return (
     <Dialog
       open={open}
       onOpenChange={(v) => {
-        setOpen(v);
+        setOpen(v)
         if (!v) {
-          feedback.reset();
-          setTags(doc.tags ?? []);
-          setDraft("");
-          setFileName(null);
+          feedback.reset()
+          setTags(doc.tags ?? [])
+          setDraft('')
+          setFileName(null)
         }
       }}
     >
@@ -166,24 +168,24 @@ export function InternalDocEditDialog({
         />
       </DialogContent>
     </Dialog>
-  );
+  )
 }
 
 type EditFormProps = {
-  doc: DocValues;
-  canEditVisibility: boolean;
-  tags: string[];
-  draft: string;
-  fileName: string | null;
-  fileRef: React.RefObject<HTMLInputElement | null>;
-  feedbackState: ReturnType<typeof useFormFeedback>["state"];
-  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
-  onDraftChange: (value: string) => void;
-  onTagKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-  onAddTag: () => void;
-  onRemoveTag: (tag: string) => void;
-  onFileChange: (name: string | null) => void;
-};
+  doc: DocValues
+  canEditVisibility: boolean
+  tags: string[]
+  draft: string
+  fileName: string | null
+  fileRef: React.RefObject<HTMLInputElement | null>
+  feedbackState: ReturnType<typeof useFormFeedback>['state']
+  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void
+  onDraftChange: (value: string) => void
+  onTagKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void
+  onAddTag: () => void
+  onRemoveTag: (tag: string) => void
+  onFileChange: (name: string | null) => void
+}
 
 function InternalDocEditForm({
   doc,
@@ -200,7 +202,7 @@ function InternalDocEditForm({
   onRemoveTag,
   onFileChange,
 }: EditFormProps) {
-  const pending = feedbackState.status === "pending";
+  const pending = feedbackState.status === 'pending'
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5">
       <FormRow label="Nombre del documento" htmlFor="edit-name" required>
@@ -221,7 +223,7 @@ function InternalDocEditForm({
         <FormRow
           label="Visibilidad"
           htmlFor="edit-visibility"
-          hint={canEditVisibility ? undefined : "Solo un administrador puede cambiarla."}
+          hint={canEditVisibility ? undefined : 'Solo un administrador puede cambiarla.'}
         >
           <Select
             id="edit-visibility"
@@ -239,7 +241,7 @@ function InternalDocEditForm({
             id="edit-effective_date"
             name="effective_date"
             type="date"
-            defaultValue={doc.effective_date ?? ""}
+            defaultValue={doc.effective_date ?? ''}
           />
         </FormRow>
 
@@ -248,7 +250,7 @@ function InternalDocEditForm({
             id="edit-expires_at"
             name="expires_at"
             type="date"
-            defaultValue={doc.expires_at ?? ""}
+            defaultValue={doc.expires_at ?? ''}
           />
         </FormRow>
       </div>
@@ -263,7 +265,7 @@ function InternalDocEditForm({
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                className="bg-muted text-muted-foreground inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs"
               >
                 {tag}
                 <button
@@ -295,7 +297,7 @@ function InternalDocEditForm({
           name="description"
           maxLength={2000}
           rows={3}
-          defaultValue={doc.description ?? ""}
+          defaultValue={doc.description ?? ''}
         />
       </FormRow>
 
@@ -322,8 +324,8 @@ function InternalDocEditForm({
             <Paperclip className="size-3.5" aria-hidden />
             Seleccionar archivo
           </Button>
-          <span className="truncate text-sm text-muted-foreground max-w-48">
-            {fileName ?? "Sin cambios"}
+          <span className="text-muted-foreground max-w-48 truncate text-sm">
+            {fileName ?? 'Sin cambios'}
           </span>
         </div>
       </FormRow>
@@ -335,5 +337,5 @@ function InternalDocEditForm({
         </SubmitButton>
       </DialogFooter>
     </form>
-  );
+  )
 }

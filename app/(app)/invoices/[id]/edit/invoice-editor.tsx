@@ -1,39 +1,41 @@
-"use client";
+'use client'
 
-import { ArrowLeft, Save } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
-import { LineItemsTable } from "@/components/finance/line-items-table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DateField } from "@/components/ui/date-field";
-import { FormRow } from "@/components/ui/form-row";
-import { Textarea } from "@/components/ui/textarea";
-import { VersionConflictDialog } from "@/components/ui/version-conflict-dialog";
-import { EMPTY_LINE_ITEM, type LineItem } from "@/lib/finance";
-import { updateInvoice } from "../../actions";
+import { ArrowLeft, Save } from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect, useRef, useState, useTransition } from 'react'
 
-export type EditableItem = LineItem;
+import { LineItemsTable } from '@/components/finance/line-items-table'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { DateField } from '@/components/ui/date-field'
+import { FormRow } from '@/components/ui/form-row'
+import { Textarea } from '@/components/ui/textarea'
+import { VersionConflictDialog } from '@/components/ui/version-conflict-dialog'
+import { EMPTY_LINE_ITEM, type LineItem } from '@/lib/finance'
+
+import { updateInvoice } from '../../actions'
+
+export type EditableItem = LineItem
 
 /**
  * Initial items may come straight from the DB without a stable client-side
  * `id` (e.g. when the invoice_items query omits it). The editor assigns a
  * UUID at mount time, so we accept items where `id` is optional.
  */
-export type InitialEditableItem = Omit<LineItem, "id"> & { id?: string };
+export type InitialEditableItem = Omit<LineItem, 'id'> & { id?: string }
 
 export type InvoiceEditorProps = {
-  id: string;
-  initialIssueDate: string;
-  initialDueDate: string | null;
-  initialNotes: string | null;
-  initialPaymentTerms: string | null;
-  initialItems: InitialEditableItem[];
-  initialVersion: number;
+  id: string
+  initialIssueDate: string
+  initialDueDate: string | null
+  initialNotes: string | null
+  initialPaymentTerms: string | null
+  initialItems: InitialEditableItem[]
+  initialVersion: number
   /** When true, fields are read-only (invoice issued). */
-  locked: boolean;
-};
+  locked: boolean
+}
 
 export function InvoiceEditor({
   id,
@@ -45,35 +47,35 @@ export function InvoiceEditor({
   initialVersion,
   locked,
 }: InvoiceEditorProps) {
-  const router = useRouter();
-  const [saving, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-  const [expectedVersion, setExpectedVersion] = useState(initialVersion);
-  const [conflictOpen, setConflictOpen] = useState(false);
+  const router = useRouter()
+  const [saving, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
+  const [expectedVersion, setExpectedVersion] = useState(initialVersion)
+  const [conflictOpen, setConflictOpen] = useState(false)
 
-  const [issueDate, setIssueDate] = useState(initialIssueDate);
-  const [dueDate, setDueDate] = useState(initialDueDate ?? "");
-  const [notes, setNotes] = useState(initialNotes ?? "");
-  const [paymentTerms, setPaymentTerms] = useState(initialPaymentTerms ?? "");
+  const [issueDate, setIssueDate] = useState(initialIssueDate)
+  const [dueDate, setDueDate] = useState(initialDueDate ?? '')
+  const [notes, setNotes] = useState(initialNotes ?? '')
+  const [paymentTerms, setPaymentTerms] = useState(initialPaymentTerms ?? '')
   const [items, setItems] = useState<EditableItem[]>(
     initialItems.length > 0
       ? initialItems.map((it) => ({ ...it, id: it.id || crypto.randomUUID() }))
       : [{ ...EMPTY_LINE_ITEM, id: crypto.randomUUID() } as EditableItem],
-  );
+  )
 
   // Track whether there are unsaved changes.
-  const [dirty, setDirty] = useState(false);
-  const isFirstRender = useRef(true);
+  const [dirty, setDirty] = useState(false)
+  const isFirstRender = useRef(true)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: react to any change in these fields
   useEffect(() => {
     if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
+      isFirstRender.current = false
+      return
     }
-    setDirty(true);
-    setError(null);
-  }, [issueDate, dueDate, notes, paymentTerms, items]);
+    setDirty(true)
+    setError(null)
+  }, [issueDate, dueDate, notes, paymentTerms, items])
 
   const buildPayload = () => ({
     id,
@@ -83,33 +85,33 @@ export function InvoiceEditor({
     notes: notes || null,
     payment_terms: paymentTerms || null,
     items,
-  });
+  })
 
   const handleSave = () => {
     startTransition(async () => {
-      const res = await updateInvoice(buildPayload());
+      const res = await updateInvoice(buildPayload())
       if (!res.ok) {
-        if (res.code === "conflict") setConflictOpen(true);
-        else setError(res.error);
+        if (res.code === 'conflict') setConflictOpen(true)
+        else setError(res.error)
       } else {
-        setExpectedVersion(res.version);
-        setDirty(false);
-        setError(null);
+        setExpectedVersion(res.version)
+        setDirty(false)
+        setError(null)
       }
-    });
-  };
+    })
+  }
 
   const handleSaveAndReturn = () => {
     startTransition(async () => {
-      const res = await updateInvoice(buildPayload());
+      const res = await updateInvoice(buildPayload())
       if (!res.ok) {
-        if (res.code === "conflict") setConflictOpen(true);
-        else setError(res.error);
+        if (res.code === 'conflict') setConflictOpen(true)
+        else setError(res.error)
       } else {
-        router.push(`/invoices/${id}`);
+        router.push(`/invoices/${id}`)
       }
-    });
-  };
+    })
+  }
 
   return (
     <>
@@ -168,7 +170,7 @@ export function InvoiceEditor({
         </div>
 
         {/* Sticky action bar */}
-        <div className="sticky bottom-0 z-10 -mx-4 -mb-4 border-t border-border bg-background/85 backdrop-blur supports-backdrop-filter:bg-background/70 md:-mx-6 md:-mb-6">
+        <div className="border-border bg-background/85 supports-backdrop-filter:bg-background/70 sticky bottom-0 z-10 -mx-4 -mb-4 border-t backdrop-blur md:-mx-6 md:-mb-6">
           <div className="flex items-center justify-between gap-4 px-4 py-3 md:px-6">
             <div className="text-sm">
               {error && <span className="text-destructive">{error}</span>}
@@ -195,11 +197,11 @@ export function InvoiceEditor({
                     onClick={handleSave}
                   >
                     <Save className="size-3.5" />
-                    {saving ? "Guardando…" : "Guardar"}
+                    {saving ? 'Guardando…' : 'Guardar'}
                   </Button>
                   <Button size="sm" disabled={saving} onClick={handleSaveAndReturn}>
                     <Save className="size-3.5" />
-                    {saving ? "Guardando…" : "Guardar y volver"}
+                    {saving ? 'Guardando…' : 'Guardar y volver'}
                   </Button>
                 </>
               )}
@@ -212,10 +214,10 @@ export function InvoiceEditor({
         entityName="factura"
         onKeepEditing={() => setConflictOpen(false)}
         onReload={() => {
-          setConflictOpen(false);
-          router.refresh();
+          setConflictOpen(false)
+          router.refresh()
         }}
       />
     </>
-  );
+  )
 }

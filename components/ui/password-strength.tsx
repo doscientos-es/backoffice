@@ -1,1 +1,1 @@
-﻿export * from "@/primitives/ui/password-strength";
+﻿export * from '@/primitives/ui/password-strength'

@@ -1,26 +1,28 @@
-"use client";
+'use client'
 
-import { Inbox, ListTodo, PartyPopper, CircleUser as UserRound } from "lucide-react";
-import { claimLead } from "@/app/(app)/leads/actions";
-import { updateTaskStatus } from "@/app/(app)/tasks/actions";
-import { useOptimisticRemoval } from "@/lib/hooks/use-optimistic-removal";
-import { MyDayColumn } from "./_components/my-day-column";
-import { getMyDayLeadsCopy, isTeamScope } from "./_components/my-day-copy";
-import { MyDayLeadItem, MyDayTaskItem } from "./_components/my-day-items";
-import { MyDayScopeSelector } from "./_components/my-day-scope-selector";
-import type { MyDayPanelProps } from "./_components/my-day-types";
+import { Inbox, ListTodo, PartyPopper, CircleUser as UserRound } from 'lucide-react'
 
-export type { MyDayPanelProps } from "./_components/my-day-types";
+import { claimLead } from '@/app/(app)/leads/actions'
+import { updateTaskStatus } from '@/app/(app)/tasks/actions'
+import { useOptimisticRemoval } from '@/lib/hooks/use-optimistic-removal'
+
+import { MyDayColumn } from './_components/my-day-column'
+import { getMyDayLeadsCopy, isTeamScope } from './_components/my-day-copy'
+import { MyDayLeadItem, MyDayTaskItem } from './_components/my-day-items'
+import { MyDayScopeSelector } from './_components/my-day-scope-selector'
+import type { MyDayPanelProps } from './_components/my-day-types'
+
+export type { MyDayPanelProps } from './_components/my-day-types'
 
 /**
  * "Tu día": a personal action queue, with an admin/owner scope selector.
  */
 export function MyDayPanel({ tasks, myLeads, unassignedLeads, scope }: MyDayPanelProps) {
-  const { items: visibleTasks, remove: completeTaskOptimistic } = useOptimisticRemoval(tasks);
+  const { items: visibleTasks, remove: completeTaskOptimistic } = useOptimisticRemoval(tasks)
   const { items: visibleUnassigned, remove: claimOptimistic } =
-    useOptimisticRemoval(unassignedLeads);
-  const teamScope = isTeamScope(scope);
-  const leadsCopy = getMyDayLeadsCopy(scope);
+    useOptimisticRemoval(unassignedLeads)
+  const teamScope = isTeamScope(scope)
+  const leadsCopy = getMyDayLeadsCopy(scope)
 
   return (
     <div className="flex flex-col gap-3">
@@ -37,7 +39,7 @@ export function MyDayPanel({ tasks, myLeads, unassignedLeads, scope }: MyDayPane
           href="/tasks"
           empty={
             <>
-              No tienes acciones pendientes.{" "}
+              No tienes acciones pendientes.{' '}
               <PartyPopper aria-hidden="true" className="inline size-4" />
             </>
           }
@@ -48,7 +50,7 @@ export function MyDayPanel({ tasks, myLeads, unassignedLeads, scope }: MyDayPane
               task={t}
               showAssignee={teamScope}
               onCompleteAction={(id) =>
-                completeTaskOptimistic(id, () => updateTaskStatus({ taskId: id, status: "done" }))
+                completeTaskOptimistic(id, () => updateTaskStatus({ taskId: id, status: 'done' }))
               }
             />
           ))}
@@ -84,5 +86,5 @@ export function MyDayPanel({ tasks, myLeads, unassignedLeads, scope }: MyDayPane
         </MyDayColumn>
       </div>
     </div>
-  );
+  )
 }

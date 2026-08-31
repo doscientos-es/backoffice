@@ -1,1 +1,1 @@
-export * from "@/primitives/ui/form-card-skeleton";
+export * from '@/primitives/ui/form-card-skeleton'

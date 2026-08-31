@@ -3,8 +3,8 @@ name: Send daily responsibility summary
 on:
   schedule:
     # 09:30 Europe/Madrid: one UTC slot for summer time and another for winter time.
-    - cron: "30 7 * * 1-5"
-    - cron: "30 8 * * 1-5"
+    - cron: '30 7 * * 1-5'
+    - cron: '30 8 * * 1-5'
   workflow_dispatch:
 
 jobs:

@@ -1,9 +1,10 @@
-"use client";
+'use client'
 
-import { TriangleAlert as AlertTriangle, Undo2 as RotateCcw } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { Button } from "@/components/ui/button";
+import { TriangleAlert as AlertTriangle, Undo2 as RotateCcw } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
+
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -12,9 +13,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { reopenProposal } from "../actions";
+} from '@/components/ui/dialog'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+
+import { reopenProposal } from '../actions'
 
 /**
  * Lets owners/admins reopen an accepted or rejected proposal so adjustments
@@ -22,24 +24,24 @@ import { reopenProposal } from "../actions";
  * resending it for re-acceptance.
  */
 export function ReopenProposalButton({ proposalId }: { proposalId: string }) {
-  const router = useRouter();
-  const feedback = useFormFeedback({ successResetMs: 3000 });
-  const [pending, startTransition] = useTransition();
-  const [open, setOpen] = useState(false);
+  const router = useRouter()
+  const feedback = useFormFeedback({ successResetMs: 3000 })
+  const [pending, startTransition] = useTransition()
+  const [open, setOpen] = useState(false)
 
   const handleConfirm = () => {
-    feedback.setPending();
+    feedback.setPending()
     startTransition(async () => {
-      const res = await reopenProposal({ id: proposalId });
+      const res = await reopenProposal({ id: proposalId })
       if (!res.ok) {
-        feedback.setError(res.error);
-        return;
+        feedback.setError(res.error)
+        return
       }
-      feedback.setSuccess("Propuesta reabierta");
-      setOpen(false);
-      router.refresh();
-    });
-  };
+      feedback.setSuccess('Propuesta reabierta')
+      setOpen(false)
+      router.refresh()
+    })
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -72,10 +74,10 @@ export function ReopenProposalButton({ proposalId }: { proposalId: string }) {
             Cancelar
           </Button>
           <Button variant="outline" size="sm" onClick={handleConfirm} disabled={pending}>
-            {pending ? "Reabriendo…" : "Confirmar reapertura"}
+            {pending ? 'Reabriendo…' : 'Confirmar reapertura'}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

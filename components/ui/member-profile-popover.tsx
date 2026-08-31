@@ -1,12 +1,13 @@
-"use client";
+'use client'
 
-import { UserRound } from "lucide-react";
-import Link from "next/link";
-import type { ReactNode } from "react";
-import type { AvatarMember } from "@/components/ui/member-avatar";
-import { Button, Popover, PopoverTrigger } from "@doscientos/ui";
+import { Button, Popover, PopoverTrigger } from '@doscientos/ui'
+import { UserRound } from 'lucide-react'
+import Link from 'next/link'
+import type { ReactNode } from 'react'
 
-export type ProfiledMember = AvatarMember & { id: string };
+import type { AvatarMember } from '@/components/ui/member-avatar'
+
+export type ProfiledMember = AvatarMember & { id: string }
 
 /**
  * Compact entry point to a member's profile. It is deliberately kept separate
@@ -17,9 +18,9 @@ export function MemberProfilePopover({
   avatar,
   profileAvatar,
 }: {
-  member: ProfiledMember;
-  avatar: ReactNode;
-  profileAvatar: ReactNode;
+  member: ProfiledMember
+  avatar: ReactNode
+  profileAvatar: ReactNode
 }) {
   return (
     <PopoverTrigger>
@@ -31,7 +32,7 @@ export function MemberProfilePopover({
         title={`Ver información de ${member.name}`}
         onPointerDown={(event) => event.stopPropagation()}
         onClick={(event) => event.stopPropagation()}
-        className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+        className="focus-visible:ring-ring/50 shrink-0 rounded-full focus-visible:ring-2 focus-visible:outline-none"
       >
         {avatar}
       </Button>
@@ -44,18 +45,18 @@ export function MemberProfilePopover({
         <div className="flex items-center gap-2 px-1 py-1.5">
           {profileAvatar}
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-foreground">{member.name}</p>
-            <p className="text-xs text-muted-foreground">Miembro del equipo</p>
+            <p className="text-foreground truncate text-sm font-semibold">{member.name}</p>
+            <p className="text-muted-foreground text-xs">Miembro del equipo</p>
           </div>
         </div>
         <Link
           href={`/team/${member.id}`}
-          className="mt-1 flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-foreground transition-colors hover:bg-muted"
+          className="text-foreground hover:bg-muted mt-1 flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors"
         >
           <UserRound className="size-3.5" aria-hidden />
           Ver perfil
         </Link>
       </Popover>
     </PopoverTrigger>
-  );
+  )
 }

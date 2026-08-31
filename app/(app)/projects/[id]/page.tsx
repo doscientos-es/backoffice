@@ -1,57 +1,59 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { RemindersSection } from "@/app/(app)/inicio/_components/reminders-section";
-import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
-import { PageHeader } from "@/components/layout/page-header";
-import { CopyPortalLink } from "@/components/portal/copy-portal-link";
-import { PortalAccessControls } from "@/components/portal/portal-access-controls";
-import { AttachmentSection } from "@/components/ui/attachment-section";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CopySummaryButton } from "@/components/ui/copy-summary-button";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { requireUser } from "@/lib/auth";
-import { githubDefaultInstallationId, isAIEnabled } from "@/lib/env";
-import { computeProjectProfitability } from "@/lib/finance";
-import { getProjectWorkspace } from "@/lib/projects/queries";
-import { INVOICE_STATUS, PROJECT_STATUS, PROPOSAL_STATUS } from "@/lib/status";
-import { formatDate, formatEUR } from "@/lib/utils";
-import { ScheduleReminderDialog } from "../../reminders/schedule-reminder-dialog";
-import { TaskCreateDialog } from "../../tasks/task-create-dialog";
-import { updateProjectPortalAccess } from "../actions";
-import { GitHubModeBadge } from "../github-mode-badge";
-import type { GitHubSyncMode } from "../github-sync-section";
-import { AiKickoffPanel } from "./ai-kickoff-panel";
-import { type ChecklistItemRow, ChecklistSection } from "./checklist-section";
-import { ClientUpdatePanel } from "./client-update-panel";
-import { DeleteProjectButton } from "./delete-project-button";
-import { LinkProposalButton } from "./link-proposal-button";
-import { MonthlyInvoiceSection } from "./monthly-invoice-section";
-import { ProjectEditDialog } from "./project-edit-dialog";
-import { ProjectTasksViewToggle } from "./project-tasks-view-toggle";
-import { type KanbanTask, TasksKanban } from "./tasks/tasks-kanban";
-import { type WorkLogRow, WorkLogSection } from "./work-log-section";
-import { WorkspacePathsForm } from "./workspace-paths-form";
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
 
-export const dynamic = "force-dynamic";
+import { RemindersSection } from '@/app/(app)/inicio/_components/reminders-section'
+import { DetailGrid, DetailRow } from '@/components/layout/detail-grid'
+import { PageHeader } from '@/components/layout/page-header'
+import { CopyPortalLink } from '@/components/portal/copy-portal-link'
+import { PortalAccessControls } from '@/components/portal/portal-access-controls'
+import { AttachmentSection } from '@/components/ui/attachment-section'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { CopySummaryButton } from '@/components/ui/copy-summary-button'
+import { StatusBadge } from '@/components/ui/status-badge'
+import { requireUser } from '@/lib/auth'
+import { githubDefaultInstallationId, isAIEnabled } from '@/lib/env'
+import { computeProjectProfitability } from '@/lib/finance'
+import { getProjectWorkspace } from '@/lib/projects/queries'
+import { INVOICE_STATUS, PROJECT_STATUS, PROPOSAL_STATUS } from '@/lib/status'
+import { formatDate, formatEUR } from '@/lib/utils'
+
+import { ScheduleReminderDialog } from '../../reminders/schedule-reminder-dialog'
+import { TaskCreateDialog } from '../../tasks/task-create-dialog'
+import { updateProjectPortalAccess } from '../actions'
+import { GitHubModeBadge } from '../github-mode-badge'
+import type { GitHubSyncMode } from '../github-sync-section'
+import { AiKickoffPanel } from './ai-kickoff-panel'
+import { type ChecklistItemRow, ChecklistSection } from './checklist-section'
+import { ClientUpdatePanel } from './client-update-panel'
+import { DeleteProjectButton } from './delete-project-button'
+import { LinkProposalButton } from './link-proposal-button'
+import { MonthlyInvoiceSection } from './monthly-invoice-section'
+import { ProjectEditDialog } from './project-edit-dialog'
+import { ProjectTasksViewToggle } from './project-tasks-view-toggle'
+import { type KanbanTask, TasksKanban } from './tasks/tasks-kanban'
+import { type WorkLogRow, WorkLogSection } from './work-log-section'
+import { WorkspacePathsForm } from './workspace-paths-form'
+
+export const dynamic = 'force-dynamic'
 
 export default async function ProjectDetailPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ tasks_view?: string }>;
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ tasks_view?: string }>
 }) {
-  const { id } = await params;
-  const { tasks_view } = await searchParams;
-  const isBoard = tasks_view === "board";
-  const user = await requireUser();
-  const canEdit = user.role !== "viewer";
+  const { id } = await params
+  const { tasks_view } = await searchParams
+  const isBoard = tasks_view === 'board'
+  const user = await requireUser()
+  const canEdit = user.role !== 'viewer'
   const workspace = await getProjectWorkspace(id, {
     includeClients: canEdit,
-    tasksView: isBoard ? "board" : "list",
-  });
-  if (!workspace) notFound();
+    tasksView: isBoard ? 'board' : 'list',
+  })
+  if (!workspace) notFound()
   const {
     project,
     client,
@@ -69,22 +71,22 @@ export default async function ProjectDetailPage({
     unlinkedProposals,
     reminders,
     clientRequests,
-  } = workspace;
+  } = workspace
 
   const pendingReminders = ((reminders ?? []) as Array<Record<string, unknown>>).map((r) => ({
     id: r.id as string,
     title: r.title as string,
     remind_at: r.start_at as string,
-  }));
+  }))
 
   const workLogs: WorkLogRow[] = ((workLogsData ?? []) as Array<Record<string, unknown>>).map(
     (w) => {
       const m = w.team_members as {
-        id: string;
-        name: string;
-        avatar_url: string | null;
-        github_handle: string | null;
-      } | null;
+        id: string
+        name: string
+        avatar_url: string | null
+        github_handle: string | null
+      } | null
       return {
         id: w.id as string,
         work_date: w.work_date as string,
@@ -94,31 +96,31 @@ export default async function ProjectDetailPage({
         note: (w.note as string | null) ?? null,
         member: m
           ? {
-            id: m.id,
-            name: m.name,
-            avatar_url: m.avatar_url ?? null,
-            github_handle: m.github_handle ?? null,
-          }
+              id: m.id,
+              name: m.name,
+              avatar_url: m.avatar_url ?? null,
+              github_handle: m.github_handle ?? null,
+            }
           : null,
-      };
+      }
     },
-  );
+  )
   const invoicedTotal = ((invoiceTotals ?? []) as Array<{ total: number | string | null }>).reduce(
     (sum, r) => sum + Number(r.total ?? 0),
     0,
-  );
+  )
 
   // Profitability: revenue excludes drafts/cancelled, hours are valued with the
   // company-wide internal hourly cost (Ajustes › Empresa), expenses exclude cancelled.
   const computableRevenue = (
     (invoiceTotals ?? []) as Array<{ total: number | string | null; status: string | null }>
   )
-    .filter((r) => r.status !== "draft" && r.status !== "cancelled")
-    .reduce((sum, r) => sum + Number(r.total ?? 0), 0);
+    .filter((r) => r.status !== 'draft' && r.status !== 'cancelled')
+    .reduce((sum, r) => sum + Number(r.total ?? 0), 0)
   const expensesTotal = ((expenseTotals ?? []) as Array<{ total: number | string | null }>).reduce(
     (sum, r) => sum + Number(r.total ?? 0),
     0,
-  );
+  )
   const profitability = computeProjectProfitability({
     revenue: computableRevenue,
     hours: workLogs.reduce((sum, w) => sum + w.hours, 0),
@@ -127,7 +129,7 @@ export default async function ProjectDetailPage({
         ?.internal_hourly_cost ?? 0,
     ),
     expenses: expensesTotal,
-  });
+  })
 
   return (
     <div className="flex flex-col gap-6">
@@ -135,7 +137,7 @@ export default async function ProjectDetailPage({
         title={project.name as string}
         description={client?.name}
         breadcrumbs={[
-          { label: "Proyectos", href: "/projects" },
+          { label: 'Proyectos', href: '/projects' },
           ...(client ? [{ label: client.name, href: `/clients/${client.id}` }] : []),
           { label: project.name as string },
         ]}
@@ -143,35 +145,35 @@ export default async function ProjectDetailPage({
           <div className="flex items-center gap-2">
             <CopySummaryButton
               lines={(() => {
-                const parts: string[] = [];
+                const parts: string[] = []
                 parts.push(
                   [`🗂️ ${project.name as string}`, client && `— ${client.name}`]
                     .filter(Boolean)
-                    .join(" "),
-                );
+                    .join(' '),
+                )
                 parts.push(
                   [
                     `Estado: ${PROJECT_STATUS[project.status as keyof typeof PROJECT_STATUS]?.label ?? project.status}`,
                     (project.billing_type as string | null) &&
-                    `Facturación: ${project.billing_type as string}`,
+                      `Facturación: ${project.billing_type as string}`,
                   ]
                     .filter(Boolean)
-                    .join(" · "),
-                );
+                    .join(' · '),
+                )
                 const dates = [
                   (project.starts_at as string | null) &&
-                  `Inicio: ${formatDate(project.starts_at as string)}`,
+                    `Inicio: ${formatDate(project.starts_at as string)}`,
                   (project.ends_at as string | null) &&
-                  `Fin: ${formatDate(project.ends_at as string)}`,
-                ].filter(Boolean);
-                if (dates.length) parts.push(dates.join(" · "));
-                return parts;
+                    `Fin: ${formatDate(project.ends_at as string)}`,
+                ].filter(Boolean)
+                if (dates.length) parts.push(dates.join(' · '))
+                return parts
               })()}
               urlPath={`/projects/${id}`}
             />
-            <GitHubModeBadge mode={(project.github_sync_mode as GitHubSyncMode | null) ?? "none"} />
+            <GitHubModeBadge mode={(project.github_sync_mode as GitHubSyncMode | null) ?? 'none'} />
             <StatusBadge meta={PROJECT_STATUS} value={project.status as string} />
-            {user.role === "owner" || user.role === "admin" ? (
+            {user.role === 'owner' || user.role === 'admin' ? (
               <Button asChild size="sm" variant="outline">
                 <Link href={`/webs/new?project_id=${id}`}>Nueva web</Link>
               </Button>
@@ -180,17 +182,17 @@ export default async function ProjectDetailPage({
               <ProjectEditDialog
                 project={{
                   id: project.id as string,
-                  client_id: (client?.id as string | undefined) ?? "",
+                  client_id: (client?.id as string | undefined) ?? '',
                   name: project.name as string,
                   status: project.status as string,
                   starts_at: (project.starts_at as string | null) ?? null,
                   ends_at: (project.ends_at as string | null) ?? null,
                   description: (project.description as string | null) ?? null,
-                  billing_type: (project.billing_type as "fixed" | "hourly" | null) ?? "fixed",
+                  billing_type: (project.billing_type as 'fixed' | 'hourly' | null) ?? 'fixed',
                   hourly_rate: project.hourly_rate != null ? Number(project.hourly_rate) : null,
                   hourly_vat_rate:
                     project.hourly_vat_rate != null ? Number(project.hourly_vat_rate) : null,
-                  github_sync_mode: (project.github_sync_mode as GitHubSyncMode | null) ?? "none",
+                  github_sync_mode: (project.github_sync_mode as GitHubSyncMode | null) ?? 'none',
                   github_repo: (project.github_repo as string | null) ?? null,
                   github_installation_id: (project.github_installation_id as number | null) ?? null,
                   github_auto_sync: (project.github_auto_sync as boolean | null) ?? true,
@@ -217,7 +219,7 @@ export default async function ProjectDetailPage({
                   {client.name}
                 </Link>
               ) : (
-                "—"
+                '—'
               )}
             </DetailRow>
             <DetailRow label="Estado">{project.status as string}</DetailRow>
@@ -231,7 +233,7 @@ export default async function ProjectDetailPage({
                   href={project.github_repo as string}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-primary hover:underline truncate"
+                  className="text-primary truncate hover:underline"
                 >
                   {project.github_repo as string}
                 </a>
@@ -239,11 +241,11 @@ export default async function ProjectDetailPage({
             ) : null}
           </DetailGrid>
           {project.description ? (
-            <div className="mt-4 border-t border-border pt-3">
-              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <div className="border-border mt-4 border-t pt-3">
+              <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wide uppercase">
                 Descripción
               </p>
-              <p className="whitespace-pre-wrap text-sm">{project.description as string}</p>
+              <p className="text-sm whitespace-pre-wrap">{project.description as string}</p>
             </div>
           ) : null}
         </CardContent>
@@ -287,7 +289,7 @@ export default async function ProjectDetailPage({
         </CardContent>
       </Card>
 
-      {canEdit && (proposals ?? []).some((proposal) => proposal.status === "accepted") ? (
+      {canEdit && (proposals ?? []).some((proposal) => proposal.status === 'accepted') ? (
         <Card>
           <CardHeader>
             <CardTitle>Arranque asistido</CardTitle>
@@ -318,7 +320,7 @@ export default async function ProjectDetailPage({
             {pendingReminders.length > 0 ? (
               <RemindersSection reminders={pendingReminders} />
             ) : (
-              <p className="text-sm text-muted-foreground">Sin avisos programados.</p>
+              <p className="text-muted-foreground text-sm">Sin avisos programados.</p>
             )}
           </CardContent>
         </Card>
@@ -328,7 +330,7 @@ export default async function ProjectDetailPage({
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Tareas</CardTitle>
           <div className="flex items-center gap-2">
-            <ProjectTasksViewToggle view={isBoard ? "board" : "list"} />
+            <ProjectTasksViewToggle view={isBoard ? 'board' : 'list'} />
             <TaskCreateDialog
               projectId={id}
               members={(members ?? []) as Array<{ id: string; name: string }>}
@@ -336,9 +338,9 @@ export default async function ProjectDetailPage({
             />
           </div>
         </CardHeader>
-        <CardContent className={isBoard ? "px-4 pb-4 pt-0" : "px-0"}>
+        <CardContent className={isBoard ? 'px-4 pt-0 pb-4' : 'px-0'}>
           {!tasks || tasks.length === 0 ? (
-            <p className="px-6 py-2 text-sm text-muted-foreground">Sin tareas.</p>
+            <p className="text-muted-foreground px-6 py-2 text-sm">Sin tareas.</p>
           ) : isBoard ? (
             <TasksKanban
               projectId={id}
@@ -346,13 +348,13 @@ export default async function ProjectDetailPage({
               currentUserId={user.id}
               tasks={(
                 tasks as unknown as Array<{
-                  id: string;
-                  title: string;
-                  status: KanbanTask["status"];
-                  priority: KanbanTask["priority"];
-                  due_date: string | null;
-                  kanban_order: string;
-                  team_members: { id: string; name: string } | null;
+                  id: string
+                  title: string
+                  status: KanbanTask['status']
+                  priority: KanbanTask['priority']
+                  due_date: string | null
+                  kanban_order: string
+                  team_members: { id: string; name: string } | null
                 }>
               ).map((t) => ({
                 id: t.id,
@@ -365,7 +367,7 @@ export default async function ProjectDetailPage({
               }))}
             />
           ) : (
-            <ul className="divide-y divide-border">
+            <ul className="divide-border divide-y">
               {tasks.map((t) => (
                 <li
                   key={t.id as string}
@@ -374,7 +376,7 @@ export default async function ProjectDetailPage({
                   <Link href={`/tasks/${t.id as string}`} className="font-medium hover:underline">
                     {t.title as string}
                   </Link>
-                  <span className="text-xs text-muted-foreground">{t.status as string}</span>
+                  <span className="text-muted-foreground text-xs">{t.status as string}</span>
                 </li>
               ))}
             </ul>
@@ -388,21 +390,21 @@ export default async function ProjectDetailPage({
         </CardHeader>
         <CardContent>
           {!clientRequests || clientRequests.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Sin solicitudes recibidas.</p>
+            <p className="text-muted-foreground text-sm">Sin solicitudes recibidas.</p>
           ) : (
-            <ul className="divide-y divide-border">
+            <ul className="divide-border divide-y">
               {clientRequests.map((request) => (
                 <li key={request.id as string} className="py-3 first:pt-0 last:pb-0">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="font-medium">{request.subject as string}</p>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       {request.status as string} · {formatDate(request.created_at as string)}
                     </span>
                   </div>
-                  <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
+                  <p className="text-muted-foreground mt-1 text-sm whitespace-pre-wrap">
                     {request.body as string}
                   </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
+                  <p className="text-muted-foreground mt-1 text-xs">
                     {request.requester_name as string} · {request.category as string}
                   </p>
                 </li>
@@ -425,12 +427,12 @@ export default async function ProjectDetailPage({
         projectId={id}
         logs={workLogs}
         invoicedTotal={invoicedTotal}
-        billingType={(project.billing_type as "fixed" | "hourly" | null) ?? "fixed"}
+        billingType={(project.billing_type as 'fixed' | 'hourly' | null) ?? 'fixed'}
         hourlyRate={project.hourly_rate != null ? Number(project.hourly_rate) : null}
         canEdit={canEdit}
       />
 
-      {canEdit && project.billing_type === "hourly" && Number(project.hourly_rate ?? 0) > 0 ? (
+      {canEdit && project.billing_type === 'hourly' && Number(project.hourly_rate ?? 0) > 0 ? (
         <MonthlyInvoiceSection
           projectId={id}
           hourlyRate={Number(project.hourly_rate)}
@@ -464,42 +466,43 @@ export default async function ProjectDetailPage({
             <ProfitStat label="Gastos" value={formatEUR(profitability.expenses)} />
             <ProfitStat label="Coste total" value={formatEUR(profitability.totalCost)} />
           </dl>
-          <div className="flex flex-wrap items-end justify-between gap-4 border-t border-border pt-4">
+          <div className="border-border flex flex-wrap items-end justify-between gap-4 border-t pt-4">
             <div>
-              <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <dt className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                 Margen
               </dt>
               <dd
-                className={`mt-1 text-2xl font-semibold tabular-nums ${profitability.margin >= 0
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-red-600 dark:text-red-400"
-                  }`}
+                className={`mt-1 text-2xl font-semibold tabular-nums ${
+                  profitability.margin >= 0
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-red-600 dark:text-red-400'
+                }`}
               >
                 {formatEUR(profitability.margin)}
                 {profitability.marginPct !== null ? (
-                  <span className="ml-2 text-sm font-medium text-muted-foreground">
+                  <span className="text-muted-foreground ml-2 text-sm font-medium">
                     {profitability.marginPct}%
                   </span>
                 ) : null}
               </dd>
             </div>
             <div className="text-right">
-              <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <dt className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                 €/h efectivo
               </dt>
               <dd className="mt-1 text-lg font-medium tabular-nums">
                 {profitability.effectiveRate !== null
                   ? `${formatEUR(profitability.effectiveRate)}/h`
-                  : "—"}
+                  : '—'}
               </dd>
             </div>
           </div>
           {profitability.hourlyCost === 0 ? (
-            <p className="text-xs text-muted-foreground">
-              Configura el{" "}
+            <p className="text-muted-foreground text-xs">
+              Configura el{' '}
               <Link href="/settings/company" className="text-primary hover:underline">
                 coste/hora interno
-              </Link>{" "}
+              </Link>{' '}
               para valorar las horas en el margen.
             </p>
           ) : null}
@@ -516,9 +519,9 @@ export default async function ProjectDetailPage({
                 projectId={id}
                 unlinkdProposals={
                   (unlinkedProposals ?? []) as {
-                    id: string;
-                    number: string | null;
-                    title: string | null;
+                    id: string
+                    number: string | null
+                    title: string | null
                   }[]
                 }
               />
@@ -531,9 +534,9 @@ export default async function ProjectDetailPage({
           </CardHeader>
           <CardContent className="px-0">
             {!proposals || proposals.length === 0 ? (
-              <p className="px-6 py-2 text-sm text-muted-foreground">Sin propuestas.</p>
+              <p className="text-muted-foreground px-6 py-2 text-sm">Sin propuestas.</p>
             ) : (
-              <ul className="divide-y divide-border">
+              <ul className="divide-border divide-y">
                 {proposals.map((p) => (
                   <li
                     key={p.id as string}
@@ -547,7 +550,7 @@ export default async function ProjectDetailPage({
                     </Link>
                     <div className="flex shrink-0 items-center gap-2">
                       <StatusBadge meta={PROPOSAL_STATUS} value={p.status as string} />
-                      <span className="tabular-nums text-xs text-muted-foreground">
+                      <span className="text-muted-foreground text-xs tabular-nums">
                         {formatEUR(Number(p.total ?? 0))}
                       </span>
                     </div>
@@ -565,9 +568,9 @@ export default async function ProjectDetailPage({
           </CardHeader>
           <CardContent className="px-0">
             {!invoices || invoices.length === 0 ? (
-              <p className="px-6 py-2 text-sm text-muted-foreground">Sin facturas.</p>
+              <p className="text-muted-foreground px-6 py-2 text-sm">Sin facturas.</p>
             ) : (
-              <ul className="divide-y divide-border">
+              <ul className="divide-border divide-y">
                 {invoices.map((inv) => (
                   <li
                     key={inv.id as string}
@@ -581,7 +584,7 @@ export default async function ProjectDetailPage({
                     </Link>
                     <div className="flex shrink-0 items-center gap-2">
                       <StatusBadge meta={INVOICE_STATUS} value={inv.status as string} />
-                      <span className="tabular-nums text-xs text-muted-foreground">
+                      <span className="text-muted-foreground text-xs tabular-nums">
                         {formatEUR(Number(inv.total ?? 0))}
                       </span>
                     </div>
@@ -596,20 +599,20 @@ export default async function ProjectDetailPage({
           entityType="project"
           entityId={id}
           attachments={
-            (attachments ?? []) as import("@/components/ui/attachment-section").AttachmentItem[]
+            (attachments ?? []) as import('@/components/ui/attachment-section').AttachmentItem[]
           }
           canEdit={canEdit}
         />
       </div>
     </div>
-  );
+  )
 }
 
 function ProfitStat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</dt>
+      <dt className="text-muted-foreground text-xs font-medium tracking-wide uppercase">{label}</dt>
       <dd className="mt-0.5 text-sm font-medium tabular-nums">{value}</dd>
     </div>
-  );
+  )
 }

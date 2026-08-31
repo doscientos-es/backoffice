@@ -1,102 +1,97 @@
-import { TriangleAlert } from "lucide-react";
-import type { Metadata } from "next";
-import { ListControls } from "@/components/layout/list-controls";
-import { PageHeader } from "@/components/layout/page-header";
-import { Card, CardContent } from "@/components/ui/card";
-import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
-import { isAIEnabled } from "@/lib/ai";
-import { requireUser } from "@/lib/auth";
-import { isGoogleEnabled } from "@/lib/env";
-import { SELECTABLE_LEAD_STATUSES } from "@/lib/leads/pipeline";
-import { listLeads } from "@/lib/leads/queries";
+import { TriangleAlert } from 'lucide-react'
+import type { Metadata } from 'next'
+
+import { ListControls } from '@/components/layout/list-controls'
+import { PageHeader } from '@/components/layout/page-header'
+import { Card, CardContent } from '@/components/ui/card'
+import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from '@/components/ui/empty-state'
+import { isAIEnabled } from '@/lib/ai'
+import { requireUser } from '@/lib/auth'
+import { isGoogleEnabled } from '@/lib/env'
+import { SELECTABLE_LEAD_STATUSES } from '@/lib/leads/pipeline'
+import { listLeads } from '@/lib/leads/queries'
 import {
   LEAD_BOARD_LIMIT,
   LEAD_LIST_PAGE_SIZE,
   LEAD_SORT_COLUMNS,
   type LeadAttentionFilter,
-} from "@/lib/leads/types";
-import { listActiveMembers } from "@/lib/members/queries";
-import { LEAD_STATUS, type LeadStatus } from "@/lib/status";
-import { parseSortParam } from "@/lib/utils/search-params";
-import { LeadCreateDialog } from "./lead-create-dialog";
-import { LEAD_SOURCES, SOLUTION_TYPES } from "./lead-form-fields";
-import { LeadsKanban } from "./leads-kanban";
-import { LeadsList } from "./leads-list";
-import { LeadsViewToggle } from "./view-toggle";
+} from '@/lib/leads/types'
+import { listActiveMembers } from '@/lib/members/queries'
+import { LEAD_STATUS, type LeadStatus } from '@/lib/status'
+import { parseSortParam } from '@/lib/utils/search-params'
 
-export const metadata: Metadata = { title: "Leads · doscientos" };
-export const dynamic = "force-dynamic";
+import { LeadCreateDialog } from './lead-create-dialog'
+import { LEAD_SOURCES, SOLUTION_TYPES } from './lead-form-fields'
+import { LeadsKanban } from './leads-kanban'
+import { LeadsList } from './leads-list'
+import { LeadsViewToggle } from './view-toggle'
+
+export const metadata: Metadata = { title: 'Leads · doscientos' }
+export const dynamic = 'force-dynamic'
 
 /** `qualifying` is omitted: it is folded into `in_conversation` when filtering. */
 const STATUS_FILTER_OPTIONS = SELECTABLE_LEAD_STATUSES.map((value) => ({
   value,
   label: LEAD_STATUS[value].label,
-}));
+}))
 
-const SOURCE_FILTER_OPTIONS = LEAD_SOURCES.map((s) => ({ value: s, label: s }));
-const SOLUTION_FILTER_OPTIONS = SOLUTION_TYPES.map((s) => ({ value: s, label: s }));
+const SOURCE_FILTER_OPTIONS = LEAD_SOURCES.map((s) => ({ value: s, label: s }))
+const SOLUTION_FILTER_OPTIONS = SOLUTION_TYPES.map((s) => ({ value: s, label: s }))
 
 const ATTENTION_FILTER_OPTIONS: { value: LeadAttentionFilter; label: string }[] = [
-  { value: "stale", label: "Estancados" },
-  { value: "unassigned", label: "Sin responsable" },
-  { value: "urgent", label: "Urgencia inmediata" },
-];
+  { value: 'stale', label: 'Estancados' },
+  { value: 'unassigned', label: 'Sin responsable' },
+  { value: 'urgent', label: 'Urgencia inmediata' },
+]
 
-const LEAD_SAVED_VIEW_FILTER_KEYS = [
-  "q",
-  "status",
-  "source",
-  "solution",
-  "assignee",
-  "attention",
-];
+const LEAD_SAVED_VIEW_FILTER_KEYS = ['q', 'status', 'source', 'solution', 'assignee', 'attention']
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 export default async function LeadsPage({
   searchParams,
 }: {
   searchParams: Promise<{
-    view?: string;
-    q?: string;
-    status?: string;
-    source?: string;
-    solution?: string;
-    assignee?: string;
-    attention?: string;
-    ids?: string;
-    page?: string;
-  }>;
+    view?: string
+    q?: string
+    status?: string
+    source?: string
+    solution?: string
+    assignee?: string
+    attention?: string
+    ids?: string
+    page?: string
+  }>
 }) {
-  const sp = await searchParams;
-  const view: "board" | "list" = sp.view === "list" ? "list" : "board";
-  const q = (sp.q ?? "").trim();
-  const status = (LEAD_STATUS as Record<string, unknown>)[sp.status ?? ""]
+  const sp = await searchParams
+  const view: 'board' | 'list' = sp.view === 'list' ? 'list' : 'board'
+  const q = (sp.q ?? '').trim()
+  const status = (LEAD_STATUS as Record<string, unknown>)[sp.status ?? '']
     ? (sp.status as LeadStatus)
-    : null;
-  const source = (LEAD_SOURCES as readonly string[]).includes(sp.source ?? "")
+    : null
+  const source = (LEAD_SOURCES as readonly string[]).includes(sp.source ?? '')
     ? (sp.source as string)
-    : null;
-  const solutionType = (SOLUTION_TYPES as readonly string[]).includes(sp.solution ?? "")
+    : null
+  const solutionType = (SOLUTION_TYPES as readonly string[]).includes(sp.solution ?? '')
     ? (sp.solution as string)
-    : null;
-  const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
+    : null
+  const page = Math.max(1, Number.parseInt(sp.page ?? '1', 10) || 1)
   const leadIds = [
-    ...new Set((sp.ids ?? "").split(",").filter((id) => UUID_PATTERN.test(id))),
-  ].slice(0, 25);
-  const { sort, dir } = parseSortParam(sp, LEAD_SORT_COLUMNS, "created_at", "desc");
+    ...new Set((sp.ids ?? '').split(',').filter((id) => UUID_PATTERN.test(id))),
+  ].slice(0, 25)
+  const { sort, dir } = parseSortParam(sp, LEAD_SORT_COLUMNS, 'created_at', 'desc')
 
-  const user = await requireUser();
-  const aiEnabled = isAIEnabled();
-  const googleEnabled = isGoogleEnabled();
-  const canEdit = user.role !== "viewer";
+  const user = await requireUser()
+  const aiEnabled = isAIEnabled()
+  const googleEnabled = isGoogleEnabled()
+  const canEdit = user.role !== 'viewer'
 
-  const members = await listActiveMembers();
-  const memberIds = new Set(members.map((m) => m.id));
-  const assignee = memberIds.has(sp.assignee ?? "") ? (sp.assignee as string) : null;
+  const members = await listActiveMembers()
+  const memberIds = new Set(members.map((m) => m.id))
+  const assignee = memberIds.has(sp.assignee ?? '') ? (sp.assignee as string) : null
   const attention = ATTENTION_FILTER_OPTIONS.some((option) => option.value === sp.attention)
     ? (sp.attention as LeadAttentionFilter)
-    : null;
+    : null
 
   const {
     leads: enrichedLeads,
@@ -114,7 +109,7 @@ export default async function LeadsPage({
     page,
     sort,
     dir,
-  });
+  })
 
   const ASSIGNEE_FILTER_OPTIONS = members.map((m) => ({
     value: m.id,
@@ -124,18 +119,18 @@ export default async function LeadsPage({
       avatar_url: m.avatar_url,
       github_handle: m.github_handle,
     },
-  }));
+  }))
 
-  const boardCapped = view === "board" && enrichedLeads.length >= LEAD_BOARD_LIMIT;
+  const boardCapped = view === 'board' && enrichedLeads.length >= LEAD_BOARD_LIMIT
 
   const actions = (
     <div className="flex items-center gap-2">
       <LeadsViewToggle view={view} />
       <LeadCreateDialog />
     </div>
-  );
+  )
 
-  if (view === "list") {
+  if (view === 'list') {
     const hasFilters =
       leadIds.length > 0 ||
       q.length > 0 ||
@@ -143,7 +138,7 @@ export default async function LeadsPage({
       !!source ||
       !!solutionType ||
       !!assignee ||
-      !!attention;
+      !!attention
     return (
       <LeadsList
         leads={enrichedLeads}
@@ -151,47 +146,47 @@ export default async function LeadsPage({
         canEdit={canEdit}
         members={members}
         senderName={user.name}
-        title={leadIds.length ? "Leads pendientes del aviso" : "Leads"}
+        title={leadIds.length ? 'Leads pendientes del aviso' : 'Leads'}
         actions={actions}
         error={error ?? undefined}
-        empty={hasFilters ? "Sin coincidencias." : "Aún no hay leads."}
+        empty={hasFilters ? 'Sin coincidencias.' : 'Aún no hay leads.'}
         emptyAction={<LeadCreateDialog />}
         searchKey="q"
         searchPlaceholder="Buscar por nombre, empresa o email…"
         controlsPresentation="default"
         filters={[
-          { key: "status", label: "Estado", options: STATUS_FILTER_OPTIONS },
-          { key: "source", label: "Origen", options: SOURCE_FILTER_OPTIONS },
-          { key: "solution", label: "Necesidad", options: SOLUTION_FILTER_OPTIONS },
+          { key: 'status', label: 'Estado', options: STATUS_FILTER_OPTIONS },
+          { key: 'source', label: 'Origen', options: SOURCE_FILTER_OPTIONS },
+          { key: 'solution', label: 'Necesidad', options: SOLUTION_FILTER_OPTIONS },
           {
-            key: "assignee",
-            label: "Responsable",
+            key: 'assignee',
+            label: 'Responsable',
             options: ASSIGNEE_FILTER_OPTIONS,
-            display: "avatars",
+            display: 'avatars',
           },
-          { key: "attention", label: "Atención", options: ATTENTION_FILTER_OPTIONS },
+          { key: 'attention', label: 'Atención', options: ATTENTION_FILTER_OPTIONS },
         ]}
         savedViews={{
-          storageKey: "leads:saved-views:v1",
+          storageKey: 'leads:saved-views:v1',
           filterKeys: LEAD_SAVED_VIEW_FILTER_KEYS,
         }}
         pagination={{ page, pageSize: LEAD_LIST_PAGE_SIZE, total: count }}
         headers={[
-          { label: "Nombre", sortKey: "name" },
-          { label: "Empresa", sortKey: "company" },
-          "Email",
-          { label: "Estado", sortKey: "status" },
-          { label: "Score", sortKey: "score" },
-          "Responsable",
-          { label: "Creado", sortKey: "created_at" },
-          "Acciones",
+          { label: 'Nombre', sortKey: 'name' },
+          { label: 'Empresa', sortKey: 'company' },
+          'Email',
+          { label: 'Estado', sortKey: 'status' },
+          { label: 'Score', sortKey: 'score' },
+          'Responsable',
+          { label: 'Creado', sortKey: 'created_at' },
+          'Acciones',
         ]}
-        align={["left", "left", "left", "left", "right", "left", "left", "right"]}
+        align={['left', 'left', 'left', 'left', 'right', 'left', 'left', 'right']}
         exportFilename="leads"
         addHref="/leads/new"
         addLabel="Añadir lead"
       />
-    );
+    )
   }
 
   return (
@@ -203,18 +198,18 @@ export default async function LeadsPage({
         searchPlaceholder="Buscar por nombre, empresa, email o teléfono…"
         presentation="default"
         filters={[
-          { key: "source", label: "Origen", options: SOURCE_FILTER_OPTIONS },
-          { key: "solution", label: "Necesidad", options: SOLUTION_FILTER_OPTIONS },
+          { key: 'source', label: 'Origen', options: SOURCE_FILTER_OPTIONS },
+          { key: 'solution', label: 'Necesidad', options: SOLUTION_FILTER_OPTIONS },
           {
-            key: "assignee",
-            label: "Responsable",
+            key: 'assignee',
+            label: 'Responsable',
             options: ASSIGNEE_FILTER_OPTIONS,
-            display: "avatars",
+            display: 'avatars',
           },
-          { key: "attention", label: "Atención", options: ATTENTION_FILTER_OPTIONS },
+          { key: 'attention', label: 'Atención', options: ATTENTION_FILTER_OPTIONS },
         ]}
         savedViews={{
-          storageKey: "leads:saved-views:v1",
+          storageKey: 'leads:saved-views:v1',
           filterKeys: LEAD_SAVED_VIEW_FILTER_KEYS,
         }}
       />
@@ -222,7 +217,7 @@ export default async function LeadsPage({
       {error ? (
         <Card>
           <CardContent className="py-6">
-            <p className="text-sm text-destructive">{error}</p>
+            <p className="text-destructive text-sm">{error}</p>
           </CardContent>
         </Card>
       ) : enrichedLeads.length === 0 ? (
@@ -261,5 +256,5 @@ export default async function LeadsPage({
         </div>
       )}
     </div>
-  );
+  )
 }

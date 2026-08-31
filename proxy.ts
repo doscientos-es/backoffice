@@ -1,52 +1,53 @@
-import { createServerClient } from "@supabase/ssr";
-import { type NextRequest, NextResponse } from "next/server";
-import { rateLimit } from "@/lib/ratelimit";
+import { createServerClient } from '@supabase/ssr'
+import { type NextRequest, NextResponse } from 'next/server'
+
+import { rateLimit } from '@/lib/ratelimit'
 
 const PUBLIC_PATHS = [
-  "/login",
-  "/auth/callback",
+  '/login',
+  '/auth/callback',
   // OTP confirmation for admin-generated tokens (team invitations). Must be
   // public so unauthenticated users can reach it without losing the token_hash.
   // Equivalent to /auth/callback in the PKCE flow.
-  "/auth/confirm",
-  "/api/webhooks",
-  "/api/email/webhook",
-  "/api/public",
-  "/api/auth/password-login",
-  "/api/cron",
+  '/auth/confirm',
+  '/api/webhooks',
+  '/api/email/webhook',
+  '/api/public',
+  '/api/auth/password-login',
+  '/api/cron',
   // This scheduled endpoint authenticates with CRON_SECRET in its route handler.
-  "/api/crm/follow-ups",
+  '/api/crm/follow-ups',
   // Integration endpoints authenticate themselves via secrets; no session needed.
-  "/api/integrations",
-];
+  '/api/integrations',
+]
 
 function clientIp(request: NextRequest): string {
-  const fwd = request.headers.get("x-forwarded-for");
-  if (fwd) return fwd.split(",")[0]?.trim() ?? "unknown";
-  return request.headers.get("x-real-ip") ?? "unknown";
+  const fwd = request.headers.get('x-forwarded-for')
+  if (fwd) return fwd.split(',')[0]?.trim() ?? 'unknown'
+  return request.headers.get('x-real-ip') ?? 'unknown'
 }
 
 export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const isPublicPortal = pathname.startsWith("/p/") || pathname.startsWith("/deck/");
+  const { pathname } = request.nextUrl
+  const isPublicPortal = pathname.startsWith('/p/') || pathname.startsWith('/deck/')
 
   // Public portal and presentation links remain anonymous, but still resolve
   // Supabase below. That refreshes an existing team session, allowing members
   // to preview drafts without making them accessible to clients.
   if (isPublicPortal) {
-    const ip = clientIp(request);
-    const { success, resetAt } = rateLimit(`portal:${ip}`, 30);
+    const ip = clientIp(request)
+    const { success, resetAt } = rateLimit(`portal:${ip}`, 30)
     if (!success) {
-      return new NextResponse("Too Many Requests", {
+      return new NextResponse('Too Many Requests', {
         status: 429,
-        headers: { "Retry-After": String(Math.ceil((resetAt - Date.now()) / 1000)) },
-      });
+        headers: { 'Retry-After': String(Math.ceil((resetAt - Date.now()) / 1000)) },
+      })
     }
   }
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) return NextResponse.next();
-  if (pathname.startsWith("/_next") || pathname.startsWith("/favicon")) return NextResponse.next();
+  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) return NextResponse.next()
+  if (pathname.startsWith('/_next') || pathname.startsWith('/favicon')) return NextResponse.next()
 
-  let response = NextResponse.next({ request });
+  let response = NextResponse.next({ request })
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -60,33 +61,33 @@ export async function proxy(request: NextRequest) {
           // Update the request cookies so server components in this same
           // request see the refreshed token immediately (not just on next load).
           for (const { name, value } of cookiesToSet) {
-            request.cookies.set(name, value);
+            request.cookies.set(name, value)
           }
           // Forward the mutated request so Next.js propagates the new cookies
           // to server components running in this request.
-          response = NextResponse.next({ request });
+          response = NextResponse.next({ request })
           for (const { name, value, options } of cookiesToSet) {
-            response.cookies.set(name, value, options);
+            response.cookies.set(name, value, options)
           }
         },
       },
     },
-  );
+  )
 
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await supabase.auth.getUser()
 
   if (!user && !isPublicPortal) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("next", pathname);
-    return NextResponse.redirect(url);
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    url.searchParams.set('next', pathname)
+    return NextResponse.redirect(url)
   }
 
-  return response;
+  return response
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
-};
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+}

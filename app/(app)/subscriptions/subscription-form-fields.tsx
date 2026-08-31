@@ -1,40 +1,41 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { EntityCombobox } from "@/components/ui/entity-combobox";
-import { FormRow } from "@/components/ui/form-row";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { SUBSCRIPTION_BILLING_CYCLE, SUBSCRIPTION_STATUS } from "@/lib/status";
+import { useState } from 'react'
 
-type ClientOption = { id: string; name: string };
-type ProjectOption = { id: string; name: string };
+import { EntityCombobox } from '@/components/ui/entity-combobox'
+import { FormRow } from '@/components/ui/form-row'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { SUBSCRIPTION_BILLING_CYCLE, SUBSCRIPTION_STATUS } from '@/lib/status'
+
+type ClientOption = { id: string; name: string }
+type ProjectOption = { id: string; name: string }
 
 export type SubscriptionFormValues = {
-  client_id: string;
-  project_id: string;
-  name: string;
-  description: string;
-  status: string;
-  billing_cycle: string;
-  amount: number;
-  vat_rate: number;
-  start_date: string;
-  end_date: string;
-  notes: string;
-};
+  client_id: string
+  project_id: string
+  name: string
+  description: string
+  status: string
+  billing_cycle: string
+  amount: number
+  vat_rate: number
+  start_date: string
+  end_date: string
+  notes: string
+}
 
 type Props = {
-  clients: ClientOption[];
-  projects: ProjectOption[];
+  clients: ClientOption[]
+  projects: ProjectOption[]
   /** Pass a full SubscriptionFormValues when editing; omit for create (defaults kick in). */
-  defaults?: Partial<SubscriptionFormValues>;
-};
+  defaults?: Partial<SubscriptionFormValues>
+}
 
 export function SubscriptionFormFields({ clients, projects, defaults }: Props) {
-  const today = new Date().toISOString().slice(0, 10);
-  const [projectId, setProjectId] = useState(defaults?.project_id ?? "");
+  const today = new Date().toISOString().slice(0, 10)
+  const [projectId, setProjectId] = useState(defaults?.project_id ?? '')
 
   return (
     <div className="grid gap-4 sm:grid-cols-2">
@@ -71,7 +72,7 @@ export function SubscriptionFormFields({ clients, projects, defaults }: Props) {
       </FormRow>
 
       <FormRow label="Estado" htmlFor="sub-status">
-        <Select id="sub-status" name="status" defaultValue={defaults?.status ?? "active"}>
+        <Select id="sub-status" name="status" defaultValue={defaults?.status ?? 'active'}>
           {Object.entries(SUBSCRIPTION_STATUS).map(([v, m]) => (
             <option key={v} value={v}>
               {m.label}
@@ -84,7 +85,7 @@ export function SubscriptionFormFields({ clients, projects, defaults }: Props) {
         <Select
           id="sub-billing"
           name="billing_cycle"
-          defaultValue={defaults?.billing_cycle ?? "monthly"}
+          defaultValue={defaults?.billing_cycle ?? 'monthly'}
         >
           {Object.entries(SUBSCRIPTION_BILLING_CYCLE).map(([v, label]) => (
             <option key={v} value={v}>
@@ -129,7 +130,7 @@ export function SubscriptionFormFields({ clients, projects, defaults }: Props) {
       </FormRow>
 
       <FormRow label="Fin (opcional)" htmlFor="sub-end">
-        <Input id="sub-end" name="end_date" type="date" defaultValue={defaults?.end_date ?? ""} />
+        <Input id="sub-end" name="end_date" type="date" defaultValue={defaults?.end_date ?? ''} />
       </FormRow>
 
       <FormRow label="Descripción" htmlFor="sub-desc" className="sm:col-span-2">
@@ -146,5 +147,5 @@ export function SubscriptionFormFields({ clients, projects, defaults }: Props) {
         />
       </FormRow>
     </div>
-  );
+  )
 }

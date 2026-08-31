@@ -1,1 +1,1 @@
-﻿export { DangerZone, type DangerZoneProps } from "@doscientos/ui";
+﻿export { DangerZone, type DangerZoneProps } from '@doscientos/ui'

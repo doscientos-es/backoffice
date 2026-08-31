@@ -1,65 +1,67 @@
-"use client";
+'use client'
 
 import {
   CalendarDays as CalendarClock,
   CircleCheck as CheckCircle2,
   ListTodo,
   LoaderCircle as Loader2,
-} from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { sileo } from "sileo";
-import { Button } from "@/components/ui/button";
+} from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
+import { sileo } from 'sileo'
+
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { TASK_STATUS, type TaskStatus } from "@/lib/status";
-import { ScheduleReminderDialog } from "../../reminders/schedule-reminder-dialog";
-import { updateTaskStatus } from "../../tasks/actions";
-import { TaskCreateDialog } from "../../tasks/task-create-dialog";
+} from '@/components/ui/dialog'
+import { StatusBadge } from '@/components/ui/status-badge'
+import { TASK_STATUS, type TaskStatus } from '@/lib/status'
+
+import { ScheduleReminderDialog } from '../../reminders/schedule-reminder-dialog'
+import { updateTaskStatus } from '../../tasks/actions'
+import { TaskCreateDialog } from '../../tasks/task-create-dialog'
 
 type Props = {
   task: {
-    id: string;
-    title: string;
-    status: TaskStatus;
-    when: string | null;
-    whenLabel: string | null;
-    overdue: boolean;
-  };
-  leadId: string;
-  members: Array<{ id: string; name: string }>;
-  currentUserId: string;
-};
+    id: string
+    title: string
+    status: TaskStatus
+    when: string | null
+    whenLabel: string | null
+    overdue: boolean
+  }
+  leadId: string
+  members: Array<{ id: string; name: string }>
+  currentUserId: string
+}
 
 /** Completes a lead task in place and immediately offers a meaningful next step. */
 export function LeadNextActionTaskItem({ task, leadId, members, currentUserId }: Props) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [completed, setCompleted] = useState(false);
-  const [followUpOpen, setFollowUpOpen] = useState(false);
-  const [createTaskOpen, setCreateTaskOpen] = useState(false);
-  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const router = useRouter()
+  const [pending, startTransition] = useTransition()
+  const [completed, setCompleted] = useState(false)
+  const [followUpOpen, setFollowUpOpen] = useState(false)
+  const [createTaskOpen, setCreateTaskOpen] = useState(false)
+  const [scheduleOpen, setScheduleOpen] = useState(false)
 
   function complete() {
     startTransition(async () => {
       const result = await updateTaskStatus({
         taskId: task.id,
-        status: "done",
-      });
+        status: 'done',
+      })
       if (!result.ok) {
-        sileo.error({ title: result.error });
-        return;
+        sileo.error({ title: result.error })
+        return
       }
-      setCompleted(true);
-      setFollowUpOpen(true);
-    });
+      setCompleted(true)
+      setFollowUpOpen(true)
+    })
   }
 
   return (
@@ -67,14 +69,14 @@ export function LeadNextActionTaskItem({ task, leadId, members, currentUserId }:
       {!completed ? (
         <li className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm">
           <Link href={`/tasks/${task.id}`} className="min-w-0 truncate font-medium hover:underline">
-            <span className="mr-2 text-xs text-muted-foreground">Tarea</span>
+            <span className="text-muted-foreground mr-2 text-xs">Tarea</span>
             {task.title}
           </Link>
           <div className="flex shrink-0 items-center gap-2 text-xs">
             <StatusBadge meta={TASK_STATUS} value={task.status} />
             {task.whenLabel ? (
               <span
-                className={task.overdue ? "font-medium text-destructive" : "text-muted-foreground"}
+                className={task.overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}
               >
                 {task.whenLabel}
               </span>
@@ -113,8 +115,8 @@ export function LeadNextActionTaskItem({ task, leadId, members, currentUserId }:
               type="button"
               className="justify-start"
               onClick={() => {
-                setFollowUpOpen(false);
-                setCreateTaskOpen(true);
+                setFollowUpOpen(false)
+                setCreateTaskOpen(true)
               }}
             >
               <ListTodo className="size-4" />
@@ -125,8 +127,8 @@ export function LeadNextActionTaskItem({ task, leadId, members, currentUserId }:
               variant="outline"
               className="justify-start"
               onClick={() => {
-                setFollowUpOpen(false);
-                setScheduleOpen(true);
+                setFollowUpOpen(false)
+                setScheduleOpen(true)
               }}
             >
               <CalendarClock className="size-4" />
@@ -156,5 +158,5 @@ export function LeadNextActionTaskItem({ task, leadId, members, currentUserId }:
         onScheduled={() => router.refresh()}
       />
     </>
-  );
+  )
 }

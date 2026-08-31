@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Activity,
@@ -6,89 +6,91 @@ import {
   Camera as Instagram,
   MessageCircle,
   Trash as Trash2,
-} from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { FormRow } from "@/components/ui/form-row";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import type { AutomationRule, MetaPlatform } from "@/lib/social/automation/types";
+} from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
+
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { FormRow } from '@/components/ui/form-row'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
+import { Textarea } from '@/components/ui/textarea'
+import type { AutomationRule, MetaPlatform } from '@/lib/social/automation/types'
+
 import {
   createGlobalAutomationRule,
   deleteAutomationRule,
   setAutomationRuleActive,
-} from "../../actions";
+} from '../../actions'
 
 const PLATFORMS: { value: MetaPlatform; label: string; icon: typeof Instagram }[] = [
-  { value: "instagram", label: "Instagram", icon: Instagram },
-  { value: "facebook", label: "Facebook", icon: Facebook },
-];
+  { value: 'instagram', label: 'Instagram', icon: Instagram },
+  { value: 'facebook', label: 'Facebook', icon: Facebook },
+]
 
 export function AutomationManager({ initialRules }: { initialRules: AutomationRule[] }) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const feedback = useFormFeedback({ successResetMs: 4000 });
-  const [keyword, setKeyword] = useState("");
-  const [publicReply, setPublicReply] = useState("¡Gracias! Te hemos escrito por privado.");
-  const [privateMessage, setPrivateMessage] = useState("");
+  const router = useRouter()
+  const [pending, startTransition] = useTransition()
+  const feedback = useFormFeedback({ successResetMs: 4000 })
+  const [keyword, setKeyword] = useState('')
+  const [publicReply, setPublicReply] = useState('¡Gracias! Te hemos escrito por privado.')
+  const [privateMessage, setPrivateMessage] = useState('')
   const [platforms, setPlatforms] = useState<Set<MetaPlatform>>(
-    () => new Set<MetaPlatform>(["instagram", "facebook"]),
-  );
+    () => new Set<MetaPlatform>(['instagram', 'facebook']),
+  )
 
   function togglePlatform(platform: MetaPlatform, checked: boolean) {
     setPlatforms((current) => {
-      const next = new Set(current);
-      if (checked) next.add(platform);
-      else next.delete(platform);
-      return next;
-    });
+      const next = new Set(current)
+      if (checked) next.add(platform)
+      else next.delete(platform)
+      return next
+    })
   }
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+    event.preventDefault()
     if (platforms.size === 0) {
-      feedback.setError("Selecciona al menos una red.");
-      return;
+      feedback.setError('Selecciona al menos una red.')
+      return
     }
-    feedback.setPending();
+    feedback.setPending()
     startTransition(async () => {
       const result = await createGlobalAutomationRule({
         keyword,
         publicReply,
         privateMessage,
         platforms: [...platforms],
-      });
+      })
       if (!result.ok) {
-        feedback.setError(result.error);
-        return;
+        feedback.setError(result.error)
+        return
       }
-      setKeyword("");
-      setPrivateMessage("");
-      feedback.setSuccess("Automatización guardada");
-      router.refresh();
-    });
+      setKeyword('')
+      setPrivateMessage('')
+      feedback.setSuccess('Automatización guardada')
+      router.refresh()
+    })
   }
 
   function toggle(rule: AutomationRule, active: boolean) {
     startTransition(async () => {
-      await setAutomationRuleActive({ ruleId: rule.id, active });
-      router.refresh();
-    });
+      await setAutomationRuleActive({ ruleId: rule.id, active })
+      router.refresh()
+    })
   }
 
   function remove(rule: AutomationRule) {
-    if (!window.confirm(`¿Eliminar la regla «${rule.keyword}»?`)) return;
+    if (!window.confirm(`¿Eliminar la regla «${rule.keyword}»?`)) return
     startTransition(async () => {
-      await deleteAutomationRule({ ruleId: rule.id });
-      router.refresh();
-    });
+      await deleteAutomationRule({ ruleId: rule.id })
+      router.refresh()
+    })
   }
 
   return (
@@ -101,7 +103,7 @@ export function AutomationManager({ initialRules }: { initialRules: AutomationRu
                 <MessageCircle className="size-4" />
                 Nueva regla global
               </CardTitle>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="text-muted-foreground mt-1 text-xs">
                 Se usa cuando la publicación no tiene una regla específica.
               </p>
             </div>
@@ -157,7 +159,7 @@ export function AutomationManager({ initialRules }: { initialRules: AutomationRu
                 {PLATFORMS.map(({ value, label, icon: Icon }) => (
                   <div
                     key={value}
-                    className="flex flex-1 cursor-pointer items-center gap-2 rounded-lg border border-border p-2.5 text-xs"
+                    className="border-border flex flex-1 cursor-pointer items-center gap-2 rounded-lg border p-2.5 text-xs"
                   >
                     <Checkbox
                       id={`global-platform-${value}`}
@@ -173,10 +175,10 @@ export function AutomationManager({ initialRules }: { initialRules: AutomationRu
                 ))}
               </div>
             </div>
-            <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
+            <div className="border-border flex items-center justify-between gap-3 border-t pt-4">
               <FormFeedback state={feedback.state} />
               <Button type="submit" size="sm" disabled={pending}>
-                {pending ? "Guardando…" : "Guardar regla"}
+                {pending ? 'Guardando…' : 'Guardar regla'}
               </Button>
             </div>
           </form>
@@ -189,17 +191,17 @@ export function AutomationManager({ initialRules }: { initialRules: AutomationRu
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           {initialRules.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
+            <p className="text-muted-foreground py-8 text-center text-sm">
               Todavía no hay reglas. Empieza por una palabra que uses en tus campañas.
             </p>
           ) : (
             initialRules.map((rule) => (
-              <div key={rule.id} className="rounded-lg border border-border p-3">
+              <div key={rule.id} className="border-border rounded-lg border p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex flex-col gap-1">
                     <span className="text-sm font-semibold">{rule.keyword}</span>
-                    <span className="text-[11px] text-muted-foreground">
-                      {rule.postId ? "Solo para una publicación" : "Global"} · {rule.platform}
+                    <span className="text-muted-foreground text-[11px]">
+                      {rule.postId ? 'Solo para una publicación' : 'Global'} · {rule.platform}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -219,12 +221,12 @@ export function AutomationManager({ initialRules }: { initialRules: AutomationRu
                     </Button>
                   </div>
                 </div>
-                <p className="mt-3 text-xs text-muted-foreground">{rule.privateMessage}</p>
+                <p className="text-muted-foreground mt-3 text-xs">{rule.privateMessage}</p>
               </div>
             ))
           )}
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

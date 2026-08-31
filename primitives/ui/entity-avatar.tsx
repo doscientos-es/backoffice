@@ -1,18 +1,18 @@
-﻿import { cn } from "../lib/utils";
+﻿import { cn } from '../lib/utils'
 
-const SIZE: Record<"xs" | "sm" | "md" | "lg", string> = {
-  xs: "size-5 text-[9px]",
-  sm: "size-7 text-[11px]",
-  md: "size-10 text-sm",
-  lg: "size-14 text-base",
-};
+const SIZE: Record<'xs' | 'sm' | 'md' | 'lg', string> = {
+  xs: 'size-5 text-[9px]',
+  sm: 'size-7 text-[11px]',
+  md: 'size-10 text-sm',
+  lg: 'size-14 text-base',
+}
 
 function initials(name: string): string {
-  const parts = (name ?? "").trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) return "?";
+  const parts = (name ?? '').trim().split(/\s+/).filter(Boolean)
+  if (!parts.length) return '?'
   const letters =
-    parts.length >= 2 ? `${parts[0]?.[0] ?? ""}${parts[1]?.[0] ?? ""}` : (parts[0]?.[0] ?? "?");
-  return letters.toUpperCase();
+    parts.length >= 2 ? `${parts[0]?.[0] ?? ''}${parts[1]?.[0] ?? ''}` : (parts[0]?.[0] ?? '?')
+  return letters.toUpperCase()
 }
 
 /**
@@ -26,13 +26,13 @@ function initials(name: string): string {
 export function EntityAvatar({
   name,
   logoUrl,
-  size = "sm",
+  size = 'sm',
   className,
 }: {
-  name: string;
-  logoUrl?: string | null;
-  size?: "xs" | "sm" | "md" | "lg";
-  className?: string;
+  name: string
+  logoUrl?: string | null
+  size?: 'xs' | 'sm' | 'md' | 'lg'
+  className?: string
 }) {
   if (logoUrl) {
     return (
@@ -41,23 +41,23 @@ export function EntityAvatar({
         src={logoUrl}
         alt={name}
         className={cn(
-          "shrink-0 rounded-md border border-border/50 bg-background object-contain p-0.5",
+          'shrink-0 rounded-md border border-border/50 bg-background object-contain p-0.5',
           SIZE[size],
           className,
         )}
       />
-    );
+    )
   }
 
   return (
     <span
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-md bg-primary/10 font-semibold uppercase text-primary",
+        'flex shrink-0 items-center justify-center rounded-md bg-primary/10 font-semibold uppercase text-primary',
         SIZE[size],
         className,
       )}
     >
       {initials(name)}
     </span>
-  );
+  )
 }

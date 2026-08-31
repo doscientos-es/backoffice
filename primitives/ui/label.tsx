@@ -1,1 +1,1 @@
-﻿export { Label } from "@doscientos/ui";
+﻿export { Label } from '@doscientos/ui'

@@ -1,18 +1,18 @@
-import { formatInteractionForAI, type LeadInteractionForAI } from "./interaction-utils";
+import { formatInteractionForAI, type LeadInteractionForAI } from './interaction-utils'
 
-type LeadContextRow = Record<string, unknown>;
+type LeadContextRow = Record<string, unknown>
 
 function display(value: unknown): string {
-  if (value == null || (typeof value === "string" && value.trim() === "")) return "—";
-  return String(value);
+  if (value == null || (typeof value === 'string' && value.trim() === '')) return '—'
+  return String(value)
 }
 
 function yesNoUnknown(value: unknown): string {
-  return value === true ? "sí" : value === false ? "no" : "sin marcar";
+  return value === true ? 'sí' : value === false ? 'no' : 'sin marcar'
 }
 
 function compact(values: unknown[]): string {
-  return values.filter((value) => value != null && String(value).trim() !== "").join(" · ") || "—";
+  return values.filter((value) => value != null && String(value).trim() !== '').join(' · ') || '—'
 }
 
 /** Serializes the CRM fields that influence qualification and sales prioritization. */
@@ -39,56 +39,56 @@ export function formatLeadContextForAI(lead: LeadContextRow): string {
     `Pérdida/no interés: ${compact([lead.lost_reason, lead.lost_at])}`,
     `Resumen IA anterior: ${display(lead.ai_summary)}`,
     `Siguiente paso IA anterior: ${display(lead.ai_suggested_next_step)} · fecha: ${display(lead.ai_suggested_next_step_at)}`,
-  ].join("\n");
+  ].join('\n')
 }
 
 export type ScheduledLeadTaskForAI = {
-  title: string | null;
-  description: string | null;
-  start_at: string | null;
-  status: string | null;
-  priority: string | number | null;
-};
+  title: string | null
+  description: string | null
+  start_at: string | null
+  status: string | null
+  priority: string | number | null
+}
 
 export function formatScheduledLeadTasksForAI(tasks: ScheduledLeadTaskForAI[]): string {
   return tasks
     .map(
       (task) =>
-        `- ${display(task.start_at)} | ${display(task.title)} | estado: ${display(task.status)} | prioridad: ${display(task.priority)}${task.description ? ` | ${task.description.slice(0, 400)}` : ""}`,
+        `- ${display(task.start_at)} | ${display(task.title)} | estado: ${display(task.status)} | prioridad: ${display(task.priority)}${task.description ? ` | ${task.description.slice(0, 400)}` : ''}`,
     )
-    .join("\n");
+    .join('\n')
 }
 
 export type LeadProposalForAI = {
-  number: string | null;
-  title: string | null;
-  status: string | null;
-  total: number | null;
-  valid_until: string | null;
-  sent_at: string | null;
-  viewed_at: string | null;
-  responded_at: string | null;
-  notes: string | null;
-};
+  number: string | null
+  title: string | null
+  status: string | null
+  total: number | null
+  valid_until: string | null
+  sent_at: string | null
+  viewed_at: string | null
+  responded_at: string | null
+  notes: string | null
+}
 
 export function formatLeadProposalsForAI(proposals: LeadProposalForAI[]): string {
   return proposals
     .map(
       (proposal) =>
-        `- ${display(proposal.number)} | ${display(proposal.title)} | estado: ${display(proposal.status)} | total: ${display(proposal.total)} | válida hasta: ${display(proposal.valid_until)} | enviada: ${display(proposal.sent_at)} | vista: ${display(proposal.viewed_at)} | respondida: ${display(proposal.responded_at)}${proposal.notes ? ` | ${proposal.notes.slice(0, 500)}` : ""}`,
+        `- ${display(proposal.number)} | ${display(proposal.title)} | estado: ${display(proposal.status)} | total: ${display(proposal.total)} | válida hasta: ${display(proposal.valid_until)} | enviada: ${display(proposal.sent_at)} | vista: ${display(proposal.viewed_at)} | respondida: ${display(proposal.responded_at)}${proposal.notes ? ` | ${proposal.notes.slice(0, 500)}` : ''}`,
     )
-    .join("\n");
+    .join('\n')
 }
 
 export type LeadConversionEventForAI = {
-  event_name: string;
-  conversion_step: string | null;
-  landing_path: string | null;
-  referrer: string | null;
-  utm_source: string | null;
-  utm_campaign: string | null;
-  created_at: string;
-};
+  event_name: string
+  conversion_step: string | null
+  landing_path: string | null
+  referrer: string | null
+  utm_source: string | null
+  utm_campaign: string | null
+  created_at: string
+}
 
 export function formatLeadConversionEventsForAI(events: LeadConversionEventForAI[]): string {
   return events
@@ -96,104 +96,100 @@ export function formatLeadConversionEventsForAI(events: LeadConversionEventForAI
       (event) =>
         `- ${display(event.created_at)} | ${display(event.event_name)} | paso: ${display(event.conversion_step)} | landing: ${display(event.landing_path)} | ref: ${display(event.referrer)} | UTM: ${compact([event.utm_source, event.utm_campaign])}`,
     )
-    .join("\n");
+    .join('\n')
 }
 
 type LeadBriefingProject = {
-  name: string;
-  status: string | null;
-  description: string | null;
-};
+  name: string
+  status: string | null
+  description: string | null
+}
 
 type LeadBriefingInvoice = {
-  full_number: string | null;
-  status: string | null;
-  total: number | null;
-  issue_date: string | null;
-};
+  full_number: string | null
+  status: string | null
+  total: number | null
+  issue_date: string | null
+}
 
 type LeadBriefingTask = {
-  title: string;
-  status: string;
-  due_date: string | null;
-  description: string | null;
-  priority: string | null;
-};
+  title: string
+  status: string
+  due_date: string | null
+  description: string | null
+  priority: string | null
+}
 
 type LeadBriefingReminder = {
-  title: string;
-  remind_at: string;
-};
+  title: string
+  remind_at: string
+}
 
 type LeadBriefingAttachment = {
-  name: string;
-  mime_type: string | null;
-};
+  name: string
+  mime_type: string | null
+}
 
 export type LeadBriefingForAI = {
-  lead: LeadContextRow;
-  clientName: string | null;
-  interactions: LeadInteractionForAI[];
-  proposals: LeadProposalForAI[];
-  projects: LeadBriefingProject[];
-  invoices: LeadBriefingInvoice[];
-  tasks: LeadBriefingTask[];
-  reminders: LeadBriefingReminder[];
-  attachments: LeadBriefingAttachment[];
-};
+  lead: LeadContextRow
+  clientName: string | null
+  interactions: LeadInteractionForAI[]
+  proposals: LeadProposalForAI[]
+  projects: LeadBriefingProject[]
+  invoices: LeadBriefingInvoice[]
+  tasks: LeadBriefingTask[]
+  reminders: LeadBriefingReminder[]
+  attachments: LeadBriefingAttachment[]
+}
 
 /**
  * Creates a portable CRM briefing for a third-party AI. It is deliberately
  * deterministic: copying it does not send CRM data anywhere.
  */
 export function formatLeadBriefingForAI(context: LeadBriefingForAI): string {
-  const interactions = context.interactions
-    .slice()
-    .reverse()
-    .map(formatInteractionForAI)
-    .join("\n");
+  const interactions = context.interactions.slice().reverse().map(formatInteractionForAI).join('\n')
   const projects = context.projects
     .map(
       (project) =>
-        `- ${display(project.name)} | estado: ${display(project.status)}${project.description ? ` | ${project.description.slice(0, 1000)}` : ""}`,
+        `- ${display(project.name)} | estado: ${display(project.status)}${project.description ? ` | ${project.description.slice(0, 1000)}` : ''}`,
     )
-    .join("\n");
+    .join('\n')
   const invoices = context.invoices
     .map(
       (invoice) =>
         `- ${display(invoice.full_number)} | estado: ${display(invoice.status)} | total: ${display(invoice.total)} | emitida: ${display(invoice.issue_date)}`,
     )
-    .join("\n");
+    .join('\n')
   const tasks = context.tasks
     .map(
       (task) =>
-        `- ${display(task.due_date)} | ${display(task.title)} | estado: ${display(task.status)} | prioridad: ${display(task.priority)}${task.description ? ` | ${task.description.slice(0, 700)}` : ""}`,
+        `- ${display(task.due_date)} | ${display(task.title)} | estado: ${display(task.status)} | prioridad: ${display(task.priority)}${task.description ? ` | ${task.description.slice(0, 700)}` : ''}`,
     )
-    .join("\n");
+    .join('\n')
   const reminders = context.reminders
     .map((reminder) => `- ${display(reminder.remind_at)} | ${display(reminder.title)}`)
-    .join("\n");
+    .join('\n')
   const attachments = context.attachments
     .map((attachment) => `- ${display(attachment.name)} | ${display(attachment.mime_type)}`)
-    .join("\n");
+    .join('\n')
 
   return [
-    "# Briefing CRM para IA",
-    "Usa únicamente estos datos como fuente de verdad. Si falta información, indícalo y no la inventes.",
-    "\n## Ficha y cualificación del lead",
+    '# Briefing CRM para IA',
+    'Usa únicamente estos datos como fuente de verdad. Si falta información, indícalo y no la inventes.',
+    '\n## Ficha y cualificación del lead',
     formatLeadContextForAI(context.lead),
     `Cliente vinculado: ${display(context.clientName)}`,
-    "\n## Historial de interacciones (cronológico)",
-    interactions || "(sin interacciones registradas)",
-    "\n## Actividad pendiente",
-    `Tareas:\n${tasks || "(sin tareas registradas)"}\n\nRecordatorios:\n${reminders || "(sin recordatorios pendientes)"}`,
-    "\n## Propuestas relacionadas",
-    formatLeadProposalsForAI(context.proposals) || "(sin propuestas relacionadas)",
-    "\n## Proyectos vinculados",
-    projects || "(sin proyectos vinculados)",
-    "\n## Facturación vinculada",
-    invoices || "(sin facturas vinculadas)",
-    "\n## Adjuntos registrados",
-    `${attachments || "(sin adjuntos)"}\nNota: solo se incluyen los nombres y tipos de los archivos; su contenido no se ha extraído.`,
-  ].join("\n");
+    '\n## Historial de interacciones (cronológico)',
+    interactions || '(sin interacciones registradas)',
+    '\n## Actividad pendiente',
+    `Tareas:\n${tasks || '(sin tareas registradas)'}\n\nRecordatorios:\n${reminders || '(sin recordatorios pendientes)'}`,
+    '\n## Propuestas relacionadas',
+    formatLeadProposalsForAI(context.proposals) || '(sin propuestas relacionadas)',
+    '\n## Proyectos vinculados',
+    projects || '(sin proyectos vinculados)',
+    '\n## Facturación vinculada',
+    invoices || '(sin facturas vinculadas)',
+    '\n## Adjuntos registrados',
+    `${attachments || '(sin adjuntos)'}\nNota: solo se incluyen los nombres y tipos de los archivos; su contenido no se ha extraído.`,
+  ].join('\n')
 }

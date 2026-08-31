@@ -1,5 +1,6 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
+import { readFileSync } from 'node:fs'
+import path from 'node:path'
+
 import {
   Document,
   Font,
@@ -10,131 +11,131 @@ import {
   StyleSheet,
   Text,
   View,
-} from "@react-pdf/renderer";
+} from '@react-pdf/renderer'
 
-const BRAND = "#2A4227";
-const INK = "#1A2E18";
-const ACCENT = "#BDFF7B";
-const PAPER = "#FAFAF7";
-const MIST = "#E9F1E6";
-const MUTED = "#657067";
-const CTA_URL = "https://doscientos.es/diagnostico#formulario";
-const BOOKING_URL = "https://cal.eu/doscientos/30min";
+const BRAND = '#2A4227'
+const INK = '#1A2E18'
+const ACCENT = '#BDFF7B'
+const PAPER = '#FAFAF7'
+const MIST = '#E9F1E6'
+const MUTED = '#657067'
+const CTA_URL = 'https://doscientos.es/diagnostico#formulario'
+const BOOKING_URL = 'https://cal.eu/doscientos/30min'
 
 // React PDF hyphenates by default. In a sales document, a broken word is worse
 // than a slightly earlier line break, so titles and buttons keep whole words.
-Font.registerHyphenationCallback((word) => [word]);
+Font.registerHyphenationCallback((word) => [word])
 
 function asset(file: string): string {
-  const extension = path.extname(file).slice(1);
-  const mime = extension === "png" ? "image/png" : `image/${extension}`;
-  return `data:${mime};base64,${readFileSync(path.join(process.cwd(), "public", file)).toString("base64")}`;
+  const extension = path.extname(file).slice(1)
+  const mime = extension === 'png' ? 'image/png' : `image/${extension}`
+  return `data:${mime};base64,${readFileSync(path.join(process.cwd(), 'public', file)).toString('base64')}`
 }
 
 const assets = {
-  logo: asset("brand/logo.png"),
-  flatmatch: asset("diagnostics/flatmatch.png"),
-  ifco: asset("diagnostics/ifco.png"),
-  arenas: asset("diagnostics/arenas.png"),
-};
+  logo: asset('brand/logo.png'),
+  flatmatch: asset('diagnostics/flatmatch.png'),
+  ifco: asset('diagnostics/ifco.png'),
+  arenas: asset('diagnostics/arenas.png'),
+}
 
 const styles = StyleSheet.create({
-  page: { backgroundColor: PAPER, color: INK, fontFamily: "Helvetica", fontSize: 10, padding: 42 },
-  cover: { backgroundColor: BRAND, color: "#FFFFFF", fontFamily: "Helvetica", padding: 42 },
-  header: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
-  headerBrand: { alignItems: "center", flexDirection: "row" },
+  page: { backgroundColor: PAPER, color: INK, fontFamily: 'Helvetica', fontSize: 10, padding: 42 },
+  cover: { backgroundColor: BRAND, color: '#FFFFFF', fontFamily: 'Helvetica', padding: 42 },
+  header: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  headerBrand: { alignItems: 'center', flexDirection: 'row' },
   logo: { height: 24, width: 24 },
-  logoTile: { backgroundColor: "#FFFFFF", borderRadius: 8, height: 34, padding: 6, width: 34 },
-  brand: { color: BRAND, fontFamily: "Helvetica-Bold", fontSize: 11, letterSpacing: 1 },
-  brandLight: { color: "#FFFFFF", fontFamily: "Helvetica-Bold", fontSize: 11, letterSpacing: 1 },
+  logoTile: { backgroundColor: '#FFFFFF', borderRadius: 8, height: 34, padding: 6, width: 34 },
+  brand: { color: BRAND, fontFamily: 'Helvetica-Bold', fontSize: 11, letterSpacing: 1 },
+  brandLight: { color: '#FFFFFF', fontFamily: 'Helvetica-Bold', fontSize: 11, letterSpacing: 1 },
   pageLabel: { color: MUTED, fontSize: 8 },
   coverTag: {
-    borderColor: "#FFFFFF",
+    borderColor: '#FFFFFF',
     borderRadius: 12,
     borderWidth: 1,
-    color: "#FFFFFF",
-    fontFamily: "Helvetica-Bold",
+    color: '#FFFFFF',
+    fontFamily: 'Helvetica-Bold',
     fontSize: 7,
     letterSpacing: 0.8,
     paddingHorizontal: 9,
     paddingVertical: 5,
-    textTransform: "uppercase",
+    textTransform: 'uppercase',
   },
   coverHero: { marginTop: 90 },
   eyebrow: {
     color: BRAND,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: 'Helvetica-Bold',
     fontSize: 8,
     letterSpacing: 1.25,
-    textTransform: "uppercase",
+    textTransform: 'uppercase',
   },
   eyebrowLight: {
     color: ACCENT,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: 'Helvetica-Bold',
     fontSize: 8,
     letterSpacing: 1.25,
-    textTransform: "uppercase",
+    textTransform: 'uppercase',
   },
   title: {
     color: INK,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: 'Helvetica-Bold',
     fontSize: 26,
     lineHeight: 1.06,
     marginTop: 11,
     maxWidth: 445,
   },
   coverTitle: {
-    color: "#FFFFFF",
-    fontFamily: "Helvetica-Bold",
+    color: '#FFFFFF',
+    fontFamily: 'Helvetica-Bold',
     fontSize: 36,
     lineHeight: 1.07,
     marginTop: 14,
     maxWidth: 410,
   },
   intro: { color: MUTED, fontSize: 11, lineHeight: 1.5, marginTop: 12, maxWidth: 435 },
-  coverIntro: { color: "#DDE9DB", fontSize: 12, lineHeight: 1.5, marginTop: 16, maxWidth: 390 },
+  coverIntro: { color: '#DDE9DB', fontSize: 12, lineHeight: 1.5, marginTop: 16, maxWidth: 390 },
   section: { marginTop: 28 },
   body: { color: MUTED, fontSize: 10, lineHeight: 1.5 },
-  metrics: { flexDirection: "row", marginTop: 20 },
+  metrics: { flexDirection: 'row', marginTop: 20 },
   metric: { backgroundColor: MIST, borderRadius: 12, flex: 1, minHeight: 102, padding: 14 },
   metricMiddle: { marginHorizontal: 8 },
   metricLabel: {
     color: BRAND,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: 'Helvetica-Bold',
     fontSize: 7,
     letterSpacing: 0.8,
-    textTransform: "uppercase",
+    textTransform: 'uppercase',
   },
   metricValue: {
     color: INK,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: 'Helvetica-Bold',
     fontSize: 21,
     lineHeight: 1,
     marginTop: 9,
   },
   metricText: { color: MUTED, fontSize: 8, lineHeight: 1.35, marginTop: 7 },
-  coverMetric: { backgroundColor: "#355332", borderRadius: 14, marginTop: 42, padding: 19 },
-  coverMetricValue: { color: ACCENT, fontFamily: "Helvetica-Bold", fontSize: 29, marginTop: 6 },
-  coverMetricText: { color: "#DDE9DB", fontSize: 9, lineHeight: 1.4, marginTop: 6 },
+  coverMetric: { backgroundColor: '#355332', borderRadius: 14, marginTop: 42, padding: 19 },
+  coverMetricValue: { color: ACCENT, fontFamily: 'Helvetica-Bold', fontSize: 29, marginTop: 6 },
+  coverMetricText: { color: '#DDE9DB', fontSize: 9, lineHeight: 1.4, marginTop: 6 },
   panel: { backgroundColor: BRAND, borderRadius: 14, marginTop: 20, padding: 18 },
   panelTitle: {
     color: ACCENT,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: 'Helvetica-Bold',
     fontSize: 8,
     letterSpacing: 1,
-    textTransform: "uppercase",
+    textTransform: 'uppercase',
   },
   panelText: {
-    color: "#FFFFFF",
-    fontFamily: "Helvetica-Bold",
+    color: '#FFFFFF',
+    fontFamily: 'Helvetica-Bold',
     fontSize: 14,
     lineHeight: 1.35,
     marginTop: 8,
   },
-  panelBody: { color: "#DDE9DB", fontSize: 9, lineHeight: 1.45, marginTop: 8 },
+  panelBody: { color: '#DDE9DB', fontSize: 9, lineHeight: 1.45, marginTop: 8 },
   callout: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#D9E1D7",
+    backgroundColor: '#FFFFFF',
+    borderColor: '#D9E1D7',
     borderRadius: 12,
     borderWidth: 1,
     marginTop: 20,
@@ -142,153 +143,153 @@ const styles = StyleSheet.create({
   },
   calloutText: {
     color: INK,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: 'Helvetica-Bold',
     fontSize: 13,
     lineHeight: 1.35,
     marginTop: 7,
   },
   rows: { marginTop: 15 },
   row: {
-    borderBottomColor: "#D9E1D7",
+    borderBottomColor: '#D9E1D7',
     borderBottomWidth: 1,
-    flexDirection: "row",
+    flexDirection: 'row',
     paddingVertical: 8,
   },
-  rowLabel: { color: BRAND, fontFamily: "Helvetica-Bold", fontSize: 8, width: "42%" },
-  rowValue: { color: INK, fontSize: 8.5, lineHeight: 1.35, width: "58%" },
-  columns: { flexDirection: "row", marginTop: 20 },
+  rowLabel: { color: BRAND, fontFamily: 'Helvetica-Bold', fontSize: 8, width: '42%' },
+  rowValue: { color: INK, fontSize: 8.5, lineHeight: 1.35, width: '58%' },
+  columns: { flexDirection: 'row', marginTop: 20 },
   column: { flex: 1 },
   columnMiddle: {
-    borderColor: "#D9E1D7",
+    borderColor: '#D9E1D7',
     borderLeftWidth: 1,
     borderRightWidth: 1,
     marginHorizontal: 12,
     paddingHorizontal: 12,
   },
-  columnNumber: { color: "#7B9975", fontFamily: "Helvetica-Bold", fontSize: 8, letterSpacing: 1 },
+  columnNumber: { color: '#7B9975', fontFamily: 'Helvetica-Bold', fontSize: 8, letterSpacing: 1 },
   columnTitle: {
     color: INK,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: 'Helvetica-Bold',
     fontSize: 12,
     lineHeight: 1.25,
     marginTop: 8,
   },
   columnText: { color: MUTED, fontSize: 8.5, lineHeight: 1.45, marginTop: 6 },
-  comparison: { flexDirection: "row", marginTop: 20 },
+  comparison: { flexDirection: 'row', marginTop: 20 },
   comparisonSide: { flex: 1, minHeight: 245, padding: 17 },
   comparisonOld: {
-    backgroundColor: "#EDF0EC",
+    backgroundColor: '#EDF0EC',
     borderBottomLeftRadius: 14,
     borderTopLeftRadius: 14,
   },
   comparisonNew: { backgroundColor: BRAND, borderBottomRightRadius: 14, borderTopRightRadius: 14 },
   comparisonTitle: {
     color: INK,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: 'Helvetica-Bold',
     fontSize: 15,
     lineHeight: 1.25,
     marginTop: 10,
   },
   comparisonTitleLight: {
-    color: "#FFFFFF",
-    fontFamily: "Helvetica-Bold",
+    color: '#FFFFFF',
+    fontFamily: 'Helvetica-Bold',
     fontSize: 15,
     lineHeight: 1.25,
     marginTop: 10,
   },
   comparisonText: { color: MUTED, fontSize: 8.5, lineHeight: 1.45, marginTop: 12 },
-  comparisonTextLight: { color: "#DDE9DB", fontSize: 8.5, lineHeight: 1.45, marginTop: 12 },
+  comparisonTextLight: { color: '#DDE9DB', fontSize: 8.5, lineHeight: 1.45, marginTop: 12 },
   project: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#D9E1D7",
+    backgroundColor: '#FFFFFF',
+    borderColor: '#D9E1D7',
     borderRadius: 13,
     borderWidth: 1,
-    flexDirection: "row",
+    flexDirection: 'row',
     marginTop: 13,
-    overflow: "hidden",
+    overflow: 'hidden',
   },
-  projectImage: { height: 124, objectFit: "cover", width: 155 },
+  projectImage: { height: 124, objectFit: 'cover', width: 155 },
   projectContent: { flex: 1, padding: 13 },
   projectTag: {
     color: BRAND,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: 'Helvetica-Bold',
     fontSize: 7.5,
     letterSpacing: 0.85,
-    textTransform: "uppercase",
+    textTransform: 'uppercase',
   },
-  projectTitle: { color: INK, fontFamily: "Helvetica-Bold", fontSize: 13, marginTop: 5 },
+  projectTitle: { color: INK, fontFamily: 'Helvetica-Bold', fontSize: 13, marginTop: 5 },
   projectText: { color: MUTED, fontSize: 8.5, lineHeight: 1.4, marginTop: 5 },
   projectResult: {
     color: BRAND,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: 'Helvetica-Bold',
     fontSize: 8,
     lineHeight: 1.35,
     marginTop: 7,
   },
   final: { backgroundColor: BRAND, borderRadius: 18, marginTop: 32, padding: 27 },
   finalTitle: {
-    color: "#FFFFFF",
-    fontFamily: "Helvetica-Bold",
+    color: '#FFFFFF',
+    fontFamily: 'Helvetica-Bold',
     fontSize: 24,
     lineHeight: 1.08,
     maxWidth: 400,
   },
-  finalText: { color: "#DDE9DB", fontSize: 11, lineHeight: 1.5, marginTop: 13, maxWidth: 400 },
+  finalText: { color: '#DDE9DB', fontSize: 11, lineHeight: 1.5, marginTop: 13, maxWidth: 400 },
   cta: {
     backgroundColor: ACCENT,
     borderRadius: 9,
     marginTop: 23,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    textDecoration: "none",
+    textDecoration: 'none',
     width: 250,
   },
-  ctaText: { color: INK, fontFamily: "Helvetica-Bold", fontSize: 10, textAlign: "center" },
+  ctaText: { color: INK, fontFamily: 'Helvetica-Bold', fontSize: 10, textAlign: 'center' },
   secondaryLink: {
-    color: "#FFFFFF",
-    fontFamily: "Helvetica-Bold",
+    color: '#FFFFFF',
+    fontFamily: 'Helvetica-Bold',
     fontSize: 9,
     marginTop: 15,
-    textDecoration: "underline",
+    textDecoration: 'underline',
   },
-  footer: { bottom: 24, color: MUTED, fontSize: 7.5, left: 42, position: "absolute", right: 42 },
-  footerLine: { borderTopColor: "#D9E1D7", borderTopWidth: 1, paddingTop: 8 },
-});
+  footer: { bottom: 24, color: MUTED, fontSize: 7.5, left: 42, position: 'absolute', right: 42 },
+  footerLine: { borderTopColor: '#D9E1D7', borderTopWidth: 1, paddingTop: 8 },
+})
 
 export type DiagnosticPdfData = {
-  name: string;
-  company: string | null;
-  reportUrl?: string;
-  answers: Record<string, unknown>;
+  name: string
+  company: string | null
+  reportUrl?: string
+  answers: Record<string, unknown>
   metrics: {
-    yearlyHours: number;
-    yearlyCost: number;
-    monthlyHours: number;
-    risk: string;
-    primaryOpportunity: string;
-  };
-};
+    yearlyHours: number
+    yearlyCost: number
+    monthlyHours: number
+    risk: string
+    primaryOpportunity: string
+  }
+}
 
 const labels: Record<string, string> = {
-  proceso: "Proceso que quieres mejorar",
-  personas: "Personas implicadas",
-  minutos_por_vez: "Tiempo por repetición",
-  veces_por_semana: "Repeticiones por semana",
-  coste_hora: "Coste estimado por hora",
-  impacto: "Consecuencia principal",
-};
+  proceso: 'Proceso que quieres mejorar',
+  personas: 'Personas implicadas',
+  minutos_por_vez: 'Tiempo por repetición',
+  veces_por_semana: 'Repeticiones por semana',
+  coste_hora: 'Coste estimado por hora',
+  impacto: 'Consecuencia principal',
+}
 function printable(value: unknown): string {
   return Array.isArray(value)
-    ? value.map(printable).join(", ")
-    : typeof value === "object" && value !== null
-      ? "Información aportada en el diagnóstico"
-      : String(value);
+    ? value.map(printable).join(', ')
+    : typeof value === 'object' && value !== null
+      ? 'Información aportada en el diagnóstico'
+      : String(value)
 }
 
 function excerpt(value: string, limit = 88): string {
-  if (value.length <= limit) return value;
-  const lastSpace = value.lastIndexOf(" ", limit - 1);
-  return `${value.slice(0, lastSpace > 0 ? lastSpace : limit)}…`;
+  if (value.length <= limit) return value
+  const lastSpace = value.lastIndexOf(' ', limit - 1)
+  return `${value.slice(0, lastSpace > 0 ? lastSpace : limit)}…`
 }
 function Header({ page }: { page: string }) {
   return (
@@ -299,18 +300,18 @@ function Header({ page }: { page: string }) {
       </View>
       <Text style={styles.pageLabel}>{page}</Text>
     </View>
-  );
+  )
 }
 function Footer({
-  children = "doscientos · sistemas a medida para operaciones que importan",
+  children = 'doscientos · sistemas a medida para operaciones que importan',
 }: {
-  children?: string;
+  children?: string
 }) {
   return (
     <View fixed style={styles.footer}>
       <Text style={styles.footerLine}>{children}</Text>
     </View>
-  );
+  )
 }
 function Metric({
   label,
@@ -318,10 +319,10 @@ function Metric({
   text,
   middle = false,
 }: {
-  label: string;
-  value: string;
-  text: string;
-  middle?: boolean;
+  label: string
+  value: string
+  text: string
+  middle?: boolean
 }) {
   return (
     <View style={[styles.metric, middle ? styles.metricMiddle : {}]}>
@@ -329,7 +330,7 @@ function Metric({
       <Text style={styles.metricValue}>{value}</Text>
       <Text style={styles.metricText}>{text}</Text>
     </View>
-  );
+  )
 }
 function Project({
   image,
@@ -338,11 +339,11 @@ function Project({
   text,
   result,
 }: {
-  image: string;
-  tag: string;
-  title: string;
-  text: string;
-  result: string;
+  image: string
+  tag: string
+  title: string
+  text: string
+  result: string
 }) {
   return (
     <View style={styles.project}>
@@ -354,26 +355,26 @@ function Project({
         <Text style={styles.projectResult}>{result}</Text>
       </View>
     </View>
-  );
+  )
 }
 
 function DiagnosticDocument({ data }: { data: DiagnosticPdfData }) {
-  const euro = new Intl.NumberFormat("es-ES", {
-    style: "currency",
-    currency: "EUR",
+  const euro = new Intl.NumberFormat('es-ES', {
+    style: 'currency',
+    currency: 'EUR',
     maximumFractionDigits: 0,
-  });
-  const company = data.company || data.name;
-  const process = printable(data.answers.proceso || data.metrics.primaryOpportunity);
-  const impact = printable(data.answers.impact || "Evitar trabajo repetitivo y errores");
-  const companyForTitle = company.length > 24 ? "tu empresa" : company;
-  const primaryActionUrl = data.reportUrl ?? CTA_URL;
+  })
+  const company = data.company || data.name
+  const process = printable(data.answers.proceso || data.metrics.primaryOpportunity)
+  const impact = printable(data.answers.impact || 'Evitar trabajo repetitivo y errores')
+  const companyForTitle = company.length > 24 ? 'tu empresa' : company
+  const primaryActionUrl = data.reportUrl ?? CTA_URL
   const primaryActionLabel = data.reportUrl
-    ? "Ver mi diagnóstico online →"
-    : "Solicitar revisión del proceso →";
+    ? 'Ver mi diagnóstico online →'
+    : 'Solicitar revisión del proceso →'
   const answers = Object.entries(data.answers)
     .filter(([, item]) => item != null && printable(item).trim())
-    .slice(0, 6);
+    .slice(0, 6)
   return (
     <Document
       title={`Diagnóstico operativo · ${company}`}
@@ -411,7 +412,7 @@ function DiagnosticDocument({ data }: { data: DiagnosticPdfData }) {
         <Text
           style={[
             styles.coverMetricText,
-            { bottom: 42, left: 42, position: "absolute", right: 42 },
+            { bottom: 42, left: 42, position: 'absolute', right: 42 },
           ]}
         >
           Una guía práctica para convertir fricción operativa en un sistema que acompaña al equipo.
@@ -421,7 +422,7 @@ function DiagnosticDocument({ data }: { data: DiagnosticPdfData }) {
         <Header page="01 / Tu oportunidad" />
         <View style={styles.section}>
           <Text style={styles.eyebrow}>La lectura de tu caso</Text>
-          <Text style={styles.title}>{"Hay una mejora concreta\nsobre la mesa."}</Text>
+          <Text style={styles.title}>{'Hay una mejora concreta\nsobre la mesa.'}</Text>
           <Text style={styles.intro}>
             En {company}, el proceso de “{process}” ya merece una revisión: cada repetición consume
             atención que el equipo podría dedicar a trabajo de más valor.
@@ -466,7 +467,7 @@ function DiagnosticDocument({ data }: { data: DiagnosticPdfData }) {
         <Header page="02 / El punto de partida" />
         <View style={styles.section}>
           <Text style={styles.eyebrow}>Tu contexto, sin tecnicismos</Text>
-          <Text style={styles.title}>{"Esto es lo que\nnos has contado."}</Text>
+          <Text style={styles.title}>{'Esto es lo que\nnos has contado.'}</Text>
           <Text style={styles.intro}>
             No partimos de una plantilla. Partimos de cómo trabaja tu equipo ahora para decidir qué
             merece la pena simplificar, conectar o automatizar.
@@ -475,7 +476,7 @@ function DiagnosticDocument({ data }: { data: DiagnosticPdfData }) {
         <View style={styles.rows}>
           {answers.map(([key, item]) => (
             <View key={key} style={styles.row}>
-              <Text style={styles.rowLabel}>{labels[key] || key.replaceAll("_", " ")}</Text>
+              <Text style={styles.rowLabel}>{labels[key] || key.replaceAll('_', ' ')}</Text>
               <Text style={styles.rowValue}>{printable(item)}</Text>
             </View>
           ))}
@@ -483,13 +484,13 @@ function DiagnosticDocument({ data }: { data: DiagnosticPdfData }) {
         <View style={styles.metrics}>
           <Metric
             label="Personas implicadas"
-            value={printable(data.answers.personas || "Tu equipo")}
+            value={printable(data.answers.personas || 'Tu equipo')}
             text="El sistema debe ayudar a todas, no solo a quien lo administra."
           />
           <Metric
             middle
             label="Ritmo actual"
-            value={printable(data.answers.veces_por_semana || "Por definir")}
+            value={printable(data.answers.veces_por_semana || 'Por definir')}
             text="La frecuencia muestra dónde una mejora tiene efecto acumulado."
           />
           <Metric
@@ -514,7 +515,7 @@ function DiagnosticDocument({ data }: { data: DiagnosticPdfData }) {
         <Header page="03 / Qué es doscientos" />
         <View style={styles.section}>
           <Text style={styles.eyebrow}>Sistemas que encajan</Text>
-          <Text style={styles.title}>{"Una solución útil para\nun trabajo concreto."}</Text>
+          <Text style={styles.title}>{'Una solución útil para\nun trabajo concreto.'}</Text>
           <Text style={styles.intro}>
             doscientos diseña y desarrolla software a medida para empresas que han superado las
             hojas de cálculo, las herramientas desconectadas y los parches de cada día.
@@ -534,19 +535,19 @@ function DiagnosticDocument({ data }: { data: DiagnosticPdfData }) {
         <View style={styles.columns}>
           {[
             [
-              "01 · ENTENDER",
-              "La realidad antes que la solución.",
-              "Hablamos con las personas que ejecutan el proceso y detectamos lo que de verdad se repite.",
+              '01 · ENTENDER',
+              'La realidad antes que la solución.',
+              'Hablamos con las personas que ejecutan el proceso y detectamos lo que de verdad se repite.',
             ],
             [
-              "02 · DISEÑAR",
-              "Una herramienta que se entiende al abrirla.",
-              "Convertimos el flujo en pantallas, automatizaciones e integraciones que tienen sentido.",
+              '02 · DISEÑAR',
+              'Una herramienta que se entiende al abrirla.',
+              'Convertimos el flujo en pantallas, automatizaciones e integraciones que tienen sentido.',
             ],
             [
-              "03 · ENTREGAR",
-              "Valor útil desde el primer módulo.",
-              "Avanzamos en fases cortas, validando con negocio antes de hacer crecer el sistema.",
+              '03 · ENTREGAR',
+              'Valor útil desde el primer módulo.',
+              'Avanzamos en fases cortas, validando con negocio antes de hacer crecer el sistema.',
             ],
           ].map(([number, title, text], index) => (
             <View key={number} style={[styles.column, index === 1 ? styles.columnMiddle : {}]}>
@@ -569,7 +570,7 @@ function DiagnosticDocument({ data }: { data: DiagnosticPdfData }) {
         <Header page="04 / Por qué a medida" />
         <View style={styles.section}>
           <Text style={styles.eyebrow}>La diferencia práctica</Text>
-          <Text style={styles.title}>{"Tu proceso no debería\nvivir entre parches."}</Text>
+          <Text style={styles.title}>{'Tu proceso no debería\nvivir entre parches.'}</Text>
           <Text style={styles.intro}>
             Las herramientas estándar son útiles hasta que obligan al equipo a cambiar su forma de
             trabajar. Ahí empieza el trabajo duplicado y la falta de contexto.
@@ -618,7 +619,7 @@ function DiagnosticDocument({ data }: { data: DiagnosticPdfData }) {
         <Header page="05 / Proyectos reales" />
         <View style={styles.section}>
           <Text style={styles.eyebrow}>Referencias que hablan de trabajo</Text>
-          <Text style={styles.title}>{"Proyectos distintos.\nTrabajo útil."}</Text>
+          <Text style={styles.title}>{'Proyectos distintos.\nTrabajo útil.'}</Text>
           <Text style={styles.intro}>
             No hay dos operaciones iguales. Por eso cada proyecto empieza por una necesidad concreta
             y termina en una herramienta que el equipo puede usar desde el primer día.
@@ -670,9 +671,9 @@ function DiagnosticDocument({ data }: { data: DiagnosticPdfData }) {
         </View>
         <View style={styles.columns}>
           {[
-            ["01", "Nos cuentas el flujo real, con ejemplos."],
-            ["02", "Priorizamos una mejora que se pueda medir."],
-            ["03", "Te devolvemos una propuesta clara, sin humo."],
+            ['01', 'Nos cuentas el flujo real, con ejemplos.'],
+            ['02', 'Priorizamos una mejora que se pueda medir.'],
+            ['03', 'Te devolvemos una propuesta clara, sin humo.'],
           ].map(([number, text], index) => (
             <View key={number} style={[styles.column, index === 1 ? styles.columnMiddle : {}]}>
               <Text style={styles.columnNumber}>{number}</Text>
@@ -688,9 +689,9 @@ function DiagnosticDocument({ data }: { data: DiagnosticPdfData }) {
         <Footer>doscientos · hola@doscientos.es · doscientos.es</Footer>
       </Page>
     </Document>
-  );
+  )
 }
 
 export async function renderDiagnosticPdf(data: DiagnosticPdfData): Promise<Buffer> {
-  return renderToBuffer(<DiagnosticDocument data={data} />);
+  return renderToBuffer(<DiagnosticDocument data={data} />)
 }

@@ -16,6 +16,6 @@
  */
 export function notDeleted<B extends { is(column: string, value: null): unknown }>(
   builder: B,
-): ReturnType<B["is"]> {
-  return builder.is("deleted_at", null) as ReturnType<B["is"]>;
+): ReturnType<B['is']> {
+  return builder.is('deleted_at', null) as ReturnType<B['is']>
 }

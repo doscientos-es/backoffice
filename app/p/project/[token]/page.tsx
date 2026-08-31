@@ -9,114 +9,116 @@ import {
   Inbox,
   MessageSquareText,
   Sparkles,
-} from "lucide-react";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { PortalPasswordGate } from "@/components/portal/password-gate";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { getCurrentUser } from "@/lib/auth";
-import { isPortalUnlocked } from "@/lib/portal/access";
-import { PROJECT_STATUS, TASK_STATUS } from "@/lib/status";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { formatDate } from "@/lib/utils";
-import { unlockProjectPortal } from "./actions";
-import { ProjectRequestDialog } from "./request-form";
+} from 'lucide-react'
+import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 
-export const dynamic = "force-dynamic";
+import { PortalPasswordGate } from '@/components/portal/password-gate'
+import { StatusBadge } from '@/components/ui/status-badge'
+import { getCurrentUser } from '@/lib/auth'
+import { isPortalUnlocked } from '@/lib/portal/access'
+import { PROJECT_STATUS, TASK_STATUS } from '@/lib/status'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { formatDate } from '@/lib/utils'
+
+import { unlockProjectPortal } from './actions'
+import { ProjectRequestDialog } from './request-form'
+
+export const dynamic = 'force-dynamic'
 export const metadata: Metadata = {
-  title: "Seguimiento del proyecto · doscientos",
+  title: 'Seguimiento del proyecto · doscientos',
   robots: { index: false, follow: false },
-};
+}
 
 const REQUEST_STATUS: Record<string, { label: string; dot: string }> = {
-  new: { label: "Recibida", dot: "bg-sky-500" },
-  in_progress: { label: "En curso", dot: "bg-amber-500" },
-  resolved: { label: "Resuelta", dot: "bg-emerald-500" },
-  closed: { label: "Cerrada", dot: "bg-zinc-400" },
-};
+  new: { label: 'Recibida', dot: 'bg-sky-500' },
+  in_progress: { label: 'En curso', dot: 'bg-amber-500' },
+  resolved: { label: 'Resuelta', dot: 'bg-emerald-500' },
+  closed: { label: 'Cerrada', dot: 'bg-zinc-400' },
+}
 
 const REQUEST_CATEGORY: Record<string, string> = {
-  question: "Consulta",
-  incident: "Incidencia",
-  change: "Cambio",
-  material: "Material",
-  maintenance: "Mantenimiento",
-  complaint: "Queja",
-};
+  question: 'Consulta',
+  incident: 'Incidencia',
+  change: 'Cambio',
+  material: 'Material',
+  maintenance: 'Mantenimiento',
+  complaint: 'Queja',
+}
 
 export default async function ProjectPortalPage({
   params,
 }: {
-  params: Promise<{ token: string }>;
+  params: Promise<{ token: string }>
 }) {
-  const { token } = await params;
-  const admin = createAdminClient();
-  const auth = await getCurrentUser();
-  const isTeam = auth.ok;
+  const { token } = await params
+  const admin = createAdminClient()
+  const auth = await getCurrentUser()
+  const isTeam = auth.ok
 
   const { data: project } = await admin
-    .from("projects")
+    .from('projects')
     .select(
-      "id, name, status, starts_at, ends_at, portal_password_hash, is_client_visible, clients(name)",
+      'id, name, status, starts_at, ends_at, portal_password_hash, is_client_visible, clients(name)',
     )
-    .eq("portal_token", token)
-    .is("deleted_at", null)
-    .maybeSingle();
-  if (!project) notFound();
+    .eq('portal_token', token)
+    .is('deleted_at', null)
+    .maybeSingle()
+  if (!project) notFound()
 
   if (!isTeam) {
-    if (project.is_client_visible === false) notFound();
+    if (project.is_client_visible === false) notFound()
     const unlocked = await isPortalUnlocked(
       token,
       (project.portal_password_hash as string | null) ?? null,
-    );
+    )
     if (!unlocked) {
-      return <PortalPasswordGate token={token} action={unlockProjectPortal} />;
+      return <PortalPasswordGate token={token} action={unlockProjectPortal} />
     }
   }
 
   const [{ data: tasks }, { data: requests }, { data: webProjects }] = await Promise.all([
     admin
-      .from("tasks")
-      .select("id, title, client_title, client_summary, status, due_date, completed_at")
-      .eq("project_id", project.id as string)
-      .eq("kind", "task")
-      .eq("is_client_visible", true)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: true }),
+      .from('tasks')
+      .select('id, title, client_title, client_summary, status, due_date, completed_at')
+      .eq('project_id', project.id as string)
+      .eq('kind', 'task')
+      .eq('is_client_visible', true)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: true }),
     admin
-      .from("project_requests")
-      .select("id, subject, category, status, created_at")
-      .eq("project_id", project.id as string)
-      .order("created_at", { ascending: false })
+      .from('project_requests')
+      .select('id, subject, category, status, created_at')
+      .eq('project_id', project.id as string)
+      .order('created_at', { ascending: false })
       .limit(20),
     admin
-      .from("web_projects")
-      .select("id, name, url")
-      .eq("project_id", project.id as string)
-      .eq("is_client_visible", true)
-      .is("deleted_at", null)
-      .order("name"),
-  ]);
+      .from('web_projects')
+      .select('id, name, url')
+      .eq('project_id', project.id as string)
+      .eq('is_client_visible', true)
+      .is('deleted_at', null)
+      .order('name'),
+  ])
 
-  const visibleTasks = (tasks ?? []).filter((task) => task.status !== "cancelled");
-  const completed = visibleTasks.filter((task) => task.status === "done").length;
+  const visibleTasks = (tasks ?? []).filter((task) => task.status !== 'cancelled')
+  const completed = visibleTasks.filter((task) => task.status === 'done').length
   const progress =
-    visibleTasks.length === 0 ? 0 : Math.round((completed / visibleTasks.length) * 100);
-  const client = (project as unknown as { clients: { name: string } | null }).clients;
-  const hasTasks = visibleTasks.length > 0;
+    visibleTasks.length === 0 ? 0 : Math.round((completed / visibleTasks.length) * 100)
+  const client = (project as unknown as { clients: { name: string } | null }).clients
+  const hasTasks = visibleTasks.length > 0
   const progressCopy = !hasTasks
-    ? "Estamos preparando los próximos pasos"
+    ? 'Estamos preparando los próximos pasos'
     : progress === 100
-      ? "Todo el trabajo compartido está completado"
-      : `${completed} de ${visibleTasks.length} tareas completadas`;
+      ? 'Todo el trabajo compartido está completado'
+      : `${completed} de ${visibleTasks.length} tareas completadas`
   const publicWebs = (webProjects ?? []).filter((web) => {
     try {
-      return ["http:", "https:"].includes(new URL(web.url as string).protocol);
+      return ['http:', 'https:'].includes(new URL(web.url as string).protocol)
     } catch {
-      return false;
+      return false
     }
-  });
+  })
 
   return (
     <div className="flex flex-col gap-5 px-4 py-5 sm:gap-6 sm:px-6 sm:py-9">
@@ -135,18 +137,18 @@ export default async function ProjectPortalPage({
       <header className="relative isolate overflow-hidden rounded-[1.75rem] bg-[#172416] px-5 py-7 text-white sm:px-8 sm:py-9">
         <div
           aria-hidden="true"
-          className="absolute -right-24 -top-36 -z-10 size-80 rounded-full bg-[#bdff7b]/15 blur-3xl transition-transform duration-1000 hover:scale-110"
+          className="absolute -top-36 -right-24 -z-10 size-80 rounded-full bg-[#bdff7b]/15 blur-3xl transition-transform duration-1000 hover:scale-110"
         />
         <div
           aria-hidden="true"
-          className="absolute inset-0 -z-10 opacity-[0.035] [background-image:radial-gradient(circle_at_center,white_1px,transparent_1px)] [background-size:20px_20px]"
+          className="absolute inset-0 -z-10 [background-image:radial-gradient(circle_at_center,white_1px,transparent_1px)] [background-size:20px_20px] opacity-[0.035]"
         />
 
         <div className="grid items-end gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.48fr)]">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2.5">
               <p className="text-sm font-medium text-[#bdff7b]">
-                {client?.name ?? "Proyecto compartido"}
+                {client?.name ?? 'Proyecto compartido'}
               </p>
               <span className="size-1 rounded-full bg-white/30" aria-hidden="true" />
               <StatusBadge
@@ -155,7 +157,7 @@ export default async function ProjectPortalPage({
                 className="border border-white/15 bg-white/10 text-white"
               />
             </div>
-            <h1 className="mt-4 max-w-3xl text-balance text-3xl font-semibold leading-[1.08] sm:text-4xl lg:text-5xl">
+            <h1 className="mt-4 max-w-3xl text-3xl leading-[1.08] font-semibold text-balance sm:text-4xl lg:text-5xl">
               {project.name as string}
             </h1>
             <p className="mt-4 max-w-xl text-sm leading-6 text-white/65 sm:text-base">
@@ -169,7 +171,7 @@ export default async function ProjectPortalPage({
                 <p className="text-xs font-medium text-white/55">Progreso compartido</p>
                 <p className="mt-1 text-sm font-medium text-white/90">{progressCopy}</p>
               </div>
-              <strong className="text-3xl font-semibold tabular-nums tracking-tight text-[#bdff7b]">
+              <strong className="text-3xl font-semibold tracking-tight text-[#bdff7b] tabular-nums">
                 {progress}%
               </strong>
             </div>
@@ -190,7 +192,7 @@ export default async function ProjectPortalPage({
         </div>
       </header>
 
-      <section className="grid border-y border-black/[0.07] dark:border-white/[0.09] sm:grid-cols-2 sm:divide-x sm:divide-black/[0.07] dark:sm:divide-white/[0.09]">
+      <section className="grid border-y border-black/[0.07] sm:grid-cols-2 sm:divide-x sm:divide-black/[0.07] dark:border-white/[0.09] dark:sm:divide-white/[0.09]">
         <InfoItem label="Inicio del proyecto" date={project.starts_at as string | null} />
         <InfoItem label="Entrega prevista" date={project.ends_at as string | null} />
       </section>
@@ -249,16 +251,16 @@ export default async function ProjectPortalPage({
               {visibleTasks.map((task) => (
                 <li
                   key={task.id as string}
-                  className="group flex flex-col gap-3 py-4 transition-colors hover:bg-black/[0.015] dark:hover:bg-white/[0.02] sm:flex-row sm:items-center sm:justify-between"
+                  className="group flex flex-col gap-3 py-4 transition-colors hover:bg-black/[0.015] sm:flex-row sm:items-center sm:justify-between dark:hover:bg-white/[0.02]"
                 >
                   <div className="flex min-w-0 items-start gap-3 sm:items-center">
                     <TaskStateIcon status={task.status as string} />
                     <div className="min-w-0">
-                      <span className="block break-words text-sm font-medium leading-5">
+                      <span className="block text-sm leading-5 font-medium break-words">
                         {(task.client_title as string | null) ?? (task.title as string)}
                       </span>
                       {task.client_summary ? (
-                        <span className="mt-0.5 block break-words text-xs leading-5 text-zinc-600 dark:text-zinc-400">
+                        <span className="mt-0.5 block text-xs leading-5 break-words text-zinc-600 dark:text-zinc-400">
                           {task.client_summary as string}
                         </span>
                       ) : null}
@@ -285,7 +287,7 @@ export default async function ProjectPortalPage({
 
         <section
           aria-labelledby="requests-title"
-          className="mt-7 border-t border-black/[0.07] pt-7 dark:border-white/[0.09] lg:mt-0 lg:border-t-0 lg:border-l lg:pt-2 lg:pl-8"
+          className="mt-7 border-t border-black/[0.07] pt-7 lg:mt-0 lg:border-t-0 lg:border-l lg:pt-2 lg:pl-8 dark:border-white/[0.09]"
         >
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
@@ -303,26 +305,26 @@ export default async function ProjectPortalPage({
           {(requests ?? []).length > 0 ? (
             <ul className="mt-4 max-h-[28rem] divide-y divide-zinc-200 overflow-y-auto pr-1 dark:divide-white/[0.08]">
               {(requests ?? []).map((request) => {
-                const status = REQUEST_STATUS[request.status as string];
+                const status = REQUEST_STATUS[request.status as string]
                 return (
                   <li key={request.id as string} className="py-3.5">
-                    <p className="break-words text-sm font-medium leading-5">
+                    <p className="text-sm leading-5 font-medium break-words">
                       {request.subject as string}
                     </p>
                     <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-xs text-zinc-500 dark:text-zinc-400">
                       <span className="inline-flex items-center gap-1.5 font-medium">
-                        <span className={`size-1.5 rounded-full ${status?.dot ?? "bg-zinc-400"}`} />
+                        <span className={`size-1.5 rounded-full ${status?.dot ?? 'bg-zinc-400'}`} />
                         {status?.label ?? (request.status as string)}
                       </span>
                       <span aria-hidden="true">·</span>
-                      <span>{REQUEST_CATEGORY[request.category as string] ?? "Solicitud"}</span>
+                      <span>{REQUEST_CATEGORY[request.category as string] ?? 'Solicitud'}</span>
                       <span aria-hidden="true">·</span>
                       <time dateTime={request.created_at as string}>
                         {formatDate(request.created_at as string)}
                       </time>
                     </div>
                   </li>
-                );
+                )
               })}
             </ul>
           ) : (
@@ -336,29 +338,29 @@ export default async function ProjectPortalPage({
         </section>
       </div>
     </div>
-  );
+  )
 }
 
 function TaskStateIcon({ status }: { status: string }) {
-  if (status === "done") {
+  if (status === 'done') {
     return (
       <span className="grid size-7 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700 transition-transform duration-200 group-hover:scale-105 dark:bg-emerald-400/15 dark:text-emerald-300">
         <Check className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
       </span>
-    );
+    )
   }
-  if (status === "in_progress" || status === "in_review") {
+  if (status === 'in_progress' || status === 'in_review') {
     return (
       <span className="grid size-7 shrink-0 place-items-center rounded-full bg-sky-100 text-sky-700 transition-transform duration-200 group-hover:scale-105 dark:bg-sky-400/15 dark:text-sky-300">
         <CircleDot className="size-3.5" aria-hidden="true" />
       </span>
-    );
+    )
   }
   return (
     <span className="grid size-7 shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-500 transition-transform duration-200 group-hover:scale-105 dark:bg-white/[0.08] dark:text-zinc-400">
       <CircleDot className="size-3.5" aria-hidden="true" />
     </span>
-  );
+  )
 }
 
 function InfoItem({ label, date }: { label: string; date: string | null }) {
@@ -380,7 +382,7 @@ function InfoItem({ label, date }: { label: string; date: string | null }) {
         )}
       </div>
     </div>
-  );
+  )
 }
 
 function EmptyState({
@@ -389,13 +391,13 @@ function EmptyState({
   description,
   compact = false,
 }: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  compact?: boolean;
+  icon: React.ReactNode
+  title: string
+  description: string
+  compact?: boolean
 }) {
   return (
-    <div className={`mt-5 grid justify-items-center px-5 text-center ${compact ? "py-6" : "py-9"}`}>
+    <div className={`mt-5 grid justify-items-center px-5 text-center ${compact ? 'py-6' : 'py-9'}`}>
       <div className="grid size-9 place-items-center rounded-full bg-zinc-100 text-zinc-500 dark:bg-white/[0.06] dark:text-zinc-300">
         {icon}
       </div>
@@ -404,5 +406,5 @@ function EmptyState({
         {description}
       </p>
     </div>
-  );
+  )
 }

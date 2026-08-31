@@ -1,24 +1,25 @@
-"use client";
+'use client'
 
-import { ChevronDown, ChevronUp, Plus, Trash as Trash2 } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { ChevronDown, ChevronUp, Plus, Trash as Trash2 } from 'lucide-react'
+
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import {
   createEmptyKeyPoint,
   type EditableKeyPoint,
   KEY_POINTS_LIMITS,
-} from "@/lib/proposals/key-points";
+} from '@/lib/proposals/key-points'
 
 export type KeyPointsEditorProps = {
-  items: EditableKeyPoint[];
-  onChange: (items: EditableKeyPoint[]) => void;
+  items: EditableKeyPoint[]
+  onChange: (items: EditableKeyPoint[]) => void
   /** When true, every input is disabled. Mirrors `LineItemsTable.locked`. */
-  locked?: boolean;
-  titlePlaceholder?: string;
-  descriptionPlaceholder?: string;
-  addLabel?: string;
-  ariaLabel?: string;
-};
+  locked?: boolean
+  titlePlaceholder?: string
+  descriptionPlaceholder?: string
+  addLabel?: string
+  ariaLabel?: string
+}
 
 /**
  * Reusable ordered-list editor for proposal narrative blocks (problems and
@@ -29,39 +30,39 @@ export function KeyPointsEditor({
   items,
   onChange,
   locked = false,
-  titlePlaceholder = "Título",
-  descriptionPlaceholder = "Descripción (opcional)",
-  addLabel = "Añadir",
+  titlePlaceholder = 'Título',
+  descriptionPlaceholder = 'Descripción (opcional)',
+  addLabel = 'Añadir',
   ariaLabel,
 }: KeyPointsEditorProps) {
-  const max = KEY_POINTS_LIMITS.maxCount;
+  const max = KEY_POINTS_LIMITS.maxCount
 
   const update = (i: number, patch: Partial<EditableKeyPoint>) =>
-    onChange(items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)));
+    onChange(items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)))
 
   const add = () => {
-    if (items.length >= max) return;
-    onChange([...items, createEmptyKeyPoint()]);
-  };
+    if (items.length >= max) return
+    onChange([...items, createEmptyKeyPoint()])
+  }
 
-  const remove = (i: number) => onChange(items.filter((_, idx) => idx !== i));
+  const remove = (i: number) => onChange(items.filter((_, idx) => idx !== i))
 
   const move = (i: number, dir: -1 | 1) => {
-    const j = i + dir;
-    if (j < 0 || j >= items.length) return;
-    const copy = items.slice();
-    const a = copy[i];
-    const b = copy[j];
-    if (!a || !b) return;
-    copy[i] = b;
-    copy[j] = a;
-    onChange(copy);
-  };
+    const j = i + dir
+    if (j < 0 || j >= items.length) return
+    const copy = items.slice()
+    const a = copy[i]
+    const b = copy[j]
+    if (!a || !b) return
+    copy[i] = b
+    copy[j] = a
+    onChange(copy)
+  }
 
   return (
     <div className="flex flex-col gap-2">
       {items.length === 0 ? (
-        <p className="rounded-md border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
+        <p className="border-border text-muted-foreground rounded-md border border-dashed px-3 py-2 text-xs">
           Aún no hay puntos. Pulsa “{addLabel}” para añadir el primero.
         </p>
       ) : (
@@ -69,11 +70,11 @@ export function KeyPointsEditor({
           {items.map((it, i) => (
             <li
               key={it.id}
-              className="flex flex-col gap-1.5 rounded-md border border-border bg-background p-2.5"
+              className="border-border bg-background flex flex-col gap-1.5 rounded-md border p-2.5"
             >
               <div className="flex items-center gap-1.5">
-                <span className="w-6 shrink-0 text-center text-[11px] font-semibold tabular-nums text-muted-foreground">
-                  {String(i + 1).padStart(2, "0")}
+                <span className="text-muted-foreground w-6 shrink-0 text-center text-[11px] font-semibold tabular-nums">
+                  {String(i + 1).padStart(2, '0')}
                 </span>
                 <Input
                   value={it.title}
@@ -90,7 +91,7 @@ export function KeyPointsEditor({
                     onClick={() => move(i, -1)}
                     disabled={locked || i === 0}
                     aria-label={`Subir punto ${i + 1}`}
-                    className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent disabled:pointer-events-none disabled:opacity-30"
+                    className="text-muted-foreground hover:bg-accent inline-flex size-7 items-center justify-center rounded-md disabled:pointer-events-none disabled:opacity-30"
                   >
                     <ChevronUp className="size-3.5" aria-hidden />
                   </button>
@@ -99,7 +100,7 @@ export function KeyPointsEditor({
                     onClick={() => move(i, 1)}
                     disabled={locked || i === items.length - 1}
                     aria-label={`Bajar punto ${i + 1}`}
-                    className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent disabled:pointer-events-none disabled:opacity-30"
+                    className="text-muted-foreground hover:bg-accent inline-flex size-7 items-center justify-center rounded-md disabled:pointer-events-none disabled:opacity-30"
                   >
                     <ChevronDown className="size-3.5" aria-hidden />
                   </button>
@@ -108,7 +109,7 @@ export function KeyPointsEditor({
                     onClick={() => remove(i)}
                     disabled={locked}
                     aria-label={`Eliminar punto ${i + 1}`}
-                    className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:pointer-events-none disabled:opacity-30"
+                    className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive inline-flex size-7 items-center justify-center rounded-md disabled:pointer-events-none disabled:opacity-30"
                   >
                     <Trash2 className="size-3.5" aria-hidden />
                   </button>
@@ -132,13 +133,13 @@ export function KeyPointsEditor({
         type="button"
         onClick={add}
         disabled={locked || items.length >= max}
-        className="inline-flex w-fit items-center gap-1.5 text-xs font-medium text-primary hover:underline disabled:pointer-events-none disabled:opacity-50"
+        className="text-primary inline-flex w-fit items-center gap-1.5 text-xs font-medium hover:underline disabled:pointer-events-none disabled:opacity-50"
       >
         <Plus className="size-3.5" aria-hidden /> {addLabel}
       </button>
       {items.length >= max ? (
-        <p className="text-[11px] text-muted-foreground">Máximo {max} puntos por bloque.</p>
+        <p className="text-muted-foreground text-[11px]">Máximo {max} puntos por bloque.</p>
       ) : null}
     </div>
-  );
+  )
 }

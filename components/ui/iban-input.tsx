@@ -1,1 +1,1 @@
-﻿export * from "@/primitives/ui/iban-input";
+﻿export * from '@/primitives/ui/iban-input'

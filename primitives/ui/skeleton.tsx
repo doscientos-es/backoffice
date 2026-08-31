@@ -1,1 +1,1 @@
-﻿export { Skeleton } from "@doscientos/ui";
+﻿export { Skeleton } from '@doscientos/ui'

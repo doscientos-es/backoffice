@@ -1,9 +1,10 @@
-import type { EmailOtpType } from "@supabase/supabase-js";
-import { type NextRequest, NextResponse } from "next/server";
-import { scopedLogger } from "@/lib/logger";
-import { createServerClient } from "@/lib/supabase/server";
+import type { EmailOtpType } from '@supabase/supabase-js'
+import { type NextRequest, NextResponse } from 'next/server'
 
-const log = scopedLogger("auth.confirm");
+import { scopedLogger } from '@/lib/logger'
+import { createServerClient } from '@/lib/supabase/server'
+
+const log = scopedLogger('auth.confirm')
 
 /**
  * OTP confirmation callback for Supabase Auth (SSR flow).
@@ -23,25 +24,25 @@ const log = scopedLogger("auth.confirm");
  * session through the SSR cookie adapter.
  */
 export async function GET(request: NextRequest) {
-  const url = new URL(request.url);
-  const tokenHash = url.searchParams.get("token_hash");
-  const type = url.searchParams.get("type") as EmailOtpType | null;
-  const rawNext = url.searchParams.get("next");
+  const url = new URL(request.url)
+  const tokenHash = url.searchParams.get('token_hash')
+  const type = url.searchParams.get('type') as EmailOtpType | null
+  const rawNext = url.searchParams.get('next')
   // Block protocol-relative URLs like //evil.com (startsWith("/") passes but
   // resolves to an external origin when fed to new URL()).
-  const next = rawNext?.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/inicio";
+  const next = rawNext?.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/inicio'
 
   if (!tokenHash || !type) {
-    log.warn({ hasToken: Boolean(tokenHash), type }, "confirm missing token_hash or type");
-    return NextResponse.redirect(new URL("/login?error=confirm_invalid_link", request.url));
+    log.warn({ hasToken: Boolean(tokenHash), type }, 'confirm missing token_hash or type')
+    return NextResponse.redirect(new URL('/login?error=confirm_invalid_link', request.url))
   }
 
-  const supabase = await createServerClient();
-  const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
+  const supabase = await createServerClient()
+  const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash })
   if (error) {
-    log.error({ err: error }, "verifyOtp failed");
-    return NextResponse.redirect(new URL("/login?error=confirm_failed", request.url));
+    log.error({ err: error }, 'verifyOtp failed')
+    return NextResponse.redirect(new URL('/login?error=confirm_failed', request.url))
   }
 
-  return NextResponse.redirect(new URL(next, request.url));
+  return NextResponse.redirect(new URL(next, request.url))
 }

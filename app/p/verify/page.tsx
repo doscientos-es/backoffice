@@ -1,19 +1,19 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-export const metadata = { title: "Verificación · doscientos" };
+export const metadata = { title: 'Verificación · doscientos' }
 
-type SearchParams = Promise<{ nif?: string; numserie?: string; fecha?: string; importe?: string }>;
+type SearchParams = Promise<{ nif?: string; numserie?: string; fecha?: string; importe?: string }>
 
 export default async function VerifyPage({ searchParams }: { searchParams: SearchParams }) {
-  const p = await searchParams;
+  const p = await searchParams
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-4">
+    <main className="bg-background flex min-h-screen items-center justify-center px-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Verificación de factura</CardTitle>
         </CardHeader>
         <CardContent className="text-sm">
-          <p className="mb-4 text-muted">
+          <p className="text-muted mb-4">
             Modo MOCK Verifactu (entorno interno). Estos datos provienen del QR de la factura.
           </p>
           <Row label="NIF emisor" value={p.nif} />
@@ -23,16 +23,16 @@ export default async function VerifyPage({ searchParams }: { searchParams: Searc
         </CardContent>
       </Card>
     </main>
-  );
+  )
 }
 
 function Row({ label, value }: { label: string; value: string | undefined }) {
   return (
-    <div className="grid grid-cols-[140px_1fr] items-center gap-2 py-1.5 border-b last:border-b-0 border-border">
+    <div className="border-border grid grid-cols-[140px_1fr] items-center gap-2 border-b py-1.5 last:border-b-0">
       <span className="text-muted">{label}</span>
-      <span className="font-medium text-primary" data-tabular>
-        {value ?? "—"}
+      <span className="text-primary font-medium" data-tabular>
+        {value ?? '—'}
       </span>
     </div>
-  );
+  )
 }

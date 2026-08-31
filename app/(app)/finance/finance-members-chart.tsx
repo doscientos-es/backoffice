@@ -1,9 +1,10 @@
-"use client";
+'use client'
 
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { formatEUR } from "@/lib/utils";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
-export type MemberBar = { name: string; value: number };
+import { formatEUR } from '@/lib/utils'
+
+export type MemberBar = { name: string; value: number }
 
 export function FinanceMembersChart({ data }: { data: MemberBar[] }) {
   return (
@@ -31,18 +32,18 @@ export function FinanceMembersChart({ data }: { data: MemberBar[] }) {
             width={96}
           />
           <Tooltip
-            cursor={{ fill: "color-mix(in oklab, var(--muted) 60%, transparent)" }}
+            cursor={{ fill: 'color-mix(in oklab, var(--muted) 60%, transparent)' }}
             contentStyle={{
-              background: "var(--background)",
-              border: "1px solid var(--border)",
+              background: 'var(--background)',
+              border: '1px solid var(--border)',
               borderRadius: 8,
               fontSize: 12,
             }}
-            formatter={(value: number) => [formatEUR(value), "Aportado"]}
+            formatter={(value: number) => [formatEUR(value), 'Aportado']}
           />
           <Bar dataKey="value" fill="var(--primary)" radius={[0, 4, 4, 0]} maxBarSize={28} />
         </BarChart>
       </ResponsiveContainer>
     </div>
-  );
+  )
 }

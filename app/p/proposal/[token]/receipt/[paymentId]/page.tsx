@@ -1,49 +1,50 @@
-import { notFound } from "next/navigation";
-import { PaymentReceipt } from "@/components/portal/payment-receipt";
-import { formatAddress } from "@/lib/address";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { notFound } from 'next/navigation'
 
-export const dynamic = "force-dynamic";
+import { PaymentReceipt } from '@/components/portal/payment-receipt'
+import { formatAddress } from '@/lib/address'
+import { createAdminClient } from '@/lib/supabase/admin'
+
+export const dynamic = 'force-dynamic'
 
 export default async function ProposalReceiptPage({
   params,
 }: {
-  params: Promise<{ token: string; paymentId: string }>;
+  params: Promise<{ token: string; paymentId: string }>
 }) {
-  const { token, paymentId } = await params;
-  const admin = createAdminClient();
+  const { token, paymentId } = await params
+  const admin = createAdminClient()
 
   // Load proposal to verify token and get context
   const { data: proposal } = await admin
-    .from("proposals")
-    .select("*, clients(name, nif, billing_address), leads(name, company)")
-    .eq("portal_token", token)
-    .maybeSingle();
+    .from('proposals')
+    .select('*, clients(name, nif, billing_address), leads(name, company)')
+    .eq('portal_token', token)
+    .maybeSingle()
 
-  if (!proposal) notFound();
+  if (!proposal) notFound()
 
   // Load specific payment
   const { data: payment } = await admin
-    .from("invoice_payments")
-    .select("*")
-    .eq("id", paymentId)
-    .eq("proposal_id", proposal.id as string)
-    .eq("status", "confirmed")
-    .maybeSingle();
+    .from('invoice_payments')
+    .select('*')
+    .eq('id', paymentId)
+    .eq('proposal_id', proposal.id as string)
+    .eq('status', 'confirmed')
+    .maybeSingle()
 
-  if (!payment) notFound();
+  if (!payment) notFound()
 
-  const { data: settings } = await admin.from("settings").select("*").eq("id", 1).maybeSingle();
+  const { data: settings } = await admin.from('settings').select('*').eq('id', 1).maybeSingle()
 
   const proposalRow = proposal as unknown as {
-    clients: { name?: string; nif?: string } | null;
-    leads: { name?: string; company?: string } | null;
-    accepted_fiscal_data: { nif?: string } | null;
-  };
-  const client = proposalRow.clients;
-  const lead = proposalRow.leads;
-  const recipientName = client?.name ?? lead?.company ?? lead?.name ?? "—";
-  const recipientNif = client?.nif ?? proposalRow.accepted_fiscal_data?.nif ?? "";
+    clients: { name?: string; nif?: string } | null
+    leads: { name?: string; company?: string } | null
+    accepted_fiscal_data: { nif?: string } | null
+  }
+  const client = proposalRow.clients
+  const lead = proposalRow.leads
+  const recipientName = client?.name ?? lead?.company ?? lead?.name ?? '—'
+  const recipientNif = client?.nif ?? proposalRow.accepted_fiscal_data?.nif ?? ''
 
   return (
     <PaymentReceipt
@@ -70,5 +71,5 @@ export default async function ProposalReceiptPage({
       amount={Number(payment.amount)}
       footerNote="Este documento es un justificante de la transacción realizada a través de nuestra pasarela de pagos. Conserve este comprobante junto con su presupuesto aceptado."
     />
-  );
+  )
 }

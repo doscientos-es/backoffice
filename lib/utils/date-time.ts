@@ -1,1 +1,1 @@
-export * from "@/primitives/lib/date-time";
+export * from '@/primitives/lib/date-time'

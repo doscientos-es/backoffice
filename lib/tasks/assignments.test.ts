@@ -1,28 +1,29 @@
-import { describe, expect, it } from "vitest";
-import { mergeTaskMemberIds, normalizeTaskMemberIds } from "./assignments";
+import { describe, expect, it } from 'vitest'
 
-describe("mergeTaskMemberIds", () => {
-  it("keeps the legacy primary assignee when no relation rows exist", () => {
-    expect(mergeTaskMemberIds("primary", [])).toEqual(["primary"]);
-  });
+import { mergeTaskMemberIds, normalizeTaskMemberIds } from './assignments'
 
-  it("merges collaborators without duplicating the primary assignee", () => {
-    expect(mergeTaskMemberIds("primary", ["primary", "gerard", null, undefined])).toEqual([
-      "primary",
-      "gerard",
-    ]);
-  });
-});
+describe('mergeTaskMemberIds', () => {
+  it('keeps the legacy primary assignee when no relation rows exist', () => {
+    expect(mergeTaskMemberIds('primary', [])).toEqual(['primary'])
+  })
 
-describe("normalizeTaskMemberIds", () => {
-  it("assigns the creator as primary when no members are selected", () => {
-    expect(normalizeTaskMemberIds("creator", [])).toEqual(["creator"]);
-  });
+  it('merges collaborators without duplicating the primary assignee', () => {
+    expect(mergeTaskMemberIds('primary', ['primary', 'gerard', null, undefined])).toEqual([
+      'primary',
+      'gerard',
+    ])
+  })
+})
 
-  it("preserves explicit order and removes duplicate members", () => {
-    expect(normalizeTaskMemberIds("creator", ["other", "creator", "other"])).toEqual([
-      "other",
-      "creator",
-    ]);
-  });
-});
+describe('normalizeTaskMemberIds', () => {
+  it('assigns the creator as primary when no members are selected', () => {
+    expect(normalizeTaskMemberIds('creator', [])).toEqual(['creator'])
+  })
+
+  it('preserves explicit order and removes duplicate members', () => {
+    expect(normalizeTaskMemberIds('creator', ['other', 'creator', 'other'])).toEqual([
+      'other',
+      'creator',
+    ])
+  })
+})

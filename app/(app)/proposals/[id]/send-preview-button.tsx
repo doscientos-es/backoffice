@@ -1,8 +1,9 @@
-"use client";
+'use client'
 
-import { CheckCheck, LoaderCircle as Loader2, Send } from "lucide-react";
-import { type FormEvent, useState, useTransition } from "react";
-import { Button } from "@/components/ui/button";
+import { CheckCheck, LoaderCircle as Loader2, Send } from 'lucide-react'
+import { type FormEvent, useState, useTransition } from 'react'
+
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -10,89 +11,90 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { markProposalAsSent, previewProposalEmail, sendPreviewLink } from "../actions";
+} from '@/components/ui/dialog'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+
+import { markProposalAsSent, previewProposalEmail, sendPreviewLink } from '../actions'
 
 type Props = {
-  id: string;
-  defaultEmail: string | null;
-  alreadySent: boolean;
-};
+  id: string
+  defaultEmail: string | null
+  alreadySent: boolean
+}
 
 /**
  * Lets the team review the exact rendered email and its recipient before the
  * public proposal URL is delivered.
  */
 export function SendPreviewButton({ id, defaultEmail, alreadySent }: Props) {
-  const [open, setOpen] = useState(false);
-  const [to, setTo] = useState(defaultEmail ?? "");
-  const [message, setMessage] = useState("");
-  const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null);
-  const [previewMessage, setPreviewMessage] = useState("");
-  const [loadingPreview, setLoadingPreview] = useState(false);
-  const feedback = useFormFeedback({ successResetMs: 4000 });
-  const markFeedback = useFormFeedback({ successResetMs: 4000 });
-  const [pending, startTransition] = useTransition();
-  const [markPending, startMarkTransition] = useTransition();
+  const [open, setOpen] = useState(false)
+  const [to, setTo] = useState(defaultEmail ?? '')
+  const [message, setMessage] = useState('')
+  const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null)
+  const [previewMessage, setPreviewMessage] = useState('')
+  const [loadingPreview, setLoadingPreview] = useState(false)
+  const feedback = useFormFeedback({ successResetMs: 4000 })
+  const markFeedback = useFormFeedback({ successResetMs: 4000 })
+  const [pending, startTransition] = useTransition()
+  const [markPending, startMarkTransition] = useTransition()
 
   const loadPreview = async () => {
-    setLoadingPreview(true);
-    const messageForPreview = message.trim();
+    setLoadingPreview(true)
+    const messageForPreview = message.trim()
     const res = await previewProposalEmail({
       id,
       message: messageForPreview || undefined,
-    });
+    })
     if (res.ok) {
-      setPreview({ subject: res.subject, html: res.html });
-      setPreviewMessage(message);
+      setPreview({ subject: res.subject, html: res.html })
+      setPreviewMessage(message)
     } else {
-      feedback.setError(res.error);
+      feedback.setError(res.error)
     }
-    setLoadingPreview(false);
-  };
+    setLoadingPreview(false)
+  }
 
   const onOpenChange = (next: boolean) => {
-    setOpen(next);
-    if (next) void loadPreview();
-  };
+    setOpen(next)
+    if (next) void loadPreview()
+  }
 
   const handleMarkAsSent = () => {
-    markFeedback.setPending();
+    markFeedback.setPending()
     startMarkTransition(async () => {
-      const res = await markProposalAsSent({ id });
+      const res = await markProposalAsSent({ id })
       if (!res.ok) {
-        markFeedback.setError(res.error);
+        markFeedback.setError(res.error)
       } else {
-        markFeedback.setSuccess("Marcada como enviada");
+        markFeedback.setSuccess('Marcada como enviada')
       }
-    });
-  };
+    })
+  }
 
   const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     if (!preview || previewMessage !== message) {
-      feedback.setError("Actualiza la vista previa antes de enviar el email.");
-      return;
+      feedback.setError('Actualiza la vista previa antes de enviar el email.')
+      return
     }
-    feedback.setPending();
+    feedback.setPending()
     startTransition(async () => {
       const res = await sendPreviewLink({
         id,
         to: to.trim() || undefined,
         message: message.trim() || undefined,
-      });
+      })
       if (!res.ok) {
-        feedback.setError(res.error);
-        return;
+        feedback.setError(res.error)
+        return
       }
-      feedback.setSuccess(res.mocked ? "Email simulado (modo dev)" : "Email enviado");
-      setOpen(false);
-    });
-  };
+      feedback.setSuccess(res.mocked ? 'Email simulado (modo dev)' : 'Email enviado')
+      setOpen(false)
+    })
+  }
 
   return (
     <>
@@ -116,7 +118,7 @@ export function SendPreviewButton({ id, defaultEmail, alreadySent }: Props) {
           onClick={() => onOpenChange(true)}
           disabled={pending || markPending}
         >
-          <Send aria-hidden /> {alreadySent ? "Reenviar preview" : "Enviar preview al cliente"}
+          <Send aria-hidden /> {alreadySent ? 'Reenviar preview' : 'Enviar preview al cliente'}
         </Button>
       </div>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -172,16 +174,16 @@ export function SendPreviewButton({ id, defaultEmail, alreadySent }: Props) {
                 Actualizar vista previa
               </Button>
             </div>
-            <div className="overflow-hidden rounded-lg border border-border bg-muted/30">
-              <div className="border-b bg-background px-4 py-3">
-                <p className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
+            <div className="border-border bg-muted/30 overflow-hidden rounded-lg border">
+              <div className="bg-background border-b px-4 py-3">
+                <p className="text-muted-foreground text-[10px] font-medium tracking-wide uppercase">
                   Asunto
                 </p>
-                <p className="mt-1 text-sm font-medium">{preview?.subject ?? "Cargando email…"}</p>
+                <p className="mt-1 text-sm font-medium">{preview?.subject ?? 'Cargando email…'}</p>
               </div>
               <div className="h-105 bg-white">
                 {loadingPreview ? (
-                  <div className="flex h-full items-center justify-center text-muted-foreground">
+                  <div className="text-muted-foreground flex h-full items-center justify-center">
                     <Loader2 className="animate-spin" aria-label="Cargando vista previa" />
                   </div>
                 ) : preview ? (
@@ -192,7 +194,7 @@ export function SendPreviewButton({ id, defaultEmail, alreadySent }: Props) {
                     className="h-full w-full border-0"
                   />
                 ) : (
-                  <p className="p-4 text-sm text-muted-foreground">
+                  <p className="text-muted-foreground p-4 text-sm">
                     No se pudo cargar la vista previa.
                   </p>
                 )}
@@ -214,12 +216,12 @@ export function SendPreviewButton({ id, defaultEmail, alreadySent }: Props) {
                 size="sm"
                 disabled={pending || loadingPreview || !preview || previewMessage !== message}
               >
-                <Send aria-hidden /> {pending ? "Enviando…" : "Enviar email"}
+                <Send aria-hidden /> {pending ? 'Enviando…' : 'Enviar email'}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
     </>
-  );
+  )
 }

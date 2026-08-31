@@ -1,44 +1,46 @@
-"use client";
+'use client'
 
-import { CheckCircle, RefreshCw, XCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { syncGoogleBusinessPerformance, syncGoogleBusinessReviews } from "../actions";
+import { CheckCircle, RefreshCw, XCircle } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
-type Phase = "idle" | "loading" | "success" | "error";
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+
+import { syncGoogleBusinessPerformance, syncGoogleBusinessReviews } from '../actions'
+
+type Phase = 'idle' | 'loading' | 'success' | 'error'
 
 export function GoogleBusinessSyncButton({
   kind,
   label,
 }: {
-  kind: "reviews" | "performance";
-  label: string;
+  kind: 'reviews' | 'performance'
+  label: string
 }) {
-  const router = useRouter();
-  const [phase, setPhase] = useState<Phase>("idle");
-  const [message, setMessage] = useState<string | null>(null);
+  const router = useRouter()
+  const [phase, setPhase] = useState<Phase>('idle')
+  const [message, setMessage] = useState<string | null>(null)
 
   async function handleSync() {
-    setPhase("loading");
-    setMessage(null);
+    setPhase('loading')
+    setMessage(null)
     try {
       const result =
-        kind === "reviews"
+        kind === 'reviews'
           ? await syncGoogleBusinessReviews()
-          : await syncGoogleBusinessPerformance({ days: 30 });
+          : await syncGoogleBusinessPerformance({ days: 30 })
       if (!result.ok) {
-        setPhase("error");
-        setMessage(result.error);
-        return;
+        setPhase('error')
+        setMessage(result.error)
+        return
       }
-      setPhase("success");
-      setMessage(`${result.synced} actualizados`);
-      router.refresh();
+      setPhase('success')
+      setMessage(`${result.synced} actualizados`)
+      router.refresh()
     } catch (error) {
-      setPhase("error");
-      setMessage(error instanceof Error ? error.message : "Error inesperado");
+      setPhase('error')
+      setMessage(error instanceof Error ? error.message : 'Error inesperado')
     }
   }
 
@@ -48,33 +50,33 @@ export function GoogleBusinessSyncButton({
         variant="outline"
         size="sm"
         onClick={handleSync}
-        disabled={phase === "loading"}
-        aria-busy={phase === "loading" || undefined}
+        disabled={phase === 'loading'}
+        aria-busy={phase === 'loading' || undefined}
         className={cn(
-          phase === "success" && "border-success/50 text-success",
-          phase === "error" && "border-destructive/50 text-destructive",
+          phase === 'success' && 'border-success/50 text-success',
+          phase === 'error' && 'border-destructive/50 text-destructive',
         )}
       >
-        {phase === "success" ? (
-          <CheckCircle className="size-3.5 text-success" />
-        ) : phase === "error" ? (
-          <XCircle className="size-3.5 text-destructive" />
+        {phase === 'success' ? (
+          <CheckCircle className="text-success size-3.5" />
+        ) : phase === 'error' ? (
+          <XCircle className="text-destructive size-3.5" />
         ) : (
-          <RefreshCw className={cn("size-3.5", phase === "loading" && "animate-spin")} />
+          <RefreshCw className={cn('size-3.5', phase === 'loading' && 'animate-spin')} />
         )}
-        {phase === "loading" ? "Sincronizando…" : label}
+        {phase === 'loading' ? 'Sincronizando…' : label}
       </Button>
-      {phase !== "idle" && phase !== "loading" && message && (
+      {phase !== 'idle' && phase !== 'loading' && message && (
         <p
-          role={phase === "error" ? "alert" : "status"}
+          role={phase === 'error' ? 'alert' : 'status'}
           className={cn(
-            "max-w-xs text-right text-xs",
-            phase === "error" ? "text-destructive" : "text-muted-foreground",
+            'max-w-xs text-right text-xs',
+            phase === 'error' ? 'text-destructive' : 'text-muted-foreground',
           )}
         >
           {message}
         </p>
       )}
     </div>
-  );
+  )
 }

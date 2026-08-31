@@ -1,5 +1,6 @@
-import { PageHeaderSkeleton } from "@/components/layout/page-header-skeleton";
-import { ChartSkeleton, DetailsSkeleton, KpisSkeleton } from "./_components/finance-skeletons";
+import { PageHeaderSkeleton } from '@/components/layout/page-header-skeleton'
+
+import { ChartSkeleton, DetailsSkeleton, KpisSkeleton } from './_components/finance-skeletons'
 
 export default function FinanceLoading() {
   return (
@@ -9,5 +10,5 @@ export default function FinanceLoading() {
       <ChartSkeleton />
       <DetailsSkeleton />
     </div>
-  );
+  )
 }

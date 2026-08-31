@@ -3,7 +3,7 @@ name: Create daily backoffice backup
 on:
   schedule:
     # Daily at 02:30 UTC, outside normal working hours in Spain.
-    - cron: "30 2 * * *"
+    - cron: '30 2 * * *'
   workflow_dispatch:
 
 jobs:

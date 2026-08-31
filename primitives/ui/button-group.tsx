@@ -3,4 +3,4 @@
   ButtonGroupSeparator,
   ButtonGroupText,
   buttonGroupVariants,
-} from "@doscientos/ui";
+} from '@doscientos/ui'

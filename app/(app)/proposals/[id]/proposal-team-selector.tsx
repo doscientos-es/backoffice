@@ -1,20 +1,22 @@
-"use client";
+'use client'
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { Button } from "@/components/ui/button";
-import { EntityMultiCombobox } from "@/components/ui/entity-multi-combobox";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { MemberAvatar } from "@/components/ui/member-avatar";
-import { setProposalTeamMembers } from "../actions";
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
+
+import { Button } from '@/components/ui/button'
+import { EntityMultiCombobox } from '@/components/ui/entity-multi-combobox'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { MemberAvatar } from '@/components/ui/member-avatar'
+
+import { setProposalTeamMembers } from '../actions'
 
 type Member = {
-  id: string;
-  name: string;
-  job_title: string | null;
-  avatar_url: string | null;
-  github_handle: string | null;
-};
+  id: string
+  name: string
+  job_title: string | null
+  avatar_url: string | null
+  github_handle: string | null
+}
 
 export function ProposalTeamSelector({
   proposalId,
@@ -22,35 +24,35 @@ export function ProposalTeamSelector({
   initialMemberIds,
   locked,
 }: {
-  proposalId: string;
-  members: Member[];
-  initialMemberIds: string[];
-  locked: boolean;
+  proposalId: string
+  members: Member[]
+  initialMemberIds: string[]
+  locked: boolean
 }) {
-  const router = useRouter();
-  const feedback = useFormFeedback({ successResetMs: 3000 });
-  const [selectedIds, setSelectedIds] = useState(initialMemberIds);
-  const [pending, startTransition] = useTransition();
+  const router = useRouter()
+  const feedback = useFormFeedback({ successResetMs: 3000 })
+  const [selectedIds, setSelectedIds] = useState(initialMemberIds)
+  const [pending, startTransition] = useTransition()
 
   function handleSave() {
-    feedback.setPending();
+    feedback.setPending()
     startTransition(async () => {
       const result = await setProposalTeamMembers({
         proposal_id: proposalId,
         member_ids: selectedIds,
-      });
+      })
       if (!result.ok) {
-        feedback.setError(result.error);
-        return;
+        feedback.setError(result.error)
+        return
       }
-      feedback.setSuccess("Equipo actualizado");
-      router.refresh();
-    });
+      feedback.setSuccess('Equipo actualizado')
+      router.refresh()
+    })
   }
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-muted-foreground text-sm">
         Selecciona solo las personas que trabajarán en este proyecto. Se mostrarán en la
         presentación para el cliente.
       </p>
@@ -75,5 +77,5 @@ export function ProposalTeamSelector({
         </Button>
       </div>
     </div>
-  );
+  )
 }

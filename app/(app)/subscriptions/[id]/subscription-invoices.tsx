@@ -1,9 +1,10 @@
-"use client";
+'use client'
 
-import { ArrowUpRight, FileText } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { ArrowUpRight, FileText } from 'lucide-react'
+import Link from 'next/link'
+import { useState } from 'react'
+
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardAction,
@@ -11,26 +12,26 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Select } from "@/components/ui/select";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { INVOICE_STATUS } from "@/lib/status";
-import { getDefaultSubscriptionInvoiceId } from "@/lib/subscriptions/invoice-history";
-import { formatDate, formatEUR } from "@/lib/utils";
+} from '@/components/ui/card'
+import { Select } from '@/components/ui/select'
+import { StatusBadge } from '@/components/ui/status-badge'
+import { INVOICE_STATUS } from '@/lib/status'
+import { getDefaultSubscriptionInvoiceId } from '@/lib/subscriptions/invoice-history'
+import { formatDate, formatEUR } from '@/lib/utils'
 
 export type SubscriptionInvoice = {
-  id: string;
-  full_number: string | null;
-  subscription_period_start: string | null;
-  issue_date: string | null;
-  total: number;
-  status: string;
-};
+  id: string
+  full_number: string | null
+  subscription_period_start: string | null
+  issue_date: string | null
+  total: number
+  status: string
+}
 
 export function SubscriptionInvoices({ invoices }: { invoices: SubscriptionInvoice[] }) {
-  const defaultInvoiceId = getDefaultSubscriptionInvoiceId(invoices);
-  const [selectedId, setSelectedId] = useState(defaultInvoiceId ?? "");
-  const selectedInvoice = invoices.find((invoice) => invoice.id === selectedId) ?? invoices[0];
+  const defaultInvoiceId = getDefaultSubscriptionInvoiceId(invoices)
+  const [selectedId, setSelectedId] = useState(defaultInvoiceId ?? '')
+  const selectedInvoice = invoices.find((invoice) => invoice.id === selectedId) ?? invoices[0]
 
   if (!selectedInvoice) {
     return (
@@ -41,11 +42,11 @@ export function SubscriptionInvoices({ invoices }: { invoices: SubscriptionInvoi
             Las facturas generadas para esta suscripción aparecerán aquí.
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex items-center gap-2 text-sm text-muted-foreground">
+        <CardContent className="text-muted-foreground flex items-center gap-2 text-sm">
           <FileText className="size-4" /> Aún no se ha generado ninguna factura.
         </CardContent>
       </Card>
-    );
+    )
   }
 
   return (
@@ -73,8 +74,8 @@ export function SubscriptionInvoices({ invoices }: { invoices: SubscriptionInvoi
           >
             {invoices.map((invoice) => (
               <option key={invoice.id} value={invoice.id}>
-                {formatDate(invoice.subscription_period_start ?? invoice.issue_date)} ·{" "}
-                {invoice.full_number ?? "Borrador"}
+                {formatDate(invoice.subscription_period_start ?? invoice.issue_date)} ·{' '}
+                {invoice.full_number ?? 'Borrador'}
               </option>
             ))}
           </Select>
@@ -85,5 +86,5 @@ export function SubscriptionInvoices({ invoices }: { invoices: SubscriptionInvoi
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }

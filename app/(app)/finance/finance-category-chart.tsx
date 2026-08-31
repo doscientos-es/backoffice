@@ -1,22 +1,23 @@
-"use client";
+'use client'
 
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { formatEUR } from "@/lib/utils";
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 
-export type CategorySlice = { name: string; value: number };
+import { formatEUR } from '@/lib/utils'
+
+export type CategorySlice = { name: string; value: number }
 
 /** Palette built from semantic tokens so it adapts to light/dark themes. */
 const PALETTE = [
-  "var(--primary)",
-  "var(--info)",
-  "var(--warning)",
-  "var(--success)",
-  "color-mix(in oklab, var(--primary) 55%, var(--info))",
-  "var(--muted-foreground)",
-] as const;
+  'var(--primary)',
+  'var(--info)',
+  'var(--warning)',
+  'var(--success)',
+  'color-mix(in oklab, var(--primary) 55%, var(--info))',
+  'var(--muted-foreground)',
+] as const
 
 export function FinanceCategoryChart({ data }: { data: CategorySlice[] }) {
-  const total = data.reduce((acc, d) => acc + d.value, 0);
+  const total = data.reduce((acc, d) => acc + d.value, 0)
 
   return (
     <div className="flex flex-col items-center gap-5 px-6 sm:flex-row">
@@ -38,8 +39,8 @@ export function FinanceCategoryChart({ data }: { data: CategorySlice[] }) {
             </Pie>
             <Tooltip
               contentStyle={{
-                background: "var(--background)",
-                border: "1px solid var(--border)",
+                background: 'var(--background)',
+                border: '1px solid var(--border)',
                 borderRadius: 8,
                 fontSize: 12,
               }}
@@ -62,7 +63,7 @@ export function FinanceCategoryChart({ data }: { data: CategorySlice[] }) {
             <span className="shrink-0 tabular-nums">
               {formatEUR(d.value)}
               {total > 0 ? (
-                <span className="ml-1.5 text-xs text-muted-foreground">
+                <span className="text-muted-foreground ml-1.5 text-xs">
                   {Math.round((d.value / total) * 100)}%
                 </span>
               ) : null}
@@ -71,5 +72,5 @@ export function FinanceCategoryChart({ data }: { data: CategorySlice[] }) {
         ))}
       </ul>
     </div>
-  );
+  )
 }

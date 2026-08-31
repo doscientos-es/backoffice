@@ -1,1 +1,1 @@
-export * from "@/primitives/lib/ranking";
+export * from '@/primitives/lib/ranking'

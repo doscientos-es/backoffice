@@ -1,1 +1,1 @@
-﻿export * from "@/primitives/ui/separator";
+﻿export * from '@/primitives/ui/separator'

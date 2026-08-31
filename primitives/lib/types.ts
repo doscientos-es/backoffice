@@ -8,12 +8,12 @@
  *   ActionResult<{ id: string }>  →  { ok: true; id: string } | { ok: false; error: string }
  */
 export type ActionFailure = {
-  ok: false;
-  error: string;
+  ok: false
+  error: string
   /** A stale edit was rejected without modifying the stored record. */
-  code?: "conflict";
-};
+  code?: 'conflict'
+}
 
 export type ActionResult<T = unknown> = T extends undefined | undefined
   ? { ok: true } | ActionFailure
-  : ({ ok: true } & T) | ActionFailure;
+  : ({ ok: true } & T) | ActionFailure

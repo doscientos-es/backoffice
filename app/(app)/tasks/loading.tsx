@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function TasksLoading() {
   return (
@@ -17,5 +17,5 @@ export default function TasksLoading() {
         ))}
       </div>
     </div>
-  );
+  )
 }

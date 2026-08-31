@@ -1,1 +1,1 @@
-export * from "@/primitives/ui/page-header-skeleton";
+export * from '@/primitives/ui/page-header-skeleton'

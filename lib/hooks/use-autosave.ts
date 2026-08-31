@@ -1,1 +1,1 @@
-export * from "@/primitives/hooks/use-autosave";
+export * from '@/primitives/hooks/use-autosave'

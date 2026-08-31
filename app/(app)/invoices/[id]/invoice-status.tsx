@@ -1,6 +1,7 @@
-import { StatusBadge } from "@/components/ui/status-badge";
-import { INVOICE_STATUS, VERIFACTU_STATUS } from "@/lib/status";
-import { VerifactuIssueDetailsButton } from "./verifactu-issue-dialog";
+import { StatusBadge } from '@/components/ui/status-badge'
+import { INVOICE_STATUS, VERIFACTU_STATUS } from '@/lib/status'
+
+import { VerifactuIssueDetailsButton } from './verifactu-issue-dialog'
 
 export function InvoiceStatus({
   status,
@@ -8,12 +9,12 @@ export function InvoiceStatus({
   verifactuError,
   verifactuAeatCode,
 }: {
-  status: string;
-  verifactuStatus: string;
-  verifactuError: string | null;
-  verifactuAeatCode: string | null;
+  status: string
+  verifactuStatus: string
+  verifactuError: string | null
+  verifactuAeatCode: string | null
 }) {
-  const hasFiscalProblem = verifactuStatus === "error" || verifactuStatus === "rejected";
+  const hasFiscalProblem = verifactuStatus === 'error' || verifactuStatus === 'rejected'
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
@@ -21,11 +22,11 @@ export function InvoiceStatus({
       <StatusBadge meta={VERIFACTU_STATUS} value={verifactuStatus} labelPrefix="Verifactu · " />
       {hasFiscalProblem ? (
         <VerifactuIssueDetailsButton
-          status={verifactuStatus as "error" | "rejected"}
+          status={verifactuStatus as 'error' | 'rejected'}
           error={verifactuError}
           aeatCode={verifactuAeatCode}
         />
       ) : null}
     </div>
-  );
+  )
 }

@@ -1,48 +1,50 @@
-import { ChartBar as BarChart3, ExternalLink, MessageSquare } from "lucide-react";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { BackLink } from "@/components/layout/back-link";
-import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
-import { PageHeader } from "@/components/layout/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { SectionBoundary } from "@/components/ui/error-boundary";
-import { Skeleton } from "@/components/ui/skeleton";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { requireUser } from "@/lib/auth";
-import { getPostDetail } from "@/lib/social/service";
-import { SOCIAL_POST_STATUS, SOCIAL_TARGET_STATUS } from "@/lib/status";
-import { formatDateTime, relativeTime } from "@/lib/utils";
-import { CommentCard } from "../_components/comment-card";
-import { MediaThumb } from "../_components/media-thumb";
-import { PlatformChip } from "../_components/platform";
-import { PublishButton } from "../_components/publish-button";
-import { SyncButton } from "../_components/sync-button";
+import { ChartBar as BarChart3, ExternalLink, MessageSquare } from 'lucide-react'
+import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
+
+import { BackLink } from '@/components/layout/back-link'
+import { DetailGrid, DetailRow } from '@/components/layout/detail-grid'
+import { PageHeader } from '@/components/layout/page-header'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { SectionBoundary } from '@/components/ui/error-boundary'
+import { Skeleton } from '@/components/ui/skeleton'
+import { StatusBadge } from '@/components/ui/status-badge'
+import { requireUser } from '@/lib/auth'
+import { getPostDetail } from '@/lib/social/service'
+import { SOCIAL_POST_STATUS, SOCIAL_TARGET_STATUS } from '@/lib/status'
+import { formatDateTime, relativeTime } from '@/lib/utils'
+
+import { CommentCard } from '../_components/comment-card'
+import { MediaThumb } from '../_components/media-thumb'
+import { PlatformChip } from '../_components/platform'
+import { PublishButton } from '../_components/publish-button'
+import { SyncButton } from '../_components/sync-button'
 
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string }>
 }): Promise<Metadata> {
-  const { id } = await params;
-  const post = await getPostDetail(id);
-  return { title: post ? `${post.caption.slice(0, 20)}... · Social` : "Post · Social" };
+  const { id } = await params
+  const post = await getPostDetail(id)
+  return { title: post ? `${post.caption.slice(0, 20)}... · Social` : 'Post · Social' }
 }
 
 async function PostDetail({ id }: { id: string }) {
-  const post = await getPostDetail(id);
-  if (!post) notFound();
+  const post = await getPostDetail(id)
+  if (!post) notFound()
 
-  const totalReach = post.targets.reduce((acc, t) => acc + (t.insights?.reach ?? 0), 0);
-  const totalLikes = post.targets.reduce((acc, t) => acc + (t.insights?.likes ?? 0), 0);
+  const totalReach = post.targets.reduce((acc, t) => acc + (t.insights?.reach ?? 0), 0)
+  const totalLikes = post.targets.reduce((acc, t) => acc + (t.insights?.likes ?? 0), 0)
   const totalComments = Math.max(
     post.targets.reduce((acc, t) => acc + (t.insights?.comments ?? 0), 0),
     post.comments.length,
-  );
-  const totalShares = post.targets.reduce((acc, t) => acc + (t.insights?.shares ?? 0), 0);
-  const totalSaves = post.targets.reduce((acc, t) => acc + (t.insights?.saves ?? 0), 0);
-  const totalActions = post.targets.reduce((acc, t) => acc + (t.insights?.actions ?? 0), 0);
-  const totalInteractions = totalLikes + totalComments + totalShares + totalSaves;
-  const engagementRate = totalReach > 0 ? (totalInteractions / totalReach) * 100 : null;
+  )
+  const totalShares = post.targets.reduce((acc, t) => acc + (t.insights?.shares ?? 0), 0)
+  const totalSaves = post.targets.reduce((acc, t) => acc + (t.insights?.saves ?? 0), 0)
+  const totalActions = post.targets.reduce((acc, t) => acc + (t.insights?.actions ?? 0), 0)
+  const totalInteractions = totalLikes + totalComments + totalShares + totalSaves
+  const engagementRate = totalReach > 0 ? (totalInteractions / totalReach) * 100 : null
 
   return (
     <div className="flex flex-col gap-8">
@@ -54,7 +56,7 @@ async function PostDetail({ id }: { id: string }) {
               <CardTitle className="text-sm font-medium">Contenido</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-6">
-              <div className="wrap-break-word whitespace-pre-wrap text-sm leading-relaxed">
+              <div className="text-sm leading-relaxed wrap-break-word whitespace-pre-wrap">
                 {post.caption}
               </div>
               {post.media.length > 0 && (
@@ -73,7 +75,7 @@ async function PostDetail({ id }: { id: string }) {
               <h2 className="flex items-center gap-2 text-sm font-medium">
                 <MessageSquare className="size-4" />
                 Comentarios
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs tabular-nums text-muted-foreground">
+                <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs tabular-nums">
                   {post.comments.length}
                 </span>
               </h2>
@@ -86,7 +88,7 @@ async function PostDetail({ id }: { id: string }) {
               </div>
             ) : (
               <Card>
-                <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                <CardContent className="text-muted-foreground py-8 text-center text-sm">
                   No hay comentarios sincronizados para esta publicación.
                 </CardContent>
               </Card>
@@ -102,17 +104,17 @@ async function PostDetail({ id }: { id: string }) {
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead>
-                    <tr className="border-b border-border text-muted-foreground">
-                      <th className="pb-2 pr-4 font-medium">Red</th>
-                      <th className="pb-2 pr-4 font-medium">Estado</th>
-                      <th className="pb-2 pr-4 font-medium text-right">Alcance</th>
-                      <th className="pb-2 pr-4 font-medium text-right">Me gusta</th>
-                      <th className="pb-2 pr-4 font-medium text-right">Coment.</th>
-                      <th className="pb-2 pr-4 font-medium text-right">Acciones</th>
-                      <th className="pb-2 font-medium text-right">Enlace</th>
+                    <tr className="border-border text-muted-foreground border-b">
+                      <th className="pr-4 pb-2 font-medium">Red</th>
+                      <th className="pr-4 pb-2 font-medium">Estado</th>
+                      <th className="pr-4 pb-2 text-right font-medium">Alcance</th>
+                      <th className="pr-4 pb-2 text-right font-medium">Me gusta</th>
+                      <th className="pr-4 pb-2 text-right font-medium">Coment.</th>
+                      <th className="pr-4 pb-2 text-right font-medium">Acciones</th>
+                      <th className="pb-2 text-right font-medium">Enlace</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border/50">
+                  <tbody className="divide-border/50 divide-y">
                     {post.targets.map((t) => (
                       <tr key={t.id} className="group">
                         <td className="py-3 pr-4">
@@ -125,9 +127,9 @@ async function PostDetail({ id }: { id: string }) {
                               value={t.status}
                               className="text-[10px]"
                             />
-                            {t.status === "failed" && t.error && (
+                            {t.status === 'failed' && t.error && (
                               <span
-                                className="max-w-50 wrap-break-word text-[10px] leading-tight text-destructive"
+                                className="text-destructive max-w-50 text-[10px] leading-tight wrap-break-word"
                                 title={t.error}
                               >
                                 {t.error.length > 80 ? `${t.error.slice(0, 80)}…` : t.error}
@@ -136,16 +138,16 @@ async function PostDetail({ id }: { id: string }) {
                           </div>
                         </td>
                         <td className="py-3 pr-4 text-right tabular-nums">
-                          {t.insights?.reach.toLocaleString() ?? "—"}
+                          {t.insights?.reach.toLocaleString() ?? '—'}
                         </td>
                         <td className="py-3 pr-4 text-right tabular-nums">
-                          {t.insights?.likes.toLocaleString() ?? "—"}
+                          {t.insights?.likes.toLocaleString() ?? '—'}
                         </td>
                         <td className="py-3 pr-4 text-right tabular-nums">
-                          {t.insights?.comments.toLocaleString() ?? "—"}
+                          {t.insights?.comments.toLocaleString() ?? '—'}
                         </td>
                         <td className="py-3 pr-4 text-right tabular-nums">
-                          {t.insights?.actions.toLocaleString() ?? "—"}
+                          {t.insights?.actions.toLocaleString() ?? '—'}
                         </td>
                         <td className="py-3 text-right">
                           {t.remoteUrl ? (
@@ -153,12 +155,12 @@ async function PostDetail({ id }: { id: string }) {
                               href={t.remoteUrl}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
+                              className="text-muted-foreground hover:text-primary inline-flex items-center gap-1 text-xs"
                             >
                               Ver <ExternalLink className="size-3" />
                             </a>
                           ) : (
-                            "—"
+                            '—'
                           )}
                         </td>
                       </tr>
@@ -184,7 +186,7 @@ async function PostDetail({ id }: { id: string }) {
                 <DetailRow label="Creado">
                   <div className="flex flex-col">
                     <span>{formatDateTime(post.createdAt)}</span>
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-muted-foreground text-[10px]">
                       {relativeTime(post.createdAt)}
                     </span>
                   </div>
@@ -201,8 +203,8 @@ async function PostDetail({ id }: { id: string }) {
                 )}
               </DetailGrid>
 
-              {post.status === "draft" && (
-                <div className="mt-6 border-t border-border pt-4">
+              {post.status === 'draft' && (
+                <div className="border-border mt-6 border-t pt-4">
                   <PublishButton
                     postId={post.id}
                     label="Publicar ahora"
@@ -211,8 +213,8 @@ async function PostDetail({ id }: { id: string }) {
                   />
                 </div>
               )}
-              {(post.status === "failed" || post.status === "partially_failed") && (
-                <div className="mt-6 border-t border-border pt-4">
+              {(post.status === 'failed' || post.status === 'partially_failed') && (
+                <div className="border-border mt-6 border-t pt-4">
                   <PublishButton postId={post.id} retry size="default" className="w-full" />
                 </div>
               )}
@@ -230,45 +232,45 @@ async function PostDetail({ id }: { id: string }) {
               {/* Aggregate stats from the latest successful sync. */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] uppercase text-muted-foreground">Reach Total</span>
+                  <span className="text-muted-foreground text-[10px] uppercase">Reach Total</span>
                   <span className="text-xl font-bold tabular-nums">
-                    {totalReach > 0 ? totalReach.toLocaleString() : "—"}
+                    {totalReach > 0 ? totalReach.toLocaleString() : '—'}
                   </span>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] uppercase text-muted-foreground">Interacciones</span>
+                  <span className="text-muted-foreground text-[10px] uppercase">Interacciones</span>
                   <span className="text-xl font-bold tabular-nums">
                     {totalInteractions.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] uppercase text-muted-foreground">Me gusta</span>
+                  <span className="text-muted-foreground text-[10px] uppercase">Me gusta</span>
                   <span className="text-xl font-bold tabular-nums">
                     {totalLikes.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] uppercase text-muted-foreground">Comentarios</span>
+                  <span className="text-muted-foreground text-[10px] uppercase">Comentarios</span>
                   <span className="text-xl font-bold tabular-nums">
                     {totalComments.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] uppercase text-muted-foreground">Acciones</span>
+                  <span className="text-muted-foreground text-[10px] uppercase">Acciones</span>
                   <span className="text-xl font-bold tabular-nums">
                     {totalActions.toLocaleString()}
                   </span>
                 </div>
               </div>
-              <div className="border-t border-border/60 pt-3">
+              <div className="border-border/60 border-t pt-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs text-muted-foreground">Engagement medio</span>
+                  <span className="text-muted-foreground text-xs">Engagement medio</span>
                   <span className="font-semibold tabular-nums">
-                    {engagementRate === null ? "—" : `${engagementRate.toFixed(1)}%`}
+                    {engagementRate === null ? '—' : `${engagementRate.toFixed(1)}%`}
                   </span>
                 </div>
                 {engagementRate === null && (
-                  <p className="mt-1 text-[11px] text-muted-foreground">
+                  <p className="text-muted-foreground mt-1 text-[11px]">
                     La red todavía no ha devuelto datos de alcance.
                   </p>
                 )}
@@ -278,7 +280,7 @@ async function PostDetail({ id }: { id: string }) {
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 function DetailSkeleton() {
@@ -295,12 +297,12 @@ function DetailSkeleton() {
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 export default async function PostDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireUser();
-  const { id } = await params;
+  await requireUser()
+  const { id } = await params
   return (
     <div className="flex flex-col gap-6">
       <BackLink href="/social" label="Social" />
@@ -313,5 +315,5 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
         <PostDetail id={id} />
       </SectionBoundary>
     </div>
-  );
+  )
 }

@@ -1,16 +1,18 @@
-"use client";
+'use client'
 
-import { Ellipsis as MoreHorizontal, Trash as Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Ellipsis as MoreHorizontal, Trash as Trash2 } from 'lucide-react'
+
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useUndoableDelete } from "@/lib/hooks/use-undoable-delete";
-import { deletePost, deletePostLocal, restorePost } from "../actions";
+} from '@/components/ui/dropdown-menu'
+import { useUndoableDelete } from '@/lib/hooks/use-undoable-delete'
+
+import { deletePost, deletePostLocal, restorePost } from '../actions'
 
 /**
  * Overflow menu for a PostCard with two deletion modes:
@@ -19,18 +21,18 @@ import { deletePost, deletePostLocal, restorePost } from "../actions";
  */
 export function DeletePostButton({ postId }: { postId: string }) {
   const { run: onDeleteAll, pending: pendingAll } = useUndoableDelete({
-    successMessage: "Eliminado de todas las redes",
+    successMessage: 'Eliminado de todas las redes',
     onDelete: () => deletePost({ postId }),
     onRestore: () => restorePost({ postId }),
-  });
+  })
 
   const { run: onDeleteLocal, pending: pendingLocal } = useUndoableDelete({
-    successMessage: "Eliminado del backoffice",
+    successMessage: 'Eliminado del backoffice',
     onDelete: () => deletePostLocal({ postId }),
     onRestore: () => restorePost({ postId }),
-  });
+  })
 
-  const pending = pendingAll || pendingLocal;
+  const pending = pendingAll || pendingLocal
 
   return (
     <DropdownMenu>
@@ -65,5 +67,5 @@ export function DeletePostButton({ postId }: { postId: string }) {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  );
+  )
 }

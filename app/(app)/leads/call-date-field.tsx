@@ -1,19 +1,19 @@
-"use client";
+'use client'
 
-import { Button } from "@/components/ui/button";
-import { DateField } from "@/components/ui/date-field";
-import { Label } from "@/components/ui/label";
-import { todayIsoLocal } from "@/lib/utils/date";
+import { Button } from '@/components/ui/button'
+import { DateField } from '@/components/ui/date-field'
+import { Label } from '@/components/ui/label'
+import { todayIsoLocal } from '@/lib/utils/date'
 
 type CallDateFieldProps = {
-  id: string;
-  value: string;
-  onChange: (value: string) => void;
-};
+  id: string
+  value: string
+  onChange: (value: string) => void
+}
 
 /** Date of the actual call, independent from when its record was created. */
 export function CallDateField({ id, value, onChange }: CallDateFieldProps) {
-  const today = todayIsoLocal();
+  const today = todayIsoLocal()
 
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
@@ -34,5 +34,5 @@ export function CallDateField({ id, value, onChange }: CallDateFieldProps) {
         </Button>
       </div>
     </div>
-  );
+  )
 }

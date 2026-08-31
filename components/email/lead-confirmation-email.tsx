@@ -1,24 +1,26 @@
-import { Button, Hr, Section, Text } from "@react-email/components";
-import type { LeadResource } from "@/lib/integrations/lead-resources";
-import { EmailLayout } from "./email-layout";
+import { Button, Hr, Section, Text } from '@react-email/components'
 
-const BRAND = "#2A4227";
-const BRAND_LIGHT = "#edf3ec";
-const FONT = "'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-const CASES_URL = "https://doscientos.es/projects?ref=email-confirmacion";
+import type { LeadResource } from '@/lib/integrations/lead-resources'
+
+import { EmailLayout } from './email-layout'
+
+const BRAND = '#2A4227'
+const BRAND_LIGHT = '#edf3ec'
+const FONT = "'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+const CASES_URL = 'https://doscientos.es/projects?ref=email-confirmacion'
 const CALCULATOR_URL =
-  "https://doscientos.es/automatizar-excel?ref=email-confirmacion#calculadora-coste";
+  'https://doscientos.es/automatizar-excel?ref=email-confirmacion#calculadora-coste'
 
 export type LeadConfirmationEmailProps = {
   /** Lead's first name or full name, used in the greeting. */
-  leadName: string;
+  leadName: string
   /** Absolute base URL of the app (for logo resolution). */
-  appUrl: string;
+  appUrl: string
   /** Contextual resource selected from the lead source/ref. */
-  resource: LeadResource;
-  calculatorCost?: string | null;
-  calculatorHours?: string | null;
-};
+  resource: LeadResource
+  calculatorCost?: string | null
+  calculatorHours?: string | null
+}
 
 /**
  * Confirmation email sent to the lead right after their request is received.
@@ -34,8 +36,8 @@ export function LeadConfirmationEmail({
   calculatorCost,
   calculatorHours,
 }: LeadConfirmationEmailProps) {
-  const firstName = leadName.split(" ")[0] ?? leadName;
-  const hasCalculatorSummary = Boolean(calculatorCost || calculatorHours);
+  const firstName = leadName.split(' ')[0] ?? leadName
+  const hasCalculatorSummary = Boolean(calculatorCost || calculatorHours)
 
   return (
     <EmailLayout
@@ -47,16 +49,16 @@ export function LeadConfirmationEmail({
         style={{
           backgroundColor: BRAND,
           borderRadius: 10,
-          padding: "28px 32px",
+          padding: '28px 32px',
           marginBottom: 28,
-          textAlign: "center",
+          textAlign: 'center',
         }}
       >
         <Text
           style={{
             fontFamily: FONT,
             fontSize: 36,
-            margin: "0 0 8px",
+            margin: '0 0 8px',
             lineHeight: 1,
           }}
         >
@@ -67,10 +69,10 @@ export function LeadConfirmationEmail({
             fontFamily: FONT,
             fontSize: 22,
             fontWeight: 700,
-            color: "#ffffff",
+            color: '#ffffff',
             margin: 0,
-            letterSpacing: "-0.02em",
-            lineHeight: "28px",
+            letterSpacing: '-0.02em',
+            lineHeight: '28px',
           }}
         >
           Solicitud recibida
@@ -93,7 +95,7 @@ export function LeadConfirmationEmail({
         <Button href={CASES_URL} style={primaryButtonStyle}>
           Ver casos de éxito
         </Button>
-        <Text style={{ ...stepBodyStyle, margin: "12px 0 8px" }}>
+        <Text style={{ ...stepBodyStyle, margin: '12px 0 8px' }}>
           También puedes estimar cuánto cuesta al año ese trabajo manual que se repite en tu equipo.
         </Text>
         <Button href={CALCULATOR_URL} style={secondaryButtonStyle}>
@@ -104,10 +106,10 @@ export function LeadConfirmationEmail({
       {hasCalculatorSummary ? (
         <Section
           style={{
-            backgroundColor: "#f4f4f5",
+            backgroundColor: '#f4f4f5',
             borderRadius: 8,
-            padding: "16px 20px",
-            margin: "20px 0 8px",
+            padding: '16px 20px',
+            margin: '20px 0 8px',
           }}
         >
           <Text style={{ ...labelStyle, color: BRAND, marginBottom: 8 }}>
@@ -124,13 +126,13 @@ export function LeadConfirmationEmail({
         </Section>
       ) : null}
 
-      {resource.slug !== "calculadora-coste-oculto" ? (
+      {resource.slug !== 'calculadora-coste-oculto' ? (
         <Section
           style={{
             backgroundColor: BRAND_LIGHT,
             borderRadius: 8,
-            padding: "18px 20px",
-            margin: "20px 0 24px",
+            padding: '18px 20px',
+            margin: '20px 0 24px',
           }}
         >
           <Text style={{ ...labelStyle, color: BRAND, marginBottom: 8 }}>Recurso recomendado</Text>
@@ -142,7 +144,7 @@ export function LeadConfirmationEmail({
         </Section>
       ) : null}
 
-      <Hr style={{ borderColor: "#e4e4e7", margin: "24px 0" }} />
+      <Hr style={{ borderColor: '#e4e4e7', margin: '24px 0' }} />
 
       {/* What happens next */}
       <Text
@@ -159,20 +161,20 @@ export function LeadConfirmationEmail({
         <Section
           key={step.title}
           style={{
-            backgroundColor: i % 2 === 0 ? BRAND_LIGHT : "#fafafa",
+            backgroundColor: i % 2 === 0 ? BRAND_LIGHT : '#fafafa',
             borderRadius: 8,
-            padding: "14px 16px",
+            padding: '14px 16px',
             marginBottom: 8,
           }}
         >
-          <Text style={{ ...stepNumStyle, color: BRAND }}>{String(i + 1).padStart(2, "0")}</Text>
+          <Text style={{ ...stepNumStyle, color: BRAND }}>{String(i + 1).padStart(2, '0')}</Text>
           <Text style={stepTitleStyle}>{step.title}</Text>
           <Text style={stepBodyStyle}>{step.body}</Text>
         </Section>
       ))}
 
-      <Hr style={{ borderColor: "#e4e4e7", margin: "24px 0 16px" }} />
-      <Text style={{ ...bodyStyle, color: "#71717a" }}>
+      <Hr style={{ borderColor: '#e4e4e7', margin: '24px 0 16px' }} />
+      <Text style={{ ...bodyStyle, color: '#71717a' }}>
         Si tienes cualquier pregunta mientras tanto, responde directamente a este email y te
         atenderemos encantados.
       </Text>
@@ -180,23 +182,23 @@ export function LeadConfirmationEmail({
         — El equipo de doscientos
       </Text>
     </EmailLayout>
-  );
+  )
 }
 
 const STEPS = [
   {
-    title: "Entendemos tu caso",
-    body: "Revisamos la información para que la primera conversación sea concreta y útil.",
+    title: 'Entendemos tu caso',
+    body: 'Revisamos la información para que la primera conversación sea concreta y útil.',
   },
   {
-    title: "Te contactamos",
-    body: "Te llamamos o escribimos para agendar una primera conversación sin compromiso.",
+    title: 'Te contactamos',
+    body: 'Te llamamos o escribimos para agendar una primera conversación sin compromiso.',
   },
   {
-    title: "Acordamos el siguiente paso",
-    body: "Si podemos ayudarte, te explicamos una propuesta clara de alcance, plazos y prioridades.",
+    title: 'Acordamos el siguiente paso',
+    body: 'Si podemos ayudarte, te explicamos una propuesta clara de alcance, plazos y prioridades.',
   },
-];
+]
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
@@ -204,74 +206,74 @@ const headingStyle: React.CSSProperties = {
   fontFamily: FONT,
   fontSize: 20,
   fontWeight: 700,
-  color: "#111111",
-  margin: "0 0 10px",
-  letterSpacing: "-0.02em",
-};
+  color: '#111111',
+  margin: '0 0 10px',
+  letterSpacing: '-0.02em',
+}
 
 const bodyStyle: React.CSSProperties = {
   fontFamily: FONT,
   fontSize: 14,
-  color: "#3f3f46",
-  lineHeight: "22px",
-  margin: "0 0 12px",
-};
+  color: '#3f3f46',
+  lineHeight: '22px',
+  margin: '0 0 12px',
+}
 
 const aboutStyle: React.CSSProperties = {
-  backgroundColor: "#fafafa",
-  border: "1px solid #e4e4e7",
+  backgroundColor: '#fafafa',
+  border: '1px solid #e4e4e7',
   borderRadius: 8,
-  padding: "18px 20px",
-  margin: "20px 0 24px",
-};
+  padding: '18px 20px',
+  margin: '20px 0 24px',
+}
 
 const primaryButtonStyle: React.CSSProperties = {
   backgroundColor: BRAND,
-  color: "#ffffff",
+  color: '#ffffff',
   borderRadius: 8,
   fontFamily: FONT,
   fontSize: 13,
   fontWeight: 700,
-  padding: "10px 14px",
-  textDecoration: "none",
-};
+  padding: '10px 14px',
+  textDecoration: 'none',
+}
 
 const secondaryButtonStyle: React.CSSProperties = {
   ...primaryButtonStyle,
-  backgroundColor: "#ffffff",
+  backgroundColor: '#ffffff',
   color: BRAND,
   border: `1px solid ${BRAND}`,
-};
+}
 
 const labelStyle: React.CSSProperties = {
   fontFamily: FONT,
   fontSize: 11,
   fontWeight: 700,
-  textTransform: "uppercase",
-  letterSpacing: "0.08em",
+  textTransform: 'uppercase',
+  letterSpacing: '0.08em',
   margin: 0,
-};
+}
 
 const stepNumStyle: React.CSSProperties = {
   fontFamily: FONT,
   fontSize: 11,
   fontWeight: 700,
-  letterSpacing: "0.06em",
-  margin: "0 0 2px",
-};
+  letterSpacing: '0.06em',
+  margin: '0 0 2px',
+}
 
 const stepTitleStyle: React.CSSProperties = {
   fontFamily: FONT,
   fontSize: 13,
   fontWeight: 600,
-  color: "#111111",
-  margin: "0 0 2px",
-};
+  color: '#111111',
+  margin: '0 0 2px',
+}
 
 const stepBodyStyle: React.CSSProperties = {
   fontFamily: FONT,
   fontSize: 13,
-  color: "#52525b",
-  lineHeight: "20px",
+  color: '#52525b',
+  lineHeight: '20px',
   margin: 0,
-};
+}

@@ -1,5 +1,6 @@
-import { z } from "zod";
-import { SOCIAL_PLATFORMS } from "@/lib/social/core";
+import { z } from 'zod'
+
+import { SOCIAL_PLATFORMS } from '@/lib/social/core'
 
 /**
  * Zod schemas for the Social Hub server actions.
@@ -10,15 +11,15 @@ import { SOCIAL_PLATFORMS } from "@/lib/social/core";
  * in supabase/migrations and the domain `MediaItem` in lib/social/core.
  */
 
-const platformEnum = z.enum(SOCIAL_PLATFORMS as unknown as [string, ...string[]]);
+const platformEnum = z.enum(SOCIAL_PLATFORMS as unknown as [string, ...string[]])
 
 /** One uploaded asset, as returned by the upload route. */
 export const MediaItemInput = z.object({
   storagePath: z.string().min(1),
   publicUrl: z.string().url(),
-  type: z.enum(["image", "video"]),
+  type: z.enum(['image', 'video']),
   mime: z.string().min(1),
-});
+})
 
 /**
  * Compose payload. `mode` decides the lifecycle: publish immediately, schedule
@@ -28,85 +29,85 @@ export const MediaItemInput = z.object({
  */
 export const CreatePostSchema = z
   .object({
-    caption: z.string().max(3000, "El texto no puede superar 3000 caracteres").default(""),
+    caption: z.string().max(3000, 'El texto no puede superar 3000 caracteres').default(''),
     captions: z
-      .record(platformEnum, z.string().max(3000, "El texto no puede superar 3000 caracteres"))
+      .record(platformEnum, z.string().max(3000, 'El texto no puede superar 3000 caracteres'))
       .optional(),
-    media: z.array(MediaItemInput).max(10, "Máximo 10 archivos").default([]),
-    platforms: z.array(platformEnum).min(1, "Selecciona al menos una red"),
-    mode: z.enum(["now", "schedule", "draft"]).default("draft"),
+    media: z.array(MediaItemInput).max(10, 'Máximo 10 archivos').default([]),
+    platforms: z.array(platformEnum).min(1, 'Selecciona al menos una red'),
+    mode: z.enum(['now', 'schedule', 'draft']).default('draft'),
     scheduledAt: z.string().datetime().nullable().default(null),
     automation: z
       .object({
         keyword: z.string().trim().min(1).max(80),
         publicReply: z.string().trim().min(1).max(3000),
         privateMessage: z.string().trim().min(1).max(3000),
-        platforms: z.array(z.enum(["instagram", "facebook"])).min(1),
+        platforms: z.array(z.enum(['instagram', 'facebook'])).min(1),
       })
       .optional(),
   })
-  .refine((v) => v.mode !== "schedule" || Boolean(v.scheduledAt), {
-    message: "Indica la fecha de programación",
-    path: ["scheduledAt"],
-  });
+  .refine((v) => v.mode !== 'schedule' || Boolean(v.scheduledAt), {
+    message: 'Indica la fecha de programación',
+    path: ['scheduledAt'],
+  })
 
-export type CreatePostSchemaType = z.infer<typeof CreatePostSchema>;
+export type CreatePostSchemaType = z.infer<typeof CreatePostSchema>
 
 /** Publish an existing post now. */
-export const PostIdInput = z.object({ postId: z.string().uuid() });
+export const PostIdInput = z.object({ postId: z.string().uuid() })
 
 export const GoogleBusinessReviewReplyInput = z.object({
   reviewId: z.string().uuid(),
   message: z.string().trim().min(1).max(4096),
-});
+})
 
-export const GoogleBusinessReviewIdInput = z.object({ reviewId: z.string().uuid() });
+export const GoogleBusinessReviewIdInput = z.object({ reviewId: z.string().uuid() })
 
 export const GoogleBusinessPerformanceInput = z.object({
   days: z.number().int().min(1).max(90).default(30),
-});
+})
 
 export const GoogleBusinessMediaInput = z.object({
   sourceUrl: z.string().url(),
   category: z.enum([
-    "COVER",
-    "PROFILE",
-    "LOGO",
-    "EXTERIOR",
-    "INTERIOR",
-    "PRODUCT",
-    "AT_WORK",
-    "FOOD_AND_DRINK",
-    "MENU",
-    "COMMON_AREA",
-    "ROOMS",
-    "TEAMS",
-    "ADDITIONAL",
+    'COVER',
+    'PROFILE',
+    'LOGO',
+    'EXTERIOR',
+    'INTERIOR',
+    'PRODUCT',
+    'AT_WORK',
+    'FOOD_AND_DRINK',
+    'MENU',
+    'COMMON_AREA',
+    'ROOMS',
+    'TEAMS',
+    'ADDITIONAL',
   ]),
   description: z.string().trim().max(1000).optional(),
-});
+})
 
 export const GoogleBusinessMediaDeleteInput = z.object({
   mediaName: z.string().regex(/^accounts\/[^/]+\/locations\/[^/]+\/media\/[^/]+$/),
-});
+})
 
 /** Reply to a comment in the unified inbox. */
 export const ReplyCommentInput = z.object({
   commentId: z.string().uuid(),
-  message: z.string().trim().min(1, "El mensaje no puede estar vacío").max(3000),
-});
+  message: z.string().trim().min(1, 'El mensaje no puede estar vacío').max(3000),
+})
 
-const metaPlatformEnum = z.enum(["instagram", "facebook"]);
+const metaPlatformEnum = z.enum(['instagram', 'facebook'])
 
 export const AutomationInput = z.object({
-  keyword: z.string().trim().min(1, "Indica la palabra clave").max(80),
-  publicReply: z.string().trim().min(1, "Indica la respuesta pública").max(3000),
-  privateMessage: z.string().trim().min(1, "Indica el mensaje privado").max(3000),
-  platforms: z.array(metaPlatformEnum).min(1, "Selecciona Instagram o Facebook"),
-});
+  keyword: z.string().trim().min(1, 'Indica la palabra clave').max(80),
+  publicReply: z.string().trim().min(1, 'Indica la respuesta pública').max(3000),
+  privateMessage: z.string().trim().min(1, 'Indica el mensaje privado').max(3000),
+  platforms: z.array(metaPlatformEnum).min(1, 'Selecciona Instagram o Facebook'),
+})
 
-export const AutomationRuleIdInput = z.object({ ruleId: z.string().uuid() });
+export const AutomationRuleIdInput = z.object({ ruleId: z.string().uuid() })
 
-export const AutomationActiveInput = AutomationRuleIdInput.extend({ active: z.boolean() });
+export const AutomationActiveInput = AutomationRuleIdInput.extend({ active: z.boolean() })
 
-export const GlobalAutomationInput = AutomationInput;
+export const GlobalAutomationInput = AutomationInput

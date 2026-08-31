@@ -6,6 +6,6 @@
  * `isConfigured()` so the registry can skip them when their ids are absent.
  */
 
-export { FacebookPublisher } from "./facebook-publisher";
-export { graphGet, graphGetList, graphPost, metaPageToken } from "./graph-client";
-export { InstagramPublisher } from "./instagram-publisher";
+export { FacebookPublisher } from './facebook-publisher'
+export { graphGet, graphGetList, graphPost, metaPageToken } from './graph-client'
+export { InstagramPublisher } from './instagram-publisher'

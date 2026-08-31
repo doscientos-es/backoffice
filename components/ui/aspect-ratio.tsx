@@ -1,1 +1,1 @@
-﻿export * from "@/primitives/ui/aspect-ratio";
+﻿export * from '@/primitives/ui/aspect-ratio'

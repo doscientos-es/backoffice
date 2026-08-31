@@ -1,1 +1,1 @@
-﻿export * from "@/primitives/ui/doc-preview";
+﻿export * from '@/primitives/ui/doc-preview'

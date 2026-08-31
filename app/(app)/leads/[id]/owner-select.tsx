@@ -1,10 +1,12 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { Select } from "@/components/ui/select";
-import type { MemberOption } from "@/lib/members/queries";
-import { assignLeadOwner } from "../actions";
+import { useState } from 'react'
+
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { Select } from '@/components/ui/select'
+import type { MemberOption } from '@/lib/members/queries'
+
+import { assignLeadOwner } from '../actions'
 
 /**
  * Inline owner picker for the lead detail view. Persists immediately via
@@ -19,12 +21,12 @@ export function LeadOwnerSelect({
   assignedTo,
   members,
 }: {
-  leadId: string;
-  assignedTo: string | null;
-  members: MemberOption[];
+  leadId: string
+  assignedTo: string | null
+  members: MemberOption[]
 }) {
-  const feedback = useFormFeedback();
-  const [value, setValue] = useState(assignedTo ?? "");
+  const feedback = useFormFeedback()
+  const [value, setValue] = useState(assignedTo ?? '')
 
   return (
     <div className="flex items-center gap-2">
@@ -34,15 +36,15 @@ export function LeadOwnerSelect({
         className="h-8 w-48"
         aria-label="Responsable del lead"
         onChange={async (e) => {
-          const next = e.target.value;
-          setValue(next);
-          feedback.setPending();
-          const res = await assignLeadOwner({ leadId, assigneeId: next });
+          const next = e.target.value
+          setValue(next)
+          feedback.setPending()
+          const res = await assignLeadOwner({ leadId, assigneeId: next })
           if (!res.ok) {
-            setValue(assignedTo ?? ""); // revert on error
-            feedback.setError(res.error);
+            setValue(assignedTo ?? '') // revert on error
+            feedback.setError(res.error)
           } else {
-            feedback.setSuccess("Responsable actualizado");
+            feedback.setSuccess('Responsable actualizado')
           }
         }}
       >
@@ -55,5 +57,5 @@ export function LeadOwnerSelect({
       </Select>
       <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
     </div>
-  );
+  )
 }

@@ -1,31 +1,33 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { BackLink } from "@/components/layout/back-link";
-import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { FormRow } from "@/components/ui/form-row";
-import { Input } from "@/components/ui/input";
-import { SubmitButton } from "@/components/ui/submit-button";
-import { Textarea } from "@/components/ui/textarea";
-import { requireUser } from "@/lib/auth";
-import { getLeadForConvert } from "@/lib/leads/queries";
-import { convertLeadToClientForm } from "../../actions";
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import { notFound, redirect } from 'next/navigation'
 
-export const metadata: Metadata = { title: "Convertir lead · doscientos" };
+import { BackLink } from '@/components/layout/back-link'
+import { PageHeader } from '@/components/layout/page-header'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { FormRow } from '@/components/ui/form-row'
+import { Input } from '@/components/ui/input'
+import { SubmitButton } from '@/components/ui/submit-button'
+import { Textarea } from '@/components/ui/textarea'
+import { requireUser } from '@/lib/auth'
+import { getLeadForConvert } from '@/lib/leads/queries'
+
+import { convertLeadToClientForm } from '../../actions'
+
+export const metadata: Metadata = { title: 'Convertir lead · doscientos' }
 
 export default async function ConvertLeadPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  await requireUser();
+  const { id } = await params
+  await requireUser()
 
-  const result = await getLeadForConvert(id);
-  if (!result) notFound();
-  const { lead, existingClientId } = result;
-  if (existingClientId) redirect(`/clients/${existingClientId}`);
+  const result = await getLeadForConvert(id)
+  if (!result) notFound()
+  const { lead, existingClientId } = result
+  if (existingClientId) redirect(`/clients/${existingClientId}`)
 
-  const defaultName = lead.company || lead.name;
-  const defaultAlias = lead.company ? "" : (lead.alias ?? "");
+  const defaultName = lead.company || lead.name
+  const defaultAlias = lead.company ? '' : (lead.alias ?? '')
 
   return (
     <div className="flex flex-col gap-6">
@@ -86,7 +88,7 @@ export default async function ConvertLeadPage({ params }: { params: Promise<{ id
                   id="contact_person"
                   name="contact_person"
                   maxLength={160}
-                  defaultValue={lead.name ?? ""}
+                  defaultValue={lead.name ?? ''}
                 />
               </FormRow>
               <FormRow label="Email" htmlFor="email">
@@ -96,7 +98,7 @@ export default async function ConvertLeadPage({ params }: { params: Promise<{ id
                   type="email"
                   inputMode="email"
                   maxLength={160}
-                  defaultValue={lead.email ?? ""}
+                  defaultValue={lead.email ?? ''}
                 />
               </FormRow>
               <FormRow label="Teléfono" htmlFor="phone" className="sm:col-span-2">
@@ -106,7 +108,7 @@ export default async function ConvertLeadPage({ params }: { params: Promise<{ id
                   type="tel"
                   inputMode="tel"
                   maxLength={40}
-                  defaultValue={lead.phone ?? ""}
+                  defaultValue={lead.phone ?? ''}
                 />
               </FormRow>
             </div>
@@ -117,11 +119,11 @@ export default async function ConvertLeadPage({ params }: { params: Promise<{ id
                 name="notes"
                 rows={3}
                 maxLength={4000}
-                defaultValue={lead.notes ?? ""}
+                defaultValue={lead.notes ?? ''}
               />
             </FormRow>
 
-            <div className="flex items-center justify-end gap-2 border-t border-border pt-5">
+            <div className="border-border flex items-center justify-end gap-2 border-t pt-5">
               <Button asChild variant="ghost" size="sm">
                 <Link href={`/leads/${id}`}>Cancelar</Link>
               </Button>
@@ -131,5 +133,5 @@ export default async function ConvertLeadPage({ params }: { params: Promise<{ id
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

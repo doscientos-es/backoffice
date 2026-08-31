@@ -1,34 +1,36 @@
-"use client";
+'use client'
 
-import { ArrowRight } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
-import { ListPage, type ListPageProps } from "@/components/layout/list-page";
-import { MemberLabel } from "@/components/ui/member-avatar";
-import { StatusBadge } from "@/components/ui/status-badge";
-import type { LeadListItem } from "@/lib/leads/types";
-import { getLeadInitials, leadDisplayName } from "@/lib/leads/utils";
-import type { MemberOption } from "@/lib/members/queries";
-import { LEAD_STATUS } from "@/lib/status";
-import { relativeTime } from "@/lib/utils";
-import { LeadFastActions } from "./lead-fast-actions";
-import { LeadQuickView } from "./lead-quick-view";
-import type { KanbanLead } from "./leads-kanban";
+import { ArrowRight } from 'lucide-react'
+import Link from 'next/link'
+import { useState } from 'react'
 
-type LeadsListProps = Omit<ListPageProps, "rows"> & {
-  leads: LeadListItem[];
-  aiEnabled?: boolean;
-  canEdit?: boolean;
-  members?: MemberOption[];
-  senderName?: string;
-};
+import { ListPage, type ListPageProps } from '@/components/layout/list-page'
+import { MemberLabel } from '@/components/ui/member-avatar'
+import { StatusBadge } from '@/components/ui/status-badge'
+import type { LeadListItem } from '@/lib/leads/types'
+import { getLeadInitials, leadDisplayName } from '@/lib/leads/utils'
+import type { MemberOption } from '@/lib/members/queries'
+import { LEAD_STATUS } from '@/lib/status'
+import { relativeTime } from '@/lib/utils'
+
+import { LeadFastActions } from './lead-fast-actions'
+import { LeadQuickView } from './lead-quick-view'
+import type { KanbanLead } from './leads-kanban'
+
+type LeadsListProps = Omit<ListPageProps, 'rows'> & {
+  leads: LeadListItem[]
+  aiEnabled?: boolean
+  canEdit?: boolean
+  members?: MemberOption[]
+  senderName?: string
+}
 
 function LeadInitials({ lead }: { lead: KanbanLead }) {
   return (
-    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold uppercase text-primary">
+    <span className="bg-primary/10 text-primary flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold uppercase">
       {getLeadInitials(lead)}
     </span>
-  );
+  )
 }
 
 export function LeadsList({
@@ -36,26 +38,26 @@ export function LeadsList({
   aiEnabled = false,
   canEdit = false,
   members = [],
-  senderName = "",
+  senderName = '',
   ...props
 }: LeadsListProps) {
-  const [selectedLead, setSelectedLead] = useState<KanbanLead | null>(null);
+  const [selectedLead, setSelectedLead] = useState<KanbanLead | null>(null)
 
   const rows = leads.map((l) => ({
     id: l.id,
     data: l as KanbanLead,
     csvValues: [
       leadDisplayName(l),
-      l.company ?? "",
-      l.email ?? "",
+      l.company ?? '',
+      l.email ?? '',
       l.status,
-      l.assignee?.name ?? "",
+      l.assignee?.name ?? '',
       l.created_at,
-      l.company_size ?? "",
-      l.solution_type ?? "",
-      l.urgency ?? "",
-      l.source ?? "",
-      l.score?.toString() ?? "",
+      l.company_size ?? '',
+      l.solution_type ?? '',
+      l.urgency ?? '',
+      l.source ?? '',
+      l.score?.toString() ?? '',
     ],
     cells: [
       <Link
@@ -65,10 +67,10 @@ export function LeadsList({
         onClick={(e) => e.stopPropagation()}
       >
         <LeadInitials lead={l} />
-        <span className="font-medium truncate max-w-40 underline-offset-2 group-hover/leadname:underline group-hover/leadname:text-primary transition-colors">
+        <span className="group-hover/leadname:text-primary max-w-40 truncate font-medium underline-offset-2 transition-colors group-hover/leadname:underline">
           {leadDisplayName(l)}
         </span>
-        <ArrowRight className="size-3.5 shrink-0 opacity-0 -translate-x-1 transition-all group-hover/leadname:opacity-60 group-hover/leadname:translate-x-0" />
+        <ArrowRight className="size-3.5 shrink-0 -translate-x-1 opacity-0 transition-all group-hover/leadname:translate-x-0 group-hover/leadname:opacity-60" />
       </Link>,
       l.company,
       l.email ? (
@@ -83,12 +85,12 @@ export function LeadsList({
       ) : null,
       <div key="status" className="flex flex-col gap-0.5">
         <StatusBadge meta={LEAD_STATUS} value={l.status} />
-        {(l.status === "lost" || l.status === "not_interested") && l.lost_reason && (
-          <span className="text-[11px] text-destructive/80 truncate max-w-36">{l.lost_reason}</span>
+        {(l.status === 'lost' || l.status === 'not_interested') && l.lost_reason && (
+          <span className="text-destructive/80 max-w-36 truncate text-[11px]">{l.lost_reason}</span>
         )}
       </div>,
-      <span key="score" className="tabular-nums text-muted-foreground">
-        {l.score ?? "—"}
+      <span key="score" className="text-muted-foreground tabular-nums">
+        {l.score ?? '—'}
       </span>,
       <MemberLabel key="assignee" member={l.assignee} size="sm" />,
       <span key="created" className="tabular-nums">
@@ -99,7 +101,7 @@ export function LeadsList({
         <LeadFastActions lead={l} aiEnabled={aiEnabled} senderName={senderName} />
       </div>,
     ],
-  }));
+  }))
 
   return (
     <>
@@ -117,5 +119,5 @@ export function LeadsList({
         onCloseAction={() => setSelectedLead(null)}
       />
     </>
-  );
+  )
 }

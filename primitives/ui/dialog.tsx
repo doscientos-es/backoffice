@@ -9,4 +9,4 @@
   DialogPortal,
   DialogTitle,
   DialogTrigger,
-} from "@doscientos/ui";
+} from '@doscientos/ui'

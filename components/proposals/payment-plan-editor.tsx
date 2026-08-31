@@ -1,18 +1,19 @@
-"use client";
+'use client'
 
-import { Plus, Trash as Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import type { PaymentPlanItem } from "@/lib/proposals/scope";
-import { formatEUR } from "@/lib/utils";
+import { Plus, Trash as Trash2 } from 'lucide-react'
+
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import type { PaymentPlanItem } from '@/lib/proposals/scope'
+import { formatEUR } from '@/lib/utils'
 
 type Props = {
-  plan: PaymentPlanItem[];
-  total: number;
-  onChange: (plan: PaymentPlanItem[]) => void;
-  locked?: boolean;
-  lockedItemIds?: readonly string[];
-};
+  plan: PaymentPlanItem[]
+  total: number
+  onChange: (plan: PaymentPlanItem[]) => void
+  locked?: boolean
+  lockedItemIds?: readonly string[]
+}
 
 /** Compact editor shared by draft proposals and accepted proposal calendars. */
 export function PaymentPlanEditor({
@@ -22,28 +23,28 @@ export function PaymentPlanEditor({
   locked = false,
   lockedItemIds = [],
 }: Props) {
-  const lockedIds = new Set(lockedItemIds);
-  const percentage = plan.reduce((sum, item) => sum + Number(item.percentage || 0), 0);
-  const balanced = Math.abs(percentage - 100) < 0.001;
+  const lockedIds = new Set(lockedItemIds)
+  const percentage = plan.reduce((sum, item) => sum + Number(item.percentage || 0), 0)
+  const balanced = Math.abs(percentage - 100) < 0.001
 
   const update = (index: number, patch: Partial<PaymentPlanItem>) => {
-    onChange(plan.map((item, current) => (current === index ? { ...item, ...patch } : item)));
-  };
+    onChange(plan.map((item, current) => (current === index ? { ...item, ...patch } : item)))
+  }
   const add = () => {
     onChange([
       ...plan,
-      { id: crypto.randomUUID(), title: "Nuevo plazo", percentage: 0, due_date: null },
-    ]);
-  };
+      { id: crypto.randomUUID(), title: 'Nuevo plazo', percentage: 0, due_date: null },
+    ])
+  }
 
   return (
     <div className="flex flex-col gap-3">
       {plan.map((item, index) => {
-        const itemLocked = locked || lockedIds.has(item.id);
+        const itemLocked = locked || lockedIds.has(item.id)
         return (
           <div
             key={item.id}
-            className="grid gap-2 rounded-lg border border-border p-3 md:grid-cols-[minmax(0,1fr)_7rem_10rem_auto]"
+            className="border-border grid gap-2 rounded-lg border p-3 md:grid-cols-[minmax(0,1fr)_7rem_10rem_auto]"
           >
             <Input
               aria-label={`Concepto del plazo ${index + 1}`}
@@ -65,7 +66,7 @@ export function PaymentPlanEditor({
             <Input
               aria-label={`Vencimiento del plazo ${index + 1}`}
               type="date"
-              value={item.due_date ?? ""}
+              value={item.due_date ?? ''}
               onChange={(event) => update(index, { due_date: event.target.value || null })}
               disabled={itemLocked}
             />
@@ -85,25 +86,25 @@ export function PaymentPlanEditor({
               </Button>
             </div>
             {lockedIds.has(item.id) ? (
-              <p className="text-xs text-muted-foreground md:col-span-4">
+              <p className="text-muted-foreground text-xs md:col-span-4">
                 Este plazo ya tiene una factura preparada; edítala desde la factura.
               </p>
             ) : null}
           </div>
-        );
+        )
       })}
       {plan.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
+        <p className="border-border text-muted-foreground rounded-lg border border-dashed p-3 text-sm">
           Añade los cobros que acordéis con el cliente. Las facturas se prepararán solo al aceptar.
         </p>
       ) : null}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p
           className={
-            balanced ? "text-sm text-muted-foreground" : "text-sm font-medium text-destructive"
+            balanced ? 'text-muted-foreground text-sm' : 'text-destructive text-sm font-medium'
           }
         >
-          {plan.length === 0 ? "Sin plazos configurados" : `Total: ${percentage.toFixed(2)} %`}
+          {plan.length === 0 ? 'Sin plazos configurados' : `Total: ${percentage.toFixed(2)} %`}
         </p>
         <Button
           type="button"
@@ -116,5 +117,5 @@ export function PaymentPlanEditor({
         </Button>
       </div>
     </div>
-  );
+  )
 }

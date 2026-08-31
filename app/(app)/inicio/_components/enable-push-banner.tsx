@@ -1,13 +1,14 @@
-"use client";
+'use client'
 
-import { BellRing, X } from "lucide-react";
-import { useEffect, useState } from "react";
-import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { useBrowserNotifications } from "@/lib/hooks/use-browser-notifications";
-import { useWebPush } from "@/lib/hooks/use-web-push";
+import { BellRing, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
-const DISMISS_KEY = "doscientos-push-banner-dismissed";
+import { Alert, AlertAction, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { useBrowserNotifications } from '@/lib/hooks/use-browser-notifications'
+import { useWebPush } from '@/lib/hooks/use-web-push'
+
+const DISMISS_KEY = 'doscientos-push-banner-dismissed'
 
 /**
  * Prompts the user to enable push notifications on the current device
@@ -15,29 +16,29 @@ const DISMISS_KEY = "doscientos-push-banner-dismissed";
  * choice is remembered in localStorage so it doesn't nag on every visit.
  */
 export function EnablePushBanner() {
-  const { permission, requestPermission } = useBrowserNotifications();
-  const { supported, subscribed, subscribe } = useWebPush();
-  const [dismissed, setDismissed] = useState(true);
-  const [pending, setPending] = useState(false);
+  const { permission, requestPermission } = useBrowserNotifications()
+  const { supported, subscribed, subscribe } = useWebPush()
+  const [dismissed, setDismissed] = useState(true)
+  const [pending, setPending] = useState(false)
 
   useEffect(() => {
-    setDismissed(localStorage.getItem(DISMISS_KEY) === "1");
-  }, []);
+    setDismissed(localStorage.getItem(DISMISS_KEY) === '1')
+  }, [])
 
-  if (!supported || subscribed || permission === "denied" || dismissed) return null;
+  if (!supported || subscribed || permission === 'denied' || dismissed) return null
 
   function dismiss() {
-    localStorage.setItem(DISMISS_KEY, "1");
-    setDismissed(true);
+    localStorage.setItem(DISMISS_KEY, '1')
+    setDismissed(true)
   }
 
   async function handleEnable() {
-    setPending(true);
+    setPending(true)
     try {
-      const result = permission === "default" ? await requestPermission() : permission;
-      if (result === "granted") await subscribe();
+      const result = permission === 'default' ? await requestPermission() : permission
+      if (result === 'granted') await subscribe()
     } finally {
-      setPending(false);
+      setPending(false)
     }
   }
 
@@ -50,7 +51,7 @@ export function EnablePushBanner() {
       </AlertDescription>
       <AlertAction className="flex items-center gap-1">
         <Button type="button" size="xs" onClick={handleEnable} disabled={pending}>
-          {pending ? "Activando…" : "Activar"}
+          {pending ? 'Activando…' : 'Activar'}
         </Button>
         <Button
           type="button"
@@ -64,5 +65,5 @@ export function EnablePushBanner() {
         </Button>
       </AlertAction>
     </Alert>
-  );
+  )
 }

@@ -1,13 +1,15 @@
-"use client";
+'use client'
 
-import { Database as DatabaseBackup, Download, LoaderCircle as Loader2 } from "lucide-react";
-import { useState, useTransition } from "react";
-import { sileo } from "sileo";
-import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
-import { triggerBackofficeBackup } from "./actions";
+import { Database as DatabaseBackup, Download, LoaderCircle as Loader2 } from 'lucide-react'
+import { useState, useTransition } from 'react'
+import { sileo } from 'sileo'
 
-type ExportTable = { value: string; label: string };
+import { Button } from '@/components/ui/button'
+import { Select } from '@/components/ui/select'
+
+import { triggerBackofficeBackup } from './actions'
+
+type ExportTable = { value: string; label: string }
 
 export function BackupActions({
   runnerConfigured,
@@ -15,21 +17,21 @@ export function BackupActions({
   showBackupAction = true,
   showExportActions = true,
 }: {
-  runnerConfigured: boolean;
-  tables: readonly ExportTable[];
-  showBackupAction?: boolean;
-  showExportActions?: boolean;
+  runnerConfigured: boolean
+  tables: readonly ExportTable[]
+  showBackupAction?: boolean
+  showExportActions?: boolean
 }) {
-  const [pending, startTransition] = useTransition();
-  const [table, setTable] = useState(tables[0]?.value ?? "");
-  const csvHref = `/api/data-export?format=csv&table=${encodeURIComponent(table)}`;
+  const [pending, startTransition] = useTransition()
+  const [table, setTable] = useState(tables[0]?.value ?? '')
+  const csvHref = `/api/data-export?format=csv&table=${encodeURIComponent(table)}`
 
   function forceBackup() {
     startTransition(async () => {
-      const result = await triggerBackofficeBackup();
-      if (result.ok) sileo.success({ title: "Copia de seguridad iniciada" });
-      else sileo.error({ title: result.error });
-    });
+      const result = await triggerBackofficeBackup()
+      if (result.ok) sileo.success({ title: 'Copia de seguridad iniciada' })
+      else sileo.error({ title: result.error })
+    })
   }
 
   return (
@@ -47,10 +49,10 @@ export function BackupActions({
             ) : (
               <DatabaseBackup className="size-4" />
             )}
-            {pending ? "Creando copia…" : "Crear copia ahora"}
+            {pending ? 'Creando copia…' : 'Crear copia ahora'}
           </Button>
           {!runnerConfigured ? (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-muted-foreground text-xs">
               La copia automática se activará al configurar el runner.
             </span>
           ) : null}
@@ -86,5 +88,5 @@ export function BackupActions({
         </div>
       ) : null}
     </div>
-  );
+  )
 }

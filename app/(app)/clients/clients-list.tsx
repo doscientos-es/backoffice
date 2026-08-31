@@ -1,19 +1,21 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { ListPage, type ListPageProps } from "@/components/layout/list-page";
-import { useOptimisticRemoval } from "@/lib/hooks/use-optimistic-removal";
-import { deleteClient } from "./actions";
-import { ClientQuickView, type QuickClient } from "./client-quick-view";
+import { useState } from 'react'
+
+import { ListPage, type ListPageProps } from '@/components/layout/list-page'
+import { useOptimisticRemoval } from '@/lib/hooks/use-optimistic-removal'
+
+import { deleteClient } from './actions'
+import { ClientQuickView, type QuickClient } from './client-quick-view'
 
 export function ClientsList({ canEdit = false, ...props }: ListPageProps & { canEdit?: boolean }) {
-  const [selectedClient, setSelectedClient] = useState<QuickClient | null>(null);
-  const { items: rows, remove } = useOptimisticRemoval(props.rows);
+  const [selectedClient, setSelectedClient] = useState<QuickClient | null>(null)
+  const { items: rows, remove } = useOptimisticRemoval(props.rows)
 
   const handleDelete = (id: string) => {
-    setSelectedClient(null);
-    remove(id, () => deleteClient({ id }), { errorMessage: "No se pudo eliminar el cliente" });
-  };
+    setSelectedClient(null)
+    remove(id, () => deleteClient({ id }), { errorMessage: 'No se pudo eliminar el cliente' })
+  }
 
   return (
     <>
@@ -29,5 +31,5 @@ export function ClientsList({ canEdit = false, ...props }: ListPageProps & { can
         onCloseAction={() => setSelectedClient(null)}
       />
     </>
-  );
+  )
 }

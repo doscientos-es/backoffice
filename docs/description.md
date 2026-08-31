@@ -38,6 +38,7 @@ Usuarios externos (clientes): acceso por URL con token UUID, sin login, sin cuen
 Instalar con: pnpm add [paquete]
 
 Produccion:
+
 - next@^16.2, react@^19.2, react-dom@^19.2
 - @supabase/supabase-js@^2, @supabase/ssr@^0.6
 - resend@^4, @react-email/components@latest
@@ -54,14 +55,16 @@ Produccion:
 - recharts@^2
 
 Opcional (recomendado activar tras la primera versión estable):
+
 - **React Compiler 1.0** (`babel-plugin-react-compiler`): activar `experimental.reactCompiler` en `next.config.ts` para auto-memoización de componentes sin `useMemo`/`useCallback` manuales.
 - **Cache Components** (`use cache`, `cacheLife`, `cacheTag`): activar `cacheComponents: true` en `next.config.ts` para cachear directives a nivel de función/componente (KPIs del dashboard, filtros de tablas grandes).
 
 # Verifactu / SIF (facturacion electronica AEAT)
-- node-forge@^1           -- firma digital con certificado .p12 (FNMT/Camerfirma)
-- fast-xml-parser@^4      -- generacion y parseo de XML segun XSD de AEAT
-- qrcode@^1               -- generacion del codigo QR en PNG/SVG para facturas
-- soap@^1                 -- cliente SOAP para el web service de AEAT (remision RF)
+
+- node-forge@^1 -- firma digital con certificado .p12 (FNMT/Camerfirma)
+- fast-xml-parser@^4 -- generacion y parseo de XML segun XSD de AEAT
+- qrcode@^1 -- generacion del codigo QR en PNG/SVG para facturas
+- soap@^1 -- cliente SOAP para el web service de AEAT (remision RF)
 
 shadcn/ui components a instalar via CLI:
 button, input, textarea, select, dialog, popover, dropdown-menu, calendar,
@@ -77,6 +80,7 @@ command, form, label, switch, checkbox, progress, scroll-area
 Referencias: **Vercel Dashboard** y **Notion**. Minimalismo funcional, no decorativo.
 
 Principios:
+
 - **Densidad informativa alta** sin sensación de saturación (whitespace generoso entre bloques, denso dentro de tablas).
 - **Bordes 1px** sobre fondos planos en lugar de sombras pesadas. Sombras solo en elementos flotantes (popover, dialog, dropdown).
 - **Radius consistente**: `--radius-sm: 6px` (badges, inputs), `--radius-md: 8px` (cards, buttons), `--radius-lg: 12px` (sheets, dialogs). Nada de "blob radius" tipo 24px+.
@@ -93,64 +97,64 @@ Tokens en `globals.css` con `@theme` de Tailwind 4:
 ```css
 :root {
   /* Surfaces */
-  --background:       #ffffff;
-  --surface:          #fafafa;
+  --background: #ffffff;
+  --surface: #fafafa;
   --surface-elevated: #ffffff;
-  --surface-hover:    #f4f4f5;
-  --border:           #e4e4e7;
-  --border-strong:    #d4d4d8;
+  --surface-hover: #f4f4f5;
+  --border: #e4e4e7;
+  --border-strong: #d4d4d8;
 
   /* Text */
-  --text-primary:     #18181b;
-  --text-secondary:   #52525b;
-  --text-muted:       #a1a1aa;
+  --text-primary: #18181b;
+  --text-secondary: #52525b;
+  --text-muted: #a1a1aa;
 
   /* Accent (botón primario, links) — neutro tipo Vercel */
-  --accent:           #18181b;
-  --accent-hover:     #27272a;
-  --accent-fg:        #fafafa;
+  --accent: #18181b;
+  --accent-hover: #27272a;
+  --accent-fg: #fafafa;
 
   /* Status */
-  --success:          #16a34a;
-  --warning:          #ca8a04;
-  --danger:           #dc2626;
-  --info:             #2563eb;
+  --success: #16a34a;
+  --warning: #ca8a04;
+  --danger: #dc2626;
+  --info: #2563eb;
 
   /* Lead temperature */
-  --hot:              #dc2626;
-  --warm:             #ea580c;
-  --cold:             #2563eb;
+  --hot: #dc2626;
+  --warm: #ea580c;
+  --cold: #2563eb;
 
   /* Focus ring */
-  --ring:             #18181b;
+  --ring: #18181b;
 }
 
 .dark {
-  --background:       #09090b;
-  --surface:          #0c0c0e;
+  --background: #09090b;
+  --surface: #0c0c0e;
   --surface-elevated: #131316;
-  --surface-hover:    #1c1c1f;
-  --border:           #27272a;
-  --border-strong:    #3f3f46;
+  --surface-hover: #1c1c1f;
+  --border: #27272a;
+  --border-strong: #3f3f46;
 
-  --text-primary:     #fafafa;
-  --text-secondary:   #a1a1aa;
-  --text-muted:       #71717a;
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
 
-  --accent:           #fafafa;
-  --accent-hover:     #e4e4e7;
-  --accent-fg:        #18181b;
+  --accent: #fafafa;
+  --accent-hover: #e4e4e7;
+  --accent-fg: #18181b;
 
-  --success:          #22c55e;
-  --warning:          #eab308;
-  --danger:           #ef4444;
-  --info:             #3b82f6;
+  --success: #22c55e;
+  --warning: #eab308;
+  --danger: #ef4444;
+  --info: #3b82f6;
 
-  --hot:              #ef4444;
-  --warm:             #f97316;
-  --cold:             #3b82f6;
+  --hot: #ef4444;
+  --warm: #f97316;
+  --cold: #3b82f6;
 
-  --ring:             #fafafa;
+  --ring: #fafafa;
 }
 ```
 
@@ -189,6 +193,7 @@ Tokens en `globals.css` con `@theme` de Tailwind 4:
 ```
 
 Sidebar nav items (en orden):
+
 1. Inicio (KPIs y actividad reciente)
 2. Leads (pipeline kanban)
 3. Clientes
@@ -604,6 +609,7 @@ is_internal   bool DEFAULT true  -- false = visible en portal cliente
 ```
 
 Triggers de base de datos al insertar:
+
 - Incrementar leads.interactions_count
 - Actualizar leads.last_interaction_at = contacted_at
 
@@ -662,6 +668,7 @@ notes              text                   -- notas internas
 ```
 
 Logica de next_invoice_date al crear:
+
 - monthly: start_date + 1 mes (mismo billing_day)
 - quarterly: start_date + 3 meses
 - biannual: start_date + 6 meses
@@ -675,6 +682,7 @@ Tabla pivote que conecta facturas generadas con su suscripcion origen.
 Se anade columna `subscription_id uuid REFERENCES subscriptions(id)` directamente en `invoices` (mas simple que tabla pivote, ya que una factura pertenece a una sola suscripcion).
 
 Actualizacion de la tabla invoices (seccion 5.6) - anadir campos:
+
 ```sql
 subscription_id    uuid REFERENCES subscriptions(id)  -- null si no es recurrente
 billing_period_start date                              -- ej: 2026-06-01
@@ -911,6 +919,7 @@ CREATE INDEX idx_time_entries_uninvoiced ON time_entries(project_id, is_billable
 ```
 
 **Flujo de facturación de horas:**
+
 1. Al cerrar el proyecto o a demanda: botón "Importar horas no facturadas" en `/projects/[id]/invoices`.
 2. La API lee `time_entries WHERE project_id = X AND is_billable = true AND invoiced_at IS NULL AND ended_at IS NOT NULL`.
 3. Agrupa por `member_id`, calcula `duration_minutes * hourly_rate / 60`.
@@ -918,6 +927,7 @@ CREATE INDEX idx_time_entries_uninvoiced ON time_entries(project_id, is_billable
 5. UPDATE `time_entries.invoiced_at = now(), invoice_id = nueva_factura.id`.
 
 **Timer activo:**
+
 - Solo puede haber 1 `time_entry` con `ended_at IS NULL` por `member_id` a la vez (validado en API route).
 - UI: botón "▶ Iniciar" en el TaskSheet. Badge en la sidebar cuando hay un timer corriendo.
 
@@ -1076,6 +1086,7 @@ CREATE POLICY "admin_write_team" ON team_members FOR ALL TO authenticated
 ### 6.2 Acceso del portal publico
 
 Las rutas /p/[tipo]/[token] son Next.js Server Components que:
+
 1. Reciben el token de la URL
 2. Hacen una query server-side con el supabaseAdmin (service_role)
 3. Validan que el token existe y el documento no esta cancelado
@@ -1085,6 +1096,7 @@ Las rutas /p/[tipo]/[token] son Next.js Server Components que:
 Rate limiting en rutas del portal: 30 req/min por IP (lru-cache en memoria, sec. 27).
 
 **Qué ve el cliente en el portal:**
+
 - Sus propuestas (`/p/proposal/[token]`): aceptar, rechazar, descargar PDF.
 - Sus facturas (`/p/invoice/[token]`): ver, descargar PDF, QR Verifactu.
 - **NO ve** tareas ni comentarios internos del equipo.
@@ -1098,7 +1110,7 @@ A partir de Next.js 16 el archivo se llama `proxy.ts` (la convención `middlewar
 ```typescript
 // proxy.ts
 export const config = {
-  matcher: ['/(dashboard)/:path*', '/api/crm/:path*']
+  matcher: ['/(dashboard)/:path*', '/api/crm/:path*'],
 }
 // Rutas protegidas: todo bajo /(dashboard) y /api/crm
 // Rutas publicas: /login, /p/:path*, /api/portal/:path*
@@ -1127,13 +1139,13 @@ Segun el articulo 6 del Real Decreto 1619/2012, una factura valida en Espana deb
 ```typescript
 const EMISOR = {
   razon_social: 'DOSCIENTOS DESARROLLO TECNOLOGICO, S.L.',
-  nif: '',          // rellenar antes de produccion
-  domicilio: '',    // rellenar antes de produccion
+  nif: '', // rellenar antes de produccion
+  domicilio: '', // rellenar antes de produccion
   ciudad: 'Barcelona',
   cp: '',
   pais: 'ES',
   email: 'hola@doscientos.es',
-  iban: '',         // para indicar cuenta bancaria en la factura
+  iban: '', // para indicar cuenta bancaria en la factura
 }
 ```
 
@@ -1190,6 +1202,7 @@ Si alguien modifica o borra una factura, la huella del siguiente registro dejari
 lo que hace la manipulacion detectable por la AEAT.
 
 Campos implicados en el calculo del hash (segun Anexo I de la Orden HAC/1177/2024):
+
 - NIF del emisor
 - Numero de factura
 - Fecha de expedicion
@@ -1204,14 +1217,14 @@ Campos implicados en el calculo del hash (segun Anexo I de la Orden HAC/1177/202
 import { createHash } from 'crypto'
 
 export function computeInvoiceHash(fields: {
-  nif_emisor: string        // NIF sin separadores, ej: 'B12345678'
-  invoice_number: string    // numero completo, ej: 'F-2026-001'
-  issue_date: string        // formato exacto 'DD-MM-YYYY' (Anexo I HAC/1177/2024)
-  invoice_type: string      // 'F1' | 'F2' | 'F3' | 'R1' | 'R2' | 'R3' | 'R4' | 'R5'
-  tax_amount: string        // CuotaTotal: suma de cuotas IVA, 2 decimales, ej: '21.00'
-  total: string             // ImporteTotal, 2 decimales, ej: '121.00'
-  previous_hash: string     // '0' si es la primera factura del ejercicio; hex del anterior en el resto
-  generated_at: string      // FechaHoraHusoHorarioFirma: 'DD-MM-YYYYTHH:MM:SS+01:00'
+  nif_emisor: string // NIF sin separadores, ej: 'B12345678'
+  invoice_number: string // numero completo, ej: 'F-2026-001'
+  issue_date: string // formato exacto 'DD-MM-YYYY' (Anexo I HAC/1177/2024)
+  invoice_type: string // 'F1' | 'F2' | 'F3' | 'R1' | 'R2' | 'R3' | 'R4' | 'R5'
+  tax_amount: string // CuotaTotal: suma de cuotas IVA, 2 decimales, ej: '21.00'
+  total: string // ImporteTotal, 2 decimales, ej: '121.00'
+  previous_hash: string // '0' si es la primera factura del ejercicio; hex del anterior en el resto
+  generated_at: string // FechaHoraHusoHorarioFirma: 'DD-MM-YYYYTHH:MM:SS+01:00'
 }): string {
   // Orden y separador exactos segun Anexo I de la Orden HAC/1177/2024
   // Los campos se concatenan con '&' como separador
@@ -1222,7 +1235,7 @@ export function computeInvoiceHash(fields: {
     fields.invoice_type,
     fields.tax_amount,
     fields.total,
-    fields.previous_hash,   // nunca null: '0' para primera factura
+    fields.previous_hash, // nunca null: '0' para primera factura
     fields.generated_at,
   ].join('&')
 
@@ -1231,6 +1244,7 @@ export function computeInvoiceHash(fields: {
 ```
 
 Notas críticas de implementación:
+
 - `previous_hash` de la **primera factura** del ejercicio es el string literal `'0'` (no cadena vacía, no null).
 - `issue_date` para el hash siempre en `DD-MM-YYYY` aunque la BD lo almacene como `date` (ISO).
 - `generated_at` es `issued_at` de la factura formateado con timezone explícito (`+01:00` o `+02:00` según DST).
@@ -1242,6 +1256,7 @@ El registro de facturacion debe firmarse con el certificado digital de la empres
 (representante de persona juridica emitido por FNMT o Camerfirma) antes de enviarse.
 
 El certificado se almacena como variable de entorno en Vercel (nunca en el repo):
+
 - VERIFACTU_CERT_P12_BASE64: certificado .p12 codificado en base64
 - VERIFACTU_CERT_PASSWORD: contrasena del .p12
 
@@ -1258,8 +1273,9 @@ lib/verifactu/
 ```
 
 Endpoints AEAT (SOAP over HTTPS):
+
 - Test (homologacion): https://prewww1.aeat.es/wlpl/TIKE-WFCS/ws/VeriFactu/RecepcionFacturas
-- Produccion:          https://www1.aeat.es/wlpl/TIKE-WFCS/ws/VeriFactu/RecepcionFacturas
+- Produccion: https://www1.aeat.es/wlpl/TIKE-WFCS/ws/VeriFactu/RecepcionFacturas
 
 El backoffice selecciona el endpoint por flujo: el diagnóstico remite un registro sintético al entorno de pruebas AEAT y la emisión o anulación de facturas remite siempre a producción. El modo demo usa `mock` y no realiza peticiones externas.
 
@@ -1283,6 +1299,7 @@ segun el art. 9 de la Orden HAC/1177/2024:
 **A) Codigo QR tributario**
 
 La URL que codifica el QR tiene el formato definido por la AEAT:
+
 ```
 https://www2.agenciatributaria.gob.es/wlpl/AVAC-CALC/VerificadorQR?
   nif=<NIF_EMISOR>
@@ -1314,6 +1331,7 @@ La normativa prohibe modificar una factura emitida. Para corregir un error se em
 una factura rectificativa (campo is_rectification=true, serie distinta: R-2026-001).
 
 Tipos segun RD 1619/2012 art.15 y Orden HAC/1177/2024:
+
 - R1: error fundado en derecho (el caso mas habitual: importe incorrecto, datos erroneos)
 - R4: simplificada rectificativa (no aplica para facturas B2B con NIF del receptor)
 - R5: diferencias (cuando solo se rectifica la diferencia, no la totalidad)
@@ -1322,6 +1340,7 @@ La serie de rectificativas es independiente de la serie de facturas normales.
 El sistema debe gestionar una secuencia invoice_seq_rect_{YYYY} separada.
 
 Flujo UI para emitir una rectificativa:
+
 1. En la ficha de la factura emitida: boton "Emitir factura rectificativa".
 2. Modal: selector de tipo (R1/R5), campo de texto con el motivo, preview del documento.
 3. Al confirmar: se crea una nueva invoice con is_rectification=true, rectified_invoice_id, y se envia a Verifactu como tipo R1/R5.
@@ -1333,6 +1352,7 @@ El certificado (.p12) NUNCA se sube al repositorio de git.
 El archivo .gitignore debe incluir *.p12 y *.pfx.
 
 Flujo de configuracion:
+
 1. Exportar el certificado a .p12 desde el navegador o desde la FNMT.
 2. Convertir a base64: `base64 -i cert.p12 | tr -d '\n'`
 3. Copiar el resultado como valor de VERIFACTU_CERT_P12_BASE64 en Vercel (Environment Variables, entorno Production y Preview por separado).
@@ -1384,6 +1404,7 @@ El certificado tiene una validez de 2-4 anios. Registrar la fecha de caducidad e
 ### 8.3 Email desde el CRM
 
 Modal con:
+
 - Para: (pre-relleno, editable)
 - Asunto: (texto libre o selector de plantilla que precarga asunto y cuerpo)
 - Cuerpo: (editor simple con soporte de variables {{nombre}}, {{empresa}}, etc.)
@@ -1410,13 +1431,17 @@ PASADO
 Permite al equipo enviar emails directamente a leads y clientes sin salir de la plataforma, usando plantillas predefinidas y firmas automáticas.
 
 ### 9.1 Configuración de remitente y firma
+
 Cada usuario del equipo configura su identidad en `/settings/profile`:
+
 - **Email Alias**: El email desde el que se envía (ej: `pol@doscientos.es`). Debe pertenecer al dominio verificado en Resend.
 - **Firma HTML**: Bloque de texto enriquecido (Tiptap) que se añade automáticamente al final de cada email si la plantilla lo requiere.
 
 ### 9.2 Server Action: `sendEmail`
+
 Ubicación: `app/actions/email.ts`.
 Flujo:
+
 1. Valida sesión del `team_member` y permisos.
 2. Carga datos del remitente (`email_alias`). La firma se genera dinámicamente.
 3. Procesa el template usando el `lib/templates/render.ts` (sec. 29) inyectando variables del lead/cliente.
@@ -1428,14 +1453,16 @@ Flujo:
      to: lead.email,
      subject: renderedSubject,
      html: renderedBodyWithSignature,
-     reply_to: member.email // Las respuestas llegan al mail personal
-   });
+     reply_to: member.email, // Las respuestas llegan al mail personal
+   })
    ```
 6. Registra la interacción en `lead_interactions` con `resend_email_id`.
 7. Inserta evento en `activities` tipo `email_sent`.
 
 ### 9.3 Webhook de Resend (`/api/email/webhook`)
+
 Escucha eventos de Resend para actualizar el estado del envío en tiempo real:
+
 - `delivered`: Marca la interacción como entregada.
 - `opened`: Primera apertura del email.
 - `bounced`: Error de entrega (notifica al autor del email via toast/aviso).
@@ -1444,14 +1471,15 @@ Escucha eventos de Resend para actualizar el estado del envío en tiempo real:
 Requiere variable `RESEND_WEBHOOK_SECRET` para validar la firma del webhook.
 
 ### 9.4 Interfaz de usuario
+
 Modal "Enviar email" accesible desde la ficha de Lead/Cliente:
+
 - **Selector de plantilla**: Filtra por categoría y precarga asunto/cuerpo.
 - **Editor en vivo**: Permite modificar el texto antes de enviar.
 - **Preview de variables**: Los tags `{{nombre}}` se ven resaltados.
 - **Toggle de firma**: Permite quitar la firma para emails informales.
 
 ---
-
 
 Los recordatorios del usuario aparecen en el panel "Avisos" del dashboard (sec. 11.5) al cargar /inicio. No se envían emails diarios en MVP.
 
@@ -1482,6 +1510,7 @@ Los recordatorios del usuario aparecen en el panel "Avisos" del dashboard (sec. 
 ### 9.3 Tracking de apertura (evento 'viewed')
 
 Cada vez que el cliente abre la URL se registra en activities:
+
 ```typescript
 {
   entity_type: 'proposal',
@@ -1491,17 +1520,29 @@ Cada vez que el cliente abre la URL se registra en activities:
   metadata: { ip, user_agent, view_count }
 }
 ```
+
 Esto aparece en el timeline interno del lead/proyecto para que el equipo vea "Cliente vio la propuesta 3 veces".
 
 ### 9.4 CSS @media print para PDF
 
 ```css
 @media print {
-  .no-print { display: none !important; }  /* sidebar, botones, topbar */
-  body { background: white; color: black; font-size: 11pt; }
-  .invoice-content { max-width: 100%; padding: 0; }
+  .no-print {
+    display: none !important;
+  } /* sidebar, botones, topbar */
+  body {
+    background: white;
+    color: black;
+    font-size: 11pt;
+  }
+  .invoice-content {
+    max-width: 100%;
+    padding: 0;
+  }
   /* Evitar corte de pagina en tablas */
-  tr { page-break-inside: avoid; }
+  tr {
+    page-break-inside: avoid;
+  }
 }
 ```
 
@@ -1601,6 +1642,7 @@ Implementar con una API route que consulta multiples tablas en paralelo con Prom
 ### 11.2 Filtros por seccion
 
 Leads:
+
 - Status (multi-select): new, contacted, qualified, lost, converted
 - Asignado a (select)
 - Budget (multi-select)
@@ -1609,12 +1651,14 @@ Leads:
 - Temperature IA (hot/warm/cold)
 
 Propuestas:
+
 - Status: draft, sent, accepted, rejected, expired
 - Cliente (select con busqueda)
 - Rango de importe total
 - Fecha de envio (rango)
 
 Facturas:
+
 - Status: draft, sent, paid, overdue, cancelled
 - Cliente
 - Rango de importe
@@ -1636,11 +1680,13 @@ Default page size: 25 items. Opciones: 25, 50, 100.
 Regla: por defecto todo es Server Component. Marcar 'use client' solo cuando sea estrictamente necesario.
 
 Server Components (sin 'use client'):
+
 - Todas las paginas del dashboard que solo muestran datos
 - El portal publico /p/[tipo]/[token]
 - Layout del sidebar y topbar
 
 Client Components (con 'use client'):
+
 - Formularios interactivos (react-hook-form)
 - Kanban de leads (drag and drop con @dnd-kit)
 - Buscador global con Command
@@ -1652,12 +1698,14 @@ Client Components (con 'use client'):
 ### 12.2 Server Actions vs API Routes
 
 Server Actions para:
+
 - Crear/editar/cambiar status de cualquier entidad (leads, propuestas, facturas, etc.)
 - Registrar interacciones
 - Marcar recordatorios como hechos
 - Aceptar/rechazar propuesta desde el portal (accion del cliente)
 
 API Routes (/api/*) para:
+
 - Envio de email (necesita logica async compleja con Resend)
 - Webhook de Stripe (fase 2)
 - Webhook de GitHub (eventos entrantes con validación de firma)
@@ -1675,6 +1723,7 @@ API Routes (/api/*) para:
 ### 12.4 Actualizaciones optimistas
 
 Usar useOptimistic de React 19 en:
+
 - Cambio de status de lead en kanban (drag and drop)
 - Marcar reminder como hecho
 - Thumbs up/down de propuesta en el portal
@@ -1682,6 +1731,7 @@ Usar useOptimistic de React 19 en:
 ### 12.5 Estado global (Zustand)
 
 Store para:
+
 - Estado del sidebar (expandido/colapsado)
 - Filtros activos de cada seccion (persisten al navegar entre paginas)
 - Usuario logueado (extraido del layout, disponible en todos los Client Components)
@@ -1798,6 +1848,7 @@ Emails del sistema (automaticos):
 | crm-email.tsx         | Email manual desde CRM   | Lead/Cliente |
 
 Emails diferidos a Phase 2 (requieren cron):
+
 | Template            | Trigger                                                | Destinatario |
 | ------------------- | ------------------------------------------------------ | ------------ |
 | invoice-overdue.tsx | Recordatorio factura vencida al cliente                | Cliente      |
@@ -1841,12 +1892,14 @@ viviría en un job se resuelve con dos patrones:
    derivados (sec. 18.3 `invoices_with_status`).
 
 **Beneficios**:
+
 - Cero coste de infraestructura (compatible con Vercel Hobby).
 - Cero fallos silenciosos: si algo no se ha hecho, se ve al instante en el dashboard.
 - Cero secretos extra (`CRON_SECRET` no es necesario).
 - Cero observabilidad de jobs (no hay `cron_runs`, heartbeats, ni alertas de cron fallido).
 
 **Phase 2** (requiere Vercel Pro o pg_cron de Supabase):
+
 - Notificaciones por email del digest (si el equipo deja de entrar a diario al dashboard).
 - Generación automática de facturas recurrentes cuando aparezca la primera suscripción.
 
@@ -1883,28 +1936,37 @@ export async function sendToAeat(invoiceId: string) {
     const response = await sendToAeatSoap(signedXml, 'prod')
 
     if (response.code === '0000') {
-      await supabase.from('invoices').update({
-        verifactu_status: 'accepted',
-        verifactu_csv: response.csv,
-        verifactu_sent_at: new Date().toISOString(),
-        verifactu_response: response.raw,
-      }).eq('id', invoiceId)
+      await supabase
+        .from('invoices')
+        .update({
+          verifactu_status: 'accepted',
+          verifactu_csv: response.csv,
+          verifactu_sent_at: new Date().toISOString(),
+          verifactu_response: response.raw,
+        })
+        .eq('id', invoiceId)
       await logInvoiceEvent(supabase, invoiceId, 'verifactu_accepted', null, { csv: response.csv })
     } else {
-      await supabase.from('invoices').update({
-        verifactu_status: 'rejected',
-        verifactu_error: response.description,
-        verifactu_response: response.raw,
-      }).eq('id', invoiceId)
+      await supabase
+        .from('invoices')
+        .update({
+          verifactu_status: 'rejected',
+          verifactu_error: response.description,
+          verifactu_response: response.raw,
+        })
+        .eq('id', invoiceId)
       await logInvoiceEvent(supabase, invoiceId, 'verifactu_rejected', null, response.raw)
     }
   } catch (e: any) {
     const retryCount = (invoice.verifactu_retry_count ?? 0) + 1
-    await supabase.from('invoices').update({
-      verifactu_status: 'error',
-      verifactu_error: e.message,
-      verifactu_retry_count: retryCount,
-    }).eq('id', invoiceId)
+    await supabase
+      .from('invoices')
+      .update({
+        verifactu_status: 'error',
+        verifactu_error: e.message,
+        verifactu_retry_count: retryCount,
+      })
+      .eq('id', invoiceId)
     await logInvoiceEvent(supabase, invoiceId, 'verifactu_error', null, { message: e.message })
   }
 
@@ -1913,6 +1975,7 @@ export async function sendToAeat(invoiceId: string) {
 ```
 
 UI en /invoices y /invoices/[id]:
+
 - Badge con `verifactu_status` en la tabla de facturas.
 - Botón "Enviar a AEAT" visible si `verifactu_status = 'pending'`.
 - Botón "Reintentar" si `verifactu_status = 'error'`.
@@ -1974,6 +2037,7 @@ Cada proyecto tiene su propia sección de tareas en `/projects/[id]/tasks` con t
 #### Vista Lista
 
 Tabla sortable por: prioridad, fecha límite, asignado, estado. Con filtros rápidos:
+
 - Asignado a mí / Sin asignar / Todos
 - Prioridad: Urgente / Alta / Media / Baja
 - Hito (milestone)
@@ -2038,6 +2102,7 @@ Al guardar: INSERT en tasks con status = columna actual, project_id = proyecto a
 ### 18.4 Menciones (@) y notificaciones
 
 Cuando un comentario contiene `@nombre`:
+
 1. El frontend parsea las menciones y rellena el array `mentions[]` con los UUIDs.
 2. Al INSERT de `task_comments`: trigger DB llama a `pg_notify('mention', payload)`.
 3. El servidor escucha via Supabase Realtime y envía email con template `task-mention.tsx` si el mencionado no ha tenido actividad en los últimos 5 minutos (evitar spam en conversaciones activas).
@@ -2105,6 +2170,7 @@ ALTER TABLE projects
 ```
 
 Variable de entorno necesaria (GitHub App):
+
 ```env
 GITHUB_APP_ID=
 GITHUB_APP_PRIVATE_KEY_BASE64=    # clave privada de la GitHub App en base64
@@ -2115,6 +2181,7 @@ GITHUB_WEBHOOK_SECRET=            # secret para validar los webhooks entrantes
 
 **Crear issue desde tarea:**
 Cuando el equipo hace clic en "Crear issue en GitHub" desde el panel de tarea:
+
 1. `POST /api/github/create-issue` con `task_id`.
 2. La API route crea el issue en el repo vinculado al proyecto via GitHub REST API.
 3. Se guarda `github_issue_number` y `github_issue_url` en la tarea.
@@ -2124,6 +2191,7 @@ Cuando el equipo hace clic en "Crear issue en GitHub" desde el panel de tarea:
 
 **Crear milestone en GitHub:**
 Cuando se crea un milestone en el CRM con `github_milestone_number IS NULL`:
+
 - Botón "Sincronizar con GitHub" en la UI del milestone.
 - Crea el milestone en GitHub con la misma fecha límite.
 - Guarda el `github_milestone_number` en la tabla.
@@ -2152,6 +2220,7 @@ Eventos que procesa:
 ### 19.4 Mapeo de usuarios GitHub ↔ team_members
 
 Añadir campo `github_handle` a team_members:
+
 ```sql
 ALTER TABLE team_members ADD COLUMN IF NOT EXISTS github_handle text UNIQUE;
 ```
@@ -2164,6 +2233,7 @@ Si un handle de GitHub no tiene correspondencia en team_members, los eventos se 
 ### 19.5 Vista "GitHub" en el panel de tarea
 
 En el TaskSheet (panel lateral de tarea):
+
 - Si `github_issue_url IS NOT NULL`: botón "Ver issue #N" que abre en nueva pestaña.
   Badge de estado del issue (open/closed) obtenido via GitHub API con cache de 5 min (SWR).
 - Si `github_pr_url IS NOT NULL`: badge "PR #N" con estado (open/merged/closed) y link.
@@ -2181,25 +2251,40 @@ import { createClient } from '@supabase/supabase-js'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!  // la landing necesita la service_role key
+  process.env.SUPABASE_SERVICE_ROLE_KEY!, // la landing necesita la service_role key
 )
 
 // Anadir dentro del handler de sendContact, tras el envio de email:
 await supabaseAdmin.from('leads').insert({
-  name, email, phone, company, budget, message,
-  source: 'landing', status: 'new',
-  utm_source, utm_medium, utm_campaign,
-  referrer, ip, device, browser, language
+  name,
+  email,
+  phone,
+  company,
+  budget,
+  message,
+  source: 'landing',
+  status: 'new',
+  utm_source,
+  utm_medium,
+  utm_campaign,
+  referrer,
+  ip,
+  device,
+  browser,
+  language,
 })
 // Notion y Google Sheets: deprecar gradualmente tras validar que Supabase funciona
 ```
 
 El CRM usa Supabase Realtime para mostrar notificacion instantanea cuando llega un lead:
+
 ```typescript
-supabase.channel('leads').on('postgres_changes',
-  { event: 'INSERT', schema: 'public', table: 'leads' },
-  (payload) => showToast('Nuevo lead: ' + payload.new.name)
-).subscribe()
+supabase
+  .channel('leads')
+  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'leads' }, (payload) =>
+    showToast('Nuevo lead: ' + payload.new.name),
+  )
+  .subscribe()
 ```
 
 ---
@@ -2209,6 +2294,7 @@ supabase.channel('leads').on('postgres_changes',
 La tabla `activities` es el **audit log central** de la aplicación. Toda mutación significativa
 (lead creado/convertido, propuesta enviada/aceptada, factura emitida/pagada, tarea completada,
 issue GitHub sincronizado) debe insertar una fila en `activities`. Esto permite:
+
 - Historial completo auditable en la ficha de cada entidad.
 - Dashboard de actividad del equipo.
 - Detectar anomalías (ej: muchas facturas emitidas en poco tiempo → posible bug).
@@ -2259,6 +2345,7 @@ Crítico para evitar doble facturación si Vercel reintenta la request o el cron
 ### 22.1 Resumen de lead (POST /api/crm/ai/summarize-lead)
 
 Input que se envia al modelo:
+
 ```
 Eres un asistente de CRM para una agencia de desarrollo web.
 Analiza la siguiente informacion sobre un lead y devuelve un JSON.
@@ -2421,6 +2508,7 @@ if (!success) return new Response('Too Many Requests', { status: 429 })
 ```
 
 Límites específicos por ruta:
+
 | Ruta                  | Límite                                             |
 | --------------------- | -------------------------------------------------- |
 | `/api/crm/*`          | 100 req/min por usuario                            |
@@ -2462,21 +2550,21 @@ export type TemplateContext = {
 }
 
 const VARIABLES: Record<string, (ctx: TemplateContext) => string> = {
-  '{{client.name}}':       ctx => ctx.client.name,
-  '{{client.company}}':   ctx => ctx.client.company,
-  '{{client.email}}':     ctx => ctx.client.email,
-  '{{project.name}}':     ctx => ctx.project?.name ?? '',
-  '{{proposal.link}}':    ctx => `${APP_URL}/p/proposal/${ctx.proposal?.public_token}`,
-  '{{invoice.number}}':   ctx => ctx.invoice?.invoice_number ?? '',
-  '{{invoice.total}}':    ctx => formatCurrency(ctx.invoice?.total ?? 0),
-  '{{invoice.due_date}}': ctx => formatDate(ctx.invoice?.due_date),
-  '{{member.name}}':      ctx => ctx.member?.name ?? '',
+  '{{client.name}}': (ctx) => ctx.client.name,
+  '{{client.company}}': (ctx) => ctx.client.company,
+  '{{client.email}}': (ctx) => ctx.client.email,
+  '{{project.name}}': (ctx) => ctx.project?.name ?? '',
+  '{{proposal.link}}': (ctx) => `${APP_URL}/p/proposal/${ctx.proposal?.public_token}`,
+  '{{invoice.number}}': (ctx) => ctx.invoice?.invoice_number ?? '',
+  '{{invoice.total}}': (ctx) => formatCurrency(ctx.invoice?.total ?? 0),
+  '{{invoice.due_date}}': (ctx) => formatDate(ctx.invoice?.due_date),
+  '{{member.name}}': (ctx) => ctx.member?.name ?? '',
 }
 
 export function renderTemplate(template: string, ctx: TemplateContext): string {
   return Object.entries(VARIABLES).reduce(
     (text, [key, fn]) => text.replaceAll(key, fn(ctx)),
-    template
+    template,
   )
 }
 ```
@@ -2688,6 +2776,7 @@ proyectos, propuestas, facturas). Persistido en `localStorage` por usuario.
 - `formatPhone(phone: string)` → formato internacional E.164.
 
 Reglas obligatorias:
+
 - Importes en facturas/propuestas: 2 decimales SIEMPRE.
 - Importes en KPIs: redondeo a entero si > 1.000 €, 2 decimales si menor.
 - Fechas en tablas: formato corto (`23 may 2026`). En tooltip: largo con hora.
@@ -2819,12 +2908,12 @@ tests/
 ```json
 // package.json scripts
 {
-  "test":       "vitest run",
+  "test": "vitest run",
   "test:watch": "vitest",
-  "typecheck":  "tsc --noEmit",
-  "lint":       "eslint .",
-  "format":     "biome format --write .",
-  "check":      "pnpm lint && pnpm typecheck && pnpm test"
+  "typecheck": "tsc --noEmit",
+  "lint": "eslint .",
+  "format": "biome format --write .",
+  "check": "pnpm lint && pnpm typecheck && pnpm test"
 }
 ```
 
@@ -2862,7 +2951,6 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
-
 ```
 
 ### 31.2 Deploys
@@ -2882,6 +2970,7 @@ jobs:
 ### 31.4 Dependabot
 
 `.github/dependabot.yml` agrupando updates:
+
 - `npm` semanal, grouping por categoría (`prod`, `dev`, `types`).
 - `github-actions` mensual.
 - Auto-approve + auto-merge sólo para `patch` updates de devDependencies via workflow `dependabot-automerge.yml`.
@@ -2908,6 +2997,7 @@ funcionalidad que puede desplegarse y usarse en producción de forma independien
 ---
 
 ### Step 1 — Infraestructura, auth y pipelines
+
 - Repo Next.js 16.2 App Router (Turbopack default), Tailwind 4 con tokens del design system (sec. 3), shadcn/ui, Pino (stdout)
 - Supabase: proyecto, tablas team_members + settings, RLS con `current_member_role()`
 - Supabase Auth: email/password (sec. 6.1)
@@ -2921,6 +3011,7 @@ funcionalidad que puede desplegarse y usarse en producción de forma independien
 - Command palette skeleton (Cmd+K) y panel de atajos (Cmd+/) (sec. 30.7/30.8)
 
 ### Step 2 — Leads y pipeline
+
 - Tablas: leads (con deleted_at), lead_interactions, reminders, activities
 - Triggers DB: interactions_count, last_interaction_at, next_followup_at
 - UI: kanban de leads (4 columnas, drag-and-drop @dnd-kit), ficha de lead, timeline
@@ -2931,6 +3022,7 @@ funcionalidad que puede desplegarse y usarse en producción de forma independien
 - Supabase Realtime: toast "Nuevo lead" en dashboard
 
 ### Step 3 — Clientes, proyectos y presupuestos
+
 - Tablas: clients (con deleted_at), projects (con github_repo_owner/name), services_catalog
 - Tablas: email_templates, proposals, line_items, proposal_items
 - `lib/templates/render.ts`: interpolación de variables en subject/body
@@ -2941,6 +3033,7 @@ funcionalidad que puede desplegarse y usarse en producción de forma independien
 - notification_preferences: defaults por rol al crear team_member
 
 ### Step 4 — Facturas y suscripciones
+
 - Tablas: invoices (todos los campos verifactu_* ya en schema), line_items, invoice_events
 - Secuencia PostgreSQL para invoice_number (F-YYYY-NNN / R-YYYY-NNN)
 - Generación de factura desde propuesta aceptada (pre-relleno)
@@ -2952,6 +3045,7 @@ funcionalidad que puede desplegarse y usarse en producción de forma independien
 - Idempotency key en `POST /api/crm/invoices` (header `Idempotency-Key`)
 
 ### Step 5 — Verifactu / SIF
+
 - `lib/verifactu/`: hash.ts (SHA-256 chain), xml.ts, sign.ts, client.ts, qr.ts, utils.ts
 - Trigger DB: inmutabilidad de `current_hash` y `chain_sequence` tras emisión
 - Flujo de emisión: SELECT FOR UPDATE → computeHash → INSERT invoice_events 'issued'
@@ -2962,6 +3056,7 @@ funcionalidad que puede desplegarse y usarse en producción de forma independien
 - Diagnóstico contra AEAT de pruebas y facturación contra producción
 
 ### Step 6 — IA y dashboard
+
 - API route `summarize-lead` (GPT-4o-mini): resumen + temperatura hot/warm/cold
 - API route `draft-email` (GPT-4o): borrador en modal de email con contexto del lead
 - KPI cards: leads activos, propuestas pendientes, facturación mensual, vencidas
@@ -2971,6 +3066,7 @@ funcionalidad que puede desplegarse y usarse en producción de forma independien
 - Responsive + dark/light mode
 
 ### Step 7 — Tasks y time tracking
+
 - Tablas: tasks (project_id nullable, lead_id, LexoRank), task_comments, task_tags,
   task_tag_assignments, time_entries, notification_preferences
 - ALTER milestones: start_date, completion_percentage, color, github_milestone_number, is_payment_milestone
@@ -2987,6 +3083,7 @@ funcionalidad que puede desplegarse y usarse en producción de forma independien
 - Banner "Milestone 100% completado" con CTA si `is_payment_milestone`
 
 ### Step 8 — GitHub integration
+
 - GitHub App: instalación en org, configurar repos por proyecto (github_repo_owner/name)
 - Webhook `/api/github/webhook`: validar X-Hub-Signature-256, procesar eventos (sec. 20.3)
 - API route `/api/github/create-issue`: crear issue desde tarea CRM
@@ -3002,7 +3099,7 @@ funcionalidad que puede desplegarse y usarse en producción de forma independien
 
 ---
 
-*Equipo: Pol (Frontend y Design) - Gerard (Backend y DevOps)*
-*Stack: Next.js 16.2 (Turbopack) + React 19.2 + Supabase + shadcn/ui + Tailwind 4 + Resend + OpenAI + Vercel + Pino (stdout)*
-*Referencia fiscal: Real Decreto 1619/2012 (facturacion) + RD 1007/2023 + Orden HAC/1177/2024 (Verifactu/SIF)*
-*Última revisión: mayo 2026 — spec completa lista para implementación del tirón*
+_Equipo: Pol (Frontend y Design) - Gerard (Backend y DevOps)_
+_Stack: Next.js 16.2 (Turbopack) + React 19.2 + Supabase + shadcn/ui + Tailwind 4 + Resend + OpenAI + Vercel + Pino (stdout)_
+_Referencia fiscal: Real Decreto 1619/2012 (facturacion) + RD 1007/2023 + Orden HAC/1177/2024 (Verifactu/SIF)_
+_Última revisión: mayo 2026 — spec completa lista para implementación del tirón_

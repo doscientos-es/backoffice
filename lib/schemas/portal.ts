@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod'
 
 /**
  * Zod schemas for the public portal access controls shared by proposals and
@@ -13,7 +13,7 @@ export const PortalToken = z
   .string()
   .min(32)
   .max(128)
-  .regex(/^[a-f0-9]+$/i);
+  .regex(/^[a-f0-9]+$/i)
 
 /**
  * Admin update of a resource's portal access.
@@ -27,12 +27,12 @@ export const UpdatePortalAccessInput = z.object({
   id: z.string().uuid(),
   is_client_visible: z.boolean().optional(),
   password: z.string().max(200).nullable().optional(),
-});
-export type UpdatePortalAccessInputType = z.infer<typeof UpdatePortalAccessInput>;
+})
+export type UpdatePortalAccessInputType = z.infer<typeof UpdatePortalAccessInput>
 
 /** Visitor-supplied password submitted on the public unlock form. */
 export const PortalUnlockInput = z.object({
   token: PortalToken,
-  password: z.string().min(1, "Introduce la contraseña").max(200),
-});
-export type PortalUnlockInputType = z.infer<typeof PortalUnlockInput>;
+  password: z.string().min(1, 'Introduce la contraseña').max(200),
+})
+export type PortalUnlockInputType = z.infer<typeof PortalUnlockInput>

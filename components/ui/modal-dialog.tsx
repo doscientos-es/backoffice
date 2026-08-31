@@ -1,1 +1,1 @@
-export { ModalDialog, type ModalDialogProps } from "@doscientos/ui";
+export { ModalDialog, type ModalDialogProps } from '@doscientos/ui'

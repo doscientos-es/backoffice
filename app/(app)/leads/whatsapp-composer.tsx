@@ -1,41 +1,43 @@
-"use client";
+'use client'
 
-import { Check, LoaderCircle as Loader2, MessageCircle, Sparkle as Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { AiNotice } from "@/components/ui/ai-notice";
-import { Button } from "@/components/ui/button";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { publicEnv } from "@/lib/env";
-import { buildLeadWhatsAppMessage, buildWhatsAppUrl } from "@/lib/leads/whatsapp";
-import { logLeadWhatsApp } from "./actions";
+import { Check, LoaderCircle as Loader2, MessageCircle, Sparkle as Sparkles } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+
+import { AiNotice } from '@/components/ui/ai-notice'
+import { Button } from '@/components/ui/button'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { Label } from '@/components/ui/label'
+import { Select } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { publicEnv } from '@/lib/env'
+import { buildLeadWhatsAppMessage, buildWhatsAppUrl } from '@/lib/leads/whatsapp'
+
+import { logLeadWhatsApp } from './actions'
 
 const LANGUAGES = [
-  { value: "es", label: "Español" },
-  { value: "ca", label: "Català" },
-  { value: "en", label: "English" },
-] as const;
+  { value: 'es', label: 'Español' },
+  { value: 'ca', label: 'Català' },
+  { value: 'en', label: 'English' },
+] as const
 
 type Props = {
-  leadId: string;
-  leadName: string;
-  leadEmail: string | null;
-  leadPhone: string | null;
-  senderName: string;
-  aiEnabled?: boolean;
-  defaultMessage?: string;
-  draftKind?: string;
-  draftInstructions?: string;
-  onSuccess?: () => void;
-};
+  leadId: string
+  leadName: string
+  leadEmail: string | null
+  leadPhone: string | null
+  senderName: string
+  aiEnabled?: boolean
+  defaultMessage?: string
+  draftKind?: string
+  draftInstructions?: string
+  onSuccess?: () => void
+}
 
 function signedMessage(message: string, senderName: string): string {
-  const signature = senderName.trim() ? `— ${senderName.trim()}` : "";
-  if (!signature || message.trimEnd().endsWith(signature)) return message;
-  return `${message.trim()}\n\n${signature}`;
+  const signature = senderName.trim() ? `— ${senderName.trim()}` : ''
+  if (!signature || message.trimEnd().endsWith(signature)) return message
+  return `${message.trim()}\n\n${signature}`
 }
 
 export function WhatsAppComposer({
@@ -46,7 +48,7 @@ export function WhatsAppComposer({
   senderName,
   aiEnabled,
   defaultMessage,
-  draftKind = "follow_up",
+  draftKind = 'follow_up',
   draftInstructions,
   onSuccess,
 }: Props) {
@@ -54,63 +56,63 @@ export function WhatsAppComposer({
     { id: leadId, name: leadName, email: leadEmail },
     senderName,
     publicEnv.NEXT_PUBLIC_CAL_LINK,
-  );
-  const initialMessage = signedMessage(defaultMessage ?? fallbackMessage, senderName);
-  const [message, setMessage] = useState(initialMessage);
-  const [language, setLanguage] = useState("es");
-  const [drafting, setDrafting] = useState(false);
-  const [openedMessage, setOpenedMessage] = useState<string | null>(null);
-  const feedback = useFormFeedback();
-  const router = useRouter();
+  )
+  const initialMessage = signedMessage(defaultMessage ?? fallbackMessage, senderName)
+  const [message, setMessage] = useState(initialMessage)
+  const [language, setLanguage] = useState('es')
+  const [drafting, setDrafting] = useState(false)
+  const [openedMessage, setOpenedMessage] = useState<string | null>(null)
+  const feedback = useFormFeedback()
+  const router = useRouter()
 
   if (!leadPhone) {
     return (
-      <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
+      <div className="border-border text-muted-foreground rounded-md border border-dashed p-4 text-sm">
         Este lead no tiene teléfono registrado.
       </div>
-    );
+    )
   }
 
   async function handleDraftWithAI() {
-    setDrafting(true);
-    setOpenedMessage(null);
+    setDrafting(true)
+    setOpenedMessage(null)
     try {
-      const response = await fetch("/api/crm/ai/draft-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/crm/ai/draft-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           lead_id: leadId,
           kind: draftKind,
-          channel: "whatsapp",
+          channel: 'whatsapp',
           language,
           instructions: draftInstructions,
         }),
-      });
-      const json = (await response.json()) as { body?: string; error?: string };
+      })
+      const json = (await response.json()) as { body?: string; error?: string }
       if (!response.ok || !json.body) {
-        throw new Error(json.error ?? "No se pudo generar el borrador.");
+        throw new Error(json.error ?? 'No se pudo generar el borrador.')
       }
-      setMessage(signedMessage(json.body, senderName));
+      setMessage(signedMessage(json.body, senderName))
     } catch (reason) {
-      feedback.setError(reason instanceof Error ? reason.message : "Error al generar el borrador.");
+      feedback.setError(reason instanceof Error ? reason.message : 'Error al generar el borrador.')
     } finally {
-      setDrafting(false);
+      setDrafting(false)
     }
   }
 
   async function handleConfirmSent() {
-    if (!openedMessage) return;
-    feedback.setPending();
-    const result = await logLeadWhatsApp({ leadId, content: openedMessage });
-    if (!result.ok) return feedback.setError(result.error);
-    feedback.setSuccess("WhatsApp registrado");
-    setOpenedMessage(null);
-    setMessage(initialMessage);
-    router.refresh();
-    onSuccess?.();
+    if (!openedMessage) return
+    feedback.setPending()
+    const result = await logLeadWhatsApp({ leadId, content: openedMessage })
+    if (!result.ok) return feedback.setError(result.error)
+    feedback.setSuccess('WhatsApp registrado')
+    setOpenedMessage(null)
+    setMessage(initialMessage)
+    router.refresh()
+    onSuccess?.()
   }
 
-  const href = buildWhatsAppUrl(leadPhone, message);
+  const href = buildWhatsAppUrl(leadPhone, message)
 
   return (
     <div className="flex flex-col gap-3">
@@ -142,13 +144,13 @@ export function WhatsAppComposer({
               ) : (
                 <Sparkles className="size-3.5" />
               )}
-              {drafting ? "Generando…" : "Generar borrador"}
+              {drafting ? 'Generando…' : 'Generar borrador'}
             </Button>
           </div>
         ) : (
           <AiNotice inline />
         )}
-        <span className="text-xs text-muted-foreground">Firma: {senderName || "equipo"}</span>
+        <span className="text-muted-foreground text-xs">Firma: {senderName || 'equipo'}</span>
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor={`whatsapp-message-${leadId}`} className="text-xs font-medium">
@@ -158,8 +160,8 @@ export function WhatsAppComposer({
           id={`whatsapp-message-${leadId}`}
           value={message}
           onChange={(event) => {
-            setMessage(event.target.value);
-            setOpenedMessage(null);
+            setMessage(event.target.value)
+            setOpenedMessage(null)
           }}
           rows={8}
           required
@@ -188,9 +190,9 @@ export function WhatsAppComposer({
           ) : null}
         </div>
       </div>
-      <p className="text-xs text-muted-foreground">
+      <p className="text-muted-foreground text-xs">
         WhatsApp no informa al backoffice del envío. Confirma solo después de enviarlo en la app.
       </p>
     </div>
-  );
+  )
 }

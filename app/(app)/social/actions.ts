@@ -1,6 +1,6 @@
-"use server";
+'use server'
 
-import { defineAction } from "@/lib/actions/define-action";
+import { defineAction } from '@/lib/actions/define-action'
 import {
   AutomationActiveInput,
   AutomationRuleIdInput,
@@ -13,11 +13,11 @@ import {
   GoogleBusinessReviewReplyInput,
   PostIdInput,
   ReplyCommentInput,
-} from "@/lib/schemas/social";
-import type { SocialPlatform } from "@/lib/social/core";
-import * as googleBusinessService from "@/lib/social/google-business/service";
-import * as repo from "@/lib/social/repo";
-import * as service from "@/lib/social/service";
+} from '@/lib/schemas/social'
+import type { SocialPlatform } from '@/lib/social/core'
+import * as googleBusinessService from '@/lib/social/google-business/service'
+import * as repo from '@/lib/social/repo'
+import * as service from '@/lib/social/service'
 
 /**
  * Social Hub server actions — thin transport layer.
@@ -28,17 +28,17 @@ import * as service from "@/lib/social/service";
  * out-of-band through /api/social/upload; these actions receive public URLs.
  */
 
-const WRITE_ROLES = ["owner", "admin", "member"] as const;
+const WRITE_ROLES = ['owner', 'admin', 'member'] as const
 
 /**
  * Create a composed post and, when `mode === "now"`, publish it immediately.
  * Returns the new post id so the client can navigate to its detail view.
  */
 export const createPost = defineAction({
-  name: "social.create",
+  name: 'social.create',
   schema: CreatePostSchema,
   roles: [...WRITE_ROLES],
-  revalidate: () => ["/social", "/social/dashboard"],
+  revalidate: () => ['/social', '/social/dashboard'],
   handler: async (input, { user }) => {
     const postId = await repo.createPost({
       caption: input.caption,
@@ -48,203 +48,203 @@ export const createPost = defineAction({
       scheduledAt: input.scheduledAt,
       createdBy: user.id,
       automation: input.automation,
-    });
-    if (input.mode === "now") await service.publishPost(postId);
-    return { id: postId };
+    })
+    if (input.mode === 'now') await service.publishPost(postId)
+    return { id: postId }
   },
-});
+})
 
 /** Publish (or retry) an existing draft/scheduled post. */
 export const publishPost = defineAction({
-  name: "social.publish",
+  name: 'social.publish',
   schema: PostIdInput,
   roles: [...WRITE_ROLES],
-  revalidate: () => ["/social", "/social/dashboard"],
+  revalidate: () => ['/social', '/social/dashboard'],
   handler: async (input) => {
-    const result = await service.publishPost(input.postId);
+    const result = await service.publishPost(input.postId)
     return {
       status: result.status as string,
       /** Per-network results so the client can show inline error toasts. */
       targets: result.targets.map((t) => ({
         platform: t.platform as string,
         ok: t.ok,
-        error: t.ok ? null : (t.error ?? "Error desconocido"),
+        error: t.ok ? null : (t.error ?? 'Error desconocido'),
       })),
-    };
+    }
   },
-});
+})
 
 /** Refresh insights for every published target that supports analytics. */
 export const syncInsights = defineAction({
-  name: "social.sync-insights",
+  name: 'social.sync-insights',
   roles: [...WRITE_ROLES],
-  revalidate: () => ["/social", "/social/dashboard"],
+  revalidate: () => ['/social', '/social/dashboard'],
   handler: async () => {
-    const { synced } = await service.syncInsights();
-    return { synced };
+    const { synced } = await service.syncInsights()
+    return { synced }
   },
-});
+})
 
 /** Refresh the unified comment inbox from every published target. */
 export const syncComments = defineAction({
-  name: "social.sync-comments",
+  name: 'social.sync-comments',
   roles: [...WRITE_ROLES],
-  revalidate: () => ["/social/feed", "/social/feed/inbox"],
+  revalidate: () => ['/social/feed', '/social/feed/inbox'],
   handler: async () => {
-    const { synced } = await service.syncComments();
-    return { synced };
+    const { synced } = await service.syncComments()
+    return { synced }
   },
-});
+})
 
 /** Refresh insights and comments for the Social detail view. */
 export const syncSocial = defineAction({
-  name: "social.sync-all",
+  name: 'social.sync-all',
   roles: [...WRITE_ROLES],
-  revalidate: () => ["/social", "/social/feed/inbox"],
+  revalidate: () => ['/social', '/social/feed/inbox'],
   handler: async () => service.syncSocial(),
-});
+})
 
 /** Import media that already exists on the connected Instagram account. */
 export const importHistoricalInstagram = defineAction({
-  name: "social.import-instagram-history",
+  name: 'social.import-instagram-history',
   roles: [...WRITE_ROLES],
-  revalidate: () => ["/social", "/social/feed", "/social/feed/inbox"],
+  revalidate: () => ['/social', '/social/feed', '/social/feed/inbox'],
   handler: async () => service.importHistoricalInstagramPosts(),
-});
+})
 
 /** Delete a post from every social network, then soft-delete locally. */
 export const deletePost = defineAction({
-  name: "social.delete",
+  name: 'social.delete',
   schema: PostIdInput,
   roles: [...WRITE_ROLES],
-  revalidate: () => ["/social", "/social/feed"],
+  revalidate: () => ['/social', '/social/feed'],
   handler: async (input) => {
     // Best-effort remote deletion — failures are logged but never block the local soft-delete.
-    await service.deletePostFromNetworks(input.postId);
-    await repo.deletePost(input.postId);
+    await service.deletePostFromNetworks(input.postId)
+    await repo.deletePost(input.postId)
   },
-});
+})
 
 /**
  * Soft-delete locally + remove media from Supabase storage.
  * Does NOT touch the live posts on any social network.
  */
 export const deletePostLocal = defineAction({
-  name: "social.delete_local",
+  name: 'social.delete_local',
   schema: PostIdInput,
   roles: [...WRITE_ROLES],
-  revalidate: () => ["/social", "/social/feed"],
+  revalidate: () => ['/social', '/social/feed'],
   handler: async (input) => {
-    await service.deletePostLocalWithMedia(input.postId);
+    await service.deletePostLocalWithMedia(input.postId)
   },
-});
+})
 
 /** Restore a soft-deleted post (clears deleted_at). */
 export const restorePost = defineAction({
-  name: "social.restore",
+  name: 'social.restore',
   schema: PostIdInput,
   roles: [...WRITE_ROLES],
-  revalidate: () => ["/social", "/social/feed"],
+  revalidate: () => ['/social', '/social/feed'],
   handler: async (input) => {
-    await repo.restorePost(input.postId);
+    await repo.restorePost(input.postId)
   },
-});
+})
 
 /** Reply to a comment in the unified inbox as the connected organization. */
 export const replyToComment = defineAction({
-  name: "social.reply",
+  name: 'social.reply',
   schema: ReplyCommentInput,
   roles: [...WRITE_ROLES],
-  revalidate: () => ["/social/feed"],
+  revalidate: () => ['/social/feed'],
   handler: async (input) => {
-    await service.replyToComment(input.commentId, input.message);
+    await service.replyToComment(input.commentId, input.message)
   },
-});
+})
 
 /** Synchronize Google Business Profile reviews into the dedicated review inbox. */
 export const syncGoogleBusinessReviews = defineAction({
-  name: "social.google-business.sync-reviews",
+  name: 'social.google-business.sync-reviews',
   roles: [...WRITE_ROLES],
-  revalidate: () => ["/social/reviews"],
+  revalidate: () => ['/social/reviews'],
   handler: async () => googleBusinessService.syncGoogleBusinessReviews(),
-});
+})
 
 /** Reply to a Google Business Profile review. */
 export const replyToGoogleBusinessReview = defineAction({
-  name: "social.google-business.reply-review",
+  name: 'social.google-business.reply-review',
   schema: GoogleBusinessReviewReplyInput,
   roles: [...WRITE_ROLES],
-  revalidate: () => ["/social/reviews"],
+  revalidate: () => ['/social/reviews'],
   handler: async (input) =>
     googleBusinessService.replyGoogleBusinessReview({
       reviewId: input.reviewId,
       comment: input.message,
     }),
-});
+})
 
 /** Remove the current reply from a Google Business Profile review. */
 export const removeGoogleBusinessReviewReply = defineAction({
-  name: "social.google-business.delete-review-reply",
+  name: 'social.google-business.delete-review-reply',
   schema: GoogleBusinessReviewIdInput,
   roles: [...WRITE_ROLES],
-  revalidate: () => ["/social/reviews"],
+  revalidate: () => ['/social/reviews'],
   handler: async (input) => googleBusinessService.removeGoogleBusinessReviewReply(input.reviewId),
-});
+})
 
 /** Synchronize daily Google Business Profile performance metrics. */
 export const syncGoogleBusinessPerformance = defineAction({
-  name: "social.google-business.sync-performance",
+  name: 'social.google-business.sync-performance',
   schema: GoogleBusinessPerformanceInput,
   roles: [...WRITE_ROLES],
-  revalidate: () => ["/social/google-business"],
+  revalidate: () => ['/social/google-business'],
   handler: async (input) => googleBusinessService.syncGoogleBusinessPerformance(input.days),
-});
+})
 
 /** Add a public photo to the connected Google Business Profile location. */
 export const addGoogleBusinessPhoto = defineAction({
-  name: "social.google-business.add-photo",
+  name: 'social.google-business.add-photo',
   schema: GoogleBusinessMediaInput,
   roles: [...WRITE_ROLES],
-  revalidate: () => ["/social/google-business"],
+  revalidate: () => ['/social/google-business'],
   handler: async (input) => googleBusinessService.addGoogleBusinessPhoto(input),
-});
+})
 
 /** Remove a photo from the connected Google Business Profile location. */
 export const removeGoogleBusinessPhoto = defineAction({
-  name: "social.google-business.delete-photo",
+  name: 'social.google-business.delete-photo',
   schema: GoogleBusinessMediaDeleteInput,
-  roles: ["owner", "admin"],
-  revalidate: () => ["/social/google-business"],
+  roles: ['owner', 'admin'],
+  revalidate: () => ['/social/google-business'],
   handler: async (input) => googleBusinessService.removeGoogleBusinessPhoto(input.mediaName),
-});
+})
 
 /** Create a global fallback automation for Instagram and/or Facebook. */
 export const createGlobalAutomationRule = defineAction({
-  name: "social.automation.create-global",
+  name: 'social.automation.create-global',
   schema: GlobalAutomationInput,
   roles: [...WRITE_ROLES],
-  revalidate: ["/social/automation"],
+  revalidate: ['/social/automation'],
   handler: async (input, { user }) => {
-    await repo.createAutomationRules({ ...input, postId: null, createdBy: user.id });
+    await repo.createAutomationRules({ ...input, postId: null, createdBy: user.id })
   },
-});
+})
 
 export const setAutomationRuleActive = defineAction({
-  name: "social.automation.toggle",
+  name: 'social.automation.toggle',
   schema: AutomationActiveInput,
   roles: [...WRITE_ROLES],
-  revalidate: ["/social/automation"],
+  revalidate: ['/social/automation'],
   handler: async (input) => {
-    await repo.setAutomationRuleActive(input.ruleId, input.active);
+    await repo.setAutomationRuleActive(input.ruleId, input.active)
   },
-});
+})
 
 export const deleteAutomationRule = defineAction({
-  name: "social.automation.delete",
+  name: 'social.automation.delete',
   schema: AutomationRuleIdInput,
-  roles: ["owner", "admin"],
-  revalidate: ["/social/automation"],
+  roles: ['owner', 'admin'],
+  revalidate: ['/social/automation'],
   handler: async (input) => {
-    await repo.deleteAutomationRule(input.ruleId);
+    await repo.deleteAutomationRule(input.ruleId)
   },
-});
+})

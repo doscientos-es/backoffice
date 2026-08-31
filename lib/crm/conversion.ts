@@ -1,14 +1,15 @@
-import { pushMetaQualifiedLeadStage } from "@/lib/integrations/meta-capi";
-import { scopedLogger } from "@/lib/logger";
-import type { AcceptProposalFiscalDataType } from "@/lib/schemas/proposal";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from '@supabase/supabase-js'
 
-const log = scopedLogger("crm.conversion");
+import { pushMetaQualifiedLeadStage } from '@/lib/integrations/meta-capi'
+import { scopedLogger } from '@/lib/logger'
+import type { AcceptProposalFiscalDataType } from '@/lib/schemas/proposal'
+
+const log = scopedLogger('crm.conversion')
 
 // Accepts both the SSR (RLS) and the admin Supabase clients. The generics are
 // intentionally loose because callers instantiate them with different schemas.
 // biome-ignore lint/suspicious/noExplicitAny: structural compatibility across client variants
-type AnyClient = SupabaseClient<any, any, any>;
+type AnyClient = SupabaseClient<any, any, any>
 
 /**
  * Returns true when a `clients` row has the minimum fiscal data required
@@ -17,13 +18,11 @@ type AnyClient = SupabaseClient<any, any, any>;
  * before they can accept a proposal.
  */
 export function hasCompleteFiscalData(client: {
-  name: string | null;
-  nif: string | null;
-  billing_address_street: string | null;
+  name: string | null
+  nif: string | null
+  billing_address_street: string | null
 }): boolean {
-  return Boolean(
-    client.name?.trim() && client.nif?.trim() && client.billing_address_street?.trim(),
-  );
+  return Boolean(client.name?.trim() && client.nif?.trim() && client.billing_address_street?.trim())
 }
 
 /**
@@ -38,55 +37,55 @@ export async function promoteLeadFromClient(
 ): Promise<{ leadId: string | null; promoted: boolean }> {
   try {
     const { data, error } = await client
-      .from("clients")
-      .select("lead_id")
-      .eq("id", clientId)
-      .maybeSingle();
-    if (error || !data?.lead_id) return { leadId: null, promoted: false };
+      .from('clients')
+      .select('lead_id')
+      .eq('id', clientId)
+      .maybeSingle()
+    if (error || !data?.lead_id) return { leadId: null, promoted: false }
 
-    const leadId = data.lead_id as string;
+    const leadId = data.lead_id as string
 
     const { data: lead, error: leadErr } = await client
-      .from("leads")
-      .select("status, email, phone, estimated_value, external_id, external_source")
-      .eq("id", leadId)
-      .maybeSingle();
-    if (leadErr || !lead) return { leadId, promoted: false };
+      .from('leads')
+      .select('status, email, phone, estimated_value, external_id, external_source')
+      .eq('id', leadId)
+      .maybeSingle()
+    if (leadErr || !lead) return { leadId, promoted: false }
 
-    if (lead.status === "won" || lead.status === "lost") {
-      return { leadId, promoted: false };
+    if (lead.status === 'won' || lead.status === 'lost') {
+      return { leadId, promoted: false }
     }
 
     const { error: updateErr } = await client
-      .from("leads")
-      .update({ status: "won", updated_at: new Date().toISOString() })
-      .eq("id", leadId);
+      .from('leads')
+      .update({ status: 'won', updated_at: new Date().toISOString() })
+      .eq('id', leadId)
     if (updateErr) {
-      log.warn({ err: updateErr, leadId }, "lead_promote_failed");
-      return { leadId, promoted: false };
+      log.warn({ err: updateErr, leadId }, 'lead_promote_failed')
+      return { leadId, promoted: false }
     }
 
-    await client.from("lead_interactions").insert({
+    await client.from('lead_interactions').insert({
       lead_id: leadId,
-      type: "note",
-      subject: "Lead ganado",
-      body: "Promovido automáticamente a `won`.",
-    });
+      type: 'note',
+      subject: 'Lead ganado',
+      body: 'Promovido automáticamente a `won`.',
+    })
 
     await pushMetaQualifiedLeadStage({
       leadId,
-      status: "won",
+      status: 'won',
       email: lead.email as string | null,
       phone: lead.phone as string | null,
       value: lead.estimated_value as number | null,
       externalId: lead.external_id as string | null,
       externalSource: lead.external_source as string | null,
-    });
+    })
 
-    return { leadId, promoted: true };
+    return { leadId, promoted: true }
   } catch (err) {
-    log.warn({ err, clientId }, "promote_lead_unexpected");
-    return { leadId: null, promoted: false };
+    log.warn({ err, clientId }, 'promote_lead_unexpected')
+    return { leadId: null, promoted: false }
   }
 }
 
@@ -104,55 +103,55 @@ export async function ensureProjectForProposal(
 ): Promise<{ projectId: string | null; created: boolean }> {
   try {
     const { data: proposal, error } = await client
-      .from("proposals")
-      .select("client_id, project_id, title, context_markdown, notes")
-      .eq("id", proposalId)
-      .maybeSingle();
-    if (error || !proposal?.client_id) return { projectId: null, created: false };
+      .from('proposals')
+      .select('client_id, project_id, title, context_markdown, notes')
+      .eq('id', proposalId)
+      .maybeSingle()
+    if (error || !proposal?.client_id) return { projectId: null, created: false }
 
     if (proposal.project_id) {
-      return { projectId: proposal.project_id as string, created: false };
+      return { projectId: proposal.project_id as string, created: false }
     }
 
-    const projectName = ((proposal.title as string | null) ?? "").trim() || "Proyecto sin título";
+    const projectName = ((proposal.title as string | null) ?? '').trim() || 'Proyecto sin título'
     // Project description prefers the proposal narrative context, falling
     // back to internal notes so the project lands with useful detail.
     const description =
-      ((proposal.context_markdown as string | null) ?? "").trim() ||
-      ((proposal.notes as string | null) ?? "").trim() ||
-      null;
+      ((proposal.context_markdown as string | null) ?? '').trim() ||
+      ((proposal.notes as string | null) ?? '').trim() ||
+      null
 
     const { data: project, error: insertErr } = await client
-      .from("projects")
+      .from('projects')
       .insert({
         client_id: proposal.client_id,
         name: projectName,
         description,
-        status: "active",
+        status: 'active',
         starts_at: new Date().toISOString().slice(0, 10),
         // Proposal validity is a commercial deadline, not the project delivery date.
         ends_at: null,
       })
-      .select("id")
-      .single();
+      .select('id')
+      .single()
     if (insertErr || !project) {
-      log.warn({ err: insertErr, proposalId }, "project_create_failed");
-      return { projectId: null, created: false };
+      log.warn({ err: insertErr, proposalId }, 'project_create_failed')
+      return { projectId: null, created: false }
     }
 
-    const projectId = project.id as string;
+    const projectId = project.id as string
     const { error: linkErr } = await client
-      .from("proposals")
+      .from('proposals')
       .update({ project_id: projectId })
-      .eq("id", proposalId);
+      .eq('id', proposalId)
     if (linkErr) {
-      log.warn({ err: linkErr, proposalId, projectId }, "project_link_failed");
+      log.warn({ err: linkErr, proposalId, projectId }, 'project_link_failed')
     }
 
-    return { projectId, created: true };
+    return { projectId, created: true }
   } catch (err) {
-    log.warn({ err, proposalId }, "ensure_project_unexpected");
-    return { projectId: null, created: false };
+    log.warn({ err, proposalId }, 'ensure_project_unexpected')
+    return { projectId: null, created: false }
   }
 }
 
@@ -175,41 +174,41 @@ export async function ensureClientForProposal(
   fiscal: AcceptProposalFiscalDataType,
 ): Promise<{ clientId: string; created: boolean } | { error: string }> {
   const { data: proposal, error: readErr } = await client
-    .from("proposals")
-    .select("client_id, lead_id")
-    .eq("id", proposalId)
-    .maybeSingle();
-  if (readErr || !proposal) return { error: "Propuesta no encontrada" };
+    .from('proposals')
+    .select('client_id, lead_id')
+    .eq('id', proposalId)
+    .maybeSingle()
+  if (readErr || !proposal) return { error: 'Propuesta no encontrada' }
 
   if (proposal.client_id) {
-    await patchMissingClientFiscal(client, proposal.client_id as string, fiscal);
-    return { clientId: proposal.client_id as string, created: false };
+    await patchMissingClientFiscal(client, proposal.client_id as string, fiscal)
+    return { clientId: proposal.client_id as string, created: false }
   }
 
   if (!proposal.lead_id) {
-    return { error: "La propuesta no tiene destinatario" };
+    return { error: 'La propuesta no tiene destinatario' }
   }
-  const leadId = proposal.lead_id as string;
+  const leadId = proposal.lead_id as string
 
   const { data: existing } = await client
-    .from("clients")
-    .select("id")
-    .eq("lead_id", leadId)
-    .is("deleted_at", null)
-    .maybeSingle();
+    .from('clients')
+    .select('id')
+    .eq('lead_id', leadId)
+    .is('deleted_at', null)
+    .maybeSingle()
 
   if (existing?.id) {
-    const clientId = existing.id as string;
-    await patchMissingClientFiscal(client, clientId, fiscal);
+    const clientId = existing.id as string
+    await patchMissingClientFiscal(client, clientId, fiscal)
     await client
-      .from("proposals")
+      .from('proposals')
       .update({ client_id: clientId, lead_id: null })
-      .eq("id", proposalId);
-    return { clientId, created: false };
+      .eq('id', proposalId)
+    return { clientId, created: false }
   }
 
   const { data: created, error: insertErr } = await client
-    .from("clients")
+    .from('clients')
     .insert({
       lead_id: leadId,
       name: fiscal.name,
@@ -219,19 +218,16 @@ export async function ensureClientForProposal(
       phone: fiscal.phone ?? null,
       contact_person: fiscal.contact_person ?? null,
     })
-    .select("id")
-    .single();
+    .select('id')
+    .single()
   if (insertErr || !created) {
-    log.warn({ err: insertErr, proposalId, leadId }, "client_create_failed");
-    return { error: insertErr?.message ?? "No se pudo crear el cliente" };
+    log.warn({ err: insertErr, proposalId, leadId }, 'client_create_failed')
+    return { error: insertErr?.message ?? 'No se pudo crear el cliente' }
   }
 
-  const clientId = created.id as string;
-  await client
-    .from("proposals")
-    .update({ client_id: clientId, lead_id: null })
-    .eq("id", proposalId);
-  return { clientId, created: true };
+  const clientId = created.id as string
+  await client.from('proposals').update({ client_id: clientId, lead_id: null }).eq('id', proposalId)
+  return { clientId, created: true }
 }
 
 /**
@@ -245,20 +241,20 @@ async function patchMissingClientFiscal(
   fiscal: AcceptProposalFiscalDataType,
 ): Promise<void> {
   const { data: row } = await client
-    .from("clients")
-    .select("name, nif, billing_address_street, email, phone, contact_person")
-    .eq("id", clientId)
-    .maybeSingle();
-  if (!row) return;
+    .from('clients')
+    .select('name, nif, billing_address_street, email, phone, contact_person')
+    .eq('id', clientId)
+    .maybeSingle()
+  if (!row) return
 
-  const patch: Record<string, unknown> = {};
-  if (!row.nif && fiscal.nif) patch.nif = fiscal.nif;
+  const patch: Record<string, unknown> = {}
+  if (!row.nif && fiscal.nif) patch.nif = fiscal.nif
   if (!row.billing_address_street && fiscal.billing_address)
-    patch.billing_address_street = fiscal.billing_address;
-  if (!row.email && fiscal.email) patch.email = fiscal.email;
-  if (!row.phone && fiscal.phone) patch.phone = fiscal.phone;
-  if (!row.contact_person && fiscal.contact_person) patch.contact_person = fiscal.contact_person;
+    patch.billing_address_street = fiscal.billing_address
+  if (!row.email && fiscal.email) patch.email = fiscal.email
+  if (!row.phone && fiscal.phone) patch.phone = fiscal.phone
+  if (!row.contact_person && fiscal.contact_person) patch.contact_person = fiscal.contact_person
 
-  if (Object.keys(patch).length === 0) return;
-  await client.from("clients").update(patch).eq("id", clientId);
+  if (Object.keys(patch).length === 0) return
+  await client.from('clients').update(patch).eq('id', clientId)
 }

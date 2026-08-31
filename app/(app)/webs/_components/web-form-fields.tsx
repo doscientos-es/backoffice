@@ -1,22 +1,23 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { DateField } from "@/components/ui/date-field";
-import { FormRow } from "@/components/ui/form-row";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { HOSTING_PROVIDER_LABELS, HOSTING_PROVIDERS } from "@/lib/schemas/web-project";
-import type { WebProjectDetail } from "@/lib/webs/types";
+import { useState } from 'react'
 
-type Defaults = Partial<WebProjectDetail>;
+import { DateField } from '@/components/ui/date-field'
+import { FormRow } from '@/components/ui/form-row'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { HOSTING_PROVIDER_LABELS, HOSTING_PROVIDERS } from '@/lib/schemas/web-project'
+import type { WebProjectDetail } from '@/lib/webs/types'
+
+type Defaults = Partial<WebProjectDetail>
 
 interface Props {
-  clients: Array<{ id: string; name: string }>;
-  projects: Array<{ id: string; name: string; client_id: string }>;
-  defaults?: Defaults;
-  idPrefix?: string;
-  autoFocusName?: boolean;
+  clients: Array<{ id: string; name: string }>
+  projects: Array<{ id: string; name: string; client_id: string }>
+  defaults?: Defaults
+  idPrefix?: string
+  autoFocusName?: boolean
 }
 
 /**
@@ -26,25 +27,25 @@ export function WebFormFields({
   clients,
   projects,
   defaults: d = {},
-  idPrefix = "web",
+  idPrefix = 'web',
   autoFocusName = false,
 }: Props) {
-  const [projectId, setProjectId] = useState(d.project_id ?? "");
-  const [clientId, setClientId] = useState(d.client_id ?? "");
+  const [projectId, setProjectId] = useState(d.project_id ?? '')
+  const [clientId, setClientId] = useState(d.client_id ?? '')
   const [clientVisible, setClientVisible] = useState(
     d.project_id ? (d.is_client_visible ?? true) : false,
-  );
+  )
 
   function selectProject(nextProjectId: string) {
-    const project = projects.find((item) => item.id === nextProjectId);
+    const project = projects.find((item) => item.id === nextProjectId)
     if (!project) {
-      setProjectId("");
-      setClientVisible(false);
-      return;
+      setProjectId('')
+      setClientVisible(false)
+      return
     }
-    if (!projectId) setClientVisible(true);
-    setProjectId(project.id);
-    setClientId(project.client_id);
+    if (!projectId) setClientVisible(true)
+    setProjectId(project.id)
+    setClientId(project.client_id)
   }
 
   return (
@@ -57,7 +58,7 @@ export function WebFormFields({
             required
             maxLength={200}
             autoFocus={autoFocusName}
-            defaultValue={d.name ?? ""}
+            defaultValue={d.name ?? ''}
             placeholder="Landing doscientos"
           />
         </FormRow>
@@ -69,7 +70,7 @@ export function WebFormFields({
             type="url"
             required
             maxLength={2000}
-            defaultValue={d.url ?? ""}
+            defaultValue={d.url ?? ''}
             placeholder="https://doscientos.es"
           />
         </FormRow>
@@ -114,7 +115,7 @@ export function WebFormFields({
           <Select
             id={`${idPrefix}-hosting_provider`}
             name="hosting_provider"
-            defaultValue={d.hosting_provider ?? ""}
+            defaultValue={d.hosting_provider ?? ''}
           >
             <option value="">— Sin especificar —</option>
             {HOSTING_PROVIDERS.map((p) => (
@@ -135,7 +136,7 @@ export function WebFormFields({
             name="hosting_url"
             type="url"
             maxLength={2000}
-            defaultValue={d.hosting_url ?? ""}
+            defaultValue={d.hosting_url ?? ''}
             placeholder="https://vercel.com/doscientos/landing"
           />
         </FormRow>
@@ -145,7 +146,7 @@ export function WebFormFields({
             id={`${idPrefix}-domain_registrar`}
             name="domain_registrar"
             maxLength={200}
-            defaultValue={d.domain_registrar ?? ""}
+            defaultValue={d.domain_registrar ?? ''}
             placeholder="Namecheap, GoDaddy…"
           />
         </FormRow>
@@ -154,7 +155,7 @@ export function WebFormFields({
           <DateField
             id={`${idPrefix}-domain_expires_at`}
             name="domain_expires_at"
-            defaultValue={d.domain_expires_at ?? ""}
+            defaultValue={d.domain_expires_at ?? ''}
           />
         </FormRow>
 
@@ -163,7 +164,7 @@ export function WebFormFields({
             id={`${idPrefix}-tech_stack`}
             name="tech_stack"
             maxLength={500}
-            defaultValue={(d.tech_stack ?? []).join(", ")}
+            defaultValue={(d.tech_stack ?? []).join(', ')}
             placeholder="Next.js, Tailwind, Supabase"
           />
         </FormRow>
@@ -178,7 +179,7 @@ export function WebFormFields({
               name="is_client_visible"
               checked={clientVisible}
               onChange={(event) => setClientVisible(event.target.checked)}
-              className="h-4 w-4 accent-primary"
+              className="accent-primary h-4 w-4"
             />
             Mostrar esta web en el portal compartido con el cliente
           </label>
@@ -186,7 +187,7 @@ export function WebFormFields({
       ) : null}
 
       <FormRow label="¿Web propia?" htmlFor={`${idPrefix}-is_own`}>
-        <label className="flex items-center gap-2 text-sm cursor-pointer">
+        <label className="flex cursor-pointer items-center gap-2 text-sm">
           <input
             id={`${idPrefix}-is_own`}
             type="checkbox"
@@ -207,14 +208,14 @@ export function WebFormFields({
           id={`${idPrefix}-backup_slug`}
           name="backup_slug"
           maxLength={200}
-          defaultValue={d.backup_slug ?? ""}
+          defaultValue={d.backup_slug ?? ''}
           placeholder="optinergia"
         />
       </FormRow>
 
-      <fieldset className="space-y-4 rounded-lg border border-border p-4">
-        <legend className="px-1 text-sm font-medium text-muted-foreground">Conexión a BD</legend>
-        <p className="text-xs text-muted-foreground">
+      <fieldset className="border-border space-y-4 rounded-lg border p-4">
+        <legend className="text-muted-foreground px-1 text-sm font-medium">Conexión a BD</legend>
+        <p className="text-muted-foreground text-xs">
           Credenciales para backups automáticos. La contraseña se guarda cifrada (AES-256-GCM) y
           nunca se expone al navegador.
         </p>
@@ -224,7 +225,7 @@ export function WebFormFields({
               id={`${idPrefix}-db_host`}
               name="db_host"
               maxLength={255}
-              defaultValue={d.db_host ?? ""}
+              defaultValue={d.db_host ?? ''}
               placeholder="127.0.0.1"
             />
           </FormRow>
@@ -236,7 +237,7 @@ export function WebFormFields({
               type="number"
               min={1}
               max={65535}
-              defaultValue={d.db_port ?? ""}
+              defaultValue={d.db_port ?? ''}
               placeholder="5432"
             />
           </FormRow>
@@ -246,7 +247,7 @@ export function WebFormFields({
               id={`${idPrefix}-db_name`}
               name="db_name"
               maxLength={255}
-              defaultValue={d.db_name ?? ""}
+              defaultValue={d.db_name ?? ''}
               placeholder="optinergia_prod"
             />
           </FormRow>
@@ -256,7 +257,7 @@ export function WebFormFields({
               id={`${idPrefix}-db_user`}
               name="db_user"
               maxLength={255}
-              defaultValue={d.db_user ?? ""}
+              defaultValue={d.db_user ?? ''}
               placeholder="postgres"
             />
           </FormRow>
@@ -267,8 +268,8 @@ export function WebFormFields({
           htmlFor={`${idPrefix}-db_pass`}
           hint={
             d.has_db_password
-              ? "Ya hay una contraseña guardada. Déjalo vacío para mantenerla."
-              : "Se almacenará cifrada."
+              ? 'Ya hay una contraseña guardada. Déjalo vacío para mantenerla.'
+              : 'Se almacenará cifrada.'
           }
         >
           <Input
@@ -277,7 +278,7 @@ export function WebFormFields({
             type="password"
             maxLength={500}
             autoComplete="new-password"
-            placeholder={d.has_db_password ? "••••••••" : ""}
+            placeholder={d.has_db_password ? '••••••••' : ''}
           />
         </FormRow>
       </fieldset>
@@ -288,10 +289,10 @@ export function WebFormFields({
           name="notes"
           rows={3}
           maxLength={4000}
-          defaultValue={d.notes ?? ""}
+          defaultValue={d.notes ?? ''}
           placeholder="Notas internas, accesos, consideraciones…"
         />
       </FormRow>
     </>
-  );
+  )
 }

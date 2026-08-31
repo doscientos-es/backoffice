@@ -1,72 +1,73 @@
-import Link from "next/link";
-import type { ReactNode } from "react";
-import { Logo } from "@/components/branding";
+import Link from 'next/link'
+import type { ReactNode } from 'react'
+
+import { Logo } from '@/components/branding'
 
 export type AuthShellProps = {
-  title: string;
-  description?: string;
-  footer?: ReactNode;
-  children: ReactNode;
-};
+  title: string
+  description?: string
+  footer?: ReactNode
+  children: ReactNode
+}
 
 export function AuthShell({ title, description, footer, children }: AuthShellProps) {
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10">
       {/* Base background */}
-      <div className="absolute inset-0 bg-background" />
+      <div className="bg-background absolute inset-0" />
 
       {/* Animated mesh gradient — large blurred blobs morphing across the viewport */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
         <div
           className="absolute rounded-full"
           style={{
-            top: "-20%",
-            left: "-15%",
-            width: "60vw",
-            height: "60vw",
-            background: "radial-gradient(circle, #2a4227 0%, transparent 70%)",
+            top: '-20%',
+            left: '-15%',
+            width: '60vw',
+            height: '60vw',
+            background: 'radial-gradient(circle, #2a4227 0%, transparent 70%)',
             opacity: 0.55,
-            filter: "blur(60px)",
-            animation: "auth-blob-1 18s ease-in-out infinite",
+            filter: 'blur(60px)',
+            animation: 'auth-blob-1 18s ease-in-out infinite',
           }}
         />
         <div
           className="absolute rounded-full"
           style={{
-            bottom: "-25%",
-            right: "-15%",
-            width: "55vw",
-            height: "55vw",
-            background: "radial-gradient(circle, #3d6b38 0%, transparent 70%)",
+            bottom: '-25%',
+            right: '-15%',
+            width: '55vw',
+            height: '55vw',
+            background: 'radial-gradient(circle, #3d6b38 0%, transparent 70%)',
             opacity: 0.5,
-            filter: "blur(70px)",
-            animation: "auth-blob-2 22s ease-in-out infinite",
+            filter: 'blur(70px)',
+            animation: 'auth-blob-2 22s ease-in-out infinite',
           }}
         />
         <div
           className="absolute rounded-full"
           style={{
-            top: "25%",
-            right: "5%",
-            width: "45vw",
-            height: "45vw",
-            background: "radial-gradient(circle, #5a8a52 0%, transparent 70%)",
+            top: '25%',
+            right: '5%',
+            width: '45vw',
+            height: '45vw',
+            background: 'radial-gradient(circle, #5a8a52 0%, transparent 70%)',
             opacity: 0.4,
-            filter: "blur(80px)",
-            animation: "auth-blob-3 26s ease-in-out infinite",
+            filter: 'blur(80px)',
+            animation: 'auth-blob-3 26s ease-in-out infinite',
           }}
         />
         <div
           className="absolute rounded-full"
           style={{
-            bottom: "5%",
-            left: "15%",
-            width: "40vw",
-            height: "40vw",
-            background: "radial-gradient(circle, #2a4227 0%, transparent 70%)",
+            bottom: '5%',
+            left: '15%',
+            width: '40vw',
+            height: '40vw',
+            background: 'radial-gradient(circle, #2a4227 0%, transparent 70%)',
             opacity: 0.35,
-            filter: "blur(90px)",
-            animation: "auth-blob-4 30s ease-in-out infinite",
+            filter: 'blur(90px)',
+            animation: 'auth-blob-4 30s ease-in-out infinite',
           }}
         />
       </div>
@@ -87,14 +88,14 @@ export function AuthShell({ title, description, footer, children }: AuthShellPro
           <Logo size="lg" />
         </Link>
         <div className="mb-6 text-center">
-          <h1 className="text-xl font-semibold tracking-tight text-primary">{title}</h1>
+          <h1 className="text-primary text-xl font-semibold tracking-tight">{title}</h1>
           {description ? (
-            <p className="mt-1.5 text-sm text-muted-foreground">{description}</p>
+            <p className="text-muted-foreground mt-1.5 text-sm">{description}</p>
           ) : null}
         </div>
         {children}
-        {footer ? <p className="mt-6 text-center text-xs text-muted-foreground">{footer}</p> : null}
+        {footer ? <p className="text-muted-foreground mt-6 text-center text-xs">{footer}</p> : null}
       </div>
     </main>
-  );
+  )
 }

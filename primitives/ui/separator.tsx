@@ -1,1 +1,1 @@
-﻿export { Separator } from "@doscientos/ui";
+﻿export { Separator } from '@doscientos/ui'

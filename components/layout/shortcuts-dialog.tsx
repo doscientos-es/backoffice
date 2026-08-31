@@ -1,25 +1,26 @@
-"use client";
+'use client'
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react'
+
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Kbd, KbdGroup } from "@/components/ui/kbd";
-import { CREATE_SHORTCUTS, NAV_SHORTCUTS } from "@/lib/navigation/shortcuts";
+} from '@/components/ui/dialog'
+import { Kbd, KbdGroup } from '@/components/ui/kbd'
+import { CREATE_SHORTCUTS, NAV_SHORTCUTS } from '@/lib/navigation/shortcuts'
 
 /** Evento global para abrir el diálogo desde un botón u otro componente. */
-export const OPEN_SHORTCUTS_DIALOG_EVENT = "open-shortcuts-dialog";
+export const OPEN_SHORTCUTS_DIALOG_EVENT = 'open-shortcuts-dialog'
 
-type Row = { keys: string[]; label: string };
+type Row = { keys: string[]; label: string }
 
 const GLOBAL_ROWS: Row[] = [
-  { keys: ["⌘/Ctrl", "K"], label: "Buscar y ejecutar acciones" },
-  { keys: ["?"], label: "Mostrar este panel de atajos" },
-];
+  { keys: ['⌘/Ctrl', 'K'], label: 'Buscar y ejecutar acciones' },
+  { keys: ['?'], label: 'Mostrar este panel de atajos' },
+]
 
 /**
  * Diálogo de referencia de atajos de teclado. Se abre con `?` o mediante el
@@ -27,24 +28,24 @@ const GLOBAL_ROWS: Row[] = [
  * (`lib/navigation/shortcuts`) para no duplicar definiciones.
  */
 export function ShortcutsDialog() {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
 
   useEffect(() => {
     // El prefijo `?` se intercepta de forma central en KeyboardShortcuts
     // (captura) y nos avisa por evento, evitando que Zen abra su buscador.
-    const onOpen = () => setOpen((v) => !v);
-    window.addEventListener(OPEN_SHORTCUTS_DIALOG_EVENT, onOpen);
-    return () => window.removeEventListener(OPEN_SHORTCUTS_DIALOG_EVENT, onOpen);
-  }, []);
+    const onOpen = () => setOpen((v) => !v)
+    window.addEventListener(OPEN_SHORTCUTS_DIALOG_EVENT, onOpen)
+    return () => window.removeEventListener(OPEN_SHORTCUTS_DIALOG_EVENT, onOpen)
+  }, [])
 
   const navRows: Row[] = NAV_SHORTCUTS.map((s) => ({
-    keys: ["G", s.key.toUpperCase()],
+    keys: ['G', s.key.toUpperCase()],
     label: s.label,
-  }));
+  }))
   const createRows: Row[] = CREATE_SHORTCUTS.map((s) => ({
-    keys: ["C", s.key.toUpperCase()],
+    keys: ['C', s.key.toUpperCase()],
     label: s.label,
-  }));
+  }))
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -62,13 +63,13 @@ export function ShortcutsDialog() {
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }
 
 function Section({ title, rows, className }: { title: string; rows: Row[]; className?: string }) {
   return (
     <section className={className}>
-      <h3 className="mb-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+      <h3 className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
         {title}
       </h3>
       <ul className="flex flex-col gap-1.5">
@@ -84,5 +85,5 @@ function Section({ title, rows, className }: { title: string; rows: Row[]; class
         ))}
       </ul>
     </section>
-  );
+  )
 }

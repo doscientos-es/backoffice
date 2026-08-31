@@ -1,50 +1,52 @@
-"use client";
+'use client'
 
-import { Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
-import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { SubmitButton } from "@/components/ui/submit-button";
-import { Textarea } from "@/components/ui/textarea";
-import { VAULT_SERVICE_LABELS, VAULT_SERVICES } from "@/lib/schemas/vault";
-import { createVaultItem, updateVaultItem } from "../actions";
+import { Eye, EyeOff } from 'lucide-react'
+import { useState } from 'react'
 
-type Client = { id: string; name: string };
+import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { SubmitButton } from '@/components/ui/submit-button'
+import { Textarea } from '@/components/ui/textarea'
+import { VAULT_SERVICE_LABELS, VAULT_SERVICES } from '@/lib/schemas/vault'
+
+import { createVaultItem, updateVaultItem } from '../actions'
+
+type Client = { id: string; name: string }
 type VaultItem = {
-  id: string;
-  name: string;
-  service: string;
-  username: string | null;
-  notes: string | null;
-  is_sensitive: boolean;
-  expires_at: string | null;
-  client_id: string | null;
-};
+  id: string
+  name: string
+  service: string
+  username: string | null
+  notes: string | null
+  is_sensitive: boolean
+  expires_at: string | null
+  client_id: string | null
+}
 
 interface Props {
-  item?: VaultItem;
-  clients: Client[];
-  onClose: () => void;
+  item?: VaultItem
+  clients: Client[]
+  onClose: () => void
 }
 
 export function VaultItemForm({ item, clients, onClose }: Props) {
-  const feedback = useFormFeedback();
-  const [showSecret, setShowSecret] = useState(false);
-  const isEdit = !!item;
+  const feedback = useFormFeedback()
+  const [showSecret, setShowSecret] = useState(false)
+  const isEdit = !!item
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    feedback.setPending();
-    const action = isEdit ? updateVaultItem : createVaultItem;
-    const result = await action(fd);
+    e.preventDefault()
+    const fd = new FormData(e.currentTarget)
+    feedback.setPending()
+    const action = isEdit ? updateVaultItem : createVaultItem
+    const result = await action(fd)
     if (result.ok) {
-      feedback.setSuccess(isEdit ? "Guardado" : "Credencial añadida");
-      setTimeout(onClose, 600);
+      feedback.setSuccess(isEdit ? 'Guardado' : 'Credencial añadida')
+      setTimeout(onClose, 600)
     } else {
-      feedback.setError(result.error);
+      feedback.setError(result.error)
     }
   }
 
@@ -67,7 +69,7 @@ export function VaultItemForm({ item, clients, onClose }: Props) {
         </Field>
         <Field>
           <FieldLabel htmlFor="vi-service">Servicio</FieldLabel>
-          <Select id="vi-service" name="service" defaultValue={item?.service ?? "other"}>
+          <Select id="vi-service" name="service" defaultValue={item?.service ?? 'other'}>
             {VAULT_SERVICES.map((s) => (
               <option key={s} value={s}>
                 {VAULT_SERVICE_LABELS[s]}
@@ -80,31 +82,31 @@ export function VaultItemForm({ item, clients, onClose }: Props) {
           <Input
             id="vi-username"
             name="username"
-            defaultValue={item?.username ?? ""}
+            defaultValue={item?.username ?? ''}
             placeholder="admin@dominio.com"
             autoComplete="off"
           />
         </Field>
         <Field className="sm:col-span-2">
           <FieldLabel htmlFor="vi-secret">
-            {isEdit ? "Secreto (vacío = no cambiar)" : "Secreto / Contraseña"}{" "}
+            {isEdit ? 'Secreto (vacío = no cambiar)' : 'Secreto / Contraseña'}{' '}
             {!isEdit && <span className="text-destructive">*</span>}
           </FieldLabel>
           <div className="relative">
             <Input
               id="vi-secret"
               name="secret"
-              type={showSecret ? "text" : "password"}
+              type={showSecret ? 'text' : 'password'}
               required={!isEdit}
-              placeholder={isEdit ? "••••••••" : "Contraseña, token, clave…"}
+              placeholder={isEdit ? '••••••••' : 'Contraseña, token, clave…'}
               autoComplete="new-password"
               className="pr-10 font-mono"
             />
             <button
               type="button"
               onClick={() => setShowSecret((v) => !v)}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              aria-label={showSecret ? "Ocultar" : "Mostrar"}
+              className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2 transition-colors"
+              aria-label={showSecret ? 'Ocultar' : 'Mostrar'}
             >
               {showSecret ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
             </button>
@@ -116,12 +118,12 @@ export function VaultItemForm({ item, clients, onClose }: Props) {
             id="vi-expires"
             name="expires_at"
             type="date"
-            defaultValue={item?.expires_at ?? ""}
+            defaultValue={item?.expires_at ?? ''}
           />
         </Field>
         <Field>
           <FieldLabel htmlFor="vi-client">Cliente (opcional)</FieldLabel>
-          <Select id="vi-client" name="client_id" defaultValue={item?.client_id ?? ""}>
+          <Select id="vi-client" name="client_id" defaultValue={item?.client_id ?? ''}>
             <option value="">— Sin cliente —</option>
             {clients.map((c) => (
               <option key={c.id} value={c.id}>
@@ -136,31 +138,31 @@ export function VaultItemForm({ item, clients, onClose }: Props) {
             id="vi-notes"
             name="notes"
             rows={2}
-            defaultValue={item?.notes ?? ""}
+            defaultValue={item?.notes ?? ''}
             placeholder="Notas adicionales…"
           />
         </Field>
         <Field className="sm:col-span-2">
-          <label className="flex items-center gap-2 cursor-pointer text-sm">
+          <label className="flex cursor-pointer items-center gap-2 text-sm">
             <input type="hidden" name="is_sensitive" value="false" />
             <input
               type="checkbox"
               name="is_sensitive"
               value="true"
               defaultChecked={item ? item.is_sensitive : true}
-              className="h-4 w-4 rounded border-border accent-primary"
+              className="border-border accent-primary h-4 w-4 rounded"
             />
             <span>Sensible — requiere contraseña maestra para ver o editar</span>
           </label>
           <FieldDescription>Marca los tokens y contraseñas críticas.</FieldDescription>
         </Field>
       </div>
-      <div className="flex items-center justify-end gap-2 border-t border-border pt-3">
-        <FormFeedback state={feedback.state} successLabel={isEdit ? "Guardado" : "Añadido"} />
+      <div className="border-border flex items-center justify-end gap-2 border-t pt-3">
+        <FormFeedback state={feedback.state} successLabel={isEdit ? 'Guardado' : 'Añadido'} />
         <SubmitButton loading={feedback.pending} pendingLabel="Guardando…">
-          {isEdit ? "Guardar cambios" : "Añadir credencial"}
+          {isEdit ? 'Guardar cambios' : 'Añadir credencial'}
         </SubmitButton>
       </div>
     </form>
-  );
+  )
 }

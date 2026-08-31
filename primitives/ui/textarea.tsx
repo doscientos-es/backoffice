@@ -1,1 +1,1 @@
-﻿export { Textarea } from "@doscientos/ui";
+﻿export { Textarea } from '@doscientos/ui'

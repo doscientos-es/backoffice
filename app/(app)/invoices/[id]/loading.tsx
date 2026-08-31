@@ -1,9 +1,9 @@
-import { DetailCardSkeleton } from "@/components/layout/detail-grid-skeleton";
-import { PageHeaderSkeleton } from "@/components/layout/page-header-skeleton";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DetailCardSkeleton } from '@/components/layout/detail-grid-skeleton'
+import { PageHeaderSkeleton } from '@/components/layout/page-header-skeleton'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 
-const LINE_WIDTHS = [200, 60, 80, 60, 80];
+const LINE_WIDTHS = [200, 60, 80, 60, 80]
 
 export default function InvoiceDetailLoading() {
   return (
@@ -17,7 +17,7 @@ export default function InvoiceDetailLoading() {
           <Skeleton className="h-5 w-32 rounded" />
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
-          <div className="flex gap-4 border-b border-border/60 pb-2">
+          <div className="border-border/60 flex gap-4 border-b pb-2">
             {LINE_WIDTHS.map((w, i) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton widths, order never changes
               <Skeleton key={`h-${w}-${i}`} className="h-3 rounded" style={{ width: w }} />
@@ -45,5 +45,5 @@ export default function InvoiceDetailLoading() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

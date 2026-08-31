@@ -1,14 +1,15 @@
-import { notFound } from "next/navigation";
-import { LogoMark } from "@/components/branding";
-import { Markdown } from "@/components/ui/markdown";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { formatDate } from "@/lib/utils";
+import { notFound } from 'next/navigation'
 
-export const dynamic = "force-dynamic";
+import { LogoMark } from '@/components/branding'
+import { Markdown } from '@/components/ui/markdown'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { formatDate } from '@/lib/utils'
+
+export const dynamic = 'force-dynamic'
 export const metadata = {
-  title: "Documentación técnica · doscientos",
+  title: 'Documentación técnica · doscientos',
   robots: { index: false, follow: false },
-};
+}
 
 /**
  * Public, unauthenticated view of a `technical_spec` document.
@@ -19,38 +20,38 @@ export const metadata = {
  * `/p/invoice/[token]`.
  */
 export default async function PortalSpecPage({ params }: { params: Promise<{ token: string }> }) {
-  const { token } = await params;
-  const admin = createAdminClient();
+  const { token } = await params
+  const admin = createAdminClient()
 
   const { data: doc } = await admin
-    .from("proposal_specs")
+    .from('proposal_specs')
     .select(
-      "id, title, body_markdown, is_client_visible, updated_at, proposal_id, proposals(number, title, portal_token)",
+      'id, title, body_markdown, is_client_visible, updated_at, proposal_id, proposals(number, title, portal_token)',
     )
-    .eq("portal_token", token)
-    .eq("is_client_visible", true)
-    .maybeSingle();
+    .eq('portal_token', token)
+    .eq('is_client_visible', true)
+    .maybeSingle()
 
-  if (!doc) notFound();
+  if (!doc) notFound()
 
   const proposal = (
     doc as unknown as {
-      proposals: { number: string; title: string; portal_token: string | null } | null;
+      proposals: { number: string; title: string; portal_token: string | null } | null
     }
-  ).proposals;
+  ).proposals
 
   return (
-    <article className="rounded-xl bg-white dark:bg-zinc-900 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-800 overflow-hidden">
+    <article className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-800">
       {/* Document header */}
-      <div className="border-b border-zinc-200 dark:border-zinc-800 px-8 py-7 flex flex-col gap-3">
+      <div className="flex flex-col gap-3 border-b border-zinc-200 px-8 py-7 dark:border-zinc-800">
         <div className="flex items-center gap-2">
           <LogoMark size={20} className="text-[#2A4227] dark:text-[#9CC196]" />
-          <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+          <span className="text-xs font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
             doscientos
           </span>
         </div>
         <div className="flex flex-col gap-1">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+          <p className="text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
             Documentación técnica
           </p>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
@@ -58,7 +59,7 @@ export default async function PortalSpecPage({ params }: { params: Promise<{ tok
           </h1>
           {proposal ? (
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Vinculada a la propuesta{" "}
+              Vinculada a la propuesta{' '}
               {proposal.portal_token ? (
                 <a
                   href={`/p/proposal/${proposal.portal_token}`}
@@ -86,5 +87,5 @@ export default async function PortalSpecPage({ params }: { params: Promise<{ tok
         <Markdown source={doc.body_markdown as string} />
       </div>
     </article>
-  );
+  )
 }

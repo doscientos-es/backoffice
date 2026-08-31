@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function CalendarLoading() {
   return (
@@ -15,15 +15,15 @@ export default function CalendarLoading() {
           <Skeleton className="h-8 w-24 rounded-md" />
         </div>
       </div>
-      <div className="grid grid-cols-7 gap-px overflow-hidden rounded-lg border border-border bg-border">
+      <div className="border-border bg-border grid grid-cols-7 gap-px overflow-hidden rounded-lg border">
         {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-          <Skeleton key={i} className="h-6 w-full rounded-none bg-muted" />
+          <Skeleton key={i} className="bg-muted h-6 w-full rounded-none" />
         ))}
         {Array.from({ length: 35 }, (_, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton cells, order never changes
-          <Skeleton key={i} className="h-24 w-full rounded-none bg-card" />
+          <Skeleton key={i} className="bg-card h-24 w-full rounded-none" />
         ))}
       </div>
     </div>
-  );
+  )
 }

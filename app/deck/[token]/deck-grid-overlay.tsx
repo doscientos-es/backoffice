@@ -1,8 +1,9 @@
-"use client";
+'use client'
 
-import { X } from "lucide-react";
-import { useEffect, useRef } from "react";
-import type { DeckSlide } from "./deck-slides";
+import { X } from 'lucide-react'
+import { useEffect, useRef } from 'react'
+
+import type { DeckSlide } from './deck-slides'
 
 export function DeckGridOverlay({
   slides,
@@ -10,20 +11,20 @@ export function DeckGridOverlay({
   onSelect,
   onClose,
 }: {
-  slides: DeckSlide[];
-  current: number;
-  onSelect: (index: number) => void;
-  onClose: () => void;
+  slides: DeckSlide[]
+  current: number
+  onSelect: (index: number) => void
+  onClose: () => void
 }) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
-    const el = dialogRef.current;
-    if (el && !el.open) el.showModal();
+    const el = dialogRef.current
+    if (el && !el.open) el.showModal()
     return () => {
-      if (el?.open) el.close();
-    };
-  }, []);
+      if (el?.open) el.close()
+    }
+  }, [])
 
   return (
     <dialog
@@ -31,16 +32,16 @@ export function DeckGridOverlay({
       className="deck-grid-overlay no-print"
       aria-label="Vista general de diapositivas"
       onCancel={(e) => {
-        e.preventDefault();
-        onClose();
+        e.preventDefault()
+        onClose()
       }}
     >
-      <div className="flex items-center justify-between gap-3 mb-6 sm:mb-8">
+      <div className="mb-6 flex items-center justify-between gap-3 sm:mb-8">
         <div className="min-w-0">
-          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.25em] sm:tracking-[0.3em] text-white/40 mb-1">
+          <p className="mb-1 text-[10px] font-semibold tracking-[0.25em] text-white/40 uppercase sm:text-xs sm:tracking-[0.3em]">
             Vista general
           </p>
-          <h2 className="text-lg sm:text-2xl font-bold text-white truncate">
+          <h2 className="truncate text-lg font-bold text-white sm:text-2xl">
             {slides.length} diapositivas
           </h2>
         </div>
@@ -49,7 +50,7 @@ export function DeckGridOverlay({
           onClick={onClose}
           aria-label="Cerrar"
           className="deck-btn flex-shrink-0"
-          style={{ color: "rgba(255,255,255,0.85)" }}
+          style={{ color: 'rgba(255,255,255,0.85)' }}
         >
           <X className="size-4" />
           <span className="deck-btn-label">Cerrar</span>
@@ -67,11 +68,11 @@ export function DeckGridOverlay({
             className="deck-grid-card"
             aria-label={`Ir a ${slide.label}`}
           >
-            <span className="deck-grid-card-index">{String(i + 1).padStart(2, "0")}</span>
+            <span className="deck-grid-card-index">{String(i + 1).padStart(2, '0')}</span>
             <span>{slide.label}</span>
           </button>
         ))}
       </div>
     </dialog>
-  );
+  )
 }

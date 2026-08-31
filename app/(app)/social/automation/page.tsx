@@ -1,16 +1,18 @@
-import type { Metadata } from "next";
-import { BackLink } from "@/components/layout/back-link";
-import { PageHeader } from "@/components/layout/page-header";
-import { requireUser } from "@/lib/auth";
-import { listAutomationRules } from "@/lib/social/repo";
-import { AutomationManager } from "./_components/automation-manager";
+import type { Metadata } from 'next'
 
-export const metadata: Metadata = { title: "Automatizaciones · Social · doscientos" };
-export const dynamic = "force-dynamic";
+import { BackLink } from '@/components/layout/back-link'
+import { PageHeader } from '@/components/layout/page-header'
+import { requireUser } from '@/lib/auth'
+import { listAutomationRules } from '@/lib/social/repo'
+
+import { AutomationManager } from './_components/automation-manager'
+
+export const metadata: Metadata = { title: 'Automatizaciones · Social · doscientos' }
+export const dynamic = 'force-dynamic'
 
 export default async function SocialAutomationPage() {
-  await requireUser();
-  const rules = await listAutomationRules();
+  await requireUser()
+  const rules = await listAutomationRules()
 
   return (
     <div className="flex flex-col gap-6">
@@ -21,5 +23,5 @@ export default async function SocialAutomationPage() {
       />
       <AutomationManager initialRules={rules} />
     </div>
-  );
+  )
 }

@@ -1,1 +1,1 @@
-export * from "@/primitives/lib/search-params";
+export * from '@/primitives/lib/search-params'

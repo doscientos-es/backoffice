@@ -1,7 +1,8 @@
-"use client";
+'use client'
 
-import { useState, useTransition } from "react";
-import type { ActionResult } from "../lib/types";
+import { useState, useTransition } from 'react'
+
+import type { ActionResult } from '../lib/types'
 
 /**
  * Optimistic scalar-field update hook.
@@ -17,20 +18,20 @@ import type { ActionResult } from "../lib/types";
  * commit(next, () => updateStatus({ id, status: next }));
  */
 export function useOptimisticUpdate<T>(initial: T, onError?: (message: string) => void) {
-  const [value, setValue] = useState<T>(initial);
-  const [, startTransition] = useTransition();
+  const [value, setValue] = useState<T>(initial)
+  const [, startTransition] = useTransition()
 
   const commit = (next: T, action: () => Promise<ActionResult | undefined>) => {
-    const prev = value;
-    setValue(next); // optimistic
+    const prev = value
+    setValue(next) // optimistic
     startTransition(async () => {
-      const res = await action();
+      const res = await action()
       if (res && !res.ok) {
-        setValue(prev); // revert
-        onError?.(res.error);
+        setValue(prev) // revert
+        onError?.(res.error)
       }
-    });
-  };
+    })
+  }
 
-  return { value, commit };
+  return { value, commit }
 }

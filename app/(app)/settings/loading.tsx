@@ -1,8 +1,8 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function SettingsLoading() {
   return (
-    <div className="flex flex-col gap-8 max-w-2xl">
+    <div className="flex max-w-2xl flex-col gap-8">
       <Skeleton className="h-7 w-28" />
       {Array.from({ length: 3 }).map((_, section) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton
@@ -20,5 +20,5 @@ export default function SettingsLoading() {
         </div>
       ))}
     </div>
-  );
+  )
 }

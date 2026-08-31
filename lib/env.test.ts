@@ -1,19 +1,19 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
-const previousDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE;
+const previousDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE
 
-describe("public environment parsing", () => {
+describe('public environment parsing', () => {
   afterEach(() => {
-    if (previousDemoMode === undefined) process.env.NEXT_PUBLIC_DEMO_MODE = undefined;
-    else process.env.NEXT_PUBLIC_DEMO_MODE = previousDemoMode;
-    vi.resetModules();
-  });
+    if (previousDemoMode === undefined) process.env.NEXT_PUBLIC_DEMO_MODE = undefined
+    else process.env.NEXT_PUBLIC_DEMO_MODE = previousDemoMode
+    vi.resetModules()
+  })
 
-  it("accepts boolean flags from CRLF .env files", async () => {
-    process.env.NEXT_PUBLIC_DEMO_MODE = "true\r\n";
+  it('accepts boolean flags from CRLF .env files', async () => {
+    process.env.NEXT_PUBLIC_DEMO_MODE = 'true\r\n'
 
-    const { publicEnv } = await import("@/lib/env");
+    const { publicEnv } = await import('@/lib/env')
 
-    expect(publicEnv.NEXT_PUBLIC_DEMO_MODE).toBe("true");
-  });
-});
+    expect(publicEnv.NEXT_PUBLIC_DEMO_MODE).toBe('true')
+  })
+})

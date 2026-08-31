@@ -1,14 +1,15 @@
-import { type NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { type NextRequest, NextResponse } from 'next/server'
+
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
-  const { token } = await params;
-  const supabase = createAdminClient();
+  const { token } = await params
+  const supabase = createAdminClient()
 
   await supabase
-    .from("lead_campaign_sends")
+    .from('lead_campaign_sends')
     .update({ unsubscribed_at: new Date().toISOString() })
-    .eq("tracking_token", token);
+    .eq('tracking_token', token)
 
   return new NextResponse(
     `<!doctype html>
@@ -33,7 +34,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tok
 </html>`,
     {
       status: 200,
-      headers: { "Content-Type": "text/html; charset=utf-8" },
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
     },
-  );
+  )
 }

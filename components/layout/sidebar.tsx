@@ -1,32 +1,33 @@
-"use client";
+'use client'
 
-import { Settings } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Logo } from "@/components/branding";
-import { CommandPaletteTrigger } from "@/components/layout/command-palette-trigger";
-import { NavigationTree } from "@/components/layout/navigation-tree";
-import { NotificationsBell } from "@/components/layout/notifications-bell";
-import { UserMenu } from "@/components/layout/user-menu";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { Badge } from "@/components/ui/badge";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { IconButton } from "@/components/ui/icon-button";
-import type { CurrentUser } from "@/lib/auth";
-import { visibleNavigationGroups } from "@/lib/navigation/navigation";
+import { Settings } from 'lucide-react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+
+import { Logo } from '@/components/branding'
+import { CommandPaletteTrigger } from '@/components/layout/command-palette-trigger'
+import { NavigationTree } from '@/components/layout/navigation-tree'
+import { NotificationsBell } from '@/components/layout/notifications-bell'
+import { UserMenu } from '@/components/layout/user-menu'
+import { ThemeToggle } from '@/components/theme-toggle'
+import { Badge } from '@/components/ui/badge'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
+import { IconButton } from '@/components/ui/icon-button'
+import type { CurrentUser } from '@/lib/auth'
+import { visibleNavigationGroups } from '@/lib/navigation/navigation'
 
 export function Sidebar({ user, demoMode }: { user: CurrentUser; demoMode: boolean }) {
-  const pathname = usePathname();
+  const pathname = usePathname()
 
-  const visibleGroups = visibleNavigationGroups(user.role);
+  const visibleGroups = visibleNavigationGroups(user.role)
 
   return (
-    <aside className="app-sidebar h-full w-56 shrink-0 flex-col border-r border-border bg-card">
+    <aside className="app-sidebar border-border bg-card h-full w-56 shrink-0 flex-col border-r">
       <div className="px-4 py-5">
         <Link
           href="/inicio"
           aria-label="doscientos · Inicio"
-          className="inline-flex rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+          className="focus-visible:ring-ring focus-visible:ring-offset-card inline-flex rounded-md outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
         >
           <Logo size="md" />
         </Link>
@@ -35,17 +36,17 @@ export function Sidebar({ user, demoMode }: { user: CurrentUser; demoMode: boole
         <CommandPaletteTrigger />
       </div>
       <nav
-        className="flex flex-1 flex-col overflow-y-auto px-2 py-1 scroll-fade no-scrollbar"
+        className="scroll-fade no-scrollbar flex flex-1 flex-col overflow-y-auto px-2 py-1"
         aria-label="Navegación principal"
       >
         <NavigationTree groups={visibleGroups} pathname={pathname} />
       </nav>
 
-      <footer className="flex flex-col border-t border-border p-2 gap-2">
+      <footer className="border-border flex flex-col gap-2 border-t p-2">
         <ErrorBoundary>
           <div className="flex items-center justify-between gap-1">
             {demoMode ? (
-              <Badge variant="warning" className="h-4 px-1 text-[9px] font-bold uppercase ml-1">
+              <Badge variant="warning" className="ml-1 h-4 px-1 text-[9px] font-bold uppercase">
                 MODO DEMO
               </Badge>
             ) : null}
@@ -57,7 +58,7 @@ export function Sidebar({ user, demoMode }: { user: CurrentUser; demoMode: boole
                 variant="ghost"
                 className="border-0"
                 label="Ajustes"
-                aria-current={pathname.startsWith("/settings") ? "page" : undefined}
+                aria-current={pathname.startsWith('/settings') ? 'page' : undefined}
               >
                 <Link href="/settings">
                   <Settings className="size-4" aria-hidden />
@@ -69,5 +70,5 @@ export function Sidebar({ user, demoMode }: { user: CurrentUser; demoMode: boole
         </ErrorBoundary>
       </footer>
     </aside>
-  );
+  )
 }

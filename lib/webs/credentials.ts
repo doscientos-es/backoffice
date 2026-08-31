@@ -1,52 +1,51 @@
-import "server-only";
-
-import { createAdminClient } from "@/lib/supabase/admin";
-import { decryptSecret } from "@/lib/vault/crypto";
+import 'server-only'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { decryptSecret } from '@/lib/vault/crypto'
 
 /** Decrypted DB connection credentials for a web project's backups. */
 export type WebProjectDbCredentials = {
-  host: string;
-  port: number;
-  name: string;
-  user: string;
-  password: string;
-};
+  host: string
+  port: number
+  name: string
+  user: string
+  password: string
+}
 
 /** Backup target ready to be sent to the runner. */
 export type WebProjectBackupTarget = {
-  id: string;
-  name: string;
-  backupSlug: string;
-  credentials: WebProjectDbCredentials;
-};
+  id: string
+  name: string
+  backupSlug: string
+  credentials: WebProjectDbCredentials
+}
 
 type CredentialRow = {
-  db_host: string | null;
-  db_port: number | null;
-  db_name: string | null;
-  db_user: string | null;
-  db_pass_encrypted: string | null;
-};
+  db_host: string | null
+  db_port: number | null
+  db_name: string | null
+  db_user: string | null
+  db_pass_encrypted: string | null
+}
 
 type BackupTargetRow = CredentialRow & {
-  id: string;
-  name: string;
-  backup_slug: string | null;
-};
+  id: string
+  name: string
+  backup_slug: string | null
+}
 
 /**
  * Maps a raw row to decrypted credentials, or null when the connection is
  * incomplete (missing host/name/user or no stored password).
  */
 function rowToCredentials(row: CredentialRow): WebProjectDbCredentials | null {
-  if (!row.db_host || !row.db_name || !row.db_user || !row.db_pass_encrypted) return null;
+  if (!row.db_host || !row.db_name || !row.db_user || !row.db_pass_encrypted) return null
   return {
     host: row.db_host,
     port: row.db_port ?? 5432,
     name: row.db_name,
     user: row.db_user,
     password: decryptSecret(row.db_pass_encrypted),
-  };
+  }
 }
 
 /**
@@ -60,15 +59,15 @@ function rowToCredentials(row: CredentialRow): WebProjectDbCredentials | null {
 export async function getWebProjectDbCredentials(
   id: string,
 ): Promise<WebProjectDbCredentials | null> {
-  const supabase = createAdminClient();
+  const supabase = createAdminClient()
   const { data } = await supabase
-    .from("web_projects")
-    .select("db_host, db_port, db_name, db_user, db_pass_encrypted")
-    .eq("id", id)
-    .is("deleted_at", null)
-    .maybeSingle();
+    .from('web_projects')
+    .select('db_host, db_port, db_name, db_user, db_pass_encrypted')
+    .eq('id', id)
+    .is('deleted_at', null)
+    .maybeSingle()
 
-  return data ? rowToCredentials(data as CredentialRow) : null;
+  return data ? rowToCredentials(data as CredentialRow) : null
 }
 
 /**
@@ -77,18 +76,18 @@ export async function getWebProjectDbCredentials(
  * the Webs configuration in the backoffice.
  */
 export async function getConfiguredWebBackupTargets(): Promise<WebProjectBackupTarget[]> {
-  const supabase = createAdminClient();
+  const supabase = createAdminClient()
   const { data, error } = await supabase
-    .from("web_projects")
-    .select("id, name, backup_slug, db_host, db_port, db_name, db_user, db_pass_encrypted")
-    .is("deleted_at", null)
-    .not("backup_slug", "is", null);
+    .from('web_projects')
+    .select('id, name, backup_slug, db_host, db_port, db_name, db_user, db_pass_encrypted')
+    .is('deleted_at', null)
+    .not('backup_slug', 'is', null)
 
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(error.message)
 
   return ((data ?? []) as BackupTargetRow[]).flatMap((row) => {
-    const credentials = rowToCredentials(row);
-    if (!row.backup_slug || !credentials) return [];
+    const credentials = rowToCredentials(row)
+    if (!row.backup_slug || !credentials) return []
     return [
       {
         id: row.id,
@@ -96,6 +95,6 @@ export async function getConfiguredWebBackupTargets(): Promise<WebProjectBackupT
         backupSlug: row.backup_slug,
         credentials,
       },
-    ];
-  });
+    ]
+  })
 }

@@ -15,29 +15,29 @@ export const KEY_POINTS_LIMITS = {
   maxCount: 20,
   maxTitleLength: 200,
   maxDescriptionLength: 2000,
-} as const;
+} as const
 
 export type KeyPoint = {
-  id: string;
-  title: string;
-  description: string | null;
-};
+  id: string
+  title: string
+  description: string | null
+}
 
 /** UI-side variant: description is always a string so `<Textarea>` is happy. */
 export type EditableKeyPoint = {
-  id: string;
-  title: string;
-  description: string;
-};
+  id: string
+  title: string
+  description: string
+}
 
 function newId(): string {
-  return typeof crypto !== "undefined" && "randomUUID" in crypto
+  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()
-    : `kp-${Math.random().toString(36).slice(2, 10)}`;
+    : `kp-${Math.random().toString(36).slice(2, 10)}`
 }
 
 export function createEmptyKeyPoint(): EditableKeyPoint {
-  return { id: newId(), title: "", description: "" };
+  return { id: newId(), title: '', description: '' }
 }
 
 /**
@@ -49,21 +49,21 @@ export function createEmptyKeyPoint(): EditableKeyPoint {
  * client-surface rewrite is needed.
  */
 export type EditablePair = {
-  id: string;
-  problem: string;
-  problemDescription: string;
-  solution: string;
-  solutionDescription: string;
-};
+  id: string
+  problem: string
+  problemDescription: string
+  solution: string
+  solutionDescription: string
+}
 
 export function createEmptyPair(): EditablePair {
   return {
     id: newId(),
-    problem: "",
-    problemDescription: "",
-    solution: "",
-    solutionDescription: "",
-  };
+    problem: '',
+    problemDescription: '',
+    solution: '',
+    solutionDescription: '',
+  }
 }
 
 /**
@@ -77,34 +77,34 @@ export function zipKeyPoints(
   problems: ReadonlyArray<{ id: string; title: string; description?: string | null }>,
   solutions: ReadonlyArray<{ id: string; title: string; description?: string | null }>,
 ): EditablePair[] {
-  const remaining = [...solutions];
+  const remaining = [...solutions]
   const takeFor = (problemId: string): (typeof remaining)[number] | undefined => {
-    if (remaining.length === 0) return undefined;
-    const byId = remaining.findIndex((s) => s.id === problemId);
-    return remaining.splice(byId >= 0 ? byId : 0, 1)[0];
-  };
+    if (remaining.length === 0) return undefined
+    const byId = remaining.findIndex((s) => s.id === problemId)
+    return remaining.splice(byId >= 0 ? byId : 0, 1)[0]
+  }
 
   const pairs: EditablePair[] = problems.map((p) => {
-    const sol = takeFor(p.id);
+    const sol = takeFor(p.id)
     return {
       id: p.id,
       problem: p.title,
-      problemDescription: p.description ?? "",
-      solution: sol?.title ?? "",
-      solutionDescription: sol?.description ?? "",
-    };
-  });
+      problemDescription: p.description ?? '',
+      solution: sol?.title ?? '',
+      solutionDescription: sol?.description ?? '',
+    }
+  })
 
   for (const s of remaining) {
     pairs.push({
       id: s.id,
-      problem: "",
-      problemDescription: "",
+      problem: '',
+      problemDescription: '',
       solution: s.title,
-      solutionDescription: s.description ?? "",
-    });
+      solutionDescription: s.description ?? '',
+    })
   }
-  return pairs;
+  return pairs
 }
 
 /**
@@ -114,16 +114,16 @@ export function zipKeyPoints(
  * which drops blank entries just like the standalone editor did.
  */
 export function unzipPairs(pairs: EditablePair[]): {
-  problems: EditableKeyPoint[];
-  solutions: EditableKeyPoint[];
+  problems: EditableKeyPoint[]
+  solutions: EditableKeyPoint[]
 } {
-  const problems: EditableKeyPoint[] = [];
-  const solutions: EditableKeyPoint[] = [];
+  const problems: EditableKeyPoint[] = []
+  const solutions: EditableKeyPoint[] = []
   for (const p of pairs) {
-    problems.push({ id: p.id, title: p.problem, description: p.problemDescription });
-    solutions.push({ id: p.id, title: p.solution, description: p.solutionDescription });
+    problems.push({ id: p.id, title: p.problem, description: p.problemDescription })
+    solutions.push({ id: p.id, title: p.solution, description: p.solutionDescription })
   }
-  return { problems, solutions };
+  return { problems, solutions }
 }
 
 /**
@@ -132,17 +132,17 @@ export function unzipPairs(pairs: EditablePair[]): {
  * without a title are dropped because they would render as empty cards.
  */
 export function parseKeyPoints(value: unknown): KeyPoint[] {
-  if (!Array.isArray(value)) return [];
+  if (!Array.isArray(value)) return []
   return value
-    .filter((v): v is Record<string, unknown> => typeof v === "object" && v !== null)
+    .filter((v): v is Record<string, unknown> => typeof v === 'object' && v !== null)
     .map((v, i): KeyPoint => {
-      const title = typeof v.title === "string" ? v.title.trim() : "";
+      const title = typeof v.title === 'string' ? v.title.trim() : ''
       const description =
-        typeof v.description === "string" && v.description.trim().length > 0 ? v.description : null;
-      const id = typeof v.id === "string" && v.id.length > 0 ? v.id : `kp-${i}`;
-      return { id, title, description };
+        typeof v.description === 'string' && v.description.trim().length > 0 ? v.description : null
+      const id = typeof v.id === 'string' && v.id.length > 0 ? v.id : `kp-${i}`
+      return { id, title, description }
     })
-    .filter((kp) => kp.title.length > 0);
+    .filter((kp) => kp.title.length > 0)
 }
 
 /** Hydrate a stored list into the editable shape used by `<KeyPointsEditor>`. */
@@ -150,8 +150,8 @@ export function toEditableKeyPoints(items: KeyPoint[]): EditableKeyPoint[] {
   return items.map((kp) => ({
     id: kp.id,
     title: kp.title,
-    description: kp.description ?? "",
-  }));
+    description: kp.description ?? '',
+  }))
 }
 
 /**
@@ -161,16 +161,16 @@ export function toEditableKeyPoints(items: KeyPoint[]): EditableKeyPoint[] {
  * "" → null collapse the schema does for the other markdown fields.
  */
 export function serializeKeyPoints(items: EditableKeyPoint[]): KeyPoint[] | null {
-  const cleaned: KeyPoint[] = [];
+  const cleaned: KeyPoint[] = []
   for (const item of items) {
-    const title = item.title.trim();
-    if (title.length === 0) continue;
-    const description = item.description.trim();
+    const title = item.title.trim()
+    if (title.length === 0) continue
+    const description = item.description.trim()
     cleaned.push({
       id: item.id,
       title,
       description: description.length > 0 ? description : null,
-    });
+    })
   }
-  return cleaned.length > 0 ? cleaned : null;
+  return cleaned.length > 0 ? cleaned : null
 }

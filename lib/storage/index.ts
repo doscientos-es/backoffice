@@ -1,7 +1,7 @@
-import { SupabaseStorageProvider } from "./supabase";
-import type { StorageProvider } from "./types";
+import { SupabaseStorageProvider } from './supabase'
+import type { StorageProvider } from './types'
 
-export type { StorageBucket, StorageProvider } from "./types";
+export type { StorageBucket, StorageProvider } from './types'
 
 /**
  * Returns the active StorageProvider.
@@ -10,5 +10,5 @@ export type { StorageBucket, StorageProvider } from "./types";
  */
 export function getStorage(): StorageProvider {
   // Future: if (process.env.STORAGE_PROVIDER === "s3") return new S3StorageProvider();
-  return new SupabaseStorageProvider();
+  return new SupabaseStorageProvider()
 }

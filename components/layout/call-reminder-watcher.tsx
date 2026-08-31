@@ -1,10 +1,11 @@
-"use client";
+'use client'
 
-import { useEffect } from "react";
-import { notifyDueCallReminders } from "@/app/(app)/leads/actions";
+import { useEffect } from 'react'
 
-const POLL_INTERVAL_MS = 30_000;
-const STARTUP_DELAY_MS = 2_000;
+import { notifyDueCallReminders } from '@/app/(app)/leads/actions'
+
+const POLL_INTERVAL_MS = 30_000
+const STARTUP_DELAY_MS = 2_000
 
 /**
  * Lightweight in-app scheduler. It needs no cron or paid worker: the browser
@@ -16,16 +17,16 @@ export function CallReminderWatcher() {
     // Defer it so the initial RSC and client bundles are not competing with a
     // Server Action. Always consume failures: expired sessions or deployment
     // races otherwise surface as an unhandled Next.js action error.
-    const check = () => void notifyDueCallReminders({}).catch(() => undefined);
-    const startupTimer = window.setTimeout(check, STARTUP_DELAY_MS);
-    const interval = window.setInterval(check, POLL_INTERVAL_MS);
-    window.addEventListener("focus", check);
+    const check = () => void notifyDueCallReminders({}).catch(() => undefined)
+    const startupTimer = window.setTimeout(check, STARTUP_DELAY_MS)
+    const interval = window.setInterval(check, POLL_INTERVAL_MS)
+    window.addEventListener('focus', check)
     return () => {
-      window.clearTimeout(startupTimer);
-      window.clearInterval(interval);
-      window.removeEventListener("focus", check);
-    };
-  }, []);
+      window.clearTimeout(startupTimer)
+      window.clearInterval(interval)
+      window.removeEventListener('focus', check)
+    }
+  }, [])
 
-  return null;
+  return null
 }

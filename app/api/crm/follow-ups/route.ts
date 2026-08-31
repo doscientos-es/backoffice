@@ -9,75 +9,76 @@
  * (No-op when CRON_SECRET is not set — allows local dev without config.)
  */
 
-import { type NextRequest, NextResponse } from "next/server";
-import { serverEnv } from "@/lib/env";
-import { getFollowUps } from "@/lib/integrations/follow-ups";
-import { telegramSendMessage } from "@/lib/integrations/telegram";
-import { scopedLogger } from "@/lib/logger";
-import { dispatchNotifications } from "@/lib/notifications/dispatch";
+import { type NextRequest, NextResponse } from 'next/server'
+
+import { serverEnv } from '@/lib/env'
+import { getFollowUps } from '@/lib/integrations/follow-ups'
+import { telegramSendMessage } from '@/lib/integrations/telegram'
+import { scopedLogger } from '@/lib/logger'
+import { dispatchNotifications } from '@/lib/notifications/dispatch'
 import {
   buildLeadFollowUpLink,
   collectLeadFollowUpSummaries,
   formatLeadFollowUpSummary,
   hasNewUncontactedLeadBreach,
   shouldSendLeadFollowUpSummary,
-} from "@/lib/notifications/lead-follow-up-summary";
-import { createAdminClient } from "@/lib/supabase/admin";
+} from '@/lib/notifications/lead-follow-up-summary'
+import { createAdminClient } from '@/lib/supabase/admin'
 
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
-const log = scopedLogger("crm.follow-ups");
-const SUMMARY_EVENT_TYPE = "lead_follow_up_summary";
+const log = scopedLogger('crm.follow-ups')
+const SUMMARY_EVENT_TYPE = 'lead_follow_up_summary'
 
 function authenticate(request: NextRequest): boolean {
-  const { CRON_SECRET } = serverEnv();
-  if (!CRON_SECRET) return true; // open in dev when not configured
+  const { CRON_SECRET } = serverEnv()
+  if (!CRON_SECRET) return true // open in dev when not configured
 
-  const auth = request.headers.get("authorization") ?? "";
+  const auth = request.headers.get('authorization') ?? ''
   // Support both "Bearer <secret>" and bare "<secret>"
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : auth;
-  return token === CRON_SECRET;
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : auth
+  return token === CRON_SECRET
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   if (!authenticate(request)) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
-  const url = new URL(request.url);
-  const slaHours = Number(url.searchParams.get("sla_hours") ?? "4");
-  const leadHours = Number(url.searchParams.get("lead_hours") ?? "24");
-  const proposalHours = Number(url.searchParams.get("proposal_hours") ?? "72");
+  const url = new URL(request.url)
+  const slaHours = Number(url.searchParams.get('sla_hours') ?? '4')
+  const leadHours = Number(url.searchParams.get('lead_hours') ?? '24')
+  const proposalHours = Number(url.searchParams.get('proposal_hours') ?? '72')
 
-  const data = await getFollowUps({ slaHours, leadHours, proposalHours });
+  const data = await getFollowUps({ slaHours, leadHours, proposalHours })
 
-  let notifyTelegram = false;
+  let notifyTelegram = false
   try {
-    ({ notifyTelegram } = await dispatchLeadFollowUpNotifications(data));
+    ;({ notifyTelegram } = await dispatchLeadFollowUpNotifications(data))
   } catch (error) {
-    log.error({ err: error }, "lead follow-up notifications failed");
+    log.error({ err: error }, 'lead follow-up notifications failed')
   }
 
   // ── Telegram SLA alert ──────────────────────────────────────────────────────
   if (notifyTelegram && data.uncontactedLeads.length > 0) {
     const lines = [
-      `⚠️ *${data.uncontactedLeads.length} lead${data.uncontactedLeads.length > 1 ? "s" : ""} sin contacto (>${slaHours}h)*`,
-      "",
+      `⚠️ *${data.uncontactedLeads.length} lead${data.uncontactedLeads.length > 1 ? 's' : ''} sin contacto (>${slaHours}h)*`,
+      '',
       ...data.uncontactedLeads.map(
         (l) =>
-          `• [${l.name}](${l.url})${l.company ? ` · ${l.company}` : ""} · *${l.hoursUncontacted}h*`,
+          `• [${l.name}](${l.url})${l.company ? ` · ${l.company}` : ''} · *${l.hoursUncontacted}h*`,
       ),
-    ].join("\n");
+    ].join('\n')
 
-    const tgResult = await telegramSendMessage({ text: lines, parseMode: "Markdown" }).catch(
+    const tgResult = await telegramSendMessage({ text: lines, parseMode: 'Markdown' }).catch(
       (e) => ({ ok: false, error: String(e) }),
-    );
+    )
 
     if (!tgResult.ok) {
-      log.warn({ error: tgResult.error }, "telegram sla alert failed");
+      log.warn({ error: tgResult.error }, 'telegram sla alert failed')
     } else {
-      log.info({ count: data.uncontactedLeads.length }, "sla telegram alert sent");
+      log.info({ count: data.uncontactedLeads.length }, 'sla telegram alert sent')
     }
   }
 
@@ -87,55 +88,55 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       stale: data.counts.staleLeads,
       proposals: data.counts.pendingProposals,
     },
-    "follow-ups cron executed",
-  );
+    'follow-ups cron executed',
+  )
 
-  return NextResponse.json(data);
+  return NextResponse.json(data)
 }
 
 async function dispatchLeadFollowUpNotifications(data: Awaited<ReturnType<typeof getFollowUps>>) {
-  const supabase = createAdminClient();
+  const supabase = createAdminClient()
   const { data: admins, error: adminsError } = await supabase
-    .from("team_members")
-    .select("id")
-    .in("role", ["owner", "admin"])
-    .is("deleted_at", null);
-  if (adminsError) throw new Error(adminsError.message);
-  const adminIds = (admins ?? []).map((member) => member.id as string);
-  const summaries = collectLeadFollowUpSummaries(data, adminIds);
-  if (!summaries.length) return { notifyTelegram: false };
+    .from('team_members')
+    .select('id')
+    .in('role', ['owner', 'admin'])
+    .is('deleted_at', null)
+  if (adminsError) throw new Error(adminsError.message)
+  const adminIds = (admins ?? []).map((member) => member.id as string)
+  const summaries = collectLeadFollowUpSummaries(data, adminIds)
+  if (!summaries.length) return { notifyTelegram: false }
 
-  const recipientIds = summaries.map((summary) => summary.recipientId);
+  const recipientIds = summaries.map((summary) => summary.recipientId)
   const { data: recentNotifications, error: recentError } = await supabase
-    .from("notifications")
-    .select("recipient_id, body")
-    .eq("event_type", SUMMARY_EVENT_TYPE)
-    .in("recipient_id", recipientIds)
-    .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-    .order("created_at", { ascending: false });
-  if (recentError) throw new Error(recentError.message);
-  const previousBodies = new Map<string, string | null>();
+    .from('notifications')
+    .select('recipient_id, body')
+    .eq('event_type', SUMMARY_EVENT_TYPE)
+    .in('recipient_id', recipientIds)
+    .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+    .order('created_at', { ascending: false })
+  if (recentError) throw new Error(recentError.message)
+  const previousBodies = new Map<string, string | null>()
   for (const notification of recentNotifications ?? []) {
     if (!previousBodies.has(notification.recipient_id)) {
-      previousBodies.set(notification.recipient_id, notification.body);
+      previousBodies.set(notification.recipient_id, notification.body)
     }
   }
 
-  let notifyTelegram = false;
+  let notifyTelegram = false
   for (const summary of summaries) {
     const previousBody = previousBodies.has(summary.recipientId)
       ? previousBodies.get(summary.recipientId)
-      : undefined;
-    if (!shouldSendLeadFollowUpSummary(summary, previousBody)) continue;
+      : undefined
+    if (!shouldSendLeadFollowUpSummary(summary, previousBody)) continue
     await dispatchNotifications({
       recipientIds: [summary.recipientId],
       eventType: SUMMARY_EVENT_TYPE,
-      entityType: "lead_follow_up_summary",
+      entityType: 'lead_follow_up_summary',
       entityId: summary.recipientId,
       body: formatLeadFollowUpSummary(summary),
       link: buildLeadFollowUpLink(summary),
-    });
-    notifyTelegram ||= hasNewUncontactedLeadBreach(summary, previousBody);
+    })
+    notifyTelegram ||= hasNewUncontactedLeadBreach(summary, previousBody)
   }
-  return { notifyTelegram };
+  return { notifyTelegram }
 }

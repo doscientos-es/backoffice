@@ -1,30 +1,31 @@
-"use client";
+'use client'
 
-import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { IbanInput } from "@/components/ui/iban-input";
-import { Input } from "@/components/ui/input";
-import { NifInputOffline } from "@/components/ui/nif-input";
-import { Select } from "@/components/ui/select";
-import { SubmitButton } from "@/components/ui/submit-button";
-import { Textarea } from "@/components/ui/textarea";
-import { ZipInput } from "@/components/ui/zip-input";
-import { COUNTRY_OPTIONS } from "@/lib/address";
-import { updateCompanySettings } from "./actions";
+import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { IbanInput } from '@/components/ui/iban-input'
+import { Input } from '@/components/ui/input'
+import { NifInputOffline } from '@/components/ui/nif-input'
+import { Select } from '@/components/ui/select'
+import { SubmitButton } from '@/components/ui/submit-button'
+import { Textarea } from '@/components/ui/textarea'
+import { ZipInput } from '@/components/ui/zip-input'
+import { COUNTRY_OPTIONS } from '@/lib/address'
+
+import { updateCompanySettings } from './actions'
 
 interface Props {
-  companyName: string;
-  companyNif: string;
-  invoiceSeries: string;
-  defaultVatRate: number;
-  iban: string;
-  companyAddressStreet: string;
-  companyAddressZip: string;
-  companyAddressCity: string;
-  companyAddressProvince: string;
-  companyAddressCountry: string;
-  internalHourlyCost: number;
-  paymentTerms: string;
+  companyName: string
+  companyNif: string
+  invoiceSeries: string
+  defaultVatRate: number
+  iban: string
+  companyAddressStreet: string
+  companyAddressZip: string
+  companyAddressCity: string
+  companyAddressProvince: string
+  companyAddressCountry: string
+  internalHourlyCost: number
+  paymentTerms: string
 }
 
 export function CompanyForm({
@@ -41,15 +42,15 @@ export function CompanyForm({
   internalHourlyCost,
   paymentTerms,
 }: Props) {
-  const feedback = useFormFeedback();
+  const feedback = useFormFeedback()
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    feedback.setPending();
-    const result = await updateCompanySettings(fd);
-    if (result.ok) feedback.setSuccess("Empresa guardada");
-    else feedback.setError(result.error);
+    e.preventDefault()
+    const fd = new FormData(e.currentTarget)
+    feedback.setPending()
+    const result = await updateCompanySettings(fd)
+    if (result.ok) feedback.setSuccess('Empresa guardada')
+    else feedback.setError(result.error)
   }
 
   return (
@@ -174,7 +175,7 @@ export function CompanyForm({
             defaultZip={companyAddressZip}
             defaultCity={companyAddressCity}
             defaultProvince={companyAddressProvince}
-            country={companyAddressCountry || "ES"}
+            country={companyAddressCountry || 'ES'}
           />
           <Field>
             <FieldLabel htmlFor="company_address_country" className="text-xs font-medium">
@@ -183,7 +184,7 @@ export function CompanyForm({
             <Select
               id="company_address_country"
               name="company_address_country"
-              defaultValue={companyAddressCountry || "ES"}
+              defaultValue={companyAddressCountry || 'ES'}
               autoComplete="country"
             >
               {COUNTRY_OPTIONS.map((c) => (
@@ -196,12 +197,12 @@ export function CompanyForm({
         </div>
         <FieldDescription>Aparece en las facturas como dirección del emisor.</FieldDescription>
       </div>
-      <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
+      <div className="border-border flex items-center justify-end gap-3 border-t pt-4">
         <FormFeedback state={feedback.state} successLabel="Empresa guardada" />
         <SubmitButton pendingLabel="Guardando…" loading={feedback.pending}>
           Guardar empresa
         </SubmitButton>
       </div>
     </form>
-  );
+  )
 }

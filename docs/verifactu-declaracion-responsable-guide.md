@@ -24,14 +24,14 @@ a la AEAT — es autocertificación bajo responsabilidad del productor.
 
 Recopilar del proyecto concreto:
 
-| Campo | Ejemplo | Dónde se configura |
-|---|---|---|
-| Nombre del SIF | "CRM Empresa ABC" | `VERIFACTU_SOFTWARE_NAME` en `.env` |
-| IdSistemaInformatico | "C1" | `VERIFACTU_SOFTWARE_ID` (2 chars, distinto por producto) |
-| Versión inicial | "1.0.0" | `VERIFACTU_SOFTWARE_VERSION` |
-| URL pública del SIF | `https://crm.empresaabc.es` | URL de producción del cliente |
-| Email de contacto Doscientos | hola@doscientos.es | Siempre el mismo |
-| Fecha de la declaración | Fecha de puesta en producción | — |
+| Campo                        | Ejemplo                       | Dónde se configura                                       |
+| ---------------------------- | ----------------------------- | -------------------------------------------------------- |
+| Nombre del SIF               | "CRM Empresa ABC"             | `VERIFACTU_SOFTWARE_NAME` en `.env`                      |
+| IdSistemaInformatico         | "C1"                          | `VERIFACTU_SOFTWARE_ID` (2 chars, distinto por producto) |
+| Versión inicial              | "1.0.0"                       | `VERIFACTU_SOFTWARE_VERSION`                             |
+| URL pública del SIF          | `https://crm.empresaabc.es`   | URL de producción del cliente                            |
+| Email de contacto Doscientos | hola@doscientos.es            | Siempre el mismo                                         |
+| Fecha de la declaración      | Fecha de puesta en producción | —                                                        |
 
 ---
 
@@ -108,9 +108,9 @@ Al incorporar Verifactu a un proyecto de cliente, seguir este orden:
 
 ## Registro de productos SIF activos
 
-| Producto | IdSistemaInformatico | Versión DR | Fecha |
-|---|---|---|---|
-| Doscientos Backoffice | D1 | 1.0.0 | 2025-07-01 |
-| _(próximo proyecto)_ | — | — | — |
+| Producto              | IdSistemaInformatico | Versión DR | Fecha      |
+| --------------------- | -------------------- | ---------- | ---------- |
+| Doscientos Backoffice | D1                   | 1.0.0      | 2025-07-01 |
+| _(próximo proyecto)_  | —                    | —          | —          |
 
 > Actualizar esta tabla cada vez que se ponga en producción un nuevo SIF.

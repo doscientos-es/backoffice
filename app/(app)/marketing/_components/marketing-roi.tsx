@@ -1,16 +1,18 @@
-import { BadgeCheck, Coins, HandCoins, Percent, Target, TrendingUp } from "lucide-react";
-import { StatCard } from "@/components/layout/stat-card";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getMarketingRoi } from "@/lib/marketing/queries";
-import { roasTone } from "@/lib/marketing/roi";
-import { formatEUR } from "@/lib/utils";
-import { numberFmt, percentFmt } from "./marketing-format";
+import { BadgeCheck, Coins, HandCoins, Percent, Target, TrendingUp } from 'lucide-react'
+
+import { StatCard } from '@/components/layout/stat-card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { getMarketingRoi } from '@/lib/marketing/queries'
+import { roasTone } from '@/lib/marketing/roi'
+import { formatEUR } from '@/lib/utils'
+
+import { numberFmt, percentFmt } from './marketing-format'
 
 type MarketingRoiProps = {
-  since: string;
-  until: string;
-  rangeLabel: string;
-};
+  since: string
+  until: string
+  rangeLabel: string
+}
 
 /**
  * Closes the marketing loop: shows what each acquired customer costs (CAC) and
@@ -20,14 +22,14 @@ type MarketingRoiProps = {
  * every source.
  */
 export async function MarketingRoi({ since, until, rangeLabel }: MarketingRoiProps) {
-  const roi = await getMarketingRoi(since, until);
+  const roi = await getMarketingRoi(since, until)
 
-  const cacValue = roi.cac !== null ? `${formatEUR(roi.cac)} / cliente` : "—";
-  const roasValue = roi.roas !== null ? `${percentFmt.format(roi.roas)}×` : "—";
+  const cacValue = roi.cac !== null ? `${formatEUR(roi.cac)} / cliente` : '—'
+  const roasValue = roi.roas !== null ? `${percentFmt.format(roi.roas)}×` : '—'
   const closedRateValue =
-    roi.closedLeadRate !== null ? percentFmt.format(roi.closedLeadRate * 100) : "—";
+    roi.closedLeadRate !== null ? percentFmt.format(roi.closedLeadRate * 100) : '—'
   const averageClosedValue =
-    roi.averageClosedValue !== null ? formatEUR(roi.averageClosedValue) : "—";
+    roi.averageClosedValue !== null ? formatEUR(roi.averageClosedValue) : '—'
 
   return (
     <Card>
@@ -45,14 +47,14 @@ export async function MarketingRoi({ since, until, rangeLabel }: MarketingRoiPro
         <StatCard
           label="Leads ganados"
           value={numberFmt.format(roi.closedLeads)}
-          tone={roi.closedLeads > 0 ? "success" : "default"}
+          tone={roi.closedLeads > 0 ? 'success' : 'default'}
           icon={BadgeCheck}
           hint={`${numberFmt.format(roi.totalLeads)} leads creados`}
         />
         <StatCard
           label="Conversión a cierre"
           value={closedRateValue}
-          tone={roi.closedLeadRate !== null && roi.closedLeadRate >= 0.1 ? "success" : "default"}
+          tone={roi.closedLeadRate !== null && roi.closedLeadRate >= 0.1 ? 'success' : 'default'}
           icon={Percent}
           hint="ganados / leads"
         />
@@ -86,5 +88,5 @@ export async function MarketingRoi({ since, until, rangeLabel }: MarketingRoiPro
         />
       </CardContent>
     </Card>
-  );
+  )
 }

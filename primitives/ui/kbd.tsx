@@ -1,1 +1,1 @@
-﻿export { Kbd, KbdGroup } from "@doscientos/ui";
+﻿export { Kbd, KbdGroup } from '@doscientos/ui'

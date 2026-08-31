@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Activity,
@@ -10,10 +10,11 @@ import {
   Target,
   User,
   Users,
-} from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+} from 'lucide-react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { useState } from 'react'
+
 import {
   Drawer,
   DrawerContent,
@@ -21,71 +22,72 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
-} from "@/components/ui/drawer";
-import { cn } from "@/lib/utils";
-import { version } from "../../../package.json";
+} from '@/components/ui/drawer'
+import { cn } from '@/lib/utils'
+
+import { version } from '../../../package.json'
 
 type Item = {
-  href: string;
-  label: string;
-  icon: typeof User;
-  requiresAdmin: boolean;
-};
+  href: string
+  label: string
+  icon: typeof User
+  requiresAdmin: boolean
+}
 
 type Group = {
-  label: string;
-  items: readonly Item[];
-};
+  label: string
+  items: readonly Item[]
+}
 
 const GROUPS: readonly Group[] = [
   {
-    label: "Mi cuenta",
+    label: 'Mi cuenta',
     items: [
-      { href: "/settings/profile", label: "Perfil", icon: User, requiresAdmin: false },
-      { href: "/settings/security", label: "Seguridad", icon: Shield, requiresAdmin: false },
+      { href: '/settings/profile', label: 'Perfil', icon: User, requiresAdmin: false },
+      { href: '/settings/security', label: 'Seguridad', icon: Shield, requiresAdmin: false },
     ],
   },
   {
-    label: "Organización",
+    label: 'Organización',
     items: [
-      { href: "/settings/company", label: "Empresa", icon: Building2, requiresAdmin: true },
-      { href: "/settings/team", label: "Equipo", icon: Users, requiresAdmin: true },
-      { href: "/settings/goals", label: "Objetivos", icon: Target, requiresAdmin: true },
+      { href: '/settings/company', label: 'Empresa', icon: Building2, requiresAdmin: true },
+      { href: '/settings/team', label: 'Equipo', icon: Users, requiresAdmin: true },
+      { href: '/settings/goals', label: 'Objetivos', icon: Target, requiresAdmin: true },
     ],
   },
   {
-    label: "Comunicación",
-    items: [{ href: "/settings/email", label: "Correo", icon: Mail, requiresAdmin: true }],
+    label: 'Comunicación',
+    items: [{ href: '/settings/email', label: 'Correo', icon: Mail, requiresAdmin: true }],
   },
   {
-    label: "Sistema",
+    label: 'Sistema',
     items: [
       {
-        href: "/settings/backups",
-        label: "Copias y exportaciones",
+        href: '/settings/backups',
+        label: 'Copias y exportaciones',
         icon: DatabaseBackup,
         requiresAdmin: true,
       },
-      { href: "/settings/diagnostics", label: "Diagnóstico", icon: Activity, requiresAdmin: true },
+      { href: '/settings/diagnostics', label: 'Diagnóstico', icon: Activity, requiresAdmin: true },
     ],
   },
   {
-    label: "Cumplimiento",
+    label: 'Cumplimiento',
     items: [
-      { href: "/settings/legal", label: "Legal y Verifactu", icon: Shield, requiresAdmin: false },
+      { href: '/settings/legal', label: 'Legal y Verifactu', icon: Shield, requiresAdmin: false },
     ],
   },
-] as const;
+] as const
 
 function isActive(pathname: string, href: string) {
-  return pathname === href || pathname.startsWith(`${href}/`);
+  return pathname === href || pathname.startsWith(`${href}/`)
 }
 
 function visibleGroups(canManageTeam: boolean) {
   return GROUPS.flatMap((group) => {
-    const items = group.items.filter((item) => !item.requiresAdmin || canManageTeam);
-    return items.length > 0 ? [{ ...group, items }] : [];
-  });
+    const items = group.items.filter((item) => !item.requiresAdmin || canManageTeam)
+    return items.length > 0 ? [{ ...group, items }] : []
+  })
 }
 
 function SettingsLinks({
@@ -93,9 +95,9 @@ function SettingsLinks({
   pathname,
   onNavigate,
 }: {
-  groups: ReturnType<typeof visibleGroups>;
-  pathname: string;
-  onNavigate?: () => void;
+  groups: ReturnType<typeof visibleGroups>
+  pathname: string
+  onNavigate?: () => void
 }) {
   return (
     <>
@@ -103,58 +105,58 @@ function SettingsLinks({
         <section key={group.label} aria-labelledby={`settings-group-${group.label}`}>
           <h2
             id={`settings-group-${group.label}`}
-            className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70"
+            className="text-muted-foreground/70 px-3 pb-1.5 text-[10px] font-semibold tracking-widest uppercase"
           >
             {group.label}
           </h2>
           <div className="flex flex-col gap-0.5">
             {group.items.map(({ href, label, icon: Icon }) => {
-              const active = isActive(pathname, href);
+              const active = isActive(pathname, href)
               return (
                 <Link
                   key={href}
                   href={href}
-                  aria-current={active ? "page" : undefined}
+                  aria-current={active ? 'page' : undefined}
                   onClick={onNavigate}
                   className={cn(
-                    "group relative flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors",
-                    "before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-r-full before:bg-primary before:transition-opacity",
+                    'group relative flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
+                    'before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-r-full before:bg-primary before:transition-opacity',
                     active
-                      ? "bg-secondary font-medium text-foreground before:opacity-100"
-                      : "text-muted-foreground before:opacity-0 hover:bg-secondary/60 hover:text-foreground",
+                      ? 'bg-secondary font-medium text-foreground before:opacity-100'
+                      : 'text-muted-foreground before:opacity-0 hover:bg-secondary/60 hover:text-foreground',
                   )}
                 >
                   <Icon
                     className={cn(
-                      "size-4 shrink-0 transition-colors",
-                      active ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
+                      'size-4 shrink-0 transition-colors',
+                      active ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground',
                     )}
                   />
                   <span className="truncate">{label}</span>
                 </Link>
-              );
+              )
             })}
           </div>
         </section>
       ))}
     </>
-  );
+  )
 }
 
 export function SettingsNav({ canManageTeam }: { canManageTeam: boolean }) {
-  const pathname = usePathname();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const groups = visibleGroups(canManageTeam);
+  const pathname = usePathname()
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const groups = visibleGroups(canManageTeam)
   const activeItem = groups
     .flatMap((group) => group.items)
-    .find((item) => isActive(pathname, item.href));
+    .find((item) => isActive(pathname, item.href))
 
   return (
     <aside className="min-w-0">
       <div className="hidden sm:block">
         <nav aria-label="Secciones de ajustes" className="sticky top-0 flex w-full flex-col gap-5">
           <SettingsLinks groups={groups} pathname={pathname} />
-          <span className="px-3 text-xs text-muted-foreground">v{version}</span>
+          <span className="text-muted-foreground px-3 text-xs">v{version}</span>
         </nav>
       </div>
 
@@ -164,12 +166,12 @@ export function SettingsNav({ canManageTeam }: { canManageTeam: boolean }) {
             <button
               type="button"
               aria-label="Cambiar sección de ajustes"
-              className="flex w-full items-center justify-between rounded-lg border border-border bg-card px-3 py-2.5 text-left text-sm shadow-sm transition-colors hover:bg-secondary/60"
+              className="border-border bg-card hover:bg-secondary/60 flex w-full items-center justify-between rounded-lg border px-3 py-2.5 text-left text-sm shadow-sm transition-colors"
             >
               <span className="text-muted-foreground">Ajustes</span>
-              <span className="flex items-center gap-2 font-medium text-foreground">
-                {activeItem?.label ?? "Secciones"}
-                <ChevronDown className="size-4 text-muted-foreground" aria-hidden />
+              <span className="text-foreground flex items-center gap-2 font-medium">
+                {activeItem?.label ?? 'Secciones'}
+                <ChevronDown className="text-muted-foreground size-4" aria-hidden />
               </span>
             </button>
           </DrawerTrigger>
@@ -184,11 +186,11 @@ export function SettingsNav({ canManageTeam }: { canManageTeam: boolean }) {
                 pathname={pathname}
                 onNavigate={() => setMobileOpen(false)}
               />
-              <span className="px-3 text-xs text-muted-foreground">v{version}</span>
+              <span className="text-muted-foreground px-3 text-xs">v{version}</span>
             </nav>
           </DrawerContent>
         </Drawer>
       </div>
     </aside>
-  );
+  )
 }

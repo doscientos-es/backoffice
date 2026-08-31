@@ -1,1 +1,1 @@
-﻿export { FormRow, type FormRowProps } from "@doscientos/ui";
+﻿export { FormRow, type FormRowProps } from '@doscientos/ui'

@@ -1,29 +1,29 @@
 const required = [
-  "VERIFACTU_PACKAGE_VERSION",
-  "createVerifactuClient",
-  "computeInvoiceHash",
-  "computeCancellationHash",
-  "buildVerifactuXml",
-  "buildVerifactuCancellationXml",
-  "prepareDurableVerifactuRecord",
-  "deliverDurableVerifactuRecord",
-  "validateSpanishFiscalIdentity",
-  "getAeatErrorMetadata",
-];
+  'VERIFACTU_PACKAGE_VERSION',
+  'createVerifactuClient',
+  'computeInvoiceHash',
+  'computeCancellationHash',
+  'buildVerifactuXml',
+  'buildVerifactuCancellationXml',
+  'prepareDurableVerifactuRecord',
+  'deliverDurableVerifactuRecord',
+  'validateSpanishFiscalIdentity',
+  'getAeatErrorMetadata',
+]
 
-const pkg = await import("@doscientos/verifactu");
-const missing = required.filter((name) => !(name in pkg));
+const pkg = await import('@doscientos/verifactu')
+const missing = required.filter((name) => !(name in pkg))
 if (missing.length > 0) {
   throw new Error(
-    `@doscientos/verifactu incompatible o antiguo. Faltan: ${missing.join(", ")}. ` +
-    "Instala la versión construida/publicada compatible con el backoffice.",
-  );
+    `@doscientos/verifactu incompatible o antiguo. Faltan: ${missing.join(', ')}. ` +
+      'Instala la versión construida/publicada compatible con el backoffice.',
+  )
 }
 
-if (pkg.VERIFACTU_PACKAGE_VERSION !== "0.1.21") {
+if (pkg.VERIFACTU_PACKAGE_VERSION !== '0.1.21') {
   throw new Error(
     `@doscientos/verifactu ${String(pkg.VERIFACTU_PACKAGE_VERSION)} no es compatible; se requiere 0.1.21.`,
-  );
+  )
 }
 
-console.log(`@doscientos/verifactu ${pkg.VERIFACTU_PACKAGE_VERSION}: contrato compatible`);
+console.log(`@doscientos/verifactu ${pkg.VERIFACTU_PACKAGE_VERSION}: contrato compatible`)

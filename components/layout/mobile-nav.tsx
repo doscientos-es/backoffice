@@ -1,26 +1,27 @@
-"use client";
+'use client'
 
-import { List as Menu, Settings, X } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { Logo } from "@/components/branding";
-import { NavigationTree } from "@/components/layout/navigation-tree";
-import { NotificationsBell } from "@/components/layout/notifications-bell";
-import { UserMenu } from "@/components/layout/user-menu";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { Badge } from "@/components/ui/badge";
-import { Drawer, DrawerClose, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { IconButton } from "@/components/ui/icon-button";
-import type { CurrentUser } from "@/lib/auth";
-import { visibleNavigationGroups } from "@/lib/navigation/navigation";
+import { List as Menu, Settings, X } from 'lucide-react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { useState } from 'react'
+
+import { Logo } from '@/components/branding'
+import { NavigationTree } from '@/components/layout/navigation-tree'
+import { NotificationsBell } from '@/components/layout/notifications-bell'
+import { UserMenu } from '@/components/layout/user-menu'
+import { ThemeToggle } from '@/components/theme-toggle'
+import { Badge } from '@/components/ui/badge'
+import { Drawer, DrawerClose, DrawerContent, DrawerTrigger } from '@/components/ui/drawer'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
+import { IconButton } from '@/components/ui/icon-button'
+import type { CurrentUser } from '@/lib/auth'
+import { visibleNavigationGroups } from '@/lib/navigation/navigation'
 
 export function MobileNav({ user, demoMode }: { user: CurrentUser; demoMode: boolean }) {
-  const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  const pathname = usePathname()
+  const [open, setOpen] = useState(false)
 
-  const visibleGroups = visibleNavigationGroups(user.role);
+  const visibleGroups = visibleNavigationGroups(user.role)
 
   return (
     <div className="app-mobile-nav items-center gap-2">
@@ -29,15 +30,15 @@ export function MobileNav({ user, demoMode }: { user: CurrentUser; demoMode: boo
           <button
             type="button"
             aria-label="Abrir menú"
-            className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            className="text-muted-foreground hover:bg-secondary hover:text-foreground flex h-8 w-8 items-center justify-center rounded-md transition-colors"
           >
             <Menu className="h-5 w-5" />
           </button>
         </DrawerTrigger>
         <DrawerContent className="bg-card w-64! max-w-[80vw]!">
-          <div className="flex flex-col h-full">
+          <div className="flex h-full flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-4 border-b border-border">
+            <div className="border-border flex items-center justify-between border-b px-4 py-4">
               <Link href="/inicio" onClick={() => setOpen(false)} aria-label="doscientos · Inicio">
                 <Logo size="md" />
               </Link>
@@ -45,7 +46,7 @@ export function MobileNav({ user, demoMode }: { user: CurrentUser; demoMode: boo
                 <button
                   type="button"
                   aria-label="Cerrar menú"
-                  className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  className="text-muted-foreground hover:bg-secondary hover:text-foreground flex h-7 w-7 items-center justify-center rounded-md transition-colors"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -54,7 +55,7 @@ export function MobileNav({ user, demoMode }: { user: CurrentUser; demoMode: boo
 
             {/* Nav links */}
             <nav
-              className="flex flex-1 flex-col px-2 py-3 overflow-y-auto scroll-fade no-scrollbar"
+              className="scroll-fade no-scrollbar flex flex-1 flex-col overflow-y-auto px-2 py-3"
               aria-label="Navegación principal"
             >
               <NavigationTree
@@ -65,10 +66,10 @@ export function MobileNav({ user, demoMode }: { user: CurrentUser; demoMode: boo
             </nav>
 
             {/* Footer */}
-            <div className="flex flex-col border-t border-border p-2 gap-2">
+            <div className="border-border flex flex-col gap-2 border-t p-2">
               <div className="flex items-center justify-between gap-1">
                 {demoMode ? (
-                  <Badge variant="warning" className="h-4 px-1 text-[9px] font-bold uppercase ml-1">
+                  <Badge variant="warning" className="ml-1 h-4 px-1 text-[9px] font-bold uppercase">
                     MODO DEMO
                   </Badge>
                 ) : null}
@@ -82,7 +83,7 @@ export function MobileNav({ user, demoMode }: { user: CurrentUser; demoMode: boo
                     variant="ghost"
                     className="border-0"
                     label="Ajustes"
-                    aria-current={pathname.startsWith("/settings") ? "page" : undefined}
+                    aria-current={pathname.startsWith('/settings') ? 'page' : undefined}
                   >
                     <Link href="/settings" onClick={() => setOpen(false)}>
                       <Settings className="size-4" aria-hidden />
@@ -103,5 +104,5 @@ export function MobileNav({ user, demoMode }: { user: CurrentUser; demoMode: boo
         </Badge>
       ) : null}
     </div>
-  );
+  )
 }

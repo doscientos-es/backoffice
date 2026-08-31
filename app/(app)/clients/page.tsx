@@ -1,38 +1,40 @@
-import { Plus } from "lucide-react";
-import type { Metadata } from "next";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { EntityAvatar } from "@/components/ui/entity-avatar";
-import { requireUser } from "@/lib/auth";
-import { listClients } from "@/lib/clients/queries";
-import { CLIENT_LIST_PAGE_SIZE, CLIENT_SORT_COLUMNS } from "@/lib/clients/types";
-import { clientDisplayName } from "@/lib/clients/utils";
-import { parsePage, parseSortParam, parseStringParam } from "@/lib/utils/search-params";
-import { ClientRowActions } from "./client-row-actions";
-import { ClientsList } from "./clients-list";
+import { Plus } from 'lucide-react'
+import type { Metadata } from 'next'
+import Link from 'next/link'
 
-export const metadata: Metadata = { title: "Clientes · doscientos" };
-export const dynamic = "force-dynamic";
+import { Button } from '@/components/ui/button'
+import { EntityAvatar } from '@/components/ui/entity-avatar'
+import { requireUser } from '@/lib/auth'
+import { listClients } from '@/lib/clients/queries'
+import { CLIENT_LIST_PAGE_SIZE, CLIENT_SORT_COLUMNS } from '@/lib/clients/types'
+import { clientDisplayName } from '@/lib/clients/utils'
+import { parsePage, parseSortParam, parseStringParam } from '@/lib/utils/search-params'
+
+import { ClientRowActions } from './client-row-actions'
+import { ClientsList } from './clients-list'
+
+export const metadata: Metadata = { title: 'Clientes · doscientos' }
+export const dynamic = 'force-dynamic'
 
 export default async function ClientsPage({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  const user = await requireUser();
-  const canEdit = user.role !== "viewer";
-  const sp = await searchParams;
-  const q = parseStringParam(sp, "q");
-  const page = parsePage(sp);
-  const { sort, dir } = parseSortParam(sp, CLIENT_SORT_COLUMNS, "created_at", "desc");
+  const user = await requireUser()
+  const canEdit = user.role !== 'viewer'
+  const sp = await searchParams
+  const q = parseStringParam(sp, 'q')
+  const page = parsePage(sp)
+  const { sort, dir } = parseSortParam(sp, CLIENT_SORT_COLUMNS, 'created_at', 'desc')
 
-  const { data, count } = await listClients({ q, page, sort, dir });
+  const { data, count } = await listClients({ q, page, sort, dir })
 
   return (
     <ClientsList
       canEdit={canEdit}
       title="Clientes"
-      empty={q ? "Sin coincidencias para tu búsqueda." : "Aún no hay clientes."}
+      empty={q ? 'Sin coincidencias para tu búsqueda.' : 'Aún no hay clientes.'}
       error={undefined}
       searchKey="q"
       searchPlaceholder="Buscar por nombre, NIF o email…"
@@ -56,14 +58,14 @@ export default async function ClientsPage({
         </Button>
       }
       headers={[
-        { label: "Nombre", sortKey: "name" },
-        { label: "NIF", sortKey: "nif" },
-        { label: "Email", sortKey: "email" },
+        { label: 'Nombre', sortKey: 'name' },
+        { label: 'NIF', sortKey: 'nif' },
+        { label: 'Email', sortKey: 'email' },
       ]}
       exportFilename="clientes"
       rows={
         data?.map((c) => {
-          const displayName = clientDisplayName(c);
+          const displayName = clientDisplayName(c)
           return {
             id: c.id as string,
             href: `/clients/${c.id}`,
@@ -89,10 +91,10 @@ export default async function ClientsPage({
                 <EntityAvatar name={displayName} logoUrl={c.logo_url} size="sm" />
                 <span className="truncate font-medium">{displayName}</span>
               </div>,
-              (c.nif as string | null) ?? "—",
-              (c.email as string | null) ?? "—",
+              (c.nif as string | null) ?? '—',
+              (c.email as string | null) ?? '—',
             ],
-            csvValues: [displayName, c.nif ?? "", c.email ?? ""],
+            csvValues: [displayName, c.nif ?? '', c.email ?? ''],
             rowActions: (
               <ClientRowActions
                 client={{
@@ -114,9 +116,9 @@ export default async function ClientsPage({
                 }}
               />
             ),
-          };
+          }
         }) ?? []
       }
     />
-  );
+  )
 }

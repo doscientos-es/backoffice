@@ -4,4 +4,4 @@
   type BadgeLinkProps,
   type BadgeProps,
   badgeVariants,
-} from "@doscientos/ui";
+} from '@doscientos/ui'

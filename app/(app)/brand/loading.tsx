@@ -1,8 +1,8 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function BrandLoading() {
   return (
-    <div className="flex flex-col h-full gap-6">
+    <div className="flex h-full flex-col gap-6">
       <div className="flex items-center justify-between">
         <div className="flex flex-col gap-2">
           <Skeleton className="h-7 w-24" />
@@ -11,7 +11,7 @@ export default function BrandLoading() {
         <Skeleton className="h-8 w-32 rounded-md" />
       </div>
       <div className="flex flex-col gap-4">
-        <div className="flex gap-0.5 border-b border-border">
+        <div className="border-border flex gap-0.5 border-b">
           {[0, 1, 2].map((i) => (
             <Skeleton key={i} className="mb-2 h-5 w-20 rounded" />
           ))}
@@ -23,5 +23,5 @@ export default function BrandLoading() {
         </div>
       </div>
     </div>
-  );
+  )
 }

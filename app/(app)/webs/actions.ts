@@ -1,65 +1,66 @@
-"use server";
+'use server'
 
-import { defineAction } from "@/lib/actions/define-action";
-import { isDemoMode } from "@/lib/demo";
-import { serverEnv } from "@/lib/env";
-import { backupsCacheTag, ensureClientBackupDir, isFileBrowserConfigured } from "@/lib/filebrowser";
-import { uuidIdInput } from "@/lib/schemas/common";
-import { UpdateWebProjectInput, WebProjectInput } from "@/lib/schemas/web-project";
-import { consumeUserVerification } from "@/lib/security/user-verification";
-import { userVerificationScope } from "@/lib/security/user-verification-scope";
-import { createServerClient } from "@/lib/supabase/server";
-import { encryptSecret } from "@/lib/vault/crypto";
-import { getWebProjectDbCredentials } from "@/lib/webs/credentials";
-import { revalidatePath, revalidateTag } from "next/cache";
-import { redirect } from "next/navigation";
-import { z } from "zod";
+import { revalidatePath, revalidateTag } from 'next/cache'
+import { redirect } from 'next/navigation'
+import { z } from 'zod'
+
+import { defineAction } from '@/lib/actions/define-action'
+import { isDemoMode } from '@/lib/demo'
+import { serverEnv } from '@/lib/env'
+import { backupsCacheTag, ensureClientBackupDir, isFileBrowserConfigured } from '@/lib/filebrowser'
+import { uuidIdInput } from '@/lib/schemas/common'
+import { UpdateWebProjectInput, WebProjectInput } from '@/lib/schemas/web-project'
+import { consumeUserVerification } from '@/lib/security/user-verification'
+import { userVerificationScope } from '@/lib/security/user-verification-scope'
+import { createServerClient } from '@/lib/supabase/server'
+import { encryptSecret } from '@/lib/vault/crypto'
+import { getWebProjectDbCredentials } from '@/lib/webs/credentials'
 
 type WebProjectContext = {
-  projectId: string | null;
-  clientId: string | null;
-};
+  projectId: string | null
+  clientId: string | null
+}
 
 async function resolveWebProjectContext(
   supabase: Awaited<ReturnType<typeof createServerClient>>,
   projectId: string | undefined,
   clientId: string | undefined,
 ): Promise<WebProjectContext> {
-  if (!projectId) return { projectId: null, clientId: clientId ?? null };
+  if (!projectId) return { projectId: null, clientId: clientId ?? null }
 
   const { data: project, error } = await supabase
-    .from("projects")
-    .select("id, client_id")
-    .eq("id", projectId)
-    .is("deleted_at", null)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!project) throw new Error("No se ha encontrado el proyecto seleccionado");
+    .from('projects')
+    .select('id, client_id')
+    .eq('id', projectId)
+    .is('deleted_at', null)
+    .maybeSingle()
+  if (error) throw new Error(error.message)
+  if (!project) throw new Error('No se ha encontrado el proyecto seleccionado')
 
-  return { projectId: project.id as string, clientId: project.client_id as string };
+  return { projectId: project.id as string, clientId: project.client_id as string }
 }
 
 function revalidateWebContext(context: WebProjectContext) {
-  if (context.projectId) revalidatePath(`/projects/${context.projectId}`);
-  if (context.clientId) revalidatePath(`/clients/${context.clientId}`);
+  if (context.projectId) revalidatePath(`/projects/${context.projectId}`)
+  if (context.clientId) revalidatePath(`/clients/${context.clientId}`)
 }
 
 export const createWebProject = defineAction({
-  name: "webs.create",
+  name: 'webs.create',
   schema: WebProjectInput,
-  roles: ["owner", "admin"],
-  revalidate: ["/webs"],
+  roles: ['owner', 'admin'],
+  revalidate: ['/webs'],
   handler: async (input, { user }) => {
     if (input.db_host || input.db_port || input.db_name || input.db_user || input.db_pass) {
       await consumeUserVerification(
         user.id,
-        userVerificationScope("web.db_credentials.update", "web:create"),
-      );
+        userVerificationScope('web.db_credentials.update', 'web:create'),
+      )
     }
-    const supabase = await createServerClient();
-    const context = await resolveWebProjectContext(supabase, input.project_id, input.client_id);
+    const supabase = await createServerClient()
+    const context = await resolveWebProjectContext(supabase, input.project_id, input.client_id)
     const { data, error } = await supabase
-      .from("web_projects")
+      .from('web_projects')
       .insert({
         name: input.name,
         url: input.url,
@@ -80,51 +81,51 @@ export const createWebProject = defineAction({
         db_user: input.db_user ?? null,
         db_pass_encrypted: input.db_pass ? encryptSecret(input.db_pass) : null,
       })
-      .select("id")
-      .single();
+      .select('id')
+      .single()
 
-    if (error || !data) throw new Error(error?.message ?? "No se pudo crear el proyecto web");
+    if (error || !data) throw new Error(error?.message ?? 'No se pudo crear el proyecto web')
 
     // Auto-provision the backup folder in FileBrowser when a slug is set.
     // Fire-and-forget: failure is logged but never blocks the redirect.
     if (input.backup_slug && isFileBrowserConfigured()) {
-      await ensureClientBackupDir(input.backup_slug);
+      await ensureClientBackupDir(input.backup_slug)
     }
 
-    revalidateWebContext(context);
-    redirect(`/webs/${data.id}`);
+    revalidateWebContext(context)
+    redirect(`/webs/${data.id}`)
   },
-});
+})
 
 export const updateWebProject = defineAction({
-  name: "webs.update",
+  name: 'webs.update',
   schema: UpdateWebProjectInput,
-  roles: ["owner", "admin"],
+  roles: ['owner', 'admin'],
   handler: async (input, { user }) => {
-    const supabase = await createServerClient();
+    const supabase = await createServerClient()
     const { data: current, error: lookupError } = await supabase
-      .from("web_projects")
-      .select("db_host, db_port, db_name, db_user, project_id, client_id")
-      .eq("id", input.id)
-      .maybeSingle();
-    if (lookupError) throw new Error(lookupError.message);
-    if (!current) throw new Error("No se ha encontrado el proyecto web");
+      .from('web_projects')
+      .select('db_host, db_port, db_name, db_user, project_id, client_id')
+      .eq('id', input.id)
+      .maybeSingle()
+    if (lookupError) throw new Error(lookupError.message)
+    if (!current) throw new Error('No se ha encontrado el proyecto web')
 
     const credentialsChanged =
       (input.db_host ?? null) !== current.db_host ||
       (input.db_port ?? null) !== current.db_port ||
       (input.db_name ?? null) !== current.db_name ||
       (input.db_user ?? null) !== current.db_user ||
-      Boolean(input.db_pass);
+      Boolean(input.db_pass)
     if (credentialsChanged) {
       await consumeUserVerification(
         user.id,
-        userVerificationScope("web.db_credentials.update", `web:${input.id}`),
-      );
+        userVerificationScope('web.db_credentials.update', `web:${input.id}`),
+      )
     }
-    const context = await resolveWebProjectContext(supabase, input.project_id, input.client_id);
+    const context = await resolveWebProjectContext(supabase, input.project_id, input.client_id)
     const { error } = await supabase
-      .from("web_projects")
+      .from('web_projects')
       .update({
         name: input.name,
         url: input.url,
@@ -148,24 +149,24 @@ export const updateWebProject = defineAction({
         ...(input.db_pass ? { db_pass_encrypted: encryptSecret(input.db_pass) } : {}),
         updated_at: new Date().toISOString(),
       })
-      .eq("id", input.id);
+      .eq('id', input.id)
 
-    if (error) throw new Error(error.message);
+    if (error) throw new Error(error.message)
 
     // Provision the backup folder if a slug is present (idempotent: safe to re-run).
     if (input.backup_slug && isFileBrowserConfigured()) {
-      await ensureClientBackupDir(input.backup_slug);
+      await ensureClientBackupDir(input.backup_slug)
     }
 
     revalidateWebContext({
       projectId: (current.project_id as string | null) ?? null,
       clientId: (current.client_id as string | null) ?? null,
-    });
-    revalidateWebContext(context);
-    revalidatePath("/webs");
-    redirect(`/webs/${input.id}`);
+    })
+    revalidateWebContext(context)
+    revalidatePath('/webs')
+    redirect(`/webs/${input.id}`)
   },
-});
+})
 
 /**
  * Forces an on-demand backup for a web project.
@@ -178,28 +179,28 @@ export const updateWebProject = defineAction({
  * The decrypted credentials only travel server-to-server to the backup runner.
  */
 export const triggerWebBackup = defineAction({
-  name: "webs.backup",
+  name: 'webs.backup',
   schema: z.object({ id: z.string().uuid(), slug: z.string().nullable().optional() }),
-  roles: ["owner", "admin"],
+  roles: ['owner', 'admin'],
   handler: async (input) => {
-    if (isDemoMode()) return;
+    if (isDemoMode()) return
 
-    const env = serverEnv();
+    const env = serverEnv()
     if (!env.BACKUP_RUNNER_URL || !env.BACKUP_RUNNER_TOKEN) {
-      throw new Error("El servicio de backups no está configurado.");
+      throw new Error('El servicio de backups no está configurado.')
     }
 
-    const credentials = await getWebProjectDbCredentials(input.id);
+    const credentials = await getWebProjectDbCredentials(input.id)
     if (!credentials) {
-      throw new Error("Este proyecto no tiene credenciales de BD configuradas.");
+      throw new Error('Este proyecto no tiene credenciales de BD configuradas.')
     }
 
-    let res: Response;
+    let res: Response
     try {
       res = await fetch(env.BACKUP_RUNNER_URL, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${env.BACKUP_RUNNER_TOKEN}`,
         },
         body: JSON.stringify({
@@ -210,35 +211,35 @@ export const triggerWebBackup = defineAction({
           user: credentials.user,
           password: credentials.password,
         }),
-        cache: "no-store",
-      });
+        cache: 'no-store',
+      })
     } catch {
-      throw new Error("No se pudo contactar con el servidor de backups.");
+      throw new Error('No se pudo contactar con el servidor de backups.')
     }
 
     if (!res.ok) {
-      const detail = (await res.json().catch(() => null)) as { error?: string } | null;
-      throw new Error(detail?.error ?? `El backup ha fallado (HTTP ${res.status}).`);
+      const detail = (await res.json().catch(() => null)) as { error?: string } | null
+      throw new Error(detail?.error ?? `El backup ha fallado (HTTP ${res.status}).`)
     }
 
     // The dump produced a new file upstream; drop the cached listings so it
     // shows without waiting for the revalidate window to expire.
-    if (input.slug) revalidateTag(backupsCacheTag(input.slug), "default");
+    if (input.slug) revalidateTag(backupsCacheTag(input.slug), 'default')
   },
-});
+})
 
 export const deleteWebProject = defineAction({
-  name: "webs.delete",
+  name: 'webs.delete',
   schema: uuidIdInput,
-  revalidate: ["/webs"],
+  revalidate: ['/webs'],
   handler: async (input) => {
-    const supabase = await createServerClient();
+    const supabase = await createServerClient()
     const { error } = await supabase
-      .from("web_projects")
+      .from('web_projects')
       .update({ deleted_at: new Date().toISOString() })
-      .eq("id", input.id);
+      .eq('id', input.id)
 
-    if (error) throw new Error(error.message);
-    redirect("/webs");
+    if (error) throw new Error(error.message)
+    redirect('/webs')
   },
-});
+})

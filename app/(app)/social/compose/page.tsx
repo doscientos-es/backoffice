@@ -1,17 +1,19 @@
-import { TriangleAlert } from "lucide-react";
-import type { Metadata } from "next";
-import { BackLink } from "@/components/layout/back-link";
-import { PageHeader } from "@/components/layout/page-header";
-import { requirePageRole } from "@/lib/auth";
-import { availablePlatforms } from "@/lib/social/service";
-import { ComposeForm } from "./_components/compose-form";
+import { TriangleAlert } from 'lucide-react'
+import type { Metadata } from 'next'
 
-export const metadata: Metadata = { title: "Nueva publicación · Social" };
-export const dynamic = "force-dynamic";
+import { BackLink } from '@/components/layout/back-link'
+import { PageHeader } from '@/components/layout/page-header'
+import { requirePageRole } from '@/lib/auth'
+import { availablePlatforms } from '@/lib/social/service'
+
+import { ComposeForm } from './_components/compose-form'
+
+export const metadata: Metadata = { title: 'Nueva publicación · Social' }
+export const dynamic = 'force-dynamic'
 
 export default async function ComposePage() {
-  await requirePageRole(["owner", "admin", "member"]);
-  const available = availablePlatforms();
+  await requirePageRole(['owner', 'admin', 'member'])
+  const available = availablePlatforms()
 
   return (
     <div className="flex flex-col gap-6">
@@ -33,5 +35,5 @@ export default async function ComposePage() {
 
       <ComposeForm available={available} />
     </div>
-  );
+  )
 }

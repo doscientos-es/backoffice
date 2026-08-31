@@ -1,7 +1,7 @@
-import { DetailCardSkeleton } from "@/components/layout/detail-grid-skeleton";
-import { PageHeaderSkeleton } from "@/components/layout/page-header-skeleton";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DetailCardSkeleton } from '@/components/layout/detail-grid-skeleton'
+import { PageHeaderSkeleton } from '@/components/layout/page-header-skeleton'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function ProposalDetailLoading() {
   return (
@@ -27,7 +27,7 @@ export default function ProposalDetailLoading() {
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           {[0, 1].map((i) => (
-            <div key={i} className="flex items-center gap-3 rounded-md border border-border/60 p-3">
+            <div key={i} className="border-border/60 flex items-center gap-3 rounded-md border p-3">
               <Skeleton className="size-8 rounded" />
               <div className="flex flex-1 flex-col gap-1.5">
                 <Skeleton className="h-4 w-40 rounded" />
@@ -38,5 +38,5 @@ export default function ProposalDetailLoading() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

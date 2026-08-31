@@ -1,1 +1,1 @@
-export * from "@/primitives/hooks/use-browser-notifications";
+export * from '@/primitives/hooks/use-browser-notifications'

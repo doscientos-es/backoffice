@@ -1,19 +1,21 @@
-"use client";
+'use client'
 
-import { Link as Link2, X } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { Button } from "@/components/ui/button";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { linkProposalToProject } from "../actions";
+import { Link as Link2, X } from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
 
-type Project = { id: string; name: string };
+import { Button } from '@/components/ui/button'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+
+import { linkProposalToProject } from '../actions'
+
+type Project = { id: string; name: string }
 
 interface Props {
-  proposalId: string;
-  currentProject: Project | null;
-  availableProjects: Project[];
+  proposalId: string
+  currentProject: Project | null
+  availableProjects: Project[]
 }
 
 /**
@@ -21,39 +23,39 @@ interface Props {
  * unlink a project to/from a proposal at any time after creation.
  */
 export function LinkProjectButton({ proposalId, currentProject, availableProjects }: Props) {
-  const router = useRouter();
-  const feedback = useFormFeedback({ successResetMs: 3000 });
-  const [pending, startTransition] = useTransition();
-  const [picking, setPicking] = useState(false);
-  const [selectedId, setSelectedId] = useState<string>("");
+  const router = useRouter()
+  const feedback = useFormFeedback({ successResetMs: 3000 })
+  const [pending, startTransition] = useTransition()
+  const [picking, setPicking] = useState(false)
+  const [selectedId, setSelectedId] = useState<string>('')
 
   function handleLink() {
-    if (!selectedId) return;
-    feedback.setPending();
+    if (!selectedId) return
+    feedback.setPending()
     startTransition(async () => {
-      const res = await linkProposalToProject({ proposal_id: proposalId, project_id: selectedId });
+      const res = await linkProposalToProject({ proposal_id: proposalId, project_id: selectedId })
       if (!res.ok) {
-        feedback.setError(res.error);
-        return;
+        feedback.setError(res.error)
+        return
       }
-      feedback.setSuccess("Proyecto vinculado");
-      setPicking(false);
-      setSelectedId("");
-      router.refresh();
-    });
+      feedback.setSuccess('Proyecto vinculado')
+      setPicking(false)
+      setSelectedId('')
+      router.refresh()
+    })
   }
 
   function handleUnlink() {
-    feedback.setPending();
+    feedback.setPending()
     startTransition(async () => {
-      const res = await linkProposalToProject({ proposal_id: proposalId, project_id: null });
+      const res = await linkProposalToProject({ proposal_id: proposalId, project_id: null })
       if (!res.ok) {
-        feedback.setError(res.error);
-        return;
+        feedback.setError(res.error)
+        return
       }
-      feedback.setSuccess("Proyecto desvinculado");
-      router.refresh();
-    });
+      feedback.setSuccess('Proyecto desvinculado')
+      router.refresh()
+    })
   }
 
   if (currentProject) {
@@ -73,14 +75,14 @@ export function LinkProjectButton({ proposalId, currentProject, availableProject
           <X className="size-3.5" />
         </button>
       </div>
-    );
+    )
   }
 
   if (picking) {
     return (
       <div className="flex items-center gap-2">
         <select
-          className="h-7 rounded-md border border-input bg-background px-2 text-xs"
+          className="border-input bg-background h-7 rounded-md border px-2 text-xs"
           value={selectedId}
           onChange={(e) => setSelectedId(e.target.value)}
         >
@@ -99,7 +101,7 @@ export function LinkProjectButton({ proposalId, currentProject, availableProject
         </Button>
         <FormFeedback state={feedback.state} />
       </div>
-    );
+    )
   }
 
   return (
@@ -118,5 +120,5 @@ export function LinkProjectButton({ proposalId, currentProject, availableProject
       ) : null}
       <FormFeedback state={feedback.state} />
     </div>
-  );
+  )
 }

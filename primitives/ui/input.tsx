@@ -1,1 +1,1 @@
-﻿export { Input } from "@doscientos/ui";
+﻿export { Input } from '@doscientos/ui'

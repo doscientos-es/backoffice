@@ -1,11 +1,11 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 
-const KPI_SKELETON_KEYS = ["kpi-a", "kpi-b", "kpi-c", "kpi-d"] as const;
-const AVISOS_SKELETON_KEYS = ["aviso-a", "aviso-b", "aviso-c", "aviso-d"] as const;
-const MY_DAY_SKELETON_KEYS = ["my-day-a", "my-day-b", "my-day-c"] as const;
-const MY_DAY_ROW_KEYS = ["row-a", "row-b", "row-c"] as const;
-const MONEY_SKELETON_KEYS = ["money-a", "money-b", "money-c", "money-d"] as const;
+const KPI_SKELETON_KEYS = ['kpi-a', 'kpi-b', 'kpi-c', 'kpi-d'] as const
+const AVISOS_SKELETON_KEYS = ['aviso-a', 'aviso-b', 'aviso-c', 'aviso-d'] as const
+const MY_DAY_SKELETON_KEYS = ['my-day-a', 'my-day-b', 'my-day-c'] as const
+const MY_DAY_ROW_KEYS = ['row-a', 'row-b', 'row-c'] as const
+const MONEY_SKELETON_KEYS = ['money-a', 'money-b', 'money-c', 'money-d'] as const
 
 export function MyDayWidgetSkeleton() {
   return (
@@ -30,7 +30,7 @@ export function MyDayWidgetSkeleton() {
         </Card>
       ))}
     </div>
-  );
+  )
 }
 
 export function KpiGridSkeleton() {
@@ -49,7 +49,7 @@ export function KpiGridSkeleton() {
         </Card>
       ))}
     </div>
-  );
+  )
 }
 
 export function AvisosWidgetSkeleton() {
@@ -68,17 +68,17 @@ export function AvisosWidgetSkeleton() {
         ))}
       </CardContent>
     </Card>
-  );
+  )
 }
 
 export function RangeSelectorSkeleton() {
   return (
-    <div className="inline-flex h-8 items-center gap-1 rounded-lg border bg-card p-0.5">
+    <div className="bg-card inline-flex h-8 items-center gap-1 rounded-lg border p-0.5">
       {[28, 32, 32, 36].map((w) => (
         <Skeleton key={w} className="rounded-md" style={{ height: 24, width: w }} />
       ))}
     </div>
-  );
+  )
 }
 
 export function RevenueWidgetSkeleton() {
@@ -91,7 +91,7 @@ export function RevenueWidgetSkeleton() {
         <Skeleton className="h-56 w-full rounded-md" />
       </CardContent>
     </Card>
-  );
+  )
 }
 
 export function MoneyOpportunitiesWidgetSkeleton() {
@@ -104,8 +104,8 @@ export function MoneyOpportunitiesWidgetSkeleton() {
       <CardContent>
         <div className="grid gap-4 xl:grid-cols-4">
           {MONEY_SKELETON_KEYS.map((key) => (
-            <div key={key} className="rounded-lg border border-border bg-muted/20">
-              <div className="border-b border-border px-3 py-2.5">
+            <div key={key} className="border-border bg-muted/20 rounded-lg border">
+              <div className="border-border border-b px-3 py-2.5">
                 <Skeleton className="h-4 w-32" />
                 <Skeleton className="mt-2 h-3 w-20" />
               </div>
@@ -119,5 +119,5 @@ export function MoneyOpportunitiesWidgetSkeleton() {
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }

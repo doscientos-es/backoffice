@@ -1,32 +1,29 @@
-import { redirect } from "next/navigation";
-import { scopedLogger } from "@/lib/logger";
-import { createServerClient } from "@/lib/supabase/server";
+import { redirect } from 'next/navigation'
 
-const log = scopedLogger("auth");
+import { scopedLogger } from '@/lib/logger'
+import { createServerClient } from '@/lib/supabase/server'
 
-export type MemberRole = "owner" | "admin" | "member" | "viewer";
+const log = scopedLogger('auth')
+
+export type MemberRole = 'owner' | 'admin' | 'member' | 'viewer'
 
 export type CurrentUser = {
-  id: string;
-  email: string;
-  name: string;
-  role: MemberRole;
-  avatarUrl: string | null;
-  emailAlias: string | null;
-  githubHandle: string | null;
-  onboardedAt: string | null;
-  jobTitle: string | null;
-  phone: string | null;
-  contactEmail: string | null;
-};
+  id: string
+  email: string
+  name: string
+  role: MemberRole
+  avatarUrl: string | null
+  emailAlias: string | null
+  githubHandle: string | null
+  onboardedAt: string | null
+  jobTitle: string | null
+  phone: string | null
+  contactEmail: string | null
+}
 
-export type AuthFailureReason =
-  | "no_session"
-  | "no_team_member"
-  | "team_member_deleted"
-  | "db_error";
+export type AuthFailureReason = 'no_session' | 'no_team_member' | 'team_member_deleted' | 'db_error'
 
-export type AuthResult = { ok: true; user: CurrentUser } | { ok: false; reason: AuthFailureReason };
+export type AuthResult = { ok: true; user: CurrentUser } | { ok: false; reason: AuthFailureReason }
 
 /**
  * Resolve the authenticated user + their team_member row.
@@ -34,30 +31,30 @@ export type AuthResult = { ok: true; user: CurrentUser } | { ok: false; reason: 
  * "no session" and "session but unauthorized" — never silent nulls.
  */
 export async function getCurrentUser(): Promise<AuthResult> {
-  const supabase = await createServerClient();
+  const supabase = await createServerClient()
   const {
     data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, reason: "no_session" };
+  } = await supabase.auth.getUser()
+  if (!user) return { ok: false, reason: 'no_session' }
 
   const { data: member, error } = await supabase
-    .from("team_members")
+    .from('team_members')
     .select(
-      "id, name, email, role, avatar_url, email_alias, github_handle, onboarded_at, deleted_at, job_title, phone, contact_email",
+      'id, name, email, role, avatar_url, email_alias, github_handle, onboarded_at, deleted_at, job_title, phone, contact_email',
     )
-    .eq("id", user.id)
-    .maybeSingle();
+    .eq('id', user.id)
+    .maybeSingle()
 
   if (error) {
-    log.error({ err: error, userId: user.id }, "team_members lookup failed");
-    return { ok: false, reason: "db_error" };
+    log.error({ err: error, userId: user.id }, 'team_members lookup failed')
+    return { ok: false, reason: 'db_error' }
   }
   if (!member) {
-    log.warn({ userId: user.id, email: user.email }, "session without team_member row");
-    return { ok: false, reason: "no_team_member" };
+    log.warn({ userId: user.id, email: user.email }, 'session without team_member row')
+    return { ok: false, reason: 'no_team_member' }
   }
   if (member.deleted_at) {
-    return { ok: false, reason: "team_member_deleted" };
+    return { ok: false, reason: 'team_member_deleted' }
   }
 
   return {
@@ -75,7 +72,7 @@ export async function getCurrentUser(): Promise<AuthResult> {
       phone: (member.phone as string | null) ?? null,
       contactEmail: (member.contact_email as string | null) ?? null,
     },
-  };
+  }
 }
 
 export interface RequireUserOptions {
@@ -83,7 +80,7 @@ export interface RequireUserOptions {
    * When `true`, skip the "must complete onboarding" check. Used inside
    * the `/onboarding` route itself to avoid an infinite redirect loop.
    */
-  allowUnonboarded?: boolean;
+  allowUnonboarded?: boolean
 }
 
 /**
@@ -93,25 +90,25 @@ export interface RequireUserOptions {
  * `allowUnonboarded` is set.
  */
 export async function requireUser(opts?: RequireUserOptions): Promise<CurrentUser> {
-  const result = await getCurrentUser();
+  const result = await getCurrentUser()
   if (!result.ok) {
-    if (result.reason === "no_session") redirect("/login");
-    redirect(`/login?error=${result.reason}`);
+    if (result.reason === 'no_session') redirect('/login')
+    redirect(`/login?error=${result.reason}`)
   }
   if (!opts?.allowUnonboarded && !result.user.onboardedAt) {
-    redirect("/onboarding");
+    redirect('/onboarding')
   }
-  return result.user;
+  return result.user
 }
 
 /**
  * Guard for Server Components that require one of the given roles.
  */
 export async function requireRole(roles: MemberRole[]): Promise<CurrentUser> {
-  const u = await requireUser();
-  if (!roles.includes(u.role)) redirect("/inicio?error=forbidden");
-  if (u.role === "owner" || u.role === "admin") await requireAal2();
-  return u;
+  const u = await requireUser()
+  if (!roles.includes(u.role)) redirect('/inicio?error=forbidden')
+  if (u.role === 'owner' || u.role === 'admin') await requireAal2()
+  return u
 }
 
 /**
@@ -119,9 +116,9 @@ export async function requireRole(roles: MemberRole[]): Promise<CurrentUser> {
  * challenged by the app-level dialog so navigation stays on the current page.
  */
 export async function requirePageRole(roles: MemberRole[]): Promise<CurrentUser> {
-  const u = await requireUser();
-  if (!roles.includes(u.role)) redirect("/inicio?error=forbidden");
-  return u;
+  const u = await requireUser()
+  if (!roles.includes(u.role)) redirect('/inicio?error=forbidden')
+  return u
 }
 
 /**
@@ -130,26 +127,26 @@ export async function requirePageRole(roles: MemberRole[]): Promise<CurrentUser>
  * can still enroll TOTP instead of being locked out.
  */
 export async function requireAal2(): Promise<void> {
-  const supabase = await createServerClient();
+  const supabase = await createServerClient()
   const {
     data: { session },
-  } = await supabase.auth.getSession();
+  } = await supabase.auth.getSession()
   const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel(
     session?.access_token,
-  );
-  if (error || data?.currentLevel !== "aal2") redirect("/settings/security");
+  )
+  if (error || data?.currentLevel !== 'aal2') redirect('/settings/security')
 }
 
 /** Returns whether the current session has completed its MFA challenge. */
 export async function hasAal2Session(): Promise<boolean> {
-  const supabase = await createServerClient();
+  const supabase = await createServerClient()
   const {
     data: { session },
-  } = await supabase.auth.getSession();
+  } = await supabase.auth.getSession()
   const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel(
     session?.access_token,
-  );
-  return !error && data?.currentLevel === "aal2";
+  )
+  return !error && data?.currentLevel === 'aal2'
 }
 
 /**
@@ -157,5 +154,5 @@ export async function hasAal2Session(): Promise<boolean> {
  * members and viewers should not see revenue, expenses, or accounts-receivable figures.
  */
 export function canViewFinance(role: MemberRole): boolean {
-  return role === "owner" || role === "admin";
+  return role === 'owner' || role === 'admin'
 }

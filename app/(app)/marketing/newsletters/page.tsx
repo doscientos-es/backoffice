@@ -1,64 +1,66 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { PageHeader } from "@/components/layout/page-header";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { requireUser } from "@/lib/auth";
+import type { Metadata } from 'next'
+import Link from 'next/link'
+
+import { PageHeader } from '@/components/layout/page-header'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { requireUser } from '@/lib/auth'
 import {
   countNewsletterAudience,
   getAudienceLabel,
   listNewsletterIssues,
   NEWSLETTER_AUDIENCES,
   type NewsletterIssue,
-} from "@/lib/marketing/newsletters";
+} from '@/lib/marketing/newsletters'
+
 import {
   createNewsletterIssueForm,
   publishNewsletterIssueForm,
   sendNewsletterIssueForm,
   sendNewsletterTestForm,
-} from "./actions";
+} from './actions'
 
-export const metadata: Metadata = { title: "Newsletters - doscientos" };
-export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: 'Newsletters - doscientos' }
+export const dynamic = 'force-dynamic'
 
-const statusLabel: Record<NewsletterIssue["status"], string> = {
-  draft: "Borrador",
-  scheduled: "Planificada",
-  sent: "Enviada",
-  published: "Publicada",
-  archived: "Archivada",
-};
+const statusLabel: Record<NewsletterIssue['status'], string> = {
+  draft: 'Borrador',
+  scheduled: 'Planificada',
+  sent: 'Enviada',
+  published: 'Publicada',
+  archived: 'Archivada',
+}
 
-const statusTone: Record<NewsletterIssue["status"], "neutral" | "info" | "success" | "warning"> = {
-  draft: "neutral",
-  scheduled: "info",
-  sent: "success",
-  published: "success",
-  archived: "warning",
-};
+const statusTone: Record<NewsletterIssue['status'], 'neutral' | 'info' | 'success' | 'warning'> = {
+  draft: 'neutral',
+  scheduled: 'info',
+  sent: 'success',
+  published: 'success',
+  archived: 'warning',
+}
 
 function canSend(issue: NewsletterIssue): boolean {
-  return !issue.sent_at && issue.status !== "archived";
+  return !issue.sent_at && issue.status !== 'archived'
 }
 
 function fmtDate(value: string | null): string {
-  if (!value) return "Sin fecha";
-  return new Intl.DateTimeFormat("es", { dateStyle: "medium", timeStyle: "short" }).format(
+  if (!value) return 'Sin fecha'
+  return new Intl.DateTimeFormat('es', { dateStyle: 'medium', timeStyle: 'short' }).format(
     new Date(value),
-  );
+  )
 }
 
 function rate(part: number, total: number): string {
-  if (total === 0) return "0%";
-  return `${Math.round((part / total) * 100)}%`;
+  if (total === 0) return '0%'
+  return `${Math.round((part / total) * 100)}%`
 }
 
 export default async function NewslettersPage() {
-  await requireUser();
+  await requireUser()
   const [issues, audienceCounts] = await Promise.all([
     listNewsletterIssues(),
     Promise.all(
@@ -67,17 +69,17 @@ export default async function NewslettersPage() {
         count: await countNewsletterAudience(audience.key),
       })),
     ),
-  ]);
-  const counts = new Map(audienceCounts.map((audience) => [audience.key, audience.count]));
-  const scheduled = issues.filter((issue) => issue.status === "scheduled").length;
-  const published = issues.filter((issue) => issue.published_at).length;
+  ])
+  const counts = new Map(audienceCounts.map((audience) => [audience.key, audience.count]))
+  const scheduled = issues.filter((issue) => issue.status === 'scheduled').length
+  const published = issues.filter((issue) => issue.published_at).length
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Newsletters"
         description="Planifica recursos, decide a quien llegan y conserva cada envio como activo publico."
-        breadcrumbs={[{ label: "Marketing", href: "/marketing" }, { label: "Newsletters" }]}
+        breadcrumbs={[{ label: 'Marketing', href: '/marketing' }, { label: 'Newsletters' }]}
         actions={
           <Button asChild variant="outline">
             <Link href="https://doscientos.es/recursos" target="_blank">
@@ -117,7 +119,7 @@ export default async function NewslettersPage() {
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="border-b text-left text-muted-foreground">
+                <thead className="text-muted-foreground border-b text-left">
                   <tr>
                     <th className="py-2 pr-3 font-medium">Newsletter</th>
                     <th className="py-2 pr-3 font-medium">Audiencia</th>
@@ -131,7 +133,7 @@ export default async function NewslettersPage() {
                 <tbody className="divide-y">
                   {issues.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-muted-foreground">
+                      <td colSpan={7} className="text-muted-foreground py-8 text-center">
                         Aun no hay newsletters.
                       </td>
                     </tr>
@@ -146,7 +148,7 @@ export default async function NewslettersPage() {
                                 {statusLabel[issue.status]}
                               </Badge>
                             </div>
-                            <span className="line-clamp-1 text-muted-foreground">
+                            <span className="text-muted-foreground line-clamp-1">
                               {issue.subject}
                             </span>
                           </div>
@@ -206,11 +208,11 @@ export default async function NewslettersPage() {
                                   className="flex items-center gap-2"
                                 >
                                   <input type="hidden" name="id" value={issue.id} />
-                                  <label className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <label className="text-muted-foreground flex items-center gap-1 text-xs">
                                     <input
                                       type="checkbox"
                                       name="confirmSend"
-                                      className="size-3.5 rounded border-border"
+                                      className="border-border size-3.5 rounded"
                                     />
                                     confirmar
                                   </label>
@@ -240,7 +242,7 @@ export default async function NewslettersPage() {
                 cada destinatario y excluye emails dados de baja.
               </CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-2 text-sm text-muted-foreground">
+            <CardContent className="text-muted-foreground grid gap-2 text-sm">
               <div>Limite operativo inicial: 500 destinatarios por newsletter.</div>
               <div>Solo owners y admins pueden hacer el envio definitivo.</div>
               <div>Los clics y aperturas se registran en la campana enlazada.</div>
@@ -286,7 +288,7 @@ export default async function NewslettersPage() {
                     id="audienceKey"
                     name="audienceKey"
                     defaultValue="active_leads"
-                    className="h-8 rounded-lg border border-border bg-background px-2.5 text-sm"
+                    className="border-border bg-background h-8 rounded-lg border px-2.5 text-sm"
                   >
                     {NEWSLETTER_AUDIENCES.map((audience) => (
                       <option key={audience.key} value={audience.key}>
@@ -319,11 +321,11 @@ export default async function NewslettersPage() {
                     <Input id="ctaUrl" name="ctaUrl" placeholder="/contacto?ref=newsletter" />
                   </div>
                 </div>
-                <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                <label className="text-muted-foreground flex items-center gap-2 text-sm">
                   <input
                     type="checkbox"
                     name="publishNow"
-                    className="size-4 rounded border-border"
+                    className="border-border size-4 rounded"
                   />
                   Publicar ya como recurso
                 </label>
@@ -342,7 +344,7 @@ export default async function NewslettersPage() {
                 <div key={audience.key} className="flex items-start justify-between gap-3">
                   <div>
                     <div className="font-medium">{audience.label}</div>
-                    <div className="text-xs text-muted-foreground">{audience.description}</div>
+                    <div className="text-muted-foreground text-xs">{audience.description}</div>
                   </div>
                   <Badge variant="outline">{counts.get(audience.key) ?? 0}</Badge>
                 </div>
@@ -352,5 +354,5 @@ export default async function NewslettersPage() {
         </div>
       </section>
     </div>
-  );
+  )
 }

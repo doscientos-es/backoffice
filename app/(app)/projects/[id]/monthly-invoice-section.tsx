@@ -1,31 +1,33 @@
-"use client";
+'use client'
 
-import { FileText } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { Input } from "@/components/ui/input";
-import { formatEUR } from "@/lib/utils";
-import { createHourlyInvoice } from "../../invoices/actions";
+import { FileText } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
+
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { Input } from '@/components/ui/input'
+import { formatEUR } from '@/lib/utils'
+
+import { createHourlyInvoice } from '../../invoices/actions'
 
 type Props = {
-  projectId: string;
-  hourlyRate: number;
-  hourlyVatRate: number;
-};
+  projectId: string
+  hourlyRate: number
+  hourlyVatRate: number
+}
 
 /** Current calendar month as `YYYY-MM`; caps the picker so future months can't be billed. */
 function currentMonth(): string {
-  return new Date().toISOString().slice(0, 7);
+  return new Date().toISOString().slice(0, 7)
 }
 
 /** Previous calendar month as `YYYY-MM` — the usual period billed after it ends. */
 function previousMonth(): string {
-  const now = new Date();
-  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
-  return d.toISOString().slice(0, 7);
+  const now = new Date()
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1))
+  return d.toISOString().slice(0, 7)
 }
 
 /**
@@ -34,23 +36,23 @@ function previousMonth(): string {
  * the new invoice so the user can review dates and fiscal data before issuing.
  */
 export function MonthlyInvoiceSection({ projectId, hourlyRate, hourlyVatRate }: Props) {
-  const router = useRouter();
-  const feedback = useFormFeedback({ successResetMs: 4000 });
-  const [pending, startTransition] = useTransition();
-  const [month, setMonth] = useState(previousMonth);
+  const router = useRouter()
+  const feedback = useFormFeedback({ successResetMs: 4000 })
+  const [pending, startTransition] = useTransition()
+  const [month, setMonth] = useState(previousMonth)
 
   const handleGenerate = () => {
-    feedback.setPending();
+    feedback.setPending()
     startTransition(async () => {
-      const res = await createHourlyInvoice({ projectId, month });
+      const res = await createHourlyInvoice({ projectId, month })
       if (!res.ok) {
-        feedback.setError(res.error);
-        return;
+        feedback.setError(res.error)
+        return
       }
-      feedback.setSuccess("Factura creada");
-      router.push(`/invoices/${res.id}`);
-    });
-  };
+      feedback.setSuccess('Factura creada')
+      router.push(`/invoices/${res.id}`)
+    })
+  }
 
   return (
     <Card>
@@ -58,11 +60,11 @@ export function MonthlyInvoiceSection({ projectId, hourlyRate, hourlyVatRate }: 
         <CardTitle>Generar factura mensual</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <p className="text-sm text-muted-foreground">
-          Suma las horas registradas del mes y crea un borrador de factura a{" "}
-          <span className="font-medium text-foreground tabular-nums">
+        <p className="text-muted-foreground text-sm">
+          Suma las horas registradas del mes y crea un borrador de factura a{' '}
+          <span className="text-foreground font-medium tabular-nums">
             {formatEUR(hourlyRate)}/h
-          </span>{" "}
+          </span>{' '}
           ({hourlyVatRate}% IVA).
         </p>
         <div className="flex flex-wrap items-end gap-2">
@@ -82,5 +84,5 @@ export function MonthlyInvoiceSection({ projectId, hourlyRate, hourlyVatRate }: 
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }

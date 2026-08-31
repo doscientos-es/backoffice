@@ -1,10 +1,11 @@
-import { ShieldCheck } from "lucide-react";
-import { LogoMark } from "@/components/branding";
+import { ShieldCheck } from 'lucide-react'
+
+import { LogoMark } from '@/components/branding'
 
 export const metadata = {
-  title: "Portal · doscientos",
+  title: 'Portal · doscientos',
   robots: { index: false, follow: false },
-};
+}
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -41,5 +42,5 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
         </div>
       </footer>
     </div>
-  );
+  )
 }

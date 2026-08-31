@@ -1,18 +1,18 @@
-﻿"use client";
+﻿'use client'
 
 import {
   Checkbox as SharedCheckbox,
   type CheckboxProps as SharedCheckboxProps,
-} from "@doscientos/ui";
+} from '@doscientos/ui'
 
 type CheckboxProps = Omit<
   SharedCheckboxProps,
-  "defaultSelected" | "isIndeterminate" | "isSelected" | "onChange"
+  'defaultSelected' | 'isIndeterminate' | 'isSelected' | 'onChange'
 > & {
-  checked?: boolean | "indeterminate";
-  defaultChecked?: boolean;
-  onCheckedChange?: (checked: boolean) => void;
-};
+  checked?: boolean | 'indeterminate'
+  defaultChecked?: boolean
+  onCheckedChange?: (checked: boolean) => void
+}
 
 /** Maps the legacy backoffice state prop names onto the shared Checkbox. */
 function Checkbox({ checked, defaultChecked, onCheckedChange, ...props }: CheckboxProps) {
@@ -20,11 +20,11 @@ function Checkbox({ checked, defaultChecked, onCheckedChange, ...props }: Checkb
     <SharedCheckbox
       {...props}
       defaultSelected={defaultChecked}
-      isIndeterminate={checked === "indeterminate"}
-      isSelected={typeof checked === "boolean" ? checked : undefined}
+      isIndeterminate={checked === 'indeterminate'}
+      isSelected={typeof checked === 'boolean' ? checked : undefined}
       onChange={onCheckedChange}
     />
-  );
+  )
 }
 
-export { Checkbox, type CheckboxProps };
+export { Checkbox, type CheckboxProps }

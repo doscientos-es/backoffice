@@ -7,101 +7,101 @@
  */
 
 /** Networks the hub can publish to. Add a new value + a Publisher to extend. */
-export type SocialPlatform = "instagram" | "facebook" | "linkedin" | "google_business_profile";
+export type SocialPlatform = 'instagram' | 'facebook' | 'linkedin' | 'google_business_profile'
 
 export const SOCIAL_PLATFORMS: readonly SocialPlatform[] = [
-  "instagram",
-  "facebook",
-  "linkedin",
-  "google_business_profile",
-] as const;
+  'instagram',
+  'facebook',
+  'linkedin',
+  'google_business_profile',
+] as const
 
 /** High-level shape of the composition, derived from its media. */
-export type MediaKind = "text" | "photo" | "video" | "carousel";
+export type MediaKind = 'text' | 'photo' | 'video' | 'carousel'
 
 /** Lifecycle of a composed post (aggregate of its targets). */
 export type PostStatus =
-  | "draft"
-  | "scheduled"
-  | "publishing"
-  | "published"
-  | "partially_failed"
-  | "failed";
+  | 'draft'
+  | 'scheduled'
+  | 'publishing'
+  | 'published'
+  | 'partially_failed'
+  | 'failed'
 
 /** Lifecycle of a single (post, platform) target. */
-export type TargetStatus = "pending" | "publishing" | "published" | "failed";
+export type TargetStatus = 'pending' | 'publishing' | 'published' | 'failed'
 
 /** A single uploaded media asset, already public-URL addressable. */
 export interface MediaItem {
-  storagePath: string;
-  publicUrl: string;
-  type: "image" | "video";
-  mime: string;
+  storagePath: string
+  publicUrl: string
+  type: 'image' | 'video'
+  mime: string
 }
 
 /** The platform-neutral post handed to every Publisher. */
 export interface ComposedPost {
-  id: string;
-  caption: string;
-  mediaKind: MediaKind;
-  media: MediaItem[];
+  id: string
+  caption: string
+  mediaKind: MediaKind
+  media: MediaItem[]
 }
 
 /** Successful publish return from a Publisher. */
 export interface PublishOutcome {
-  remoteId: string;
-  remoteUrl: string | null;
+  remoteId: string
+  remoteUrl: string | null
 }
 
 /** Capability answer: can this Publisher handle this post as-is? */
-export type PublishSupport = { ok: true } | { ok: false; reason: string };
+export type PublishSupport = { ok: true } | { ok: false; reason: string }
 
 /** Per-target result of a fan-out publish. */
 export interface TargetResult {
-  platform: SocialPlatform;
-  ok: boolean;
-  remoteId?: string;
-  remoteUrl?: string | null;
-  error?: string;
+  platform: SocialPlatform
+  ok: boolean
+  remoteId?: string
+  remoteUrl?: string | null
+  error?: string
 }
 
 /** Aggregated outcome of publishing one post to N platforms. */
 export interface FanOutResult {
-  status: PostStatus;
-  targets: TargetResult[];
+  status: PostStatus
+  targets: TargetResult[]
 }
 
 /** Normalised metrics snapshot for a published target. */
 export interface PostInsights {
-  impressions: number;
-  reach: number;
-  likes: number;
-  comments: number;
-  shares: number;
-  saves: number;
-  videoViews: number;
+  impressions: number
+  reach: number
+  likes: number
+  comments: number
+  shares: number
+  saves: number
+  videoViews: number
   /** Platform-specific actions such as Google Local Post CTA clicks. */
-  actions?: number;
+  actions?: number
   /** 0..1 (likes+comments+shares+saves / reach). */
-  engagementRate: number;
-  raw: unknown;
+  engagementRate: number
+  raw: unknown
 }
 
 /** Normalised comment fetched from a platform. */
 export interface PlatformComment {
-  remoteId: string;
-  authorName: string;
-  authorId: string | null;
-  text: string;
-  likeCount: number;
+  remoteId: string
+  authorName: string
+  authorId: string | null
+  text: string
+  likeCount: number
   /** ISO timestamp, or null when the platform omits it. */
-  publishedAt: string | null;
+  publishedAt: string | null
 }
 
 /** Human-readable labels for each network (UI + logs). */
 export const PLATFORM_LABELS: Record<SocialPlatform, string> = {
-  instagram: "Instagram",
-  facebook: "Facebook",
-  linkedin: "LinkedIn",
-  google_business_profile: "Google Business Profile",
-};
+  instagram: 'Instagram',
+  facebook: 'Facebook',
+  linkedin: 'LinkedIn',
+  google_business_profile: 'Google Business Profile',
+}

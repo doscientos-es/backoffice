@@ -1,7 +1,7 @@
-import { DetailCardSkeleton } from "@/components/layout/detail-grid-skeleton";
-import { PageHeaderSkeleton } from "@/components/layout/page-header-skeleton";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DetailCardSkeleton } from '@/components/layout/detail-grid-skeleton'
+import { PageHeaderSkeleton } from '@/components/layout/page-header-skeleton'
+import { Card, CardContent } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function DocumentDetailLoading() {
   return (
@@ -16,5 +16,5 @@ export default function DocumentDetailLoading() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

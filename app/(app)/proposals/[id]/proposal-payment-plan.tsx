@@ -1,25 +1,27 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { PaymentPlanEditor } from "@/components/proposals/payment-plan-editor";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import type { PaymentPlanItem } from "@/lib/proposals/scope";
-import { updateProposalPaymentPlan } from "../actions";
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
 
-type InvoiceRef = { id: string; planItemId: string; number: string; status: string };
+import { PaymentPlanEditor } from '@/components/proposals/payment-plan-editor'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import type { PaymentPlanItem } from '@/lib/proposals/scope'
+
+import { updateProposalPaymentPlan } from '../actions'
+
+type InvoiceRef = { id: string; planItemId: string; number: string; status: string }
 
 type Props = {
-  proposalId: string;
-  initialPlan: PaymentPlanItem[];
-  initialVersion: number;
-  total: number;
-  canEdit: boolean;
-  invoices: InvoiceRef[];
-};
+  proposalId: string
+  initialPlan: PaymentPlanItem[]
+  initialVersion: number
+  total: number
+  canEdit: boolean
+  invoices: InvoiceRef[]
+}
 
 /** Keeps future collection dates editable without reopening the accepted proposal. */
 export function ProposalPaymentPlan({
@@ -30,35 +32,35 @@ export function ProposalPaymentPlan({
   canEdit,
   invoices,
 }: Props) {
-  const router = useRouter();
-  const feedback = useFormFeedback({ successResetMs: 4_000 });
-  const [plan, setPlan] = useState(initialPlan);
-  const [version, setVersion] = useState(initialVersion);
-  const [pending, startTransition] = useTransition();
+  const router = useRouter()
+  const feedback = useFormFeedback({ successResetMs: 4_000 })
+  const [plan, setPlan] = useState(initialPlan)
+  const [version, setVersion] = useState(initialVersion)
+  const [pending, startTransition] = useTransition()
 
   const save = () => {
-    feedback.setPending();
+    feedback.setPending()
     startTransition(async () => {
       const result = await updateProposalPaymentPlan({
         id: proposalId,
         expected_version: version,
         payment_plan: plan,
-      });
+      })
       if (!result.ok) {
-        feedback.setError(result.error);
-        return;
+        feedback.setError(result.error)
+        return
       }
-      setVersion(result.version);
-      feedback.setSuccess("Calendario de cobros guardado");
-      router.refresh();
-    });
-  };
+      setVersion(result.version)
+      feedback.setSuccess('Calendario de cobros guardado')
+      router.refresh()
+    })
+  }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Calendario de facturación</CardTitle>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Ajusta los próximos cobros sin modificar la propuesta aceptada. Los plazos ya facturados
           se gestionan desde su factura.
         </p>
@@ -72,7 +74,7 @@ export function ProposalPaymentPlan({
           lockedItemIds={invoices.map((invoice) => invoice.planItemId)}
         />
         {invoices.length > 0 ? (
-          <div className="rounded-lg border border-border px-3 py-2 text-sm">
+          <div className="border-border rounded-lg border px-3 py-2 text-sm">
             {invoices.map((invoice) => (
               <Link
                 key={invoice.id}
@@ -94,5 +96,5 @@ export function ProposalPaymentPlan({
         ) : null}
       </CardContent>
     </Card>
-  );
+  )
 }

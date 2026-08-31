@@ -1,16 +1,18 @@
-"use client";
+'use client'
 
-import { Heart, MessageSquare, Undo2 as Reply } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { Textarea } from "@/components/ui/textarea";
-import type { CommentView } from "@/lib/social/types";
-import { cn, formatDateTime, relativeTime } from "@/lib/utils";
-import { replyToComment } from "../actions";
-import { PlatformChip } from "./platform";
+import { Heart, MessageSquare, Undo2 as Reply } from 'lucide-react'
+import Link from 'next/link'
+import { useState } from 'react'
+
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { Textarea } from '@/components/ui/textarea'
+import type { CommentView } from '@/lib/social/types'
+import { cn, formatDateTime, relativeTime } from '@/lib/utils'
+
+import { replyToComment } from '../actions'
+import { PlatformChip } from './platform'
 
 /**
  * Unified comment inbox item. Shows the original comment, platform info,
@@ -20,58 +22,58 @@ export function CommentCard({
   comment,
   showPostContext = true,
 }: {
-  comment: CommentView;
-  showPostContext?: boolean;
+  comment: CommentView
+  showPostContext?: boolean
 }) {
-  const [showReply, setShowReply] = useState(false);
-  const [replyText, setReplyText] = useState("");
-  const { state, setPending, setSuccess, setError, pending } = useFormFeedback();
+  const [showReply, setShowReply] = useState(false)
+  const [replyText, setReplyText] = useState('')
+  const { state, setPending, setSuccess, setError, pending } = useFormFeedback()
 
   async function handleReply() {
-    if (!replyText.trim()) return;
-    setPending();
+    if (!replyText.trim()) return
+    setPending()
     const res = await replyToComment({
       commentId: comment.id,
       message: replyText,
-    });
+    })
     if (!res.ok) {
-      setError(res.error);
-      return;
+      setError(res.error)
+      return
     }
-    setSuccess("Respuesta enviada");
-    setReplyText("");
-    setTimeout(() => setShowReply(false), 2000);
+    setSuccess('Respuesta enviada')
+    setReplyText('')
+    setTimeout(() => setShowReply(false), 2000)
   }
 
   return (
-    <Card className={cn("overflow-hidden", comment.replied && "bg-muted/30 opacity-80")}>
+    <Card className={cn('overflow-hidden', comment.replied && 'bg-muted/30 opacity-80')}>
       <CardHeader className="flex flex-row items-start justify-between space-y-0 p-4 pb-2">
         <div className="flex min-w-0 flex-col gap-0.5">
           <div className="flex min-w-0 items-center gap-2">
-            <span className="min-w-0 break-words text-sm font-semibold">{comment.authorName}</span>
+            <span className="min-w-0 text-sm font-semibold break-words">{comment.authorName}</span>
             <PlatformChip platform={comment.platform} />
           </div>
           <time
-            className="text-[10px] text-muted-foreground uppercase"
+            className="text-muted-foreground text-[10px] uppercase"
             title={formatDateTime(comment.publishedAt)}
           >
             {relativeTime(comment.publishedAt)}
           </time>
         </div>
         {comment.replied && (
-          <span className="rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-medium text-success ring-1 ring-success/20">
+          <span className="bg-success/10 text-success ring-success/20 rounded-full px-2 py-0.5 text-[10px] font-medium ring-1">
             Respondido
           </span>
         )}
       </CardHeader>
       <CardContent className="min-w-0 p-4 pt-0">
-        <p className="break-words whitespace-pre-wrap text-sm leading-relaxed">{comment.text}</p>
+        <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">{comment.text}</p>
 
         {showPostContext ? <PostContext comment={comment} /> : null}
       </CardContent>
-      <CardFooter className="flex flex-col items-stretch border-t border-border/50 bg-muted/5 p-2 px-4">
+      <CardFooter className="border-border/50 bg-muted/5 flex flex-col items-stretch border-t p-2 px-4">
         <div className="flex items-center justify-between py-1">
-          <div className="flex items-center gap-3 text-muted-foreground">
+          <div className="text-muted-foreground flex items-center gap-3">
             <span className="flex items-center gap-1 text-xs">
               <Heart className="size-3" />
               {comment.likeCount}
@@ -81,7 +83,7 @@ export function CommentCard({
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 text-xs gap-1.5"
+              className="h-8 gap-1.5 text-xs"
               onClick={() => setShowReply(true)}
             >
               <Reply className="size-3.5" />
@@ -91,12 +93,12 @@ export function CommentCard({
         </div>
 
         {showReply && (
-          <div className="flex flex-col gap-2 pt-2 pb-1 animate-in slide-in-from-top-1 duration-200">
+          <div className="animate-in slide-in-from-top-1 flex flex-col gap-2 pt-2 pb-1 duration-200">
             <Textarea
               placeholder="Escribe tu respuesta pública..."
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
-              className="min-h-[80px] text-sm resize-none"
+              className="min-h-[80px] resize-none text-sm"
               disabled={pending}
               autoFocus
             />
@@ -112,7 +114,7 @@ export function CommentCard({
                   Cancelar
                 </Button>
                 <Button size="sm" onClick={handleReply} disabled={pending || !replyText.trim()}>
-                  {pending ? "Enviando..." : "Enviar"}
+                  {pending ? 'Enviando...' : 'Enviar'}
                 </Button>
               </div>
             </div>
@@ -120,7 +122,7 @@ export function CommentCard({
         )}
       </CardFooter>
     </Card>
-  );
+  )
 }
 
 function PostContext({ comment }: { comment: CommentView }) {
@@ -130,22 +132,22 @@ function PostContext({ comment }: { comment: CommentView }) {
       <span className="shrink-0 font-medium">En post:</span>
       <span
         className="line-clamp-2 min-w-0 flex-1 break-words italic"
-        title={comment.postCaption || "(Sin texto)"}
+        title={comment.postCaption || '(Sin texto)'}
       >
-        "{comment.postCaption || "(Sin texto)"}"
+        "{comment.postCaption || '(Sin texto)'}"
       </span>
     </>
-  );
+  )
   const className =
-    "mt-3 flex min-w-0 items-start gap-1.5 rounded-lg border border-border/50 bg-muted/20 px-2 py-1.5 text-[11px] text-muted-foreground";
+    'mt-3 flex min-w-0 items-start gap-1.5 rounded-lg border border-border/50 bg-muted/20 px-2 py-1.5 text-[11px] text-muted-foreground'
 
-  if (!comment.postId) return <div className={className}>{content}</div>;
+  if (!comment.postId) return <div className={className}>{content}</div>
   return (
     <Link
       href={`/social/${comment.postId}`}
-      className={cn(className, "hover:border-border hover:bg-muted/40")}
+      className={cn(className, 'hover:border-border hover:bg-muted/40')}
     >
       {content}
     </Link>
-  );
+  )
 }

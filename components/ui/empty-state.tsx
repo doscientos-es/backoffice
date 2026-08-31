@@ -1,1 +1,1 @@
-﻿export * from "@/primitives/ui/empty-state";
+﻿export * from '@/primitives/ui/empty-state'

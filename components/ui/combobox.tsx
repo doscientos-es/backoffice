@@ -1,1 +1,1 @@
-﻿export * from "@/primitives/ui/combobox";
+﻿export * from '@/primitives/ui/combobox'

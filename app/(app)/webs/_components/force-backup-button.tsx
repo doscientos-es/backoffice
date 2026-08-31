@@ -1,15 +1,17 @@
-"use client";
+'use client'
 
-import { Database as DatabaseBackup, LoaderCircle as Loader2 } from "lucide-react";
-import { useTransition } from "react";
-import { sileo } from "sileo";
-import { Button } from "@/components/ui/button";
-import { triggerWebBackup } from "../actions";
+import { Database as DatabaseBackup, LoaderCircle as Loader2 } from 'lucide-react'
+import { useTransition } from 'react'
+import { sileo } from 'sileo'
+
+import { Button } from '@/components/ui/button'
+
+import { triggerWebBackup } from '../actions'
 
 type Props = {
-  projectId: string;
-  slug: string | null;
-};
+  projectId: string
+  slug: string | null
+}
 
 /**
  * Triggers an on-demand backup via the `triggerWebBackup` server action, which
@@ -17,17 +19,17 @@ type Props = {
  * action awaits the script) and a toast with the outcome.
  */
 export function ForceBackupButton({ projectId, slug }: Props) {
-  const [pending, startTransition] = useTransition();
+  const [pending, startTransition] = useTransition()
 
   function onClick() {
     startTransition(async () => {
-      const res = await triggerWebBackup({ id: projectId, slug });
+      const res = await triggerWebBackup({ id: projectId, slug })
       if (res.ok) {
-        sileo.success({ title: "Backup completado" });
+        sileo.success({ title: 'Backup completado' })
       } else {
-        sileo.error({ title: res.error ?? "No se pudo completar el backup" });
+        sileo.error({ title: res.error ?? 'No se pudo completar el backup' })
       }
-    });
+    })
   }
 
   return (
@@ -39,5 +41,5 @@ export function ForceBackupButton({ projectId, slug }: Props) {
       )}
       Forzar backup
     </Button>
-  );
+  )
 }

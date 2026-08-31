@@ -1,1 +1,1 @@
-﻿export * from "@/primitives/ui/collapsible";
+﻿export * from '@/primitives/ui/collapsible'

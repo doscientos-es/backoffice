@@ -5,59 +5,60 @@
  * GET /api/backups/[client]/download?path=daily/dump.sql
  */
 
-import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
-import { BACKOFFICE_BACKUP_SLUG } from "@/lib/backups/backoffice";
-import { isFileBrowserConfigured } from "@/lib/filebrowser";
+import { NextResponse } from 'next/server'
+
+import { requireUser } from '@/lib/auth'
+import { BACKOFFICE_BACKUP_SLUG } from '@/lib/backups/backoffice'
+import { isFileBrowserConfigured } from '@/lib/filebrowser'
 
 async function getAuthToken(): Promise<string> {
   const res = await fetch(`${process.env.FILEBROWSER_API_URL}/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       username: process.env.FILEBROWSER_USER,
       password: process.env.FILEBROWSER_PASSWORD,
     }),
-  });
-  if (!res.ok) throw new Error("Auth failed");
-  return res.text();
+  })
+  if (!res.ok) throw new Error('Auth failed')
+  return res.text()
 }
 
 export async function GET(request: Request, { params }: { params: Promise<{ client: string }> }) {
-  const user = await requireUser();
+  const user = await requireUser()
 
   if (!isFileBrowserConfigured()) {
-    return NextResponse.json({ error: "FileBrowser no configurado" }, { status: 503 });
+    return NextResponse.json({ error: 'FileBrowser no configurado' }, { status: 503 })
   }
 
-  const { client } = await params;
-  if (client === BACKOFFICE_BACKUP_SLUG && user.role !== "owner" && user.role !== "admin") {
-    return NextResponse.json({ error: "Sin permiso" }, { status: 403 });
+  const { client } = await params
+  if (client === BACKOFFICE_BACKUP_SLUG && user.role !== 'owner' && user.role !== 'admin') {
+    return NextResponse.json({ error: 'Sin permiso' }, { status: 403 })
   }
-  const { searchParams } = new URL(request.url);
-  const filePath = searchParams.get("path") ?? "";
+  const { searchParams } = new URL(request.url)
+  const filePath = searchParams.get('path') ?? ''
 
   if (!filePath) {
-    return NextResponse.json({ error: "path requerido" }, { status: 400 });
+    return NextResponse.json({ error: 'path requerido' }, { status: 400 })
   }
 
   try {
-    const token = await getAuthToken();
-    const rawUrl = `${process.env.FILEBROWSER_API_URL}/raw/${encodeURIComponent(client)}/${filePath}?auth=${token}`;
+    const token = await getAuthToken()
+    const rawUrl = `${process.env.FILEBROWSER_API_URL}/raw/${encodeURIComponent(client)}/${filePath}?auth=${token}`
 
-    const upstream = await fetch(rawUrl);
+    const upstream = await fetch(rawUrl)
     if (!upstream.ok) {
-      return NextResponse.json({ error: "Archivo no encontrado" }, { status: upstream.status });
+      return NextResponse.json({ error: 'Archivo no encontrado' }, { status: upstream.status })
     }
 
-    const filename = filePath.split("/").pop() ?? "backup";
+    const filename = filePath.split('/').pop() ?? 'backup'
     return new Response(upstream.body, {
       headers: {
-        "Content-Type": upstream.headers.get("Content-Type") ?? "application/octet-stream",
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        'Content-Type': upstream.headers.get('Content-Type') ?? 'application/octet-stream',
+        'Content-Disposition': `attachment; filename="${filename}"`,
       },
-    });
+    })
   } catch {
-    return NextResponse.json({ error: "Error descargando el archivo" }, { status: 500 });
+    return NextResponse.json({ error: 'Error descargando el archivo' }, { status: 500 })
   }
 }

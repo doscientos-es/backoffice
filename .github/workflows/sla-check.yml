@@ -4,7 +4,7 @@ on:
   schedule:
     # Cada hora de lunes a viernes, de 8:00 a 20:00 UTC+2 (6:00–18:00 UTC).
     # GitHub Actions puede retrasarse hasta ~15 min; es suficiente para SLA de 4h.
-    - cron: "0 6-18 * * 1-5"
+    - cron: '0 6-18 * * 1-5'
   # Permite lanzarlo manualmente desde la pestaña Actions del repo.
   workflow_dispatch:
 

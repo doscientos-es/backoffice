@@ -1,12 +1,13 @@
-import { AuthShell } from "@/components/auth/auth-shell";
-import { UpdatePasswordForm } from "./update-password-form";
+import { AuthShell } from '@/components/auth/auth-shell'
 
-export const metadata = { title: "Nueva contraseña · doscientos" };
+import { UpdatePasswordForm } from './update-password-form'
+
+export const metadata = { title: 'Nueva contraseña · doscientos' }
 
 export default function UpdatePasswordPage() {
   return (
     <AuthShell title="Nueva contraseña" description="Define una contraseña para tu cuenta.">
       <UpdatePasswordForm />
     </AuthShell>
-  );
+  )
 }

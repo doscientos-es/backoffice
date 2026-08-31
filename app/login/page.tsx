@@ -1,9 +1,11 @@
-import type { Metadata } from "next";
-import { Suspense } from "react";
-import { AuthShell } from "@/components/auth/auth-shell";
-import { LoginForm, LoginFormSkeleton } from "./login-form";
+import type { Metadata } from 'next'
+import { Suspense } from 'react'
 
-export const metadata: Metadata = { title: "Entrar · doscientos backoffice" };
+import { AuthShell } from '@/components/auth/auth-shell'
+
+import { LoginForm, LoginFormSkeleton } from './login-form'
+
+export const metadata: Metadata = { title: 'Entrar · doscientos backoffice' }
 
 export default function LoginPage() {
   return (
@@ -16,5 +18,5 @@ export default function LoginPage() {
         <LoginForm />
       </Suspense>
     </AuthShell>
-  );
+  )
 }

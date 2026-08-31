@@ -343,4 +343,4 @@ export const DECK_STYLES = `
     .deck-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
     .deck-grid-card { font-size: 11px; padding: 8px; }
   }
-`;
+`

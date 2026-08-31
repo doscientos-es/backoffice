@@ -1,15 +1,17 @@
-"use client";
+'use client'
 
-import { Ellipsis as MoreHorizontal, Trash as Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Ellipsis as MoreHorizontal, Trash as Trash2 } from 'lucide-react'
+
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useUndoableDelete } from "@/lib/hooks/use-undoable-delete";
-import { deleteClient, restoreClient } from "../actions";
+} from '@/components/ui/dropdown-menu'
+import { useUndoableDelete } from '@/lib/hooks/use-undoable-delete'
+
+import { deleteClient, restoreClient } from '../actions'
 
 /**
  * Kebab menu hosting destructive actions for a client. Soft-deletes via
@@ -18,11 +20,11 @@ import { deleteClient, restoreClient } from "../actions";
  */
 export function DeleteClientButton({ clientId }: { clientId: string }) {
   const { run: onDelete, pending } = useUndoableDelete({
-    successMessage: "Cliente eliminado",
+    successMessage: 'Cliente eliminado',
     onDelete: () => deleteClient({ id: clientId }),
     onRestore: () => restoreClient({ id: clientId }),
-    redirectTo: "/clients",
-  });
+    redirectTo: '/clients',
+  })
 
   return (
     <div className="flex items-center gap-2">
@@ -40,5 +42,5 @@ export function DeleteClientButton({ clientId }: { clientId: string }) {
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
-  );
+  )
 }

@@ -1,13 +1,14 @@
-import { HandCoins, Hourglass, Percent, Receipt, TrendingDown, TrendingUp } from "lucide-react";
-import { StatCard } from "@/components/layout/stat-card";
-import { getFinanceKpis } from "@/lib/finance/queries";
-import { formatEUR } from "@/lib/utils";
+import { HandCoins, Hourglass, Percent, Receipt, TrendingDown, TrendingUp } from 'lucide-react'
 
-type Props = { since: string; until: string; rangeLabel: string };
+import { StatCard } from '@/components/layout/stat-card'
+import { getFinanceKpis } from '@/lib/finance/queries'
+import { formatEUR } from '@/lib/utils'
+
+type Props = { since: string; until: string; rangeLabel: string }
 
 export async function FinanceKpis({ since, until, rangeLabel }: Props) {
   const { revenueMonth, expenseMonth, netMonth, margin, cashCollected, pendingCollection } =
-    await getFinanceKpis(since, until);
+    await getFinanceKpis(since, until)
 
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -28,7 +29,7 @@ export async function FinanceKpis({ since, until, rangeLabel }: Props) {
       <StatCard
         label="Pendiente de cobro"
         value={formatEUR(pendingCollection)}
-        tone={pendingCollection > 0 ? "warning" : "info"}
+        tone={pendingCollection > 0 ? 'warning' : 'info'}
         icon={Hourglass}
         hint="Facturas emitidas/vencidas"
       />
@@ -42,17 +43,17 @@ export async function FinanceKpis({ since, until, rangeLabel }: Props) {
       <StatCard
         label="Beneficio neto"
         value={formatEUR(netMonth)}
-        tone={netMonth >= 0 ? "success" : "danger"}
+        tone={netMonth >= 0 ? 'success' : 'danger'}
         icon={Receipt}
         hint={rangeLabel}
       />
       <StatCard
         label="Margen"
-        value={margin == null ? "—" : `${margin.toFixed(1)}%`}
-        tone={margin != null && margin >= 0 ? "info" : "danger"}
+        value={margin == null ? '—' : `${margin.toFixed(1)}%`}
+        tone={margin != null && margin >= 0 ? 'info' : 'danger'}
         icon={Percent}
         hint={rangeLabel}
       />
     </div>
-  );
+  )
 }

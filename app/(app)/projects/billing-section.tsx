@@ -1,16 +1,17 @@
-"use client";
+'use client'
 
-import { type ReactNode, useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { type ReactNode, useState } from 'react'
 
-export type ProjectBillingType = "fixed" | "hourly";
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+
+export type ProjectBillingType = 'fixed' | 'hourly'
 
 export interface BillingSectionProps {
-  idPrefix: string;
-  defaultBillingType?: ProjectBillingType;
-  defaultHourlyRate?: number | null;
-  defaultHourlyVatRate?: number | null;
+  idPrefix: string
+  defaultBillingType?: ProjectBillingType
+  defaultHourlyRate?: number | null
+  defaultHourlyVatRate?: number | null
 }
 
 /**
@@ -21,16 +22,16 @@ export interface BillingSectionProps {
  */
 export function BillingSection({
   idPrefix,
-  defaultBillingType = "fixed",
+  defaultBillingType = 'fixed',
   defaultHourlyRate,
   defaultHourlyVatRate,
 }: BillingSectionProps) {
-  const [billingType, setBillingType] = useState<ProjectBillingType>(defaultBillingType);
-  const isHourly = billingType === "hourly";
+  const [billingType, setBillingType] = useState<ProjectBillingType>(defaultBillingType)
+  const isHourly = billingType === 'hourly'
 
   return (
-    <fieldset className="flex flex-col gap-3 rounded-lg border border-border bg-muted/20 p-4">
-      <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+    <fieldset className="border-border bg-muted/20 flex flex-col gap-3 rounded-lg border p-4">
+      <legend className="text-muted-foreground px-1 text-xs font-semibold tracking-wide uppercase">
         Facturación
       </legend>
 
@@ -62,7 +63,7 @@ export function BillingSection({
               step="0.01"
               min="0"
               required
-              defaultValue={defaultHourlyRate ?? ""}
+              defaultValue={defaultHourlyRate ?? ''}
               placeholder="40"
               className="text-right tabular-nums"
             />
@@ -94,7 +95,7 @@ export function BillingSection({
         </>
       )}
     </fieldset>
-  );
+  )
 }
 
 function Field({
@@ -104,23 +105,23 @@ function Field({
   hint,
   children,
 }: {
-  label: string;
-  htmlFor: string;
-  required?: boolean;
-  hint?: string;
-  children: ReactNode;
+  label: string
+  htmlFor: string
+  required?: boolean
+  hint?: string
+  children: ReactNode
 }) {
   return (
     <div className="flex flex-col gap-1.5">
       <label
         htmlFor={htmlFor}
-        className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+        className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase"
       >
         {label}
-        {required ? <span className="ml-0.5 text-destructive">*</span> : null}
+        {required ? <span className="text-destructive ml-0.5">*</span> : null}
       </label>
       {children}
-      {hint ? <p className="text-[11px] text-muted-foreground">{hint}</p> : null}
+      {hint ? <p className="text-muted-foreground text-[11px]">{hint}</p> : null}
     </div>
-  );
+  )
 }

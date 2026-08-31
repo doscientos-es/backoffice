@@ -3,14 +3,14 @@
  * wrapper turns it into a structured, safe-to-display result for clients.
  */
 export class VersionConflictError extends Error {
-  readonly code = "conflict" as const;
+  readonly code = 'conflict' as const
 
   constructor() {
-    super("Este registro ha cambiado mientras lo editabas.");
-    this.name = "VersionConflictError";
+    super('Este registro ha cambiado mientras lo editabas.')
+    this.name = 'VersionConflictError'
   }
 }
 
 export function isVersionConflictError(error: unknown): error is VersionConflictError {
-  return error instanceof VersionConflictError;
+  return error instanceof VersionConflictError
 }

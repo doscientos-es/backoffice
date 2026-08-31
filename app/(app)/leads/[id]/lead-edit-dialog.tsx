@@ -1,10 +1,11 @@
-"use client";
+'use client'
 
-import { Pencil } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { sileo } from "sileo";
-import { Button } from "@/components/ui/button";
+import { Pencil } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { sileo } from 'sileo'
+
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -12,66 +13,67 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { SubmitButton } from "@/components/ui/submit-button";
-import { VersionConflictDialog } from "@/components/ui/version-conflict-dialog";
-import { useFormDirty } from "@/lib/hooks/use-form-dirty";
-import type { MemberOption } from "@/lib/members/queries";
-import { updateLead } from "../actions";
-import { LeadFormFields } from "../lead-form-fields";
+} from '@/components/ui/dialog'
+import { SubmitButton } from '@/components/ui/submit-button'
+import { VersionConflictDialog } from '@/components/ui/version-conflict-dialog'
+import { useFormDirty } from '@/lib/hooks/use-form-dirty'
+import type { MemberOption } from '@/lib/members/queries'
+
+import { updateLead } from '../actions'
+import { LeadFormFields } from '../lead-form-fields'
 
 type Lead = {
-  id: string;
-  name: string;
-  alias: string | null;
-  company: string | null;
-  email: string | null;
-  phone: string | null;
-  source: string | null;
-  notes: string | null;
-  estimated_value: number | null;
-  company_size: string | null;
-  solution_type: string | null;
-  urgency: string | null;
-  assigned_to: string | null;
-  version: number;
-};
+  id: string
+  name: string
+  alias: string | null
+  company: string | null
+  email: string | null
+  phone: string | null
+  source: string | null
+  notes: string | null
+  estimated_value: number | null
+  company_size: string | null
+  solution_type: string | null
+  urgency: string | null
+  assigned_to: string | null
+  version: number
+}
 
 export function LeadEditDialog({ lead, members = [] }: { lead: Lead; members?: MemberOption[] }) {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [conflictOpen, setConflictOpen] = useState(false);
-  const { formRef, isDirty, reset } = useFormDirty<HTMLFormElement>();
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
+  const [conflictOpen, setConflictOpen] = useState(false)
+  const { formRef, isDirty, reset } = useFormDirty<HTMLFormElement>()
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    const estimatedRaw = fd.get("estimated_value")?.toString() ?? "";
+    e.preventDefault()
+    const fd = new FormData(e.currentTarget)
+    const estimatedRaw = fd.get('estimated_value')?.toString() ?? ''
     const payload = {
       id: lead.id,
       expected_version: lead.version,
-      name: fd.get("name")?.toString() ?? "",
-      alias: fd.get("alias")?.toString() ?? "",
-      email: fd.get("email")?.toString() ?? "",
-      phone: fd.get("phone")?.toString() ?? "",
-      company: fd.get("company")?.toString() ?? "",
-      source: fd.get("source")?.toString() ?? "",
-      notes: fd.get("notes")?.toString() ?? "",
-      estimated_value: estimatedRaw === "" ? null : Number(estimatedRaw),
-      company_size: fd.get("company_size")?.toString() ?? "",
-      solution_type: fd.get("solution_type")?.toString() ?? "",
-      urgency: fd.get("urgency")?.toString() ?? "",
-      assigned_to: fd.get("assigned_to")?.toString() ?? "",
-    };
-    const res = await updateLead(payload);
-    if (!res.ok) {
-      if (res.code === "conflict") setConflictOpen(true);
-      else sileo.error({ title: res.error ?? "No se pudo guardar el lead" });
-      return;
+      name: fd.get('name')?.toString() ?? '',
+      alias: fd.get('alias')?.toString() ?? '',
+      email: fd.get('email')?.toString() ?? '',
+      phone: fd.get('phone')?.toString() ?? '',
+      company: fd.get('company')?.toString() ?? '',
+      source: fd.get('source')?.toString() ?? '',
+      notes: fd.get('notes')?.toString() ?? '',
+      estimated_value: estimatedRaw === '' ? null : Number(estimatedRaw),
+      company_size: fd.get('company_size')?.toString() ?? '',
+      solution_type: fd.get('solution_type')?.toString() ?? '',
+      urgency: fd.get('urgency')?.toString() ?? '',
+      assigned_to: fd.get('assigned_to')?.toString() ?? '',
     }
-    reset();
-    setOpen(false);
-    router.refresh();
+    const res = await updateLead(payload)
+    if (!res.ok) {
+      if (res.code === 'conflict') setConflictOpen(true)
+      else sileo.error({ title: res.error ?? 'No se pudo guardar el lead' })
+      return
+    }
+    reset()
+    setOpen(false)
+    router.refresh()
   }
 
   return (
@@ -93,7 +95,7 @@ export function LeadEditDialog({ lead, members = [] }: { lead: Lead; members?: M
           onSubmit={onSubmit}
           className="flex min-h-0 flex-1 flex-col"
         >
-          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 flex flex-col gap-5 scroll-fade no-scrollbar">
+          <div className="scroll-fade no-scrollbar flex min-h-0 flex-1 flex-col gap-5 overflow-x-hidden overflow-y-auto pr-1">
             <LeadFormFields
               idPrefix={`edit-${lead.id}`}
               includeEstimatedValue
@@ -114,7 +116,7 @@ export function LeadEditDialog({ lead, members = [] }: { lead: Lead; members?: M
               }}
             />
           </div>
-          <div className="shrink-0 flex items-center justify-end gap-3 border-t border-border pt-3">
+          <div className="border-border flex shrink-0 items-center justify-end gap-3 border-t pt-3">
             <SubmitButton disabled={!isDirty}>Guardar cambios</SubmitButton>
           </div>
         </form>
@@ -124,11 +126,11 @@ export function LeadEditDialog({ lead, members = [] }: { lead: Lead; members?: M
         entityName="lead"
         onKeepEditing={() => setConflictOpen(false)}
         onReload={() => {
-          setConflictOpen(false);
-          setOpen(false);
-          router.refresh();
+          setConflictOpen(false)
+          setOpen(false)
+          router.refresh()
         }}
       />
     </Dialog>
-  );
+  )
 }

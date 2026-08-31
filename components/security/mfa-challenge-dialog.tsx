@@ -1,8 +1,9 @@
-"use client";
+'use client'
 
-import { LoaderCircle as Loader2, ShieldCheck } from "lucide-react";
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { LoaderCircle as Loader2, ShieldCheck } from 'lucide-react'
+import { useEffect, useState } from 'react'
+
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -10,18 +11,18 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Field, FieldLabel } from "@/components/ui/field";
-import { OtpInput } from "@/components/ui/otp-input";
-import { getBrowserClient } from "@/lib/supabase/browser";
+} from '@/components/ui/dialog'
+import { Field, FieldLabel } from '@/components/ui/field'
+import { OtpInput } from '@/components/ui/otp-input'
+import { getBrowserClient } from '@/lib/supabase/browser'
 
 type Props = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onVerified: () => void;
-  dismissible?: boolean;
-  setupHref?: string;
-};
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onVerified: () => void
+  dismissible?: boolean
+  setupHref?: string
+}
 
 export function MfaChallengeDialog({
   open,
@@ -30,43 +31,43 @@ export function MfaChallengeDialog({
   dismissible = true,
   setupHref,
 }: Props) {
-  const [factorId, setFactorId] = useState<string | null>(null);
-  const [code, setCode] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [factorId, setFactorId] = useState<string | null>(null)
+  const [code, setCode] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!open) return;
-    setCode("");
-    setError(null);
-    setLoading(true);
+    if (!open) return
+    setCode('')
+    setError(null)
+    setLoading(true)
     void getBrowserClient()
       .auth.mfa.listFactors()
       .then(({ data, error: factorsError }) => {
-        const factor = data?.totp.find((candidate) => candidate.status === "verified");
-        setFactorId(factor?.id ?? null);
+        const factor = data?.totp.find((candidate) => candidate.status === 'verified')
+        setFactorId(factor?.id ?? null)
         if (factorsError || !factor) {
-          setError("No hay una aplicación Authenticator configurada para esta cuenta.");
+          setError('No hay una aplicación Authenticator configurada para esta cuenta.')
         }
       })
-      .finally(() => setLoading(false));
-  }, [open]);
+      .finally(() => setLoading(false))
+  }, [open])
 
   async function verify(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!factorId) return;
-    setError(null);
-    setLoading(true);
+    event.preventDefault()
+    if (!factorId) return
+    setError(null)
+    setLoading(true)
     const { error: verifyError } = await getBrowserClient().auth.mfa.challengeAndVerify({
       factorId,
       code,
-    });
-    setLoading(false);
+    })
+    setLoading(false)
     if (verifyError) {
-      setError("El código no es válido. Comprueba la hora de tu dispositivo e inténtalo de nuevo.");
-      return;
+      setError('El código no es válido. Comprueba la hora de tu dispositivo e inténtalo de nuevo.')
+      return
     }
-    onVerified();
+    onVerified()
   }
 
   return (
@@ -79,7 +80,7 @@ export function MfaChallengeDialog({
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <ShieldCheck className="size-5 text-primary" /> Confirmar acción
+            <ShieldCheck className="text-primary size-5" /> Confirmar acción
           </DialogTitle>
           <DialogDescription>
             Introduce el código de seis dígitos de Google Authenticator para continuar. No saldrás
@@ -96,17 +97,17 @@ export function MfaChallengeDialog({
               onChange={setCode}
               disabled={loading || !factorId}
               aria-invalid={Boolean(error)}
-              aria-describedby={error ? "invoice-mfa-code-error" : undefined}
+              aria-describedby={error ? 'invoice-mfa-code-error' : undefined}
               required
             />
           </Field>
           {error ? (
-            <p id="invoice-mfa-code-error" role="alert" className="text-sm text-destructive">
+            <p id="invoice-mfa-code-error" role="alert" className="text-destructive text-sm">
               {error}
             </p>
           ) : null}
           {error && setupHref ? (
-            <a className="text-sm text-primary underline underline-offset-4" href={setupHref}>
+            <a className="text-primary text-sm underline underline-offset-4" href={setupHref}>
               Configurar MFA en Seguridad
             </a>
           ) : null}
@@ -128,5 +129,5 @@ export function MfaChallengeDialog({
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

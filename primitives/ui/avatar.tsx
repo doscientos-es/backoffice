@@ -6,4 +6,4 @@
   AvatarGroupCount,
   AvatarImage,
   type AvatarProps,
-} from "@doscientos/ui";
+} from '@doscientos/ui'

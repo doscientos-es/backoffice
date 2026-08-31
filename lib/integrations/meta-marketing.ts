@@ -1,81 +1,81 @@
-import { isDemoMode } from "@/lib/demo";
-import { serverEnv } from "@/lib/env";
-import { scopedLogger } from "@/lib/logger";
+import { isDemoMode } from '@/lib/demo'
+import { serverEnv } from '@/lib/env'
+import { scopedLogger } from '@/lib/logger'
 
-const log = scopedLogger("meta-marketing");
+const log = scopedLogger('meta-marketing')
 
 // ---------------- Types ----------------
 
 export interface MetaMarketingCampaign {
-  id: string;
-  name: string;
-  status: string;
-  objective: string;
-  buying_type: string;
-  start_time?: string;
-  stop_time?: string;
+  id: string
+  name: string
+  status: string
+  objective: string
+  buying_type: string
+  start_time?: string
+  stop_time?: string
 }
 
 export interface MetaMarketingAdSet {
-  id: string;
-  campaign_id: string;
-  name: string;
-  status: string;
-  billing_event: string;
-  optimization_goal: string;
-  daily_budget?: string;
-  lifetime_budget?: string;
+  id: string
+  campaign_id: string
+  name: string
+  status: string
+  billing_event: string
+  optimization_goal: string
+  daily_budget?: string
+  lifetime_budget?: string
 }
 
 export interface MetaMarketingAd {
-  id: string;
-  adset_id: string;
-  campaign_id: string;
-  name: string;
-  status: string;
+  id: string
+  adset_id: string
+  campaign_id: string
+  name: string
+  status: string
   creative?: {
-    id: string;
-    thumbnail_url?: string;
-    call_to_action_type?: string;
-    url_tags?: string;
-    object_url?: string;
+    id: string
+    thumbnail_url?: string
+    call_to_action_type?: string
+    url_tags?: string
+    object_url?: string
     object_story_spec?: {
       link_data?: {
-        link?: string;
-        call_to_action?: { type?: string; value?: { lead_gen_form_id?: string } };
-      };
+        link?: string
+        call_to_action?: { type?: string; value?: { lead_gen_form_id?: string } }
+      }
       template_data?: {
-        link?: string;
-        call_to_action?: { type?: string; value?: { lead_gen_form_id?: string } };
-      };
-    };
-  };
+        link?: string
+        call_to_action?: { type?: string; value?: { lead_gen_form_id?: string } }
+      }
+    }
+  }
 }
 
 export interface MetaActionStat {
-  action_type: string;
-  value: string;
+  action_type: string
+  value: string
 }
 
 export interface MetaMarketingInsight {
-  ad_id?: string;
-  campaign_id?: string;
-  campaign_name?: string;
-  date_start: string;
-  date_stop: string;
-  impressions: string;
-  reach: string;
-  clicks: string;
-  spend: string;
-  ctr: string;
-  cpc?: string;
-  cpp?: string;
-  inline_link_clicks?: string;
-  outbound_clicks?: MetaActionStat[];
-  unique_outbound_clicks?: MetaActionStat[];
-  account_currency?: string;
-  actions?: MetaActionStat[];
-  cost_per_action_type?: MetaActionStat[];
+  ad_id?: string
+  campaign_id?: string
+  campaign_name?: string
+  date_start: string
+  date_stop: string
+  impressions: string
+  reach: string
+  clicks: string
+  spend: string
+  ctr: string
+  cpc?: string
+  cpp?: string
+  inline_link_clicks?: string
+  outbound_clicks?: MetaActionStat[]
+  unique_outbound_clicks?: MetaActionStat[]
+  account_currency?: string
+  actions?: MetaActionStat[]
+  cost_per_action_type?: MetaActionStat[]
 }
 
 /**
@@ -83,9 +83,9 @@ export interface MetaMarketingInsight {
  * `onsite_conversion.lead_grouped` is the modern grouped form-fill metric.
  * Campaigns usually report one or the other depending on objective.
  */
-const LEAD_ACTION_TYPES = new Set(["lead", "onsite_conversion.lead_grouped"]);
-const LANDING_PAGE_VIEW_ACTION_TYPES = new Set(["landing_page_view"]);
-const OUTBOUND_CLICK_ACTION_TYPES = new Set(["outbound_click"]);
+const LEAD_ACTION_TYPES = new Set(['lead', 'onsite_conversion.lead_grouped'])
+const LANDING_PAGE_VIEW_ACTION_TYPES = new Set(['landing_page_view'])
+const OUTBOUND_CLICK_ACTION_TYPES = new Set(['outbound_click'])
 
 function sumActionValues(
   actions: MetaActionStat[] | undefined,
@@ -93,7 +93,7 @@ function sumActionValues(
 ): number {
   return (actions ?? [])
     .filter((action) => actionTypes.has(action.action_type))
-    .reduce((sum, action) => sum + (Number.parseFloat(action.value) || 0), 0);
+    .reduce((sum, action) => sum + (Number.parseFloat(action.value) || 0), 0)
 }
 
 /**
@@ -105,105 +105,105 @@ export function extractMetaLeads(
   actions: MetaActionStat[] | undefined,
   spend: number,
 ): { totalLeads: number; costPerLead: number } {
-  const totalLeads = sumActionValues(actions, LEAD_ACTION_TYPES);
+  const totalLeads = sumActionValues(actions, LEAD_ACTION_TYPES)
 
   return {
     totalLeads,
     costPerLead: totalLeads > 0 ? spend / totalLeads : 0,
-  };
+  }
 }
 
 /** Metrics that describe the path from an ad click to an actual page view. */
 export function extractMetaTrafficMetrics(insight: MetaMarketingInsight): {
-  inlineLinkClicks: number;
-  outboundClicks: number;
-  uniqueOutboundClicks: number;
-  landingPageViews: number;
+  inlineLinkClicks: number
+  outboundClicks: number
+  uniqueOutboundClicks: number
+  landingPageViews: number
 } {
   return {
-    inlineLinkClicks: Number.parseInt(insight.inline_link_clicks ?? "", 10) || 0,
+    inlineLinkClicks: Number.parseInt(insight.inline_link_clicks ?? '', 10) || 0,
     outboundClicks: sumActionValues(insight.outbound_clicks, OUTBOUND_CLICK_ACTION_TYPES),
     uniqueOutboundClicks: sumActionValues(
       insight.unique_outbound_clicks,
       OUTBOUND_CLICK_ACTION_TYPES,
     ),
     landingPageViews: sumActionValues(insight.actions, LANDING_PAGE_VIEW_ACTION_TYPES),
-  };
+  }
 }
 
 /** Extract stable, user-visible creative details without depending on raw JSON. */
 export function extractMetaCreativeDetails(ad: MetaMarketingAd): {
-  creativeId: string | null;
-  destinationUrl: string | null;
-  urlTags: string | null;
-  callToActionType: string | null;
-  leadFormId: string | null;
+  creativeId: string | null
+  destinationUrl: string | null
+  urlTags: string | null
+  callToActionType: string | null
+  leadFormId: string | null
 } {
-  const creative = ad.creative;
+  const creative = ad.creative
   const linkData =
-    creative?.object_story_spec?.link_data ?? creative?.object_story_spec?.template_data;
+    creative?.object_story_spec?.link_data ?? creative?.object_story_spec?.template_data
   return {
     creativeId: creative?.id ?? null,
     destinationUrl: creative?.object_url ?? linkData?.link ?? null,
     urlTags: creative?.url_tags ?? null,
     callToActionType: creative?.call_to_action_type ?? linkData?.call_to_action?.type ?? null,
     leadFormId: linkData?.call_to_action?.value?.lead_gen_form_id ?? null,
-  };
+  }
 }
 
 // ---------------- API Calls ----------------
 
-const REQUEST_TIMEOUT_MS = 25_000;
-const MAX_ATTEMPTS = 4;
-const PAGE_LIMIT = 100;
+const REQUEST_TIMEOUT_MS = 25_000
+const MAX_ATTEMPTS = 4
+const PAGE_LIMIT = 100
 const TRANSIENT_NET_CODES = new Set([
-  "ECONNRESET",
-  "ETIMEDOUT",
-  "ECONNREFUSED",
-  "EAI_AGAIN",
-  "ENETUNREACH",
-  "UND_ERR_SOCKET",
-  "UND_ERR_CONNECT_TIMEOUT",
-  "UND_ERR_HEADERS_TIMEOUT",
-]);
+  'ECONNRESET',
+  'ETIMEDOUT',
+  'ECONNREFUSED',
+  'EAI_AGAIN',
+  'ENETUNREACH',
+  'UND_ERR_SOCKET',
+  'UND_ERR_CONNECT_TIMEOUT',
+  'UND_ERR_HEADERS_TIMEOUT',
+])
 
 function isTransientNetworkError(err: unknown): boolean {
-  if (!(err instanceof Error)) return false;
-  if (err.name === "AbortError") return true;
+  if (!(err instanceof Error)) return false
+  if (err.name === 'AbortError') return true
   // undici exposes the underlying cause with a Node `code`
-  const cause = (err as { cause?: unknown }).cause;
+  const cause = (err as { cause?: unknown }).cause
   const code =
-    (cause && typeof cause === "object" && "code" in cause
+    (cause && typeof cause === 'object' && 'code' in cause
       ? (cause as { code?: unknown }).code
-      : undefined) ?? (err as { code?: unknown }).code;
-  return typeof code === "string" && TRANSIENT_NET_CODES.has(code);
+      : undefined) ?? (err as { code?: unknown }).code
+  return typeof code === 'string' && TRANSIENT_NET_CODES.has(code)
 }
 
 function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 async function fetchWithRetry(url: string, attempt = 1): Promise<Response> {
   try {
     const res = await fetch(url, {
-      cache: "no-store",
+      cache: 'no-store',
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    });
+    })
     if ((res.status >= 500 || res.status === 429) && attempt < MAX_ATTEMPTS) {
-      const delay = 2 ** (attempt - 1) * 500 + Math.floor(Math.random() * 250);
-      log.warn({ status: res.status, attempt, delay }, "Meta API transient HTTP, retrying");
-      await sleep(delay);
-      return fetchWithRetry(url, attempt + 1);
+      const delay = 2 ** (attempt - 1) * 500 + Math.floor(Math.random() * 250)
+      log.warn({ status: res.status, attempt, delay }, 'Meta API transient HTTP, retrying')
+      await sleep(delay)
+      return fetchWithRetry(url, attempt + 1)
     }
-    return res;
+    return res
   } catch (err) {
     if (isTransientNetworkError(err) && attempt < MAX_ATTEMPTS) {
-      const delay = 2 ** (attempt - 1) * 500 + Math.floor(Math.random() * 250);
-      log.warn({ err, attempt, delay }, "Meta API transient network error, retrying");
-      await sleep(delay);
-      return fetchWithRetry(url, attempt + 1);
+      const delay = 2 ** (attempt - 1) * 500 + Math.floor(Math.random() * 250)
+      log.warn({ err, attempt, delay }, 'Meta API transient network error, retrying')
+      await sleep(delay)
+      return fetchWithRetry(url, attempt + 1)
     }
-    throw err;
+    throw err
   }
 }
 
@@ -211,69 +211,69 @@ async function fetchMetaMarketing<T>(
   path: string,
   params: Record<string, string> = {},
 ): Promise<T[]> {
-  if (isDemoMode()) return [];
+  if (isDemoMode()) return []
 
-  const env = serverEnv();
-  const token = env.META_USER_ACCESS_TOKEN || env.META_PAGE_ACCESS_TOKEN;
+  const env = serverEnv()
+  const token = env.META_USER_ACCESS_TOKEN || env.META_PAGE_ACCESS_TOKEN
 
   if (!token) {
-    throw new Error("Meta Access Token (User or Page) not configured");
+    throw new Error('Meta Access Token (User or Page) not configured')
   }
 
-  const firstUrl = new URL(`https://graph.facebook.com/${env.META_GRAPH_API_VERSION}/${path}`);
-  firstUrl.searchParams.set("access_token", token);
-  firstUrl.searchParams.set("limit", String(PAGE_LIMIT));
+  const firstUrl = new URL(`https://graph.facebook.com/${env.META_GRAPH_API_VERSION}/${path}`)
+  firstUrl.searchParams.set('access_token', token)
+  firstUrl.searchParams.set('limit', String(PAGE_LIMIT))
   for (const [key, value] of Object.entries(params)) {
-    firstUrl.searchParams.set(key, value);
+    firstUrl.searchParams.set(key, value)
   }
 
-  const results: T[] = [];
-  let nextUrl: string | null = firstUrl.toString();
-  let pages = 0;
+  const results: T[] = []
+  let nextUrl: string | null = firstUrl.toString()
+  let pages = 0
 
   while (nextUrl) {
-    const res = await fetchWithRetry(nextUrl);
+    const res = await fetchWithRetry(nextUrl)
     if (!res.ok) {
-      const errorBody = await res.text().catch(() => "");
-      throw new Error(`Meta API Error ${res.status}: ${errorBody.slice(0, 500)}`);
+      const errorBody = await res.text().catch(() => '')
+      throw new Error(`Meta API Error ${res.status}: ${errorBody.slice(0, 500)}`)
     }
-    const data = (await res.json()) as { data?: T[]; paging?: { next?: string } };
-    if (data.data?.length) results.push(...data.data);
-    nextUrl = data.paging?.next ?? null;
-    pages++;
+    const data = (await res.json()) as { data?: T[]; paging?: { next?: string } }
+    if (data.data?.length) results.push(...data.data)
+    nextUrl = data.paging?.next ?? null
+    pages++
   }
 
-  log.debug({ path, pages, count: results.length }, "Meta API fetch complete");
-  return results;
+  log.debug({ path, pages, count: results.length }, 'Meta API fetch complete')
+  return results
 }
 
 export async function getMetaCampaigns(): Promise<MetaMarketingCampaign[]> {
-  const env = serverEnv();
-  if (!env.META_AD_ACCOUNT_ID) throw new Error("META_AD_ACCOUNT_ID not configured");
+  const env = serverEnv()
+  if (!env.META_AD_ACCOUNT_ID) throw new Error('META_AD_ACCOUNT_ID not configured')
 
   return fetchMetaMarketing<MetaMarketingCampaign>(`${env.META_AD_ACCOUNT_ID}/campaigns`, {
-    fields: "id,name,status,objective,buying_type,start_time,stop_time",
-  });
+    fields: 'id,name,status,objective,buying_type,start_time,stop_time',
+  })
 }
 
 export async function getMetaAdSets(): Promise<MetaMarketingAdSet[]> {
-  const env = serverEnv();
-  if (!env.META_AD_ACCOUNT_ID) throw new Error("META_AD_ACCOUNT_ID not configured");
+  const env = serverEnv()
+  if (!env.META_AD_ACCOUNT_ID) throw new Error('META_AD_ACCOUNT_ID not configured')
 
   return fetchMetaMarketing<MetaMarketingAdSet>(`${env.META_AD_ACCOUNT_ID}/adsets`, {
     fields:
-      "id,campaign_id,name,status,billing_event,optimization_goal,daily_budget,lifetime_budget",
-  });
+      'id,campaign_id,name,status,billing_event,optimization_goal,daily_budget,lifetime_budget',
+  })
 }
 
 export async function getMetaAds(): Promise<MetaMarketingAd[]> {
-  const env = serverEnv();
-  if (!env.META_AD_ACCOUNT_ID) throw new Error("META_AD_ACCOUNT_ID not configured");
+  const env = serverEnv()
+  if (!env.META_AD_ACCOUNT_ID) throw new Error('META_AD_ACCOUNT_ID not configured')
 
   return fetchMetaMarketing<MetaMarketingAd>(`${env.META_AD_ACCOUNT_ID}/ads`, {
     fields:
-      "id,adset_id,campaign_id,name,status,creative{id,thumbnail_url,call_to_action_type,url_tags,object_url,object_story_spec}",
-  });
+      'id,adset_id,campaign_id,name,status,creative{id,thumbnail_url,call_to_action_type,url_tags,object_url,object_story_spec}',
+  })
 }
 
 /**
@@ -291,16 +291,16 @@ export async function getMetaInsights(
   since: string,
   until: string,
 ): Promise<MetaMarketingInsight[]> {
-  const env = serverEnv();
-  if (!env.META_AD_ACCOUNT_ID) throw new Error("META_AD_ACCOUNT_ID not configured");
+  const env = serverEnv()
+  if (!env.META_AD_ACCOUNT_ID) throw new Error('META_AD_ACCOUNT_ID not configured')
 
   return fetchMetaMarketing<MetaMarketingInsight>(`${env.META_AD_ACCOUNT_ID}/insights`, {
-    level: "ad",
+    level: 'ad',
     fields:
-      "ad_id,date_start,date_stop,impressions,reach,clicks,inline_link_clicks,outbound_clicks,unique_outbound_clicks,spend,ctr,cpc,cpp,account_currency,actions,cost_per_action_type",
+      'ad_id,date_start,date_stop,impressions,reach,clicks,inline_link_clicks,outbound_clicks,unique_outbound_clicks,spend,ctr,cpc,cpp,account_currency,actions,cost_per_action_type',
     time_range: JSON.stringify({ since, until }),
-    time_increment: "1",
-  });
+    time_increment: '1',
+  })
 }
 
 /**
@@ -308,33 +308,33 @@ export async function getMetaInsights(
  * placement format. Body looks like `<iframe src="https://..."></iframe>`.
  */
 export type MetaAdPreviewFormat =
-  | "DESKTOP_FEED_STANDARD"
-  | "MOBILE_FEED_STANDARD"
-  | "INSTAGRAM_STANDARD"
-  | "FACEBOOK_STORY_MOBILE"
-  | "INSTAGRAM_STORY";
+  | 'DESKTOP_FEED_STANDARD'
+  | 'MOBILE_FEED_STANDARD'
+  | 'INSTAGRAM_STANDARD'
+  | 'FACEBOOK_STORY_MOBILE'
+  | 'INSTAGRAM_STORY'
 
 export async function getMetaAdPreview(
   adId: string,
-  format: MetaAdPreviewFormat = "DESKTOP_FEED_STANDARD",
+  format: MetaAdPreviewFormat = 'DESKTOP_FEED_STANDARD',
 ): Promise<string | null> {
-  if (isDemoMode()) return null;
+  if (isDemoMode()) return null
 
-  const env = serverEnv();
-  const token = env.META_USER_ACCESS_TOKEN || env.META_PAGE_ACCESS_TOKEN;
-  if (!token) throw new Error("Meta Access Token (User or Page) not configured");
+  const env = serverEnv()
+  const token = env.META_USER_ACCESS_TOKEN || env.META_PAGE_ACCESS_TOKEN
+  if (!token) throw new Error('Meta Access Token (User or Page) not configured')
 
-  const url = new URL(`https://graph.facebook.com/${env.META_GRAPH_API_VERSION}/${adId}/previews`);
-  url.searchParams.set("access_token", token);
-  url.searchParams.set("ad_format", format);
+  const url = new URL(`https://graph.facebook.com/${env.META_GRAPH_API_VERSION}/${adId}/previews`)
+  url.searchParams.set('access_token', token)
+  url.searchParams.set('ad_format', format)
 
-  const res = await fetchWithRetry(url.toString());
+  const res = await fetchWithRetry(url.toString())
   if (!res.ok) {
-    const errorBody = await res.text().catch(() => "");
-    throw new Error(`Meta API Error ${res.status}: ${errorBody.slice(0, 300)}`);
+    const errorBody = await res.text().catch(() => '')
+    throw new Error(`Meta API Error ${res.status}: ${errorBody.slice(0, 300)}`)
   }
-  const data = (await res.json()) as { data?: Array<{ body: string }> };
-  return data.data?.[0]?.body ?? null;
+  const data = (await res.json()) as { data?: Array<{ body: string }> }
+  return data.data?.[0]?.body ?? null
 }
 
 /**
@@ -344,23 +344,23 @@ export async function getMetaAdPreview(
  */
 export async function getMetaCampaignInsights(
   datePreset:
-    | "today"
-    | "yesterday"
-    | "this_month"
-    | "last_month"
-    | "last_30d"
-    | "lifetime" = "this_month",
+    | 'today'
+    | 'yesterday'
+    | 'this_month'
+    | 'last_month'
+    | 'last_30d'
+    | 'lifetime' = 'this_month',
 ): Promise<MetaMarketingInsight[]> {
-  const env = serverEnv();
-  if (!env.META_AD_ACCOUNT_ID) throw new Error("META_AD_ACCOUNT_ID not configured");
+  const env = serverEnv()
+  if (!env.META_AD_ACCOUNT_ID) throw new Error('META_AD_ACCOUNT_ID not configured')
 
   return fetchMetaMarketing<MetaMarketingInsight>(`${env.META_AD_ACCOUNT_ID}/insights`, {
-    level: "campaign",
+    level: 'campaign',
     fields:
-      "campaign_id,campaign_name,date_start,date_stop,impressions,reach,clicks,spend,ctr,cpc,account_currency,actions,cost_per_action_type",
+      'campaign_id,campaign_name,date_start,date_stop,impressions,reach,clicks,spend,ctr,cpc,account_currency,actions,cost_per_action_type',
     date_preset: datePreset,
     filtering: JSON.stringify([
-      { field: "campaign.delivery_info", operator: "IN", value: ["active"] },
+      { field: 'campaign.delivery_info', operator: 'IN', value: ['active'] },
     ]),
-  });
+  })
 }

@@ -1,8 +1,7 @@
-import "server-only";
-
-import { formatAddress } from "@/lib/address";
-import { buildVatBreakdown, type VatBreakdownRow } from "@/lib/finance";
-import { verifactuInvoiceConfigFromEnv } from "@/lib/verifactu/config";
+import 'server-only'
+import { formatAddress } from '@/lib/address'
+import { buildVatBreakdown, type VatBreakdownRow } from '@/lib/finance'
+import { verifactuInvoiceConfigFromEnv } from '@/lib/verifactu/config'
 
 /**
  * Normalised, render-ready snapshot of an invoice for the PDF document.
@@ -11,108 +10,108 @@ import { verifactuInvoiceConfigFromEnv } from "@/lib/verifactu/config";
  * routes so the generated document is identical regardless of the caller.
  */
 export type InvoicePdfItem = {
-  description: string;
-  quantity: number;
-  unitPrice: number;
-  vatRate: number;
-  subtotal: number;
-};
+  description: string
+  quantity: number
+  unitPrice: number
+  vatRate: number
+  subtotal: number
+}
 
 /** Render-ready work-log entry shown on the PDF activity page. */
 export type InvoicePdfWorkLog = {
-  workDate: string | null;
-  memberName: string | null;
-  startTime: string | null;
-  endTime: string | null;
-  hours: number;
-  note: string | null;
-};
+  workDate: string | null
+  memberName: string | null
+  startTime: string | null
+  endTime: string | null
+  hours: number
+  note: string | null
+}
 
 /** Raw work-log row both callers can shape from their own queries. */
 export type InvoicePdfWorkLogInput = {
-  work_date: string | null;
-  member_name: string | null;
-  start_time: string | null;
-  end_time: string | null;
-  hours: number | null;
-  note: string | null;
-};
+  work_date: string | null
+  member_name: string | null
+  start_time: string | null
+  end_time: string | null
+  hours: number | null
+  note: string | null
+}
 
 export type InvoicePdfData = {
-  fullNumber: string;
-  invoiceType: string | null;
-  status: string;
-  issueDate: string | null;
-  dueDate: string | null;
-  idfact: string | null;
-  verifactuCsv: string | null;
-  clientName: string | null;
-  clientLogoUrl: string | null;
-  clientNif: string | null;
-  clientAddress: string | null;
+  fullNumber: string
+  invoiceType: string | null
+  status: string
+  issueDate: string | null
+  dueDate: string | null
+  idfact: string | null
+  verifactuCsv: string | null
+  clientName: string | null
+  clientLogoUrl: string | null
+  clientNif: string | null
+  clientAddress: string | null
   company: {
-    name: string | null;
-    nif: string | null;
-    address: string | null;
-    iban: string | null;
-  } | null;
-  items: InvoicePdfItem[];
-  subtotal: number;
-  total: number;
-  vatBreakdown: VatBreakdownRow[];
-  qrDataUrl: string | null;
+    name: string | null
+    nif: string | null
+    address: string | null
+    iban: string | null
+  } | null
+  items: InvoicePdfItem[]
+  subtotal: number
+  total: number
+  vatBreakdown: VatBreakdownRow[]
+  qrDataUrl: string | null
   /** Public portal URL so clients can pay online (shown in payment section). */
-  portalUrl: string | null;
+  portalUrl: string | null
   /** Payment terms shown in the payment section (per-invoice override or company default). */
-  paymentTerms: string | null;
+  paymentTerms: string | null
   /** Tracked hours linked to this invoice, rendered on a second page. */
-  workLogs: InvoicePdfWorkLog[];
-};
+  workLogs: InvoicePdfWorkLog[]
+}
 
 /** Raw pieces both callers can shape from their own queries. */
 export type BuildInvoicePdfInput = {
   invoice: {
-    full_number: string | null;
-    invoice_type: string | null;
-    status: string | null;
-    verifactu_status: string | null;
-    issue_date: string | null;
-    due_date: string | null;
-    idfact: string | null;
-    verifactu_csv: string | null;
-    qr_url?: string | null;
-    subtotal: number | null;
-    total: number | null;
-    client_nif: string | null;
-    client_address_street?: string | null;
-    client_address_zip?: string | null;
-    client_address_city?: string | null;
-    client_address_province?: string | null;
-    client_address_country?: string | null;
+    full_number: string | null
+    invoice_type: string | null
+    status: string | null
+    verifactu_status: string | null
+    issue_date: string | null
+    due_date: string | null
+    idfact: string | null
+    verifactu_csv: string | null
+    qr_url?: string | null
+    subtotal: number | null
+    total: number | null
+    client_nif: string | null
+    client_address_street?: string | null
+    client_address_zip?: string | null
+    client_address_city?: string | null
+    client_address_province?: string | null
+    client_address_country?: string | null
     /** Portal token used to build the public payment URL. */
-    portal_token?: string | null;
+    portal_token?: string | null
     /** Per-invoice override for the payment terms. */
-    payment_terms?: string | null;
-  };
-  clientName: string | null;
-  clientLogoUrl?: string | null;
+    payment_terms?: string | null
+  }
+  clientName: string | null
+  clientLogoUrl?: string | null
   items: ReadonlyArray<{
-    description: string | null;
-    quantity: number | null;
-    unit_price: number | null;
-    vat_rate: number | null;
-    subtotal: number | null;
-  }>;
+    description: string | null
+    quantity: number | null
+    unit_price: number | null
+    vat_rate: number | null
+    subtotal: number | null
+  }>
   settings: {
-    company_name: string | null;
-    company_nif: string | null;
-    company_address?: string | null;
-    iban: string | null;
+    company_name: string | null
+    company_nif: string | null
+    company_address?: string | null
+    iban: string | null
     /** Company-wide default payment terms. */
-    payment_terms?: string | null;
-  } | null;
-  workLogs?: ReadonlyArray<InvoicePdfWorkLogInput>;
-};
+    payment_terms?: string | null
+  } | null
+  workLogs?: ReadonlyArray<InvoicePdfWorkLogInput>
+}
 
 /**
  * Build the Verifactu QR data URL when the invoice carries the required fiscal
@@ -120,27 +119,27 @@ export type BuildInvoicePdfInput = {
  * the statutory QR from an already-issued invoice.
  */
 async function buildInvoiceQr(
-  invoice: BuildInvoicePdfInput["invoice"],
+  invoice: BuildInvoicePdfInput['invoice'],
   emisorNif: string | null,
 ): Promise<string | null> {
-  const persistedQrUrl = invoice.qr_url?.trim();
+  const persistedQrUrl = invoice.qr_url?.trim()
   if (persistedQrUrl) {
-    const { buildQrDataUrl } = await import("@doscientos/verifactu");
-    return buildQrDataUrl(persistedQrUrl);
+    const { buildQrDataUrl } = await import('@doscientos/verifactu')
+    return buildQrDataUrl(persistedQrUrl)
   }
   if (
     !emisorNif ||
-    invoice.status === "draft" ||
+    invoice.status === 'draft' ||
     !invoice.full_number ||
     !invoice.issue_date ||
     invoice.total == null
   ) {
-    return null;
+    return null
   }
   // The package contains an optional native XML binding. Load it only for an
   // actual PDF QR request so Server Action bundles unrelated to PDF rendering
   // do not evaluate that binding during page render.
-  const { buildQrDataUrl, buildQrUrl } = await import("@doscientos/verifactu");
+  const { buildQrDataUrl, buildQrUrl } = await import('@doscientos/verifactu')
   const qrUrl = buildQrUrl(
     {
       nif: emisorNif,
@@ -149,33 +148,33 @@ async function buildInvoiceQr(
       total: invoice.total,
     },
     verifactuInvoiceConfigFromEnv(),
-  );
-  return buildQrDataUrl(qrUrl);
+  )
+  return buildQrDataUrl(qrUrl)
 }
 
 /** Default payment term (Ley 3/2004): 30 days from the issue date. */
-const DEFAULT_DUE_DAYS = 30;
+const DEFAULT_DUE_DAYS = 30
 
 /** Returns an ISO date string `days` after the given ISO date, or `null`. */
 function addDaysIso(isoDate: string | null, days: number): string | null {
-  if (!isoDate) return null;
-  const d = new Date(isoDate);
-  if (Number.isNaN(d.getTime())) return null;
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  if (!isoDate) return null
+  const d = new Date(isoDate)
+  if (Number.isNaN(d.getTime())) return null
+  d.setDate(d.getDate() + days)
+  return d.toISOString().slice(0, 10)
 }
 
 /** Shape raw query rows into the render-ready {@link InvoicePdfData}. */
 export async function buildInvoicePdfData(input: BuildInvoicePdfInput): Promise<InvoicePdfData> {
-  const { invoice, items, settings } = input;
+  const { invoice, items, settings } = input
 
   const normalisedItems: InvoicePdfItem[] = items.map((item) => ({
-    description: item.description ?? "",
+    description: item.description ?? '',
     quantity: Number(item.quantity ?? 0),
     unitPrice: Number(item.unit_price ?? 0),
     vatRate: Number(item.vat_rate ?? 0),
     subtotal: Number(item.subtotal ?? 0),
-  }));
+  }))
 
   const normalisedWorkLogs: InvoicePdfWorkLog[] = (input.workLogs ?? []).map((log) => ({
     workDate: log.work_date,
@@ -184,12 +183,12 @@ export async function buildInvoicePdfData(input: BuildInvoicePdfInput): Promise<
     endTime: log.end_time,
     hours: Number(log.hours ?? 0),
     note: log.note,
-  }));
+  }))
 
   return {
-    fullNumber: invoice.full_number ?? "",
+    fullNumber: invoice.full_number ?? '',
     invoiceType: invoice.invoice_type,
-    status: invoice.status ?? "draft",
+    status: invoice.status ?? 'draft',
     issueDate: invoice.issue_date,
     dueDate: invoice.due_date ?? addDaysIso(invoice.issue_date, DEFAULT_DUE_DAYS),
     idfact: invoice.idfact,
@@ -207,11 +206,11 @@ export async function buildInvoicePdfData(input: BuildInvoicePdfInput): Promise<
       }) || null,
     company: settings
       ? {
-        name: settings.company_name,
-        nif: settings.company_nif,
-        address: settings.company_address || null,
-        iban: settings.iban,
-      }
+          name: settings.company_name,
+          nif: settings.company_nif,
+          address: settings.company_address || null,
+          iban: settings.iban,
+        }
       : null,
     items: normalisedItems,
     subtotal: Number(invoice.subtotal ?? 0),
@@ -228,11 +227,11 @@ export async function buildInvoicePdfData(input: BuildInvoicePdfInput): Promise<
         : null,
     paymentTerms: invoice.payment_terms ?? settings?.payment_terms ?? null,
     workLogs: normalisedWorkLogs,
-  };
+  }
 }
 
 /** Safe, descriptive download filename for an invoice PDF. */
 export function invoicePdfFilename(fullNumber: string | null, fallbackId: string): string {
-  const base = (fullNumber ?? fallbackId).replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/^-+|-+$/g, "");
-  return `factura-${base || fallbackId}.pdf`;
+  const base = (fullNumber ?? fallbackId).replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/^-+|-+$/g, '')
+  return `factura-${base || fallbackId}.pdf`
 }

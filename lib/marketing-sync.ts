@@ -1,35 +1,36 @@
-import { roundCurrency } from "@/lib/finance/helpers";
-import { scopedLogger } from "@/lib/logger";
-import { createAdminClient } from "@/lib/supabase/admin";
-import * as MetaAPI from "./integrations/meta-marketing";
+import { roundCurrency } from '@/lib/finance/helpers'
+import { scopedLogger } from '@/lib/logger'
+import { createAdminClient } from '@/lib/supabase/admin'
+
+import * as MetaAPI from './integrations/meta-marketing'
 import {
   extractMetaCreativeDetails,
   extractMetaLeads,
   extractMetaTrafficMetrics,
-} from "./integrations/meta-marketing";
+} from './integrations/meta-marketing'
 
-const log = scopedLogger("marketing-sync");
+const log = scopedLogger('marketing-sync')
 
 /**
  * Full sync of Campaigns, Ad Sets and Ads from Meta.
  */
 export async function syncMetaCatalog() {
-  const supabase = createAdminClient();
+  const supabase = createAdminClient()
 
   try {
     const [campaigns, adsets, ads] = await Promise.all([
       MetaAPI.getMetaCampaigns(),
       MetaAPI.getMetaAdSets(),
       MetaAPI.getMetaAds(),
-    ]);
+    ])
 
     // `updated_at` lacks an UPDATE trigger so we set it explicitly on every
     // sync. This lets the dashboard derive "last sync" from max(updated_at).
-    const now = new Date().toISOString();
+    const now = new Date().toISOString()
 
     // Upsert Campaigns
     if (campaigns.length > 0) {
-      const { error: cErr } = await supabase.from("marketing_campaigns").upsert(
+      const { error: cErr } = await supabase.from('marketing_campaigns').upsert(
         campaigns.map((c) => ({
           id: c.id,
           name: c.name,
@@ -41,13 +42,13 @@ export async function syncMetaCatalog() {
           updated_at: now,
           raw_payload: c,
         })),
-      );
-      if (cErr) throw cErr;
+      )
+      if (cErr) throw cErr
     }
 
     // Upsert Ad Sets
     if (adsets.length > 0) {
-      const { error: asErr } = await supabase.from("marketing_ad_sets").upsert(
+      const { error: asErr } = await supabase.from('marketing_ad_sets').upsert(
         adsets.map((as) => ({
           id: as.id,
           campaign_id: as.campaign_id,
@@ -60,13 +61,13 @@ export async function syncMetaCatalog() {
           updated_at: now,
           raw_payload: as,
         })),
-      );
-      if (asErr) throw asErr;
+      )
+      if (asErr) throw asErr
     }
 
     // Upsert Ads
     if (ads.length > 0) {
-      const { error: aErr } = await supabase.from("marketing_ads").upsert(
+      const { error: aErr } = await supabase.from('marketing_ads').upsert(
         ads.map((a) => ({
           ...extractMetaCreativeDetails(a),
           id: a.id,
@@ -78,17 +79,17 @@ export async function syncMetaCatalog() {
           updated_at: now,
           raw_payload: a,
         })),
-      );
-      if (aErr) throw aErr;
+      )
+      if (aErr) throw aErr
     }
 
     return {
       ok: true,
       synced: { campaigns: campaigns.length, adsets: adsets.length, ads: ads.length },
-    };
+    }
   } catch (err) {
-    log.error({ err }, "syncMetaCatalog failed");
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    log.error({ err }, 'syncMetaCatalog failed')
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
   }
 }
 
@@ -96,17 +97,17 @@ export async function syncMetaCatalog() {
  * Sync daily insights for a given range.
  */
 export async function syncMetaInsights(since: string, until: string) {
-  const supabase = createAdminClient();
+  const supabase = createAdminClient()
 
   try {
-    const insights = await MetaAPI.getMetaInsights(since, until);
-    if (insights.length === 0) return { ok: true, synced: 0 };
+    const insights = await MetaAPI.getMetaInsights(since, until)
+    if (insights.length === 0) return { ok: true, synced: 0 }
 
-    const { error } = await supabase.from("marketing_insights").upsert(
+    const { error } = await supabase.from('marketing_insights').upsert(
       insights.map((i) => {
-        const spend = Number.parseFloat(i.spend) || 0;
-        const { totalLeads, costPerLead } = extractMetaLeads(i.actions, spend);
-        const traffic = extractMetaTrafficMetrics(i);
+        const spend = Number.parseFloat(i.spend) || 0
+        const { totalLeads, costPerLead } = extractMetaLeads(i.actions, spend)
+        const traffic = extractMetaTrafficMetrics(i)
         return {
           ad_id: i.ad_id,
           date_start: i.date_start,
@@ -119,22 +120,22 @@ export async function syncMetaInsights(since: string, until: string) {
           unique_outbound_clicks: traffic.uniqueOutboundClicks,
           landing_page_views: traffic.landingPageViews,
           spend,
-          currency: i.account_currency ?? "EUR",
+          currency: i.account_currency ?? 'EUR',
           ctr: Number.parseFloat(i.ctr) || null,
           cpc: i.cpc ? Number.parseFloat(i.cpc) : null,
           cpp: i.cpp ? Number.parseFloat(i.cpp) : null,
           total_leads: totalLeads,
           cost_per_lead: costPerLead || null,
-        };
+        }
       }),
-      { onConflict: "ad_id,date_start" },
-    );
+      { onConflict: 'ad_id,date_start' },
+    )
 
-    if (error) throw error;
-    return { ok: true, synced: insights.length };
+    if (error) throw error
+    return { ok: true, synced: insights.length }
   } catch (err) {
-    log.error({ err }, "syncMetaInsights failed");
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    log.error({ err }, 'syncMetaInsights failed')
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
   }
 }
 
@@ -154,95 +155,95 @@ export async function syncMetaInsights(since: string, until: string) {
  * tax (`subtotal = total = spend`); the user can adjust individual rows later.
  */
 export async function syncMetaSpendToExpenses(since: string, until: string) {
-  const supabase = createAdminClient();
+  const supabase = createAdminClient()
 
   try {
     // Expand the lower bound to the first day of `since`'s month so each touched
     // month is aggregated in full, keeping the upsert idempotent regardless of
     // the window Meta was polled with.
-    const monthFloor = `${since.slice(0, 7)}-01`;
+    const monthFloor = `${since.slice(0, 7)}-01`
 
     const { data: rows, error: readErr } = await supabase
-      .from("marketing_insights")
-      .select("spend, currency, date_start, date_stop")
-      .gte("date_start", monthFloor)
-      .lte("date_start", until);
-    if (readErr) throw readErr;
+      .from('marketing_insights')
+      .select('spend, currency, date_start, date_stop')
+      .gte('date_start', monthFloor)
+      .lte('date_start', until)
+    if (readErr) throw readErr
 
     // Keep only true daily rows (date_start === date_stop) to avoid folding a
     // legacy period-aggregate row into a month, mirroring the dashboard queries.
-    type MonthBucket = { spend: number; currency: string; maxDate: string };
-    const byMonth = new Map<string, MonthBucket>();
+    type MonthBucket = { spend: number; currency: string; maxDate: string }
+    const byMonth = new Map<string, MonthBucket>()
     for (const r of rows ?? []) {
-      if (!r.date_start || r.date_start !== r.date_stop) continue;
-      const key = r.date_start.slice(0, 7); // YYYY-MM
+      if (!r.date_start || r.date_start !== r.date_stop) continue
+      const key = r.date_start.slice(0, 7) // YYYY-MM
       const bucket = byMonth.get(key) ?? {
         spend: 0,
-        currency: r.currency ?? "EUR",
+        currency: r.currency ?? 'EUR',
         maxDate: r.date_start,
-      };
-      bucket.spend += Number(r.spend ?? 0);
-      if (r.date_start > bucket.maxDate) bucket.maxDate = r.date_start;
-      byMonth.set(key, bucket);
+      }
+      bucket.spend += Number(r.spend ?? 0)
+      if (r.date_start > bucket.maxDate) bucket.maxDate = r.date_start
+      byMonth.set(key, bucket)
     }
 
     const months = Array.from(byMonth.entries())
       .map(([key, b]) => ({ key, ...b, spend: roundCurrency(b.spend) }))
-      .filter((m) => m.spend > 0);
-    if (months.length === 0) return { ok: true, synced: 0 };
+      .filter((m) => m.spend > 0)
+    if (months.length === 0) return { ok: true, synced: 0 }
 
     // Look up which months already have an auto-synced expense so we update in
     // place instead of inserting duplicates (no DB unique constraint on ref).
-    const refs = months.map((m) => `meta-ads-${m.key}`);
+    const refs = months.map((m) => `meta-ads-${m.key}`)
     const { data: existing, error: existErr } = await supabase
-      .from("expenses")
-      .select("id, invoice_reference")
-      .eq("category", "meta_ads")
-      .in("invoice_reference", refs)
-      .is("deleted_at", null);
-    if (existErr) throw existErr;
+      .from('expenses')
+      .select('id, invoice_reference')
+      .eq('category', 'meta_ads')
+      .in('invoice_reference', refs)
+      .is('deleted_at', null)
+    if (existErr) throw existErr
     const idByRef = new Map(
       (existing ?? []).map((e) => [e.invoice_reference as string, e.id as string]),
-    );
+    )
 
-    const now = new Date().toISOString();
-    const toInsert: Record<string, unknown>[] = [];
+    const now = new Date().toISOString()
+    const toInsert: Record<string, unknown>[] = []
 
     for (const m of months) {
-      const ref = `meta-ads-${m.key}`;
+      const ref = `meta-ads-${m.key}`
       const row = {
-        vendor: "Meta",
+        vendor: 'Meta',
         description: `Inversión en anuncios de Meta (${m.key})`,
-        category: "meta_ads" as const,
-        status: "paid" as const,
-        recurrence: "none" as const,
+        category: 'meta_ads' as const,
+        status: 'paid' as const,
+        recurrence: 'none' as const,
         expense_date: m.maxDate,
-        currency: m.currency || "EUR",
+        currency: m.currency || 'EUR',
         subtotal: m.spend,
         tax_rate: 0,
         tax_amount: 0,
         total: m.spend,
         invoice_reference: ref,
         updated_at: now,
-      };
+      }
 
-      const existingId = idByRef.get(ref);
+      const existingId = idByRef.get(ref)
       if (existingId) {
-        const { error: updErr } = await supabase.from("expenses").update(row).eq("id", existingId);
-        if (updErr) throw updErr;
+        const { error: updErr } = await supabase.from('expenses').update(row).eq('id', existingId)
+        if (updErr) throw updErr
       } else {
-        toInsert.push(row);
+        toInsert.push(row)
       }
     }
 
     if (toInsert.length > 0) {
-      const { error: insErr } = await supabase.from("expenses").insert(toInsert);
-      if (insErr) throw insErr;
+      const { error: insErr } = await supabase.from('expenses').insert(toInsert)
+      if (insErr) throw insErr
     }
 
-    return { ok: true, synced: months.length };
+    return { ok: true, synced: months.length }
   } catch (err) {
-    log.error({ err }, "syncMetaSpendToExpenses failed");
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    log.error({ err }, 'syncMetaSpendToExpenses failed')
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
   }
 }

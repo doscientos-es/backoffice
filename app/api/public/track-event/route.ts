@@ -1,61 +1,62 @@
-import { type NextRequest, NextResponse } from "next/server";
-import { serverEnv } from "@/lib/env";
+import { type NextRequest, NextResponse } from 'next/server'
+
+import { serverEnv } from '@/lib/env'
 import {
   clientIp,
   isLikelyBot,
   PublicTrackEventInput,
   recordConversionEvent,
-} from "@/lib/integrations/conversion-events";
-import { distributedRateLimit } from "@/lib/ratelimit";
+} from '@/lib/integrations/conversion-events'
+import { distributedRateLimit } from '@/lib/ratelimit'
 
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 /** Eventos por IP y minuto. Generoso: una visita normal manda 2-4. */
-const RATE_LIMIT = 60;
+const RATE_LIMIT = 60
 
 /** Cortafuegos contra payloads absurdos enviados a mano. */
-const MAX_BODY_BYTES = 4096;
+const MAX_BODY_BYTES = 4096
 
 function normalizeOrigin(value: string): string {
   return value
     .trim()
-    .replace(/^['"]+|['"]+$/g, "")
-    .replace(/\/+$/, "")
-    .toLowerCase();
+    .replace(/^['"]+|['"]+$/g, '')
+    .replace(/\/+$/, '')
+    .toLowerCase()
 }
 
 function allowedOrigins(): string[] {
-  return serverEnv().LANDING_ALLOWED_ORIGINS.split(",").map(normalizeOrigin).filter(Boolean);
+  return serverEnv().LANDING_ALLOWED_ORIGINS.split(',').map(normalizeOrigin).filter(Boolean)
 }
 
 function corsHeaders(origin: string | null): Record<string, string> {
   const headers: Record<string, string> = {
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Max-Age": "86400",
-    Vary: "Origin",
-  };
-  const allowed = allowedOrigins();
-  if (allowed.includes("*")) headers["Access-Control-Allow-Origin"] = "*";
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Max-Age': '86400',
+    Vary: 'Origin',
+  }
+  const allowed = allowedOrigins()
+  if (allowed.includes('*')) headers['Access-Control-Allow-Origin'] = '*'
   else if (origin && allowed.includes(normalizeOrigin(origin)))
-    headers["Access-Control-Allow-Origin"] = origin;
-  return headers;
+    headers['Access-Control-Allow-Origin'] = origin
+  return headers
 }
 
 function isAllowedOrigin(origin: string | null): boolean {
-  const allowed = allowedOrigins();
+  const allowed = allowedOrigins()
   return (
-    allowed.includes("*") ||
+    allowed.includes('*') ||
     (Boolean(origin) && allowed.includes(normalizeOrigin(origin as string)))
-  );
+  )
 }
 
 export function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
     status: 204,
-    headers: corsHeaders(request.headers.get("origin")),
-  });
+    headers: corsHeaders(request.headers.get('origin')),
+  })
 }
 
 /**
@@ -71,35 +72,35 @@ export function OPTIONS(request: NextRequest) {
  * cuentan como silencio, no como fallo.
  */
 export async function POST(request: NextRequest) {
-  const origin = request.headers.get("origin");
-  const cors = corsHeaders(origin);
-  const noop = new NextResponse(null, { status: 204, headers: cors });
+  const origin = request.headers.get('origin')
+  const cors = corsHeaders(origin)
+  const noop = new NextResponse(null, { status: 204, headers: cors })
 
-  if (origin && !isAllowedOrigin(origin)) return noop;
+  if (origin && !isAllowedOrigin(origin)) return noop
 
   // Los crawlers no ejecutan JS, así que aquí solo llegan clientes fabricados.
-  if (isLikelyBot(request.headers.get("user-agent"))) return noop;
+  if (isLikelyBot(request.headers.get('user-agent'))) return noop
 
-  const ip = clientIp(request);
-  if (!(await distributedRateLimit(`public-track:${ip}`, RATE_LIMIT)).success) return noop;
+  const ip = clientIp(request)
+  if (!(await distributedRateLimit(`public-track:${ip}`, RATE_LIMIT)).success) return noop
 
-  const body = await request.text();
-  if (!body || body.length > MAX_BODY_BYTES) return noop;
+  const body = await request.text()
+  if (!body || body.length > MAX_BODY_BYTES) return noop
 
-  let raw: unknown;
+  let raw: unknown
   try {
-    raw = JSON.parse(body);
+    raw = JSON.parse(body)
   } catch {
-    return noop;
+    return noop
   }
 
-  const parsed = PublicTrackEventInput.safeParse(raw);
-  if (!parsed.success) return noop;
+  const parsed = PublicTrackEventInput.safeParse(raw)
+  if (!parsed.success) return noop
 
   await recordConversionEvent(parsed.data, {
     ip,
-    userAgent: request.headers.get("user-agent"),
-  });
+    userAgent: request.headers.get('user-agent'),
+  })
 
-  return noop;
+  return noop
 }

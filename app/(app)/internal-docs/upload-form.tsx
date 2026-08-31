@@ -1,74 +1,75 @@
-"use client";
+'use client'
 
-import { LoaderCircle as Loader2, Paperclip } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { DateField } from "@/components/ui/date-field";
-import { FormRow } from "@/components/ui/form-row";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { todayIsoLocal } from "@/lib/utils/date";
+import { LoaderCircle as Loader2, Paperclip } from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
+
+import { Button } from '@/components/ui/button'
+import { DateField } from '@/components/ui/date-field'
+import { FormRow } from '@/components/ui/form-row'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { todayIsoLocal } from '@/lib/utils/date'
 
 const CATEGORIES = [
-  { value: "legal", label: "Legal" },
-  { value: "hr", label: "RRHH" },
-  { value: "finance", label: "Finanzas" },
-  { value: "templates", label: "Plantillas" },
-  { value: "policies", label: "Políticas" },
-  { value: "meetings", label: "Actas" },
-  { value: "other", label: "Otro" },
-] as const;
+  { value: 'legal', label: 'Legal' },
+  { value: 'hr', label: 'RRHH' },
+  { value: 'finance', label: 'Finanzas' },
+  { value: 'templates', label: 'Plantillas' },
+  { value: 'policies', label: 'Políticas' },
+  { value: 'meetings', label: 'Actas' },
+  { value: 'other', label: 'Otro' },
+] as const
 
-const ACCEPTED = ".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg";
+const ACCEPTED = '.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg'
 
 export function UploadForm() {
-  const router = useRouter();
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter()
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [fileName, setFileName] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   // Avoid SSR/client hydration mismatch: set today's date after mount only.
-  const [effectiveDate, setEffectiveDate] = useState("");
+  const [effectiveDate, setEffectiveDate] = useState('')
   useEffect(() => {
-    setEffectiveDate(todayIsoLocal());
-  }, []);
+    setEffectiveDate(todayIsoLocal())
+  }, [])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError(null);
+    e.preventDefault()
+    setError(null)
 
-    const form = e.currentTarget;
-    const formData = new FormData(form);
+    const form = e.currentTarget
+    const formData = new FormData(form)
 
-    const file = fileRef.current?.files?.[0];
+    const file = fileRef.current?.files?.[0]
     if (!file) {
-      setError("Selecciona un archivo");
-      return;
+      setError('Selecciona un archivo')
+      return
     }
 
-    formData.set("file", file);
+    formData.set('file', file)
 
-    setUploading(true);
+    setUploading(true)
     try {
-      const res = await fetch("/api/internal-docs/upload", {
-        method: "POST",
+      const res = await fetch('/api/internal-docs/upload', {
+        method: 'POST',
         body: formData,
-      });
-      const json = (await res.json()) as { id?: string; error?: string };
+      })
+      const json = (await res.json()) as { id?: string; error?: string }
 
       if (!res.ok || !json.id) {
-        setError(json.error ?? "Error al subir el documento");
-        return;
+        setError(json.error ?? 'Error al subir el documento')
+        return
       }
 
-      router.push(`/internal-docs/${json.id}`);
+      router.push(`/internal-docs/${json.id}`)
     } catch {
-      setError("Error de red. Inténtalo de nuevo.");
+      setError('Error de red. Inténtalo de nuevo.')
     } finally {
-      setUploading(false);
+      setUploading(false)
     }
   }
 
@@ -97,9 +98,9 @@ export function UploadForm() {
             Seleccionar archivo
           </Button>
           {fileName ? (
-            <span className="truncate text-sm text-muted-foreground max-w-xs">{fileName}</span>
+            <span className="text-muted-foreground max-w-xs truncate text-sm">{fileName}</span>
           ) : (
-            <span className="text-sm text-muted-foreground">
+            <span className="text-muted-foreground text-sm">
               Máx. 50 MB · PDF, Word, Excel, imagen
             </span>
           )}
@@ -166,9 +167,9 @@ export function UploadForm() {
         />
       </FormRow>
 
-      {error && <p className="text-sm font-medium text-destructive">{error}</p>}
+      {error && <p className="text-destructive text-sm font-medium">{error}</p>}
 
-      <div className="flex items-center justify-end gap-2 border-t border-border pt-5">
+      <div className="border-border flex items-center justify-end gap-2 border-t pt-5">
         <Button asChild variant="ghost" size="sm">
           <Link href="/internal-docs">Cancelar</Link>
         </Button>
@@ -179,10 +180,10 @@ export function UploadForm() {
               Subiendo…
             </>
           ) : (
-            "Subir documento"
+            'Subir documento'
           )}
         </Button>
       </div>
     </form>
-  );
+  )
 }

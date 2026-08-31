@@ -1,26 +1,28 @@
-import { MessageSquare } from "lucide-react";
-import type { Metadata } from "next";
-import { BackLink } from "@/components/layout/back-link";
-import { PageHeader } from "@/components/layout/page-header";
+import { MessageSquare } from 'lucide-react'
+import type { Metadata } from 'next'
+
+import { BackLink } from '@/components/layout/back-link'
+import { PageHeader } from '@/components/layout/page-header'
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@/components/ui/empty-state";
-import { SectionBoundary } from "@/components/ui/error-boundary";
-import { Skeleton } from "@/components/ui/skeleton";
-import { requireUser } from "@/lib/auth";
-import { listComments } from "@/lib/social/repo";
-import { CommentCard } from "../../_components/comment-card";
-import { SyncButton } from "../../_components/sync-button";
+} from '@/components/ui/empty-state'
+import { SectionBoundary } from '@/components/ui/error-boundary'
+import { Skeleton } from '@/components/ui/skeleton'
+import { requireUser } from '@/lib/auth'
+import { listComments } from '@/lib/social/repo'
 
-export const metadata: Metadata = { title: "Bandeja de entrada · Social · doscientos" };
-export const dynamic = "force-dynamic";
+import { CommentCard } from '../../_components/comment-card'
+import { SyncButton } from '../../_components/sync-button'
+
+export const metadata: Metadata = { title: 'Bandeja de entrada · Social · doscientos' }
+export const dynamic = 'force-dynamic'
 
 async function CommentsList() {
-  const comments = await listComments();
+  const comments = await listComments()
   if (comments.length === 0) {
     return (
       <Empty className="mt-12">
@@ -34,7 +36,7 @@ async function CommentsList() {
           </EmptyDescription>
         </EmptyHeader>
       </Empty>
-    );
+    )
   }
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
@@ -42,7 +44,7 @@ async function CommentsList() {
         <CommentCard key={comment.id} comment={comment} />
       ))}
     </div>
-  );
+  )
 }
 
 function InboxSkeleton() {
@@ -50,7 +52,7 @@ function InboxSkeleton() {
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
       {Array.from({ length: 6 }).map((_, i) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton
-        <div key={i} className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
+        <div key={i} className="border-border bg-card flex flex-col gap-3 rounded-xl border p-4">
           <div className="flex flex-col gap-2">
             <Skeleton className="h-4 w-32" />
             <Skeleton className="h-3 w-20" />
@@ -63,11 +65,11 @@ function InboxSkeleton() {
         </div>
       ))}
     </div>
-  );
+  )
 }
 
 export default async function InboxPage() {
-  await requireUser();
+  await requireUser()
   return (
     <div className="flex flex-col gap-6">
       <BackLink href="/social" label="Social" />
@@ -80,5 +82,5 @@ export default async function InboxPage() {
         <CommentsList />
       </SectionBoundary>
     </div>
-  );
+  )
 }

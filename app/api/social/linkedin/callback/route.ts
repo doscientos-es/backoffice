@@ -13,86 +13,87 @@
  * authenticated admin only. This keeps the secret out of logs, DB, and code.
  */
 
-import { type NextRequest, NextResponse } from "next/server";
-import { serverEnv } from "@/lib/env";
-import { scopedLogger } from "@/lib/logger";
+import { type NextRequest, NextResponse } from 'next/server'
 
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
+import { serverEnv } from '@/lib/env'
+import { scopedLogger } from '@/lib/logger'
 
-const log = scopedLogger("social-linkedin.callback");
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
-const LINKEDIN_TOKEN_URL = "https://www.linkedin.com/oauth/v2/accessToken";
-const STATE_COOKIE = "li_oauth_state";
+const log = scopedLogger('social-linkedin.callback')
+
+const LINKEDIN_TOKEN_URL = 'https://www.linkedin.com/oauth/v2/accessToken'
+const STATE_COOKIE = 'li_oauth_state'
 
 interface LinkedInTokenResponse {
-  access_token: string;
-  expires_in: number;
-  scope: string;
+  access_token: string
+  expires_in: number
+  scope: string
 }
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = req.nextUrl;
-  const code = searchParams.get("code");
-  const state = searchParams.get("state");
-  const errorParam = searchParams.get("error");
-  const errorDescription = searchParams.get("error_description");
+  const { searchParams } = req.nextUrl
+  const code = searchParams.get('code')
+  const state = searchParams.get('state')
+  const errorParam = searchParams.get('error')
+  const errorDescription = searchParams.get('error_description')
 
   // ── LinkedIn returned an error ────────────────────────────────────────────
   if (errorParam) {
-    log.warn({ errorParam, errorDescription }, "LinkedIn OAuth error");
-    return htmlPage("Error de LinkedIn", `<p class="err">${errorDescription ?? errorParam}</p>`);
+    log.warn({ errorParam, errorDescription }, 'LinkedIn OAuth error')
+    return htmlPage('Error de LinkedIn', `<p class="err">${errorDescription ?? errorParam}</p>`)
   }
 
   // ── CSRF: compare state ───────────────────────────────────────────────────
-  const savedState = req.cookies.get(STATE_COOKIE)?.value;
+  const savedState = req.cookies.get(STATE_COOKIE)?.value
   if (!savedState || savedState !== state) {
-    log.warn({ savedState, state }, "LinkedIn OAuth state mismatch — possible CSRF");
-    return htmlPage("Error", `<p class="err">State inválido. Vuelve a iniciar el proceso.</p>`);
+    log.warn({ savedState, state }, 'LinkedIn OAuth state mismatch — possible CSRF')
+    return htmlPage('Error', `<p class="err">State inválido. Vuelve a iniciar el proceso.</p>`)
   }
 
   if (!code) {
-    return htmlPage("Error", `<p class="err">No se recibió el código de autorización.</p>`);
+    return htmlPage('Error', `<p class="err">No se recibió el código de autorización.</p>`)
   }
 
-  const env = serverEnv();
+  const env = serverEnv()
 
   // ── Exchange code → access token ──────────────────────────────────────────
-  let tokenData: LinkedInTokenResponse;
+  let tokenData: LinkedInTokenResponse
   try {
     const body = new URLSearchParams({
-      grant_type: "authorization_code",
+      grant_type: 'authorization_code',
       code,
       redirect_uri: env.LINKEDIN_REDIRECT_URI,
       client_id: env.LINKEDIN_CLIENT_ID,
       client_secret: env.LINKEDIN_CLIENT_SECRET,
-    });
+    })
 
     const res = await fetch(LINKEDIN_TOKEN_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: body.toString(),
-      cache: "no-store",
-    });
+      cache: 'no-store',
+    })
 
     if (!res.ok) {
-      const text = await res.text();
-      log.error({ status: res.status, body: text }, "LinkedIn token exchange failed");
-      return htmlPage("Error", `<p class="err">LinkedIn devolvió un error: ${res.status}</p>`);
+      const text = await res.text()
+      log.error({ status: res.status, body: text }, 'LinkedIn token exchange failed')
+      return htmlPage('Error', `<p class="err">LinkedIn devolvió un error: ${res.status}</p>`)
     }
 
-    tokenData = (await res.json()) as LinkedInTokenResponse;
+    tokenData = (await res.json()) as LinkedInTokenResponse
   } catch (err) {
-    log.error({ err }, "LinkedIn token request threw");
-    return htmlPage("Error", `<p class="err">Error de red al contactar con LinkedIn.</p>`);
+    log.error({ err }, 'LinkedIn token request threw')
+    return htmlPage('Error', `<p class="err">Error de red al contactar con LinkedIn.</p>`)
   }
 
-  const expiresIn = Math.round(tokenData.expires_in / 86400);
-  log.info({ scope: tokenData.scope, expiresInDays: expiresIn }, "LinkedIn token received");
+  const expiresIn = Math.round(tokenData.expires_in / 86400)
+  log.info({ scope: tokenData.scope, expiresInDays: expiresIn }, 'LinkedIn token received')
 
   // Clear the state cookie
   const res = htmlPage(
-    "✅ LinkedIn conectado",
+    '✅ LinkedIn conectado',
     `
     <p>Token obtenido correctamente. Copia el valor y pégalo en <code>.env.local</code>:</p>
     <pre id="token">${tokenData.access_token}</pre>
@@ -107,9 +108,9 @@ export async function GET(req: NextRequest) {
       <code>LINKEDIN_ACCESS_TOKEN=&lt;el token copiado&gt;</code>
     </p>
   `,
-  );
-  res.cookies.delete(STATE_COOKIE);
-  return res;
+  )
+  res.cookies.delete(STATE_COOKIE)
+  return res
 }
 
 // ── HTML helper ──────────────────────────────────────────────────────────────
@@ -133,9 +134,9 @@ function htmlPage(title: string, body: string): NextResponse {
   <h1>${title}</h1>
   ${body}
 </body>
-</html>`;
+</html>`
   return new NextResponse(html, {
     status: 200,
-    headers: { "Content-Type": "text/html; charset=utf-8" },
-  });
+    headers: { 'Content-Type': 'text/html; charset=utf-8' },
+  })
 }

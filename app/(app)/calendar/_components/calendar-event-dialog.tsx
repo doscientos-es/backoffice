@@ -1,7 +1,7 @@
-"use client";
+'use client'
 
-import { format, parseISO } from "date-fns";
-import { es } from "date-fns/locale";
+import { format, parseISO } from 'date-fns'
+import { es } from 'date-fns/locale'
 import {
   ArrowUpRight,
   Briefcase,
@@ -16,32 +16,33 @@ import {
   Trash as Trash2,
   User,
   Users,
-} from "lucide-react";
-import Link from "next/link";
-import { useTransition } from "react";
-import { sileo } from "sileo";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { deleteCalendarEvent } from "@/lib/calendar/actions";
+} from 'lucide-react'
+import Link from 'next/link'
+import { useTransition } from 'react'
+import { sileo } from 'sileo'
+
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { deleteCalendarEvent } from '@/lib/calendar/actions'
 import {
   CALENDAR_LAYER_COLORS,
   CALENDAR_LAYER_LABELS,
   type CalendarEvent,
-} from "@/lib/calendar/types";
-import { cn } from "@/lib/utils";
+} from '@/lib/calendar/types'
+import { cn } from '@/lib/utils'
 
 type Props = {
-  event: CalendarEvent | null;
-  onClose: () => void;
-  onDeleted?: (id: string) => void;
-};
+  event: CalendarEvent | null
+  onClose: () => void
+  onDeleted?: (id: string) => void
+}
 
 export function CalendarEventDialog({ event, onClose, onDeleted }: Props) {
   return (
     <Dialog open={!!event} onOpenChange={(o) => !o && onClose()}>
       {event && <EventDialogContent event={event} onClose={onClose} onDeleted={onDeleted} />}
     </Dialog>
-  );
+  )
 }
 
 function EventDialogContent({
@@ -49,42 +50,42 @@ function EventDialogContent({
   onClose,
   onDeleted,
 }: {
-  event: CalendarEvent;
-  onClose: () => void;
-  onDeleted?: (id: string) => void;
+  event: CalendarEvent
+  onClose: () => void
+  onDeleted?: (id: string) => void
 }) {
-  const colors = CALENDAR_LAYER_COLORS[event.kind];
-  const label = CALENDAR_LAYER_LABELS[event.kind];
-  const [deletePending, startDelete] = useTransition();
+  const colors = CALENDAR_LAYER_COLORS[event.kind]
+  const label = CALENDAR_LAYER_LABELS[event.kind]
+  const [deletePending, startDelete] = useTransition()
 
   function handleDelete() {
     startDelete(async () => {
-      const res = await deleteCalendarEvent(event.id);
+      const res = await deleteCalendarEvent(event.id)
       if (!res.ok) {
-        sileo.error({ title: res.error });
-        return;
+        sileo.error({ title: res.error })
+        return
       }
-      sileo.success({ title: "Reunión eliminada" });
-      onDeleted?.(event.id);
-    });
+      sileo.success({ title: 'Reunión eliminada' })
+      onDeleted?.(event.id)
+    })
   }
 
-  const startDate = parseISO(event.start);
-  const endDate = parseISO(event.end);
-  const sameDay = event.start.slice(0, 10) === event.end.slice(0, 10);
+  const startDate = parseISO(event.start)
+  const endDate = parseISO(event.end)
+  const sameDay = event.start.slice(0, 10) === event.end.slice(0, 10)
 
   const dateStr = event.allDay
-    ? format(startDate, "EEEE, d MMMM yyyy", { locale: es })
-    : format(startDate, "EEEE, d MMMM yyyy · HH:mm", { locale: es }) +
-      (!sameDay ? ` — ${format(endDate, "d MMM · HH:mm", { locale: es })}` : "");
+    ? format(startDate, 'EEEE, d MMMM yyyy', { locale: es })
+    : format(startDate, 'EEEE, d MMMM yyyy · HH:mm', { locale: es }) +
+      (!sameDay ? ` — ${format(endDate, 'd MMM · HH:mm', { locale: es })}` : '')
 
   return (
     <DialogContent className="sm:max-w-sm">
       <DialogHeader>
         <div className="flex items-start gap-2.5 pr-6">
-          <span className={cn("mt-0.5 h-3 w-3 shrink-0 rounded-full", colors.dot)} />
+          <span className={cn('mt-0.5 h-3 w-3 shrink-0 rounded-full', colors.dot)} />
           <DialogTitle
-            className={cn("text-base leading-snug", event.done && "line-through opacity-60")}
+            className={cn('text-base leading-snug', event.done && 'line-through opacity-60')}
           >
             {event.title}
           </DialogTitle>
@@ -96,15 +97,15 @@ function EventDialogContent({
         <Row icon={<Tag className="size-3.5" />}>
           <span
             className={cn(
-              "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium",
+              'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium',
               colors.bg,
               colors.text,
             )}
           >
             {label}
           </span>
-          {event.done && <CheckCircle2 className="ml-1 size-3.5 text-muted-foreground" />}
-          {!event.done && <Circle className="ml-1 size-3.5 text-muted-foreground" />}
+          {event.done && <CheckCircle2 className="text-muted-foreground ml-1 size-3.5" />}
+          {!event.done && <Circle className="text-muted-foreground ml-1 size-3.5" />}
         </Row>
 
         {/* Date */}
@@ -116,8 +117,8 @@ function EventDialogContent({
         {!event.allDay && (
           <Row icon={<Clock className="size-3.5" />}>
             <span>
-              {format(startDate, "HH:mm")}
-              {!sameDay ? ` — ${format(endDate, "HH:mm d MMM")}` : ""}
+              {format(startDate, 'HH:mm')}
+              {!sameDay ? ` — ${format(endDate, 'HH:mm d MMM')}` : ''}
             </span>
           </Row>
         )}
@@ -139,7 +140,7 @@ function EventDialogContent({
         {/* Attendees (events) */}
         {event.meta.attendees && event.meta.attendees.length > 0 && (
           <Row icon={<Users className="size-3.5" />}>
-            <span>{event.meta.attendees.join(", ")}</span>
+            <span>{event.meta.attendees.join(', ')}</span>
           </Row>
         )}
 
@@ -199,7 +200,7 @@ function EventDialogContent({
 
         {/* Description / notes */}
         {event.meta.description && (
-          <p className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground leading-relaxed">
+          <p className="bg-muted/40 text-muted-foreground rounded-md border px-3 py-2 text-xs leading-relaxed">
             {event.meta.description}
           </p>
         )}
@@ -208,7 +209,7 @@ function EventDialogContent({
         {event.meta.amount != null && (
           <Row icon={<span className="size-3.5 text-[10px] leading-none">€</span>}>
             <span className="font-medium tabular-nums">
-              {event.meta.amount.toLocaleString("es-ES", { style: "currency", currency: "EUR" })}
+              {event.meta.amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
             </span>
           </Row>
         )}
@@ -216,20 +217,20 @@ function EventDialogContent({
         {/* Status */}
         {event.meta.status && (
           <Row icon={<span className="size-3.5 text-[10px] leading-none">◉</span>}>
-            <span className="capitalize text-muted-foreground">{event.meta.status}</span>
+            <span className="text-muted-foreground capitalize">{event.meta.status}</span>
           </Row>
         )}
       </div>
 
       {/* Footer */}
-      <div className="-mx-4 -mb-4 flex items-center justify-end gap-2 rounded-b-xl border-t bg-muted/50 px-4 py-3">
-        {event.kind === "google_meeting" && (
+      <div className="bg-muted/50 -mx-4 -mb-4 flex items-center justify-end gap-2 rounded-b-xl border-t px-4 py-3">
+        {event.kind === 'google_meeting' && (
           <Button
             variant="ghost"
             size="sm"
             disabled={deletePending}
             onClick={handleDelete}
-            className="mr-auto text-muted-foreground hover:text-destructive"
+            className="text-muted-foreground hover:text-destructive mr-auto"
           >
             {deletePending ? (
               <Loader2 className="size-3.5 animate-spin" />
@@ -284,14 +285,14 @@ function EventDialogContent({
         )}
       </div>
     </DialogContent>
-  );
+  )
 }
 
 function Row({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-2 text-muted-foreground">
+    <div className="text-muted-foreground flex items-start gap-2">
       <span className="mt-0.5 shrink-0">{icon}</span>
       <span className="flex flex-wrap items-center gap-1">{children}</span>
     </div>
-  );
+  )
 }

@@ -1,21 +1,22 @@
-"use client";
+'use client'
 
-import { Check, Share2 } from "lucide-react";
-import { useState } from "react";
-import { sileo } from "sileo";
-import { cn } from "@/lib/utils";
+import { Check, Share2 } from 'lucide-react'
+import { useState } from 'react'
+import { sileo } from 'sileo'
+
+import { cn } from '@/lib/utils'
 
 interface CopySummaryButtonProps {
   /**
    * Pre-formatted text lines built server-side (no URL — it is appended
    * client-side so the domain always matches the deployment being viewed).
    */
-  lines: string[];
+  lines: string[]
   /** App-relative path, e.g. "/clients/abc". Resolved to a full URL on click. */
-  urlPath: string;
+  urlPath: string
   /** Optional compact label, shown on narrow screens. */
-  label?: string;
-  className?: string;
+  label?: string
+  className?: string
 }
 
 /**
@@ -29,23 +30,23 @@ interface CopySummaryButtonProps {
  *   → https://backoffice.example.com/clients/…
  */
 export function CopySummaryButton({ lines, urlPath, label, className }: CopySummaryButtonProps) {
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState(false)
 
   async function handleCopy() {
-    const url = `${window.location.origin}${urlPath}`;
-    const text = [...lines, `→ ${url}`].join("\n");
+    const url = `${window.location.origin}${urlPath}`
+    const text = [...lines, `→ ${url}`].join('\n')
     try {
       if (navigator.share) {
-        await navigator.share({ title: label ?? "Ficha de Doscientos", text, url });
-        return;
+        await navigator.share({ title: label ?? 'Ficha de Doscientos', text, url })
+        return
       }
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      sileo.success({ title: "Ficha copiada al portapapeles" });
-      setTimeout(() => setCopied(false), 1500);
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      sileo.success({ title: 'Ficha copiada al portapapeles' })
+      setTimeout(() => setCopied(false), 1500)
     } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return;
-      sileo.error({ title: "No se pudo copiar" });
+      if (error instanceof DOMException && error.name === 'AbortError') return
+      sileo.error({ title: 'No se pudo copiar' })
     }
   }
 
@@ -56,7 +57,7 @@ export function CopySummaryButton({ lines, urlPath, label, className }: CopySumm
       aria-label="Copiar ficha"
       title="Copiar ficha al portapapeles"
       className={cn(
-        "inline-flex h-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+        'inline-flex h-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
         className,
       )}
     >
@@ -67,5 +68,5 @@ export function CopySummaryButton({ lines, urlPath, label, className }: CopySumm
       )}
       {label ? <span className="sm:hidden">{label}</span> : null}
     </button>
-  );
+  )
 }

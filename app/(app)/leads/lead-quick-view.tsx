@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   ArrowUpRight,
@@ -18,12 +18,13 @@ import {
   Wallet,
   Wrench,
   X,
-} from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { type ReactNode, useState, useTransition } from "react";
-import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+} from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { type ReactNode, useState, useTransition } from 'react'
+
+import { Button } from '@/components/ui/button'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
   Dialog,
   DialogContent,
@@ -31,7 +32,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog'
 import {
   Drawer,
   DrawerClose,
@@ -39,46 +40,47 @@ import {
   DrawerDescription,
   DrawerHeader,
   DrawerTitle,
-} from "@/components/ui/drawer";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { MemberLabel } from "@/components/ui/member-avatar";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { nextActionState } from "@/lib/leads/pipeline";
-import { leadDisplayName } from "@/lib/leads/utils";
-import type { MemberOption } from "@/lib/members/queries";
-import { LEAD_STATUS } from "@/lib/status";
-import { formatEUR, relativeTime } from "@/lib/utils";
-import { ScheduleReminderDialog } from "../reminders/schedule-reminder-dialog";
-import { GmailSyncButton } from "./[id]/gmail-sync-button";
-import { LeadEditDialog } from "./[id]/lead-edit-dialog";
-import { LeadCallLink } from "./[id]/phone-actions";
-import { assignLeadOwner, claimLead } from "./actions";
+} from '@/components/ui/drawer'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
+import { MemberLabel } from '@/components/ui/member-avatar'
+import { StatusBadge } from '@/components/ui/status-badge'
+import { nextActionState } from '@/lib/leads/pipeline'
+import { leadDisplayName } from '@/lib/leads/utils'
+import type { MemberOption } from '@/lib/members/queries'
+import { LEAD_STATUS } from '@/lib/status'
+import { formatEUR, relativeTime } from '@/lib/utils'
+
+import { ScheduleReminderDialog } from '../reminders/schedule-reminder-dialog'
+import { GmailSyncButton } from './[id]/gmail-sync-button'
+import { LeadEditDialog } from './[id]/lead-edit-dialog'
+import { LeadCallLink } from './[id]/phone-actions'
+import { assignLeadOwner, claimLead } from './actions'
 import {
   QCallDialog,
   QEmailDialog,
   QNoteDialog,
   QWhatsAppDialog,
-} from "./lead-quick-action-dialogs";
-import type { KanbanLead } from "./leads-kanban";
+} from './lead-quick-action-dialogs'
+import type { KanbanLead } from './leads-kanban'
 
 const INTERACTION_LABEL: Record<string, string> = {
-  email_sent: "Email enviado",
-  email_received: "Email recibido",
-  email_delivered: "Email entregado",
-  email_opened: "Email abierto",
-  email_clicked: "Email con clic",
-  email_bounced: "Email rebotado",
-  email_complained: "Email marcado como spam",
-  email_scheduled: "Email programado",
-  email_delivery_delayed: "Entrega de email retrasada",
-  email_failed: "Error al enviar el email",
-  email_suppressed: "Email suprimido",
-  call: "Llamada",
-  meeting: "Reunión",
-  note: "Nota",
-  owner_change: "Responsable cambiado",
-  status_change: "Cambio de estado",
-};
+  email_sent: 'Email enviado',
+  email_received: 'Email recibido',
+  email_delivered: 'Email entregado',
+  email_opened: 'Email abierto',
+  email_clicked: 'Email con clic',
+  email_bounced: 'Email rebotado',
+  email_complained: 'Email marcado como spam',
+  email_scheduled: 'Email programado',
+  email_delivery_delayed: 'Entrega de email retrasada',
+  email_failed: 'Error al enviar el email',
+  email_suppressed: 'Email suprimido',
+  call: 'Llamada',
+  meeting: 'Reunión',
+  note: 'Nota',
+  owner_change: 'Responsable cambiado',
+  status_change: 'Cambio de estado',
+}
 
 export function LeadQuickView({
   lead,
@@ -86,19 +88,19 @@ export function LeadQuickView({
   aiEnabled = false,
   googleEnabled = false,
   members = [],
-  senderName = "",
+  senderName = '',
   onDeleteAction,
   onCloseAction,
 }: {
-  lead: KanbanLead | null;
-  canEdit?: boolean;
-  aiEnabled?: boolean;
-  googleEnabled?: boolean;
-  members?: MemberOption[];
-  senderName?: string;
+  lead: KanbanLead | null
+  canEdit?: boolean
+  aiEnabled?: boolean
+  googleEnabled?: boolean
+  members?: MemberOption[]
+  senderName?: string
   /** Optimistically removes the lead from the board and runs the delete. Optional — falls back to router.refresh(). */
-  onDeleteAction?: (id: string) => void;
-  onCloseAction: () => void;
+  onDeleteAction?: (id: string) => void
+  onCloseAction: () => void
 }) {
   return (
     <Drawer open={!!lead} onOpenChange={(v) => !v && onCloseAction()} direction="right">
@@ -118,7 +120,7 @@ export function LeadQuickView({
         ) : null}
       </DrawerContent>
     </Drawer>
-  );
+  )
 }
 
 function Body({
@@ -130,25 +132,25 @@ function Body({
   senderName,
   onDeleteAction,
 }: {
-  lead: KanbanLead;
-  canEdit: boolean;
-  aiEnabled: boolean;
-  googleEnabled: boolean;
-  members: MemberOption[];
-  senderName: string;
-  onDeleteAction?: (id: string) => void;
+  lead: KanbanLead
+  canEdit: boolean
+  aiEnabled: boolean
+  googleEnabled: boolean
+  members: MemberOption[]
+  senderName: string
+  onDeleteAction?: (id: string) => void
 }) {
-  const hasEstimated = lead.estimated_value != null && lead.estimated_value > 0;
-  const displayName = leadDisplayName(lead);
-  const alias = lead.alias?.trim();
-  const needsNextAction = nextActionState(lead.status, lead.next_action) === "missing";
+  const hasEstimated = lead.estimated_value != null && lead.estimated_value > 0
+  const displayName = leadDisplayName(lead)
+  const alias = lead.alias?.trim()
+  const needsNextAction = nextActionState(lead.status, lead.next_action) === 'missing'
   return (
     <div className="grid h-full grid-rows-[auto_1fr_auto_auto]">
-      <DrawerHeader className="flex flex-row items-start justify-between gap-2 border-b border-border">
+      <DrawerHeader className="border-border flex flex-row items-start justify-between gap-2 border-b">
         <div className="flex flex-col gap-1">
           <DrawerTitle>{displayName}</DrawerTitle>
           {alias && alias !== lead.name ? (
-            <span className="text-xs text-muted-foreground">Nombre: {lead.name}</span>
+            <span className="text-muted-foreground text-xs">Nombre: {lead.name}</span>
           ) : null}
           <DrawerDescription className="flex items-center gap-1.5">
             <StatusBadge meta={LEAD_STATUS} value={lead.status} />
@@ -162,14 +164,14 @@ function Body({
         </DrawerClose>
       </DrawerHeader>
 
-      <div className="flex flex-col gap-4 overflow-y-auto h-full flex-1 p-4 scroll-fade no-scrollbar">
+      <div className="scroll-fade no-scrollbar flex h-full flex-1 flex-col gap-4 overflow-y-auto p-4">
         {canEdit && needsNextAction ? (
-          <section className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+          <section className="border-destructive/30 bg-destructive/5 rounded-lg border p-3">
             <div className="flex items-start gap-2">
-              <CalendarPlus className="mt-0.5 size-4 shrink-0 text-destructive" aria-hidden />
+              <CalendarPlus className="text-destructive mt-0.5 size-4 shrink-0" aria-hidden />
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-semibold">Sin próxima acción</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
+                <p className="text-muted-foreground mt-0.5 text-xs">
                   Agenda el siguiente contacto antes de cerrar este lead.
                 </p>
                 <ScheduleReminderDialog
@@ -185,12 +187,12 @@ function Body({
             </div>
           </section>
         ) : null}
-        {(lead.status === "lost" || lead.status === "not_interested") && lead.lost_reason && (
-          <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/8 px-3 py-2.5 text-xs">
-            <TriangleAlert className="size-3.5 shrink-0 mt-0.5 text-destructive" />
-            <div className="flex flex-col gap-0.5 min-w-0">
-              <span className="font-semibold text-destructive">
-                {lead.status === "lost" ? "Motivo de pérdida" : "Motivo de no interés"}
+        {(lead.status === 'lost' || lead.status === 'not_interested') && lead.lost_reason && (
+          <div className="border-destructive/30 bg-destructive/8 flex items-start gap-2 rounded-md border px-3 py-2.5 text-xs">
+            <TriangleAlert className="text-destructive mt-0.5 size-3.5 shrink-0" />
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <span className="text-destructive font-semibold">
+                {lead.status === 'lost' ? 'Motivo de pérdida' : 'Motivo de no interés'}
               </span>
               <span className="text-foreground">{lead.lost_reason}</span>
             </div>
@@ -204,7 +206,7 @@ function Body({
             </Row>
           )}
           {lead.phone && (
-            <div className="flex items-center gap-2 hover:text-primary">
+            <div className="hover:text-primary flex items-center gap-2">
               <span className="text-muted-foreground">
                 <Phone className="size-3.5" />
               </span>
@@ -260,38 +262,38 @@ function Body({
           lead.first_landing_path ||
           lead.last_utm_source ||
           lead.last_utm_campaign) && (
-            <section className="flex flex-col gap-1.5 text-xs">
-              <Heading>Atribución</Heading>
-              {(lead.last_utm_source || lead.source) && (
-                <Row icon={<ArrowUpRight className="size-3.5" />}>
-                  Fuente: {lead.last_utm_source || lead.source}
-                </Row>
-              )}
-              {lead.last_utm_campaign && (
-                <Row icon={<ArrowUpRight className="size-3.5" />}>
-                  Campaña: {lead.last_utm_campaign}
-                </Row>
-              )}
-              {(lead.first_landing_path || lead.landing_path) && (
-                <Row icon={<ArrowUpRight className="size-3.5" />}>
-                  Entrada: {lead.first_landing_path || lead.landing_path}
-                </Row>
-              )}
-              {lead.conversion_step && (
-                <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.conversion_step}</Row>
-              )}
-              {lead.landing_ref && (
-                <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_ref}</Row>
-              )}
-              {lead.landing_subject && (
-                <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_subject}</Row>
-              )}
-            </section>
-          )}
+          <section className="flex flex-col gap-1.5 text-xs">
+            <Heading>Atribución</Heading>
+            {(lead.last_utm_source || lead.source) && (
+              <Row icon={<ArrowUpRight className="size-3.5" />}>
+                Fuente: {lead.last_utm_source || lead.source}
+              </Row>
+            )}
+            {lead.last_utm_campaign && (
+              <Row icon={<ArrowUpRight className="size-3.5" />}>
+                Campaña: {lead.last_utm_campaign}
+              </Row>
+            )}
+            {(lead.first_landing_path || lead.landing_path) && (
+              <Row icon={<ArrowUpRight className="size-3.5" />}>
+                Entrada: {lead.first_landing_path || lead.landing_path}
+              </Row>
+            )}
+            {lead.conversion_step && (
+              <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.conversion_step}</Row>
+            )}
+            {lead.landing_ref && (
+              <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_ref}</Row>
+            )}
+            {lead.landing_subject && (
+              <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_subject}</Row>
+            )}
+          </section>
+        )}
         {lead.notes && (
           <section className="flex flex-col gap-1.5">
             <Heading>Notas</Heading>
-            <p className="whitespace-pre-wrap text-xs leading-relaxed text-foreground">
+            <p className="text-foreground text-xs leading-relaxed whitespace-pre-wrap">
               {lead.notes}
             </p>
           </section>
@@ -299,13 +301,13 @@ function Body({
         {lead.ai_summary && (
           <section className="flex flex-col gap-1.5">
             <Heading>Resumen IA</Heading>
-            <p className="text-xs leading-relaxed text-foreground">{lead.ai_summary}</p>
+            <p className="text-foreground text-xs leading-relaxed">{lead.ai_summary}</p>
           </section>
         )}
         <Interactions interactions={lead.recent_interactions} />
       </div>
 
-      <div className="shrink-0 border-t border-border px-4 py-3">
+      <div className="border-border shrink-0 border-t px-4 py-3">
         <QuickActions
           leadId={lead.id}
           leadName={displayName}
@@ -317,7 +319,7 @@ function Body({
         />
       </div>
 
-      <footer className="flex items-center gap-2 border-t border-border p-3">
+      <footer className="border-border flex items-center gap-2 border-t p-3">
         {canEdit && (
           <>
             {onDeleteAction && (
@@ -356,7 +358,7 @@ function Body({
         </Button>
       </footer>
     </div>
-  );
+  )
 }
 
 function DeleteLeadButton({
@@ -364,16 +366,16 @@ function DeleteLeadButton({
   leadName,
   onConfirmAction,
 }: {
-  leadId: string;
-  leadName: string;
+  leadId: string
+  leadName: string
   /** Triggers the optimistic removal + delete in the parent board. */
-  onConfirmAction: (id: string) => void;
+  onConfirmAction: (id: string) => void
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
 
   function onConfirm() {
-    setOpen(false);
-    onConfirmAction(leadId);
+    setOpen(false)
+    onConfirmAction(leadId)
   }
 
   return (
@@ -405,15 +407,15 @@ function DeleteLeadButton({
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }
 
 function Heading({ children }: { children: ReactNode }) {
   return (
-    <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+    <p className="text-muted-foreground text-[10px] font-semibold tracking-wide uppercase">
       {children}
     </p>
-  );
+  )
 }
 
 function Row({ icon, href, children }: { icon: ReactNode; href?: string; children: ReactNode }) {
@@ -422,28 +424,28 @@ function Row({ icon, href, children }: { icon: ReactNode; href?: string; childre
       <span className="text-muted-foreground">{icon}</span>
       <span className="truncate">{children}</span>
     </>
-  );
+  )
   return href ? (
-    <a href={href} className="flex items-center gap-2 hover:text-primary">
+    <a href={href} className="hover:text-primary flex items-center gap-2">
       {inner}
     </a>
   ) : (
     <div className="flex items-center gap-2">{inner}</div>
-  );
+  )
 }
 
-function Interactions({ interactions }: { interactions: KanbanLead["recent_interactions"] }) {
+function Interactions({ interactions }: { interactions: KanbanLead['recent_interactions'] }) {
   return (
     <section className="flex flex-col gap-1.5">
       <Heading>Últimas interacciones</Heading>
       {interactions.length === 0 ? (
-        <p className="text-xs text-muted-foreground/80">Sin interacciones registradas.</p>
+        <p className="text-muted-foreground/80 text-xs">Sin interacciones registradas.</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {interactions.slice(0, 3).map((i) => (
-            <li key={i.id} className="flex flex-col gap-0.5 rounded-md bg-muted/30 p-2">
+            <li key={i.id} className="bg-muted/30 flex flex-col gap-0.5 rounded-md p-2">
               <div className="flex items-center justify-between text-[11px]">
-                <span className="font-medium text-foreground">
+                <span className="text-foreground font-medium">
                   {INTERACTION_LABEL[i.type] ?? i.type}
                 </span>
                 <span className="text-muted-foreground tabular-nums">
@@ -451,13 +453,13 @@ function Interactions({ interactions }: { interactions: KanbanLead["recent_inter
                 </span>
               </div>
               {i.subject && (
-                <p className="line-clamp-2 text-[11px] text-muted-foreground">{i.subject}</p>
+                <p className="text-muted-foreground line-clamp-2 text-[11px]">{i.subject}</p>
               )}
               {i.performer && (
                 <MemberLabel
                   member={i.performer}
                   size="sm"
-                  className="text-[11px] text-muted-foreground"
+                  className="text-muted-foreground text-[11px]"
                 />
               )}
             </li>
@@ -465,39 +467,39 @@ function Interactions({ interactions }: { interactions: KanbanLead["recent_inter
         </ul>
       )}
     </section>
-  );
+  )
 }
 
 // ─── Assign Widget ───────────────────────────────────────────────────────────
 
 function AssignWidget({ leadId, members }: { leadId: string; members: MemberOption[] }) {
-  const router = useRouter();
-  const [claimPending, startClaim] = useTransition();
-  const [assignPending, startAssign] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-  const isPending = claimPending || assignPending;
+  const router = useRouter()
+  const [claimPending, startClaim] = useTransition()
+  const [assignPending, startAssign] = useTransition()
+  const [error, setError] = useState<string | null>(null)
+  const isPending = claimPending || assignPending
 
   const handleClaim = () => {
-    setError(null);
+    setError(null)
     startClaim(async () => {
-      const res = await claimLead({ leadId });
-      if (res.ok) router.refresh();
-      else setError(res.error);
-    });
-  };
+      const res = await claimLead({ leadId })
+      if (res.ok) router.refresh()
+      else setError(res.error)
+    })
+  }
 
   const handleAssign = (assigneeId: string) => {
-    if (!assigneeId) return;
-    setError(null);
+    if (!assigneeId) return
+    setError(null)
     startAssign(async () => {
-      const res = await assignLeadOwner({ leadId, assigneeId });
-      if (res.ok) router.refresh();
-      else setError(res.error);
-    });
-  };
+      const res = await assignLeadOwner({ leadId, assigneeId })
+      if (res.ok) router.refresh()
+      else setError(res.error)
+    })
+  }
 
   return (
-    <div className="flex flex-col gap-1.5 w-full min-w-0">
+    <div className="flex w-full min-w-0 flex-col gap-1.5">
       <Button
         type="button"
         variant="outline"
@@ -511,7 +513,7 @@ function AssignWidget({ leadId, members }: { leadId: string; members: MemberOpti
       </Button>
       <select
         disabled={isPending}
-        className="h-7 w-full rounded-md border border-input bg-background px-2 text-xs text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+        className="border-input bg-background text-muted-foreground focus:ring-ring h-7 w-full rounded-md border px-2 text-xs focus:ring-1 focus:outline-none"
         value=""
         onChange={(e) => handleAssign(e.target.value)}
       >
@@ -524,9 +526,9 @@ function AssignWidget({ leadId, members }: { leadId: string; members: MemberOpti
           </option>
         ))}
       </select>
-      {error && <p className="text-[11px] text-destructive">{error}</p>}
+      {error && <p className="text-destructive text-[11px]">{error}</p>}
     </div>
-  );
+  )
 }
 
 // ─── Quick Actions (inline in drawer) ────────────────────────────────────────
@@ -540,22 +542,22 @@ function QuickActions({
   aiEnabled,
   googleEnabled,
 }: {
-  leadId: string;
-  leadName: string;
-  leadPhone: string | null;
-  leadEmail: string | null;
-  senderName: string;
-  aiEnabled: boolean;
-  googleEnabled: boolean;
+  leadId: string
+  leadName: string
+  leadPhone: string | null
+  leadEmail: string | null
+  senderName: string
+  aiEnabled: boolean
+  googleEnabled: boolean
 }) {
-  const secondaryActionCount = googleEnabled ? 3 : 2;
+  const secondaryActionCount = googleEnabled ? 3 : 2
 
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+      <p className="text-muted-foreground text-[10px] font-semibold tracking-wide uppercase">
         Acciones rápidas
       </p>
-      <div className="grid grid-cols-2 gap-1.5 [&_button]:h-auto [&_button]:min-h-8 [&_button]:whitespace-normal [&_button]:px-2 [&_button]:text-left">
+      <div className="grid grid-cols-2 gap-1.5 [&_button]:h-auto [&_button]:min-h-8 [&_button]:px-2 [&_button]:text-left [&_button]:whitespace-normal">
         <QCallDialog
           leadId={leadId}
           leadName={leadName}
@@ -578,7 +580,7 @@ function QuickActions({
             defaultTitle={`Seguimiento de ${leadName}`}
             trigger={
               <Button type="button" size="sm" variant="outline" className="w-full justify-start">
-                <CalendarPlus className="size-3.5 text-muted-foreground" />
+                <CalendarPlus className="text-muted-foreground size-3.5" />
                 Programar seguimiento
               </Button>
             }
@@ -590,15 +592,15 @@ function QuickActions({
           <Button variant="ghost" size="sm" className="group/more w-full justify-between px-2">
             <span className="flex items-center gap-1.5">
               Más acciones
-              <span className="text-xs font-normal text-muted-foreground">
+              <span className="text-muted-foreground text-xs font-normal">
                 {secondaryActionCount}
               </span>
             </span>
-            <ChevronDown className="size-4 text-muted-foreground transition-transform group-aria-expanded/more:rotate-180" />
+            <ChevronDown className="text-muted-foreground size-4 transition-transform group-aria-expanded/more:rotate-180" />
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent className="pt-1.5">
-          <div className="flex flex-col gap-1.5 rounded-lg border bg-muted/20 p-2">
+          <div className="bg-muted/20 flex flex-col gap-1.5 rounded-lg border p-2">
             <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
             <QNoteDialog leadId={leadId} />
             {googleEnabled ? <GmailSyncButton leadId={leadId} leadEmail={leadEmail} /> : null}
@@ -606,5 +608,5 @@ function QuickActions({
         </CollapsibleContent>
       </Collapsible>
     </div>
-  );
+  )
 }

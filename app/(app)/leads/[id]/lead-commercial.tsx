@@ -1,12 +1,9 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { StatusBadge } from "@/components/ui/status-badge";
-import type {
-  LeadRelatedInvoice,
-  LeadRelatedProject,
-  LeadRelatedProposal,
-} from "@/lib/leads/types";
+import Link from 'next/link'
+
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { StatusBadge } from '@/components/ui/status-badge'
+import type { LeadRelatedInvoice, LeadRelatedProject, LeadRelatedProposal } from '@/lib/leads/types'
 import {
   INVOICE_STATUS,
   type InvoiceStatus,
@@ -14,28 +11,28 @@ import {
   PROPOSAL_STATUS,
   type ProjectStatus,
   type ProposalStatus,
-} from "@/lib/status";
-import { formatEUR } from "@/lib/utils";
+} from '@/lib/status'
+import { formatEUR } from '@/lib/utils'
 
 type LeadCommercialProps = {
-  leadId: string;
-  linkedClientId: string | null;
-  proposals: LeadRelatedProposal[];
-  projects: LeadRelatedProject[];
-  invoices: LeadRelatedInvoice[];
-};
+  leadId: string
+  linkedClientId: string | null
+  proposals: LeadRelatedProposal[]
+  projects: LeadRelatedProject[]
+  invoices: LeadRelatedInvoice[]
+}
 
 /** Shown in place of a list when projects/invoices require a client. */
 function ClientRequiredHint() {
   return (
-    <p className="px-6 py-2 text-sm text-muted-foreground">
+    <p className="text-muted-foreground px-6 py-2 text-sm">
       Disponible cuando el lead sea cliente.
     </p>
-  );
+  )
 }
 
 function EmptyHint({ label }: { label: string }) {
-  return <p className="px-6 py-2 text-sm text-muted-foreground">{label}</p>;
+  return <p className="text-muted-foreground px-6 py-2 text-sm">{label}</p>
 }
 
 /**
@@ -64,7 +61,7 @@ export function LeadCommercial({
           {proposals.length === 0 ? (
             <EmptyHint label="Sin propuestas." />
           ) : (
-            <ul className="divide-y divide-border">
+            <ul className="divide-border divide-y">
               {proposals.map((p) => (
                 <li
                   key={p.id}
@@ -74,11 +71,11 @@ export function LeadCommercial({
                     href={`/proposals/${p.id}`}
                     className="truncate font-medium hover:underline"
                   >
-                    {p.number ?? p.title ?? "Propuesta"}
+                    {p.number ?? p.title ?? 'Propuesta'}
                   </Link>
                   <div className="flex shrink-0 items-center gap-2">
                     <StatusBadge meta={PROPOSAL_STATUS} value={p.status as ProposalStatus} />
-                    <span className="tabular-nums text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs tabular-nums">
                       {formatEUR(Number(p.total ?? 0))}
                     </span>
                   </div>
@@ -105,7 +102,7 @@ export function LeadCommercial({
           ) : projects.length === 0 ? (
             <EmptyHint label="Sin proyectos." />
           ) : (
-            <ul className="divide-y divide-border">
+            <ul className="divide-border divide-y">
               {projects.map((p) => (
                 <li
                   key={p.id}
@@ -133,7 +130,7 @@ export function LeadCommercial({
           ) : invoices.length === 0 ? (
             <EmptyHint label="Sin facturas." />
           ) : (
-            <ul className="divide-y divide-border">
+            <ul className="divide-border divide-y">
               {invoices.map((inv) => (
                 <li
                   key={inv.id}
@@ -143,11 +140,11 @@ export function LeadCommercial({
                     href={`/invoices/${inv.id}`}
                     className="truncate font-medium hover:underline"
                   >
-                    {inv.full_number ?? "Factura"}
+                    {inv.full_number ?? 'Factura'}
                   </Link>
                   <div className="flex shrink-0 items-center gap-2">
                     <StatusBadge meta={INVOICE_STATUS} value={inv.status as InvoiceStatus} />
-                    <span className="tabular-nums text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs tabular-nums">
                       {formatEUR(Number(inv.total ?? 0))}
                     </span>
                   </div>
@@ -158,5 +155,5 @@ export function LeadCommercial({
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

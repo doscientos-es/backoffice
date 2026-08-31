@@ -3,7 +3,7 @@ name: Generate recurring subscription invoices
 on:
   schedule:
     # Daily at 06:10 UTC. The endpoint catches up safely if a run is delayed.
-    - cron: "10 6 * * *"
+    - cron: '10 6 * * *'
   workflow_dispatch:
 
 jobs:

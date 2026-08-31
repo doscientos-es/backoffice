@@ -1,6 +1,6 @@
-﻿"use client";
+﻿'use client'
 
-import { cn } from "../lib/utils";
+import { cn } from '../lib/utils'
 import {
   Combobox,
   ComboboxChip,
@@ -12,18 +12,18 @@ import {
   ComboboxList,
   ComboboxValue,
   useComboboxAnchor,
-} from "./combobox";
-import type { EntityOption } from "./entity-combobox";
+} from './combobox'
+import type { EntityOption } from './entity-combobox'
 
 export interface EntityMultiComboboxProps {
-  id?: string;
-  items: EntityOption[];
-  value: string[];
-  onChange: (ids: string[]) => void;
-  placeholder?: string;
-  className?: string;
-  disabled?: boolean;
-  "aria-label"?: string;
+  id?: string
+  items: EntityOption[]
+  value: string[]
+  onChange: (ids: string[]) => void
+  placeholder?: string
+  className?: string
+  disabled?: boolean
+  'aria-label'?: string
 }
 
 /**
@@ -36,18 +36,18 @@ export function EntityMultiCombobox({
   items,
   value,
   onChange,
-  placeholder = "Buscar…",
+  placeholder = 'Buscar…',
   className,
   disabled = false,
-  "aria-label": ariaLabel,
+  'aria-label': ariaLabel,
 }: EntityMultiComboboxProps) {
-  const anchor = useComboboxAnchor();
+  const anchor = useComboboxAnchor()
   const labelFor = (v: string) => {
-    const item = items.find((i) => i.id === v);
-    if (!item) return v;
-    return item.sublabel ? `${item.label} · ${item.sublabel}` : item.label;
-  };
-  const itemFor = (v: string) => items.find((item) => item.id === v);
+    const item = items.find((i) => i.id === v)
+    if (!item) return v
+    return item.sublabel ? `${item.label} · ${item.sublabel}` : item.label
+  }
+  const itemFor = (v: string) => items.find((item) => item.id === v)
 
   return (
     <Combobox
@@ -58,23 +58,23 @@ export function EntityMultiCombobox({
       itemToStringLabel={labelFor}
       disabled={disabled}
     >
-      <ComboboxChips ref={anchor} className={cn("w-full", className)}>
+      <ComboboxChips ref={anchor} className={cn('w-full', className)}>
         <ComboboxValue>
           {(selected: string[]) =>
             selected.map((v) => {
-              const item = itemFor(v);
+              const item = itemFor(v)
               return (
                 <ComboboxChip key={v} aria-label={labelFor(v)}>
                   {item?.leading ? <span className="shrink-0">{item.leading}</span> : null}
                   <span className="max-w-[22ch] truncate">{item?.label ?? labelFor(v)}</span>
                 </ComboboxChip>
-              );
+              )
             })
           }
         </ComboboxValue>
         <ComboboxChipsInput
           id={id}
-          placeholder={value.length ? "" : placeholder}
+          placeholder={value.length ? '' : placeholder}
           disabled={disabled}
           aria-label={ariaLabel}
         />
@@ -83,23 +83,23 @@ export function EntityMultiCombobox({
         <ComboboxEmpty>No se encontraron coincidencias</ComboboxEmpty>
         <ComboboxList>
           {(id: string) => {
-            const item = items.find((option) => option.id === id);
-            if (!item) return null;
+            const item = items.find((option) => option.id === id)
+            if (!item) return null
 
             return (
               <ComboboxItem key={item.id} value={item.id}>
                 {item.leading ? <span className="shrink-0">{item.leading}</span> : null}
                 <span className="min-w-0 flex-1 truncate">{item.label}</span>
                 {item.sublabel && (
-                  <span className="max-w-[45%] truncate text-xs text-muted-foreground">
+                  <span className="text-muted-foreground max-w-[45%] truncate text-xs">
                     {item.sublabel}
                   </span>
                 )}
               </ComboboxItem>
-            );
+            )
           }}
         </ComboboxList>
       </ComboboxContent>
     </Combobox>
-  );
+  )
 }

@@ -1,1 +1,1 @@
-﻿export * from "@/primitives/ui/form-feedback";
+﻿export * from '@/primitives/ui/form-feedback'

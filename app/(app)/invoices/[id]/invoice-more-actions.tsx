@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   TriangleAlert as AlertTriangle,
@@ -7,10 +7,11 @@ import {
   Ellipsis as MoreHorizontal,
   Trash as Trash2,
   XCircle,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { Button } from "@/components/ui/button";
+} from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
+
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -18,53 +19,54 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { IconButton } from "@/components/ui/icon-button";
-import { Label } from "@/components/ui/label";
-import { useUndoableDelete } from "@/lib/hooks/use-undoable-delete";
+} from '@/components/ui/dropdown-menu'
+import { IconButton } from '@/components/ui/icon-button'
+import { Label } from '@/components/ui/label'
+import { useUndoableDelete } from '@/lib/hooks/use-undoable-delete'
+
 import {
   createRectification,
   deleteInvoice,
   markAsUncollectible,
   restoreInvoice,
   updateInvoiceStatus,
-} from "../actions";
-import type { InvoiceFeedback, VerifyInvoiceStatusChange } from "./invoice-action-contracts";
+} from '../actions'
+import type { InvoiceFeedback, VerifyInvoiceStatusChange } from './invoice-action-contracts'
 
 const RECTIFICATION_TYPES = [
   {
-    value: "R1",
-    label: "R1 – Error en datos o devolución",
-    description: "Importe incorrecto, datos erróneos del cliente, devolución parcial o total.",
+    value: 'R1',
+    label: 'R1 – Error en datos o devolución',
+    description: 'Importe incorrecto, datos erróneos del cliente, devolución parcial o total.',
   },
   {
-    value: "R4",
-    label: "R4 – Otras causas",
-    description: "Cualquier otra corrección no contemplada en R1.",
+    value: 'R4',
+    label: 'R4 – Otras causas',
+    description: 'Cualquier otra corrección no contemplada en R1.',
   },
-] as const;
+] as const
 
 function idFormData(invoiceId: string): FormData {
-  const formData = new FormData();
-  formData.append("id", invoiceId);
-  return formData;
+  const formData = new FormData()
+  formData.append('id', invoiceId)
+  return formData
 }
 
 interface Props {
-  invoiceId: string;
-  canCancel: boolean;
-  canDelete: boolean;
-  canRectify: boolean;
-  canMarkUncollectible: boolean;
-  feedback: InvoiceFeedback;
-  verifyStatusChange: VerifyInvoiceStatusChange;
+  invoiceId: string
+  canCancel: boolean
+  canDelete: boolean
+  canRectify: boolean
+  canMarkUncollectible: boolean
+  feedback: InvoiceFeedback
+  verifyStatusChange: VerifyInvoiceStatusChange
 }
 
 /** Groups destructive and legally exceptional invoice operations behind one menu. */
@@ -77,59 +79,59 @@ export function InvoiceMoreActions({
   feedback,
   verifyStatusChange,
 }: Props) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [rectificationOpen, setRectificationOpen] = useState(false);
-  const [uncollectibleOpen, setUncollectibleOpen] = useState(false);
-  const [rectType, setRectType] = useState<"R1" | "R4">("R1");
-  const [rectReason, setRectReason] = useState("");
+  const router = useRouter()
+  const [pending, startTransition] = useTransition()
+  const [rectificationOpen, setRectificationOpen] = useState(false)
+  const [uncollectibleOpen, setUncollectibleOpen] = useState(false)
+  const [rectType, setRectType] = useState<'R1' | 'R4'>('R1')
+  const [rectReason, setRectReason] = useState('')
   const { run: deleteInvoiceWithUndo, pending: deletePending } = useUndoableDelete({
-    successMessage: "Factura eliminada",
+    successMessage: 'Factura eliminada',
     onDelete: () => deleteInvoice(idFormData(invoiceId)),
     onRestore: () => restoreInvoice(idFormData(invoiceId)),
-    redirectTo: "/invoices",
-  });
+    redirectTo: '/invoices',
+  })
 
-  if (!(canCancel || canDelete || canRectify || canMarkUncollectible)) return null;
+  if (!(canCancel || canDelete || canRectify || canMarkUncollectible)) return null
 
   const cancelInvoice = async () => {
-    if (!(await verifyStatusChange("cancelled"))) return;
-    feedback.setPending();
+    if (!(await verifyStatusChange('cancelled'))) return
+    feedback.setPending()
     startTransition(async () => {
-      const result = await updateInvoiceStatus({ id: invoiceId, status: "cancelled" });
-      if (result.ok) feedback.setSuccess("Factura anulada");
-      else feedback.setError(result.error);
-    });
-  };
+      const result = await updateInvoiceStatus({ id: invoiceId, status: 'cancelled' })
+      if (result.ok) feedback.setSuccess('Factura anulada')
+      else feedback.setError(result.error)
+    })
+  }
 
   const markUncollectible = () => {
     startTransition(async () => {
-      feedback.setPending();
-      const result = await markAsUncollectible({ id: invoiceId });
-      setUncollectibleOpen(false);
-      if (result.ok) feedback.setSuccess("Factura marcada como incobrable");
-      else feedback.setError(result.error);
-    });
-  };
+      feedback.setPending()
+      const result = await markAsUncollectible({ id: invoiceId })
+      setUncollectibleOpen(false)
+      if (result.ok) feedback.setSuccess('Factura marcada como incobrable')
+      else feedback.setError(result.error)
+    })
+  }
 
   const createInvoiceRectification = () => {
-    if (!rectReason.trim()) return;
+    if (!rectReason.trim()) return
     startTransition(async () => {
-      feedback.setPending();
+      feedback.setPending()
       const result = await createRectification({
         originalInvoiceId: invoiceId,
         rectificationType: rectType,
         reason: rectReason.trim(),
-      });
+      })
       if (!result.ok) {
-        feedback.setError(result.error);
-        return;
+        feedback.setError(result.error)
+        return
       }
-      setRectificationOpen(false);
-      setRectReason("");
-      router.push(`/invoices/${result.id}`);
-    });
-  };
+      setRectificationOpen(false)
+      setRectReason('')
+      router.push(`/invoices/${result.id}`)
+    })
+  }
 
   return (
     <>
@@ -142,7 +144,7 @@ export function InvoiceMoreActions({
         <DropdownMenuContent align="end" className="w-64">
           {canRectify ? (
             <DropdownMenuItem
-              className="min-h-9 gap-2 px-2 py-2 focus:bg-muted focus:text-foreground data-[highlighted]:bg-muted"
+              className="focus:bg-muted focus:text-foreground data-[highlighted]:bg-muted min-h-9 gap-2 px-2 py-2"
               onClick={() => setRectificationOpen(true)}
             >
               <FileMinus2 className="h-4 w-4" /> Emitir factura rectificativa
@@ -150,7 +152,7 @@ export function InvoiceMoreActions({
           ) : null}
           {canMarkUncollectible ? (
             <DropdownMenuItem
-              className="min-h-9 gap-2 px-2 py-2 text-warning focus:bg-warning/10 focus:text-warning data-[highlighted]:bg-warning/10"
+              className="text-warning focus:bg-warning/10 focus:text-warning data-[highlighted]:bg-warning/10 min-h-9 gap-2 px-2 py-2"
               onClick={() => setUncollectibleOpen(true)}
             >
               <AlertTriangle className="h-4 w-4" /> Marcar como incobrable
@@ -161,7 +163,7 @@ export function InvoiceMoreActions({
           ) : null}
           {canCancel ? (
             <DropdownMenuItem
-              className="min-h-9 gap-2 px-2 py-2 text-destructive focus:bg-destructive/10 focus:text-destructive data-[highlighted]:bg-destructive/10"
+              className="text-destructive focus:bg-destructive/10 focus:text-destructive data-[highlighted]:bg-destructive/10 min-h-9 gap-2 px-2 py-2"
               disabled={pending}
               onClick={cancelInvoice}
             >
@@ -172,7 +174,7 @@ export function InvoiceMoreActions({
             <>
               {canCancel ? <DropdownMenuSeparator /> : null}
               <DropdownMenuItem
-                className="min-h-9 gap-2 px-2 py-2 text-destructive focus:bg-destructive/10 focus:text-destructive data-[highlighted]:bg-destructive/10"
+                className="text-destructive focus:bg-destructive/10 focus:text-destructive data-[highlighted]:bg-destructive/10 min-h-9 gap-2 px-2 py-2"
                 disabled={pending || deletePending}
                 onClick={deleteInvoiceWithUndo}
               >
@@ -198,7 +200,7 @@ export function InvoiceMoreActions({
               {RECTIFICATION_TYPES.map((type) => (
                 <label
                   key={type.value}
-                  className="flex cursor-pointer items-start gap-3 rounded-md border p-3 has-checked:border-primary"
+                  className="has-checked:border-primary flex cursor-pointer items-start gap-3 rounded-md border p-3"
                 >
                   <input
                     type="radio"
@@ -210,7 +212,7 @@ export function InvoiceMoreActions({
                   />
                   <span>
                     <span className="block text-sm font-medium">{type.label}</span>
-                    <span className="block text-xs text-muted-foreground">{type.description}</span>
+                    <span className="text-muted-foreground block text-xs">{type.description}</span>
                   </span>
                 </label>
               ))}
@@ -221,7 +223,7 @@ export function InvoiceMoreActions({
               </Label>
               <textarea
                 id="rectReason"
-                className="min-h-20 w-full resize-none rounded-md border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="bg-background focus-visible:ring-ring min-h-20 w-full resize-none rounded-md border px-3 py-2 text-sm focus-visible:ring-1 focus-visible:outline-none"
                 placeholder="Describe el motivo de la rectificación (requerido por ley)"
                 value={rectReason}
                 onChange={(event) => setRectReason(event.target.value)}
@@ -275,5 +277,5 @@ export function InvoiceMoreActions({
         </DialogContent>
       </Dialog>
     </>
-  );
+  )
 }

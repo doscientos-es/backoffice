@@ -1,27 +1,26 @@
-"use client";
+'use client'
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MemberProfilePopover, type ProfiledMember } from "@/components/ui/member-profile-popover";
-import { cn, memberAvatarUrl } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { MemberProfilePopover, type ProfiledMember } from '@/components/ui/member-profile-popover'
+import { cn, memberAvatarUrl } from '@/lib/utils'
 
 /** Member shape this component needs to resolve an avatar + initials fallback. */
 export type AvatarMember = {
-  id?: string;
-  name: string;
-  avatar_url: string | null;
-  github_handle: string | null;
-};
+  id?: string
+  name: string
+  avatar_url: string | null
+  github_handle: string | null
+}
 
 function initials(name: string): string {
-  const parts = (name ?? "").trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  const letters =
-    parts.length >= 2 ? `${parts[0]?.[0] ?? ""}${parts[1]?.[0] ?? ""}` : parts[0]?.[0];
-  return (letters ?? "?").toUpperCase();
+  const parts = (name ?? '').trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return '?'
+  const letters = parts.length >= 2 ? `${parts[0]?.[0] ?? ''}${parts[1]?.[0] ?? ''}` : parts[0]?.[0]
+  return (letters ?? '?').toUpperCase()
 }
 
 function hasProfile(member: AvatarMember | null): member is ProfiledMember {
-  return Boolean(member?.id);
+  return Boolean(member?.id)
 }
 
 /**
@@ -31,29 +30,29 @@ function hasProfile(member: AvatarMember | null): member is ProfiledMember {
  */
 export function MemberAvatar({
   member,
-  size = "sm",
+  size = 'sm',
   className,
 }: {
-  member: AvatarMember | null;
-  size?: "xs" | "sm" | "default" | "lg";
-  className?: string;
+  member: AvatarMember | null
+  size?: 'xs' | 'sm' | 'default' | 'lg'
+  className?: string
 }) {
   if (!member) {
     return (
-      <Avatar size={size} className={cn("border border-dashed border-border", className)}>
-        <AvatarFallback className="bg-transparent text-muted-foreground">—</AvatarFallback>
+      <Avatar size={size} className={cn('border border-dashed border-border', className)}>
+        <AvatarFallback className="text-muted-foreground bg-transparent">—</AvatarFallback>
       </Avatar>
-    );
+    )
   }
 
-  const src = memberAvatarUrl({ avatarUrl: member.avatar_url, githubHandle: member.github_handle });
+  const src = memberAvatarUrl({ avatarUrl: member.avatar_url, githubHandle: member.github_handle })
 
   return (
     <Avatar size={size} className={className}>
       {src ? <AvatarImage src={src} alt={member.name} referrerPolicy="no-referrer" /> : null}
       <AvatarFallback>{initials(member.name)}</AvatarFallback>
     </Avatar>
-  );
+  )
 }
 
 /**
@@ -62,15 +61,15 @@ export function MemberAvatar({
  */
 export function MemberLabel({
   member,
-  size = "sm",
+  size = 'sm',
   className,
 }: {
-  member: AvatarMember | null;
-  size?: "xs" | "sm" | "default" | "lg";
-  className?: string;
+  member: AvatarMember | null
+  size?: 'xs' | 'sm' | 'default' | 'lg'
+  className?: string
 }) {
   return (
-    <span className={cn("inline-flex items-center gap-2 min-w-0", className)}>
+    <span className={cn('inline-flex items-center gap-2 min-w-0', className)}>
       {hasProfile(member) ? (
         <MemberProfilePopover
           member={member}
@@ -80,9 +79,9 @@ export function MemberLabel({
       ) : (
         <MemberAvatar member={member} size={size} />
       )}
-      <span className={cn("truncate", !member && "text-muted-foreground")}>
-        {member ? member.name : "Sin asignar"}
+      <span className={cn('truncate', !member && 'text-muted-foreground')}>
+        {member ? member.name : 'Sin asignar'}
       </span>
     </span>
-  );
+  )
 }

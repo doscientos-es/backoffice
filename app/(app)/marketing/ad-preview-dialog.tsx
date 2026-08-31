@@ -1,8 +1,9 @@
-"use client";
+'use client'
 
-import { ExternalLink, Eye, LoaderCircle as Loader2 } from "lucide-react";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { ExternalLink, Eye, LoaderCircle as Loader2 } from 'lucide-react'
+import { useState } from 'react'
+
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -10,52 +11,53 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { getAdPreviewAction } from "./actions";
+} from '@/components/ui/dialog'
 
-type AdFormat = "DESKTOP_FEED_STANDARD" | "MOBILE_FEED_STANDARD" | "INSTAGRAM_STANDARD";
+import { getAdPreviewAction } from './actions'
+
+type AdFormat = 'DESKTOP_FEED_STANDARD' | 'MOBILE_FEED_STANDARD' | 'INSTAGRAM_STANDARD'
 
 const FORMATS: { value: AdFormat; label: string }[] = [
-  { value: "DESKTOP_FEED_STANDARD", label: "Facebook Desktop" },
-  { value: "MOBILE_FEED_STANDARD", label: "Facebook Mobile" },
-  { value: "INSTAGRAM_STANDARD", label: "Instagram Feed" },
-];
+  { value: 'DESKTOP_FEED_STANDARD', label: 'Facebook Desktop' },
+  { value: 'MOBILE_FEED_STANDARD', label: 'Facebook Mobile' },
+  { value: 'INSTAGRAM_STANDARD', label: 'Instagram Feed' },
+]
 
 type Props = {
-  adId: string;
-  adName: string;
-  campaignName: string;
-  adsManagerUrl: string | null;
-};
+  adId: string
+  adName: string
+  campaignName: string
+  adsManagerUrl: string | null
+}
 
 export function AdPreviewDialog({ adId, adName, campaignName, adsManagerUrl }: Props) {
-  const [open, setOpen] = useState(false);
-  const [format, setFormat] = useState<AdFormat>("DESKTOP_FEED_STANDARD");
-  const [body, setBody] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [open, setOpen] = useState(false)
+  const [format, setFormat] = useState<AdFormat>('DESKTOP_FEED_STANDARD')
+  const [body, setBody] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function load(next: AdFormat) {
-    setLoading(true);
-    setError(null);
-    setBody(null);
-    const result = await getAdPreviewAction(adId, next);
+    setLoading(true)
+    setError(null)
+    setBody(null)
+    const result = await getAdPreviewAction(adId, next)
     if (result.ok) {
-      setBody(result.body);
+      setBody(result.body)
     } else {
-      setError(result.error);
+      setError(result.error)
     }
-    setLoading(false);
+    setLoading(false)
   }
 
   function onOpenChange(next: boolean) {
-    setOpen(next);
-    if (next && !body && !loading) load(format);
+    setOpen(next)
+    if (next && !body && !loading) load(format)
   }
 
   function onFormatChange(next: AdFormat) {
-    setFormat(next);
-    load(next);
+    setFormat(next)
+    load(next)
   }
 
   return (
@@ -79,8 +81,8 @@ export function AdPreviewDialog({ adId, adName, campaignName, adsManagerUrl }: P
               onClick={() => onFormatChange(f.value)}
               className={
                 f.value === format
-                  ? "rounded-md bg-foreground px-2 py-1 text-xs font-medium text-background"
-                  : "rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+                  ? 'bg-foreground text-background rounded-md px-2 py-1 text-xs font-medium'
+                  : 'text-muted-foreground hover:text-foreground rounded-md px-2 py-1 text-xs font-medium'
               }
             >
               {f.label}
@@ -88,11 +90,11 @@ export function AdPreviewDialog({ adId, adName, campaignName, adsManagerUrl }: P
           ))}
         </div>
 
-        <div className="flex min-h-[420px] items-center justify-center overflow-hidden rounded-md bg-muted/30">
+        <div className="bg-muted/30 flex min-h-[420px] items-center justify-center overflow-hidden rounded-md">
           {loading ? (
-            <Loader2 className="size-6 animate-spin text-muted-foreground" />
+            <Loader2 className="text-muted-foreground size-6 animate-spin" />
           ) : error ? (
-            <p className="px-4 text-center text-sm text-destructive">{error}</p>
+            <p className="text-destructive px-4 text-center text-sm">{error}</p>
           ) : body ? (
             // Meta returns a self-contained `<iframe src="...">` snippet.
             <div
@@ -101,7 +103,7 @@ export function AdPreviewDialog({ adId, adName, campaignName, adsManagerUrl }: P
               dangerouslySetInnerHTML={{ __html: body }}
             />
           ) : (
-            <p className="text-sm text-muted-foreground">Sin previa disponible.</p>
+            <p className="text-muted-foreground text-sm">Sin previa disponible.</p>
           )}
         </div>
 
@@ -115,5 +117,5 @@ export function AdPreviewDialog({ adId, adName, campaignName, adsManagerUrl }: P
         ) : null}
       </DialogContent>
     </Dialog>
-  );
+  )
 }

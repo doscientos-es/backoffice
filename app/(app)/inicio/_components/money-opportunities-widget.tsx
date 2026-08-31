@@ -5,24 +5,25 @@ import {
   FileText as FileSignature,
   Flame,
   Undo2 as RotateCcw,
-} from "lucide-react";
-import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getMoneyOpportunities } from "@/lib/dashboard/queries";
+} from 'lucide-react'
+import Link from 'next/link'
+
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { getMoneyOpportunities } from '@/lib/dashboard/queries'
 import type {
   AcceptedUninvoicedRow,
   MoneyOpportunities,
   MoneyProposalRow,
   PriorityLeadRow,
   RecoverableLeadRow,
-} from "@/lib/dashboard/types";
-import { formatEUR, relativeTime } from "@/lib/utils";
+} from '@/lib/dashboard/types'
+import { formatEUR, relativeTime } from '@/lib/utils'
 
 export async function MoneyOpportunitiesWidget() {
-  const data = await getMoneyOpportunities();
-  return <MoneyOpportunitiesPanel data={data} />;
+  const data = await getMoneyOpportunities()
+  return <MoneyOpportunitiesPanel data={data} />
 }
 
 function MoneyOpportunitiesPanel({ data }: { data: MoneyOpportunities }) {
@@ -30,10 +31,10 @@ function MoneyOpportunitiesPanel({ data }: { data: MoneyOpportunities }) {
     data.openProposals.length === 0 &&
     data.acceptedUninvoiced.length === 0 &&
     data.priorityLeads.length === 0 &&
-    data.recoverableLeads.length === 0;
+    data.recoverableLeads.length === 0
 
   return (
-    <Card className="border-emerald-500/15 bg-gradient-to-br from-emerald-500/[0.06] via-card to-card shadow-sm">
+    <Card className="via-card to-card border-emerald-500/15 bg-gradient-to-br from-emerald-500/[0.06] shadow-sm">
       <CardHeader className="flex-row items-center justify-between gap-3 space-y-0">
         <CardTitle className="flex items-center gap-2 text-sm">
           <span className="flex size-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
@@ -41,7 +42,7 @@ function MoneyOpportunitiesPanel({ data }: { data: MoneyOpportunities }) {
           </span>
           <span>
             Dinero accionable
-            <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+            <span className="text-muted-foreground mt-0.5 block text-xs font-normal">
               Próximos movimientos con impacto
             </span>
           </span>
@@ -54,7 +55,7 @@ function MoneyOpportunitiesPanel({ data }: { data: MoneyOpportunities }) {
       </CardHeader>
       <CardContent>
         {empty ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">
+          <p className="text-muted-foreground py-6 text-center text-sm">
             No hay oportunidades urgentes detectadas.
           </p>
         ) : (
@@ -70,7 +71,7 @@ function MoneyOpportunitiesPanel({ data }: { data: MoneyOpportunities }) {
         )}
       </CardContent>
     </Card>
-  );
+  )
 }
 
 function Section({
@@ -80,25 +81,25 @@ function Section({
   href,
   children,
 }: {
-  icon: React.ReactNode;
-  title: string;
-  metric: string;
-  href: string;
-  children: React.ReactNode;
+  icon: React.ReactNode
+  title: string
+  metric: string
+  href: string
+  children: React.ReactNode
 }) {
   return (
-    <section className="min-w-0 rounded-xl border border-border/70 bg-background/65 transition-all hover:border-emerald-500/25 hover:shadow-sm">
-      <div className="flex items-start justify-between gap-3 border-b border-border/60 px-3 py-2.5">
+    <section className="border-border/70 bg-background/65 min-w-0 rounded-xl border transition-all hover:border-emerald-500/25 hover:shadow-sm">
+      <div className="border-border/60 flex items-start justify-between gap-3 border-b px-3 py-2.5">
         <div className="min-w-0">
           <h3 className="flex items-center gap-2 text-sm font-medium">
             {icon}
             <span className="truncate">{title}</span>
           </h3>
-          <p className="mt-0.5 text-xs text-muted-foreground">{metric}</p>
+          <p className="text-muted-foreground mt-0.5 text-xs">{metric}</p>
         </div>
         <Link
           href={href}
-          className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="text-muted-foreground hover:bg-muted hover:text-foreground inline-flex size-7 shrink-0 items-center justify-center rounded-md transition-colors"
           aria-label={`Ver ${title}`}
         >
           <ChevronRight className="size-4" />
@@ -106,11 +107,11 @@ function Section({
       </div>
       <div className="px-3 py-2">{children}</div>
     </section>
-  );
+  )
 }
 
 function Empty({ children }: { children: React.ReactNode }) {
-  return <p className="py-4 text-sm text-muted-foreground">{children}</p>;
+  return <p className="text-muted-foreground py-4 text-sm">{children}</p>
 }
 
 function OpenProposals({ rows, total }: { rows: MoneyProposalRow[]; total: number }) {
@@ -124,21 +125,21 @@ function OpenProposals({ rows, total }: { rows: MoneyProposalRow[]; total: numbe
       {rows.length === 0 ? (
         <Empty>Sin propuestas abiertas.</Empty>
       ) : (
-        <ul className="divide-y divide-border">
+        <ul className="divide-border divide-y">
           {rows.map((row) => (
             <li key={row.id} className="py-2 first:pt-0 last:pb-0">
               <Link href={`/proposals/${row.id}`} className="block min-w-0 hover:underline">
                 <span className="block truncate text-sm font-medium">
-                  {row.number ?? "Sin número"} · {row.title}
+                  {row.number ?? 'Sin número'} · {row.title}
                 </span>
-                <span className="block truncate text-xs text-muted-foreground">
-                  {row.client_name ?? row.lead_name ?? "Sin cliente"} ·{" "}
+                <span className="text-muted-foreground block truncate text-xs">
+                  {row.client_name ?? row.lead_name ?? 'Sin cliente'} ·{' '}
                   {relativeTime(row.updated_at)}
                 </span>
               </Link>
               <div className="mt-1 flex items-center justify-between gap-2">
-                <Badge variant={row.status === "viewed" ? "warning" : "info"}>
-                  {row.status === "viewed" ? "Vista" : "Enviada"}
+                <Badge variant={row.status === 'viewed' ? 'warning' : 'info'}>
+                  {row.status === 'viewed' ? 'Vista' : 'Enviada'}
                 </Badge>
                 <span className="text-xs font-medium tabular-nums">{formatEUR(row.total)}</span>
               </div>
@@ -147,7 +148,7 @@ function OpenProposals({ rows, total }: { rows: MoneyProposalRow[]; total: numbe
         </ul>
       )}
     </Section>
-  );
+  )
 }
 
 function AcceptedUninvoiced({ rows, total }: { rows: AcceptedUninvoicedRow[]; total: number }) {
@@ -161,18 +162,18 @@ function AcceptedUninvoiced({ rows, total }: { rows: AcceptedUninvoicedRow[]; to
       {rows.length === 0 ? (
         <Empty>Todo lo aceptado está facturado.</Empty>
       ) : (
-        <ul className="divide-y divide-border">
+        <ul className="divide-border divide-y">
           {rows.map((row) => (
             <li key={row.id} className="py-2 first:pt-0 last:pb-0">
               <Link href={`/proposals/${row.id}`} className="block min-w-0 hover:underline">
                 <span className="block truncate text-sm font-medium">
-                  {row.number ?? "Sin número"} · {row.title}
+                  {row.number ?? 'Sin número'} · {row.title}
                 </span>
-                <span className="block truncate text-xs text-muted-foreground">
-                  {row.client_name ?? "Sin cliente"} · facturado {formatEUR(row.invoiced_total)}
+                <span className="text-muted-foreground block truncate text-xs">
+                  {row.client_name ?? 'Sin cliente'} · facturado {formatEUR(row.invoiced_total)}
                 </span>
               </Link>
-              <p className="mt-1 text-xs font-medium tabular-nums text-emerald-700 dark:text-emerald-300">
+              <p className="mt-1 text-xs font-medium text-emerald-700 tabular-nums dark:text-emerald-300">
                 Falta {formatEUR(row.remaining_total)}
               </p>
             </li>
@@ -180,7 +181,7 @@ function AcceptedUninvoiced({ rows, total }: { rows: AcceptedUninvoicedRow[]; to
         </ul>
       )}
     </Section>
-  );
+  )
 }
 
 function PriorityLeads({ rows, total }: { rows: PriorityLeadRow[]; total: number }) {
@@ -194,13 +195,13 @@ function PriorityLeads({ rows, total }: { rows: PriorityLeadRow[]; total: number
       {rows.length === 0 ? (
         <Empty>No hay leads activos urgentes.</Empty>
       ) : (
-        <ul className="divide-y divide-border">
+        <ul className="divide-border divide-y">
           {rows.map((row) => (
             <li key={row.id} className="py-2 first:pt-0 last:pb-0">
               <Link href={`/leads/${row.id}`} className="block min-w-0 hover:underline">
                 <span className="block truncate text-sm font-medium">{row.name}</span>
-                <span className="block truncate text-xs text-muted-foreground">
-                  {row.company ?? row.source ?? "Sin empresa"} · {relativeTime(row.updated_at)}
+                <span className="text-muted-foreground block truncate text-xs">
+                  {row.company ?? row.source ?? 'Sin empresa'} · {relativeTime(row.updated_at)}
                 </span>
               </Link>
               <div className="mt-1 flex flex-wrap gap-1">
@@ -213,7 +214,7 @@ function PriorityLeads({ rows, total }: { rows: PriorityLeadRow[]; total: number
         </ul>
       )}
     </Section>
-  );
+  )
 }
 
 function RecoverableLeads({ rows, count }: { rows: RecoverableLeadRow[]; count: number }) {
@@ -227,13 +228,13 @@ function RecoverableLeads({ rows, count }: { rows: RecoverableLeadRow[]; count: 
       {rows.length === 0 ? (
         <Empty>Sin perdidos con señal clara.</Empty>
       ) : (
-        <ul className="divide-y divide-border">
+        <ul className="divide-border divide-y">
           {rows.map((row) => (
             <li key={row.id} className="py-2 first:pt-0 last:pb-0">
               <Link href={`/leads/${row.id}`} className="block min-w-0 hover:underline">
                 <span className="block truncate text-sm font-medium">{row.name}</span>
-                <span className="block truncate text-xs text-muted-foreground">
-                  {row.company ?? row.source ?? "Sin empresa"} · {relativeTime(row.updated_at)}
+                <span className="text-muted-foreground block truncate text-xs">
+                  {row.company ?? row.source ?? 'Sin empresa'} · {relativeTime(row.updated_at)}
                 </span>
               </Link>
               <div className="mt-1 flex flex-wrap gap-1">
@@ -245,5 +246,5 @@ function RecoverableLeads({ rows, count }: { rows: RecoverableLeadRow[]; count: 
         </ul>
       )}
     </Section>
-  );
+  )
 }

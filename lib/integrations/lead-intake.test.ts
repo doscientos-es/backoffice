@@ -15,7 +15,7 @@
  *  - validation failure → ok: false
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // ── shared state ──────────────────────────────────────────────────────────────
 
@@ -31,35 +31,35 @@ const { notifyNewLead, sendLeadConfirmation, store } = vi.hoisted(() => ({
     insertedRows: [] as Record<string, unknown>[],
     enrichSelectResult: null as Record<string, unknown> | null,
   },
-}));
+}))
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock("@/lib/supabase/admin", () => ({
+vi.mock('@/lib/supabase/admin', () => ({
   createAdminClient: () => ({
     from: (table: string) => buildChain(table),
   }),
-}));
+}))
 
-vi.mock("@/lib/integrations/lead-pipeline", () => ({
+vi.mock('@/lib/integrations/lead-pipeline', () => ({
   runLeadPipeline: vi.fn().mockResolvedValue(undefined),
-}));
+}))
 
-vi.mock("@/lib/integrations/notify-new-lead", () => ({
+vi.mock('@/lib/integrations/notify-new-lead', () => ({
   notifyNewLead,
-}));
+}))
 
-vi.mock("@/lib/integrations/send-lead-confirmation", () => ({
+vi.mock('@/lib/integrations/send-lead-confirmation', () => ({
   sendLeadConfirmation,
-}));
+}))
 
-vi.mock("@/lib/logger", () => ({
+vi.mock('@/lib/logger', () => ({
   scopedLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),
-}));
+}))
 
-vi.mock("next/server", () => ({
+vi.mock('next/server', () => ({
   after: (fn: () => unknown) => fn(), // execute inline in tests
-}));
+}))
 
 /**
  * Builds a chainable Supabase query mock.
@@ -67,170 +67,170 @@ vi.mock("next/server", () => ({
  * whichever filter method was called (eq on external_id, email, or phone).
  */
 function buildChain(table: string) {
-  let op: "select" | "insert" | "update" | "none" = "none";
-  const filters: Record<string, unknown> = {};
+  let op: 'select' | 'insert' | 'update' | 'none' = 'none'
+  const filters: Record<string, unknown> = {}
 
   const chain: Record<string, unknown> = {
     select(_cols?: string) {
       // Don't overwrite a DML op already set (insert/update), so single()
       // can detect it correctly after .insert(row).select("id").single().
-      if (op === "none") op = "select";
-      return chain;
+      if (op === 'none') op = 'select'
+      return chain
     },
     insert(row: Record<string, unknown>) {
-      op = "insert";
-      store.insertedRow = { table, ...row };
-      store.insertedRows.push(store.insertedRow);
-      return chain;
+      op = 'insert'
+      store.insertedRow = { table, ...row }
+      store.insertedRows.push(store.insertedRow)
+      return chain
     },
     update(patch: Record<string, unknown>) {
-      op = "update";
-      store.updatedRow = { table, ...patch };
-      return chain;
+      op = 'update'
+      store.updatedRow = { table, ...patch }
+      return chain
     },
     eq(col: string, val: unknown) {
-      filters[col] = val;
-      return chain;
+      filters[col] = val
+      return chain
     },
     is(_col: string, _val: unknown) {
-      return chain;
+      return chain
     },
     gte(_col: string, _val: unknown) {
-      return chain;
+      return chain
     },
     in(_col: string, _values: unknown[]) {
-      return chain;
+      return chain
     },
     limit(_n: number) {
-      return chain;
+      return chain
     },
     async single() {
-      if (op === "insert") return { data: { id: "new-lead-uuid" }, error: null };
-      return { data: null, error: null };
+      if (op === 'insert') return { data: { id: 'new-lead-uuid' }, error: null }
+      return { data: null, error: null }
     },
     async maybeSingle() {
-      if (op === "insert") return { data: { id: "new-lead-uuid" }, error: null };
+      if (op === 'insert') return { data: { id: 'new-lead-uuid' }, error: null }
 
       // externalId idempotency lookup
       if (filters.external_id) {
-        return { data: store.existingById, error: null };
+        return { data: store.existingById, error: null }
       }
       // enrichLead inner select (by id)
       if (filters.id) {
-        return { data: store.enrichSelectResult, error: null };
+        return { data: store.enrichSelectResult, error: null }
       }
       // soft-dedupe by email
       if (filters.email) {
-        return { data: store.existingByEmail, error: null };
+        return { data: store.existingByEmail, error: null }
       }
       // soft-dedupe by phone
       if (filters.phone) {
-        return { data: store.existingByPhone, error: null };
+        return { data: store.existingByPhone, error: null }
       }
-      return { data: null, error: null };
+      return { data: null, error: null }
     },
-  };
-  return chain;
+  }
+  return chain
 }
 
 // ── SUT ───────────────────────────────────────────────────────────────────────
 
-import { ingestLead } from "@/lib/integrations/lead-intake";
+import { ingestLead } from '@/lib/integrations/lead-intake'
 
 // ── fixtures ──────────────────────────────────────────────────────────────────
 
 const landingIntake = {
-  name: "María López",
-  email: "maria@example.com",
-  phone: "+34600111222",
-  source: "landing",
-} as const;
+  name: 'María López',
+  email: 'maria@example.com',
+  phone: '+34600111222',
+  source: 'landing',
+} as const
 
 const calIntake = {
-  name: "Guest",
-  email: "maria@example.com",
-  company: "Acme SL",
-  notes: "Meeting confirmed for Tuesday",
-  source: "cal",
-  externalId: "booking-uid-abc",
-  externalSource: "cal",
-} as const;
+  name: 'Guest',
+  email: 'maria@example.com',
+  company: 'Acme SL',
+  notes: 'Meeting confirmed for Tuesday',
+  source: 'cal',
+  externalId: 'booking-uid-abc',
+  externalSource: 'cal',
+} as const
 
 // ── tests ─────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
-  notifyNewLead.mockClear();
-  sendLeadConfirmation.mockClear();
-  store.existingById = null;
-  store.existingByEmail = null;
-  store.existingByPhone = null;
-  store.updatedRow = null;
-  store.insertedRow = null;
-  store.insertedRows = [];
-  store.enrichSelectResult = null;
-});
+  notifyNewLead.mockClear()
+  sendLeadConfirmation.mockClear()
+  store.existingById = null
+  store.existingByEmail = null
+  store.existingByPhone = null
+  store.updatedRow = null
+  store.insertedRow = null
+  store.insertedRows = []
+  store.enrichSelectResult = null
+})
 
 // ── 1. Happy path ─────────────────────────────────────────────────────────────
 
-describe("ingestLead – new lead", () => {
-  it("inserts a row and returns duplicate: false", async () => {
-    const result = await ingestLead(landingIntake);
-    expect(result).toEqual({ ok: true, leadId: "new-lead-uuid", duplicate: false });
-    expect(store.insertedRows.find((row) => row.table === "leads")).toMatchObject({
-      name: "María López",
-      email: "maria@example.com",
-    });
+describe('ingestLead – new lead', () => {
+  it('inserts a row and returns duplicate: false', async () => {
+    const result = await ingestLead(landingIntake)
+    expect(result).toEqual({ ok: true, leadId: 'new-lead-uuid', duplicate: false })
+    expect(store.insertedRows.find((row) => row.table === 'leads')).toMatchObject({
+      name: 'María López',
+      email: 'maria@example.com',
+    })
     await vi.waitFor(() =>
-      expect(store.insertedRows.find((row) => row.table === "lead_interactions")).toMatchObject({
-        lead_id: "new-lead-uuid",
-        type: "note",
-        subject: "Lead recibido desde Landing",
+      expect(store.insertedRows.find((row) => row.table === 'lead_interactions')).toMatchObject({
+        lead_id: 'new-lead-uuid',
+        type: 'note',
+        subject: 'Lead recibido desde Landing',
       }),
-    );
-    expect(store.insertedRows.find((row) => row.table === "conversion_events")).toMatchObject({
-      lead_id: "new-lead-uuid",
-      event_name: "lead_created",
-    });
+    )
+    expect(store.insertedRows.find((row) => row.table === 'conversion_events')).toMatchObject({
+      lead_id: 'new-lead-uuid',
+      event_name: 'lead_created',
+    })
     await vi.waitFor(() =>
       expect(sendLeadConfirmation).toHaveBeenCalledWith(
         expect.objectContaining({
-          leadId: "new-lead-uuid",
-          leadEmail: "maria@example.com",
-          leadSource: "Landing",
+          leadId: 'new-lead-uuid',
+          leadEmail: 'maria@example.com',
+          leadSource: 'Landing',
         }),
       ),
-    );
-    await vi.waitFor(() => expect(notifyNewLead).toHaveBeenCalledOnce());
+    )
+    await vi.waitFor(() => expect(notifyNewLead).toHaveBeenCalledOnce())
     expect(sendLeadConfirmation.mock.invocationCallOrder[0]).toBeLessThan(
       notifyNewLead.mock.invocationCallOrder[0] as number,
-    );
-  });
+    )
+  })
 
-  it("returns ok:false when validation fails", async () => {
-    const result = await ingestLead({ name: "", source: "landing" } as never);
-    expect(result).toMatchObject({ ok: false });
-    expect((result as { error: string }).error).toMatch(/name/i);
-  });
-});
+  it('returns ok:false when validation fails', async () => {
+    const result = await ingestLead({ name: '', source: 'landing' } as never)
+    expect(result).toMatchObject({ ok: false })
+    expect((result as { error: string }).error).toMatch(/name/i)
+  })
+})
 
 // ── 2. ExternalId idempotency (step 2) ────────────────────────────────────────
 
-describe("ingestLead – externalId dedupe", () => {
-  it("returns duplicate: true without inserting when externalId already exists", async () => {
-    store.existingById = { id: "existing-lead-uuid" };
-    const result = await ingestLead(calIntake);
-    expect(result).toEqual({ ok: true, leadId: "existing-lead-uuid", duplicate: true });
-    expect(store.insertedRow).toBeNull();
-  });
-});
+describe('ingestLead – externalId dedupe', () => {
+  it('returns duplicate: true without inserting when externalId already exists', async () => {
+    store.existingById = { id: 'existing-lead-uuid' }
+    const result = await ingestLead(calIntake)
+    expect(result).toEqual({ ok: true, leadId: 'existing-lead-uuid', duplicate: true })
+    expect(store.insertedRow).toBeNull()
+  })
+})
 
 // ── 3. Soft-dedupe + enrich (step 3) ──────────────────────────────────────────
 
-describe("ingestLead – soft-dedupe by email (cross-source)", () => {
-  it("returns duplicate: true and does not insert a second lead", async () => {
-    store.existingByEmail = { id: "lead-from-landing" };
+describe('ingestLead – soft-dedupe by email (cross-source)', () => {
+  it('returns duplicate: true and does not insert a second lead', async () => {
+    store.existingByEmail = { id: 'lead-from-landing' }
     store.enrichSelectResult = {
-      email: "maria@example.com",
+      email: 'maria@example.com',
       phone: null,
       company: null,
       notes: null,
@@ -244,18 +244,18 @@ describe("ingestLead – soft-dedupe by email (cross-source)", () => {
       device: null,
       browser: null,
       language: null,
-    };
+    }
 
-    const result = await ingestLead(calIntake);
-    expect(result).toEqual({ ok: true, leadId: "lead-from-landing", duplicate: true });
-    expect(store.insertedRow).toBeNull();
-  });
+    const result = await ingestLead(calIntake)
+    expect(result).toEqual({ ok: true, leadId: 'lead-from-landing', duplicate: true })
+    expect(store.insertedRow).toBeNull()
+  })
 
-  it("enriches the existing lead with company from the second source", async () => {
-    store.existingByEmail = { id: "lead-from-landing" };
+  it('enriches the existing lead with company from the second source', async () => {
+    store.existingByEmail = { id: 'lead-from-landing' }
     store.enrichSelectResult = {
-      email: "maria@example.com",
-      phone: "+34600111222",
+      email: 'maria@example.com',
+      phone: '+34600111222',
       company: null,
       notes: null,
       utm_source: null,
@@ -268,18 +268,18 @@ describe("ingestLead – soft-dedupe by email (cross-source)", () => {
       device: null,
       browser: null,
       language: null,
-    };
+    }
 
-    await ingestLead(calIntake);
-    expect(store.updatedRow).toMatchObject({ company: "Acme SL" });
-  });
+    await ingestLead(calIntake)
+    expect(store.updatedRow).toMatchObject({ company: 'Acme SL' })
+  })
 
-  it("does not overwrite existing company with incoming value", async () => {
-    store.existingByEmail = { id: "lead-from-landing" };
+  it('does not overwrite existing company with incoming value', async () => {
+    store.existingByEmail = { id: 'lead-from-landing' }
     store.enrichSelectResult = {
-      email: "maria@example.com",
+      email: 'maria@example.com',
       phone: null,
-      company: "Original SL",
+      company: 'Original SL',
       notes: null,
       utm_source: null,
       utm_medium: null,
@@ -291,20 +291,20 @@ describe("ingestLead – soft-dedupe by email (cross-source)", () => {
       device: null,
       browser: null,
       language: null,
-    };
+    }
 
-    await ingestLead(calIntake);
+    await ingestLead(calIntake)
     // company should NOT appear in the update because it already has a value
-    expect(store.updatedRow?.company).toBeUndefined();
-  });
-});
+    expect(store.updatedRow?.company).toBeUndefined()
+  })
+})
 
-describe("ingestLead – soft-dedupe by phone", () => {
-  it("matches by phone when email is absent and enriches", async () => {
-    store.existingByPhone = { id: "lead-by-phone" };
+describe('ingestLead – soft-dedupe by phone', () => {
+  it('matches by phone when email is absent and enriches', async () => {
+    store.existingByPhone = { id: 'lead-by-phone' }
     store.enrichSelectResult = {
       email: null,
-      phone: "+34600111222",
+      phone: '+34600111222',
       company: null,
       notes: null,
       utm_source: null,
@@ -317,33 +317,33 @@ describe("ingestLead – soft-dedupe by phone", () => {
       device: null,
       browser: null,
       language: null,
-    };
+    }
 
     const noEmailIntake = {
-      name: "Guest",
-      phone: "+34600111222",
-      source: "cal",
-      externalId: "uid-2",
-      externalSource: "cal",
-      company: "New Co",
-    };
+      name: 'Guest',
+      phone: '+34600111222',
+      source: 'cal',
+      externalId: 'uid-2',
+      externalSource: 'cal',
+      company: 'New Co',
+    }
 
-    const result = await ingestLead(noEmailIntake);
-    expect(result).toEqual({ ok: true, leadId: "lead-by-phone", duplicate: true });
-    expect(store.updatedRow).toMatchObject({ company: "New Co" });
-  });
-});
+    const result = await ingestLead(noEmailIntake)
+    expect(result).toEqual({ ok: true, leadId: 'lead-by-phone', duplicate: true })
+    expect(store.updatedRow).toMatchObject({ company: 'New Co' })
+  })
+})
 
 // ── 4. Note appending ─────────────────────────────────────────────────────────
 
-describe("enrichLead – note appending", () => {
-  it("appends notes with separator when existing notes are present", async () => {
-    store.existingByEmail = { id: "lead-1" };
+describe('enrichLead – note appending', () => {
+  it('appends notes with separator when existing notes are present', async () => {
+    store.existingByEmail = { id: 'lead-1' }
     store.enrichSelectResult = {
-      email: "maria@example.com",
+      email: 'maria@example.com',
       phone: null,
       company: null,
-      notes: "Original note",
+      notes: 'Original note',
       utm_source: null,
       utm_medium: null,
       utm_campaign: null,
@@ -354,16 +354,16 @@ describe("enrichLead – note appending", () => {
       device: null,
       browser: null,
       language: null,
-    };
+    }
 
-    await ingestLead(calIntake);
-    expect(store.updatedRow?.notes).toBe("Original note\n\n---\nMeeting confirmed for Tuesday");
-  });
+    await ingestLead(calIntake)
+    expect(store.updatedRow?.notes).toBe('Original note\n\n---\nMeeting confirmed for Tuesday')
+  })
 
-  it("sets notes directly when existing lead has none", async () => {
-    store.existingByEmail = { id: "lead-1" };
+  it('sets notes directly when existing lead has none', async () => {
+    store.existingByEmail = { id: 'lead-1' }
     store.enrichSelectResult = {
-      email: "maria@example.com",
+      email: 'maria@example.com',
       phone: null,
       company: null,
       notes: null,
@@ -377,19 +377,19 @@ describe("enrichLead – note appending", () => {
       device: null,
       browser: null,
       language: null,
-    };
+    }
 
-    await ingestLead(calIntake);
-    expect(store.updatedRow?.notes).toBe("Meeting confirmed for Tuesday");
-  });
+    await ingestLead(calIntake)
+    expect(store.updatedRow?.notes).toBe('Meeting confirmed for Tuesday')
+  })
 
-  it("is idempotent: does not append the same note twice", async () => {
-    store.existingByEmail = { id: "lead-1" };
+  it('is idempotent: does not append the same note twice', async () => {
+    store.existingByEmail = { id: 'lead-1' }
     store.enrichSelectResult = {
-      email: "maria@example.com",
-      phone: "+34600111222",
-      company: "Acme SL", // already enriched — no gap to fill
-      notes: "Meeting confirmed for Tuesday", // already there from a previous enrichment
+      email: 'maria@example.com',
+      phone: '+34600111222',
+      company: 'Acme SL', // already enriched — no gap to fill
+      notes: 'Meeting confirmed for Tuesday', // already there from a previous enrichment
       utm_source: null,
       utm_medium: null,
       utm_campaign: null,
@@ -400,10 +400,10 @@ describe("enrichLead – note appending", () => {
       device: null,
       browser: null,
       language: null,
-    };
+    }
 
-    await ingestLead(calIntake);
+    await ingestLead(calIntake)
     // No update should be issued (nothing changed)
-    expect(store.updatedRow).toBeNull();
-  });
-});
+    expect(store.updatedRow).toBeNull()
+  })
+})

@@ -1,11 +1,11 @@
-import type { ConversionEventRow } from "./queries";
+import type { ConversionEventRow } from './queries'
 
 /** Dominio legible de una URL de referrer, o null si no se puede parsear. */
 function referrerHost(referrer: string): string | null {
   try {
-    return new URL(referrer).hostname.replace(/^www\./, "");
+    return new URL(referrer).hostname.replace(/^www\./, '')
   } catch {
-    return null;
+    return null
   }
 }
 
@@ -15,37 +15,37 @@ function referrerHost(referrer: string): string | null {
  * dentro de la propia web (típico de un clic en el pie o en el menú).
  */
 export function trafficSource(
-  event: Pick<ConversionEventRow, "utm_source" | "utm_medium" | "utm_campaign" | "referrer">,
+  event: Pick<ConversionEventRow, 'utm_source' | 'utm_medium' | 'utm_campaign' | 'referrer'>,
 ): string {
   if (event.utm_source) {
-    const medium = event.utm_medium ? ` / ${event.utm_medium}` : "";
-    const campaign = event.utm_campaign ? ` · ${event.utm_campaign}` : "";
-    return `${event.utm_source}${medium}${campaign}`;
+    const medium = event.utm_medium ? ` / ${event.utm_medium}` : ''
+    const campaign = event.utm_campaign ? ` · ${event.utm_campaign}` : ''
+    return `${event.utm_source}${medium}${campaign}`
   }
   if (event.referrer) {
-    const host = referrerHost(event.referrer);
-    if (host?.includes("google")) return "Google (orgánico)";
-    if (host?.includes("facebook") || host?.includes("instagram")) return "Meta (orgánico)";
-    if (host) return `Referido: ${host}`;
+    const host = referrerHost(event.referrer)
+    if (host?.includes('google')) return 'Google (orgánico)'
+    if (host?.includes('facebook') || host?.includes('instagram')) return 'Meta (orgánico)'
+    if (host) return `Referido: ${host}`
   }
-  return "Directo";
+  return 'Directo'
 }
 
 export type VisitorJourney = {
   /** Clave interna de agrupación (visitor_id o lead_id fusionados). */
-  key: string;
-  visitorIds: string[];
-  lead: ConversionEventRow["lead"];
+  key: string
+  visitorIds: string[]
+  lead: ConversionEventRow['lead']
   /** Eventos ordenados cronológicamente, más antiguo primero. */
-  events: ConversionEventRow[];
-  firstSeen: string;
-  lastSeen: string;
-  entryPath: string | null;
-  source: string;
-  hasWhatsappClick: boolean;
+  events: ConversionEventRow[]
+  firstSeen: string
+  lastSeen: string
+  entryPath: string | null
+  source: string
+  hasWhatsappClick: boolean
   /** Grabación de la sesión en Microsoft Clarity, si la landing la capturó. */
-  clarityUrl: string | null;
-};
+  clarityUrl: string | null
+}
 
 /**
  * La landing adjunta la URL de reproducción de Clarity en el payload de los
@@ -54,23 +54,23 @@ export type VisitorJourney = {
  */
 export function findClarityPlaybackUrl(events: ConversionEventRow[]): string | null {
   for (const event of events) {
-    const url = event.payload?.clarity_url;
-    if (typeof url !== "string") continue;
+    const url = event.payload?.clarity_url
+    if (typeof url !== 'string') continue
     try {
-      if (new URL(url).origin === "https://clarity.microsoft.com") return url;
+      if (new URL(url).origin === 'https://clarity.microsoft.com') return url
     } catch {
       // Ignore malformed URLs received from the public tracking endpoint.
     }
   }
-  return null;
+  return null
 }
 
 function journeyKeys(event: ConversionEventRow): string[] {
-  const keys: string[] = [];
-  if (event.visitor_id) keys.push(`v:${event.visitor_id}`);
-  if (event.lead_id) keys.push(`l:${event.lead_id}`);
-  if (keys.length === 0) keys.push(`e:${event.id}`);
-  return keys;
+  const keys: string[] = []
+  if (event.visitor_id) keys.push(`v:${event.visitor_id}`)
+  if (event.lead_id) keys.push(`l:${event.lead_id}`)
+  if (keys.length === 0) keys.push(`e:${event.id}`)
+  return keys
 }
 
 /**
@@ -82,63 +82,61 @@ function journeyKeys(event: ConversionEventRow): string[] {
  * un solo evento.
  */
 export function groupIntoJourneys(events: ConversionEventRow[]): VisitorJourney[] {
-  const parent = new Map<string, string>();
+  const parent = new Map<string, string>()
 
   function find(key: string): string {
-    let root = key;
+    let root = key
     while (parent.get(root) !== root) {
-      const next = parent.get(root);
-      if (next === undefined) break;
-      root = next;
+      const next = parent.get(root)
+      if (next === undefined) break
+      root = next
     }
-    let cur = key;
+    let cur = key
     while (cur !== root) {
-      const next = parent.get(cur);
-      if (next === undefined) break;
-      parent.set(cur, root);
-      cur = next;
+      const next = parent.get(cur)
+      if (next === undefined) break
+      parent.set(cur, root)
+      cur = next
     }
-    return root;
+    return root
   }
 
   function union(a: string, b: string) {
-    const rootA = find(a);
-    const rootB = find(b);
-    if (rootA !== rootB) parent.set(rootA, rootB);
+    const rootA = find(a)
+    const rootB = find(b)
+    if (rootA !== rootB) parent.set(rootA, rootB)
   }
 
   for (const event of events) {
-    const keys = journeyKeys(event);
+    const keys = journeyKeys(event)
     for (const key of keys) {
-      if (!parent.has(key)) parent.set(key, key);
+      if (!parent.has(key)) parent.set(key, key)
     }
-    const [primary, ...rest] = keys;
+    const [primary, ...rest] = keys
     if (primary) {
-      for (const key of rest) union(primary, key);
+      for (const key of rest) union(primary, key)
     }
   }
 
-  const buckets = new Map<string, ConversionEventRow[]>();
+  const buckets = new Map<string, ConversionEventRow[]>()
   for (const event of events) {
-    const primary = journeyKeys(event)[0];
-    if (primary === undefined) continue; // journeyKeys() siempre devuelve al menos una clave
-    const root = find(primary);
-    const bucket = buckets.get(root);
-    if (bucket) bucket.push(event);
-    else buckets.set(root, [event]);
+    const primary = journeyKeys(event)[0]
+    if (primary === undefined) continue // journeyKeys() siempre devuelve al menos una clave
+    const root = find(primary)
+    const bucket = buckets.get(root)
+    if (bucket) bucket.push(event)
+    else buckets.set(root, [event])
   }
 
-  const journeys: VisitorJourney[] = [];
+  const journeys: VisitorJourney[] = []
   for (const [key, group] of buckets) {
     const sorted = [...group].sort(
       (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
-    );
-    const entry = sorted[0];
-    const last = sorted.at(-1);
-    if (!entry || !last) continue; // buckets nunca están vacíos, pero satisface a TS
-    const visitorIds = [
-      ...new Set(sorted.map((e) => e.visitor_id).filter((v): v is string => !!v)),
-    ];
+    )
+    const entry = sorted[0]
+    const last = sorted.at(-1)
+    if (!entry || !last) continue // buckets nunca están vacíos, pero satisface a TS
+    const visitorIds = [...new Set(sorted.map((e) => e.visitor_id).filter((v): v is string => !!v))]
     journeys.push({
       key,
       visitorIds,
@@ -148,11 +146,11 @@ export function groupIntoJourneys(events: ConversionEventRow[]): VisitorJourney[
       lastSeen: last.created_at,
       entryPath: entry.landing_path,
       source: trafficSource(entry),
-      hasWhatsappClick: sorted.some((e) => e.event_name === "whatsapp_click"),
+      hasWhatsappClick: sorted.some((e) => e.event_name === 'whatsapp_click'),
       clarityUrl: findClarityPlaybackUrl(sorted),
-    });
+    })
   }
 
-  journeys.sort((a, b) => new Date(b.lastSeen).getTime() - new Date(a.lastSeen).getTime());
-  return journeys;
+  journeys.sort((a, b) => new Date(b.lastSeen).getTime() - new Date(a.lastSeen).getTime())
+  return journeys
 }

@@ -1,11 +1,12 @@
-import type { z } from "zod";
-import { PublicSchema, ServerSchema } from "@/lib/env.schema";
+import type { z } from 'zod'
+
+import { PublicSchema, ServerSchema } from '@/lib/env.schema'
 
 /** Strip leading/trailing whitespace (incl. \r from CRLF .env files) from all values. */
 function trimEnv(env: NodeJS.ProcessEnv): Record<string, string | undefined> {
   return Object.fromEntries(
-    Object.entries(env).map(([k, v]) => [k, typeof v === "string" ? v.trim() : v]),
-  );
+    Object.entries(env).map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v]),
+  )
 }
 
 // IMPORTANT: each `NEXT_PUBLIC_*` value below MUST be accessed via a literal
@@ -22,13 +23,13 @@ export const publicEnv = PublicSchema.parse({
   NEXT_PUBLIC_DEMO_MODE: process.env.NEXT_PUBLIC_DEMO_MODE?.trim(),
   NEXT_PUBLIC_HCAPTCHA_SITE_KEY: process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY?.trim(),
   NEXT_PUBLIC_CAL_LINK: process.env.NEXT_PUBLIC_CAL_LINK?.trim(),
-});
+})
 
-let cachedServerEnv: z.infer<typeof ServerSchema> | null = null;
+let cachedServerEnv: z.infer<typeof ServerSchema> | null = null
 export function serverEnv() {
-  if (cachedServerEnv) return cachedServerEnv;
-  cachedServerEnv = ServerSchema.parse(trimEnv(process.env));
-  return cachedServerEnv;
+  if (cachedServerEnv) return cachedServerEnv
+  cachedServerEnv = ServerSchema.parse(trimEnv(process.env))
+  return cachedServerEnv
 }
 
 /**
@@ -39,9 +40,9 @@ export function serverEnv() {
  * branch en resolveModel().
  */
 export function isAIEnabled(): boolean {
-  const provider = process.env.AI_PROVIDER?.trim();
-  if (provider === "vertex") return Boolean(process.env.GOOGLE_CLOUD_PROJECT_ID?.trim());
-  return false;
+  const provider = process.env.AI_PROVIDER?.trim()
+  if (provider === 'vertex') return Boolean(process.env.GOOGLE_CLOUD_PROJECT_ID?.trim())
+  return false
 }
 
 /**
@@ -50,13 +51,12 @@ export function isAIEnabled(): boolean {
  */
 export function isGoogleEnabled(): boolean {
   const demoMode =
-    process.env.DEMO_MODE?.trim() === "true" ||
-    process.env.NEXT_PUBLIC_DEMO_MODE?.trim() === "true";
+    process.env.DEMO_MODE?.trim() === 'true' || process.env.NEXT_PUBLIC_DEMO_MODE?.trim() === 'true'
   return Boolean(
     !demoMode &&
-      process.env.GOOGLE_SA_CLIENT_EMAIL?.trim() &&
-      process.env.GOOGLE_SA_PRIVATE_KEY_BASE64?.trim(),
-  );
+    process.env.GOOGLE_SA_CLIENT_EMAIL?.trim() &&
+    process.env.GOOGLE_SA_PRIVATE_KEY_BASE64?.trim(),
+  )
 }
 
 /**
@@ -64,8 +64,8 @@ export function isGoogleEnabled(): boolean {
  * Devuelve null si no está configurado o el valor no es un entero positivo.
  */
 export function githubDefaultInstallationId(): number | null {
-  const raw = process.env.GITHUB_DEFAULT_INSTALLATION_ID?.trim();
-  if (!raw) return null;
-  const n = Number(raw);
-  return Number.isInteger(n) && n > 0 ? n : null;
+  const raw = process.env.GITHUB_DEFAULT_INSTALLATION_ID?.trim()
+  if (!raw) return null
+  const n = Number(raw)
+  return Number.isInteger(n) && n > 0 ? n : null
 }

@@ -1,10 +1,11 @@
-import type { VerifactuConfig } from "@doscientos/verifactu";
-import { isDemoMode } from "@/lib/demo";
-import { serverEnv } from "@/lib/env";
+import type { VerifactuConfig } from '@doscientos/verifactu'
+
+import { isDemoMode } from '@/lib/demo'
+import { serverEnv } from '@/lib/env'
 
 /** Serializable safe subset persisted with the immutable fiscal record. */
-export function verifactuSoftwareSnapshotFromEnv(): VerifactuConfig["software"] {
-  return verifactuInvoiceConfigFromEnv().software;
+export function verifactuSoftwareSnapshotFromEnv(): VerifactuConfig['software'] {
+  return verifactuInvoiceConfigFromEnv().software
 }
 
 /**
@@ -22,26 +23,26 @@ export function verifactuSoftwareSnapshotFromEnv(): VerifactuConfig["software"] 
  * Validates the configuration shared by the AEAT test and production flows.
  */
 function assertOperationalVerifactuConfiguration(): void {
-  const env = serverEnv();
+  const env = serverEnv()
   if (!env.VERIFACTU_PRODUCER_NIF.trim()) {
-    throw new Error("VERIFACTU_PRODUCER_NIF es obligatorio para operar con VERI*FACTU");
+    throw new Error('VERIFACTU_PRODUCER_NIF es obligatorio para operar con VERI*FACTU')
   }
   if (!env.VERIFACTU_CERT_P12_BASE64 || !env.VERIFACTU_CERT_PASSWORD) {
-    throw new Error("El certificado P12 de VERI*FACTU es obligatorio para conectar con AEAT");
+    throw new Error('El certificado P12 de VERI*FACTU es obligatorio para conectar con AEAT')
   }
   if (!env.VERIFACTU_CERT_EXPIRES_AT) {
-    throw new Error("VERIFACTU_CERT_EXPIRES_AT es obligatorio para conectar con AEAT");
+    throw new Error('VERIFACTU_CERT_EXPIRES_AT es obligatorio para conectar con AEAT')
   }
-  const expiresAt = new Date(env.VERIFACTU_CERT_EXPIRES_AT);
+  const expiresAt = new Date(env.VERIFACTU_CERT_EXPIRES_AT)
   if (Number.isNaN(expiresAt.getTime()) || expiresAt.getTime() <= Date.now()) {
-    throw new Error("El certificado P12 de VERI*FACTU está caducado o tiene una fecha inválida");
+    throw new Error('El certificado P12 de VERI*FACTU está caducado o tiene una fecha inválida')
   }
 }
 
-function verifactuConfigFromEnv(environment: "test" | "prod"): VerifactuConfig {
-  const env = serverEnv();
-  const resolvedEnvironment = isDemoMode() ? "mock" : environment;
-  if (resolvedEnvironment !== "mock") assertOperationalVerifactuConfiguration();
+function verifactuConfigFromEnv(environment: 'test' | 'prod'): VerifactuConfig {
+  const env = serverEnv()
+  const resolvedEnvironment = isDemoMode() ? 'mock' : environment
+  if (resolvedEnvironment !== 'mock') assertOperationalVerifactuConfiguration()
   return {
     environment: resolvedEnvironment,
     certificate: {
@@ -59,15 +60,15 @@ function verifactuConfigFromEnv(environment: "test" | "prod"): VerifactuConfig {
       multipleTaxpayers: false,
     },
     appUrl: env.NEXT_PUBLIC_APP_URL,
-  };
+  }
 }
 
 /** Configuration for real invoice issuance, cancellation and fiscal QR generation. */
 export function verifactuInvoiceConfigFromEnv(): VerifactuConfig {
-  return verifactuConfigFromEnv("prod");
+  return verifactuConfigFromEnv('prod')
 }
 
 /** Configuration for the synthetic record submitted to AEAT pre-production. */
 export function verifactuDiagnosticConfigFromEnv(): VerifactuConfig {
-  return verifactuConfigFromEnv("test");
+  return verifactuConfigFromEnv('test')
 }

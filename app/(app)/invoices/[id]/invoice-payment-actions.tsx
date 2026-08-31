@@ -1,8 +1,9 @@
-"use client";
+'use client'
 
-import { CircleCheck as CheckCircle2, LoaderCircle as Loader2, XCircle } from "lucide-react";
-import { useState, useTransition } from "react";
-import { Button } from "@/components/ui/button";
+import { CircleCheck as CheckCircle2, LoaderCircle as Loader2, XCircle } from 'lucide-react'
+import { useState, useTransition } from 'react'
+
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -10,22 +11,23 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { IconButton } from "@/components/ui/icon-button";
-import { Label } from "@/components/ui/label";
-import { PAYMENT_METHOD_LABELS, type PaymentMethodType } from "@/lib/schemas/invoice";
-import { recordInvoicePayment, updateInvoiceStatus } from "../actions";
-import type { InvoiceFeedback, VerifyInvoiceStatusChange } from "./invoice-action-contracts";
+} from '@/components/ui/dialog'
+import { IconButton } from '@/components/ui/icon-button'
+import { Label } from '@/components/ui/label'
+import { PAYMENT_METHOD_LABELS, type PaymentMethodType } from '@/lib/schemas/invoice'
+
+import { recordInvoicePayment, updateInvoiceStatus } from '../actions'
+import type { InvoiceFeedback, VerifyInvoiceStatusChange } from './invoice-action-contracts'
 
 interface Props {
-  invoiceId: string;
-  total: number;
-  amountPaid: number;
-  canRecordPayment: boolean;
-  canRevertPayment: boolean;
-  feedback: InvoiceFeedback;
-  verifyStatusChange: VerifyInvoiceStatusChange;
-  onChanged: () => void;
+  invoiceId: string
+  total: number
+  amountPaid: number
+  canRecordPayment: boolean
+  canRevertPayment: boolean
+  feedback: InvoiceFeedback
+  verifyStatusChange: VerifyInvoiceStatusChange
+  onChanged: () => void
 }
 
 /** Isolates payment collection and reversal from fiscal issuance controls. */
@@ -39,49 +41,49 @@ export function InvoicePaymentActions({
   verifyStatusChange,
   onChanged,
 }: Props) {
-  const [pending, startTransition] = useTransition();
-  const [paymentOpen, setPaymentOpen] = useState(false);
-  const [revertOpen, setRevertOpen] = useState(false);
-  const [method, setMethod] = useState<PaymentMethodType>("transfer");
-  const [amount, setAmount] = useState("");
+  const [pending, startTransition] = useTransition()
+  const [paymentOpen, setPaymentOpen] = useState(false)
+  const [revertOpen, setRevertOpen] = useState(false)
+  const [method, setMethod] = useState<PaymentMethodType>('transfer')
+  const [amount, setAmount] = useState('')
 
   const openPayment = () => {
-    setAmount(Math.max(0, total - amountPaid).toFixed(2));
-    setPaymentOpen(true);
-  };
+    setAmount(Math.max(0, total - amountPaid).toFixed(2))
+    setPaymentOpen(true)
+  }
 
   const recordPayment = () => {
     startTransition(async () => {
-      feedback.setPending();
+      feedback.setPending()
       const result = await recordInvoicePayment({
         id: invoiceId,
         amount: Number(amount),
         paymentMethod: method,
-      });
+      })
       if (!result.ok) {
-        feedback.setError(result.error);
-        return;
+        feedback.setError(result.error)
+        return
       }
-      setPaymentOpen(false);
-      feedback.setSuccess(result.fullyPaid ? "Factura pagada" : "Cobro parcial registrado");
-      onChanged();
-    });
-  };
+      setPaymentOpen(false)
+      feedback.setSuccess(result.fullyPaid ? 'Factura pagada' : 'Cobro parcial registrado')
+      onChanged()
+    })
+  }
 
   const revertPayment = async () => {
-    if (!(await verifyStatusChange("issued"))) return;
-    setRevertOpen(false);
-    feedback.setPending();
+    if (!(await verifyStatusChange('issued'))) return
+    setRevertOpen(false)
+    feedback.setPending()
     startTransition(async () => {
-      const result = await updateInvoiceStatus({ id: invoiceId, status: "issued" });
+      const result = await updateInvoiceStatus({ id: invoiceId, status: 'issued' })
       if (result.ok) {
-        feedback.setSuccess("Factura marcada como no cobrada");
-        onChanged();
+        feedback.setSuccess('Factura marcada como no cobrada')
+        onChanged()
       } else {
-        feedback.setError(result.error);
+        feedback.setError(result.error)
       }
-    });
-  };
+    })
+  }
 
   return (
     <>
@@ -92,7 +94,7 @@ export function InvoicePaymentActions({
             size="sm"
             disabled={pending}
             onClick={openPayment}
-            className="justify-center whitespace-nowrap text-success-foreground hover:text-success-foreground"
+            className="text-success-foreground hover:text-success-foreground justify-center whitespace-nowrap"
           >
             <CheckCircle2 className="h-4 w-4" /> Registrar cobro
           </Button>
@@ -114,7 +116,7 @@ export function InvoicePaymentActions({
                   step="0.01"
                   value={amount}
                   onChange={(event) => setAmount(event.target.value)}
-                  className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                  className="bg-background h-9 w-full rounded-md border px-3 text-sm"
                 />
                 <Label>Medio de cobro</Label>
                 <div className="space-y-1.5">
@@ -122,7 +124,7 @@ export function InvoicePaymentActions({
                     (paymentMethod) => (
                       <label
                         key={paymentMethod}
-                        className="flex cursor-pointer items-center gap-3 rounded-md border p-3 has-checked:border-primary"
+                        className="has-checked:border-primary flex cursor-pointer items-center gap-3 rounded-md border p-3"
                       >
                         <input
                           type="radio"
@@ -172,7 +174,7 @@ export function InvoicePaymentActions({
               <DialogHeader>
                 <DialogTitle>¿Revertir cobro de la factura?</DialogTitle>
                 <DialogDescription>
-                  Esto eliminará la fecha de cobro y devolverá la factura al estado{" "}
+                  Esto eliminará la fecha de cobro y devolverá la factura al estado{' '}
                   <strong>Emitida</strong>. Úsalo solo para corregir errores.
                 </DialogDescription>
               </DialogHeader>
@@ -194,5 +196,5 @@ export function InvoicePaymentActions({
         </>
       ) : null}
     </>
-  );
+  )
 }

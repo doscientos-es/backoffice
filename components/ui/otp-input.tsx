@@ -1,1 +1,1 @@
-export * from "@/primitives/ui/otp-input";
+export * from '@/primitives/ui/otp-input'

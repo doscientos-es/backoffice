@@ -1,5 +1,5 @@
-import { render } from "@react-email/components";
-import type { ReactElement } from "react";
+import { render } from '@react-email/components'
+import type { ReactElement } from 'react'
 
 /**
  * Renders a React Email component tree into an HTML string ready to be
@@ -22,5 +22,5 @@ import type { ReactElement } from "react";
  *   await sendEmail({ ..., html });
  */
 export async function renderEmail(element: ReactElement): Promise<string> {
-  return render(element);
+  return render(element)
 }

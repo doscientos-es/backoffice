@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Bar,
@@ -10,15 +10,16 @@ import {
   Tooltip,
   XAxis,
   YAxis,
-} from "recharts";
-import type { MonthlyPoint } from "@/lib/finance";
-import { formatEUR } from "@/lib/utils";
+} from 'recharts'
 
-const SERIES_LABEL: Record<"revenue" | "expense" | "net", string> = {
-  revenue: "Ingresos",
-  expense: "Gastos",
-  net: "Beneficio",
-};
+import type { MonthlyPoint } from '@/lib/finance'
+import { formatEUR } from '@/lib/utils'
+
+const SERIES_LABEL: Record<'revenue' | 'expense' | 'net', string> = {
+  revenue: 'Ingresos',
+  expense: 'Gastos',
+  net: 'Beneficio',
+}
 
 export function FinanceChart({ data }: { data: MonthlyPoint[] }) {
   return (
@@ -44,10 +45,10 @@ export function FinanceChart({ data }: { data: MonthlyPoint[] }) {
             width={48}
           />
           <Tooltip
-            cursor={{ fill: "color-mix(in oklab, var(--muted) 60%, transparent)" }}
+            cursor={{ fill: 'color-mix(in oklab, var(--muted) 60%, transparent)' }}
             contentStyle={{
-              background: "var(--background)",
-              border: "1px solid var(--border)",
+              background: 'var(--background)',
+              border: '1px solid var(--border)',
               borderRadius: 8,
               fontSize: 12,
             }}
@@ -73,11 +74,11 @@ export function FinanceChart({ data }: { data: MonthlyPoint[] }) {
             dataKey="net"
             stroke="var(--info)"
             strokeWidth={2}
-            dot={{ r: 2.5, fill: "var(--info)" }}
+            dot={{ r: 2.5, fill: 'var(--info)' }}
             activeDot={{ r: 4 }}
           />
         </ComposedChart>
       </ResponsiveContainer>
     </div>
-  );
+  )
 }

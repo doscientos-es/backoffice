@@ -1,49 +1,50 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
-import { TaskFormFields } from "./task-form-fields";
+import { fireEvent, render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 
-describe("TaskFormFields client visibility", () => {
-  it("enables client visibility by default and keeps the toggle editable", () => {
+import { TaskFormFields } from './task-form-fields'
+
+describe('TaskFormFields client visibility', () => {
+  it('enables client visibility by default and keeps the toggle editable', () => {
     const { container } = render(
       <form>
         <TaskFormFields />
       </form>,
-    );
-    const toggle = screen.getByRole("checkbox", { name: /Visible en el portal del cliente/i });
+    )
+    const toggle = screen.getByRole('checkbox', { name: /Visible en el portal del cliente/i })
 
-    expect(toggle).toHaveProperty("checked", true);
-    fireEvent.click(toggle);
-    expect(toggle).toHaveProperty("checked", false);
-    expect(new FormData(container.querySelector("form")!).get("is_client_visible")).toBeNull();
-  });
+    expect(toggle).toHaveProperty('checked', true)
+    fireEvent.click(toggle)
+    expect(toggle).toHaveProperty('checked', false)
+    expect(new FormData(container.querySelector('form')!).get('is_client_visible')).toBeNull()
+  })
 
-  it("respects an explicitly private task when editing", () => {
+  it('respects an explicitly private task when editing', () => {
     render(
       <form>
         <TaskFormFields defaults={{ is_client_visible: false }} />
       </form>,
-    );
+    )
 
     expect(
-      screen.getByRole("checkbox", { name: /Visible en el portal del cliente/i }),
-    ).toHaveProperty("checked", false);
-  });
+      screen.getByRole('checkbox', { name: /Visible en el portal del cliente/i }),
+    ).toHaveProperty('checked', false)
+  })
 
-  it("keeps optional client-facing content separate from internal description", () => {
+  it('keeps optional client-facing content separate from internal description', () => {
     render(
       <form>
         <TaskFormFields
           defaults={{
-            title: "Título interno",
-            description: "Notas privadas",
-            client_title: "Título compartido",
-            client_summary: "Resumen compartido",
+            title: 'Título interno',
+            description: 'Notas privadas',
+            client_title: 'Título compartido',
+            client_summary: 'Resumen compartido',
           }}
         />
       </form>,
-    );
+    )
 
-    expect(screen.getByLabelText("Título para cliente")).toHaveValue("Título compartido");
-    expect(screen.getByLabelText("Resumen para cliente")).toHaveValue("Resumen compartido");
-  });
-});
+    expect(screen.getByLabelText('Título para cliente')).toHaveValue('Título compartido')
+    expect(screen.getByLabelText('Resumen para cliente')).toHaveValue('Resumen compartido')
+  })
+})

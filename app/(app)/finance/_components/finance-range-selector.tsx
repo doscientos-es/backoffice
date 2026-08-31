@@ -1,31 +1,32 @@
-"use client";
+'use client'
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
-import { Select } from "@/components/ui/select";
-import { FINANCE_RANGE_OPTIONS, type FinanceRange } from "@/lib/finance/range";
-import { cn } from "@/lib/utils";
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useTransition } from 'react'
+
+import { Select } from '@/components/ui/select'
+import { FINANCE_RANGE_OPTIONS, type FinanceRange } from '@/lib/finance/range'
+import { cn } from '@/lib/utils'
 
 export function FinanceRangeSelector({ current }: { current: FinanceRange }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [pending, startTransition] = useTransition();
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const [pending, startTransition] = useTransition()
 
   const onSelect = (next: FinanceRange) => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParams.toString())
     // "month" is the default — omit the param to keep URLs clean
-    if (next === "month") params.delete("range");
-    else params.set("range", next);
-    const qs = params.toString();
+    if (next === 'month') params.delete('range')
+    else params.set('range', next)
+    const qs = params.toString()
     startTransition(() => {
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-    });
-  };
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+    })
+  }
 
   return (
-    <div className={cn("flex items-center gap-2 text-xs", pending && "opacity-70")}>
-      <span className="font-medium text-muted-foreground">Periodo</span>
+    <div className={cn('flex items-center gap-2 text-xs', pending && 'opacity-70')}>
+      <span className="text-muted-foreground font-medium">Periodo</span>
       <Select
         aria-label="Rango temporal"
         value={current}
@@ -39,5 +40,5 @@ export function FinanceRangeSelector({ current }: { current: FinanceRange }) {
         ))}
       </Select>
     </div>
-  );
+  )
 }

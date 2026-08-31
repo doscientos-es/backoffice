@@ -1,9 +1,10 @@
-"use client";
+'use client'
 
-import { Brain, Mail, MessageCircle, Phone, Sparkle as Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { type ReactNode, useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Brain, Mail, MessageCircle, Phone, Sparkle as Sparkles } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { type ReactNode, useEffect, useState } from 'react'
+
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -11,65 +12,66 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
-import { SubmitButton } from "@/components/ui/submit-button";
-import { Textarea } from "@/components/ui/textarea";
-import type { LeadInteraction, LeadListItem } from "@/lib/leads/types";
-import type { CallOutcome } from "@/lib/schemas/lead";
-import { relativeTime } from "@/lib/utils";
-import { todayIsoLocal } from "@/lib/utils/date";
-import type { MomTestValues } from "./[id]/mom-test-checklist";
-import { MomTestQuickDialog } from "./[id]/mom-test-quick-dialog";
-import { logLeadCall, logLeadEmail } from "./actions";
-import { CallDateField } from "./call-date-field";
-import { CallDigestDialog } from "./call-digest-dialog";
-import { WhatsAppComposer } from "./whatsapp-composer";
+} from '@/components/ui/dialog'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select } from '@/components/ui/select'
+import { SubmitButton } from '@/components/ui/submit-button'
+import { Textarea } from '@/components/ui/textarea'
+import type { LeadInteraction, LeadListItem } from '@/lib/leads/types'
+import type { CallOutcome } from '@/lib/schemas/lead'
+import { relativeTime } from '@/lib/utils'
+import { todayIsoLocal } from '@/lib/utils/date'
 
-export type FastInteraction = LeadInteraction;
+import type { MomTestValues } from './[id]/mom-test-checklist'
+import { MomTestQuickDialog } from './[id]/mom-test-quick-dialog'
+import { logLeadCall, logLeadEmail } from './actions'
+import { CallDateField } from './call-date-field'
+import { CallDigestDialog } from './call-digest-dialog'
+import { WhatsAppComposer } from './whatsapp-composer'
 
-export type FastLead = LeadListItem;
+export type FastInteraction = LeadInteraction
+
+export type FastLead = LeadListItem
 
 type Props = {
-  lead: FastLead;
-  aiEnabled: boolean;
-  senderName: string;
-};
+  lead: FastLead
+  aiEnabled: boolean
+  senderName: string
+}
 
 const INTERACTION_LABEL: Record<string, string> = {
-  email_sent: "Email enviado",
-  email_received: "Email recibido",
-  email_delivered: "Email entregado",
-  email_opened: "Email abierto",
-  email_clicked: "Email con clic",
-  email_bounced: "Email rebotado",
-  email_complained: "Email marcado como spam",
-  email_scheduled: "Email programado",
-  email_delivery_delayed: "Entrega de email retrasada",
-  email_failed: "Error al enviar el email",
-  email_suppressed: "Email suprimido",
-  call: "Llamada",
-  meeting: "Reunión",
-  note: "Nota",
-  owner_change: "Responsable cambiado",
-  status_change: "Cambio de estado",
-  portal_view: "Portal visto",
-  portal_accept: "Propuesta aceptada",
-  portal_reject: "Propuesta rechazada",
-};
+  email_sent: 'Email enviado',
+  email_received: 'Email recibido',
+  email_delivered: 'Email entregado',
+  email_opened: 'Email abierto',
+  email_clicked: 'Email con clic',
+  email_bounced: 'Email rebotado',
+  email_complained: 'Email marcado como spam',
+  email_scheduled: 'Email programado',
+  email_delivery_delayed: 'Entrega de email retrasada',
+  email_failed: 'Error al enviar el email',
+  email_suppressed: 'Email suprimido',
+  call: 'Llamada',
+  meeting: 'Reunión',
+  note: 'Nota',
+  owner_change: 'Responsable cambiado',
+  status_change: 'Cambio de estado',
+  portal_view: 'Portal visto',
+  portal_accept: 'Propuesta aceptada',
+  portal_reject: 'Propuesta rechazada',
+}
 
 function excerpt(body: string | null, max = 120): string | null {
-  if (!body) return null;
+  if (!body) return null
   const text = body
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  if (!text) return null;
-  return text.length > max ? `${text.slice(0, max)}…` : text;
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (!text) return null
+  return text.length > max ? `${text.slice(0, max)}…` : text
 }
 
 function WhatsAppFollowUp({
@@ -82,14 +84,14 @@ function WhatsAppFollowUp({
   open,
   onOpenChange,
 }: {
-  leadId: string;
-  leadName: string;
-  leadEmail: string | null;
-  leadPhone: string | null;
-  senderName: string;
-  aiEnabled: boolean;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  leadId: string
+  leadName: string
+  leadEmail: string | null
+  leadPhone: string | null
+  senderName: string
+  aiEnabled: boolean
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -114,7 +116,7 @@ function WhatsAppFollowUp({
         />
       </DialogContent>
     </Dialog>
-  );
+  )
 }
 
 export function LeadFastActions({ lead, aiEnabled, senderName }: Props) {
@@ -147,7 +149,7 @@ export function LeadFastActions({ lead, aiEnabled, senderName }: Props) {
       <EmailDialog leadId={lead.id} leadEmail={lead.email} />
       <MemoryHoverCard lead={lead} aiEnabled={aiEnabled} />
     </div>
-  );
+  )
 }
 
 function QuickWhatsAppDialog({
@@ -158,14 +160,14 @@ function QuickWhatsAppDialog({
   senderName,
   aiEnabled,
 }: {
-  leadId: string;
-  leadName: string;
-  leadEmail: string | null;
-  leadPhone: string | null;
-  senderName: string;
-  aiEnabled: boolean;
+  leadId: string
+  leadName: string
+  leadEmail: string | null
+  leadPhone: string | null
+  senderName: string
+  aiEnabled: boolean
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
 
   return (
     <FastDialog
@@ -189,7 +191,7 @@ function QuickWhatsAppDialog({
         onSuccess={() => setOpen(false)}
       />
     </FastDialog>
-  );
+  )
 }
 
 function IconTrigger({ label, children }: { label: string; children: ReactNode }) {
@@ -204,7 +206,7 @@ function IconTrigger({ label, children }: { label: string; children: ReactNode }
     >
       {children}
     </Button>
-  );
+  )
 }
 
 function FastDialog({
@@ -215,12 +217,12 @@ function FastDialog({
   onOpenChange,
   children,
 }: {
-  trigger: ReactNode;
-  title: string;
-  description?: string;
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  children: ReactNode;
+  trigger: ReactNode
+  title: string
+  description?: string
+  open: boolean
+  onOpenChange: (v: boolean) => void
+  children: ReactNode
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -233,7 +235,7 @@ function FastDialog({
         {children}
       </DialogContent>
     </Dialog>
-  );
+  )
 }
 
 // ---------------- CALL ----------------
@@ -247,58 +249,58 @@ function CallDialog({
   aiEnabled,
   defaultDurationMinutes,
 }: {
-  leadId: string;
-  leadName: string;
-  leadEmail: string | null;
-  leadPhone: string | null;
-  senderName: string;
-  aiEnabled: boolean;
-  defaultDurationMinutes: number | null;
+  leadId: string
+  leadName: string
+  leadEmail: string | null
+  leadPhone: string | null
+  senderName: string
+  aiEnabled: boolean
+  defaultDurationMinutes: number | null
 }) {
-  const [open, setOpen] = useState(false);
-  const [digestOpen, setDigestOpen] = useState(false);
-  const [digestKey, setDigestKey] = useState(0);
-  const [momTestOpen, setMomTestOpen] = useState(false);
-  const [digestAfterMomTest, setDigestAfterMomTest] = useState(false);
-  const [momTestValues, setMomTestValues] = useState<MomTestValues | null>(null);
-  const [whatsappOpen, setWhatsappOpen] = useState(false);
-  const [notes, setNotes] = useState("");
-  const [duration, setDuration] = useState(() => defaultDurationMinutes?.toString() ?? "");
-  const [callDate, setCallDate] = useState(todayIsoLocal);
-  const [outcome, setOutcome] = useState<CallOutcome>("connected");
-  const feedback = useFormFeedback();
-  const router = useRouter();
+  const [open, setOpen] = useState(false)
+  const [digestOpen, setDigestOpen] = useState(false)
+  const [digestKey, setDigestKey] = useState(0)
+  const [momTestOpen, setMomTestOpen] = useState(false)
+  const [digestAfterMomTest, setDigestAfterMomTest] = useState(false)
+  const [momTestValues, setMomTestValues] = useState<MomTestValues | null>(null)
+  const [whatsappOpen, setWhatsappOpen] = useState(false)
+  const [notes, setNotes] = useState('')
+  const [duration, setDuration] = useState(() => defaultDurationMinutes?.toString() ?? '')
+  const [callDate, setCallDate] = useState(todayIsoLocal)
+  const [outcome, setOutcome] = useState<CallOutcome>('connected')
+  const feedback = useFormFeedback()
+  const router = useRouter()
 
   useEffect(() => {
-    if (open) setDuration(defaultDurationMinutes?.toString() ?? "");
-  }, [defaultDurationMinutes, open]);
+    if (open) setDuration(defaultDurationMinutes?.toString() ?? '')
+  }, [defaultDurationMinutes, open])
 
   async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    feedback.setPending();
+    e.preventDefault()
+    feedback.setPending()
     const res = await logLeadCall({
       leadId,
       notes: notes || undefined,
       durationMinutes: duration ? Number(duration) : undefined,
       outcome,
       callDate,
-    });
-    if (!res.ok) return feedback.setError(res.error);
-    feedback.setSuccess("Llamada registrada");
-    setNotes("");
-    setDuration(defaultDurationMinutes?.toString() ?? "");
-    setCallDate(todayIsoLocal());
-    setDigestKey((key) => key + 1);
-    router.refresh();
-    setOpen(false);
+    })
+    if (!res.ok) return feedback.setError(res.error)
+    feedback.setSuccess('Llamada registrada')
+    setNotes('')
+    setDuration(defaultDurationMinutes?.toString() ?? '')
+    setCallDate(todayIsoLocal())
+    setDigestKey((key) => key + 1)
+    router.refresh()
+    setOpen(false)
     if (res.showMomTestPrompt) {
-      setMomTestValues(res.momTestValues);
-      setDigestAfterMomTest(true);
-      setMomTestOpen(true);
-    } else if (outcome === "connected") {
-      setDigestOpen(true);
+      setMomTestValues(res.momTestValues)
+      setDigestAfterMomTest(true)
+      setMomTestOpen(true)
+    } else if (outcome === 'connected') {
+      setDigestOpen(true)
     } else if (res.noAnswerStreak === 3) {
-      setWhatsappOpen(true);
+      setWhatsappOpen(true)
     }
   }
 
@@ -311,7 +313,7 @@ function CallDialog({
           </IconTrigger>
         }
         title="Registrar llamada"
-        description={leadPhone ? `Teléfono: ${leadPhone}` : "Sin teléfono guardado."}
+        description={leadPhone ? `Teléfono: ${leadPhone}` : 'Sin teléfono guardado.'}
         open={open}
         onOpenChange={setOpen}
       >
@@ -354,7 +356,7 @@ function CallDialog({
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor={`fast-call-notes-${leadId}`} className="text-xs font-medium">
-              Notas{" "}
+              Notas{' '}
               <span className="text-muted-foreground/60">(opcionales si no hubo contacto)</span>
             </Label>
             <Textarea
@@ -388,10 +390,10 @@ function CallDialog({
         leadId={leadId}
         open={momTestOpen}
         onOpenChange={(nextOpen) => {
-          setMomTestOpen(nextOpen);
+          setMomTestOpen(nextOpen)
           if (!nextOpen && digestAfterMomTest) {
-            setDigestAfterMomTest(false);
-            setDigestOpen(true);
+            setDigestAfterMomTest(false)
+            setDigestOpen(true)
           }
         }}
         initialValues={momTestValues}
@@ -407,36 +409,36 @@ function CallDialog({
         onOpenChange={setWhatsappOpen}
       />
     </>
-  );
+  )
 }
 
 // ---------------- EMAIL (manual log) ----------------
 
 function EmailDialog({ leadId, leadEmail }: { leadId: string; leadEmail: string | null }) {
-  const [open, setOpen] = useState(false);
-  const [direction, setDirection] = useState<"incoming" | "outgoing">("outgoing");
-  const [subject, setSubject] = useState("");
-  const [bodyHtml, setBodyHtml] = useState("");
-  const [counterparty, setCounterparty] = useState(leadEmail ?? "");
-  const feedback = useFormFeedback();
-  const router = useRouter();
+  const [open, setOpen] = useState(false)
+  const [direction, setDirection] = useState<'incoming' | 'outgoing'>('outgoing')
+  const [subject, setSubject] = useState('')
+  const [bodyHtml, setBodyHtml] = useState('')
+  const [counterparty, setCounterparty] = useState(leadEmail ?? '')
+  const feedback = useFormFeedback()
+  const router = useRouter()
 
   async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    feedback.setPending();
+    e.preventDefault()
+    feedback.setPending()
     const res = await logLeadEmail({
       leadId,
       direction,
       subject,
       bodyHtml: bodyHtml || undefined,
       counterparty: counterparty || undefined,
-    });
-    if (!res.ok) return feedback.setError(res.error);
-    feedback.setSuccess("Email registrado");
-    setSubject("");
-    setBodyHtml("");
-    router.refresh();
-    setTimeout(() => setOpen(false), 400);
+    })
+    if (!res.ok) return feedback.setError(res.error)
+    feedback.setSuccess('Email registrado')
+    setSubject('')
+    setBodyHtml('')
+    router.refresh()
+    setTimeout(() => setOpen(false), 400)
   }
 
   return (
@@ -460,7 +462,7 @@ function EmailDialog({ leadId, leadEmail }: { leadId: string; leadEmail: string 
             <Select
               id={`fast-email-dir-${leadId}`}
               value={direction}
-              onChange={(e) => setDirection(e.target.value as "incoming" | "outgoing")}
+              onChange={(e) => setDirection(e.target.value as 'incoming' | 'outgoing')}
             >
               <option value="outgoing">Enviado</option>
               <option value="incoming">Recibido</option>
@@ -468,7 +470,7 @@ function EmailDialog({ leadId, leadEmail }: { leadId: string; leadEmail: string 
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor={`fast-email-cp-${leadId}`} className="text-xs font-medium">
-              {direction === "incoming" ? "De" : "Para"}
+              {direction === 'incoming' ? 'De' : 'Para'}
             </Label>
             <Input
               id={`fast-email-cp-${leadId}`}
@@ -513,38 +515,38 @@ function EmailDialog({ leadId, leadEmail }: { leadId: string; leadEmail: string 
         </div>
       </form>
     </FastDialog>
-  );
+  )
 }
 
 // ---------------- MEMORY (hover card) ----------------
 
 function MemoryHoverCard({ lead, aiEnabled }: { lead: FastLead; aiEnabled: boolean }) {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleGenerate() {
-    if (!aiEnabled) return;
-    setLoading(true);
-    setError(null);
+    if (!aiEnabled) return
+    setLoading(true)
+    setError(null)
     try {
-      const res = await fetch("/api/crm/ai/summarize-lead", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/crm/ai/summarize-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lead_id: lead.id }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Error al generar el resumen.");
-      router.refresh();
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'Error al generar el resumen.')
+      router.refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error desconocido.");
+      setError(err instanceof Error ? err.message : 'Error desconocido.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
-  const hasInteractions = lead.recent_interactions.length > 0;
-  const hasSummary = Boolean(lead.ai_summary);
+  const hasInteractions = lead.recent_interactions.length > 0
+  const hasSummary = Boolean(lead.ai_summary)
 
   return (
     <HoverCard openDelay={120} closeDelay={80}>
@@ -560,16 +562,16 @@ function MemoryHoverCard({ lead, aiEnabled }: { lead: FastLead; aiEnabled: boole
         </Button>
       </HoverCardTrigger>
       <HoverCardContent align="end" className="w-80 p-0">
-        <div className="flex flex-col divide-y divide-border">
+        <div className="divide-border flex flex-col divide-y">
           <div className="px-3 py-2.5">
-            <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-foreground">
+            <div className="text-foreground mb-1 flex items-center gap-1.5 text-xs font-semibold">
               <Sparkles className="size-3 opacity-60" />
               Descripción del lead
             </div>
             {hasSummary ? (
-              <p className="text-xs leading-relaxed text-muted-foreground">{lead.ai_summary}</p>
+              <p className="text-muted-foreground text-xs leading-relaxed">{lead.ai_summary}</p>
             ) : (
-              <p className="text-xs leading-relaxed text-muted-foreground/80">
+              <p className="text-muted-foreground/80 text-xs leading-relaxed">
                 Aún no hay descripción generada para este lead.
               </p>
             )}
@@ -583,7 +585,7 @@ function MemoryHoverCard({ lead, aiEnabled }: { lead: FastLead; aiEnabled: boole
                   disabled={loading}
                 >
                   <Sparkles className="size-3" />
-                  {loading ? "Analizando…" : hasSummary ? "Actualizar" : "Generar con IA"}
+                  {loading ? 'Analizando…' : hasSummary ? 'Actualizar' : 'Generar con IA'}
                 </Button>
               ) : (
                 <Button
@@ -597,25 +599,25 @@ function MemoryHoverCard({ lead, aiEnabled }: { lead: FastLead; aiEnabled: boole
                   Generar con IA · No disponible
                 </Button>
               )}
-              {error ? <span className="text-[10px] text-destructive">{error}</span> : null}
+              {error ? <span className="text-destructive text-[10px]">{error}</span> : null}
             </div>
             {!aiEnabled ? (
-              <p className="mt-1.5 text-[10px] leading-snug text-muted-foreground/70">
+              <p className="text-muted-foreground/70 mt-1.5 text-[10px] leading-snug">
                 Sin clave de API configurada. La IA usará emails, llamadas y notas para resumir lo
                 que pide el lead.
               </p>
             ) : null}
           </div>
           <div className="px-3 py-2.5">
-            <div className="mb-1.5 text-xs font-semibold text-foreground">Últimas acciones</div>
+            <div className="text-foreground mb-1.5 text-xs font-semibold">Últimas acciones</div>
             {hasInteractions ? (
               <ul className="flex flex-col gap-1.5">
                 {lead.recent_interactions.slice(0, 3).map((i) => {
-                  const snippet = excerpt(i.body, 90) ?? i.subject;
+                  const snippet = excerpt(i.body, 90) ?? i.subject
                   return (
                     <li key={i.id} className="flex flex-col gap-0.5">
                       <div className="flex items-center justify-between gap-2 text-[11px]">
-                        <span className="font-medium text-foreground">
+                        <span className="text-foreground font-medium">
                           {INTERACTION_LABEL[i.type] ?? i.type}
                         </span>
                         <span className="text-muted-foreground tabular-nums">
@@ -623,14 +625,14 @@ function MemoryHoverCard({ lead, aiEnabled }: { lead: FastLead; aiEnabled: boole
                         </span>
                       </div>
                       {snippet ? (
-                        <p className="line-clamp-2 text-[11px] text-muted-foreground">{snippet}</p>
+                        <p className="text-muted-foreground line-clamp-2 text-[11px]">{snippet}</p>
                       ) : null}
                     </li>
-                  );
+                  )
                 })}
               </ul>
             ) : (
-              <p className="text-[11px] text-muted-foreground/80">
+              <p className="text-muted-foreground/80 text-[11px]">
                 Sin interacciones registradas todavía.
               </p>
             )}
@@ -638,5 +640,5 @@ function MemoryHoverCard({ lead, aiEnabled }: { lead: FastLead; aiEnabled: boole
         </div>
       </HoverCardContent>
     </HoverCard>
-  );
+  )
 }

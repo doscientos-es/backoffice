@@ -1,5 +1,4 @@
-import "server-only";
-
+import 'server-only'
 import {
   Circle,
   Document,
@@ -12,94 +11,96 @@ import {
   Svg,
   Text,
   View,
-} from "@react-pdf/renderer";
-import { INVOICE_STATUS, type InvoiceStatus } from "@/lib/status";
-import { formatDate, formatEUR } from "@/lib/utils";
-import type { InvoicePdfData } from "./pdf-data";
+} from '@react-pdf/renderer'
 
-const BRAND = "#2A4227";
-const MUTED = "#71717a";
-const FAINT = "#a1a1aa";
-const LINE = "#e4e4e7";
-const INK = "#18181b";
+import { INVOICE_STATUS, type InvoiceStatus } from '@/lib/status'
+import { formatDate, formatEUR } from '@/lib/utils'
+
+import type { InvoicePdfData } from './pdf-data'
+
+const BRAND = '#2A4227'
+const MUTED = '#71717a'
+const FAINT = '#a1a1aa'
+const LINE = '#e4e4e7'
+const INK = '#18181b'
 
 const styles = StyleSheet.create({
   page: { paddingTop: 40, paddingBottom: 64, paddingHorizontal: 40, fontSize: 9, color: INK },
-  fiscalQrHeader: { marginBottom: 10, alignItems: "flex-start" },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-  brandRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  brandName: { fontSize: 11, fontFamily: "Helvetica-Bold", letterSpacing: 1, color: BRAND },
-  docType: { marginTop: 4, fontSize: 8, color: FAINT, textTransform: "uppercase" },
-  headerRight: { alignItems: "flex-end" },
-  number: { fontSize: 16, fontFamily: "Helvetica-Bold", color: INK },
+  fiscalQrHeader: { marginBottom: 10, alignItems: 'flex-start' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  brandName: { fontSize: 11, fontFamily: 'Helvetica-Bold', letterSpacing: 1, color: BRAND },
+  docType: { marginTop: 4, fontSize: 8, color: FAINT, textTransform: 'uppercase' },
+  headerRight: { alignItems: 'flex-end' },
+  number: { fontSize: 16, fontFamily: 'Helvetica-Bold', color: INK },
   status: {
     marginTop: 2,
     fontSize: 8,
     color: MUTED,
-    textTransform: "uppercase",
+    textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   metaRow: { marginTop: 4, fontSize: 8, color: MUTED },
-  parties: { flexDirection: "row", marginTop: 28, gap: 24 },
+  parties: { flexDirection: 'row', marginTop: 28, gap: 24 },
   party: { flex: 1 },
   label: {
     fontSize: 7,
     color: FAINT,
-    textTransform: "uppercase",
+    textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: 4,
   },
-  partyName: { fontSize: 10, fontFamily: "Helvetica-Bold", color: INK },
+  partyName: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: INK },
   partyLine: { fontSize: 8, color: MUTED, marginTop: 2 },
   table: { marginTop: 28, borderTopWidth: 1, borderColor: LINE },
-  thead: { flexDirection: "row", borderBottomWidth: 1, borderColor: LINE, paddingVertical: 6 },
-  row: { flexDirection: "row", borderBottomWidth: 0.5, borderColor: LINE, paddingVertical: 7 },
-  th: { fontSize: 7, color: FAINT, textTransform: "uppercase", letterSpacing: 0.5 },
+  thead: { flexDirection: 'row', borderBottomWidth: 1, borderColor: LINE, paddingVertical: 6 },
+  row: { flexDirection: 'row', borderBottomWidth: 0.5, borderColor: LINE, paddingVertical: 7 },
+  th: { fontSize: 7, color: FAINT, textTransform: 'uppercase', letterSpacing: 0.5 },
   cDesc: { flex: 1, paddingRight: 8 },
-  cNum: { width: 50, textAlign: "right" },
-  cVat: { width: 40, textAlign: "right" },
-  cAmount: { width: 70, textAlign: "right" },
-  totals: { marginTop: 16, alignSelf: "flex-end", width: 220 },
-  totalLine: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 2 },
+  cNum: { width: 50, textAlign: 'right' },
+  cVat: { width: 40, textAlign: 'right' },
+  cAmount: { width: 70, textAlign: 'right' },
+  totals: { marginTop: 16, alignSelf: 'flex-end', width: 220 },
+  totalLine: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 },
   totalMuted: { fontSize: 8, color: MUTED },
   grandRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     borderTopWidth: 1,
     borderColor: LINE,
     marginTop: 4,
     paddingTop: 6,
   },
-  grandLabel: { fontSize: 11, fontFamily: "Helvetica-Bold" },
-  fiscal: { flexDirection: "row", justifyContent: "space-between", marginTop: 28, gap: 16 },
+  grandLabel: { fontSize: 11, fontFamily: 'Helvetica-Bold' },
+  fiscal: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 28, gap: 16 },
   fiscalInfo: { flex: 1 },
-  mono: { fontFamily: "Courier", fontSize: 7, color: MUTED, marginTop: 2 },
-  qrWrap: { alignItems: "center" },
+  mono: { fontFamily: 'Courier', fontSize: 7, color: MUTED, marginTop: 2 },
+  qrWrap: { alignItems: 'center' },
   // 88 pt = 31.0 mm. AEAT permits 30–40 mm for printed/viewable invoices.
   qr: { width: 88, height: 88 },
   qrCaption: { fontSize: 7, color: FAINT, marginTop: 3 },
   payment: {
     marginTop: 20,
     padding: 12,
-    backgroundColor: "#f4f4f5",
+    backgroundColor: '#f4f4f5',
     borderRadius: 4,
     borderLeftWidth: 3,
     borderLeftColor: BRAND,
   },
   paymentTitle: {
     fontSize: 7,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: 'Helvetica-Bold',
     color: BRAND,
-    textTransform: "uppercase",
+    textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: 6,
   },
-  paymentRow: { flexDirection: "row", marginTop: 3, gap: 4 },
+  paymentRow: { flexDirection: 'row', marginTop: 3, gap: 4 },
   paymentKey: { fontSize: 8, color: MUTED, width: 90 },
-  paymentVal: { fontSize: 8, color: INK, fontFamily: "Helvetica-Bold", flex: 1 },
+  paymentVal: { fontSize: 8, color: INK, fontFamily: 'Helvetica-Bold', flex: 1 },
   paymentNote: { fontSize: 7, color: FAINT, marginTop: 6 },
   footer: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 32,
     left: 40,
     right: 40,
@@ -108,23 +109,23 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   footerText: { fontSize: 7, color: FAINT, lineHeight: 1.5 },
-  pageTitle: { fontSize: 13, fontFamily: "Helvetica-Bold", color: INK },
+  pageTitle: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: INK },
   pageSubtitle: { marginTop: 2, fontSize: 8, color: MUTED },
   wlDate: { width: 62 },
   wlMember: { flex: 1, paddingRight: 8 },
   wlRange: { width: 76 },
-  wlHours: { width: 56, textAlign: "right" },
+  wlHours: { width: 56, textAlign: 'right' },
   wlNote: { flex: 1.4, paddingLeft: 8 },
-});
+})
 
 /** Compact "4 h 30 min" style duration used across the work-log views. */
 function formatWorkLogHours(hours: number): string {
-  const totalMin = Math.round(hours * 60);
-  const hrs = Math.floor(totalMin / 60);
-  const mins = totalMin % 60;
-  if (hrs === 0) return `${mins} min`;
-  if (mins === 0) return `${hrs} h`;
-  return `${hrs} h ${mins} min`;
+  const totalMin = Math.round(hours * 60)
+  const hrs = Math.floor(totalMin / 60)
+  const mins = totalMin % 60
+  if (hrs === 0) return `${mins} min`
+  if (mins === 0) return `${hrs} h`
+  return `${hrs} h ${mins} min`
 }
 
 /** Brand mark recreated with react-pdf SVG primitives (matches the green logo asset). */
@@ -139,19 +140,19 @@ function BrandMark() {
       <Circle cx="389.757" cy="429" r="111.989" fill="#0C110B" />
       <Circle cx="634.996" cy="429" r="111.989" fill="#0C110B" />
     </Svg>
-  );
+  )
 }
 
 function statusLabel(status: string): string {
-  return INVOICE_STATUS[status as InvoiceStatus]?.label ?? status;
+  return INVOICE_STATUS[status as InvoiceStatus]?.label ?? status
 }
 
 /** Professional A4 invoice document mirroring the HTML portal view. */
 function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
-  const { company } = data;
+  const { company } = data
   const showPaymentInstructions =
-    data.status !== "cancelled" &&
-    Boolean(data.company?.iban || data.dueDate || data.portalUrl || data.paymentTerms);
+    data.status !== 'cancelled' &&
+    Boolean(data.company?.iban || data.dueDate || data.portalUrl || data.paymentTerms)
   return (
     <Document title={`Factura ${data.fullNumber}`} author="doscientos">
       <Page size="A4" style={styles.page}>
@@ -187,7 +188,7 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
           {company ? (
             <View style={styles.party}>
               <Text style={styles.label}>Emitida por</Text>
-              <Text style={styles.partyName}>{company.name ?? "—"}</Text>
+              <Text style={styles.partyName}>{company.name ?? '—'}</Text>
               {company.nif ? <Text style={styles.partyLine}>NIF: {company.nif}</Text> : null}
               {company.address ? <Text style={styles.partyLine}>{company.address}</Text> : null}
               {company.iban ? <Text style={styles.partyLine}>IBAN: {company.iban}</Text> : null}
@@ -198,10 +199,10 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
             {data.clientLogoUrl ? (
               <Image
                 src={data.clientLogoUrl}
-                style={{ width: 40, height: 20, objectFit: "contain", marginBottom: 4 }}
+                style={{ width: 40, height: 20, objectFit: 'contain', marginBottom: 4 }}
               />
             ) : null}
-            <Text style={styles.partyName}>{data.clientName ?? "—"}</Text>
+            <Text style={styles.partyName}>{data.clientName ?? '—'}</Text>
             {data.clientNif ? <Text style={styles.partyLine}>NIF: {data.clientNif}</Text> : null}
             {data.clientAddress ? <Text style={styles.partyLine}>{data.clientAddress}</Text> : null}
           </View>
@@ -227,7 +228,7 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
                 <Text style={styles.cNum}>{item.quantity}</Text>
                 <Text style={styles.cNum}>{formatEUR(item.unitPrice)}</Text>
                 <Text style={styles.cVat}>{item.vatRate}%</Text>
-                <Text style={[styles.cAmount, { fontFamily: "Helvetica-Bold" }]}>
+                <Text style={[styles.cAmount, { fontFamily: 'Helvetica-Bold' }]}>
                   {formatEUR(item.subtotal)}
                 </Text>
               </View>
@@ -277,7 +278,7 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
                 </View>
                 <View style={styles.paymentRow}>
                   <Text style={styles.paymentKey}>Beneficiario</Text>
-                  <Text style={styles.paymentVal}>{data.company.name ?? "—"}</Text>
+                  <Text style={styles.paymentVal}>{data.company.name ?? '—'}</Text>
                 </View>
                 <View style={styles.paymentRow}>
                   <Text style={styles.paymentKey}>Concepto</Text>
@@ -288,7 +289,7 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
 
             {data.portalUrl ? (
               <Text style={styles.paymentNote}>
-                También puede abonar esta factura online mediante tarjeta o Bizum en:{" "}
+                También puede abonar esta factura online mediante tarjeta o Bizum en:{' '}
                 {data.portalUrl}
               </Text>
             ) : null}
@@ -312,20 +313,20 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
         <View style={styles.footer} fixed>
           <Text style={styles.footerText}>
             {data.qrDataUrl
-              ? "VERI*FACTU · Factura verificable en la sede electrónica de la AEAT mediante el código QR."
-              : "Factura en borrador: no constituye un documento fiscal emitido."}
+              ? 'VERI*FACTU · Factura verificable en la sede electrónica de la AEAT mediante el código QR.'
+              : 'Factura en borrador: no constituye un documento fiscal emitido.'}
           </Text>
         </View>
       </Page>
 
       {data.workLogs.length > 0 ? <WorkLogPage data={data} /> : null}
     </Document>
-  );
+  )
 }
 
 /** Second PDF page detailing the tracked hours linked to the invoice. */
 function WorkLogPage({ data }: { data: InvoicePdfData }) {
-  const totalHours = data.workLogs.reduce((sum, log) => sum + log.hours, 0);
+  const totalHours = data.workLogs.reduce((sum, log) => sum + log.hours, 0)
   return (
     <Page size="A4" style={styles.page}>
       <View style={styles.header}>
@@ -350,15 +351,15 @@ function WorkLogPage({ data }: { data: InvoicePdfData }) {
         {data.workLogs.map((log, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: PDF is generated once from a fixed snapshot
           <View key={i} style={styles.row} wrap={false}>
-            <Text style={styles.wlDate}>{log.workDate ? formatDate(log.workDate) : "—"}</Text>
-            <Text style={styles.wlMember}>{log.memberName ?? "—"}</Text>
+            <Text style={styles.wlDate}>{log.workDate ? formatDate(log.workDate) : '—'}</Text>
+            <Text style={styles.wlMember}>{log.memberName ?? '—'}</Text>
             <Text style={styles.wlRange}>
-              {log.startTime && log.endTime ? `${log.startTime}–${log.endTime}` : "—"}
+              {log.startTime && log.endTime ? `${log.startTime}–${log.endTime}` : '—'}
             </Text>
-            <Text style={[styles.wlHours, { fontFamily: "Helvetica-Bold" }]}>
+            <Text style={[styles.wlHours, { fontFamily: 'Helvetica-Bold' }]}>
               {formatWorkLogHours(log.hours)}
             </Text>
-            <Text style={[styles.wlNote, { color: MUTED }]}>{log.note ?? ""}</Text>
+            <Text style={[styles.wlNote, { color: MUTED }]}>{log.note ?? ''}</Text>
           </View>
         ))}
       </View>
@@ -377,10 +378,10 @@ function WorkLogPage({ data }: { data: InvoicePdfData }) {
         </Text>
       </View>
     </Page>
-  );
+  )
 }
 
 /** Render an invoice snapshot to a PDF buffer suitable for a download response. */
 export async function renderInvoicePdf(data: InvoicePdfData): Promise<Buffer> {
-  return renderToBuffer(<InvoicePdfDocument data={data} />);
+  return renderToBuffer(<InvoicePdfDocument data={data} />)
 }

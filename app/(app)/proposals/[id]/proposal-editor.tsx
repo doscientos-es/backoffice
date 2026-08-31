@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   CircleAlert as AlertCircle,
@@ -7,25 +7,26 @@ import {
   ChevronRight,
   Save,
   Sparkle as Sparkles,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { LineItemsTable } from "@/components/finance/line-items-table";
-import { MaintenanceOfferEditor } from "@/components/proposals/maintenance-offer-editor";
-import { PaymentPlanEditor } from "@/components/proposals/payment-plan-editor";
-import { ProblemSolutionEditor } from "@/components/proposals/problem-solution-editor";
-import { ScopeModulesEditor } from "@/components/proposals/scope-modules-editor";
-import { AiNotice } from "@/components/ui/ai-notice";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { FormRow } from "@/components/ui/form-row";
-import { Input } from "@/components/ui/input";
-import { Markdown } from "@/components/ui/markdown";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { VersionConflictDialog } from "@/components/ui/version-conflict-dialog";
-import { computeProposalTotals, EMPTY_LINE_ITEM, type LineItem } from "@/lib/finance";
+} from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+
+import { LineItemsTable } from '@/components/finance/line-items-table'
+import { MaintenanceOfferEditor } from '@/components/proposals/maintenance-offer-editor'
+import { PaymentPlanEditor } from '@/components/proposals/payment-plan-editor'
+import { ProblemSolutionEditor } from '@/components/proposals/problem-solution-editor'
+import { ScopeModulesEditor } from '@/components/proposals/scope-modules-editor'
+import { AiNotice } from '@/components/ui/ai-notice'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { FormRow } from '@/components/ui/form-row'
+import { Input } from '@/components/ui/input'
+import { Markdown } from '@/components/ui/markdown'
+import { Select } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { VersionConflictDialog } from '@/components/ui/version-conflict-dialog'
+import { computeProposalTotals, EMPTY_LINE_ITEM, type LineItem } from '@/lib/finance'
 import {
   createEmptyPair,
   type EditableKeyPoint,
@@ -33,12 +34,12 @@ import {
   serializeKeyPoints,
   unzipPairs,
   zipKeyPoints,
-} from "@/lib/proposals/key-points";
+} from '@/lib/proposals/key-points'
 import {
   DEFAULT_MAINTENANCE_OFFER,
   type MaintenanceOffer,
   selectedMaintenancePlan,
-} from "@/lib/proposals/maintenance";
+} from '@/lib/proposals/maintenance'
 import {
   DEFAULT_CHANGE_MANAGEMENT_TERMS,
   PAYMENT_SCHEDULE_LABELS,
@@ -47,53 +48,54 @@ import {
   type PaymentSchedule,
   paymentPlanForSchedule,
   type ScopeModule,
-} from "@/lib/proposals/scope";
-import { formatEUR } from "@/lib/utils";
-import { setProposalTeamMembers, updateProposal } from "../actions";
+} from '@/lib/proposals/scope'
+import { formatEUR } from '@/lib/utils'
 
-export type EditableItem = LineItem;
+import { setProposalTeamMembers, updateProposal } from '../actions'
+
+export type EditableItem = LineItem
 
 const EDITOR_STEPS = [
-  { label: "Datos", description: "Base de la propuesta" },
-  { label: "Alcance", description: "Qué vamos a entregar" },
-  { label: "Precio", description: "Partidas y condiciones" },
-  { label: "Revisión", description: "Equipo y comprobación final" },
-] as const;
+  { label: 'Datos', description: 'Base de la propuesta' },
+  { label: 'Alcance', description: 'Qué vamos a entregar' },
+  { label: 'Precio', description: 'Partidas y condiciones' },
+  { label: 'Revisión', description: 'Equipo y comprobación final' },
+] as const
 
-type ProposalTeamMember = { id: string; name: string; job_title: string | null };
+type ProposalTeamMember = { id: string; name: string; job_title: string | null }
 
 export type ProposalEditorProps = {
-  id: string;
-  initialTitle: string;
-  initialValidUntil: string | null;
-  initialNotes: string | null;
-  initialContextMarkdown: string | null;
-  initialProblems: EditableKeyPoint[];
-  initialSolutions: EditableKeyPoint[];
-  initialTerms: string | null;
-  initialScopeModules: ScopeModule[];
-  initialDeliverables: string | null;
-  initialAcceptanceCriteria: string | null;
-  initialPaymentSchedule: PaymentSchedule | null;
-  initialPaymentPlan: PaymentPlanItem[];
-  initialPaymentTerms: string | null;
-  initialChangeManagementTerms: string | null;
-  initialMaintenanceOptions: MaintenanceOffer | null;
-  initialMaintenanceSelectedPlanId: string | null;
-  teamMembers: ProposalTeamMember[];
-  initialTeamMemberIds: string[];
-  initialItems: EditableItem[];
+  id: string
+  initialTitle: string
+  initialValidUntil: string | null
+  initialNotes: string | null
+  initialContextMarkdown: string | null
+  initialProblems: EditableKeyPoint[]
+  initialSolutions: EditableKeyPoint[]
+  initialTerms: string | null
+  initialScopeModules: ScopeModule[]
+  initialDeliverables: string | null
+  initialAcceptanceCriteria: string | null
+  initialPaymentSchedule: PaymentSchedule | null
+  initialPaymentPlan: PaymentPlanItem[]
+  initialPaymentTerms: string | null
+  initialChangeManagementTerms: string | null
+  initialMaintenanceOptions: MaintenanceOffer | null
+  initialMaintenanceSelectedPlanId: string | null
+  teamMembers: ProposalTeamMember[]
+  initialTeamMemberIds: string[]
+  initialItems: EditableItem[]
   /** Optimistic-concurrency token captured with the record. */
-  initialVersion: number;
+  initialVersion: number
   /** When true, fields are read-only (proposal accepted/rejected). */
-  locked: boolean;
+  locked: boolean
   /** Gates the "generate problems/solutions with AI" affordance. */
-  aiEnabled: boolean;
+  aiEnabled: boolean
   /** The lead whose CRM briefing can be used to prepare this proposal. */
-  leadId: string | null;
+  leadId: string | null
   /** Runs once when arriving from the "Crear y prerrellenar" flow. */
-  autoGenerateDraft: boolean;
-};
+  autoGenerateDraft: boolean
+}
 
 /**
  * Inline editor for the proposal detail page. Changes remain local until the
@@ -130,55 +132,55 @@ export function ProposalEditor({
   leadId,
   autoGenerateDraft,
 }: ProposalEditorProps) {
-  const router = useRouter();
-  const [expectedVersion, setExpectedVersion] = useState(initialVersion);
-  const [conflictOpen, setConflictOpen] = useState(false);
-  const [title, setTitle] = useState(initialTitle);
-  const [validUntil, setValidUntil] = useState(initialValidUntil ?? "");
-  const [notes, setNotes] = useState(initialNotes ?? "");
-  const [notesPreview, setNotesPreview] = useState(false);
-  const [contextMarkdown, setContextMarkdown] = useState(initialContextMarkdown ?? "");
+  const router = useRouter()
+  const [expectedVersion, setExpectedVersion] = useState(initialVersion)
+  const [conflictOpen, setConflictOpen] = useState(false)
+  const [title, setTitle] = useState(initialTitle)
+  const [validUntil, setValidUntil] = useState(initialValidUntil ?? '')
+  const [notes, setNotes] = useState(initialNotes ?? '')
+  const [notesPreview, setNotesPreview] = useState(false)
+  const [contextMarkdown, setContextMarkdown] = useState(initialContextMarkdown ?? '')
   const [pairs, setPairs] = useState<EditablePair[]>(() =>
     zipKeyPoints(initialProblems, initialSolutions),
-  );
-  const [generating, setGenerating] = useState(false);
-  const aiFeedback = useFormFeedback();
-  const saveFeedback = useFormFeedback({ successResetMs: 4_000 });
-  const automaticDraftStarted = useRef(false);
-  const [terms, setTerms] = useState(initialTerms ?? "");
-  const [scopeModules, setScopeModules] = useState(initialScopeModules);
-  const [deliverables, setDeliverables] = useState(initialDeliverables ?? "");
-  const [acceptanceCriteria, setAcceptanceCriteria] = useState(initialAcceptanceCriteria ?? "");
+  )
+  const [generating, setGenerating] = useState(false)
+  const aiFeedback = useFormFeedback()
+  const saveFeedback = useFormFeedback({ successResetMs: 4_000 })
+  const automaticDraftStarted = useRef(false)
+  const [terms, setTerms] = useState(initialTerms ?? '')
+  const [scopeModules, setScopeModules] = useState(initialScopeModules)
+  const [deliverables, setDeliverables] = useState(initialDeliverables ?? '')
+  const [acceptanceCriteria, setAcceptanceCriteria] = useState(initialAcceptanceCriteria ?? '')
   const [paymentSchedule, setPaymentSchedule] = useState<PaymentSchedule>(
-    initialPaymentSchedule ?? "half_half",
-  );
+    initialPaymentSchedule ?? 'half_half',
+  )
   const [paymentPlan, setPaymentPlan] = useState<PaymentPlanItem[]>(
     initialPaymentPlan.length > 0
       ? initialPaymentPlan
-      : paymentPlanForSchedule(initialPaymentSchedule ?? "half_half"),
-  );
+      : paymentPlanForSchedule(initialPaymentSchedule ?? 'half_half'),
+  )
   const [paymentTerms, setPaymentTerms] = useState(
     initialPaymentTerms ?? PAYMENT_SCHEDULE_TEMPLATES.half_half,
-  );
+  )
   const [changeManagementTerms, setChangeManagementTerms] = useState(
     initialChangeManagementTerms ?? DEFAULT_CHANGE_MANAGEMENT_TERMS,
-  );
+  )
   const [maintenanceOptions, setMaintenanceOptions] = useState<MaintenanceOffer>(
     initialMaintenanceOptions ?? DEFAULT_MAINTENANCE_OFFER,
-  );
+  )
   const [maintenanceSelectedPlanId, setMaintenanceSelectedPlanId] = useState<string | null>(
     initialMaintenanceSelectedPlanId,
-  );
-  const [teamMemberIds, setTeamMemberIds] = useState(initialTeamMemberIds);
-  const [activeStep, setActiveStep] = useState(0);
+  )
+  const [teamMemberIds, setTeamMemberIds] = useState(initialTeamMemberIds)
+  const [activeStep, setActiveStep] = useState(0)
   const [items, setItems] = useState<EditableItem[]>(
     initialItems.length > 0
       ? initialItems.map((it) => ({ ...it, id: it.id || crypto.randomUUID() }))
       : [{ ...EMPTY_LINE_ITEM, id: crypto.randomUUID() } as EditableItem],
-  );
+  )
 
   const payload = useMemo(() => {
-    const { problems, solutions } = unzipPairs(pairs);
+    const { problems, solutions } = unzipPairs(pairs)
     return {
       id,
       expected_version: expectedVersion,
@@ -199,7 +201,7 @@ export function ProposalEditor({
       maintenance_options: maintenanceOptions,
       maintenance_selected_plan_id: maintenanceSelectedPlanId,
       items,
-    };
+    }
   }, [
     id,
     expectedVersion,
@@ -219,130 +221,127 @@ export function ProposalEditor({
     maintenanceOptions,
     maintenanceSelectedPlanId,
     items,
-  ]);
+  ])
 
   async function handleGenerateNarrative() {
-    setGenerating(true);
-    aiFeedback.setPending();
+    setGenerating(true)
+    aiFeedback.setPending()
     try {
-      const res = await fetch(`/api/proposals/${id}/generate-narrative`, { method: "POST" });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "No se pudo generar la narrativa.");
-      const incoming = (json.pairs ?? []) as Array<Omit<EditablePair, "id">>;
-      setPairs(incoming.map((p) => ({ ...createEmptyPair(), ...p })));
-      aiFeedback.setSuccess("Narrativa generada");
+      const res = await fetch(`/api/proposals/${id}/generate-narrative`, { method: 'POST' })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'No se pudo generar la narrativa.')
+      const incoming = (json.pairs ?? []) as Array<Omit<EditablePair, 'id'>>
+      setPairs(incoming.map((p) => ({ ...createEmptyPair(), ...p })))
+      aiFeedback.setSuccess('Narrativa generada')
     } catch (err) {
-      aiFeedback.setError(err instanceof Error ? err.message : "Error desconocido");
+      aiFeedback.setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
-      setGenerating(false);
+      setGenerating(false)
     }
   }
 
   const narrativeIsEmpty =
-    !notes.trim() && !contextMarkdown.trim() && pairs.length === 0 && !terms.trim();
+    !notes.trim() && !contextMarkdown.trim() && pairs.length === 0 && !terms.trim()
   const commercialScopeIsEmpty =
-    scopeModules.length === 0 && !deliverables.trim() && !acceptanceCriteria.trim();
+    scopeModules.length === 0 && !deliverables.trim() && !acceptanceCriteria.trim()
   const hasEmptyDraftFields =
     narrativeIsEmpty ||
     commercialScopeIsEmpty ||
     !paymentTerms.trim() ||
-    !changeManagementTerms.trim();
+    !changeManagementTerms.trim()
   const saveErrors =
-    saveFeedback.state.status === "error"
-      ? saveFeedback.state.message.split("\n").filter(Boolean)
-      : [];
-  const proposalTotals = useMemo(() => computeProposalTotals(items), [items]);
-  const selectedMaintenance = selectedMaintenancePlan(
-    maintenanceOptions,
-    maintenanceSelectedPlanId,
-  );
+    saveFeedback.state.status === 'error'
+      ? saveFeedback.state.message.split('\n').filter(Boolean)
+      : []
+  const proposalTotals = useMemo(() => computeProposalTotals(items), [items])
+  const selectedMaintenance = selectedMaintenancePlan(maintenanceOptions, maintenanceSelectedPlanId)
   const stepComplete = [
     Boolean(title.trim() && validUntil),
     Boolean(contextMarkdown.trim() || pairs.length || scopeModules.length || deliverables.trim()),
     Boolean(items.some((item) => item.description.trim() && Number(item.quantity) > 0)),
     Boolean(selectedMaintenance),
-  ];
-  const currentStep = EDITOR_STEPS[activeStep] ?? EDITOR_STEPS[0]!;
-  const nextStep = EDITOR_STEPS[activeStep + 1] ?? currentStep;
+  ]
+  const currentStep = EDITOR_STEPS[activeStep] ?? EDITOR_STEPS[0]!
+  const nextStep = EDITOR_STEPS[activeStep + 1] ?? currentStep
 
   async function handleSave() {
-    saveFeedback.setPending();
+    saveFeedback.setPending()
     try {
-      const result = await updateProposal(payload);
+      const result = await updateProposal(payload)
       if (!result.ok) {
-        if (result.code === "conflict") setConflictOpen(true);
-        else saveFeedback.setError(result.error);
-        return;
+        if (result.code === 'conflict') setConflictOpen(true)
+        else saveFeedback.setError(result.error)
+        return
       }
       const teamResult = await setProposalTeamMembers({
         proposal_id: id,
         member_ids: teamMemberIds,
-      });
+      })
       if (!teamResult.ok) {
-        setExpectedVersion(result.version);
+        setExpectedVersion(result.version)
         saveFeedback.setError(
           `La propuesta se guardó, pero no se pudo actualizar el equipo: ${teamResult.error}`,
-        );
-        return;
+        )
+        return
       }
-      setExpectedVersion(result.version);
-      saveFeedback.setSuccess("Propuesta guardada");
-      router.push(`/proposals/${id}`);
+      setExpectedVersion(result.version)
+      saveFeedback.setSuccess('Propuesta guardada')
+      router.push(`/proposals/${id}`)
     } catch (error) {
       saveFeedback.setError(
-        error instanceof Error ? error.message : "No se pudo guardar la propuesta",
-      );
+        error instanceof Error ? error.message : 'No se pudo guardar la propuesta',
+      )
     }
   }
 
   function handlePaymentScheduleChange(value: PaymentSchedule) {
-    setPaymentSchedule(value);
-    if (value !== "custom") setPaymentTerms(PAYMENT_SCHEDULE_TEMPLATES[value]);
-    setPaymentPlan(paymentPlanForSchedule(value));
+    setPaymentSchedule(value)
+    if (value !== 'custom') setPaymentTerms(PAYMENT_SCHEDULE_TEMPLATES[value])
+    setPaymentPlan(paymentPlanForSchedule(value))
   }
 
   const handleGenerateDraft = useCallback(async () => {
-    if (!leadId || generating || locked || !hasEmptyDraftFields) return;
-    setGenerating(true);
-    aiFeedback.setPending();
+    if (!leadId || generating || locked || !hasEmptyDraftFields) return
+    setGenerating(true)
+    aiFeedback.setPending()
     try {
-      const res = await fetch(`/api/proposals/${id}/generate-draft`, { method: "POST" });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "No se pudo preparar la propuesta.");
+      const res = await fetch(`/api/proposals/${id}/generate-draft`, { method: 'POST' })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'No se pudo preparar la propuesta.')
 
-      const incoming = (json.pairs ?? []) as Array<Omit<EditablePair, "id">>;
-      const nextPairs = incoming.map((pair) => ({ ...createEmptyPair(), ...pair }));
-      const nextScopeModules = (json.scope_modules ?? []) as ScopeModule[];
-      const titleIsEmpty = !title.trim();
-      const notesAreEmpty = !notes.trim();
-      const contextIsEmpty = !contextMarkdown.trim();
-      const pairsAreEmpty = pairs.length === 0;
-      const termsAreEmpty = !terms.trim();
-      const modulesAreEmpty = scopeModules.length === 0;
-      const deliverablesAreEmpty = !deliverables.trim();
-      const acceptanceCriteriaAreEmpty = !acceptanceCriteria.trim();
-      const paymentTermsAreEmpty = !paymentTerms.trim();
-      const changeManagementTermsAreEmpty = !changeManagementTerms.trim();
-      if (titleIsEmpty) setTitle(json.title);
-      if (notesAreEmpty) setNotes(json.notes ?? "");
-      if (contextIsEmpty) setContextMarkdown(json.context_markdown ?? "");
-      if (pairsAreEmpty) setPairs(nextPairs);
-      if (termsAreEmpty) setTerms(json.terms ?? "");
-      if (modulesAreEmpty && nextScopeModules.length > 0) setScopeModules(nextScopeModules);
-      if (deliverablesAreEmpty) setDeliverables(json.deliverables ?? "");
-      if (acceptanceCriteriaAreEmpty) setAcceptanceCriteria(json.acceptance_criteria ?? "");
+      const incoming = (json.pairs ?? []) as Array<Omit<EditablePair, 'id'>>
+      const nextPairs = incoming.map((pair) => ({ ...createEmptyPair(), ...pair }))
+      const nextScopeModules = (json.scope_modules ?? []) as ScopeModule[]
+      const titleIsEmpty = !title.trim()
+      const notesAreEmpty = !notes.trim()
+      const contextIsEmpty = !contextMarkdown.trim()
+      const pairsAreEmpty = pairs.length === 0
+      const termsAreEmpty = !terms.trim()
+      const modulesAreEmpty = scopeModules.length === 0
+      const deliverablesAreEmpty = !deliverables.trim()
+      const acceptanceCriteriaAreEmpty = !acceptanceCriteria.trim()
+      const paymentTermsAreEmpty = !paymentTerms.trim()
+      const changeManagementTermsAreEmpty = !changeManagementTerms.trim()
+      if (titleIsEmpty) setTitle(json.title)
+      if (notesAreEmpty) setNotes(json.notes ?? '')
+      if (contextIsEmpty) setContextMarkdown(json.context_markdown ?? '')
+      if (pairsAreEmpty) setPairs(nextPairs)
+      if (termsAreEmpty) setTerms(json.terms ?? '')
+      if (modulesAreEmpty && nextScopeModules.length > 0) setScopeModules(nextScopeModules)
+      if (deliverablesAreEmpty) setDeliverables(json.deliverables ?? '')
+      if (acceptanceCriteriaAreEmpty) setAcceptanceCriteria(json.acceptance_criteria ?? '')
       if (paymentTermsAreEmpty) {
-        setPaymentSchedule(json.payment_schedule as PaymentSchedule);
-        setPaymentTerms(json.payment_terms ?? "");
+        setPaymentSchedule(json.payment_schedule as PaymentSchedule)
+        setPaymentTerms(json.payment_terms ?? '')
       }
       if (changeManagementTermsAreEmpty) {
-        setChangeManagementTerms(json.change_management_terms ?? "");
+        setChangeManagementTerms(json.change_management_terms ?? '')
       }
-      aiFeedback.setSuccess("Borrador preparado con el contexto del lead");
+      aiFeedback.setSuccess('Borrador preparado con el contexto del lead')
     } catch (err) {
-      aiFeedback.setError(err instanceof Error ? err.message : "Error desconocido");
+      aiFeedback.setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
-      setGenerating(false);
+      setGenerating(false)
     }
   }, [
     acceptanceCriteria,
@@ -361,7 +360,7 @@ export function ProposalEditor({
     scopeModules,
     terms,
     title,
-  ]);
+  ])
 
   useEffect(() => {
     if (
@@ -373,10 +372,10 @@ export function ProposalEditor({
       !commercialScopeIsEmpty ||
       automaticDraftStarted.current
     ) {
-      return;
+      return
     }
-    automaticDraftStarted.current = true;
-    void handleGenerateDraft();
+    automaticDraftStarted.current = true
+    void handleGenerateDraft()
   }, [
     autoGenerateDraft,
     aiEnabled,
@@ -385,14 +384,14 @@ export function ProposalEditor({
     narrativeIsEmpty,
     commercialScopeIsEmpty,
     handleGenerateDraft,
-  ]);
+  ])
 
   return (
     <>
       <div className="flex flex-col gap-5">
-        <header className="sticky top-3 z-20 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-background/95 p-3 shadow-sm backdrop-blur">
+        <header className="border-border bg-background/95 sticky top-3 z-20 flex flex-wrap items-center gap-3 rounded-xl border p-3 shadow-sm backdrop-blur">
           <div className="min-w-0 flex-1">
-            <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            <p className="text-muted-foreground mb-1 text-[11px] font-medium tracking-wide uppercase">
               Paso {activeStep + 1} de {EDITOR_STEPS.length} · {currentStep.label}
             </p>
             <Input
@@ -409,13 +408,13 @@ export function ProposalEditor({
               <FormFeedback state={saveFeedback.state} pendingLabel="Guardando propuesta…" />
               <Button onClick={handleSave} disabled={saveFeedback.pending}>
                 <Save className="size-4" aria-hidden />
-                {saveFeedback.pending ? "Guardando…" : "Guardar y ver propuesta"}
+                {saveFeedback.pending ? 'Guardando…' : 'Guardar y ver propuesta'}
               </Button>
             </div>
           ) : null}
         </header>
 
-        {saveFeedback.state.status === "error" && saveErrors.length > 0 ? (
+        {saveFeedback.state.status === 'error' && saveErrors.length > 0 ? (
           <Alert variant="destructive" className="border-destructive/30 bg-destructive/5 px-4 py-3">
             <AlertCircle className="size-4" aria-hidden />
             <AlertTitle>No se ha podido guardar la propuesta</AlertTitle>
@@ -435,48 +434,48 @@ export function ProposalEditor({
           className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4"
         >
           {EDITOR_STEPS.map((step, index) => {
-            const active = activeStep === index;
+            const active = activeStep === index
             return (
               <button
                 key={step.label}
                 type="button"
                 onClick={() => setActiveStep(index)}
-                aria-current={active ? "step" : undefined}
-                className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${active ? "border-primary bg-primary/5" : "border-border bg-card hover:bg-muted/40"}`}
+                aria-current={active ? 'step' : undefined}
+                className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${active ? 'border-primary bg-primary/5' : 'border-border bg-card hover:bg-muted/40'}`}
               >
                 <span
-                  className={`flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${stepComplete[index] ? "bg-primary text-primary-foreground" : active ? "border border-primary text-primary" : "bg-muted text-muted-foreground"}`}
+                  className={`flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${stepComplete[index] ? 'bg-primary text-primary-foreground' : active ? 'border-primary text-primary border' : 'bg-muted text-muted-foreground'}`}
                 >
                   {stepComplete[index] ? <Check className="size-3.5" aria-hidden /> : index + 1}
                 </span>
                 <span className="min-w-0">
                   <span className="block text-sm font-semibold">{step.label}</span>
-                  <span className="block truncate text-[11px] text-muted-foreground">
+                  <span className="text-muted-foreground block truncate text-[11px]">
                     {step.description}
                   </span>
                 </span>
               </button>
-            );
+            )
           })}
         </nav>
 
         <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_18rem]">
           <main className="min-w-0">
             {activeStep === 0 ? (
-              <section className="flex flex-col gap-5 rounded-xl border border-border bg-card p-5">
+              <section className="border-border bg-card flex flex-col gap-5 rounded-xl border p-5">
                 <header>
                   <h2 className="text-base font-semibold">Empieza por lo esencial</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
+                  <p className="text-muted-foreground mt-1 text-sm">
                     Define la vigencia y añade solo las notas que necesites para preparar la
                     propuesta.
                   </p>
                 </header>
 
                 {aiEnabled && leadId && hasEmptyDraftFields && !locked ? (
-                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4">
+                  <div className="border-primary/20 bg-primary/5 flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4">
                     <div>
                       <p className="text-sm font-medium">Prepara una primera versión con IA</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
+                      <p className="text-muted-foreground mt-1 text-xs">
                         Usa el historial del lead y rellena solo los campos que estén vacíos.
                       </p>
                     </div>
@@ -487,7 +486,7 @@ export function ProposalEditor({
                       onClick={handleGenerateDraft}
                     >
                       <Sparkles className="size-4" aria-hidden />
-                      {generating ? "Preparando…" : "Crear borrador"}
+                      {generating ? 'Preparando…' : 'Crear borrador'}
                     </Button>
                   </div>
                 ) : null}
@@ -513,14 +512,14 @@ export function ProposalEditor({
                         <button
                           type="button"
                           onClick={() => setNotesPreview((preview) => !preview)}
-                          className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                          className="text-muted-foreground hover:text-foreground text-xs transition-colors"
                         >
-                          {notesPreview ? "Editar" : "Previsualizar"}
+                          {notesPreview ? 'Editar' : 'Previsualizar'}
                         </button>
                       ) : null}
                     </div>
                     {notesPreview && notes ? (
-                      <div className="min-h-32 rounded-md border border-border bg-muted/20 px-3 py-2">
+                      <div className="border-border bg-muted/20 min-h-32 rounded-md border px-3 py-2">
                         <Markdown source={notes} />
                       </div>
                     ) : (
@@ -540,11 +539,11 @@ export function ProposalEditor({
 
             {activeStep === 1 ? (
               <div className="flex flex-col gap-5">
-                <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5">
+                <section className="border-border bg-card flex flex-col gap-4 rounded-xl border p-5">
                   <header className="flex items-start justify-between gap-3">
                     <div>
                       <h2 className="text-base font-semibold">Cuenta la propuesta</h2>
-                      <p className="mt-1 text-sm text-muted-foreground">
+                      <p className="text-muted-foreground mt-1 text-sm">
                         Explica el punto de partida y cómo lo vas a resolver.
                       </p>
                     </div>
@@ -583,10 +582,10 @@ export function ProposalEditor({
                   </FormRow>
                 </section>
 
-                <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5">
+                <section className="border-border bg-card flex flex-col gap-4 rounded-xl border p-5">
                   <header>
                     <h2 className="text-base font-semibold">Alcance y entregables</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <p className="text-muted-foreground mt-1 text-sm">
                       Añade los módulos y concreta lo que recibirá el cliente.
                     </p>
                   </header>
@@ -609,9 +608,9 @@ export function ProposalEditor({
                       placeholder="- Diseño validado\n- Desarrollo de los módulos acordados\n- Formación y documentación"
                     />
                   </FormRow>
-                  <div className="rounded-lg border border-border bg-muted/20 p-3">
+                  <div className="border-border bg-muted/20 rounded-lg border p-3">
                     <p className="mb-1 text-sm font-medium">Facturación por plazos</p>
-                    <p className="mb-3 text-xs text-muted-foreground">
+                    <p className="text-muted-foreground mb-3 text-xs">
                       Se crearán borradores editables para estos cobros al aceptar la propuesta.
                     </p>
                     <PaymentPlanEditor
@@ -621,7 +620,7 @@ export function ProposalEditor({
                       locked={locked}
                     />
                   </div>
-                  <details className="rounded-lg border border-border bg-muted/20 p-3">
+                  <details className="border-border bg-muted/20 rounded-lg border p-3">
                     <summary className="cursor-pointer text-sm font-medium">
                       Añadir criterios de aceptación
                     </summary>
@@ -648,14 +647,14 @@ export function ProposalEditor({
 
             {activeStep === 2 ? (
               <div className="flex flex-col gap-5">
-                <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5">
+                <section className="border-border bg-card flex flex-col gap-4 rounded-xl border p-5">
                   <header>
                     <h2 className="text-base font-semibold">Precio de la propuesta</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <p className="text-muted-foreground mt-1 text-sm">
                       Añade una partida por cada servicio. Los totales se calculan automáticamente.
                     </p>
                   </header>
-                  <div className="min-w-0 overflow-hidden rounded-lg border border-border">
+                  <div className="border-border min-w-0 overflow-hidden rounded-lg border">
                     <LineItemsTable
                       items={items}
                       onChange={setItems}
@@ -665,10 +664,10 @@ export function ProposalEditor({
                   </div>
                 </section>
 
-                <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5">
+                <section className="border-border bg-card flex flex-col gap-4 rounded-xl border p-5">
                   <header>
                     <h2 className="text-base font-semibold">Forma de pago</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <p className="text-muted-foreground mt-1 text-sm">
                       Elige una base y ajusta el mensaje para el cliente si lo necesitas.
                     </p>
                   </header>
@@ -698,7 +697,7 @@ export function ProposalEditor({
                       />
                     </div>
                   </FormRow>
-                  <details className="rounded-lg border border-border bg-muted/20 p-3">
+                  <details className="border-border bg-muted/20 rounded-lg border p-3">
                     <summary className="cursor-pointer text-sm font-medium">
                       Personalizar condiciones
                     </summary>
@@ -737,16 +736,16 @@ export function ProposalEditor({
                   onSelectedPlanChange={setMaintenanceSelectedPlanId}
                   locked={locked}
                 />
-                <section className="rounded-xl border border-border bg-card p-5">
+                <section className="border-border bg-card rounded-xl border p-5">
                   <h2 className="text-base font-semibold">Equipo que verá el cliente</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
+                  <p className="text-muted-foreground mt-1 text-sm">
                     Selecciona quién aparecerá junto a la propuesta y en el portal del cliente.
                   </p>
                   <div className="mt-3 grid gap-2 sm:grid-cols-2">
                     {teamMembers.map((member) => (
                       <label
                         key={member.id}
-                        className="flex cursor-pointer items-center gap-3 rounded-lg border border-border p-3"
+                        className="border-border flex cursor-pointer items-center gap-3 rounded-lg border p-3"
                       >
                         <input
                           type="checkbox"
@@ -762,33 +761,33 @@ export function ProposalEditor({
                         />
                         <span>
                           <span className="block text-sm font-medium">{member.name}</span>
-                          <span className="block text-xs text-muted-foreground">
-                            {member.job_title ?? "Equipo Doscientos"}
+                          <span className="text-muted-foreground block text-xs">
+                            {member.job_title ?? 'Equipo Doscientos'}
                           </span>
                         </span>
                       </label>
                     ))}
                   </div>
                 </section>
-                <section className="rounded-xl border border-primary/20 bg-primary/5 p-5">
+                <section className="border-primary/20 bg-primary/5 rounded-xl border p-5">
                   <h2 className="text-base font-semibold">Lista para revisar</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
+                  <p className="text-muted-foreground mt-1 text-sm">
                     Comprueba el resumen y guarda para volver a la vista de propuesta. Desde allí
                     podrás enviar o marcarla como enviada.
                   </p>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-lg bg-background p-3">
-                      <p className="text-xs text-muted-foreground">Inversión inicial</p>
+                    <div className="bg-background rounded-lg p-3">
+                      <p className="text-muted-foreground text-xs">Inversión inicial</p>
                       <p className="mt-1 text-lg font-semibold tabular-nums">
                         {formatEUR(proposalTotals.oneTime.total)}
                       </p>
                     </div>
-                    <div className="rounded-lg bg-background p-3">
-                      <p className="text-xs text-muted-foreground">Mantenimiento</p>
+                    <div className="bg-background rounded-lg p-3">
+                      <p className="text-muted-foreground text-xs">Mantenimiento</p>
                       <p className="mt-1 text-lg font-semibold">
                         {selectedMaintenance
                           ? `${selectedMaintenance.name} · ${formatEUR(selectedMaintenance.monthly_price)}/mes`
-                          : "Pendiente de elegir"}
+                          : 'Pendiente de elegir'}
                       </p>
                     </div>
                   </div>
@@ -797,15 +796,15 @@ export function ProposalEditor({
             ) : null}
           </main>
 
-          <aside className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 xl:sticky xl:top-24">
+          <aside className="border-border bg-card flex flex-col gap-4 rounded-xl border p-4 xl:sticky xl:top-24">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                 Resumen comercial
               </p>
-              <p className="mt-1 text-sm text-muted-foreground">Se actualiza mientras editas.</p>
+              <p className="text-muted-foreground mt-1 text-sm">Se actualiza mientras editas.</p>
             </div>
-            <div className="rounded-lg bg-muted/40 p-3">
-              <p className="text-xs text-muted-foreground">Inversión inicial · IVA incluido</p>
+            <div className="bg-muted/40 rounded-lg p-3">
+              <p className="text-muted-foreground text-xs">Inversión inicial · IVA incluido</p>
               <p className="mt-1 text-2xl font-semibold tabular-nums">
                 {formatEUR(proposalTotals.oneTime.total)}
               </p>
@@ -813,14 +812,14 @@ export function ProposalEditor({
             <div className="flex flex-col gap-2 text-sm">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-muted-foreground">Vigencia</span>
-                <span className="font-medium">{validUntil || "Pendiente"}</span>
+                <span className="font-medium">{validUntil || 'Pendiente'}</span>
               </div>
               <div className="flex items-center justify-between gap-3">
                 <span className="text-muted-foreground">Mantenimiento</span>
                 <span className="text-right font-medium">
                   {selectedMaintenance
                     ? `${formatEUR(selectedMaintenance.monthly_price)}/mes`
-                    : "Pendiente"}
+                    : 'Pendiente'}
                 </span>
               </div>
               {proposalTotals.monthly.total > 0 ? (
@@ -832,17 +831,17 @@ export function ProposalEditor({
                 </div>
               ) : null}
             </div>
-            <div className="border-t border-border pt-3">
-              <p className="mb-2 text-xs font-medium text-muted-foreground">Completitud</p>
+            <div className="border-border border-t pt-3">
+              <p className="text-muted-foreground mb-2 text-xs font-medium">Completitud</p>
               <div className="flex flex-col gap-2">
                 {EDITOR_STEPS.map((step, index) => (
                   <div key={step.label} className="flex items-center gap-2 text-xs">
                     <Check
-                      className={`size-3.5 ${stepComplete[index] ? "text-primary" : "text-muted-foreground/40"}`}
+                      className={`size-3.5 ${stepComplete[index] ? 'text-primary' : 'text-muted-foreground/40'}`}
                       aria-hidden
                     />
                     <span
-                      className={stepComplete[index] ? "text-foreground" : "text-muted-foreground"}
+                      className={stepComplete[index] ? 'text-foreground' : 'text-muted-foreground'}
                     >
                       {step.label}
                     </span>
@@ -853,7 +852,7 @@ export function ProposalEditor({
           </aside>
         </div>
 
-        <footer className="sticky bottom-3 z-20 flex items-center justify-between gap-3 rounded-xl border border-border bg-background/95 p-3 shadow-sm backdrop-blur">
+        <footer className="border-border bg-background/95 sticky bottom-3 z-20 flex items-center justify-between gap-3 rounded-xl border p-3 shadow-sm backdrop-blur">
           <Button
             type="button"
             variant="outline"
@@ -868,16 +867,16 @@ export function ProposalEditor({
             disabled={activeStep === EDITOR_STEPS.length - 1 && (locked || saveFeedback.pending)}
             onClick={() => {
               if (activeStep === EDITOR_STEPS.length - 1) {
-                void handleSave();
-                return;
+                void handleSave()
+                return
               }
-              setActiveStep((step) => Math.min(EDITOR_STEPS.length - 1, step + 1));
+              setActiveStep((step) => Math.min(EDITOR_STEPS.length - 1, step + 1))
             }}
           >
             {activeStep === EDITOR_STEPS.length - 1 ? (
               <>
                 <Save className="size-4" aria-hidden />
-                {saveFeedback.pending ? "Guardando…" : "Guardar y ver propuesta"}
+                {saveFeedback.pending ? 'Guardando…' : 'Guardar y ver propuesta'}
               </>
             ) : (
               <>
@@ -893,10 +892,10 @@ export function ProposalEditor({
         entityName="propuesta"
         onKeepEditing={() => setConflictOpen(false)}
         onReload={() => {
-          setConflictOpen(false);
-          router.refresh();
+          setConflictOpen(false)
+          router.refresh()
         }}
       />
     </>
-  );
+  )
 }

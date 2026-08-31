@@ -1,1 +1,1 @@
-export * from "@/primitives/hooks/use-github-handle";
+export * from '@/primitives/hooks/use-github-handle'

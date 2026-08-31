@@ -1,6 +1,7 @@
-import { scopedLogger } from "@/lib/logger";
-import { notDeleted } from "@/lib/supabase/filters";
-import { createServerClient } from "@/lib/supabase/server";
+import { scopedLogger } from '@/lib/logger'
+import { notDeleted } from '@/lib/supabase/filters'
+import { createServerClient } from '@/lib/supabase/server'
+
 import {
   CLIENT_LIST_PAGE_SIZE,
   CLIENT_PROJECTS_LIMIT,
@@ -8,41 +9,41 @@ import {
   type ClientDetailResult,
   type ClientListParams,
   type ClientListResult,
-} from "./types";
+} from './types'
 
-const log = scopedLogger("clients.queries");
+const log = scopedLogger('clients.queries')
 
 function escapeIlike(value: string): string {
-  return value.replace(/[%_\\]/g, (m) => `\\${m}`);
+  return value.replace(/[%_\\]/g, (m) => `\\${m}`)
 }
 
 export async function listClients(params: ClientListParams): Promise<ClientListResult> {
-  const supabase = await createServerClient();
-  const page = Math.max(1, params.page ?? 1);
-  const from = (page - 1) * CLIENT_LIST_PAGE_SIZE;
-  const to = from + CLIENT_LIST_PAGE_SIZE - 1;
+  const supabase = await createServerClient()
+  const page = Math.max(1, params.page ?? 1)
+  const from = (page - 1) * CLIENT_LIST_PAGE_SIZE
+  const to = from + CLIENT_LIST_PAGE_SIZE - 1
 
   let query = notDeleted(
     supabase
-      .from("clients")
+      .from('clients')
       .select(
-        "id, version, name, label, nif, email, phone, contact_person, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country, notes, logo_url, updated_at",
-        { count: "exact" },
+        'id, version, name, label, nif, email, phone, contact_person, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country, notes, logo_url, updated_at',
+        { count: 'exact' },
       ),
-  );
+  )
 
   if (params.q && params.q.length > 0) {
-    const p = `%${escapeIlike(params.q)}%`;
-    query = query.or(`name.ilike.${p},nif.ilike.${p},email.ilike.${p}`);
+    const p = `%${escapeIlike(params.q)}%`
+    query = query.or(`name.ilike.${p},nif.ilike.${p},email.ilike.${p}`)
   }
 
-  const sortCol = params.sort ?? "created_at";
-  const ascending = params.sort ? params.dir !== "desc" : false;
+  const sortCol = params.sort ?? 'created_at'
+  const ascending = params.sort ? params.dir !== 'desc' : false
   const { data, error, count } = await query
     .order(sortCol, { ascending, nullsFirst: false })
-    .range(from, to);
+    .range(from, to)
 
-  if (error) log.error({ err: error.message }, "list_clients_failed");
+  if (error) log.error({ err: error.message }, 'list_clients_failed')
 
   return {
     data: (data ?? []).map((c) => ({
@@ -64,18 +65,18 @@ export async function listClients(params: ClientListParams): Promise<ClientListR
       updated_at: (c.updated_at as string | null) ?? null,
     })),
     count: count ?? 0,
-  };
+  }
 }
 
 export async function getClientDetail(id: string): Promise<ClientDetailResult> {
-  const supabase = await createServerClient();
+  const supabase = await createServerClient()
 
   const { data: client, error } = await notDeleted(
-    supabase.from("clients").select("*").eq("id", id),
-  ).maybeSingle();
+    supabase.from('clients').select('*').eq('id', id),
+  ).maybeSingle()
 
-  if (error) log.error({ clientId: id, err: error.message }, "get_client_detail_failed");
-  if (!client) return null;
+  if (error) log.error({ clientId: id, err: error.message }, 'get_client_detail_failed')
+  if (!client) return null
 
   const [
     { data: projects },
@@ -85,47 +86,47 @@ export async function getClientDetail(id: string): Promise<ClientDetailResult> {
     { data: reminders },
     { data: webs },
   ] = await Promise.all([
-    notDeleted(supabase.from("projects").select("id, name, status").eq("client_id", id))
-      .order("created_at", { ascending: false })
+    notDeleted(supabase.from('projects').select('id, name, status').eq('client_id', id))
+      .order('created_at', { ascending: false })
       .limit(CLIENT_PROJECTS_LIMIT),
     notDeleted(
-      supabase.from("proposals").select("id, number, title, status, total").eq("client_id", id),
+      supabase.from('proposals').select('id, number, title, status, total').eq('client_id', id),
     )
-      .order("created_at", { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(CLIENT_RELATED_LIMIT),
     notDeleted(
       supabase
-        .from("invoices")
-        .select("id, full_number, status, total, issue_date")
-        .eq("client_id", id),
+        .from('invoices')
+        .select('id, full_number, status, total, issue_date')
+        .eq('client_id', id),
     )
-      .order("issue_date", { ascending: false })
+      .order('issue_date', { ascending: false })
       .limit(CLIENT_RELATED_LIMIT),
     notDeleted(
       supabase
-        .from("tasks")
-        .select("id, title, status, due_date")
-        .eq("kind", "task")
-        .eq("client_id", id),
+        .from('tasks')
+        .select('id, title, status, due_date')
+        .eq('kind', 'task')
+        .eq('client_id', id),
     )
-      .order("created_at", { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(CLIENT_RELATED_LIMIT),
     supabase
-      .from("tasks")
-      .select("id, title, start_at")
-      .eq("kind", "reminder")
-      .eq("client_id", id)
-      .is("completed_at", null)
-      .is("deleted_at", null)
-      .order("start_at", { ascending: true })
+      .from('tasks')
+      .select('id, title, start_at')
+      .eq('kind', 'reminder')
+      .eq('client_id', id)
+      .is('completed_at', null)
+      .is('deleted_at', null)
+      .order('start_at', { ascending: true })
       .limit(CLIENT_RELATED_LIMIT),
     notDeleted(
       supabase
-        .from("web_projects")
-        .select("id, name, url, project_id, is_client_visible, projects(name)")
-        .eq("client_id", id),
-    ).order("name"),
-  ]);
+        .from('web_projects')
+        .select('id, name, url, project_id, is_client_visible, projects(name)')
+        .eq('client_id', id),
+    ).order('name'),
+  ])
 
   return {
     client: {
@@ -145,7 +146,7 @@ export async function getClientDetail(id: string): Promise<ClientDetailResult> {
       notes: (client.notes as string | null) ?? null,
       logo_url: (client.logo_url as string | null) ?? null,
       fiscal_verification_status:
-        client.fiscal_verification_status as import("./types").FiscalVerificationStatus,
+        client.fiscal_verification_status as import('./types').FiscalVerificationStatus,
       fiscal_verified_at: (client.fiscal_verified_at as string | null) ?? null,
       created_at: (client.created_at as string | null) ?? null,
       updated_at: (client.updated_at as string | null) ?? null,
@@ -189,5 +190,5 @@ export async function getClientDetail(id: string): Promise<ClientDetailResult> {
         (web as unknown as { projects: { name: string } | null }).projects?.name ?? null,
       is_client_visible: Boolean(web.is_client_visible),
     })),
-  };
+  }
 }

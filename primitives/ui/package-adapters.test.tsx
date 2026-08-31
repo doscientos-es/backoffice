@@ -1,71 +1,72 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
-import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
-import { ButtonGroup, ButtonGroupSeparator, ButtonGroupText } from "./button-group";
-import { FormFeedback } from "./form-feedback";
-import { FormRow } from "./form-row";
-import { Kbd, KbdGroup } from "./kbd";
-import { Separator } from "./separator";
+import { fireEvent, render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 
-describe("@doscientos/ui adapters", () => {
-  it("renders accessible form feedback from the package", () => {
-    render(<FormFeedback state={{ status: "success" }} />);
+import { Avatar, AvatarFallback, AvatarImage } from './avatar'
+import { ButtonGroup, ButtonGroupSeparator, ButtonGroupText } from './button-group'
+import { FormFeedback } from './form-feedback'
+import { FormRow } from './form-row'
+import { Kbd, KbdGroup } from './kbd'
+import { Separator } from './separator'
 
-    expect(screen.getByRole("status").textContent).toContain("Guardado");
-  });
+describe('@doscientos/ui adapters', () => {
+  it('renders accessible form feedback from the package', () => {
+    render(<FormFeedback state={{ status: 'success' }} />)
 
-  it("keeps labels and errors associated in form rows", () => {
+    expect(screen.getByRole('status').textContent).toContain('Guardado')
+  })
+
+  it('keeps labels and errors associated in form rows', () => {
     render(
       <FormRow label="Nombre" htmlFor="name" error="Campo obligatorio">
         <input id="name" />
       </FormRow>,
-    );
+    )
 
-    expect(screen.getByLabelText("Nombre")).toBeTruthy();
-    expect(screen.getByRole("alert").textContent).toContain("Campo obligatorio");
-  });
+    expect(screen.getByLabelText('Nombre')).toBeTruthy()
+    expect(screen.getByRole('alert').textContent).toContain('Campo obligatorio')
+  })
 
-  it("groups keyboard shortcuts without nesting kbd elements", () => {
+  it('groups keyboard shortcuts without nesting kbd elements', () => {
     const { container } = render(
       <KbdGroup>
         <Kbd>Ctrl</Kbd>
         <Kbd>K</Kbd>
       </KbdGroup>,
-    );
+    )
 
-    const group = container.querySelector('[data-slot="kbd-group"]');
-    expect(group?.tagName).toBe("SPAN");
-    expect(group?.querySelectorAll("kbd")).toHaveLength(2);
-  });
+    const group = container.querySelector('[data-slot="kbd-group"]')
+    expect(group?.tagName).toBe('SPAN')
+    expect(group?.querySelectorAll('kbd')).toHaveLength(2)
+  })
 
-  it("replaces an avatar fallback after its image loads", () => {
+  it('replaces an avatar fallback after its image loads', () => {
     render(
       <Avatar>
         <AvatarImage src="/ana.jpg" alt="Ana" />
         <AvatarFallback>AN</AvatarFallback>
       </Avatar>,
-    );
+    )
 
-    fireEvent.load(screen.getByRole("img", { name: "Ana" }));
-    expect(screen.queryByText("AN")).toBeNull();
-  });
+    fireEvent.load(screen.getByRole('img', { name: 'Ana' }))
+    expect(screen.queryByText('AN')).toBeNull()
+  })
 
-  it("uses the package separator with its accessible orientation", () => {
-    render(<Separator orientation="vertical" />);
+  it('uses the package separator with its accessible orientation', () => {
+    render(<Separator orientation="vertical" />)
 
-    expect(screen.getByRole("separator").getAttribute("aria-orientation")).toBe("vertical");
-  });
+    expect(screen.getByRole('separator').getAttribute('aria-orientation')).toBe('vertical')
+  })
 
-  it("composes accessible button groups from the package", () => {
+  it('composes accessible button groups from the package', () => {
     render(
       <ButtonGroup aria-label="Paginación">
         <ButtonGroupText>Página 1</ButtonGroupText>
         <ButtonGroupSeparator />
       </ButtonGroup>,
-    );
+    )
 
-    expect(screen.getByRole("group", { name: "Paginación" })).toBeTruthy();
-    expect(screen.getByText("Página 1").getAttribute("data-slot")).toBe("button-group-text");
-    expect(screen.getByRole("separator").getAttribute("data-slot")).toBe("button-group-separator");
-  });
-});
+    expect(screen.getByRole('group', { name: 'Paginación' })).toBeTruthy()
+    expect(screen.getByText('Página 1').getAttribute('data-slot')).toBe('button-group-text')
+    expect(screen.getByRole('separator').getAttribute('data-slot')).toBe('button-group-separator')
+  })
+})

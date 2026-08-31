@@ -1,23 +1,24 @@
-import { render, screen } from "@testing-library/react";
-import type { ReactElement } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { SectionBoundary } from "@/components/ui/error-boundary";
+import { render, screen } from '@testing-library/react'
+import type { ReactElement } from 'react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock("next/navigation", () => ({
+import { SectionBoundary } from '@/components/ui/error-boundary'
+
+vi.mock('next/navigation', () => ({
   useRouter: () => ({ refresh: vi.fn() }),
-}));
+}))
 
 function FailingSection(): ReactElement {
-  throw new Error("section failed");
+  throw new Error('section failed')
 }
 
-describe("SectionBoundary", () => {
+describe('SectionBoundary', () => {
   afterEach(() => {
-    vi.restoreAllMocks();
-  });
+    vi.restoreAllMocks()
+  })
 
-  it("shows only its fallback and keeps sibling content rendered", () => {
-    vi.spyOn(console, "error").mockImplementation(() => undefined);
+  it('shows only its fallback and keeps sibling content rendered', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
 
     render(
       <div>
@@ -26,9 +27,9 @@ describe("SectionBoundary", () => {
           <FailingSection />
         </SectionBoundary>
       </div>,
-    );
+    )
 
-    expect(screen.getByText("La ficha del lead sigue disponible")).toBeDefined();
-    expect(screen.getByText("No se pudieron cargar los diagnósticos")).toBeDefined();
-  });
-});
+    expect(screen.getByText('La ficha del lead sigue disponible')).toBeDefined()
+    expect(screen.getByText('No se pudieron cargar los diagnósticos')).toBeDefined()
+  })
+})

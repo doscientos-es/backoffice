@@ -1,23 +1,24 @@
-import { scopedLogger } from "@/lib/logger";
-import { notDeleted } from "@/lib/supabase/filters";
-import { createServerClient } from "@/lib/supabase/server";
-import type { WebProjectDetail, WebProjectListItem } from "./types";
+import { scopedLogger } from '@/lib/logger'
+import { notDeleted } from '@/lib/supabase/filters'
+import { createServerClient } from '@/lib/supabase/server'
 
-const log = scopedLogger("webs.queries");
+import type { WebProjectDetail, WebProjectListItem } from './types'
+
+const log = scopedLogger('webs.queries')
 
 export async function listWebProjects(): Promise<WebProjectListItem[]> {
-  const supabase = await createServerClient();
+  const supabase = await createServerClient()
   const { data, error } = await notDeleted(
     supabase
-      .from("web_projects")
+      .from('web_projects')
       .select(
-        "id, name, url, client_id, project_id, is_client_visible, is_own, hosting_provider, domain_expires_at, tech_stack, updated_at, clients(name), projects(name)",
+        'id, name, url, client_id, project_id, is_client_visible, is_own, hosting_provider, domain_expires_at, tech_stack, updated_at, clients(name), projects(name)',
       ),
   )
-    .order("is_own", { ascending: false })
-    .order("name");
+    .order('is_own', { ascending: false })
+    .order('name')
 
-  if (error) log.error({ err: error.message }, "list_web_projects_failed");
+  if (error) log.error({ err: error.message }, 'list_web_projects_failed')
 
   return (data ?? []).map((r) => ({
     id: r.id as string,
@@ -33,17 +34,17 @@ export async function listWebProjects(): Promise<WebProjectListItem[]> {
     domain_expires_at: (r.domain_expires_at as string | null) ?? null,
     tech_stack: (r.tech_stack as string[]) ?? [],
     updated_at: (r.updated_at as string | null) ?? null,
-  }));
+  }))
 }
 
 export async function getWebProject(id: string): Promise<WebProjectDetail | null> {
-  const supabase = await createServerClient();
+  const supabase = await createServerClient()
   const { data, error } = await notDeleted(
-    supabase.from("web_projects").select("*, projects(name)").eq("id", id),
-  ).maybeSingle();
+    supabase.from('web_projects').select('*, projects(name)').eq('id', id),
+  ).maybeSingle()
 
-  if (error) log.error({ id, err: error.message }, "get_web_project_failed");
-  if (!data) return null;
+  if (error) log.error({ id, err: error.message }, 'get_web_project_failed')
+  if (!data) return null
 
   return {
     id: data.id as string,
@@ -67,5 +68,5 @@ export async function getWebProject(id: string): Promise<WebProjectDetail | null
     db_user: (data.db_user as string | null) ?? null,
     has_db_password: Boolean(data.db_pass_encrypted),
     updated_at: (data.updated_at as string | null) ?? null,
-  };
+  }
 }

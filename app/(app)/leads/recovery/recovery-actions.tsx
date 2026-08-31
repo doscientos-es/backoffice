@@ -1,10 +1,11 @@
-"use client";
+'use client'
 
-import { Ban, Mail, Undo2 as RotateCcw } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { sileo } from "sileo";
-import { Button } from "@/components/ui/button";
+import { Ban, Mail, Undo2 as RotateCcw } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
+import { sileo } from 'sileo'
+
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -12,16 +13,17 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { publicEnv } from "@/lib/env";
-import { leadDisplayName } from "@/lib/leads/utils";
-import { getRecoveryTemplate } from "@/lib/recovery/templates";
-import type { RecoveryLead } from "@/lib/recovery/types";
-import { buildBookingUrl } from "@/lib/recovery/utils";
-import { EmailComposer } from "../[id]/email-composer";
-import { updateLeadStatus } from "../actions";
-import { CloseReasonDialog } from "../close-reason-dialog";
-import { ReopenConfirmDialog } from "../reopen-confirm-dialog";
+} from '@/components/ui/dialog'
+import { publicEnv } from '@/lib/env'
+import { leadDisplayName } from '@/lib/leads/utils'
+import { getRecoveryTemplate } from '@/lib/recovery/templates'
+import type { RecoveryLead } from '@/lib/recovery/types'
+import { buildBookingUrl } from '@/lib/recovery/utils'
+
+import { EmailComposer } from '../[id]/email-composer'
+import { updateLeadStatus } from '../actions'
+import { CloseReasonDialog } from '../close-reason-dialog'
+import { ReopenConfirmDialog } from '../reopen-confirm-dialog'
 
 /**
  * Per-row recovery actions for a lost lead:
@@ -31,53 +33,53 @@ import { ReopenConfirmDialog } from "../reopen-confirm-dialog";
  *    re-enters the active sales pipeline.
  */
 export function RecoveryActions({ lead, aiEnabled }: { lead: RecoveryLead; aiEnabled?: boolean }) {
-  const router = useRouter();
-  const [emailOpen, setEmailOpen] = useState(false);
-  const [pendingReopen, setPendingReopen] = useState(false);
-  const [pendingNotInterested, setPendingNotInterested] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const router = useRouter()
+  const [emailOpen, setEmailOpen] = useState(false)
+  const [pendingReopen, setPendingReopen] = useState(false)
+  const [pendingNotInterested, setPendingNotInterested] = useState(false)
+  const [isPending, startTransition] = useTransition()
 
-  const displayName = leadDisplayName(lead);
+  const displayName = leadDisplayName(lead)
   const bookingUrl = buildBookingUrl(publicEnv.NEXT_PUBLIC_CAL_LINK, {
     id: lead.id,
     name: displayName,
     email: lead.email,
-  });
-  const template = getRecoveryTemplate(lead.lost_reason, { bookingUrl });
+  })
+  const template = getRecoveryTemplate(lead.lost_reason, { bookingUrl })
 
   function handleEmailSuccess() {
-    router.refresh();
-    setTimeout(() => setEmailOpen(false), 400);
+    router.refresh()
+    setTimeout(() => setEmailOpen(false), 400)
   }
 
   function confirmReopen() {
-    setPendingReopen(false);
+    setPendingReopen(false)
     startTransition(async () => {
-      const res = await updateLeadStatus({ leadId: lead.id, status: "in_conversation" });
+      const res = await updateLeadStatus({ leadId: lead.id, status: 'in_conversation' })
       if (res && !res.ok) {
-        sileo.error({ title: res.error });
-        return;
+        sileo.error({ title: res.error })
+        return
       }
-      sileo.success({ title: `${displayName} vuelve al pipeline` });
-      router.refresh();
-    });
+      sileo.success({ title: `${displayName} vuelve al pipeline` })
+      router.refresh()
+    })
   }
 
   function confirmNotInterested(reason: string) {
-    setPendingNotInterested(false);
+    setPendingNotInterested(false)
     startTransition(async () => {
       const res = await updateLeadStatus({
         leadId: lead.id,
-        status: "not_interested",
+        status: 'not_interested',
         lostReason: reason,
-      });
+      })
       if (res && !res.ok) {
-        sileo.error({ title: res.error });
-        return;
+        sileo.error({ title: res.error })
+        return
       }
-      sileo.success({ title: `${displayName} marcado como no interesado` });
-      router.refresh();
-    });
+      sileo.success({ title: `${displayName} marcado como no interesado` })
+      router.refresh()
+    })
   }
 
   return (
@@ -96,7 +98,7 @@ export function RecoveryActions({ lead, aiEnabled }: { lead: RecoveryLead; aiEna
           </DialogHeader>
           <EmailComposer
             leadId={lead.id}
-            defaultTo={lead.email ?? ""}
+            defaultTo={lead.email ?? ''}
             defaultSubject={template.subject}
             defaultBody={template.body}
             disabled={!lead.email}
@@ -107,11 +109,11 @@ export function RecoveryActions({ lead, aiEnabled }: { lead: RecoveryLead; aiEna
         </DialogContent>
       </Dialog>
 
-      {lead.status !== "not_interested" ? (
+      {lead.status !== 'not_interested' ? (
         <Button
           variant="ghost"
           size="sm"
-          className="gap-1.5 text-muted-foreground"
+          className="text-muted-foreground gap-1.5"
           disabled={isPending}
           onClick={() => setPendingNotInterested(true)}
         >
@@ -152,5 +154,5 @@ export function RecoveryActions({ lead, aiEnabled }: { lead: RecoveryLead; aiEna
         onConfirm={confirmNotInterested}
       />
     </div>
-  );
+  )
 }

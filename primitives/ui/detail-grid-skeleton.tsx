@@ -1,14 +1,14 @@
-import { cn } from "../lib/utils";
-import { Card, CardContent, CardHeader } from "./card";
-import { Skeleton } from "./skeleton";
+import { cn } from '../lib/utils'
+import { Card, CardContent, CardHeader } from './card'
+import { Skeleton } from './skeleton'
 
 export type DetailGridSkeletonProps = {
   /** Width of each row's value cell in px. Length defines number of rows. */
-  rowWidths?: number[];
+  rowWidths?: number[]
   /** Width of every label cell in px. */
-  labelWidth?: number;
-  className?: string;
-};
+  labelWidth?: number
+  className?: string
+}
 
 /** Mirrors DetailGrid + DetailRow layout for loading states. */
 export function DetailGridSkeleton({
@@ -19,7 +19,7 @@ export function DetailGridSkeleton({
   return (
     <dl
       className={cn(
-        "grid min-w-0 grid-cols-[140px_minmax(0,1fr)] gap-x-4 gap-y-2.5 text-sm",
+        'grid min-w-0 grid-cols-[140px_minmax(0,1fr)] gap-x-4 gap-y-2.5 text-sm',
         className,
       )}
     >
@@ -30,13 +30,13 @@ export function DetailGridSkeleton({
         </div>
       ))}
     </dl>
-  );
+  )
 }
 
 export type DetailCardSkeletonProps = DetailGridSkeletonProps & {
   /** Width of the card header title skeleton in px. */
-  titleWidth?: number;
-};
+  titleWidth?: number
+}
 
 /** Card + header title + DetailGridSkeleton, the canonical "datos" card. */
 export function DetailCardSkeleton({
@@ -54,5 +54,5 @@ export function DetailCardSkeleton({
         <DetailGridSkeleton rowWidths={rowWidths} labelWidth={labelWidth} />
       </CardContent>
     </Card>
-  );
+  )
 }

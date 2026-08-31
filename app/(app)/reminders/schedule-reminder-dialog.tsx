@@ -1,7 +1,8 @@
-"use client";
+'use client'
 
-import { type ReactNode, useCallback, useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { type ReactNode, useCallback, useEffect, useState } from 'react'
+
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -9,55 +10,56 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { FormRow } from "@/components/ui/form-row";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { SubmitButton } from "@/components/ui/submit-button";
-import { Textarea } from "@/components/ui/textarea";
+} from '@/components/ui/dialog'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { FormRow } from '@/components/ui/form-row'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { SubmitButton } from '@/components/ui/submit-button'
+import { Textarea } from '@/components/ui/textarea'
 import {
   REMINDER_ACTION_TYPE_LABEL,
   REMINDER_ACTION_TYPES,
   type ReminderActionType,
-} from "@/lib/reminders/action-types";
-import { suggestedReminderDateTime } from "@/lib/reminders/date-presets";
-import { datetimeLocalToIso, toDatetimeLocalValue } from "@/lib/utils/date-time";
-import { createReminder } from "./actions";
+} from '@/lib/reminders/action-types'
+import { suggestedReminderDateTime } from '@/lib/reminders/date-presets'
+import { datetimeLocalToIso, toDatetimeLocalValue } from '@/lib/utils/date-time'
+
+import { createReminder } from './actions'
 
 const SCHEDULE_PRESETS: { label: string; minutes: number }[] = [
-  { label: "En 1 h", minutes: 60 },
-  { label: "Mañana", minutes: 60 * 24 },
-  { label: "En 3 días", minutes: 60 * 24 * 3 },
-  { label: "En 1 semana", minutes: 60 * 24 * 7 },
-];
+  { label: 'En 1 h', minutes: 60 },
+  { label: 'Mañana', minutes: 60 * 24 },
+  { label: 'En 3 días', minutes: 60 * 24 * 3 },
+  { label: 'En 1 semana', minutes: 60 * 24 * 7 },
+]
 
-export type ScheduleMember = { id: string; name: string };
+export type ScheduleMember = { id: string; name: string }
 
 type Props = {
   /** Context the reminder is linked to. Provide at most one. */
-  leadId?: string;
-  projectId?: string;
-  clientId?: string;
+  leadId?: string
+  projectId?: string
+  clientId?: string
   /**
    * Element that opens the dialog (rendered via DialogTrigger asChild).
    * Omit it when driving the dialog with `open` / `onOpenChange`.
    */
-  trigger?: ReactNode;
+  trigger?: ReactNode
   /** Controlled visibility, for callers that open the dialog programmatically. */
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
   /** Prefilled reminder title (e.g. the AI suggested next step). */
-  defaultTitle?: string;
-  defaultNotes?: string;
+  defaultTitle?: string
+  defaultNotes?: string
   /** ISO timestamp suggested by the AI; converted to the user's local timezone. */
-  defaultRemindAt?: string | null;
+  defaultRemindAt?: string | null
   /** Classifies the action in the commercial agenda. */
-  defaultActionType?: ReminderActionType;
+  defaultActionType?: ReminderActionType
   /** Team members available for assignment. When provided, a member picker is shown. */
-  members?: ScheduleMember[];
-  onScheduled?: () => void;
-};
+  members?: ScheduleMember[]
+  onScheduled?: () => void
+}
 
 /**
  * Universal reminder scheduling dialog — shared by lead quick actions, the AI
@@ -72,59 +74,59 @@ export function ScheduleReminderDialog({
   trigger,
   open: controlledOpen,
   onOpenChange,
-  defaultTitle = "",
-  defaultNotes = "",
+  defaultTitle = '',
+  defaultNotes = '',
   defaultRemindAt = null,
-  defaultActionType = "follow_up",
+  defaultActionType = 'follow_up',
   members = [],
   onScheduled,
 }: Props) {
-  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
-  const [title, setTitle] = useState(defaultTitle);
-  const [remindAt, setRemindAt] = useState(suggestedReminderDateTime(defaultRemindAt));
-  const [notes, setNotes] = useState(defaultNotes);
-  const [actionType, setActionType] = useState<ReminderActionType>(defaultActionType);
-  const [assigneeId, setAssigneeId] = useState<string>("");
-  const feedback = useFormFeedback();
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
+  const [title, setTitle] = useState(defaultTitle)
+  const [remindAt, setRemindAt] = useState(suggestedReminderDateTime(defaultRemindAt))
+  const [notes, setNotes] = useState(defaultNotes)
+  const [actionType, setActionType] = useState<ReminderActionType>(defaultActionType)
+  const [assigneeId, setAssigneeId] = useState<string>('')
+  const feedback = useFormFeedback()
 
-  const isControlled = controlledOpen !== undefined;
-  const open = isControlled ? controlledOpen : uncontrolledOpen;
-  const contextLabel = leadId ? "esta lead" : projectId ? "este proyecto" : "este cliente";
+  const isControlled = controlledOpen !== undefined
+  const open = isControlled ? controlledOpen : uncontrolledOpen
+  const contextLabel = leadId ? 'esta lead' : projectId ? 'este proyecto' : 'este cliente'
 
   const resetFields = useCallback(() => {
-    setTitle(defaultTitle);
-    setNotes(defaultNotes);
-    setActionType(defaultActionType);
-    setRemindAt(suggestedReminderDateTime(defaultRemindAt));
-    setAssigneeId("");
-    feedback.reset();
-  }, [defaultTitle, defaultNotes, defaultRemindAt, defaultActionType, feedback.reset]);
+    setTitle(defaultTitle)
+    setNotes(defaultNotes)
+    setActionType(defaultActionType)
+    setRemindAt(suggestedReminderDateTime(defaultRemindAt))
+    setAssigneeId('')
+    feedback.reset()
+  }, [defaultTitle, defaultNotes, defaultRemindAt, defaultActionType, feedback.reset])
 
   // Controlled callers flip `open` without going through the trigger, so the
   // prefilled values are refreshed here instead of in `handleOpenChange`.
   useEffect(() => {
-    if (isControlled && controlledOpen) resetFields();
-  }, [isControlled, controlledOpen, resetFields]);
+    if (isControlled && controlledOpen) resetFields()
+  }, [isControlled, controlledOpen, resetFields])
 
   function setOpen(next: boolean) {
-    if (isControlled) onOpenChange?.(next);
-    else setUncontrolledOpen(next);
+    if (isControlled) onOpenChange?.(next)
+    else setUncontrolledOpen(next)
   }
 
   function handleOpenChange(next: boolean) {
-    if (next && !isControlled) resetFields();
-    setOpen(next);
+    if (next && !isControlled) resetFields()
+    setOpen(next)
   }
 
   function applyPreset(minutes: number) {
-    const d = new Date(Date.now() + minutes * 60_000);
-    d.setSeconds(0, 0);
-    setRemindAt(toDatetimeLocalValue(d));
+    const d = new Date(Date.now() + minutes * 60_000)
+    d.setSeconds(0, 0)
+    setRemindAt(toDatetimeLocalValue(d))
   }
 
   async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    feedback.setPending();
+    e.preventDefault()
+    feedback.setPending()
     const res = await createReminder({
       leadId,
       projectId,
@@ -134,11 +136,11 @@ export function ScheduleReminderDialog({
       remindAt: datetimeLocalToIso(remindAt),
       notes: notes || undefined,
       assigneeId: assigneeId || undefined,
-    });
-    if (!res.ok) return feedback.setError(res.error);
-    feedback.setSuccess("Aviso programado");
-    onScheduled?.();
-    setTimeout(() => setOpen(false), 400);
+    })
+    if (!res.ok) return feedback.setError(res.error)
+    feedback.setSuccess('Aviso programado')
+    onScheduled?.()
+    setTimeout(() => setOpen(false), 400)
   }
 
   return (
@@ -232,5 +234,5 @@ export function ScheduleReminderDialog({
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

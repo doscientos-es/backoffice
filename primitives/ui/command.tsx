@@ -1,44 +1,45 @@
-﻿"use client";
+﻿'use client'
 
-import { Command as CommandPrimitive } from "cmdk";
-import { Check as CheckIcon, Search as SearchIcon } from "lucide-react";
-import type * as React from "react";
-import { cn } from "../lib/utils";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./dialog";
+import { Command as CommandPrimitive } from 'cmdk'
+import { Check as CheckIcon, Search as SearchIcon } from 'lucide-react'
+import type * as React from 'react'
+
+import { cn } from '../lib/utils'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './dialog'
 
 function Command({ className, ...props }: React.ComponentProps<typeof CommandPrimitive>) {
   return (
     <CommandPrimitive
       data-slot="command"
       className={cn(
-        "flex size-full flex-col overflow-hidden rounded-xl! bg-background p-1 text-background-foreground",
+        'flex size-full flex-col overflow-hidden rounded-xl! bg-background p-1 text-background-foreground',
         className,
       )}
       {...props}
     />
-  );
+  )
 }
 
 function CommandDialog({
-  title = "Command Palette",
-  description = "Search for a command to run...",
+  title = 'Command Palette',
+  description = 'Search for a command to run...',
   children,
   className,
   showCloseButton = false,
   ...props
 }: React.ComponentProps<typeof Dialog> & {
-  title?: string;
-  description?: string;
-  className?: string;
-  showCloseButton?: boolean;
+  title?: string
+  description?: string
+  className?: string
+  showCloseButton?: boolean
 }) {
   return (
     <Dialog {...props}>
       <DialogContent
         className={cn(
-          "overflow-hidden rounded-xl! p-0",
+          'overflow-hidden rounded-xl! p-0',
           // Mobile: anclado arriba, ancho completo, solo redondeado abajo
-          "max-sm:top-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:max-w-none max-sm:rounded-t-none! max-sm:rounded-b-2xl!",
+          'max-sm:top-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:max-w-none max-sm:rounded-t-none! max-sm:rounded-b-2xl!',
           className,
         )}
         showCloseButton={showCloseButton}
@@ -50,7 +51,7 @@ function CommandDialog({
         <Command>{children}</Command>
       </DialogContent>
     </Dialog>
-  );
+  )
 }
 
 function CommandInput({
@@ -62,19 +63,19 @@ function CommandInput({
       <div className="relative">
         <SearchIcon
           aria-hidden="true"
-          className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground"
+          className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2"
         />
         <CommandPrimitive.Input
           data-slot="command-border"
           className={cn(
-            "h-8 w-full rounded-lg border border-border bg-background py-1 pr-3 pl-8 text-sm text-foreground shadow-xs outline-none placeholder:text-muted-foreground focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50",
+            'h-8 w-full rounded-lg border border-border bg-background py-1 pr-3 pl-8 text-sm text-foreground shadow-xs outline-none placeholder:text-muted-foreground focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50',
             className,
           )}
           {...props}
         />
       </div>
     </div>
-  );
+  )
 }
 
 function CommandList({ className, ...props }: React.ComponentProps<typeof CommandPrimitive.List>) {
@@ -82,12 +83,12 @@ function CommandList({ className, ...props }: React.ComponentProps<typeof Comman
     <CommandPrimitive.List
       data-slot="command-list"
       className={cn(
-        "no-scrollbar max-h-80 max-sm:max-h-[50dvh] scroll-py-1 overflow-x-hidden overflow-y-auto outline-none scroll-fade",
+        'no-scrollbar max-h-80 max-sm:max-h-[50dvh] scroll-py-1 overflow-x-hidden overflow-y-auto outline-none scroll-fade',
         className,
       )}
       {...props}
     />
-  );
+  )
 }
 
 function CommandEmpty({
@@ -97,10 +98,10 @@ function CommandEmpty({
   return (
     <CommandPrimitive.Empty
       data-slot="command-empty"
-      className={cn("py-6 text-center text-sm", className)}
+      className={cn('py-6 text-center text-sm', className)}
       {...props}
     />
-  );
+  )
 }
 
 function CommandGroup({
@@ -111,12 +112,12 @@ function CommandGroup({
     <CommandPrimitive.Group
       data-slot="command-group"
       className={cn(
-        "overflow-hidden p-1 text-foreground **:[[cmdk-group-heading]]:px-2 **:[[cmdk-group-heading]]:py-1.5 **:[[cmdk-group-heading]]:text-xs **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:text-muted-foreground",
+        'overflow-hidden p-1 text-foreground **:[[cmdk-group-heading]]:px-2 **:[[cmdk-group-heading]]:py-1.5 **:[[cmdk-group-heading]]:text-xs **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:text-muted-foreground',
         className,
       )}
       {...props}
     />
-  );
+  )
 }
 
 function CommandSeparator({
@@ -126,10 +127,10 @@ function CommandSeparator({
   return (
     <CommandPrimitive.Separator
       data-slot="command-separator"
-      className={cn("-mx-1 h-px bg-border", className)}
+      className={cn('-mx-1 h-px bg-border', className)}
       {...props}
     />
-  );
+  )
 }
 
 function CommandItem({
@@ -149,20 +150,20 @@ function CommandItem({
       {children}
       <CheckIcon className="ml-auto opacity-0 group-has-data-[slot=command-shortcut]/command-item:hidden group-data-[checked=true]/command-item:opacity-100" />
     </CommandPrimitive.Item>
-  );
+  )
 }
 
-function CommandShortcut({ className, ...props }: React.ComponentProps<"span">) {
+function CommandShortcut({ className, ...props }: React.ComponentProps<'span'>) {
   return (
     <span
       data-slot="command-shortcut"
       className={cn(
-        "ml-auto text-xs tracking-widest text-muted-foreground group-data-selected/command-item:text-foreground",
+        'ml-auto text-xs tracking-widest text-muted-foreground group-data-selected/command-item:text-foreground',
         className,
       )}
       {...props}
     />
-  );
+  )
 }
 
 export {
@@ -175,4 +176,4 @@ export {
   CommandList,
   CommandSeparator,
   CommandShortcut,
-};
+}

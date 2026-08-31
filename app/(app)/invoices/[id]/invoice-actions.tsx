@@ -1,24 +1,26 @@
-"use client";
+'use client'
 
-import { Download, FileText as FileEdit } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { IconButton } from "@/components/ui/icon-button";
-import type { InvoiceActionInvoice } from "./invoice-action-contracts";
-import { aeatDeliveryLabel, getInvoiceActionPolicy } from "./invoice-action-policy";
-import { InvoiceIssuanceAction } from "./invoice-issuance-action";
-import { InvoiceMoreActions } from "./invoice-more-actions";
-import { InvoicePaymentActions } from "./invoice-payment-actions";
-import { RegularizeAeatButton } from "./regularize-aeat-button";
-import { SendAeatButton } from "./send-aeat-button";
-import { SendInvoiceButton } from "./send-invoice-button";
-import { useInvoiceStatusVerification } from "./use-invoice-status-verification";
+import { Download, FileText as FileEdit } from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { IconButton } from '@/components/ui/icon-button'
+
+import type { InvoiceActionInvoice } from './invoice-action-contracts'
+import { aeatDeliveryLabel, getInvoiceActionPolicy } from './invoice-action-policy'
+import { InvoiceIssuanceAction } from './invoice-issuance-action'
+import { InvoiceMoreActions } from './invoice-more-actions'
+import { InvoicePaymentActions } from './invoice-payment-actions'
+import { RegularizeAeatButton } from './regularize-aeat-button'
+import { SendAeatButton } from './send-aeat-button'
+import { SendInvoiceButton } from './send-invoice-button'
+import { useInvoiceStatusVerification } from './use-invoice-status-verification'
 
 interface Props {
-  invoice: InvoiceActionInvoice;
-  clientEmail?: string | null;
-  recipientFiscalReady?: boolean;
+  invoice: InvoiceActionInvoice
+  clientEmail?: string | null
+  recipientFiscalReady?: boolean
 }
 
 /**
@@ -27,17 +29,17 @@ interface Props {
  * the visible action surface.
  */
 export function InvoiceActions({ invoice, clientEmail, recipientFiscalReady }: Props) {
-  const router = useRouter();
-  const feedback = useFormFeedback();
-  const policy = getInvoiceActionPolicy(invoice);
-  const { challenge, verifyStatusChange } = useInvoiceStatusVerification(invoice.id, feedback);
+  const router = useRouter()
+  const feedback = useFormFeedback()
+  const policy = getInvoiceActionPolicy(invoice)
+  const { challenge, verifyStatusChange } = useInvoiceStatusVerification(invoice.id, feedback)
 
   return (
     <div className="flex w-fit max-w-full min-w-0 flex-col items-end gap-2">
       {challenge}
-      {feedback.state.status !== "idle" ? (
-        <div className="min-w-0 max-w-full">
-          <FormFeedback state={feedback.state} className="min-w-0 max-w-full" />
+      {feedback.state.status !== 'idle' ? (
+        <div className="max-w-full min-w-0">
+          <FormFeedback state={feedback.state} className="max-w-full min-w-0" />
         </div>
       ) : null}
 
@@ -93,7 +95,7 @@ export function InvoiceActions({ invoice, clientEmail, recipientFiscalReady }: P
             isRegularization={invoice.is_regularization_pending}
             label={
               invoice.is_regularization_pending
-                ? "Enviar regularización a AEAT"
+                ? 'Enviar regularización a AEAT'
                 : aeatDeliveryLabel(invoice.verifactu_status)
             }
           />
@@ -106,5 +108,5 @@ export function InvoiceActions({ invoice, clientEmail, recipientFiscalReady }: P
         ) : null}
       </div>
     </div>
-  );
+  )
 }

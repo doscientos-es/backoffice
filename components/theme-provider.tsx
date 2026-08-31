@@ -1,7 +1,7 @@
-"use client";
+'use client'
 
-import { ThemeProvider as NextThemesProvider } from "next-themes";
-import { type ReactNode, useEffect } from "react";
+import { ThemeProvider as NextThemesProvider } from 'next-themes'
+import { type ReactNode, useEffect } from 'react'
 
 // next-themes injects an inline <script> (to prevent theme FOUC) via
 // React.createElement("script"). React 19 warns about any <script> tag
@@ -9,19 +9,19 @@ import { type ReactNode, useEffect } from "react";
 // hydration, so the warning is a false positive.
 function useSuppressNextThemesScriptWarning() {
   useEffect(() => {
-    const original = console.error.bind(console);
+    const original = console.error.bind(console)
     console.error = (...args: Parameters<typeof console.error>) => {
-      if (typeof args[0] === "string" && args[0].includes("Encountered a script tag")) return;
-      original(...args);
-    };
+      if (typeof args[0] === 'string' && args[0].includes('Encountered a script tag')) return
+      original(...args)
+    }
     return () => {
-      console.error = original;
-    };
-  }, []);
+      console.error = original
+    }
+  }, [])
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  useSuppressNextThemesScriptWarning();
+  useSuppressNextThemesScriptWarning()
   return (
     <NextThemesProvider
       attribute="class"
@@ -31,5 +31,5 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     >
       {children}
     </NextThemesProvider>
-  );
+  )
 }

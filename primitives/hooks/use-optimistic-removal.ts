@@ -1,13 +1,14 @@
-"use client";
+'use client'
 
-import { useOptimistic, useTransition } from "react";
-import type { ActionResult } from "../lib/types";
+import { useOptimistic, useTransition } from 'react'
+
+import type { ActionResult } from '../lib/types'
 
 interface RemoveOptions {
   /** Runs once the server action settles (success or failure). */
-  onSettled?: () => void;
+  onSettled?: () => void
   /** Overrides the error message passed to `onError`. */
-  errorMessage?: string;
+  errorMessage?: string
 }
 
 /**
@@ -29,17 +30,17 @@ export function useOptimisticRemoval<T extends { id: string }>(
 ) {
   const [optimisticItems, dropOptimistic] = useOptimistic(items, (state, id: string) =>
     state.filter((it) => it.id !== id),
-  );
-  const [pending, startTransition] = useTransition();
+  )
+  const [pending, startTransition] = useTransition()
 
   const remove = (id: string, action: () => Promise<ActionResult>, options?: RemoveOptions) => {
     startTransition(async () => {
-      dropOptimistic(id);
-      const res = await action();
-      if (!res.ok) onError?.(options?.errorMessage ?? res.error);
-      options?.onSettled?.();
-    });
-  };
+      dropOptimistic(id)
+      const res = await action()
+      if (!res.ok) onError?.(options?.errorMessage ?? res.error)
+      options?.onSettled?.()
+    })
+  }
 
-  return { items: optimisticItems, remove, pending };
+  return { items: optimisticItems, remove, pending }
 }

@@ -1,8 +1,8 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 
-const KPI_KEYS = ["kpi-a", "kpi-b", "kpi-c", "kpi-d", "kpi-e", "kpi-f"] as const;
-const LIST_ROW_KEYS = ["row-a", "row-b", "row-c", "row-d", "row-e"] as const;
+const KPI_KEYS = ['kpi-a', 'kpi-b', 'kpi-c', 'kpi-d', 'kpi-e', 'kpi-f'] as const
+const LIST_ROW_KEYS = ['row-a', 'row-b', 'row-c', 'row-d', 'row-e'] as const
 
 export function KpisSkeleton() {
   return (
@@ -19,7 +19,7 @@ export function KpisSkeleton() {
         </Card>
       ))}
     </div>
-  );
+  )
 }
 
 export function ChartSkeleton() {
@@ -35,7 +35,7 @@ export function ChartSkeleton() {
         <Skeleton className="h-64 w-full rounded-md" />
       </CardContent>
     </Card>
-  );
+  )
 }
 
 function ListCardSkeleton({ rows = 5 }: { rows?: number }) {
@@ -53,7 +53,7 @@ function ListCardSkeleton({ rows = 5 }: { rows?: number }) {
         ))}
       </CardContent>
     </Card>
-  );
+  )
 }
 
 function DonutCardSkeleton() {
@@ -74,7 +74,7 @@ function DonutCardSkeleton() {
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }
 
 export function DetailsSkeleton() {
@@ -86,5 +86,5 @@ export function DetailsSkeleton() {
       </div>
       <ListCardSkeleton />
     </div>
-  );
+  )
 }

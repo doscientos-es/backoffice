@@ -1,17 +1,17 @@
-import { cn } from "../lib/utils";
-import { Skeleton } from "./skeleton";
+import { cn } from '../lib/utils'
+import { Skeleton } from './skeleton'
 
 export type PageHeaderSkeletonProps = {
   /** Widths for breadcrumb pills, in px. Set to 0 to hide breadcrumbs. */
-  breadcrumbs?: number[];
+  breadcrumbs?: number[]
   /** Title width in px. */
-  titleWidth?: number;
+  titleWidth?: number
   /** Show description placeholder under the title. */
-  withDescription?: boolean;
+  withDescription?: boolean
   /** Widths for action buttons on the right, in px. Empty array hides them. */
-  actions?: number[];
-  className?: string;
-};
+  actions?: number[]
+  className?: string
+}
 
 /**
  * Mirrors PageHeader layout: optional breadcrumb row, then title + actions.
@@ -25,7 +25,7 @@ export function PageHeaderSkeleton({
   className,
 }: PageHeaderSkeletonProps) {
   return (
-    <header className={cn("flex flex-col gap-2", className)}>
+    <header className={cn('flex flex-col gap-2', className)}>
       {breadcrumbs.length > 0 ? (
         <div className="flex items-center gap-2">
           {breadcrumbs.map((w, i) => (
@@ -54,5 +54,5 @@ export function PageHeaderSkeleton({
         ) : null}
       </div>
     </header>
-  );
+  )
 }

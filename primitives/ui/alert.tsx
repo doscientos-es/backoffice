@@ -5,4 +5,4 @@
   type AlertProps,
   AlertTitle,
   alertVariants,
-} from "@doscientos/ui";
+} from '@doscientos/ui'

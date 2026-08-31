@@ -1,1 +1,1 @@
-export { OtpInput, type OtpInputProps } from "@doscientos/ui";
+export { OtpInput, type OtpInputProps } from '@doscientos/ui'

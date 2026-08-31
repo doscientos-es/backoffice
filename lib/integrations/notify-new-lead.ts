@@ -1,38 +1,38 @@
-import { NewLeadEmail } from "@/components/email/new-lead-email";
-import { renderEmail } from "@/lib/email/render";
-import { sendEmail } from "@/lib/email/resend";
-import { publicEnv } from "@/lib/env";
-import { telegramSendMessage } from "@/lib/integrations/telegram";
-import { scopedLogger } from "@/lib/logger";
-import { dispatchNotifications } from "@/lib/notifications/dispatch";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { NewLeadEmail } from '@/components/email/new-lead-email'
+import { renderEmail } from '@/lib/email/render'
+import { sendEmail } from '@/lib/email/resend'
+import { publicEnv } from '@/lib/env'
+import { telegramSendMessage } from '@/lib/integrations/telegram'
+import { scopedLogger } from '@/lib/logger'
+import { dispatchNotifications } from '@/lib/notifications/dispatch'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export type NotifyNewLeadInput = {
-  leadId: string;
-  leadName: string;
-  leadEmail?: string | null;
-  leadPhone?: string | null;
-  leadCompany?: string | null;
-  leadSource: string;
-  leadNotes?: string | null;
+  leadId: string
+  leadName: string
+  leadEmail?: string | null
+  leadPhone?: string | null
+  leadCompany?: string | null
+  leadSource: string
+  leadNotes?: string | null
   /** Qualification signals surfaced at the top of the Telegram alert. */
-  leadEstimatedValue?: number | null;
-  leadCompanySize?: string | null;
-  leadUrgency?: string | null;
-  leadLandingRef?: string | null;
-  leadLandingSubject?: string | null;
-  leadResourceSlug?: string | null;
-  leadCalculatorCost?: string | null;
-  leadCalculatorHours?: string | null;
-};
+  leadEstimatedValue?: number | null
+  leadCompanySize?: string | null
+  leadUrgency?: string | null
+  leadLandingRef?: string | null
+  leadLandingSubject?: string | null
+  leadResourceSlug?: string | null
+  leadCalculatorCost?: string | null
+  leadCalculatorHours?: string | null
+}
 
-const eur = new Intl.NumberFormat("es-ES", {
-  style: "currency",
-  currency: "EUR",
+const eur = new Intl.NumberFormat('es-ES', {
+  style: 'currency',
+  currency: 'EUR',
   maximumFractionDigits: 0,
-});
+})
 
-const log = scopedLogger("notify-new-lead");
+const log = scopedLogger('notify-new-lead')
 
 /**
  * Notifies all active owners and admins when a new lead is created.
@@ -45,48 +45,48 @@ const log = scopedLogger("notify-new-lead");
  * invoke with `.catch(() => {})` so lead creation is never blocked.
  */
 export async function notifyNewLead(input: NotifyNewLeadInput): Promise<void> {
-  const supabase = createAdminClient();
-  const appUrl = publicEnv.NEXT_PUBLIC_APP_URL;
-  const leadUrl = `${appUrl}/leads/${input.leadId}`;
+  const supabase = createAdminClient()
+  const appUrl = publicEnv.NEXT_PUBLIC_APP_URL
+  const leadUrl = `${appUrl}/leads/${input.leadId}`
 
   // ── 1. Fetch active owners and admins ────────────────────────────────────
   const { data: recipients, error: fetchError } = await supabase
-    .from("team_members")
-    .select("id, name, email")
-    .in("role", ["owner", "admin"])
-    .is("deleted_at", null);
+    .from('team_members')
+    .select('id, name, email')
+    .in('role', ['owner', 'admin'])
+    .is('deleted_at', null)
 
   if (fetchError) {
-    log.error({ err: fetchError }, "failed to fetch admin/owner recipients");
-    return;
+    log.error({ err: fetchError }, 'failed to fetch admin/owner recipients')
+    return
   }
   if (!recipients?.length) {
-    log.warn("no admin/owner recipients to notify for lead_new");
-    return;
+    log.warn('no admin/owner recipients to notify for lead_new')
+    return
   }
 
   // Short summary line used as the in-app notification body
   const notifBody = [input.leadName, input.leadCompany, input.leadEmail, input.leadPhone]
     .filter(Boolean)
-    .join(" · ");
-  const phoneDigits = input.leadPhone?.replace(/\D/g, "") ?? "";
-  const callUrl = phoneDigits ? `tel:${phoneDigits}` : null;
-  const whatsappUrl = phoneDigits ? `https://wa.me/${phoneDigits}` : null;
-  const notificationActions = [{ action: "feedback", title: "Registrar" }];
+    .join(' · ')
+  const phoneDigits = input.leadPhone?.replace(/\D/g, '') ?? ''
+  const callUrl = phoneDigits ? `tel:${phoneDigits}` : null
+  const whatsappUrl = phoneDigits ? `https://wa.me/${phoneDigits}` : null
+  const notificationActions = [{ action: 'feedback', title: 'Registrar' }]
   if (input.leadPhone) {
     notificationActions.unshift(
-      { action: "call", title: "Llamar" },
-      { action: "whatsapp", title: "WhatsApp" },
-    );
+      { action: 'call', title: 'Llamar' },
+      { action: 'whatsapp', title: 'WhatsApp' },
+    )
   }
 
   // ── 2. In-app notification + background Push ─────────────────────────────
   await dispatchNotifications({
     recipientIds: recipients.map((r) => r.id as string),
-    eventType: "lead_new",
-    entityType: "lead",
+    eventType: 'lead_new',
+    entityType: 'lead',
     entityId: input.leadId,
-    body: notifBody || "Ha entrado un nuevo lead",
+    body: notifBody || 'Ha entrado un nuevo lead',
     link: `/leads/${input.leadId}`,
     actions: notificationActions,
     data: {
@@ -94,10 +94,10 @@ export async function notifyNewLead(input: NotifyNewLeadInput): Promise<void> {
       whatsappUrl,
       feedbackUrl: `/leads/${input.leadId}?feedback=call`,
     },
-  });
+  })
 
   // ── 3. Email (render once, send to all) ──────────────────────────────────
-  let html: string;
+  let html: string
   try {
     html = await renderEmail(
       NewLeadEmail({
@@ -109,36 +109,36 @@ export async function notifyNewLead(input: NotifyNewLeadInput): Promise<void> {
         leadUrl,
         appUrl,
       }),
-    );
+    )
   } catch (e) {
-    log.error({ err: e }, "failed to render NewLeadEmail");
-    return;
+    log.error({ err: e }, 'failed to render NewLeadEmail')
+    return
   }
 
-  const subject = `Nuevo lead: ${input.leadName}${input.leadCompany ? ` · ${input.leadCompany}` : ""}`;
+  const subject = `Nuevo lead: ${input.leadName}${input.leadCompany ? ` · ${input.leadCompany}` : ''}`
 
   const results = await Promise.allSettled(
     recipients.map((r) =>
       sendEmail({
-        fromName: "doscientos",
-        fromAlias: "notificaciones",
+        fromName: 'doscientos',
+        fromAlias: 'notificaciones',
         to: r.email as string,
         subject,
         html,
         tags: { lead_id: input.leadId },
       }),
     ),
-  );
+  )
 
-  const failed = results.filter((r) => r.status === "rejected").length;
+  const failed = results.filter((r) => r.status === 'rejected').length
   if (failed > 0) {
-    log.error({ leadId: input.leadId, failed }, "some lead_new emails failed to send");
+    log.error({ leadId: input.leadId, failed }, 'some lead_new emails failed to send')
   }
 
   log.info(
     { leadId: input.leadId, recipientCount: recipients.length, emailsFailed: failed },
-    "lead_new notifications dispatched",
-  );
+    'lead_new notifications dispatched',
+  )
 
   // ── 4. Telegram direct notification ─────────────────────────────────────
   // Qualification block: budget, firmographics and intent up top so the sales
@@ -149,15 +149,15 @@ export async function notifyNewLead(input: NotifyNewLeadInput): Promise<void> {
       : null,
     input.leadCompanySize ? `👥 Tamaño: ${input.leadCompanySize}` : null,
     input.leadUrgency ? `⏱️ Urgencia: ${input.leadUrgency}` : null,
-  ].filter((l): l is string => l !== null);
+  ].filter((l): l is string => l !== null)
 
   const notesLines = input.leadNotes
-    ? ["", "📋 *Formulario*", ...input.leadNotes.split("\n").map((l) => `  ${l}`)]
-    : [];
+    ? ['', '📋 *Formulario*', ...input.leadNotes.split('\n').map((l) => `  ${l}`)]
+    : []
 
   const lines = [
-    "🔔 *Nuevo lead*",
-    "",
+    '🔔 *Nuevo lead*',
+    '',
     `👤 ${input.leadName}`,
     input.leadEmail ? `📧 ${input.leadEmail}` : null,
     input.leadPhone ? `📱 ${input.leadPhone}` : null,
@@ -165,27 +165,27 @@ export async function notifyNewLead(input: NotifyNewLeadInput): Promise<void> {
     `🎯 Fuente: ${input.leadSource}`,
     ...qualLines,
     ...notesLines,
-    "",
+    '',
     `🔗 [Ver en backoffice](${leadUrl})`,
   ]
     .filter((l) => l !== null)
-    .join("\n");
+    .join('\n')
 
   const tgRes = await telegramSendMessage({
     text: lines,
-    parseMode: "Markdown",
+    parseMode: 'Markdown',
     inlineKeyboard: [
       [
-        { text: "✅ Contactado", callback_data: `c:${input.leadId}` },
-        { text: "🏆 Ganado", callback_data: `w:${input.leadId}` },
-        { text: "❌ No interesa", callback_data: `n:${input.leadId}` },
+        { text: '✅ Contactado', callback_data: `c:${input.leadId}` },
+        { text: '🏆 Ganado', callback_data: `w:${input.leadId}` },
+        { text: '❌ No interesa', callback_data: `n:${input.leadId}` },
       ],
     ],
-  });
+  })
 
   if (tgRes.ok) {
-    log.info({ leadId: input.leadId }, "telegram lead notification sent");
+    log.info({ leadId: input.leadId }, 'telegram lead notification sent')
   } else {
-    log.error({ leadId: input.leadId, err: tgRes.error }, "telegram lead notification failed");
+    log.error({ leadId: input.leadId, err: tgRes.error }, 'telegram lead notification failed')
   }
 }

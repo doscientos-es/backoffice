@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   DndContext,
@@ -10,7 +10,7 @@ import {
   useDroppable,
   useSensor,
   useSensors,
-} from "@dnd-kit/core";
+} from '@dnd-kit/core'
 import {
   TriangleAlert as AlertTriangle,
   CalendarDays as CalendarClock,
@@ -26,16 +26,17 @@ import {
   Plus,
   RefreshCw,
   User,
-} from "lucide-react";
-import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useOptimistic, useState, useTransition } from "react";
-import { Badge } from "@/components/ui/badge";
-import { EntityAvatar } from "@/components/ui/entity-avatar";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { MemberAvatar } from "@/components/ui/member-avatar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+} from 'lucide-react'
+import Link from 'next/link'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useOptimistic, useState, useTransition } from 'react'
+
+import { Badge } from '@/components/ui/badge'
+import { EntityAvatar } from '@/components/ui/entity-avatar'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
+import { MemberAvatar } from '@/components/ui/member-avatar'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   boardColumnForLead,
   countLeadsNeedingAttention,
@@ -44,109 +45,110 @@ import {
   type LeadKanbanColumnId,
   nextActionForKanban,
   sumLeadEstimatedValue,
-} from "@/lib/leads/kanban-policy";
+} from '@/lib/leads/kanban-policy'
 import {
   type LeadKanbanColumnPreferences,
   leadKanbanColumnIds,
   resolveCompactLeadKanbanColumns,
-} from "@/lib/leads/kanban-preferences";
+} from '@/lib/leads/kanban-preferences'
 import {
   isRotting,
   nextActionState,
   STAGE_ROT_DAYS,
   waitingForReplySince,
-} from "@/lib/leads/pipeline";
-import type { LeadListItem, LeadMemberRef } from "@/lib/leads/types";
-import { leadDisplayName } from "@/lib/leads/utils";
-import type { MemberOption } from "@/lib/members/queries";
-import type { LeadStatus } from "@/lib/status";
-import { cn, formatEUR, relativeTime } from "@/lib/utils";
-import { ScheduleReminderDialog } from "../reminders/schedule-reminder-dialog";
-import { LeadCallLink } from "./[id]/phone-actions";
-import { deleteLead, updateLeadStatus } from "./actions";
-import { CloseReasonDialog, type CloseReasonVariant } from "./close-reason-dialog";
-import { LeadQuickView } from "./lead-quick-view";
-import { QuotedSuggestionDialog } from "./quoted-suggestion-dialog";
-import { ReopenConfirmDialog } from "./reopen-confirm-dialog";
+} from '@/lib/leads/pipeline'
+import type { LeadListItem, LeadMemberRef } from '@/lib/leads/types'
+import { leadDisplayName } from '@/lib/leads/utils'
+import type { MemberOption } from '@/lib/members/queries'
+import type { LeadStatus } from '@/lib/status'
+import { cn, formatEUR, relativeTime } from '@/lib/utils'
+
+import { ScheduleReminderDialog } from '../reminders/schedule-reminder-dialog'
+import { LeadCallLink } from './[id]/phone-actions'
+import { deleteLead, updateLeadStatus } from './actions'
+import { CloseReasonDialog, type CloseReasonVariant } from './close-reason-dialog'
+import { LeadQuickView } from './lead-quick-view'
+import { QuotedSuggestionDialog } from './quoted-suggestion-dialog'
+import { ReopenConfirmDialog } from './reopen-confirm-dialog'
 
 const URGENCY_STYLE: Record<string, string> = {
-  Inmediata: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400",
-  "Este mes": "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400",
-  "Este trimestre": "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-400",
-  "Sin urgencia": "bg-muted text-muted-foreground",
-};
+  Inmediata: 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400',
+  'Este mes': 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400',
+  'Este trimestre': 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-400',
+  'Sin urgencia': 'bg-muted text-muted-foreground',
+}
 
-export type KanbanLead = LeadListItem;
+export type KanbanLead = LeadListItem
 
 const INTERACTION_LABEL: Record<string, string> = {
-  email_sent: "Email enviado",
-  email_received: "Email recibido",
-  email_delivered: "Email entregado",
-  email_opened: "Email abierto",
-  email_clicked: "Email con clic",
-  email_bounced: "Email rebotado",
-  email_complained: "Email marcado como spam",
-  email_scheduled: "Email programado",
-  email_delivery_delayed: "Entrega de email retrasada",
-  email_failed: "Error al enviar el email",
-  email_suppressed: "Email suprimido",
-  call: "Llamada",
-  meeting: "Reunión",
-  note: "Nota",
-  owner_change: "Responsable cambiado",
-  status_change: "Cambio de estado",
-};
+  email_sent: 'Email enviado',
+  email_received: 'Email recibido',
+  email_delivered: 'Email entregado',
+  email_opened: 'Email abierto',
+  email_clicked: 'Email con clic',
+  email_bounced: 'Email rebotado',
+  email_complained: 'Email marcado como spam',
+  email_scheduled: 'Email programado',
+  email_delivery_delayed: 'Entrega de email retrasada',
+  email_failed: 'Error al enviar el email',
+  email_suppressed: 'Email suprimido',
+  call: 'Llamada',
+  meeting: 'Reunión',
+  note: 'Nota',
+  owner_change: 'Responsable cambiado',
+  status_change: 'Cambio de estado',
+}
 
 const REOPEN_INTO: ReadonlySet<LeadStatus> = new Set([
-  "new",
-  "contacted",
-  "in_conversation",
-  "quoted",
-]);
+  'new',
+  'contacted',
+  'in_conversation',
+  'quoted',
+])
 
-const STATUS_BY_COLUMN: Record<Exclude<LeadKanbanColumnId, "meeting">, LeadStatus> = {
-  new: "new",
-  in_conversation: "in_conversation",
-  waiting: "contacted",
-  quoted: "quoted",
-  won: "won",
-  lost: "lost",
-  not_interested: "not_interested",
-  archived: "archived",
-};
+const STATUS_BY_COLUMN: Record<Exclude<LeadKanbanColumnId, 'meeting'>, LeadStatus> = {
+  new: 'new',
+  in_conversation: 'in_conversation',
+  waiting: 'contacted',
+  quoted: 'quoted',
+  won: 'won',
+  lost: 'lost',
+  not_interested: 'not_interested',
+  archived: 'archived',
+}
 
-const COMPACT_COLUMNS_KEY = "leads-kanban:compact-columns";
+const COMPACT_COLUMNS_KEY = 'leads-kanban:compact-columns'
 
 function loadColumnPreferences(key: string): LeadKanbanColumnPreferences | null {
   try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    const stored: unknown = JSON.parse(raw);
+    const raw = localStorage.getItem(key)
+    if (!raw) return null
+    const stored: unknown = JSON.parse(raw)
     if (Array.isArray(stored)) {
       // Legacy storage only recorded compact columns, so it could not retain
       // an explicit "keep visible" choice for columns closed by default.
-      return { compact: leadKanbanColumnIds(stored), expanded: [] };
+      return { compact: leadKanbanColumnIds(stored), expanded: [] }
     }
-    if (!stored || typeof stored !== "object") return null;
-    const preferences = stored as Record<string, unknown>;
+    if (!stored || typeof stored !== 'object') return null
+    const preferences = stored as Record<string, unknown>
     return {
       compact: leadKanbanColumnIds(preferences.compact),
       expanded: leadKanbanColumnIds(preferences.expanded),
-    };
+    }
   } catch {
-    return null;
+    return null
   }
 }
 
 function saveColumnPreferences(key: string, value: LeadKanbanColumnPreferences) {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    localStorage.setItem(key, JSON.stringify(value))
   } catch {
     // The preference is optional when browser storage is unavailable.
   }
 }
 
-type Action = { type: "move"; id: string; status: LeadStatus } | { type: "remove"; id: string };
+type Action = { type: 'move'; id: string; status: LeadStatus } | { type: 'remove'; id: string }
 
 export function LeadsKanban({
   leads,
@@ -155,146 +157,146 @@ export function LeadsKanban({
   googleEnabled = false,
   members = [],
 }: {
-  leads: KanbanLead[];
-  canEdit?: boolean;
-  aiEnabled?: boolean;
-  googleEnabled?: boolean;
-  members?: MemberOption[];
+  leads: KanbanLead[]
+  canEdit?: boolean
+  aiEnabled?: boolean
+  googleEnabled?: boolean
+  members?: MemberOption[]
 }) {
-  const router = useRouter();
-  const [, startTransition] = useTransition();
-  const [isRefreshing, startRefresh] = useTransition();
-  const [lastRefresh, setLastRefresh] = useState<Date>(() => new Date());
+  const router = useRouter()
+  const [, startTransition] = useTransition()
+  const [isRefreshing, startRefresh] = useTransition()
+  const [lastRefresh, setLastRefresh] = useState<Date>(() => new Date())
   const [optimistic, applyOptimistic] = useOptimistic(leads, (state, action: Action) =>
-    action.type === "remove"
+    action.type === 'remove'
       ? state.filter((l) => l.id !== action.id)
       : state.map((l) => (l.id === action.id ? { ...l, status: action.status } : l)),
-  );
+  )
   const [columnPreferences, setColumnPreferences] = useState<LeadKanbanColumnPreferences>({
     compact: [],
     expanded: [],
-  });
+  })
   useEffect(() => {
-    const storedPreferences = loadColumnPreferences(COMPACT_COLUMNS_KEY);
-    if (storedPreferences) setColumnPreferences(storedPreferences);
-  }, []);
+    const storedPreferences = loadColumnPreferences(COMPACT_COLUMNS_KEY)
+    if (storedPreferences) setColumnPreferences(storedPreferences)
+  }, [])
 
   const toggleColumnCompact = (id: LeadKanbanColumnId) => {
     setColumnPreferences((previous) => {
-      const compact = resolveCompactLeadKanbanColumns(previous);
+      const compact = resolveCompactLeadKanbanColumns(previous)
       const next = {
         compact: new Set(previous.compact),
         expanded: new Set(previous.expanded),
-      };
+      }
       if (compact.has(id)) {
-        next.compact.delete(id);
-        next.expanded.add(id);
+        next.compact.delete(id)
+        next.expanded.add(id)
       } else {
-        next.expanded.delete(id);
-        next.compact.add(id);
+        next.expanded.delete(id)
+        next.compact.add(id)
       }
       const preferences = {
         compact: [...next.compact],
         expanded: [...next.expanded],
-      };
-      saveColumnPreferences(COMPACT_COLUMNS_KEY, preferences);
-      return preferences;
-    });
-  };
+      }
+      saveColumnPreferences(COMPACT_COLUMNS_KEY, preferences)
+      return preferences
+    })
+  }
   const handleRefresh = () => {
     startRefresh(() => {
-      router.refresh();
-      setLastRefresh(new Date());
-    });
-  };
-  const [activeId, setActiveId] = useState<string | null>(null);
+      router.refresh()
+      setLastRefresh(new Date())
+    })
+  }
+  const [activeId, setActiveId] = useState<string | null>(null)
   const [pendingClosure, setPendingClosure] = useState<{
-    id: string;
-    name: string;
-    variant: CloseReasonVariant;
-  } | null>(null);
+    id: string
+    name: string
+    variant: CloseReasonVariant
+  } | null>(null)
   const [pendingReopen, setPendingReopen] = useState<{
-    id: string;
-    name: string;
-    to: LeadKanbanColumnId;
-  } | null>(null);
+    id: string
+    name: string
+    to: LeadKanbanColumnId
+  } | null>(null)
   const [pendingSuggestion, setPendingSuggestion] = useState<{ id: string; name: string } | null>(
     null,
-  );
+  )
   const [pendingMeeting, setPendingMeeting] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
-  const [quickViewId, setQuickViewId] = useState<string | null>(null);
-  const feedback = useFormFeedback();
+    id: string
+    name: string
+  } | null>(null)
+  const [quickViewId, setQuickViewId] = useState<string | null>(null)
+  const feedback = useFormFeedback()
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
-  const onDragStart = (event: DragStartEvent) => setActiveId(String(event.active.id));
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
+  const onDragStart = (event: DragStartEvent) => setActiveId(String(event.active.id))
 
   const commitMove = (id: string, status: LeadStatus, lostReason?: string) => {
     startTransition(async () => {
-      applyOptimistic({ type: "move", id, status });
-      feedback.setPending();
-      const res = await updateLeadStatus({ leadId: id, status, lostReason });
-      if (!res.ok) feedback.setError(res.error);
-      else feedback.setSuccess("Estado actualizado");
-    });
-  };
+      applyOptimistic({ type: 'move', id, status })
+      feedback.setPending()
+      const res = await updateLeadStatus({ leadId: id, status, lostReason })
+      if (!res.ok) feedback.setError(res.error)
+      else feedback.setSuccess('Estado actualizado')
+    })
+  }
 
   // Optimistically drops the card from the board; the server revalidation keeps
   // it gone on success, and on failure React reverts the state (the card
   // reappears) with an error shown in the feedback bar.
   const commitDelete = (id: string) => {
-    setQuickViewId(null);
+    setQuickViewId(null)
     startTransition(async () => {
-      applyOptimistic({ type: "remove", id });
-      feedback.setPending();
-      const res = await deleteLead({ id });
-      if (!res.ok) feedback.setError(res.error);
-      else feedback.setSuccess("Lead eliminado");
-    });
-  };
+      applyOptimistic({ type: 'remove', id })
+      feedback.setPending()
+      const res = await deleteLead({ id })
+      if (!res.ok) feedback.setError(res.error)
+      else feedback.setSuccess('Lead eliminado')
+    })
+  }
 
   const moveToColumn = (lead: KanbanLead, column: LeadKanbanColumnId) => {
-    if (column === "meeting") {
-      if (lead.status !== "in_conversation") commitMove(lead.id, "in_conversation");
-      setPendingMeeting({ id: lead.id, name: leadDisplayName(lead) });
-      return;
+    if (column === 'meeting') {
+      if (lead.status !== 'in_conversation') commitMove(lead.id, 'in_conversation')
+      setPendingMeeting({ id: lead.id, name: leadDisplayName(lead) })
+      return
     }
 
-    const status = STATUS_BY_COLUMN[column];
-    if (status === "lost" || status === "not_interested") {
-      setPendingClosure({ id: lead.id, name: leadDisplayName(lead), variant: status });
-      return;
+    const status = STATUS_BY_COLUMN[column]
+    if (status === 'lost' || status === 'not_interested') {
+      setPendingClosure({ id: lead.id, name: leadDisplayName(lead), variant: status })
+      return
     }
 
-    commitMove(lead.id, status);
-    if (status === "quoted") setPendingSuggestion({ id: lead.id, name: leadDisplayName(lead) });
-  };
+    commitMove(lead.id, status)
+    if (status === 'quoted') setPendingSuggestion({ id: lead.id, name: leadDisplayName(lead) })
+  }
 
   const onDragEnd = (event: DragEndEvent) => {
-    setActiveId(null);
-    if (!event.over) return;
-    const id = String(event.active.id);
-    const column = String(event.over.id) as LeadKanbanColumnId;
-    const current = optimistic.find((lead) => lead.id === id);
-    if (!current || boardColumnForLead(current) === column) return;
+    setActiveId(null)
+    if (!event.over) return
+    const id = String(event.active.id)
+    const column = String(event.over.id) as LeadKanbanColumnId
+    const current = optimistic.find((lead) => lead.id === id)
+    if (!current || boardColumnForLead(current) === column) return
 
-    const targetStatus = column === "meeting" ? "in_conversation" : STATUS_BY_COLUMN[column];
-    if (current.status === "won" && REOPEN_INTO.has(targetStatus)) {
-      setPendingReopen({ id, name: leadDisplayName(current), to: column });
-      return;
+    const targetStatus = column === 'meeting' ? 'in_conversation' : STATUS_BY_COLUMN[column]
+    if (current.status === 'won' && REOPEN_INTO.has(targetStatus)) {
+      setPendingReopen({ id, name: leadDisplayName(current), to: column })
+      return
     }
 
-    moveToColumn(current, column);
-  };
+    moveToColumn(current, column)
+  }
 
-  const grouped = groupLeadsForKanban(optimistic);
-  const compactColumns = resolveCompactLeadKanbanColumns(columnPreferences);
-  const active = activeId ? optimistic.find((lead) => lead.id === activeId) : null;
+  const grouped = groupLeadsForKanban(optimistic)
+  const compactColumns = resolveCompactLeadKanbanColumns(columnPreferences)
+  const active = activeId ? optimistic.find((lead) => lead.id === activeId) : null
   const refreshLabel = isRefreshing
-    ? "Actualizando leads"
-    : `Actualizar leads; actualizado ${relativeTime(lastRefresh.toISOString())}`;
+    ? 'Actualizando leads'
+    : `Actualizar leads; actualizado ${relativeTime(lastRefresh.toISOString())}`
 
   return (
     <>
@@ -305,7 +307,7 @@ export function LeadsKanban({
         onDragCancel={() => setActiveId(null)}
       >
         <div className="flex h-full min-h-0 flex-col">
-          <div className="flex min-h-0 flex-1 gap-4 overflow-x-auto overflow-y-hidden pb-2 scroll-fade-x no-scrollbar">
+          <div className="scroll-fade-x no-scrollbar flex min-h-0 flex-1 gap-4 overflow-x-auto overflow-y-hidden pb-2">
             {LEAD_KANBAN_COLUMNS.map((col) => (
               <Column
                 key={col.id}
@@ -329,11 +331,11 @@ export function LeadsKanban({
               type="button"
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="flex items-center text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+              className="text-muted-foreground hover:text-foreground flex items-center transition-colors disabled:opacity-50"
               aria-label={refreshLabel}
               title={refreshLabel}
             >
-              <RefreshCw className={cn("size-3", isRefreshing && "animate-spin")} />
+              <RefreshCw className={cn('size-3', isRefreshing && 'animate-spin')} />
               <span className="sr-only">{refreshLabel}</span>
             </button>
           </div>
@@ -342,35 +344,35 @@ export function LeadsKanban({
       </DndContext>
       <CloseReasonDialog
         lead={pendingClosure ? { id: pendingClosure.id, name: pendingClosure.name } : null}
-        variant={pendingClosure?.variant ?? "lost"}
+        variant={pendingClosure?.variant ?? 'lost'}
         onCancel={() => setPendingClosure(null)}
         onConfirm={(reason) => {
-          if (!pendingClosure) return;
-          const { id, variant } = pendingClosure;
-          setPendingClosure(null);
-          commitMove(id, variant, reason);
+          if (!pendingClosure) return
+          const { id, variant } = pendingClosure
+          setPendingClosure(null)
+          commitMove(id, variant, reason)
         }}
       />
       <ReopenConfirmDialog
         lead={pendingReopen ? { id: pendingReopen.id, name: pendingReopen.name } : null}
         onCancel={() => setPendingReopen(null)}
         onConfirm={() => {
-          if (!pendingReopen) return;
-          const { id, to } = pendingReopen;
-          setPendingReopen(null);
-          const lead = optimistic.find((item) => item.id === id);
-          if (lead) moveToColumn(lead, to);
+          if (!pendingReopen) return
+          const { id, to } = pendingReopen
+          setPendingReopen(null)
+          const lead = optimistic.find((item) => item.id === id)
+          if (lead) moveToColumn(lead, to)
         }}
       />
       <QuotedSuggestionDialog lead={pendingSuggestion} onClose={() => setPendingSuggestion(null)} />
       <ScheduleReminderDialog
-        key={pendingMeeting?.id ?? "meeting"}
+        key={pendingMeeting?.id ?? 'meeting'}
         leadId={pendingMeeting?.id}
         open={pendingMeeting !== null}
         onOpenChange={(open) => {
-          if (!open) setPendingMeeting(null);
+          if (!open) setPendingMeeting(null)
         }}
-        defaultTitle={pendingMeeting ? `Reunión con ${pendingMeeting.name}` : ""}
+        defaultTitle={pendingMeeting ? `Reunión con ${pendingMeeting.name}` : ''}
         defaultActionType="meeting"
         members={members}
         onScheduled={() => router.refresh()}
@@ -385,7 +387,7 @@ export function LeadsKanban({
         onCloseAction={() => setQuickViewId(null)}
       />
     </>
-  );
+  )
 }
 
 function Column({
@@ -401,54 +403,54 @@ function Column({
   onOpenQuickView,
   onToggleCompact,
 }: {
-  status: LeadKanbanColumnId;
-  label: string;
-  description: string;
-  tone: string;
-  dot: string;
-  leads: KanbanLead[];
-  canEdit: boolean;
-  compact: boolean;
-  isDragging: boolean;
-  onOpenQuickView: (id: string) => void;
-  onToggleCompact: () => void;
+  status: LeadKanbanColumnId
+  label: string
+  description: string
+  tone: string
+  dot: string
+  leads: KanbanLead[]
+  canEdit: boolean
+  compact: boolean
+  isDragging: boolean
+  onOpenQuickView: (id: string) => void
+  onToggleCompact: () => void
 }) {
-  const { setNodeRef, isOver } = useDroppable({ id: status });
-  const total = sumLeadEstimatedValue(leads);
-  const attention = countLeadsNeedingAttention(leads);
-  const collapsed = compact && !isOver;
+  const { setNodeRef, isOver } = useDroppable({ id: status })
+  const total = sumLeadEstimatedValue(leads)
+  const attention = countLeadsNeedingAttention(leads)
+  const collapsed = compact && !isOver
   return (
     <section
       ref={setNodeRef}
-      aria-label={`${label} · ${leads.length} lead${leads.length === 1 ? "" : "s"}`}
+      aria-label={`${label} · ${leads.length} lead${leads.length === 1 ? '' : 's'}`}
       title={collapsed ? `${label} (${leads.length}) · pasa el cursor para expandir` : undefined}
       className={cn(
-        "group/col relative flex h-full w-80 shrink-0 flex-col overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10",
-        "transition-[width,background-color,box-shadow] duration-200 ease-out motion-reduce:transition-none",
-        collapsed && "md:w-11 md:cursor-pointer md:bg-muted/30 md:hover:w-80 md:hover:bg-card",
-        isOver && "bg-primary/5 ring-2 ring-primary/50",
-        isDragging && !isOver && "ring-dashed ring-primary/30",
+        'group/col relative flex h-full w-80 shrink-0 flex-col overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10',
+        'transition-[width,background-color,box-shadow] duration-200 ease-out motion-reduce:transition-none',
+        collapsed && 'md:w-11 md:cursor-pointer md:bg-muted/30 md:hover:w-80 md:hover:bg-card',
+        isOver && 'bg-primary/5 ring-2 ring-primary/50',
+        isDragging && !isOver && 'ring-dashed ring-primary/30',
       )}
     >
       <header
         className={cn(
-          "shrink-0 border-b border-border px-3 py-3",
-          collapsed && "md:px-1.5 md:group-hover/col:px-3",
+          'shrink-0 border-b border-border px-3 py-3',
+          collapsed && 'md:px-1.5 md:group-hover/col:px-3',
         )}
       >
         <div
           className={cn(
-            "flex min-w-0 items-center gap-2",
-            collapsed && "md:flex-col md:group-hover/col:flex-row",
+            'flex min-w-0 items-center gap-2',
+            collapsed && 'md:flex-col md:group-hover/col:flex-row',
           )}
         >
-          <span className={cn("size-2 shrink-0 rounded-full", dot)} aria-hidden />
+          <span className={cn('size-2 shrink-0 rounded-full', dot)} aria-hidden />
           <span
             className={cn(
-              "min-w-0 flex-1 truncate text-sm font-semibold",
+              'min-w-0 flex-1 truncate text-sm font-semibold',
               tone,
               collapsed
-                ? "md:rotate-180 md:[writing-mode:vertical-rl] md:group-hover/col:rotate-0 md:group-hover/col:[writing-mode:horizontal-tb]"
+                ? 'md:rotate-180 md:[writing-mode:vertical-rl] md:group-hover/col:rotate-0 md:group-hover/col:[writing-mode:horizontal-tb]'
                 : undefined,
             )}
           >
@@ -459,10 +461,10 @@ function Column({
               <Badge
                 variant="danger"
                 className={cn(
-                  "h-5 gap-1 text-[11px] tabular-nums",
-                  collapsed && "md:hidden md:group-hover/col:inline-flex",
+                  'h-5 gap-1 text-[11px] tabular-nums',
+                  collapsed && 'md:hidden md:group-hover/col:inline-flex',
                 )}
-                title={`${attention} lead${attention === 1 ? "" : "s"} sin próxima acción o con el aviso vencido`}
+                title={`${attention} lead${attention === 1 ? '' : 's'} sin próxima acción o con el aviso vencido`}
               >
                 <AlertTriangle className="size-2.5" aria-hidden />
                 {attention}
@@ -474,14 +476,14 @@ function Column({
             <button
               type="button"
               onClick={(event) => {
-                event.stopPropagation();
-                onToggleCompact();
+                event.stopPropagation()
+                onToggleCompact()
               }}
-              title={compact ? "Mantener siempre visible" : "Colapsar cuando no esté en uso"}
-              aria-label={compact ? "Mantener siempre visible" : "Colapsar cuando no esté en uso"}
+              title={compact ? 'Mantener siempre visible' : 'Colapsar cuando no esté en uso'}
+              aria-label={compact ? 'Mantener siempre visible' : 'Colapsar cuando no esté en uso'}
               className={cn(
-                "hidden shrink-0 rounded p-0.5 text-muted-foreground/50 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
-                "md:group-hover/col:inline-flex",
+                'hidden shrink-0 rounded p-0.5 text-muted-foreground/50 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+                'md:group-hover/col:inline-flex',
               )}
             >
               {compact ? <Maximize2 className="size-3" /> : <Minimize2 className="size-3" />}
@@ -490,8 +492,8 @@ function Column({
         </div>
         <p
           className={cn(
-            "mt-1.5 truncate pl-4 text-[11px] text-muted-foreground",
-            collapsed && "md:hidden md:group-hover/col:block",
+            'mt-1.5 truncate pl-4 text-[11px] text-muted-foreground',
+            collapsed && 'md:hidden md:group-hover/col:block',
           )}
         >
           {description}
@@ -499,8 +501,8 @@ function Column({
         {total > 0 ? (
           <p
             className={cn(
-              "mt-2 pl-4 text-xs font-medium tabular-nums text-foreground/80",
-              collapsed && "md:hidden md:group-hover/col:block",
+              'mt-2 pl-4 text-xs font-medium tabular-nums text-foreground/80',
+              collapsed && 'md:hidden md:group-hover/col:block',
             )}
           >
             {formatEUR(total)}
@@ -509,39 +511,39 @@ function Column({
       </header>
       <div
         className={cn(
-          "flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2.5 scroll-fade no-scrollbar",
-          collapsed && "md:hidden md:group-hover/col:flex",
+          'flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2.5 scroll-fade no-scrollbar',
+          collapsed && 'md:hidden md:group-hover/col:flex',
         )}
       >
         {leads.length === 0 ? (
-          <p className="px-2 py-6 text-center text-xs text-muted-foreground">
-            {isDragging ? "Soltar aquí" : "Sin leads"}
+          <p className="text-muted-foreground px-2 py-6 text-center text-xs">
+            {isDragging ? 'Soltar aquí' : 'Sin leads'}
           </p>
         ) : (
           leads.map((l) => (
             <Card key={l.id} lead={l} canEdit={canEdit} onOpenQuickView={onOpenQuickView} />
           ))
         )}
-        {status === "new" && <AddLeadCard />}
+        {status === 'new' && <AddLeadCard />}
       </div>
     </section>
-  );
+  )
 }
 
 function AddLeadCard() {
   return (
     <Link
       href="/leads/new"
-      className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+      className="border-border text-muted-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-primary flex items-center gap-2 rounded-lg border border-dashed px-3 py-2 text-xs transition-colors"
     >
       <Plus className="size-3.5 shrink-0" />
       Añadir lead
     </Link>
-  );
+  )
 }
 
 function LeadAvatar({ lead }: { lead: KanbanLead }) {
-  const name = lead.client?.name ?? leadDisplayName(lead);
+  const name = lead.client?.name ?? leadDisplayName(lead)
   return (
     <EntityAvatar
       name={name}
@@ -549,7 +551,7 @@ function LeadAvatar({ lead }: { lead: KanbanLead }) {
       size="sm"
       className="size-6 rounded-full"
     />
-  );
+  )
 }
 
 function Card({
@@ -558,25 +560,25 @@ function Card({
   canEdit = false,
   onOpenQuickView,
 }: {
-  lead: KanbanLead;
-  isOverlay?: boolean;
-  canEdit?: boolean;
-  onOpenQuickView?: (id: string) => void;
+  lead: KanbanLead
+  isOverlay?: boolean
+  canEdit?: boolean
+  onOpenQuickView?: (id: string) => void
 }) {
   const { attributes, listeners, setActivatorNodeRef, setNodeRef, isDragging } = useDraggable({
     id: lead.id,
     disabled: !canEdit || isOverlay,
-  });
-  const rotting = isRotting(lead.status, lead.updated_at);
-  const rotDays = STAGE_ROT_DAYS[lead.status];
+  })
+  const rotting = isRotting(lead.status, lead.updated_at)
+  const rotDays = STAGE_ROT_DAYS[lead.status]
   return (
     <article
       ref={setNodeRef}
       className={cn(
-        "group flex flex-col gap-2 rounded-lg bg-background p-3 text-left ring-1 ring-border transition-all hover:shadow-sm hover:ring-foreground/20",
-        isDragging && "opacity-30",
-        isOverlay && "cursor-grabbing shadow-lg ring-foreground/30",
-        rotting && !isOverlay && "ring-amber-400/60 dark:ring-amber-500/40",
+        'group flex flex-col gap-2 rounded-lg bg-background p-3 text-left ring-1 ring-border transition-all hover:shadow-sm hover:ring-foreground/20',
+        isDragging && 'opacity-30',
+        isOverlay && 'cursor-grabbing shadow-lg ring-foreground/30',
+        rotting && !isOverlay && 'ring-amber-400/60 dark:ring-amber-500/40',
       )}
     >
       <div className="flex items-start gap-2">
@@ -588,7 +590,7 @@ function Card({
             {...listeners}
             aria-label={`Arrastrar ${leadDisplayName(lead)}`}
             title="Arrastrar lead"
-            className="mt-0.5 shrink-0 cursor-grab touch-none rounded text-muted-foreground/45 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 active:cursor-grabbing"
+            className="text-muted-foreground/45 hover:text-foreground focus-visible:ring-ring/50 mt-0.5 shrink-0 cursor-grab touch-none rounded focus-visible:ring-2 focus-visible:outline-none active:cursor-grabbing"
           >
             <GripVertical className="size-3.5" aria-hidden />
           </button>
@@ -599,18 +601,18 @@ function Card({
             <button
               type="button"
               onClick={() => onOpenQuickView(lead.id)}
-              className="block max-w-full truncate text-left text-sm font-medium leading-tight underline-offset-2 hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+              className="hover:text-primary focus-visible:ring-ring/50 block max-w-full truncate text-left text-sm leading-tight font-medium underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:outline-none"
               title="Abrir panel rápido"
             >
               {leadDisplayName(lead)}
             </button>
           ) : (
-            <span className="block truncate text-sm font-medium leading-tight">
+            <span className="block truncate text-sm leading-tight font-medium">
               {leadDisplayName(lead)}
             </span>
           )}
           {lead.alias?.trim() && lead.alias.trim() !== lead.name ? (
-            <p className="truncate text-[11px] leading-tight text-muted-foreground">{lead.name}</p>
+            <p className="text-muted-foreground truncate text-[11px] leading-tight">{lead.name}</p>
           ) : null}
         </div>
         {rotting && !isOverlay && (
@@ -627,13 +629,13 @@ function Card({
       {!isOverlay && <NextActionChip lead={lead} />}
       {!isOverlay && (lead.company || lead.phone || lead.email) && (
         <div className="flex min-w-0 flex-col gap-0.5 pl-8 text-xs">
-          {lead.company ? <p className="truncate text-muted-foreground">{lead.company}</p> : null}
+          {lead.company ? <p className="text-muted-foreground truncate">{lead.company}</p> : null}
           {lead.phone ? (
             <LeadCallLink
               leadId={lead.id}
               phone={lead.phone}
               aria-label={`Llamar a ${leadDisplayName(lead)}`}
-              className="inline-flex min-w-0 items-center gap-1 truncate text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+              className="text-muted-foreground hover:text-primary focus-visible:ring-ring/50 inline-flex min-w-0 items-center gap-1 truncate transition-colors focus-visible:ring-2 focus-visible:outline-none"
             >
               <Phone className="size-3 shrink-0" aria-hidden />
               <span className="truncate">{lead.phone}</span>
@@ -643,7 +645,7 @@ function Card({
             <a
               href={`mailto:${lead.email}`}
               aria-label={`Enviar email a ${leadDisplayName(lead)}`}
-              className="inline-flex min-w-0 items-center gap-1 truncate text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+              className="text-muted-foreground hover:text-primary focus-visible:ring-ring/50 inline-flex min-w-0 items-center gap-1 truncate transition-colors focus-visible:ring-2 focus-visible:outline-none"
             >
               <Mail className="size-3 shrink-0" aria-hidden />
               <span className="truncate">{lead.email}</span>
@@ -655,17 +657,17 @@ function Card({
         <div className="flex flex-wrap items-center gap-1 pl-8">
           <span
             className={cn(
-              "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium",
-              URGENCY_STYLE[lead.urgency] ?? "bg-muted text-muted-foreground",
+              'inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium',
+              URGENCY_STYLE[lead.urgency] ?? 'bg-muted text-muted-foreground',
             )}
           >
             {lead.urgency}
           </span>
         </div>
       )}
-      {!isOverlay && lead.status === "lost" && lead.lost_reason ? (
+      {!isOverlay && lead.status === 'lost' && lead.lost_reason ? (
         <p
-          className="truncate pl-8 text-[11px] text-destructive/75"
+          className="text-destructive/75 truncate pl-8 text-[11px]"
           title={`Motivo de pérdida: ${lead.lost_reason}`}
         >
           <span className="font-medium">Pérdida:</span> {lead.lost_reason}
@@ -674,12 +676,12 @@ function Card({
       <div className="flex items-center justify-between gap-1.5 pl-8">
         <div className="flex items-center gap-1.5">
           {lead.score != null && (
-            <Badge variant="neutral" className="tabular-nums text-[10px] h-4 px-1.5">
+            <Badge variant="neutral" className="h-4 px-1.5 text-[10px] tabular-nums">
               {lead.score}
             </Badge>
           )}
           {lead.estimated_value != null && lead.estimated_value > 0 && (
-            <Badge variant="neutral" className="tabular-nums text-[10px] h-4 px-1.5">
+            <Badge variant="neutral" className="h-4 px-1.5 text-[10px] tabular-nums">
               {formatEUR(lead.estimated_value)}
             </Badge>
           )}
@@ -688,7 +690,7 @@ function Card({
         {lead.assignee ? <MemberFilterPopover member={lead.assignee} /> : null}
       </div>
     </article>
-  );
+  )
 }
 
 /**
@@ -698,23 +700,23 @@ function Card({
  * also says since when we are waiting.
  */
 function NextActionChip({ lead }: { lead: KanbanLead }) {
-  const next = nextActionForKanban(lead);
-  const state = nextActionState(lead.status, next);
-  if (state === "none") return null;
+  const next = nextActionForKanban(lead)
+  const state = nextActionState(lead.status, next)
+  if (state === 'none') return null
 
-  const waitingSince = waitingForReplySince(lead.recent_interactions);
+  const waitingSince = waitingForReplySince(lead.recent_interactions)
   const waiting =
-    waitingSince && state !== "overdue" ? (
+    waitingSince && state !== 'overdue' ? (
       <span
-        className="inline-flex items-center gap-1 text-[10px] text-muted-foreground"
+        className="text-muted-foreground inline-flex items-center gap-1 text-[10px]"
         title={`Última salida nuestra ${relativeTime(waitingSince)}`}
       >
         <Hourglass className="size-2.5 shrink-0" aria-hidden />
         <span className="truncate">Esperando respuesta {relativeTime(waitingSince)}</span>
       </span>
-    ) : null;
+    ) : null
 
-  if (state === "missing") {
+  if (state === 'missing') {
     return (
       <div className="flex min-w-0 flex-col gap-0.5 pl-8">
         <span className="inline-flex items-center gap-1 text-[10px] font-medium text-red-600 dark:text-red-400">
@@ -723,47 +725,47 @@ function NextActionChip({ lead }: { lead: KanbanLead }) {
         </span>
         {waiting}
       </div>
-    );
+    )
   }
 
-  if (!next) return null;
+  if (!next) return null
   const tone =
-    state === "overdue"
-      ? "font-medium text-red-600 dark:text-red-400"
-      : state === "today"
-        ? "font-medium text-amber-700 dark:text-amber-400"
-        : "text-muted-foreground";
+    state === 'overdue'
+      ? 'font-medium text-red-600 dark:text-red-400'
+      : state === 'today'
+        ? 'font-medium text-amber-700 dark:text-amber-400'
+        : 'text-muted-foreground'
 
   return (
     <div className="flex min-w-0 flex-col gap-0.5 pl-8">
       <span
-        className={cn("inline-flex min-w-0 items-center gap-1 text-[10px]", tone)}
+        className={cn('inline-flex min-w-0 items-center gap-1 text-[10px]', tone)}
         title={`${next.title} · ${relativeTime(next.remind_at)}`}
       >
         <CalendarClock className="size-2.5 shrink-0" aria-hidden />
         <span className="truncate">
-          {state === "overdue" ? "Vencido " : ""}
+          {state === 'overdue' ? 'Vencido ' : ''}
           {relativeTime(next.remind_at)} · {next.title}
         </span>
       </span>
       {waiting}
     </div>
-  );
+  )
 }
 
 function MemberFilterPopover({ member }: { member: LeadMemberRef }) {
-  const [open, setOpen] = useState(false);
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const [open, setOpen] = useState(false)
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
 
   const filterByAssignee = () => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("assignee", member.id);
-    params.delete("page");
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    setOpen(false);
-  };
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('assignee', member.id)
+    params.delete('page')
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+    setOpen(false)
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -774,7 +776,7 @@ function MemberFilterPopover({ member }: { member: LeadMemberRef }) {
           title={member.name}
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
-          className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="focus-visible:ring-ring/50 shrink-0 rounded-full focus-visible:ring-2 focus-visible:outline-none"
         >
           <MemberAvatar member={member} size="sm" className="size-5 shrink-0" />
         </button>
@@ -788,13 +790,13 @@ function MemberFilterPopover({ member }: { member: LeadMemberRef }) {
         <div className="flex items-center gap-2 px-1 py-1.5">
           <MemberAvatar member={member} size="default" className="size-8" />
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-foreground">{member.name}</p>
-            <p className="text-xs text-muted-foreground">Responsable del lead</p>
+            <p className="text-foreground truncate text-sm font-semibold">{member.name}</p>
+            <p className="text-muted-foreground text-xs">Responsable del lead</p>
           </div>
         </div>
         <Link
           href={`/team/${member.id}`}
-          className="mt-1 flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-foreground transition-colors hover:bg-muted"
+          className="text-foreground hover:bg-muted mt-1 flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors"
         >
           <User className="size-3.5" aria-hidden />
           Ver perfil
@@ -802,19 +804,19 @@ function MemberFilterPopover({ member }: { member: LeadMemberRef }) {
         <button
           type="button"
           onClick={filterByAssignee}
-          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs text-foreground transition-colors hover:bg-muted"
+          className="text-foreground hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors"
         >
           <Filter className="size-3.5" aria-hidden />
           Filtrar sus tareas
         </button>
       </PopoverContent>
     </Popover>
-  );
+  )
 }
 
 function RecentActivity({ lead }: { lead: KanbanLead }) {
-  const [open, setOpen] = useState(false);
-  const interactions = lead.recent_interactions;
+  const [open, setOpen] = useState(false)
+  const interactions = lead.recent_interactions
   return (
     <HoverCard open={open} onOpenChange={setOpen} openDelay={120} closeDelay={80}>
       <HoverCardTrigger asChild>
@@ -824,10 +826,10 @@ function RecentActivity({ lead }: { lead: KanbanLead }) {
           title="Últimas acciones"
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => {
-            e.stopPropagation();
-            setOpen((v) => !v);
+            e.stopPropagation()
+            setOpen((v) => !v)
           }}
-          className="inline-flex size-4 shrink-0 items-center justify-center rounded text-muted-foreground/70 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="text-muted-foreground/70 hover:text-foreground focus-visible:ring-ring/50 inline-flex size-4 shrink-0 items-center justify-center rounded transition-colors focus-visible:ring-2 focus-visible:outline-none"
         >
           <HistoryIcon className="size-3" aria-hidden />
         </button>
@@ -838,15 +840,15 @@ function RecentActivity({ lead }: { lead: KanbanLead }) {
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="mb-1.5 text-xs font-semibold text-foreground">Últimas acciones</p>
+        <p className="text-foreground mb-1.5 text-xs font-semibold">Últimas acciones</p>
         {interactions.length === 0 ? (
-          <p className="text-[11px] text-muted-foreground/80">Sin interacciones registradas.</p>
+          <p className="text-muted-foreground/80 text-[11px]">Sin interacciones registradas.</p>
         ) : (
           <ul className="flex flex-col gap-1.5">
             {interactions.slice(0, 3).map((i) => (
               <li key={i.id} className="flex flex-col gap-0.5">
                 <div className="flex items-center justify-between gap-2 text-[11px]">
-                  <span className="font-medium text-foreground">
+                  <span className="text-foreground font-medium">
                     {INTERACTION_LABEL[i.type] ?? i.type}
                   </span>
                   <span className="text-muted-foreground tabular-nums">
@@ -854,7 +856,7 @@ function RecentActivity({ lead }: { lead: KanbanLead }) {
                   </span>
                 </div>
                 {i.subject ? (
-                  <p className="line-clamp-2 text-[11px] text-muted-foreground">{i.subject}</p>
+                  <p className="text-muted-foreground line-clamp-2 text-[11px]">{i.subject}</p>
                 ) : null}
               </li>
             ))}
@@ -862,5 +864,5 @@ function RecentActivity({ lead }: { lead: KanbanLead }) {
         )}
       </HoverCardContent>
     </HoverCard>
-  );
+  )
 }

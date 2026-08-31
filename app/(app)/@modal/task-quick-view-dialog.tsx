@@ -1,9 +1,10 @@
-"use client";
+'use client'
 
-import { ArrowUpRight, X } from "lucide-react";
-import { useRouter } from "next/navigation";
-import type { ReactNode } from "react";
-import { Button } from "@/components/ui/button";
+import { ArrowUpRight, X } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import type { ReactNode } from 'react'
+
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogClose,
@@ -11,10 +12,10 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog'
 
 export function TaskQuickViewDialog({ taskId, children }: { taskId: string; children: ReactNode }) {
-  const router = useRouter();
+  const router = useRouter()
 
   return (
     <Dialog open onOpenChange={(open) => !open && router.back()}>
@@ -47,5 +48,5 @@ export function TaskQuickViewDialog({ taskId, children }: { taskId: string; chil
         <div className="min-h-0 overflow-y-auto p-4 sm:p-6">{children}</div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

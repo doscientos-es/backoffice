@@ -1,15 +1,17 @@
-"use client";
+'use client'
 
-import { Mail } from "lucide-react";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { IconButton } from "@/components/ui/icon-button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ModalDialog } from "@/components/ui/modal-dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { sendInvoiceEmail } from "../actions";
+import { Mail } from 'lucide-react'
+import { useState } from 'react'
+
+import { Button } from '@/components/ui/button'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { IconButton } from '@/components/ui/icon-button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { ModalDialog } from '@/components/ui/modal-dialog'
+import { Textarea } from '@/components/ui/textarea'
+
+import { sendInvoiceEmail } from '../actions'
 
 /**
  * Opens a dialog to email the public portal link of an invoice to the client,
@@ -21,28 +23,28 @@ export function SendInvoiceButton({
   defaultEmail,
   iconOnly = false,
 }: {
-  invoiceId: string;
-  defaultEmail?: string | null;
+  invoiceId: string
+  defaultEmail?: string | null
   /** Render the trigger as a square icon-only button (no label text). */
-  iconOnly?: boolean;
+  iconOnly?: boolean
 }) {
-  const feedback = useFormFeedback();
-  const [open, setOpen] = useState(false);
-  const [to, setTo] = useState("");
-  const [message, setMessage] = useState("");
+  const feedback = useFormFeedback()
+  const [open, setOpen] = useState(false)
+  const [to, setTo] = useState('')
+  const [message, setMessage] = useState('')
 
   async function onSend() {
-    feedback.setPending();
+    feedback.setPending()
     const result = await sendInvoiceEmail({
       id: invoiceId,
       to: to.trim() || undefined,
       message: message.trim() || undefined,
-    });
+    })
     if (result.ok) {
-      feedback.setSuccess(result.mocked ? "Email simulado (sin Resend)" : "Email enviado");
-      setTimeout(() => setOpen(false), 1200);
+      feedback.setSuccess(result.mocked ? 'Email simulado (sin Resend)' : 'Email enviado')
+      setTimeout(() => setOpen(false), 1200)
     } else {
-      feedback.setError(result.error);
+      feedback.setError(result.error)
     }
   }
 
@@ -79,7 +81,7 @@ export function SendInvoiceButton({
               </Button>
               <Button size="sm" disabled={feedback.pending} onClick={onSend}>
                 <Mail className="mr-2 h-4 w-4" />
-                {feedback.pending ? "Enviando…" : "Enviar"}
+                {feedback.pending ? 'Enviando…' : 'Enviar'}
               </Button>
             </div>
           </>
@@ -91,7 +93,7 @@ export function SendInvoiceButton({
             <Input
               id="invoice-email-to"
               type="email"
-              placeholder={defaultEmail ?? "email@cliente.com"}
+              placeholder={defaultEmail ?? 'email@cliente.com'}
               value={to}
               onChange={(e) => setTo(e.target.value)}
             />
@@ -112,5 +114,5 @@ export function SendInvoiceButton({
         </div>
       </ModalDialog>
     </>
-  );
+  )
 }

@@ -1,53 +1,55 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
-import { PageHeader } from "@/components/layout/page-header";
-import { type AttachmentItem, AttachmentSection } from "@/components/ui/attachment-section";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DangerZone } from "@/components/ui/danger-zone";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { requirePageRole } from "@/lib/auth";
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+
+import { DetailGrid, DetailRow } from '@/components/layout/detail-grid'
+import { PageHeader } from '@/components/layout/page-header'
+import { type AttachmentItem, AttachmentSection } from '@/components/ui/attachment-section'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { DangerZone } from '@/components/ui/danger-zone'
+import { StatusBadge } from '@/components/ui/status-badge'
+import { requirePageRole } from '@/lib/auth'
 import {
   EXPENSE_CATEGORY_LABELS,
   EXPENSE_PAYMENT_SOURCE_LABELS,
   EXPENSE_RECURRENCE_LABELS,
-} from "@/lib/finance";
-import { getExpenseDetail } from "@/lib/finance/queries";
-import { EXPENSE_STATUS } from "@/lib/status";
-import { createServerClient } from "@/lib/supabase/server";
-import { formatDate, formatEUR } from "@/lib/utils";
-import { deleteExpense } from "../actions";
-import { ExpenseEditDialog } from "./expense-edit-dialog";
-import { ExpenseInvoiceExtractor } from "./expense-invoice-extractor";
+} from '@/lib/finance'
+import { getExpenseDetail } from '@/lib/finance/queries'
+import { EXPENSE_STATUS } from '@/lib/status'
+import { createServerClient } from '@/lib/supabase/server'
+import { formatDate, formatEUR } from '@/lib/utils'
 
-export const dynamic = "force-dynamic";
+import { deleteExpense } from '../actions'
+import { ExpenseEditDialog } from './expense-edit-dialog'
+import { ExpenseInvoiceExtractor } from './expense-invoice-extractor'
+
+export const dynamic = 'force-dynamic'
 
 export default async function ExpenseDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const user = await requirePageRole(["owner", "admin"]);
+  const { id } = await params
+  const user = await requirePageRole(['owner', 'admin'])
 
-  const supabase = await createServerClient();
+  const supabase = await createServerClient()
   const [result, { data: teamMembersRaw }, { data: attachments, error: attachmentsError }] =
     await Promise.all([
       getExpenseDetail(id),
-      supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
+      supabase.from('team_members').select('id, name').is('deleted_at', null).order('name'),
       supabase
-        .from("attachments")
-        .select("id, name, mime_type, size_bytes, created_at, source, web_view_link")
-        .eq("expense_id", id)
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false }),
-    ]);
+        .from('attachments')
+        .select('id, name, mime_type, size_bytes, created_at, source, web_view_link')
+        .eq('expense_id', id)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false }),
+    ])
 
-  if (!result) notFound();
-  if (attachmentsError) throw new Error(attachmentsError.message);
-  const { expense, projectOptions } = result;
-  const project = expense.project;
-  const teamMembers = (teamMembersRaw ?? []) as Array<{ id: string; name: string }>;
+  if (!result) notFound()
+  if (attachmentsError) throw new Error(attachmentsError.message)
+  const { expense, projectOptions } = result
+  const project = expense.project
+  const teamMembers = (teamMembersRaw ?? []) as Array<{ id: string; name: string }>
 
-  const canDelete = user.role === "owner" || user.role === "admin";
-  const canEdit = user.role !== "viewer";
+  const canDelete = user.role === 'owner' || user.role === 'admin'
+  const canEdit = user.role !== 'viewer'
 
   return (
     <div className="flex flex-col gap-6">
@@ -55,8 +57,8 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
         title={expense.vendor}
         description={EXPENSE_CATEGORY_LABELS[expense.category] ?? expense.category}
         breadcrumbs={[
-          { label: "Finanzas", href: "/finance" },
-          { label: "Gastos", href: "/finance/expenses" },
+          { label: 'Finanzas', href: '/finance' },
+          { label: 'Gastos', href: '/finance/expenses' },
           { label: expense.vendor },
         ]}
         actions={
@@ -110,7 +112,7 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
                 {EXPENSE_CATEGORY_LABELS[expense.category] ?? expense.category}
               </DetailRow>
               <DetailRow label="Pagado desde">
-                {expense.payment_source === "member" && expense.paid_by_member_name
+                {expense.payment_source === 'member' && expense.paid_by_member_name
                   ? `${EXPENSE_PAYMENT_SOURCE_LABELS.member} · ${expense.paid_by_member_name}`
                   : (EXPENSE_PAYMENT_SOURCE_LABELS[expense.payment_source] ??
                     expense.payment_source)}
@@ -148,11 +150,11 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
               {expense.vendor_nif ? <DetailRow label="NIF">{expense.vendor_nif}</DetailRow> : null}
             </DetailGrid>
             {expense.notes ? (
-              <div className="mt-4 border-t border-border pt-3">
-                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <div className="border-border mt-4 border-t pt-3">
+                <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wide uppercase">
                   Notas
                 </p>
-                <p className="whitespace-pre-wrap text-sm">{expense.notes}</p>
+                <p className="text-sm whitespace-pre-wrap">{expense.notes}</p>
               </div>
             ) : null}
           </CardContent>
@@ -170,28 +172,28 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
               id: expense.id,
               expected_version: Number(expense.version),
               vendor: expense.vendor,
-              description: expense.description ?? "",
+              description: expense.description ?? '',
               category: expense.category,
               status: expense.status,
               recurrence: expense.recurrence,
               expense_date: expense.expense_date,
-              due_date: expense.due_date ?? "",
-              paid_at: expense.paid_at ?? "",
+              due_date: expense.due_date ?? '',
+              paid_at: expense.paid_at ?? '',
               currency: expense.currency,
               subtotal: expense.subtotal,
               tax_rate: expense.tax_rate,
-              vendor_nif: expense.vendor_nif ?? "",
-              invoice_reference: expense.invoice_reference ?? "",
-              project_id: expense.project_id ?? "",
-              notes: expense.notes ?? "",
+              vendor_nif: expense.vendor_nif ?? '',
+              invoice_reference: expense.invoice_reference ?? '',
+              project_id: expense.project_id ?? '',
+              notes: expense.notes ?? '',
               payment_source: expense.payment_source,
-              paid_by_member_id: expense.paid_by_member_id ?? "",
+              paid_by_member_id: expense.paid_by_member_id ?? '',
               version: Number(expense.version),
             }}
             attachments={(attachments ?? [])
               .filter(
                 (attachment) =>
-                  attachment.mime_type === "application/pdf" && attachment.source !== "drive",
+                  attachment.mime_type === 'application/pdf' && attachment.source !== 'drive',
               )
               .map((attachment) => ({
                 id: attachment.id,
@@ -207,7 +209,7 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
         <DangerZone>
           <form action={deleteExpense} className="flex items-center justify-between gap-3">
             <input type="hidden" name="id" value={id} />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               El gasto se eliminará del listado y dejará de contar en finanzas.
             </p>
             <Button type="submit" variant="destructive" size="sm">
@@ -217,5 +219,5 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
         </DangerZone>
       ) : null}
     </div>
-  );
+  )
 }

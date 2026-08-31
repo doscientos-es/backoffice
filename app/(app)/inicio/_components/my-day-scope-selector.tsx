@@ -1,20 +1,22 @@
-"use client";
+'use client'
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Select } from "@/components/ui/select";
-import type { MyDayScope } from "./my-day-types";
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+
+import { Select } from '@/components/ui/select'
+
+import type { MyDayScope } from './my-day-types'
 
 export function MyDayScopeSelector({ scope }: { scope: MyDayScope }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
 
   function updateScope(value: string) {
-    const params = new URLSearchParams(searchParams.toString());
-    if (value) params.set("member", value);
-    else params.delete("member");
-    const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    const params = new URLSearchParams(searchParams.toString())
+    if (value) params.set('member', value)
+    else params.delete('member')
+    const query = params.toString()
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
   }
 
   return (
@@ -32,5 +34,5 @@ export function MyDayScopeSelector({ scope }: { scope: MyDayScope }) {
         </option>
       ))}
     </Select>
-  );
+  )
 }

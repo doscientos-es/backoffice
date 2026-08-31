@@ -1,1 +1,1 @@
-﻿export { DocPreview, type DocPreviewProps } from "@doscientos/ui";
+﻿export { DocPreview, type DocPreviewProps } from '@doscientos/ui'

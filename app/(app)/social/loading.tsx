@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function SocialLoading() {
   return (
@@ -21,7 +21,7 @@ export default function SocialLoading() {
       <div className="grid gap-3 lg:grid-cols-2">
         {Array.from({ length: 4 }).map((_, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list, order never changes
-          <div key={i} className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3">
+          <div key={i} className="border-border bg-card flex flex-col gap-3 rounded-xl border p-3">
             <div className="flex gap-3">
               <Skeleton className="size-20 shrink-0 rounded-lg" />
               <div className="flex flex-1 flex-col gap-2">
@@ -35,5 +35,5 @@ export default function SocialLoading() {
         ))}
       </div>
     </div>
-  );
+  )
 }

@@ -1,10 +1,11 @@
-"use client";
+'use client'
 
-import { Check, Copy, ExternalLink, Link as Link2 } from "lucide-react";
-import { useState } from "react";
-import { sileo } from "sileo";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Check, Copy, ExternalLink, Link as Link2 } from 'lucide-react'
+import { useState } from 'react'
+import { sileo } from 'sileo'
+
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 /**
  * Renders a public portal link (e.g. an invoice payment page) with
@@ -16,43 +17,43 @@ import { cn } from "@/lib/utils";
  */
 export function CopyPortalLink({
   path,
-  label = "Enlace de pago",
+  label = 'Enlace de pago',
 }: {
-  path: string;
-  label?: string;
+  path: string
+  label?: string
 }) {
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState(false)
 
   const handleCopy = async () => {
     try {
-      const url = `${window.location.origin}${path}`;
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      sileo.success({ title: "Enlace copiado" });
-      window.setTimeout(() => setCopied(false), 1500);
+      const url = `${window.location.origin}${path}`
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      sileo.success({ title: 'Enlace copiado' })
+      window.setTimeout(() => setCopied(false), 1500)
     } catch {
-      sileo.error({ title: "No se pudo copiar el enlace" });
+      sileo.error({ title: 'No se pudo copiar el enlace' })
     }
-  };
+  }
 
   const handleOpen = () => {
-    window.open(path, "_blank", "noopener,noreferrer");
-  };
+    window.open(path, '_blank', 'noopener,noreferrer')
+  }
 
   return (
     <div
       className={cn(
-        "group flex items-center gap-3 rounded-lg border border-border/60 px-2.5 py-2 transition-colors",
-        "hover:border-border hover:bg-muted/40",
+        'group flex items-center gap-3 rounded-lg border border-border/60 px-2.5 py-2 transition-colors',
+        'hover:border-border hover:bg-muted/40',
       )}
     >
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+      <span className="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-md">
         <Link2 className="size-4" aria-hidden />
       </span>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <span className="text-sm font-medium leading-tight">{label}</span>
-        <span className="truncate font-mono text-xs text-muted-foreground/80">{path}</span>
+        <span className="text-sm leading-tight font-medium">{label}</span>
+        <span className="text-muted-foreground/80 truncate font-mono text-xs">{path}</span>
       </div>
 
       <div className="flex shrink-0 items-center gap-0.5">
@@ -82,5 +83,5 @@ export function CopyPortalLink({
         </Button>
       </div>
     </div>
-  );
+  )
 }

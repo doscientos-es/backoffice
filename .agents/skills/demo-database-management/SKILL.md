@@ -176,4 +176,4 @@ Despues aplicala en la Supabase demo self-hosted siguiendo la skill
 demo-database-management, sin mezclar credenciales ni datos.
 Verifica ambas bases y ejecuta los tests afectados.
 No edites migraciones ya aplicadas y no ejecutes seeds reales en la demo.
-``` 
+```

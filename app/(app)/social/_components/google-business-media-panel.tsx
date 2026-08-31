@@ -1,73 +1,75 @@
-"use client";
+'use client'
 
-import { Upload, X } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import type { GoogleBusinessMediaItem } from "@/lib/social/google-business/profile";
-import { addGoogleBusinessPhoto, removeGoogleBusinessPhoto } from "../actions";
+import { Upload, X } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import type { GoogleBusinessMediaItem } from '@/lib/social/google-business/profile'
+
+import { addGoogleBusinessPhoto, removeGoogleBusinessPhoto } from '../actions'
 
 const CATEGORIES = [
-  ["ADDITIONAL", "Adicional"],
-  ["COVER", "Portada"],
-  ["PROFILE", "Perfil"],
-  ["LOGO", "Logotipo"],
-  ["EXTERIOR", "Exterior"],
-  ["INTERIOR", "Interior"],
-  ["PRODUCT", "Producto"],
-  ["AT_WORK", "En el trabajo"],
-  ["FOOD_AND_DRINK", "Comida y bebida"],
-  ["MENU", "Menú"],
-  ["TEAMS", "Equipo"],
-] as const;
+  ['ADDITIONAL', 'Adicional'],
+  ['COVER', 'Portada'],
+  ['PROFILE', 'Perfil'],
+  ['LOGO', 'Logotipo'],
+  ['EXTERIOR', 'Exterior'],
+  ['INTERIOR', 'Interior'],
+  ['PRODUCT', 'Producto'],
+  ['AT_WORK', 'En el trabajo'],
+  ['FOOD_AND_DRINK', 'Comida y bebida'],
+  ['MENU', 'Menú'],
+  ['TEAMS', 'Equipo'],
+] as const
 
 export function GoogleBusinessMediaPanel({ media }: { media: GoogleBusinessMediaItem[] }) {
-  const router = useRouter();
-  const [category, setCategory] = useState<(typeof CATEGORIES)[number][0]>("ADDITIONAL");
-  const [description, setDescription] = useState("");
-  const [pending, setPending] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const router = useRouter()
+  const [category, setCategory] = useState<(typeof CATEGORIES)[number][0]>('ADDITIONAL')
+  const [description, setDescription] = useState('')
+  const [pending, setPending] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
 
   async function handleUpload(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
-    setPending(true);
-    setMessage(null);
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    setPending(true)
+    setMessage(null)
     try {
-      const formData = new FormData();
-      formData.append("files", file);
-      const upload = await fetch("/api/social/upload", { method: "POST", body: formData });
+      const formData = new FormData()
+      formData.append('files', file)
+      const upload = await fetch('/api/social/upload', { method: 'POST', body: formData })
       const payload = (await upload.json()) as {
-        media?: Array<{ publicUrl: string }>;
-        error?: string;
-      };
+        media?: Array<{ publicUrl: string }>
+        error?: string
+      }
       if (!upload.ok || !payload.media?.[0]?.publicUrl)
-        throw new Error(payload.error ?? "No se pudo subir la foto.");
+        throw new Error(payload.error ?? 'No se pudo subir la foto.')
       const result = await addGoogleBusinessPhoto({
         sourceUrl: payload.media[0].publicUrl,
         category,
         description: description || undefined,
-      });
-      if (!result.ok) throw new Error(result.error);
-      setDescription("");
-      setMessage("Foto añadida a Google");
-      router.refresh();
+      })
+      if (!result.ok) throw new Error(result.error)
+      setDescription('')
+      setMessage('Foto añadida a Google')
+      router.refresh()
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "No se pudo añadir la foto.");
+      setMessage(error instanceof Error ? error.message : 'No se pudo añadir la foto.')
     } finally {
-      setPending(false);
+      setPending(false)
     }
   }
 
   async function handleDelete(mediaName: string) {
-    if (!window.confirm("¿Eliminar esta foto de Google Business Profile?")) return;
-    setPending(true);
-    const result = await removeGoogleBusinessPhoto({ mediaName });
-    setMessage(result.ok ? "Foto eliminada" : result.error);
-    if (result.ok) router.refresh();
-    setPending(false);
+    if (!window.confirm('¿Eliminar esta foto de Google Business Profile?')) return
+    setPending(true)
+    const result = await removeGoogleBusinessPhoto({ mediaName })
+    setMessage(result.ok ? 'Foto eliminada' : result.error)
+    if (result.ok) router.refresh()
+    setPending(false)
   }
 
   return (
@@ -78,7 +80,7 @@ export function GoogleBusinessMediaPanel({ media }: { media: GoogleBusinessMedia
           <select
             value={category}
             onChange={(event) => setCategory(event.target.value as typeof category)}
-            className="h-8 rounded-lg border border-border bg-background px-2 text-sm"
+            className="border-border bg-background h-8 rounded-lg border px-2 text-sm"
             disabled={pending}
           >
             {CATEGORIES.map(([value, label]) => (
@@ -99,7 +101,7 @@ export function GoogleBusinessMediaPanel({ media }: { media: GoogleBusinessMedia
         <Button asChild size="sm" disabled={pending}>
           <label className="cursor-pointer">
             <Upload className="size-3.5" />
-            {pending ? "Procesando…" : "Subir foto"}
+            {pending ? 'Procesando…' : 'Subir foto'}
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp"
@@ -109,18 +111,18 @@ export function GoogleBusinessMediaPanel({ media }: { media: GoogleBusinessMedia
           </label>
         </Button>
       </div>
-      {message ? <p className="text-xs text-muted-foreground">{message}</p> : null}
+      {message ? <p className="text-muted-foreground text-xs">{message}</p> : null}
       {media.length > 0 ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {media.map((item) => (
             <div
               key={item.name}
-              className="group relative overflow-hidden rounded-lg border border-border"
+              className="group border-border relative overflow-hidden rounded-lg border"
             >
               {/* biome-ignore lint/performance/noImgElement: URL externa de Google Business, no compatible con next/image */}
               <img
                 src={item.googleUrl ?? item.sourceUrl}
-                alt={item.description ?? "Foto de la ficha"}
+                alt={item.description ?? 'Foto de la ficha'}
                 className="aspect-square w-full object-cover"
                 loading="lazy"
               />
@@ -137,8 +139,8 @@ export function GoogleBusinessMediaPanel({ media }: { media: GoogleBusinessMedia
           ))}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">No hay fotos sincronizadas en la ficha.</p>
+        <p className="text-muted-foreground text-sm">No hay fotos sincronizadas en la ficha.</p>
       )}
     </div>
-  );
+  )
 }

@@ -1,1 +1,1 @@
-﻿export * from "@/primitives/ui/popover";
+﻿export * from '@/primitives/ui/popover'

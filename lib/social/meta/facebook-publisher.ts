@@ -6,7 +6,7 @@
  * directly; multi-photo posts become a feed story with attached media. Video
  * carousels are not supported by the Page feed, so we reject them explicitly.
  */
-import { scopedLogger } from "@/lib/logger";
+import { scopedLogger } from '@/lib/logger'
 import type {
   ComposedPost,
   PlatformComment,
@@ -15,8 +15,9 @@ import type {
   PublishOutcome,
   PublishSupport,
   SocialPlatform,
-} from "@/lib/social/core";
-import { PublishError } from "@/lib/social/core";
+} from '@/lib/social/core'
+import { PublishError } from '@/lib/social/core'
+
 import {
   deletePost,
   fbPageId,
@@ -28,68 +29,68 @@ import {
   publishText,
   publishVideo,
   replyToComment,
-} from "./facebook-api";
-import { metaPageToken } from "./graph-client";
+} from './facebook-api'
+import { metaPageToken } from './graph-client'
 
-const log = scopedLogger("social-facebook");
+const log = scopedLogger('social-facebook')
 
 export class FacebookPublisher implements Publisher {
-  readonly platform: SocialPlatform = "facebook";
+  readonly platform: SocialPlatform = 'facebook'
 
   isConfigured(): boolean {
-    return Boolean(metaPageToken() && fbPageId());
+    return Boolean(metaPageToken() && fbPageId())
   }
 
   supports(post: ComposedPost): PublishSupport {
-    if (post.mediaKind === "carousel" && post.media.some((m) => m.type === "video")) {
-      return { ok: false, reason: "Facebook no admite carruseles con vídeo desde la API." };
+    if (post.mediaKind === 'carousel' && post.media.some((m) => m.type === 'video')) {
+      return { ok: false, reason: 'Facebook no admite carruseles con vídeo desde la API.' }
     }
-    return { ok: true };
+    return { ok: true }
   }
 
   async publish(post: ComposedPost): Promise<PublishOutcome> {
-    const remoteId = await this.publishByKind(post);
-    const remoteUrl = await getPermalink(remoteId).catch(() => null);
-    log.info({ postId: post.id, remoteId }, "Published to Facebook");
-    return { remoteId, remoteUrl };
+    const remoteId = await this.publishByKind(post)
+    const remoteUrl = await getPermalink(remoteId).catch(() => null)
+    log.info({ postId: post.id, remoteId }, 'Published to Facebook')
+    return { remoteId, remoteUrl }
   }
 
   private async publishByKind(post: ComposedPost): Promise<string> {
     switch (post.mediaKind) {
-      case "text": {
-        const ref = await publishText(post.caption);
-        return ref.post_id ?? ref.id;
+      case 'text': {
+        const ref = await publishText(post.caption)
+        return ref.post_id ?? ref.id
       }
-      case "photo": {
-        const item = post.media[0];
-        if (!item) throw new PublishError("facebook", "Falta la imagen.");
-        return publishPhoto(item.publicUrl, post.caption);
+      case 'photo': {
+        const item = post.media[0]
+        if (!item) throw new PublishError('facebook', 'Falta la imagen.')
+        return publishPhoto(item.publicUrl, post.caption)
       }
-      case "video": {
-        const item = post.media[0];
-        if (!item) throw new PublishError("facebook", "Falta el vídeo.");
-        return publishVideo(item.publicUrl, post.caption);
+      case 'video': {
+        const item = post.media[0]
+        if (!item) throw new PublishError('facebook', 'Falta el vídeo.')
+        return publishVideo(item.publicUrl, post.caption)
       }
-      case "carousel":
-        return publishPhotoCarousel(post.media, post.caption);
+      case 'carousel':
+        return publishPhotoCarousel(post.media, post.caption)
       default:
-        throw new PublishError("facebook", "Tipo de contenido no soportado en Facebook.");
+        throw new PublishError('facebook', 'Tipo de contenido no soportado en Facebook.')
     }
   }
 
   fetchInsights(remoteId: string): Promise<PostInsights> {
-    return getPostInsights(remoteId);
+    return getPostInsights(remoteId)
   }
 
   fetchComments(remoteId: string): Promise<PlatformComment[]> {
-    return getPostComments(remoteId);
+    return getPostComments(remoteId)
   }
 
   replyToComment(remoteCommentId: string, message: string): Promise<void> {
-    return replyToComment(remoteCommentId, message);
+    return replyToComment(remoteCommentId, message)
   }
 
   deletePost(remoteId: string): Promise<void> {
-    return deletePost(remoteId);
+    return deletePost(remoteId)
   }
 }

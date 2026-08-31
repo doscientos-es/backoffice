@@ -1,17 +1,19 @@
-"use client";
+'use client'
 
-import { Link as Link2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { Button } from "@/components/ui/button";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { linkProposalToProject } from "../../proposals/actions";
+import { Link as Link2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
 
-type Proposal = { id: string; number: string | null; title: string | null };
+import { Button } from '@/components/ui/button'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+
+import { linkProposalToProject } from '../../proposals/actions'
+
+type Proposal = { id: string; number: string | null; title: string | null }
 
 interface Props {
-  projectId: string;
-  unlinkdProposals: Proposal[];
+  projectId: string
+  unlinkdProposals: Proposal[]
 }
 
 /**
@@ -19,42 +21,42 @@ interface Props {
  * (one that has no project_id yet) to this project.
  */
 export function LinkProposalButton({ projectId, unlinkdProposals }: Props) {
-  const router = useRouter();
-  const feedback = useFormFeedback({ successResetMs: 3000 });
-  const [pending, startTransition] = useTransition();
-  const [picking, setPicking] = useState(false);
-  const [selectedId, setSelectedId] = useState<string>("");
+  const router = useRouter()
+  const feedback = useFormFeedback({ successResetMs: 3000 })
+  const [pending, startTransition] = useTransition()
+  const [picking, setPicking] = useState(false)
+  const [selectedId, setSelectedId] = useState<string>('')
 
-  if (unlinkdProposals.length === 0) return null;
+  if (unlinkdProposals.length === 0) return null
 
   function handleLink() {
-    if (!selectedId) return;
-    feedback.setPending();
+    if (!selectedId) return
+    feedback.setPending()
     startTransition(async () => {
-      const res = await linkProposalToProject({ proposal_id: selectedId, project_id: projectId });
+      const res = await linkProposalToProject({ proposal_id: selectedId, project_id: projectId })
       if (!res.ok) {
-        feedback.setError(res.error);
-        return;
+        feedback.setError(res.error)
+        return
       }
-      feedback.setSuccess("Propuesta vinculada");
-      setPicking(false);
-      setSelectedId("");
-      router.refresh();
-    });
+      feedback.setSuccess('Propuesta vinculada')
+      setPicking(false)
+      setSelectedId('')
+      router.refresh()
+    })
   }
 
   if (picking) {
     return (
       <div className="flex items-center gap-2">
         <select
-          className="h-7 rounded-md border border-input bg-background px-2 text-xs"
+          className="border-input bg-background h-7 rounded-md border px-2 text-xs"
           value={selectedId}
           onChange={(e) => setSelectedId(e.target.value)}
         >
           <option value="">— Selecciona —</option>
           {unlinkdProposals.map((p) => (
             <option key={p.id} value={p.id}>
-              {p.number ? `${p.number} · ` : ""}
+              {p.number ? `${p.number} · ` : ''}
               {p.title ?? p.id}
             </option>
           ))}
@@ -67,7 +69,7 @@ export function LinkProposalButton({ projectId, unlinkdProposals }: Props) {
         </Button>
         <FormFeedback state={feedback.state} />
       </div>
-    );
+    )
   }
 
   return (
@@ -78,5 +80,5 @@ export function LinkProposalButton({ projectId, unlinkdProposals }: Props) {
       </Button>
       <FormFeedback state={feedback.state} />
     </div>
-  );
+  )
 }

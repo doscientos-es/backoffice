@@ -1,54 +1,55 @@
-import { Download } from "lucide-react";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
-import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DocPreview } from "@/components/ui/doc-preview";
-import { getStorage } from "@/lib/storage";
-import { createServerClient } from "@/lib/supabase/server";
-import { formatDate } from "@/lib/utils";
+import { Download } from 'lucide-react'
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
 
-export const dynamic = "force-dynamic";
+import { DetailGrid, DetailRow } from '@/components/layout/detail-grid'
+import { PageHeader } from '@/components/layout/page-header'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { DocPreview } from '@/components/ui/doc-preview'
+import { getStorage } from '@/lib/storage'
+import { createServerClient } from '@/lib/supabase/server'
+import { formatDate } from '@/lib/utils'
+
+export const dynamic = 'force-dynamic'
 
 /** Preview TTL: 10 min — long enough to browse the document comfortably. */
-const PREVIEW_TTL = 600;
+const PREVIEW_TTL = 600
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const supabase = await createServerClient();
-  const { data } = await supabase.from("attachments").select("name").eq("id", id).maybeSingle();
-  return { title: data?.name ? `${data.name as string} · doscientos` : "Documento · doscientos" };
+  const { id } = await params
+  const supabase = await createServerClient()
+  const { data } = await supabase.from('attachments').select('name').eq('id', id).maybeSingle()
+  return { title: data?.name ? `${data.name as string} · doscientos` : 'Documento · doscientos' }
 }
 
 export default async function DocumentDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const supabase = await createServerClient();
+  const { id } = await params
+  const supabase = await createServerClient()
 
   const { data: doc } = await supabase
-    .from("attachments")
-    .select("id, name, mime_type, size_bytes, storage_path, created_at")
-    .eq("id", id)
-    .is("deleted_at", null)
-    .maybeSingle();
+    .from('attachments')
+    .select('id, name, mime_type, size_bytes, storage_path, created_at')
+    .eq('id', id)
+    .is('deleted_at', null)
+    .maybeSingle()
 
-  if (!doc) notFound();
+  if (!doc) notFound()
 
-  const storagePath = doc.storage_path as string | null;
+  const storagePath = doc.storage_path as string | null
 
   // Generate preview URL server-side so it's ready when the page renders.
-  let previewUrl: string | null = null;
+  let previewUrl: string | null = null
   if (storagePath) {
-    const { url } = await getStorage().createSignedUrl("documents", storagePath, PREVIEW_TTL);
-    previewUrl = url;
+    const { url } = await getStorage().createSignedUrl('documents', storagePath, PREVIEW_TTL)
+    previewUrl = url
   }
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title={doc.name as string}
-        breadcrumbs={[{ label: "Documentos", href: "/documents" }, { label: doc.name as string }]}
+        breadcrumbs={[{ label: 'Documentos', href: '/documents' }, { label: doc.name as string }]}
         actions={
           <Button asChild size="sm">
             <Link href={`/api/documents/${id}/download`} target="_blank" rel="noopener noreferrer">
@@ -65,9 +66,9 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
         </CardHeader>
         <CardContent>
           <DetailGrid>
-            <DetailRow label="Tipo">{(doc.mime_type as string | null) ?? "—"}</DetailRow>
+            <DetailRow label="Tipo">{(doc.mime_type as string | null) ?? '—'}</DetailRow>
             <DetailRow label="Tamaño">
-              {doc.size_bytes ? `${Math.ceil(Number(doc.size_bytes) / 1024)} KB` : "—"}
+              {doc.size_bytes ? `${Math.ceil(Number(doc.size_bytes) / 1024)} KB` : '—'}
             </DetailRow>
             <DetailRow label="Subido">{formatDate(doc.created_at as string)}</DetailRow>
           </DetailGrid>
@@ -78,7 +79,7 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
         <CardHeader>
           <CardTitle>Preview</CardTitle>
         </CardHeader>
-        <CardContent className="p-0 overflow-hidden rounded-b-lg">
+        <CardContent className="overflow-hidden rounded-b-lg p-0">
           <DocPreview
             url={previewUrl}
             mimeType={doc.mime_type as string | null}
@@ -87,5 +88,5 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

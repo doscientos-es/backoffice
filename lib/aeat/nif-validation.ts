@@ -2,11 +2,10 @@ export {
   AEAT_NIF_ENDPOINTS,
   buildAeatNifEnvelope,
   interpretAeatNifResponse,
-  validateSpanishFiscalIdentity
-} from "@doscientos/verifactu/nif";
+  validateSpanishFiscalIdentity,
+} from '@doscientos/verifactu/nif'
 export type {
   AeatFiscalIdentity,
   AeatNifValidation,
-  AeatNifValidationOptions
-} from "@doscientos/verifactu/nif";
-
+  AeatNifValidationOptions,
+} from '@doscientos/verifactu/nif'

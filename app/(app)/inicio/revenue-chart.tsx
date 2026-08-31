@@ -1,6 +1,6 @@
-"use client";
+'use client'
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react'
 import {
   Bar,
   BarChart,
@@ -10,23 +10,24 @@ import {
   Tooltip,
   XAxis,
   YAxis,
-} from "recharts";
-import type { RevenuePoint } from "@/lib/dashboard/types";
-import { formatEUR } from "@/lib/utils";
+} from 'recharts'
 
-export type { RevenuePoint };
+import type { RevenuePoint } from '@/lib/dashboard/types'
+import { formatEUR } from '@/lib/utils'
+
+export type { RevenuePoint }
 
 const SERIES_LABEL: Record<string, string> = {
-  current: "Año actual",
-  previous: "Año anterior",
-};
+  current: 'Año actual',
+  previous: 'Año anterior',
+}
 
 export function RevenueChart({ data }: { data: RevenuePoint[] }) {
   // ResponsiveContainer reads DOM dimensions — skip SSR to prevent hydration mismatch.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
 
-  if (!mounted) return <div className="h-56 w-full" />;
+  if (!mounted) return <div className="h-56 w-full" />
 
   return (
     <div className="h-56 w-full">
@@ -49,10 +50,10 @@ export function RevenueChart({ data }: { data: RevenuePoint[] }) {
             width={40}
           />
           <Tooltip
-            cursor={{ fill: "color-mix(in oklab, var(--muted) 60%, transparent)" }}
+            cursor={{ fill: 'color-mix(in oklab, var(--muted) 60%, transparent)' }}
             contentStyle={{
-              background: "var(--background)",
-              border: "1px solid var(--border)",
+              background: 'var(--background)',
+              border: '1px solid var(--border)',
               borderRadius: 8,
               fontSize: 12,
             }}
@@ -65,7 +66,7 @@ export function RevenueChart({ data }: { data: RevenuePoint[] }) {
             verticalAlign="top"
             height={24}
             iconSize={8}
-            wrapperStyle={{ fontSize: 11, color: "var(--muted-foreground)" }}
+            wrapperStyle={{ fontSize: 11, color: 'var(--muted-foreground)' }}
             formatter={(value) => SERIES_LABEL[String(value)] ?? String(value)}
           />
           <Bar
@@ -79,5 +80,5 @@ export function RevenueChart({ data }: { data: RevenuePoint[] }) {
         </BarChart>
       </ResponsiveContainer>
     </div>
-  );
+  )
 }

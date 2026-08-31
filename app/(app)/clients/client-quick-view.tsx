@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   ArrowUpRight,
@@ -10,11 +10,12 @@ import {
   Trash as Trash2,
   User,
   X,
-} from "lucide-react";
-import Link from "next/link";
-import { type ReactNode, useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+} from 'lucide-react'
+import Link from 'next/link'
+import { type ReactNode, useState } from 'react'
+
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -22,7 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog'
 import {
   Drawer,
   DrawerClose,
@@ -30,30 +31,31 @@ import {
   DrawerDescription,
   DrawerHeader,
   DrawerTitle,
-} from "@/components/ui/drawer";
-import { EntityAvatar } from "@/components/ui/entity-avatar";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { relativeTime } from "@/lib/utils";
-import { ClientEditDialog } from "./[id]/client-edit-dialog";
+} from '@/components/ui/drawer'
+import { EntityAvatar } from '@/components/ui/entity-avatar'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
+import { relativeTime } from '@/lib/utils'
+
+import { ClientEditDialog } from './[id]/client-edit-dialog'
 
 export type QuickClient = {
-  id: string;
-  name: string;
-  label: string | null;
-  logo_url: string | null;
-  email: string | null;
-  phone: string | null;
-  nif: string | null;
-  contact_person: string | null;
-  billing_address_street: string | null;
-  billing_address_zip: string | null;
-  billing_address_city: string | null;
-  billing_address_province: string | null;
-  billing_address_country: string | null;
-  notes: string | null;
-  updated_at: string;
-  version: number;
-};
+  id: string
+  name: string
+  label: string | null
+  logo_url: string | null
+  email: string | null
+  phone: string | null
+  nif: string | null
+  contact_person: string | null
+  billing_address_street: string | null
+  billing_address_zip: string | null
+  billing_address_city: string | null
+  billing_address_province: string | null
+  billing_address_country: string | null
+  notes: string | null
+  updated_at: string
+  version: number
+}
 
 export function ClientQuickView({
   client,
@@ -61,10 +63,10 @@ export function ClientQuickView({
   onDeleteAction,
   onCloseAction,
 }: {
-  client: QuickClient | null;
-  canEdit?: boolean;
-  onDeleteAction?: (id: string) => void;
-  onCloseAction: () => void;
+  client: QuickClient | null
+  canEdit?: boolean
+  onDeleteAction?: (id: string) => void
+  onCloseAction: () => void
 }) {
   return (
     <Drawer open={!!client} onOpenChange={(v) => !v && onCloseAction()} direction="right">
@@ -76,7 +78,7 @@ export function ClientQuickView({
         ) : null}
       </DrawerContent>
     </Drawer>
-  );
+  )
 }
 
 function Body({
@@ -84,22 +86,22 @@ function Body({
   canEdit,
   onDeleteAction,
 }: {
-  client: QuickClient;
-  canEdit: boolean;
-  onDeleteAction?: (id: string) => void;
+  client: QuickClient
+  canEdit: boolean
+  onDeleteAction?: (id: string) => void
 }) {
-  const displayName = client.label?.trim() || client.name;
+  const displayName = client.label?.trim() || client.name
 
   const addressParts = [
     client.billing_address_street,
-    [client.billing_address_zip, client.billing_address_city].filter(Boolean).join(" "),
+    [client.billing_address_zip, client.billing_address_city].filter(Boolean).join(' '),
     client.billing_address_province,
-  ].filter(Boolean);
-  const hasAddress = addressParts.length > 0;
+  ].filter(Boolean)
+  const hasAddress = addressParts.length > 0
 
   return (
     <div className="grid h-full grid-rows-[auto_1fr_auto]">
-      <DrawerHeader className="flex flex-row items-start justify-between gap-2 border-b border-border">
+      <DrawerHeader className="border-border flex flex-row items-start justify-between gap-2 border-b">
         <div className="flex min-w-0 items-start gap-3">
           <EntityAvatar
             name={displayName}
@@ -122,7 +124,7 @@ function Body({
         </DrawerClose>
       </DrawerHeader>
 
-      <div className="flex flex-col gap-5 overflow-y-auto p-4 scroll-fade no-scrollbar">
+      <div className="scroll-fade no-scrollbar flex flex-col gap-5 overflow-y-auto p-4">
         {/* Contact */}
         <section className="flex flex-col gap-2 text-xs">
           <Heading>Contacto</Heading>
@@ -154,7 +156,7 @@ function Body({
           <section className="flex flex-col gap-2 text-xs">
             <Heading>Dirección de facturación</Heading>
             <Row icon={<MapPin className="size-3.5" />}>
-              <span className="whitespace-pre-line">{addressParts.join("\n")}</span>
+              <span className="whitespace-pre-line">{addressParts.join('\n')}</span>
             </Row>
           </section>
         )}
@@ -176,14 +178,14 @@ function Body({
                 Notas
               </span>
             </Heading>
-            <p className="whitespace-pre-wrap rounded-md bg-muted/30 p-2 text-muted-foreground leading-relaxed">
+            <p className="bg-muted/30 text-muted-foreground rounded-md p-2 leading-relaxed whitespace-pre-wrap">
               {client.notes}
             </p>
           </section>
         )}
       </div>
 
-      <footer className="flex items-center gap-2 border-t border-border p-3">
+      <footer className="border-border flex items-center gap-2 border-t p-3">
         {canEdit && (
           <>
             {onDeleteAction && (
@@ -211,7 +213,7 @@ function Body({
         </Button>
       </footer>
     </div>
-  );
+  )
 }
 
 function DeleteClientInlineButton({
@@ -219,15 +221,15 @@ function DeleteClientInlineButton({
   clientName,
   onConfirmAction,
 }: {
-  clientId: string;
-  clientName: string;
-  onConfirmAction: (id: string) => void;
+  clientId: string
+  clientName: string
+  onConfirmAction: (id: string) => void
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
 
   function onConfirm() {
-    setOpen(false);
-    onConfirmAction(clientId);
+    setOpen(false)
+    onConfirmAction(clientId)
   }
 
   return (
@@ -259,15 +261,15 @@ function DeleteClientInlineButton({
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }
 
 function Heading({ children }: { children: ReactNode }) {
   return (
-    <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+    <p className="text-muted-foreground text-[10px] font-semibold tracking-wide uppercase">
       {children}
     </p>
-  );
+  )
 }
 
 function Row({ icon, href, children }: { icon: ReactNode; href?: string; children: ReactNode }) {
@@ -276,12 +278,12 @@ function Row({ icon, href, children }: { icon: ReactNode; href?: string; childre
       <span className="text-muted-foreground">{icon}</span>
       <span className="truncate">{children}</span>
     </>
-  );
+  )
   return href ? (
-    <a href={href} className="flex items-center gap-2 hover:text-primary transition-colors">
+    <a href={href} className="hover:text-primary flex items-center gap-2 transition-colors">
       {inner}
     </a>
   ) : (
     <div className="flex items-center gap-2">{inner}</div>
-  );
+  )
 }
