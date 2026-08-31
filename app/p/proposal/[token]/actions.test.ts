@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { DEFAULT_MAINTENANCE_OFFER } from '@/lib/proposals/maintenance'
 
@@ -80,6 +80,19 @@ const COMPLETE_CLIENT = {
   billing_address_street: 'Calle Mayor 1, Madrid',
 }
 
+let acceptProposal: typeof import('./actions').acceptProposal
+let rejectProposal: typeof import('./actions').rejectProposal
+let selectProposalMaintenance: typeof import('./actions').selectProposalMaintenance
+let sendProposalQuestion: typeof import('./actions').sendProposalQuestion
+
+beforeAll(async () => {
+  const actions = await import('./actions')
+  acceptProposal = actions.acceptProposal
+  rejectProposal = actions.rejectProposal
+  selectProposalMaintenance = actions.selectProposalMaintenance
+  sendProposalQuestion = actions.sendProposalQuestion
+}, 30_000)
+
 describe('portal proposal actions', () => {
   beforeEach(() => {
     state.fetchResult = { data: null, error: null }
@@ -90,8 +103,6 @@ describe('portal proposal actions', () => {
   })
 
   it('rejects malformed tokens without touching the DB', async () => {
-    const { acceptProposal, sendProposalQuestion } =
-      await import('@/app/p/proposal/[token]/actions')
     const result = await acceptProposal('short')
     expect(result).toEqual({ ok: false, error: 'Token inválido' })
     expect(state.lastPatch).toBeNull()
@@ -103,7 +114,6 @@ describe('portal proposal actions', () => {
   })
 
   it('returns not-found when the proposal does not exist', async () => {
-    const { acceptProposal } = await import('@/app/p/proposal/[token]/actions')
     state.fetchResult = { data: null, error: null }
 
     const result = await acceptProposal(VALID_TOKEN)
@@ -111,8 +121,6 @@ describe('portal proposal actions', () => {
   })
 
   it('blocks transitions from already-responded states', async () => {
-    const { acceptProposal, rejectProposal } = await import('@/app/p/proposal/[token]/actions')
-
     state.fetchResult = { data: { id: 'p1', status: 'accepted' }, error: null }
     expect(await acceptProposal(VALID_TOKEN)).toEqual({
       ok: false,
@@ -127,8 +135,6 @@ describe('portal proposal actions', () => {
   })
 
   it('blocks transitions from draft or expired', async () => {
-    const { acceptProposal } = await import('@/app/p/proposal/[token]/actions')
-
     state.fetchResult = { data: { id: 'p1', status: 'draft' }, error: null }
     expect(await acceptProposal(VALID_TOKEN)).toEqual({
       ok: false,
@@ -143,7 +149,6 @@ describe('portal proposal actions', () => {
   })
 
   it('accepts a sent proposal and revalidates the portal path', async () => {
-    const { acceptProposal } = await import('@/app/p/proposal/[token]/actions')
     state.fetchResult = {
       data: { id: 'p1', status: 'sent', lead_id: null, client_id: 'c1', clients: COMPLETE_CLIENT },
       error: null,
@@ -158,7 +163,6 @@ describe('portal proposal actions', () => {
   })
 
   it('rejects a viewed proposal and stores the rejection reason', async () => {
-    const { rejectProposal } = await import('@/app/p/proposal/[token]/actions')
     state.fetchResult = { data: { id: 'p2', status: 'viewed' }, error: null }
 
     const result = await rejectProposal(VALID_TOKEN, 'No es lo que buscamos')
@@ -170,7 +174,6 @@ describe('portal proposal actions', () => {
   })
 
   it('omits signature_data when no rejection reason is provided', async () => {
-    const { rejectProposal } = await import('@/app/p/proposal/[token]/actions')
     state.fetchResult = { data: { id: 'p3', status: 'sent' }, error: null }
 
     await rejectProposal(VALID_TOKEN)
@@ -178,7 +181,6 @@ describe('portal proposal actions', () => {
   })
 
   it('surfaces DB update errors', async () => {
-    const { acceptProposal } = await import('@/app/p/proposal/[token]/actions')
     state.fetchResult = {
       data: { id: 'p4', status: 'sent', lead_id: null, client_id: 'c1', clients: COMPLETE_CLIENT },
       error: null,
@@ -191,7 +193,6 @@ describe('portal proposal actions', () => {
   })
 
   it('rejects maintenance selection when the offer is disabled', async () => {
-    const { selectProposalMaintenance } = await import('@/app/p/proposal/[token]/actions')
     state.fetchResult = {
       data: {
         id: 'p5',
