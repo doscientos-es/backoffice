@@ -163,8 +163,8 @@ export function AutomationManager({ initialRules }: { initialRules: AutomationRu
                   >
                     <Checkbox
                       id={`global-platform-${value}`}
-                      checked={platforms.has(value)}
-                      onCheckedChange={(checked) => togglePlatform(value, checked === true)}
+                      isSelected={platforms.has(value)}
+                      onChange={togglePlatform.bind(null, value)}
                       isDisabled={pending}
                     />
                     <Label htmlFor={`global-platform-${value}`} className="flex items-center gap-2">

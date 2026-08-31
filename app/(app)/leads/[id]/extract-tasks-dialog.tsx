@@ -168,8 +168,8 @@ export function ExtractTasksDialog({ leadId, trigger, createTaskAction }: Extrac
                   onClick={() => toggleTask(i)}
                 >
                   <Checkbox
-                    checked={selected.has(i)}
-                    onCheckedChange={() => toggleTask(i)}
+                    isSelected={selected.has(i)}
+                    onChange={() => toggleTask(i)}
                     className="mt-0.5 shrink-0"
                     onClick={(e) => e.stopPropagation()}
                   />

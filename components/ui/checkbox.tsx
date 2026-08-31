@@ -1,1 +1,1 @@
-﻿export * from '@/primitives/ui/checkbox'
+﻿export * from '@doscientos/ui'

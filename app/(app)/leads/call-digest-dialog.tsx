@@ -266,7 +266,7 @@ function CallCopilot({ leadId, open }: { leadId: string; open: boolean }) {
   }
 
   return (
-    <section className="border-primary/15 bg-primary/[0.03] animate-in fade-in slide-in-from-bottom-2 rounded-lg border p-3 duration-300">
+    <section className="border-primary/15 bg-primary/3 animate-in fade-in slide-in-from-bottom-2 rounded-lg border p-3 duration-300">
       <div className="mb-3 flex items-center gap-2">
         <span className="bg-primary/10 text-primary flex size-7 items-center justify-center rounded-full">
           <Sparkles className="size-3.5" />
@@ -313,10 +313,10 @@ function CallCopilot({ leadId, open }: { leadId: string; open: boolean }) {
                     >
                       <Checkbox
                         id={`call-task-${index}`}
-                        checked={checked}
-                        onCheckedChange={(value) =>
+                        isSelected={checked}
+                        onChange={(value) =>
                           setSelected((current) =>
-                            value === true
+                            value
                               ? [...current, task.title]
                               : current.filter((title) => title !== task.title),
                           )

@@ -47,7 +47,7 @@ function FieldRow({
       htmlFor={id}
       className="hover:bg-muted/50 flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5"
     >
-      <Checkbox id={id} checked={checked} onCheckedChange={onCheckedChange} />
+      <Checkbox id={id} isSelected={checked} onChange={onCheckedChange} />
       <span className="text-muted-foreground shrink-0">{icon}</span>
       <span className="min-w-0 text-sm">
         <span className="text-muted-foreground font-medium">{label}: </span>

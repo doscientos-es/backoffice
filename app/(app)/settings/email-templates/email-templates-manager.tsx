@@ -318,8 +318,8 @@ export function EmailTemplatesManager({ templates }: Props) {
                 <div className="flex items-center gap-2">
                   <Checkbox
                     id="tpl-sig"
-                    checked={form.include_signature}
-                    onCheckedChange={(v) => setForm((f) => ({ ...f, include_signature: !!v }))}
+                  isSelected={form.include_signature}
+                  onChange={(v) => setForm((f) => ({ ...f, include_signature: v }))}
                   />
                   <Label htmlFor="tpl-sig" className="cursor-pointer">
                     Añadir firma del remitente

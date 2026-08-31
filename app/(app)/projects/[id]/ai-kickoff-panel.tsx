@@ -214,7 +214,7 @@ function SelectRow({
       htmlFor={id}
       className="hover:bg-muted/50 flex cursor-pointer items-start gap-2 rounded p-1.5"
     >
-      <Checkbox id={id} checked={checked} onCheckedChange={(value) => onChange(value === true)} />
+      <Checkbox id={id} isSelected={checked} onChange={onChange} />
       <span className="min-w-0">
         <span className="block text-xs">{label}</span>
         {detail ? <span className="text-muted-foreground block text-[11px]">{detail}</span> : null}

@@ -189,8 +189,8 @@ function MemberCheckboxes({
           <div key={m.id} className="flex items-center gap-2">
             <Checkbox
               id={`member-${m.id}`}
-              checked={selected.has(m.id)}
-              onCheckedChange={() => onToggle(m.id)}
+              isSelected={selected.has(m.id)}
+              onChange={() => onToggle(m.id)}
             />
             <label
               htmlFor={`member-${m.id}`}
@@ -557,8 +557,8 @@ function FollowUpSection({
       >
         <Checkbox
           id={`${idPrefix}-followup`}
-          checked={enabled}
-          onCheckedChange={(v) => onEnabledChange(v === true)}
+          isSelected={enabled}
+          onChange={onEnabledChange}
         />
         Crear aviso de seguimiento
       </label>
