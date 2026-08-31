@@ -179,10 +179,10 @@ export function LeadCompanyResearch({
           {!available
             ? 'La investigación de empresa estará disponible cuando termine de actualizarse esta sección.'
             : aiEnabled && !hasCorporateEmail(email)
-            ? 'Disponible cuando el lead tenga un email corporativo.'
-            : aiEnabled
-              ? 'Aún no se ha investigado esta empresa.'
-              : 'La investigación estará disponible cuando se active la IA interna.'}
+              ? 'Disponible cuando el lead tenga un email corporativo.'
+              : aiEnabled
+                ? 'Aún no se ha investigado esta empresa.'
+                : 'La investigación estará disponible cuando se active la IA interna.'}
         </div>
       ) : (
         <div className="animate-in fade-in slide-in-from-bottom-2 flex flex-col gap-4 duration-500">

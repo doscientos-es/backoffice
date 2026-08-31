@@ -121,10 +121,7 @@ async function loadCompanyResearch(
   id: string,
 ): Promise<CompanyResearchLoad> {
   const { data, error } = await notDeleted(
-    supabase
-      .from('leads')
-      .select(COMPANY_RESEARCH_COLUMNS)
-      .eq('id', id),
+    supabase.from('leads').select(COMPANY_RESEARCH_COLUMNS).eq('id', id),
   ).maybeSingle()
 
   if (error) {
@@ -134,7 +131,8 @@ async function loadCompanyResearch(
 
   return {
     available: true,
-    company_research: (data?.company_research as LeadDetailResult['lead']['company_research']) ?? null,
+    company_research:
+      (data?.company_research as LeadDetailResult['lead']['company_research']) ?? null,
     company_researched_at: (data?.company_researched_at as string | null) ?? null,
   }
 }
@@ -339,12 +337,7 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
     { data: reminders },
     { data: attachments },
   ] = await Promise.all([
-    notDeleted(
-      supabase
-        .from('leads')
-        .select(DETAIL_COLUMNS)
-        .eq('id', id),
-    ).maybeSingle(),
+    notDeleted(supabase.from('leads').select(DETAIL_COLUMNS).eq('id', id)).maybeSingle(),
     loadCompanyResearch(supabase, id),
     supabase
       .from('lead_interactions')
