@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button'
 import { EntityCombobox } from '@/components/ui/entity-combobox'
 import { Input } from '@/components/ui/input'
 import { type AvatarMember, MemberAvatar } from '@/components/ui/member-avatar'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { PopoverContent, PopoverTrigger } from '@doscientos/ui'
 import { Select } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 
@@ -131,8 +131,7 @@ function SavedViewsMenu({
   onDelete: (id: string) => void
 }) {
   return (
-    <Popover>
-      <PopoverTrigger asChild>
+    <PopoverTrigger>
         <Button type="button" size="sm" variant="outline" className="h-9 shrink-0">
           <Bookmark className="size-3.5" />
           Vistas
@@ -142,8 +141,7 @@ function SavedViewsMenu({
             </span>
           ) : null}
         </Button>
-      </PopoverTrigger>
-      <PopoverContent align="start" className="w-[min(22rem,calc(100vw-2rem))] p-3">
+      <PopoverContent placement="bottom start" className="w-[min(22rem,calc(100vw-2rem))] p-3">
         <div className="mb-3">
           <p className="text-sm font-semibold">Vistas guardadas</p>
           <p className="text-muted-foreground text-xs">Se guardan solo en este navegador.</p>
@@ -211,7 +209,7 @@ function SavedViewsMenu({
           </Button>
         )}
       </PopoverContent>
-    </Popover>
+    </PopoverTrigger>
   )
 }
 
@@ -447,8 +445,7 @@ export function ListControls({
           })}
 
           {secondaryFilters.length > 0 ? (
-            <Popover>
-              <PopoverTrigger asChild>
+            <PopoverTrigger>
                 <Button
                   type="button"
                   size="sm"
@@ -466,8 +463,7 @@ export function ListControls({
                     </span>
                   ) : null}
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent align="start" className="w-[min(22rem,calc(100vw-2rem))] p-3">
+              <PopoverContent placement="bottom start" className="w-[min(22rem,calc(100vw-2rem))] p-3">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold">Filtrar el listado</p>
@@ -530,7 +526,7 @@ export function ListControls({
                   })}
                 </div>
               </PopoverContent>
-            </Popover>
+            </PopoverTrigger>
           ) : null}
 
           {savedViewsMenu}

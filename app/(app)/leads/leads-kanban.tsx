@@ -36,7 +36,7 @@ import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 import { MemberAvatar } from '@/components/ui/member-avatar'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { PopoverContent, PopoverTrigger } from '@doscientos/ui'
 import {
   boardColumnForLead,
   countLeadsNeedingAttention,
@@ -766,8 +766,7 @@ function MemberFilterPopover({ member }: { member: LeadMemberRef }) {
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <PopoverTrigger isOpen={open} onOpenChange={setOpen}>
         <button
           type="button"
           aria-label={`Opciones de ${member.name}`}
@@ -778,9 +777,8 @@ function MemberFilterPopover({ member }: { member: LeadMemberRef }) {
         >
           <MemberAvatar member={member} size="sm" className="size-5 shrink-0" />
         </button>
-      </PopoverTrigger>
       <PopoverContent
-        align="end"
+        placement="bottom end"
         className="w-56 p-2"
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
@@ -808,7 +806,7 @@ function MemberFilterPopover({ member }: { member: LeadMemberRef }) {
           Filtrar sus tareas
         </button>
       </PopoverContent>
-    </Popover>
+    </PopoverTrigger>
   )
 }
 

@@ -5,7 +5,7 @@ import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { PopoverContent, PopoverTrigger } from '@doscientos/ui'
 
 function currentMonth(): string {
   return new Date().toISOString().slice(0, 7)
@@ -28,15 +28,13 @@ export function InvoiceRegisterExport({ year }: { year: number }) {
     : null
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
+    <PopoverTrigger>
         <Button variant="outline" className="h-9 gap-2">
           <Download className="size-4" />
           Libro registro
           <ChevronDown className="text-muted-foreground size-3.5" />
         </Button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="w-[min(22rem,calc(100vw-2rem))] p-4">
+      <PopoverContent placement="bottom end" className="w-[min(22rem,calc(100vw-2rem))] p-4">
         <div className="mb-4">
           <p className="text-sm font-semibold">Descargar libro registro</p>
           <p className="text-muted-foreground mt-0.5 text-xs">
@@ -129,6 +127,6 @@ export function InvoiceRegisterExport({ year }: { year: number }) {
           </div>
         </div>
       </PopoverContent>
-    </Popover>
+    </PopoverTrigger>
   )
 }

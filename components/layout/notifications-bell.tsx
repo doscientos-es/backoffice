@@ -29,7 +29,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty-state'
 import { IconButton } from '@/components/ui/icon-button'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { PopoverContent, PopoverTrigger } from '@doscientos/ui'
 import { useBrowserNotifications } from '@/lib/hooks/use-browser-notifications'
 import { useWebPush } from '@/lib/hooks/use-web-push'
 import { getBrowserClient } from '@/lib/supabase/browser'
@@ -279,8 +279,7 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <PopoverTrigger isOpen={open} onOpenChange={setOpen}>
         <IconButton
           type="button"
           variant="ghost"
@@ -294,9 +293,7 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
             </span>
           )}
         </IconButton>
-      </PopoverTrigger>
-
-      <PopoverContent align="end" sideOffset={8} className="w-96 p-0">
+      <PopoverContent placement="bottom end" offset={8} className="w-96 p-0">
         <div className="border-border flex items-center justify-between gap-2 border-b px-3 py-2">
           <div className="flex items-baseline gap-2">
             <span className="text-sm font-semibold">Notificaciones</span>
@@ -441,6 +438,6 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
           </ul>
         )}
       </PopoverContent>
-    </Popover>
+    </PopoverTrigger>
   )
 }

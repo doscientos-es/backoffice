@@ -15,7 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { PopoverContent, PopoverTrigger } from '@doscientos/ui'
 import { publicEnv } from '@/lib/env'
 import { buildBookingUrl } from '@/lib/recovery/utils'
 import { cn } from '@/lib/utils'
@@ -226,8 +226,7 @@ function PhoneQrPopover({ phone }: { phone: string }) {
   }, [open, phone])
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <PopoverTrigger isOpen={open} onOpenChange={setOpen}>
         <button
           type="button"
           aria-label="Mostrar QR para llamar desde el móvil"
@@ -238,7 +237,6 @@ function PhoneQrPopover({ phone }: { phone: string }) {
         >
           <QrCode className="size-3.5" />
         </button>
-      </PopoverTrigger>
       <PopoverContent className="flex w-auto flex-col items-center gap-2 p-3">
         <p className="text-muted-foreground text-center text-xs">
           Escanea con el móvil para llamar a
@@ -259,6 +257,6 @@ function PhoneQrPopover({ phone }: { phone: string }) {
           )}
         </div>
       </PopoverContent>
-    </Popover>
+    </PopoverTrigger>
   )
 }
