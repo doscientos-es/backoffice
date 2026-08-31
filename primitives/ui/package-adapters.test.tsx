@@ -1,11 +1,18 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
+import {
+  ButtonGroup,
+  ButtonGroupSeparator,
+  ButtonGroupText,
+  Kbd,
+  KbdGroup,
+  Separator,
+  SubmitButton,
+} from '@doscientos/ui'
 
 import { Avatar, AvatarFallback, AvatarImage } from './avatar'
-import { ButtonGroup, ButtonGroupSeparator, ButtonGroupText } from './button-group'
 import { FormFeedback } from './form-feedback'
 import { FormRow } from './form-row'
-import { Kbd, KbdGroup, Separator } from '@doscientos/ui'
 
 describe('@doscientos/ui adapters', () => {
   it('renders accessible form feedback from the package', () => {
@@ -67,5 +74,19 @@ describe('@doscientos/ui adapters', () => {
     expect(screen.getByRole('group', { name: 'Paginación' })).toBeTruthy()
     expect(screen.getByText('Página 1').getAttribute('data-slot')).toBe('button-group-text')
     expect(screen.getByRole('separator').getAttribute('data-slot')).toBe('button-group-separator')
+  })
+
+  it('uses the package submit button while a client form is loading', () => {
+    render(
+      <form>
+        <SubmitButton loading loadingLabel="Guardando…">
+          Guardar
+        </SubmitButton>
+      </form>,
+    )
+
+    const button = screen.getByRole('button', { name: 'Guardando…' })
+    expect(button).toBeDisabled()
+    expect(button).toHaveAttribute('aria-busy', 'true')
   })
 })

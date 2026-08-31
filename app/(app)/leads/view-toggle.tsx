@@ -8,10 +8,10 @@ import {
 } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useTransition } from 'react'
+import { ButtonGroup } from '@doscientos/ui'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ButtonGroup } from '@/components/ui/button-group'
 
 type LeadView = 'board' | 'list' | 'analytics'
 

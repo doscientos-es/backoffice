@@ -155,7 +155,7 @@ export function ExpenseEditDialog({
           </div>
           <div className="border-border flex shrink-0 items-center justify-end gap-3 border-t pt-3">
             <FormFeedback state={state} pendingLabel="Guardando…" />
-            <SubmitButton loading={pending} disabled={!isDirty} pendingLabel="Guardando…">
+            <SubmitButton loading={pending} isDisabled={!isDirty} pendingLabel="Guardando…">
               Guardar cambios
             </SubmitButton>
           </div>

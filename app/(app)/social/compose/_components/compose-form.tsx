@@ -426,7 +426,7 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
         </Button>
         <SubmitButton
           loading={pending || submitted}
-          disabled={!canSubmit || submitted}
+          isDisabled={!canSubmit || submitted}
           pendingLabel="Guardando…"
         >
           {mode === 'now' ? 'Publicar' : mode === 'schedule' ? 'Programar' : 'Guardar borrador'}

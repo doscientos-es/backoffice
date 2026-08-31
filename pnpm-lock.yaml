@@ -30,8 +30,8 @@ importers:
         specifier: ^3.2.2
         version: 3.2.2(react@19.2.6)
       '@doscientos/ui':
-        specifier: 0.1.23
-        version: 0.1.23(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        specifier: 0.1.28
+        version: 0.1.28(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@doscientos/verifactu':
         specifier: file:vendor\doscientos-verifactu-0.1.21.tgz
         version: file:vendor/doscientos-verifactu-0.1.21.tgz(date-fns@4.3.0)
@@ -540,8 +540,8 @@ packages:
       vitest:
         optional: true
 
-  '@doscientos/ui@0.1.23':
-    resolution: {integrity: sha512-DO7kdjDZ14DMAqiaASIhj6Fw0U8rQAU9RdC2V6AUZC+HZyg+tRDdYcuFfy+u9YTBLxBlEIsdXqNPwg+GPu4vrg==}
+  '@doscientos/ui@0.1.28':
+    resolution: {integrity: sha512-lSkKTIMbG7X56iJF5BNVxZIAT2EIu6YvDM/pwJVkZ7V/OIcQutDoKq6FRx3A9qFXZvSv96TyjUQw1diuf6Uz+g==}
     peerDependencies:
       react: '>=18.3.0'
       react-dom: '>=18.3.0'
@@ -6118,7 +6118,7 @@ snapshots:
       oxlint-tsgolint: 7.0.2001
       vitest: 3.2.4(@types/node@22.19.19)(happy-dom@16.8.1)(jiti@2.7.0)(lightningcss@1.32.0)(msw@2.14.6(@types/node@22.19.19)(typescript@5.9.3))(tsx@4.22.4)
 
-  '@doscientos/ui@0.1.23(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+  '@doscientos/ui@0.1.28(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
       class-variance-authority: 0.7.1
       clsx: 2.1.1

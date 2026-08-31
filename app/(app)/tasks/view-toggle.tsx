@@ -3,10 +3,10 @@
 import { LayoutGrid, List, LoaderCircle as Loader2 } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useTransition } from 'react'
+import { ButtonGroup } from '@doscientos/ui'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ButtonGroup } from '@/components/ui/button-group'
 
 /** Params that are meaningful in both views. */
 const SHARED_PARAMS = ['q', 'project', 'priority'] as const

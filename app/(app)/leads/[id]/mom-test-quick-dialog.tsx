@@ -3,9 +3,9 @@
 import { Check, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { sileo } from 'sileo'
+import { ButtonGroup } from '@doscientos/ui'
 
 import { Button } from '@/components/ui/button'
-import { ButtonGroup } from '@/components/ui/button-group'
 import {
   Dialog,
   DialogContent,

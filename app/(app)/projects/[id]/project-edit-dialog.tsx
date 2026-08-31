@@ -143,7 +143,7 @@ export function ProjectEditDialog({ project, clients, orgDefaultInstallationId =
           </div>
           <div className="border-border flex shrink-0 items-center justify-end gap-3 border-t pt-3">
             <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
-            <SubmitButton loading={feedback.pending} disabled={!isDirty} pendingLabel="Guardando…">
+            <SubmitButton loading={feedback.pending} isDisabled={!isDirty} pendingLabel="Guardando…">
               Guardar cambios
             </SubmitButton>
           </div>

@@ -117,7 +117,7 @@ export function LeadEditDialog({ lead, members = [] }: { lead: Lead; members?: M
             />
           </div>
           <div className="border-border flex shrink-0 items-center justify-end gap-3 border-t pt-3">
-            <SubmitButton disabled={!isDirty}>Guardar cambios</SubmitButton>
+            <SubmitButton isDisabled={!isDirty}>Guardar cambios</SubmitButton>
           </div>
         </form>
       </DialogContent>
