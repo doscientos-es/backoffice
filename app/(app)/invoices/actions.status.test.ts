@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const {
-  assertVerifactuDiagnosticGate,
   backupInvoiceToDrive,
   consumeUserVerification,
   deliverVerifactuOutbox,
@@ -11,7 +10,6 @@ const {
   rpc,
   syncInvoiceQrFromLedger,
 } = vi.hoisted(() => ({
-  assertVerifactuDiagnosticGate: vi.fn(),
   backupInvoiceToDrive: vi.fn(),
   consumeUserVerification: vi.fn(),
   deliverVerifactuOutbox: vi.fn(),
@@ -53,7 +51,6 @@ vi.mock('@/lib/verifactu/config', () => ({
     multipleTaxpayers: false,
   }),
 }))
-vi.mock('@/lib/verifactu/diagnostics', () => ({ assertVerifactuDiagnosticGate }))
 vi.mock('@/lib/logger', () => ({
   scopedLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),
 }))
@@ -65,8 +62,6 @@ import { regularizeVerifactu, revertInvoicePayment, updateInvoiceStatus } from '
 const INVOICE_ID = '11111111-1111-1111-1111-111111111111'
 
 beforeEach(() => {
-  assertVerifactuDiagnosticGate.mockReset()
-  assertVerifactuDiagnosticGate.mockResolvedValue(undefined)
   consumeUserVerification.mockReset()
   consumeUserVerification.mockResolvedValue(undefined)
   deliverVerifactuOutbox.mockReset()
@@ -100,7 +95,6 @@ describe('updateInvoiceStatus fiscal flow', () => {
     )
     expect(syncInvoiceQrFromLedger).toHaveBeenCalledWith(INVOICE_ID)
     expect(backupInvoiceToDrive).toHaveBeenCalledWith(INVOICE_ID, 'admin@example.test')
-    expect(assertVerifactuDiagnosticGate).toHaveBeenCalledOnce()
     expect(consumeUserVerification).toHaveBeenCalledWith('user-1', {
       intent: 'invoice.status.update',
       resource: `invoice:${INVOICE_ID}:status:issued`,

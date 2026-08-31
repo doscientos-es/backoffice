@@ -10,7 +10,7 @@ import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 
 import { PortalPasswordGate } from '@/components/portal/password-gate'
-import { ProposalPaymentButton } from '@/components/portal/proposal-payment-button'
+import { ProposalPaymentOptions } from '@/components/portal/proposal-payment-options'
 import {
   type ProposalMessage,
   ProposalMessageThread,
@@ -195,6 +195,11 @@ export default async function PortalProposalPage({
     .select('id, author_type, author_name, body, created_at')
     .eq('proposal_id', proposal.id as string)
     .order('created_at', { ascending: true })
+  const { data: settings } = await admin
+    .from('settings')
+    .select('company_name, iban')
+    .eq('id', 1)
+    .maybeSingle()
 
   // Bump status from 'sent' to 'viewed' only on the first external (client)
   // view. Team previews and drafts never transition the status.
@@ -787,23 +792,15 @@ export default async function PortalProposalPage({
           </p>
 
           {status === 'accepted' && !signalPaid && !isTeam && depositAmount !== null && (
-            <div className="flex w-full max-w-md flex-col items-center gap-4 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-              <div className="space-y-1 text-center">
-                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                  Realiza el primer pago
-                </p>
-                <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-                  Para poner en marcha el proyecto, abona el primer plazo acordado (
-                  {initialPaymentPercentage} %).
-                </p>
-              </div>
-              <ProposalPaymentButton
-                proposalId={proposal.id as string}
-                token={token}
-                depositAmount={depositAmount}
-                paymentLabel="Pagar primer plazo"
-              />
-            </div>
+            <ProposalPaymentOptions
+              proposalId={proposal.id as string}
+              token={token}
+              proposalNumber={proposalNumber}
+              initialPaymentPercentage={initialPaymentPercentage ?? 0}
+              depositAmount={depositAmount}
+              companyName={(settings?.company_name as string | null) ?? null}
+              iban={(settings?.iban as string | null) ?? null}
+            />
           )}
 
           {status === 'accepted' && signalPaid && confirmedPayments[0] && (

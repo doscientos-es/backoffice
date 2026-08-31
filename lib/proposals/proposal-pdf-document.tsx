@@ -14,6 +14,7 @@ import type { MaintenanceOffer } from '@/lib/proposals/maintenance'
 import {
   PAYMENT_SCHEDULE_LABELS,
   type PaymentSchedule,
+  paymentInitialPercentage,
   type ScopeModule,
   scopeModuleDurationText,
 } from '@/lib/proposals/scope'
@@ -244,6 +245,8 @@ export type ProposalPdfData = {
   maintenanceOffer: MaintenanceOffer
   maintenanceSelectedPlanId: string | null
   portalUrl: string
+  companyName: string | null
+  iban: string | null
 }
 
 function money(value: number): string {
@@ -378,6 +381,8 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
   const hasRecurring = data.items.some((item) => item.billingCycle && item.billingCycle !== 'none')
   const deliverables = data.deliverables?.trim()
   const acceptanceCriteria = data.acceptanceCriteria?.trim()
+  const initialPaymentPercentage = paymentInitialPercentage(data.paymentSchedule)
+  const hasConditions = Boolean(data.paymentTerms || data.changeManagementTerms || data.terms)
   return (
     <Document title={`Propuesta ${data.number ?? ''} · ${data.title}`} author="doscientos">
       <Page size="A4" style={styles.cover}>
@@ -512,9 +517,9 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
           </View>
         </View>
 
-        {data.paymentTerms || data.changeManagementTerms || data.terms ? (
+        {hasConditions || data.iban ? (
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Condiciones</Text>
+            <Text style={styles.sectionLabel}>{hasConditions ? 'Condiciones y pago' : 'Pago'}</Text>
             {data.paymentTerms ? (
               <>
                 <Text style={styles.pointTitle}>Forma de pago</Text>
@@ -531,6 +536,23 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
               </>
             ) : null}
             {data.terms ? <Text style={styles.body}>{printableMarkdown(data.terms)}</Text> : null}
+            {data.iban ? (
+              <>
+                <Text style={[styles.pointTitle, { marginTop: hasConditions ? 12 : 0 }]}>
+                  Pago por transferencia
+                </Text>
+                <Text style={styles.pointText}>
+                  También puede abonar el primer plazo antes de recibir la factura con estos datos.
+                </Text>
+                <Text style={styles.body}>
+                  Beneficiario: {data.companyName ?? '—'}{`\n`}IBAN: {data.iban}
+                  {`\n`}Concepto: Propuesta {data.number ?? data.title}
+                  {initialPaymentPercentage !== null
+                    ? `\nPrimer plazo (${initialPaymentPercentage}%): ${money((data.total * initialPaymentPercentage) / 100)}`
+                    : ''}
+                </Text>
+              </>
+            ) : null}
           </View>
         ) : null}
         {data.notes ? (

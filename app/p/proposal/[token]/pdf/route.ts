@@ -58,6 +58,11 @@ export async function GET(
     .eq('proposal_id', proposal.id as string)
     .order('position')
   if (itemsError) return NextResponse.json({ error: 'No se pudo generar el PDF' }, { status: 500 })
+  const { data: settings } = await admin
+    .from('settings')
+    .select('company_name, iban')
+    .eq('id', 1)
+    .maybeSingle()
 
   const client = (proposal as unknown as { clients: { name: string } | null }).clients
   const lead = (
@@ -112,6 +117,8 @@ export async function GET(
     maintenanceOffer,
     maintenanceSelectedPlanId,
     portalUrl: `${externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)}/p/proposal/${token}`,
+    companyName: (settings?.company_name as string | null) ?? null,
+    iban: (settings?.iban as string | null) ?? null,
   })
 
   return new NextResponse(new Uint8Array(pdf), {

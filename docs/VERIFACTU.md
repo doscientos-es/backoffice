@@ -45,7 +45,7 @@ primero si pertenecen al paquete.
 ## Regularización
 
 - Un rechazo definitivo no se reenvía.
-- Se vuelve a validar el destinatario con AEAT.
+- Se comprueba que el destinatario sigue validado con AEAT para sus datos legales actuales.
 - Se crea otro Alta con `Subsanacion=S` y `RechazoPrevio=X`.
 - El predecesor es el último registro global del emisor.
 - Los registros rechazados y terminales no bloquean indefinidamente la cadena.

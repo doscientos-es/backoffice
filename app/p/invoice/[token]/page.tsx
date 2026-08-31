@@ -5,8 +5,8 @@ import Image from 'next/image'
 import { notFound } from 'next/navigation'
 
 import { InvoiceItemsSummary } from '@/components/finance/invoice-items-summary'
+import { InvoicePaymentOptions } from '@/components/portal/invoice-payment-options'
 import { PortalPasswordGate } from '@/components/portal/password-gate'
-import { RedsysPaymentButton } from '@/components/portal/redsys-payment-button'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { getCurrentUser } from '@/lib/auth'
@@ -206,22 +206,17 @@ export default async function PortalInvoicePage({
         </div>
       )}
 
-      {canPay && amountDue > 0 && (
-        <div className="flex flex-col items-center justify-between gap-6 rounded-xl bg-zinc-900 p-6 shadow-sm ring-1 ring-zinc-800 sm:flex-row dark:bg-zinc-800">
-          <div className="flex flex-col gap-1 text-center sm:text-left">
-            <h2 className="text-lg font-bold text-white">Pago online disponible</h2>
-            <p className="text-sm text-zinc-400">
-              Puede abonar esta factura de forma segura con tarjeta de crédito/débito o Bizum.
-            </p>
-          </div>
-          <RedsysPaymentButton
-            invoiceId={invoice.id as string}
-            token={token}
-            total={invoice.total as number}
-            amountPaid={amountPaid}
-          />
-        </div>
-      )}
+      {canPay && amountDue > 0 ? (
+        <InvoicePaymentOptions
+          invoiceId={invoice.id as string}
+          token={token}
+          total={invoice.total as number}
+          amountPaid={amountPaid}
+          invoiceNumber={invoice.full_number as string}
+          companyName={(settings?.company_name as string | null) ?? null}
+          iban={(settings?.iban as string | null) ?? null}
+        />
+      ) : null}
 
       <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200 dark:bg-zinc-950 dark:ring-zinc-800">
         {/* Document header */}

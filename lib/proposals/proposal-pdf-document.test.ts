@@ -58,6 +58,8 @@ describe('proposal PDF helpers', () => {
       maintenanceOffer: DEFAULT_MAINTENANCE_OFFER,
       maintenanceSelectedPlanId: 'growth',
       portalUrl: 'https://example.test/p/proposal/token',
+      companyName: 'Doscientos S.L.',
+      iban: 'ES12 3456 7890 1234 5678 9012',
     })
 
     expect(pdf.subarray(0, 4).toString()).toBe('%PDF')

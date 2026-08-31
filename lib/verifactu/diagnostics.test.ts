@@ -115,7 +115,7 @@ describe('runVerifactuAeatTestDiagnostic', () => {
     expect(result).toEqual({
       ok: false,
       detail:
-        'La suite VERI*FACTU falló: Los datos fiscales de la empresa (NIF y razón social) son obligatorios para ejecutar el diagnóstico VERI*FACTU. La facturación real permanece bloqueada.',
+        'La suite VERI*FACTU falló: Los datos fiscales de la empresa (NIF y razón social) son obligatorios para ejecutar el diagnóstico VERI*FACTU.',
     })
     expect(registerInvoice).not.toHaveBeenCalled()
   })
@@ -130,7 +130,7 @@ describe('runVerifactuAeatTestDiagnostic', () => {
     expect(result).toEqual({
       ok: false,
       detail:
-        'La suite VERI*FACTU falló: El certificado P12 de VERI*FACTU es obligatorio para conectar con AEAT. La facturación real permanece bloqueada.',
+        'La suite VERI*FACTU falló: El certificado P12 de VERI*FACTU es obligatorio para conectar con AEAT.',
     })
     expect(insert).toHaveBeenCalledWith(
       expect.objectContaining({

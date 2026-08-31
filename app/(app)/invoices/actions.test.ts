@@ -88,7 +88,6 @@ vi.mock('@/lib/verifactu/outbox', () => ({
   deliverVerifactuOutbox: vi.fn(),
   syncInvoiceQrFromLedger: vi.fn(),
 }))
-vi.mock('@/lib/verifactu/diagnostics', () => ({ assertVerifactuDiagnosticGate: vi.fn() }))
 vi.mock('@doscientos/verifactu', () => ({ createVerifactuClient: vi.fn() }))
 
 import { createInvoicesFromProposalPlan, requestInvoiceFromProposal } from './actions'

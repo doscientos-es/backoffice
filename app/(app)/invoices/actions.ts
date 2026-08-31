@@ -62,7 +62,6 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { createServerClient } from '@/lib/supabase/server'
 import { formatDate, formatEUR } from '@/lib/utils'
 import { verifactuSoftwareSnapshotFromEnv } from '@/lib/verifactu/config'
-import { assertVerifactuDiagnosticGate } from '@/lib/verifactu/diagnostics'
 import {
   assertDurableVerifactuPackage,
   deliverInvoiceVerifactu,
@@ -133,7 +132,6 @@ export const updateInvoiceStatus = defineAction<
     }
     if (status === 'issued' || status === 'cancelled') {
       await assertDurableVerifactuPackage(status === 'cancelled')
-      await assertVerifactuDiagnosticGate()
       const outboxId = await enqueueFiscalRecord(id, status === 'cancelled')
       const delivery = await deliverVerifactuOutbox(outboxId, `action:${crypto.randomUUID()}`)
       if (status === 'issued' && delivery.status === 'accepted') {
@@ -403,7 +401,6 @@ export const regularizeVerifactu = defineAction<
       userVerificationScope('invoice.verifactu_regularize', `invoice:${input.id}`),
     )
     await assertDurableVerifactuPackage()
-    await assertVerifactuDiagnosticGate()
     await ensureInvoiceRecipientVerified(input.id, user.id)
     const outboxId = await enqueueVerifactuRegularization(input.id)
     const delivery = await deliverVerifactuOutbox(outboxId, `regularize:${crypto.randomUUID()}`)

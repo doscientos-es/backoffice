@@ -30,9 +30,8 @@ export type DiagnosticsConfig = {
   telegramChat: boolean
   ai: boolean
   verifactuGate: {
-    status: 'missing' | 'expired' | 'failed' | 'passed'
+    status: 'missing' | 'failed' | 'passed'
     ranAt: string | null
-    expiresAt: string | null
   }
 }
 
@@ -163,10 +162,10 @@ export function DiagnosticsPanel({ config }: { config: DiagnosticsConfig }) {
       disabledHint: 'IA no configurada',
     },
     {
-      title: 'VERI*FACTU · suite sintética obligatoria',
+      title: 'VERI*FACTU · suite sintética',
       description:
         config.verifactuGate.status === 'passed'
-          ? 'Última suite válida. La emisión real está habilitada durante 7 días.'
+          ? 'Última suite superada. Es una comprobación informativa y no afecta a la emisión.'
           : 'Genera XML/XSD, huella y QR, y envía un registro sintético a la AEAT de pruebas. No crea una factura operativa.',
       run: testVerifactuAeatSuite,
       onSuccess: router.refresh,

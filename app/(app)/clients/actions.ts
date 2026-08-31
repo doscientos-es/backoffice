@@ -20,13 +20,33 @@ import { createServerClient } from '@/lib/supabase/server'
 import { type ViesResult, validateVatVies } from '@/lib/vies/client'
 import { validateNifEs } from '@/lib/vies/nif'
 
+function canVerifySpanishFiscalIdentity(input: {
+  name: string
+  nif?: string | undefined
+  billing_address_country?: string | undefined
+}) {
+  return (
+    input.name.trim().length > 0 &&
+    Boolean(input.nif?.trim()) &&
+    (input.billing_address_country ?? 'ES').trim().toUpperCase() === 'ES'
+  )
+}
+
+async function refreshFiscalVerification(clientId: string, userId: string) {
+  try {
+    await validateAndRecordClientFiscalIdentity(clientId, userId)
+  } catch {
+    // The client remains unverified so an F1 cannot be issued until AEAT is available.
+  }
+}
+
 // ---------- CREATE ----------
 // Kept as a redirect-based form action: `<form action={createClient}>`.
 // Errors throw and surface via the closest error boundary, matching the
 // pre-existing behaviour. Schema is centralised in lib/schemas/client.
 
 export async function createClient(formData: FormData): Promise<void> {
-  await requireUser()
+  const user = await requireUser()
   const raw = {
     name: formData.get('name')?.toString() ?? '',
     nif: formData.get('nif')?.toString() ?? '',
@@ -66,6 +86,9 @@ export async function createClient(formData: FormData): Promise<void> {
     .single()
 
   if (error || !data) throw new Error(error?.message ?? 'No se pudo crear el cliente')
+  if (canVerifySpanishFiscalIdentity(parsed.data)) {
+    await refreshFiscalVerification(data.id, user.id)
+  }
   revalidatePath('/clients')
   redirect(`/clients/${data.id}`)
 }
@@ -93,9 +116,21 @@ export const updateClient = defineAction({
   name: 'clients.update',
   schema: UpdateClientInput,
   revalidate: (_payload, input) => [`/clients/${input.id}`, '/clients'],
-  handler: async (input) => {
+  handler: async (input, { user }) => {
     const supabase = await createServerClient()
     const { id, expected_version, ...patch } = input
+    const { data: current, error: currentError } = await supabase
+      .from('clients')
+      .select('name, nif, billing_address_country')
+      .eq('id', id)
+      .eq('version', expected_version)
+      .maybeSingle()
+    if (currentError) throw new Error(currentError.message)
+    const fiscalDetailsChanged =
+      current !== null &&
+      (patch.name !== current.name ||
+        (patch.nif ?? null) !== current.nif ||
+        (patch.billing_address_country ?? 'ES') !== (current.billing_address_country ?? 'ES'))
     const { data, error } = await supabase
       .from('clients')
       .update({
@@ -119,6 +154,9 @@ export const updateClient = defineAction({
       .maybeSingle()
     if (error) throw new Error(error.message)
     if (!data) throw new VersionConflictError()
+    if (fiscalDetailsChanged && canVerifySpanishFiscalIdentity(patch)) {
+      await refreshFiscalVerification(id, user.id)
+    }
     return { version: Number(data.version) }
   },
 })

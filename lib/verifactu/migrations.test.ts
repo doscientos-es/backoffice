@@ -19,14 +19,15 @@ describe('VERI*FACTU recovery migrations', () => {
     )
   })
 
-  it('applies the fresh AEAT recipient preflight to every regularization path', () => {
-    const sql = migration('20260822131000_verifactu_regularization_common_preflight.sql')
+  it('removes diagnostic gating and preserves recipient validation without a 24-hour expiry', () => {
+    const sql = migration('20260831120000_remove_verifactu_diagnostic_and_fiscal_expiry.sql')
 
-    expect(sql).toContain('Common preflight for every regularization path')
-    expect(sql).toContain("v_client.fiscal_verification_status <> 'verified'")
+    expect(sql).toContain('drop trigger if exists trg_verifactu_invoice_requires_diagnostic')
+    expect(sql).toContain('drop function if exists public.assert_verifactu_diagnostic_gate()')
     expect(sql).toContain("clock_timestamp() - interval '24 hours'")
-    expect(sql).toContain('v_client.fiscal_verified_nif is distinct from')
-    expect(sql).toContain('v_client.fiscal_verified_name is distinct from trim(v_client.name)')
+    expect(sql).toContain("replace(v_definition, v_freshness, '')")
+    expect(sql).toContain('validarse con AEAT antes de emitir una factura F1')
+    expect(sql).toContain('validarse con AEAT antes de regularizar una factura F1')
   })
 
   it('chains recoveries globally and resolves definitive predecessors without deadlock', () => {

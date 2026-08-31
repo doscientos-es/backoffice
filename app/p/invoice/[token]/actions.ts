@@ -14,8 +14,6 @@ export async function unlockInvoicePortal(input: unknown): Promise<ActionResult>
   return unlockPortalResource('invoices', input)
 }
 
-export type PaymentMode = 'full' | 'deposit' | 'remainder'
-
 export type PaymentInitResult =
   | {
       ok: true
@@ -30,13 +28,10 @@ export type PaymentInitResult =
 /**
  * Initiates a Redsys payment for an invoice.
  * Creates a pending `invoice_payments` row whose `seq`-derived `redsys_order`
- * guarantees uniqueness across retries and partial-payment scenarios.
+ * guarantees uniqueness across retries. The gateway always charges the full
+ * outstanding balance of this invoice; installments are separate invoices.
  */
-export async function initiatePayment(
-  invoiceId: string,
-  mode: PaymentMode,
-  token: string,
-): Promise<PaymentInitResult> {
+export async function initiatePayment(invoiceId: string, token: string): Promise<PaymentInitResult> {
   const admin = createAdminClient()
   const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
 
@@ -52,24 +47,14 @@ export async function initiatePayment(
   }
 
   const invoiceTotal = Number(invoice.total)
-
-  // Compute amount based on mode
-  let amount: number
-  if (mode === 'full') {
-    amount = invoiceTotal
-  } else if (mode === 'deposit') {
-    amount = Math.round(invoiceTotal * 50) / 100 // 50%
-  } else {
-    // remainder: total minus already-confirmed payments
-    const { data: confirmed } = await admin
-      .from('invoice_payments')
-      .select('amount')
-      .eq('invoice_id', invoiceId)
-      .eq('status', 'confirmed')
-    const paid = confirmed?.reduce((s, p) => s + Number(p.amount), 0) ?? 0
-    amount = Math.round((invoiceTotal - paid) * 100) / 100
-    if (amount <= 0) return { ok: false, error: 'Invoice already fully paid' }
-  }
+  const { data: confirmed } = await admin
+    .from('invoice_payments')
+    .select('amount')
+    .eq('invoice_id', invoiceId)
+    .eq('status', 'confirmed')
+  const paid = confirmed?.reduce((sum, payment) => sum + Number(payment.amount), 0) ?? 0
+  const amount = Math.round((invoiceTotal - paid) * 100) / 100
+  if (amount <= 0) return { ok: false, error: 'Invoice already fully paid' }
 
   // Insert pending payment row — seq auto-increments and redsys_order is generated
   const { data: payment, error: insertError } = await admin
@@ -95,7 +80,7 @@ export async function initiatePayment(
 
     if (confirmError) return { ok: false, error: 'Failed to simulate payment' }
 
-    const shouldMarkPaid = mode !== 'deposit' && amount >= invoiceTotal
+    const shouldMarkPaid = paid + amount >= invoiceTotal
     if (shouldMarkPaid) {
       const { error: invoiceError } = await admin
         .from('invoices')

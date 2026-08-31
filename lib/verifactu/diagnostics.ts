@@ -1,6 +1,5 @@
 import { verifactuDiagnosticConfigFromEnv } from './config'
 
-const DIAGNOSTIC_TTL_DAYS = 7
 const DIAGNOSTIC_RECIPIENT = {
   nif: 'B88873393',
   name: 'DOSCIENTOS DESARROLLO TECNOLOGICO, S.L.',
@@ -9,14 +8,12 @@ const DIAGNOSTIC_RECIPIENT = {
 type DiagnosticCheck = { key: string; ok: boolean; detail: string }
 
 export type VerifactuDiagnosticGate = {
-  status: 'missing' | 'expired' | 'failed' | 'passed'
+  status: 'missing' | 'failed' | 'passed'
   ranAt: string | null
-  expiresAt: string | null
 }
 
 type DiagnosticRun = {
   status: 'passed' | 'failed'
-  expires_at: string
   created_at: string
 }
 
@@ -60,36 +57,23 @@ async function findDiagnosticIssuer(): Promise<{ nif: string; name: string }> {
 }
 
 function gateFromRun(run: DiagnosticRun | null): VerifactuDiagnosticGate {
-  if (!run) return { status: 'missing', ranAt: null, expiresAt: null }
+  if (!run) return { status: 'missing', ranAt: null }
   if (run.status !== 'passed') {
-    return { status: 'failed', ranAt: run.created_at, expiresAt: run.expires_at }
+    return { status: 'failed', ranAt: run.created_at }
   }
-  return {
-    status: new Date(run.expires_at).getTime() > Date.now() ? 'passed' : 'expired',
-    ranAt: run.created_at,
-    expiresAt: run.expires_at,
-  }
+  return { status: 'passed', ranAt: run.created_at }
 }
 
 export async function getVerifactuDiagnosticGate(): Promise<VerifactuDiagnosticGate> {
   const admin = await createDiagnosticAdminClient()
   const { data, error } = await admin
     .from('verifactu_diagnostic_runs')
-    .select('status, created_at, expires_at')
+    .select('status, created_at')
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
   if (error) throw new Error(`No se pudo consultar el diagnóstico VERI*FACTU: ${error.message}`)
   return gateFromRun(data as DiagnosticRun | null)
-}
-
-export async function assertVerifactuDiagnosticGate(): Promise<void> {
-  const gate = await getVerifactuDiagnosticGate()
-  if (gate.status !== 'passed') {
-    throw new Error(
-      'La suite sintética VERI*FACTU debe completarse correctamente en Ajustes > Diagnóstico antes de emitir o anular facturas.',
-    )
-  }
 }
 
 export async function runVerifactuAeatTestDiagnostic(memberId: string): Promise<{
@@ -156,13 +140,12 @@ export async function runVerifactuAeatTestDiagnostic(memberId: string): Promise<
     status: ok ? 'passed' : 'failed',
     checks,
     created_by: memberId,
-    expires_at: new Date(now.getTime() + DIAGNOSTIC_TTL_DAYS * 86_400_000).toISOString(),
   })
   if (error) throw new Error(`No se pudo guardar el diagnóstico VERI*FACTU: ${error.message}`)
   return {
     ok,
     detail: ok
-      ? `Suite VERI*FACTU superada. Habilita facturación durante ${DIAGNOSTIC_TTL_DAYS} días.`
-      : `La suite VERI*FACTU falló: ${checks.find((check) => !check.ok)?.detail ?? 'comprobación no superada'}. La facturación real permanece bloqueada.`,
+      ? 'Suite VERI*FACTU superada. El diagnóstico se ha registrado correctamente.'
+      : `La suite VERI*FACTU falló: ${checks.find((check) => !check.ok)?.detail ?? 'comprobación no superada'}.`,
   }
 }

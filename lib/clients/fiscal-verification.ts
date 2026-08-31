@@ -76,7 +76,7 @@ export async function validateAndRecordClientFiscalIdentity(
   return { status, aeatName, message }
 }
 
-export async function ensureInvoiceRecipientVerified(invoiceId: string, checkedBy: string) {
+export async function ensureInvoiceRecipientVerified(invoiceId: string, _checkedBy: string) {
   const admin = createAdminClient()
   const { data: invoice, error } = await admin
     .from('invoices')
@@ -88,8 +88,39 @@ export async function ensureInvoiceRecipientVerified(invoiceId: string, checkedB
   if (invoice.invoice_type !== 'F1') return
   if (!invoice.client_id) throw new Error('La factura F1 no tiene destinatario fiscal')
 
-  const result = await validateAndRecordClientFiscalIdentity(invoice.client_id, checkedBy)
-  if (result.status !== 'verified') {
-    throw new Error(`No se ha podido validar el destinatario con AEAT: ${result.message}`)
+  const { data: client, error: clientError } = await admin
+    .from('clients')
+    .select(
+      'nif, name, billing_address_country, fiscal_verification_status, fiscal_verified_nif, fiscal_verified_name, fiscal_verified_at',
+    )
+    .eq('id', invoice.client_id)
+    .is('deleted_at', null)
+    .maybeSingle()
+  if (clientError || !client) throw new Error(clientError?.message ?? 'Cliente no encontrado')
+
+  const country = String(client.billing_address_country ?? 'ES')
+    .trim()
+    .toUpperCase()
+  const nif = String(client.nif ?? '')
+    .trim()
+    .toUpperCase()
+    .replace(/[\s.-]/g, '')
+    .replace(/^ES/, '')
+  const name = String(client.name ?? '').trim()
+  if (country !== 'ES') {
+    throw new Error(
+      'Las facturas F1 para destinatarios extranjeros requieren soporte de identificación extranjera antes de regularizarse',
+    )
+  }
+  if (!nif || !name) throw new Error('Una factura F1 requiere NIF y razón social del destinatario')
+  if (
+    client.fiscal_verification_status !== 'verified' ||
+    client.fiscal_verified_at === null ||
+    client.fiscal_verified_nif !== nif ||
+    client.fiscal_verified_name !== name
+  ) {
+    throw new Error(
+      'El NIF y la razón social del destinatario deben validarse con AEAT antes de regularizar una factura F1',
+    )
   }
 }

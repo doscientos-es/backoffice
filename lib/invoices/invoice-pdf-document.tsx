@@ -257,7 +257,7 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
 
         {showPaymentInstructions ? (
           <View style={styles.payment}>
-            <Text style={styles.paymentTitle}>Instrucciones de pago</Text>
+            <Text style={styles.paymentTitle}>Opciones de pago</Text>
 
             {data.dueDate ? (
               <View style={styles.paymentRow}>
@@ -266,10 +266,22 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
               </View>
             ) : null}
 
-            {data.company?.iban ? (
+            {data.portalUrl ? (
               <>
                 <View style={styles.paymentRow}>
                   <Text style={styles.paymentKey}>Forma de pago</Text>
+                  <Text style={styles.paymentVal}>Tarjeta o Bizum (pago online)</Text>
+                </View>
+                <Text style={styles.paymentNote}>
+                  Pague online con tarjeta o Bizum en: {data.portalUrl}
+                </Text>
+              </>
+            ) : null}
+
+            {data.company?.iban ? (
+              <>
+                <View style={styles.paymentRow}>
+                  <Text style={styles.paymentKey}>Alternativa</Text>
                   <Text style={styles.paymentVal}>Transferencia bancaria</Text>
                 </View>
                 <View style={styles.paymentRow}>
@@ -285,13 +297,6 @@ function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
                   <Text style={styles.paymentVal}>Factura {data.fullNumber}</Text>
                 </View>
               </>
-            ) : null}
-
-            {data.portalUrl ? (
-              <Text style={styles.paymentNote}>
-                También puede abonar esta factura online mediante tarjeta o Bizum en:{' '}
-                {data.portalUrl}
-              </Text>
             ) : null}
 
             {data.paymentTerms ? <Text style={styles.paymentNote}>{data.paymentTerms}</Text> : null}

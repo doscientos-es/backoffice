@@ -39,10 +39,7 @@ export function FiscalVerificationCard({
   const [verifiedAt, setVerifiedAt] = useState(initialVerifiedAt)
   const [message, setMessage] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
-  const verified =
-    status === 'verified' &&
-    verifiedAt !== null &&
-    Date.now() - new Date(verifiedAt).getTime() < 24 * 60 * 60 * 1000
+  const verified = status === 'verified' && verifiedAt !== null
 
   async function validate() {
     setPending(true)
@@ -64,11 +61,7 @@ export function FiscalVerificationCard({
         )}
         <div>
           <p className="font-medium">Identificación fiscal</p>
-          <p className="text-muted-foreground text-sm">
-            {status === 'verified' && !verified
-              ? 'Revalidación AEAT requerida antes de emitir'
-              : labels[status]}
-          </p>
+          <p className="text-muted-foreground text-sm">{labels[status]}</p>
         </div>
       </div>
       {message ? <p className="text-muted-foreground text-sm">{message}</p> : null}

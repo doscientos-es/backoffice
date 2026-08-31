@@ -173,14 +173,11 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
     .toUpperCase()
     .replace(/[\s.-]/g, '')
     .replace(/^ES/, '')
-  const fiscalVerificationTime = client?.fiscal_verified_at
-    ? new Date(client.fiscal_verified_at).getTime()
-    : 0
   const recipientFiscalReady =
     invoice.invoice_type !== 'F1' ||
     (client?.billing_address_country?.trim().toUpperCase() === 'ES' &&
       client.fiscal_verification_status === 'verified' &&
-      fiscalVerificationTime >= Date.now() - 24 * 60 * 60 * 1000 &&
+      client.fiscal_verified_at !== null &&
       client.fiscal_verified_nif === normalizedClientNif &&
       client.fiscal_verified_name === client.name.trim())
   const project = (invoice as unknown as { projects: { id: string; name: string } | null }).projects
@@ -642,8 +639,8 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
       {qrDataUrl ? (
         <p className="text-muted-foreground border-border border-t pt-4 text-[11px] leading-relaxed">
           Factura verificable en la sede electrónica de la AEAT mediante el código QR. Sistema de
-          emisión conforme al Reglamento Verifactu (RD 1007/2023). Conserve esta factura conforme a la
-          normativa fiscal aplicable.
+          emisión conforme al Reglamento Verifactu (RD 1007/2023). Conserve esta factura conforme a
+          la normativa fiscal aplicable.
         </p>
       ) : null}
     </div>
