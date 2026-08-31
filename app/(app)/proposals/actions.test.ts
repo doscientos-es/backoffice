@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { crm, state } = vi.hoisted(() => ({
+const { createProposalDraftInvoices, crm, sendProposalAcceptedEmail, state } = vi.hoisted(() => ({
+  createProposalDraftInvoices: vi.fn(async () => ({ ids: [], created: 0 })),
   crm: {
     ensureClientForProposal: vi.fn(),
     ensureProjectForProposal: vi.fn(),
@@ -31,6 +32,7 @@ const { crm, state } = vi.hoisted(() => ({
     },
     leadStatus: 'in_conversation',
   },
+  sendProposalAcceptedEmail: vi.fn(async () => undefined),
 }))
 
 vi.mock('@/lib/auth', () => ({
@@ -39,9 +41,8 @@ vi.mock('@/lib/auth', () => ({
 }))
 
 vi.mock('@/lib/crm/conversion', () => crm)
-vi.mock('@/lib/invoices/proposal-drafts', () => ({
-  createProposalDraftInvoices: vi.fn(async () => ({ ids: [], created: 0 })),
-}))
+vi.mock('@/lib/invoices/proposal-drafts', () => ({ createProposalDraftInvoices }))
+vi.mock('@/lib/integrations/send-proposal-accepted-email', () => ({ sendProposalAcceptedEmail }))
 vi.mock('@/lib/supabase/admin', () => ({ createAdminClient: vi.fn(() => ({})) }))
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -185,6 +186,7 @@ describe('updateProposal', () => {
       payment_terms: '50 % al aceptar.',
       change_management_terms: 'Cambios presupuestados.',
       maintenance_options: {
+        enabled: true,
         heading: 'Mantenimiento web',
         intro: 'Soporte técnico continuo.',
         plans: [
@@ -279,6 +281,8 @@ describe('markProposalAsAccepted', () => {
   beforeEach(() => {
     state.inserts = []
     state.updates = []
+    createProposalDraftInvoices.mockClear()
+    sendProposalAcceptedEmail.mockClear()
     state.proposal = {
       id: ID,
       number: null,
@@ -316,6 +320,7 @@ describe('markProposalAsAccepted', () => {
         accepted_fiscal_data: fiscal,
       }),
     )
+    expect(createProposalDraftInvoices).toHaveBeenCalledWith(expect.anything(), ID, 'member-1')
   })
 
   it('repairs an already accepted lead-first proposal when fiscal data is provided', async () => {

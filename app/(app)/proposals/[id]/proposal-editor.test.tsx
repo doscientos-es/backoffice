@@ -101,5 +101,6 @@ describe('ProposalEditor', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Continuar a Precio' }))
     expect(screen.getByRole('heading', { name: 'Precio de la propuesta' })).toBeDefined()
+    expect(screen.getByText('Facturación por plazos')).toBeDefined()
   })
 })

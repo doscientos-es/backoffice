@@ -2,8 +2,15 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { DEFAULT_MAINTENANCE_OFFER } from '@/lib/proposals/maintenance'
 
+const { createProposalDraftInvoices, sendProposalAcceptedEmail } = vi.hoisted(() => ({
+  createProposalDraftInvoices: vi.fn(async () => ({ ids: [], created: 0 })),
+  sendProposalAcceptedEmail: vi.fn(async () => undefined),
+}))
+
 const revalidatePath = vi.fn()
 vi.mock('next/cache', () => ({ revalidatePath }))
+vi.mock('@/lib/invoices/proposal-drafts', () => ({ createProposalDraftInvoices }))
+vi.mock('@/lib/integrations/send-proposal-accepted-email', () => ({ sendProposalAcceptedEmail }))
 
 type ProposalRow = {
   id: string
@@ -99,6 +106,8 @@ describe('portal proposal actions', () => {
     state.updateResult = { error: null }
     state.lastPatch = null
     state.lastUpdateId = null
+    createProposalDraftInvoices.mockClear()
+    sendProposalAcceptedEmail.mockClear()
     revalidatePath.mockClear()
   })
 
@@ -159,6 +168,7 @@ describe('portal proposal actions', () => {
     expect(state.lastUpdateId).toBe('p1')
     expect(state.lastPatch?.status).toBe('accepted')
     expect(typeof state.lastPatch?.responded_at).toBe('string')
+    expect(createProposalDraftInvoices).toHaveBeenCalledWith(expect.anything(), 'p1', null)
     expect(revalidatePath).toHaveBeenCalledWith(`/p/proposal/${VALID_TOKEN}`)
   })
 

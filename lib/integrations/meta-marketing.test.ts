@@ -1,8 +1,18 @@
 import { describe, expect, it } from 'vitest'
 
 import { extractMetaCreativeDetails, extractMetaTrafficMetrics } from './meta-marketing'
+import { getMarketingSyncErrorMessage } from '../marketing-sync'
 
 describe('Meta marketing funnel metrics', () => {
+  it('keeps the message from structured Supabase errors', () => {
+    expect(
+      getMarketingSyncErrorMessage({
+        code: '23505',
+        message: 'duplicate key value violates unique constraint',
+      }),
+    ).toBe('duplicate key value violates unique constraint')
+  })
+
   it("extracts link and landing metrics from Meta's mixed insight fields", () => {
     expect(
       extractMetaTrafficMetrics({

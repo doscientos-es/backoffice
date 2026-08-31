@@ -497,30 +497,32 @@ export default async function LeadDetailPage({
                                 className="gap-1 text-[11px] text-muted-foreground/70"
                               />
                             ) : null}
-                            {type === "call" ? (
-                              <CallInteractionDetails
-                                interaction={i}
-                                leadId={lead.id}
-                                canEdit={canEdit}
-                              />
-                            ) : null}
-                            {type !== "call" ? (
-                              <LeadInteractionDetails
-                                interaction={i}
-                                label={label}
-                                leadId={lead.id}
-                                leadEmail={lead.email}
-                                canReply={canEdit}
-                                aiEnabled={aiEnabled}
-                              />
-                            ) : null}
-                            {type === "note" && canEdit ? (
-                              <DeleteLeadInteractionButton
-                                leadId={lead.id}
-                                interactionId={i.id}
-                                label="nota"
-                              />
-                            ) : null}
+                            <div className="flex flex-wrap justify-end gap-0.5">
+                              {type === "call" ? (
+                                <CallInteractionDetails
+                                  interaction={i}
+                                  leadId={lead.id}
+                                  canEdit={canEdit}
+                                />
+                              ) : null}
+                              {type !== "call" ? (
+                                <LeadInteractionDetails
+                                  interaction={i}
+                                  label={label}
+                                  leadId={lead.id}
+                                  leadEmail={lead.email}
+                                  canReply={canEdit}
+                                  aiEnabled={aiEnabled}
+                                />
+                              ) : null}
+                              {type === "note" && canEdit ? (
+                                <DeleteLeadInteractionButton
+                                  leadId={lead.id}
+                                  interactionId={i.id}
+                                  label="nota"
+                                />
+                              ) : null}
+                            </div>
                           </div>
                         </li>
                       );

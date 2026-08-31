@@ -4,7 +4,12 @@ import { revalidatePath } from 'next/cache'
 
 import { requireUser } from '@/lib/auth'
 import { getMetaAdPreview, type MetaAdPreviewFormat } from '@/lib/integrations/meta-marketing'
-import { syncMetaCatalog, syncMetaInsights, syncMetaSpendToExpenses } from '@/lib/marketing-sync'
+import {
+  getMarketingSyncErrorMessage,
+  syncMetaCatalog,
+  syncMetaInsights,
+  syncMetaSpendToExpenses,
+} from '@/lib/marketing-sync'
 import { metaHistoryFloor, parseMarketingRange, rangeToDates } from '@/lib/marketing/range'
 
 export async function syncMetaAction(
@@ -49,7 +54,7 @@ export async function syncMetaAction(
   } catch (err) {
     return {
       ok: false,
-      error: err instanceof Error ? err.message : 'Error inesperado en la sincronización',
+      error: getMarketingSyncErrorMessage(err),
     }
   }
 }
@@ -65,7 +70,7 @@ export async function getAdPreviewAction(
   } catch (err) {
     return {
       ok: false,
-      error: err instanceof Error ? err.message : 'Error obteniendo la previa del anuncio',
+      error: getMarketingSyncErrorMessage(err),
     }
   }
 }

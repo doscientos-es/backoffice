@@ -608,18 +608,6 @@ export function ProposalEditor({
                       placeholder="- Diseño validado\n- Desarrollo de los módulos acordados\n- Formación y documentación"
                     />
                   </FormRow>
-                  <div className="border-border bg-muted/20 rounded-lg border p-3">
-                    <p className="mb-1 text-sm font-medium">Facturación por plazos</p>
-                    <p className="text-muted-foreground mb-3 text-xs">
-                      Se crearán borradores editables para estos cobros al aceptar la propuesta.
-                    </p>
-                    <PaymentPlanEditor
-                      plan={paymentPlan}
-                      total={proposalTotals.oneTime.total}
-                      onChange={setPaymentPlan}
-                      locked={locked}
-                    />
-                  </div>
                   <details className="border-border bg-muted/20 rounded-lg border p-3">
                     <summary className="cursor-pointer text-sm font-medium">
                       Añadir criterios de aceptación
@@ -697,6 +685,19 @@ export function ProposalEditor({
                       />
                     </div>
                   </FormRow>
+                  <div className="border-border bg-muted/20 rounded-lg border p-3">
+                    <p className="mb-1 text-sm font-medium">Facturación por plazos</p>
+                    <p className="text-muted-foreground mb-3 text-xs">
+                      Personaliza los cobros que se prepararán como borradores al aceptar la
+                      propuesta.
+                    </p>
+                    <PaymentPlanEditor
+                      plan={paymentPlan}
+                      total={proposalTotals.oneTime.total}
+                      onChange={setPaymentPlan}
+                      locked={locked}
+                    />
+                  </div>
                   <details className="border-border bg-muted/20 rounded-lg border p-3">
                     <summary className="cursor-pointer text-sm font-medium">
                       Personalizar condiciones

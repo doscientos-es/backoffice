@@ -11,6 +11,21 @@ import {
 
 const log = scopedLogger('marketing-sync')
 
+/** Extract a useful message from Error instances and Supabase's plain error objects. */
+export function getMarketingSyncErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message
+  if (typeof err === 'string') return err
+  if (
+    typeof err === 'object' &&
+    err !== null &&
+    'message' in err &&
+    typeof err.message === 'string'
+  ) {
+    return err.message
+  }
+  return 'Error desconocido durante la sincronización'
+}
+
 /**
  * Full sync of Campaigns, Ad Sets and Ads from Meta.
  */
@@ -89,7 +104,7 @@ export async function syncMetaCatalog() {
     }
   } catch (err) {
     log.error({ err }, 'syncMetaCatalog failed')
-    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+    return { ok: false, error: getMarketingSyncErrorMessage(err) }
   }
 }
 
@@ -135,7 +150,7 @@ export async function syncMetaInsights(since: string, until: string) {
     return { ok: true, synced: insights.length }
   } catch (err) {
     log.error({ err }, 'syncMetaInsights failed')
-    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+    return { ok: false, error: getMarketingSyncErrorMessage(err) }
   }
 }
 
@@ -244,6 +259,6 @@ export async function syncMetaSpendToExpenses(since: string, until: string) {
     return { ok: true, synced: months.length }
   } catch (err) {
     log.error({ err }, 'syncMetaSpendToExpenses failed')
-    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+    return { ok: false, error: getMarketingSyncErrorMessage(err) }
   }
 }

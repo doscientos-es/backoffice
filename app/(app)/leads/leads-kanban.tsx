@@ -49,7 +49,9 @@ import {
 import {
   type LeadKanbanColumnPreferences,
   leadKanbanColumnIds,
+  preferencesFromLegacyCompactColumns,
   resolveCompactLeadKanbanColumns,
+  toggleLeadKanbanColumnPreference,
 } from '@/lib/leads/kanban-preferences'
 import {
   isRotting,
@@ -117,7 +119,7 @@ const STATUS_BY_COLUMN: Record<Exclude<LeadKanbanColumnId, 'meeting'>, LeadStatu
   archived: 'archived',
 }
 
-const COMPACT_COLUMNS_KEY = 'leads-kanban:compact-columns'
+const COMPACT_COLUMNS_KEY = 'leads-kanban:compact-columns:v2'
 
 function loadColumnPreferences(key: string): LeadKanbanColumnPreferences | null {
   try {
@@ -125,9 +127,7 @@ function loadColumnPreferences(key: string): LeadKanbanColumnPreferences | null 
     if (!raw) return null
     const stored: unknown = JSON.parse(raw)
     if (Array.isArray(stored)) {
-      // Legacy storage only recorded compact columns, so it could not retain
-      // an explicit "keep visible" choice for columns closed by default.
-      return { compact: leadKanbanColumnIds(stored), expanded: [] }
+      return preferencesFromLegacyCompactColumns(leadKanbanColumnIds(stored))
     }
     if (!stored || typeof stored !== 'object') return null
     const preferences = stored as Record<string, unknown>
@@ -183,22 +183,7 @@ export function LeadsKanban({
 
   const toggleColumnCompact = (id: LeadKanbanColumnId) => {
     setColumnPreferences((previous) => {
-      const compact = resolveCompactLeadKanbanColumns(previous)
-      const next = {
-        compact: new Set(previous.compact),
-        expanded: new Set(previous.expanded),
-      }
-      if (compact.has(id)) {
-        next.compact.delete(id)
-        next.expanded.add(id)
-      } else {
-        next.expanded.delete(id)
-        next.compact.add(id)
-      }
-      const preferences = {
-        compact: [...next.compact],
-        expanded: [...next.expanded],
-      }
+      const preferences = toggleLeadKanbanColumnPreference(previous, id)
       saveColumnPreferences(COMPACT_COLUMNS_KEY, preferences)
       return preferences
     })
