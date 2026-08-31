@@ -6,8 +6,15 @@ import { useState } from 'react'
 
 import { MfaChallengeDialog } from '@/components/security/mfa-challenge-dialog'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { useFormFeedback } from '@/components/ui/form-feedback'
-import { ModalDialog } from '@/components/ui/modal-dialog'
 import { userVerificationScope } from '@/lib/security/user-verification-scope'
 import { grantUserVerificationFromMfa } from '@/lib/security/webauthn-actions'
 import {
@@ -144,7 +151,7 @@ export function SendAeatButton({
         <Send className="size-4" />
         {preparing ? 'Preparando…' : feedback.pending ? 'Enviando…' : label}
       </Button>
-      <ModalDialog
+      <Dialog
         open={confirmOpen}
         onOpenChange={(open) => {
           setConfirmOpen(open)
@@ -153,66 +160,71 @@ export function SendAeatButton({
             setVerificationError(null)
           }
         }}
-        title={
-          isRegularization
-            ? 'Confirmar envío de regularización a AEAT'
-            : 'Confirmar reenvío a VERI*FACTU'
-        }
-        description={
-          passkeyOptions
-            ? 'Usa la biometría o el bloqueo del dispositivo para continuar.'
-            : recentlyVerified
-              ? 'Tu identidad ya está verificada. Confirma el envío fiscal para continuar.'
-              : isRegularization
-                ? 'Elige cómo confirmar tu identidad para enviar el registro de subsanación a AEAT.'
-                : 'Elige cómo quieres confirmar tu identidad para reenviar este registro fiscal a AEAT.'
-        }
-        showCloseButton={!feedback.pending}
-        footer={
-          recentlyVerified ? (
-            <>
-              <Button variant="outline" onClick={() => setConfirmOpen(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={() => void sendVerifiedDelivery()}>Confirmar envío</Button>
-            </>
-          ) : passkeyOptions ? (
-            <>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setPasskeyOptions(null)
-                  setVerificationError(null)
-                }}
-                disabled={feedback.pending}
-              >
-                Elegir otro método
-              </Button>
-              <Button onClick={confirmWithPasskey} disabled={feedback.pending}>
-                Confirmar con biometría
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setConfirmOpen(false)
-                  setMfaOpen(true)
-                }}
-                disabled={preparing || feedback.pending}
-              >
-                Usar código de autenticación
-              </Button>
-              <Button onClick={prepareVerification} disabled={preparing || feedback.pending}>
-                {preparing ? 'Preparando…' : 'Reintentar en este dispositivo'}
-              </Button>
-            </>
-          )
-        }
       >
-        {verificationError ? <p className="text-destructive text-sm">{verificationError}</p> : null}
-      </ModalDialog>
+        <DialogContent showCloseButton={!feedback.pending}>
+          <DialogHeader>
+            <DialogTitle>
+              {isRegularization
+                ? 'Confirmar envío de regularización a AEAT'
+                : 'Confirmar reenvío a VERI*FACTU'}
+            </DialogTitle>
+            <DialogDescription>
+              {passkeyOptions
+                ? 'Usa la biometría o el bloqueo del dispositivo para continuar.'
+                : recentlyVerified
+                  ? 'Tu identidad ya está verificada. Confirma el envío fiscal para continuar.'
+                  : isRegularization
+                    ? 'Elige cómo confirmar tu identidad para enviar el registro de subsanación a AEAT.'
+                    : 'Elige cómo quieres confirmar tu identidad para reenviar este registro fiscal a AEAT.'}
+            </DialogDescription>
+          </DialogHeader>
+          {verificationError ? (
+            <p className="text-destructive text-sm">{verificationError}</p>
+          ) : null}
+          <DialogFooter>
+            {recentlyVerified ? (
+              <>
+                <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={() => void sendVerifiedDelivery()}>Confirmar envío</Button>
+              </>
+            ) : passkeyOptions ? (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setPasskeyOptions(null)
+                    setVerificationError(null)
+                  }}
+                  disabled={feedback.pending}
+                >
+                  Elegir otro método
+                </Button>
+                <Button onClick={confirmWithPasskey} disabled={feedback.pending}>
+                  Confirmar con biometría
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setConfirmOpen(false)
+                    setMfaOpen(true)
+                  }}
+                  disabled={preparing || feedback.pending}
+                >
+                  Usar código de autenticación
+                </Button>
+                <Button onClick={prepareVerification} disabled={preparing || feedback.pending}>
+                  {preparing ? 'Preparando…' : 'Reintentar en este dispositivo'}
+                </Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <MfaChallengeDialog
         open={mfaOpen}
         onOpenChange={setMfaOpen}

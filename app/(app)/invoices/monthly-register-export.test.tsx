@@ -21,5 +21,10 @@ describe('InvoiceRegisterExport', () => {
       links.some((link) => link.getAttribute('href')?.includes(`month=${monthInput.value}`)),
     ).toBe(true)
     expect(links.some((link) => link.getAttribute('href')?.includes('year=2026'))).toBe(true)
+
+    const quarterlyLink = screen.getByRole('link', { name: 'Descargar ZIP' })
+    expect(quarterlyLink.getAttribute('href')).toMatch(
+      /^\/api\/invoices\/trimestral\?year=\d{4}&quarter=[1-4]$/,
+    )
   })
 })

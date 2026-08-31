@@ -11,10 +11,21 @@ function currentMonth(): string {
   return new Date().toISOString().slice(0, 7)
 }
 
+function quarterForMonth(month: string): { year: string; quarter: number; label: string } | null {
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return null
+  const year = month.slice(0, 4)
+  const quarter = Math.ceil(Number(month.slice(5, 7)) / 3)
+  return { year, quarter, label: `T${quarter} ${year}` }
+}
+
 /** Groups the monthly and annual accounting-register downloads. */
 export function InvoiceRegisterExport({ year }: { year: number }) {
   const [month, setMonth] = useState(currentMonth)
   const monthHref = `/api/invoices/libro-registro?month=${month}`
+  const quarter = quarterForMonth(month)
+  const quarterHref = quarter
+    ? `/api/invoices/trimestral?year=${quarter.year}&quarter=${quarter.quarter}`
+    : null
 
   return (
     <Popover>
@@ -59,6 +70,42 @@ export function InvoiceRegisterExport({ year }: { year: number }) {
                 </Button>
               )}
             </div>
+          </div>
+
+          <div className="border-border space-y-2 border-t pt-4">
+            <label htmlFor="invoice-quarterly-month" className="text-xs font-medium">
+              Carpeta trimestral para asesoría
+            </label>
+            <p className="text-muted-foreground text-xs">
+              ZIP con gastos, cobros y sus metadatos del trimestre seleccionado.
+            </p>
+            <div className="flex gap-2">
+              <Input
+                id="invoice-quarterly-month"
+                type="month"
+                value={month}
+                max={currentMonth()}
+                onChange={(event) => setMonth(event.target.value)}
+                className="h-9 min-w-0 flex-1"
+              />
+              {quarterHref && quarter ? (
+                <Button variant="secondary" className="h-9" asChild>
+                  <a
+                    href={quarterHref}
+                    download={`doscientos-T${quarter.quarter}-${quarter.year}.zip`}
+                  >
+                    Descargar ZIP
+                  </a>
+                </Button>
+              ) : (
+                <Button variant="secondary" className="h-9" disabled>
+                  Descargar ZIP
+                </Button>
+              )}
+            </div>
+            {quarter ? (
+              <p className="text-muted-foreground text-xs">Se descargará {quarter.label}.</p>
+            ) : null}
           </div>
 
           <div className="border-border flex items-center justify-between gap-3 border-t pt-4">
