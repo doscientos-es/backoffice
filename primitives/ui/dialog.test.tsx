@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
-import { DialogFooter } from './dialog'
+import { DialogFooter } from '@doscientos/ui'
 
 describe('DialogFooter', () => {
   it('wraps actions that do not fit in its dialog', () => {

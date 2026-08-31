@@ -1,1 +1,1 @@
-﻿export * from '@/primitives/ui/danger-zone'
+﻿export * from '@doscientos/ui'

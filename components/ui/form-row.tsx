@@ -1,1 +1,1 @@
-﻿export * from '@/primitives/ui/form-row'
+﻿export * from '@doscientos/ui'

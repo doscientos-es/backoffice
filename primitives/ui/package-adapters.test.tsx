@@ -6,13 +6,15 @@ import {
   KbdGroup,
   Separator,
   SubmitButton,
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  FormFeedback,
+  FormRow,
 } from '@doscientos/ui'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
-import { Avatar, AvatarFallback, AvatarImage } from './avatar'
-import { FormFeedback } from './form-feedback'
-import { FormRow } from './form-row'
 
 describe('@doscientos/ui adapters', () => {
   it('renders accessible form feedback from the package', () => {

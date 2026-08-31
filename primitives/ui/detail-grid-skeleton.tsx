@@ -1,6 +1,6 @@
 import { cn } from '../lib/utils'
 import { Card, CardContent, CardHeader } from './card'
-import { Skeleton } from './skeleton'
+import { Skeleton } from '@doscientos/ui'
 
 export type DetailGridSkeletonProps = {
   /** Width of each row's value cell in px. Length defines number of rows. */

@@ -9,7 +9,7 @@ import { isValidIBAN } from 'ibantools'
 import { CheckCircle, XCircle } from 'lucide-react'
 import { useState } from 'react'
 
-import { Input } from './input'
+import { Input } from '@doscientos/ui'
 
 interface IbanInputProps {
   id: string

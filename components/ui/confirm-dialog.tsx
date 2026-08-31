@@ -1,1 +1,1 @@
-﻿export * from '@/primitives/ui/confirm-dialog'
+﻿export * from '@doscientos/ui'

@@ -1,1 +1,1 @@
-﻿export * from '@/primitives/ui/submit-button'
+﻿export * from '@doscientos/ui'

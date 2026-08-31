@@ -1,5 +1,5 @@
 import { cn } from '../lib/utils'
-import { Skeleton } from './skeleton'
+import { Skeleton } from '@doscientos/ui'
 
 export type PageHeaderSkeletonProps = {
   /** Widths for breadcrumb pills, in px. Set to 0 to hide breadcrumbs. */

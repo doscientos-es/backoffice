@@ -1,6 +1,6 @@
 import { cn } from '../lib/utils'
 import { Card, CardContent } from './card'
-import { Skeleton } from './skeleton'
+import { Skeleton } from '@doscientos/ui'
 
 export type FormCardSkeletonProps = {
   /** Number of single-line form rows. */

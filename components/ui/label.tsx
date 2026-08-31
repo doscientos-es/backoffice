@@ -1,1 +1,1 @@
-﻿export * from '@/primitives/ui/label'
+﻿export * from '@doscientos/ui'
