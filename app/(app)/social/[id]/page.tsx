@@ -1,52 +1,52 @@
-import { ChartBar as BarChart3, ExternalLink, MessageSquare, Pencil } from 'lucide-react'
-import type { Metadata } from 'next'
-import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { ChartBar as BarChart3, ExternalLink, MessageSquare, Pencil } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 
-import { BackLink } from '@/components/layout/back-link'
-import { DetailGrid, DetailRow } from '@/components/layout/detail-grid'
-import { PageHeader } from '@/components/layout/page-header'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { SectionBoundary } from '@/components/ui/error-boundary'
-import { Skeleton } from '@/components/ui/skeleton'
-import { StatusBadge } from '@/components/ui/status-badge'
-import { requireUser } from '@/lib/auth'
-import { getPostDetail } from '@/lib/social/service'
-import { SOCIAL_POST_STATUS, SOCIAL_TARGET_STATUS } from '@/lib/status'
-import { formatDateTime, relativeTime } from '@/lib/utils'
+import { BackLink } from "@/components/layout/back-link";
+import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
+import { PageHeader } from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SectionBoundary } from "@/components/ui/error-boundary";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { requireUser } from "@/lib/auth";
+import { getPostDetail } from "@/lib/social/service";
+import { SOCIAL_POST_STATUS, SOCIAL_TARGET_STATUS } from "@/lib/status";
+import { formatDateTime, relativeTime } from "@/lib/utils";
 
-import { CommentCard } from '../_components/comment-card'
-import { MediaThumb } from '../_components/media-thumb'
-import { PlatformChip } from '../_components/platform'
-import { PublishButton } from '../_components/publish-button'
-import { SyncButton } from '../_components/sync-button'
+import { CommentCard } from "../_components/comment-card";
+import { MediaThumb } from "../_components/media-thumb";
+import { PlatformChip } from "../_components/platform";
+import { PublishButton } from "../_components/publish-button";
+import { SyncButton } from "../_components/sync-button";
 
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
 }): Promise<Metadata> {
-  const { id } = await params
-  const post = await getPostDetail(id)
-  return { title: post ? `${post.caption.slice(0, 20)}... · Social` : 'Post · Social' }
+  const { id } = await params;
+  const post = await getPostDetail(id);
+  return { title: post ? `${post.caption.slice(0, 20)}... · Social` : "Post · Social" };
 }
 
 async function PostDetail({ id, canEdit }: { id: string; canEdit: boolean }) {
-  const post = await getPostDetail(id)
-  if (!post) notFound()
+  const post = await getPostDetail(id);
+  if (!post) notFound();
 
-  const totalReach = post.targets.reduce((acc, t) => acc + (t.insights?.reach ?? 0), 0)
-  const totalLikes = post.targets.reduce((acc, t) => acc + (t.insights?.likes ?? 0), 0)
+  const totalReach = post.targets.reduce((acc, t) => acc + (t.insights?.reach ?? 0), 0);
+  const totalLikes = post.targets.reduce((acc, t) => acc + (t.insights?.likes ?? 0), 0);
   const totalComments = Math.max(
     post.targets.reduce((acc, t) => acc + (t.insights?.comments ?? 0), 0),
     post.comments.length,
-  )
-  const totalShares = post.targets.reduce((acc, t) => acc + (t.insights?.shares ?? 0), 0)
-  const totalSaves = post.targets.reduce((acc, t) => acc + (t.insights?.saves ?? 0), 0)
-  const totalActions = post.targets.reduce((acc, t) => acc + (t.insights?.actions ?? 0), 0)
-  const totalInteractions = totalLikes + totalComments + totalShares + totalSaves
-  const engagementRate = totalReach > 0 ? (totalInteractions / totalReach) * 100 : null
+  );
+  const totalShares = post.targets.reduce((acc, t) => acc + (t.insights?.shares ?? 0), 0);
+  const totalSaves = post.targets.reduce((acc, t) => acc + (t.insights?.saves ?? 0), 0);
+  const totalActions = post.targets.reduce((acc, t) => acc + (t.insights?.actions ?? 0), 0);
+  const totalInteractions = totalLikes + totalComments + totalShares + totalSaves;
+  const engagementRate = totalReach > 0 ? (totalInteractions / totalReach) * 100 : null;
 
   return (
     <div className="flex flex-col gap-8">
@@ -129,7 +129,7 @@ async function PostDetail({ id, canEdit }: { id: string; canEdit: boolean }) {
                               value={t.status}
                               className="text-[10px]"
                             />
-                            {t.status === 'failed' && t.error && (
+                            {t.status === "failed" && t.error && (
                               <span
                                 className="text-destructive max-w-50 text-[10px] leading-tight wrap-break-word"
                                 title={t.error}
@@ -140,16 +140,16 @@ async function PostDetail({ id, canEdit }: { id: string; canEdit: boolean }) {
                           </div>
                         </td>
                         <td className="py-3 pr-4 text-right tabular-nums">
-                          {t.insights?.reach.toLocaleString() ?? '—'}
+                          {t.insights?.reach.toLocaleString() ?? "—"}
                         </td>
                         <td className="py-3 pr-4 text-right tabular-nums">
-                          {t.insights?.likes.toLocaleString() ?? '—'}
+                          {t.insights?.likes.toLocaleString() ?? "—"}
                         </td>
                         <td className="py-3 pr-4 text-right tabular-nums">
-                          {t.insights?.comments.toLocaleString() ?? '—'}
+                          {t.insights?.comments.toLocaleString() ?? "—"}
                         </td>
                         <td className="py-3 pr-4 text-right tabular-nums">
-                          {t.insights?.actions.toLocaleString() ?? '—'}
+                          {t.insights?.actions.toLocaleString() ?? "—"}
                         </td>
                         <td className="py-3 text-right">
                           {t.remoteUrl ? (
@@ -162,7 +162,7 @@ async function PostDetail({ id, canEdit }: { id: string; canEdit: boolean }) {
                               Ver <ExternalLink className="size-3" />
                             </a>
                           ) : (
-                            '—'
+                            "—"
                           )}
                         </td>
                       </tr>
@@ -205,7 +205,7 @@ async function PostDetail({ id, canEdit }: { id: string; canEdit: boolean }) {
                 )}
               </DetailGrid>
 
-              {canEdit && post.status === 'scheduled' && (
+              {canEdit && post.status === "scheduled" && (
                 <div className="border-border mt-6 border-t pt-4">
                   <Button asChild variant="outline" size="default" className="w-full">
                     <Link href={`/social/${post.id}/edit`}>
@@ -216,17 +216,17 @@ async function PostDetail({ id, canEdit }: { id: string; canEdit: boolean }) {
                 </div>
               )}
 
-              {(post.status === 'draft' || post.status === 'scheduled') && (
+              {canEdit && (post.status === "draft" || post.status === "scheduled") && (
                 <div className="border-border mt-6 border-t pt-4">
                   <PublishButton
                     postId={post.id}
-                    label={post.status === 'scheduled' ? 'Publicar ahora' : undefined}
+                    label={post.status === "scheduled" ? "Publicar ahora" : undefined}
                     size="default"
                     className="w-full"
                   />
                 </div>
               )}
-              {(post.status === 'failed' || post.status === 'partially_failed') && (
+              {(post.status === "failed" || post.status === "partially_failed") && (
                 <div className="border-border mt-6 border-t pt-4">
                   <PublishButton postId={post.id} retry size="default" className="w-full" />
                 </div>
@@ -247,7 +247,7 @@ async function PostDetail({ id, canEdit }: { id: string; canEdit: boolean }) {
                 <div className="flex flex-col gap-0.5">
                   <span className="text-muted-foreground text-[10px] uppercase">Reach Total</span>
                   <span className="text-xl font-bold tabular-nums">
-                    {totalReach > 0 ? totalReach.toLocaleString() : '—'}
+                    {totalReach > 0 ? totalReach.toLocaleString() : "—"}
                   </span>
                 </div>
                 <div className="flex flex-col gap-0.5">
@@ -279,7 +279,7 @@ async function PostDetail({ id, canEdit }: { id: string; canEdit: boolean }) {
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-muted-foreground text-xs">Engagement medio</span>
                   <span className="font-semibold tabular-nums">
-                    {engagementRate === null ? '—' : `${engagementRate.toFixed(1)}%`}
+                    {engagementRate === null ? "—" : `${engagementRate.toFixed(1)}%`}
                   </span>
                 </div>
                 {engagementRate === null && (
@@ -293,7 +293,7 @@ async function PostDetail({ id, canEdit }: { id: string; canEdit: boolean }) {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function DetailSkeleton() {
@@ -310,12 +310,12 @@ function DetailSkeleton() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 export default async function PostDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const user = await requireUser()
-  const { id } = await params
+  const user = await requireUser();
+  const { id } = await params;
   return (
     <div className="flex flex-col gap-6">
       <BackLink href="/social" label="Social" />
@@ -325,8 +325,8 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
         actions={<SyncButton kind="social" label="Sincronizar datos" />}
       />
       <SectionBoundary pending={<DetailSkeleton />} label="No se pudo cargar el detalle">
-        <PostDetail id={id} canEdit={user.role !== 'viewer'} />
+        <PostDetail id={id} canEdit={user.role !== "viewer"} />
       </SectionBoundary>
     </div>
-  )
+  );
 }
