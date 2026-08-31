@@ -11,6 +11,15 @@ import { syncMetaAction } from './actions'
 
 type SyncStatus = 'idle' | 'loading' | 'success' | 'error'
 
+function syncErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message
+  if (typeof error === 'string') return error
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    return typeof error.message === 'string' ? error.message : 'Error inesperado al sincronizar'
+  }
+  return 'Error inesperado al sincronizar'
+}
+
 export function SyncMarketingButton() {
   const [status, setStatus] = useState<SyncStatus>('idle')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -26,13 +35,13 @@ export function SyncMarketingButton() {
       result = await syncMetaAction(searchParams.get('range') ?? undefined)
     } catch (err) {
       setStatus('error')
-      setErrorMsg(err instanceof Error ? err.message : 'Error inesperado')
+      setErrorMsg(syncErrorMessage(err))
       return
     }
 
     if (!result.ok) {
       setStatus('error')
-      setErrorMsg(result.error ?? 'Error desconocido')
+      setErrorMsg(syncErrorMessage(result.error))
       return
     }
 

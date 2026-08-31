@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { extractMetaCreativeDetails, extractMetaTrafficMetrics } from './meta-marketing'
-import { getMarketingSyncErrorMessage } from '../marketing-sync'
+import { getMarketingSyncErrorMessage, mapMetaAdForStorage } from '../marketing-sync'
 
 describe('Meta marketing funnel metrics', () => {
   it('keeps the message from structured Supabase errors', () => {
@@ -11,6 +11,37 @@ describe('Meta marketing funnel metrics', () => {
         message: 'duplicate key value violates unique constraint',
       }),
     ).toBe('duplicate key value violates unique constraint')
+  })
+
+  it('maps creative properties to the snake_case marketing ads columns', () => {
+    expect(
+      mapMetaAdForStorage(
+        {
+          id: 'ad',
+          adset_id: 'adset',
+          campaign_id: 'campaign',
+          name: 'Anuncio',
+          status: 'ACTIVE',
+          creative: {
+            id: 'creative',
+            thumbnail_url: 'https://cdn.example/thumbnail.jpg',
+            call_to_action_type: 'LEARN_MORE',
+            url_tags: 'utm_source=facebook',
+            object_url: 'https://doscientos.es/contacto',
+            object_story_spec: {
+              link_data: { call_to_action: { value: { lead_gen_form_id: 'form' } } },
+            },
+          },
+        },
+        '2026-08-31T00:00:00.000Z',
+      ),
+    ).toMatchObject({
+      creative_id: 'creative',
+      destination_url: 'https://doscientos.es/contacto',
+      url_tags: 'utm_source=facebook',
+      call_to_action_type: 'LEARN_MORE',
+      lead_form_id: 'form',
+    })
   })
 
   it("extracts link and landing metrics from Meta's mixed insight fields", () => {

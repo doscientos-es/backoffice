@@ -63,6 +63,9 @@ export type LeadListItem = {
   landing_subject: string | null
   conversion_step: string | null
   first_landing_path: string | null
+  utm_campaign: string | null
+  /** Resolved name from Meta's synced campaign catalog. */
+  marketing_campaign_name: string | null
   last_utm_source: string | null
   last_utm_campaign: string | null
   ai_summary: string | null
@@ -115,6 +118,21 @@ export type LeadListResult = {
 
 export type LeadDetailAiTemperature = 'hot' | 'warm' | 'cold'
 
+export type LeadCompanyResearch = {
+  domain: string
+  description: string
+  sector: string | null
+  services: string[]
+  location: string | null
+  company_size: string | null
+  fit: string
+  priority: 'high' | 'medium' | 'low'
+  confidence: number
+  reasons: string[]
+  cautions: string[]
+  sources: Array<{ title: string; url: string; excerpt: string }>
+}
+
 export type LeadDetail = {
   id: string
   /** Internal optimistic-concurrency token. */
@@ -146,6 +164,9 @@ export type LeadDetail = {
   first_utm_campaign: string | null
   first_utm_term: string | null
   first_utm_content: string | null
+  utm_campaign: string | null
+  /** Resolved name from Meta's synced campaign catalog. */
+  marketing_campaign_name: string | null
   last_landing_path: string | null
   last_referrer: string | null
   last_utm_source: string | null
@@ -164,6 +185,9 @@ export type LeadDetail = {
   ai_confidence: number | null
   ai_updated_at: string | null
   ai_tags: string[] | null
+  /** Public-company research; always kept separate from lead-submitted CRM fields. */
+  company_research: LeadCompanyResearch | null
+  company_researched_at: string | null
   lost_reason: string | null
   lost_at: string | null
   assigned_to: string | null

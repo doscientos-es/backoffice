@@ -26,6 +26,24 @@ describe('lead AI context', () => {
     expect(context).toContain('Atribución inicial: q3')
   })
 
+  it('makes public company research useful for the next AI action', () => {
+    const context = formatLeadContextForAI({
+      company_research: {
+        description: 'Fabricante de maquinaria industrial.',
+        sector: 'Industria',
+        services: ['Automatización'],
+        fit: 'Puede necesitar un portal comercial.',
+        priority: 'high',
+        reasons: ['Tiene catálogo técnico'],
+        cautions: ['Tamaño sin confirmar'],
+      },
+    })
+
+    expect(context).toContain('sector: Industria')
+    expect(context).toContain('servicios: Automatización')
+    expect(context).toContain('cautelas: Tamaño sin confirmar')
+  })
+
   it('keeps scheduled tasks and proposal status actionable', () => {
     expect(
       formatScheduledLeadTasksForAI([

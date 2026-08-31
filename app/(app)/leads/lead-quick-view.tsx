@@ -45,6 +45,7 @@ import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { MemberLabel } from '@/components/ui/member-avatar'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { nextActionState } from '@/lib/leads/pipeline'
+import { requiresCyaProspectSoftwareCommission } from '@/lib/leads/attribution'
 import { leadDisplayName } from '@/lib/leads/utils'
 import type { MemberOption } from '@/lib/members/queries'
 import { LEAD_STATUS } from '@/lib/status'
@@ -143,6 +144,7 @@ function Body({
   const hasEstimated = lead.estimated_value != null && lead.estimated_value > 0
   const displayName = leadDisplayName(lead)
   const alias = lead.alias?.trim()
+  const campaignName = lead.marketing_campaign_name
   const needsNextAction = nextActionState(lead.status, lead.next_action) === 'missing'
   return (
     <div className="grid h-full grid-rows-[auto_1fr_auto_auto]">
@@ -261,7 +263,8 @@ function Body({
           lead.conversion_step ||
           lead.first_landing_path ||
           lead.last_utm_source ||
-          lead.last_utm_campaign) && (
+          lead.last_utm_campaign ||
+          campaignName) && (
           <section className="flex flex-col gap-1.5 text-xs">
             <Heading>Atribución</Heading>
             {(lead.last_utm_source || lead.source) && (
@@ -269,9 +272,14 @@ function Body({
                 Fuente: {lead.last_utm_source || lead.source}
               </Row>
             )}
-            {lead.last_utm_campaign && (
+            {campaignName && (
               <Row icon={<ArrowUpRight className="size-3.5" />}>
-                Campaña: {lead.last_utm_campaign}
+                Campaña: {campaignName}
+              </Row>
+            )}
+            {requiresCyaProspectSoftwareCommission(campaignName) && (
+              <Row icon={<TriangleAlert className="size-3.5" />}>
+                Comisión CYA: 20 % de lo ganado
               </Row>
             )}
             {(lead.first_landing_path || lead.landing_path) && (

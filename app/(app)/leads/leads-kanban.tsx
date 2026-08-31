@@ -59,6 +59,7 @@ import {
   STAGE_ROT_DAYS,
   waitingForReplySince,
 } from '@/lib/leads/pipeline'
+import { requiresCyaProspectSoftwareCommission } from '@/lib/leads/attribution'
 import type { LeadListItem, LeadMemberRef } from '@/lib/leads/types'
 import { leadDisplayName } from '@/lib/leads/utils'
 import type { MemberOption } from '@/lib/members/queries'
@@ -668,6 +669,15 @@ function Card({
           {lead.estimated_value != null && lead.estimated_value > 0 && (
             <Badge variant="neutral" className="h-4 px-1.5 text-[10px] tabular-nums">
               {formatEUR(lead.estimated_value)}
+            </Badge>
+          )}
+          {!isOverlay && requiresCyaProspectSoftwareCommission(lead.marketing_campaign_name) && (
+            <Badge
+              variant="warning"
+              className="h-4 px-1.5 text-[10px]"
+              title="Comisión CYA: 20 % de lo ganado"
+            >
+              CYA · 20 %
             </Badge>
           )}
           {!isOverlay && <RecentActivity lead={lead} />}

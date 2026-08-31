@@ -26,6 +26,26 @@ export function getMarketingSyncErrorMessage(err: unknown): string {
   return 'Error desconocido durante la sincronización'
 }
 
+/** Maps Meta's camelCase creative fields to the database's snake_case columns. */
+export function mapMetaAdForStorage(ad: MetaAPI.MetaMarketingAd, updatedAt: string) {
+  const creative = extractMetaCreativeDetails(ad)
+  return {
+    creative_id: creative.creativeId,
+    destination_url: creative.destinationUrl,
+    url_tags: creative.urlTags,
+    call_to_action_type: creative.callToActionType,
+    lead_form_id: creative.leadFormId,
+    id: ad.id,
+    adset_id: ad.adset_id,
+    campaign_id: ad.campaign_id,
+    name: ad.name,
+    status: ad.status,
+    preview_url: ad.creative?.thumbnail_url,
+    updated_at: updatedAt,
+    raw_payload: ad,
+  }
+}
+
 /**
  * Full sync of Campaigns, Ad Sets and Ads from Meta.
  */
@@ -82,19 +102,9 @@ export async function syncMetaCatalog() {
 
     // Upsert Ads
     if (ads.length > 0) {
-      const { error: aErr } = await supabase.from('marketing_ads').upsert(
-        ads.map((a) => ({
-          ...extractMetaCreativeDetails(a),
-          id: a.id,
-          adset_id: a.adset_id,
-          campaign_id: a.campaign_id,
-          name: a.name,
-          status: a.status,
-          preview_url: a.creative?.thumbnail_url,
-          updated_at: now,
-          raw_payload: a,
-        })),
-      )
+      const { error: aErr } = await supabase
+        .from('marketing_ads')
+        .upsert(ads.map((ad) => mapMetaAdForStorage(ad, now)))
       if (aErr) throw aErr
     }
 

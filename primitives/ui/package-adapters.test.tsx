@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from './avatar'
 import { ButtonGroup, ButtonGroupSeparator, ButtonGroupText } from './button-group'
 import { FormFeedback } from './form-feedback'
 import { FormRow } from './form-row'
-import { Kbd, KbdGroup } from './kbd'
+import { Kbd, KbdGroup } from '@doscientos/ui'
 import { Separator } from './separator'
 
 describe('@doscientos/ui adapters', () => {

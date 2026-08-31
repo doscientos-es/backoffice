@@ -61,8 +61,7 @@ primero si pertenecen al paquete.
 1. Ejecutar en `modules/verifactu`: `pnpm test`, `pnpm typecheck`, `pnpm build`.
 2. Crear el tarball con `pnpm pack --pack-destination ../../internal/backoffice/vendor`.
 3. Instalarlo con `pnpm add @doscientos/verifactu@file:vendor/<tarball>`.
-4. Ejecutar `scripts/verify-verifactu-package.mjs`.
-5. Validar tests, typecheck y build del backoffice.
+4. Validar tests, typecheck y build del backoffice.
 
 No editar manualmente `pnpm-lock.yaml`. Si cambia el contenido de un tarball con
 la misma versión local, usar un nombre de revisión distinto para evitar caché.
@@ -85,7 +84,6 @@ datos ni seeds. No editar una migración aplicada; crear una correctiva.
 pnpm exec vitest run lib/verifactu --reporter=dot
 pnpm typecheck
 $env:CI='1'; pnpm build
-node scripts/verify-verifactu-package.mjs
 ```
 
 En base de datos comprobar además:

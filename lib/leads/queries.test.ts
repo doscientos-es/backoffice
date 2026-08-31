@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const state = vi.hoisted(() => ({
   rows: [] as Record<string, unknown>[],
   tasks: [] as Record<string, unknown>[],
+  campaigns: [] as Record<string, unknown>[],
   leadSelect: '',
   inCalls: [] as [string, unknown[]][],
 }))
@@ -11,7 +12,14 @@ vi.mock('@/lib/supabase/server', () => ({
   createServerClient: async () => ({
     from: (table: string) => {
       const result = {
-        data: table === 'leads' ? state.rows : table === 'tasks' ? state.tasks : [],
+        data:
+          table === 'leads'
+            ? state.rows
+            : table === 'tasks'
+              ? state.tasks
+              : table === 'marketing_campaigns'
+                ? state.campaigns
+                : [],
         error: null,
         count: table === 'leads' ? state.rows.length : null,
       }
@@ -44,6 +52,7 @@ describe('listLeads client avatar enrichment', () => {
   beforeEach(() => {
     state.rows = []
     state.tasks = []
+    state.campaigns = []
     state.leadSelect = ''
     state.inCalls = []
   })
@@ -143,6 +152,34 @@ describe('listLeads client avatar enrichment', () => {
     })
     expect(result.leads[0]?.scheduled_meeting_at).toBe('2099-07-22T09:00:00.000Z')
     expect(result.leads[1]?.next_action).toBeNull()
+  })
+
+  it('resolves a Meta lead campaign name from the synced campaign catalog', async () => {
+    state.rows = [
+      {
+        id: 'lead-1',
+        name: 'María García',
+        status: 'new',
+        created_at: '2026-07-16T10:00:00.000Z',
+        updated_at: '2026-07-16T10:00:00.000Z',
+        utm_campaign: 'campaign-cya',
+      },
+    ]
+    state.campaigns = [{ id: 'campaign-cya', name: 'CYA - PROSP SOFTWARE' }]
+
+    const result = await listLeads({
+      view: 'board',
+      q: '',
+      status: null,
+      source: null,
+      solutionType: null,
+      assignee: null,
+      attention: null,
+      page: 1,
+    })
+
+    expect(state.leadSelect).toContain('utm_campaign')
+    expect(result.leads[0]?.marketing_campaign_name).toBe('CYA - PROSP SOFTWARE')
   })
 
   it('limits a notification summary view to its lead ids', async () => {

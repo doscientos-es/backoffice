@@ -33,7 +33,7 @@ const CLIENT_EMBED = 'client:clients!lead_id(name, logo_url)'
 const PERFORMER_EMBED = 'performer:performed_by(id, name, avatar_url, github_handle)'
 
 const QUALIFICATION_COLUMNS =
-  'company_size, solution_type, urgency, first_contacted_at, landing_path, landing_ref, landing_subject, calculator_cost, calculator_hours, event_id, conversion_step, first_landing_path, first_referrer, first_utm_source, first_utm_medium, first_utm_campaign, first_utm_term, first_utm_content, last_landing_path, last_referrer, last_utm_source, last_utm_medium, last_utm_campaign, last_utm_term, last_utm_content'
+  'company_size, solution_type, urgency, first_contacted_at, landing_path, landing_ref, landing_subject, calculator_cost, calculator_hours, event_id, conversion_step, utm_campaign, first_landing_path, first_referrer, first_utm_source, first_utm_medium, first_utm_campaign, first_utm_term, first_utm_content, last_landing_path, last_referrer, last_utm_source, last_utm_medium, last_utm_campaign, last_utm_term, last_utm_content'
 
 /** Mom Test qualification checklist — only needed on the lead detail view. */
 const MOM_TEST_COLUMNS =
@@ -41,7 +41,7 @@ const MOM_TEST_COLUMNS =
 
 const LIST_COLUMNS = `id, version, name, alias, company, email, phone, source, notes, status, created_at, updated_at, estimated_value, score, ${QUALIFICATION_COLUMNS}, ai_summary, ai_updated_at, lost_reason, lost_at, assigned_to, ${CLIENT_EMBED}, ${ASSIGNEE_EMBED}`
 
-const DETAIL_COLUMNS = `id, version, name, alias, email, phone, company, source, status, notes, estimated_value, score, ${QUALIFICATION_COLUMNS}, ${MOM_TEST_COLUMNS}, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_suggested_next_step_at, ai_temperature, ai_confidence, ai_updated_at, ai_tags, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`
+const DETAIL_COLUMNS = `id, version, name, alias, email, phone, company, source, status, notes, estimated_value, score, ${QUALIFICATION_COLUMNS}, ${MOM_TEST_COLUMNS}, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_suggested_next_step_at, ai_temperature, ai_confidence, ai_updated_at, ai_tags, company_research, company_researched_at, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`
 
 const log = scopedLogger('leads.queries')
 
@@ -84,6 +84,25 @@ function mapClientRef(value: unknown): LeadClientRef | null {
   }
 }
 
+/** Resolves the Meta campaign IDs stored on leads to their synced campaign names. */
+async function loadMarketingCampaignNames(
+  campaignIds: Array<string | null>,
+): Promise<Map<string, string>> {
+  const ids = [...new Set(campaignIds.filter((id): id is string => Boolean(id?.trim())))]
+  if (ids.length === 0) return new Map()
+
+  const supabase = await createServerClient()
+  const { data, error } = await supabase
+    .from('marketing_campaigns')
+    .select('id, name')
+    .in('id', ids)
+  if (error) {
+    log.error({ err: error.message }, 'marketing_campaigns_query_failed')
+    return new Map()
+  }
+  return new Map((data ?? []).map((campaign) => [campaign.id, campaign.name]))
+}
+
 export async function listLeads(params: LeadListParams): Promise<LeadListResult> {
   const supabase = await createServerClient()
 
@@ -120,10 +139,11 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
 
   const rows = data ?? []
   const leadIds = rows.map((r) => r.id as string)
-  const [interactionsByLead, remindersByLead, durationsByLead] = await Promise.all([
+  const [interactionsByLead, remindersByLead, durationsByLead, campaignNames] = await Promise.all([
     loadRecentInteractions(leadIds),
     loadLeadReminders(leadIds),
     loadScheduledMeetingDurations(leadIds),
+    loadMarketingCampaignNames(rows.map((lead) => (lead.utm_campaign as string | null) ?? null)),
   ])
 
   const leads: LeadListItem[] = rows.map((l) => ({
@@ -150,6 +170,8 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
     landing_subject: (l.landing_subject as string | null) ?? null,
     conversion_step: (l.conversion_step as string | null) ?? null,
     first_landing_path: (l.first_landing_path as string | null) ?? null,
+    utm_campaign: (l.utm_campaign as string | null) ?? null,
+    marketing_campaign_name: campaignNames.get(l.utm_campaign as string) ?? null,
     last_utm_source: (l.last_utm_source as string | null) ?? null,
     last_utm_campaign: (l.last_utm_campaign as string | null) ?? null,
     ai_summary: (l.ai_summary as string | null) ?? null,
@@ -318,6 +340,11 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
   if (leadErr) log.error({ leadId: id, err: leadErr.message }, 'lead_query_failed')
   if (!lead) return null
 
+  const campaignNames = await loadMarketingCampaignNames([
+    (lead.utm_campaign as string | null) ?? null,
+  ])
+  const marketingCampaignName = campaignNames.get(lead.utm_campaign as string) ?? null
+
   const linkedClientId = (linkedClient?.id as string | undefined) ?? null
   const linkedClientName = (linkedClient?.name as string | undefined) ?? null
 
@@ -376,7 +403,10 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
   }))
 
   return {
-    lead: lead as unknown as LeadDetailResult['lead'],
+    lead: {
+      ...lead,
+      marketing_campaign_name: marketingCampaignName,
+    } as unknown as LeadDetailResult['lead'],
     interactions: detailInteractions,
     linkedClientId,
     linkedClientName,

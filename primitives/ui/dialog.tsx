@@ -7,7 +7,6 @@
   DialogHeader,
   DialogOverlay,
   DialogPortal,
-  DialogRoot,
   DialogTitle,
   DialogTrigger,
 } from '@doscientos/ui'

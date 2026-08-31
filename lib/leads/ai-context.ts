@@ -15,6 +15,23 @@ function compact(values: unknown[]): string {
   return values.filter((value) => value != null && String(value).trim() !== '').join(' · ') || '—'
 }
 
+function companyResearchSummary(value: unknown): string {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return '—'
+  const research = value as Record<string, unknown>
+  const services = Array.isArray(research.services) ? research.services.join(', ') : null
+  const reasons = Array.isArray(research.reasons) ? research.reasons.join(' | ') : null
+  const cautions = Array.isArray(research.cautions) ? research.cautions.join(' | ') : null
+  return compact([
+    research.description && `descripción: ${research.description}`,
+    research.sector && `sector: ${research.sector}`,
+    services && `servicios: ${services}`,
+    research.fit && `encaje: ${research.fit}`,
+    research.priority && `prioridad: ${research.priority}`,
+    reasons && `señales: ${reasons}`,
+    cautions && `cautelas: ${cautions}`,
+  ])
+}
+
 /** Serializes the CRM fields that influence qualification and sales prioritization. */
 export function formatLeadContextForAI(lead: LeadContextRow): string {
   return [
@@ -39,6 +56,7 @@ export function formatLeadContextForAI(lead: LeadContextRow): string {
     `Pérdida/no interés: ${compact([lead.lost_reason, lead.lost_at])}`,
     `Resumen IA anterior: ${display(lead.ai_summary)}`,
     `Siguiente paso IA anterior: ${display(lead.ai_suggested_next_step)} · fecha: ${display(lead.ai_suggested_next_step_at)}`,
+    `Investigación pública de empresa (información inferida, revisar antes de usar): ${companyResearchSummary(lead.company_research)}`,
   ].join('\n')
 }
 

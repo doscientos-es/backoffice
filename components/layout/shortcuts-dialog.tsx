@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Kbd, KbdGroup } from '@/components/ui/kbd'
+import { Kbd, KbdGroup } from '@doscientos/ui'
 import { CREATE_SHORTCUTS, NAV_SHORTCUTS } from '@/lib/navigation/shortcuts'
 
 /** Evento global para abrir el diálogo desde un botón u otro componente. */

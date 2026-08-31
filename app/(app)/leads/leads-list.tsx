@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { ListPage, type ListPageProps } from '@/components/layout/list-page'
 import { MemberLabel } from '@/components/ui/member-avatar'
 import { StatusBadge } from '@/components/ui/status-badge'
+import { requiresCyaProspectSoftwareCommission } from '@/lib/leads/attribution'
 import type { LeadListItem } from '@/lib/leads/types'
 import { getLeadInitials, leadDisplayName } from '@/lib/leads/utils'
 import type { MemberOption } from '@/lib/members/queries'
@@ -57,6 +58,7 @@ export function LeadsList({
       l.solution_type ?? '',
       l.urgency ?? '',
       l.source ?? '',
+      l.marketing_campaign_name ?? '',
       l.score?.toString() ?? '',
     ],
     cells: [
@@ -83,6 +85,14 @@ export function LeadsList({
           {l.email}
         </a>
       ) : null,
+      <div key="campaign" className="flex min-w-32 flex-col gap-0.5">
+        <span className="truncate" title={l.marketing_campaign_name ?? undefined}>
+          {l.marketing_campaign_name ?? '—'}
+        </span>
+        {requiresCyaProspectSoftwareCommission(l.marketing_campaign_name) && (
+          <span className="text-warning text-[11px] font-medium">Comisión CYA · 20 %</span>
+        )}
+      </div>,
       <div key="status" className="flex flex-col gap-0.5">
         <StatusBadge meta={LEAD_STATUS} value={l.status} />
         {(l.status === 'lost' || l.status === 'not_interested') && l.lost_reason && (
