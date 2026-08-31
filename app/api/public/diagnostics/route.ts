@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { DiagnosticReportEmail } from '@/components/email/diagnostic-report-email'
 import { renderDiagnosticPdf } from '@/lib/diagnostics/report'
+import { externalAppUrl } from '@/lib/email/app-url'
 import { renderEmail } from '@/lib/email/render'
 import { sendEmail } from '@/lib/email/resend'
 import { publicEnv, serverEnv } from '@/lib/env'
@@ -186,7 +187,7 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', leadId)
   }
-  const pdfUrl = `${publicEnv.NEXT_PUBLIC_APP_URL}/api/public/diagnostics/${diagnostic.id}/pdf?token=${encodeURIComponent(accessToken)}`
+  const pdfUrl = `${externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)}/api/public/diagnostics/${diagnostic.id}/pdf?token=${encodeURIComponent(accessToken)}`
   const reportUrl = landingReportUrl(request, diagnostic.id, accessToken)
   const eventContext = { ip, userAgent: request.headers.get('user-agent') }
   after(async () => {

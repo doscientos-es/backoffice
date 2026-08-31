@@ -1,6 +1,7 @@
 import type { VerifactuConfig } from '@doscientos/verifactu'
 
 import { isDemoMode } from '@/lib/demo'
+import { externalAppUrl } from '@/lib/email/app-url'
 import { serverEnv } from '@/lib/env'
 
 /** Serializable safe subset persisted with the immutable fiscal record. */
@@ -59,7 +60,7 @@ function verifactuConfigFromEnv(environment: 'test' | 'prod'): VerifactuConfig {
       onlyVerifactu: true,
       multipleTaxpayers: false,
     },
-    appUrl: env.NEXT_PUBLIC_APP_URL,
+    appUrl: externalAppUrl(env.NEXT_PUBLIC_APP_URL),
   }
 }
 

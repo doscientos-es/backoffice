@@ -12,9 +12,10 @@ import {
   hasCompleteFiscalData,
   promoteLeadFromClient,
 } from '@/lib/crm/conversion'
-import { emailAppUrl } from '@/lib/email/app-url'
+import { externalAppUrl } from '@/lib/email/app-url'
 import { renderEmail } from '@/lib/email/render'
 import { sendEmail } from '@/lib/email/resend'
+import { publicEnv } from '@/lib/env'
 import { backupProposalToDrive } from '@/lib/google/backup'
 import { sendProposalAcceptedEmail } from '@/lib/integrations/send-proposal-accepted-email'
 import { createProposalDraftInvoices } from '@/lib/invoices/proposal-drafts'
@@ -771,7 +772,7 @@ async function renderProposalPreview(
   const portalToken = proposal.portal_token
   if (!portalToken) return { ok: false, error: 'La propuesta no tiene token de portal' }
 
-  const appUrl = emailAppUrl(process.env.NEXT_PUBLIC_APP_URL)
+  const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
   const proposalNumber = proposal.number ?? (await nextProposalNumber(supabase))
   const { data: specs } = await supabase
     .from('proposal_specs')

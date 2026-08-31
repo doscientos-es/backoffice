@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 
 import { getCurrentUser } from '@/lib/auth'
+import { externalAppUrl } from '@/lib/email/app-url'
 import { publicEnv } from '@/lib/env'
 import { isPortalUnlocked } from '@/lib/portal/access'
 import { parseKeyPoints } from '@/lib/proposals/key-points'
@@ -110,7 +111,7 @@ export async function GET(
     items: pdfItems,
     maintenanceOffer,
     maintenanceSelectedPlanId,
-    portalUrl: `${publicEnv.NEXT_PUBLIC_APP_URL}/p/proposal/${token}`,
+    portalUrl: `${externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)}/p/proposal/${token}`,
   })
 
   return new NextResponse(new Uint8Array(pdf), {

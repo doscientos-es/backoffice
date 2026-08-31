@@ -1,7 +1,8 @@
 import { NewLeadEmail } from '@/components/email/new-lead-email'
-import { emailAppUrl } from '@/lib/email/app-url'
+import { externalAppUrl } from '@/lib/email/app-url'
 import { renderEmail } from '@/lib/email/render'
 import { sendEmail } from '@/lib/email/resend'
+import { publicEnv } from '@/lib/env'
 import { telegramSendMessage } from '@/lib/integrations/telegram'
 import { scopedLogger } from '@/lib/logger'
 import { dispatchNotifications } from '@/lib/notifications/dispatch'
@@ -46,7 +47,7 @@ const log = scopedLogger('notify-new-lead')
  */
 export async function notifyNewLead(input: NotifyNewLeadInput): Promise<void> {
   const supabase = createAdminClient()
-  const appUrl = emailAppUrl(process.env.NEXT_PUBLIC_APP_URL)
+  const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
   const leadUrl = `${appUrl}/leads/${input.leadId}`
 
   // ── 1. Fetch active owners and admins ────────────────────────────────────

@@ -1,5 +1,6 @@
 import 'server-only'
 import { formatAddress } from '@/lib/address'
+import { externalAppUrl } from '@/lib/email/app-url'
 import { buildVatBreakdown, type VatBreakdownRow } from '@/lib/finance'
 import { verifactuInvoiceConfigFromEnv } from '@/lib/verifactu/config'
 
@@ -224,10 +225,9 @@ export async function buildInvoicePdfData(input: BuildInvoicePdfInput): Promise<
     // New issued invoices persist this URL from the immutable RegistroAlta.
     // The legacy fallback only supports invoices emitted before qr_url existed.
     qrDataUrl: await buildInvoiceQr(invoice, settings?.company_nif || null),
-    portalUrl:
-      invoice.portal_token && process.env.NEXT_PUBLIC_APP_URL
-        ? `${process.env.NEXT_PUBLIC_APP_URL}/p/invoice/${invoice.portal_token}`
-        : null,
+    portalUrl: invoice.portal_token
+      ? `${externalAppUrl(process.env.NEXT_PUBLIC_APP_URL)}/p/invoice/${invoice.portal_token}`
+      : null,
     paymentTerms: invoice.payment_terms ?? settings?.payment_terms ?? null,
     workLogs: normalisedWorkLogs,
   }

@@ -10,6 +10,7 @@ import {
   promoteLeadFromClient,
 } from '@/lib/crm/conversion'
 import { isDemoMode } from '@/lib/demo'
+import { externalAppUrl } from '@/lib/email/app-url'
 import { publicEnv, serverEnv } from '@/lib/env'
 import { backupProposalToDrive } from '@/lib/google/backup'
 import { createRedsysPayment, getRedsysUrl } from '@/lib/integrations/redsys'
@@ -344,6 +345,7 @@ export async function initiateProposalPayment(
   if (isDemoMode()) return { ok: false, error: 'Los pagos están desactivados en modo demo' }
 
   const admin = createAdminClient()
+  const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
 
   const { data: proposal } = await admin
     .from('proposals')
@@ -403,7 +405,7 @@ export async function initiateProposalPayment(
     return {
       ok: true,
       demo: true,
-      url: `${publicEnv.NEXT_PUBLIC_APP_URL}/p/proposal/${token}?success=1`,
+      url: `${appUrl}/p/proposal/${token}?success=1`,
       signatureVersion: 'DEMO',
       merchantParameters: '',
       signature: '',
@@ -420,9 +422,9 @@ export async function initiateProposalPayment(
     Ds_Merchant_Terminal: env.REDSYS_TERMINAL,
     Ds_Merchant_Currency: env.REDSYS_CURRENCY,
     Ds_Merchant_TransactionType: '0',
-    Ds_Merchant_MerchantURL: `${publicEnv.NEXT_PUBLIC_APP_URL}/api/webhooks/redsys`,
-    Ds_Merchant_UrlOK: `${publicEnv.NEXT_PUBLIC_APP_URL}/p/proposal/${token}?success=1`,
-    Ds_Merchant_UrlKO: `${publicEnv.NEXT_PUBLIC_APP_URL}/p/proposal/${token}?error=1`,
+    Ds_Merchant_MerchantURL: `${appUrl}/api/webhooks/redsys`,
+    Ds_Merchant_UrlOK: `${appUrl}/p/proposal/${token}?success=1`,
+    Ds_Merchant_UrlKO: `${appUrl}/p/proposal/${token}?error=1`,
     Ds_Merchant_MerchantData: proposalId,
   })
 

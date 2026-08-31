@@ -1,5 +1,6 @@
 import { PaymentReceiptEmail } from '@/components/email'
 import { isDemoMode } from '@/lib/demo'
+import { externalAppUrl } from '@/lib/email/app-url'
 import { renderEmail } from '@/lib/email/render'
 import { sendEmail } from '@/lib/email/resend'
 import { publicEnv } from '@/lib/env'
@@ -226,7 +227,7 @@ export async function POST(req: Request) {
 
           if (recipientEmail && portalToken) {
             try {
-              const appUrl = publicEnv.NEXT_PUBLIC_APP_URL
+              const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
               const html = await renderEmail(
                 PaymentReceiptEmail({
                   clientName: client?.name ?? lead?.company ?? lead?.name ?? 'Hola',

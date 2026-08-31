@@ -4,10 +4,11 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
 import { defineAction } from '@/lib/actions/define-action'
-import { emailAppUrl } from '@/lib/email/app-url'
+import { externalAppUrl } from '@/lib/email/app-url'
 import { sendEmail } from '@/lib/email/resend'
 import { markdownToHtml } from '@/lib/email/templates'
 import { addEmailTracking } from '@/lib/email/tracking'
+import { publicEnv } from '@/lib/env'
 import {
   getNewsletterIssue,
   listNewsletterRecipients,
@@ -177,7 +178,7 @@ export const sendNewsletterTest = defineAction({
     if (!issue) throw new Error('Newsletter no encontrada')
 
     const baseHtml = renderNewsletterHtml(issue)
-    const appUrl = emailAppUrl(process.env.NEXT_PUBLIC_APP_URL)
+    const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
     const testToken = crypto.randomUUID()
     const html = appendNewsletterFooter(
       addEmailTracking(baseHtml, appUrl, testToken),
@@ -257,7 +258,7 @@ export const sendNewsletterIssue = defineAction({
     )
     if (pendingRecipients.length === 0) throw new Error('No quedan destinatarios pendientes.')
 
-    const appUrl = emailAppUrl(process.env.NEXT_PUBLIC_APP_URL)
+    const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
     let sentCount = 0
     try {
       for (const recipient of pendingRecipients) {

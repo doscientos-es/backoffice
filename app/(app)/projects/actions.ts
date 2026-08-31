@@ -8,9 +8,10 @@ import { ProjectKickoffEmail } from '@/components/email'
 import { defineAction } from '@/lib/actions/define-action'
 import { requireRole } from '@/lib/auth'
 import { VersionConflictError } from '@/lib/concurrency/version-conflict'
-import { emailAppUrl } from '@/lib/email/app-url'
+import { externalAppUrl } from '@/lib/email/app-url'
 import { renderEmail } from '@/lib/email/render'
 import { sendEmail } from '@/lib/email/resend'
+import { publicEnv } from '@/lib/env'
 import { parseGithubRepoUrl } from '@/lib/integrations/github-sync'
 import { buildPortalAccessPatch } from '@/lib/portal/access'
 import { uuidIdInput } from '@/lib/schemas/common'
@@ -245,7 +246,7 @@ export async function publishProjectPortal(input: unknown) {
   }
 
   try {
-    const appUrl = emailAppUrl(process.env.NEXT_PUBLIC_APP_URL)
+    const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
     const portalUrl = `${appUrl}/p/project/${project.portal_token}`
     const html = await renderEmail(
       ProjectKickoffEmail({

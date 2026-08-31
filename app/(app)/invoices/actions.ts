@@ -9,9 +9,10 @@ import { requireRole } from '@/lib/auth'
 import { ensureInvoiceRecipientVerified } from '@/lib/clients/fiscal-verification'
 import { VersionConflictError } from '@/lib/concurrency/version-conflict'
 import { hasCompleteFiscalData } from '@/lib/crm/conversion'
-import { emailAppUrl } from '@/lib/email/app-url'
+import { externalAppUrl } from '@/lib/email/app-url'
 import { renderEmail } from '@/lib/email/render'
 import { sendEmail } from '@/lib/email/resend'
+import { publicEnv } from '@/lib/env'
 import { computeLineTotals } from '@/lib/finance'
 import { backupInvoiceToDrive } from '@/lib/google/backup'
 import { pushMetaConversion } from '@/lib/integrations/meta-capi'
@@ -794,7 +795,7 @@ export const sendInvoiceEmail = defineAction<
     if (!invoice.portal_token) throw new Error('La factura no tiene token de portal')
 
     const invoiceNumber = invoice.full_number ?? '—'
-    const appUrl = emailAppUrl(process.env.NEXT_PUBLIC_APP_URL)
+    const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
     const portalUrl = `${appUrl}/p/invoice/${invoice.portal_token}`
     const html = await renderEmail(
       InvoiceEmail({

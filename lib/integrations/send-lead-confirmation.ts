@@ -1,7 +1,8 @@
 import { LeadConfirmationEmail } from '@/components/email/lead-confirmation-email'
-import { emailAppUrl } from '@/lib/email/app-url'
+import { externalAppUrl } from '@/lib/email/app-url'
 import { renderEmail } from '@/lib/email/render'
 import { sendEmail } from '@/lib/email/resend'
+import { publicEnv } from '@/lib/env'
 import { normalizeLeadSource } from '@/lib/leads/constants'
 import { scopedLogger } from '@/lib/logger'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -48,7 +49,7 @@ export async function sendLeadConfirmation(input: SendLeadConfirmationInput): Pr
   const html = await renderEmail(
     LeadConfirmationEmail({
       leadName: input.leadName,
-      appUrl: emailAppUrl(process.env.NEXT_PUBLIC_APP_URL),
+      appUrl: externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL),
       resource,
       calculatorCost: input.calculatorCost,
       calculatorHours: input.calculatorHours,

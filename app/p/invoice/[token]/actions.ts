@@ -1,6 +1,7 @@
 'use server'
 
 import { isDemoMode } from '@/lib/demo'
+import { externalAppUrl } from '@/lib/email/app-url'
 import { publicEnv, serverEnv } from '@/lib/env'
 import { createRedsysPayment, getRedsysUrl } from '@/lib/integrations/redsys'
 import { unlockPortalResource } from '@/lib/portal/access'
@@ -37,6 +38,7 @@ export async function initiatePayment(
   token: string,
 ): Promise<PaymentInitResult> {
   const admin = createAdminClient()
+  const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
 
   const { data: invoice } = await admin
     .from('invoices')
@@ -109,7 +111,7 @@ export async function initiatePayment(
     return {
       ok: true,
       demo: true,
-      url: `${publicEnv.NEXT_PUBLIC_APP_URL}/p/invoice/${token}?success=1`,
+      url: `${appUrl}/p/invoice/${token}?success=1`,
       signatureVersion: 'DEMO',
       merchantParameters: '',
       signature: '',
@@ -126,9 +128,9 @@ export async function initiatePayment(
     Ds_Merchant_Terminal: env.REDSYS_TERMINAL,
     Ds_Merchant_Currency: env.REDSYS_CURRENCY,
     Ds_Merchant_TransactionType: '0',
-    Ds_Merchant_MerchantURL: `${publicEnv.NEXT_PUBLIC_APP_URL}/api/webhooks/redsys`,
-    Ds_Merchant_UrlOK: `${publicEnv.NEXT_PUBLIC_APP_URL}/p/invoice/${token}?success=1`,
-    Ds_Merchant_UrlKO: `${publicEnv.NEXT_PUBLIC_APP_URL}/p/invoice/${token}?error=1`,
+    Ds_Merchant_MerchantURL: `${appUrl}/api/webhooks/redsys`,
+    Ds_Merchant_UrlOK: `${appUrl}/p/invoice/${token}?success=1`,
+    Ds_Merchant_UrlKO: `${appUrl}/p/invoice/${token}?error=1`,
     Ds_Merchant_MerchantData: invoiceId,
   })
 
