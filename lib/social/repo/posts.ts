@@ -259,6 +259,60 @@ export async function getPost(id: string): Promise<PostListItem | null> {
   return data ? mapPost(data as unknown as PostRow) : null
 }
 
+/** List a bounded batch of posts whose scheduled time has arrived. */
+export async function listDueScheduledPostIds(now: string, limit = 25): Promise<string[]> {
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from('social_posts')
+    .select('id')
+    .eq('status', 'scheduled')
+    .lte('scheduled_at', now)
+    .is('deleted_at', null)
+    .order('scheduled_at', { ascending: true })
+    .limit(limit)
+  if (error) throw new Error(`No se pudieron buscar publicaciones programadas: ${error.message}`)
+  return (data ?? []).map((post) => post.id)
+}
+
+/** Fetch a post for the cron worker, which has no end-user session. */
+export async function getScheduledPostForPublishing(id: string): Promise<PostListItem | null> {
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from('social_posts')
+    .select(POST_SELECT)
+    .eq('id', id)
+    .is('deleted_at', null)
+    .maybeSingle()
+  if (error) throw new Error(`No se pudo cargar la publicación programada: ${error.message}`)
+  return data ? mapPost(data as unknown as PostRow) : null
+}
+
+/**
+ * Atomically claim a due scheduled post for the cron worker. A post claimed by
+ * another invocation is skipped, preventing duplicate remote publications.
+ */
+export async function claimDueScheduledPost(postId: string, now: string): Promise<boolean> {
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from('social_posts')
+    .update({ status: 'publishing' })
+    .eq('id', postId)
+    .eq('status', 'scheduled')
+    .lte('scheduled_at', now)
+    .is('deleted_at', null)
+    .select('id')
+    .maybeSingle()
+  if (error) throw new Error(`No se pudo iniciar la publicación programada: ${error.message}`)
+  if (!data) return false
+
+  await supabase
+    .from('social_post_targets')
+    .update({ status: 'publishing', error: null })
+    .eq('post_id', postId)
+    .neq('status', 'published')
+  return true
+}
+
 /**
  * Replace media only while the post is still scheduled. The status condition is
  * part of the update so a scheduler transition to publishing cannot race this.
@@ -308,8 +362,12 @@ export async function markPublishing(postId: string): Promise<boolean> {
  * recomputed from EVERY target (not just the ones just retried), so a
  * selective retry correctly rolls up alongside previously-published targets.
  */
-export async function applyFanOut(postId: string, result: FanOutResult): Promise<void> {
-  const supabase = await createServerClient()
+export async function applyFanOut(
+  postId: string,
+  result: FanOutResult,
+  useAdminClient = false,
+): Promise<void> {
+  const supabase = useAdminClient ? createAdminClient() : await createServerClient()
   const now = new Date().toISOString()
 
   await Promise.all(

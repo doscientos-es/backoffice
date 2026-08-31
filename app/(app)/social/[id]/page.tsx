@@ -216,11 +216,11 @@ async function PostDetail({ id, canEdit }: { id: string; canEdit: boolean }) {
                 </div>
               )}
 
-              {post.status === 'draft' && (
+              {(post.status === 'draft' || post.status === 'scheduled') && (
                 <div className="border-border mt-6 border-t pt-4">
                   <PublishButton
                     postId={post.id}
-                    label="Publicar ahora"
+                    label={post.status === 'scheduled' ? 'Publicar ahora' : undefined}
                     size="default"
                     className="w-full"
                   />

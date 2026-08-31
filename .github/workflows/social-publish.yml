@@ -1,0 +1,29 @@
+name: Publish scheduled social posts
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: Publish due social posts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Call the social publishing endpoint
+        run: |
+          STATUS=$(curl --silent --output /tmp/social-publish.json \
+                        --write-out "%{http_code}" \
+                        --max-time 300 \
+                        -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+                        "${{ secrets.APP_URL }}/api/cron/social-publish")
+
+          echo "HTTP status: $STATUS"
+          cat /tmp/social-publish.json | python3 -m json.tool || true
+
+          if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 300 ]; then
+            echo "::error::El endpoint devolvió HTTP $STATUS"
+            exit 1
+          fi

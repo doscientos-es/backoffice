@@ -135,6 +135,77 @@ export async function publishPost(postId: string): Promise<FanOutResult> {
   return result
 }
 
+/** Publish a bounded batch of scheduled posts whose date has arrived. */
+export async function publishDueScheduledPosts(now = new Date()): Promise<{
+  checked: number
+  published: number
+  partiallyFailed: number
+  failed: number
+  skipped: number
+}> {
+  const nowIso = now.toISOString()
+  const postIds = await repo.listDueScheduledPostIds(nowIso)
+  const results = await Promise.allSettled(
+    postIds.map((postId) => publishDueScheduledPost(postId, nowIso)),
+  )
+  let published = 0
+  let partiallyFailed = 0
+  let failed = 0
+  let skipped = 0
+
+  for (const result of results) {
+    if (result.status === 'rejected') {
+      failed += 1
+      log.error({ err: result.reason }, 'scheduled_post_publish_failed')
+      continue
+    }
+    if (result.value === 'skipped') skipped += 1
+    else if (result.value === 'published') published += 1
+    else if (result.value === 'partially_failed') partiallyFailed += 1
+    else failed += 1
+  }
+
+  return { checked: postIds.length, published, partiallyFailed, failed, skipped }
+}
+
+async function publishDueScheduledPost(
+  postId: string,
+  nowIso: string,
+): Promise<'published' | 'partially_failed' | 'failed' | 'skipped'> {
+  if (!(await repo.claimDueScheduledPost(postId, nowIso))) return 'skipped'
+  const post = await repo.getScheduledPostForPublishing(postId)
+  if (!post) throw new Error('La publicación programada no existe.')
+
+  const platforms = post.targets
+    .filter((target) => target.status !== 'published')
+    .map((target) => target.platform)
+  if (platforms.length === 0) {
+    await repo.applyFanOut(postId, { status: 'failed', targets: [] }, true)
+    return 'failed'
+  }
+
+  const result: FanOutResult = isDemoMode()
+    ? {
+        status: 'published',
+        targets: platforms.map((platform) => ({
+          platform,
+          ok: true,
+          remoteId: `demo-${postId}-${platform}`,
+          remoteUrl: null,
+        })),
+      }
+    : await fanOutPublish(
+        composePost(post.id, post.caption, post.media),
+        platforms,
+        socialRegistry(),
+        captionOverrides(post.targets),
+      )
+  await repo.applyFanOut(postId, result, true)
+  return result.status === 'published' || result.status === 'partially_failed'
+    ? result.status
+    : 'failed'
+}
+
 /** Collect the per-network copy overrides stored on the post's targets. */
 function captionOverrides(targets: { platform: SocialPlatform; caption: string | null }[]) {
   const captions: CaptionByPlatform = {}
