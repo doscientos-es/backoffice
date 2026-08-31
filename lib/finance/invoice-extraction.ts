@@ -58,6 +58,7 @@ function findDate(text: string, labels: string[]): string | null {
     )
     if (!match) continue
     const [, day, month, year] = match
+    if (!day || !month || !year) continue
     return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
   }
   return null

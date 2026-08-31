@@ -259,7 +259,7 @@ export async function publishProjectPortal(input: unknown) {
     )
     const sent = await sendEmail({
       fromName: user.name,
-      fromAlias: user.email_alias,
+      fromAlias: user.emailAlias ?? user.email,
       to: project.clients.email,
       replyTo: user.email,
       subject: `Arrancamos con ${project.name}`,

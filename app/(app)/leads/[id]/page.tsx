@@ -525,8 +525,7 @@ export default async function LeadDetailPage({
                         </li>
                       );
                     },
-                  },
-                )}
+                  )}
                 </ol>
               )}
             </CardContent>

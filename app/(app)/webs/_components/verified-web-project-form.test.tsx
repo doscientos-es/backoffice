@@ -59,7 +59,13 @@ describe('VerifiedWebProjectForm', () => {
 
   it('saves routine metadata edits without interrupting with biometrics', async () => {
     render(
-      <VerifiedWebProjectForm clients={[]} mode="edit" projectId="web-1" defaults={defaults} />,
+      <VerifiedWebProjectForm
+        clients={[]}
+        projects={[]}
+        mode="edit"
+        projectId="web-1"
+        defaults={defaults}
+      />,
     )
 
     fireEvent.change(screen.getByDisplayValue('Web actual'), { target: { value: 'Nuevo nombre' } })
@@ -71,7 +77,13 @@ describe('VerifiedWebProjectForm', () => {
 
   it('requires verification when database credentials change', async () => {
     render(
-      <VerifiedWebProjectForm clients={[]} mode="edit" projectId="web-1" defaults={defaults} />,
+      <VerifiedWebProjectForm
+        clients={[]}
+        projects={[]}
+        mode="edit"
+        projectId="web-1"
+        defaults={defaults}
+      />,
     )
 
     fireEvent.change(screen.getByRole('textbox', { name: 'Host' }), {

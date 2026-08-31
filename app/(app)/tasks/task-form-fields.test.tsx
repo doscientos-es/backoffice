@@ -44,7 +44,13 @@ describe('TaskFormFields client visibility', () => {
       </form>,
     )
 
-    expect(screen.getByLabelText('Título para cliente')).toHaveValue('Título compartido')
-    expect(screen.getByLabelText('Resumen para cliente')).toHaveValue('Resumen compartido')
+    expect(screen.getByLabelText('Título para cliente')).toHaveProperty(
+      'value',
+      'Título compartido',
+    )
+    expect(screen.getByLabelText('Resumen para cliente')).toHaveProperty(
+      'value',
+      'Resumen compartido',
+    )
   })
 })

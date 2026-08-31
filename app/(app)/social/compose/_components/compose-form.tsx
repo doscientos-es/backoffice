@@ -352,7 +352,7 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
                     <Checkbox
                       id={`platform-${p}`}
                       checked={checked}
-                      disabled={!configured}
+                      isDisabled={!configured}
                       onCheckedChange={(v) => togglePlatform(p, v === true)}
                     />
                     <Label

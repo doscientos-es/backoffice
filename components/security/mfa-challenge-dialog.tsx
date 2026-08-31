@@ -71,13 +71,11 @@ export function MfaChallengeDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="sm:max-w-sm"
-        showCloseButton={dismissible}
-        onEscapeKeyDown={dismissible ? undefined : (event) => event.preventDefault()}
-        onPointerDownOutside={dismissible ? undefined : (event) => event.preventDefault()}
-      >
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => (dismissible || nextOpen) && onOpenChange(nextOpen)}
+    >
+      <DialogContent className="sm:max-w-sm" showCloseButton={dismissible}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShieldCheck className="text-primary size-5" /> Confirmar acción

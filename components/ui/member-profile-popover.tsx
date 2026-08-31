@@ -29,7 +29,6 @@ export function MemberProfilePopover({
         size="icon"
         type="button"
         aria-label={`Ver información de ${member.name}`}
-        title={`Ver información de ${member.name}`}
         onPointerDown={(event) => event.stopPropagation()}
         onClick={(event) => event.stopPropagation()}
         className="focus-visible:ring-ring/50 shrink-0 rounded-full focus-visible:ring-2 focus-visible:outline-none"
