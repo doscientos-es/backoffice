@@ -1,5 +1,3 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
 import {
   ButtonGroup,
   ButtonGroupSeparator,
@@ -9,6 +7,8 @@ import {
   Separator,
   SubmitButton,
 } from '@doscientos/ui'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 
 import { Avatar, AvatarFallback, AvatarImage } from './avatar'
 import { FormFeedback } from './form-feedback'
