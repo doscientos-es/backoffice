@@ -300,7 +300,7 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
           </span>
         )}
       </PopoverButton>
-      <PopoverContent placement="bottom end" offset={8} className="w-96 p-0">
+      <PopoverContent placement="bottom end" offset={8} className="z-50 w-96 p-0">
         <div className="border-border flex items-center justify-between gap-2 border-b px-3 py-2">
           <div className="flex items-baseline gap-2">
             <span className="text-sm font-semibold">Notificaciones</span>
