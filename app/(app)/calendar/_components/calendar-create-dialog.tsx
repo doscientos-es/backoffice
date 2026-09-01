@@ -9,10 +9,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { EntityCombobox } from '@/components/ui/entity-combobox'
 import { EntityMultiCombobox } from '@/components/ui/entity-multi-combobox'
 import { createCalendarEvent } from '@/lib/calendar/actions'
+import {
+  DEFAULT_MEETING_DURATION,
+  MEETING_DURATIONS,
+  type MeetingDuration,
+} from '@/lib/calendar/date-presets'
 import type { CalendarEvent } from '@/lib/calendar/types'
 import { cn } from '@/lib/utils'
 import { todayIsoLocal } from '@/lib/utils/date'
-import { dateAndTimeToIso } from '@/lib/utils/date-time'
+import { addMinutesToDatetimeLocal, datetimeLocalToIso } from '@/lib/utils/date-time'
 
 import type { LeadOption, ProjectOption, TeamMember } from './calendar-grid'
 
@@ -75,6 +80,8 @@ export function CalendarCreateDialog({
   const [date, setDate] = useState(initialDate ?? today)
   const [startTime, setStartTime] = useState('10:00')
   const [endTime, setEndTime] = useState('11:00')
+  const [meetingStart, setMeetingStart] = useState(`${initialDate ?? today}T10:00`)
+  const [meetingDuration, setMeetingDuration] = useState<MeetingDuration>(DEFAULT_MEETING_DURATION)
   const [description, setDescription] = useState('')
   const [assigneeId, setAssigneeId] = useState('')
   const [withMeet, setWithMeet] = useState(true)
@@ -91,6 +98,8 @@ export function CalendarCreateDialog({
   useEffect(() => {
     if (open) {
       setDate(initialDate ?? today)
+      setMeetingStart(`${initialDate ?? today}T10:00`)
+      setMeetingDuration(DEFAULT_MEETING_DURATION)
       setTitle('')
       setDescription('')
       setError(null)
@@ -122,8 +131,10 @@ export function CalendarCreateDialog({
 
         // ── Meeting with a contact that has a lead ID → scheduleLeadMeeting (logs as interaction) ────
         if (kind === 'google_meeting' && selectedLeadId && selectedContactLeadId) {
-          const startISO = dateAndTimeToIso(date, startTime)
-          const endISO = dateAndTimeToIso(date, endTime)
+          const startISO = datetimeLocalToIso(meetingStart)
+          const endISO = datetimeLocalToIso(
+            addMinutesToDatetimeLocal(meetingStart, meetingDuration),
+          )
           const attendeeEmails = [
             ...(selectedContact?.email ? [selectedContact.email] : []),
             ...memberEmails,
@@ -172,9 +183,15 @@ export function CalendarCreateDialog({
         const res = await createCalendarEvent({
           kind,
           title,
-          date,
-          startTime: kind !== 'task' ? startTime : undefined,
-          endTime: kind === 'google_meeting' || kind === 'event' ? endTime : undefined,
+          date: kind === 'google_meeting' ? meetingStart.slice(0, 10) : date,
+          startTime:
+            kind === 'google_meeting'
+              ? meetingStart.slice(11)
+              : kind !== 'task'
+                ? startTime
+                : undefined,
+          endTime: kind === 'event' ? endTime : undefined,
+          durationMinutes: kind === 'google_meeting' ? meetingDuration : undefined,
           description: description || undefined,
           assigneeId: kind === 'task' && assigneeId ? assigneeId : undefined,
           withMeet: kind === 'google_meeting' ? withMeet : undefined,
@@ -246,50 +263,84 @@ export function CalendarCreateDialog({
             className="border-border bg-background placeholder:text-muted-foreground focus:ring-ring w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:outline-none"
           />
 
-          {/* Date + time row */}
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <label htmlFor="ev-date" className={LABEL_CLS}>
-                Fecha
-              </label>
-              <input
-                id="ev-date"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-                className={cn(INPUT_CLS, 'mt-0.5')}
-              />
+          {kind === 'google_meeting' ? (
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label htmlFor="ev-meeting-start" className={LABEL_CLS}>
+                  Inicio
+                </label>
+                <input
+                  id="ev-meeting-start"
+                  type="datetime-local"
+                  value={meetingStart}
+                  onChange={(e) => setMeetingStart(e.target.value)}
+                  required
+                  className={cn(INPUT_CLS, 'mt-0.5')}
+                />
+              </div>
+              <div>
+                <label htmlFor="ev-meeting-duration" className={LABEL_CLS}>
+                  Duración
+                </label>
+                <select
+                  id="ev-meeting-duration"
+                  value={meetingDuration}
+                  onChange={(e) => setMeetingDuration(Number(e.target.value) as MeetingDuration)}
+                  className={cn(INPUT_CLS, 'mt-0.5')}
+                >
+                  {MEETING_DURATIONS.map((minutes) => (
+                    <option key={minutes} value={minutes}>
+                      {minutes} minutos
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-            {kind !== 'task' && (
-              <div>
-                <label htmlFor="ev-start" className={LABEL_CLS}>
-                  Hora
+          ) : (
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <label htmlFor="ev-date" className={LABEL_CLS}>
+                  Fecha
                 </label>
                 <input
-                  id="ev-start"
-                  type="time"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
+                  id="ev-date"
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  required
                   className={cn(INPUT_CLS, 'mt-0.5')}
                 />
               </div>
-            )}
-            {(kind === 'google_meeting' || kind === 'event') && (
-              <div>
-                <label htmlFor="ev-end" className={LABEL_CLS}>
-                  Fin
-                </label>
-                <input
-                  id="ev-end"
-                  type="time"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  className={cn(INPUT_CLS, 'mt-0.5')}
-                />
-              </div>
-            )}
-          </div>
+              {kind !== 'task' && (
+                <div>
+                  <label htmlFor="ev-start" className={LABEL_CLS}>
+                    Hora
+                  </label>
+                  <input
+                    id="ev-start"
+                    type="time"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    className={cn(INPUT_CLS, 'mt-0.5')}
+                  />
+                </div>
+              )}
+              {kind === 'event' && (
+                <div>
+                  <label htmlFor="ev-end" className={LABEL_CLS}>
+                    Fin
+                  </label>
+                  <input
+                    id="ev-end"
+                    type="time"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    className={cn(INPUT_CLS, 'mt-0.5')}
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Event: location */}
           {kind === 'event' && (

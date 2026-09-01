@@ -35,7 +35,12 @@ import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { Textarea } from '@/components/ui/textarea'
-import { defaultMeetingEnd, defaultMeetingStart } from '@/lib/calendar/date-presets'
+import {
+  DEFAULT_MEETING_DURATION,
+  MEETING_DURATIONS,
+  type MeetingDuration,
+  defaultMeetingStart,
+} from '@/lib/calendar/date-presets'
 import { publicEnv } from '@/lib/env'
 import { buildLeadWhatsAppMessage } from '@/lib/leads/whatsapp'
 import { buildBookingUrl } from '@/lib/recovery/utils'
@@ -240,21 +245,12 @@ export function QMeetDialog({
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [title, setTitle] = useState(`Reunión con ${leadName}`)
   const [start, setStart] = useState(defaultMeetingStart)
-  const [end, setEnd] = useState(defaultMeetingEnd)
+  const [duration, setDuration] = useState<MeetingDuration>(DEFAULT_MEETING_DURATION)
   const [description, setDescription] = useState('')
   const [projectId, setProjectId] = useState('')
   const members = useMemberToggle()
   const feedback = useFormFeedback()
   const router = useRouter()
-
-  function handleStartChange(val: string) {
-    setStart(val)
-    const s = new Date(val)
-    const e = new Date(end)
-    if (e <= s) {
-      setEnd(addMinutesToDatetimeLocal(val, 60))
-    }
-  }
 
   async function onSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -269,7 +265,7 @@ export function QMeetDialog({
       title,
       description: description.trim() || undefined,
       start: datetimeLocalToIso(start),
-      end: datetimeLocalToIso(end),
+      end: datetimeLocalToIso(addMinutesToDatetimeLocal(start, duration)),
       attendeeEmails: attendeeEmails.length > 0 ? attendeeEmails : undefined,
       projectId: projectId || undefined,
       withMeet: true,
@@ -326,20 +322,25 @@ export function QMeetDialog({
                   type="datetime-local"
                   required
                   value={start}
-                  onChange={(e) => handleStartChange(e.target.value)}
+                  onChange={(e) => setStart(e.target.value)}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor={`qa-meet-end-${leadId}`} className="text-xs font-medium">
-                  Fin <span className="text-destructive">*</span>
+                <Label htmlFor={`qa-meet-duration-${leadId}`} className="text-xs font-medium">
+                  Duración <span className="text-destructive">*</span>
                 </Label>
-                <Input
-                  id={`qa-meet-end-${leadId}`}
-                  type="datetime-local"
+                <Select
+                  id={`qa-meet-duration-${leadId}`}
                   required
-                  value={end}
-                  onChange={(e) => setEnd(e.target.value)}
-                />
+                  value={duration}
+                  onChange={(e) => setDuration(Number(e.target.value) as MeetingDuration)}
+                >
+                  {MEETING_DURATIONS.map((minutes) => (
+                    <option key={minutes} value={minutes}>
+                      {minutes} minutos
+                    </option>
+                  ))}
+                </Select>
               </div>
             </div>
             {projects.length > 0 && (
@@ -555,11 +556,7 @@ function FollowUpSection({
         htmlFor={`${idPrefix}-followup`}
         className="flex items-center gap-2 text-xs font-medium"
       >
-        <Checkbox
-          id={`${idPrefix}-followup`}
-          isSelected={enabled}
-          onChange={onEnabledChange}
-        />
+        <Checkbox id={`${idPrefix}-followup`} isSelected={enabled} onChange={onEnabledChange} />
         Crear aviso de seguimiento
       </label>
       {enabled && (

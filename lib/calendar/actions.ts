@@ -8,6 +8,7 @@ import { deleteEvent, insertEvent } from '@/lib/google/calendar'
 import { resolveSubject } from '@/lib/google/client'
 import { createServerClient } from '@/lib/supabase/server'
 
+import { DEFAULT_MEETING_DURATION, type MeetingDuration } from './date-presets'
 import type { CalendarEvent, CalendarEventKind } from './types'
 
 export type RescheduleResult = { ok: true } | { ok: false; error: string }
@@ -103,7 +104,8 @@ export type CreateCalendarEventInput = {
   title: string
   date: string // YYYY-MM-DD
   startTime?: string // HH:MM — optional for tasks, required for meetings/events
-  endTime?: string // HH:MM — meetings and events
+  endTime?: string // HH:MM — events only
+  durationMinutes?: MeetingDuration // google_meeting only
   description?: string
   assigneeId?: string // tasks only
   withMeet?: boolean // google_meeting only
@@ -258,9 +260,9 @@ export async function createCalendarEvent(
     if (!calendarId) return { ok: false, error: 'GOOGLE_CALENDAR_ID no configurado' }
 
     const startStr = `${input.date}T${input.startTime ?? '10:00'}:00`
-    const endStr = `${input.date}T${input.endTime ?? '11:00'}:00`
     const startDt = new Date(startStr)
-    const endDt = new Date(endStr)
+    const durationMinutes = input.durationMinutes ?? DEFAULT_MEETING_DURATION
+    const endDt = new Date(startDt.getTime() + durationMinutes * 60_000)
 
     try {
       const inserted = await insertEvent({
