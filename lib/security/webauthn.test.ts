@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 vi.mock('next/headers', () => ({ cookies: vi.fn(), headers: vi.fn() }))
 vi.mock('@/lib/env', () => ({
   publicEnv: {
-    NEXT_PUBLIC_APP_URL: 'https://backoffice-demo.example.test',
+    NEXT_PUBLIC_APP_URL: 'https://backoffice.example.test',
     NEXT_PUBLIC_DEMO_MODE: 'false',
   },
   serverEnv: () => ({ SUPABASE_SERVICE_ROLE_KEY: 'test-key' }),

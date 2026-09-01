@@ -25,9 +25,6 @@ Configurar en el proyecto Vercel **backoffice** y nunca en el cliente:
 - `FILEBROWSER_API_URL`, `FILEBROWSER_USER`, `FILEBROWSER_PASSWORD`: muestran el historial en Ajustes.
 - `CRON_SECRET` y, en GitHub Actions, los secretos `CRON_SECRET` y `APP_URL`.
 
-No configurar estas variables en `backoffice-demo`: la ruta devuelve un no-op y la demo no debe
-emitir copias externas.
-
 ## Contrato con el backup runner
 
 Además de los parámetros planos ya usados para los backups de webs, el endpoint recibe:
