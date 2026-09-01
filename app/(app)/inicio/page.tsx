@@ -22,7 +22,6 @@ import { MoneyOpportunitiesWidget } from './_components/money-opportunities-widg
 import { MyDayWidget } from './_components/my-day-widget'
 import { RangeSelector } from './_components/range-selector'
 import { RevenueWidget } from './_components/revenue-widget'
-import { SalesControlWidget } from './_components/sales-control-widget'
 import {
   AvisosWidgetSkeleton,
   KpiGridSkeleton,
@@ -46,7 +45,6 @@ export default async function InicioPage({ searchParams }: PageProps) {
   const greeting = getGreeting()
   const firstName = user.name.split(' ')[0]
   const showFinance = canViewFinance(user.role)
-  const showSalesControl = user.role === 'owner' || user.role === 'admin'
   const today = new Intl.DateTimeFormat('es-ES', {
     weekday: 'long',
     day: 'numeric',
@@ -101,8 +99,6 @@ export default async function InicioPage({ searchParams }: PageProps) {
           <AvisosWidget showFinance={showFinance} />
         </SectionBoundary>
       </section>
-
-      {showSalesControl ? <SalesControlWidget /> : null}
 
       <section className="flex flex-col gap-4" aria-labelledby="inicio-oportunidades">
         <div>

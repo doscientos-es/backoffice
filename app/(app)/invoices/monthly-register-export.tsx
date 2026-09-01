@@ -1,39 +1,39 @@
-'use client'
+"use client";
 
-import { CalendarDays, ChevronDown, Download } from 'lucide-react'
-import { useState } from 'react'
+import { CalendarDays, ChevronDown, Download } from "lucide-react";
+import { useState } from "react";
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { PopoverContent, PopoverTrigger } from '@doscientos/ui'
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Button as PopoverButton, PopoverContent, PopoverTrigger } from "@doscientos/ui";
 
 function currentMonth(): string {
-  return new Date().toISOString().slice(0, 7)
+  return new Date().toISOString().slice(0, 7);
 }
 
 function quarterForMonth(month: string): { year: string; quarter: number; label: string } | null {
-  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return null
-  const year = month.slice(0, 4)
-  const quarter = Math.ceil(Number(month.slice(5, 7)) / 3)
-  return { year, quarter, label: `T${quarter} ${year}` }
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return null;
+  const year = month.slice(0, 4);
+  const quarter = Math.ceil(Number(month.slice(5, 7)) / 3);
+  return { year, quarter, label: `T${quarter} ${year}` };
 }
 
 /** Groups the monthly and annual accounting-register downloads. */
 export function InvoiceRegisterExport({ year }: { year: number }) {
-  const [month, setMonth] = useState(currentMonth)
-  const monthHref = `/api/invoices/libro-registro?month=${month}`
-  const quarter = quarterForMonth(month)
+  const [month, setMonth] = useState(currentMonth);
+  const monthHref = `/api/invoices/libro-registro?month=${month}`;
+  const quarter = quarterForMonth(month);
   const quarterHref = quarter
     ? `/api/invoices/trimestral?year=${quarter.year}&quarter=${quarter.quarter}`
-    : null
+    : null;
 
   return (
     <PopoverTrigger>
-        <Button variant="outline" className="h-9 gap-2">
-          <Download className="size-4" />
-          Libro registro
-          <ChevronDown className="text-muted-foreground size-3.5" />
-        </Button>
+      <PopoverButton type="button" variant="outline" className="h-9 gap-2">
+        <Download className="size-4" />
+        Libro registro
+        <ChevronDown className="text-muted-foreground size-3.5" />
+      </PopoverButton>
       <PopoverContent placement="bottom end" className="w-[min(22rem,calc(100vw-2rem))] p-4">
         <div className="mb-4">
           <p className="text-sm font-semibold">Descargar libro registro</p>
@@ -128,5 +128,5 @@ export function InvoiceRegisterExport({ year }: { year: number }) {
         </div>
       </PopoverContent>
     </PopoverTrigger>
-  )
+  );
 }

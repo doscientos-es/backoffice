@@ -1,12 +1,12 @@
-'use client'
+"use client";
 
-import { MessageCircle, QrCode } from 'lucide-react'
-import Image from 'next/image'
-import { toDataURL } from 'qrcode'
-import { useEffect, useState } from 'react'
+import { MessageCircle, QrCode } from "lucide-react";
+import Image from "next/image";
+import { toDataURL } from "qrcode";
+import { useEffect, useState } from "react";
 
-import { Button } from '@/components/ui/button'
-import { CopyButton } from '@/components/ui/copy-button'
+import { Button } from "@/components/ui/button";
+import { CopyButton } from "@/components/ui/copy-button";
 import {
   Dialog,
   DialogContent,
@@ -14,14 +14,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
-import { PopoverContent, PopoverTrigger } from '@doscientos/ui'
-import { publicEnv } from '@/lib/env'
-import { buildBookingUrl } from '@/lib/recovery/utils'
-import { cn } from '@/lib/utils'
+} from "@/components/ui/dialog";
+import { Button as PopoverButton, PopoverContent, PopoverTrigger } from "@doscientos/ui";
+import { publicEnv } from "@/lib/env";
+import { buildBookingUrl } from "@/lib/recovery/utils";
+import { cn } from "@/lib/utils";
 
-import { startLeadCall } from '../actions'
-import { WhatsAppComposer } from '../whatsapp-composer'
+import { startLeadCall } from "../actions";
+import { WhatsAppComposer } from "../whatsapp-composer";
 
 /**
  * Normalises a raw phone string into a clean `tel:` URI value.
@@ -34,10 +34,10 @@ import { WhatsAppComposer } from '../whatsapp-composer'
  * 3. Otherwise return the cleaned string as-is.
  */
 function normalizePhone(phone: string): string {
-  const cleaned = phone.replace(/[^\d+]/g, '')
-  const plusIndex = cleaned.indexOf('+')
-  if (plusIndex > 0) return cleaned.slice(plusIndex)
-  return cleaned
+  const cleaned = phone.replace(/[^\d+]/g, "");
+  const plusIndex = cleaned.indexOf("+");
+  if (plusIndex > 0) return cleaned.slice(plusIndex);
+  return cleaned;
 }
 
 /**
@@ -54,19 +54,19 @@ export function LeadCallLink({
   className,
   ...props
 }: {
-  leadId: string
-  phone: string
-  children: React.ReactNode
-  className?: string
+  leadId: string;
+  phone: string;
+  children: React.ReactNode;
+  className?: string;
 } & React.AnchorHTMLAttributes<HTMLAnchorElement>) {
-  const normalized = normalizePhone(phone)
+  const normalized = normalizePhone(phone);
   async function handleClick(event: React.MouseEvent<HTMLAnchorElement>) {
-    event.preventDefault()
-    event.stopPropagation()
+    event.preventDefault();
+    event.stopPropagation();
     try {
-      await startLeadCall({ leadId })
+      await startLeadCall({ leadId });
     } finally {
-      window.location.href = `tel:${normalized}`
+      window.location.href = `tel:${normalized}`;
     }
   }
 
@@ -74,7 +74,7 @@ export function LeadCallLink({
     <a {...props} href={`tel:${normalized}`} onClick={handleClick} className={className}>
       {children}
     </a>
-  )
+  );
 }
 
 export function PhoneQuickActions({
@@ -86,15 +86,15 @@ export function PhoneQuickActions({
   senderName,
   aiEnabled,
 }: {
-  phone: string
-  leadId?: string
-  leadName?: string
-  leadEmail?: string | null
-  firstContactedAt?: string | null
-  senderName: string
-  aiEnabled?: boolean
+  phone: string;
+  leadId?: string;
+  leadName?: string;
+  leadEmail?: string | null;
+  firstContactedAt?: string | null;
+  senderName: string;
+  aiEnabled?: boolean;
 }) {
-  const normalized = normalizePhone(phone)
+  const normalized = normalizePhone(phone);
   return (
     <div className="flex items-center gap-1.5">
       {leadId ? (
@@ -127,7 +127,7 @@ export function PhoneQuickActions({
         />
       )}
     </div>
-  )
+  );
 }
 
 export function LeadWhatsAppButton({
@@ -139,33 +139,33 @@ export function LeadWhatsAppButton({
   senderName,
   aiEnabled,
 }: {
-  leadId: string
-  leadName: string
-  leadEmail: string | null
-  phone: string
-  firstContactedAt?: string | null
-  senderName: string
-  aiEnabled?: boolean
+  leadId: string;
+  leadName: string;
+  leadEmail: string | null;
+  phone: string;
+  firstContactedAt?: string | null;
+  senderName: string;
+  aiEnabled?: boolean;
 }) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
   const bookingUrl = buildBookingUrl(publicEnv.NEXT_PUBLIC_CAL_LINK, {
     id: leadId,
     name: leadName,
     email: leadEmail,
-  })
-  const firstName = leadName.split(' ')[0] || leadName
+  });
+  const firstName = leadName.split(" ")[0] || leadName;
   const initialMessage = [
-    `Hola, ${firstName}. Soy ${senderName || 'el equipo'}, de Doscientos.`,
-    'He intentado llamarte porque rellenaste un formulario en uno de nuestros anuncios de Meta.',
-    'Me gustaría entender qué necesitas y ver si podemos ayudarte.',
+    `Hola, ${firstName}. Soy ${senderName || "el equipo"}, de Doscientos.`,
+    "He intentado llamarte porque rellenaste un formulario en uno de nuestros anuncios de Meta.",
+    "Me gustaría entender qué necesitas y ver si podemos ayudarte.",
     bookingUrl
       ? `Puedes contarme brevemente por aquí o, si lo prefieres, agendar una reunión: ${bookingUrl}`
-      : 'Puedes contarme brevemente por aquí y te respondo en cuanto pueda.',
-    '¿Qué te resulta más cómodo?',
-  ].join('\n\n')
+      : "Puedes contarme brevemente por aquí y te respondo en cuanto pueda.",
+    "¿Qué te resulta más cómodo?",
+  ].join("\n\n");
   const message = firstContactedAt
-    ? `Hola, ${firstName}. Soy ${senderName || 'el equipo'}, de Doscientos.`
-    : initialMessage
+    ? `Hola, ${firstName}. Soy ${senderName || "el equipo"}, de Doscientos.`
+    : initialMessage;
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -199,44 +199,43 @@ export function LeadWhatsAppButton({
         />
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
 function PhoneQrPopover({ phone }: { phone: string }) {
-  const [open, setOpen] = useState(false)
-  const [qr, setQr] = useState<string | null>(null)
+  const [open, setOpen] = useState(false);
+  const [qr, setQr] = useState<string | null>(null);
 
   // Regenerate QR every time the popover opens or the phone changes.
   // `qr` is intentionally excluded from deps to avoid an infinite loop.
   useEffect(() => {
-    if (!open) return
-    let cancelled = false
-    setQr(null)
+    if (!open) return;
+    let cancelled = false;
+    setQr(null);
     toDataURL(`tel:${normalizePhone(phone)}`, { width: 220, margin: 1 })
       .then((url) => {
-        if (!cancelled) setQr(url)
+        if (!cancelled) setQr(url);
       })
       .catch(() => {
-        if (!cancelled) setQr(null)
-      })
+        if (!cancelled) setQr(null);
+      });
     return () => {
-      cancelled = true
-    }
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, phone])
+  }, [open, phone]);
 
   return (
     <PopoverTrigger isOpen={open} onOpenChange={setOpen}>
-        <button
-          type="button"
-          aria-label="Mostrar QR para llamar desde el móvil"
-          title="Llamar desde el móvil (QR)"
-          className={cn(
-            'inline-flex size-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
-          )}
-        >
-          <QrCode className="size-3.5" />
-        </button>
+      <PopoverButton
+        type="button"
+        size="icon-xs"
+        variant="ghost"
+        aria-label="Mostrar QR para llamar desde el móvil"
+        className={cn("text-muted-foreground hover:bg-muted hover:text-foreground")}
+      >
+        <QrCode className="size-3.5" />
+      </PopoverButton>
       <PopoverContent className="flex w-auto flex-col items-center gap-2 p-3">
         <p className="text-muted-foreground text-center text-xs">
           Escanea con el móvil para llamar a
@@ -258,5 +257,5 @@ function PhoneQrPopover({ phone }: { phone: string }) {
         </div>
       </PopoverContent>
     </PopoverTrigger>
-  )
+  );
 }
