@@ -1,9 +1,9 @@
-import { scopedLogger } from '@/lib/logger'
-import { notDeleted } from '@/lib/supabase/filters'
-import { createServerClient } from '@/lib/supabase/server'
-import { escapeIlike } from '@/lib/utils/search-params'
+import { scopedLogger } from "@/lib/logger";
+import { notDeleted } from "@/lib/supabase/filters";
+import { createServerClient } from "@/lib/supabase/server";
+import { escapeIlike } from "@/lib/utils/search-params";
 
-import type { InvoicePdfWorkLogInput } from './pdf-data'
+import type { InvoicePdfWorkLogInput } from "./pdf-data";
 import {
   type ClientInfo,
   type CompanySettings,
@@ -26,87 +26,91 @@ import {
   type VerifactuChainEntry,
   type VerifactuPatch,
   type WorkLogEntry,
-} from './types'
+} from "./types";
 
-const log = scopedLogger('invoices.queries')
+const log = scopedLogger("invoices.queries");
 
 type InvoiceConceptRow = {
-  description: string | null
-  position: number | null
-}
+  description: string | null;
+  position: number | null;
+};
 
 export function invoiceConcepts(items: InvoiceConceptRow[] | null | undefined): string[] {
   return [...(items ?? [])]
     .sort(
       (a, b) => (a.position ?? Number.MAX_SAFE_INTEGER) - (b.position ?? Number.MAX_SAFE_INTEGER),
     )
-    .map((item) => item.description?.trim() ?? '')
-    .filter(Boolean)
+    .map((item) => item.description?.trim() ?? "")
+    .filter(Boolean);
 }
 
 export async function listInvoices(params: InvoiceListParams): Promise<InvoiceListResult> {
-  const supabase = await createServerClient()
-  const page = Math.max(1, params.page ?? 1)
-  const from = (page - 1) * INVOICE_LIST_PAGE_SIZE
-  const to = from + INVOICE_LIST_PAGE_SIZE - 1
+  const supabase = await createServerClient();
+  const page = Math.max(1, params.page ?? 1);
+  const from = (page - 1) * INVOICE_LIST_PAGE_SIZE;
+  const to = from + INVOICE_LIST_PAGE_SIZE - 1;
 
-  const now = new Date()
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
 
   const [listRes, pendingRes, overdueRes, paidMonthRes, verifactuKoRes] = await Promise.all([
     (() => {
       let query = notDeleted(
         supabase
-          .from('invoices')
+          .from("invoices")
           .select(
-            'id, full_number, idfact, status, verifactu_status, total, issue_date, due_date, client_name, invoice_items(description, position)',
-            { count: 'exact' },
+            "id, client_id, full_number, idfact, status, verifactu_status, total, issue_date, due_date, client_name, invoice_items(description, position)",
+            { count: "exact" },
           ),
-      )
+      );
       if (params.q && params.q.length > 0) {
-        const pattern = `%${escapeIlike(params.q)}%`
+        const pattern = `%${escapeIlike(params.q)}%`;
         query = query.or(
           `full_number.ilike.${pattern},idfact.ilike.${pattern},client_name.ilike.${pattern}`,
-        )
+        );
       }
-      if (params.status) query = query.eq('status', params.status)
-      if (params.verifactu) query = query.eq('verifactu_status', params.verifactu)
-      const sortCol = params.sort ?? 'issue_date'
-      const ascending = params.dir === 'asc'
-      return query.order(sortCol, { ascending, nullsFirst: false }).range(from, to)
+      if (params.status) query = query.eq("status", params.status);
+      if (params.verifactu) query = query.eq("verifactu_status", params.verifactu);
+      const sortCol = params.sort ?? "issue_date";
+      const ascending = params.dir === "asc";
+      return query.order(sortCol, { ascending, nullsFirst: false }).range(from, to);
     })(),
-    notDeleted(supabase.from('invoices').select('total', { count: 'exact' })).eq(
-      'status',
-      'issued',
+    notDeleted(supabase.from("invoices").select("total", { count: "exact" })).eq(
+      "status",
+      "issued",
     ),
-    notDeleted(supabase.from('invoices').select('total', { count: 'exact' })).eq(
-      'status',
-      'overdue',
+    notDeleted(supabase.from("invoices").select("total", { count: "exact" })).eq(
+      "status",
+      "overdue",
     ),
-    notDeleted(supabase.from('invoices').select('total'))
-      .eq('status', 'paid')
-      .gte('issue_date', monthStart),
-    notDeleted(supabase.from('invoices').select('id', { count: 'exact', head: true })).in(
-      'verifactu_status',
-      ['rejected', 'error'],
+    notDeleted(supabase.from("invoices").select("total"))
+      .eq("status", "paid")
+      .gte("issue_date", monthStart),
+    notDeleted(supabase.from("invoices").select("id", { count: "exact", head: true })).in(
+      "verifactu_status",
+      ["rejected", "error"],
     ),
-  ])
+  ]);
 
-  if (listRes.error) log.error({ err: listRes.error.message }, 'list_invoices_failed')
+  if (listRes.error) log.error({ err: listRes.error.message }, "list_invoices_failed");
 
-  const pendingTotal = (pendingRes.data ?? []).reduce((acc, r) => acc + Number(r.total ?? 0), 0)
-  const overdueTotal = (overdueRes.data ?? []).reduce((acc, r) => acc + Number(r.total ?? 0), 0)
-  const paidMonthTotal = (paidMonthRes.data ?? []).reduce((acc, r) => acc + Number(r.total ?? 0), 0)
+  const pendingTotal = (pendingRes.data ?? []).reduce((acc, r) => acc + Number(r.total ?? 0), 0);
+  const overdueTotal = (overdueRes.data ?? []).reduce((acc, r) => acc + Number(r.total ?? 0), 0);
+  const paidMonthTotal = (paidMonthRes.data ?? []).reduce(
+    (acc, r) => acc + Number(r.total ?? 0),
+    0,
+  );
 
   return {
     data: (listRes.data ?? []).map((i) => ({
       id: i.id as string,
+      client_id: i.client_id as string,
       full_number: (i.full_number as string | null) ?? null,
       idfact: (i.idfact as string | null) ?? null,
       concepts: invoiceConcepts(
         (
           i as unknown as {
-            invoice_items: InvoiceConceptRow[] | null
+            invoice_items: InvoiceConceptRow[] | null;
           }
         ).invoice_items,
       ),
@@ -127,43 +131,43 @@ export async function listInvoices(params: InvoiceListParams): Promise<InvoiceLi
       verifactuKoCount: verifactuKoRes.count ?? 0,
     },
     error: listRes.error?.message ?? null,
-  }
+  };
 }
 
 export async function getInvoiceDetail(id: string): Promise<InvoiceDetailResult> {
-  const supabase = await createServerClient()
+  const supabase = await createServerClient();
 
   const { data: invoice, error } = await notDeleted(
     supabase
-      .from('invoices')
-      .select('*, clients(id, name, logo_url), projects(id, name)')
-      .eq('id', id),
-  ).maybeSingle()
+      .from("invoices")
+      .select("*, clients(id, name, logo_url), projects(id, name)")
+      .eq("id", id),
+  ).maybeSingle();
 
-  if (error) log.error({ invoiceId: id, err: error.message }, 'get_invoice_detail_failed')
-  if (!invoice) return null
+  if (error) log.error({ invoiceId: id, err: error.message }, "get_invoice_detail_failed");
+  if (!invoice) return null;
 
   const [{ data: items }, { data: settings }] = await Promise.all([
     supabase
-      .from('invoice_items')
-      .select('id, position, description, quantity, unit_price, vat_rate, subtotal')
-      .eq('invoice_id', id)
-      .order('position'),
+      .from("invoice_items")
+      .select("id, position, description, quantity, unit_price, vat_rate, subtotal")
+      .eq("invoice_id", id)
+      .order("position"),
     supabase
-      .from('settings')
-      .select('company_name, company_nif, company_address, iban, payment_terms')
-      .eq('id', 1)
+      .from("settings")
+      .select("company_name, company_nif, company_address, iban, payment_terms")
+      .eq("id", 1)
       .single(),
-  ])
+  ]);
 
   const client =
     (
       invoice as unknown as {
-        clients: { id: string; name: string; logo_url: string | null } | null
+        clients: { id: string; name: string; logo_url: string | null } | null;
       }
-    ).clients ?? null
+    ).clients ?? null;
   const project =
-    (invoice as unknown as { projects: { id: string; name: string } | null }).projects ?? null
+    (invoice as unknown as { projects: { id: string; name: string } | null }).projects ?? null;
 
   return {
     invoice: {
@@ -207,7 +211,7 @@ export async function getInvoiceDetail(id: string): Promise<InvoiceDetailResult>
           payment_terms: (settings.payment_terms as string | null) ?? null,
         }
       : null,
-  }
+  };
 }
 
 // ─── Status / soft-delete mutations ──────────────────────────────────────────
@@ -217,18 +221,18 @@ export async function getInvoiceDetail(id: string): Promise<InvoiceDetailResult>
  * to stamp it. Returns `null` when the invoice does not exist.
  */
 export async function findInvoiceTimestamps(id: string): Promise<InvoiceTimestamps | null> {
-  const supabase = await createServerClient()
+  const supabase = await createServerClient();
   const { data } = await supabase
-    .from('invoices')
-    .select('issued_at, client_id')
-    .eq('id', id)
-    .maybeSingle()
+    .from("invoices")
+    .select("issued_at, client_id")
+    .eq("id", id)
+    .maybeSingle();
   return data
     ? {
         issued_at: (data.issued_at as string | null) ?? null,
         client_id: (data.client_id as string | null) ?? null,
       }
-    : null
+    : null;
 }
 
 /**
@@ -239,46 +243,46 @@ export async function findInvoiceTimestamps(id: string): Promise<InvoiceTimestam
 export async function patchInvoiceClientSnapshot(
   id: string,
   snapshot: {
-    client_nif: string | null
-    client_name: string | null
-    client_address_street: string | null
-    client_address_zip: string | null
-    client_address_city: string | null
-    client_address_province: string | null
-    client_address_country: string | null
+    client_nif: string | null;
+    client_name: string | null;
+    client_address_street: string | null;
+    client_address_zip: string | null;
+    client_address_city: string | null;
+    client_address_province: string | null;
+    client_address_country: string | null;
   },
 ): Promise<void> {
-  const supabase = await createServerClient()
+  const supabase = await createServerClient();
   const { error } = await supabase
-    .from('invoices')
+    .from("invoices")
     .update({ ...snapshot, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .eq('status', 'draft')
-  if (error) throw new Error(error.message)
+    .eq("id", id)
+    .eq("status", "draft");
+  if (error) throw new Error(error.message);
 }
 
 /** Applies a status/timestamp patch to an invoice row. Throws on DB error. */
 export async function patchInvoiceStatus(id: string, patch: InvoiceStatusPatch): Promise<void> {
-  const supabase = await createServerClient()
-  const { error } = await supabase.from('invoices').update(patch).eq('id', id)
-  if (error) throw new Error(error.message)
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("invoices").update(patch).eq("id", id);
+  if (error) throw new Error(error.message);
 }
 
 /** Soft-deletes an invoice by stamping `deleted_at`. Throws on DB error. */
 export async function softDeleteInvoice(id: string): Promise<void> {
-  const supabase = await createServerClient()
+  const supabase = await createServerClient();
   const { error } = await supabase
-    .from('invoices')
+    .from("invoices")
     .update({ deleted_at: new Date().toISOString() })
-    .eq('id', id)
-  if (error) throw new Error(error.message)
+    .eq("id", id);
+  if (error) throw new Error(error.message);
 }
 
 /** Clears `deleted_at`, reversing a soft-delete. Throws on DB error. */
 export async function restoreDeletedInvoice(id: string): Promise<void> {
-  const supabase = await createServerClient()
-  const { error } = await supabase.from('invoices').update({ deleted_at: null }).eq('id', id)
-  if (error) throw new Error(error.message)
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("invoices").update({ deleted_at: null }).eq("id", id);
+  if (error) throw new Error(error.message);
 }
 
 // ─── Verifactu queries ────────────────────────────────────────────────────────
@@ -288,17 +292,17 @@ export async function restoreDeletedInvoice(id: string): Promise<void> {
  * Returns `null` when the invoice is deleted or does not exist.
  */
 export async function findInvoiceForVerifactu(id: string): Promise<InvoiceForVerifactu | null> {
-  const supabase = await createServerClient()
+  const supabase = await createServerClient();
   const { data, error } = await supabase
-    .from('invoices')
+    .from("invoices")
     .select(
-      'id, client_id, status, verifactu_status, full_number, invoice_type, issue_date, tax_amount, total, previous_hash, chain_sequence, client_nif, client_name',
+      "id, client_id, status, verifactu_status, full_number, invoice_type, issue_date, tax_amount, total, previous_hash, chain_sequence, client_nif, client_name",
     )
-    .eq('id', id)
-    .is('deleted_at', null)
-    .maybeSingle()
-  if (error) log.error({ invoiceId: id, err: error.message }, 'find_invoice_for_verifactu_failed')
-  if (!data) return null
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (error) log.error({ invoiceId: id, err: error.message }, "find_invoice_for_verifactu_failed");
+  if (!data) return null;
   return {
     id: data.id as string,
     client_id: (data.client_id as string | null) ?? null,
@@ -313,7 +317,7 @@ export async function findInvoiceForVerifactu(id: string): Promise<InvoiceForVer
     chain_sequence: (data.chain_sequence as number | null) ?? null,
     client_nif: (data.client_nif as string | null) ?? null,
     client_name: (data.client_name as string | null) ?? null,
-  }
+  };
 }
 
 /**
@@ -321,59 +325,59 @@ export async function findInvoiceForVerifactu(id: string): Promise<InvoiceForVer
  * or `null` when no accepted invoices exist yet.
  */
 export async function findLastVerifactuChainEntry(): Promise<VerifactuChainEntry | null> {
-  const supabase = await createServerClient()
+  const supabase = await createServerClient();
   const { data } = await supabase
-    .from('invoices')
-    .select('current_hash, chain_sequence, full_number, issue_date')
-    .eq('verifactu_status', 'accepted')
-    .not('current_hash', 'is', null)
-    .order('chain_sequence', { ascending: false, nullsFirst: false })
+    .from("invoices")
+    .select("current_hash, chain_sequence, full_number, issue_date")
+    .eq("verifactu_status", "accepted")
+    .not("current_hash", "is", null)
+    .order("chain_sequence", { ascending: false, nullsFirst: false })
     .limit(1)
-    .maybeSingle()
-  if (!data) return null
+    .maybeSingle();
+  if (!data) return null;
   return {
     current_hash: data.current_hash as string,
     chain_sequence: data.chain_sequence as number,
     full_number: data.full_number as string,
     issue_date: data.issue_date as string,
-  }
+  };
 }
 
 /** Returns the line items needed to build the Verifactu VAT breakdown. */
 export async function findInvoiceItemsForVat(id: string): Promise<VatLineItem[]> {
-  const supabase = await createServerClient()
+  const supabase = await createServerClient();
   const { data } = await supabase
-    .from('invoice_items')
-    .select('description, vat_rate, subtotal')
-    .eq('invoice_id', id)
-    .order('position')
+    .from("invoice_items")
+    .select("description, vat_rate, subtotal")
+    .eq("invoice_id", id)
+    .order("position");
   return (data ?? []).map((it) => ({
     description: (it.description as string | null) ?? null,
     vat_rate: Number(it.vat_rate ?? 0),
     subtotal: Number(it.subtotal ?? 0),
-  }))
+  }));
 }
 
 /** Returns company-level Verifactu settings (NIF + name). */
 export async function findCompanySettings(): Promise<CompanySettings | null> {
-  const supabase = await createServerClient()
+  const supabase = await createServerClient();
   const { data } = await supabase
-    .from('settings')
-    .select('company_nif, company_name')
-    .eq('id', 1)
-    .maybeSingle()
-  if (!data) return null
+    .from("settings")
+    .select("company_nif, company_name")
+    .eq("id", 1)
+    .maybeSingle();
+  if (!data) return null;
   return {
     company_nif: (data.company_nif as string | null) ?? null,
-    company_name: (data.company_name as string | null) ?? '',
-  }
+    company_name: (data.company_name as string | null) ?? "",
+  };
 }
 
 /** Persists the Verifactu submission result on the invoice row. Throws on DB error. */
 export async function patchInvoiceAfterVerifactu(id: string, patch: VerifactuPatch): Promise<void> {
-  const supabase = await createServerClient()
-  const { error } = await supabase.from('invoices').update(patch).eq('id', id)
-  if (error) throw new Error(error.message)
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("invoices").update(patch).eq("id", id);
+  if (error) throw new Error(error.message);
 }
 
 // ─── Invoice creation helpers ─────────────────────────────────────────────────
@@ -382,14 +386,14 @@ export async function patchInvoiceAfterVerifactu(id: string, patch: VerifactuPat
 export async function findProposalForInvoice(
   proposalId: string,
 ): Promise<ProposalForInvoice | null> {
-  const supabase = await createServerClient()
+  const supabase = await createServerClient();
   const { data } = await supabase
-    .from('proposals')
-    .select('id, client_id, project_id, status, title, notes, payment_schedule, payment_plan')
-    .eq('id', proposalId)
-    .is('deleted_at', null)
-    .maybeSingle()
-  if (!data) return null
+    .from("proposals")
+    .select("id, client_id, project_id, status, title, notes, payment_schedule, payment_plan")
+    .eq("id", proposalId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!data) return null;
   return {
     id: data.id as string,
     client_id: data.client_id as string,
@@ -399,35 +403,35 @@ export async function findProposalForInvoice(
     notes: (data.notes as string | null) ?? null,
     payment_schedule: (data.payment_schedule as string | null) ?? null,
     payment_plan: data.payment_plan,
-  }
+  };
 }
 
 /** Plan item ids which already own a non-deleted invoice for this proposal. */
 export async function findInvoicedProposalPaymentPlanIds(proposalId: string): Promise<Set<string>> {
-  const supabase = await createServerClient()
+  const supabase = await createServerClient();
   const { data, error } = await supabase
-    .from('invoices')
-    .select('proposal_payment_plan_item_id')
-    .eq('proposal_id', proposalId)
-    .is('deleted_at', null)
-    .not('proposal_payment_plan_item_id', 'is', null)
-  if (error) throw new Error(error.message)
+    .from("invoices")
+    .select("proposal_payment_plan_item_id")
+    .eq("proposal_id", proposalId)
+    .is("deleted_at", null)
+    .not("proposal_payment_plan_item_id", "is", null);
+  if (error) throw new Error(error.message);
   return new Set(
     (data ?? [])
       .map((invoice) => invoice.proposal_payment_plan_item_id as string | null)
       .filter((id): id is string => Boolean(id)),
-  )
+  );
 }
 
 /** Returns all line items for a proposal, ordered by position. */
 export async function findProposalItems(proposalId: string): Promise<ProposalItem[]> {
-  const supabase = await createServerClient()
+  const supabase = await createServerClient();
   const { data, error } = await supabase
-    .from('proposal_items')
-    .select('position, description, quantity, unit_price, vat_rate, billing_cycle')
-    .eq('proposal_id', proposalId)
-    .order('position')
-  if (error) throw new Error(error.message)
+    .from("proposal_items")
+    .select("position, description, quantity, unit_price, vat_rate, billing_cycle")
+    .eq("proposal_id", proposalId)
+    .order("position");
+  if (error) throw new Error(error.message);
   return (data ?? []).map((it) => ({
     position: it.position as number,
     description: (it.description as string | null) ?? null,
@@ -435,20 +439,20 @@ export async function findProposalItems(proposalId: string): Promise<ProposalIte
     unit_price: Number(it.unit_price ?? 0),
     vat_rate: Number(it.vat_rate ?? 0),
     billing_cycle: (it.billing_cycle as string | null) ?? null,
-  }))
+  }));
 }
 
 /** Returns client snapshot fields denormalized onto invoices. */
 export async function findClientInfo(clientId: string): Promise<ClientInfo | null> {
-  const supabase = await createServerClient()
+  const supabase = await createServerClient();
   const { data } = await supabase
-    .from('clients')
+    .from("clients")
     .select(
-      'name, nif, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country',
+      "name, nif, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country",
     )
-    .eq('id', clientId)
-    .maybeSingle()
-  if (!data) return null
+    .eq("id", clientId)
+    .maybeSingle();
+  if (!data) return null;
   return {
     name: (data.name as string | null) ?? null,
     nif: (data.nif as string | null) ?? null,
@@ -457,7 +461,7 @@ export async function findClientInfo(clientId: string): Promise<ClientInfo | nul
     billing_address_city: (data.billing_address_city as string | null) ?? null,
     billing_address_province: (data.billing_address_province as string | null) ?? null,
     billing_address_country: (data.billing_address_country as string | null) ?? null,
-  }
+  };
 }
 
 /**
@@ -465,13 +469,13 @@ export async function findClientInfo(clientId: string): Promise<ClientInfo | nul
  * defaulting to `"A"` when absent or blank.
  */
 export async function findInvoiceSeries(): Promise<string> {
-  const supabase = await createServerClient()
+  const supabase = await createServerClient();
   const { data } = await supabase
-    .from('settings')
-    .select('invoice_series')
-    .eq('id', 1)
-    .maybeSingle()
-  return ((data?.invoice_series as string | null) ?? 'A').trim() || 'A'
+    .from("settings")
+    .select("invoice_series")
+    .eq("id", 1)
+    .maybeSingle();
+  return ((data?.invoice_series as string | null) ?? "A").trim() || "A";
 }
 
 /**
@@ -484,10 +488,10 @@ export async function findInvoiceSeries(): Promise<string> {
  * serialise concurrent calls and avoid duplicate number collisions.
  */
 export async function findNextInvoiceNumberForSeries(series: string): Promise<number> {
-  const supabase = await createServerClient()
-  const { data, error } = await supabase.rpc('next_invoice_number', { p_series: series })
-  if (error) throw new Error(error.message)
-  return data as number
+  const supabase = await createServerClient();
+  const { data, error } = await supabase.rpc("next_invoice_number", { p_series: series });
+  if (error) throw new Error(error.message);
+  return data as number;
 }
 
 /**
@@ -502,24 +506,24 @@ export async function insertInvoiceWithItems(
   invoiceData: NewInvoiceData,
   items: InvoiceItemInsert[],
 ): Promise<{ id: string }> {
-  const supabase = await createServerClient()
+  const supabase = await createServerClient();
   const { data: invoice, error: invoiceError } = await supabase
-    .from('invoices')
+    .from("invoices")
     .insert(invoiceData)
-    .select('id')
-    .single()
+    .select("id")
+    .single();
   if (invoiceError || !invoice)
-    throw new Error(invoiceError?.message ?? 'No se pudo crear la factura')
+    throw new Error(invoiceError?.message ?? "No se pudo crear la factura");
 
   const { error: itemsError } = await supabase
-    .from('invoice_items')
-    .insert(items.map((it) => ({ ...it, invoice_id: invoice.id as string })))
+    .from("invoice_items")
+    .insert(items.map((it) => ({ ...it, invoice_id: invoice.id as string })));
   if (itemsError) {
-    log.error({ err: itemsError, invoiceId: invoice.id }, 'insert_invoice_items_failed')
-    throw new Error(itemsError.message)
+    log.error({ err: itemsError, invoiceId: invoice.id }, "insert_invoice_items_failed");
+    throw new Error(itemsError.message);
   }
 
-  return { id: invoice.id as string }
+  return { id: invoice.id as string };
 }
 
 // ─── Hourly invoice helpers ───────────────────────────────────────────────────
@@ -528,14 +532,14 @@ export async function insertInvoiceWithItems(
 export async function findProjectForHourlyBilling(
   projectId: string,
 ): Promise<ProjectForHourlyBilling | null> {
-  const supabase = await createServerClient()
+  const supabase = await createServerClient();
   const { data } = await supabase
-    .from('projects')
-    .select('id, client_id, name, billing_type, hourly_rate, hourly_vat_rate')
-    .eq('id', projectId)
-    .is('deleted_at', null)
-    .maybeSingle()
-  if (!data) return null
+    .from("projects")
+    .select("id, client_id, name, billing_type, hourly_rate, hourly_vat_rate")
+    .eq("id", projectId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!data) return null;
   return {
     id: data.id as string,
     client_id: data.client_id as string,
@@ -543,7 +547,7 @@ export async function findProjectForHourlyBilling(
     billing_type: data.billing_type as string,
     hourly_rate: Number(data.hourly_rate ?? 0),
     hourly_vat_rate: Number(data.hourly_vat_rate ?? 0),
-  }
+  };
 }
 
 /**
@@ -555,29 +559,29 @@ export async function findUnlinkedWorkLogsForMonth(
   monthStart: string,
   monthEnd: string,
 ): Promise<WorkLogEntry[]> {
-  const supabase = await createServerClient()
+  const supabase = await createServerClient();
   const { data, error } = await supabase
-    .from('work_logs')
-    .select('id, hours')
-    .eq('project_id', projectId)
-    .is('deleted_at', null)
-    .is('invoice_id', null)
-    .gte('work_date', monthStart)
-    .lt('work_date', monthEnd)
-    .order('work_date', { ascending: true })
-  if (error) throw new Error(error.message)
-  return (data ?? []).map((l) => ({ id: l.id as string, hours: Number(l.hours ?? 0) }))
+    .from("work_logs")
+    .select("id, hours")
+    .eq("project_id", projectId)
+    .is("deleted_at", null)
+    .is("invoice_id", null)
+    .gte("work_date", monthStart)
+    .lt("work_date", monthEnd)
+    .order("work_date", { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((l) => ({ id: l.id as string, hours: Number(l.hours ?? 0) }));
 }
 
 /** Links a set of work-log rows to an invoice so they can't be double-billed. */
 export async function linkWorkLogsToInvoice(logIds: string[], invoiceId: string): Promise<void> {
-  if (logIds.length === 0) return
-  const supabase = await createServerClient()
+  if (logIds.length === 0) return;
+  const supabase = await createServerClient();
   const { error } = await supabase
-    .from('work_logs')
+    .from("work_logs")
     .update({ invoice_id: invoiceId })
-    .in('id', logIds)
-  if (error) throw new Error(error.message)
+    .in("id", logIds);
+  if (error) throw new Error(error.message);
 }
 
 /**
@@ -585,19 +589,19 @@ export async function linkWorkLogsToInvoice(logIds: string[], invoiceId: string)
  * date. Used to render the tracked-hours breakdown page of the invoice PDF.
  */
 export async function findWorkLogsForInvoice(invoiceId: string): Promise<InvoicePdfWorkLogInput[]> {
-  const supabase = await createServerClient()
+  const supabase = await createServerClient();
   const { data, error } = await supabase
-    .from('work_logs')
-    .select('work_date, hours, start_time, end_time, note, team_members:member_id(name)')
-    .eq('invoice_id', invoiceId)
-    .is('deleted_at', null)
-    .order('work_date', { ascending: true })
+    .from("work_logs")
+    .select("work_date, hours, start_time, end_time, note, team_members:member_id(name)")
+    .eq("invoice_id", invoiceId)
+    .is("deleted_at", null)
+    .order("work_date", { ascending: true });
   if (error) {
-    log.error({ invoiceId, err: error.message }, 'find_work_logs_for_invoice_failed')
-    return []
+    log.error({ invoiceId, err: error.message }, "find_work_logs_for_invoice_failed");
+    return [];
   }
   return (data ?? []).map((w) => {
-    const member = w.team_members as unknown as { name: string } | null
+    const member = w.team_members as unknown as { name: string } | null;
     return {
       work_date: (w.work_date as string | null) ?? null,
       member_name: member?.name ?? null,
@@ -605,8 +609,8 @@ export async function findWorkLogsForInvoice(invoiceId: string): Promise<Invoice
       end_time: ((w.end_time as string | null) ?? null)?.slice(0, 5) ?? null,
       hours: Number(w.hours ?? 0),
       note: (w.note as string | null) ?? null,
-    }
-  })
+    };
+  });
 }
 
 // ─── Invoice edit helpers ─────────────────────────────────────────────────────
@@ -616,17 +620,17 @@ export async function findWorkLogsForInvoice(invoiceId: string): Promise<Invoice
  * Returns `null` when the invoice does not exist.
  */
 export async function findInvoiceForEdit(id: string): Promise<{ status: string } | null> {
-  const supabase = await createServerClient()
-  const { data } = await supabase.from('invoices').select('status').eq('id', id).single()
-  if (!data) return null
-  return { status: data.status as string }
+  const supabase = await createServerClient();
+  const { data } = await supabase.from("invoices").select("status").eq("id", id).single();
+  if (!data) return null;
+  return { status: data.status as string };
 }
 
 /** Applies a partial header patch to a draft invoice. Throws on DB error. */
 export async function patchInvoiceHeader(id: string, patch: InvoiceHeaderPatch): Promise<void> {
-  const supabase = await createServerClient()
-  const { error } = await supabase.from('invoices').update(patch).eq('id', id)
-  if (error) throw new Error(error.message)
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("invoices").update(patch).eq("id", id);
+  if (error) throw new Error(error.message);
 }
 
 /**
@@ -638,17 +642,17 @@ export async function replaceInvoiceItems(
   invoiceId: string,
   items: InvoiceItemInsert[],
 ): Promise<void> {
-  const supabase = await createServerClient()
+  const supabase = await createServerClient();
   const { error: deleteError } = await supabase
-    .from('invoice_items')
+    .from("invoice_items")
     .delete()
-    .eq('invoice_id', invoiceId)
-  if (deleteError) throw new Error(deleteError.message)
+    .eq("invoice_id", invoiceId);
+  if (deleteError) throw new Error(deleteError.message);
 
   const { error: insertError } = await supabase
-    .from('invoice_items')
-    .insert(items.map((it, idx) => ({ ...it, position: idx, invoice_id: invoiceId })))
-  if (insertError) throw new Error(insertError.message)
+    .from("invoice_items")
+    .insert(items.map((it, idx) => ({ ...it, position: idx, invoice_id: invoiceId })));
+  if (insertError) throw new Error(insertError.message);
 }
 
 // ─── Portal access ────────────────────────────────────────────────────────────
@@ -658,9 +662,9 @@ export async function patchInvoicePortal(
   id: string,
   patch: Record<string, unknown>,
 ): Promise<void> {
-  const supabase = await createServerClient()
-  const { error } = await supabase.from('invoices').update(patch).eq('id', id)
-  if (error) throw new Error(error.message)
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("invoices").update(patch).eq("id", id);
+  if (error) throw new Error(error.message);
 }
 
 // ─── Email helpers ────────────────────────────────────────────────────────────
@@ -670,20 +674,20 @@ export async function patchInvoicePortal(
  * Returns `null` when the invoice is deleted or does not exist.
  */
 export async function findInvoiceForEmail(id: string): Promise<InvoiceForEmail | null> {
-  const supabase = await createServerClient()
+  const supabase = await createServerClient();
   const { data, error } = await supabase
-    .from('invoices')
+    .from("invoices")
     .select(
-      'id, full_number, total, due_date, status, portal_token, is_client_visible, clients(name, email)',
+      "id, full_number, total, due_date, status, portal_token, is_client_visible, clients(name, email)",
     )
-    .eq('id', id)
-    .is('deleted_at', null)
-    .maybeSingle()
-  if (error) log.error({ invoiceId: id, err: error.message }, 'find_invoice_for_email_failed')
-  if (!data) return null
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (error) log.error({ invoiceId: id, err: error.message }, "find_invoice_for_email_failed");
+  if (!data) return null;
 
   const rawClient = (data as unknown as { clients: { name: string; email: string | null } | null })
-    .clients
+    .clients;
   return {
     id: data.id as string,
     full_number: (data.full_number as string | null) ?? null,
@@ -693,7 +697,7 @@ export async function findInvoiceForEmail(id: string): Promise<InvoiceForEmail |
     portal_token: (data.portal_token as string | null) ?? null,
     is_client_visible: Boolean(data.is_client_visible),
     client: rawClient ?? null,
-  }
+  };
 }
 
 // ─── Rectification helpers ────────────────────────────────────────────────────
@@ -705,18 +709,18 @@ export async function findInvoiceForEmail(id: string): Promise<InvoiceForEmail |
 export async function findInvoiceForRectification(
   id: string,
 ): Promise<InvoiceForRectification | null> {
-  const supabase = await createServerClient()
+  const supabase = await createServerClient();
   const { data, error } = await supabase
-    .from('invoices')
+    .from("invoices")
     .select(
-      'id, status, verifactu_status, invoice_type, full_number, series, number, issue_date, client_id, project_id, client_nif, client_name, client_address_street, client_address_zip, client_address_city, client_address_province, client_address_country, notes, payment_terms, subtotal, tax_amount, total, is_rectification',
+      "id, status, verifactu_status, invoice_type, full_number, series, number, issue_date, client_id, project_id, client_nif, client_name, client_address_street, client_address_zip, client_address_city, client_address_province, client_address_country, notes, payment_terms, subtotal, tax_amount, total, is_rectification",
     )
-    .eq('id', id)
-    .is('deleted_at', null)
-    .maybeSingle()
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
   if (error)
-    log.error({ invoiceId: id, err: error.message }, 'find_invoice_for_rectification_failed')
-  if (!data) return null
+    log.error({ invoiceId: id, err: error.message }, "find_invoice_for_rectification_failed");
+  if (!data) return null;
   return {
     id: data.id as string,
     status: data.status as string,
@@ -741,7 +745,7 @@ export async function findInvoiceForRectification(
     tax_amount: Number(data.tax_amount ?? 0),
     total: Number(data.total ?? 0),
     is_rectification: Boolean(data.is_rectification),
-  }
+  };
 }
 
 /**
@@ -750,34 +754,34 @@ export async function findInvoiceForRectification(
  */
 export async function insertRectificationWithItems(
   invoiceData: NewInvoiceData & {
-    invoice_type: string
-    is_rectification: true
-    rectified_invoice_id: string
-    rectification_reason: string
-    rectification_type: string
+    invoice_type: string;
+    is_rectification: true;
+    rectified_invoice_id: string;
+    rectification_reason: string;
+    rectification_type: string;
   },
   items: InvoiceItemInsert[],
 ): Promise<{ id: string }> {
-  const supabase = await createServerClient()
+  const supabase = await createServerClient();
   // Cast to `any` because the generated DB types don't include the new
   // rectification columns until the schema types are regenerated.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: invoice, error: invoiceError } = await supabase
-    .from('invoices')
+    .from("invoices")
     // biome-ignore lint/suspicious/noExplicitAny: new columns not yet in generated types
     .insert(invoiceData as any)
-    .select('id')
-    .single()
+    .select("id")
+    .single();
   if (invoiceError || !invoice)
-    throw new Error(invoiceError?.message ?? 'No se pudo crear la factura rectificativa')
+    throw new Error(invoiceError?.message ?? "No se pudo crear la factura rectificativa");
 
   const { error: itemsError } = await supabase
-    .from('invoice_items')
-    .insert(items.map((it) => ({ ...it, invoice_id: invoice.id as string })))
+    .from("invoice_items")
+    .insert(items.map((it) => ({ ...it, invoice_id: invoice.id as string })));
   if (itemsError) {
-    log.error({ err: itemsError, invoiceId: invoice.id }, 'insert_rectification_items_failed')
-    throw new Error(itemsError.message)
+    log.error({ err: itemsError, invoiceId: invoice.id }, "insert_rectification_items_failed");
+    throw new Error(itemsError.message);
   }
 
-  return { id: invoice.id as string }
+  return { id: invoice.id as string };
 }

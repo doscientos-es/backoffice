@@ -236,6 +236,14 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* Keep standard dialogs compact before Tailwind's `sm` breakpoint. The task quick
+ * view remains full-width because it is a dedicated working surface. */
+@media (max-width: 39.999rem) {
+  [data-slot='dialog-content']:not(.max-sm\:max-w-none):not(.sm\:max-w-6xl) {
+    max-width: 24rem;
+  }
+}
+
 /* Focus ring (consistent across all interactive elements) */
 :where(button, [role='button'], a, input, textarea, select):focus-visible {
   outline: 2px solid var(--ring);

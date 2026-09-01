@@ -1,119 +1,120 @@
-import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { Mail, MessageSquare, Phone, StickyNote } from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 
-import { DetailGrid, DetailRow } from '@/components/layout/detail-grid'
-import { PageHeader } from '@/components/layout/page-header'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { CopySummaryButton } from '@/components/ui/copy-summary-button'
-import { SectionBoundary } from '@/components/ui/error-boundary'
-import { MemberLabel } from '@/components/ui/member-avatar'
-import { StatusBadge } from '@/components/ui/status-badge'
-import { isAIEnabled } from '@/lib/ai'
-import { requireUser } from '@/lib/auth'
-import { CONVERSION_STEP_LABEL } from '@/lib/conversion-events/labels'
-import { formatLeadBriefingForAI } from '@/lib/leads/ai-context'
-import { requiresCyaProspectSoftwareCommission } from '@/lib/leads/attribution'
+import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
+import { PageHeader } from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CopySummaryButton } from "@/components/ui/copy-summary-button";
+import { SectionBoundary } from "@/components/ui/error-boundary";
+import { MemberLabel } from "@/components/ui/member-avatar";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { isAIEnabled } from "@/lib/ai";
+import { requireUser } from "@/lib/auth";
+import { CONVERSION_STEP_LABEL } from "@/lib/conversion-events/labels";
+import { formatLeadBriefingForAI } from "@/lib/leads/ai-context";
+import { requiresCyaProspectSoftwareCommission } from "@/lib/leads/attribution";
 import {
   groupResendInteractions,
   interactionBodyText,
   interactionDate,
-} from '@/lib/leads/interaction-utils'
-import { suggestedCallDurationMinutes } from '@/lib/leads/meeting-duration'
-import { getLeadDetail } from '@/lib/leads/queries'
-import type { LeadCompanyResearch as LeadCompanyResearchData } from '@/lib/leads/types'
-import { leadDisplayName } from '@/lib/leads/utils'
-import { listActiveMembers } from '@/lib/members/queries'
-import { LEAD_STATUS, TASK_STATUS, type TaskStatus } from '@/lib/status'
-import { formatDate, formatEUR, relativeTime } from '@/lib/utils'
+} from "@/lib/leads/interaction-utils";
+import { suggestedCallDurationMinutes } from "@/lib/leads/meeting-duration";
+import { getLeadDetail } from "@/lib/leads/queries";
+import type { LeadCompanyResearch as LeadCompanyResearchData } from "@/lib/leads/types";
+import { leadDisplayName } from "@/lib/leads/utils";
+import { listActiveMembers } from "@/lib/members/queries";
+import { LEAD_STATUS, TASK_STATUS, type TaskStatus } from "@/lib/status";
+import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
 
-import { TaskCreateDialog } from '../../tasks/task-create-dialog'
-import { CallInteractionDetails } from './call-interaction-details'
-import { DeleteLeadInteractionButton } from './delete-lead-interaction-button'
-import { EmailDeliveryStatuses } from './email-delivery-statuses'
-import { Lead360Timeline } from './lead-360-timeline'
-import { LeadAiPanel } from './lead-ai-panel'
-import { LeadCommercial } from './lead-commercial'
-import { LeadCompanyResearch } from './lead-company-research'
+import { TaskCreateDialog } from "../../tasks/task-create-dialog";
+import { CallInteractionDetails } from "./call-interaction-details";
+import { DeleteLeadInteractionButton } from "./delete-lead-interaction-button";
+import { EmailDeliveryStatuses } from "./email-delivery-statuses";
+import { Lead360Timeline } from "./lead-360-timeline";
+import { LeadAiPanel } from "./lead-ai-panel";
+import { LeadCommercial } from "./lead-commercial";
+import { LeadCompanyResearch } from "./lead-company-research";
 import {
   LeadAttachmentsSection,
   LeadConversionJourneySection,
   LeadDiagnosticsSection,
   LeadQuickActionsSection,
-} from './lead-detail-async-sections'
-import { LeadEditDialog } from './lead-edit-dialog'
-import { LeadInteractionDetails } from './lead-interaction-details'
-import { LeadNextActionTaskItem } from './lead-next-action-task-item'
-import { LeadNotesDialog } from './lead-notes-dialog'
-import { MomTestChecklist } from './mom-test-checklist'
-import { PhoneQuickActions } from './phone-actions'
-import { LeadStatusSelect } from './status-select'
+} from "./lead-detail-async-sections";
+import { LeadEditDialog } from "./lead-edit-dialog";
+import { LeadInteractionDetails } from "./lead-interaction-details";
+import { LeadNextActionTaskItem } from "./lead-next-action-task-item";
+import { LeadNotesDialog } from "./lead-notes-dialog";
+import { MomTestChecklist } from "./mom-test-checklist";
+import { PhoneQuickActions } from "./phone-actions";
+import { LeadStatusSelect } from "./status-select";
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 const INTERACTION_LABEL: Record<string, string> = {
-  email_sent: 'Email enviado',
-  email_received: 'Email recibido',
-  email_delivered: 'Email entregado',
-  email_opened: 'Email abierto',
-  email_clicked: 'Email con clic',
-  email_bounced: 'Email rebotado',
-  email_complained: 'Email marcado como spam',
-  email_scheduled: 'Email programado',
-  email_delivery_delayed: 'Entrega de email retrasada',
-  email_failed: 'Error al enviar el email',
-  email_suppressed: 'Email suprimido',
-  call: 'Llamada',
-  meeting: 'Reunión',
-  note: 'Nota',
-  owner_change: 'Responsable cambiado',
-  status_change: 'Cambio de estado',
-  portal_view: 'Portal visto',
-  portal_accept: 'Propuesta aceptada',
-  portal_reject: 'Propuesta rechazada',
-}
+  email_sent: "Email enviado",
+  email_received: "Email recibido",
+  email_delivered: "Email entregado",
+  email_opened: "Email abierto",
+  email_clicked: "Email con clic",
+  email_bounced: "Email rebotado",
+  email_complained: "Email marcado como spam",
+  email_scheduled: "Email programado",
+  email_delivery_delayed: "Entrega de email retrasada",
+  email_failed: "Error al enviar el email",
+  email_suppressed: "Email suprimido",
+  call: "Llamada",
+  meeting: "Reunión",
+  note: "Nota",
+  owner_change: "Responsable cambiado",
+  status_change: "Cambio de estado",
+  portal_view: "Portal visto",
+  portal_accept: "Propuesta aceptada",
+  portal_reject: "Propuesta rechazada",
+};
 
 type NextAction = {
-  id: string
-  title: string
-  kind: 'task' | 'reminder'
-  when: string | null
-  status: TaskStatus
-}
+  id: string;
+  title: string;
+  kind: "task" | "reminder";
+  when: string | null;
+  status: TaskStatus;
+};
 
 /**
  * Recorta el cuerpo de la interacción para mostrarlo en el timeline.
  * Acepta HTML (emails) y texto plano (notas, transcripciones).
  */
 function excerpt(body: string | null, max = 160): string | null {
-  const text = interactionBodyText(body)?.replace(/\s+/g, ' ').trim()
-  if (!text) return null
-  return text.length > max ? `${text.slice(0, max)}…` : text
+  const text = interactionBodyText(body)?.replace(/\s+/g, " ").trim();
+  if (!text) return null;
+  return text.length > max ? `${text.slice(0, max)}…` : text;
 }
 
 function hasValue(value: unknown): boolean {
-  if (value == null) return false
-  return typeof value === 'string' ? value.trim().length > 0 : true
+  if (value == null) return false;
+  return typeof value === "string" ? value.trim().length > 0 : true;
 }
 
 function compactParts(parts: Array<string | null | undefined>): string | null {
-  const value = parts.filter(hasValue).join(' · ')
-  return value || null
+  const value = parts.filter(hasValue).join(" · ");
+  return value || null;
 }
 
 export default async function LeadDetailPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ id: string }>
-  searchParams?: Promise<{ feedback?: string }>
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{ feedback?: string }>;
 }) {
-  const { id } = await params
-  const query = await searchParams
-  const user = await requireUser()
+  const { id } = await params;
+  const query = await searchParams;
+  const user = await requireUser();
 
-  const result = await getLeadDetail(id)
-  if (!result) notFound()
+  const result = await getLeadDetail(id);
+  if (!result) notFound();
   const {
     lead,
     companyResearchAvailable,
@@ -126,49 +127,49 @@ export default async function LeadDetailPage({
     tasks,
     reminders,
     attachments,
-  } = result
+  } = result;
 
-  const aiEnabled = isAIEnabled()
-  const canEdit = user.role !== 'viewer'
-  const members = canEdit ? await listActiveMembers().catch(() => []) : []
+  const aiEnabled = isAIEnabled();
+  const canEdit = user.role !== "viewer";
+  const members = canEdit ? await listActiveMembers().catch(() => []) : [];
   const nextActions: NextAction[] = [
     ...tasks.map((task) => ({
       id: task.id as string,
       title: task.title as string,
-      kind: 'task' as const,
+      kind: "task" as const,
       when: (task.due_date as string | null) ?? null,
       status: task.status as TaskStatus,
     })),
     ...reminders.map((reminder) => ({
       id: reminder.id as string,
       title: reminder.title as string,
-      kind: 'reminder' as const,
+      kind: "reminder" as const,
       when: reminder.remind_at,
-      status: 'todo' as TaskStatus,
+      status: "todo" as TaskStatus,
     })),
   ].sort((a, b) => {
-    if (!a.when) return 1
-    if (!b.when) return -1
-    return new Date(a.when).getTime() - new Date(b.when).getTime()
-  })
+    if (!a.when) return 1;
+    if (!b.when) return -1;
+    return new Date(a.when).getTime() - new Date(b.when).getTime();
+  });
 
-  const displayName = leadDisplayName(lead)
-  const alias = (lead.alias as string | null)?.trim() || null
-  const campaignName = lead.marketing_campaign_name
+  const displayName = leadDisplayName(lead);
+  const alias = (lead.alias as string | null)?.trim() || null;
+  const campaignName = lead.marketing_campaign_name;
   const firstTouch = compactParts([
     lead.first_landing_path,
     lead.first_referrer,
     lead.first_utm_source,
     lead.first_utm_medium,
     lead.first_utm_campaign,
-  ])
+  ]);
   const lastTouch = compactParts([
     lead.last_landing_path,
     lead.last_referrer,
     lead.last_utm_source,
     lead.last_utm_medium,
     lead.last_utm_campaign,
-  ])
+  ]);
   const briefing = formatLeadBriefingForAI({
     lead,
     clientName: linkedClientName,
@@ -179,43 +180,43 @@ export default async function LeadDetailPage({
     tasks,
     reminders,
     attachments,
-  })
-  const defaultDurationMinutes = suggestedCallDurationMinutes(interactions)
+  });
+  const defaultDurationMinutes = suggestedCallDurationMinutes(interactions);
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title={displayName}
         description={(lead.company as string | null) ?? undefined}
         breadcrumbs={[
-          { label: 'Leads', href: '/leads' },
+          { label: "Leads", href: "/leads" },
           { label: displayName },
-          ...(linkedClientId ? [{ label: 'Cliente', href: `/clients/${linkedClientId}` }] : []),
+          ...(linkedClientId ? [{ label: "Cliente", href: `/clients/${linkedClientId}` }] : []),
         ]}
         actions={
           <>
             <CopySummaryButton
               lines={(() => {
-                const parts: string[] = []
+                const parts: string[] = [];
                 parts.push(
                   [`🎯 ${displayName}`, lead.company && `— ${lead.company}`]
                     .filter(Boolean)
-                    .join(' '),
-                )
+                    .join(" "),
+                );
                 parts.push(
                   [
                     `Estado: ${LEAD_STATUS[lead.status]?.label ?? lead.status}`,
                     lead.estimated_value != null && `Valor: ${formatEUR(lead.estimated_value)}`,
                   ]
                     .filter(Boolean)
-                    .join(' · '),
-                )
+                    .join(" · "),
+                );
                 const contact = [
                   lead.email && `Email: ${lead.email}`,
                   lead.phone && `Tel: ${lead.phone}`,
-                ].filter(Boolean)
-                if (contact.length) parts.push(contact.join(' · '))
-                if (lead.assignee?.name) parts.push(`Responsable: ${lead.assignee.name}`)
-                return parts
+                ].filter(Boolean);
+                if (contact.length) parts.push(contact.join(" · "));
+                if (lead.assignee?.name) parts.push(`Responsable: ${lead.assignee.name}`);
+                return parts;
               })()}
               urlPath={`/leads/${lead.id as string}`}
             />
@@ -302,9 +303,9 @@ export default async function LeadDetailPage({
                 <DetailRow label="Estado">
                   <StatusBadge meta={LEAD_STATUS} value={lead.status as string} />
                 </DetailRow>
-                {(lead.status === 'lost' || lead.status === 'not_interested') &&
+                {(lead.status === "lost" || lead.status === "not_interested") &&
                   lead.lost_reason && (
-                    <DetailRow label={lead.status === 'lost' ? 'Motivo de pérdida' : 'Motivo'}>
+                    <DetailRow label={lead.status === "lost" ? "Motivo de pérdida" : "Motivo"}>
                       <span className="text-destructive font-medium">
                         {lead.lost_reason as string}
                       </span>
@@ -359,7 +360,7 @@ export default async function LeadDetailPage({
                 {lead.landing_ref && <DetailRow label="Ref">{lead.landing_ref}</DetailRow>}
                 {[lead.calculator_cost, lead.calculator_hours].some(hasValue) && (
                   <DetailRow label="Calculadora">
-                    {[lead.calculator_cost, lead.calculator_hours].filter(hasValue).join(' · ')}
+                    {[lead.calculator_cost, lead.calculator_hours].filter(hasValue).join(" · ")}
                   </DetailRow>
                 )}
               </DetailGrid>
@@ -371,13 +372,13 @@ export default async function LeadDetailPage({
                   <div className="text-muted-foreground space-y-1 text-xs">
                     {lead.landing_subject ? (
                       <p>
-                        <span className="text-foreground font-medium">Asunto:</span>{' '}
+                        <span className="text-foreground font-medium">Asunto:</span>{" "}
                         {lead.landing_subject}
                       </p>
                     ) : null}
                     {firstTouch ? (
                       <p>
-                        <span className="text-foreground font-medium">First touch:</span>{' '}
+                        <span className="text-foreground font-medium">First touch:</span>{" "}
                         {firstTouch}
                       </p>
                     ) : null}
@@ -468,7 +469,7 @@ export default async function LeadDetailPage({
                     ai_suggested_next_step: (lead.ai_suggested_next_step as string | null) ?? null,
                     ai_suggested_next_step_at:
                       (lead.ai_suggested_next_step_at as string | null) ?? null,
-                    ai_temperature: (lead.ai_temperature as 'hot' | 'warm' | 'cold' | null) ?? null,
+                    ai_temperature: (lead.ai_temperature as "hot" | "warm" | "cold" | null) ?? null,
                     ai_confidence: (lead.ai_confidence as number | null) ?? null,
                     ai_updated_at: (lead.ai_updated_at as string | null) ?? null,
                     ai_tags: (lead.ai_tags as string[] | null) ?? null,
@@ -491,68 +492,85 @@ export default async function LeadDetailPage({
                 <ol className="divide-border divide-y">
                   {groupResendInteractions(interactions).map(
                     ({ interaction: i, latestInteraction, statuses }) => {
-                      const type = i.type as string
-                      const subject = i.subject as string | null
-                      const snippet = excerpt(i.body as string | null)
+                      const type = i.type as string;
+                      const subject = i.subject as string | null;
+                      const snippet = excerpt(i.body as string | null);
                       const label = i.resend_email_id
-                        ? statuses.includes('email_received')
-                          ? 'Email recibido'
-                          : 'Email enviado'
-                        : (INTERACTION_LABEL[type] ?? type)
+                        ? statuses.includes("email_received")
+                          ? "Email recibido"
+                          : "Email enviado"
+                        : (INTERACTION_LABEL[type] ?? type);
+                      const InteractionIcon =
+                        type === "call"
+                          ? Phone
+                          : type === "note"
+                            ? StickyNote
+                            : type.startsWith("email_")
+                              ? Mail
+                              : MessageSquare;
                       return (
-                        <li key={i.id as string} className="flex items-start gap-3 px-6 py-3">
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium">{label}</p>
-                            {subject ? (
-                              <p className="text-muted-foreground truncate text-xs">{subject}</p>
-                            ) : null}
-                            <EmailDeliveryStatuses statuses={statuses} />
-                            {snippet ? (
-                              <p className="text-muted-foreground/90 mt-1 line-clamp-2 text-xs">
-                                {snippet}
-                              </p>
-                            ) : null}
-                          </div>
-                          <div className="text-muted-foreground flex shrink-0 flex-col items-end gap-0.5 text-xs">
-                            <span className="tabular-nums">
-                              {relativeTime(interactionDate(latestInteraction))}
+                        <li key={i.id as string} className="px-3 py-2 sm:px-4">
+                          <article className="group flex items-start gap-3 rounded-xl border border-transparent px-3 py-3 transition-colors hover:border-border hover:bg-muted/30">
+                            <span className="bg-muted text-muted-foreground mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg">
+                              <InteractionIcon className="size-4" aria-hidden />
                             </span>
-                            {i.performer ? (
-                              <MemberLabel
-                                member={i.performer}
-                                size="xs"
-                                className="text-muted-foreground/70 gap-1 text-[11px]"
-                              />
-                            ) : null}
-                            <div className="flex flex-wrap justify-end gap-0.5">
-                              {type === 'call' ? (
-                                <CallInteractionDetails
-                                  interaction={i}
-                                  leadId={lead.id}
-                                  canEdit={canEdit}
-                                />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                <p className="text-sm font-semibold">{label}</p>
+                                <EmailDeliveryStatuses statuses={statuses} />
+                              </div>
+                              {subject ? (
+                                <p className="text-muted-foreground mt-0.5 truncate text-xs">
+                                  {subject}
+                                </p>
                               ) : null}
-                              {type !== 'call' ? (
-                                <LeadInteractionDetails
-                                  interaction={i}
-                                  label={label}
-                                  leadId={lead.id}
-                                  leadEmail={lead.email}
-                                  canReply={canEdit}
-                                  aiEnabled={aiEnabled}
-                                />
-                              ) : null}
-                              {type === 'note' && canEdit ? (
-                                <DeleteLeadInteractionButton
-                                  leadId={lead.id}
-                                  interactionId={i.id}
-                                  label="nota"
-                                />
+                              {snippet ? (
+                                <p className="text-muted-foreground/90 mt-1 line-clamp-2 text-xs leading-relaxed">
+                                  {snippet}
+                                </p>
                               ) : null}
                             </div>
-                          </div>
+                            <div className="text-muted-foreground flex shrink-0 flex-col items-end gap-1 text-xs">
+                              <span className="tabular-nums">
+                                {relativeTime(interactionDate(latestInteraction))}
+                              </span>
+                              {i.performer ? (
+                                <MemberLabel
+                                  member={i.performer}
+                                  size="xs"
+                                  className="text-muted-foreground/70 gap-1 text-[11px]"
+                                />
+                              ) : null}
+                              <div className="flex flex-wrap justify-end gap-0.5">
+                                {type === "call" ? (
+                                  <CallInteractionDetails
+                                    interaction={i}
+                                    leadId={lead.id}
+                                    canEdit={canEdit}
+                                  />
+                                ) : null}
+                                {type !== "call" ? (
+                                  <LeadInteractionDetails
+                                    interaction={i}
+                                    label={label}
+                                    leadId={lead.id}
+                                    leadEmail={lead.email}
+                                    canReply={canEdit}
+                                    aiEnabled={aiEnabled}
+                                  />
+                                ) : null}
+                                {type === "note" && canEdit ? (
+                                  <DeleteLeadInteractionButton
+                                    leadId={lead.id}
+                                    interactionId={i.id}
+                                    label="nota"
+                                  />
+                                ) : null}
+                              </div>
+                            </div>
+                          </article>
                         </li>
-                      )
+                      );
                     },
                   )}
                 </ol>
@@ -577,8 +595,8 @@ export default async function LeadDetailPage({
               }}
               senderName={user.name}
               canEdit={canEdit}
-              openCallInitially={query?.feedback === 'call'}
-              openScheduleInitially={query?.feedback === 'schedule'}
+              openCallInitially={query?.feedback === "call"}
+              openScheduleInitially={query?.feedback === "schedule"}
               defaultDurationMinutes={defaultDurationMinutes}
               aiEnabled={aiEnabled}
               scheduleMembers={members}
@@ -587,7 +605,7 @@ export default async function LeadDetailPage({
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function NextActionsCard({
@@ -597,11 +615,11 @@ function NextActionsCard({
   currentUserId,
   actions,
 }: {
-  canEdit: boolean
-  leadId: string
-  members: Awaited<ReturnType<typeof listActiveMembers>>
-  currentUserId: string
-  actions: NextAction[]
+  canEdit: boolean;
+  leadId: string;
+  members: Awaited<ReturnType<typeof listActiveMembers>>;
+  currentUserId: string;
+  actions: NextAction[];
 }) {
   return (
     <Card className="border-primary/20 bg-primary/[0.02]">
@@ -625,8 +643,8 @@ function NextActionsCard({
         {actions.length > 0 ? (
           <ul className="divide-border divide-y">
             {actions.map((action) => {
-              const overdue = action.when ? new Date(action.when) < new Date() : false
-              if (action.kind === 'task' && canEdit) {
+              const overdue = action.when ? new Date(action.when) < new Date() : false;
+              if (action.kind === "task" && canEdit) {
                 return (
                   <LeadNextActionTaskItem
                     key={`${action.kind}-${action.id}`}
@@ -639,7 +657,7 @@ function NextActionsCard({
                     members={members}
                     currentUserId={currentUserId}
                   />
-                )
+                );
               }
               return (
                 <li
@@ -651,18 +669,18 @@ function NextActionsCard({
                     className="min-w-0 truncate font-medium hover:underline"
                   >
                     <span className="text-muted-foreground mr-2 text-xs">
-                      {action.kind === 'reminder' ? 'Aviso' : 'Tarea'}
+                      {action.kind === "reminder" ? "Aviso" : "Tarea"}
                     </span>
                     {action.title}
                   </Link>
                   <div className="flex shrink-0 items-center gap-3 text-xs">
-                    {action.kind === 'task' ? (
+                    {action.kind === "task" ? (
                       <StatusBadge meta={TASK_STATUS} value={action.status} />
                     ) : null}
                     {action.when ? (
                       <span
                         className={
-                          overdue ? 'text-destructive font-medium' : 'text-muted-foreground'
+                          overdue ? "text-destructive font-medium" : "text-muted-foreground"
                         }
                       >
                         {relativeTime(action.when)}
@@ -670,7 +688,7 @@ function NextActionsCard({
                     ) : null}
                   </div>
                 </li>
-              )
+              );
             })}
           </ul>
         ) : (
@@ -678,5 +696,5 @@ function NextActionsCard({
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

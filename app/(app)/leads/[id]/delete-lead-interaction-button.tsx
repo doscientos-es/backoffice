@@ -1,49 +1,50 @@
-'use client'
+"use client";
 
-import { Trash as Trash2 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { sileo } from 'sileo'
+import { Trash as Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { sileo } from "sileo";
 
-import { Button } from '@/components/ui/button'
-import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { IconButton } from "@/components/ui/icon-button";
 
-import { deleteLeadInteraction } from '../actions'
+import { deleteLeadInteraction } from "../actions";
 
 export function DeleteLeadInteractionButton({
   leadId,
   interactionId,
   label,
 }: {
-  leadId: string
-  interactionId: string
-  label: 'llamada' | 'nota'
+  leadId: string;
+  interactionId: string;
+  label: "llamada" | "nota";
 }) {
-  const router = useRouter()
-  const [open, setOpen] = useState(false)
-  const [pending, setPending] = useState(false)
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [pending, setPending] = useState(false);
 
   const onConfirm = async () => {
-    setPending(true)
-    const result = await deleteLeadInteraction({ leadId, interactionId })
-    setPending(false)
-    if (!result.ok) return sileo.error({ title: result.error })
-    setOpen(false)
-    router.refresh()
-  }
+    setPending(true);
+    const result = await deleteLeadInteraction({ leadId, interactionId });
+    setPending(false);
+    if (!result.ok) return sileo.error({ title: result.error });
+    setOpen(false);
+    router.refresh();
+  };
 
   return (
     <>
-      <Button
+      <IconButton
         type="button"
         variant="ghost"
-        size="xs"
-        className="text-muted-foreground hover:text-destructive h-6 gap-1 px-2 text-xs"
+        size="icon-xs"
+        label={`Eliminar ${label}`}
+        title={`Eliminar ${label}`}
+        className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
         onClick={() => setOpen(true)}
       >
         <Trash2 className="size-3" />
-        Eliminar
-      </Button>
+      </IconButton>
       <ConfirmDialog
         open={open}
         onOpenChange={setOpen}
@@ -55,5 +56,5 @@ export function DeleteLeadInteractionButton({
         onConfirm={() => void onConfirm()}
       />
     </>
-  )
+  );
 }
