@@ -157,7 +157,7 @@ function SavedViewsMenu({
                 >
                   {view.name}
                 </button>
-                <PopoverButton
+                <Button
                   type="button"
                   size="icon-xs"
                   variant="ghost"
@@ -166,7 +166,7 @@ function SavedViewsMenu({
                   title={`Eliminar ${view.name}`}
                 >
                   <Trash2 className="size-3.5" />
-                </PopoverButton>
+                </Button>
               </div>
             ))}
           </div>
@@ -455,7 +455,7 @@ export function ListControls({
 
           {secondaryFilters.length > 0 ? (
             <PopoverTrigger>
-              <Button
+              <PopoverButton
                 type="button"
                 size="sm"
                 variant="outline"
@@ -471,7 +471,7 @@ export function ListControls({
                     {activeSecondaryFilterCount}
                   </span>
                 ) : null}
-              </Button>
+              </PopoverButton>
               <PopoverContent
                 placement="bottom start"
                 className="w-[min(22rem,calc(100vw-2rem))] p-3"
