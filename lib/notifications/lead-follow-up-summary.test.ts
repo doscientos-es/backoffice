@@ -6,7 +6,6 @@ import {
   buildLeadFollowUpLink,
   collectLeadFollowUpSummaries,
   formatLeadFollowUpSummary,
-  hasNewUncontactedLeadBreach,
   parseLeadFollowUpSummary,
   shouldSendLeadFollowUpSummary,
 } from './lead-follow-up-summary'
@@ -185,8 +184,6 @@ describe('lead follow-up summaries', () => {
     })
     expect(shouldSendLeadFollowUpSummary(summary, undefined)).toBe(true)
     expect(shouldSendLeadFollowUpSummary(summary, currentBody)).toBe(false)
-    expect(hasNewUncontactedLeadBreach(summary, undefined)).toBe(true)
-    expect(hasNewUncontactedLeadBreach(summary, currentBody)).toBe(false)
     expect(shouldSendLeadFollowUpSummary(summary, '1 lead pendiente: 1 sin seguimiento.')).toBe(
       true,
     )

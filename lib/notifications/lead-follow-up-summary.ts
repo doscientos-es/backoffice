@@ -146,16 +146,6 @@ export function parseLeadFollowUpSummary(body: string | null): SummaryCounts | n
   }
 }
 
-/** True when a speed-to-lead SLA breach is new or has increased. */
-export function hasNewUncontactedLeadBreach(
-  summary: LeadFollowUpSummary,
-  previousBody: string | null | undefined,
-): boolean {
-  if (previousBody === undefined) return summary.uncontactedLeads > 0
-  const previous = parseLeadFollowUpSummary(previousBody)
-  return previous ? summary.uncontactedLeads > previous.uncontactedLeads : false
-}
-
 /** Routine follow-ups stay in the daily digest; only urgent deterioration interrupts the day. */
 export function shouldSendLeadFollowUpSummary(
   summary: LeadFollowUpSummary,

@@ -42,7 +42,7 @@ Las decisiones de arquitectura que deben guiar implementaciones y agentes están
 
 **Decisión**: No.
 **Contexto**: Se valoró añadir un sistema de mensajería entre miembros del equipo dentro del backoffice.
-**Razón**: Slack, Teams o el propio Telegram (ya integrado para notificaciones) cubren este caso. Reinventar una herramienta de comunicación en un backoffice crea fragmentación: la gente no adopta el chat interno cuando ya tiene otra herramienta. El coste de implementación (WebSockets, presencia, historial, notificaciones push) no se justifica.
+**Razón**: Slack o Teams cubren este caso. Reinventar una herramienta de comunicación en un backoffice crea fragmentación: la gente no adopta el chat interno cuando ya tiene otra herramienta. El coste de implementación (WebSockets, presencia, historial, notificaciones push) no se justifica.
 **Revisitar si**: El equipo decide migrar completamente fuera de Slack/Teams y necesita comunicación integrada con entidades del CRM.
 
 ---

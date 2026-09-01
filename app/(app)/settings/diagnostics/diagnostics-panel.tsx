@@ -20,14 +20,11 @@ import {
   testAI,
   testResendEmail,
   testSupabaseConnection,
-  testTelegramBot,
-  testTelegramLeadMessage,
   testVerifactuAeatSuite,
+  testWebPush,
 } from './actions'
 
 export type DiagnosticsConfig = {
-  telegramBot: boolean
-  telegramChat: boolean
   ai: boolean
   verifactuGate: {
     status: 'missing' | 'failed' | 'passed'
@@ -116,28 +113,10 @@ export function DiagnosticsPanel({ config }: { config: DiagnosticsConfig }) {
     if (result !== 'granted') return { ok: false, error: 'Permiso de notificaciones no concedido.' }
     const subscribed = await subscribe()
     if (!subscribed) return { ok: false, error: 'No se pudo registrar este dispositivo para Push.' }
-    const response = await fetch('/api/push/test', { method: 'POST' })
-    const payload = (await response.json()) as { ok?: boolean; detail?: string; error?: string }
-    if (!response.ok || !payload.ok)
-      return { ok: false, error: payload.error ?? 'No se pudo enviar el Push.' }
-    return { ok: true, detail: payload.detail ?? 'Push enviado' }
+    return testWebPush()
   }
 
   const tests: Test[] = [
-    {
-      title: 'Lead → Telegram (envío directo)',
-      description: 'Envía un lead de ejemplo directamente al chat vía API de Telegram.',
-      run: testTelegramLeadMessage,
-      disabled: !config.telegramBot || !config.telegramChat,
-      disabledHint: !config.telegramBot ? 'Falta TELEGRAM_BOT_TOKEN' : 'Falta TELEGRAM_CHAT_ID',
-    },
-    {
-      title: 'Bot de Telegram (token)',
-      description: 'Verifica que el token del bot es válido (getMe).',
-      run: testTelegramBot,
-      disabled: !config.telegramBot,
-      disabledHint: 'Falta TELEGRAM_BOT_TOKEN',
-    },
     {
       title: 'Email (Resend)',
       description: 'Envía un email de prueba a tu propia dirección.',

@@ -24,6 +24,21 @@ self.addEventListener('push', (event) => {
   )
 })
 
+async function openOrFocus(target) {
+  if (target.startsWith('tel:')) return self.clients.openWindow(target)
+  const targetUrl = new URL(target, self.location.origin)
+  if (targetUrl.origin !== self.location.origin) return self.clients.openWindow(targetUrl.href)
+
+  const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+  const existing = windows.find((client) => new URL(client.url).origin === self.location.origin)
+  if (existing) {
+    await existing.focus()
+    await existing.navigate(targetUrl.href)
+    return
+  }
+  await self.clients.openWindow(targetUrl.href)
+}
+
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
   const data = event.notification.data || {}
@@ -38,12 +53,9 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil(
     (async () => {
       try {
-        await self.clients.openWindow(
-          target.startsWith('tel:') ? target : new URL(target, self.location.origin).href,
-        )
+        await openOrFocus(target)
       } catch {
-        if (data.feedbackUrl)
-          await self.clients.openWindow(new URL(data.feedbackUrl, self.location.origin).href)
+        if (data.feedbackUrl) await openOrFocus(data.feedbackUrl)
       }
     })(),
   )

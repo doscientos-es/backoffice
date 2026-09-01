@@ -44,12 +44,6 @@ export function getSystemStatus(): SystemStatus {
       configured: resend,
       detail: resend ? env.RESEND_FROM_DOMAIN : 'modo mock',
     },
-    { key: 'telegram_bot', label: 'Bot de Telegram', configured: has(env.TELEGRAM_BOT_TOKEN) },
-    {
-      key: 'telegram_chat',
-      label: 'Chat de Telegram (envío directo)',
-      configured: has(env.TELEGRAM_CHAT_ID),
-    },
     { key: 'google', label: 'Google Workspace', configured: isGoogleEnabled() },
     { key: 'calendar', label: 'Google Calendar', configured: has(env.GOOGLE_CALENDAR_ID) },
     {

@@ -2,8 +2,8 @@
  * GET /api/crm/follow-ups
  *
  * Cron endpoint consumed by n8n / Vercel Cron. Returns stale leads, pending
- * proposals, and speed-to-lead SLA breaches. Also fires Telegram alerts for
- * uncontacted leads so the team is notified without logging into the backoffice.
+ * proposals, and speed-to-lead SLA breaches. It sends PWA notifications for
+ * actionable follow-up summaries.
  *
  * Auth: Authorization: Bearer <CRON_SECRET>
  * (No-op when CRON_SECRET is not set — allows local dev without config.)
@@ -13,14 +13,12 @@ import { type NextRequest, NextResponse } from 'next/server'
 
 import { serverEnv } from '@/lib/env'
 import { getFollowUps } from '@/lib/integrations/follow-ups'
-import { telegramSendMessage } from '@/lib/integrations/telegram'
 import { scopedLogger } from '@/lib/logger'
 import { dispatchNotifications } from '@/lib/notifications/dispatch'
 import {
   buildLeadFollowUpLink,
   collectLeadFollowUpSummaries,
   formatLeadFollowUpSummary,
-  hasNewUncontactedLeadBreach,
   shouldSendLeadFollowUpSummary,
 } from '@/lib/notifications/lead-follow-up-summary'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -53,33 +51,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   const data = await getFollowUps({ slaHours, leadHours, proposalHours })
 
-  let notifyTelegram = false
   try {
-    ;({ notifyTelegram } = await dispatchLeadFollowUpNotifications(data))
+    await dispatchLeadFollowUpNotifications(data)
   } catch (error) {
     log.error({ err: error }, 'lead follow-up notifications failed')
-  }
-
-  // ── Telegram SLA alert ──────────────────────────────────────────────────────
-  if (notifyTelegram && data.uncontactedLeads.length > 0) {
-    const lines = [
-      `⚠️ *${data.uncontactedLeads.length} lead${data.uncontactedLeads.length > 1 ? 's' : ''} sin contacto (>${slaHours}h)*`,
-      '',
-      ...data.uncontactedLeads.map(
-        (l) =>
-          `• [${l.name}](${l.url})${l.company ? ` · ${l.company}` : ''} · *${l.hoursUncontacted}h*`,
-      ),
-    ].join('\n')
-
-    const tgResult = await telegramSendMessage({ text: lines, parseMode: 'Markdown' }).catch(
-      (e) => ({ ok: false, error: String(e) }),
-    )
-
-    if (!tgResult.ok) {
-      log.warn({ error: tgResult.error }, 'telegram sla alert failed')
-    } else {
-      log.info({ count: data.uncontactedLeads.length }, 'sla telegram alert sent')
-    }
   }
 
   log.info(
@@ -104,7 +79,7 @@ async function dispatchLeadFollowUpNotifications(data: Awaited<ReturnType<typeof
   if (adminsError) throw new Error(adminsError.message)
   const adminIds = (admins ?? []).map((member) => member.id as string)
   const summaries = collectLeadFollowUpSummaries(data, adminIds)
-  if (!summaries.length) return { notifyTelegram: false }
+  if (!summaries.length) return
 
   const recipientIds = summaries.map((summary) => summary.recipientId)
   const { data: recentNotifications, error: recentError } = await supabase
@@ -122,7 +97,6 @@ async function dispatchLeadFollowUpNotifications(data: Awaited<ReturnType<typeof
     }
   }
 
-  let notifyTelegram = false
   for (const summary of summaries) {
     const previousBody = previousBodies.has(summary.recipientId)
       ? previousBodies.get(summary.recipientId)
@@ -136,7 +110,5 @@ async function dispatchLeadFollowUpNotifications(data: Awaited<ReturnType<typeof
       body: formatLeadFollowUpSummary(summary),
       link: buildLeadFollowUpLink(summary),
     })
-    notifyTelegram ||= hasNewUncontactedLeadBreach(summary, previousBody)
   }
-  return { notifyTelegram }
 }

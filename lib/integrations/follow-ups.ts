@@ -12,8 +12,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * `getMyDay`, open proposals in `countOpenProposals`) but those queries are
  * RLS-bound to a logged-in member via `createServerClient`. The cron jobs run
  * unauthenticated (shared-secret only), so we mirror the same business rules
- * here through the service-role client — exactly like the Telegram callback
- * route at `/api/integrations/leads/[id]/status`.
+ * here through the service-role client.
  */
 
 const DEFAULT_LEAD_HOURS = 24

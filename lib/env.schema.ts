@@ -149,13 +149,6 @@ export const ServerSchema = PublicSchema.extend({
   GOOGLE_DRIVE_PROPOSALS_FOLDER_ID: z.string().optional().default(''),
   // Shared Google Calendar ID for lead meetings (e.g. "doscientos.es_xxx@group.calendar.google.com").
   GOOGLE_CALENDAR_ID: z.string().optional().default(''),
-  // Telegram Bot — direct webhook handler (callbacks from inline buttons)
-  TELEGRAM_BOT_TOKEN: z.string().optional().default(''),
-  // Secret set in setWebhook; Telegram sends it as X-Telegram-Bot-Api-Secret-Token.
-  TELEGRAM_WEBHOOK_SECRET: z.string().optional().default(''),
-  // Default chat/group id for outbound notifications (new leads, alerts).
-  // Empty = direct Telegram send disabled (notify-new-lead falls back to n8n).
-  TELEGRAM_CHAT_ID: z.string().optional().default(''),
   // File Browser (internal backup server)
   FILEBROWSER_API_URL: z.string().url().or(z.literal('')).optional().default(''),
   FILEBROWSER_USER: z.string().optional().default(''),

@@ -29,8 +29,6 @@ describe('demo mode', () => {
 
   it('fails closed for integrations in demo mode', () => {
     state.demo = 'true'
-    expect(() => assertExternalActionAllowed('Telegram')).toThrow(
-      'Telegram está desactivado en modo demo',
-    )
+    expect(() => assertExternalActionAllowed('Meta')).toThrow('Meta está desactivado en modo demo')
   })
 })

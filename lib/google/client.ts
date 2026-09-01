@@ -6,7 +6,7 @@ import { isDemoMode } from '@/lib/demo'
  *
  * Mintea tokens OAuth2 impersonando a un usuario @doscientos.es (`subject`) y
  * llama directamente a las REST APIs de Drive/Calendar vía fetch — mismo estilo
- * que el resto de integraciones (Meta, Telegram, GitHub).
+ * que el resto de integraciones (Meta, GitHub).
  *
  * Nunca usar sin comprobar `isGoogleEnabled()` antes.
  */
