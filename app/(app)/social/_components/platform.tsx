@@ -1,9 +1,4 @@
-import {
-  Globe2 as Facebook,
-  Camera as Instagram,
-  BriefcaseBusiness as Linkedin,
-  Store,
-} from 'lucide-react'
+import { Globe2 as Facebook, Camera as Instagram, Store } from 'lucide-react'
 import type { ComponentType } from 'react'
 
 import { PLATFORM_LABELS, type SocialPlatform } from '@/lib/social/core'
@@ -20,7 +15,6 @@ import { cn } from '@/lib/utils'
 const ICONS: Record<SocialPlatform, ComponentType<{ className?: string }>> = {
   instagram: Instagram,
   facebook: Facebook,
-  linkedin: Linkedin,
   google_business_profile: Store,
 }
 
@@ -28,7 +22,6 @@ const ICONS: Record<SocialPlatform, ComponentType<{ className?: string }>> = {
 const TINTS: Record<SocialPlatform, string> = {
   instagram: 'bg-pink-500/10 text-pink-600 dark:text-pink-300',
   facebook: 'bg-blue-500/10 text-blue-600 dark:text-blue-300',
-  linkedin: 'bg-sky-500/10 text-sky-700 dark:text-sky-300',
   google_business_profile: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
 }
 

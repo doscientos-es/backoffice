@@ -40,7 +40,7 @@ const posts: PostListItem[] = [
     targets: [
       {
         id: 'published-target',
-        platform: 'linkedin',
+        platform: 'facebook',
         status: 'published',
         caption: null,
         remoteId: 'remote-1',
@@ -58,7 +58,7 @@ describe('filterAndSortPosts', () => {
     const result = filterAndSortPosts(posts, {
       q: 'lanzamiento',
       status: 'published',
-      platform: 'linkedin',
+      platform: 'facebook',
       mediaKind: 'video',
     })
 

@@ -75,7 +75,7 @@ export default async function InboxPage() {
       <BackLink href="/social" label="Social" />
       <PageHeader
         title="Bandeja de entrada"
-        description="Gestiona todos los comentarios de Instagram, Facebook y LinkedIn en un solo sitio."
+        description="Gestiona todos los comentarios de Instagram y Facebook en un solo sitio."
         actions={<SyncButton kind="comments" label="Sincronizar" />}
       />
       <SectionBoundary pending={<InboxSkeleton />} label="No se pudieron cargar los comentarios">

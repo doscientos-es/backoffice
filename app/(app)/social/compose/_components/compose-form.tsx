@@ -1,5 +1,6 @@
 'use client'
 
+import { Switch } from '@doscientos/ui'
 import { CalendarDays as CalendarClock, FileText, MessageCircle, Send } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -13,7 +14,6 @@ import { FormRow } from '@/components/ui/form-row'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SubmitButton } from '@/components/ui/submit-button'
-import { Switch } from '@doscientos/ui'
 import { Textarea } from '@/components/ui/textarea'
 import type { SocialPostSuggestion } from '@/lib/social/ai-suggestion'
 import type { MediaItem, SocialPlatform } from '@/lib/social/core'
@@ -79,7 +79,7 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
     if (mode === 'schedule' && !scheduledLocal) return false
     if (
       automationEnabled &&
-      (selectedList.every((platform) => platform === 'linkedin') ||
+      (selectedList.every((platform) => platform === 'google_business_profile') ||
         !automationKeyword.trim() ||
         !automationPublicReply.trim() ||
         !automationPrivateMessage.trim())

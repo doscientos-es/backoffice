@@ -7,12 +7,11 @@
  */
 
 /** Networks the hub can publish to. Add a new value + a Publisher to extend. */
-export type SocialPlatform = 'instagram' | 'facebook' | 'linkedin' | 'google_business_profile'
+export type SocialPlatform = 'instagram' | 'facebook' | 'google_business_profile'
 
 export const SOCIAL_PLATFORMS: readonly SocialPlatform[] = [
   'instagram',
   'facebook',
-  'linkedin',
   'google_business_profile',
 ] as const
 
@@ -102,6 +101,5 @@ export interface PlatformComment {
 export const PLATFORM_LABELS: Record<SocialPlatform, string> = {
   instagram: 'Instagram',
   facebook: 'Facebook',
-  linkedin: 'LinkedIn',
   google_business_profile: 'Google Business Profile',
 }

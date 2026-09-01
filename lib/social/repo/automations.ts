@@ -81,7 +81,7 @@ function mapRule(row: AutomationRuleRow): AutomationRule {
   }
 }
 
-/** Create one row per selected Meta platform. LinkedIn is intentionally excluded. */
+/** Create one row per selected Meta platform. */
 export async function createAutomationRules(input: CreateAutomationRuleInput): Promise<void> {
   const keyword = input.keyword.trim()
   const publicReply = input.publicReply.trim()

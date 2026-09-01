@@ -8,7 +8,6 @@
  */
 import { PublisherRegistry } from '@/lib/social/core'
 import { GoogleBusinessProfilePublisher } from '@/lib/social/google-business'
-import { LinkedInPublisher } from '@/lib/social/linkedin'
 import { FacebookPublisher, InstagramPublisher } from '@/lib/social/meta'
 
 let cached: PublisherRegistry | null = null
@@ -19,7 +18,6 @@ export function socialRegistry(): PublisherRegistry {
   cached = new PublisherRegistry()
     .register(new InstagramPublisher())
     .register(new FacebookPublisher())
-    .register(new LinkedInPublisher())
     .register(new GoogleBusinessProfilePublisher())
   return cached
 }

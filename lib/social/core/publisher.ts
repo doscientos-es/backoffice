@@ -3,7 +3,7 @@
  *
  * Every network implements this interface. The orchestrator and services
  * depend ONLY on this abstraction (Dependency Inversion), never on a concrete
- * Meta/LinkedIn client. Analytics methods are optional so a network can ship
+ * platform client. Analytics methods are optional so a network can ship
  * publishing first and add insights/comments later without breaking callers
  * (Interface Segregation via optional members).
  */
