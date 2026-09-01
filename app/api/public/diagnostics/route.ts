@@ -2,6 +2,11 @@ import { after, type NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { DiagnosticReportEmail } from '@/components/email/diagnostic-report-email'
+import {
+  DIAGNOSTIC_PDF_BUCKET,
+  diagnosticPdfStoragePath,
+  toArrayBuffer,
+} from '@/lib/diagnostics/pdf-cache'
 import { renderDiagnosticPdf } from '@/lib/diagnostics/report'
 import { externalAppUrl } from '@/lib/email/app-url'
 import { renderEmail } from '@/lib/email/render'
@@ -9,6 +14,7 @@ import { sendEmail } from '@/lib/email/resend'
 import { publicEnv, serverEnv } from '@/lib/env'
 import { recordConversionEvent } from '@/lib/integrations/conversion-events'
 import { distributedRateLimit } from '@/lib/ratelimit'
+import { getStorage } from '@/lib/storage'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 export const runtime = 'nodejs'
@@ -218,6 +224,18 @@ export async function POST(request: NextRequest) {
         answers: input.answers,
         metrics: input.metrics,
       })
+      try {
+        const { error: cacheError } = await getStorage().upload(
+          DIAGNOSTIC_PDF_BUCKET,
+          diagnosticPdfStoragePath(diagnostic.id),
+          toArrayBuffer(pdf),
+          { contentType: 'application/pdf' },
+        )
+        if (cacheError) console.warn('diagnostic_pdf_cache_upload_failed', cacheError)
+      } catch (cacheError) {
+        // The email must still be sent if Storage is temporarily unavailable.
+        console.warn('diagnostic_pdf_cache_upload_failed', cacheError)
+      }
       const html = await renderEmail(
         DiagnosticReportEmail({
           name: input.name ?? '',

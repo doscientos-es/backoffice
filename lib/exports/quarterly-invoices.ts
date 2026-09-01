@@ -63,13 +63,14 @@ export function expenseArchiveFilename(input: {
 
 export function csvWithBom(
   rows: ReadonlyArray<Record<string, string | number | null>>,
+  headers?: ReadonlyArray<string>,
 ): Uint8Array {
-  const headers = [...new Set(rows.flatMap((row) => Object.keys(row)))]
+  const columns = headers ? [...headers] : [...new Set(rows.flatMap((row) => Object.keys(row)))]
   const escapeCell = (value: string | number | null | undefined) =>
     `"${String(value ?? '').replaceAll('"', '""')}"`
   const body = [
-    headers.map(escapeCell).join(','),
-    ...rows.map((row) => headers.map((header) => escapeCell(row[header])).join(',')),
+    columns.map(escapeCell).join(','),
+    ...rows.map((row) => columns.map((header) => escapeCell(row[header])).join(',')),
   ].join('\r\n')
   return textEncoder.encode(`\uFEFF${body}\r\n`)
 }

@@ -1,19 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server'
 
 import { requireUser } from '@/lib/auth'
-import {
-  createZip,
-  csvWithBom,
-  expenseArchiveFilename,
-  quarterlyPeriod,
-  safeFilePart,
-  type ZipEntry,
-} from '@/lib/exports/quarterly-invoices'
-import { renderInvoicePdf } from '@/lib/invoices/invoice-pdf-document'
-import { buildInvoicePdfData, invoicePdfFilename } from '@/lib/invoices/pdf-data'
-import { findWorkLogsForInvoice, getInvoiceDetail } from '@/lib/invoices/queries'
+import { csvWithBom, quarterlyPeriod } from '@/lib/exports/quarterly-invoices'
 import { scopedLogger } from '@/lib/logger'
-import { getStorage } from '@/lib/storage'
 import { createServerClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
@@ -21,6 +10,22 @@ export const runtime = 'nodejs'
 
 const log = scopedLogger('api.invoices.trimestral')
 const EXPORTABLE_INVOICE_STATUSES = ['issued', 'paid', 'overdue', 'rectified']
+const CSV_HEADERS = [
+  'Tipo',
+  'Número / referencia',
+  'Fecha',
+  'Contraparte',
+  'NIF',
+  'Categoría',
+  'Base',
+  'IVA',
+  'Total',
+  'Estado',
+  'Estado Verifactu',
+  'CSV Verifactu',
+  'Adjuntos',
+  'Enlaces Drive',
+] as const
 
 type QuarterlyInvoice = {
   id: string
@@ -50,17 +55,12 @@ type QuarterlyExpense = {
 }
 
 type ExpenseAttachment = {
-  id: string
   expense_id: string
   name: string
-  mime_type: string | null
-  size_bytes: number | null
-  storage_path: string | null
-  source: 'storage' | 'drive' | null
   web_view_link: string | null
 }
 
-/** Creates the manual accountant package for one calendar quarter. */
+/** Creates a lightweight CSV register for the accountant for one calendar quarter. */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   let user: Awaited<ReturnType<typeof requireUser>>
   try {
@@ -117,121 +117,69 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         ? { data: [] as ExpenseAttachment[], error: null }
         : await supabase
             .from('attachments')
-            .select(
-              'id, expense_id, name, mime_type, size_bytes, storage_path, source, web_view_link',
-            )
+            .select('expense_id, name, web_view_link')
             .is('deleted_at', null)
             .in('expense_id', expenseIds)
             .order('name', { ascending: true })
     if (attachmentsResult.error) throw new Error(attachmentsResult.error.message)
     const attachments = (attachmentsResult.data ?? []) as unknown as ExpenseAttachment[]
 
-    const expenseById = new Map(expenses.map((expense) => [expense.id, expense]))
-    const entries: ZipEntry[] = [
-      {
-        name: 'gastos/metadatos.csv',
-        body: csvWithBom(
-          attachments.map((attachment) => {
-            const expense = expenseById.get(attachment.expense_id)
-            const stored = attachment.source !== 'drive' && Boolean(attachment.storage_path)
-            return {
-              'Archivo ZIP': stored
-                ? `gastos/${expenseArchiveFilename({
-                    id: attachment.id,
-                    date: expense?.expense_date ?? period.start,
-                    vendor: expense?.vendor ?? 'proveedor',
-                    reference: expense?.invoice_reference ?? null,
-                    name: attachment.name,
-                  })}`
-                : '',
-              'Estado archivo': stored ? 'Adjunto incluido' : 'Solo enlace de Drive',
-              Archivo: attachment.name,
-              Fecha: expense?.expense_date ?? '',
-              Proveedor: expense?.vendor ?? '',
-              'NIF proveedor': expense?.vendor_nif ?? '',
-              'Nº factura proveedor': expense?.invoice_reference ?? '',
-              Categoría: expense?.category ?? '',
-              Base: Number(expense?.subtotal ?? 0).toFixed(2),
-              IVA: Number(expense?.tax_amount ?? 0).toFixed(2),
-              Total: Number(expense?.total ?? 0).toFixed(2),
-              Moneda: expense?.currency ?? 'EUR',
-              'Tipo MIME': attachment.mime_type ?? '',
-              'Tamaño (bytes)': attachment.size_bytes ?? '',
-              'Enlace Drive': attachment.web_view_link ?? '',
-            }
-          }),
-        ),
-      },
-      {
-        name: 'cobros/metadatos.csv',
-        body: csvWithBom(
-          invoices.map((invoice) => ({
-            'Archivo ZIP': `cobros/${invoice.issue_date ?? period.start}_${invoicePdfFilename(invoice.full_number, invoice.id)}`,
-            'Nº factura': invoice.full_number ?? '',
-            Fecha: invoice.issue_date ?? '',
-            Cliente: invoice.client_name ?? '',
-            'NIF cliente': invoice.client_nif ?? '',
-            Base: Number(invoice.subtotal ?? 0).toFixed(2),
-            IVA: Number(invoice.tax_amount ?? 0).toFixed(2),
-            Total: Number(invoice.total ?? 0).toFixed(2),
-            Estado: invoice.status ?? '',
-            'Estado Verifactu': invoice.verifactu_status ?? '',
-            'CSV Verifactu': invoice.verifactu_csv ?? '',
-          })),
-        ),
-      },
-    ]
-
-    const storage = getStorage()
+    const attachmentsByExpense = new Map<string, ExpenseAttachment[]>()
     for (const attachment of attachments) {
-      const expense = expenseById.get(attachment.expense_id)
-      if (!expense || attachment.source === 'drive' || !attachment.storage_path) continue
-      const { data, error } = await storage.download('documents', attachment.storage_path)
-      if (error || !data) throw new Error(error ?? `No se pudo descargar ${attachment.name}`)
-      entries.push({
-        name: `gastos/${expenseArchiveFilename({
-          id: attachment.id,
-          date: expense.expense_date,
-          vendor: expense.vendor,
-          reference: expense.invoice_reference,
-          name: attachment.name,
-        })}`,
-        body: new Uint8Array(data),
-        modifiedAt: new Date(`${expense.expense_date}T12:00:00`),
-      })
+      const current = attachmentsByExpense.get(attachment.expense_id) ?? []
+      current.push(attachment)
+      attachmentsByExpense.set(attachment.expense_id, current)
     }
-
-    for (const invoice of invoices) {
-      const detail = await getInvoiceDetail(invoice.id)
-      if (!detail)
-        throw new Error(`No se pudo obtener la factura ${invoice.full_number ?? invoice.id}`)
-      const workLogs = await findWorkLogsForInvoice(invoice.id)
-      const pdfData = await buildInvoicePdfData({
-        invoice: detail.invoice,
-        clientName: detail.invoice.client?.name ?? invoice.client_name,
-        clientLogoUrl: detail.invoice.client?.logo_url ?? null,
-        items: detail.items,
-        settings: detail.settings,
-        workLogs,
-      })
-      entries.push({
-        name: `cobros/${invoice.issue_date ?? period.start}_${invoicePdfFilename(invoice.full_number, invoice.id)}`,
-        body: await renderInvoicePdf(pdfData),
-        modifiedAt: new Date(`${invoice.issue_date ?? period.start}T12:00:00`),
-      })
-    }
-
-    const archive = createZip(entries)
-    const filename = `doscientos-${safeFilePart(period.label.replace(' ', '-'), 'trimestre')}.zip`
+    const rows = [
+      ...invoices.map((invoice) => ({
+        Tipo: 'Cobro',
+        'Número / referencia': invoice.full_number ?? '',
+        Fecha: invoice.issue_date ?? '',
+        Contraparte: invoice.client_name ?? '',
+        NIF: invoice.client_nif ?? '',
+        Categoría: '',
+        Base: Number(invoice.subtotal ?? 0).toFixed(2),
+        IVA: Number(invoice.tax_amount ?? 0).toFixed(2),
+        Total: Number(invoice.total ?? 0).toFixed(2),
+        Estado: invoice.status ?? '',
+        'Estado Verifactu': invoice.verifactu_status ?? '',
+        'CSV Verifactu': invoice.verifactu_csv ?? '',
+        Adjuntos: 'PDF disponible para descarga manual desde la factura',
+        'Enlaces Drive': '',
+      })),
+      ...expenses.map((expense) => {
+        const expenseAttachments = attachmentsByExpense.get(expense.id) ?? []
+        return {
+          Tipo: 'Gasto',
+          'Número / referencia': expense.invoice_reference ?? '',
+          Fecha: expense.expense_date,
+          Contraparte: expense.vendor,
+          NIF: expense.vendor_nif ?? '',
+          Categoría: expense.category ?? '',
+          Base: Number(expense.subtotal ?? 0).toFixed(2),
+          IVA: Number(expense.tax_amount ?? 0).toFixed(2),
+          Total: Number(expense.total ?? 0).toFixed(2),
+          Estado: '',
+          'Estado Verifactu': '',
+          'CSV Verifactu': '',
+          Adjuntos: expenseAttachments.map((attachment) => attachment.name).join(' · '),
+          'Enlaces Drive': expenseAttachments
+            .map((attachment) => attachment.web_view_link)
+            .filter((link): link is string => Boolean(link))
+            .join(' · '),
+        }
+      }),
+    ]
+    const csv = csvWithBom(rows, CSV_HEADERS)
+    const filename = `doscientos-${period.label.replace(' ', '-')}.csv`
     log.info(
       { quarter: period.label, invoices: invoices.length, expenseAttachments: attachments.length },
-      'quarterly_advisor_archive_exported',
+      'quarterly_advisor_csv_exported',
     )
-    return new NextResponse(new Uint8Array(archive), {
+    return new NextResponse(new TextDecoder().decode(csv), {
       headers: {
-        'Content-Type': 'application/zip',
+        'Content-Type': 'text/csv; charset=utf-8',
         'Content-Disposition': `attachment; filename="${filename}"`,
-        'Cache-Control': 'no-store',
       },
     })
   } catch (error) {
