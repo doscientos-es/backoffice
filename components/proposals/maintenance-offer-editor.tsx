@@ -114,7 +114,7 @@ export function MaintenanceOfferEditor({
   return (
     <section className="border-border bg-card flex flex-col gap-4 rounded-lg border p-4">
       <header className="flex flex-col gap-0.5">
-        <h2 className="text-sm font-semibold">Mantenimiento opcional</h2>
+        <h2 className="text-sm font-semibold">Mantenimiento</h2>
         <p className="text-muted-foreground text-[11px]">
           Personaliza los planes para esta propuesta. El cliente podrá escoger uno antes de
           aceptarla.

@@ -102,5 +102,14 @@ describe('ProposalEditor', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Continuar a Precio' }))
     expect(screen.getByRole('heading', { name: 'Precio de la propuesta' })).toBeDefined()
     expect(screen.getByText('Facturación por plazos')).toBeDefined()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar a Revisión' }))
+    expect(screen.getByText('Inversión inicial')).toBeDefined()
+    expect(screen.queryByRole('heading', { name: 'Lista para revisar' })).toBeNull()
+    expect(
+      screen.queryByText(
+        'Comprueba el resumen y guarda para volver a la vista de propuesta. Desde allí podrás enviar o marcarla como enviada.',
+      ),
+    ).toBeNull()
   })
 })

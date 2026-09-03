@@ -6,6 +6,21 @@ import { DEFAULT_MAINTENANCE_OFFER } from '@/lib/proposals/maintenance'
 import { MaintenanceOfferEditor } from './maintenance-offer-editor'
 
 describe('MaintenanceOfferEditor', () => {
+  it('uses the default maintenance heading', () => {
+    render(
+      <MaintenanceOfferEditor
+        offer={DEFAULT_MAINTENANCE_OFFER}
+        selectedPlanId={null}
+        onChange={vi.fn()}
+        onSelectedPlanChange={vi.fn()}
+        locked={false}
+      />,
+    )
+
+    expect(screen.getByRole('heading', { name: 'Mantenimiento' })).toBeDefined()
+    expect(screen.queryByText('Mantenimiento opcional')).toBeNull()
+  })
+
   it('keeps multiline edits until blur and imports pasted bullet lists', () => {
     const onChange = vi.fn()
     render(

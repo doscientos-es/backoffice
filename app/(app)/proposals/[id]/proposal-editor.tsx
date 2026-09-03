@@ -44,9 +44,9 @@ import {
   DEFAULT_CHANGE_MANAGEMENT_TERMS,
   PAYMENT_SCHEDULE_LABELS,
   PAYMENT_SCHEDULE_TEMPLATES,
+  paymentPlanForSchedule,
   type PaymentPlanItem,
   type PaymentSchedule,
-  paymentPlanForSchedule,
   type ScopeModule,
 } from '@/lib/proposals/scope'
 import { formatEUR } from '@/lib/utils'
@@ -771,12 +771,7 @@ export function ProposalEditor({
                   </div>
                 </section>
                 <section className="border-primary/20 bg-primary/5 rounded-xl border p-5">
-                  <h2 className="text-base font-semibold">Lista para revisar</h2>
-                  <p className="text-muted-foreground mt-1 text-sm">
-                    Comprueba el resumen y guarda para volver a la vista de propuesta. Desde allí
-                    podrás enviar o marcarla como enviada.
-                  </p>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div className="grid gap-3 sm:grid-cols-2">
                     <div className="bg-background rounded-lg p-3">
                       <p className="text-muted-foreground text-xs">Inversión inicial</p>
                       <p className="mt-1 text-lg font-semibold tabular-nums">
