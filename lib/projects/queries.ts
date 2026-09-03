@@ -150,7 +150,7 @@ export async function getProjectWorkspace(
   const supabase = await createServerClient()
   const { data: project, error } = await supabase
     .from('projects')
-    .select('*, clients(id, name, email)')
+    .select('*, clients(id, name, email, lead_id)')
     .eq('id', id)
     .is('deleted_at', null)
     .maybeSingle()
@@ -159,7 +159,9 @@ export async function getProjectWorkspace(
   if (!project) return null
 
   const client = (
-    project as unknown as { clients: { id: string; name: string; email: string | null } | null }
+    project as unknown as {
+      clients: { id: string; name: string; email: string | null; lead_id: string | null } | null
+    }
   ).clients
   const clientsResult = options.includeClients
     ? await supabase.from('clients').select('id, name').is('deleted_at', null).order('name')
@@ -244,7 +246,11 @@ export async function getProjectWorkspace(
       ? supabase
           .from('proposals')
           .select('id, number, title')
-          .eq('client_id', client.id)
+          .or(
+            client.lead_id
+              ? `client_id.eq.${client.id},lead_id.eq.${client.lead_id}`
+              : `client_id.eq.${client.id}`,
+          )
           .is('project_id', null)
           .is('deleted_at', null)
           .order('created_at', { ascending: false })

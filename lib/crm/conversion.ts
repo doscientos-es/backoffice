@@ -175,7 +175,7 @@ export async function ensureClientForProposal(
 ): Promise<{ clientId: string; created: boolean } | { error: string }> {
   const { data: proposal, error: readErr } = await client
     .from('proposals')
-    .select('client_id, lead_id')
+    .select('client_id, lead_id, project_id')
     .eq('id', proposalId)
     .maybeSingle()
   if (readErr || !proposal) return { error: 'Propuesta no encontrada' }
@@ -190,6 +190,28 @@ export async function ensureClientForProposal(
   }
   const leadId = proposal.lead_id as string
 
+  // A lead-first proposal may already be attached to a project whose client
+  // represents that lead. Reuse that exact client before considering another
+  // client for the lead, so the proposal/project relationship remains valid.
+  if (proposal.project_id) {
+    const { data: project } = await client
+      .from('projects')
+      .select('client_id')
+      .eq('id', proposal.project_id as string)
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (project?.client_id) {
+      const clientId = project.client_id as string
+      await patchMissingClientFiscal(client, clientId, fiscal)
+      const { error: updateError } = await client
+        .from('proposals')
+        .update({ client_id: clientId, lead_id: null })
+        .eq('id', proposalId)
+      if (updateError) return { error: updateError.message }
+      return { clientId, created: false }
+    }
+  }
+
   const { data: existing } = await client
     .from('clients')
     .select('id')
@@ -200,10 +222,11 @@ export async function ensureClientForProposal(
   if (existing?.id) {
     const clientId = existing.id as string
     await patchMissingClientFiscal(client, clientId, fiscal)
-    await client
+    const { error: updateError } = await client
       .from('proposals')
       .update({ client_id: clientId, lead_id: null })
       .eq('id', proposalId)
+    if (updateError) return { error: updateError.message }
     return { clientId, created: false }
   }
 
@@ -226,7 +249,11 @@ export async function ensureClientForProposal(
   }
 
   const clientId = created.id as string
-  await client.from('proposals').update({ client_id: clientId, lead_id: null }).eq('id', proposalId)
+  const { error: updateError } = await client
+    .from('proposals')
+    .update({ client_id: clientId, lead_id: null })
+    .eq('id', proposalId)
+  if (updateError) return { error: updateError.message }
   return { clientId, created: true }
 }
 

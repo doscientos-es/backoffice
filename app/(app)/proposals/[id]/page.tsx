@@ -140,16 +140,20 @@ export default async function ProposalDetailPage({
     .eq('proposal_id', id)
     .order('created_at', { ascending: true })
 
-  // Projects available to link: same client, active (not deleted).
+  // Projects available to link: same client or a client derived from this lead.
+  // This mirrors the database rule which protects the association on every write.
   const clientId = (proposal.client_id as string | null) ?? null
+  const leadId = (proposal.lead_id as string | null) ?? null
+  const availableProjectsQuery = supabase
+    .from('projects')
+    .select('id, name, clients!inner(lead_id)')
+    .is('deleted_at', null)
+    .order('name')
   const { data: availableProjects } = clientId
-    ? await supabase
-        .from('projects')
-        .select('id, name')
-        .eq('client_id', clientId)
-        .is('deleted_at', null)
-        .order('name')
-    : { data: [] }
+    ? await availableProjectsQuery.eq('client_id', clientId)
+    : leadId
+      ? await availableProjectsQuery.eq('clients.lead_id', leadId)
+      : { data: [] }
 
   const [{ data: teamMembers }, { data: proposalTeam }] = await Promise.all([
     supabase
