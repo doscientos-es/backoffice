@@ -10,7 +10,7 @@ import { emptyToUndef, optionalText, requiredText } from './common'
 export const ProjectStatus = z.enum(['planning', 'active', 'on_hold', 'done', 'cancelled'])
 export type ProjectStatusType = z.infer<typeof ProjectStatus>
 
-export const GithubSyncMode = z.enum(['none', 'one_way', 'bidirectional', 'link_only'])
+export const GithubSyncMode = z.enum(['none', 'link_only', 'bidirectional'])
 export type GithubSyncModeType = z.infer<typeof GithubSyncMode>
 
 export const ProjectWorkspacePath = z

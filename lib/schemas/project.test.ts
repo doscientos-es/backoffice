@@ -28,22 +28,22 @@ describe('ProjectInput github refinement', () => {
     expect(out.github_auto_sync).toBe(true)
   })
   it('requires a repo url when sync is enabled', () => {
-    expect(ProjectInput.safeParse({ ...base, github_sync_mode: 'one_way' }).success).toBe(false)
+    expect(ProjectInput.safeParse({ ...base, github_sync_mode: 'link_only' }).success).toBe(false)
   })
   it('rejects a malformed repo url', () => {
     expect(
       ProjectInput.safeParse({
         ...base,
-        github_sync_mode: 'one_way',
+        github_sync_mode: 'link_only',
         github_repo: 'https://example.com/x',
       }).success,
     ).toBe(false)
   })
-  it('accepts a valid repo url for one-way sync', () => {
+  it('accepts a valid repo URL for link-only sync', () => {
     expect(
       ProjectInput.safeParse({
         ...base,
-        github_sync_mode: 'one_way',
+        github_sync_mode: 'link_only',
         github_repo: 'https://github.com/owner/repo',
       }).success,
     ).toBe(true)
