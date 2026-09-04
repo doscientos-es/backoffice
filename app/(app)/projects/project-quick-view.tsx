@@ -1,6 +1,12 @@
 'use client'
 
-import { DrawerClose, DrawerDescription, DrawerHeader, DrawerTitle, Sheet } from '@doscientos/ui'
+import {
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from '@doscientos/ui'
 import { ArrowUpRight, Building2, Clock, ExternalLink, Trash as Trash2, X } from 'lucide-react'
 import Link from 'next/link'
 import { type ReactNode, useState, useTransition } from 'react'
@@ -50,7 +56,7 @@ export function ProjectQuickView({
   onCloseAction: () => void
 }) {
   return (
-    <Sheet
+    <DrawerContent
       isOpen={!!project}
       onOpenChange={(open) => !open && onCloseAction()}
       side="right"
@@ -62,7 +68,7 @@ export function ProjectQuickView({
           <Body project={project} canEdit={canEdit} onDeleteAction={onDeleteAction} />
         </ErrorBoundary>
       ) : null}
-    </Sheet>
+    </DrawerContent>
   )
 }
 

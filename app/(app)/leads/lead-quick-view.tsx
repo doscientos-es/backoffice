@@ -5,10 +5,10 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
   DrawerClose,
+  DrawerContent,
   DrawerDescription,
   DrawerHeader,
   DrawerTitle,
-  Sheet,
 } from '@doscientos/ui'
 import {
   ArrowUpRight,
@@ -110,7 +110,7 @@ export function LeadQuickView({
   onCloseAction: () => void
 }) {
   return (
-    <Sheet
+    <DrawerContent
       isOpen={!!lead}
       onOpenChange={(open) => !open && onCloseAction()}
       side="right"
@@ -130,7 +130,7 @@ export function LeadQuickView({
           />
         </ErrorBoundary>
       ) : null}
-    </Sheet>
+    </DrawerContent>
   )
 }
 

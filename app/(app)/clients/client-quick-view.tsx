@@ -1,6 +1,12 @@
 'use client'
 
-import { DrawerClose, DrawerDescription, DrawerHeader, DrawerTitle, Sheet } from '@doscientos/ui'
+import {
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from '@doscientos/ui'
 import {
   ArrowUpRight,
   Building2,
@@ -62,7 +68,7 @@ export function ClientQuickView({
   onCloseAction: () => void
 }) {
   return (
-    <Sheet
+    <DrawerContent
       isOpen={!!client}
       onOpenChange={(open) => !open && onCloseAction()}
       side="right"
@@ -74,7 +80,7 @@ export function ClientQuickView({
           <Body client={client} canEdit={canEdit} onDeleteAction={onDeleteAction} />
         </ErrorBoundary>
       ) : null}
-    </Sheet>
+    </DrawerContent>
   )
 }
 
