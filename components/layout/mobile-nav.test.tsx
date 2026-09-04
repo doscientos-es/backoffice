@@ -22,11 +22,13 @@ vi.mock('@/components/theme-toggle', () => ({ ThemeToggle: () => <button type="b
 vi.mock('@/components/ui/badge', () => ({
   Badge: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
 }))
-vi.mock('@/components/ui/drawer', () => ({
-  Drawer: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  DrawerClose: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  DrawerContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  DrawerTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+vi.mock('@doscientos/ui', () => ({
+  Drawer: ({ children, trigger }: { children: React.ReactNode; trigger: React.ReactNode }) => (
+    <>
+      {trigger}
+      {children}
+    </>
+  ),
 }))
 vi.mock('@/components/ui/error-boundary', () => ({
   ErrorBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,

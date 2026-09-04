@@ -1,5 +1,6 @@
 'use client'
 
+import { DrawerClose, DrawerDescription, DrawerHeader, DrawerTitle, Sheet } from '@doscientos/ui'
 import {
   ArrowUpRight,
   Building2,
@@ -24,14 +25,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-} from '@/components/ui/drawer'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { relativeTime } from '@/lib/utils'
@@ -69,15 +62,19 @@ export function ClientQuickView({
   onCloseAction: () => void
 }) {
   return (
-    <Drawer open={!!client} onOpenChange={(v) => !v && onCloseAction()} direction="right">
-      <DrawerContent className="sm:max-w-sm">
-        {client ? (
-          <ErrorBoundary>
-            <Body client={client} canEdit={canEdit} onDeleteAction={onDeleteAction} />
-          </ErrorBoundary>
-        ) : null}
-      </DrawerContent>
-    </Drawer>
+    <Sheet
+      isOpen={!!client}
+      onOpenChange={(open) => !open && onCloseAction()}
+      side="right"
+      className="sm:max-w-sm"
+      showCloseButton={false}
+    >
+      {client ? (
+        <ErrorBoundary>
+          <Body client={client} canEdit={canEdit} onDeleteAction={onDeleteAction} />
+        </ErrorBoundary>
+      ) : null}
+    </Sheet>
   )
 }
 
@@ -117,10 +114,8 @@ function Body({
             </DrawerDescription>
           </div>
         </div>
-        <DrawerClose asChild>
-          <Button variant="ghost" size="icon-sm" aria-label="Cerrar">
-            <X className="size-4" />
-          </Button>
+        <DrawerClose variant="ghost" size="icon-sm" aria-label="Cerrar">
+          <X className="size-4" />
         </DrawerClose>
       </DrawerHeader>
 

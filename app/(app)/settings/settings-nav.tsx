@@ -1,5 +1,6 @@
 'use client'
 
+import { Drawer, DrawerDescription, DrawerHeader, DrawerTitle } from '@doscientos/ui'
 import {
   Activity,
   Building2,
@@ -15,14 +16,6 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from '@/components/ui/drawer'
 import { cn } from '@/lib/utils'
 
 import { version } from '../../../package.json'
@@ -161,8 +154,8 @@ export function SettingsNav({ canManageTeam }: { canManageTeam: boolean }) {
       </div>
 
       <div className="sm:hidden">
-        <Drawer open={mobileOpen} onOpenChange={setMobileOpen}>
-          <DrawerTrigger asChild>
+        <Drawer
+          trigger={
             <button
               type="button"
               aria-label="Cambiar sección de ajustes"
@@ -174,21 +167,24 @@ export function SettingsNav({ canManageTeam }: { canManageTeam: boolean }) {
                 <ChevronDown className="text-muted-foreground size-4" aria-hidden />
               </span>
             </button>
-          </DrawerTrigger>
-          <DrawerContent className="max-h-[80svh] overflow-y-auto">
-            <DrawerHeader>
-              <DrawerTitle>Ajustes</DrawerTitle>
-              <DrawerDescription>Elige la sección que quieres gestionar.</DrawerDescription>
-            </DrawerHeader>
-            <nav aria-label="Secciones de ajustes" className="flex flex-col gap-5 px-3 pb-6">
-              <SettingsLinks
-                groups={groups}
-                pathname={pathname}
-                onNavigate={() => setMobileOpen(false)}
-              />
-              <span className="text-muted-foreground px-3 text-xs">v{version}</span>
-            </nav>
-          </DrawerContent>
+          }
+          isOpen={mobileOpen}
+          onOpenChange={setMobileOpen}
+          side="bottom"
+          className="max-h-[80svh] overflow-y-auto"
+        >
+          <DrawerHeader>
+            <DrawerTitle>Ajustes</DrawerTitle>
+            <DrawerDescription>Elige la sección que quieres gestionar.</DrawerDescription>
+          </DrawerHeader>
+          <nav aria-label="Secciones de ajustes" className="flex flex-col gap-5 px-3 pb-6">
+            <SettingsLinks
+              groups={groups}
+              pathname={pathname}
+              onNavigate={() => setMobileOpen(false)}
+            />
+            <span className="text-muted-foreground px-3 text-xs">v{version}</span>
+          </nav>
         </Drawer>
       </div>
     </aside>

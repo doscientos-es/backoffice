@@ -1,5 +1,6 @@
 'use client'
 
+import { DrawerClose, DrawerDescription, DrawerHeader, DrawerTitle, Sheet } from '@doscientos/ui'
 import { ArrowUpRight, Building2, Clock, ExternalLink, Trash as Trash2, X } from 'lucide-react'
 import Link from 'next/link'
 import { type ReactNode, useState, useTransition } from 'react'
@@ -14,14 +15,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-} from '@/components/ui/drawer'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { Input } from '@/components/ui/input'
 import { StatusBadge } from '@/components/ui/status-badge'
@@ -57,15 +50,19 @@ export function ProjectQuickView({
   onCloseAction: () => void
 }) {
   return (
-    <Drawer open={!!project} onOpenChange={(v) => !v && onCloseAction()} direction="right">
-      <DrawerContent className="sm:max-w-sm">
-        {project ? (
-          <ErrorBoundary>
-            <Body project={project} canEdit={canEdit} onDeleteAction={onDeleteAction} />
-          </ErrorBoundary>
-        ) : null}
-      </DrawerContent>
-    </Drawer>
+    <Sheet
+      isOpen={!!project}
+      onOpenChange={(open) => !open && onCloseAction()}
+      side="right"
+      className="sm:max-w-sm"
+      showCloseButton={false}
+    >
+      {project ? (
+        <ErrorBoundary>
+          <Body project={project} canEdit={canEdit} onDeleteAction={onDeleteAction} />
+        </ErrorBoundary>
+      ) : null}
+    </Sheet>
   )
 }
 
@@ -83,10 +80,8 @@ function Body({ project, canEdit, onDeleteAction }: BodyProps) {
             <span className="text-[11px] tabular-nums">{relativeTime(project.updated_at)}</span>
           </DrawerDescription>
         </div>
-        <DrawerClose asChild>
-          <Button variant="ghost" size="icon-sm" aria-label="Cerrar">
-            <X className="size-4" />
-          </Button>
+        <DrawerClose variant="ghost" size="icon-sm" aria-label="Cerrar">
+          <X className="size-4" />
         </DrawerClose>
       </DrawerHeader>
 
