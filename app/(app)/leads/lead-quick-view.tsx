@@ -1,6 +1,16 @@
 'use client'
 
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+  DrawerClose,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  Sheet,
+} from '@doscientos/ui'
+import {
   ArrowUpRight,
   Building2,
   CalendarPlus,
@@ -24,7 +34,6 @@ import { useRouter } from 'next/navigation'
 import { type ReactNode, useState, useTransition } from 'react'
 
 import { Button } from '@/components/ui/button'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@doscientos/ui'
 import {
   Dialog,
   DialogContent,
@@ -33,25 +42,19 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-} from '@/components/ui/drawer'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { MemberLabel } from '@/components/ui/member-avatar'
 import { StatusBadge } from '@/components/ui/status-badge'
-import { nextActionState } from '@/lib/leads/pipeline'
 import { requiresCyaProspectSoftwareCommission } from '@/lib/leads/attribution'
+import { nextActionState } from '@/lib/leads/pipeline'
 import { leadDisplayName } from '@/lib/leads/utils'
 import type { MemberOption } from '@/lib/members/queries'
 import { LEAD_STATUS } from '@/lib/status'
 import { formatEUR, relativeTime } from '@/lib/utils'
 
 import { ScheduleReminderDialog } from '../reminders/schedule-reminder-dialog'
+import { createTask } from '../tasks/actions'
+import { ExtractTasksDialog } from './[id]/extract-tasks-dialog'
 import { GmailSyncButton } from './[id]/gmail-sync-button'
 import { LeadEditDialog } from './[id]/lead-edit-dialog'
 import { LeadCallLink } from './[id]/phone-actions'
@@ -59,7 +62,10 @@ import { assignLeadOwner, claimLead } from './actions'
 import {
   QCallDialog,
   QEmailDialog,
+  QMeetDialog,
+  QMeetNowDialog,
   QNoteDialog,
+  QSendEmailDialog,
   QWhatsAppDialog,
 } from './lead-quick-action-dialogs'
 import type { KanbanLead } from './leads-kanban'
@@ -104,23 +110,27 @@ export function LeadQuickView({
   onCloseAction: () => void
 }) {
   return (
-    <Drawer open={!!lead} onOpenChange={(v) => !v && onCloseAction()} direction="right">
-      <DrawerContent className="sm:max-w-sm">
-        {lead ? (
-          <ErrorBoundary>
-            <Body
-              lead={lead}
-              canEdit={canEdit}
-              aiEnabled={aiEnabled}
-              googleEnabled={googleEnabled}
-              members={members}
-              senderName={senderName}
-              onDeleteAction={onDeleteAction}
-            />
-          </ErrorBoundary>
-        ) : null}
-      </DrawerContent>
-    </Drawer>
+    <Sheet
+      isOpen={!!lead}
+      onOpenChange={(open) => !open && onCloseAction()}
+      side="right"
+      className="sm:max-w-sm"
+      showCloseButton={false}
+    >
+      {lead ? (
+        <ErrorBoundary>
+          <Body
+            lead={lead}
+            canEdit={canEdit}
+            aiEnabled={aiEnabled}
+            googleEnabled={googleEnabled}
+            members={members}
+            senderName={senderName}
+            onDeleteAction={onDeleteAction}
+          />
+        </ErrorBoundary>
+      ) : null}
+    </Sheet>
   )
 }
 
@@ -159,10 +169,8 @@ function Body({
             <span className="text-[11px] tabular-nums">{relativeTime(lead.updated_at)}</span>
           </DrawerDescription>
         </div>
-        <DrawerClose asChild>
-          <Button variant="ghost" size="icon-sm" aria-label="Cerrar">
-            <X className="size-4" />
-          </Button>
+        <DrawerClose variant="ghost" size="icon-sm" aria-label="Cerrar">
+          <X className="size-4" />
         </DrawerClose>
       </DrawerHeader>
 
@@ -273,9 +281,7 @@ function Body({
               </Row>
             )}
             {campaignName && (
-              <Row icon={<ArrowUpRight className="size-3.5" />}>
-                Campaña: {campaignName}
-              </Row>
+              <Row icon={<ArrowUpRight className="size-3.5" />}>Campaña: {campaignName}</Row>
             )}
             {requiresCyaProspectSoftwareCommission(campaignName) && (
               <Row icon={<TriangleAlert className="size-3.5" />}>
@@ -316,7 +322,7 @@ function Body({
       </div>
 
       <div className="border-border shrink-0 border-t px-4 py-3">
-        <QuickActions
+        <DrawerQuickActions
           leadId={lead.id}
           leadName={displayName}
           leadPhone={lead.phone}
@@ -541,7 +547,7 @@ function AssignWidget({ leadId, members }: { leadId: string; members: MemberOpti
 
 // ─── Quick Actions (inline in drawer) ────────────────────────────────────────
 
-function QuickActions({
+export function DrawerQuickActions({
   leadId,
   leadName,
   leadPhone,
@@ -558,7 +564,7 @@ function QuickActions({
   aiEnabled: boolean
   googleEnabled: boolean
 }) {
-  const secondaryActionCount = googleEnabled ? 3 : 2
+  const secondaryActionCount = 3 + (googleEnabled ? 3 : 0) + (aiEnabled ? 1 : 0)
 
   return (
     <div className="flex flex-col gap-2">
@@ -608,13 +614,45 @@ function QuickActions({
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent className="pt-1.5">
-          <div className="bg-muted/20 flex flex-col gap-1.5 rounded-lg border p-2">
-            <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
-            <QNoteDialog leadId={leadId} />
-            {googleEnabled ? <GmailSyncButton leadId={leadId} leadEmail={leadEmail} /> : null}
+          <div className="bg-muted/20 flex flex-col gap-3 rounded-lg border p-2">
+            <DrawerActionGroup label="Registrar">
+              <QSendEmailDialog leadId={leadId} leadEmail={leadEmail} aiEnabled={aiEnabled} />
+              <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
+              <QNoteDialog leadId={leadId} />
+            </DrawerActionGroup>
+            {googleEnabled ? (
+              <DrawerActionGroup label="Reuniones">
+                <QMeetNowDialog leadId={leadId} leadName={leadName} leadEmail={leadEmail} />
+                <QMeetDialog
+                  leadId={leadId}
+                  leadName={leadName}
+                  leadEmail={leadEmail}
+                  projects={[]}
+                />
+              </DrawerActionGroup>
+            ) : null}
+            {googleEnabled || aiEnabled ? (
+              <DrawerActionGroup label="Herramientas">
+                {googleEnabled ? <GmailSyncButton leadId={leadId} leadEmail={leadEmail} /> : null}
+                {aiEnabled ? (
+                  <ExtractTasksDialog leadId={leadId} createTaskAction={createTask} />
+                ) : null}
+              </DrawerActionGroup>
+            ) : null}
           </div>
         </CollapsibleContent>
       </Collapsible>
+    </div>
+  )
+}
+
+function DrawerActionGroup({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <p className="text-muted-foreground px-1 text-[10px] font-semibold tracking-wide uppercase">
+        {label}
+      </p>
+      {children}
     </div>
   )
 }
