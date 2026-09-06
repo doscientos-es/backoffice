@@ -690,7 +690,7 @@ export function QCallDialog({
             Registrar llamada
           </Button>
         </DialogTrigger>
-        <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-lg">
+        <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-md">
           <DialogHeader className="shrink-0">
             <DialogTitle>Registrar llamada</DialogTitle>
             {leadPhone && <DialogDescription>{leadPhone}</DialogDescription>}

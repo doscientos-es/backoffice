@@ -146,7 +146,7 @@ export function ScheduleReminderDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Agendar aviso</DialogTitle>
           <DialogDescription>

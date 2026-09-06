@@ -1,4 +1,4 @@
-import { Globe2 as Facebook, Camera as Instagram, Store } from 'lucide-react'
+import { Globe2 as Facebook, Camera as Instagram } from 'lucide-react'
 import type { ComponentType } from 'react'
 
 import { PLATFORM_LABELS, type SocialPlatform } from '@/lib/social/core'
@@ -15,14 +15,12 @@ import { cn } from '@/lib/utils'
 const ICONS: Record<SocialPlatform, ComponentType<{ className?: string }>> = {
   instagram: Instagram,
   facebook: Facebook,
-  google_business_profile: Store,
 }
 
 /** Brand-tinted chip classes per network (subtle, theme-aware). */
 const TINTS: Record<SocialPlatform, string> = {
   instagram: 'bg-pink-500/10 text-pink-600 dark:text-pink-300',
   facebook: 'bg-blue-500/10 text-blue-600 dark:text-blue-300',
-  google_business_profile: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
 }
 
 export function PlatformIcon({

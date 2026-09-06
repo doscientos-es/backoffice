@@ -97,8 +97,7 @@ export async function importHistoricalInstagramPosts(): Promise<{
 /**
  * Publish an existing draft/scheduled post to its pending targets, or retry
  * only the targets that previously failed. Targets already `published` are
- * skipped so retrying a partially-failed post (e.g. only Google Business
- * Profile pending approval) never republishes to networks that already
+ * skipped so retrying a partially-failed post never republishes to networks that already
  * succeeded. Marks the post `publishing`, fans out, then persists the
  * per-target outcome.
  */

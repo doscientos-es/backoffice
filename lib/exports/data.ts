@@ -42,8 +42,6 @@ export const EXPORTABLE_TABLES = [
   'marketing_ad_sets',
   'marketing_ads',
   'marketing_insights',
-  'google_business_profile_metrics',
-  'google_business_reviews',
   'brand_guides',
   'brand_tokens',
   'brand_assets',

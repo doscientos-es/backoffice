@@ -7,12 +7,11 @@
  */
 
 /** Networks the hub can publish to. Add a new value + a Publisher to extend. */
-export type SocialPlatform = 'instagram' | 'facebook' | 'google_business_profile'
+export type SocialPlatform = 'instagram' | 'facebook'
 
 export const SOCIAL_PLATFORMS: readonly SocialPlatform[] = [
   'instagram',
   'facebook',
-  'google_business_profile',
 ] as const
 
 /** High-level shape of the composition, derived from its media. */
@@ -79,7 +78,7 @@ export interface PostInsights {
   shares: number
   saves: number
   videoViews: number
-  /** Platform-specific actions such as Google Local Post CTA clicks. */
+  /** Platform-specific actions such as CTA clicks. */
   actions?: number
   /** 0..1 (likes+comments+shares+saves / reach). */
   engagementRate: number
@@ -101,5 +100,4 @@ export interface PlatformComment {
 export const PLATFORM_LABELS: Record<SocialPlatform, string> = {
   instagram: 'Instagram',
   facebook: 'Facebook',
-  google_business_profile: 'Google Business Profile',
 }

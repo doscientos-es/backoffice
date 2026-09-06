@@ -23,7 +23,6 @@ import {
   SOCIAL_PLATFORMS,
   type SocialPlatform,
 } from '@/lib/social/core'
-import { googleBusinessOAuthConfigured } from '@/lib/social/google-business'
 import {
   filterAndSortPosts,
   SOCIAL_POST_SORT_OPTIONS,
@@ -193,8 +192,6 @@ export default async function SocialPage({
   const hasFilters = Boolean(q || status || platform || mediaKind || sort !== 'created_desc')
   const available = availablePlatforms()
   const instagramConnected = available.includes('instagram')
-  const googleBusinessNeedsSetup =
-    googleBusinessOAuthConfigured() && !available.includes('google_business_profile')
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -203,17 +200,6 @@ export default async function SocialPage({
         actions={
           <>
             {instagramConnected && <ImportInstagramButton />}
-            {googleBusinessNeedsSetup && (
-              <Button asChild variant="outline" size="sm">
-                <Link href="/api/social/google-business/auth">Conectar Google Business</Link>
-              </Button>
-            )}
-            <Button asChild variant="outline" size="sm">
-              <Link href="/social/reviews">Reseñas Google</Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/social/google-business">Ficha Google</Link>
-            </Button>
             <SyncButton kind="insights" label="Sincronizar métricas" />
             <Button asChild variant="outline" size="sm">
               <Link href="/social/feed/inbox">

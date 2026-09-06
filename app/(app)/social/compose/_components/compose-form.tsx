@@ -79,8 +79,7 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
     if (mode === 'schedule' && !scheduledLocal) return false
     if (
       automationEnabled &&
-      (selectedList.every((platform) => platform === 'google_business_profile') ||
-        !automationKeyword.trim() ||
+      (!automationKeyword.trim() ||
         !automationPublicReply.trim() ||
         !automationPrivateMessage.trim())
     ) {
@@ -95,7 +94,6 @@ export function ComposeForm({ available }: { available: SocialPlatform[] }) {
     automationKeyword,
     automationPublicReply,
     automationPrivateMessage,
-    selectedList,
   ])
 
   function togglePlatform(p: SocialPlatform, on: boolean) {

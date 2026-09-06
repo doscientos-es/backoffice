@@ -81,32 +81,6 @@ export interface CommentView {
   postCaption: string
 }
 
-/** Google Business Profile review, kept separate from post comments. */
-export interface GoogleReviewView {
-  id: string
-  reviewName: string
-  reviewerName: string
-  reviewerPhotoUrl: string | null
-  isAnonymous: boolean
-  starRating: string
-  comment: string
-  createdAt: string | null
-  updatedAt: string | null
-  replyComment: string | null
-  replyUpdatedAt: string | null
-  replyState: string | null
-  policyViolation: string | null
-  replied: boolean
-}
-
-/** Daily location metric from the Google Business Profile Performance API. */
-export interface GoogleBusinessMetricView {
-  metric: string
-  date: string
-  value: number
-  fetchedAt: string
-}
-
 /** Input to create a composed post (already-uploaded media + target set). */
 export interface CreatePostInput {
   /** Shared copy, used as the default for every target. */
