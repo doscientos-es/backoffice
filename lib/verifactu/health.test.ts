@@ -68,4 +68,26 @@ describe('getVerifactuOperationalHealth', () => {
       certificate: { status: 'warning' },
     })
   })
+
+  it('keeps invoice health available when optional server configuration is invalid', async () => {
+    const responses = [
+      { count: 0, error: null },
+      { count: 0, error: null },
+      { count: 0, error: null },
+    ]
+    from.mockImplementation(() => ({
+      select: () => ({
+        in: async () => responses.shift(),
+        eq: async () => responses.shift(),
+      }),
+    }))
+    serverEnv.mockImplementation(() => {
+      throw new Error('Invalid optional environment configuration')
+    })
+
+    await expect(getVerifactuOperationalHealth()).resolves.toMatchObject({
+      queueAvailable: true,
+      certificate: { status: 'missing', expiresAt: null, daysRemaining: null },
+    })
+  })
 })

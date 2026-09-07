@@ -54,6 +54,10 @@ describe('formatDate / formatDateTime', () => {
     expect(formatDate(null)).toBe('—')
     expect(formatDateTime(undefined)).toBe('—')
   })
+  it('returns em-dash instead of throwing for malformed values', () => {
+    expect(formatDate('not-a-date')).toBe('—')
+    expect(formatDateTime('not-a-date')).toBe('—')
+  })
 })
 
 describe('relativeTime', () => {

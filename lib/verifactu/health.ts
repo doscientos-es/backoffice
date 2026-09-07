@@ -38,6 +38,15 @@ export function getCertificateHealth(
   }
 }
 
+function getConfiguredCertificateHealth(): CertificateHealth {
+  try {
+    return getCertificateHealth(serverEnv().VERIFACTU_CERT_EXPIRES_AT)
+  } catch {
+    // Auxiliary operational data must not prevent the invoice list from rendering.
+    return getCertificateHealth(undefined)
+  }
+}
+
 export async function getVerifactuOperationalHealth(): Promise<VerifactuOperationalHealth> {
   const supabase = await createServerClient()
   const [pending, retrying, blocked, diagnostic] = await Promise.all([
@@ -65,6 +74,6 @@ export async function getVerifactuOperationalHealth(): Promise<VerifactuOperatio
     retrying: retrying.count ?? 0,
     blocked: blocked.count ?? 0,
     diagnostic,
-    certificate: getCertificateHealth(serverEnv().VERIFACTU_CERT_EXPIRES_AT),
+    certificate: getConfiguredCertificateHealth(),
   }
 }
