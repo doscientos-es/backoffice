@@ -38,8 +38,8 @@ importers:
         specifier: ^0.1.29
         version: 0.1.29(patch_hash=abthirmwvoetocnpzgfpuvn4wi)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@doscientos/verifactu':
-        specifier: file:vendor\doscientos-verifactu-0.1.21.tgz
-        version: file:vendor/doscientos-verifactu-0.1.21.tgz(date-fns@4.3.0)
+        specifier: ^0.1.25
+        version: 0.1.25(date-fns@4.3.0)
       '@hcaptcha/react-hcaptcha':
         specifier: ^2.0.2
         version: 2.0.2
@@ -548,9 +548,8 @@ packages:
       react: '>=18.3.0'
       react-dom: '>=18.3.0'
 
-  '@doscientos/verifactu@file:vendor/doscientos-verifactu-0.1.21.tgz':
-    resolution: {integrity: sha512-oNBYhuZ51OZn3C/1HwNUAbvxNp0lsAXSvLESvYYMCIA0jJA5KFelWZKMxNnH8UIHjnHqY9OcMBAsoEsQGGB6Og==, tarball: file:vendor/doscientos-verifactu-0.1.21.tgz}
-    version: 0.1.21
+  '@doscientos/verifactu@0.1.25':
+    resolution: {integrity: sha512-xJ9nJGBx61oh3hXRFTX4SQbivcc+xZjOe1IWiSRNO7d/TZSt5zqxUYXKqObhiMwxYs9bCDobKJTfSwjYzJEqqA==}
     engines: {node: '>=22.18'}
 
   '@dotenvx/dotenvx@1.69.1':
@@ -6128,7 +6127,7 @@ snapshots:
     transitivePeerDependencies:
       - '@emotion/is-prop-valid'
 
-  '@doscientos/verifactu@file:vendor/doscientos-verifactu-0.1.21.tgz(date-fns@4.3.0)':
+  '@doscientos/verifactu@0.1.25(date-fns@4.3.0)':
     dependencies:
       '@richhouse83/xsd-validator': 1.0.0
       date-fns-tz: 3.2.0(date-fns@4.3.0)

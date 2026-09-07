@@ -56,15 +56,14 @@ primero si pertenecen al paquete.
 - Si hubo regularizaciones, se selecciona la última Alta aceptada.
 - La anulación es otro registro append-only de la cadena global.
 
-## Actualizar el paquete vendorizado
+## Actualizar la dependencia npm
 
 1. Ejecutar en `modules/verifactu`: `pnpm test`, `pnpm typecheck`, `pnpm build`.
-2. Crear el tarball con `pnpm pack --pack-destination ../../internal/backoffice/vendor`.
-3. Instalarlo con `pnpm add @doscientos/verifactu@file:vendor/<tarball>`.
+2. Publicar la nueva versión de `@doscientos/verifactu` en npm.
+3. Actualizarla en el backoffice con `pnpm update @doscientos/verifactu --latest`.
 4. Validar tests, typecheck y build del backoffice.
 
-No editar manualmente `pnpm-lock.yaml`. Si cambia el contenido de un tarball con
-la misma versión local, usar un nombre de revisión distinto para evitar caché.
+No editar manualmente `pnpm-lock.yaml`; `pnpm` debe resolver y registrar la versión publicada.
 
 ## Migraciones
 
