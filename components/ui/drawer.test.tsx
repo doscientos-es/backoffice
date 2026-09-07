@@ -41,7 +41,13 @@ describe('Drawer', () => {
   it('preserves the trigger click handler while opening the drawer', () => {
     const onClick = vi.fn()
     render(
-      <Drawer trigger={<button type="button" onClick={onClick}>Abrir con acción</button>}>
+      <Drawer
+        trigger={
+          <button type="button" onClick={onClick}>
+            Abrir con acción
+          </button>
+        }
+      >
         <p>Contenido con acción</p>
       </Drawer>,
     )

@@ -29,6 +29,8 @@ import { listActiveMembers } from '@/lib/members/queries'
 import { LEAD_STATUS, TASK_STATUS, type TaskStatus } from '@/lib/status'
 import { formatDate, formatEUR, relativeTime } from '@/lib/utils'
 
+import { buildAdsManagerUrl } from '../../marketing/_components/marketing-format'
+import { AdPreviewDialog } from '../../marketing/ad-preview-dialog'
 import { TaskCreateDialog } from '../../tasks/task-create-dialog'
 import { CallInteractionDetails } from './call-interaction-details'
 import { DeleteLeadInteractionButton } from './delete-lead-interaction-button'
@@ -51,9 +53,6 @@ import { LeadNotesDialog } from './lead-notes-dialog'
 import { MomTestChecklist } from './mom-test-checklist'
 import { PhoneQuickActions } from './phone-actions'
 import { LeadStatusSelect } from './status-select'
-
-import { AdPreviewDialog } from '../../marketing/ad-preview-dialog'
-import { buildAdsManagerUrl } from '../../marketing/_components/marketing-format'
 
 export const dynamic = 'force-dynamic'
 
@@ -300,14 +299,6 @@ export default async function LeadDetailPage({
         </aside>
       </section>
 
-      <LeadCommercial
-        leadId={lead.id as string}
-        linkedClientId={linkedClientId}
-        proposals={proposals}
-        projects={projects}
-        invoices={invoices}
-      />
-
       <SectionBoundary label="No se pudo cargar la inteligencia de empresa">
         <Card>
           <CardContent className="pt-6">
@@ -489,6 +480,14 @@ export default async function LeadDetailPage({
           />
         </LeadDetailDisclosure>
       </section>
+
+      <LeadCommercial
+        leadId={lead.id as string}
+        linkedClientId={linkedClientId}
+        proposals={proposals}
+        projects={projects}
+        invoices={invoices}
+      />
 
       <Lead360Timeline
         leadId={lead.id as string}
