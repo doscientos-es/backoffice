@@ -42,7 +42,7 @@ export default async function ClientsPage({
       addHref="/clients/new"
       addLabel="Nuevo cliente"
       actions={
-        <Button asChild size="sm">
+        <Button asChild size="sm" className="min-h-11 w-full sm:w-auto">
           <Link href="/clients/new">
             <Plus className="mr-2 h-4 w-4" />
             Nuevo
@@ -85,6 +85,7 @@ export default async function ClientsPage({
               billing_address_province: c.billing_address_province,
               billing_address_country: c.billing_address_country,
               notes: c.notes,
+              version: c.version,
             },
             cells: [
               <div key="name" className="flex items-center gap-2">

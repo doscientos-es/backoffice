@@ -1,5 +1,6 @@
 'use client'
 
+import { ChevronDown } from 'lucide-react'
 import { useCallback, useState } from 'react'
 
 import { ClientLogoUpload } from '@/components/ui/client-logo-upload'
@@ -47,6 +48,17 @@ export function ClientFormFields({
   autoFocusName?: boolean
 }) {
   const d = defaults ?? {}
+  const hasAdditionalDetails = Boolean(
+    d.label ||
+    d.contact_person ||
+    d.billing_address_street ||
+    d.billing_address_zip ||
+    d.billing_address_city ||
+    d.billing_address_province ||
+    d.notes ||
+    d.logo_url,
+  )
+  const [showDetails, setShowDetails] = useState(hasAdditionalDetails)
 
   // Controlled state for fields that can be autofilled from the Registro Mercantil
   const [name, setName] = useState(d.name ?? '')
@@ -91,6 +103,10 @@ export function ClientFormFields({
         />
       )}
 
+      <p className="text-muted-foreground text-sm">
+        Empieza por lo esencial. Podrás completar la ficha cuando tengas más información.
+      </p>
+
       <div className="grid gap-5 sm:grid-cols-2">
         <FormRow
           label="Nombre"
@@ -108,19 +124,6 @@ export function ClientFormFields({
             onChange={(e) => setName(e.target.value)}
             placeholder="Acme S.L."
             autoComplete="organization"
-          />
-        </FormRow>
-        <FormRow
-          label="Alias / Label"
-          htmlFor={`${idPrefix}-label`}
-          hint="Nombre corto para listas. Si está vacío se usa la razón social."
-        >
-          <Input
-            id={`${idPrefix}-label`}
-            name="label"
-            maxLength={100}
-            defaultValue={d.label ?? ''}
-            placeholder="Acme"
           />
         </FormRow>
         <FormRow
@@ -154,78 +157,115 @@ export function ClientFormFields({
             autoComplete="tel"
           />
         </FormRow>
-        <FormRow label="Persona de contacto" htmlFor={`${idPrefix}-contact_person`}>
-          <Input
-            id={`${idPrefix}-contact_person`}
-            name="contact_person"
-            maxLength={160}
-            value={contactPerson}
-            onChange={(e) => setContactPerson(e.target.value)}
-            placeholder="Nombre y apellidos"
-            autoComplete="name"
-          />
-        </FormRow>
       </div>
-      <div className="col-span-full">
-        <p className="mb-3 text-sm font-medium">Dirección de facturación</p>
-        <p className="text-muted-foreground mb-3 text-xs">
-          Se usará en las facturas. Cada campo se guarda por separado para garantizar validez
-          fiscal.
-        </p>
-        <div className="grid gap-4 sm:grid-cols-2">
+
+      <div className="border-border border-t pt-3">
+        <button
+          type="button"
+          onClick={() => setShowDetails((value) => !value)}
+          aria-expanded={showDetails}
+          aria-controls={`${idPrefix}-additional-details`}
+          className="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 flex min-h-11 w-full items-center gap-2 rounded-lg px-2 text-left text-sm font-medium transition-colors outline-none focus-visible:ring-2"
+        >
+          <ChevronDown
+            className={`size-4 transition-transform ${showDetails ? 'rotate-180' : ''}`}
+          />
+          Más datos de cliente <span className="font-normal">(opcional)</span>
+          {hasAdditionalDetails && !showDetails ? (
+            <span className="bg-muted ml-auto rounded-full px-2 py-0.5 text-xs">con datos</span>
+          ) : null}
+        </button>
+        <div
+          id={`${idPrefix}-additional-details`}
+          className={`mt-4 space-y-5 ${showDetails ? '' : 'hidden'}`}
+        >
+          <div className="grid gap-5 sm:grid-cols-2">
+            <FormRow
+              label="Alias / Label"
+              htmlFor={`${idPrefix}-label`}
+              hint="Nombre corto para listas. Si está vacío se usa la razón social."
+            >
+              <Input
+                id={`${idPrefix}-label`}
+                name="label"
+                maxLength={100}
+                defaultValue={d.label ?? ''}
+                placeholder="Acme"
+              />
+            </FormRow>
+            <FormRow label="Persona de contacto" htmlFor={`${idPrefix}-contact_person`}>
+              <Input
+                id={`${idPrefix}-contact_person`}
+                name="contact_person"
+                maxLength={160}
+                value={contactPerson}
+                onChange={(e) => setContactPerson(e.target.value)}
+                placeholder="Nombre y apellidos"
+                autoComplete="name"
+              />
+            </FormRow>
+          </div>
+          <div>
+            <p className="mb-1 text-sm font-medium">Dirección de facturación</p>
+            <p className="text-muted-foreground mb-3 text-xs">
+              Se usará en las facturas cuando la necesites.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormRow
+                label="Calle y número"
+                htmlFor={`${idPrefix}-billing_address_street`}
+                className="sm:col-span-2"
+              >
+                <Input
+                  id={`${idPrefix}-billing_address_street`}
+                  name="billing_address_street"
+                  maxLength={200}
+                  value={street}
+                  onChange={(e) => setStreet(e.target.value)}
+                  placeholder="Calle Mayor, 1 - 3ª"
+                  autoComplete="street-address"
+                />
+              </FormRow>
+              <ZipInput
+                key={zipKey}
+                namePrefix="billing_address"
+                defaultZip={d.billing_address_zip}
+                defaultCity={autofillCity || d.billing_address_city}
+                defaultProvince={autofillProvince || d.billing_address_province}
+              />
+              <FormRow label="País" htmlFor={`${idPrefix}-billing_address_country`}>
+                <Select
+                  id={`${idPrefix}-billing_address_country`}
+                  name="billing_address_country"
+                  defaultValue={d.billing_address_country ?? 'ES'}
+                  autoComplete="country"
+                >
+                  {COUNTRY_OPTIONS.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.label}
+                    </option>
+                  ))}
+                </Select>
+              </FormRow>
+            </div>
+          </div>
           <FormRow
-            label="Calle y número"
-            htmlFor={`${idPrefix}-billing_address_street`}
-            className="sm:col-span-2"
+            label="Notas"
+            htmlFor={`${idPrefix}-notes`}
+            hint="Información interna, no visible para el cliente."
           >
-            <Input
-              id={`${idPrefix}-billing_address_street`}
-              name="billing_address_street"
-              maxLength={200}
-              value={street}
-              onChange={(e) => setStreet(e.target.value)}
-              placeholder="Calle Mayor, 1 - 3ª"
-              autoComplete="street-address"
+            <Textarea
+              id={`${idPrefix}-notes`}
+              name="notes"
+              rows={3}
+              maxLength={4000}
+              defaultValue={d.notes ?? ''}
+              placeholder="Condiciones de pago, observaciones…"
             />
           </FormRow>
-          <ZipInput
-            key={zipKey}
-            namePrefix="billing_address"
-            defaultZip={d.billing_address_zip}
-            defaultCity={autofillCity || d.billing_address_city}
-            defaultProvince={autofillProvince || d.billing_address_province}
-          />
-          <FormRow label="País" htmlFor={`${idPrefix}-billing_address_country`}>
-            <Select
-              id={`${idPrefix}-billing_address_country`}
-              name="billing_address_country"
-              defaultValue={d.billing_address_country ?? 'ES'}
-              autoComplete="country"
-            >
-              {COUNTRY_OPTIONS.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.label}
-                </option>
-              ))}
-            </Select>
-          </FormRow>
+          <ClientLogoUpload defaultLogoUrl={d.logo_url} />
         </div>
       </div>
-      <FormRow
-        label="Notas"
-        htmlFor={`${idPrefix}-notes`}
-        hint="Información interna, no visible para el cliente."
-      >
-        <Textarea
-          id={`${idPrefix}-notes`}
-          name="notes"
-          rows={3}
-          maxLength={4000}
-          defaultValue={d.notes ?? ''}
-          placeholder="Condiciones de pago, observaciones…"
-        />
-      </FormRow>
-      <ClientLogoUpload defaultLogoUrl={d.logo_url} />
     </>
   )
 }

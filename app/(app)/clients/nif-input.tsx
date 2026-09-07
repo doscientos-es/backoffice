@@ -143,7 +143,7 @@ export function NifInput({
           onClick={verify}
           disabled={state.status === 'loading' || !value.trim()}
           title="Buscar en Registro Mercantil y VIES"
-          className="border-input bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground inline-flex shrink-0 items-center gap-1.5 rounded-md border px-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+          className="border-input bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-md border px-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
         >
           {state.status === 'loading' ? (
             <Loader2 className="size-3.5 animate-spin" />

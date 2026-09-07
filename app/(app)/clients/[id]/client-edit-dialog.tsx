@@ -103,7 +103,7 @@ export function ClientEditDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="max-w-[calc(100%-1rem)] sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Editar cliente</DialogTitle>
           <DialogDescription>Actualiza los datos del cliente.</DialogDescription>
@@ -112,7 +112,7 @@ export function ClientEditDialog({
           key={client.version}
           ref={formRef}
           onSubmit={onSubmit}
-          className="flex max-h-[70vh] flex-col"
+          className="flex max-h-[75svh] flex-col sm:max-h-[70vh]"
         >
           <div className="scroll-fade no-scrollbar flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto pr-1">
             <ClientFormFields
@@ -134,9 +134,14 @@ export function ClientEditDialog({
               }}
             />
           </div>
-          <div className="border-border flex shrink-0 items-center justify-end gap-3 border-t pt-3">
+          <div className="border-border bg-background/95 -mx-4 flex shrink-0 flex-col-reverse gap-2 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:static sm:mx-0 sm:flex-row sm:items-center sm:justify-end sm:bg-transparent sm:p-0 sm:pt-3 sm:backdrop-blur-none">
             <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
-            <SubmitButton loading={feedback.pending} isDisabled={!isDirty} pendingLabel="Guardando…">
+            <SubmitButton
+              className="min-h-11 w-full sm:w-auto"
+              loading={feedback.pending}
+              isDisabled={!isDirty}
+              pendingLabel="Guardando…"
+            >
               Guardar cambios
             </SubmitButton>
           </div>

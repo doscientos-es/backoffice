@@ -95,6 +95,8 @@ export type ListPageProps = {
   savedViews?: ListControlsProps['savedViews']
   /** Presentación de controles; usa el panel compacto por defecto. */
   controlsPresentation?: ListControlsProps['presentation']
+  /** Render alternativo de cada fila para pantallas pequeñas. */
+  mobileRow?: (row: ListRow) => ReactNode
   onRowClick?: (row: ListRow) => void
   addHref?: string
   addLabel?: string
@@ -165,6 +167,7 @@ export function ListPage({
   pagination,
   savedViews,
   controlsPresentation = 'panel',
+  mobileRow,
   onRowClick,
   addHref,
   addLabel,
@@ -340,113 +343,129 @@ export function ListPage({
               {emptyAction ? <EmptyContent>{emptyAction}</EmptyContent> : null}
             </Empty>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-border bg-muted/30 border-b">
-                    {table.getFlatHeaders().map((header, colIdx) => {
-                      const right = alignAt(colIdx) === 'right'
+            <>
+              {mobileRow ? (
+                <div className="flex flex-col gap-2 p-3 sm:hidden">
+                  {table.getRowModel().rows.map((tableRow) => mobileRow(tableRow.original))}
+                  {addHref ? (
+                    <Link
+                      href={addHref}
+                      className="border-border text-muted-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-primary flex min-h-11 items-center justify-center gap-2 rounded-lg border border-dashed px-3 py-2 text-sm font-medium transition-colors"
+                    >
+                      <Plus className="size-4 shrink-0" />
+                      {addLabel ?? 'Añadir nuevo'}
+                    </Link>
+                  ) : null}
+                </div>
+              ) : null}
+              <div className={cn('overflow-x-auto', mobileRow && 'hidden sm:block')}>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-border bg-muted/30 border-b">
+                      {table.getFlatHeaders().map((header, colIdx) => {
+                        const right = alignAt(colIdx) === 'right'
+                        return (
+                          <th
+                            key={header.id}
+                            style={
+                              headerMinWidth(headers[colIdx] ?? '')
+                                ? { minWidth: headerMinWidth(headers[colIdx] ?? '') }
+                                : undefined
+                            }
+                            className={cn(
+                              'px-5 py-3 text-xs font-medium tracking-wide text-muted-foreground',
+                              right ? 'text-right' : 'text-left',
+                            )}
+                          >
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                          </th>
+                        )
+                      })}
+                      {hasRowActions && <th className="w-px px-3 py-3" aria-label="Acciones" />}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-border/60 divide-y">
+                    {table.getRowModel().rows.map((tableRow) => {
+                      const row = tableRow.original
+                      const isClickable = !!(onRowClick || row.href)
                       return (
-                        <th
-                          key={header.id}
-                          style={
-                            headerMinWidth(headers[colIdx] ?? '')
-                              ? { minWidth: headerMinWidth(headers[colIdx] ?? '') }
-                              : undefined
-                          }
+                        <tr
+                          key={tableRow.id}
+                          onClick={() => {
+                            if (onRowClick) onRowClick(row)
+                            else if (row.href) router.push(row.href)
+                          }}
+                          onMouseEnter={() => prefetchRow(row.href)}
+                          onFocus={() => prefetchRow(row.href)}
                           className={cn(
-                            'px-5 py-3 text-xs font-medium tracking-wide text-muted-foreground',
-                            right ? 'text-right' : 'text-left',
+                            'group transition-colors hover:bg-muted/40',
+                            isClickable && 'cursor-pointer',
                           )}
                         >
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                        </th>
+                          {tableRow.getVisibleCells().map((cell, colIdx) => {
+                            const isFirst = colIdx === 0
+                            const right = alignAt(colIdx) === 'right'
+                            return (
+                              <td
+                                key={cell.id}
+                                className={cn(
+                                  'px-5 py-3 align-middle',
+                                  isFirst ? 'font-medium text-foreground' : 'text-muted-foreground',
+                                  right && 'text-right',
+                                )}
+                              >
+                                {isFirst && row.href ? (
+                                  <Link
+                                    href={row.href}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="group-hover:text-primary inline-flex items-center gap-1.5 underline-offset-2 transition-all hover:underline"
+                                  >
+                                    {row.cells[colIdx] ?? (
+                                      <span className="text-muted-foreground/40">—</span>
+                                    )}
+                                    <ArrowRight className="size-3.5 shrink-0 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-60" />
+                                  </Link>
+                                ) : (
+                                  (() => {
+                                    const c = row.cells[colIdx]
+                                    return c == null || c === '—' ? (
+                                      <span className="text-muted-foreground/40">—</span>
+                                    ) : (
+                                      c
+                                    )
+                                  })()
+                                )}
+                              </td>
+                            )
+                          })}
+                          {hasRowActions && (
+                            <td
+                              className="px-3 py-2 text-right align-middle"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {row.rowActions}
+                            </td>
+                          )}
+                        </tr>
                       )
                     })}
-                    {hasRowActions && <th className="w-px px-3 py-3" aria-label="Acciones" />}
-                  </tr>
-                </thead>
-                <tbody className="divide-border/60 divide-y">
-                  {table.getRowModel().rows.map((tableRow) => {
-                    const row = tableRow.original
-                    const isClickable = !!(onRowClick || row.href)
-                    return (
-                      <tr
-                        key={tableRow.id}
-                        onClick={() => {
-                          if (onRowClick) onRowClick(row)
-                          else if (row.href) router.push(row.href)
-                        }}
-                        onMouseEnter={() => prefetchRow(row.href)}
-                        onFocus={() => prefetchRow(row.href)}
-                        className={cn(
-                          'group transition-colors hover:bg-muted/40',
-                          isClickable && 'cursor-pointer',
-                        )}
-                      >
-                        {tableRow.getVisibleCells().map((cell, colIdx) => {
-                          const isFirst = colIdx === 0
-                          const right = alignAt(colIdx) === 'right'
-                          return (
-                            <td
-                              key={cell.id}
-                              className={cn(
-                                'px-5 py-3 align-middle',
-                                isFirst ? 'font-medium text-foreground' : 'text-muted-foreground',
-                                right && 'text-right',
-                              )}
-                            >
-                              {isFirst && row.href ? (
-                                <Link
-                                  href={row.href}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="group-hover:text-primary inline-flex items-center gap-1.5 underline-offset-2 transition-all hover:underline"
-                                >
-                                  {row.cells[colIdx] ?? (
-                                    <span className="text-muted-foreground/40">—</span>
-                                  )}
-                                  <ArrowRight className="size-3.5 shrink-0 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-60" />
-                                </Link>
-                              ) : (
-                                (() => {
-                                  const c = row.cells[colIdx]
-                                  return c == null || c === '—' ? (
-                                    <span className="text-muted-foreground/40">—</span>
-                                  ) : (
-                                    c
-                                  )
-                                })()
-                              )}
-                            </td>
-                          )
-                        })}
-                        {hasRowActions && (
-                          <td
-                            className="px-3 py-2 text-right align-middle"
-                            onClick={(e) => e.stopPropagation()}
+                    {addHref && (
+                      <tr>
+                        <td colSpan={table.getFlatHeaders().length} className="px-2 py-1.5">
+                          <Link
+                            href={addHref}
+                            className="border-border text-muted-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-primary flex w-full items-center gap-2 rounded-md border border-dashed px-3 py-2 text-xs transition-colors"
                           >
-                            {row.rowActions}
-                          </td>
-                        )}
+                            <Plus className="size-3.5 shrink-0" />
+                            {addLabel ?? 'Añadir nuevo'}
+                          </Link>
+                        </td>
                       </tr>
-                    )
-                  })}
-                  {addHref && (
-                    <tr>
-                      <td colSpan={table.getFlatHeaders().length} className="px-2 py-1.5">
-                        <Link
-                          href={addHref}
-                          className="border-border text-muted-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-primary flex w-full items-center gap-2 rounded-md border border-dashed px-3 py-2 text-xs transition-colors"
-                        >
-                          <Plus className="size-3.5 shrink-0" />
-                          {addLabel ?? 'Añadir nuevo'}
-                        </Link>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

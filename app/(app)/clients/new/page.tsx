@@ -22,15 +22,17 @@ export default async function NewClientPage() {
         description="Registra un nuevo cliente."
         back={<BackLink href="/clients" label="Volver a clientes" />}
       />
-      <Card>
+      <Card className="mx-auto w-full max-w-3xl">
         <CardContent className="pt-6">
           <form action={createClient} className="flex flex-col gap-5">
             <ClientFormFields idPrefix="new" autoFocusName />
-            <div className="border-border flex items-center justify-end gap-2 border-t pt-4">
-              <Button asChild variant="ghost" size="sm">
+            <div className="border-border bg-card/95 sticky bottom-0 -mx-4 flex flex-col-reverse gap-2 border-t px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur sm:static sm:mx-0 sm:flex-row sm:justify-end sm:bg-transparent sm:p-0 sm:pt-4 sm:backdrop-blur-none">
+              <Button asChild variant="ghost" size="sm" className="min-h-11 w-full sm:w-auto">
                 <Link href="/clients">Cancelar</Link>
               </Button>
-              <SubmitButton pendingLabel="Creando…">Crear cliente</SubmitButton>
+              <SubmitButton className="min-h-11 w-full sm:w-auto" pendingLabel="Creando…">
+                Crear cliente
+              </SubmitButton>
             </div>
           </form>
         </CardContent>

@@ -71,8 +71,8 @@ export function ClientQuickView({
     <DrawerContent
       isOpen={!!client}
       onOpenChange={(open) => !open && onCloseAction()}
-      side="right"
-      className="sm:max-w-sm"
+      side="bottom"
+      className="h-[78svh] max-h-[85svh] rounded-t-2xl sm:h-full sm:max-h-none sm:rounded-none sm:data-[side=bottom]:inset-y-0 sm:data-[side=bottom]:right-0 sm:data-[side=bottom]:left-auto sm:data-[side=bottom]:w-3/4 sm:data-[side=bottom]:max-w-sm sm:data-[side=bottom]:border-t-0 sm:data-[side=bottom]:border-l"
       showCloseButton={false}
     >
       {client ? (
@@ -186,7 +186,7 @@ function Body({
         )}
       </div>
 
-      <footer className="border-border flex items-center gap-2 border-t p-3">
+      <footer className="border-border flex flex-wrap items-center gap-2 border-t p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         {canEdit && (
           <>
             {onDeleteAction && (
@@ -199,14 +199,14 @@ function Body({
             <ClientEditDialog
               client={client}
               trigger={
-                <Button variant="outline" size="sm" className="gap-1.5">
+                <Button variant="outline" size="sm" className="min-h-11 gap-1.5">
                   Editar
                 </Button>
               }
             />
           </>
         )}
-        <Button asChild className="flex-1" size="sm" variant="outline">
+        <Button asChild className="min-h-11 flex-1" size="sm" variant="outline">
           <Link href={`/clients/${client.id}`}>
             Ver detalle
             <ArrowUpRight className="size-3.5" />
@@ -281,10 +281,13 @@ function Row({ icon, href, children }: { icon: ReactNode; href?: string; childre
     </>
   )
   return href ? (
-    <a href={href} className="hover:text-primary flex items-center gap-2 transition-colors">
+    <a
+      href={href}
+      className="hover:text-primary flex min-h-11 items-center gap-2 transition-colors"
+    >
       {inner}
     </a>
   ) : (
-    <div className="flex items-center gap-2">{inner}</div>
+    <div className="flex min-h-11 items-center gap-2">{inner}</div>
   )
 }
