@@ -63,6 +63,13 @@ describe('Meta marketing funnel metrics', () => {
     })
   })
 
+  it('drops an impossible per-ad lead count that exceeds clicks', () => {
+    expect(extractMetaLeads([{ action_type: 'lead', value: '267' }], 20, 5)).toEqual({
+      totalLeads: 0,
+      costPerLead: 0,
+    })
+  })
+
   it("extracts link and landing metrics from Meta's mixed insight fields", () => {
     expect(
       extractMetaTrafficMetrics({

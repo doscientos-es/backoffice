@@ -108,9 +108,14 @@ function actionValue(actions: MetaActionStat[] | undefined, actionType: string):
 export function extractMetaLeads(
   actions: MetaActionStat[] | undefined,
   spend: number,
+  maxPlausibleLeads = Number.POSITIVE_INFINITY,
 ): { totalLeads: number; costPerLead: number } {
-  const totalLeads =
+  const reportedLeads =
     actionValue(actions, GROUPED_LEAD_ACTION_TYPE) ?? actionValue(actions, LEGACY_LEAD_ACTION_TYPE) ?? 0
+  // A single lead conversion requires a prior ad click. Meta may occasionally
+  // return an aggregated legacy action for an individual daily ad insight; do
+  // not persist that impossible count as a daily lead total.
+  const totalLeads = reportedLeads <= maxPlausibleLeads ? reportedLeads : 0
 
   return {
     totalLeads,

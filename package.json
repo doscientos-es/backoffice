@@ -27,7 +27,10 @@
     "db:types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_REF --schema public > lib/database.types.ts",
     "env:example": "tsx scripts/generate-env-example.ts",
     "google:smoke": "tsx scripts/google-smoke.ts",
-    "push:keys": "tsx scripts/generate-push-keys.ts"
+    "push:keys": "tsx scripts/generate-push-keys.ts",
+    "quality:quick": "pnpm format:check && pnpm lint",
+    "quality": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
+    "hooks:install": "node .githooks/install.mjs"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.8",
