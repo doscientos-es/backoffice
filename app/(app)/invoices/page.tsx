@@ -205,7 +205,6 @@ export default async function InvoicesPage({
             <Link
               key="client"
               href={`/clients/${i.client_id}`}
-              onClick={(event) => event.stopPropagation()}
               className="text-foreground hover:text-primary block max-w-48 transition-colors hover:underline"
               title={`Abrir ficha de ${i.client_name}`}
             >

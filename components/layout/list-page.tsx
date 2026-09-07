@@ -391,7 +391,12 @@ export function ListPage({
                       return (
                         <tr
                           key={tableRow.id}
-                          onClick={() => {
+                          onClick={(event) => {
+                            if (
+                              event.target instanceof Element &&
+                              event.target.closest('a, button, input, select, textarea, [role="button"]')
+                            )
+                              return
                             if (onRowClick) onRowClick(row)
                             else if (row.href) router.push(row.href)
                           }}
