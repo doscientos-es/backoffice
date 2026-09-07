@@ -45,7 +45,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
   ])
   if (!result) notFound()
 
-  const { client, projects, proposals, invoices, tasks, reminders } = result
+  const { client, originLead, projects, proposals, invoices, tasks, reminders } = result
 
   return (
     <div className="flex flex-col gap-6">
@@ -148,6 +148,13 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
             <DetailRow label="Contacto">
               {(client.contact_person as string | null) ?? '—'}
             </DetailRow>
+            {originLead ? (
+              <DetailRow label="Lead de origen">
+                <Link href={`/leads/${originLead.id}`} className="hover:underline">
+                  {originLead.company ? `${originLead.name} · ${originLead.company}` : originLead.name}
+                </Link>
+              </DetailRow>
+            ) : null}
             <DetailRow label="Creado">{formatDate(client.created_at as string)}</DetailRow>
           </DetailGrid>
           {formatAddress({

@@ -13,6 +13,7 @@ import type { MemberOption } from '@/lib/members/queries'
 import { MEETING_PROJECT_STATUSES } from '@/lib/status'
 import { createServerClient } from '@/lib/supabase/server'
 
+import { LeadDetailDisclosure } from './lead-detail-disclosure'
 import { LeadQuickActions } from './quick-actions'
 
 function formatJourneyTime(value: string): string {
@@ -36,10 +37,12 @@ export async function LeadConversionJourneySection({
   const clarityUrl = findClarityPlaybackUrl(events)
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
-        <CardTitle>Journey de conversión</CardTitle>
-        {clarityUrl ? (
+    <LeadDetailDisclosure
+      id="conversion-journey"
+      title="Journey de conversión"
+      description="Visitas y señales que llevaron a este lead."
+      action={
+        clarityUrl ? (
           <a
             href={clarityUrl}
             target="_blank"
@@ -48,66 +51,65 @@ export async function LeadConversionJourneySection({
           >
             Ver grabación <ExternalLink className="size-3" aria-hidden />
           </a>
-        ) : null}
-      </CardHeader>
-      <CardContent>
-        {events.length === 0 ? (
-          <p className="text-muted-foreground text-sm">
-            Sin eventos de landing vinculados a este lead.
-          </p>
-        ) : (
-          <div className="-mx-1 overflow-x-auto px-1 pb-2">
-            <ol className="flex min-w-max items-center gap-3" aria-label="Pasos del journey">
-              {journeyEvents.map((event, index) => {
-                const isConversion = ['lead_created', 'form_submit', 'whatsapp_click'].includes(
-                  event.event_name,
-                )
-                const attribution = [event.utm_source, event.utm_medium, event.utm_campaign]
-                  .filter(Boolean)
-                  .join(' · ')
-                const detail =
-                  CONVERSION_STEP_LABEL[event.conversion_step ?? ''] ??
-                  (attribution || event.landing_ref || 'Sin UTM/ref')
+        ) : null
+      }
+    >
+      {events.length === 0 ? (
+        <p className="text-muted-foreground text-sm">
+          Sin eventos de landing vinculados a este lead.
+        </p>
+      ) : (
+        <div className="-mx-1 overflow-x-auto px-1 pb-2">
+          <ol className="flex min-w-max items-center gap-3" aria-label="Pasos del journey">
+            {journeyEvents.map((event, index) => {
+              const isConversion = ['lead_created', 'form_submit', 'whatsapp_click'].includes(
+                event.event_name,
+              )
+              const attribution = [event.utm_source, event.utm_medium, event.utm_campaign]
+                .filter(Boolean)
+                .join(' · ')
+              const detail =
+                CONVERSION_STEP_LABEL[event.conversion_step ?? ''] ??
+                (attribution || event.landing_ref || 'Sin UTM/ref')
 
-                return (
-                  <li key={event.id} className="flex items-center gap-3">
-                    <article className="border-border bg-muted/30 w-52 rounded-lg border p-3 shadow-sm">
-                      <div className="text-muted-foreground flex items-center justify-between gap-2 text-xs">
-                        <span className="flex items-center gap-1 whitespace-nowrap">
-                          <Clock3 className="size-3" aria-hidden="true" />
-                          <time dateTime={event.created_at}>
-                            {formatJourneyTime(event.created_at)}
-                          </time>
-                        </span>
-                        <span className="font-medium">{index + 1}</span>
-                      </div>
-                      <Badge
-                        className="mt-2 max-w-full"
-                        variant={isConversion ? 'success' : 'neutral'}
-                      >
-                        <span className="truncate">
-                          {CONVERSION_EVENT_LABEL[event.event_name] ?? event.event_name}
-                        </span>
-                      </Badge>
-                      <p className="mt-2 truncate text-sm font-medium">
-                        {event.landing_path ?? event.referrer ?? 'Evento sin página'}
-                      </p>
-                      <p className="text-muted-foreground mt-0.5 truncate text-xs">{detail}</p>
-                    </article>
-                    {index < journeyEvents.length - 1 && (
-                      <ArrowRight
-                        className="text-muted-foreground/60 size-4 shrink-0"
-                        aria-hidden="true"
-                      />
-                    )}
-                  </li>
-                )
-              })}
-            </ol>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              return (
+                <li key={event.id} className="flex items-center gap-3">
+                  <article className="border-border bg-muted/30 w-52 rounded-lg border p-3 shadow-sm">
+                    <div className="text-muted-foreground flex items-center justify-between gap-2 text-xs">
+                      <span className="flex items-center gap-1 whitespace-nowrap">
+                        <Clock3 className="size-3" aria-hidden="true" />
+                        <time dateTime={event.created_at}>
+                          {formatJourneyTime(event.created_at)}
+                        </time>
+                      </span>
+                      <span className="font-medium">{index + 1}</span>
+                    </div>
+                    <Badge
+                      className="mt-2 max-w-full"
+                      variant={isConversion ? 'success' : 'neutral'}
+                    >
+                      <span className="truncate">
+                        {CONVERSION_EVENT_LABEL[event.event_name] ?? event.event_name}
+                      </span>
+                    </Badge>
+                    <p className="mt-2 truncate text-sm font-medium">
+                      {event.landing_path ?? event.referrer ?? 'Evento sin página'}
+                    </p>
+                    <p className="text-muted-foreground mt-0.5 truncate text-xs">{detail}</p>
+                  </article>
+                  {index < journeyEvents.length - 1 && (
+                    <ArrowRight
+                      className="text-muted-foreground/60 size-4 shrink-0"
+                      aria-hidden="true"
+                    />
+                  )}
+                </li>
+              )
+            })}
+          </ol>
+        </div>
+      )}
+    </LeadDetailDisclosure>
   )
 }
 
@@ -119,38 +121,37 @@ export async function LeadDiagnosticsSection({ leadId }: { leadId: string }) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Diagnósticos personalizados</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {diagnostics.map((diagnostic) => (
-            <div key={diagnostic.id} className="border-border rounded-lg border p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-medium">{diagnostic.company || diagnostic.email}</p>
-                <Badge variant={diagnostic.report_opened_at ? 'success' : 'neutral'}>
-                  {diagnostic.report_opened_at
-                    ? 'Informe abierto'
-                    : diagnostic.report_sent_at
-                      ? 'Informe enviado'
-                      : 'Completado'}
-                </Badge>
-              </div>
-              <p className="text-muted-foreground mt-2 text-sm">
-                {diagnostic.metrics.monthlyHours ?? '—'} h/mes ·{' '}
-                {diagnostic.metrics.yearlyHours ?? '—'} h/año · {diagnostic.metrics.risk ?? '—'}
-              </p>
-              {diagnostic.metrics.primaryOpportunity ? (
-                <p className="text-muted-foreground mt-2 text-xs">
-                  {diagnostic.metrics.primaryOpportunity}
-                </p>
-              ) : null}
+    <LeadDetailDisclosure
+      id="diagnostics"
+      title="Diagnósticos personalizados"
+      description={`${diagnostics.length} ${diagnostics.length === 1 ? 'diagnóstico disponible' : 'diagnósticos disponibles'}.`}
+    >
+      <div className="space-y-4">
+        {diagnostics.map((diagnostic) => (
+          <div key={diagnostic.id} className="border-border rounded-lg border p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-medium">{diagnostic.company || diagnostic.email}</p>
+              <Badge variant={diagnostic.report_opened_at ? 'success' : 'neutral'}>
+                {diagnostic.report_opened_at
+                  ? 'Informe abierto'
+                  : diagnostic.report_sent_at
+                    ? 'Informe enviado'
+                    : 'Completado'}
+              </Badge>
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+            <p className="text-muted-foreground mt-2 text-sm">
+              {diagnostic.metrics.monthlyHours ?? '—'} h/mes ·{' '}
+              {diagnostic.metrics.yearlyHours ?? '—'} h/año · {diagnostic.metrics.risk ?? '—'}
+            </p>
+            {diagnostic.metrics.primaryOpportunity ? (
+              <p className="text-muted-foreground mt-2 text-xs">
+                {diagnostic.metrics.primaryOpportunity}
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </LeadDetailDisclosure>
   )
 }
 

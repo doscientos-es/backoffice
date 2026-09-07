@@ -20,7 +20,6 @@ export const publicEnv = PublicSchema.parse({
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL?.trim(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim(),
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL?.trim(),
-  NEXT_PUBLIC_DEMO_MODE: process.env.NEXT_PUBLIC_DEMO_MODE?.trim(),
   NEXT_PUBLIC_HCAPTCHA_SITE_KEY: process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY?.trim(),
   NEXT_PUBLIC_CAL_LINK: process.env.NEXT_PUBLIC_CAL_LINK?.trim(),
 })
@@ -50,12 +49,8 @@ export function isAIEnabled(): boolean {
  * para Drive (backups) y Calendar (agenda de leads). Requiere email + clave.
  */
 export function isGoogleEnabled(): boolean {
-  const demoMode =
-    process.env.DEMO_MODE?.trim() === 'true' || process.env.NEXT_PUBLIC_DEMO_MODE?.trim() === 'true'
   return Boolean(
-    !demoMode &&
-    process.env.GOOGLE_SA_CLIENT_EMAIL?.trim() &&
-    process.env.GOOGLE_SA_PRIVATE_KEY_BASE64?.trim(),
+    process.env.GOOGLE_SA_CLIENT_EMAIL?.trim() && process.env.GOOGLE_SA_PRIVATE_KEY_BASE64?.trim(),
   )
 }
 

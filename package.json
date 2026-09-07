@@ -113,5 +113,9 @@
     "pnpm": ">=9.0.0"
   },
   "packageManager": "pnpm@9.15.2",
-  "pnpm": {}
+  "pnpm": {
+    "patchedDependencies": {
+      "@doscientos/ui@0.1.29": "patches/@doscientos__ui@0.1.29.patch"
+    }
+  }
 }

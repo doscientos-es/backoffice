@@ -6,7 +6,6 @@ const { createAdminClient, createRedsysPayment, insertPayment } = vi.hoisted(() 
   insertPayment: vi.fn(),
 }))
 
-vi.mock('@/lib/demo', () => ({ isDemoMode: () => false }))
 vi.mock('@/lib/email/app-url', () => ({ externalAppUrl: () => 'https://app.example.test' }))
 vi.mock('@/lib/env', () => ({
   publicEnv: { NEXT_PUBLIC_APP_URL: 'https://app.example.test' },

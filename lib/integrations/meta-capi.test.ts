@@ -1,15 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { fetchMock, isDemoMode, serverEnv } = vi.hoisted(() => ({
+const { fetchMock, serverEnv } = vi.hoisted(() => ({
   fetchMock: vi.fn(),
-  isDemoMode: vi.fn(() => false),
   serverEnv: vi.fn(() => ({
     META_PIXEL_ID: '913006054543123',
     META_CAPI_ACCESS_TOKEN: 'test-token',
   })),
 }))
 
-vi.mock('@/lib/demo', () => ({ isDemoMode }))
 vi.mock('@/lib/env', () => ({ serverEnv }))
 vi.mock('@/lib/logger', () => ({
   scopedLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),

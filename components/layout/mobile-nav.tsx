@@ -11,13 +11,12 @@ import { NavigationTree } from '@/components/layout/navigation-tree'
 import { NotificationsBell } from '@/components/layout/notifications-bell'
 import { UserMenu } from '@/components/layout/user-menu'
 import { ThemeToggle } from '@/components/theme-toggle'
-import { Badge } from '@/components/ui/badge'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { IconButton } from '@/components/ui/icon-button'
 import type { CurrentUser } from '@/lib/auth'
 import { visibleNavigationGroups } from '@/lib/navigation/navigation'
 
-export function MobileNav({ user, demoMode }: { user: CurrentUser; demoMode: boolean }) {
+export function MobileNav({ user }: { user: CurrentUser }) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
 
@@ -30,6 +29,7 @@ export function MobileNav({ user, demoMode }: { user: CurrentUser; demoMode: boo
           <button
             type="button"
             aria-label="Abrir menú"
+            aria-expanded={open}
             className="text-muted-foreground hover:bg-secondary hover:text-foreground flex h-8 w-8 items-center justify-center rounded-md transition-colors"
           >
             <Menu className="h-5 w-5" />
@@ -72,11 +72,6 @@ export function MobileNav({ user, demoMode }: { user: CurrentUser; demoMode: boo
           {/* Footer */}
           <div className="border-border flex flex-col gap-2 border-t p-2">
             <div className="flex items-center justify-between gap-1">
-              {demoMode ? (
-                <Badge variant="warning" className="ml-1 h-4 px-1 text-[9px] font-bold uppercase">
-                  MODO DEMO
-                </Badge>
-              ) : null}
               <div className="ml-auto flex items-center gap-1">
                 <ThemeToggle />
                 <ErrorBoundary fallback={() => null}>
@@ -101,11 +96,6 @@ export function MobileNav({ user, demoMode }: { user: CurrentUser; demoMode: boo
           </div>
         </div>
       </Drawer>
-      {demoMode ? (
-        <Badge variant="warning" className="h-4 px-1 text-[9px] font-bold uppercase">
-          MODO DEMO
-        </Badge>
-      ) : null}
     </div>
   )
 }

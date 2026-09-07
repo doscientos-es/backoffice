@@ -1,5 +1,4 @@
 import 'server-only'
-import { isDemoMode } from '@/lib/demo'
 import { publicEnv, serverEnv } from '@/lib/env'
 import { scopedLogger } from '@/lib/logger'
 
@@ -93,9 +92,7 @@ export function isBackofficeBackupConfigured(): boolean {
 }
 
 /** Runs a full database and Storage backup on the trusted backup server. */
-export async function runBackofficeBackup(): Promise<{ mocked: boolean }> {
-  if (isDemoMode()) return { mocked: true }
-
+export async function runBackofficeBackup(): Promise<void> {
   const setup = getBackofficeBackupSetup(serverEnv())
   if (!setup.configured) {
     throw new Error(`Falta configurar: ${setup.missing.join(', ')}`)
@@ -123,5 +120,4 @@ export async function runBackofficeBackup(): Promise<{ mocked: boolean }> {
   }
 
   log.info({ retentionDays: setup.retentionDays }, 'backoffice_backup_completed')
-  return { mocked: false }
 }

@@ -4,11 +4,13 @@ const state = vi.hoisted(() => ({
   rows: [] as Record<string, unknown>[],
   tasks: [] as Record<string, unknown>[],
   campaigns: [] as Record<string, unknown>[],
+  ads: [] as Record<string, unknown>[],
   detailLead: null as Record<string, unknown> | null,
   detailLeadError: null as string | null,
   companyResearch: null as Record<string, unknown> | null,
   companyResearchError: null as string | null,
   leadSelect: '',
+  leadSelections: [] as string[],
   inCalls: [] as [string, unknown[]][],
 }))
 
@@ -24,6 +26,8 @@ vi.mock('@/lib/supabase/server', () => ({
               ? state.tasks
               : table === 'marketing_campaigns'
                 ? state.campaigns
+              : table === 'marketing_ads'
+                ? state.ads
                 : [],
         error: null,
         count: table === 'leads' ? state.rows.length : null,
@@ -32,7 +36,10 @@ vi.mock('@/lib/supabase/server', () => ({
       // `limit()` (the next-action query ends in `order()`).
       const builder = {
         select(selectedColumns: string) {
-          if (table === 'leads') state.leadSelect = selectedColumns
+          if (table === 'leads') {
+            state.leadSelect = selectedColumns
+            state.leadSelections.push(selectedColumns)
+          }
           selection = selectedColumns
           return builder
         },
@@ -58,6 +65,9 @@ vi.mock('@/lib/supabase/server', () => ({
               error: state.detailLeadError ? { message: state.detailLeadError } : null,
             }
           }
+          if (table === 'marketing_ads') {
+            return { data: state.ads[0] ?? null, error: null }
+          }
           return { data: null, error: null }
         },
         // biome-ignore lint/suspicious/noThenProperty: mock needs to be thenable to mimic Supabase query builder
@@ -75,11 +85,13 @@ describe('listLeads client avatar enrichment', () => {
     state.rows = []
     state.tasks = []
     state.campaigns = []
+    state.ads = []
     state.detailLead = null
     state.detailLeadError = null
     state.companyResearch = null
     state.companyResearchError = null
     state.leadSelect = ''
+    state.leadSelections = []
     state.inCalls = []
   })
 
@@ -230,11 +242,13 @@ describe('getLeadDetail resilience', () => {
     state.rows = []
     state.tasks = []
     state.campaigns = []
+    state.ads = []
     state.detailLead = { id: 'lead-1', name: 'María García', utm_campaign: null }
     state.detailLeadError = null
     state.companyResearch = null
     state.companyResearchError = null
     state.leadSelect = ''
+    state.leadSelections = []
     state.inCalls = []
   })
 
@@ -252,5 +266,22 @@ describe('getLeadDetail resilience', () => {
     state.detailLeadError = 'permission denied for table leads'
 
     await expect(getLeadDetail('lead-1')).rejects.toThrow('No se pudo cargar el lead.')
+  })
+
+  it('resolves the Meta ad name from the ID stored in UTM content', async () => {
+    state.detailLead = {
+      id: 'lead-1',
+      name: 'María García',
+      utm_campaign: 'campaign-1',
+      utm_content: 'ad-1',
+    }
+    state.campaigns = [{ id: 'campaign-1', name: 'Campaña captación' }]
+    state.ads = [{ id: 'ad-1', name: 'Vídeo casos de éxito' }]
+
+    const result = await getLeadDetail('lead-1')
+
+    expect(state.leadSelections.some((selection) => selection.includes('utm_content'))).toBe(true)
+    expect(result?.lead.marketing_campaign_name).toBe('Campaña captación')
+    expect(result?.lead.marketing_ad_name).toBe('Vídeo casos de éxito')
   })
 })

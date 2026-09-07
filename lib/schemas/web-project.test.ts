@@ -14,8 +14,8 @@ describe('WebProjectInput project link', () => {
 
   it('accepts a linked web that is visible in the project portal', () => {
     const parsed = WebProjectInput.parse({
-      name: 'Demo',
-      url: 'https://demo.example.test',
+      name: 'Sitio de prueba',
+      url: 'https://sitio.example.test',
       project_id: projectId,
       is_client_visible: 'on',
     })

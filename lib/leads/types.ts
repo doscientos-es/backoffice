@@ -165,8 +165,12 @@ export type LeadDetail = {
   first_utm_term: string | null
   first_utm_content: string | null
   utm_campaign: string | null
+  /** Meta's ad ID for instant-form leads; stored in UTM content for attribution. */
+  utm_content: string | null
   /** Resolved name from Meta's synced campaign catalog. */
   marketing_campaign_name: string | null
+  /** Resolved name from Meta's synced ad catalog. */
+  marketing_ad_name: string | null
   last_landing_path: string | null
   last_referrer: string | null
   last_utm_source: string | null

@@ -14,7 +14,7 @@ import {
 } from '@simplewebauthn/server'
 import { cookies, headers } from 'next/headers'
 
-import { publicEnv, serverEnv } from '@/lib/env'
+import { serverEnv } from '@/lib/env'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 import { grantUserVerification } from './user-verification'
@@ -67,10 +67,6 @@ export function resolveWebAuthnConfig(request: RequestOrigin): WebAuthnConfig {
       return { expectedOrigin: url.origin, rpID: 'localhost', rpName: 'Doscientos (local)' }
     }
 
-    const demoUrl = new URL(publicEnv.NEXT_PUBLIC_APP_URL)
-    if (publicEnv.NEXT_PUBLIC_DEMO_MODE === 'true' && url.origin === demoUrl.origin) {
-      return { expectedOrigin: demoUrl.origin, rpID: demoUrl.hostname, rpName: 'Doscientos demo' }
-    }
   } catch {
     // Fall through to the generic, non-sensitive configuration error below.
   }

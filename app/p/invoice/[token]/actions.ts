@@ -1,6 +1,5 @@
 'use server'
 
-import { isDemoMode } from '@/lib/demo'
 import { externalAppUrl } from '@/lib/email/app-url'
 import { publicEnv, serverEnv } from '@/lib/env'
 import { createRedsysPayment, getRedsysUrl } from '@/lib/integrations/redsys'
@@ -17,7 +16,6 @@ export async function unlockInvoicePortal(input: unknown): Promise<ActionResult>
 export type PaymentInitResult =
   | {
       ok: true
-      demo?: boolean
       url: string
       signatureVersion: string
       merchantParameters: string
@@ -65,42 +63,6 @@ export async function initiatePayment(invoiceId: string, token: string): Promise
 
   if (insertError || !payment?.redsys_order) {
     return { ok: false, error: 'Failed to create payment record' }
-  }
-
-  if (isDemoMode()) {
-    const { error: confirmError } = await admin
-      .from('invoice_payments')
-      .update({
-        status: 'confirmed',
-        ds_response: '0000',
-        ds_authorisation_code: 'DEMO-0001',
-        confirmed_at: new Date().toISOString(),
-      })
-      .eq('redsys_order', payment.redsys_order as string)
-
-    if (confirmError) return { ok: false, error: 'Failed to simulate payment' }
-
-    const shouldMarkPaid = paid + amount >= invoiceTotal
-    if (shouldMarkPaid) {
-      const { error: invoiceError } = await admin
-        .from('invoices')
-        .update({
-          status: 'paid',
-          payment_method: 'card',
-          paid_at: new Date().toISOString(),
-        })
-        .eq('id', invoiceId)
-      if (invoiceError) return { ok: false, error: 'Failed to update demo invoice' }
-    }
-
-    return {
-      ok: true,
-      demo: true,
-      url: `${appUrl}/p/invoice/${token}?success=1`,
-      signatureVersion: 'DEMO',
-      merchantParameters: '',
-      signature: '',
-    }
   }
 
   const env = serverEnv()

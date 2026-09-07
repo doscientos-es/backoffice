@@ -119,8 +119,16 @@ export type ClientDetail = {
   updated_at: string | null
 }
 
+export type ClientOriginLead = {
+  id: string
+  name: string
+  company: string | null
+}
+
 export type ClientDetailResult = {
   client: ClientDetail
+  /** Lead from which this client was converted, when applicable. */
+  originLead: ClientOriginLead | null
   projects: ClientProjectItem[]
   proposals: ClientProposalItem[]
   invoices: ClientInvoiceItem[]

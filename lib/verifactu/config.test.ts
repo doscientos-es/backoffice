@@ -1,11 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { isDemoMode, serverEnv } = vi.hoisted(() => ({
-  isDemoMode: vi.fn(),
+const { serverEnv } = vi.hoisted(() => ({
   serverEnv: vi.fn(),
 }))
 
-vi.mock('@/lib/demo', () => ({ isDemoMode }))
 vi.mock('@/lib/env', () => ({ serverEnv }))
 
 import { verifactuDiagnosticConfigFromEnv, verifactuInvoiceConfigFromEnv } from './config'
@@ -25,8 +23,6 @@ const operationalEnv = {
 
 describe('VERI*FACTU environment selection', () => {
   beforeEach(() => {
-    isDemoMode.mockReset()
-    isDemoMode.mockReturnValue(false)
     serverEnv.mockReset()
     serverEnv.mockReturnValue(operationalEnv)
   })
@@ -34,13 +30,5 @@ describe('VERI*FACTU environment selection', () => {
   it('uses AEAT production for operational invoices and AEAT test for diagnostics', () => {
     expect(verifactuInvoiceConfigFromEnv().environment).toBe('prod')
     expect(verifactuDiagnosticConfigFromEnv().environment).toBe('test')
-  })
-
-  it('uses mock mode only for demo', () => {
-    isDemoMode.mockReturnValue(true)
-    serverEnv.mockReturnValue({ ...operationalEnv, VERIFACTU_PRODUCER_NIF: '' })
-
-    expect(verifactuInvoiceConfigFromEnv().environment).toBe('mock')
-    expect(verifactuDiagnosticConfigFromEnv().environment).toBe('mock')
   })
 })

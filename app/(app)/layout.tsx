@@ -13,7 +13,6 @@ import { Sidebar } from '@/components/layout/sidebar'
 import { PwaInstallPrompt } from '@/components/pwa-install-prompt'
 import { MfaSessionGate } from '@/components/security/mfa-session-gate'
 import { hasAal2Session, requireUser } from '@/lib/auth'
-import { isPublicDemoMode } from '@/lib/demo'
 
 export default async function AppLayout({
   children,
@@ -23,15 +22,14 @@ export default async function AppLayout({
   modal: React.ReactNode
 }) {
   const user = await requireUser()
-  const demoMode = isPublicDemoMode()
   const mfaVerified = user.role === 'owner' || user.role === 'admin' ? await hasAal2Session() : true
 
   return (
     <div className="app-shell bg-background flex h-screen overflow-hidden">
-      <Sidebar user={user} demoMode={demoMode} />
+      <Sidebar user={user} />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header className="app-mobile-header border-border h-14 shrink-0 items-center gap-2 border-b px-3">
-          <MobileNav user={user} demoMode={demoMode} />
+          <MobileNav user={user} />
           <Link
             href="/inicio"
             aria-label="doscientos · Inicio"

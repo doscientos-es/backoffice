@@ -1,5 +1,3 @@
-import { isDemoMode } from '@/lib/demo'
-
 /**
  * Agenda de leads vía Google Calendar (service account, domain-wide delegation).
  *
@@ -39,8 +37,6 @@ export async function findConflicts(opts: {
   start: Date
   end: Date
 }): Promise<CalendarBusySlot[]> {
-  if (isDemoMode()) return []
-
   const params = new URLSearchParams({
     timeMin: opts.start.toISOString(),
     timeMax: opts.end.toISOString(),
@@ -117,8 +113,6 @@ export async function listEvents(opts: {
   timeMin: Date
   timeMax: Date
 }): Promise<GoogleCalendarEvent[]> {
-  if (isDemoMode()) return []
-
   const params = new URLSearchParams({
     timeMin: opts.timeMin.toISOString(),
     timeMax: opts.timeMax.toISOString(),
@@ -150,15 +144,6 @@ export async function listEvents(opts: {
 
 /** Crea un evento en el calendario indicado. Lanza si la API falla. */
 export async function insertEvent(input: InsertEventInput): Promise<InsertedEvent> {
-  if (isDemoMode()) {
-    const id = `demo-calendar-${Date.now().toString(36)}`
-    return {
-      id,
-      htmlLink: `https://demo.invalid/calendar/events/${id}`,
-      meetUrl: input.withMeet ? `https://demo.invalid/meet/${id}` : null,
-    }
-  }
-
   const tz = input.timeZone ?? 'Europe/Madrid'
 
   // All-day events use `date` (YYYY-MM-DD); timed events use `dateTime` + timeZone.
@@ -228,8 +213,6 @@ export async function deleteEvent(opts: {
   calendarId: string
   eventId: string
 }): Promise<void> {
-  if (isDemoMode()) return
-
   const params = new URLSearchParams({ sendUpdates: 'externalOnly' })
   const url = `${BASE}/${encodeURIComponent(opts.calendarId)}/events/${encodeURIComponent(opts.eventId)}?${params}`
   await googleFetch<null>(opts.subject, [GOOGLE_SCOPES.calendar], url, { method: 'DELETE' })

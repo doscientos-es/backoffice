@@ -37,7 +37,7 @@ primitivas y helpers, no un componente "universal" de cientos de líneas.
 
 Para cabecera + líneas, conversiones y cambios que escriben timeline, usar una frontera de caso
 de uso. Si las escrituras deben ser atómicas, implementar una RPC/migración nueva y verificarla
-en producción y demo; nunca encadenar `delete` + `insert` como sustituto de una transacción.
+en producción; nunca encadenar `delete` + `insert` como sustituto de una transacción.
 
 Una RPC de escritura acepta el mínimo input de intención, valida invariantes en PostgreSQL y
 recalcula importes/actor desde la base. Debe bloquear la entidad raíz o usar un advisory lock si
@@ -61,7 +61,7 @@ cifrado nunca llega a filtros, logs, props de diagnóstico ni tests.
 
 - Un archivo nuevo debe pertenecer a un dominio y tener una única responsabilidad nombrable.
 - Antes de introducir un cast `as unknown as`, crear o ampliar el DTO que falta.
-- Antes de una migración, leer la skill `demo-database-management` y aplicar exactamente el
-  mismo SQL a producción y demo siguiendo su verificación obligatoria.
+- Antes de una migración, verificar el SQL y su efecto en producción siguiendo el procedimiento
+  obligatorio.
 - Las revisiones deben rechazar nuevas actions o páginas que reintroduzcan responsabilidades ya
   extraídas.

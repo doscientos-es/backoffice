@@ -33,7 +33,7 @@ const CLIENT_EMBED = 'client:clients!lead_id(name, logo_url)'
 const PERFORMER_EMBED = 'performer:performed_by(id, name, avatar_url, github_handle)'
 
 const QUALIFICATION_COLUMNS =
-  'company_size, solution_type, urgency, first_contacted_at, landing_path, landing_ref, landing_subject, calculator_cost, calculator_hours, event_id, conversion_step, utm_campaign, first_landing_path, first_referrer, first_utm_source, first_utm_medium, first_utm_campaign, first_utm_term, first_utm_content, last_landing_path, last_referrer, last_utm_source, last_utm_medium, last_utm_campaign, last_utm_term, last_utm_content'
+  'company_size, solution_type, urgency, first_contacted_at, landing_path, landing_ref, landing_subject, calculator_cost, calculator_hours, event_id, conversion_step, utm_campaign, utm_content, first_landing_path, first_referrer, first_utm_source, first_utm_medium, first_utm_campaign, first_utm_term, first_utm_content, last_landing_path, last_referrer, last_utm_source, last_utm_medium, last_utm_campaign, last_utm_term, last_utm_content'
 
 /** Mom Test qualification checklist — only needed on the lead detail view. */
 const MOM_TEST_COLUMNS =
@@ -110,6 +110,23 @@ async function loadMarketingCampaignNames(
     return new Map()
   }
   return new Map((data ?? []).map((campaign) => [campaign.id, campaign.name]))
+}
+
+/** Resolves the Meta ad ID attached to an instant-form lead to its synced name. */
+async function loadMarketingAdName(adId: string | null): Promise<string | null> {
+  if (!adId?.trim()) return null
+
+  const supabase = await createServerClient()
+  const { data, error } = await supabase
+    .from('marketing_ads')
+    .select('name')
+    .eq('id', adId)
+    .maybeSingle()
+  if (error) {
+    log.error({ err: error.message, adId }, 'marketing_ad_query_failed')
+    return null
+  }
+  return typeof data?.name === 'string' ? data.name : null
 }
 
 /**
@@ -379,8 +396,9 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
   }
   if (!lead) return null
 
-  const campaignNames = await loadMarketingCampaignNames([
-    (lead.utm_campaign as string | null) ?? null,
+  const [campaignNames, marketingAdName] = await Promise.all([
+    loadMarketingCampaignNames([(lead.utm_campaign as string | null) ?? null]),
+    loadMarketingAdName((lead.utm_content as string | null) ?? null),
   ])
   const marketingCampaignName = campaignNames.get(lead.utm_campaign as string) ?? null
 
@@ -447,6 +465,7 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
       company_research: companyResearch.company_research,
       company_researched_at: companyResearch.company_researched_at,
       marketing_campaign_name: marketingCampaignName,
+      marketing_ad_name: marketingAdName,
     } as unknown as LeadDetailResult['lead'],
     companyResearchAvailable: companyResearch.available,
     interactions: detailInteractions,

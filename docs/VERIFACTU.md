@@ -72,11 +72,8 @@ Orden obligatorio:
 
 1. Producción gestionada mediante la API/MCP de Supabase.
 2. Verificación de funciones e integridad del ledger.
-3. Demo self-hosted mediante SSH y `psql -v ON_ERROR_STOP=1`.
-4. Verificación equivalente en demo.
 
-La demo y producción son bases independientes. Nunca compartir credenciales,
-datos ni seeds. No editar una migración aplicada; crear una correctiva.
+No editar una migración aplicada; crear una correctiva.
 
 ## Comprobaciones mínimas
 

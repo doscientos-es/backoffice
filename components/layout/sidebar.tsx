@@ -10,13 +10,12 @@ import { NavigationTree } from '@/components/layout/navigation-tree'
 import { NotificationsBell } from '@/components/layout/notifications-bell'
 import { UserMenu } from '@/components/layout/user-menu'
 import { ThemeToggle } from '@/components/theme-toggle'
-import { Badge } from '@/components/ui/badge'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { IconButton } from '@/components/ui/icon-button'
 import type { CurrentUser } from '@/lib/auth'
 import { visibleNavigationGroups } from '@/lib/navigation/navigation'
 
-export function Sidebar({ user, demoMode }: { user: CurrentUser; demoMode: boolean }) {
+export function Sidebar({ user }: { user: CurrentUser }) {
   const pathname = usePathname()
 
   const visibleGroups = visibleNavigationGroups(user.role)
@@ -45,11 +44,6 @@ export function Sidebar({ user, demoMode }: { user: CurrentUser; demoMode: boole
       <footer className="border-border flex flex-col gap-2 border-t p-2">
         <ErrorBoundary>
           <div className="flex items-center justify-between gap-1">
-            {demoMode ? (
-              <Badge variant="warning" className="ml-1 h-4 px-1 text-[9px] font-bold uppercase">
-                MODO DEMO
-              </Badge>
-            ) : null}
             <div className="ml-auto flex items-center gap-1">
               <ThemeToggle />
               <NotificationsBell memberId={user.id} />

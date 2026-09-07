@@ -1,6 +1,5 @@
 import { validateSpanishFiscalIdentity } from '@/lib/aeat/nif-validation'
 import type { FiscalVerificationStatus } from '@/lib/clients/types'
-import { assertExternalActionAllowed } from '@/lib/demo'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifactuInvoiceConfigFromEnv } from '@/lib/verifactu/config'
 import { validateNifEs } from '@/lib/vies/nif'
@@ -50,7 +49,6 @@ export async function validateAndRecordClientFiscalIdentity(
       status = 'invalid'
       message = local.message
     } else {
-      assertExternalActionAllowed('La validación censal con AEAT')
       const result = await validateSpanishFiscalIdentity(
         { nif: aeatNif, name },
         verifactuInvoiceConfigFromEnv().certificate,

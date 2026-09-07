@@ -29,9 +29,6 @@ vi.mock('@/components/layout/user-menu', () => ({
 vi.mock('@/components/theme-toggle', () => ({
   ThemeToggle: () => <button type="button" aria-label="Cambiar tema" />,
 }))
-vi.mock('@/components/ui/badge', () => ({
-  Badge: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
-}))
 vi.mock('@/components/ui/error-boundary', () => ({
   ErrorBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }))
@@ -53,14 +50,14 @@ const user: CurrentUser = {
 
 describe('Sidebar actions', () => {
   it('uses the app sidebar visibility rule for desktop navigation', () => {
-    const { container } = render(<Sidebar user={user} demoMode={false} />)
+    const { container } = render(<Sidebar user={user} />)
 
     const sidebar = container.querySelector('aside')
     expect(sidebar?.className).toContain('app-sidebar')
   })
 
   it('places the profile menu beside the utility actions', () => {
-    render(<Sidebar user={user} demoMode={false} />)
+    render(<Sidebar user={user} />)
 
     const settings = screen.getByRole('link', { name: 'Ajustes' })
     const theme = screen.getByRole('button', { name: 'Cambiar tema' })
@@ -76,7 +73,7 @@ describe('Sidebar actions', () => {
 
   it('marks the settings icon as active in settings routes', () => {
     pathname = '/settings/profile'
-    render(<Sidebar user={user} demoMode={false} />)
+    render(<Sidebar user={user} />)
 
     expect(screen.getByRole('link', { name: 'Ajustes' }).getAttribute('aria-current')).toBe('page')
     pathname = '/inicio'

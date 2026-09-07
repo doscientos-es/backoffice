@@ -1,6 +1,5 @@
 import type { VerifactuConfig } from '@doscientos/verifactu'
 
-import { isDemoMode } from '@/lib/demo'
 import { externalAppUrl } from '@/lib/email/app-url'
 import { serverEnv } from '@/lib/env'
 
@@ -42,10 +41,9 @@ function assertOperationalVerifactuConfiguration(): void {
 
 function verifactuConfigFromEnv(environment: 'test' | 'prod'): VerifactuConfig {
   const env = serverEnv()
-  const resolvedEnvironment = isDemoMode() ? 'mock' : environment
-  if (resolvedEnvironment !== 'mock') assertOperationalVerifactuConfiguration()
+  assertOperationalVerifactuConfiguration()
   return {
-    environment: resolvedEnvironment,
+    environment,
     certificate: {
       p12Base64: env.VERIFACTU_CERT_P12_BASE64,
       password: env.VERIFACTU_CERT_PASSWORD,

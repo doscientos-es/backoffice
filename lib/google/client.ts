@@ -1,6 +1,5 @@
 import { JWT } from 'google-auth-library'
 
-import { isDemoMode } from '@/lib/demo'
 /**
  * Cliente Google Workspace con service account (domain-wide delegation).
  *
@@ -53,10 +52,6 @@ function decodePrivateKey(): string {
  * Lanza un error claro si la integración no está configurada.
  */
 export function getGoogleClient(subject: string, scopes: string[]): JWT {
-  if (isDemoMode()) {
-    throw new Error('Google Workspace está desactivado en modo demo.')
-  }
-
   if (!isGoogleEnabled()) {
     throw new Error(
       'Google Workspace no configurado. Añade GOOGLE_SA_CLIENT_EMAIL y GOOGLE_SA_PRIVATE_KEY_BASE64.',

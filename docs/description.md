@@ -1277,7 +1277,7 @@ Endpoints AEAT (SOAP over HTTPS):
 - Test (homologacion): https://prewww1.aeat.es/wlpl/TIKE-WFCS/ws/VeriFactu/RecepcionFacturas
 - Produccion: https://www1.aeat.es/wlpl/TIKE-WFCS/ws/VeriFactu/RecepcionFacturas
 
-El backoffice selecciona el endpoint por flujo: el diagnóstico remite un registro sintético al entorno de pruebas AEAT y la emisión o anulación de facturas remite siempre a producción. El modo demo usa `mock` y no realiza peticiones externas.
+El backoffice selecciona el endpoint por flujo: el diagnóstico remite un registro sintético al entorno de pruebas AEAT y la emisión o anulación de facturas remite siempre a producción.
 
 #### 7.6.3 Flujo de emision de una factura
 

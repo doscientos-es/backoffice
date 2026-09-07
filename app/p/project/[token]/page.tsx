@@ -202,7 +202,7 @@ export default async function ProjectPortalPage({
           <div className="flex items-center gap-2.5">
             <Globe className="size-5 text-sky-700 dark:text-sky-300" aria-hidden="true" />
             <h2 id="webs-title" className="text-xl font-semibold">
-              Webs y demos
+              Webs
             </h2>
           </div>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">

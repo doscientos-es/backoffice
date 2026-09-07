@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from 'vitest'
 
 const googleFetch = vi.hoisted(() => vi.fn())
 
-vi.mock('@/lib/demo', () => ({ isDemoMode: () => false }))
 vi.mock('./client', () => ({
   GOOGLE_SCOPES: { calendar: 'https://www.googleapis.com/auth/calendar' },
   googleFetch,

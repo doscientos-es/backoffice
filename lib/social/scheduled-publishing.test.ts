@@ -15,8 +15,6 @@ vi.mock('@/lib/social/repo', () => ({
   applyFanOut: state.applyFanOut,
 }))
 
-vi.mock('@/lib/demo', () => ({ isDemoMode: () => false }))
-
 vi.mock('@/lib/social/core', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/social/core')>()),
   fanOutPublish: state.fanOutPublish,

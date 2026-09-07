@@ -106,14 +106,14 @@ describe('attachment list', () => {
 
 // ── drive linking ─────────────────────────────────────────────────────────────
 describe('drive linking', () => {
-  it("hides the 'Vincular de Drive' button when canEdit is false", () => {
+  it("hides the 'Vincular desde Google Drive' button when canEdit is false", () => {
     render(<AttachmentSection {...BASE_PROPS} canEdit={false} />)
-    expect(screen.queryByRole('button', { name: /vincular de drive/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /vincular desde google drive/i })).toBeNull()
   })
 
-  it("opens the dialog when clicking 'Vincular de Drive'", () => {
+  it("opens the dialog when clicking 'Vincular desde Google Drive'", () => {
     render(<AttachmentSection {...BASE_PROPS} />)
-    fireEvent.click(screen.getByRole('button', { name: /vincular de drive/i }))
+    fireEvent.click(screen.getByRole('button', { name: /vincular desde google drive/i }))
     expect(screen.getByText('Vincular documento de Drive')).toBeDefined()
     expect(screen.getByLabelText(/enlace de drive/i)).toBeDefined()
   })
@@ -125,7 +125,7 @@ describe('drive linking', () => {
     })
 
     render(<AttachmentSection {...BASE_PROPS} />)
-    fireEvent.click(screen.getByRole('button', { name: /vincular de drive/i }))
+    fireEvent.click(screen.getByRole('button', { name: /vincular desde google drive/i }))
 
     const input = screen.getByLabelText(/enlace de drive/i)
     fireEvent.change(input, {
@@ -155,7 +155,7 @@ describe('drive linking', () => {
     })
 
     render(<AttachmentSection {...BASE_PROPS} />)
-    fireEvent.click(screen.getByRole('button', { name: /vincular de drive/i }))
+    fireEvent.click(screen.getByRole('button', { name: /vincular desde google drive/i }))
 
     const input = screen.getByLabelText(/enlace de drive/i)
     fireEvent.change(input, {
@@ -173,7 +173,7 @@ describe('drive linking', () => {
     ;(fetch as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('network'))
 
     render(<AttachmentSection {...BASE_PROPS} />)
-    fireEvent.click(screen.getByRole('button', { name: /vincular de drive/i }))
+    fireEvent.click(screen.getByRole('button', { name: /vincular desde google drive/i }))
 
     const input = screen.getByLabelText(/enlace de drive/i)
     fireEvent.change(input, {

@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@doscientos/ui@0.1.29':
+    hash: abthirmwvoetocnpzgfpuvn4wi
+    path: patches/@doscientos__ui@0.1.29.patch
+
 importers:
 
   .:
@@ -31,7 +36,7 @@ importers:
         version: 3.2.2(react@19.2.6)
       '@doscientos/ui':
         specifier: ^0.1.29
-        version: 0.1.29(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        version: 0.1.29(patch_hash=abthirmwvoetocnpzgfpuvn4wi)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@doscientos/verifactu':
         specifier: file:vendor\doscientos-verifactu-0.1.21.tgz
         version: file:vendor/doscientos-verifactu-0.1.21.tgz(date-fns@4.3.0)
@@ -3024,6 +3029,7 @@ packages:
   '@xmldom/xmldom@0.8.13':
     resolution: {integrity: sha512-KRYzxepc14G/CEpEGc3Yn+JKaAeT63smlDr+vjB8jRfgTBBI9wRj/nkQEO+ucV8p8I9bfKLWp37uHgFrbntPvw==}
     engines: {node: '>=10.0.0'}
+    deprecated: this version has critical issues, please update to the latest version
 
   abbrev@3.0.1:
     resolution: {integrity: sha512-AO2ac6pjRB3SJmGJo+v5/aK6Omggp6fsLrs6wN9bd35ulu4cCwaAU9+7ZhXjeqHVkaHThLuzH0nZr0YpCDhygg==}
@@ -6109,7 +6115,7 @@ snapshots:
       oxlint-tsgolint: 7.0.2001
       vitest: 3.2.4(@types/node@22.19.19)(happy-dom@16.8.1)(jiti@2.7.0)(lightningcss@1.32.0)(msw@2.14.6(@types/node@22.19.19)(typescript@5.9.3))(tsx@4.22.4)
 
-  '@doscientos/ui@0.1.29(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+  '@doscientos/ui@0.1.29(patch_hash=abthirmwvoetocnpzgfpuvn4wi)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
       class-variance-authority: 0.7.1
       clsx: 2.1.1

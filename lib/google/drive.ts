@@ -5,7 +5,6 @@
  * de backups, actuando como un usuario del dominio. Es best-effort: el caller
  * decide si un fallo aquí debe romper el flujo principal (normalmente NO).
  */
-import { isDemoMode } from '@/lib/demo'
 import { isGoogleEnabled } from '@/lib/env'
 import { scopedLogger } from '@/lib/logger'
 
@@ -95,14 +94,6 @@ export type UploadBackupInput = {
  * API devuelve error — envuelve la llamada en try/catch en el call-site.
  */
 export async function uploadBackup(input: UploadBackupInput): Promise<DriveUploadResult> {
-  if (isDemoMode()) {
-    return {
-      id: `demo-drive-${Date.now().toString(36)}`,
-      name: input.name,
-      webViewLink: null,
-    }
-  }
-
   const folderId = input.folderId ?? ''
   const client = getGoogleClient(input.subject, [GOOGLE_SCOPES.drive])
   const { token } = await client.getAccessToken()
@@ -149,7 +140,7 @@ export async function uploadBackup(input: UploadBackupInput): Promise<DriveUploa
 export async function uploadBackupSafe(
   input: UploadBackupInput,
 ): Promise<DriveUploadResult | null> {
-  if (isDemoMode() || !isGoogleEnabled()) return null
+  if (!isGoogleEnabled()) return null
   try {
     const result = await uploadBackup(input)
     log.info({ id: result.id, name: result.name }, 'drive_backup_uploaded')

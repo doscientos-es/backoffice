@@ -94,7 +94,7 @@ export function WebFormFields({
         <FormRow
           label="Proyecto"
           htmlFor={`${idPrefix}-project_id`}
-          hint="Opcional. Vincula esta web o demo con un proyecto."
+          hint="Opcional. Vincula esta web con un proyecto."
         >
           <Select
             id={`${idPrefix}-project_id`}

@@ -25,6 +25,7 @@ import type {
 import { formatDate, formatEUR, relativeTime } from '@/lib/utils'
 
 import { EmailDeliveryStatuses } from './email-delivery-statuses'
+import { LeadDetailDisclosure } from './lead-detail-disclosure'
 
 type TimelineEvent = {
   id: string
@@ -372,81 +373,74 @@ export function Lead360Timeline({
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-      <Card className="overflow-hidden">
-        <CardHeader className="border-border/70 bg-muted/10 border-b">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Sparkles className="text-primary size-4" />
-                Journey 360º
-              </CardTitle>
-              <p className="text-muted-foreground mt-1 text-xs">
-                Todo lo que ha pasado alrededor de esta oportunidad.
-              </p>
-            </div>
-            <div className="text-muted-foreground text-right text-xs tabular-nums">
-              <p>{events.length} señales</p>
-              {events[0] ? <p>Última {relativeTime(events[0].date)}</p> : null}
-            </div>
+      <LeadDetailDisclosure
+        id="journey-360"
+        title="Journey 360º"
+        titleIcon={<Sparkles className="text-primary size-4" />}
+        description="Todo lo que ha pasado alrededor de esta oportunidad."
+        headerAside={
+          <div className="text-muted-foreground shrink-0 text-right text-xs tabular-nums">
+            <p>{events.length} señales</p>
+            {events[0] ? <p>Última {relativeTime(events[0].date)}</p> : null}
           </div>
-        </CardHeader>
-        <CardContent className="px-5 py-5">
-          {events.length === 0 ? (
-            <p className="text-muted-foreground py-4 text-sm">
-              Aún no hay actividad cruzada registrada.
-            </p>
-          ) : (
-            <div className="space-y-5">
-              {eventGroups.map((group) => (
-                <section key={group.key} aria-label={`Actividad: ${group.label}`}>
-                  <p className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
-                    {group.label}
-                  </p>
-                  <ol className="border-border relative ml-2 border-l">
-                    {group.events.map((event) => {
-                      const Icon = event.icon
-                      const content = (
-                        <div className="flex min-w-0 flex-1 items-start justify-between gap-4">
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium capitalize">{event.title}</p>
-                            {event.detail ? (
-                              <p className="text-muted-foreground mt-0.5 truncate text-xs">
-                                {event.detail}
-                              </p>
-                            ) : null}
-                            {event.emailStatuses ? (
-                              <EmailDeliveryStatuses statuses={event.emailStatuses} />
-                            ) : null}
-                          </div>
-                          <span className="text-muted-foreground shrink-0 text-xs">
-                            {relativeTime(event.date)}
-                          </span>
+        }
+        contentClassName="px-5 py-5"
+      >
+        {events.length === 0 ? (
+          <p className="text-muted-foreground py-4 text-sm">
+            Aún no hay actividad cruzada registrada.
+          </p>
+        ) : (
+          <div className="space-y-5">
+            {eventGroups.map((group) => (
+              <section key={group.key} aria-label={`Actividad: ${group.label}`}>
+                <p className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
+                  {group.label}
+                </p>
+                <ol className="border-border relative ml-2 border-l">
+                  {group.events.map((event) => {
+                    const Icon = event.icon
+                    const content = (
+                      <div className="flex min-w-0 flex-1 items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium capitalize">{event.title}</p>
+                          {event.detail ? (
+                            <p className="text-muted-foreground mt-0.5 truncate text-xs">
+                              {event.detail}
+                            </p>
+                          ) : null}
+                          {event.emailStatuses ? (
+                            <EmailDeliveryStatuses statuses={event.emailStatuses} />
+                          ) : null}
                         </div>
-                      )
-                      return (
-                        <li key={event.id} className="relative flex gap-3 pb-5 last:pb-0">
-                          <span
-                            className={`ring-card -ml-3.5 flex size-7 shrink-0 items-center justify-center rounded-full ring-4 ${event.color}`}
-                          >
-                            <Icon className="size-3.5" />
-                          </span>
-                          {event.href ? (
-                            <Link href={event.href} className="min-w-0 flex-1 hover:opacity-75">
-                              {content}
-                            </Link>
-                          ) : (
-                            content
-                          )}
-                        </li>
-                      )
-                    })}
-                  </ol>
-                </section>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                        <span className="text-muted-foreground shrink-0 text-xs">
+                          {relativeTime(event.date)}
+                        </span>
+                      </div>
+                    )
+                    return (
+                      <li key={event.id} className="relative flex gap-3 pb-5 last:pb-0">
+                        <span
+                          className={`ring-card -ml-3.5 flex size-7 shrink-0 items-center justify-center rounded-full ring-4 ${event.color}`}
+                        >
+                          <Icon className="size-3.5" />
+                        </span>
+                        {event.href ? (
+                          <Link href={event.href} className="min-w-0 flex-1 hover:opacity-75">
+                            {content}
+                          </Link>
+                        ) : (
+                          content
+                        )}
+                      </li>
+                    )
+                  })}
+                </ol>
+              </section>
+            ))}
+          </div>
+        )}
+      </LeadDetailDisclosure>
 
       <Card className={`border ${next.tone}`}>
         <CardHeader>
