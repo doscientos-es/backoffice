@@ -1,0 +1,20 @@
+﻿[?25l[36m?[39m [1mThe modules directory at "C:\Users\pol.gubau\dev\projects\doscientos\internal\backoffice\node_modules" will be removed and reinstalled from scratch. Proceed?[22m [2m(Y/n)[22m [2m┬╗[22m [36mtrue[39m[4D[2K[F[2K[F[2K[1G[35m├ù[39m [1mThe modules directory at "C:\Users\pol.gubau\dev\projects\doscientos\internal\backoffice\node_modules" will be removed and reinstalled from scratch. Proceed?[22m [2m(Y/n)[22m [2m┬╖[22m [32mtrue[39m[4D
+
+
+pnpm : Error [ERR_USE_AFTER_CLOSE]: readline was closed
+En línea: 1 Carácter: 1
++ pnpm install --reporter=append-only 2>&1 | Out-File -FilePath pnpm-in ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Error [ERR_USE_...line was closed:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    at Interface.pause (node:internal/readline/interface:564:13)
+    at ConfirmPrompt.off [as stop] (C:\Users\pol.gubau\AppData\Local\pnpm\global\5\.pnpm\pnpm@9.5.0\node_modules\pnpm\dist\pnpm.cjs:123918:12)
+    at Object.onceWrapper (node:events:630:28)
+    at ConfirmPrompt.emit (node:events:521:24)
+    at prompt.emit (C:\Users\pol.gubau\AppData\Local\pnpm\global\5\.pnpm\pnpm@9.5.0\node_modules\pnpm\dist\pnpm.cjs:127720:18)
+    at ConfirmPrompt.close (C:\Users\pol.gubau\AppData\Local\pnpm\global\5\.pnpm\pnpm@9.5.0\node_modules\pnpm\dist\pnpm.cjs:124537:14)
+    at ConfirmPrompt.cancel (C:\Users\pol.gubau\AppData\Local\pnpm\global\5\.pnpm\pnpm@9.5.0\node_modules\pnpm\dist\pnpm.cjs:124520:20)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async ConfirmPrompt.keypress (C:\Users\pol.gubau\AppData\Local\pnpm\global\5\.pnpm\pnpm@9.5.0\node_modules\pnpm\dist\pnpm.cjs:124424:18)
+[?25h

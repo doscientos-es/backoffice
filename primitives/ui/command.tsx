@@ -38,8 +38,10 @@ function CommandDialog({
       <DialogContent
         className={cn(
           'overflow-hidden rounded-xl! p-0',
-          // Mobile: anclado arriba, ancho completo, solo redondeado abajo
-          'max-sm:top-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:max-w-none max-sm:rounded-t-none! max-sm:rounded-b-2xl!',
+          // Mobile: pantalla completa. Altura fijada con svh (viewport más pequeño
+          // posible) en vez de dvh para que el diálogo NO cambie de tamaño cuando
+          // el teclado virtual aparece — evita el "salto" al enfocar el input.
+          'max-sm:top-0 max-sm:left-0 max-sm:right-0 max-sm:bottom-0 max-sm:h-svh max-sm:max-h-svh max-sm:w-full max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:flex max-sm:flex-col max-sm:rounded-none!',
           className,
         )}
         showCloseButton={showCloseButton}
@@ -48,7 +50,7 @@ function CommandDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <Command>{children}</Command>
+        <Command className="max-sm:min-h-0 max-sm:flex-1">{children}</Command>
       </DialogContent>
     </Dialog>
   )
@@ -83,7 +85,10 @@ function CommandList({ className, ...props }: React.ComponentProps<typeof Comman
     <CommandPrimitive.List
       data-slot="command-list"
       className={cn(
-        'no-scrollbar max-h-80 max-sm:max-h-[50dvh] scroll-py-1 overflow-x-hidden overflow-y-auto outline-none scroll-fade',
+        // Desktop: altura acotada dentro del popover.
+        // Mobile: sin límite en dvh (cambiaría con el teclado); en su lugar
+        // ocupa el espacio restante del contenedor flex a pantalla completa.
+        'no-scrollbar max-h-80 scroll-py-1 overflow-x-hidden overflow-y-auto outline-none scroll-fade max-sm:max-h-none max-sm:min-h-0 max-sm:flex-1',
         className,
       )}
       {...props}
