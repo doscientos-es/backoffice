@@ -47,33 +47,49 @@ function getConfiguredCertificateHealth(): CertificateHealth {
   }
 }
 
-export async function getVerifactuOperationalHealth(): Promise<VerifactuOperationalHealth> {
-  const supabase = await createServerClient()
-  const [pending, retrying, blocked, diagnostic] = await Promise.all([
-    supabase
-      .from('verifactu_outbox')
-      .select('id', { count: 'exact', head: true })
-      .in('state', ['queued', 'processing']),
-    supabase
-      .from('verifactu_outbox')
-      .select('id', { count: 'exact', head: true })
-      .eq('state', 'retryable_error'),
-    supabase
-      .from('verifactu_outbox')
-      .select('id', { count: 'exact', head: true })
-      .in('state', ['rejected', 'terminal_error']),
-    getVerifactuDiagnosticGate().catch(
-      () => ({ status: 'unavailable', ranAt: null, expiresAt: null }) as const,
-    ),
-  ])
-  const queueAvailable = !pending.error && !retrying.error && !blocked.error
-
+function unavailableOperationalHealth(): VerifactuOperationalHealth {
   return {
-    queueAvailable,
-    pending: pending.count ?? 0,
-    retrying: retrying.count ?? 0,
-    blocked: blocked.count ?? 0,
-    diagnostic,
+    queueAvailable: false,
+    pending: 0,
+    retrying: 0,
+    blocked: 0,
+    diagnostic: { status: 'unavailable', ranAt: null, expiresAt: null },
     certificate: getConfiguredCertificateHealth(),
+  }
+}
+
+export async function getVerifactuOperationalHealth(): Promise<VerifactuOperationalHealth> {
+  try {
+    const supabase = await createServerClient()
+    const [pending, retrying, blocked, diagnostic] = await Promise.all([
+      supabase
+        .from('verifactu_outbox')
+        .select('id', { count: 'exact', head: true })
+        .in('state', ['queued', 'processing']),
+      supabase
+        .from('verifactu_outbox')
+        .select('id', { count: 'exact', head: true })
+        .eq('state', 'retryable_error'),
+      supabase
+        .from('verifactu_outbox')
+        .select('id', { count: 'exact', head: true })
+        .in('state', ['rejected', 'terminal_error']),
+      getVerifactuDiagnosticGate().catch(
+        () => ({ status: 'unavailable', ranAt: null, expiresAt: null }) as const,
+      ),
+    ])
+    const queueAvailable = !pending.error && !retrying.error && !blocked.error
+
+    return {
+      queueAvailable,
+      pending: pending.count ?? 0,
+      retrying: retrying.count ?? 0,
+      blocked: blocked.count ?? 0,
+      diagnostic,
+      certificate: getConfiguredCertificateHealth(),
+    }
+  } catch {
+    // Operational widgets are auxiliary and must not prevent invoice access.
+    return unavailableOperationalHealth()
   }
 }

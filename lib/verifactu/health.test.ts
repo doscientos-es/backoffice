@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { from, getVerifactuDiagnosticGate, serverEnv } = vi.hoisted(() => ({
+const { createServerClient, from, getVerifactuDiagnosticGate, serverEnv } = vi.hoisted(() => ({
+  createServerClient: vi.fn(),
   from: vi.fn(),
   getVerifactuDiagnosticGate: vi.fn(),
   serverEnv: vi.fn(),
@@ -8,7 +9,7 @@ const { from, getVerifactuDiagnosticGate, serverEnv } = vi.hoisted(() => ({
 
 vi.mock('@/lib/env', () => ({ serverEnv }))
 vi.mock('@/lib/supabase/server', () => ({
-  createServerClient: async () => ({ from }),
+  createServerClient,
 }))
 vi.mock('./diagnostics', () => ({ getVerifactuDiagnosticGate }))
 
@@ -18,6 +19,7 @@ const NOW = new Date('2026-08-22T12:00:00.000Z')
 
 beforeEach(() => {
   vi.clearAllMocks()
+  createServerClient.mockResolvedValue({ from })
   serverEnv.mockReturnValue({ VERIFACTU_CERT_EXPIRES_AT: '2026-09-10T12:00:00.000Z' })
   getVerifactuDiagnosticGate.mockResolvedValue({
     status: 'passed',
@@ -88,6 +90,23 @@ describe('getVerifactuOperationalHealth', () => {
     await expect(getVerifactuOperationalHealth()).resolves.toMatchObject({
       queueAvailable: true,
       certificate: { status: 'missing', expiresAt: null, daysRemaining: null },
+    })
+  })
+
+  it('does not block the invoice list when the auxiliary health lookup fails', async () => {
+    createServerClient.mockRejectedValueOnce(new Error('Supabase unavailable'))
+
+    await expect(getVerifactuOperationalHealth()).resolves.toEqual({
+      queueAvailable: false,
+      pending: 0,
+      retrying: 0,
+      blocked: 0,
+      diagnostic: { status: 'unavailable', ranAt: null, expiresAt: null },
+      certificate: {
+        status: 'warning',
+        expiresAt: '2026-09-10T12:00:00.000Z',
+        daysRemaining: expect.any(Number),
+      },
     })
   })
 })
