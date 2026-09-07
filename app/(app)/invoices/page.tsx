@@ -79,11 +79,12 @@ export default async function InvoicesPage({
       title="Facturas"
       description="Consulta el estado de cobro y el envío de cada factura a Verifactu."
       summary={
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard
               label="Pendientes de cobro"
               value={formatEUR(pendingTotal)}
+              density="compact"
               tone="info"
               icon={Clock}
               hint={`${pendingCount} ${pendingCount === 1 ? "factura emitida" : "facturas emitidas"}`}
@@ -92,6 +93,7 @@ export default async function InvoicesPage({
             <StatCard
               label="Vencidas"
               value={formatEUR(overdueTotal)}
+              density="compact"
               tone="danger"
               icon={AlertTriangle}
               hint={`${overdueCount} ${overdueCount === 1 ? "factura vencida" : "facturas vencidas"}`}
@@ -100,6 +102,7 @@ export default async function InvoicesPage({
             <StatCard
               label="Cobrado este mes"
               value={formatEUR(paidMonthTotal)}
+              density="compact"
               tone="success"
               icon={CheckCircle2}
               hint={`Desde ${formatDate(monthStart)}`}
@@ -107,20 +110,22 @@ export default async function InvoicesPage({
             <StatCard
               label="Verifactu KO"
               value={verifactuKoCount}
+              density="compact"
               tone={verifactuKoCount > 0 ? "danger" : "default"}
               icon={ShieldAlert}
               hint="Rechazadas por AEAT"
               href="/invoices?verifactu=rejected"
             />
           </div>
-          <section aria-labelledby="aeat-health-title" className="space-y-2">
-            <h2 id="aeat-health-title" className="text-sm font-semibold">
+          <section aria-labelledby="aeat-health-title" className="space-y-1.5">
+            <h2 id="aeat-health-title" className="text-xs font-semibold">
               Salud operativa AEAT
             </h2>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-5">
               <StatCard
                 label="Cola pendiente"
                 value={aeatHealth.queueAvailable ? aeatHealth.pending : "—"}
+                density="compact"
                 tone={aeatHealth.pending > 0 ? "warning" : "default"}
                 icon={Send}
                 hint="En espera o procesando"
@@ -128,6 +133,7 @@ export default async function InvoicesPage({
               <StatCard
                 label="Reintentos"
                 value={aeatHealth.queueAvailable ? aeatHealth.retrying : "—"}
+                density="compact"
                 tone={aeatHealth.retrying > 0 ? "warning" : "default"}
                 icon={RefreshCcw}
                 hint="Errores técnicos recuperables"
@@ -136,6 +142,7 @@ export default async function InvoicesPage({
               <StatCard
                 label="Bloqueadas"
                 value={aeatHealth.queueAvailable ? aeatHealth.blocked : "—"}
+                density="compact"
                 tone={aeatHealth.blocked > 0 ? "danger" : "default"}
                 icon={AlertTriangle}
                 hint="Rechazo o error definitivo"
@@ -144,6 +151,7 @@ export default async function InvoicesPage({
               <StatCard
                 label="Diagnóstico AEAT"
                 value={aeatHealth.diagnostic.status === "passed" ? "Vigente" : "Revisar"}
+                density="compact"
                 tone={aeatHealth.diagnostic.status === "passed" ? "success" : "danger"}
                 icon={Activity}
                 hint="Suite sintética obligatoria"
@@ -156,6 +164,7 @@ export default async function InvoicesPage({
                     ? "Sin fecha"
                     : `${aeatHealth.certificate.daysRemaining} días`
                 }
+                density="compact"
                 tone={
                   aeatHealth.certificate.status === "ok"
                     ? "success"

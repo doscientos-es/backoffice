@@ -18,6 +18,8 @@ export type GoalProp = {
 export type StatCardProps = {
   label: string
   value: number | string
+  /** Reduces padding and type scale for dense dashboard summaries. */
+  density?: 'default' | 'compact'
   tone?: StatTone
   icon?: ComponentType<SVGProps<SVGSVGElement>>
   hint?: string
@@ -65,6 +67,7 @@ const GOAL_BAR_COLOR = (pct: number) => {
 export function StatCard({
   label,
   value,
+  density = 'default',
   tone = 'default',
   icon: Icon,
   hint,
@@ -72,6 +75,7 @@ export function StatCard({
   trend,
   goal,
 }: StatCardProps) {
+  const compact = density === 'compact'
   const displayValue =
     typeof value === 'number' ? new Intl.NumberFormat('es-ES').format(value) : value
   const TrendIcon = trend && !goal ? TREND_ICON[trend.direction] : null
@@ -80,19 +84,26 @@ export function StatCard({
 
   const card = (
     <Card
+      size={compact ? 'sm' : 'default'}
       className={cn(
         'h-full transition-colors hover:bg-muted/80',
         href && 'cursor-pointer hover:ring-foreground/10',
       )}
     >
-      <CardContent className="flex items-start justify-between gap-3 pt-5">
+      <CardContent className={cn('flex items-start justify-between', compact ? 'gap-2 pt-3' : 'gap-3 pt-5')}>
         <div className="min-w-0 flex-1">
-          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+          <div
+            className={cn(
+              'text-muted-foreground font-medium tracking-wide uppercase',
+              compact ? 'text-[11px] leading-4' : 'text-xs',
+            )}
+          >
             {label}
           </div>
           <div
             className={cn(
-              'mt-1.5 truncate text-2xl font-semibold tracking-tight tabular-nums',
+              'truncate font-semibold tracking-tight tabular-nums',
+              compact ? 'mt-0.5 text-xl leading-6' : 'mt-1.5 text-2xl',
               TONE_VALUE[tone],
             )}
           >
@@ -134,17 +145,25 @@ export function StatCard({
               {hint ? <span className="text-muted-foreground">· {hint}</span> : null}
             </div>
           ) : hint ? (
-            <div className="text-muted-foreground mt-1 text-xs">{hint}</div>
+            <div
+              className={cn(
+                'text-muted-foreground',
+                compact ? 'mt-0.5 text-[11px] leading-4' : 'mt-1 text-xs',
+              )}
+            >
+              {hint}
+            </div>
           ) : null}
         </div>
         {Icon ? (
           <div
             className={cn(
-              'flex size-9 shrink-0 items-center justify-center rounded-lg',
+              'flex shrink-0 items-center justify-center',
+              compact ? 'size-7 rounded-md' : 'size-9 rounded-lg',
               TONE_ICON[tone],
             )}
           >
-            <Icon className="size-4" />
+            <Icon className={compact ? 'size-3.5' : 'size-4'} />
           </div>
         ) : null}
       </CardContent>
