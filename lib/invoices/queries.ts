@@ -52,6 +52,9 @@ export async function listInvoices(params: InvoiceListParams): Promise<InvoiceLi
 
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+  const { data: leadClient } = params.leadId
+    ? await notDeleted(supabase.from("clients").select("id").eq("lead_id", params.leadId)).maybeSingle()
+    : { data: null };
 
   const [listRes, pendingRes, overdueRes, paidMonthRes, verifactuKoRes] = await Promise.all([
     (() => {
@@ -71,6 +74,7 @@ export async function listInvoices(params: InvoiceListParams): Promise<InvoiceLi
       }
       if (params.status) query = query.eq("status", params.status);
       if (params.verifactu) query = query.eq("verifactu_status", params.verifactu);
+      if (params.leadId) query = leadClient ? query.eq("client_id", leadClient.id) : query.is("id", null);
       const sortCol = params.sort ?? "issue_date";
       const ascending = params.dir === "asc";
       return query.order(sortCol, { ascending, nullsFirst: false }).range(from, to);

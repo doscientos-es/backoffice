@@ -44,6 +44,7 @@ import { LeadNextActionReminderItem } from './lead-next-action-reminder-item'
 import { LeadNextMove } from './lead-next-move'
 import { LeadNotesDialog } from './lead-notes-dialog'
 import { LeadRecentInteractions } from './lead-recent-interactions'
+import { LeadRelatedLinks } from './lead-related-links'
 import { MomTestChecklist } from './mom-test-checklist'
 import { PhoneQuickActions } from './phone-actions'
 import { LeadStatusSelect } from './status-select'
@@ -384,6 +385,15 @@ export default async function LeadDetailPage({
             )}
           </CardContent>
         </Card>
+
+              <LeadRelatedLinks
+                leadId={id}
+                counts={{
+                  proposals: proposals.length,
+                  projects: projects.length,
+                  invoices: invoices.length,
+                }}
+              />
 
               {canEdit || nextActions.length > 0 ? (
                 <NextActionsCard

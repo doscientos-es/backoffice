@@ -33,16 +33,17 @@ export default async function ProjectsPage({
   const sp = await searchParams
   const q = parseStringParam(sp, 'q')
   const status = parseStringParam(sp, 'status')
+  const leadId = parseStringParam(sp, 'lead')
   const page = parsePage(sp)
   const { sort, dir } = parseSortParam(sp, PROJECT_SORT_COLUMNS, 'updated_at', 'desc')
 
-  const { data, count } = await listProjects({ q, status, page, sort, dir })
+  const { data, count } = await listProjects({ q, status, leadId, page, sort, dir })
 
   return (
     <ProjectsList
       canEdit={canEdit}
       title="Proyectos"
-      empty={q || status ? 'Sin coincidencias.' : 'Aún no hay proyectos.'}
+      empty={q || status || leadId ? 'Sin coincidencias.' : 'Aún no hay proyectos.'}
       error={undefined}
       searchKey="q"
       searchPlaceholder="Buscar por nombre…"

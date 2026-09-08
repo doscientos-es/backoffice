@@ -25,6 +25,7 @@ export const PROJECT_SORT_COLUMNS = ['name', 'status', 'updated_at'] as const
 export type ProjectListParams = {
   q?: string
   status?: string
+  leadId?: string
   page?: number
   sort?: string
   dir?: 'asc' | 'desc'

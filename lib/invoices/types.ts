@@ -42,6 +42,7 @@ export type InvoiceListParams = {
   q?: string;
   status?: string;
   verifactu?: string;
+  leadId?: string;
   page?: number;
   sort?: string;
   dir?: "asc" | "desc";

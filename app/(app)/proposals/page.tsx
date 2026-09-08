@@ -32,6 +32,7 @@ const EXPIRY_FILTER_OPTIONS = [
 
 const FOLLOW_UP_FILTER_OPTIONS = [{ value: 'waiting_72', label: 'Esperando +72 h' }]
 const FOLLOW_UP_CUTOFF_MS = 72 * 60 * 60 * 1000
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export default async function ProposalsPage({
   searchParams,
@@ -43,6 +44,7 @@ export default async function ProposalsPage({
   const q = parseStringParam(sp, 'q')
   const status = parseStringParam(sp, 'status')
   const clientId = parseStringParam(sp, 'client')
+  const leadId = parseStringParam(sp, 'lead')
   const expiry = parseStringParam(sp, 'expiry')
   const followUp = parseStringParam(sp, 'followup')
   const page = parsePage(sp)
@@ -52,11 +54,12 @@ export default async function ProposalsPage({
 
   const supabase = await createServerClient()
 
-  const { data: clients } = await supabase
-    .from('clients')
-    .select('id, name')
-    .is('deleted_at', null)
-    .order('name')
+  const [{ data: clients }, { data: leadClient }] = await Promise.all([
+    supabase.from('clients').select('id, name').is('deleted_at', null).order('name'),
+    leadId && UUID_PATTERN.test(leadId)
+      ? supabase.from('clients').select('id').eq('lead_id', leadId).is('deleted_at', null).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ])
 
   const CLIENT_FILTER_OPTIONS = (clients ?? []).map((c) => ({ value: c.id, label: c.name }))
 
@@ -74,6 +77,11 @@ export default async function ProposalsPage({
   }
   if (status) query = query.eq('status', status)
   if (clientId) query = query.eq('client_id', clientId)
+  if (leadId && UUID_PATTERN.test(leadId)) {
+    query = leadClient
+      ? query.or(`lead_id.eq.${leadId},client_id.eq.${leadClient.id}`)
+      : query.eq('lead_id', leadId)
+  }
 
   if (expiry === 'expired') {
     query = query.lt('valid_until', new Date().toISOString().slice(0, 10))
@@ -106,7 +114,7 @@ export default async function ProposalsPage({
     </Button>
   )
 
-  const hasFilters = !!(q || status || clientId || expiry || followUp)
+  const hasFilters = !!(q || status || clientId || leadId || expiry || followUp)
 
   return (
     <ListPage

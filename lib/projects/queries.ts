@@ -22,6 +22,11 @@ export async function listProjects(params: ProjectListParams): Promise<ProjectLi
   const page = Math.max(1, params.page ?? 1)
   const from = (page - 1) * PROJECT_LIST_PAGE_SIZE
   const to = from + PROJECT_LIST_PAGE_SIZE - 1
+  const { data: leadClient } = params.leadId
+    ? await notDeleted(supabase.from('clients').select('id').eq('lead_id', params.leadId)).maybeSingle()
+    : { data: null }
+
+  if (params.leadId && !leadClient) return { data: [], count: 0 }
 
   let query = notDeleted(
     supabase
@@ -34,6 +39,7 @@ export async function listProjects(params: ProjectListParams): Promise<ProjectLi
 
   if (params.q && params.q.length > 0) query = query.ilike('name', `%${escapeIlike(params.q)}%`)
   if (params.status) query = query.eq('status', params.status)
+  if (leadClient) query = query.eq('client_id', leadClient.id)
 
   const sortCol = params.sort ?? 'created_at'
   const ascending = params.sort ? params.dir !== 'desc' : false
