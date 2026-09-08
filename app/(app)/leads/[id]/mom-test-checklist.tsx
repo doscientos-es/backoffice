@@ -13,7 +13,7 @@ const SIGNALS = [
   { key: 'real_problem', label: 'Tiene el problema real' },
   { key: 'aware_problem', label: 'Es consciente del problema' },
   { key: 'tried_solutions', label: 'Ha intentado solucionarlo' },
-  { key: 'decision_power_or_budget', label: 'Tiene poder de decisión o presupuesto' },
+  { key: 'decision_power_or_budget', label: 'Decide él y tiene presupuesto' },
   { key: 'accessible', label: 'Es accesible' },
 ] as const
 

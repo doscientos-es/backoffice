@@ -8,14 +8,15 @@ import {
   FileText,
   LoaderCircle as Loader2,
   Mail,
-  MessageCircle,
   Notebook as NotebookPen,
   Phone,
   Send,
   Video,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { type SubmitEvent, useEffect, useState } from 'react'
+import { type ReactNode, type SubmitEvent, useEffect, useState } from 'react'
+
+import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
 
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -63,6 +64,36 @@ import { WhatsAppComposer } from './whatsapp-composer'
 
 /** Shape passed for Meet invitee selection — subset of team_members with email. */
 export type MeetMember = { id: string; name: string; email: string }
+
+/** Compact primary quick-action trigger: icon inline with the label. */
+export function QuickActionTile({
+  icon,
+  label,
+  tone = 'default',
+  ...props
+}: {
+  icon: ReactNode
+  label: string
+  tone?: 'default' | 'whatsapp'
+} & React.ComponentProps<typeof Button>) {
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      className={cn(
+        'border-border/80 bg-card/60 justify-start gap-2 font-medium [&>span]:min-w-0',
+        'hover:border-foreground/25 hover:bg-muted/60 transition-colors',
+        tone === 'whatsapp' &&
+          'border-emerald-500/25 hover:border-emerald-500/50 hover:bg-emerald-500/10',
+      )}
+      {...props}
+    >
+      {icon}
+      <span className="truncate text-xs">{label}</span>
+    </Button>
+  )
+}
 
 function LastAttemptDialog({
   leadId,
@@ -285,10 +316,7 @@ export function QMeetDialog({
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-            <Video className="text-muted-foreground size-3.5" />
-            Agendar reunión Meet
-          </Button>
+          <QuickActionTile icon={<Video className="text-muted-foreground size-3.5" />} label="Agendar Meet" />
         </DialogTrigger>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -470,10 +498,7 @@ export function QMeetNowDialog({
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-            <Video className="size-3.5 text-green-500" />
-            Meet ahora
-          </Button>
+          <QuickActionTile icon={<Video className="size-3.5 text-green-500" />} label="Meet ahora" />
         </DialogTrigger>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
@@ -685,10 +710,7 @@ export function QCallDialog({
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-            <Phone className="text-muted-foreground size-3.5" />
-            Registrar llamada
-          </Button>
+          <QuickActionTile icon={<Phone className="text-muted-foreground size-3.5" />} label="Registrar llamada" />
         </DialogTrigger>
         <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-md">
           <DialogHeader className="shrink-0">
@@ -871,10 +893,11 @@ export function QWhatsAppDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-          <MessageCircle className="size-3.5 text-emerald-600" />
-          Preparar WhatsApp
-        </Button>
+        <QuickActionTile
+          icon={<WhatsAppIcon className="size-3.5 text-emerald-600" />}
+          label="WhatsApp"
+          tone="whatsapp"
+        />
       </DialogTrigger>
       <DialogContent
         className="max-h-[90vh] overflow-y-auto sm:max-w-lg"
@@ -934,10 +957,7 @@ export function QEmailDialog({ leadId, leadEmail }: { leadId: string; leadEmail:
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-          <Mail className="text-muted-foreground size-3.5" />
-          Registrar email
-        </Button>
+        <QuickActionTile icon={<Mail className="text-muted-foreground size-3.5" />} label="Registrar email" />
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
@@ -1015,10 +1035,7 @@ export function QNoteDialog({ leadId }: { leadId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-          <NotebookPen className="text-muted-foreground size-3.5" />
-          Añadir nota
-        </Button>
+        <QuickActionTile icon={<NotebookPen className="text-muted-foreground size-3.5" />} label="Añadir nota" />
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
@@ -1062,10 +1079,7 @@ export function QSendEmailDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-          <Send className="text-muted-foreground size-3.5" />
-          Enviar email
-        </Button>
+        <QuickActionTile icon={<Send className="text-muted-foreground size-3.5" />} label="Enviar email" />
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>

@@ -13,21 +13,16 @@ import type {
   DashboardKpis,
   DateRange,
   GoalMetric,
-  MoneyOpportunities,
-  MoneyProposalRow,
   MonthFinanceSummary,
   MyDayData,
   MyTaskRow,
   OverdueInvoiceRow,
-  PriorityLeadRow,
-  RecoverableLeadRow,
   ReminderRow,
   RevenuePoint,
 } from './types'
 
 const AVISOS_LIMIT = 5
 const MY_DAY_LIMIT = 6
-const MONEY_LIMIT = 5
 
 /** Task statuses that are still actionable (not done / cancelled). */
 const OPEN_TASK_STATUSES = ['todo', 'in_progress', 'in_review'] as const
@@ -396,9 +391,6 @@ export async function getMonthFinanceSummary(): Promise<MonthFinanceSummary> {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Company goals
-// ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 // Company goals
 // ---------------------------------------------------------------------------

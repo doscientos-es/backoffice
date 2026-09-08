@@ -21,6 +21,7 @@ import {
   QNoteDialog,
   QSendEmailDialog,
   QWhatsAppDialog,
+  QuickActionTile,
 } from '../lead-quick-action-dialogs'
 import { ExtractTasksDialog, type ExtractTasksDialogProps } from './extract-tasks-dialog'
 import { GmailSyncButton } from './gmail-sync-button'
@@ -65,9 +66,11 @@ export function LeadQuickActions({
   const secondaryActionCount = 2 + (googleEnabled ? 3 : 0) + (canExtractTasks ? 1 : 0)
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       {claimable && <ClaimButton leadId={leadId} />}
-      <div className="grid grid-cols-2 gap-2 [&_button]:h-auto [&_button]:min-h-8 [&_button]:px-2 [&_button]:text-left [&_button]:whitespace-normal [&_button_span]:text-xs">
+
+      {/* Primary: 2x2 tactile tiles, one per channel */}
+      <div className="grid grid-cols-2 gap-2">
         <QCallDialog
           leadId={leadId}
           leadPhone={leadPhone}
@@ -97,18 +100,19 @@ export function LeadQuickActions({
 
       <Collapsible>
         <CollapsibleTrigger asChild>
-          <Button variant="ghost" size="sm" className="group/more w-full justify-between px-2">
-            <span className="flex items-center gap-1.5">
-              Más acciones
-              <span className="text-muted-foreground text-xs font-normal">
-                {secondaryActionCount}
-              </span>
+          <button
+            type="button"
+            className="text-muted-foreground hover:text-foreground group/more flex w-full items-center justify-center gap-1.5 rounded-md py-0.5 text-xs font-medium transition-colors"
+          >
+            Más acciones
+            <span className="bg-muted rounded-full px-1.5 py-0.5 text-[10px] tabular-nums">
+              {secondaryActionCount}
             </span>
-            <ChevronDown className="text-muted-foreground size-4 transition-transform group-aria-expanded/more:rotate-180" />
-          </Button>
+            <ChevronDown className="size-3 transition-transform group-aria-expanded/more:rotate-180" />
+          </button>
         </CollapsibleTrigger>
-        <CollapsibleContent className="pt-2">
-          <div className="bg-muted/20 flex flex-col gap-3 rounded-lg border p-2">
+        <CollapsibleContent className="pt-2.5">
+          <div className="bg-muted/30 flex flex-col gap-2.5 rounded-lg p-2.5">
             <ActionGroup label="Registrar">
               <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
               <QNoteDialog leadId={leadId} />
@@ -170,11 +174,11 @@ export function LeadQuickActions({
 
 function ActionGroup({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <p className="text-muted-foreground px-1 text-[10px] font-semibold tracking-wide uppercase">
+    <div className="flex flex-col gap-1">
+      <p className="text-muted-foreground text-[10px] font-semibold tracking-wide uppercase">
         {label}
       </p>
-      {children}
+      <div className="grid grid-cols-2 gap-1.5">{children}</div>
     </div>
   )
 }
@@ -218,9 +222,14 @@ function ActionTrigger({
   ...rest
 }: { icon: ReactNode; label: string } & React.ComponentProps<typeof Button>) {
   return (
-    <Button variant="outline" size="sm" className="w-full justify-start gap-2" {...rest}>
-      <span className="text-muted-foreground">{icon}</span>
-      <span className="text-sm font-medium">{label}</span>
+    <Button
+      variant="outline"
+      size="sm"
+      className="h-auto min-w-0 justify-start gap-2 px-2.5 py-2"
+      {...rest}
+    >
+      <span className="text-muted-foreground shrink-0">{icon}</span>
+      <span className="truncate text-xs leading-tight font-medium">{label}</span>
     </Button>
   )
 }
@@ -249,7 +258,10 @@ function ScheduleDialog({
       open={open}
       onOpenChange={setOpen}
       trigger={
-        <ActionTrigger icon={<CalendarClock className="size-4" />} label="Agendar llamada" />
+        <QuickActionTile
+          icon={<CalendarClock className="text-muted-foreground size-3.5" />}
+          label="Agendar llamada"
+        />
       }
     />
   )
