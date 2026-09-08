@@ -10,10 +10,6 @@ jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    env:
-      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: anon-test-key-placeholder-1234567890
-      SUPABASE_SERVICE_ROLE_KEY: service-role-test-key-placeholder-1234567890
     steps:
       - uses: actions/checkout@v4
 
@@ -37,6 +33,10 @@ jobs:
 
       - name: Build
         run: pnpm build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: anon-test-key-placeholder-1234567890
+          SUPABASE_SERVICE_ROLE_KEY: service-role-test-key-placeholder-1234567890
 
       - name: Tests
         run: pnpm test
