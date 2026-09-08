@@ -40,6 +40,7 @@ import {
 import { LeadDetailTabs, resolveLeadTab } from './lead-detail-tabs'
 import { LeadEditDialog } from './lead-edit-dialog'
 import { LeadNextActionTaskItem } from './lead-next-action-task-item'
+import { LeadNextActionReminderItem } from './lead-next-action-reminder-item'
 import { LeadNextMove } from './lead-next-move'
 import { LeadNotesDialog } from './lead-notes-dialog'
 import { LeadRecentInteractions } from './lead-recent-interactions'
@@ -595,18 +596,23 @@ function NextActionsCard({
           <ul className="divide-border divide-y">
             {actions.map((action) => {
               const overdue = action.when ? new Date(action.when) < new Date() : false
+              const whenLabel = action.when ? relativeTime(action.when) : null
               if (action.kind === 'task' && canEdit) {
                 return (
                   <LeadNextActionTaskItem
                     key={`${action.kind}-${action.id}`}
-                    task={{
-                      ...action,
-                      overdue,
-                      whenLabel: action.when ? relativeTime(action.when) : null,
-                    }}
+                    task={{ ...action, overdue, whenLabel }}
                     leadId={leadId}
                     members={members}
                     currentUserId={currentUserId}
+                  />
+                )
+              }
+              if (action.kind === 'reminder' && canEdit) {
+                return (
+                  <LeadNextActionReminderItem
+                    key={`${action.kind}-${action.id}`}
+                    reminder={{ id: action.id, title: action.title, whenLabel, overdue }}
                   />
                 )
               }
@@ -628,13 +634,13 @@ function NextActionsCard({
                     {action.kind === 'task' ? (
                       <StatusBadge meta={TASK_STATUS} value={action.status} />
                     ) : null}
-                    {action.when ? (
+                    {whenLabel ? (
                       <span
                         className={
                           overdue ? 'text-destructive font-medium' : 'text-muted-foreground'
                         }
                       >
-                        {relativeTime(action.when)}
+                        {whenLabel}
                       </span>
                     ) : null}
                   </div>
