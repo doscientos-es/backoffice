@@ -11,8 +11,10 @@ import { DangerZone } from '@/components/ui/danger-zone'
 import { DocPreview } from '@doscientos/ui'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { requireUser } from '@/lib/auth'
+import { getInternalDocPreviewUrl } from '@/lib/internal-documents/preview'
+import { loadOptionalInternalDocData } from '@/lib/internal-documents/supplementary-data'
+import { scopedLogger } from '@/lib/logger'
 import type { InternalDocCategory, InternalDocVisibility } from '@/lib/schemas/internal-doc'
-import { getStorage } from '@/lib/storage'
 import { createServerClient } from '@/lib/supabase/server'
 import { formatDate } from '@/lib/utils'
 
@@ -20,10 +22,9 @@ import { deleteInternalDoc, reindexInternalDoc } from '../actions'
 import { InternalDocEditDialog } from './internal-doc-edit-dialog'
 import { type InternalDocEvent, InternalDocHistory } from './internal-doc-history'
 
-/** Preview TTL: 10 min — long enough to browse the document comfortably. */
-const PREVIEW_TTL = 600
-
 export const dynamic = 'force-dynamic'
+
+const log = scopedLogger('internal-documents.detail')
 
 const CATEGORY_LABELS: Record<string, string> = {
   legal: 'Legal',
@@ -84,13 +85,25 @@ function extractionFeedback(extraction: ExtractionStatus | null) {
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const supabase = await createServerClient()
-  const { data } = await supabase
-    .from('internal_documents')
-    .select('name')
-    .eq('id', id)
-    .maybeSingle()
-  return { title: data?.name ? `${data.name as string} · doscientos` : 'Documento · doscientos' }
+  try {
+    const supabase = await createServerClient()
+    const { data, error } = await supabase
+      .from('internal_documents')
+      .select('name')
+      .eq('id', id)
+      .maybeSingle()
+
+    if (error) {
+      log.warn({ documentId: id, errorCode: error.code }, 'could not load internal document metadata')
+    }
+    return { title: data?.name ? `${data.name as string} · doscientos` : 'Documento · doscientos' }
+  } catch (error) {
+    log.error(
+      { documentId: id, errorType: error instanceof Error ? error.name : typeof error },
+      'unexpected error loading internal document metadata',
+    )
+    return { title: 'Documento · doscientos' }
+  }
 }
 
 export default async function InternalDocDetailPage({
@@ -122,26 +135,32 @@ export default async function InternalDocDetailPage({
   const uploaderName =
     (doc as unknown as { team_members: { name: string } | null }).team_members?.name ?? '—'
 
-  const storagePath = doc.storage_path as string | null
-  let previewUrl: string | null = null
-  if (storagePath) {
-    const { url } = await getStorage().createSignedUrl('internal-docs', storagePath, PREVIEW_TTL)
-    previewUrl = url
-  }
+  const previewUrl = await getInternalDocPreviewUrl(
+    doc.id as string,
+    doc.storage_path as string | null,
+  )
 
-  // Audit trail and extraction status. RLS mirrors the document's visibility.
-  const [{ data: rawEvents }, { data: rawExtraction }] = await Promise.all([
-    supabase
-      .from('internal_document_events')
-      .select('id, action, created_at, payload, team_members:actor_id(name)')
-      .eq('document_id', id)
-      .order('created_at', { ascending: false })
-      .limit(50),
-    supabase
-      .from('internal_document_extractions')
-      .select('status, page_count, truncated')
-      .eq('document_id', id)
-      .maybeSingle(),
+  // Audit trail and extraction status enrich the page but are not required to view the document.
+  const [rawEvents, rawExtraction] = await Promise.all([
+    loadOptionalInternalDocData(
+      id,
+      'events',
+      supabase
+        .from('internal_document_events')
+        .select('id, action, created_at, payload, team_members:actor_id(name)')
+        .eq('document_id', id)
+        .order('created_at', { ascending: false })
+        .limit(50),
+    ),
+    loadOptionalInternalDocData(
+      id,
+      'extraction',
+      supabase
+        .from('internal_document_extractions')
+        .select('status, page_count, truncated')
+        .eq('document_id', id)
+        .maybeSingle(),
+    ),
   ])
 
   const events: InternalDocEvent[] = (rawEvents ?? []).map((e) => ({
