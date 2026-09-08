@@ -47,6 +47,7 @@ import {
   CreateMonthlyHourlyInvoiceInput,
   CreateRectificationInput,
   MarkUncollectibleInput,
+  PreviewInvoiceEmailInput,
   RecordInvoicePaymentInput,
   SendInvoiceEmailInput,
   SendInvoiceInput,
@@ -766,6 +767,55 @@ export const createRectification = defineAction<typeof CreateRectificationInput,
 
 // ─── Send email ───────────────────────────────────────────────────────────────
 
+type RenderedInvoiceEmail = {
+  subject: string;
+  html: string;
+  portalUrl: string;
+  clientEmail: string | null;
+};
+
+/** Renders the exact invoice email so it can be previewed or delivered. */
+async function renderInvoiceEmail(
+  invoice: NonNullable<Awaited<ReturnType<typeof findInvoiceForEmail>>>,
+  message: string | undefined,
+): Promise<RenderedInvoiceEmail> {
+  const invoiceNumber = invoice.full_number ?? "—";
+  const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL);
+  const portalUrl = `${appUrl}/p/invoice/${invoice.portal_token ?? ""}`;
+  const html = await renderEmail(
+    InvoiceEmail({
+      clientName: invoice.client?.name ?? "Hola",
+      invoiceNumber,
+      total: formatEUR(invoice.total ?? 0),
+      dueDate: invoice.due_date ? formatDate(invoice.due_date) : "—",
+      portalUrl,
+      appUrl,
+      message,
+    }),
+  );
+  return {
+    subject: `Factura ${invoiceNumber}`,
+    html,
+    portalUrl,
+    clientEmail: invoice.client?.email ?? null,
+  };
+}
+
+/** Renders the invoice email for review without delivering it. */
+export const previewInvoiceEmail = defineAction<
+  typeof PreviewInvoiceEmailInput,
+  { subject: string; html: string; clientEmail: string | null }
+>({
+  name: "invoices.previewEmail",
+  schema: PreviewInvoiceEmailInput,
+  handler: async (input) => {
+    const invoice = await findInvoiceForEmail(input.id);
+    if (!invoice) throw new Error("Factura no encontrada");
+    const { subject, html, clientEmail } = await renderInvoiceEmail(invoice, input.message);
+    return { subject, html, clientEmail };
+  },
+});
+
 /**
  * Emails the public portal link to the client via Resend.
  * Requires the invoice to be issued and client-visible.
@@ -790,27 +840,14 @@ export const sendInvoiceEmail = defineAction<
     if (!recipient) throw new Error("El cliente no tiene email registrado");
     if (!invoice.portal_token) throw new Error("La factura no tiene token de portal");
 
-    const invoiceNumber = invoice.full_number ?? "—";
-    const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL);
-    const portalUrl = `${appUrl}/p/invoice/${invoice.portal_token}`;
-    const html = await renderEmail(
-      InvoiceEmail({
-        clientName: invoice.client?.name ?? "Hola",
-        invoiceNumber,
-        total: formatEUR(invoice.total ?? 0),
-        dueDate: invoice.due_date ? formatDate(invoice.due_date) : "—",
-        portalUrl,
-        appUrl,
-        message,
-      }),
-    );
+    const { subject, html, portalUrl } = await renderInvoiceEmail(invoice, message);
 
     const result = await sendEmail({
       fromName: user.name,
       fromAlias: user.emailAlias ?? "facturacion",
       to: recipient,
       replyTo: user.contactEmail ?? user.email,
-      subject: `Factura ${invoiceNumber}`,
+      subject,
       html,
       tags: { invoice_id: id, kind: "invoice_link" },
     });

@@ -206,6 +206,16 @@ function buildEvents({
   )
 }
 
+/**
+ * Number of events the activity tab would render; used to decide whether a
+ * "view full history" link adds value elsewhere.
+ */
+export function countActivityEvents(
+  props: Pick<LeadActivityFeedProps, 'interactions' | 'proposals' | 'invoices' | 'tasks'>,
+): number {
+  return buildEvents(props).length
+}
+
 /** Unified chronological feed: interactions plus proposal, invoice and task milestones. */
 export function LeadActivityFeed({
   leadId,

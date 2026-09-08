@@ -34,6 +34,10 @@ export const SendInvoiceEmailInput = z.object({
 })
 export type SendInvoiceEmailInputType = z.infer<typeof SendInvoiceEmailInput>
 
+/** Input for rendering the invoice email without delivering it. */
+export const PreviewInvoiceEmailInput = SendInvoiceEmailInput.pick({ id: true, message: true })
+export type PreviewInvoiceEmailInputType = z.infer<typeof PreviewInvoiceEmailInput>
+
 export const CreateInvoiceFromProposalInput = z.object({
   proposalId: z.string().uuid(),
 })

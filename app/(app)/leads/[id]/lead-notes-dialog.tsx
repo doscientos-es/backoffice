@@ -17,9 +17,13 @@ export function LeadNotesDialog({ notes }: { notes: string }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-7 gap-1.5 px-2 text-xs">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Ver nota completa"
+          title="Ver nota completa"
+        >
           <Maximize2 className="size-3.5" />
-          Ver nota completa
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl">
