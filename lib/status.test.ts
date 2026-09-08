@@ -9,7 +9,6 @@ import {
   PROPOSAL_STATUS,
   TASK_PRIORITY,
   TASK_STATUS,
-  VERIFACTU_ALERT_STATUS,
   VERIFACTU_STATUS,
 } from '@/lib/status'
 
@@ -23,7 +22,6 @@ const ALL_MAPS = {
   TASK_STATUS,
   TASK_PRIORITY,
   VERIFACTU_STATUS,
-  VERIFACTU_ALERT_STATUS,
   EXPENSE_STATUS,
 }
 
@@ -58,9 +56,8 @@ describe('specific mappings', () => {
   it('uses only valid active project states when scheduling a meeting', () => {
     expect(MEETING_PROJECT_STATUSES).toEqual(['planning', 'active', 'on_hold'])
   })
-  it('maps verifactu states (full + alert subset)', () => {
+  it('maps verifactu states', () => {
     expect(VERIFACTU_STATUS.accepted.variant).toBe('success')
-    expect(VERIFACTU_ALERT_STATUS.error.variant).toBe('danger')
   })
   it('borrows expense labels from lib/finance', () => {
     expect(EXPENSE_STATUS.paid.label).toBe('Pagado')

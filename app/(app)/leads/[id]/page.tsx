@@ -385,29 +385,6 @@ export default async function LeadDetailPage({
           </CardContent>
         </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Calificación</CardTitle>
-                  <p className="text-muted-foreground mt-1 text-sm font-normal">
-                    Señales de encaje y capacidad de compra.
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <MomTestChecklist
-                    leadId={lead.id as string}
-                    canEdit={canEdit}
-                    initialValues={{
-                      real_problem: (lead.mom_test_real_problem as boolean | null) ?? null,
-                      aware_problem: (lead.mom_test_aware_problem as boolean | null) ?? null,
-                      tried_solutions: (lead.mom_test_tried_solutions as boolean | null) ?? null,
-                      decision_power_or_budget:
-                        (lead.mom_test_decision_power_or_budget as boolean | null) ?? null,
-                      accessible: (lead.mom_test_accessible as boolean | null) ?? null,
-                    }}
-                  />
-                </CardContent>
-              </Card>
-
               {canEdit || nextActions.length > 0 ? (
                 <NextActionsCard
                   canEdit={canEdit}
@@ -546,6 +523,31 @@ export default async function LeadDetailPage({
                 aiEnabled={aiEnabled}
                 scheduleMembers={members}
               />
+            </SectionBoundary>
+
+            <SectionBoundary label="No se pudo actualizar la calificación">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Calificación</CardTitle>
+                  <p className="text-muted-foreground mt-1 text-xs font-normal">
+                    Señales del Mom Test.
+                  </p>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <MomTestChecklist
+                    leadId={lead.id as string}
+                    canEdit={canEdit}
+                    initialValues={{
+                      real_problem: (lead.mom_test_real_problem as boolean | null) ?? null,
+                      aware_problem: (lead.mom_test_aware_problem as boolean | null) ?? null,
+                      tried_solutions: (lead.mom_test_tried_solutions as boolean | null) ?? null,
+                      decision_power_or_budget:
+                        (lead.mom_test_decision_power_or_budget as boolean | null) ?? null,
+                      accessible: (lead.mom_test_accessible as boolean | null) ?? null,
+                    }}
+                  />
+                </CardContent>
+              </Card>
             </SectionBoundary>
 
             <LeadNextMove

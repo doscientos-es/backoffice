@@ -150,18 +150,6 @@ export const VERIFACTU_STATUS: StatusMeta<VerifactuStatus> = {
   excluded: { label: 'Excluida', variant: 'neutral' },
 }
 
-/**
- * Narrower set used by the dashboard `AvisosPanel` — only states that warrant
- * surfacing as a pending issue.
- */
-export type VerifactuAlertStatus = 'pending' | 'error' | 'rejected'
-
-export const VERIFACTU_ALERT_STATUS: StatusMeta<VerifactuAlertStatus> = {
-  pending: { label: 'Pendiente', variant: 'warning' },
-  error: { label: 'Error', variant: 'danger' },
-  rejected: { label: 'Rechazada', variant: 'danger' },
-}
-
 // ---------------------------------------------------------------------------
 // Expenses (labels live in `lib/finance` alongside the rest of the EXPENSE_*
 // catalogue — we only own the badge variant mapping here)

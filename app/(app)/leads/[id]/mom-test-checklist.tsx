@@ -3,10 +3,8 @@
 import { Check, X } from 'lucide-react'
 import { useState, useTransition } from 'react'
 import { sileo } from 'sileo'
-import { ButtonGroup } from '@doscientos/ui'
 
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 import { updateLeadMomTestSignal } from '../actions'
@@ -55,51 +53,57 @@ export function MomTestChecklist({
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <p className="text-muted-foreground text-xs">Señales de un buen lead</p>
         <Badge variant={score >= 4 ? 'success' : score >= 2 ? 'warning' : 'neutral'}>
           {score}/5
         </Badge>
       </div>
-      <ul className="flex flex-col gap-2.5">
+      <ul className="flex flex-col gap-1.5">
         {SIGNALS.map((s) => {
           const value = values[s.key]
           return (
-            <li key={s.key} className="flex items-center justify-between gap-3">
-              <span className="text-sm">{s.label}</span>
+            <li key={s.key} className="flex items-center justify-between gap-2">
+              <span className="text-muted-foreground truncate text-xs leading-snug">{s.label}</span>
               {canEdit ? (
-                <ButtonGroup>
-                  <Button
+                <span className="flex shrink-0 items-center gap-0.5">
+                  <button
                     type="button"
-                    size="sm"
-                    variant="outline"
-                    className={cn(
-                      value === true &&
-                        'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300',
-                    )}
                     aria-pressed={value === true}
+                    aria-label={`${s.label}: sí`}
+                    title={s.label}
                     onClick={() => setSignal(s.key, value === true ? null : true)}
+                    className={cn(
+                      'flex size-6 items-center justify-center rounded-md transition-colors',
+                      value === true
+                        ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                        : 'text-muted-foreground/50 hover:bg-muted hover:text-foreground',
+                    )}
                   >
                     <Check className="size-3.5" />
-                    Sí
-                  </Button>
-                  <Button
+                  </button>
+                  <button
                     type="button"
-                    size="sm"
-                    variant={value === false ? 'destructive' : 'outline'}
                     aria-pressed={value === false}
+                    aria-label={`${s.label}: no`}
+                    title={s.label}
                     onClick={() => setSignal(s.key, value === false ? null : false)}
+                    className={cn(
+                      'flex size-6 items-center justify-center rounded-md transition-colors',
+                      value === false
+                        ? 'bg-destructive/10 text-destructive'
+                        : 'text-muted-foreground/50 hover:bg-muted hover:text-foreground',
+                    )}
                   >
                     <X className="size-3.5" />
-                    No
-                  </Button>
-                </ButtonGroup>
+                  </button>
+                </span>
               ) : (
                 <Badge
                   variant={value === true ? 'success' : value === false ? 'destructive' : 'neutral'}
                 >
-                  {value === true ? 'Sí' : value === false ? 'No' : 'Sin marcar'}
+                  {value === true ? 'Sí' : value === false ? 'No' : '—'}
                 </Badge>
               )}
             </li>

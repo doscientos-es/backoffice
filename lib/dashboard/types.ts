@@ -30,14 +30,6 @@ export type ReminderRow = {
   remind_at: string
 }
 
-export type VerifactuPendingRow = {
-  id: string
-  full_number: string | null
-  verifactu_status: 'pending' | 'error' | 'rejected'
-  verifactu_error: string | null
-  client_name: string | null
-}
-
 export type OverdueInvoiceRow = {
   id: string
   full_number: string | null
@@ -78,7 +70,6 @@ export type DashboardKpis = {
 
 export type AvisosData = {
   reminders: ReminderRow[]
-  verifactuPending: VerifactuPendingRow[]
   overdueInvoices: OverdueInvoiceRow[]
   certExpiresAt: string | null
 }

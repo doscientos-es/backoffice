@@ -1,53 +1,27 @@
-import {
-  TriangleAlert as AlertTriangle,
-  BellRing,
-  FileText as FileWarning,
-  ShieldAlert,
-} from 'lucide-react'
+import { BellRing, FileText as FileWarning, ShieldAlert } from 'lucide-react'
 import Link from 'next/link'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { StatusBadge } from '@/components/ui/status-badge'
-import type {
-  AvisosData,
-  OverdueInvoiceRow,
-  ReminderRow,
-  VerifactuPendingRow,
-} from '@/lib/dashboard/types'
-import { VERIFACTU_ALERT_STATUS } from '@/lib/status'
+import type { AvisosData, OverdueInvoiceRow, ReminderRow } from '@/lib/dashboard/types'
 import { formatDate, formatEUR, relativeTime } from '@/lib/utils'
 
-export type { AvisosData, OverdueInvoiceRow, ReminderRow, VerifactuPendingRow }
+export type { AvisosData, OverdueInvoiceRow, ReminderRow }
 
 export type AvisosPanelProps = AvisosData & { showFinance?: boolean }
 
 export function AvisosPanel({
-  verifactuPending,
   overdueInvoices,
   certExpiresAt,
   showFinance = true,
 }: AvisosPanelProps) {
-  const visibleVerifactu = showFinance ? verifactuPending : []
   const visibleOverdue = showFinance ? overdueInvoices : []
   const visibleCertExpiry = showFinance ? certExpiresAt : null
 
-  const empty = visibleVerifactu.length === 0 && visibleOverdue.length === 0 && !visibleCertExpiry
+  // Sin avisos: no renderizar nada.
+  const empty = visibleOverdue.length === 0 && !visibleCertExpiry
 
   if (empty) {
-    return (
-      <Card className="border-border/80 bg-card/90 shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BellRing className="size-4" /> Avisos
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="rounded-lg bg-emerald-500/8 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">
-            Sin avisos pendientes. Todo en orden.
-          </p>
-        </CardContent>
-      </Card>
-    )
+    return null
   }
 
   return (
@@ -72,27 +46,6 @@ export function AvisosPanel({
               </p>
             </div>
           </div>
-        ) : null}
-
-        {visibleVerifactu.length > 0 ? (
-          <Section
-            icon={<AlertTriangle className="size-4 text-amber-500" />}
-            title={`Verifactu pendiente (${visibleVerifactu.length})`}
-          >
-            <ul className="space-y-1.5">
-              {visibleVerifactu.map((v) => (
-                <li key={v.id} className="flex items-center justify-between gap-2">
-                  <Link href={`/invoices/${v.id}`} className="truncate text-sm hover:underline">
-                    {v.full_number ?? v.id.slice(0, 8)}
-                    {v.client_name ? (
-                      <span className="text-muted-foreground"> · {v.client_name}</span>
-                    ) : null}
-                  </Link>
-                  <StatusBadge meta={VERIFACTU_ALERT_STATUS} value={v.verifactu_status} />
-                </li>
-              ))}
-            </ul>
-          </Section>
         ) : null}
 
         {visibleOverdue.length > 0 ? (

@@ -18,14 +18,12 @@ import { getGreeting, parseDashboardRange } from '@/lib/utils/date'
 import { AvisosWidget } from './_components/avisos-widget'
 import { EnablePushBanner } from './_components/enable-push-banner'
 import { KpiGrid } from './_components/kpi-grid'
-import { MoneyOpportunitiesWidget } from './_components/money-opportunities-widget'
 import { MyDayWidget } from './_components/my-day-widget'
 import { RangeSelector } from './_components/range-selector'
 import { RevenueWidget } from './_components/revenue-widget'
 import {
   AvisosWidgetSkeleton,
   KpiGridSkeleton,
-  MoneyOpportunitiesWidgetSkeleton,
   MyDayWidgetSkeleton,
   RangeSelectorSkeleton,
   RevenueWidgetSkeleton,
@@ -97,23 +95,6 @@ export default async function InicioPage({ searchParams }: PageProps) {
           label="No se pudieron cargar los avisos"
         >
           <AvisosWidget showFinance={showFinance} />
-        </SectionBoundary>
-      </section>
-
-      <section className="flex flex-col gap-4" aria-labelledby="inicio-oportunidades">
-        <div>
-          <p className="text-xs font-semibold tracking-[0.16em] text-emerald-600 uppercase dark:text-emerald-400">
-            Crecimiento
-          </p>
-          <h2 id="inicio-oportunidades" className="mt-1 text-xl font-semibold tracking-tight">
-            Oportunidades que merecen seguimiento
-          </h2>
-        </div>
-        <SectionBoundary
-          pending={<MoneyOpportunitiesWidgetSkeleton />}
-          label="No se pudieron cargar las oportunidades"
-        >
-          <MoneyOpportunitiesWidget />
         </SectionBoundary>
       </section>
 
