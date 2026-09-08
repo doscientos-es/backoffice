@@ -42,6 +42,7 @@ import { LeadEditDialog } from './lead-edit-dialog'
 import { LeadNextActionTaskItem } from './lead-next-action-task-item'
 import { LeadNextMove } from './lead-next-move'
 import { LeadNotesDialog } from './lead-notes-dialog'
+import { LeadRecentInteractions } from './lead-recent-interactions'
 import { MomTestChecklist } from './mom-test-checklist'
 import { PhoneQuickActions } from './phone-actions'
 import { LeadStatusSelect } from './status-select'
@@ -415,6 +416,14 @@ export default async function LeadDetailPage({
                   actions={nextActions}
                 />
               ) : null}
+
+              <LeadRecentInteractions
+                leadId={lead.id as string}
+                leadEmail={(lead.email as string | null) ?? null}
+                canEdit={canEdit}
+                aiEnabled={aiEnabled}
+                interactions={interactions ?? []}
+              />
             </>
           ) : null}
 
@@ -431,10 +440,6 @@ export default async function LeadDetailPage({
                 tasks={tasks}
               />
 
-              <SectionBoundary label="No se pudo cargar el journey de conversión">
-                <LeadConversionJourneySection leadId={lead.id} eventId={lead.event_id} />
-              </SectionBoundary>
-
               <SectionBoundary label="No se pudieron cargar los adjuntos">
                 <LeadAttachmentsSection leadId={lead.id} canEdit={canEdit} />
               </SectionBoundary>
@@ -442,13 +447,19 @@ export default async function LeadDetailPage({
           ) : null}
 
           {tab === 'comercial' ? (
-            <LeadCommercial
-              leadId={lead.id as string}
-              linkedClientId={linkedClientId}
-              proposals={proposals}
-              projects={projects}
-              invoices={invoices}
-            />
+            <>
+              <LeadCommercial
+                leadId={lead.id as string}
+                linkedClientId={linkedClientId}
+                proposals={proposals}
+                projects={projects}
+                invoices={invoices}
+              />
+
+              <SectionBoundary label="No se pudo cargar el journey de conversión">
+                <LeadConversionJourneySection leadId={lead.id} eventId={lead.event_id} />
+              </SectionBoundary>
+            </>
           ) : null}
 
           {tab === 'inteligencia' ? (

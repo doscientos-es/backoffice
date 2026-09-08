@@ -87,6 +87,67 @@ export function interactionBodyText(body: string | null): string | null {
   return text || null
 }
 
+/** Trims an interaction body (HTML for emails, plain text otherwise) into a flat excerpt. */
+export function excerptInteractionBody(body: string | null, max = 160): string | null {
+  const text = interactionBodyText(body)?.replace(/\s+/g, ' ').trim()
+  if (!text) return null
+  return text.length > max ? `${text.slice(0, max)}…` : text
+}
+
+const INTERACTION_LABEL: Record<string, string> = {
+  email_sent: 'Email enviado',
+  email_received: 'Email recibido',
+  email_delivered: 'Email entregado',
+  email_opened: 'Email abierto',
+  email_clicked: 'Email con clic',
+  email_bounced: 'Email rebotado',
+  email_complained: 'Email marcado como spam',
+  email_scheduled: 'Email programado',
+  email_delivery_delayed: 'Entrega de email retrasada',
+  email_failed: 'Error al enviar el email',
+  email_suppressed: 'Email suprimido',
+  call: 'Llamada',
+  meeting: 'Reunión',
+  note: 'Nota',
+  owner_change: 'Responsable cambiado',
+  status_change: 'Cambio de estado',
+  portal_view: 'Portal visto',
+  portal_accept: 'Propuesta aceptada',
+  portal_reject: 'Propuesta rechazada',
+}
+
+/** Interactions that carry real commercial signal for the recent-activity view. */
+const HIGH_VALUE_INTERACTIONS = ['call', 'note', 'meeting'] as const
+
+/** Interactions shown in a compact, muted style because they are bookkeeping, not signal. */
+const LOW_VALUE_INTERACTIONS = ['owner_change', 'status_change'] as const
+
+/** An event whose engagement signal lives elsewhere: it is a tracked milestone. */
+const PORTAL_INTERACTIONS = ['portal_view', 'portal_accept', 'portal_reject'] as const
+
+/** Bookkeeping events and portal signals render in the muted, compact style. */
+export function isLowValueInteraction(type: string): boolean {
+  return (
+    (LOW_VALUE_INTERACTIONS as readonly string[]).includes(type) ||
+    (PORTAL_INTERACTIONS as readonly string[]).includes(type)
+  )
+}
+
+/** Human label for an interaction type. */
+export function interactionLabel(type: string): string {
+  return INTERACTION_LABEL[type] ?? type
+}
+
+/** Splits interactions into the primary list (signal) and the secondary list (bookkeeping). */
+export function splitInteractionsByValue<T extends { type: string }>(interactions: T[]) {
+  const primary: T[] = []
+  const secondary: T[] = []
+  for (const interaction of interactions) {
+    ;(isLowValueInteraction(interaction.type) ? secondary : primary).push(interaction)
+  }
+  return { primary, secondary }
+}
+
 /** Groups the complete Resend lifecycle of an email into one timeline entry. */
 export function groupResendInteractions<T extends ResendInteraction>(interactions: T[]) {
   const groups = new Map<

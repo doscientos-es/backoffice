@@ -1,4 +1,5 @@
 import {
+  Calendar,
   SquareCheck as CheckSquare2,
   FileText as FileSignature,
   Mail,
@@ -12,9 +13,10 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { MemberLabel } from '@/components/ui/member-avatar'
 import {
+  excerptInteractionBody,
   groupResendInteractions,
-  interactionBodyText,
   interactionDate,
+  isLowValueInteraction,
 } from '@/lib/leads/interaction-utils'
 import type {
   LeadDetailInteraction,
@@ -87,14 +89,13 @@ function interactionIcon(type: string) {
   if (type === 'call') return Phone
   if (type === 'note') return StickyNote
   if (type.startsWith('email_')) return Mail
+  if (type === 'meeting') return Calendar
   return MessageSquare
 }
 
 /** Trims the interaction body (HTML for emails, plain text otherwise) for the feed. */
 function excerpt(body: string | null, max = 160): string | null {
-  const text = interactionBodyText(body)?.replace(/\s+/g, ' ').trim()
-  if (!text) return null
-  return text.length > max ? `${text.slice(0, max)}…` : text
+  return excerptInteractionBody(body, max)
 }
 
 function dayKey(value: string) {
@@ -248,6 +249,8 @@ export function LeadActivityFeed({
                   {group.events.map((event) =>
                     event.kind === 'record' ? (
                       <RecordRow key={event.id} event={event} />
+                    ) : isLowValueInteraction(event.interaction.type) ? (
+                      <CompactInteractionRow key={event.id} event={event} />
                     ) : (
                       <InteractionRow
                         key={event.id}
@@ -361,6 +364,25 @@ function InteractionRow({
           </div>
         </div>
       </article>
+    </li>
+  )
+}
+
+/** Bookkeeping event (status/owner change, portal signals): one muted inline line. */
+function CompactInteractionRow({ event }: { event: InteractionEvent }) {
+  return (
+    <li className="py-1.5">
+      <div className="text-muted-foreground/80 flex items-center gap-2 text-xs">
+        <span className="tabular-nums">{relativeTime(event.date)}</span>
+        <span className="truncate">{event.label}</span>
+        {event.interaction.performer ? (
+          <MemberLabel
+            member={event.interaction.performer}
+            size="xs"
+            className="gap-1 text-[11px]"
+          />
+        ) : null}
+      </div>
     </li>
   )
 }
