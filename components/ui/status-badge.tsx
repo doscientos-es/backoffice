@@ -1,3 +1,4 @@
+import { AlertTriangle, Check, Clock3, Info } from 'lucide-react'
 import type { ComponentProps } from 'react'
 
 import { Badge } from '@/components/ui/badge'
@@ -36,8 +37,19 @@ export function StatusBadge<T extends string>({
       ]
     : undefined
   const label = entry?.label ?? fallbackLabel ?? value ?? '—'
+  const Icon =
+    entry?.variant === 'success'
+      ? Check
+      : entry?.variant === 'warning'
+        ? Clock3
+        : entry?.variant === 'danger'
+          ? AlertTriangle
+          : entry?.variant === 'info'
+            ? Info
+            : null
   return (
     <Badge variant={entry?.variant ?? 'neutral'} {...rest}>
+      {Icon ? <Icon aria-hidden="true" /> : null}
       {labelPrefix ? `${labelPrefix}${label}` : label}
     </Badge>
   )
