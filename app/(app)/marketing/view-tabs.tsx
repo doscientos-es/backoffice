@@ -4,6 +4,7 @@ import { Megaphone, Target } from 'lucide-react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useTransition } from 'react'
 
+import { TabList, TabTrigger } from '@/components/ui/tabs'
 import type { MarketingView } from '@/lib/marketing/range'
 import { cn } from '@/lib/utils'
 
@@ -29,26 +30,20 @@ export function MarketingViewTabs({ current }: { current: MarketingView }) {
   }
 
   return (
-    <div
-      role="tablist"
+    <TabList
       aria-label="Vista"
-      className={cn(
-        'inline-flex h-9 items-center rounded-lg border bg-card p-0.5 text-sm',
-        pending && 'opacity-70',
-      )}
+      className={cn('h-9 rounded-lg border border-border bg-card p-0.5 text-sm', pending && 'opacity-70')}
     >
       {TABS.map((tab) => {
         const active = tab.value === current
         const Icon = tab.icon
         return (
-          <button
+          <TabTrigger
             key={tab.value}
-            type="button"
-            role="tab"
-            aria-selected={active}
+            active={active}
             onClick={() => onSelect(tab.value)}
             className={cn(
-              'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-colors',
+              'rounded-md border-b-0 px-3 py-1.5',
               active
                 ? 'bg-foreground text-background'
                 : 'text-muted-foreground hover:text-foreground',
@@ -56,9 +51,9 @@ export function MarketingViewTabs({ current }: { current: MarketingView }) {
           >
             <Icon className="size-3.5" />
             {tab.label}
-          </button>
+          </TabTrigger>
         )
       })}
-    </div>
+    </TabList>
   )
 }

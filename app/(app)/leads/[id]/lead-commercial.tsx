@@ -16,8 +16,6 @@ import {
 } from '@/lib/status'
 import { formatEUR } from '@/lib/utils'
 
-import { LeadDetailDisclosure } from './lead-detail-disclosure'
-
 type LeadCommercialProps = {
   leadId: string
   linkedClientId: string | null
@@ -86,17 +84,19 @@ export function LeadCommercial({
   return (
     <>
       <section className="lg:hidden" aria-label="Relaciones comerciales">
-        <LeadDetailDisclosure
-          id="commercial-records"
-          title="Relaciones comerciales"
-          description={[
-            relationshipSummary(proposals.length, 'propuesta', 'propuestas'),
-            relationshipSummary(projects.length, 'proyecto', 'proyectos'),
-            relationshipSummary(invoices.length, 'factura', 'facturas'),
-          ].join(' · ')}
-          contentClassName="py-4"
-        >
-          <dl className="flex flex-col gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Relaciones comerciales</CardTitle>
+            <p className="text-muted-foreground mt-1 text-sm font-normal">
+              {[
+                relationshipSummary(proposals.length, 'propuesta', 'propuestas'),
+                relationshipSummary(projects.length, 'proyecto', 'proyectos'),
+                relationshipSummary(invoices.length, 'factura', 'facturas'),
+              ].join(' · ')}
+            </p>
+          </CardHeader>
+          <CardContent>
+            <dl className="flex flex-col gap-4">
             <MobileRelationshipRow icon={<FileText className="size-3.5" />} label="Propuestas">
               {proposals.length === 0 ? (
                 <MobileEmptyLink href={`/proposals/new?lead_id=${leadId}`}>
@@ -167,8 +167,9 @@ export function LeadCommercial({
                 ))
               )}
             </MobileRelationshipRow>
-          </dl>
-        </LeadDetailDisclosure>
+            </dl>
+          </CardContent>
+        </Card>
       </section>
 
       <div className="hidden gap-6 lg:grid lg:grid-cols-3">

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 
+import { TabList, TabTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
 
 import { AssetsGrid, type BrandAsset } from './assets-grid'
@@ -33,23 +34,18 @@ export function BrandHub({ assets, tokens, guides, isAdmin, className }: Props) 
   return (
     <div className={cn('flex flex-col', className)}>
       {/* Tab bar */}
-      <div className="border-border flex shrink-0 gap-0.5 border-b">
+      <TabList aria-label="Secciones de marca" className="shrink-0 gap-0.5 border-b">
         {TABS.map((t) => (
-          <button
+          <TabTrigger
             key={t.id}
-            type="button"
+            active={active === t.id}
             onClick={() => setActive(t.id)}
-            className={cn(
-              'px-4 py-2 text-sm font-medium transition-colors -mb-px border-b-2',
-              active === t.id
-                ? 'border-primary text-foreground'
-                : 'border-transparent text-muted-foreground hover:text-foreground',
-            )}
+            className="px-4 py-2"
           >
             {t.label}
-          </button>
+          </TabTrigger>
         ))}
-      </div>
+      </TabList>
 
       {/* Content — scrollable */}
       <div className="min-h-0 flex-1 overflow-y-auto pt-4">

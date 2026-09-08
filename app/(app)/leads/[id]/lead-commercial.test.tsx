@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
 import { LeadCommercial } from './lead-commercial'
@@ -29,10 +29,6 @@ describe('LeadCommercial', () => {
     )
 
     const mobileSection = screen.getByRole('region', { name: 'Relaciones comerciales' })
-    const trigger = within(mobileSection).getByRole('button', { name: /relaciones comerciales/i })
-    expect(trigger.getAttribute('aria-expanded')).toBe('false')
-
-    fireEvent.click(trigger)
 
     expect(
       within(mobileSection)
