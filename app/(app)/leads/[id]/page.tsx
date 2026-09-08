@@ -27,7 +27,7 @@ import { formatDate, formatEUR, relativeTime } from '@/lib/utils'
 import { buildAdsManagerUrl } from '../../marketing/_components/marketing-format'
 import { AdPreviewDialog } from '../../marketing/ad-preview-dialog'
 import { TaskCreateDialog } from '../../tasks/task-create-dialog'
-import { LeadActivityFeed } from './lead-activity-feed'
+import { LeadActivityFeed, countActivityEvents } from './lead-activity-feed'
 import { LeadAiPanel } from './lead-ai-panel'
 import { LeadCommercial } from './lead-commercial'
 import { LeadCompanyResearch } from './lead-company-research'
@@ -424,6 +424,12 @@ export default async function LeadDetailPage({
                 canEdit={canEdit}
                 aiEnabled={aiEnabled}
                 interactions={interactions ?? []}
+                totalActivityEvents={countActivityEvents({
+                  interactions: interactions ?? [],
+                  proposals,
+                  invoices,
+                  tasks,
+                })}
               />
             </>
           ) : null}
