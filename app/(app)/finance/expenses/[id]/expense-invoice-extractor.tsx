@@ -97,13 +97,15 @@ export function ExpenseInvoiceExtractor({ expense, attachments }: Props) {
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ attachment_id: attachmentId }),
         })
-        const result = (await response.json()) as Suggestion & {
+        const result = (await response.json()) as {
+          suggestion?: Suggestion
           source?: 'ai' | 'rules'
           warning?: string | null
           error?: string
         }
-        if (!response.ok) throw new Error(result.error ?? 'No se pudo analizar el PDF')
-        setSuggestion(result)
+        if (!response.ok || !result.suggestion)
+          throw new Error(result.error ?? 'No se pudo analizar el PDF')
+        setSuggestion(result.suggestion)
         setSource(result.source ?? null)
         setWarning(result.warning ?? null)
       } catch (err) {

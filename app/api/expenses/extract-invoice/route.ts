@@ -34,14 +34,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const supabase = await createServerClient()
   const { data: attachment, error } = await supabase
     .from('attachments')
-    .select('id, expense_id, mime_type, storage_path')
+    .select('id, expense_id, mime_type, storage_path, uploaded_by')
     .eq('id', body.attachment_id)
-    .not('expense_id', 'is', null)
     .is('deleted_at', null)
     .maybeSingle()
 
   if (error || !attachment)
     return NextResponse.json({ error: 'Factura no encontrada' }, { status: 404 })
+
+  // Orphan PDFs (uploaded from the new-expense form, not yet linked to an
+  // expense) are only extractable by the member who uploaded them. 404, not
+  // 403, to avoid leaking the attachment's existence.
+  if (!attachment.expense_id && attachment.uploaded_by !== user.id) {
+    return NextResponse.json({ error: 'Factura no encontrada' }, { status: 404 })
+  }
   if (attachment.mime_type !== 'application/pdf' || !attachment.storage_path) {
     return NextResponse.json({ error: 'Selecciona un PDF subido al gasto' }, { status: 400 })
   }
