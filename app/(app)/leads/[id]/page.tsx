@@ -554,6 +554,8 @@ export default async function LeadDetailPage({
                       decision_power_or_budget:
                         (lead.mom_test_decision_power_or_budget as boolean | null) ?? null,
                       accessible: (lead.mom_test_accessible as boolean | null) ?? null,
+                      comparing_other_companies:
+                        (lead.mom_test_comparing_other_companies as boolean | null) ?? null,
                     }}
                   />
                 </CardContent>

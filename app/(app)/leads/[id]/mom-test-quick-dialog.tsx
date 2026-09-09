@@ -24,6 +24,7 @@ const SIGNALS = [
   { key: 'tried_solutions', label: 'Ha probado soluciones' },
   { key: 'decision_power_or_budget', label: 'Decide o tiene presupuesto' },
   { key: 'accessible', label: 'Es accesible' },
+  { key: 'comparing_other_companies', label: 'Comparando con otras empresas' },
 ] as const
 
 const EMPTY_VALUES: MomTestValues = {
@@ -32,6 +33,7 @@ const EMPTY_VALUES: MomTestValues = {
   tried_solutions: null,
   decision_power_or_budget: null,
   accessible: null,
+  comparing_other_companies: null,
 }
 
 const POSITIVE_SIGNAL_CLASS =

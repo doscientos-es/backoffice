@@ -103,18 +103,19 @@ describe('UpdateLeadStatusInput refinements', () => {
 })
 
 describe('UpdateLeadMomTestInput', () => {
-  it('supports the five Mom Test criteria with a tri-state value', () => {
+  it('supports the six Mom Test criteria with a tri-state value', () => {
     expect(MOM_TEST_SIGNALS).toEqual([
       'real_problem',
       'aware_problem',
       'tried_solutions',
       'decision_power_or_budget',
       'accessible',
+      'comparing_other_companies',
     ])
     expect(
       UpdateLeadMomTestInput.parse({
         leadId: uuid,
-        signal: 'accessible',
+        signal: 'comparing_other_companies',
         value: null,
       }).value,
     ).toBeNull()

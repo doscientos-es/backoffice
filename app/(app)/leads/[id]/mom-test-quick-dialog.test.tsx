@@ -14,6 +14,7 @@ const initialValues = {
   tried_solutions: null,
   decision_power_or_budget: true,
   accessible: false,
+  comparing_other_companies: null,
 }
 
 function buttonsFor(label: string) {
@@ -44,6 +45,7 @@ describe('MomTestQuickDialog', () => {
     expect(
       buttonsFor('Es consciente').getByRole('button', { name: 'No' }).getAttribute('aria-pressed'),
     ).toBe('true')
+    expect(buttonsFor('Comparando con otras empresas').getByRole('button', { name: 'Sí' })).toBeTruthy()
   })
 
   it('keeps the other rows interactive while one answer is saving', () => {
@@ -76,6 +78,25 @@ describe('MomTestQuickDialog', () => {
     expect(updateLeadMomTestSignal).toHaveBeenNthCalledWith(2, {
       leadId: 'lead-1',
       signal: 'aware_problem',
+      value: true,
+    })
+  })
+
+  it('saves the answer about comparing other companies', () => {
+    render(
+      <MomTestQuickDialog
+        leadId="lead-1"
+        open
+        onOpenChange={vi.fn()}
+        initialValues={initialValues}
+      />,
+    )
+
+    fireEvent.click(buttonsFor('Comparando con otras empresas').getByRole('button', { name: 'Sí' }))
+
+    expect(updateLeadMomTestSignal).toHaveBeenCalledWith({
+      leadId: 'lead-1',
+      signal: 'comparing_other_companies',
       value: true,
     })
   })

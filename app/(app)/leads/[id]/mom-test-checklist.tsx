@@ -15,13 +15,14 @@ const SIGNALS = [
   { key: 'tried_solutions', label: 'Ha intentado solucionarlo' },
   { key: 'decision_power_or_budget', label: 'Decide él y tiene presupuesto' },
   { key: 'accessible', label: 'Es accesible' },
+  { key: 'comparing_other_companies', label: 'Comparando con otras empresas' },
 ] as const
 
 type SignalKey = (typeof SIGNALS)[number]['key']
 export type MomTestValues = Record<SignalKey, boolean | null>
 
 /**
- * Checklist tri-estado (vacío / sí / no) con las 5 señales del Mom Test que
+ * Checklist tri-estado (vacío / sí / no) con las 6 señales del Mom Test que
  * ayudan a detectar un buen lead. Cada fila persiste al instante vía
  * `updateLeadMomTestSignal`, con revert optimista si falla. Clicar el valor
  * ya activo lo vuelve a vaciar.
@@ -57,7 +58,7 @@ export function MomTestChecklist({
       <div className="flex items-center justify-between">
         <p className="text-muted-foreground text-xs">Señales de un buen lead</p>
         <Badge variant={score >= 4 ? 'success' : score >= 2 ? 'warning' : 'neutral'}>
-          {score}/5
+          {score}/6
         </Badge>
       </div>
       <ul className="flex flex-col gap-1.5">

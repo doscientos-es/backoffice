@@ -37,7 +37,7 @@ const QUALIFICATION_COLUMNS =
 
 /** Mom Test qualification checklist — only needed on the lead detail view. */
 const MOM_TEST_COLUMNS =
-  'mom_test_real_problem, mom_test_aware_problem, mom_test_tried_solutions, mom_test_decision_power_or_budget, mom_test_accessible'
+  'mom_test_real_problem, mom_test_aware_problem, mom_test_tried_solutions, mom_test_decision_power_or_budget, mom_test_accessible, mom_test_comparing_other_companies'
 
 const COMPANY_RESEARCH_COLUMNS = 'company_research, company_researched_at'
 

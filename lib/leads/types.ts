@@ -202,6 +202,7 @@ export type LeadDetail = {
   mom_test_tried_solutions: boolean | null
   mom_test_decision_power_or_budget: boolean | null
   mom_test_accessible: boolean | null
+  mom_test_comparing_other_companies: boolean | null
 }
 
 export type LeadDetailInteraction = LeadInteraction & {

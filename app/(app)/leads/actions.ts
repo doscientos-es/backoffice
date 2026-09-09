@@ -376,6 +376,7 @@ const MOM_TEST_COLUMN: Record<MomTestSignal, string> = {
   tried_solutions: "mom_test_tried_solutions",
   decision_power_or_budget: "mom_test_decision_power_or_budget",
   accessible: "mom_test_accessible",
+  comparing_other_companies: "mom_test_comparing_other_companies",
 };
 
 export const updateLeadMomTestSignal = defineAction({
@@ -815,7 +816,7 @@ export const logLeadCall = defineAction<
     const { data: lead, error: leadError } = await supabase
       .from("leads")
       .select(
-        "mom_test_real_problem, mom_test_aware_problem, mom_test_tried_solutions, mom_test_decision_power_or_budget, mom_test_accessible, mom_test_accessible_source",
+        "mom_test_real_problem, mom_test_aware_problem, mom_test_tried_solutions, mom_test_decision_power_or_budget, mom_test_accessible, mom_test_accessible_source, mom_test_comparing_other_companies",
       )
       .eq("id", leadId)
       .maybeSingle();
@@ -853,6 +854,7 @@ export const logLeadCall = defineAction<
       tried_solutions: (lead.mom_test_tried_solutions as boolean | null) ?? null,
       decision_power_or_budget: (lead.mom_test_decision_power_or_budget as boolean | null) ?? null,
       accessible,
+      comparing_other_companies: (lead.mom_test_comparing_other_companies as boolean | null) ?? null,
     };
 
     return {
