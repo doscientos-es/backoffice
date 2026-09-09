@@ -120,7 +120,11 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange 
           onClick={() => inputRef.current?.click()}
           disabled={busy}
         >
-          {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Paperclip className="size-3.5" />}
+          {busy ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
+            <Paperclip className="size-3.5" />
+          )}
           {phase === 'uploading'
             ? 'Subiendo…'
             : phase === 'extracting'
