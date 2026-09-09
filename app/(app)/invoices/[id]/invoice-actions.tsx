@@ -21,6 +21,9 @@ import { useInvoiceStatusVerification } from './use-invoice-status-verification'
 interface Props {
   invoice: InvoiceActionInvoice
   clientEmail?: string | null
+  clientPhone?: string | null
+  /** Timestamp of the most recent delivery to the client, if any. */
+  lastSentAt?: string | null
   recipientFiscalReady?: boolean
 }
 
@@ -29,7 +32,13 @@ interface Props {
  * financial workflows live in focused modules so this component only declares
  * the visible action surface.
  */
-export function InvoiceActions({ invoice, clientEmail, recipientFiscalReady }: Props) {
+export function InvoiceActions({
+  invoice,
+  clientEmail,
+  clientPhone,
+  lastSentAt = null,
+  recipientFiscalReady,
+}: Props) {
   const router = useRouter()
   const feedback = useFormFeedback()
   const policy = getInvoiceActionPolicy(invoice)
@@ -62,6 +71,8 @@ export function InvoiceActions({ invoice, clientEmail, recipientFiscalReady }: P
           <SendInvoiceButton
             invoiceId={invoice.id}
             defaultEmail={clientEmail}
+            defaultPhone={clientPhone}
+            lastSentAt={lastSentAt}
             iconOnly
             open={sendDialogOpen}
             onOpenChange={setSendDialogOpen}

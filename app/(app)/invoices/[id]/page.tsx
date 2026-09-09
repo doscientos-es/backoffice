@@ -24,6 +24,7 @@ import {
 import { CopyButton } from "@/components/ui/copy-button";
 import { requireUser } from "@/lib/auth";
 import { buildVatBreakdown } from "@/lib/finance";
+import { findInvoiceDeliveries } from "@/lib/invoices/queries";
 import { PAYMENT_METHOD_LABELS, type PaymentMethodType } from "@/lib/schemas/invoice";
 import { createServerClient } from "@/lib/supabase/server";
 import { cn, formatDate, formatEUR } from "@/lib/utils";
@@ -87,7 +88,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
   const { data: invoice } = await supabase
     .from("invoices")
     .select(
-      "*, clients(id, name, email, nif, billing_address_country, fiscal_verification_status, fiscal_verified_at, fiscal_verified_nif, fiscal_verified_name), projects(id, name)",
+      "*, clients(id, name, email, phone, nif, billing_address_country, fiscal_verification_status, fiscal_verified_at, fiscal_verified_nif, fiscal_verified_name), projects(id, name)",
     )
     .eq("id", id)
     .is("deleted_at", null)
@@ -115,6 +116,8 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
     .eq("invoice_id", id)
     .is("deleted_at", null)
     .order("work_date", { ascending: true });
+
+  const deliveries = await findInvoiceDeliveries(id);
 
   const { data: latestFiscalRecord } = await supabase
     .from("verifactu_ledger")
@@ -157,6 +160,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         id: string;
         name: string;
         email: string | null;
+        phone: string | null;
         nif: string | null;
         billing_address_country: string | null;
         fiscal_verification_status: string | null;
@@ -320,6 +324,8 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
               amountPaid,
             }}
             clientEmail={client?.email ?? null}
+            clientPhone={client?.phone ?? null}
+            lastSentAt={deliveries[0]?.created_at ?? null}
             recipientFiscalReady={recipientFiscalReady}
           />
         }
@@ -548,6 +554,32 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                   hasPassword={Boolean(invoice.portal_password_hash)}
                   action={updateInvoicePortalAccess}
                 />
+                <div className="border-border border-t pt-4">
+                  <p className="text-muted-foreground text-xs font-medium">Envíos al cliente</p>
+                  {deliveries.length > 0 ? (
+                    <ul className="mt-2 flex flex-col gap-1.5">
+                      {deliveries.map((delivery) => (
+                        <li key={delivery.id} className="min-w-0 text-xs">
+                          <span className="font-medium">
+                            {delivery.channel === "whatsapp" ? "WhatsApp" : "Email"}
+                          </span>
+                          <span className="text-muted-foreground">
+                            {" · "}
+                            {formatDate(delivery.created_at)}
+                            {delivery.recipient ? ` · ${delivery.recipient}` : ""}
+                            {delivery.attached_pdf ? " · PDF adjunto" : ""}
+                            {delivery.mocked ? " · simulado" : ""}
+                            {delivery.sent_by_name ? ` · ${delivery.sent_by_name}` : ""}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-muted-foreground mt-2 text-xs">
+                      Todavía no se ha enviado al cliente.
+                    </p>
+                  )}
+                </div>
               </CardContent>
             </Card>
           ) : null}
