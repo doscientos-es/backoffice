@@ -5,6 +5,7 @@ import {
   Camera,
   Download,
   ExternalLink,
+  Eye,
   LoaderCircle as Loader2,
   Paperclip,
   Upload as UploadCloud,
@@ -345,17 +346,32 @@ export function AttachmentSection({
                     </Link>
                   </Button>
                 ) : (
-                  <Button asChild variant="ghost" size="icon" className="size-7 shrink-0">
-                    <Link
-                      href={`/api/documents/${a.id}/download`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="Descargar"
-                    >
-                      <Download className="size-3.5" />
-                      <span className="sr-only">Descargar</span>
-                    </Link>
-                  </Button>
+                  <>
+                    {a.mime_type === 'application/pdf' ? (
+                      <Button asChild variant="ghost" size="icon" className="size-7 shrink-0">
+                        <Link
+                          href={`/api/documents/${a.id}/view`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Ver PDF"
+                        >
+                          <Eye className="size-3.5" />
+                          <span className="sr-only">Ver PDF</span>
+                        </Link>
+                      </Button>
+                    ) : null}
+                    <Button asChild variant="ghost" size="icon" className="size-7 shrink-0">
+                      <Link
+                        href={`/api/documents/${a.id}/download`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Descargar"
+                      >
+                        <Download className="size-3.5" />
+                        <span className="sr-only">Descargar</span>
+                      </Link>
+                    </Button>
+                  </>
                 )}
               </li>
             ))}
