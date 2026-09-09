@@ -28,6 +28,10 @@ interface Props {
   feedback: InvoiceFeedback
   verifyStatusChange: VerifyInvoiceStatusChange
   onIssued: () => void
+  /** Called when the progress dialog is dismissed after a successful issuance
+   * (i.e. not the 'error' phase), so the parent can pop up the send-to-client
+   * dialog right away. */
+  onIssuedSuccessfully?: () => void
 }
 
 /** Owns the fiscal issuance workflow and its progress dialog. */
@@ -36,6 +40,7 @@ export function InvoiceIssuanceAction({
   feedback,
   verifyStatusChange,
   onIssued,
+  onIssuedSuccessfully,
 }: Props) {
   const [pending, startTransition] = useTransition()
   const [open, setOpen] = useState(false)
@@ -86,7 +91,10 @@ export function InvoiceIssuanceAction({
         phase={result.phase}
         error={result.error}
         csv={result.csv}
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          setOpen(false)
+          if (result.phase !== 'error') onIssuedSuccessfully?.()
+        }}
       />
     </>
   )

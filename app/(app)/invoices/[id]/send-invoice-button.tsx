@@ -1,9 +1,12 @@
 'use client'
 
 import { LoaderCircle as Loader2, Mail } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { type FormEvent, useState } from 'react'
 
+import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -17,31 +20,52 @@ import { IconButton } from '@/components/ui/icon-button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { formatDate } from '@/lib/utils'
 
-import { previewInvoiceEmail, sendInvoiceEmail } from '../actions'
+import { logInvoiceWhatsappShare, previewInvoiceEmail, sendInvoiceEmail } from '../actions'
 
 /**
- * Opens a dialog to email the public portal link of an invoice to the client.
- * The team reviews the exact rendered email and its recipient before delivery.
+ * Opens a dialog to share the public portal link of an invoice with the client.
+ * The team reviews the exact rendered email and its recipient before delivery,
+ * can attach the invoice PDF, or hand the link over to WhatsApp instead.
  * Shown only for issued invoices (the server action also re-validates this).
+ *
+ * The open state can be controlled from a parent (e.g. to pop it up right
+ * after issuing the invoice); when `open`/`onOpenChange` are omitted it falls
+ * back to managing its own state, triggered by the rendered button.
  */
 export function SendInvoiceButton({
   invoiceId,
   defaultEmail,
+  defaultPhone,
+  lastSentAt = null,
   iconOnly = false,
+  open: controlledOpen,
+  onOpenChange: setControlledOpen,
 }: {
   invoiceId: string
   defaultEmail?: string | null
+  defaultPhone?: string | null
+  /** Timestamp of the most recent delivery, used to offer a re-send. */
+  lastSentAt?: string | null
   /** Render the trigger as a square icon-only button (no label text). */
   iconOnly?: boolean
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }) {
+  const router = useRouter()
   const feedback = useFormFeedback()
-  const [open, setOpen] = useState(false)
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
+  const open = controlledOpen ?? uncontrolledOpen
   const [to, setTo] = useState(defaultEmail ?? '')
+  const [phone, setPhone] = useState(defaultPhone ?? '')
   const [message, setMessage] = useState('')
+  const [attachPdf, setAttachPdf] = useState(true)
   const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null)
+  const [portalUrl, setPortalUrl] = useState<string | null>(null)
   const [previewMessage, setPreviewMessage] = useState('')
   const [loadingPreview, setLoadingPreview] = useState(false)
+  const [sharingWhatsapp, setSharingWhatsapp] = useState(false)
 
   const loadPreview = async () => {
     setLoadingPreview(true)
@@ -52,8 +76,10 @@ export function SendInvoiceButton({
     })
     if (res.ok) {
       setPreview({ subject: res.subject, html: res.html })
+      setPortalUrl(res.portalUrl)
       setPreviewMessage(message)
       if (!to.trim() && res.clientEmail) setTo(res.clientEmail)
+      if (!phone.trim() && res.clientPhone) setPhone(res.clientPhone)
     } else {
       feedback.setError(res.error)
     }
@@ -61,7 +87,8 @@ export function SendInvoiceButton({
   }
 
   const onOpenChange = (next: boolean) => {
-    setOpen(next)
+    if (setControlledOpen) setControlledOpen(next)
+    else setUncontrolledOpen(next)
     if (next) void loadPreview()
   }
 
@@ -76,37 +103,69 @@ export function SendInvoiceButton({
       id: invoiceId,
       to: to.trim() || undefined,
       message: message.trim() || undefined,
+      attachPdf,
     })
     if (result.ok) {
       feedback.setSuccess(result.mocked ? 'Email simulado (sin Resend)' : 'Email enviado')
-      setOpen(false)
+      onOpenChange(false)
+      router.refresh()
     } else {
       feedback.setError(result.error)
     }
   }
 
+  // WhatsApp is delivered by the team member from their own account: we open the
+  // prefilled chat and only record that the link was shared.
+  const handleWhatsapp = async () => {
+    const digits = phone.replace(/\D/g, '')
+    if (!digits) {
+      feedback.setError('Añade un teléfono para compartir por WhatsApp.')
+      return
+    }
+    if (!portalUrl) {
+      feedback.setError('Espera a que cargue la vista previa para obtener el enlace.')
+      return
+    }
+    const note = message.trim()
+    const text = note ? `${note}\n\n${portalUrl}` : `Aquí tienes tu factura: ${portalUrl}`
+    window.open(
+      `https://wa.me/${digits}?text=${encodeURIComponent(text)}`,
+      '_blank',
+      'noopener,noreferrer',
+    )
+    setSharingWhatsapp(true)
+    const result = await logInvoiceWhatsappShare({ id: invoiceId, phone: phone.trim() })
+    setSharingWhatsapp(false)
+    if (result.ok) {
+      feedback.setSuccess('Envío por WhatsApp registrado')
+      router.refresh()
+    } else {
+      feedback.setError(result.error)
+    }
+  }
+
+  const triggerLabel = lastSentAt ? 'Reenviar al cliente' : 'Enviar al cliente'
+
   return (
     <>
       {iconOnly ? (
-        <IconButton
-          variant="outline"
-          label="Enviar email al cliente"
-          onClick={() => onOpenChange(true)}
-        >
+        <IconButton variant="outline" label={triggerLabel} onClick={() => onOpenChange(true)}>
           <Mail className="h-4 w-4" />
         </IconButton>
       ) : (
-        <Button variant="outline" size="sm" onClick={() => onOpenChange(true)}>
+        <Button variant="outline" size="sm" onClick={() => onOpenChange(true)} type="button">
           <Mail className="mr-2 h-4 w-4" />
-          Enviar email
+          {triggerLabel}
         </Button>
       )}
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
-            <DialogTitle>Revisar email antes de enviarlo</DialogTitle>
+            <DialogTitle>Enviar la factura al cliente</DialogTitle>
             <DialogDescription>
-              Comprueba el destinatario y el contenido exacto que recibirá el cliente.
+              {lastSentAt
+                ? `Ya se envió el ${formatDate(lastSentAt)}. Puedes volver a enviarla cuando quieras.`
+                : 'Comprueba el destinatario y el contenido exacto que recibirá el cliente.'}
             </DialogDescription>
           </DialogHeader>
           <form
@@ -144,6 +203,23 @@ export function SendInvoiceButton({
                   </p>
                 ) : null}
               </div>
+              <label
+                htmlFor="invoice-email-attach-pdf"
+                className="hover:bg-muted/50 flex cursor-pointer items-start gap-2 rounded p-1.5"
+              >
+                <Checkbox
+                  id="invoice-email-attach-pdf"
+                  isSelected={attachPdf}
+                  onChange={setAttachPdf}
+                  isDisabled={feedback.pending}
+                />
+                <span className="min-w-0">
+                  <span className="block text-sm">Adjuntar el PDF de la factura</span>
+                  <span className="text-muted-foreground block text-xs">
+                    El email siempre incluye el enlace al portal de pago.
+                  </span>
+                </span>
+              </label>
               <Button
                 type="button"
                 variant="outline"
@@ -153,6 +229,30 @@ export function SendInvoiceButton({
                 {loadingPreview ? <Loader2 className="animate-spin" aria-hidden /> : null}
                 Actualizar vista previa
               </Button>
+              <div className="border-border flex flex-col gap-1.5 border-t pt-4">
+                <Label htmlFor="invoice-whatsapp-phone">Teléfono para WhatsApp</Label>
+                <Input
+                  id="invoice-whatsapp-phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder={defaultPhone ?? '+34600000000'}
+                  autoComplete="tel"
+                  disabled={feedback.pending || sharingWhatsapp}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => void handleWhatsapp()}
+                  disabled={!phone.trim() || !portalUrl || feedback.pending || sharingWhatsapp}
+                >
+                  <WhatsAppIcon className="mr-2" />
+                  Compartir por WhatsApp
+                </Button>
+                <p className="text-muted-foreground text-xs">
+                  Se abre WhatsApp con el enlace y la nota; el envío queda registrado.
+                </p>
+              </div>
             </div>
             <div className="border-border bg-muted/30 overflow-hidden rounded-lg border">
               <div className="bg-background border-b px-4 py-3">
@@ -186,7 +286,7 @@ export function SendInvoiceButton({
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => setOpen(false)}
+                onClick={() => onOpenChange(false)}
                 disabled={feedback.pending}
               >
                 Cancelar

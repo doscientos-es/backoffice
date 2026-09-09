@@ -26,17 +26,29 @@ export const SendInvoiceInput = uuidIdInput
 /**
  * Input for emailing the public portal link of an invoice to the client.
  * `to` overrides the client's stored email; `message` is an optional note.
+ * `attachPdf` attaches the generated invoice PDF to the email.
  */
 export const SendInvoiceEmailInput = z.object({
   id: z.string().uuid(),
   to: z.string().email().optional(),
   message: z.string().max(1000).optional(),
+  attachPdf: z.boolean().optional(),
 })
 export type SendInvoiceEmailInputType = z.infer<typeof SendInvoiceEmailInput>
 
 /** Input for rendering the invoice email without delivering it. */
 export const PreviewInvoiceEmailInput = SendInvoiceEmailInput.pick({ id: true, message: true })
 export type PreviewInvoiceEmailInputType = z.infer<typeof PreviewInvoiceEmailInput>
+
+/**
+ * Input for logging that the portal link was shared over WhatsApp. Delivery
+ * happens in WhatsApp itself, so only the recipient phone is recorded.
+ */
+export const LogInvoiceWhatsappShareInput = z.object({
+  id: z.string().uuid(),
+  phone: z.string().min(6).max(30),
+})
+export type LogInvoiceWhatsappShareInputType = z.infer<typeof LogInvoiceWhatsappShareInput>
 
 export const CreateInvoiceFromProposalInput = z.object({
   proposalId: z.string().uuid(),

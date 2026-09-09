@@ -8,6 +8,8 @@ import {
   type ClientInfo,
   type CompanySettings,
   INVOICE_LIST_PAGE_SIZE,
+  type InvoiceDelivery,
+  type InvoiceDeliveryChannel,
   type InvoiceDetailResult,
   type InvoiceForEmail,
   type InvoiceForRectification,
@@ -682,7 +684,7 @@ export async function findInvoiceForEmail(id: string): Promise<InvoiceForEmail |
   const { data, error } = await supabase
     .from("invoices")
     .select(
-      "id, full_number, total, due_date, status, portal_token, is_client_visible, clients(name, email)",
+      "id, full_number, total, due_date, status, portal_token, is_client_visible, clients(name, email, phone)",
     )
     .eq("id", id)
     .is("deleted_at", null)
@@ -690,8 +692,11 @@ export async function findInvoiceForEmail(id: string): Promise<InvoiceForEmail |
   if (error) log.error({ invoiceId: id, err: error.message }, "find_invoice_for_email_failed");
   if (!data) return null;
 
-  const rawClient = (data as unknown as { clients: { name: string; email: string | null } | null })
-    .clients;
+  const rawClient = (
+    data as unknown as {
+      clients: { name: string; email: string | null; phone: string | null } | null;
+    }
+  ).clients;
   return {
     id: data.id as string,
     full_number: (data.full_number as string | null) ?? null,
@@ -702,6 +707,59 @@ export async function findInvoiceForEmail(id: string): Promise<InvoiceForEmail |
     is_client_visible: Boolean(data.is_client_visible),
     client: rawClient ?? null,
   };
+}
+
+// ─── Delivery log ─────────────────────────────────────────────────────────────
+
+/** Appends a delivery record so the team can audit what the client received. */
+export async function insertInvoiceDelivery(entry: {
+  invoiceId: string;
+  channel: InvoiceDeliveryChannel;
+  recipient: string | null;
+  attachedPdf?: boolean;
+  providerMessageId?: string | null;
+  mocked?: boolean;
+  sentBy: string;
+}): Promise<void> {
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("invoice_deliveries").insert({
+    invoice_id: entry.invoiceId,
+    channel: entry.channel,
+    recipient: entry.recipient,
+    attached_pdf: entry.attachedPdf ?? false,
+    provider_message_id: entry.providerMessageId ?? null,
+    mocked: entry.mocked ?? false,
+    sent_by: entry.sentBy,
+  });
+  if (error)
+    log.error(
+      { invoiceId: entry.invoiceId, channel: entry.channel, err: error.message },
+      "insert_invoice_delivery_failed",
+    );
+}
+
+/** Returns the invoice deliveries, most recent first. */
+export async function findInvoiceDeliveries(invoiceId: string): Promise<InvoiceDelivery[]> {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("invoice_deliveries")
+    .select("id, channel, recipient, attached_pdf, mocked, created_at, team_members(name)")
+    .eq("invoice_id", invoiceId)
+    .order("created_at", { ascending: false });
+  if (error) {
+    log.error({ invoiceId, err: error.message }, "find_invoice_deliveries_failed");
+    return [];
+  }
+  return (data ?? []).map((row) => ({
+    id: row.id as string,
+    channel: row.channel as InvoiceDeliveryChannel,
+    recipient: (row.recipient as string | null) ?? null,
+    attached_pdf: Boolean(row.attached_pdf),
+    mocked: Boolean(row.mocked),
+    created_at: row.created_at as string,
+    sent_by_name:
+      (row as unknown as { team_members: { name: string } | null }).team_members?.name ?? null,
+  }));
 }
 
 // ─── Rectification helpers ────────────────────────────────────────────────────

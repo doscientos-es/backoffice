@@ -3,6 +3,7 @@
 import { Download, FileText as FileEdit } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
 import { IconButton } from '@/components/ui/icon-button'
@@ -33,6 +34,7 @@ export function InvoiceActions({ invoice, clientEmail, recipientFiscalReady }: P
   const feedback = useFormFeedback()
   const policy = getInvoiceActionPolicy(invoice)
   const { challenge, verifyStatusChange } = useInvoiceStatusVerification(invoice.id, feedback)
+  const [sendDialogOpen, setSendDialogOpen] = useState(false)
 
   return (
     <div className="flex w-fit max-w-full min-w-0 flex-col items-end gap-2">
@@ -57,7 +59,13 @@ export function InvoiceActions({ invoice, clientEmail, recipientFiscalReady }: P
           </IconButton>
         ) : null}
         {policy.canSendEmail ? (
-          <SendInvoiceButton invoiceId={invoice.id} defaultEmail={clientEmail} iconOnly />
+          <SendInvoiceButton
+            invoiceId={invoice.id}
+            defaultEmail={clientEmail}
+            iconOnly
+            open={sendDialogOpen}
+            onOpenChange={setSendDialogOpen}
+          />
         ) : null}
         <InvoiceMoreActions
           invoiceId={invoice.id}
@@ -77,6 +85,7 @@ export function InvoiceActions({ invoice, clientEmail, recipientFiscalReady }: P
             feedback={feedback}
             verifyStatusChange={verifyStatusChange}
             onIssued={() => router.refresh()}
+            onIssuedSuccessfully={() => setSendDialogOpen(true)}
           />
         ) : null}
         <InvoicePaymentActions

@@ -217,7 +217,21 @@ export type InvoiceForEmail = {
   status: string;
   portal_token: string | null;
   is_client_visible: boolean;
-  client: { name: string; email: string | null } | null;
+  client: { name: string; email: string | null; phone: string | null } | null;
+};
+
+/** Channels the invoice portal link can be delivered through. */
+export type InvoiceDeliveryChannel = "email" | "whatsapp";
+
+/** Append-only record of an invoice delivery to the client. */
+export type InvoiceDelivery = {
+  id: string;
+  channel: InvoiceDeliveryChannel;
+  recipient: string | null;
+  attached_pdf: boolean;
+  mocked: boolean;
+  created_at: string;
+  sent_by_name: string | null;
 };
 
 // ─── Query-level shapes (write) ───────────────────────────────────────────────

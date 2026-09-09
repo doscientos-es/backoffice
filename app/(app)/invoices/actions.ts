@@ -24,6 +24,9 @@ import {
   findInvoiceSeries,
   findProposalForInvoice,
   findProposalItems,
+  findWorkLogsForInvoice,
+  getInvoiceDetail,
+  insertInvoiceDelivery,
   insertInvoiceWithItems,
   patchInvoiceClientSnapshot,
   patchInvoiceStatus,
@@ -46,6 +49,7 @@ import {
   CreateInvoicesFromProposalPlanInput,
   CreateMonthlyHourlyInvoiceInput,
   CreateRectificationInput,
+  LogInvoiceWhatsappShareInput,
   MarkUncollectibleInput,
   PreviewInvoiceEmailInput,
   RecordInvoicePaymentInput,
@@ -801,34 +805,80 @@ async function renderInvoiceEmail(
   };
 }
 
+/** Renders the invoice PDF so it can travel attached to the client email. */
+async function buildInvoicePdfAttachment(
+  invoiceId: string,
+): Promise<{ filename: string; content: Buffer } | null> {
+  // The renderer pulls the whole React-PDF document tree; load it only when the
+  // attachment was actually requested so unrelated action bundles stay lean.
+  const [{ renderInvoicePdf }, { buildInvoicePdfData, invoicePdfFilename }] = await Promise.all([
+    import("@/lib/invoices/invoice-pdf-document"),
+    import("@/lib/invoices/pdf-data"),
+  ]);
+
+  const detail = await getInvoiceDetail(invoiceId);
+  if (!detail) return null;
+  const { invoice, items, settings } = detail;
+  const workLogs = await findWorkLogsForInvoice(invoice.id);
+  const data = await buildInvoicePdfData({
+    invoice,
+    clientName: invoice.client?.name ?? null,
+    clientLogoUrl: invoice.client?.logo_url ?? null,
+    items,
+    settings,
+    workLogs,
+  });
+
+  return {
+    filename: invoicePdfFilename(invoice.full_number, invoice.id),
+    content: await renderInvoicePdf(data),
+  };
+}
+
 /** Renders the invoice email for review without delivering it. */
 export const previewInvoiceEmail = defineAction<
   typeof PreviewInvoiceEmailInput,
-  { subject: string; html: string; clientEmail: string | null }
+  {
+    subject: string;
+    html: string;
+    clientEmail: string | null;
+    clientPhone: string | null;
+    portalUrl: string;
+  }
 >({
   name: "invoices.previewEmail",
   schema: PreviewInvoiceEmailInput,
   handler: async (input) => {
     const invoice = await findInvoiceForEmail(input.id);
     if (!invoice) throw new Error("Factura no encontrada");
-    const { subject, html, clientEmail } = await renderInvoiceEmail(invoice, input.message);
-    return { subject, html, clientEmail };
+    const { subject, html, clientEmail, portalUrl } = await renderInvoiceEmail(
+      invoice,
+      input.message,
+    );
+    return {
+      subject,
+      html,
+      clientEmail,
+      clientPhone: invoice.client?.phone ?? null,
+      portalUrl,
+    };
   },
 });
 
 /**
- * Emails the public portal link to the client via Resend.
- * Requires the invoice to be issued and client-visible.
+ * Emails the public portal link to the client via Resend, optionally with the
+ * invoice PDF attached. Requires the invoice to be issued and client-visible.
+ * Every delivery is logged so the team can audit and re-send later.
  */
 export const sendInvoiceEmail = defineAction<
   typeof SendInvoiceEmailInput,
-  { portalUrl: string; mocked: boolean }
+  { portalUrl: string; mocked: boolean; attachedPdf: boolean }
 >({
   name: "invoices.sendEmail",
   schema: SendInvoiceEmailInput,
   revalidate: (_p, input) => [`/invoices/${input.id}`],
   handler: async (input, { user }) => {
-    const { id, to: overrideTo, message } = input;
+    const { id, to: overrideTo, message, attachPdf } = input;
 
     const invoice = await findInvoiceForEmail(id);
     if (!invoice) throw new Error("Factura no encontrada");
@@ -841,6 +891,7 @@ export const sendInvoiceEmail = defineAction<
     if (!invoice.portal_token) throw new Error("La factura no tiene token de portal");
 
     const { subject, html, portalUrl } = await renderInvoiceEmail(invoice, message);
+    const attachment = attachPdf ? await buildInvoicePdfAttachment(id) : null;
 
     const result = await sendEmail({
       fromName: user.name,
@@ -849,10 +900,55 @@ export const sendInvoiceEmail = defineAction<
       replyTo: user.contactEmail ?? user.email,
       subject,
       html,
+      attachments: attachment ? [attachment] : undefined,
       tags: { invoice_id: id, kind: "invoice_link" },
     });
 
-    return { portalUrl, mocked: result.mocked };
+    await insertInvoiceDelivery({
+      invoiceId: id,
+      channel: "email",
+      recipient,
+      attachedPdf: Boolean(attachment),
+      providerMessageId: result.id,
+      mocked: result.mocked,
+      sentBy: user.id,
+    });
+
+    return { portalUrl, mocked: result.mocked, attachedPdf: Boolean(attachment) };
+  },
+});
+
+/**
+ * Records that the portal link was shared with the client over WhatsApp.
+ * The message itself is composed in WhatsApp by the team member, so this only
+ * keeps the delivery history complete for later diagnosis.
+ */
+export const logInvoiceWhatsappShare = defineAction<
+  typeof LogInvoiceWhatsappShareInput,
+  { portalUrl: string }
+>({
+  name: "invoices.logWhatsappShare",
+  schema: LogInvoiceWhatsappShareInput,
+  revalidate: (_p, input) => [`/invoices/${input.id}`],
+  handler: async (input, { user }) => {
+    const { id, phone } = input;
+
+    const invoice = await findInvoiceForEmail(id);
+    if (!invoice) throw new Error("Factura no encontrada");
+    if (invoice.status === "draft")
+      throw new Error("Emite la factura antes de enviarla al cliente");
+    if (!invoice.is_client_visible) throw new Error("La factura no es visible para el cliente");
+    if (!invoice.portal_token) throw new Error("La factura no tiene token de portal");
+
+    await insertInvoiceDelivery({
+      invoiceId: id,
+      channel: "whatsapp",
+      recipient: phone,
+      sentBy: user.id,
+    });
+
+    const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL);
+    return { portalUrl: `${appUrl}/p/invoice/${invoice.portal_token}` };
   },
 });
 
