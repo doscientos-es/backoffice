@@ -8,7 +8,7 @@ import {
   EXPENSE_STATUSES,
 } from '@/lib/finance'
 
-import { emptyToUndef, optionalDate, uuidIdInput } from './common'
+import { emptyToUndef, optionalDate, optionalUuid, uuidIdInput } from './common'
 
 /**
  * Zod schemas for the `expenses` domain.
@@ -65,8 +65,14 @@ const payerRefinement = {
   path: ['paid_by_member_id'],
 }
 
-/** Create payload, consumed from FormData via `formDataToObject`. */
-export const ExpenseInput = ExpenseBase.refine(hasPayer, payerRefinement)
+/**
+ * Create payload, consumed from FormData via `formDataToObject`.
+ * `invoice_attachment_id` references a PDF already uploaded from the
+ * new-expense form; the action links it to the expense after insert.
+ */
+export const ExpenseInput = ExpenseBase.extend({
+  invoice_attachment_id: optionalUuid,
+}).refine(hasPayer, payerRefinement)
 export type ExpenseInputType = z.infer<typeof ExpenseInput>
 
 export const ExpenseIdInput = uuidIdInput

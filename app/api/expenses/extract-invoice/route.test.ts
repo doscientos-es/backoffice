@@ -10,6 +10,7 @@ const { state } = vi.hoisted(() => ({
       expense_id: 'expense-1',
       mime_type: 'application/pdf',
       storage_path: 'expense/a.pdf',
+      uploaded_by: 'user-1',
     } as Record<string, unknown> | null,
     downloadError: null as string | null,
   },
@@ -79,6 +80,7 @@ describe('POST /api/expenses/extract-invoice', () => {
       expense_id: 'expense-1',
       mime_type: 'application/pdf',
       storage_path: 'expense/a.pdf',
+      uploaded_by: 'user-1',
     }
     state.downloadError = null
   })
@@ -105,5 +107,27 @@ describe('POST /api/expenses/extract-invoice', () => {
       source: 'ai',
       suggestion: { vendor: 'Agencia', subtotal: 100 },
     })
+  })
+
+  it('extracts from an orphan attachment (new-expense form) for its uploader', async () => {
+    state.attachment = {
+      id: ID,
+      expense_id: null,
+      mime_type: 'application/pdf',
+      storage_path: 'misc/a.pdf',
+      uploaded_by: 'user-1',
+    }
+    expect((await POST(request({ attachment_id: ID }))).status).toBe(200)
+  })
+
+  it('hides an orphan attachment uploaded by another member', async () => {
+    state.attachment = {
+      id: ID,
+      expense_id: null,
+      mime_type: 'application/pdf',
+      storage_path: 'misc/a.pdf',
+      uploaded_by: 'user-2',
+    }
+    expect((await POST(request({ attachment_id: ID }))).status).toBe(404)
   })
 })

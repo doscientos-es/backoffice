@@ -6,9 +6,12 @@ import { redirect } from 'next/navigation'
 import { defineAction } from '@/lib/actions/define-action'
 import { VersionConflictError } from '@/lib/concurrency/version-conflict'
 import { computeExpenseTotals } from '@/lib/finance'
+import { scopedLogger } from '@/lib/logger'
 import { uuidIdInput } from '@/lib/schemas/common'
 import { ExpenseInput, type ExpenseInputType, UpdateExpenseInput } from '@/lib/schemas/expense'
 import { createServerClient } from '@/lib/supabase/server'
+
+const log = scopedLogger('expenses.actions')
 
 /**
  * Maps a validated expense input to the `expenses` table row shape, deriving
@@ -53,6 +56,23 @@ export const createExpense = defineAction({
       .single()
 
     if (error || !data) throw new Error(error?.message ?? 'No se pudo crear el gasto')
+
+    // Link the invoice PDF uploaded from the new-expense form. Best effort:
+    // the expense already exists, so a link failure must not fail the create.
+    if (input.invoice_attachment_id) {
+      const { error: linkError } = await supabase
+        .from('attachments')
+        .update({ expense_id: data.id })
+        .eq('id', input.invoice_attachment_id)
+        .is('expense_id', null)
+      if (linkError) {
+        log.warn(
+          { err: linkError, attachmentId: input.invoice_attachment_id, expenseId: data.id },
+          'invoice attachment link failed',
+        )
+      }
+    }
+
     revalidatePath('/finance')
     revalidatePath('/finance/expenses')
     redirect(`/finance/expenses/${data.id}`)
