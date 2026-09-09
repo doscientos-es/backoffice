@@ -34,6 +34,7 @@ drop policy if exists invoice_deliveries_insert on public.invoice_deliveries;
 create policy invoice_deliveries_insert on public.invoice_deliveries
   for insert with check (
     public.current_member_role() in ('owner', 'admin', 'member')
+    and sent_by = auth.uid()
   );
 
 -- Append-only: deliveries are immutable evidence of what the client received.

@@ -40,6 +40,7 @@ export function SendInvoiceButton({
   defaultPhone,
   lastSentAt = null,
   iconOnly = false,
+  hideTrigger = false,
   open: controlledOpen,
   onOpenChange: setControlledOpen,
 }: {
@@ -50,6 +51,8 @@ export function SendInvoiceButton({
   lastSentAt?: string | null
   /** Render the trigger as a square icon-only button (no label text). */
   iconOnly?: boolean
+  /** Lets another control (such as a row-actions menu) open the dialog. */
+  hideTrigger?: boolean
   open?: boolean
   onOpenChange?: (open: boolean) => void
 }) {
@@ -148,7 +151,7 @@ export function SendInvoiceButton({
 
   return (
     <>
-      {iconOnly ? (
+      {hideTrigger ? null : iconOnly ? (
         <IconButton variant="outline" label={triggerLabel} onClick={() => onOpenChange(true)}>
           <Mail className="h-4 w-4" />
         </IconButton>

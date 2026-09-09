@@ -23,6 +23,7 @@ import { parsePage, parseSortParam, parseStringParam } from "@/lib/utils/search-
 import { getVerifactuOperationalHealth } from "@/lib/verifactu/health";
 
 import { InvoiceRegisterExport } from "./monthly-register-export";
+import { InvoiceListRowActions } from "./invoice-list-row-actions";
 
 export const metadata: Metadata = { title: "Facturas · doscientos" };
 export const dynamic = "force-dynamic";
@@ -266,6 +267,9 @@ export default async function InvoicesPage({
           i.issue_date ?? "",
           i.due_date ?? "",
         ],
+        rowActions: (
+          <InvoiceListRowActions invoiceId={i.id} canSendToClient={i.status !== "draft"} />
+        ),
       }))}
     />
   );

@@ -73,7 +73,6 @@ export function InvoiceActions({
             defaultEmail={clientEmail}
             defaultPhone={clientPhone}
             lastSentAt={lastSentAt}
-            iconOnly
             open={sendDialogOpen}
             onOpenChange={setSendDialogOpen}
           />

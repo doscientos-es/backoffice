@@ -29,7 +29,9 @@ vi.mock('./send-aeat-button', () => ({
   SendAeatButton: ({ label }: { label: string }) => <button type="button">{label}</button>,
 }))
 vi.mock('./send-invoice-button', () => ({
-  SendInvoiceButton: () => <button aria-label="Enviar email al cliente" type="button" />,
+  SendInvoiceButton: ({ lastSentAt }: { lastSentAt?: string | null }) => (
+    <button type="button">{lastSentAt ? 'Reenviar al cliente' : 'Enviar al cliente'}</button>
+  ),
 }))
 vi.mock('./invoice-more-actions', () => ({
   InvoiceMoreActions: () => <button aria-label="Más acciones" type="button" />,
@@ -39,7 +41,7 @@ vi.mock('./use-invoice-status-verification', () => ({
 }))
 
 describe('InvoiceActions', () => {
-  it('groups the icon-only actions separately from the primary action buttons', () => {
+  it('groups the quick client-delivery action separately from primary workflow buttons', () => {
     const { container } = render(
       <InvoiceActions
         invoice={{
@@ -64,7 +66,7 @@ describe('InvoiceActions', () => {
 
     expect(within(iconActions).getByRole('button', { name: 'Descargar PDF' })).toBeTruthy()
     expect(
-      within(iconActions).getByRole('button', { name: 'Enviar email al cliente' }),
+      within(iconActions).getByRole('button', { name: 'Enviar al cliente' }),
     ).toBeTruthy()
     expect(within(iconActions).getByRole('button', { name: 'Más acciones' })).toBeTruthy()
     expect(within(primaryActions).getByRole('button', { name: 'Registrar cobro' })).toBeTruthy()
