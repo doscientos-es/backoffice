@@ -199,6 +199,15 @@ export async function processPrivacyRequest(
     if (invoices && invoices.length > 0) {
       const reason = 'Solicitud bloqueada: el cliente tiene documentos fiscales sujetos a conservación legal'
       await blockRequest(request.id, actor, reason)
+      await writeAuditEvent({
+        actorId: actor.id,
+        actorRole: actor.role,
+        entityType: request.subject_type,
+        entityId: request.subject_id,
+        action: 'privacy_erasure_blocked',
+        metadata: { privacyRequestId: request.id, reason: 'fiscal_retention' },
+        outcome: 'failure',
+      })
       return { status: 'blocked' }
     }
   }
@@ -207,6 +216,15 @@ export async function processPrivacyRequest(
   if (!patch) {
     const reason = 'La anonimización de personal requiere revisión legal manual'
     await blockRequest(request.id, actor, reason)
+    await writeAuditEvent({
+      actorId: actor.id,
+      actorRole: actor.role,
+      entityType: request.subject_type,
+      entityId: request.subject_id,
+      action: 'privacy_erasure_blocked',
+      metadata: { privacyRequestId: request.id, reason: 'legal_review_required' },
+      outcome: 'failure',
+    })
     return { status: 'blocked' }
   }
   const { error: anonymizeError } = await admin
@@ -292,7 +310,7 @@ export async function processDuePrivacyErasures(limit = 25): Promise<{
   for (const row of data ?? []) {
     try {
       const result = await processPrivacyRequest((row as { id: string }).id, {
-      id: null,
+        id: null,
         role: 'system',
       })
       summary[result.status] += 1
