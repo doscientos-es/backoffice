@@ -1,0 +1,24 @@
+name: Process due privacy erasures
+
+on:
+  schedule:
+    - cron: '20 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Process the bounded due erasure batch
+        run: |
+          STATUS=$(curl --silent --output /tmp/privacy-retention.json \
+                        --write-out "%{http_code}" \
+                        --max-time 120 \
+                        -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+                        "${{ secrets.APP_URL }}/api/cron/privacy-retention")
+          cat /tmp/privacy-retention.json | python3 -m json.tool || true
+          if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 300 ]; then
+            echo "::error::El endpoint devolvió HTTP $STATUS"
+            exit 1
+          fi

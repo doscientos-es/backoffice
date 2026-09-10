@@ -66,17 +66,34 @@ export const EXPORTABLE_TABLES = [
 
 export type ExportableTable = (typeof EXPORTABLE_TABLES)[number]
 export type ExportRecord = Record<string, unknown>
+export type ExportOptions = { includePii?: boolean }
 
 const PAGE_SIZE = 1_000
-const SENSITIVE_KEY =
+const SECRET_KEY =
   /(?:pass(?:word|phrase)?|secret|token|api[_-]?key|private[_-]?key|credential)/i
+const PII_KEY =
+  /(?:email|phone|mobile|nif|vat|address|postal|contact|name|notes|body|raw_payload|ip|device|browser)/i
+const encoder = new TextEncoder()
 
 export function isExportableTable(value: string | null): value is ExportableTable {
   return Boolean(value && EXPORTABLE_TABLES.includes(value as ExportableTable))
 }
 
-export function sanitizeExportRecord(record: ExportRecord): ExportRecord {
-  return Object.fromEntries(Object.entries(record).filter(([key]) => !SENSITIVE_KEY.test(key)))
+function sanitizeExportValue(value: unknown, options: ExportOptions): unknown {
+  if (Array.isArray(value)) return value.map((item) => sanitizeExportValue(item, options))
+  if (!value || typeof value !== 'object') return value
+
+  return Object.fromEntries(
+    Object.entries(value as ExportRecord).flatMap(([key, child]) => {
+      if (SECRET_KEY.test(key) || (!options.includePii && PII_KEY.test(key))) return []
+      return [[key, sanitizeExportValue(child, options)]]
+    }),
+  )
+}
+
+/** Removes secrets at every depth and excludes PII unless explicitly requested. */
+export function sanitizeExportRecord(record: ExportRecord, options: ExportOptions = {}): ExportRecord {
+  return sanitizeExportValue(record, options) as ExportRecord
 }
 
 export function dataToCsv(rows: ExportRecord[]): string {
@@ -98,28 +115,77 @@ export function dataToCsv(rows: ExportRecord[]): string {
     .concat('\r\n')
 }
 
-async function readTable(table: ExportableTable): Promise<ExportRecord[]> {
-  const admin = createAdminClient()
-  const rows: ExportRecord[] = []
-
-  for (let from = 0; ; from += PAGE_SIZE) {
-    const { data, error } = await admin
-      .from(table)
-      .select('*')
-      .range(from, from + PAGE_SIZE - 1)
-    if (error) throw new Error(`No se pudo exportar ${table}: ${error.message}`)
-    const page = (data ?? []) as ExportRecord[]
-    rows.push(...page.map(sanitizeExportRecord))
-    if (page.length < PAGE_SIZE) return rows
+function csvRow(headers: string[], row: ExportRecord): string {
+  const escapeCsv = (value: unknown) => {
+    const text =
+      value === null || value === undefined
+        ? ''
+        : typeof value === 'object'
+          ? JSON.stringify(value)
+          : String(value)
+    return `"${text.replaceAll('"', '""')}"`
   }
+  return headers.map((header) => escapeCsv(row[header])).join(',')
 }
 
-export async function exportTable(table: ExportableTable): Promise<ExportRecord[]> {
-  return readTable(table)
+async function readExportPage(table: ExportableTable, from: number, options: ExportOptions) {
+  const { data, error } = await createAdminClient()
+    .from(table)
+    .select('*')
+    .range(from, from + PAGE_SIZE - 1)
+  if (error) throw new Error(`No se pudo exportar ${table}: ${error.message}`)
+  return ((data ?? []) as ExportRecord[]).map((row) => sanitizeExportRecord(row, options))
 }
 
-export async function exportAllOperationalData() {
-  const tables: Record<string, ExportRecord[]> = {}
-  for (const table of EXPORTABLE_TABLES) tables[table] = await readTable(table)
-  return { version: 1, generatedAt: new Date().toISOString(), tables }
+/** Streams one table in bounded pages instead of retaining its full result set. */
+export function streamTableAsCsv(table: ExportableTable, options: ExportOptions = {}): ReadableStream {
+  return new ReadableStream({
+    async start(controller) {
+      try {
+        let headers: string[] | null = null
+        for (let from = 0; ; from += PAGE_SIZE) {
+          const page = await readExportPage(table, from, options)
+          if (!headers && page.length > 0) {
+            headers = [...new Set(page.flatMap((row) => Object.keys(row)))]
+            controller.enqueue(encoder.encode(`\uFEFF${csvRow(headers, Object.fromEntries(headers.map((h) => [h, h])))}\r\n`))
+          }
+          for (const row of page) controller.enqueue(encoder.encode(`${csvRow(headers ?? [], row)}\r\n`))
+          if (page.length < PAGE_SIZE) break
+        }
+        controller.close()
+      } catch (error) {
+        controller.error(error)
+      }
+    },
+  })
+}
+
+/** Streams a complete operational JSON export one table page at a time. */
+export function streamOperationalDataAsJson(options: ExportOptions = {}): ReadableStream {
+  return new ReadableStream({
+    async start(controller) {
+      try {
+        controller.enqueue(encoder.encode(`{"version":2,"generatedAt":"${new Date().toISOString()}","tables":{`))
+        for (const [tableIndex, table] of EXPORTABLE_TABLES.entries()) {
+          if (tableIndex > 0) controller.enqueue(encoder.encode(','))
+          controller.enqueue(encoder.encode(`${JSON.stringify(table)}:[`))
+          let firstRow = true
+          for (let from = 0; ; from += PAGE_SIZE) {
+            const page = await readExportPage(table, from, options)
+            for (const row of page) {
+              if (!firstRow) controller.enqueue(encoder.encode(','))
+              controller.enqueue(encoder.encode(JSON.stringify(row)))
+              firstRow = false
+            }
+            if (page.length < PAGE_SIZE) break
+          }
+          controller.enqueue(encoder.encode(']'))
+        }
+        controller.enqueue(encoder.encode('}}'))
+        controller.close()
+      } catch (error) {
+        controller.error(error)
+      }
+    },
+  })
 }

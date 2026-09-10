@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from 'next/server'
 
+import { writeAuditEvent } from '@/lib/audit/events'
 import { requireRole } from '@/lib/auth'
 import {
-  dataToCsv,
-  exportAllOperationalData,
-  exportTable,
   isExportableTable,
+  streamOperationalDataAsJson,
+  streamTableAsCsv,
 } from '@/lib/exports/data'
 import { scopedLogger } from '@/lib/logger'
 
@@ -14,7 +14,7 @@ export const runtime = 'nodejs'
 
 const log = scopedLogger('api.data-export')
 
-function download(body: string, contentType: string, filename: string) {
+function download(body: BodyInit, contentType: string, filename: string) {
   return new NextResponse(body, {
     headers: {
       'Content-Type': contentType,
@@ -25,8 +25,9 @@ function download(body: string, contentType: string, filename: string) {
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  let user: Awaited<ReturnType<typeof requireRole>>
   try {
-    await requireRole(['owner', 'admin'])
+    user = await requireRole(['owner', 'admin'])
   } catch {
     return NextResponse.json({ error: 'Sin permiso' }, { status: 403 })
   }
@@ -34,13 +35,25 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams } = new URL(request.url)
   const format = searchParams.get('format')
   const stamp = new Date().toISOString().slice(0, 10)
+  const includePii = searchParams.get('includePii') === 'true'
+
+  if (includePii && user.role !== 'owner') {
+    return NextResponse.json({ error: 'Solo un owner puede incluir datos personales' }, { status: 403 })
+  }
 
   try {
     if (format === 'json') {
-      const data = await exportAllOperationalData()
-      log.info({ tables: Object.keys(data.tables).length }, 'operational_data_exported_json')
+      await writeAuditEvent({
+        actorId: user.id,
+        actorRole: user.role,
+        entityType: 'operational_data',
+        action: 'exported',
+        metadata: { format, piiIncluded: includePii, scope: 'all_tables' },
+        requestId: request.headers.get('x-request-id') ?? request.headers.get('x-vercel-id'),
+      })
+      log.info({ piiIncluded: includePii }, 'operational_data_export_stream_started')
       return download(
-        JSON.stringify(data, null, 2),
+        streamOperationalDataAsJson({ includePii }),
         'application/json; charset=utf-8',
         `doscientos-datos-${stamp}.json`,
       )
@@ -51,10 +64,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Formato o tabla no válidos' }, { status: 400 })
     }
 
-    const rows = await exportTable(table)
-    log.info({ table, count: rows.length }, 'operational_data_exported_csv')
+    await writeAuditEvent({
+      actorId: user.id,
+      actorRole: user.role,
+      entityType: table,
+      action: 'exported',
+      metadata: { format, piiIncluded: includePii, scope: 'single_table' },
+      requestId: request.headers.get('x-request-id') ?? request.headers.get('x-vercel-id'),
+    })
+    log.info({ table, piiIncluded: includePii }, 'operational_data_export_stream_started')
     return download(
-      `\uFEFF${dataToCsv(rows)}`,
+      streamTableAsCsv(table, { includePii }),
       'text/csv; charset=utf-8',
       `doscientos-${table}-${stamp}.csv`,
     )

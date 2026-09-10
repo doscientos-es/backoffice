@@ -373,6 +373,8 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
     last_utm_term: norm.context?.lastUtmTerm ?? norm.utm?.term ?? null,
     last_utm_content: norm.context?.lastUtmContent ?? norm.utm?.content ?? null,
     raw_payload: (norm.rawPayload ?? null) as Record<string, unknown> | null,
+    marketing_consent: norm.context?.marketingConsent === true,
+    marketing_consent_at: norm.context?.marketingConsent === true ? new Date().toISOString() : null,
   }
 
   const { data, error } = await supabase.from('leads').insert(row).select('id').single()
@@ -400,6 +402,17 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
   }
 
   const leadId = data.id as string
+  if (row.marketing_consent) {
+    const { error: consentError } = await supabase.from('data_processing_consents').insert({
+      subject_type: 'lead',
+      subject_id: leadId,
+      purpose: 'marketing',
+      granted: true,
+      source: normalizedSource.slice(0, 100),
+      evidence: { landingPath: row.landing_path },
+    })
+    if (consentError) log.error({ err: consentError, leadId }, 'marketing consent audit failed')
+  }
   log.info({ leadId, source: row.source, externalSource: row.external_source }, 'lead ingested')
 
   // ── 5 & 6. Background work (scored, auto-assigned, notified) ───────────────
