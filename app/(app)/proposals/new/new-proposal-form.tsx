@@ -94,13 +94,13 @@ export function NewProposalForm({
       validItems.length > 0
         ? validItems
         : [
-            {
-              ...EMPTY_LINE_ITEM,
-              id: crypto.randomUUID(),
-              description: 'Pendiente de definir',
-              quantity: 1,
-            },
-          ]
+          {
+            ...EMPTY_LINE_ITEM,
+            id: crypto.randomUUID(),
+            description: 'Pendiente de definir',
+            quantity: 1,
+          },
+        ]
     const defaultTitle = selectedRecipient
       ? `Propuesta para ${selectedRecipient.name}`
       : 'Nueva propuesta'
@@ -151,117 +151,153 @@ export function NewProposalForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      <Card>
-        <CardContent className="pt-6">
-          <p className="text-muted-foreground mb-4 text-xs">
-            Solo el destinatario es obligatorio. Puedes completar el resto ahora o abrir el borrador
-            y editarlo después.
-          </p>
-          <div className="grid gap-5 sm:grid-cols-2">
-            <FormRow
-              label="Destinatario"
-              htmlFor="recipient"
-              required
-              hint="Cliente existente o lead. Si es lead, le pediremos sus datos fiscales al aceptar."
-            >
-              <EntityCombobox
-                id="recipient"
-                items={[
-                  ...clients.map((c) => ({ id: `client:${c.id}`, label: c.name })),
-                  ...leads.map((l) => ({
-                    id: `lead:${l.id}`,
-                    label: l.name,
-                    sublabel: l.company,
-                  })),
-                ]}
-                value={recipientValue}
-                onChange={onRecipientChange}
-                placeholder="Buscar cliente o lead…"
-                required
-              />
-            </FormRow>
-            <FormRow label="Título" htmlFor="title">
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                maxLength={200}
-                autoFocus
-                placeholder="Propuesta de servicios"
-              />
-            </FormRow>
-            <FormRow label="Válida hasta" htmlFor="valid_until" hint="Fecha límite de aceptación.">
-              <DateField id="valid_until" value={validUntil} onChange={setValidUntil} />
-            </FormRow>
-            {clientProjects.length > 0 && (
+    <form onSubmit={handleSubmit} className="mx-auto flex w-full max-w-6xl flex-col gap-5">
+      <section aria-labelledby="proposal-details-heading">
+        <Card className="border-border shadow-none">
+          <CardContent className="pt-6">
+            <header className="mb-5">
+              <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+                01 · Base comercial
+              </p>
+              <h2 id="proposal-details-heading" className="mt-1 text-base font-semibold">
+                Destinatario y contexto
+              </h2>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Solo el destinatario es obligatorio. El resto se puede completar más tarde.
+              </p>
+            </header>
+            <div className="grid gap-5 sm:grid-cols-2">
               <FormRow
-                label="Proyecto"
-                htmlFor="project_id"
-                hint="Opcional. Vincula esta propuesta a un proyecto existente."
+                label="Destinatario"
+                htmlFor="recipient"
+                required
+                hint="Cliente existente o lead. Si es lead, le pediremos sus datos fiscales al aceptar."
               >
                 <EntityCombobox
-                  id="project_id"
-                  items={clientProjects.map((p) => ({ id: p.id, label: p.name }))}
-                  value={projectId}
-                  onChange={setProjectId}
-                  placeholder="Buscar proyecto…"
+                  id="recipient"
+                  items={[
+                    ...clients.map((c) => ({ id: `client:${c.id}`, label: c.name })),
+                    ...leads.map((l) => ({
+                      id: `lead:${l.id}`,
+                      label: l.name,
+                      sublabel: l.company,
+                    })),
+                  ]}
+                  value={recipientValue}
+                  onChange={onRecipientChange}
+                  placeholder="Buscar cliente o lead…"
+                  required
                 />
               </FormRow>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              <FormRow label="Título" htmlFor="title">
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  maxLength={200}
+                  autoFocus
+                  placeholder="Propuesta de servicios"
+                />
+              </FormRow>
+              <FormRow label="Válida hasta" htmlFor="valid_until" hint="Fecha límite de aceptación.">
+                <DateField id="valid_until" value={validUntil} onChange={setValidUntil} />
+              </FormRow>
+              {clientProjects.length > 0 && (
+                <FormRow
+                  label="Proyecto"
+                  htmlFor="project_id"
+                  hint="Opcional. Vincula esta propuesta a un proyecto existente."
+                >
+                  <EntityCombobox
+                    id="project_id"
+                    items={clientProjects.map((p) => ({ id: p.id, label: p.name }))}
+                    value={projectId}
+                    onChange={setProjectId}
+                    placeholder="Buscar proyecto…"
+                  />
+                </FormRow>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </section>
 
-      <Card>
-        <CardContent className="pt-6">
-          <h2 className="mb-4 text-sm font-semibold">Líneas</h2>
-          <LineItemsTable items={items} onChange={setItems} showBillingCycle />
-        </CardContent>
-      </Card>
+      <section aria-labelledby="proposal-items-heading">
+        <Card className="border-border shadow-none">
+          <CardContent className="pt-6">
+            <header className="mb-4">
+              <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+                02 · Inversión
+              </p>
+              <h2 id="proposal-items-heading" className="mt-1 text-base font-semibold">
+                Partidas iniciales
+              </h2>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Añade los servicios ya definidos. Podrás ajustarlos con detalle en el editor.
+              </p>
+            </header>
+            <div className="border-border min-w-0 overflow-hidden rounded-lg border">
+              <LineItemsTable items={items} onChange={setItems} showBillingCycle />
+            </div>
+          </CardContent>
+        </Card>
+      </section>
 
-      <Card>
-        <CardContent className="pt-6">
-          <FormRow
-            label="Notas"
-            htmlFor="notes"
-            hint="Condiciones generales, alcance o aclaraciones para el cliente."
-          >
-            <Textarea
-              id="notes"
-              rows={4}
-              maxLength={4000}
-              placeholder="Condiciones, alcance, observaciones…"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-          </FormRow>
-        </CardContent>
-      </Card>
+      <section aria-labelledby="proposal-notes-heading">
+        <Card className="border-border shadow-none">
+          <CardContent className="pt-6">
+            <header className="mb-4">
+              <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+                03 · Aclaraciones
+              </p>
+              <h2 id="proposal-notes-heading" className="mt-1 text-base font-semibold">
+                Notas de la propuesta
+              </h2>
+            </header>
+            <FormRow
+              label="Notas"
+              htmlFor="notes"
+              hint="Condiciones generales, alcance o aclaraciones para el cliente."
+            >
+              <Textarea
+                id="notes"
+                rows={4}
+                maxLength={4000}
+                placeholder="Condiciones, alcance, observaciones…"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
+            </FormRow>
+          </CardContent>
+        </Card>
+      </section>
 
-      <div className="border-border flex items-center justify-end gap-3 border-t pt-4">
+      <div className="border-border bg-background/95 sticky bottom-3 z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 shadow-sm backdrop-blur">
         <FormFeedback state={feedback.state} pendingLabel="Creando…" />
-        <Button asChild variant="ghost" size="sm">
-          <Link href="/proposals">Cancelar</Link>
-        </Button>
-        <Button type="submit" size="sm" disabled={pending || !canSubmit}>
-          {pending ? 'Creando…' : 'Crear en blanco'}
-        </Button>
-        {aiEnabled ? (
-          <Button
-            type="button"
-            size="sm"
-            disabled={pending || !canSubmit || recipient?.kind !== 'lead'}
-            onClick={() => handleCreate('ai')}
-            title={
-              recipient?.kind !== 'lead'
-                ? 'Selecciona un lead para usar su contexto con IA'
-                : undefined
-            }
-          >
-            {pending ? 'Creando…' : 'Crear y prerrellenar con IA'}
+        <div className="ml-auto flex w-full flex-wrap justify-end gap-2 sm:w-auto">
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/proposals">Cancelar</Link>
           </Button>
-        ) : null}
+          {aiEnabled ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={pending || !canSubmit || recipient?.kind !== 'lead'}
+              onClick={() => handleCreate('ai')}
+              title={
+                recipient?.kind !== 'lead'
+                  ? 'Selecciona un lead para usar su contexto con IA'
+                  : undefined
+              }
+            >
+              {pending ? 'Creando…' : 'Crear y prerrellenar con IA'}
+            </Button>
+          ) : null}
+          <Button type="submit" size="sm" disabled={pending || !canSubmit}>
+            {pending ? 'Creando…' : 'Crear en blanco'}
+          </Button>
+        </div>
       </div>
       {aiEnabled ? (
         <p className="text-muted-foreground -mt-3 text-right text-xs">

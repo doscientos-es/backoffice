@@ -9,6 +9,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server'
 
+import { isAuthorizedCronRequest } from '@/lib/cron/auth'
 import { serverEnv } from '@/lib/env'
 import { scopedLogger } from '@/lib/logger'
 import { getConfiguredWebBackupTargets } from '@/lib/webs/credentials'
@@ -25,16 +26,6 @@ type BackupResult = {
   ok: boolean
   status?: number
   error?: string
-}
-
-function authenticate(request: NextRequest): boolean {
-  const { BACKUP_RUNNER_TOKEN, CRON_SECRET } = serverEnv()
-  const allowedTokens = [CRON_SECRET, BACKUP_RUNNER_TOKEN].filter(Boolean)
-  if (allowedTokens.length === 0) return true
-
-  const auth = request.headers.get('authorization') ?? ''
-  const token = auth.startsWith('Bearer ') ? auth.slice(7) : auth
-  return allowedTokens.includes(token)
 }
 
 async function runBackup(
@@ -66,11 +57,11 @@ async function runBackup(
 }
 
 async function handle(request: NextRequest): Promise<NextResponse> {
-  if (!authenticate(request)) {
+  const env = serverEnv()
+  if (!isAuthorizedCronRequest(request, [env.CRON_SECRET, env.BACKUP_RUNNER_TOKEN])) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
-  const env = serverEnv()
   if (!env.BACKUP_RUNNER_URL || !env.BACKUP_RUNNER_TOKEN) {
     return NextResponse.json({ error: 'backup runner not configured' }, { status: 503 })
   }

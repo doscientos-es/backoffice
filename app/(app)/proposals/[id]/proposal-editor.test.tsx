@@ -112,4 +112,18 @@ describe('ProposalEditor', () => {
       ),
     ).toBeNull()
   })
+
+  it('provides keyboard-accessible tabs for proposal steps', () => {
+    render(<ProposalEditor {...props} />)
+
+    const detailsTab = screen.getByRole('tab', { name: /Paso 1: Datos/ })
+    expect(detailsTab.getAttribute('aria-selected')).toBe('true')
+
+    fireEvent.keyDown(detailsTab, { key: 'End' })
+
+    const reviewTab = screen.getByRole('tab', { name: /Paso 4: Revisión/ })
+    expect(document.activeElement).toBe(reviewTab)
+    expect(reviewTab.getAttribute('aria-selected')).toBe('true')
+    expect(screen.getByRole('tabpanel').getAttribute('aria-labelledby')).toBe('proposal-step-tab-3')
+  })
 })

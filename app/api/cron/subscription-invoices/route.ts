@@ -7,6 +7,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server'
 
+import { isAuthorizedCronRequest } from '@/lib/cron/auth'
 import { serverEnv } from '@/lib/env'
 import { scopedLogger } from '@/lib/logger'
 import { generateDueSubscriptionInvoices } from '@/lib/subscriptions/generate-invoices'
@@ -16,17 +17,8 @@ export const runtime = 'nodejs'
 
 const log = scopedLogger('cron.subscription-invoices')
 
-function authenticate(request: NextRequest): boolean {
-  const { CRON_SECRET } = serverEnv()
-  if (!CRON_SECRET) return true
-
-  const auth = request.headers.get('authorization') ?? ''
-  const token = auth.startsWith('Bearer ') ? auth.slice(7) : auth
-  return token === CRON_SECRET
-}
-
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  if (!authenticate(request)) {
+  if (!isAuthorizedCronRequest(request, [serverEnv().CRON_SECRET])) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 

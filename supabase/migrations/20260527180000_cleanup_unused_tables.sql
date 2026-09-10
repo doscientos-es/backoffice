@@ -2,14 +2,13 @@
 -- Cleanup: drop tables with zero usage in the codebase.
 -- ============================================================
 -- Tables dropped:
---   • activity_log           — never read/written; logging is handled by pino stdout.
 --   • email_templates        — table unused; emails built with React Email components.
 --   • notification_preferences — no reads or writes anywhere in app/.
+--
+-- activity_log deliberately remains: later MCP and portal migrations append
+-- business audit events to it. Keeping it here also makes a clean migration
+-- replay consistent with existing production databases.
 -- ============================================================
-
--- ---- activity_log ----
-drop index if exists public.activity_log_entity_idx;
-drop table if exists public.activity_log;
 
 -- ---- email_templates ----
 drop trigger if exists trg_touch_email_templates on public.email_templates;

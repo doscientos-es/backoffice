@@ -33,6 +33,13 @@ describe('GET /api/cron/daily-responsibilities', () => {
     expect(sendDailyResponsibilityNotifications).not.toHaveBeenCalled()
   })
 
+  it('fails closed when the cron secret is not configured', async () => {
+    serverEnv.mockReturnValue({ CRON_SECRET: '' })
+    const response = await GET(request('anything') as never)
+    expect(response.status).toBe(401)
+    expect(sendDailyResponsibilityNotifications).not.toHaveBeenCalled()
+  })
+
   it('runs the daily notification summary', async () => {
     const response = await GET(request('cron-secret') as never)
     expect(response.status).toBe(200)

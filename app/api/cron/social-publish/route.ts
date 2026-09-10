@@ -7,6 +7,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server'
 
+import { isAuthorizedCronRequest } from '@/lib/cron/auth'
 import { serverEnv } from '@/lib/env'
 import { scopedLogger } from '@/lib/logger'
 import { publishDueScheduledPosts } from '@/lib/social/service'
@@ -16,17 +17,9 @@ export const runtime = 'nodejs'
 
 const log = scopedLogger('cron.social-publish')
 
-function authenticate(request: NextRequest): boolean {
-  const { CRON_SECRET } = serverEnv()
-  if (!CRON_SECRET) return true
-
-  const authorization = request.headers.get('authorization') ?? ''
-  const token = authorization.startsWith('Bearer ') ? authorization.slice(7) : authorization
-  return token === CRON_SECRET
-}
-
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  if (!authenticate(request)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  if (!isAuthorizedCronRequest(request, [serverEnv().CRON_SECRET]))
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   try {
     const result = await publishDueScheduledPosts()

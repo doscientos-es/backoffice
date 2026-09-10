@@ -9,7 +9,7 @@ import {
   Sparkle as Sparkles,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { type KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { LineItemsTable } from '@/components/finance/line-items-table'
 import { MaintenanceOfferEditor } from '@/components/proposals/maintenance-offer-editor'
@@ -177,6 +177,7 @@ export function ProposalEditor({
   )
   const [teamMemberIds, setTeamMemberIds] = useState(initialTeamMemberIds)
   const [activeStep, setActiveStep] = useState(0)
+  const stepTabRefs = useRef<Array<HTMLButtonElement | null>>([])
   const [items, setItems] = useState<EditableItem[]>(
     initialItems.length > 0
       ? initialItems.map((it) => ({ ...it, id: it.id || crypto.randomUUID() }))
@@ -269,6 +270,30 @@ export function ProposalEditor({
   ]
   const currentStep = EDITOR_STEPS[activeStep] ?? EDITOR_STEPS[0]!
   const nextStep = EDITOR_STEPS[activeStep + 1] ?? currentStep
+
+  function handleStepKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
+    const lastStepIndex = EDITOR_STEPS.length - 1
+    const nextIndex =
+      event.key === 'ArrowRight' || event.key === 'ArrowDown'
+        ? index === lastStepIndex
+          ? 0
+          : index + 1
+        : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+          ? index === 0
+            ? lastStepIndex
+            : index - 1
+          : event.key === 'Home'
+            ? 0
+            : event.key === 'End'
+              ? lastStepIndex
+              : null
+
+    if (nextIndex === null) return
+
+    event.preventDefault()
+    setActiveStep(nextIndex)
+    stepTabRefs.current[nextIndex]?.focus()
+  }
 
   async function handleSave() {
     saveFeedback.setPending()
@@ -398,19 +423,19 @@ export function ProposalEditor({
         <header className="border-border bg-background/95 sticky top-3 z-20 flex flex-wrap items-center gap-3 rounded-xl border p-3 shadow-sm backdrop-blur">
           <div className="min-w-0 flex-1">
             <p className="text-muted-foreground mb-1 text-[11px] font-medium tracking-wide uppercase">
-              Paso {activeStep + 1} de {EDITOR_STEPS.length} · {currentStep.label}
+              Edición de propuesta
             </p>
             <Input
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               disabled={locked}
               placeholder="Título de la propuesta"
-              className="h-9 text-base font-medium"
+              className="h-10 border-transparent bg-transparent px-2 text-lg font-semibold shadow-none hover:bg-muted/40 focus-visible:border-input focus-visible:bg-background"
               aria-label="Título"
             />
           </div>
           {!locked ? (
-            <div className="flex items-center gap-3">
+            <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-start">
               <FormFeedback state={saveFeedback.state} pendingLabel="Guardando propuesta…" />
               <Button onClick={handleSave} disabled={saveFeedback.pending}>
                 <Save className="size-4" aria-hidden />
@@ -435,38 +460,58 @@ export function ProposalEditor({
           </Alert>
         ) : null}
 
-        <nav
-          aria-label="Pasos de la propuesta"
-          className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4"
-        >
-          {EDITOR_STEPS.map((step, index) => {
-            const active = activeStep === index
-            return (
-              <button
-                key={step.label}
-                type="button"
-                onClick={() => setActiveStep(index)}
-                aria-current={active ? 'step' : undefined}
-                className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${active ? 'border-primary bg-primary/5' : 'border-border bg-card hover:bg-muted/40'}`}
-              >
-                <span
-                  className={`flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${stepComplete[index] ? 'bg-primary text-primary-foreground' : active ? 'border-primary text-primary border' : 'bg-muted text-muted-foreground'}`}
+        <nav aria-label="Pasos de la propuesta">
+          <div
+            role="tablist"
+            aria-label="Secciones de la propuesta"
+            className="border-border bg-card flex gap-1 overflow-x-auto rounded-xl border p-1 shadow-sm"
+          >
+            {EDITOR_STEPS.map((step, index) => {
+              const active = activeStep === index
+              return (
+                <button
+                  key={step.label}
+                  ref={(element) => {
+                    stepTabRefs.current[index] = element
+                  }}
+                  type="button"
+                  onClick={() => setActiveStep(index)}
+                  onKeyDown={(event) => handleStepKeyDown(event, index)}
+                  role="tab"
+                  id={`proposal-step-tab-${index}`}
+                  aria-controls="proposal-editor-panel"
+                  aria-selected={active}
+                  aria-label={`Paso ${index + 1}: ${step.label}, ${stepComplete[index] ? 'completado' : 'pendiente'}`}
+                  tabIndex={active ? 0 : -1}
+                  className={`focus-visible:ring-ring flex min-w-36 flex-1 items-center gap-2.5 rounded-lg px-3 py-2.5 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none sm:min-w-0 ${active ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'}`}
                 >
-                  {stepComplete[index] ? <Check className="size-3.5" aria-hidden /> : index + 1}
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-semibold">{step.label}</span>
-                  <span className="text-muted-foreground block truncate text-[11px]">
-                    {step.description}
+                  <span
+                    className={`flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${active ? 'bg-primary-foreground/20 text-primary-foreground' : stepComplete[index] ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}
+                  >
+                    {stepComplete[index] ? <Check className="size-3.5" aria-hidden /> : index + 1}
                   </span>
-                </span>
-              </button>
-            )
-          })}
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold">{step.label}</span>
+                    <span
+                      className={`hidden truncate text-[11px] sm:block ${active ? 'text-primary-foreground/75' : 'text-muted-foreground'}`}
+                    >
+                      {step.description}
+                    </span>
+                  </span>
+                </button>
+              )
+            })}
+          </div>
         </nav>
 
         <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_18rem]">
-          <main className="min-w-0">
+          <main
+            id="proposal-editor-panel"
+            role="tabpanel"
+            aria-labelledby={`proposal-step-tab-${activeStep}`}
+            tabIndex={-1}
+            className="min-w-0"
+          >
             {activeStep === 0 ? (
               <section className="border-border bg-card flex flex-col gap-5 rounded-xl border p-5">
                 <header>
@@ -814,7 +859,10 @@ export function ProposalEditor({
             ) : null}
           </main>
 
-          <aside className="border-border bg-card flex flex-col gap-4 rounded-xl border p-4 xl:sticky xl:top-24">
+          <aside
+            aria-label="Resumen comercial"
+            className="border-border bg-card flex flex-col gap-4 rounded-xl border p-4 xl:sticky xl:top-24"
+          >
             <div>
               <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                 Resumen comercial
@@ -873,11 +921,16 @@ export function ProposalEditor({
         </div>
 
         <footer className="border-border bg-background/95 sticky bottom-3 z-20 flex items-center justify-between gap-3 rounded-xl border p-3 shadow-sm backdrop-blur">
+          <p className="text-muted-foreground hidden min-w-0 text-sm sm:block">
+            Paso {activeStep + 1} de {EDITOR_STEPS.length} ·{' '}
+            <span className="text-foreground font-medium">{currentStep.label}</span>
+          </p>
           <Button
             type="button"
             variant="outline"
             disabled={activeStep === 0}
             onClick={() => setActiveStep((step) => Math.max(0, step - 1))}
+            className="flex-1 sm:ml-auto sm:flex-none"
           >
             <ChevronLeft className="size-4" aria-hidden />
             Anterior
@@ -892,6 +945,7 @@ export function ProposalEditor({
               }
               setActiveStep((step) => Math.min(EDITOR_STEPS.length - 1, step + 1))
             }}
+            className="flex-1 sm:flex-none"
           >
             {activeStep === EDITOR_STEPS.length - 1 ? (
               <>

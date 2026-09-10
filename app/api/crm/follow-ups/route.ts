@@ -6,11 +6,12 @@
  * actionable follow-up summaries.
  *
  * Auth: Authorization: Bearer <CRON_SECRET>
- * (No-op when CRON_SECRET is not set — allows local dev without config.)
+ * The endpoint fails closed when CRON_SECRET is not configured.
  */
 
 import { type NextRequest, NextResponse } from 'next/server'
 
+import { isAuthorizedCronRequest } from '@/lib/cron/auth'
 import { serverEnv } from '@/lib/env'
 import { getFollowUps } from '@/lib/integrations/follow-ups'
 import { scopedLogger } from '@/lib/logger'
@@ -29,18 +30,8 @@ export const runtime = 'nodejs'
 const log = scopedLogger('crm.follow-ups')
 const SUMMARY_EVENT_TYPE = 'lead_follow_up_summary'
 
-function authenticate(request: NextRequest): boolean {
-  const { CRON_SECRET } = serverEnv()
-  if (!CRON_SECRET) return true // open in dev when not configured
-
-  const auth = request.headers.get('authorization') ?? ''
-  // Support both "Bearer <secret>" and bare "<secret>"
-  const token = auth.startsWith('Bearer ') ? auth.slice(7) : auth
-  return token === CRON_SECRET
-}
-
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  if (!authenticate(request)) {
+  if (!isAuthorizedCronRequest(request, [serverEnv().CRON_SECRET])) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
