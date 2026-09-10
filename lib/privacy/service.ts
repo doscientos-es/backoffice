@@ -38,6 +38,7 @@ export function anonymizationPatch(subjectType: PrivacySubjectType): Record<stri
       browser: null,
       marketing_consent: false,
       marketing_consent_withdrawn_at: new Date().toISOString(),
+      privacy_anonymized_at: new Date().toISOString(),
     }
   }
   if (subjectType === 'client') {
@@ -298,6 +299,54 @@ export async function processDuePrivacyErasures(limit = 25): Promise<{
     } catch {
       summary.failed += 1
     }
+  }
+  return summary
+}
+
+/** Applies the documented retention policy only to aged, soft-deleted leads. */
+export async function anonymizeExpiredLeadPii(limit = 50): Promise<{ anonymized: number; blocked: number }> {
+  const admin = createAdminClient()
+  const cutoff = new Date(Date.now() - 730 * 24 * 60 * 60 * 1_000).toISOString()
+  const { data, error } = await admin
+    .from('leads')
+    .select('id')
+    .not('deleted_at', 'is', null)
+    .is('privacy_anonymized_at', null)
+    .lte('deleted_at', cutoff)
+    .order('deleted_at', { ascending: true })
+    .limit(Math.min(Math.max(limit, 1), 100))
+  if (error) throw new Error(error.message)
+
+  const summary = { anonymized: 0, blocked: 0 }
+  for (const row of data ?? []) {
+    const leadId = (row as { id: string }).id
+    const { data: holds, error: holdsError } = await admin
+      .from('privacy_legal_holds')
+      .select('id')
+      .eq('entity_type', 'lead')
+      .eq('entity_id', leadId)
+      .is('released_at', null)
+      .limit(1)
+    if (holdsError) throw new Error(holdsError.message)
+    if (holds && holds.length > 0) {
+      summary.blocked += 1
+      continue
+    }
+
+    const { error: updateError } = await admin
+      .from('leads')
+      .update(anonymizationPatch('lead')!)
+      .eq('id', leadId)
+      .is('privacy_anonymized_at', null)
+    if (updateError) throw new Error(updateError.message)
+    await writeAuditEvent({
+      entityType: 'lead',
+      entityId: leadId,
+      action: 'privacy_retention_anonymized',
+      origin: 'retention_cron',
+      metadata: { retentionDays: 730 },
+    })
+    summary.anonymized += 1
   }
   return summary
 }

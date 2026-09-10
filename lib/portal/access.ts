@@ -3,6 +3,7 @@ import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypt
 
 import { cookies } from 'next/headers'
 
+import { writeAuditEvent } from '@/lib/audit/events'
 import { serverEnv } from '@/lib/env'
 import { PortalUnlockInput, type UpdatePortalAccessInputType } from '@/lib/schemas/portal'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -122,22 +123,39 @@ export async function unlockPortalResource(
   const admin = createAdminClient()
   const { data: row, error } = await admin
     .from(table)
-    .select('portal_password_hash, is_client_visible')
+    .select('id, portal_password_hash, is_client_visible')
     .eq('portal_token', token)
     .is('deleted_at', null)
     .maybeSingle()
 
   if (error || !row) return { ok: false, error: 'Recurso no encontrado' }
   const access = row as unknown as {
+    id: string
     portal_password_hash: string | null
     is_client_visible: boolean | null
   }
   if (access.is_client_visible === false) return { ok: false, error: 'Recurso no disponible' }
-  if (!access.portal_password_hash) return { ok: true }
+  if (!access.portal_password_hash) {
+    await writeAuditEvent({
+      entityType: table,
+      entityId: access.id,
+      action: 'portal_accessed',
+      origin: 'client_portal',
+      metadata: { passwordProtected: false },
+    })
+    return { ok: true }
+  }
   if (!verifyPortalPassword(password, access.portal_password_hash)) {
     return { ok: false, error: 'Contraseña incorrecta' }
   }
 
   await grantPortalUnlock(token, access.portal_password_hash)
+  await writeAuditEvent({
+    entityType: table,
+    entityId: access.id,
+    action: 'portal_accessed',
+    origin: 'client_portal',
+    metadata: { passwordProtected: true },
+  })
   return { ok: true }
 }

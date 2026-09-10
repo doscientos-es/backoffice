@@ -17,14 +17,14 @@ describe('data exports', () => {
   it('redacts nested secrets and can keep PII only after explicit opt-in', () => {
     const record = {
       id: 'row-1',
-      contact: { email: 'client@example.test', api_token: 'private' },
+      metadata: { email: 'client@example.test', api_token: 'private' },
       name: 'Cliente',
     }
 
-    expect(sanitizeExportRecord(record)).toEqual({ id: 'row-1', contact: {} })
+    expect(sanitizeExportRecord(record)).toEqual({ id: 'row-1', metadata: {} })
     expect(sanitizeExportRecord(record, { includePii: true })).toEqual({
       id: 'row-1',
-      contact: { email: 'client@example.test' },
+      metadata: { email: 'client@example.test' },
       name: 'Cliente',
     })
   })

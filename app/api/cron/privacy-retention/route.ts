@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { isAuthorizedCronRequest } from '@/lib/cron/auth'
 import { serverEnv } from '@/lib/env'
 import { scopedLogger } from '@/lib/logger'
-import { processDuePrivacyErasures } from '@/lib/privacy/service'
+import { anonymizeExpiredLeadPii, processDuePrivacyErasures } from '@/lib/privacy/service'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -15,7 +15,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   try {
-    const summary = await processDuePrivacyErasures()
+    const [dueRequests, leadRetention] = await Promise.all([
+      processDuePrivacyErasures(),
+      anonymizeExpiredLeadPii(),
+    ])
+    const summary = { ...dueRequests, leadRetention }
     log.info(summary, 'privacy retention cron executed')
     return NextResponse.json(summary, { status: summary.failed > 0 ? 207 : 200 })
   } catch (error) {

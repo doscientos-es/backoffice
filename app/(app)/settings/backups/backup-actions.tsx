@@ -16,21 +16,39 @@ export function BackupActions({
   tables,
   showBackupAction = true,
   showExportActions = true,
+  canIncludePii = false,
 }: {
   runnerConfigured: boolean
   tables: readonly ExportTable[]
   showBackupAction?: boolean
   showExportActions?: boolean
+  canIncludePii?: boolean
 }) {
   const [pending, startTransition] = useTransition()
   const [table, setTable] = useState(tables[0]?.value ?? '')
-  const csvHref = `/api/data-export?format=csv&table=${encodeURIComponent(table)}`
+  const [includePii, setIncludePii] = useState(false)
 
   function forceBackup() {
     startTransition(async () => {
       const result = await triggerBackofficeBackup()
       if (result.ok) sileo.success({ title: 'Copia de seguridad iniciada' })
       else sileo.error({ title: result.error })
+    })
+  }
+
+  function exportData(format: 'json' | 'csv') {
+    startTransition(async () => {
+      const response = await fetch('/api/data-export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ format, table: format === 'csv' ? table : undefined, includePii }),
+      })
+      const result = (await response.json().catch(() => null)) as { downloadUrl?: string; error?: string } | null
+      if (!response.ok || !result?.downloadUrl) {
+        sileo.error({ title: result?.error ?? 'No se pudo preparar la exportación' })
+        return
+      }
+      window.location.assign(result.downloadUrl)
     })
   }
 
@@ -61,11 +79,9 @@ export function BackupActions({
 
       {showExportActions ? (
         <div className="flex flex-wrap items-center gap-2">
-          <Button asChild variant="outline">
-            <a href="/api/data-export?format=json" download>
-              <Download className="size-4" />
-              Descargar datos actuales (JSON)
-            </a>
+          <Button type="button" variant="outline" disabled={pending} onClick={() => exportData('json')}>
+            <Download className="size-4" />
+            Descargar datos actuales (JSON)
           </Button>
           <Select
             value={table}
@@ -79,12 +95,21 @@ export function BackupActions({
               </option>
             ))}
           </Select>
-          <Button asChild variant="outline" disabled={!table}>
-            <a href={csvHref} download>
-              <Download className="size-4" />
-              Descargar datos actuales (CSV / Excel)
-            </a>
+          <Button type="button" variant="outline" disabled={!table || pending} onClick={() => exportData('csv')}>
+            <Download className="size-4" />
+            Descargar datos actuales (CSV / Excel)
           </Button>
+          {canIncludePii ? (
+            <label className="text-muted-foreground flex items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                checked={includePii}
+                onChange={(event) => setIncludePii(event.target.checked)}
+                className="accent-primary size-4"
+              />
+              Incluir datos personales
+            </label>
+          ) : null}
         </div>
       ) : null}
     </div>

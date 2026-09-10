@@ -18,7 +18,7 @@ function labelForTable(table: string) {
 }
 
 export default async function BackupSettingsPage() {
-  await requirePageRole(['owner', 'admin'])
+  const user = await requirePageRole(['owner', 'admin'])
   const env = serverEnv()
   const setup = getBackofficeBackupSetup(env)
   const archiveConfigured = isFileBrowserConfigured()
@@ -44,6 +44,7 @@ export default async function BackupSettingsPage() {
             runnerConfigured={setup.configured}
             tables={tables}
             showBackupAction={false}
+            canIncludePii={user.role === 'owner'}
           />
           <p className="text-muted-foreground text-sm">
             Los archivos físicos de Supabase Storage no van en esta descarga; sus metadatos y rutas
