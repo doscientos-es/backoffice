@@ -28,7 +28,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
+} from '@doscientos/ui'
 import { EntityCombobox } from '@/components/ui/entity-combobox'
 import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
 import { Input } from '@/components/ui/input'
@@ -85,7 +85,7 @@ export function QuickActionTile({
         'border-border/80 bg-card/60 justify-start gap-2 font-medium [&>span]:min-w-0',
         'hover:border-foreground/25 hover:bg-muted/60 transition-colors',
         tone === 'whatsapp' &&
-          'border-emerald-500/25 hover:border-emerald-500/50 hover:bg-emerald-500/10',
+        'border-emerald-500/25 hover:border-emerald-500/50 hover:bg-emerald-500/10',
       )}
       {...props}
     >

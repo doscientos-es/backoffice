@@ -10,7 +10,10 @@ import {
   parseMaintenanceOffer,
   selectedMaintenancePlan,
 } from '@/lib/proposals/maintenance'
-import { effectiveProposalTerms } from '@/lib/proposals/proposal-acceptance'
+import {
+  DEFAULT_PROPOSAL_LEGAL_TERMS,
+  effectiveProposalTerms,
+} from '@/lib/proposals/proposal-acceptance'
 import {
   type ProposalPdfItem,
   proposalPdfFilename,
@@ -73,10 +76,17 @@ export async function GET(
     .maybeSingle()
 
   const signedSnapshot = acceptance?.document_snapshot as
-    | { proposal?: Record<string, unknown>; fiscal_data?: { name?: string } | null }
+    | { version?: string; proposal?: Record<string, unknown>; fiscal_data?: { name?: string } | null }
     | null
   const signedProposal = signedSnapshot?.proposal
   const documentSource = signedProposal ?? (proposal as Record<string, unknown>)
+  const legalTerms =
+    signedProposal && !('legal_terms' in signedProposal)
+      ? ((documentSource.terms as string | null) ?? DEFAULT_PROPOSAL_LEGAL_TERMS)
+      : effectiveProposalTerms(
+          (documentSource.terms as string | null) ?? null,
+          (documentSource.legal_terms as string | null) ?? null,
+        )
   const signedItems = Array.isArray(signedProposal?.items) ? signedProposal.items : items ?? []
   const client = (proposal as unknown as { clients: { name: string } | null }).clients
   const lead = (
@@ -124,9 +134,7 @@ export async function GET(
     paymentSchedule: (documentSource.payment_schedule as PaymentSchedule | null) ?? 'half_half',
     paymentTerms: (documentSource.payment_terms as string | null) ?? null,
     changeManagementTerms: (documentSource.change_management_terms as string | null) ?? null,
-    terms: signedProposal
-      ? (documentSource.terms as string | null) ?? null
-      : effectiveProposalTerms((documentSource.terms as string | null) ?? null),
+    legalTerms,
     notes: (documentSource.notes as string | null) ?? null,
     subtotal: Number(documentSource.subtotal ?? 0),
     taxAmount: Number(documentSource.tax_amount ?? 0),

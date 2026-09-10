@@ -9,7 +9,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@doscientos/ui'
 
 const DEFAULT_DESCRIPTION = (name: string): ReactNode => (
   <>

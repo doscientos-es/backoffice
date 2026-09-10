@@ -11,6 +11,7 @@ const props = {
   token: '12345678-1234-4123-8123-123456789abc',
   needsFiscal: false,
   signerPrefill: 'Ana Gómez',
+  legalTerms: '1. Condiciones de contratación',
   fiscalPrefill: {
     name: '',
     nif: '',
@@ -42,5 +43,14 @@ describe('ProposalActions', () => {
       ),
     )
     expect(await screen.findByText('Propuesta firmada y aceptada. Gracias.')).toBeDefined()
+  })
+
+  it('lets the signer review the full contractual annex before accepting', () => {
+    render(<ProposalActions {...props} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Firmar y aceptar' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Leer el anexo contractual completo' }))
+
+    expect(screen.getByRole('dialog').textContent).toContain('Condiciones de contratación')
   })
 })

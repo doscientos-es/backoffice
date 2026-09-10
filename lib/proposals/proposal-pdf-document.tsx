@@ -238,7 +238,7 @@ export type ProposalPdfData = {
   paymentSchedule: PaymentSchedule
   paymentTerms: string | null
   changeManagementTerms: string | null
-  terms: string | null
+  legalTerms: string
   notes: string | null
   subtotal: number
   taxAmount: number
@@ -399,7 +399,7 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
   const deliverables = data.deliverables?.trim()
   const acceptanceCriteria = data.acceptanceCriteria?.trim()
   const initialPaymentPercentage = paymentInitialPercentage(data.paymentSchedule)
-  const hasConditions = Boolean(data.paymentTerms || data.changeManagementTerms || data.terms)
+  const hasConditions = Boolean(data.paymentTerms || data.changeManagementTerms)
   return (
     <Document title={`Propuesta ${data.number ?? ''} · ${data.title}`} author="doscientos">
       <Page size="A4" style={styles.cover}>
@@ -552,7 +552,6 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
                 <Text style={styles.body}>{printableMarkdown(data.changeManagementTerms)}</Text>
               </>
             ) : null}
-            {data.terms ? <Text style={styles.body}>{printableMarkdown(data.terms)}</Text> : null}
             {data.iban ? (
               <>
                 <Text style={[styles.pointTitle, { marginTop: hasConditions ? 12 : 0 }]}>
@@ -616,6 +615,18 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
             </Link>
           </View>
         )}
+        <Footer />
+      </Page>
+      <Page size="A4" style={styles.page} wrap>
+        <View fixed style={styles.header}>
+          <Text style={styles.brand}>doscientos</Text>
+          <Text style={styles.pageLabel}>Anexo de la propuesta {data.number ?? 'personalizada'}</Text>
+        </View>
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Anexo contractual</Text>
+          <Text style={styles.sectionTitle}>Condiciones generales y particulares</Text>
+          <Text style={styles.body}>{printableMarkdown(data.legalTerms)}</Text>
+        </View>
         <Footer />
       </Page>
     </Document>

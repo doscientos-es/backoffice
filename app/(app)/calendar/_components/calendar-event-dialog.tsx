@@ -22,7 +22,7 @@ import { useTransition } from 'react'
 import { sileo } from 'sileo'
 
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@doscientos/ui'
 import { deleteCalendarEvent } from '@/lib/calendar/actions'
 import {
   CALENDAR_LAYER_COLORS,
@@ -77,7 +77,7 @@ function EventDialogContent({
   const dateStr = event.allDay
     ? format(startDate, 'EEEE, d MMMM yyyy', { locale: es })
     : format(startDate, 'EEEE, d MMMM yyyy · HH:mm', { locale: es }) +
-      (!sameDay ? ` — ${format(endDate, 'd MMM · HH:mm', { locale: es })}` : '')
+    (!sameDay ? ` — ${format(endDate, 'd MMM · HH:mm', { locale: es })}` : '')
 
   return (
     <DialogContent className="sm:max-w-sm">

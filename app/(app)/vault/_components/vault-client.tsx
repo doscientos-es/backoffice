@@ -33,7 +33,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@doscientos/ui'
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'

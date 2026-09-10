@@ -12,7 +12,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@doscientos/ui'
 
 export function TaskQuickViewDialog({ taskId, children }: { taskId: string; children: ReactNode }) {
   const router = useRouter()

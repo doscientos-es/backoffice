@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
+} from '@doscientos/ui'
 import { FormFeedback } from '@/components/ui/form-feedback'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { VersionConflictDialog } from '@/components/ui/version-conflict-dialog'

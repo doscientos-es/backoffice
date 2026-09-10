@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
+} from '@doscientos/ui'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { VersionConflictDialog } from '@/components/ui/version-conflict-dialog'
 import { useFormDirty } from '@/lib/hooks/use-form-dirty'

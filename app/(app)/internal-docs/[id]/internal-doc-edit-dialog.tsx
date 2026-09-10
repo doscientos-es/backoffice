@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
+} from '@doscientos/ui'
 import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
 import { FormRow } from '@/components/ui/form-row'
 import { Input } from '@/components/ui/input'

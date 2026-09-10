@@ -13,7 +13,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@doscientos/ui'
 import { Empty, EmptyHeader, EmptyTitle } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -318,8 +318,8 @@ export function EmailTemplatesManager({ templates }: Props) {
                 <div className="flex items-center gap-2">
                   <Checkbox
                     id="tpl-sig"
-                  isSelected={form.include_signature}
-                  onChange={(v) => setForm((f) => ({ ...f, include_signature: v }))}
+                    isSelected={form.include_signature}
+                    onChange={(v) => setForm((f) => ({ ...f, include_signature: v }))}
                   />
                   <Label htmlFor="tpl-sig" className="cursor-pointer">
                     Añadir firma del remitente

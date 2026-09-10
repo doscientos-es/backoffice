@@ -11,7 +11,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@doscientos/ui'
 import { Field, FieldLabel } from '@/components/ui/field'
 import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
 import { Input } from '@/components/ui/input'

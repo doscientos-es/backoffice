@@ -81,7 +81,7 @@ export type ProposalEditorProps = {
   initialPaymentPlan: PaymentPlanItem[]
   initialPaymentTerms: string | null
   initialChangeManagementTerms: string | null
-  initialLegalTerms: string | null
+  initialLegalTerms?: string | null
   initialMaintenanceOptions: MaintenanceOffer | null
   initialMaintenanceSelectedPlanId: string | null
   teamMembers: ProposalTeamMember[]

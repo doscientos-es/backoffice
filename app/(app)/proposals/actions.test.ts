@@ -137,6 +137,7 @@ describe('updateProposal', () => {
       payment_schedule: 'half_half',
       payment_terms: '50 % al aceptar.',
       change_management_terms: 'Cambios presupuestados.',
+      legal_terms: 'Anexo contractual específico.',
       maintenance_options: {
         heading: 'Mantenimiento web',
         intro: 'Soporte técnico continuo.',
@@ -185,6 +186,7 @@ describe('updateProposal', () => {
       payment_schedule: 'half_half',
       payment_terms: '50 % al aceptar.',
       change_management_terms: 'Cambios presupuestados.',
+      legal_terms: 'Anexo contractual específico.',
       maintenance_options: {
         enabled: true,
         heading: 'Mantenimiento web',

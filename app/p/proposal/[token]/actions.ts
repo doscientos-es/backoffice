@@ -43,6 +43,25 @@ const log = scopedLogger('portal.proposal')
 
 type ActionResult = { ok: true } | { ok: false; error: string }
 
+type PortalAccessControlledProposal = {
+  is_client_visible?: boolean | null
+  portal_password_hash?: string | null
+}
+
+function isProposalExpired(validUntil: unknown): boolean {
+  return typeof validUntil === 'string' && validUntil < new Date().toISOString().slice(0, 10)
+}
+
+/** Re-check portal visibility and password for every public server mutation. */
+async function requirePublicPortalAccess(
+  token: string,
+  proposal: PortalAccessControlledProposal,
+): Promise<ActionResult> {
+  if (proposal.is_client_visible === false) return { ok: false, error: 'Propuesta no disponible' }
+  const unlocked = await isPortalUnlocked(token, proposal.portal_password_hash ?? null)
+  return unlocked ? { ok: true } : { ok: false, error: 'Vuelve a introducir la contraseña del portal' }
+}
+
 export type PaymentInitResult =
   | {
       ok: true
@@ -112,27 +131,22 @@ async function acceptWithFiscal(
   const { data: proposal, error: fetchError } = await admin
     .from('proposals')
     .select(
-      'id, number, status, title, currency, subtotal, tax_amount, total, valid_until, context_markdown, problems, solutions, terms, scope_modules, deliverables, acceptance_criteria, payment_schedule, payment_plan, payment_terms, change_management_terms, maintenance_options, maintenance_selected_plan_id, is_client_visible, portal_password_hash, client_id, lead_id, clients(name, nif, billing_address_street), leads(name, email, phone, company)',
+      'id, number, status, title, currency, subtotal, tax_amount, total, valid_until, context_markdown, problems, solutions, terms, legal_terms, scope_modules, deliverables, acceptance_criteria, payment_schedule, payment_plan, payment_terms, change_management_terms, maintenance_options, maintenance_selected_plan_id, is_client_visible, portal_password_hash, client_id, lead_id, clients(name, nif, billing_address_street), leads(name, email, phone, company)',
     )
     .eq('portal_token', parsed.data)
     .is('deleted_at', null)
     .maybeSingle()
 
   if (fetchError || !proposal) return { ok: false, error: 'Propuesta no encontrada' }
+  const access = await requirePublicPortalAccess(parsed.data, proposal)
+  if (!access.ok) return access
   if (proposal.status === 'accepted' || proposal.status === 'rejected') {
     return { ok: false, error: 'Esta propuesta ya ha sido respondida' }
   }
-  if (proposal.status === 'expired') return { ok: false, error: 'Propuesta expirada' }
-  if (proposal.status === 'draft') return { ok: false, error: 'Propuesta no disponible' }
-  if (proposal.is_client_visible === false) return { ok: false, error: 'Propuesta no disponible' }
-  if (
-    !(await isPortalUnlocked(
-      parsed.data,
-      (proposal.portal_password_hash as string | null) ?? null,
-    ))
-  ) {
-    return { ok: false, error: 'Vuelve a introducir la contraseña del portal' }
+  if (proposal.status === 'expired' || isProposalExpired(proposal.valid_until)) {
+    return { ok: false, error: 'Propuesta expirada' }
   }
+  if (proposal.status === 'draft') return { ok: false, error: 'Propuesta no disponible' }
 
   // Decide whether we need fiscal data: leads always require it, clients
   // only when their row is missing the legal minimum (name + NIF + address).
@@ -262,26 +276,31 @@ async function rejectAction(token: string, rejectionReason?: string): Promise<Ac
   const admin = createAdminClient()
   const { data: proposal, error: fetchError } = await admin
     .from('proposals')
-    .select('id, status, title, clients(name), leads(name)')
+    .select('id, status, title, is_client_visible, portal_password_hash, clients(name), leads(name)')
     .eq('portal_token', parsed.data)
     .is('deleted_at', null)
     .maybeSingle()
 
   if (fetchError || !proposal) return { ok: false, error: 'Propuesta no encontrada' }
+  const access = await requirePublicPortalAccess(parsed.data, proposal)
+  if (!access.ok) return access
   if (proposal.status === 'accepted' || proposal.status === 'rejected') {
     return { ok: false, error: 'Esta propuesta ya ha sido respondida' }
   }
-  if (proposal.status === 'expired') return { ok: false, error: 'Propuesta expirada' }
+  if (proposal.status === 'expired' || isProposalExpired(proposal.valid_until)) {
+    return { ok: false, error: 'Propuesta expirada' }
+  }
   if (proposal.status === 'draft') return { ok: false, error: 'Propuesta no disponible' }
 
-  const patch: Record<string, unknown> = {
-    status: 'rejected',
-    responded_at: new Date().toISOString(),
+  const { error: rejectionError } = await admin.rpc('reject_proposal_from_portal', {
+    p_proposal_id: proposal.id,
+    p_rejected_at: new Date().toISOString(),
+    p_rejection_reason: rejectionReason ?? null,
+  })
+  if (rejectionError) {
+    log.warn({ err: rejectionError, proposalId: proposal.id }, 'proposal_portal_rejection_failed')
+    return { ok: false, error: 'No se pudo actualizar la propuesta' }
   }
-  if (rejectionReason) patch.signature_data = { rejection_reason: rejectionReason }
-
-  const { error: updateError } = await admin.from('proposals').update(patch).eq('id', proposal.id)
-  if (updateError) return { ok: false, error: 'No se pudo actualizar la propuesta' }
 
   const proposalTitle = (proposal as unknown as { title?: string | null }).title
   const leadData = (proposal as unknown as { leads?: { name?: string | null } | null }).leads
@@ -326,11 +345,16 @@ export async function selectProposalMaintenance(
   const admin = createAdminClient()
   const { data: proposal, error } = await admin
     .from('proposals')
-    .select('id, status, maintenance_options')
+    .select('id, status, valid_until, is_client_visible, portal_password_hash, maintenance_options')
     .eq('portal_token', parsedToken.data)
     .is('deleted_at', null)
     .maybeSingle()
   if (error || !proposal) return { ok: false, error: 'Propuesta no encontrada' }
+  const access = await requirePublicPortalAccess(parsedToken.data, proposal)
+  if (!access.ok) return access
+  if (isProposalExpired(proposal.valid_until)) {
+    return { ok: false, error: 'El mantenimiento ya no se puede modificar' }
+  }
   if (!['sent', 'viewed'].includes(proposal.status as string)) {
     return { ok: false, error: 'El mantenimiento ya no se puede modificar' }
   }
@@ -368,11 +392,18 @@ export async function sendProposalQuestion(token: string, body: string): Promise
   const admin = createAdminClient()
   const { data: proposal, error } = await admin
     .from('proposals')
-    .select('id, status, title, clients(name), leads(name)')
+    .select(
+      'id, status, valid_until, title, is_client_visible, portal_password_hash, clients(name), leads(name)',
+    )
     .eq('portal_token', parsedToken.data)
     .is('deleted_at', null)
     .maybeSingle()
   if (error || !proposal) return { ok: false, error: 'Propuesta no encontrada' }
+  const access = await requirePublicPortalAccess(parsedToken.data, proposal)
+  if (!access.ok) return access
+  if (isProposalExpired(proposal.valid_until)) {
+    return { ok: false, error: 'Esta propuesta ya no admite consultas' }
+  }
   if (!['sent', 'viewed'].includes(proposal.status as string)) {
     return { ok: false, error: 'Esta propuesta ya no admite consultas' }
   }
@@ -410,19 +441,27 @@ export async function initiateProposalPayment(
   proposalId: string,
   token: string,
 ): Promise<PaymentInitResult> {
+  const parsedProposalId = z.string().uuid().safeParse(proposalId)
+  const parsedToken = ProposalPortalToken.safeParse(token)
+  if (!parsedProposalId.success || !parsedToken.success) {
+    return { ok: false, error: 'Propuesta no disponible para pago' }
+  }
   const admin = createAdminClient()
   const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
 
   const { data: proposal } = await admin
     .from('proposals')
-    .select('id, status, total, payment_schedule')
-    .eq('id', proposalId)
-    .eq('portal_token', token)
+    .select('id, status, total, payment_schedule, is_client_visible, portal_password_hash')
+    .eq('id', parsedProposalId.data)
+    .eq('portal_token', parsedToken.data)
+    .is('deleted_at', null)
     .maybeSingle()
 
-  if (proposal?.status !== 'accepted') {
+  if (!proposal || proposal.status !== 'accepted') {
     return { ok: false, error: 'Propuesta no disponible para pago' }
   }
+  const access = await requirePublicPortalAccess(parsedToken.data, proposal)
+  if (!access.ok) return { ok: false, error: 'Propuesta no disponible para pago' }
 
   const paymentSchedule = paymentScheduleInput.safeParse(proposal.payment_schedule)
   const initialPercentage = paymentSchedule.success
@@ -433,25 +472,16 @@ export async function initiateProposalPayment(
   }
   const amount = Math.round(Number(proposal.total) * initialPercentage) / 100
 
-  // Check if signal already paid
-  const { data: existing } = await admin
-    .from('invoice_payments')
-    .select('id')
-    .eq('proposal_id', proposalId)
-    .eq('status', 'confirmed')
-    .maybeSingle()
+  const { data: payment, error: insertError } = await admin.rpc('create_proposal_deposit_payment', {
+    p_proposal_id: parsedProposalId.data,
+    p_amount: amount,
+  })
+  const redsysOrder = (payment as Array<{ redsys_order: string }> | null)?.[0]?.redsys_order
 
-  if (existing) {
-    return { ok: false, error: 'La señal ya ha sido abonada' }
-  }
-
-  const { data: payment, error: insertError } = await admin
-    .from('invoice_payments')
-    .insert({ proposal_id: proposalId, amount })
-    .select('redsys_order')
-    .single()
-
-  if (insertError || !payment?.redsys_order) {
+  if (insertError || !redsysOrder) {
+    if (insertError?.message === 'Ya existe un pago de señal pendiente o confirmado') {
+      return { ok: false, error: insertError.message }
+    }
     return { ok: false, error: 'Error al crear el registro de pago' }
   }
 
@@ -460,15 +490,15 @@ export async function initiateProposalPayment(
 
   const redsysData = createRedsysPayment({
     Ds_Merchant_Amount: amountCents,
-    Ds_Merchant_Order: payment.redsys_order as string,
+    Ds_Merchant_Order: redsysOrder,
     Ds_Merchant_MerchantCode: env.REDSYS_MERCHANT_CODE,
     Ds_Merchant_Terminal: env.REDSYS_TERMINAL,
     Ds_Merchant_Currency: env.REDSYS_CURRENCY,
     Ds_Merchant_TransactionType: '0',
     Ds_Merchant_MerchantURL: `${appUrl}/api/webhooks/redsys`,
-    Ds_Merchant_UrlOK: `${appUrl}/p/proposal/${token}?success=1`,
-    Ds_Merchant_UrlKO: `${appUrl}/p/proposal/${token}?error=1`,
-    Ds_Merchant_MerchantData: proposalId,
+    Ds_Merchant_UrlOK: `${appUrl}/p/proposal/${parsedToken.data}?success=1`,
+    Ds_Merchant_UrlKO: `${appUrl}/p/proposal/${parsedToken.data}?error=1`,
+    Ds_Merchant_MerchantData: parsedProposalId.data,
   })
 
   return {

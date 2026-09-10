@@ -4,7 +4,7 @@ import { Pencil, Plus, Trash as Trash2 } from 'lucide-react'
 import { useState, useTransition } from 'react'
 
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@doscientos/ui'
 import { FormRow } from '@/components/ui/form-row'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'

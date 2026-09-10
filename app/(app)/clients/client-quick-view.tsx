@@ -30,7 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
+} from '@doscientos/ui'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { relativeTime } from '@/lib/utils'

@@ -26,7 +26,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@doscientos/ui'
 import { Label } from '@/components/ui/label'
 import { useUndoableDelete } from '@/lib/hooks/use-undoable-delete'
 

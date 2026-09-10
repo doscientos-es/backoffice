@@ -41,6 +41,13 @@ const proposalMarkdownField = (maxLength: number) =>
     .or(z.literal('').transform(() => null))
     .nullable()
 
+const proposalLegalTermsField = z
+  .string()
+  .trim()
+  .min(1, 'El anexo contractual no puede estar vacío')
+  .max(20_000)
+  .optional()
+
 /**
  * Zod schemas for the `proposals` domain.
  *
@@ -107,7 +114,7 @@ export const UpdateProposalInput = z.object({
   payment_plan: paymentPlanInput.optional(),
   payment_terms: proposalMarkdownField(8_000),
   change_management_terms: proposalMarkdownField(8_000),
-  legal_terms: proposalMarkdownField(20_000),
+  legal_terms: proposalLegalTermsField,
   maintenance_options: maintenanceOfferInput.nullable().optional(),
   maintenance_selected_plan_id: z.string().min(1).max(64).nullable().optional(),
   items: z.array(lineItemInput).min(1).optional(),

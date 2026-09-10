@@ -62,6 +62,7 @@ export async function MarketingTable({
         {numberFmt.format(totalOutboundClicks)} · Vistas de landing:{' '}
         {numberFmt.format(totalLandingPageViews)} · CPC medio: {formatEUR(avgCpc)} · Impresiones:{' '}
         {numberFmt.format(totalImpressions)}.
+        Las columnas CRM cruzan los leads captados en el período con clientes y facturas no anuladas.
         {lastSyncAt ? ` Sincronizado ${relativeTime(lastSyncAt)}.` : ''}
       </p>
     </>
@@ -98,13 +99,19 @@ function AdsTable({
               <TableHead className="text-right">Gasto</TableHead>
               <TableHead className="text-right">Leads</TableHead>
               <TableHead className="text-right">CPL</TableHead>
+              <TableHead className="text-right">CRM</TableHead>
+              <TableHead className="text-right">Calif.</TableHead>
+              <TableHead className="text-right">Gan.</TableHead>
+              <TableHead className="text-right">Perd.</TableHead>
+              <TableHead className="text-right">Clientes</TableHead>
+              <TableHead className="text-right">Facturado</TableHead>
               <TableHead className="w-[88px] text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {ads.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={13} className="text-muted-foreground py-8 text-center">
+                <TableCell colSpan={19} className="text-muted-foreground py-8 text-center">
                   No hay anuncios con datos en el rango seleccionado.
                 </TableCell>
               </TableRow>
@@ -178,6 +185,18 @@ function AdsTable({
                     >
                       {ad.leads > 0 ? formatEUR(ad.cpl) : '—'}
                     </TableCell>
+                    <TableCell className="text-right tabular-nums" title="Leads encontrados en el CRM">
+                      {ad.crmLeads}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{ad.qualifiedLeads}</TableCell>
+                    <TableCell className="text-right font-semibold tabular-nums">
+                      {ad.wonLeads}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{ad.lostLeads}</TableCell>
+                    <TableCell className="text-right tabular-nums">{ad.customers}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {ad.invoicedRevenue > 0 ? formatEUR(ad.invoicedRevenue) : '—'}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-0.5">
                         <AdPreviewDialog
@@ -239,13 +258,19 @@ function CampaignsTable({
               <TableHead className="text-right">Gasto</TableHead>
               <TableHead className="text-right">Leads</TableHead>
               <TableHead className="text-right">CPL</TableHead>
+              <TableHead className="text-right">CRM</TableHead>
+              <TableHead className="text-right">Calif.</TableHead>
+              <TableHead className="text-right">Gan.</TableHead>
+              <TableHead className="text-right">Perd.</TableHead>
+              <TableHead className="text-right">Clientes</TableHead>
+              <TableHead className="text-right">Facturado</TableHead>
               <TableHead className="w-16 text-right">Acción</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {campaigns.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={13} className="text-muted-foreground py-8 text-center">
+                <TableCell colSpan={19} className="text-muted-foreground py-8 text-center">
                   No hay campañas con datos en el rango seleccionado.
                 </TableCell>
               </TableRow>
@@ -294,6 +319,14 @@ function CampaignsTable({
                       )}
                     >
                       {c.leads > 0 ? formatEUR(c.cpl) : '—'}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{c.crmLeads}</TableCell>
+                    <TableCell className="text-right tabular-nums">{c.qualifiedLeads}</TableCell>
+                    <TableCell className="text-right font-semibold tabular-nums">{c.wonLeads}</TableCell>
+                    <TableCell className="text-right tabular-nums">{c.lostLeads}</TableCell>
+                    <TableCell className="text-right tabular-nums">{c.customers}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {c.invoicedRevenue > 0 ? formatEUR(c.invoicedRevenue) : '—'}
                     </TableCell>
                     <TableCell className="text-right">
                       {url ? (

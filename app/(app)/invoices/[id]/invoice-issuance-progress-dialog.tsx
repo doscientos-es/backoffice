@@ -18,7 +18,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@doscientos/ui'
 import { cn } from '@/lib/utils'
 
 export type InvoiceIssuancePhase =

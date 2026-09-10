@@ -18,7 +18,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@doscientos/ui'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { TASK_STATUS, type TaskStatus } from '@/lib/status'
 

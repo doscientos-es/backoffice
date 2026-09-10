@@ -7,6 +7,7 @@ import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from '@/components/ui/em
 import { requireUser } from '@/lib/auth'
 import { getLeadJourneyAnalytics } from '@/lib/leads/analytics'
 import { leadAnalyticsRangeToDates, parseLeadAnalyticsRange } from '@/lib/leads/analytics-range'
+import { formatEUR } from '@/lib/utils'
 
 import { LeadCreateDialog } from '../lead-create-dialog'
 import { LeadsViewToggle } from '../view-toggle'
@@ -80,6 +81,18 @@ export default async function LeadAnalyticsPage({
               label={analytics.mainLeak?.label ?? 'Leads perdidos'}
               value={String(analytics.mainLeak?.value ?? analytics.lost)}
               tone="danger"
+            />
+            <Metric
+              icon={ChartNoAxesCombined}
+              label="Pipeline estimado"
+              value={formatEUR(analytics.pipelineValue)}
+              tone="info"
+            />
+            <Metric
+              icon={Trophy}
+              label="Valor ganado"
+              value={formatEUR(analytics.wonValue)}
+              tone="success"
             />
           </section>
           <LeadAnalyticsCharts analytics={analytics} />

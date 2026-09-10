@@ -39,7 +39,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@doscientos/ui'
 import { NAVIGATION_GROUPS } from '@/lib/navigation/navigation'
 import {
   CREATE_SHORTCUTS,

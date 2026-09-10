@@ -28,7 +28,7 @@ import {
   parseMaintenanceOffer,
   selectedMaintenancePlan,
 } from '@/lib/proposals/maintenance'
-import { DEFAULT_PROPOSAL_LEGAL_TERMS } from '@/lib/proposals/proposal-acceptance'
+import { effectiveProposalTerms } from '@/lib/proposals/proposal-acceptance'
 import {
   PAYMENT_SCHEDULE_LABELS,
   type PaymentSchedule,
@@ -278,31 +278,31 @@ export default async function PortalProposalPage({
   // back-office for prospects that never went through onboarding.
   const clientBillingAddress = client
     ? formatAddress({
-        street: client.billing_address_street,
-        zip: client.billing_address_zip,
-        city: client.billing_address_city,
-        province: client.billing_address_province,
-        country: client.billing_address_country,
-      })
+      street: client.billing_address_street,
+      zip: client.billing_address_zip,
+      city: client.billing_address_city,
+      province: client.billing_address_province,
+      country: client.billing_address_country,
+    })
     : ''
   const needsFiscal = !client?.nif?.trim() || !clientBillingAddress || !client.name?.trim()
   const fiscalPrefill = client
     ? {
-        name: client.name ?? '',
-        nif: client.nif ?? '',
-        billing_address: clientBillingAddress,
-        contact_person: client.contact_person ?? '',
-        email: client.email ?? '',
-        phone: client.phone ?? '',
-      }
+      name: client.name ?? '',
+      nif: client.nif ?? '',
+      billing_address: clientBillingAddress,
+      contact_person: client.contact_person ?? '',
+      email: client.email ?? '',
+      phone: client.phone ?? '',
+    }
     : {
-        name: lead?.company ?? lead?.name ?? '',
-        nif: '',
-        billing_address: '',
-        contact_person: lead?.name ?? '',
-        email: lead?.email ?? '',
-        phone: lead?.phone ?? '',
-      }
+      name: lead?.company ?? lead?.name ?? '',
+      nif: '',
+      billing_address: '',
+      contact_person: lead?.name ?? '',
+      email: lead?.email ?? '',
+      phone: lead?.phone ?? '',
+    }
   const recipientName = client?.name ?? lead?.company ?? lead?.name ?? '—'
   const proposalNumber = (proposal.number as string | null) ?? 'Borrador'
   const baseItems = (items ?? []) as unknown as ProposalItem[]
@@ -316,6 +316,8 @@ export default async function PortalProposalPage({
   const problems = parseKeyPoints(proposal.problems)
   const solutions = parseKeyPoints(proposal.solutions)
   const terms = (proposal.terms as string | null) ?? null
+  const legalTerms = (proposal.legal_terms as string | null) ?? null
+  const contractualAnnex = effectiveProposalTerms(terms, legalTerms)
   const scopeModules = parseScopeModules(proposal.scope_modules)
   const deliverables = ((proposal.deliverables as string | null) ?? '').trim()
   const acceptanceCriteria = ((proposal.acceptance_criteria as string | null) ?? '').trim()
@@ -671,7 +673,7 @@ export default async function PortalProposalPage({
             </div>
           </div>
 
-          {paymentTerms || changeManagementTerms || terms ? (
+          {paymentTerms || changeManagementTerms ? (
             <div className="border-t border-zinc-100 bg-zinc-50 px-8 py-6 dark:border-zinc-800/60 dark:bg-zinc-900/50">
               <p className="mb-4 text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
                 Condiciones
@@ -700,11 +702,6 @@ export default async function PortalProposalPage({
                     </p>
                   </div>
                 ) : null}
-                {terms ? (
-                  <div className="lg:col-span-2">
-                    <Markdown source={terms} />
-                  </div>
-                ) : null}
               </div>
             </div>
           ) : null}
@@ -721,16 +718,6 @@ export default async function PortalProposalPage({
               />
             </div>
           ) : null}
-
-          <div className="border-t border-zinc-100 bg-zinc-50 px-8 py-6 dark:border-zinc-800/60 dark:bg-zinc-900/50">
-            <p className="mb-3 text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-              Condiciones generales de contratación
-            </p>
-            <Markdown
-              source={DEFAULT_PROPOSAL_LEGAL_TERMS}
-              className="text-xs leading-relaxed text-zinc-600 dark:text-zinc-400"
-            />
-          </div>
 
           {/* Technical specs */}
           {safeSpecs.length > 0 ? (
@@ -763,6 +750,7 @@ export default async function PortalProposalPage({
                 needsFiscal={needsFiscal}
                 fiscalPrefill={fiscalPrefill}
                 signerPrefill={client?.contact_person ?? lead?.name ?? ''}
+                legalTerms={contractualAnnex}
               />
             </div>
           ) : null}
@@ -842,6 +830,7 @@ export default async function PortalProposalPage({
             needsFiscal={needsFiscal}
             fiscalPrefill={fiscalPrefill}
             signerPrefill={client?.contact_person ?? lead?.name ?? ''}
+            legalTerms={contractualAnnex}
           />
         </div>
       ) : null}

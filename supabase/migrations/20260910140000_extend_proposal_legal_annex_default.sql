@@ -1,8 +1,7 @@
-import { createHash } from 'node:crypto'
-
-export const PROPOSAL_ACCEPTANCE_VERSION = 'doscientos-proposal-acceptance-v2'
-
-export const DEFAULT_PROPOSAL_LEGAL_TERMS = `1. **Contrato, partes y alcance.** La aceptación electrónica de esta propuesta, junto con sus anexos y condiciones particulares, formaliza el encargo entre Doscientos y el Cliente identificados en ella. Quien firma declara disponer de facultades suficientes para representar al Cliente. Solo están incluidos los trabajos y entregables descritos expresamente; cualquier cambio requerirá aceptación previa por escrito y, cuando proceda, presupuesto adicional.
+-- Only changes the default for new drafts. Issued and signed proposal terms
+-- are intentionally preserved as contractual and evidentiary records.
+alter table public.proposals
+  alter column legal_terms set default $$1. **Contrato, partes y alcance.** La aceptación electrónica de esta propuesta, junto con sus anexos y condiciones particulares, formaliza el encargo entre Doscientos y el Cliente identificados en ella. Quien firma declara disponer de facultades suficientes para representar al Cliente. Solo están incluidos los trabajos y entregables descritos expresamente; cualquier cambio requerirá aceptación previa por escrito y, cuando proceda, presupuesto adicional.
 
 2. **Vigencia, prelación y modificaciones.** La propuesta podrá aceptarse hasta la fecha de validez indicada. En caso de contradicción, prevalecerán por este orden: las condiciones particulares de la propuesta, sus anexos, estas condiciones generales y, por último, cualquier comunicación previa. Las modificaciones, aprobaciones, renuncias o ampliaciones de alcance solo serán válidas si constan por escrito en un canal de comunicación acordado.
 
@@ -32,70 +31,4 @@ export const DEFAULT_PROPOSAL_LEGAL_TERMS = `1. **Contrato, partes y alcance.** 
 
 15. **Comunicaciones, cesión y separabilidad.** Las comunicaciones operativas y las notificaciones se realizarán por los correos electrónicos y canales indicados en la propuesta o posteriormente acordados por escrito. El Cliente no podrá ceder el encargo sin autorización previa de Doscientos; Doscientos podrá cederlo a una entidad sucesora o vinculada que asuma estas obligaciones, informando al Cliente cuando resulte exigible. La nulidad de una cláusula no afectará a las restantes, que conservarán su eficacia. La tolerancia o falta de ejercicio de un derecho no supone renuncia a él.
 
-16. **Ley aplicable y consumidores.** Para relaciones entre empresas, las partes se someten a la legislación española y a los juzgados y tribunales de Barcelona. Si el Cliente actúa como consumidor, se aplicarán la información precontractual, derechos de desistimiento, garantías y fueros imperativos que correspondan; cualquier inicio anticipado de servicios o contenido digital requerirá las solicitudes y consentimientos expresos legalmente exigibles.`
-
-export const PROPOSAL_ACCEPTANCE_CONSENT =
-  'Declaro que tengo capacidad suficiente para representar al Cliente y acepto íntegramente la propuesta, sus condiciones particulares y el anexo contractual.'
-
-type ProposalAcceptanceSource = Record<string, unknown>
-
-type ProposalAcceptanceItem = {
-  id: string
-  description: string
-  quantity: number
-  unit_price: number
-  vat_rate: number
-  subtotal: number
-  billing_cycle: string | null
-}
-
-export function effectiveProposalTerms(terms: string | null, legalTerms?: string | null): string {
-  const particularTerms = terms?.trim()
-  const generalTerms = legalTerms?.trim() || DEFAULT_PROPOSAL_LEGAL_TERMS
-  return particularTerms
-    ? `${particularTerms}\n\n${generalTerms}`
-    : generalTerms
-}
-
-/** Creates a deterministic, self-contained record of the document accepted by the client. */
-export function proposalAcceptanceSnapshot(
-  proposal: ProposalAcceptanceSource,
-  items: ProposalAcceptanceItem[],
-  fiscalData: unknown,
-) {
-  return {
-    version: PROPOSAL_ACCEPTANCE_VERSION,
-    proposal: {
-      id: proposal.id ?? null,
-      number: proposal.number ?? null,
-      title: proposal.title ?? null,
-      currency: proposal.currency ?? 'EUR',
-      subtotal: proposal.subtotal ?? null,
-      tax_amount: proposal.tax_amount ?? null,
-      total: proposal.total ?? null,
-      valid_until: proposal.valid_until ?? null,
-      context_markdown: proposal.context_markdown ?? null,
-      problems: proposal.problems ?? null,
-      solutions: proposal.solutions ?? null,
-      scope_modules: proposal.scope_modules ?? null,
-      deliverables: proposal.deliverables ?? null,
-      acceptance_criteria: proposal.acceptance_criteria ?? null,
-      payment_schedule: proposal.payment_schedule ?? null,
-      payment_plan: proposal.payment_plan ?? null,
-      payment_terms: proposal.payment_terms ?? null,
-      change_management_terms: proposal.change_management_terms ?? null,
-      maintenance_options: proposal.maintenance_options ?? null,
-      maintenance_selected_plan_id: proposal.maintenance_selected_plan_id ?? null,
-      terms: proposal.terms ?? null,
-      legal_terms:
-        (proposal.legal_terms as string | null) ?? DEFAULT_PROPOSAL_LEGAL_TERMS,
-      notes: proposal.notes ?? null,
-      items,
-    },
-    fiscal_data: fiscalData ?? null,
-  }
-}
-
-export function proposalAcceptanceHash(snapshot: unknown): string {
-  return createHash('sha256').update(JSON.stringify(snapshot)).digest('hex')
-}
+16. **Ley aplicable y consumidores.** Para relaciones entre empresas, las partes se someten a la legislación española y a los juzgados y tribunales de Barcelona. Si el Cliente actúa como consumidor, se aplicarán la información precontractual, derechos de desistimiento, garantías y fueros imperativos que correspondan; cualquier inicio anticipado de servicios o contenido digital requerirá las solicitudes y consentimientos expresos legalmente exigibles.$$;

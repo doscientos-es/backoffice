@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
+} from '@doscientos/ui'
 import { MemberLabel } from '@/components/ui/member-avatar'
 import { interactionBodyText } from '@/lib/leads/interaction-utils'
 import type { LeadDetailInteraction } from '@/lib/leads/types'

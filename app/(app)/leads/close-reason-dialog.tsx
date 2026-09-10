@@ -9,7 +9,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@doscientos/ui'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 

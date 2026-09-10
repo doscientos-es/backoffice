@@ -17,7 +17,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@doscientos/ui'
 import { userVerificationScope } from '@/lib/security/user-verification-scope'
 import {
   completePasskeyAuthentication,

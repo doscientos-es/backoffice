@@ -23,7 +23,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@doscientos/ui'
 import { FormRow } from '@/components/ui/form-row'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'

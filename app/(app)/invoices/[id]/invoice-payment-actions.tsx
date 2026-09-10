@@ -11,7 +11,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@doscientos/ui'
 import { IconButton } from '@/components/ui/icon-button'
 import { Label } from '@/components/ui/label'
 import { PAYMENT_METHOD_LABELS, type PaymentMethodType } from '@/lib/schemas/invoice'

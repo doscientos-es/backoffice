@@ -2,24 +2,55 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { DEFAULT_MAINTENANCE_OFFER } from '@/lib/proposals/maintenance'
 
-const { createProposalDraftInvoices, sendProposalAcceptedEmail } = vi.hoisted(() => ({
+const {
+  createProposalDraftInvoices,
+  createRedsysPayment,
+  isPortalUnlocked,
+  sendProposalAcceptedEmail,
+} = vi.hoisted(() => ({
   createProposalDraftInvoices: vi.fn(async () => ({ ids: [], created: 0 })),
+  createRedsysPayment: vi.fn(() => ({
+    Ds_SignatureVersion: 'HMAC_SHA256_V1',
+    Ds_MerchantParameters: 'params',
+    Ds_Signature: 'signature',
+  })),
+  isPortalUnlocked: vi.fn(async () => true),
   sendProposalAcceptedEmail: vi.fn(async () => undefined),
 }))
 
 const revalidatePath = vi.fn()
 vi.mock('next/cache', () => ({ revalidatePath }))
 vi.mock('next/headers', () => ({ headers: async () => new Headers({ 'user-agent': 'vitest' }) }))
+vi.mock('@/lib/email/app-url', () => ({ externalAppUrl: () => 'https://app.example.test' }))
+vi.mock('@/lib/env', () => ({
+  isGoogleEnabled: () => false,
+  publicEnv: { NEXT_PUBLIC_APP_URL: 'https://app.example.test' },
+  serverEnv: () => ({
+    LOG_LEVEL: 'info',
+    REDSYS_MERCHANT_CODE: 'merchant',
+    REDSYS_TERMINAL: '1',
+    REDSYS_CURRENCY: '978',
+  }),
+}))
 vi.mock('@/lib/invoices/proposal-drafts', () => ({ createProposalDraftInvoices }))
 vi.mock('@/lib/integrations/send-proposal-accepted-email', () => ({ sendProposalAcceptedEmail }))
+vi.mock('@/lib/integrations/redsys', () => ({
+  createRedsysPayment,
+  getRedsysUrl: () => 'https://redsys.example.test',
+}))
 vi.mock('@/lib/portal/access', () => ({
-  isPortalUnlocked: async () => true,
+  isPortalUnlocked,
   unlockPortalResource: vi.fn(),
 }))
 
 type ProposalRow = {
   id: string
   status: string
+  valid_until?: string | null
+  is_client_visible?: boolean | null
+  portal_password_hash?: string | null
+  total?: number
+  payment_schedule?: string
   maintenance_options?: unknown
   lead_id?: string | null
   client_id?: string | null
@@ -31,7 +62,7 @@ type ProposalRow = {
 } | null
 type FetchResult = { data: ProposalRow; error: unknown }
 type UpdateResult = { error: unknown }
-type RpcResult = { error: unknown }
+type RpcResult = { data?: unknown; error: unknown }
 
 const state: {
   fetchResult: FetchResult
@@ -107,6 +138,7 @@ const COMPLETE_CLIENT = {
 }
 
 let acceptProposal: typeof import('./actions').acceptProposal
+let initiateProposalPayment: typeof import('./actions').initiateProposalPayment
 let rejectProposal: typeof import('./actions').rejectProposal
 let selectProposalMaintenance: typeof import('./actions').selectProposalMaintenance
 let sendProposalQuestion: typeof import('./actions').sendProposalQuestion
@@ -114,6 +146,7 @@ let sendProposalQuestion: typeof import('./actions').sendProposalQuestion
 beforeAll(async () => {
   const actions = await import('./actions')
   acceptProposal = actions.acceptProposal
+  initiateProposalPayment = actions.initiateProposalPayment
   rejectProposal = actions.rejectProposal
   selectProposalMaintenance = actions.selectProposalMaintenance
   sendProposalQuestion = actions.sendProposalQuestion
@@ -128,6 +161,9 @@ describe('portal proposal actions', () => {
     state.lastUpdateId = null
     state.lastRpc = null
     createProposalDraftInvoices.mockClear()
+    createRedsysPayment.mockClear()
+    isPortalUnlocked.mockReset()
+    isPortalUnlocked.mockResolvedValue(true)
     sendProposalAcceptedEmail.mockClear()
     revalidatePath.mockClear()
   })
@@ -176,6 +212,56 @@ describe('portal proposal actions', () => {
       ok: false,
       error: 'Propuesta expirada',
     })
+
+    state.fetchResult = {
+      data: { id: 'p1', status: 'sent', valid_until: '2000-01-01' },
+      error: null,
+    }
+    expect(await acceptProposal(VALID_TOKEN, SIGNATURE)).toEqual({
+      ok: false,
+      error: 'Propuesta expirada',
+    })
+    expect(state.lastRpc).toBeNull()
+  })
+
+  it('requires an unlocked, visible portal for every public mutation', async () => {
+    state.fetchResult = {
+      data: {
+        id: 'p1',
+        status: 'sent',
+        is_client_visible: true,
+        portal_password_hash: 'protected',
+        maintenance_options: DEFAULT_MAINTENANCE_OFFER,
+      },
+      error: null,
+    }
+    isPortalUnlocked.mockResolvedValue(false)
+
+    await expect(rejectProposal(VALID_TOKEN)).resolves.toEqual({
+      ok: false,
+      error: 'Vuelve a introducir la contraseña del portal',
+    })
+    await expect(selectProposalMaintenance(VALID_TOKEN, 'growth')).resolves.toEqual({
+      ok: false,
+      error: 'Vuelve a introducir la contraseña del portal',
+    })
+    await expect(sendProposalQuestion(VALID_TOKEN, '¿Incluye soporte?')).resolves.toEqual({
+      ok: false,
+      error: 'Vuelve a introducir la contraseña del portal',
+    })
+    state.fetchResult = {
+      data: {
+        id: '494d62cb-fd56-4650-b131-9e3a927a20ad',
+        status: 'accepted',
+        is_client_visible: true,
+        portal_password_hash: 'protected',
+      },
+      error: null,
+    }
+    await expect(
+      initiateProposalPayment('494d62cb-fd56-4650-b131-9e3a927a20ad', VALID_TOKEN),
+    ).resolves.toEqual({ ok: false, error: 'Propuesta no disponible para pago' })
+    expect(state.lastPatch).toBeNull()
   })
 
   it('accepts a sent proposal and revalidates the portal path', async () => {
@@ -190,7 +276,7 @@ describe('portal proposal actions', () => {
     expect(state.lastRpc?.args).toMatchObject({
       p_proposal_id: 'p1',
       p_signer_name: 'Ana Gómez',
-      p_evidence_version: 'doscientos-proposal-acceptance-v1',
+      p_evidence_version: 'doscientos-proposal-acceptance-v2',
       p_document_hash: expect.stringMatching(/^[a-f0-9]{64}$/),
     })
     expect(createProposalDraftInvoices).toHaveBeenCalledWith(expect.anything(), 'p1', null)
@@ -202,9 +288,12 @@ describe('portal proposal actions', () => {
 
     const result = await rejectProposal(VALID_TOKEN, 'No es lo que buscamos')
     expect(result).toEqual({ ok: true })
-    expect(state.lastPatch?.status).toBe('rejected')
-    expect(state.lastPatch?.signature_data).toEqual({
-      rejection_reason: 'No es lo que buscamos',
+    expect(state.lastRpc).toMatchObject({
+      name: 'reject_proposal_from_portal',
+      args: {
+        p_proposal_id: 'p2',
+        p_rejection_reason: 'No es lo que buscamos',
+      },
     })
   })
 
@@ -212,7 +301,10 @@ describe('portal proposal actions', () => {
     state.fetchResult = { data: { id: 'p3', status: 'sent' }, error: null }
 
     await rejectProposal(VALID_TOKEN)
-    expect(state.lastPatch?.signature_data).toBeUndefined()
+    expect(state.lastRpc).toMatchObject({
+      name: 'reject_proposal_from_portal',
+      args: { p_rejection_reason: null },
+    })
   })
 
   it('surfaces acceptance evidence persistence errors', async () => {
@@ -242,5 +334,49 @@ describe('portal proposal actions', () => {
       error: 'El mantenimiento no está disponible en esta propuesta',
     })
     expect(state.lastPatch).toBeNull()
+  })
+
+  it('creates exactly the agreed deposit through the atomic payment RPC', async () => {
+    state.fetchResult = {
+      data: {
+        id: '494d62cb-fd56-4650-b131-9e3a927a20ad',
+        status: 'accepted',
+        total: 1_000,
+        payment_schedule: 'half_half',
+      },
+      error: null,
+    }
+    state.rpcResult = { data: [{ redsys_order: '1234567890' }], error: null }
+
+    await expect(
+      initiateProposalPayment('494d62cb-fd56-4650-b131-9e3a927a20ad', VALID_TOKEN),
+    ).resolves.toMatchObject({ ok: true, url: 'https://redsys.example.test' })
+    expect(state.lastRpc).toEqual({
+      name: 'create_proposal_deposit_payment',
+      args: { p_proposal_id: '494d62cb-fd56-4650-b131-9e3a927a20ad', p_amount: 500 },
+    })
+    expect(createRedsysPayment).toHaveBeenCalledWith(
+      expect.objectContaining({ Ds_Merchant_Amount: '50000', Ds_Merchant_Order: '1234567890' }),
+    )
+  })
+
+  it('returns the atomic duplicate-deposit error without creating a gateway request', async () => {
+    state.fetchResult = {
+      data: {
+        id: '494d62cb-fd56-4650-b131-9e3a927a20ad',
+        status: 'accepted',
+        total: 1_000,
+        payment_schedule: 'half_half',
+      },
+      error: null,
+    }
+    state.rpcResult = {
+      error: { message: 'Ya existe un pago de señal pendiente o confirmado' },
+    }
+
+    await expect(
+      initiateProposalPayment('494d62cb-fd56-4650-b131-9e3a927a20ad', VALID_TOKEN),
+    ).resolves.toEqual({ ok: false, error: 'Ya existe un pago de señal pendiente o confirmado' })
+    expect(createRedsysPayment).not.toHaveBeenCalled()
   })
 })

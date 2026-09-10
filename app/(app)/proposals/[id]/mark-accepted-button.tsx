@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
+} from '@doscientos/ui'
 import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -68,13 +68,13 @@ export function MarkAcceptedButton({
         id: proposalId,
         fiscal: needsFiscal
           ? {
-              name: fiscal.name.trim(),
-              nif: fiscal.nif.trim(),
-              billing_address: fiscal.billing_address.trim(),
-              contact_person: fiscal.contact_person.trim() || undefined,
-              email: fiscal.email.trim() || undefined,
-              phone: fiscal.phone.trim() || undefined,
-            }
+            name: fiscal.name.trim(),
+            nif: fiscal.nif.trim(),
+            billing_address: fiscal.billing_address.trim(),
+            contact_person: fiscal.contact_person.trim() || undefined,
+            email: fiscal.email.trim() || undefined,
+            phone: fiscal.phone.trim() || undefined,
+          }
           : undefined,
       })
       if (!res.ok) {

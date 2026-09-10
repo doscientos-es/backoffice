@@ -39,7 +39,7 @@ describe('proposal PDF helpers', () => {
       paymentSchedule: 'half_half',
       paymentTerms: '50 % al aceptar y 50 % a la entrega.',
       changeManagementTerms: 'Los cambios fuera de alcance se presupuestan aparte.',
-      terms: null,
+      legalTerms: 'Condiciones generales de contratación.',
       notes: null,
       subtotal: 1000,
       taxAmount: 210,

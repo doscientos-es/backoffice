@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from 'react'
 
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@doscientos/ui'
 import { FormRow } from '@/components/ui/form-row'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'

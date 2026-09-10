@@ -171,7 +171,7 @@ describe('GET /p/proposal/[token]/pdf', () => {
       expect.objectContaining({
         title: 'Título firmado',
         recipientName: 'Acme SL',
-        terms: 'Condiciones firmadas',
+        legalTerms: 'Condiciones firmadas',
         items: [expect.objectContaining({ description: 'Implementación firmada' })],
         acceptance: {
           signerName: 'Ana Gómez',

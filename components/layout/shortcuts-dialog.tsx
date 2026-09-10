@@ -8,7 +8,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@doscientos/ui'
 import { Kbd, KbdGroup } from '@doscientos/ui'
 import { CREATE_SHORTCUTS, NAV_SHORTCUTS } from '@/lib/navigation/shortcuts'
 

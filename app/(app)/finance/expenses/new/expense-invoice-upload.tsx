@@ -4,7 +4,7 @@ import { Check, FileText, LoaderCircle as Loader2, Paperclip, Sparkles, X } from
 import { useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@doscientos/ui'
 import type { ExpenseInvoiceSuggestion } from '@/lib/finance/invoice-extraction'
 
 export type InvoiceExtractionMeta = {
@@ -120,97 +120,97 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange 
 
   return (
     <>
-    <div className="border-border bg-muted/20 flex flex-col gap-2 rounded-lg border border-dashed p-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <input
-          ref={inputRef}
-          type="file"
-          accept="application/pdf,image/jpeg,image/png,image/webp"
-          className="sr-only"
-          aria-label="Factura en PDF o foto"
-          onChange={(e) => {
-            const file = e.target.files?.[0]
-            if (file) void handleFile(file)
-          }}
-        />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => inputRef.current?.click()}
-          disabled={busy}
-        >
-          {busy ? (
-            <Loader2 className="size-3.5 animate-spin" />
-          ) : (
-            <Paperclip className="size-3.5" />
-          )}
-          {phase === 'uploading'
-            ? 'Subiendo…'
-            : phase === 'extracting'
-              ? 'Analizando…'
-              : fileName
-                ? 'Cambiar factura'
-                : 'Adjuntar factura (PDF o foto)'}
-        </Button>
-        {fileName ? (
-          <span className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-sm">
-            <FileText className="size-3.5 shrink-0" />
-            <span className="max-w-64 truncate">{fileName}</span>
-          </span>
-        ) : null}
-        {phase === 'done' ? (
-          <Button type="button" variant="ghost" size="sm" onClick={clear}>
-            <X className="size-3.5" />
-            Quitar
+      <div className="border-border bg-muted/20 flex flex-col gap-2 rounded-lg border border-dashed p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            ref={inputRef}
+            type="file"
+            accept="application/pdf,image/jpeg,image/png,image/webp"
+            className="sr-only"
+            aria-label="Factura en PDF o foto"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) void handleFile(file)
+            }}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => inputRef.current?.click()}
+            disabled={busy}
+          >
+            {busy ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Paperclip className="size-3.5" />
+            )}
+            {phase === 'uploading'
+              ? 'Subiendo…'
+              : phase === 'extracting'
+                ? 'Analizando…'
+                : fileName
+                  ? 'Cambiar factura'
+                  : 'Adjuntar factura (PDF o foto)'}
           </Button>
+          {fileName ? (
+            <span className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-sm">
+              <FileText className="size-3.5 shrink-0" />
+              <span className="max-w-64 truncate">{fileName}</span>
+            </span>
+          ) : null}
+          {phase === 'done' ? (
+            <Button type="button" variant="ghost" size="sm" onClick={clear}>
+              <X className="size-3.5" />
+              Quitar
+            </Button>
+          ) : null}
+        </div>
+        {phase === 'idle' && !fileName ? (
+          <p className="text-muted-foreground text-xs">
+            Sube la factura en PDF o como foto y rellenaremos el formulario con sus datos. Quedará adjunta al
+            gasto al crearlo.
+          </p>
+        ) : null}
+        {meta ? (
+          <p className="text-muted-foreground text-xs">
+            {meta.source === 'ai'
+              ? 'Datos aplicados con IA. Revísalos antes de crear el gasto.'
+              : 'Datos aplicados con reglas locales. Revísalos antes de crear el gasto.'}
+          </p>
+        ) : null}
+        {meta?.warning ? (
+          <p className="text-sm text-amber-700 dark:text-amber-300">{meta.warning}</p>
+        ) : null}
+        {extractFailed ? (
+          <p className="text-sm text-amber-700 dark:text-amber-300">
+            No se pudieron extraer datos de la factura. El PDF quedará adjunto al gasto.
+          </p>
+        ) : null}
+        {error ? (
+          <p role="alert" className="text-destructive text-sm">
+            {error}
+          </p>
         ) : null}
       </div>
-      {phase === 'idle' && !fileName ? (
-        <p className="text-muted-foreground text-xs">
-          Sube la factura en PDF o como foto y rellenaremos el formulario con sus datos. Quedará adjunta al
-          gasto al crearlo.
-        </p>
-      ) : null}
-      {meta ? (
-        <p className="text-muted-foreground text-xs">
-          {meta.source === 'ai'
-            ? 'Datos aplicados con IA. Revísalos antes de crear el gasto.'
-            : 'Datos aplicados con reglas locales. Revísalos antes de crear el gasto.'}
-        </p>
-      ) : null}
-      {meta?.warning ? (
-        <p className="text-sm text-amber-700 dark:text-amber-300">{meta.warning}</p>
-      ) : null}
-      {extractFailed ? (
-        <p className="text-sm text-amber-700 dark:text-amber-300">
-          No se pudieron extraer datos de la factura. El PDF quedará adjunto al gasto.
-        </p>
-      ) : null}
-      {error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {error}
-        </p>
-      ) : null}
-    </div>
-    <Dialog open={scanOpen} onOpenChange={setScanOpen}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><Sparkles className="text-primary size-5" /> Factura analizada</DialogTitle>
-          <DialogDescription>He encontrado datos que puedo importar al nuevo gasto. Revisa el resultado antes de aceptarlo.</DialogDescription>
-        </DialogHeader>
-        {!suggestion ? <div className="flex flex-col items-center gap-4 py-8 text-center"><Loader2 className="text-primary size-10 animate-spin" /><p className="font-medium">Escaneando factura…</p><p className="text-muted-foreground text-sm">Estoy leyendo proveedor, fecha e importes.</p></div> : <div className="bg-muted/40 grid gap-2 rounded-lg p-4 text-sm">
-          {suggestion.vendor && <div className="flex justify-between"><span className="text-muted-foreground">Proveedor</span><span className="font-medium">{suggestion.vendor}</span></div>}
-          {suggestion.invoice_reference && <div className="flex justify-between"><span className="text-muted-foreground">Factura</span><span>{suggestion.invoice_reference}</span></div>}
-          {suggestion.expense_date && <div className="flex justify-between"><span className="text-muted-foreground">Fecha</span><span>{suggestion.expense_date}</span></div>}
-          {suggestion.subtotal !== null && <div className="flex justify-between"><span className="text-muted-foreground">Base imponible</span><span>{suggestion.subtotal} €</span></div>}
-        </div>}
-        {suggestion ? <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => setScanOpen(false)}>Rellenar a mano</Button>
-          <Button type="button" onClick={() => { if (suggestion) onExtracted(suggestion, { source: meta?.source ?? 'rules', warning: meta?.warning ?? null }); setScanOpen(false) }}><Check className="size-4" /> Importar datos</Button>
-        </DialogFooter> : null}
-      </DialogContent>
-    </Dialog>
+      <Dialog open={scanOpen} onOpenChange={setScanOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Sparkles className="text-primary size-5" /> Factura analizada</DialogTitle>
+            <DialogDescription>He encontrado datos que puedo importar al nuevo gasto. Revisa el resultado antes de aceptarlo.</DialogDescription>
+          </DialogHeader>
+          {!suggestion ? <div className="flex flex-col items-center gap-4 py-8 text-center"><Loader2 className="text-primary size-10 animate-spin" /><p className="font-medium">Escaneando factura…</p><p className="text-muted-foreground text-sm">Estoy leyendo proveedor, fecha e importes.</p></div> : <div className="bg-muted/40 grid gap-2 rounded-lg p-4 text-sm">
+            {suggestion.vendor && <div className="flex justify-between"><span className="text-muted-foreground">Proveedor</span><span className="font-medium">{suggestion.vendor}</span></div>}
+            {suggestion.invoice_reference && <div className="flex justify-between"><span className="text-muted-foreground">Factura</span><span>{suggestion.invoice_reference}</span></div>}
+            {suggestion.expense_date && <div className="flex justify-between"><span className="text-muted-foreground">Fecha</span><span>{suggestion.expense_date}</span></div>}
+            {suggestion.subtotal !== null && <div className="flex justify-between"><span className="text-muted-foreground">Base imponible</span><span>{suggestion.subtotal} €</span></div>}
+          </div>}
+          {suggestion ? <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setScanOpen(false)}>Rellenar a mano</Button>
+            <Button type="button" onClick={() => { if (suggestion) onExtracted(suggestion, { source: meta?.source ?? 'rules', warning: meta?.warning ?? null }); setScanOpen(false) }}><Check className="size-4" /> Importar datos</Button>
+          </DialogFooter> : null}
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

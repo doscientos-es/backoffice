@@ -5,7 +5,7 @@ import { useEffect, useState, useTransition } from 'react'
 
 import { scheduleLeadMeeting } from '@/app/(app)/leads/actions'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@doscientos/ui'
 import { EntityCombobox } from '@/components/ui/entity-combobox'
 import { EntityMultiCombobox } from '@/components/ui/entity-multi-combobox'
 import { createCalendarEvent } from '@/lib/calendar/actions'

@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
+} from '@doscientos/ui'
 import { AEAT_VERIFACTU_ERROR_CATALOG_URL, getAeatErrorMetadata } from '@/lib/verifactu/aeat-errors'
 
 type VerifactuIssueStatus = 'error' | 'rejected'

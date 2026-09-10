@@ -13,7 +13,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@doscientos/ui'
 import { useFormFeedback } from '@/components/ui/form-feedback'
 import { userVerificationScope } from '@/lib/security/user-verification-scope'
 import { grantUserVerificationFromMfa } from '@/lib/security/webauthn-actions'

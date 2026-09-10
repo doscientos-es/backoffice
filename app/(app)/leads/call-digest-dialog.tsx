@@ -18,7 +18,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@doscientos/ui'
 import { cn } from '@/lib/utils'
 
 import { createTask } from '../tasks/actions'

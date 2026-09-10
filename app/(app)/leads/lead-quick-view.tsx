@@ -41,7 +41,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
+} from '@doscientos/ui'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { MemberLabel } from '@/components/ui/member-avatar'
 import { StatusBadge } from '@/components/ui/status-badge'
@@ -273,37 +273,37 @@ function Body({
           lead.last_utm_source ||
           lead.last_utm_campaign ||
           campaignName) && (
-          <section className="flex flex-col gap-1.5 text-xs">
-            <Heading>Atribución</Heading>
-            {(lead.last_utm_source || lead.source) && (
-              <Row icon={<ArrowUpRight className="size-3.5" />}>
-                Fuente: {lead.last_utm_source || lead.source}
-              </Row>
-            )}
-            {campaignName && (
-              <Row icon={<ArrowUpRight className="size-3.5" />}>Campaña: {campaignName}</Row>
-            )}
-            {requiresCyaProspectSoftwareCommission(campaignName) && (
-              <Row icon={<TriangleAlert className="size-3.5" />}>
-                Comisión CYA: 20 % de lo ganado
-              </Row>
-            )}
-            {(lead.first_landing_path || lead.landing_path) && (
-              <Row icon={<ArrowUpRight className="size-3.5" />}>
-                Entrada: {lead.first_landing_path || lead.landing_path}
-              </Row>
-            )}
-            {lead.conversion_step && (
-              <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.conversion_step}</Row>
-            )}
-            {lead.landing_ref && (
-              <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_ref}</Row>
-            )}
-            {lead.landing_subject && (
-              <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_subject}</Row>
-            )}
-          </section>
-        )}
+            <section className="flex flex-col gap-1.5 text-xs">
+              <Heading>Atribución</Heading>
+              {(lead.last_utm_source || lead.source) && (
+                <Row icon={<ArrowUpRight className="size-3.5" />}>
+                  Fuente: {lead.last_utm_source || lead.source}
+                </Row>
+              )}
+              {campaignName && (
+                <Row icon={<ArrowUpRight className="size-3.5" />}>Campaña: {campaignName}</Row>
+              )}
+              {requiresCyaProspectSoftwareCommission(campaignName) && (
+                <Row icon={<TriangleAlert className="size-3.5" />}>
+                  Comisión CYA: 20 % de lo ganado
+                </Row>
+              )}
+              {(lead.first_landing_path || lead.landing_path) && (
+                <Row icon={<ArrowUpRight className="size-3.5" />}>
+                  Entrada: {lead.first_landing_path || lead.landing_path}
+                </Row>
+              )}
+              {lead.conversion_step && (
+                <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.conversion_step}</Row>
+              )}
+              {lead.landing_ref && (
+                <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_ref}</Row>
+              )}
+              {lead.landing_subject && (
+                <Row icon={<ArrowUpRight className="size-3.5" />}>{lead.landing_subject}</Row>
+              )}
+            </section>
+          )}
         {lead.notes && (
           <section className="flex flex-col gap-1.5">
             <Heading>Notas</Heading>
