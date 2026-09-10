@@ -1,9 +1,10 @@
 'use client'
 
-import { FileText, LoaderCircle as Loader2, Paperclip, X } from 'lucide-react'
+import { Check, FileText, LoaderCircle as Loader2, Paperclip, Sparkles, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import type { ExpenseInvoiceSuggestion } from '@/lib/finance/invoice-extraction'
 
 export type InvoiceExtractionMeta = {
@@ -46,6 +47,8 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange 
   const [meta, setMeta] = useState<InvoiceExtractionMeta | null>(null)
   const [extractFailed, setExtractFailed] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [suggestion, setSuggestion] = useState<ExpenseInvoiceSuggestion | null>(null)
+  const [scanOpen, setScanOpen] = useState(false)
 
   const busy = phase === 'uploading' || phase === 'extracting'
 
@@ -68,6 +71,7 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange 
       onAttached({ id: uploadJson.id, name: file.name })
 
       setPhase('extracting')
+      setScanOpen(true)
       const extractRes = await fetch('/api/expenses/extract-invoice', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -85,7 +89,8 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange 
           warning: extractJson.warning ?? null,
         }
         setMeta(m)
-        onExtracted(extractJson.suggestion, m)
+        setSuggestion(extractJson.suggestion)
+        setScanOpen(true)
       } else {
         // Non-blocking: the PDF stays attached and the form can be filled by hand.
         setExtractFailed(true)
@@ -107,11 +112,14 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange 
     setMeta(null)
     setExtractFailed(false)
     setError(null)
+    setSuggestion(null)
+    setScanOpen(false)
     setPhase('idle')
     onAttached(null)
   }
 
   return (
+    <>
     <div className="border-border bg-muted/20 flex flex-col gap-2 rounded-lg border border-dashed p-3">
       <div className="flex flex-wrap items-center gap-2">
         <input
@@ -185,5 +193,24 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange 
         </p>
       ) : null}
     </div>
+    <Dialog open={scanOpen} onOpenChange={setScanOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><Sparkles className="text-primary size-5" /> Factura analizada</DialogTitle>
+          <DialogDescription>He encontrado datos que puedo importar al nuevo gasto. Revisa el resultado antes de aceptarlo.</DialogDescription>
+        </DialogHeader>
+        {!suggestion ? <div className="flex flex-col items-center gap-4 py-8 text-center"><Loader2 className="text-primary size-10 animate-spin" /><p className="font-medium">Escaneando factura…</p><p className="text-muted-foreground text-sm">Estoy leyendo proveedor, fecha e importes.</p></div> : <div className="bg-muted/40 grid gap-2 rounded-lg p-4 text-sm">
+          {suggestion.vendor && <div className="flex justify-between"><span className="text-muted-foreground">Proveedor</span><span className="font-medium">{suggestion.vendor}</span></div>}
+          {suggestion.invoice_reference && <div className="flex justify-between"><span className="text-muted-foreground">Factura</span><span>{suggestion.invoice_reference}</span></div>}
+          {suggestion.expense_date && <div className="flex justify-between"><span className="text-muted-foreground">Fecha</span><span>{suggestion.expense_date}</span></div>}
+          {suggestion.subtotal !== null && <div className="flex justify-between"><span className="text-muted-foreground">Base imponible</span><span>{suggestion.subtotal} €</span></div>}
+        </div>}
+        {suggestion ? <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => setScanOpen(false)}>Rellenar a mano</Button>
+          <Button type="button" onClick={() => { if (suggestion) onExtracted(suggestion, { source: meta?.source ?? 'rules', warning: meta?.warning ?? null }); setScanOpen(false) }}><Check className="size-4" /> Importar datos</Button>
+        </DialogFooter> : null}
+      </DialogContent>
+    </Dialog>
+    </>
   )
 }

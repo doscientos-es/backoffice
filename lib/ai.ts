@@ -11,7 +11,7 @@ import { createVertex } from '@ai-sdk/google-vertex'
  *      · Vercel/prod → Service Account vía GOOGLE_SA_CLIENT_EMAIL + GOOGLE_SA_PRIVATE_KEY_BASE64
  *        (no hay ADC ni metadata server en serverless, hay que pasar las credenciales).
  */
-import { generateText, type LanguageModel, type LanguageModelUsage, Output } from 'ai'
+import { generateText, type LanguageModel, type LanguageModelUsage, type ModelMessage, Output } from 'ai'
 import type { z } from 'zod'
 
 import { isAIEnabled } from './env'
@@ -159,7 +159,7 @@ export type RunAIObjectInput<S extends z.ZodType> = {
   /** System prompt — define rol e instrucciones. */
   system: string
   /** User prompt — datos del caso concreto. */
-  user: string | Array<{ type: 'text'; text: string } | { type: 'image'; image: string }>
+  user: string | ModelMessage[]
   /** Schema Zod que valida y tipa la salida estructurada. */
   schema: S
   /** Temperatura del muestreo. Default 0.3. */

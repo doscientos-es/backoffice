@@ -123,13 +123,17 @@ export async function extractExpenseInvoice(
       const ai = await runAIObject({
         model: AI_MODELS.summarizer,
         system: `${SYSTEM_PROMPT}\nLa entrada es una foto. Lee el texto visible de la factura directamente de la imagen (OCR).`,
-        user: [
-          { type: 'text', text: 'Extrae los datos de esta factura fotografiada.' },
-          { type: 'image', image: `data:${mimeType};base64,${Buffer.from(bytes).toString('base64')}` },
-        ],
+        user: [{
+          role: 'user',
+          content: [
+            { type: 'text', text: 'Extrae los datos de esta factura fotografiada.' },
+            { type: 'image', image: `data:${mimeType};base64,${Buffer.from(bytes).toString('base64')}` },
+          ],
+        }],
         schema: ExpenseInvoiceSuggestionSchema,
         temperature: 0,
-        maxOutputTokens: 600,
+        // Keep the response deliberately small: only the fields in the schema are needed.
+        maxOutputTokens: 400,
       })
       return { suggestion: ai, source: 'ai', warning: null }
     } catch {
@@ -170,7 +174,7 @@ export async function extractExpenseInvoice(
       user: `Texto de la factura:\n${text}`,
       schema: ExpenseInvoiceSuggestionSchema,
       temperature: 0,
-      maxOutputTokens: 600,
+      maxOutputTokens: 400,
     })
 
     return {

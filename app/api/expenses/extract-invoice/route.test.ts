@@ -90,14 +90,14 @@ describe('POST /api/expenses/extract-invoice', () => {
     expect((await POST(request({ attachment_id: ID }))).status).toBe(403)
   })
 
-  it('rejects an attachment that is not a stored PDF', async () => {
+  it('accepts a stored invoice image for OCR', async () => {
     state.attachment = {
       id: ID,
       expense_id: 'expense-1',
       mime_type: 'image/jpeg',
       storage_path: 'expense/a.jpg',
     }
-    expect((await POST(request({ attachment_id: ID }))).status).toBe(400)
+    expect((await POST(request({ attachment_id: ID }))).status).toBe(200)
   })
 
   it('returns a reviewable suggestion without saving the expense', async () => {
