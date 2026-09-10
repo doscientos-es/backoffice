@@ -22,6 +22,18 @@ interface Props {
 
 type Phase = 'idle' | 'uploading' | 'extracting' | 'done'
 
+async function readJson<T>(response: Response): Promise<T> {
+  const contentType = response.headers.get('content-type') ?? ''
+  if (!contentType.includes('application/json')) {
+    throw new Error(
+      response.ok
+        ? 'El servidor devolvió una respuesta no válida'
+        : `Error del servidor (${response.status})`,
+    )
+  }
+  return (await response.json()) as T
+}
+
 /**
  * PDF picker for the new-expense form: uploads the invoice as an orphan
  * attachment (linked to the expense on create) and asks the server to extract
@@ -47,7 +59,7 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange 
       const formData = new FormData()
       formData.set('file', file)
       const uploadRes = await fetch('/api/attachments/upload', { method: 'POST', body: formData })
-      const uploadJson = (await uploadRes.json()) as { id?: string; error?: string }
+      const uploadJson = await readJson<{ id?: string; error?: string }>(uploadRes)
       if (!uploadRes.ok || !uploadJson.id) {
         throw new Error(uploadJson.error ?? 'No se pudo subir la factura')
       }
@@ -61,12 +73,12 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange 
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ attachment_id: uploadJson.id }),
       })
-      const extractJson = (await extractRes.json()) as {
+      const extractJson = await readJson<{
         suggestion?: ExpenseInvoiceSuggestion
         source?: 'ai' | 'rules'
         warning?: string | null
         error?: string
-      }
+      }>(extractRes)
       if (extractRes.ok && extractJson.suggestion) {
         const m: InvoiceExtractionMeta = {
           source: extractJson.source ?? 'rules',
@@ -105,9 +117,9 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange 
         <input
           ref={inputRef}
           type="file"
-          accept="application/pdf"
+          accept="application/pdf,image/jpeg,image/png,image/webp"
           className="sr-only"
-          aria-label="Factura en PDF"
+          aria-label="Factura en PDF o foto"
           onChange={(e) => {
             const file = e.target.files?.[0]
             if (file) void handleFile(file)
@@ -131,7 +143,7 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange 
               ? 'Analizando…'
               : fileName
                 ? 'Cambiar factura'
-                : 'Adjuntar factura (PDF)'}
+                : 'Adjuntar factura (PDF o foto)'}
         </Button>
         {fileName ? (
           <span className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-sm">
@@ -148,7 +160,7 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange 
       </div>
       {phase === 'idle' && !fileName ? (
         <p className="text-muted-foreground text-xs">
-          Sube la factura en PDF y rellenaremos el formulario con sus datos. Quedará adjunta al
+          Sube la factura en PDF o como foto y rellenaremos el formulario con sus datos. Quedará adjunta al
           gasto al crearlo.
         </p>
       ) : null}

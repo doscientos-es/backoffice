@@ -58,15 +58,13 @@ function deriveOrderKey(order: string): Buffer {
  * Generates the parameters and signature for a Redsys form.
  */
 export function createRedsysPayment(params: RedsysParams) {
-  // Redsys expects both values in URL-safe Base64. Standard Base64 is not
-  // safe in an application/x-www-form-urlencoded POST: `+` can be decoded as
-  // a space, and Redsys explicitly rejects `+`, `/` and `=` in the payload.
+  // SHA-256 redirect payments use the URL-safe alphabet, retaining Base64
+  // padding. Redsys includes the padded representation in its HMAC input.
   const toBase64Url = (value: Buffer | string) =>
     (Buffer.isBuffer(value) ? value : Buffer.from(value))
       .toString('base64')
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
-      .replace(/=+$/g, '')
 
   const merchantParameters = toBase64Url(JSON.stringify(params))
 

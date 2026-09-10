@@ -159,7 +159,7 @@ export type RunAIObjectInput<S extends z.ZodType> = {
   /** System prompt — define rol e instrucciones. */
   system: string
   /** User prompt — datos del caso concreto. */
-  user: string
+  user: string | Array<{ type: 'text'; text: string } | { type: 'image'; image: string }>
   /** Schema Zod que valida y tipa la salida estructurada. */
   schema: S
   /** Temperatura del muestreo. Default 0.3. */

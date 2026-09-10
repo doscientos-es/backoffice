@@ -107,7 +107,39 @@ function mergeSuggestion(
   }
 }
 
-export async function extractExpenseInvoice(bytes: ArrayBuffer): Promise<ExpenseInvoiceExtraction> {
+export async function extractExpenseInvoice(
+  bytes: ArrayBuffer,
+  mimeType = 'application/pdf',
+): Promise<ExpenseInvoiceExtraction> {
+  if (mimeType.startsWith('image/')) {
+    if (!isAIEnabled()) {
+      return {
+        suggestion: ExpenseInvoiceSuggestionSchema.parse({}),
+        source: 'rules',
+        warning: 'La IA no está configurada; la foto quedará adjunta y puedes rellenar los datos a mano.',
+      }
+    }
+    try {
+      const ai = await runAIObject({
+        model: AI_MODELS.summarizer,
+        system: `${SYSTEM_PROMPT}\nLa entrada es una foto. Lee el texto visible de la factura directamente de la imagen (OCR).`,
+        user: [
+          { type: 'text', text: 'Extrae los datos de esta factura fotografiada.' },
+          { type: 'image', image: `data:${mimeType};base64,${Buffer.from(bytes).toString('base64')}` },
+        ],
+        schema: ExpenseInvoiceSuggestionSchema,
+        temperature: 0,
+        maxOutputTokens: 600,
+      })
+      return { suggestion: ai, source: 'ai', warning: null }
+    } catch {
+      return {
+        suggestion: ExpenseInvoiceSuggestionSchema.parse({}),
+        source: 'rules',
+        warning: 'No se pudo leer el texto de la foto. La imagen quedará adjunta para revisarla manualmente.',
+      }
+    }
+  }
   const extracted = await extractPdfPages(bytes)
   const text = extracted.pages
     .map((page) => page.content)

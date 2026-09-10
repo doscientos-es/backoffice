@@ -48,8 +48,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (!attachment.expense_id && attachment.uploaded_by !== user.id) {
     return NextResponse.json({ error: 'Factura no encontrada' }, { status: 404 })
   }
-  if (attachment.mime_type !== 'application/pdf' || !attachment.storage_path) {
-    return NextResponse.json({ error: 'Selecciona un PDF subido al gasto' }, { status: 400 })
+  if ((!attachment.mime_type?.startsWith('image/') && attachment.mime_type !== 'application/pdf') || !attachment.storage_path) {
+    return NextResponse.json({ error: 'Selecciona un PDF o una imagen de factura' }, { status: 400 })
   }
 
   const { data, error: downloadError } = await getStorage().download(
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'No se pudo leer el PDF' }, { status: 502 })
 
   try {
-    const result = await extractExpenseInvoice(data)
+    const result = await extractExpenseInvoice(data, attachment.mime_type)
     log.info({ attachmentId: attachment.id, source: result.source }, 'expense_invoice_extracted')
     return NextResponse.json(result)
   } catch (err) {
