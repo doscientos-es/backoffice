@@ -20,7 +20,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@doscientos/ui";
 import { cn } from "@/lib/utils";
 
 type Source = { title: string; url: string; excerpt: string };
@@ -143,8 +143,8 @@ export function LeadCompanyResearch({
   const canResearch = available && canEdit && aiEnabled && hasCorporateEmail(email);
   const updated = researchedAt
     ? new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short" }).format(
-        new Date(researchedAt),
-      )
+      new Date(researchedAt),
+    )
     : null;
 
   return (

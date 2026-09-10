@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@doscientos/ui";
 import { publicEnv } from "@/lib/env";
 import { leadDisplayName } from "@/lib/leads/utils";
 import { getRecoveryTemplate } from "@/lib/recovery/templates";

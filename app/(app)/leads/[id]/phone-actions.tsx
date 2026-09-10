@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@doscientos/ui";
 import { Button as PopoverButton, PopoverContent, PopoverTrigger } from "@doscientos/ui";
 import { publicEnv } from "@/lib/env";
 import { buildBookingUrl } from "@/lib/recovery/utils";

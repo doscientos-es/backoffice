@@ -1,88 +1,96 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@doscientos/ui'
-import { Markdown } from '@/components/ui/markdown'
+} from "@doscientos/ui";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Markdown } from "@/components/ui/markdown";
+import { Textarea } from "@/components/ui/textarea";
 
-import { acceptProposal, rejectProposal } from './actions'
+import { acceptProposal, rejectProposal } from "./actions";
 
 type FiscalForm = {
-  name: string
-  nif: string
-  billing_address: string
-  contact_person: string
-  email: string
-  phone: string
-}
+  name: string;
+  nif: string;
+  billing_address: string;
+  contact_person: string;
+  email: string;
+  phone: string;
+};
 
 type SignatureForm = {
-  signer_name: string
-  signer_role: string
-  accepts_terms: boolean
-}
+  signer_name: string;
+  signer_role: string;
+  accepts_terms: boolean;
+};
 
 type Props = {
-  token: string
+  token: string;
   /** When true, the visitor must provide fiscal data before accepting. */
-  needsFiscal: boolean
+  needsFiscal: boolean;
   /** Best-effort prefill of the fiscal form from lead/client info. */
-  fiscalPrefill: FiscalForm
+  fiscalPrefill: FiscalForm;
   /** Best-effort prefill from the contact to make the signature step faster. */
-  signerPrefill: string
+  signerPrefill: string;
   /** Complete contractual annex that the signer can review before consenting. */
-  legalTerms: string
-}
+  legalTerms: string;
+};
 
-export function ProposalActions({ token, needsFiscal, fiscalPrefill, signerPrefill, legalTerms }: Props) {
-  const feedback = useFormFeedback({ successResetMs: 0 })
-  const [showReject, setShowReject] = useState(false)
-  const [showAccept, setShowAccept] = useState(false)
-  const [showTerms, setShowTerms] = useState(false)
-  const [reason, setReason] = useState('')
-  const [fiscal, setFiscal] = useState<FiscalForm>(fiscalPrefill)
+export function ProposalActions({
+  token,
+  needsFiscal,
+  fiscalPrefill,
+  signerPrefill,
+  legalTerms,
+}: Props) {
+  const feedback = useFormFeedback({ successResetMs: 0 });
+  const [showReject, setShowReject] = useState(false);
+  const [showAccept, setShowAccept] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  const [reason, setReason] = useState("");
+  const [fiscal, setFiscal] = useState<FiscalForm>(fiscalPrefill);
   const [signature, setSignature] = useState<SignatureForm>({
     signer_name: signerPrefill,
-    signer_role: '',
+    signer_role: "",
     accepts_terms: false,
-  })
+  });
 
   const onAccept = async () => {
     if (!signature.signer_name.trim()) {
-      feedback.setError('Indica tu nombre completo para firmar')
-      return
+      feedback.setError("Indica tu nombre completo para firmar");
+      return;
     }
     if (!signature.accepts_terms) {
-      feedback.setError('Debes aceptar las condiciones para firmar la propuesta')
-      return
+      feedback.setError("Debes aceptar las condiciones para firmar la propuesta");
+      return;
     }
-    if (needsFiscal && (!fiscal.name.trim() || !fiscal.nif.trim() || !fiscal.billing_address.trim())) {
-      feedback.setError('Completa razón social, NIF y dirección de facturación')
-      return
+    if (
+      needsFiscal &&
+      (!fiscal.name.trim() || !fiscal.nif.trim() || !fiscal.billing_address.trim())
+    ) {
+      feedback.setError("Completa razón social, NIF y dirección de facturación");
+      return;
     }
     const fiscalData = needsFiscal
       ? {
-        name: fiscal.name.trim(),
-        nif: fiscal.nif.trim(),
-        billing_address: fiscal.billing_address.trim(),
-        contact_person: fiscal.contact_person.trim() || undefined,
-        email: fiscal.email.trim() || undefined,
-        phone: fiscal.phone.trim() || undefined,
-      }
-      : undefined
-    feedback.setPending()
+          name: fiscal.name.trim(),
+          nif: fiscal.nif.trim(),
+          billing_address: fiscal.billing_address.trim(),
+          contact_person: fiscal.contact_person.trim() || undefined,
+          email: fiscal.email.trim() || undefined,
+          phone: fiscal.phone.trim() || undefined,
+        }
+      : undefined;
+    feedback.setPending();
     const res = await acceptProposal(
       token,
       {
@@ -91,20 +99,20 @@ export function ProposalActions({ token, needsFiscal, fiscalPrefill, signerPrefi
         accepts_terms: true,
       },
       fiscalData,
-    )
-    if (res.ok) feedback.setSuccess('Propuesta firmada y aceptada. Gracias.')
-    else feedback.setError(res.error)
-  }
+    );
+    if (res.ok) feedback.setSuccess("Propuesta firmada y aceptada. Gracias.");
+    else feedback.setError(res.error);
+  };
 
   const onReject = async () => {
-    feedback.setPending()
-    const res = await rejectProposal(token, reason.trim() || undefined)
-    if (res.ok) feedback.setSuccess('Respuesta registrada.')
-    else feedback.setError(res.error)
-  }
+    feedback.setPending();
+    const res = await rejectProposal(token, reason.trim() || undefined);
+    if (res.ok) feedback.setSuccess("Respuesta registrada.");
+    else feedback.setError(res.error);
+  };
 
   const patch = (k: keyof FiscalForm) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setFiscal((prev) => ({ ...prev, [k]: e.target.value }))
+    setFiscal((prev) => ({ ...prev, [k]: e.target.value }));
 
   if (showAccept) {
     return (
@@ -157,7 +165,7 @@ export function ProposalActions({ token, needsFiscal, fiscalPrefill, signerPrefi
                     <Input
                       id="fiscal-name"
                       value={fiscal.name}
-                      onChange={patch('name')}
+                      onChange={patch("name")}
                       disabled={feedback.pending}
                       required
                     />
@@ -167,7 +175,7 @@ export function ProposalActions({ token, needsFiscal, fiscalPrefill, signerPrefi
                     <Input
                       id="fiscal-nif"
                       value={fiscal.nif}
-                      onChange={patch('nif')}
+                      onChange={patch("nif")}
                       disabled={feedback.pending}
                       required
                     />
@@ -177,7 +185,7 @@ export function ProposalActions({ token, needsFiscal, fiscalPrefill, signerPrefi
                     <Input
                       id="fiscal-contact"
                       value={fiscal.contact_person}
-                      onChange={patch('contact_person')}
+                      onChange={patch("contact_person")}
                       disabled={feedback.pending}
                     />
                   </div>
@@ -186,7 +194,7 @@ export function ProposalActions({ token, needsFiscal, fiscalPrefill, signerPrefi
                     <Input
                       id="fiscal-address"
                       value={fiscal.billing_address}
-                      onChange={patch('billing_address')}
+                      onChange={patch("billing_address")}
                       disabled={feedback.pending}
                       required
                     />
@@ -197,7 +205,7 @@ export function ProposalActions({ token, needsFiscal, fiscalPrefill, signerPrefi
                       id="fiscal-email"
                       type="email"
                       value={fiscal.email}
-                      onChange={patch('email')}
+                      onChange={patch("email")}
                       disabled={feedback.pending}
                     />
                   </div>
@@ -206,7 +214,7 @@ export function ProposalActions({ token, needsFiscal, fiscalPrefill, signerPrefi
                     <Input
                       id="fiscal-phone"
                       value={fiscal.phone}
-                      onChange={patch('phone')}
+                      onChange={patch("phone")}
                       disabled={feedback.pending}
                     />
                   </div>
@@ -224,8 +232,8 @@ export function ProposalActions({ token, needsFiscal, fiscalPrefill, signerPrefi
                 className="mt-0.5 size-4 shrink-0"
               />
               <span>
-                Declaro que tengo capacidad suficiente para representar al Cliente y acepto íntegramente
-                la propuesta, sus condiciones particulares y el anexo contractual.
+                Declaro que tengo capacidad suficiente para representar al Cliente y acepto
+                íntegramente la propuesta, sus condiciones particulares y el anexo contractual.
               </span>
             </label>
             <button
@@ -246,7 +254,7 @@ export function ProposalActions({ token, needsFiscal, fiscalPrefill, signerPrefi
                 Cancelar
               </Button>
               <Button className="w-full" onClick={onAccept} disabled={feedback.pending}>
-                {feedback.pending ? 'Procesando…' : 'Firmar y aceptar propuesta'}
+                {feedback.pending ? "Procesando…" : "Firmar y aceptar propuesta"}
               </Button>
             </div>
           </CardContent>
@@ -263,7 +271,7 @@ export function ProposalActions({ token, needsFiscal, fiscalPrefill, signerPrefi
           </DialogContent>
         </Dialog>
       </>
-    )
+    );
   }
 
   if (showReject) {
@@ -301,12 +309,12 @@ export function ProposalActions({ token, needsFiscal, fiscalPrefill, signerPrefi
               onClick={onReject}
               disabled={feedback.pending}
             >
-              {feedback.pending ? 'Enviando…' : 'Confirmar rechazo'}
+              {feedback.pending ? "Enviando…" : "Confirmar rechazo"}
             </Button>
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -334,10 +342,10 @@ export function ProposalActions({ token, needsFiscal, fiscalPrefill, signerPrefi
             onClick={() => setShowAccept(true)}
             disabled={feedback.pending}
           >
-            {feedback.pending ? 'Procesando…' : 'Firmar y aceptar'}
+            {feedback.pending ? "Procesando…" : "Firmar y aceptar"}
           </Button>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
