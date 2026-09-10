@@ -6,6 +6,8 @@ const state = vi.hoisted(() => ({
   unlocked: true,
   proposal: null as Record<string, unknown> | null,
   items: [] as Array<Record<string, unknown>>,
+  settings: null as Record<string, unknown> | null,
+  acceptance: null as Record<string, unknown> | null,
 }))
 const renderProposalPdf = vi.hoisted(() => vi.fn(async () => Buffer.from('pdf-content')))
 
@@ -21,14 +23,23 @@ vi.mock('@/lib/proposals/proposal-pdf-document', () => ({
 vi.mock('@/lib/supabase/admin', () => ({
   createAdminClient: () => ({
     from: (table: string) => {
+      const result = {
+        proposals: state.proposal,
+        proposal_acceptances: state.acceptance,
+        proposal_items: state.items,
+        settings: state.settings,
+      }[table] ?? null
       const chain = {
         select: () => chain,
         eq: () => chain,
         is: () => chain,
-        maybeSingle: async () => ({ data: state.proposal, error: null }),
-        order: async () => ({ data: state.items, error: null }),
+        order: () => chain,
+        limit: () => chain,
+        maybeSingle: async () => ({ data: result, error: null }),
+        then: <T>(onfulfilled?: (value: { data: unknown; error: null }) => T) =>
+          Promise.resolve({ data: result, error: null }).then(onfulfilled),
       }
-      return table === 'proposals' ? chain : chain
+      return chain
     },
   }),
 }))
@@ -45,6 +56,8 @@ describe('GET /p/proposal/[token]/pdf', () => {
     state.isTeam = false
     state.unlocked = true
     state.items = []
+    state.settings = { company_name: 'doscientos', company_nif: 'B12345678', iban: 'ES00' }
+    state.acceptance = null
     renderProposalPdf.mockClear()
     state.proposal = {
       id: 'proposal-1',
@@ -103,6 +116,69 @@ describe('GET /p/proposal/[token]/pdf', () => {
       expect.objectContaining({
         maintenanceOffer: expect.objectContaining({ plans: expect.any(Array) }),
         maintenanceSelectedPlanId: null,
+      }),
+    )
+  })
+
+  it('renders the signed document snapshot and signature evidence', async () => {
+    const { GET } = await import('./route')
+    state.proposal = { ...state.proposal, status: 'accepted', title: 'Título modificado' }
+    state.items = [
+      {
+        id: 'item-current',
+        description: 'Concepto modificado',
+        quantity: 1,
+        unit_price: 5000,
+        vat_rate: 21,
+        subtotal: 5000,
+        billing_cycle: 'none',
+      },
+    ]
+    state.acceptance = {
+      signer_name: 'Ana Gómez',
+      signer_role: 'Administradora',
+      accepted_at: '2026-09-10T12:34:56.000Z',
+      document_hash: 'a'.repeat(64),
+      document_snapshot: {
+        proposal: {
+          number: 'P-001',
+          title: 'Título firmado',
+          currency: 'EUR',
+          subtotal: 1000,
+          tax_amount: 210,
+          total: 1210,
+          items: [
+            {
+              id: 'item-signed',
+              description: 'Implementación firmada',
+              quantity: 1,
+              unit_price: 1000,
+              vat_rate: 21,
+              subtotal: 1000,
+              billing_cycle: 'none',
+            },
+          ],
+          terms: 'Condiciones firmadas',
+        },
+        fiscal_data: { name: 'Acme SL' },
+      },
+    }
+
+    const response = await GET(request(), context)
+
+    expect(response.status).toBe(200)
+    expect(renderProposalPdf).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Título firmado',
+        recipientName: 'Acme SL',
+        terms: 'Condiciones firmadas',
+        items: [expect.objectContaining({ description: 'Implementación firmada' })],
+        acceptance: {
+          signerName: 'Ana Gómez',
+          signerRole: 'Administradora',
+          acceptedAt: '2026-09-10T12:34:56.000Z',
+          documentHash: 'a'.repeat(64),
+        },
       }),
     )
   })

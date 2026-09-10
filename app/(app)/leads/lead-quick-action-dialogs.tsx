@@ -65,7 +65,7 @@ import { WhatsAppComposer } from './whatsapp-composer'
 /** Shape passed for Meet invitee selection — subset of team_members with email. */
 export type MeetMember = { id: string; name: string; email: string }
 
-/** Compact primary quick-action trigger: icon inline with the label. */
+/** Primary quick-action row: icon inline with the label, full width of the rail. */
 export function QuickActionTile({
   icon,
   label,
@@ -316,7 +316,10 @@ export function QMeetDialog({
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <QuickActionTile icon={<Video className="text-muted-foreground size-3.5" />} label="Agendar Meet" />
+          <QuickActionTile
+            icon={<Video className="text-muted-foreground size-3.5" />}
+            label="Agendar reunión Meet"
+          />
         </DialogTrigger>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -895,7 +898,7 @@ export function QWhatsAppDialog({
       <DialogTrigger asChild>
         <QuickActionTile
           icon={<WhatsAppIcon className="size-3.5 text-emerald-600" />}
-          label="WhatsApp"
+          label="Preparar WhatsApp"
           tone="whatsapp"
         />
       </DialogTrigger>

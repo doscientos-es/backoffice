@@ -7,8 +7,14 @@ vi.mock('../../reminders/schedule-reminder-dialog', () => ({
   ScheduleReminderDialog: ({ trigger }: { trigger: React.ReactNode }) => trigger,
 }))
 vi.mock('../lead-quick-action-dialogs', () => ({
+  QuickActionTile: ({ icon, label }: { icon: React.ReactNode; label: string }) => (
+    <button type="button">
+      {icon}
+      {label}
+    </button>
+  ),
   QCallDialog: () => <button type="button">Registrar llamada</button>,
-  QWhatsAppDialog: () => <button type="button">WhatsApp</button>,
+  QWhatsAppDialog: () => <button type="button">Preparar WhatsApp</button>,
   QSendEmailDialog: () => <button type="button">Enviar email</button>,
   QEmailDialog: () => <button type="button">Registrar email</button>,
   QNoteDialog: () => <button type="button">Añadir nota</button>,
@@ -37,7 +43,7 @@ describe('LeadQuickActions', () => {
     render(<LeadQuickActions {...props} googleEnabled />)
 
     expect(screen.getByRole('button', { name: 'Registrar llamada' })).not.toBeNull()
-    expect(screen.getByRole('button', { name: 'WhatsApp' })).not.toBeNull()
+    expect(screen.getByRole('button', { name: 'Preparar WhatsApp' })).not.toBeNull()
     expect(screen.getByRole('button', { name: 'Enviar email' })).not.toBeNull()
     expect(screen.getByRole('button', { name: 'Agendar llamada' })).not.toBeNull()
     expect(screen.queryByRole('button', { name: 'Añadir nota' })).toBeNull()

@@ -210,6 +210,8 @@ const styles = StyleSheet.create({
   cta: { backgroundColor: BRAND, borderRadius: 10, marginTop: 20, padding: 15 },
   ctaText: { color: '#DDE9DB', fontSize: 8.5, lineHeight: 1.45 },
   ctaLink: { color: ACCENT, fontFamily: 'Helvetica-Bold', fontSize: 10, marginTop: 7 },
+  acceptance: { borderColor: BRAND, borderRadius: 10, borderWidth: 1, marginTop: 20, padding: 16 },
+  acceptanceHash: { color: MUTED, fontSize: 6.5, lineHeight: 1.35, marginTop: 8 },
 })
 
 export type ProposalPdfItem = {
@@ -246,7 +248,14 @@ export type ProposalPdfData = {
   maintenanceSelectedPlanId: string | null
   portalUrl: string
   companyName: string | null
+  companyNif?: string | null
   iban: string | null
+  acceptance?: {
+    signerName: string
+    signerRole: string | null
+    acceptedAt: string
+    documentHash: string
+  } | null
 }
 
 function money(value: number): string {
@@ -256,6 +265,14 @@ function money(value: number): string {
 function date(value: string | null): string | null {
   if (!value) return null
   return new Intl.DateTimeFormat('es-ES', { dateStyle: 'long' }).format(new Date(value))
+}
+
+function dateTime(value: string): string {
+  return new Intl.DateTimeFormat('es-ES', {
+    dateStyle: 'long',
+    timeStyle: 'short',
+    timeZone: 'UTC',
+  }).format(new Date(value))
 }
 
 function cycleLabel(cycle: string | null): string {
@@ -576,14 +593,29 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
             </Text>
           </View>
         ) : null}
-        <View style={styles.cta} wrap={false}>
-          <Text style={styles.ctaText}>
-            ¿Todo claro? Revisa la propuesta online y confírmala para que podamos empezar.
-          </Text>
-          <Link src={data.portalUrl} style={styles.ctaLink}>
-            Revisar y aceptar la propuesta →
-          </Link>
-        </View>
+        {data.acceptance ? (
+          <View style={styles.acceptance} break wrap={false}>
+            <Text style={styles.sectionLabel}>Aceptación electrónica</Text>
+            <Text style={[styles.sectionTitle, { fontSize: 15 }]}>Propuesta firmada y aceptada</Text>
+            <Text style={styles.body}>
+              {`Firmante: ${data.acceptance.signerName}${data.acceptance.signerRole ? ` · ${data.acceptance.signerRole}` : ''}`}
+            </Text>
+            <Text style={styles.body}>{`Fecha y hora (UTC): ${dateTime(data.acceptance.acceptedAt)}`}</Text>
+            <Text style={styles.body}>
+              {`Emisor: ${data.companyName ?? 'doscientos'}${data.companyNif ? ` · NIF ${data.companyNif}` : ''}`}
+            </Text>
+            <Text style={styles.acceptanceHash}>{`Huella SHA-256 del documento aceptado: ${data.acceptance.documentHash}`}</Text>
+          </View>
+        ) : (
+          <View style={styles.cta} wrap={false}>
+            <Text style={styles.ctaText}>
+              ¿Todo claro? Revisa la propuesta online y confírmala para que podamos empezar.
+            </Text>
+            <Link src={data.portalUrl} style={styles.ctaLink}>
+              Revisar y aceptar la propuesta →
+            </Link>
+          </View>
+        )}
         <Footer />
       </Page>
     </Document>

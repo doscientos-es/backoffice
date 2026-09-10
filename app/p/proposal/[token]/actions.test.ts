@@ -9,8 +9,13 @@ const { createProposalDraftInvoices, sendProposalAcceptedEmail } = vi.hoisted(()
 
 const revalidatePath = vi.fn()
 vi.mock('next/cache', () => ({ revalidatePath }))
+vi.mock('next/headers', () => ({ headers: async () => new Headers({ 'user-agent': 'vitest' }) }))
 vi.mock('@/lib/invoices/proposal-drafts', () => ({ createProposalDraftInvoices }))
 vi.mock('@/lib/integrations/send-proposal-accepted-email', () => ({ sendProposalAcceptedEmail }))
+vi.mock('@/lib/portal/access', () => ({
+  isPortalUnlocked: async () => true,
+  unlockPortalResource: vi.fn(),
+}))
 
 type ProposalRow = {
   id: string
@@ -26,17 +31,22 @@ type ProposalRow = {
 } | null
 type FetchResult = { data: ProposalRow; error: unknown }
 type UpdateResult = { error: unknown }
+type RpcResult = { error: unknown }
 
 const state: {
   fetchResult: FetchResult
   updateResult: UpdateResult
+  rpcResult: RpcResult
   lastPatch: Record<string, unknown> | null
   lastUpdateId: string | null
+  lastRpc: { name: string; args: Record<string, unknown> } | null
 } = {
   fetchResult: { data: null, error: null },
   updateResult: { error: null },
+  rpcResult: { error: null },
   lastPatch: null,
   lastUpdateId: null,
+  lastRpc: null,
 }
 
 // Mock builder keyed on the primary lookup: only the query that filters by
@@ -74,13 +84,22 @@ vi.mock('@/lib/supabase/admin', () => ({
       }
       return chain
     },
+    rpc: (name: string, args: Record<string, unknown>) => {
+      state.lastRpc = { name, args }
+      return Promise.resolve(state.rpcResult)
+    },
   }),
 }))
 
 const VALID_TOKEN = 'a'.repeat(48)
+const SIGNATURE = {
+  signer_name: 'Ana Gómez',
+  signer_role: 'Administradora',
+  accepts_terms: true,
+} as const
 
 // A client row with the minimum fiscal data so `acceptWithFiscal` skips the
-// fiscal-form requirement and exercises the plain accept → update path.
+// fiscal-form requirement and exercises the electronic acceptance flow.
 const COMPLETE_CLIENT = {
   name: 'Acme SL',
   nif: 'B12345678',
@@ -104,15 +123,17 @@ describe('portal proposal actions', () => {
   beforeEach(() => {
     state.fetchResult = { data: null, error: null }
     state.updateResult = { error: null }
+    state.rpcResult = { error: null }
     state.lastPatch = null
     state.lastUpdateId = null
+    state.lastRpc = null
     createProposalDraftInvoices.mockClear()
     sendProposalAcceptedEmail.mockClear()
     revalidatePath.mockClear()
   })
 
   it('rejects malformed tokens without touching the DB', async () => {
-    const result = await acceptProposal('short')
+    const result = await acceptProposal('short', SIGNATURE)
     expect(result).toEqual({ ok: false, error: 'Token inválido' })
     expect(state.lastPatch).toBeNull()
 
@@ -125,13 +146,13 @@ describe('portal proposal actions', () => {
   it('returns not-found when the proposal does not exist', async () => {
     state.fetchResult = { data: null, error: null }
 
-    const result = await acceptProposal(VALID_TOKEN)
+    const result = await acceptProposal(VALID_TOKEN, SIGNATURE)
     expect(result).toEqual({ ok: false, error: 'Propuesta no encontrada' })
   })
 
   it('blocks transitions from already-responded states', async () => {
     state.fetchResult = { data: { id: 'p1', status: 'accepted' }, error: null }
-    expect(await acceptProposal(VALID_TOKEN)).toEqual({
+    expect(await acceptProposal(VALID_TOKEN, SIGNATURE)).toEqual({
       ok: false,
       error: 'Esta propuesta ya ha sido respondida',
     })
@@ -145,13 +166,13 @@ describe('portal proposal actions', () => {
 
   it('blocks transitions from draft or expired', async () => {
     state.fetchResult = { data: { id: 'p1', status: 'draft' }, error: null }
-    expect(await acceptProposal(VALID_TOKEN)).toEqual({
+    expect(await acceptProposal(VALID_TOKEN, SIGNATURE)).toEqual({
       ok: false,
       error: 'Propuesta no disponible',
     })
 
     state.fetchResult = { data: { id: 'p1', status: 'expired' }, error: null }
-    expect(await acceptProposal(VALID_TOKEN)).toEqual({
+    expect(await acceptProposal(VALID_TOKEN, SIGNATURE)).toEqual({
       ok: false,
       error: 'Propuesta expirada',
     })
@@ -163,11 +184,15 @@ describe('portal proposal actions', () => {
       error: null,
     }
 
-    const result = await acceptProposal(VALID_TOKEN)
+    const result = await acceptProposal(VALID_TOKEN, SIGNATURE)
     expect(result).toEqual({ ok: true })
-    expect(state.lastUpdateId).toBe('p1')
-    expect(state.lastPatch?.status).toBe('accepted')
-    expect(typeof state.lastPatch?.responded_at).toBe('string')
+    expect(state.lastRpc?.name).toBe('accept_proposal_with_evidence')
+    expect(state.lastRpc?.args).toMatchObject({
+      p_proposal_id: 'p1',
+      p_signer_name: 'Ana Gómez',
+      p_evidence_version: 'doscientos-proposal-acceptance-v1',
+      p_document_hash: expect.stringMatching(/^[a-f0-9]{64}$/),
+    })
     expect(createProposalDraftInvoices).toHaveBeenCalledWith(expect.anything(), 'p1', null)
     expect(revalidatePath).toHaveBeenCalledWith(`/p/proposal/${VALID_TOKEN}`)
   })
@@ -190,15 +215,15 @@ describe('portal proposal actions', () => {
     expect(state.lastPatch?.signature_data).toBeUndefined()
   })
 
-  it('surfaces DB update errors', async () => {
+  it('surfaces acceptance evidence persistence errors', async () => {
     state.fetchResult = {
       data: { id: 'p4', status: 'sent', lead_id: null, client_id: 'c1', clients: COMPLETE_CLIENT },
       error: null,
     }
-    state.updateResult = { error: { message: 'db down' } }
+    state.rpcResult = { error: { message: 'db down' } }
 
-    const result = await acceptProposal(VALID_TOKEN)
-    expect(result).toEqual({ ok: false, error: 'No se pudo actualizar la propuesta' })
+    const result = await acceptProposal(VALID_TOKEN, SIGNATURE)
+    expect(result).toEqual({ ok: false, error: 'No se pudo registrar la firma de la propuesta' })
     expect(revalidatePath).not.toHaveBeenCalled()
   })
 

@@ -69,8 +69,8 @@ export function LeadQuickActions({
     <div className="flex flex-col gap-3">
       {claimable && <ClaimButton leadId={leadId} />}
 
-      {/* Primary: 2x2 tactile tiles, one per channel */}
-      <div className="grid grid-cols-2 gap-2">
+      {/* Primary: one full-width row per channel — no truncation in the narrow rail */}
+      <div className="grid grid-cols-1 gap-1.5">
         <QCallDialog
           leadId={leadId}
           leadPhone={leadPhone}
@@ -142,7 +142,7 @@ export function LeadQuickActions({
                       createTaskAction={createTaskAction}
                       trigger={
                         <ActionTrigger
-                          icon={<ListTodo className="size-4" />}
+                          icon={<ListTodo className="size-3.5" />}
                           label="Extraer tareas IA"
                         />
                       }
@@ -158,7 +158,7 @@ export function LeadQuickActions({
                   createTaskAction={createTaskAction}
                   trigger={
                     <ActionTrigger
-                      icon={<ListTodo className="size-4" />}
+                      icon={<ListTodo className="size-3.5" />}
                       label="Extraer tareas IA"
                     />
                   }
@@ -178,7 +178,7 @@ function ActionGroup({ label, children }: { label: string; children: ReactNode }
       <p className="text-muted-foreground text-[10px] font-semibold tracking-wide uppercase">
         {label}
       </p>
-      <div className="grid grid-cols-2 gap-1.5">{children}</div>
+      <div className="grid grid-cols-1 gap-1">{children}</div>
     </div>
   )
 }

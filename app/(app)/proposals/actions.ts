@@ -28,6 +28,7 @@ import {
   isProposalEditable,
 } from '@/lib/proposals/items'
 import { parseMaintenanceOffer, selectedMaintenancePlan } from '@/lib/proposals/maintenance'
+import { DEFAULT_PROPOSAL_LEGAL_TERMS } from '@/lib/proposals/proposal-acceptance'
 import { parsePaymentPlan } from '@/lib/proposals/scope'
 import { formatProposalValidationIssues } from '@/lib/proposals/validation'
 import { UpdatePortalAccessInput } from '@/lib/schemas/portal'
@@ -159,6 +160,7 @@ async function insertDraftProposal(
       ...totals,
       valid_until: data.valid_until ?? null,
       notes: data.notes ?? null,
+      legal_terms: DEFAULT_PROPOSAL_LEGAL_TERMS,
       created_by: userId,
     })
     .select('id')
@@ -253,7 +255,7 @@ export async function duplicateProposal(
   const { data: source, error: readError } = await supabase
     .from('proposals')
     .select(
-      'client_id, lead_id, title, valid_until, notes, context_markdown, problems, solutions, terms, scope_modules, deliverables, acceptance_criteria, payment_schedule, payment_terms, change_management_terms, subtotal, tax_amount, total, currency',
+      'client_id, lead_id, title, valid_until, notes, context_markdown, problems, solutions, terms, legal_terms, scope_modules, deliverables, acceptance_criteria, payment_schedule, payment_terms, change_management_terms, subtotal, tax_amount, total, currency',
     )
     .eq('id', parsed.data.id)
     .is('deleted_at', null)
@@ -285,6 +287,7 @@ export async function duplicateProposal(
       problems: source.problems,
       solutions: source.solutions,
       terms: source.terms,
+      legal_terms: source.legal_terms ?? DEFAULT_PROPOSAL_LEGAL_TERMS,
       scope_modules: source.scope_modules,
       deliverables: source.deliverables,
       acceptance_criteria: source.acceptance_criteria,
@@ -388,6 +391,7 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
   if (rest.change_management_terms !== undefined) {
     patch.change_management_terms = rest.change_management_terms
   }
+  if (rest.legal_terms !== undefined) patch.legal_terms = rest.legal_terms
   if (rest.maintenance_options !== undefined) patch.maintenance_options = rest.maintenance_options
   if (rest.maintenance_selected_plan_id !== undefined) {
     patch.maintenance_selected_plan_id = rest.maintenance_selected_plan_id

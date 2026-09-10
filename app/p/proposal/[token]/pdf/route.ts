@@ -10,6 +10,7 @@ import {
   parseMaintenanceOffer,
   selectedMaintenancePlan,
 } from '@/lib/proposals/maintenance'
+import { effectiveProposalTerms } from '@/lib/proposals/proposal-acceptance'
 import {
   type ProposalPdfItem,
   proposalPdfFilename,
@@ -60,18 +61,32 @@ export async function GET(
   if (itemsError) return NextResponse.json({ error: 'No se pudo generar el PDF' }, { status: 500 })
   const { data: settings } = await admin
     .from('settings')
-    .select('company_name, iban')
+    .select('company_name, company_nif, iban')
     .eq('id', 1)
     .maybeSingle()
+  const { data: acceptance } = await admin
+    .from('proposal_acceptances')
+    .select('signer_name, signer_role, accepted_at, document_hash, document_snapshot')
+    .eq('proposal_id', proposal.id as string)
+    .order('accepted_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
 
+  const signedSnapshot = acceptance?.document_snapshot as
+    | { proposal?: Record<string, unknown>; fiscal_data?: { name?: string } | null }
+    | null
+  const signedProposal = signedSnapshot?.proposal
+  const documentSource = signedProposal ?? (proposal as Record<string, unknown>)
+  const signedItems = Array.isArray(signedProposal?.items) ? signedProposal.items : items ?? []
   const client = (proposal as unknown as { clients: { name: string } | null }).clients
   const lead = (
     proposal as unknown as { leads: { name: string | null; company: string | null } | null }
   ).leads
-  const maintenanceOffer = parseMaintenanceOffer(proposal.maintenance_options)
-  const maintenanceSelectedPlanId = (proposal.maintenance_selected_plan_id as string | null) ?? null
+  const maintenanceOffer = parseMaintenanceOffer(documentSource.maintenance_options)
+  const maintenanceSelectedPlanId =
+    (documentSource.maintenance_selected_plan_id as string | null) ?? null
   const maintenancePlan = selectedMaintenancePlan(maintenanceOffer, maintenanceSelectedPlanId)
-  const pdfItems: ProposalPdfItem[] = ((items ?? []) as Array<Record<string, unknown>>).map(
+  const pdfItems: ProposalPdfItem[] = (signedItems as Array<Record<string, unknown>>).map(
     (item): ProposalPdfItem => ({
       id: String(item.id),
       description: String(item.description ?? ''),
@@ -95,30 +110,43 @@ export async function GET(
     })
   }
   const pdf = await renderProposalPdf({
-    number: (proposal.number as string | null) ?? null,
-    title: proposal.title as string,
-    recipientName: client?.name ?? lead?.company ?? lead?.name ?? 'Cliente',
-    validUntil: (proposal.valid_until as string | null) ?? null,
-    context: (proposal.context_markdown as string | null) ?? null,
-    problems: parseKeyPoints(proposal.problems),
-    solutions: parseKeyPoints(proposal.solutions),
-    scopeModules: parseScopeModules(proposal.scope_modules),
-    deliverables: (proposal.deliverables as string | null) ?? null,
-    acceptanceCriteria: (proposal.acceptance_criteria as string | null) ?? null,
-    paymentSchedule: (proposal.payment_schedule as PaymentSchedule | null) ?? 'half_half',
-    paymentTerms: (proposal.payment_terms as string | null) ?? null,
-    changeManagementTerms: (proposal.change_management_terms as string | null) ?? null,
-    terms: (proposal.terms as string | null) ?? null,
-    notes: (proposal.notes as string | null) ?? null,
-    subtotal: Number(proposal.subtotal ?? 0),
-    taxAmount: Number(proposal.tax_amount ?? 0),
-    total: Number(proposal.total ?? 0),
+    number: (documentSource.number as string | null) ?? null,
+    title: documentSource.title as string,
+    recipientName:
+      signedSnapshot?.fiscal_data?.name ?? client?.name ?? lead?.company ?? lead?.name ?? 'Cliente',
+    validUntil: (documentSource.valid_until as string | null) ?? null,
+    context: (documentSource.context_markdown as string | null) ?? null,
+    problems: parseKeyPoints(documentSource.problems),
+    solutions: parseKeyPoints(documentSource.solutions),
+    scopeModules: parseScopeModules(documentSource.scope_modules),
+    deliverables: (documentSource.deliverables as string | null) ?? null,
+    acceptanceCriteria: (documentSource.acceptance_criteria as string | null) ?? null,
+    paymentSchedule: (documentSource.payment_schedule as PaymentSchedule | null) ?? 'half_half',
+    paymentTerms: (documentSource.payment_terms as string | null) ?? null,
+    changeManagementTerms: (documentSource.change_management_terms as string | null) ?? null,
+    terms: signedProposal
+      ? (documentSource.terms as string | null) ?? null
+      : effectiveProposalTerms((documentSource.terms as string | null) ?? null),
+    notes: (documentSource.notes as string | null) ?? null,
+    subtotal: Number(documentSource.subtotal ?? 0),
+    taxAmount: Number(documentSource.tax_amount ?? 0),
+    total: Number(documentSource.total ?? 0),
     items: pdfItems,
     maintenanceOffer,
     maintenanceSelectedPlanId,
     portalUrl: `${externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)}/p/proposal/${token}`,
     companyName: (settings?.company_name as string | null) ?? null,
+    companyNif: (settings?.company_nif as string | null) ?? null,
     iban: (settings?.iban as string | null) ?? null,
+    acceptance:
+      proposal.status === 'accepted' && acceptance
+        ? {
+            signerName: acceptance.signer_name as string,
+            signerRole: (acceptance.signer_role as string | null) ?? null,
+            acceptedAt: acceptance.accepted_at as string,
+            documentHash: acceptance.document_hash as string,
+          }
+        : null,
   })
 
   return new NextResponse(new Uint8Array(pdf), {

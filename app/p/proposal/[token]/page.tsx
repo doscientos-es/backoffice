@@ -28,6 +28,7 @@ import {
   parseMaintenanceOffer,
   selectedMaintenancePlan,
 } from '@/lib/proposals/maintenance'
+import { DEFAULT_PROPOSAL_LEGAL_TERMS } from '@/lib/proposals/proposal-acceptance'
 import {
   PAYMENT_SCHEDULE_LABELS,
   type PaymentSchedule,
@@ -721,6 +722,16 @@ export default async function PortalProposalPage({
             </div>
           ) : null}
 
+          <div className="border-t border-zinc-100 bg-zinc-50 px-8 py-6 dark:border-zinc-800/60 dark:bg-zinc-900/50">
+            <p className="mb-3 text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
+              Condiciones generales de contratación
+            </p>
+            <Markdown
+              source={DEFAULT_PROPOSAL_LEGAL_TERMS}
+              className="text-xs leading-relaxed text-zinc-600 dark:text-zinc-400"
+            />
+          </div>
+
           {/* Technical specs */}
           {safeSpecs.length > 0 ? (
             <div className="flex flex-col gap-4 border-t border-zinc-200 px-8 py-6 dark:border-zinc-800">
@@ -751,6 +762,7 @@ export default async function PortalProposalPage({
                 token={token}
                 needsFiscal={needsFiscal}
                 fiscalPrefill={fiscalPrefill}
+                signerPrefill={client?.contact_person ?? lead?.name ?? ''}
               />
             </div>
           ) : null}
@@ -825,7 +837,12 @@ export default async function PortalProposalPage({
         </div>
       ) : !isDraft ? (
         <div className="lg:hidden">
-          <ProposalActions token={token} needsFiscal={needsFiscal} fiscalPrefill={fiscalPrefill} />
+          <ProposalActions
+            token={token}
+            needsFiscal={needsFiscal}
+            fiscalPrefill={fiscalPrefill}
+            signerPrefill={client?.contact_person ?? lead?.name ?? ''}
+          />
         </div>
       ) : null}
     </div>

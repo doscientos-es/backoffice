@@ -1,6 +1,9 @@
 'use server'
 
+import { createHash } from 'node:crypto'
+
 import { revalidatePath } from 'next/cache'
+import { headers } from 'next/headers'
 import { z } from 'zod'
 
 import {
@@ -17,12 +20,20 @@ import { sendProposalAcceptedEmail } from '@/lib/integrations/send-proposal-acce
 import { createProposalDraftInvoices } from '@/lib/invoices/proposal-drafts'
 import { scopedLogger } from '@/lib/logger'
 import { dispatchNotifications } from '@/lib/notifications/dispatch'
-import { unlockPortalResource } from '@/lib/portal/access'
+import { isPortalUnlocked, unlockPortalResource } from '@/lib/portal/access'
+import {
+  PROPOSAL_ACCEPTANCE_CONSENT,
+  PROPOSAL_ACCEPTANCE_VERSION,
+  proposalAcceptanceHash,
+  proposalAcceptanceSnapshot,
+} from '@/lib/proposals/proposal-acceptance'
 import { parseMaintenanceOffer, selectedMaintenancePlan } from '@/lib/proposals/maintenance'
 import { paymentInitialPercentage, paymentScheduleInput } from '@/lib/proposals/scope'
 import {
   AcceptProposalFiscalData,
   type AcceptProposalFiscalDataType,
+  AcceptProposalSignature,
+  type AcceptProposalSignatureType,
   ProposalPortalToken,
   ProposalRejectionReason,
 } from '@/lib/schemas/proposal'
@@ -82,15 +93,26 @@ async function notifyAdmins(
   })
 }
 
-async function acceptWithFiscal(token: string, fiscalInput: unknown): Promise<ActionResult> {
+async function acceptWithFiscal(
+  token: string,
+  signatureInput: unknown,
+  fiscalInput: unknown,
+): Promise<ActionResult> {
   const parsed = ProposalPortalToken.safeParse(token)
   if (!parsed.success) return { ok: false, error: 'Token inválido' }
+  const parsedSignature = AcceptProposalSignature.safeParse(signatureInput)
+  if (!parsedSignature.success) {
+    return {
+      ok: false,
+      error: parsedSignature.error.errors[0]?.message ?? 'La firma no es válida',
+    }
+  }
 
   const admin = createAdminClient()
   const { data: proposal, error: fetchError } = await admin
     .from('proposals')
     .select(
-      'id, status, title, client_id, lead_id, clients(name, nif, billing_address_street), leads(name, email, phone, company)',
+      'id, number, status, title, currency, subtotal, tax_amount, total, valid_until, context_markdown, problems, solutions, terms, scope_modules, deliverables, acceptance_criteria, payment_schedule, payment_plan, payment_terms, change_management_terms, maintenance_options, maintenance_selected_plan_id, is_client_visible, portal_password_hash, client_id, lead_id, clients(name, nif, billing_address_street), leads(name, email, phone, company)',
     )
     .eq('portal_token', parsed.data)
     .is('deleted_at', null)
@@ -102,6 +124,15 @@ async function acceptWithFiscal(token: string, fiscalInput: unknown): Promise<Ac
   }
   if (proposal.status === 'expired') return { ok: false, error: 'Propuesta expirada' }
   if (proposal.status === 'draft') return { ok: false, error: 'Propuesta no disponible' }
+  if (proposal.is_client_visible === false) return { ok: false, error: 'Propuesta no disponible' }
+  if (
+    !(await isPortalUnlocked(
+      parsed.data,
+      (proposal.portal_password_hash as string | null) ?? null,
+    ))
+  ) {
+    return { ok: false, error: 'Vuelve a introducir la contraseña del portal' }
+  }
 
   // Decide whether we need fiscal data: leads always require it, clients
   // only when their row is missing the legal minimum (name + NIF + address).
@@ -131,15 +162,50 @@ async function acceptWithFiscal(token: string, fiscalInput: unknown): Promise<Ac
     if ('error' in ensured) return { ok: false, error: ensured.error }
   }
 
-  const { error: updateError } = await admin
-    .from('proposals')
-    .update({
-      status: 'accepted',
-      responded_at: new Date().toISOString(),
-      accepted_fiscal_data: fiscal ?? null,
-    })
-    .eq('id', proposal.id)
-  if (updateError) return { ok: false, error: 'No se pudo actualizar la propuesta' }
+  const { data: items, error: itemsError } = await admin
+    .from('proposal_items')
+    .select('id, description, quantity, unit_price, vat_rate, subtotal, billing_cycle')
+    .eq('proposal_id', proposal.id)
+    .order('position')
+  if (itemsError) return { ok: false, error: 'No se pudo preparar la firma de la propuesta' }
+
+  const snapshot = proposalAcceptanceSnapshot(
+    proposal as unknown as Record<string, unknown>,
+    (items ?? []) as Parameters<typeof proposalAcceptanceSnapshot>[1],
+    fiscal,
+  )
+  const acceptedAt = new Date().toISOString()
+  const requestHeaders = await headers()
+  const forwarded = requestHeaders.get('x-forwarded-for')
+  const ip = forwarded?.split(',')[0]?.trim() ?? requestHeaders.get('x-real-ip') ?? ''
+  const portalTokenHash = createHash('sha256').update(parsed.data).digest('hex')
+  const { error: acceptanceError } = await admin.rpc('accept_proposal_with_evidence', {
+    p_proposal_id: proposal.id,
+    p_accepted_at: acceptedAt,
+    p_signer_name: parsedSignature.data.signer_name,
+    p_signer_role: parsedSignature.data.signer_role ?? '',
+    p_consent_text: PROPOSAL_ACCEPTANCE_CONSENT,
+    p_evidence_version: PROPOSAL_ACCEPTANCE_VERSION,
+    p_document_snapshot: snapshot,
+    p_document_hash: proposalAcceptanceHash(snapshot),
+    p_portal_token_hash: portalTokenHash,
+    p_ip: ip,
+    p_user_agent: requestHeaders.get('user-agent') ?? '',
+  })
+  if (acceptanceError) {
+    log.warn({ err: acceptanceError, proposalId: proposal.id }, 'proposal_electronic_acceptance_failed')
+    return { ok: false, error: 'No se pudo registrar la firma de la propuesta' }
+  }
+
+  if (fiscal) {
+    const { error: fiscalSnapshotError } = await admin
+      .from('proposals')
+      .update({ accepted_fiscal_data: fiscal })
+      .eq('id', proposal.id)
+    if (fiscalSnapshotError) {
+      log.warn({ err: fiscalSnapshotError, proposalId: proposal.id }, 'proposal_fiscal_snapshot_failed')
+    }
+  }
 
   // Best-effort side-effects: Drive backup, project creation, lead promotion, notification.
   // Failures are logged but never reverse the acceptance — the customer's
@@ -233,8 +299,12 @@ async function rejectAction(token: string, rejectionReason?: string): Promise<Ac
   return { ok: true }
 }
 
-export async function acceptProposal(token: string, fiscal?: unknown): Promise<ActionResult> {
-  return acceptWithFiscal(token, fiscal)
+export async function acceptProposal(
+  token: string,
+  signature: AcceptProposalSignatureType,
+  fiscal?: unknown,
+): Promise<ActionResult> {
+  return acceptWithFiscal(token, signature, fiscal)
 }
 
 export async function rejectProposal(token: string, reason?: string): Promise<ActionResult> {

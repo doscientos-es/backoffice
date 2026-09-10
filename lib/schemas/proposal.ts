@@ -107,6 +107,7 @@ export const UpdateProposalInput = z.object({
   payment_plan: paymentPlanInput.optional(),
   payment_terms: proposalMarkdownField(8_000),
   change_management_terms: proposalMarkdownField(8_000),
+  legal_terms: proposalMarkdownField(20_000),
   maintenance_options: maintenanceOfferInput.nullable().optional(),
   maintenance_selected_plan_id: z.string().min(1).max(64).nullable().optional(),
   items: z.array(lineItemInput).min(1).optional(),
@@ -191,8 +192,18 @@ export const AcceptProposalFiscalData = z.object({
 })
 export type AcceptProposalFiscalDataType = z.infer<typeof AcceptProposalFiscalData>
 
+export const AcceptProposalSignature = z.object({
+  signer_name: requiredText(160, 'Indica tu nombre completo'),
+  signer_role: optionalText(160),
+  accepts_terms: z.literal(true, {
+    errorMap: () => ({ message: 'Debes aceptar las condiciones para firmar la propuesta' }),
+  }),
+})
+export type AcceptProposalSignatureType = z.infer<typeof AcceptProposalSignature>
+
 export const AcceptProposalInput = z.object({
   token: ProposalPortalToken,
+  signature: AcceptProposalSignature,
   fiscal: AcceptProposalFiscalData.optional(),
 })
 export type AcceptProposalInputType = z.infer<typeof AcceptProposalInput>

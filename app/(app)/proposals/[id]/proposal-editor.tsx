@@ -49,6 +49,7 @@ import {
   type PaymentSchedule,
   type ScopeModule,
 } from '@/lib/proposals/scope'
+import { DEFAULT_PROPOSAL_LEGAL_TERMS } from '@/lib/proposals/proposal-acceptance'
 import { formatEUR } from '@/lib/utils'
 
 import { setProposalTeamMembers, updateProposal } from '../actions'
@@ -80,6 +81,7 @@ export type ProposalEditorProps = {
   initialPaymentPlan: PaymentPlanItem[]
   initialPaymentTerms: string | null
   initialChangeManagementTerms: string | null
+  initialLegalTerms: string | null
   initialMaintenanceOptions: MaintenanceOffer | null
   initialMaintenanceSelectedPlanId: string | null
   teamMembers: ProposalTeamMember[]
@@ -121,6 +123,7 @@ export function ProposalEditor({
   initialPaymentPlan,
   initialPaymentTerms,
   initialChangeManagementTerms,
+  initialLegalTerms,
   initialMaintenanceOptions,
   initialMaintenanceSelectedPlanId,
   teamMembers,
@@ -165,6 +168,7 @@ export function ProposalEditor({
   const [changeManagementTerms, setChangeManagementTerms] = useState(
     initialChangeManagementTerms ?? DEFAULT_CHANGE_MANAGEMENT_TERMS,
   )
+  const [legalTerms, setLegalTerms] = useState(initialLegalTerms ?? DEFAULT_PROPOSAL_LEGAL_TERMS)
   const [maintenanceOptions, setMaintenanceOptions] = useState<MaintenanceOffer>(
     initialMaintenanceOptions ?? DEFAULT_MAINTENANCE_OFFER,
   )
@@ -198,6 +202,7 @@ export function ProposalEditor({
       payment_plan: paymentPlan,
       payment_terms: paymentTerms || null,
       change_management_terms: changeManagementTerms || null,
+      legal_terms: legalTerms || null,
       maintenance_options: maintenanceOptions,
       maintenance_selected_plan_id: maintenanceSelectedPlanId,
       items,
@@ -218,6 +223,7 @@ export function ProposalEditor({
     paymentPlan,
     paymentTerms,
     changeManagementTerms,
+    legalTerms,
     maintenanceOptions,
     maintenanceSelectedPlanId,
     items,
@@ -723,6 +729,20 @@ export function ProposalEditor({
                         />
                       </FormRow>
                     </div>
+                    <FormRow
+                      label="Anexo contractual"
+                      htmlFor="legal-terms"
+                      hint="Se prellena al crear la propuesta, se acepta al firmar y se añade al final del PDF."
+                      className="mt-4"
+                    >
+                      <Textarea
+                        id="legal-terms"
+                        value={legalTerms}
+                        onChange={(event) => setLegalTerms(event.target.value)}
+                        disabled={locked}
+                        rows={16}
+                      />
+                    </FormRow>
                   </details>
                 </section>
               </div>

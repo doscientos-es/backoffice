@@ -139,6 +139,13 @@ export default async function ProposalDetailPage({
     .select('id, author_type, author_name, body, created_at')
     .eq('proposal_id', id)
     .order('created_at', { ascending: true })
+  const { data: latestAcceptance } = await supabase
+    .from('proposal_acceptances')
+    .select('signer_name, signer_role, accepted_at, document_hash')
+    .eq('proposal_id', id)
+    .order('accepted_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
 
   // Projects available to link: same client or a client derived from this lead.
   // This mirrors the database rule which protects the association on every write.
@@ -215,21 +222,21 @@ export default async function ProposalDetailPage({
   const needsFiscal = !client || !hasCompleteFiscalData(client)
   const fiscalPrefill = client
     ? {
-        name: client.name ?? '',
-        nif: client.nif ?? '',
-        billing_address: client.billing_address_street ?? '',
-        contact_person: client.contact_person ?? '',
-        email: client.email ?? '',
-        phone: client.phone ?? '',
-      }
+      name: client.name ?? '',
+      nif: client.nif ?? '',
+      billing_address: client.billing_address_street ?? '',
+      contact_person: client.contact_person ?? '',
+      email: client.email ?? '',
+      phone: client.phone ?? '',
+    }
     : {
-        name: lead?.company ?? lead?.name ?? '',
-        nif: '',
-        billing_address: '',
-        contact_person: lead?.name ?? '',
-        email: lead?.email ?? '',
-        phone: lead?.phone ?? '',
-      }
+      name: lead?.company ?? lead?.name ?? '',
+      nif: '',
+      billing_address: '',
+      contact_person: lead?.name ?? '',
+      email: lead?.email ?? '',
+      phone: lead?.phone ?? '',
+    }
   const locked = status === 'accepted' || status === 'rejected'
   const editing = !locked && (mode === 'edit' || ai_draft === '1')
   const configuredPaymentPlan = parsePaymentPlan(proposal.payment_plan)
@@ -296,7 +303,7 @@ export default async function ProposalDetailPage({
                     client ? `Cliente: ${client.name}` : lead ? `Lead: ${lead.name}` : null,
                     `Estado: ${PROPOSAL_STATUS[status]?.label ?? status}`,
                     Number(proposal.total ?? 0) > 0 &&
-                      `Total: ${formatEUR(Number(proposal.total))}`,
+                    `Total: ${formatEUR(Number(proposal.total))}`,
                   ]
                     .filter(Boolean)
                     .join(' · '),
@@ -374,6 +381,7 @@ export default async function ProposalDetailPage({
             initialChangeManagementTerms={
               (proposal.change_management_terms as string | null) ?? null
             }
+            initialLegalTerms={(proposal.legal_terms as string | null) ?? null}
             initialMaintenanceOptions={parseMaintenanceOffer(proposal.maintenance_options)}
             initialMaintenanceSelectedPlanId={
               (proposal.maintenance_selected_plan_id as string | null) ?? null
@@ -560,6 +568,16 @@ export default async function ProposalDetailPage({
                 <DetailRow label="Respondida">
                   {formatDate(proposal.responded_at as string | null)}
                 </DetailRow>
+                {status === 'accepted' && latestAcceptance ? (
+                  <>
+                    <DetailRow label="Firmada por">
+                      {`${latestAcceptance.signer_name as string}${latestAcceptance.signer_role ? ` · ${latestAcceptance.signer_role as string}` : ''}`}
+                    </DetailRow>
+                    <DetailRow label="Huella del documento">
+                      <span className="font-mono text-xs">{latestAcceptance.document_hash as string}</span>
+                    </DetailRow>
+                  </>
+                ) : null}
               </DetailGrid>
             </CardContent>
           </Card>

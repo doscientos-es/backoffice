@@ -10,6 +10,7 @@ const accept = vi.mocked(acceptProposal)
 const props = {
   token: '12345678-1234-4123-8123-123456789abc',
   needsFiscal: false,
+  signerPrefill: 'Ana Gómez',
   fiscalPrefill: {
     name: '',
     nif: '',
@@ -26,12 +27,20 @@ describe('ProposalActions', () => {
     accept.mockResolvedValue({ ok: true })
   })
 
-  it('accepts a proposal directly when fiscal data is already available', async () => {
+  it('requires an explicit electronic signature before accepting a proposal', async () => {
     render(<ProposalActions {...props} />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Aceptar propuesta' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Firmar y aceptar' }))
+    fireEvent.click(screen.getByRole('checkbox'))
+    fireEvent.click(screen.getByRole('button', { name: 'Firmar y aceptar propuesta' }))
 
-    await waitFor(() => expect(accept).toHaveBeenCalledWith(props.token))
-    expect(await screen.findByText('Propuesta aceptada. Gracias.')).toBeDefined()
+    await waitFor(() =>
+      expect(accept).toHaveBeenCalledWith(
+        props.token,
+        { signer_name: 'Ana Gómez', signer_role: undefined, accepts_terms: true },
+        undefined,
+      ),
+    )
+    expect(await screen.findByText('Propuesta firmada y aceptada. Gracias.')).toBeDefined()
   })
 })
