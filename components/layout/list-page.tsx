@@ -313,6 +313,12 @@ export function ListPage({
     }
   }
 
+  function exportSelectedRows() {
+    const selectedRows = rows.filter((row) => selectedIds.includes(row.id))
+    if (selectedRows.length === 0) return
+    exportToCSV(headers, selectedRows, `${exportFilename ?? 'seleccionadas'}-seleccionadas`)
+  }
+
   const hasControls = !!searchKey || (filters && filters.length > 0) || !!pagination
   const hasRowActions = rows.some((r) => r.rowActions != null)
 
@@ -369,6 +375,12 @@ export function ListPage({
                   </Button>
                 )
               })}
+              {exportFilename ? (
+                <Button size="sm" variant="outline" onClick={exportSelectedRows}>
+                  <Download className="mr-1.5 size-3.5" />
+                  Exportar seleccionadas
+                </Button>
+              ) : null}
               <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])}>
                 Cancelar
               </Button>

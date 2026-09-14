@@ -7,6 +7,7 @@ import {
   RefreshCcw,
   Send,
   ShieldAlert,
+  CheckCircle2 as BulkCheckCircle2,
 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -24,6 +25,7 @@ import { getVerifactuOperationalHealth } from "@/lib/verifactu/health";
 
 import { InvoiceRegisterExport } from "./monthly-register-export";
 import { InvoiceListRowActions } from "./invoice-list-row-actions";
+import { bulkMarkInvoicesPaid } from "./actions";
 
 export const metadata: Metadata = { title: "Facturas · doscientos" };
 export const dynamic = "force-dynamic";
@@ -205,6 +207,16 @@ export default async function InvoicesPage({
       ]}
       align={["left", "left", "left", "left", "left", "left", "right", "left", "left"]}
       exportFilename="facturas"
+      bulkActions={[
+        {
+          label: "Marcar cobradas · transferencia",
+          icon: BulkCheckCircle2,
+          onAction: async (ids) => {
+            const result = await bulkMarkInvoicesPaid({ ids });
+            if (!result.ok) throw new Error(result.error);
+          },
+        },
+      ]}
       rows={data.map((i) => ({
         id: i.id,
         href: `/invoices/${i.id}`,

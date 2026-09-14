@@ -326,6 +326,106 @@ export const bulkAssignLeadsToMe = defineAction({
   },
 });
 
+/** Applies one pipeline status to the selected leads and keeps their timeline useful. */
+export const bulkUpdateLeadStatus = defineAction({
+  name: 'leads.bulkUpdateStatus',
+  schema: z.object({
+    ids: z.array(z.string().uuid()).min(1).max(100),
+    status: UpdateLeadStatusInput.shape.status,
+  }),
+  roles: ['owner', 'admin', 'member'],
+  revalidate: ['/leads', '/inicio'],
+  handler: async ({ ids, status }, { user }) => {
+    const supabase = await createServerClient();
+    const now = new Date().toISOString();
+    const { data: current, error: readError } = await supabase
+      .from('leads')
+      .select('id, status')
+      .in('id', ids)
+      .is('deleted_at', null);
+    if (readError) throw new Error(readError.message);
+
+    for (const lead of current ?? []) {
+      if (lead.status === status) continue;
+      const { error } = await supabase
+        .from('leads')
+        .update(
+          buildLeadStatusPatch({
+            status,
+            userId: user.id,
+            now,
+          }),
+        )
+        .eq('id', lead.id as string)
+        .is('deleted_at', null);
+      if (error) throw new Error(error.message);
+
+      const { error: interactionError } = await supabase.from('lead_interactions').insert({
+        lead_id: lead.id,
+        type: 'status_change',
+        subject: `Estado: ${lead.status} → ${status}`,
+        performed_by: user.id,
+        payload: { from: lead.status, to: status, bulk: true },
+      });
+      if (interactionError) throw new Error(interactionError.message);
+    }
+  },
+});
+
+/** Creates a one-day follow-up task for every selected lead. */
+export const bulkCreateLeadTasks = defineAction({
+  name: 'leads.bulkCreateTasks',
+  schema: z.object({ ids: z.array(z.string().uuid()).min(1).max(100) }),
+  roles: ['owner', 'admin', 'member'],
+  revalidate: ['/leads', '/tasks', '/inicio'],
+  handler: async ({ ids }, { user }) => {
+    const dueDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const supabase = await createServerClient();
+    const { error } = await supabase.from('tasks').insert(
+      ids.map((leadId) => ({
+        kind: 'task',
+        title: 'Seguimiento comercial',
+        description: 'Revisar el lead y decidir la siguiente acción.',
+        lead_id: leadId,
+        created_by: user.id,
+        assignee_id: user.id,
+        status: 'todo',
+        priority: 'medium',
+        due_date: dueDate,
+        is_client_visible: false,
+      })),
+    );
+    if (error) throw new Error(error.message);
+  },
+});
+
+/** Schedules a durable reminder for every selected lead for the next working day. */
+export const bulkScheduleLeadReminders = defineAction({
+  name: 'leads.bulkScheduleReminders',
+  schema: z.object({ ids: z.array(z.string().uuid()).min(1).max(100) }),
+  roles: ['owner', 'admin', 'member'],
+  revalidate: ['/leads', '/reminders', '/inicio'],
+  handler: async ({ ids }, { user }) => {
+    const remindAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const supabase = await createServerClient();
+    const { error } = await supabase.from('tasks').insert(
+      ids.map((leadId) => ({
+        kind: 'reminder',
+        title: 'Seguimiento comercial',
+        description: 'Recordatorio creado en bloque desde la lista de leads.',
+        start_at: remindAt,
+        action_type: 'other',
+        lead_id: leadId,
+        created_by: user.id,
+        assignee_id: user.id,
+        status: 'todo',
+        priority: 'medium',
+      })),
+    );
+    if (error) throw new Error(error.message);
+  },
+});
+
 /**
  * Removes a closed lead from the recovery queue without reclassifying its
  * commercial outcome. The original closure reason and date remain on the lead

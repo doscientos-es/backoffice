@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowRight, UserRound } from 'lucide-react'
+import { ArrowRight, Bell, CheckCircle2, ListTodo, UserRound } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 
@@ -14,7 +14,12 @@ import type { MemberOption } from '@/lib/members/queries'
 import { LEAD_STATUS } from '@/lib/status'
 import { relativeTime } from '@/lib/utils'
 
-import { bulkAssignLeadsToMe } from './actions'
+import {
+  bulkAssignLeadsToMe,
+  bulkCreateLeadTasks,
+  bulkScheduleLeadReminders,
+  bulkUpdateLeadStatus,
+} from './actions'
 import { LeadFastActions } from './lead-fast-actions'
 import { LeadQuickView } from './lead-quick-view'
 import type { KanbanLead } from './leads-kanban'
@@ -128,6 +133,30 @@ export function LeadsList({
               if (!result.ok) throw new Error(result.error)
             },
           },
+          {
+            label: 'Crear seguimiento',
+            icon: ListTodo,
+            onAction: async (ids) => {
+              const result = await bulkCreateLeadTasks({ ids })
+              if (!result.ok) throw new Error(result.error)
+            },
+          },
+          {
+            label: 'Recordatorio mañana',
+            icon: Bell,
+            onAction: async (ids) => {
+              const result = await bulkScheduleLeadReminders({ ids })
+              if (!result.ok) throw new Error(result.error)
+            },
+          },
+          ...(['contacted', 'in_conversation', 'quoted', 'won', 'lost'] as const).map((status) => ({
+            label: `Estado: ${LEAD_STATUS[status].label}`,
+            icon: status === 'won' ? CheckCircle2 : undefined,
+            onAction: async (ids: string[]) => {
+              const result = await bulkUpdateLeadStatus({ ids, status })
+              if (!result.ok) throw new Error(result.error)
+            },
+          })),
         ]}
         onRowClick={(row) => setSelectedLead(row.data as KanbanLead)}
       />

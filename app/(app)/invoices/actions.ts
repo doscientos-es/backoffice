@@ -288,6 +288,33 @@ export const recordInvoicePayment = defineAction<
   },
 })
 
+/** Marks selected issued invoices as fully paid using a confirmed transfer payment. */
+export const bulkMarkInvoicesPaid = defineAction({
+  name: 'invoices.bulkMarkPaid',
+  schema: z.object({ ids: z.array(z.string().uuid()).min(1).max(100) }),
+  roles: ['owner', 'admin'],
+  revalidate: ['/invoices', '/finance', '/inicio'],
+  handler: async ({ ids }) => {
+    const admin = createAdminClient()
+    const { data: invoices, error } = await admin
+      .from('invoices')
+      .select('id, status, total')
+      .in('id', ids)
+      .is('deleted_at', null)
+    if (error) throw new Error(error.message)
+
+    for (const invoice of invoices ?? []) {
+      if (!['issued', 'overdue'].includes(invoice.status as string)) continue
+      const result = await recordInvoicePayment({
+        id: invoice.id as string,
+        amount: Number(invoice.total),
+        paymentMethod: 'transfer',
+      })
+      if (!result.ok) throw new Error(result.error)
+    }
+  },
+})
+
 /** Reverts a payment without re-emitting its immutable fiscal record. */
 export const revertInvoicePayment = defineAction({
   name: 'invoices.revertPayment',
