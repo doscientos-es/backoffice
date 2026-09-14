@@ -11,7 +11,10 @@ export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 const log = scopedLogger('expenses.extract-invoice')
-const BodySchema = z.object({ attachment_id: z.string().uuid() })
+const BodySchema = z.object({
+  attachment_id: z.string().uuid(),
+  confirm_large: z.boolean().optional().default(false),
+})
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   let user: Awaited<ReturnType<typeof requireUser>>
@@ -48,8 +51,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (!attachment.expense_id && attachment.uploaded_by !== user.id) {
     return NextResponse.json({ error: 'Factura no encontrada' }, { status: 404 })
   }
-  if ((!attachment.mime_type?.startsWith('image/') && attachment.mime_type !== 'application/pdf') || !attachment.storage_path) {
-    return NextResponse.json({ error: 'Selecciona un PDF o una imagen de factura' }, { status: 400 })
+  if (
+    (!attachment.mime_type?.startsWith('image/') && attachment.mime_type !== 'application/pdf') ||
+    !attachment.storage_path
+  ) {
+    return NextResponse.json(
+      { error: 'Selecciona un PDF o una imagen de factura' },
+      { status: 400 },
+    )
   }
 
   const { data, error: downloadError } = await getStorage().download(
@@ -60,7 +69,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'No se pudo leer el PDF' }, { status: 502 })
 
   try {
-    const result = await extractExpenseInvoice(data, attachment.mime_type)
+    const result = await extractExpenseInvoice(data, attachment.mime_type, {
+      confirmLarge: body.confirm_large,
+    })
+    if (result.requiresConfirmation) {
+      return NextResponse.json(
+        {
+          requires_confirmation: true,
+          reason: result.warning,
+          size_bytes: result.sizeBytes,
+          page_count: result.pageCount,
+        },
+        { status: 409 },
+      )
+    }
     log.info({ attachmentId: attachment.id, source: result.source }, 'expense_invoice_extracted')
     return NextResponse.json(result)
   } catch (err) {

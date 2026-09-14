@@ -1,6 +1,6 @@
+import { render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
 
 type ChildrenProps = { children: ReactNode }
 
@@ -34,9 +34,15 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('next/link', () => ({
-  default: ({ children, href }: { children: ReactNode; href: string }) => <a href={href}>{children}</a>,
+  default: ({ children, href }: { children: ReactNode; href: string }) => (
+    <a href={href}>{children}</a>
+  ),
 }))
-vi.mock('next/navigation', () => ({ notFound: vi.fn(() => { throw new Error('not found') }) }))
+vi.mock('next/navigation', () => ({
+  notFound: vi.fn(() => {
+    throw new Error('not found')
+  }),
+}))
 vi.mock('@/lib/auth', () => ({ requireUser: vi.fn(async () => ({ role: 'viewer' })) }))
 vi.mock('@/lib/logger', () => ({ scopedLogger: () => mocks.log }))
 vi.mock('@/lib/internal-documents/preview', () => ({
@@ -47,7 +53,11 @@ vi.mock('@/lib/supabase/server', () => ({
     from: (table: string) => ({
       select: () => {
         if (table === 'internal_documents') {
-          return { eq: () => ({ is: () => ({ maybeSingle: () => Promise.resolve(mocks.documentResult) }) }) }
+          return {
+            eq: () => ({
+              is: () => ({ maybeSingle: () => Promise.resolve(mocks.documentResult) }),
+            }),
+          }
         }
         if (table === 'internal_document_events') {
           return {
@@ -84,7 +94,9 @@ vi.mock('@/components/layout/detail-grid', () => ({
     </div>
   ),
 }))
-vi.mock('@/components/ui/badge', () => ({ Badge: ({ children }: ChildrenProps) => <span>{children}</span> }))
+vi.mock('@/components/ui/badge', () => ({
+  Badge: ({ children }: ChildrenProps) => <span>{children}</span>,
+}))
 vi.mock('@/components/ui/button', () => ({
   Button: ({ asChild, children }: ChildrenProps & { asChild?: boolean }) =>
     asChild ? children : <button type="button">{children}</button>,
@@ -95,13 +107,19 @@ vi.mock('@/components/ui/card', () => ({
   CardHeader: ({ children }: ChildrenProps) => <header>{children}</header>,
   CardTitle: ({ children }: ChildrenProps) => <h2>{children}</h2>,
 }))
-vi.mock('@/components/ui/danger-zone', () => ({ DangerZone: ({ children }: ChildrenProps) => <div>{children}</div> }))
+vi.mock('@/components/ui/danger-zone', () => ({
+  DangerZone: ({ children }: ChildrenProps) => <div>{children}</div>,
+}))
 vi.mock('@/components/ui/submit-button', () => ({
   SubmitButton: ({ children }: ChildrenProps) => <button type="submit">{children}</button>,
 }))
 vi.mock('@doscientos/ui', () => ({ DocPreview: () => <p>Preview no disponible</p> }))
-vi.mock('./internal-doc-edit-dialog', () => ({ InternalDocEditDialog: () => <button type="button">Editar</button> }))
-vi.mock('./internal-doc-history', () => ({ InternalDocHistory: () => <p>Sin actividad registrada todavía.</p> }))
+vi.mock('./internal-doc-edit-dialog', () => ({
+  InternalDocEditDialog: () => <button type="button">Editar</button>,
+}))
+vi.mock('./internal-doc-history', () => ({
+  InternalDocHistory: () => <p>Sin actividad registrada todavía.</p>,
+}))
 vi.mock('../actions', () => ({ deleteInternalDoc: vi.fn(), reindexInternalDoc: vi.fn() }))
 
 import InternalDocDetailPage from './page'
@@ -123,7 +141,10 @@ describe('InternalDocDetailPage', () => {
 
     expect(screen.getByRole('heading', { name: 'Documento de prueba' })).toBeTruthy()
     expect(screen.getByText('Preview no disponible')).toBeTruthy()
-    expect(mocks.getInternalDocPreviewUrl).toHaveBeenCalledWith('doc-1', 'other/doc-1/documento.pdf')
+    expect(mocks.getInternalDocPreviewUrl).toHaveBeenCalledWith(
+      'doc-1',
+      'other/doc-1/documento.pdf',
+    )
     expect(mocks.log.warn).toHaveBeenCalledWith(
       { documentId: 'doc-1', source: 'events', errorCode: 'PGRST205' },
       'could not load optional internal document data',

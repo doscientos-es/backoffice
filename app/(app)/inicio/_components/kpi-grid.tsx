@@ -40,7 +40,7 @@ export async function KpiGrid({ range, showFinance }: KpiGridProps) {
       />
       {showFinance ? (
         <StatCard
-          label="Facturación del mes"
+          label="Facturación"
           value={formatEUR(kpis.monthRevenue)}
           tone="success"
           icon={TrendingUp}

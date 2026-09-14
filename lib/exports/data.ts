@@ -27,6 +27,7 @@ export const EXPORTABLE_TABLES = [
   'invoices',
   'invoice_items',
   'invoice_payments',
+  'invoice_automations',
   'expenses',
   'subscriptions',
   'attachments',

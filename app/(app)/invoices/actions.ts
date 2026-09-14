@@ -17,6 +17,10 @@ import { computeLineTotals } from "@/lib/finance";
 import { backupInvoiceToDrive } from "@/lib/google/backup";
 import { pushMetaConversion } from "@/lib/integrations/meta-capi";
 import {
+  cancelInvoicePaymentFollowUp,
+  scheduleInvoicePaymentFollowUp,
+} from "@/lib/invoices/payment-follow-ups";
+import {
   findClientInfo,
   findInvoicedProposalPaymentPlanIds,
   findInvoiceForEdit,
@@ -147,7 +151,16 @@ export const updateInvoiceStatus = defineAction<
           "verifactu_immediate_delivery_deferred",
         );
       }
-      if (status === "issued") void backupInvoiceToDrive(id, user.email);
+      if (status === "issued") {
+        void backupInvoiceToDrive(id, user.email);
+        after(async () => {
+          try {
+            await scheduleInvoicePaymentFollowUp(await createServerClient(), id, user.id);
+          } catch (error) {
+            log.warn({ err: error, invoiceId: id }, "invoice_payment_follow_up_schedule_failed");
+          }
+        });
+      }
       return { fiscalDeliveryStatus: delivery.status, fiscalDeliveryCsv: delivery.csv };
     }
 
@@ -163,6 +176,13 @@ export const updateInvoiceStatus = defineAction<
     // Fire-and-forget: notify Meta CAPI when an invoice is paid — the
     // highest-value signal for the ad algorithm to optimise towards.
     if (status === "paid") {
+      after(async () => {
+        try {
+          await cancelInvoicePaymentFollowUp(await createServerClient(), id);
+        } catch (error) {
+          log.warn({ err: error, invoiceId: id }, "invoice_payment_follow_up_cancel_failed");
+        }
+      });
       after(async () => {
         try {
           const inv = await findInvoiceForEmail(id);
@@ -254,6 +274,16 @@ export const recordInvoicePayment = defineAction<
         : { payment_method: input.paymentMethod }),
     });
 
+    if (fullyPaid) {
+      after(async () => {
+        try {
+          await cancelInvoicePaymentFollowUp(await createServerClient(), input.id);
+        } catch (error) {
+          log.warn({ err: error, invoiceId: input.id }, "invoice_payment_follow_up_cancel_failed");
+        }
+      });
+    }
+
     return { fullyPaid };
   },
 });
@@ -279,6 +309,13 @@ export const revertInvoicePayment = defineAction({
       updated_at: new Date().toISOString(),
       paid_at: null,
       payment_method: null,
+    });
+    after(async () => {
+      try {
+        await scheduleInvoicePaymentFollowUp(await createServerClient(), input.id, user.id);
+      } catch (error) {
+        log.warn({ err: error, invoiceId: input.id }, "invoice_payment_follow_up_schedule_failed");
+      }
     });
   },
 });

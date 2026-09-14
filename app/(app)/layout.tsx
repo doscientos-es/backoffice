@@ -44,7 +44,7 @@ export default async function AppLayout({
       </div>
       {modal}
       <NavProgress />
-      <CommandPalette />
+      <CommandPalette role={user.role} />
       <KeyboardShortcuts />
       <ShortcutsDialog />
       <QuickCreateButton />

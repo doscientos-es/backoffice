@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import * as vitest from 'vitest'
 
 const { createServerClient, from, getVerifactuDiagnosticGate, serverEnv } = vi.hoisted(() => ({
   createServerClient: vi.fn(),
@@ -30,7 +31,7 @@ beforeEach(() => {
   })
 })
 
-afterEach(() => vi.useRealTimers())
+vitest.afterEach(() => vi.useRealTimers())
 
 describe('getCertificateHealth', () => {
   it('warns during the 30 days before certificate expiry', () => {

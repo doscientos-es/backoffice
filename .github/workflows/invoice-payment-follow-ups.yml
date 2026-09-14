@@ -1,0 +1,30 @@
+name: Send visible invoice payment follow-ups
+
+on:
+  schedule:
+    # Hourly keeps the promised date reasonably close without sending duplicates.
+    - cron: '15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  process:
+    name: Process pending invoice follow-ups
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Call the invoice follow-up endpoint
+        run: |
+          STATUS=$(curl --silent --output /tmp/invoice-payment-follow-ups.json \
+                        --write-out "%{http_code}" \
+                        --max-time 60 \
+                        -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+                        "${{ secrets.APP_URL }}/api/cron/invoice-payment-follow-ups")
+
+          echo "HTTP status: $STATUS"
+          cat /tmp/invoice-payment-follow-ups.json | python3 -m json.tool || true
+
+          if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 300 ]; then
+            echo "::error::El endpoint devolvió HTTP $STATUS"
+            exit 1
+          fi

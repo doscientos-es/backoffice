@@ -30,6 +30,7 @@ const { db, authUser, googleCalendar, sendEmail } = vi.hoisted(() => ({
       mom_test_decision_power_or_budget: null as boolean | null,
       mom_test_accessible: null as boolean | null,
       mom_test_accessible_source: null as string | null,
+      mom_test_comparing_other_companies: null as boolean | null,
     },
     adminEmails: [{ email: "admin@doscientos.es" }, { email: "owner@doscientos.es" }],
   },
@@ -234,6 +235,7 @@ beforeEach(() => {
     mom_test_decision_power_or_budget: null,
     mom_test_accessible: null,
     mom_test_accessible_source: null,
+    mom_test_comparing_other_companies: null,
   };
   db.adminEmails = [{ email: "admin@doscientos.es" }, { email: "owner@doscientos.es" }];
   authUser.role = "admin";

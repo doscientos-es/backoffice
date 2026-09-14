@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { visibleCommandActions } from '@/lib/navigation/command-actions'
 import {
   CREATE_SHORTCUTS,
   findShortcut,
@@ -65,5 +66,22 @@ describe('mergeRecentItems', () => {
 
   it('honours a custom max', () => {
     expect(mergeRecentItems([a, b], c, 2)).toEqual([c, a])
+  })
+})
+
+describe('visibleCommandActions', () => {
+  it('keeps finance shortcuts for admins but not regular team members', () => {
+    expect(visibleCommandActions('admin').some((action) => action.key === 'overdue-invoices')).toBe(
+      true,
+    )
+    expect(
+      visibleCommandActions('member').some((action) => action.key === 'overdue-invoices'),
+    ).toBe(false)
+  })
+
+  it('only exposes actions that lead to a concrete pending-work view', () => {
+    for (const action of visibleCommandActions('member')) {
+      expect(action.href).toMatch(/^\/(inicio|leads|reminders|tasks)/)
+    }
   })
 })

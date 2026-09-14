@@ -1,15 +1,28 @@
 'use client'
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@doscientos/ui'
 import { Check, FileText, LoaderCircle as Loader2, Paperclip, Sparkles, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@doscientos/ui'
 import type { ExpenseInvoiceSuggestion } from '@/lib/finance/invoice-extraction'
 
 export type InvoiceExtractionMeta = {
   source: 'ai' | 'rules'
   warning: string | null
+}
+
+type LargeFileReview = {
+  reason: string
+  sizeBytes: number
+  pageCount: number | null
 }
 
 interface Props {
@@ -43,14 +56,61 @@ async function readJson<T>(response: Response): Promise<T> {
 export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [phase, setPhase] = useState<Phase>('idle')
+  const [attachmentId, setAttachmentId] = useState<string | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const [meta, setMeta] = useState<InvoiceExtractionMeta | null>(null)
   const [extractFailed, setExtractFailed] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [suggestion, setSuggestion] = useState<ExpenseInvoiceSuggestion | null>(null)
   const [scanOpen, setScanOpen] = useState(false)
+  const [largeFileReview, setLargeFileReview] = useState<LargeFileReview | null>(null)
 
   const busy = phase === 'uploading' || phase === 'extracting'
+
+  async function extractAttachment(attachmentId: string, confirmLarge = false) {
+    setPhase('extracting')
+    setScanOpen(true)
+    const extractRes = await fetch('/api/expenses/extract-invoice', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ attachment_id: attachmentId, confirm_large: confirmLarge }),
+    })
+    const extractJson = await readJson<{
+      suggestion?: ExpenseInvoiceSuggestion
+      source?: 'ai' | 'rules'
+      warning?: string | null
+      error?: string
+      requires_confirmation?: boolean
+      reason?: string
+      size_bytes?: number
+      page_count?: number | null
+    }>(extractRes)
+
+    if (extractRes.status === 409 && extractJson.requires_confirmation) {
+      setScanOpen(false)
+      setLargeFileReview({
+        reason: extractJson.reason ?? 'Este documento puede tener un coste de análisis elevado.',
+        sizeBytes: extractJson.size_bytes ?? 0,
+        pageCount: extractJson.page_count ?? null,
+      })
+      setPhase('done')
+      return
+    }
+
+    if (extractRes.ok && extractJson.suggestion) {
+      const extractionMeta: InvoiceExtractionMeta = {
+        source: extractJson.source ?? 'rules',
+        warning: extractJson.warning ?? null,
+      }
+      setMeta(extractionMeta)
+      setSuggestion(extractJson.suggestion)
+      setScanOpen(true)
+    } else {
+      setScanOpen(false)
+      setExtractFailed(true)
+    }
+    setPhase('done')
+  }
 
   async function handleFile(file: File) {
     setError(null)
@@ -68,37 +128,14 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange 
       }
 
       setFileName(file.name)
+      setAttachmentId(uploadJson.id)
       onAttached({ id: uploadJson.id, name: file.name })
 
-      setPhase('extracting')
-      setScanOpen(true)
-      const extractRes = await fetch('/api/expenses/extract-invoice', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ attachment_id: uploadJson.id }),
-      })
-      const extractJson = await readJson<{
-        suggestion?: ExpenseInvoiceSuggestion
-        source?: 'ai' | 'rules'
-        warning?: string | null
-        error?: string
-      }>(extractRes)
-      if (extractRes.ok && extractJson.suggestion) {
-        const m: InvoiceExtractionMeta = {
-          source: extractJson.source ?? 'rules',
-          warning: extractJson.warning ?? null,
-        }
-        setMeta(m)
-        setSuggestion(extractJson.suggestion)
-        setScanOpen(true)
-      } else {
-        // Non-blocking: the PDF stays attached and the form can be filled by hand.
-        setExtractFailed(true)
-      }
-      setPhase('done')
+      await extractAttachment(uploadJson.id)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error de red')
       setFileName(null)
+      setAttachmentId(null)
       onAttached(null)
       setPhase('idle')
     } finally {
@@ -109,10 +146,12 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange 
   function clear() {
     if (inputRef.current) inputRef.current.value = ''
     setFileName(null)
+    setAttachmentId(null)
     setMeta(null)
     setExtractFailed(false)
     setError(null)
     setSuggestion(null)
+    setLargeFileReview(null)
     setScanOpen(false)
     setPhase('idle')
     onAttached(null)
@@ -168,8 +207,8 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange 
         </div>
         {phase === 'idle' && !fileName ? (
           <p className="text-muted-foreground text-xs">
-            Sube la factura en PDF o como foto y rellenaremos el formulario con sus datos. Quedará adjunta al
-            gasto al crearlo.
+            Sube la factura en PDF o como foto y rellenaremos el formulario con sus datos. Quedará
+            adjunta al gasto al crearlo.
           </p>
         ) : null}
         {meta ? (
@@ -196,19 +235,115 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange 
       <Dialog open={scanOpen} onOpenChange={setScanOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Sparkles className="text-primary size-5" /> Factura analizada</DialogTitle>
-            <DialogDescription>He encontrado datos que puedo importar al nuevo gasto. Revisa el resultado antes de aceptarlo.</DialogDescription>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="text-primary size-5" /> Factura analizada
+            </DialogTitle>
+            <DialogDescription>
+              He encontrado datos que puedo importar al nuevo gasto. Revisa el resultado antes de
+              aceptarlo.
+            </DialogDescription>
           </DialogHeader>
-          {!suggestion ? <div className="flex flex-col items-center gap-4 py-8 text-center"><Loader2 className="text-primary size-10 animate-spin" /><p className="font-medium">Escaneando factura…</p><p className="text-muted-foreground text-sm">Estoy leyendo proveedor, fecha e importes.</p></div> : <div className="bg-muted/40 grid gap-2 rounded-lg p-4 text-sm">
-            {suggestion.vendor && <div className="flex justify-between"><span className="text-muted-foreground">Proveedor</span><span className="font-medium">{suggestion.vendor}</span></div>}
-            {suggestion.invoice_reference && <div className="flex justify-between"><span className="text-muted-foreground">Factura</span><span>{suggestion.invoice_reference}</span></div>}
-            {suggestion.expense_date && <div className="flex justify-between"><span className="text-muted-foreground">Fecha</span><span>{suggestion.expense_date}</span></div>}
-            {suggestion.subtotal !== null && <div className="flex justify-between"><span className="text-muted-foreground">Base imponible</span><span>{suggestion.subtotal} €</span></div>}
-          </div>}
-          {suggestion ? <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setScanOpen(false)}>Rellenar a mano</Button>
-            <Button type="button" onClick={() => { if (suggestion) onExtracted(suggestion, { source: meta?.source ?? 'rules', warning: meta?.warning ?? null }); setScanOpen(false) }}><Check className="size-4" /> Importar datos</Button>
-          </DialogFooter> : null}
+          {!suggestion ? (
+            <div className="flex flex-col items-center gap-4 py-8 text-center">
+              <Loader2 className="text-primary size-10 animate-spin" />
+              <p className="font-medium">Escaneando factura…</p>
+              <p className="text-muted-foreground text-sm">
+                Estoy leyendo proveedor, fecha e importes.
+              </p>
+            </div>
+          ) : (
+            <div className="bg-muted/40 grid gap-2 rounded-lg p-4 text-sm">
+              {suggestion.vendor && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Proveedor</span>
+                  <span className="font-medium">{suggestion.vendor}</span>
+                </div>
+              )}
+              {suggestion.invoice_reference && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Factura</span>
+                  <span>{suggestion.invoice_reference}</span>
+                </div>
+              )}
+              {suggestion.expense_date && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Fecha</span>
+                  <span>{suggestion.expense_date}</span>
+                </div>
+              )}
+              {suggestion.subtotal !== null && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Base imponible</span>
+                  <span>{suggestion.subtotal} €</span>
+                </div>
+              )}
+            </div>
+          )}
+          {suggestion ? (
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setScanOpen(false)}>
+                Rellenar a mano
+              </Button>
+              <Button
+                type="button"
+                onClick={() => {
+                  if (suggestion)
+                    onExtracted(suggestion, {
+                      source: meta?.source ?? 'rules',
+                      warning: meta?.warning ?? null,
+                    })
+                  setScanOpen(false)
+                }}
+              >
+                <Check className="size-4" /> Importar datos
+              </Button>
+            </DialogFooter>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={largeFileReview !== null}
+        onOpenChange={(open) => {
+          if (!open) setLargeFileReview(null)
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Documento de análisis costoso</DialogTitle>
+            <DialogDescription>
+              {largeFileReview?.reason} El archivo seguirá adjunto y no se analizará con IA hasta
+              que lo confirmes.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="bg-muted/40 rounded-lg p-3 text-sm">
+            {largeFileReview?.pageCount ? `${largeFileReview.pageCount} páginas · ` : ''}
+            {largeFileReview ? `${(largeFileReview.sizeBytes / 1024 / 1024).toFixed(1)} MB` : ''}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setLargeFileReview(null)}>
+              Rellenar a mano
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                if (!attachmentId) return
+                setLargeFileReview(null)
+                onPendingChange(true)
+                void extractAttachment(attachmentId, true)
+                  .catch((err) => {
+                    setError(
+                      err instanceof Error ? err.message : 'No se pudo analizar el documento',
+                    )
+                    setScanOpen(false)
+                    setPhase('done')
+                  })
+                  .finally(() => onPendingChange(false))
+              }}
+              disabled={!attachmentId || busy}
+            >
+              Analizar igualmente
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>

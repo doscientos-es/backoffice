@@ -9,6 +9,7 @@ const db: {
   unassigned: unknown[]
 } = { tasks: [], myLeads: [], unassigned: [] }
 const filters: Array<{ table: string; column: string; value: unknown }> = []
+const invoiceDateFilters: Array<{ operator: 'gte' | 'lte'; column: string; value: unknown }> = []
 
 // ---------------------------------------------------------------------------
 // Supabase server mock
@@ -41,8 +42,15 @@ vi.mock('@/lib/supabase/server', () => ({
           return chain
         },
         in: () => chain,
-        gte: () => chain,
-        lte: () => chain,
+        gte: (column: string, value: unknown) => {
+          if (table === 'invoices') invoiceDateFilters.push({ operator: 'gte', column, value })
+          return chain
+        },
+        lte: (column: string, value: unknown) => {
+          if (table === 'invoices') invoiceDateFilters.push({ operator: 'lte', column, value })
+          return chain
+        },
+        lt: () => chain,
         order: () => chain,
         limit: async () => {
           if (isCountQuery) return { data: null, count: 0, error: null }
@@ -249,5 +257,31 @@ describe('getMyDay', () => {
 
     expect(filters.some((filter) => filter.column === 'assignee_id')).toBe(false)
     expect(filters).toContainEqual({ table: 'leads', column: 'assigned_to', value: null })
+  })
+})
+
+describe('getDashboardKpis', () => {
+  beforeEach(() => {
+    invoiceDateFilters.length = 0
+    vi.resetModules()
+  })
+
+  afterEach(() => {
+    vi.resetModules()
+  })
+
+  it('filters revenue by the selected current and comparison windows', async () => {
+    const { getDashboardKpis } = await import('@/lib/dashboard/queries')
+    await getDashboardKpis({
+      current: { from: new Date('2026-05-08T12:00:00Z'), to: new Date('2026-05-15T12:00:00Z') },
+      previous: { from: new Date('2026-05-01T12:00:00Z'), to: new Date('2026-05-08T12:00:00Z') },
+    })
+
+    expect(invoiceDateFilters).toEqual([
+      { operator: 'gte', column: 'issue_date', value: '2026-05-08' },
+      { operator: 'lte', column: 'issue_date', value: '2026-05-15' },
+      { operator: 'gte', column: 'issue_date', value: '2026-05-01' },
+      { operator: 'lte', column: 'issue_date', value: '2026-05-08' },
+    ])
   })
 })

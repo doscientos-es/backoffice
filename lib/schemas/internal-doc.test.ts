@@ -8,6 +8,8 @@ import {
   INTERNAL_DOC_MAX_TAGS,
   INTERNAL_DOC_VISIBILITIES,
   InternalDocCategorySchema,
+  PreviewInternalDocEmailInput,
+  SendInternalDocEmailInput,
   InternalDocIdInput,
   InternalDocVisibilitySchema,
   UpdateInternalDocInput,
@@ -57,5 +59,21 @@ describe('UpdateInternalDocInput', () => {
 describe('InternalDocIdInput', () => {
   it('validates the uuid payload', () => {
     expect(InternalDocIdInput.safeParse({ id: uuid }).success).toBe(true)
+  })
+})
+
+describe('internal document email inputs', () => {
+  it('validates personalised email data and requires a recipient when sending', () => {
+    const preview = {
+      id: uuid,
+      subject: 'Documento actualizado',
+      recipientName: 'Ana',
+      message: 'Gracias.',
+    }
+    expect(PreviewInternalDocEmailInput.safeParse(preview).success).toBe(true)
+    expect(SendInternalDocEmailInput.safeParse(preview).success).toBe(false)
+    expect(SendInternalDocEmailInput.safeParse({ ...preview, to: 'ana@example.com' }).success).toBe(
+      true,
+    )
   })
 })

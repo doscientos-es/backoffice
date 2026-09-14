@@ -44,6 +44,23 @@ export type RevenuePoint = {
   previous: number
 }
 
+export type RevenueBreakdownPoint = {
+  month: string
+  total: number
+  [seriesKey: string]: string | number
+}
+
+export type RevenueBreakdown = {
+  points: RevenueBreakdownPoint[]
+  series: Array<{ key: string; label: string }>
+}
+
+export type RevenueChartData = {
+  totals: RevenuePoint[]
+  byProject: RevenueBreakdown
+  byLead: RevenueBreakdown
+}
+
 // ---------------------------------------------------------------------------
 // Company goals
 // ---------------------------------------------------------------------------

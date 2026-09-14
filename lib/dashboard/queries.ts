@@ -20,7 +20,8 @@ import type {
   MyTaskRow,
   OverdueInvoiceRow,
   ReminderRow,
-  RevenuePoint,
+  RevenueBreakdown,
+  RevenueChartData,
 } from './types'
 
 const AVISOS_LIMIT = 5
@@ -97,9 +98,6 @@ function toMyTask(row: Record<string, unknown>): MyTaskRow {
 export async function getDashboardKpis(range: DateRange): Promise<DashboardKpis> {
   const supabase = await createServerClient()
   const now = new Date()
-  const monthStart = toIsoDate(new Date(now.getFullYear(), now.getMonth(), 1))
-  const prevMonthStart = toIsoDate(new Date(now.getFullYear(), now.getMonth() - 1, 1))
-  const prevMonthEnd = toIsoDate(new Date(now.getFullYear(), now.getMonth(), 0))
   const today = toIsoDate(now)
 
   const [
@@ -138,14 +136,15 @@ export async function getDashboardKpis(range: DateRange): Promise<DashboardKpis>
     supabase
       .from('invoices')
       .select('total')
-      .gte('issue_date', monthStart)
+      .gte('issue_date', toIsoDate(range.current.from))
+      .lte('issue_date', toIsoDate(range.current.to))
       .in('status', ['issued', 'paid', 'overdue'])
       .is('deleted_at', null),
     supabase
       .from('invoices')
       .select('total')
-      .gte('issue_date', prevMonthStart)
-      .lte('issue_date', prevMonthEnd)
+      .gte('issue_date', toIsoDate(range.previous.from))
+      .lte('issue_date', toIsoDate(range.previous.to))
       .in('status', ['issued', 'paid', 'overdue'])
       .is('deleted_at', null),
   ])
@@ -249,7 +248,90 @@ export async function getAvisos(): Promise<AvisosData> {
   return { reminders, overdueInvoices, certExpiresAt }
 }
 
-export async function getRevenueSeries(months = 6): Promise<RevenuePoint[]> {
+type RevenueReference = { id: string; name: string }
+
+export type RevenueInvoiceRow = {
+  issue_date: string
+  total: number | string | null
+  projects: RevenueReference | RevenueReference[] | null
+  clients:
+    | (RevenueReference & { lead_id: string | null; leads: RevenueReference | RevenueReference[] | null })
+    | Array<RevenueReference & { lead_id: string | null; leads: RevenueReference | RevenueReference[] | null }>
+    | null
+}
+
+type RevenueDimension = 'project' | 'lead'
+
+const REVENUE_BREAKDOWN_LIMIT = 6
+
+function singleReference<T>(value: T | T[] | null): T | null {
+  return Array.isArray(value) ? (value[0] ?? null) : value
+}
+
+function revenueEntity(row: RevenueInvoiceRow, dimension: RevenueDimension): RevenueReference {
+  if (dimension === 'project') {
+    return singleReference(row.projects) ?? { id: 'unattributed', name: 'Sin proyecto' }
+  }
+
+  const client = singleReference(row.clients)
+  return singleReference(client?.leads ?? null) ?? { id: 'unattributed', name: 'Sin lead' }
+}
+
+/** Groups current-period invoices into the six largest entities plus an "Otros" bucket. */
+export function buildRevenueBreakdown(
+  rows: RevenueInvoiceRow[],
+  months: number,
+  now: Date,
+  dimension: RevenueDimension,
+): RevenueBreakdown {
+  const monthSlots = Array.from({ length: months }, (_, index) => {
+    const date = new Date(now.getFullYear(), now.getMonth() - (months - 1 - index), 1)
+    return { key: `${date.getMonth()}`, label: shortMonthEs(date.getMonth()) }
+  })
+  const amountsByEntity = new Map<string, { label: string; amounts: Map<string, number>; total: number }>()
+
+  for (const row of rows) {
+    const month = `${new Date(row.issue_date).getMonth()}`
+    if (!monthSlots.some((slot) => slot.key === month)) continue
+    const entity = revenueEntity(row, dimension)
+    const entityKey = `${dimension}:${entity.id}`
+    const bucket = amountsByEntity.get(entityKey) ?? {
+      label: entity.name,
+      amounts: new Map<string, number>(),
+      total: 0,
+    }
+    const amount = Number(row.total ?? 0)
+    bucket.amounts.set(month, (bucket.amounts.get(month) ?? 0) + amount)
+    bucket.total += amount
+    amountsByEntity.set(entityKey, bucket)
+  }
+
+  const ranked = Array.from(amountsByEntity.entries()).sort(([, a], [, b]) => b.total - a.total)
+  const visible = ranked.slice(0, REVENUE_BREAKDOWN_LIMIT)
+  const hidden = ranked.slice(REVENUE_BREAKDOWN_LIMIT)
+  const series = visible.map(([, bucket], index) => ({ key: `series_${index}`, label: bucket.label }))
+  if (hidden.length > 0) series.push({ key: 'others', label: 'Otros' })
+
+  return {
+    series,
+    points: monthSlots.map((slot) => {
+      const point: Record<string, string | number> = { month: slot.label, total: 0 }
+      visible.forEach(([, bucket], index) => {
+        const amount = bucket.amounts.get(slot.key) ?? 0
+        point[`series_${index}`] = amount
+        point.total = Number(point.total) + amount
+      })
+      if (hidden.length > 0) {
+        const amount = hidden.reduce((sum, [, bucket]) => sum + (bucket.amounts.get(slot.key) ?? 0), 0)
+        point.others = amount
+        point.total = Number(point.total) + amount
+      }
+      return point as RevenueBreakdown['points'][number]
+    }),
+  }
+}
+
+export async function getRevenueSeries(months = 6): Promise<RevenueChartData> {
   const supabase = await createServerClient()
   const now = new Date()
   const startCurrent = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1)
@@ -259,40 +341,46 @@ export async function getRevenueSeries(months = 6): Promise<RevenuePoint[]> {
   const [currentRes, previousRes] = await Promise.all([
     supabase
       .from('invoices')
-      .select('issue_date, total')
+      .select('issue_date, total, projects(id, name), clients(lead_id, leads(id, name))')
       .gte('issue_date', toIsoDate(startCurrent))
       .neq('status', 'draft')
       .is('deleted_at', null),
     supabase
       .from('invoices')
-      .select('issue_date, total')
+      .select('issue_date, total, projects(id, name), clients(lead_id, leads(id, name))')
       .gte('issue_date', toIsoDate(startPrevious))
       .lte('issue_date', toIsoDate(endPrevious))
       .neq('status', 'draft')
       .is('deleted_at', null),
   ])
 
+  const currentRows = (currentRes.data ?? []) as unknown as RevenueInvoiceRow[]
+  const previousRows = (previousRes.data ?? []) as unknown as RevenueInvoiceRow[]
   const byMonth = new Map<string, { current: number; previous: number }>()
   for (let i = months - 1; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
     byMonth.set(`${d.getMonth()}`, { current: 0, previous: 0 })
   }
-  for (const row of currentRes.data ?? []) {
-    const d = new Date(row.issue_date as string)
+  for (const row of currentRows) {
+    const d = new Date(row.issue_date)
     const slot = byMonth.get(`${d.getMonth()}`)
     if (slot) slot.current += Number(row.total ?? 0)
   }
-  for (const row of previousRes.data ?? []) {
-    const d = new Date(row.issue_date as string)
+  for (const row of previousRows) {
+    const d = new Date(row.issue_date)
     const slot = byMonth.get(`${d.getMonth()}`)
     if (slot) slot.previous += Number(row.total ?? 0)
   }
 
-  return Array.from(byMonth.entries()).map(([key, { current, previous }]) => ({
-    month: shortMonthEs(Number(key)),
-    current: Math.round(current * 100) / 100,
-    previous: Math.round(previous * 100) / 100,
-  }))
+  return {
+    totals: Array.from(byMonth.entries()).map(([key, { current, previous }]) => ({
+      month: shortMonthEs(Number(key)),
+      current: Math.round(current * 100) / 100,
+      previous: Math.round(previous * 100) / 100,
+    })),
+    byProject: buildRevenueBreakdown(currentRows, months, now, 'project'),
+    byLead: buildRevenueBreakdown(currentRows, months, now, 'lead'),
+  }
 }
 
 /**

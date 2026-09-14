@@ -9,7 +9,7 @@ import { RevenueChart } from '../revenue-chart'
 
 export async function RevenueWidget() {
   const data = await getRevenueSeries(6)
-  const hasData = data.some((p) => p.current > 0 || p.previous > 0)
+  const hasData = data.totals.some((p) => p.current > 0 || p.previous > 0)
 
   return (
     <Card>

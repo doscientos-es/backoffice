@@ -22,11 +22,27 @@ export const ExpenseInvoiceSuggestionSchema = z.object({
 })
 
 export type ExpenseInvoiceSuggestion = z.infer<typeof ExpenseInvoiceSuggestionSchema>
-export type ExpenseInvoiceExtraction = {
-  suggestion: ExpenseInvoiceSuggestion
-  source: 'ai' | 'rules'
-  warning: string | null
-}
+export type ExpenseInvoiceExtraction =
+  | {
+      suggestion: ExpenseInvoiceSuggestion
+      source: 'ai' | 'rules'
+      warning: string | null
+      requiresConfirmation?: false
+      sizeBytes?: number
+      pageCount?: number | null
+    }
+  | {
+      requiresConfirmation: true
+      source: 'rules'
+      warning: string
+      sizeBytes: number
+      pageCount: number | null
+    }
+
+export const INVOICE_OCR_LIMITS = {
+  automaticBytes: 8 * 1024 * 1024,
+  automaticPages: 12,
+} as const
 
 const SYSTEM_PROMPT = `Extrae datos de una factura recibida española para crear un gasto.
 Devuelve solo datos que aparezcan inequívocamente en el texto. Las fechas deben usar YYYY-MM-DD.
@@ -110,41 +126,70 @@ function mergeSuggestion(
 export async function extractExpenseInvoice(
   bytes: ArrayBuffer,
   mimeType = 'application/pdf',
+  options: { confirmLarge?: boolean } = {},
 ): Promise<ExpenseInvoiceExtraction> {
+  const sizeBytes = bytes.byteLength
+  if (!options.confirmLarge && sizeBytes > INVOICE_OCR_LIMITS.automaticBytes) {
+    return {
+      requiresConfirmation: true,
+      source: 'rules',
+      warning: 'Este archivo es grande y el análisis con IA puede consumir más recursos.',
+      sizeBytes,
+      pageCount: null,
+    }
+  }
+
   if (mimeType.startsWith('image/')) {
     if (!isAIEnabled()) {
       return {
         suggestion: ExpenseInvoiceSuggestionSchema.parse({}),
         source: 'rules',
-        warning: 'La IA no está configurada; la foto quedará adjunta y puedes rellenar los datos a mano.',
+        warning:
+          'La IA no está configurada; la foto quedará adjunta y puedes rellenar los datos a mano.',
       }
     }
     try {
       const ai = await runAIObject({
         model: AI_MODELS.summarizer,
         system: `${SYSTEM_PROMPT}\nLa entrada es una foto. Lee el texto visible de la factura directamente de la imagen (OCR).`,
-        user: [{
-          role: 'user',
-          content: [
-            { type: 'text', text: 'Extrae los datos de esta factura fotografiada.' },
-            { type: 'image', image: `data:${mimeType};base64,${Buffer.from(bytes).toString('base64')}` },
-          ],
-        }],
+        user: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: 'Extrae los datos de esta factura fotografiada.' },
+              {
+                type: 'image',
+                image: `data:${mimeType};base64,${Buffer.from(bytes).toString('base64')}`,
+              },
+            ],
+          },
+        ],
         schema: ExpenseInvoiceSuggestionSchema,
         temperature: 0,
         // Keep the response deliberately small: only the fields in the schema are needed.
         maxOutputTokens: 400,
       })
-      return { suggestion: ai, source: 'ai', warning: null }
+      return { suggestion: ai, source: 'ai', warning: null, sizeBytes }
     } catch {
       return {
         suggestion: ExpenseInvoiceSuggestionSchema.parse({}),
         source: 'rules',
-        warning: 'No se pudo leer el texto de la foto. La imagen quedará adjunta para revisarla manualmente.',
+        warning:
+          'No se pudo leer el texto de la foto. La imagen quedará adjunta para revisarla manualmente.',
       }
     }
   }
   const extracted = await extractPdfPages(bytes)
+  if (!options.confirmLarge && extracted.pageCount > INVOICE_OCR_LIMITS.automaticPages) {
+    return {
+      requiresConfirmation: true,
+      source: 'rules',
+      warning: `Este PDF tiene ${extracted.pageCount} páginas y el análisis con IA puede consumir más recursos.`,
+      sizeBytes,
+      pageCount: extracted.pageCount,
+    }
+  }
+
   const text = extracted.pages
     .map((page) => page.content)
     .join('\n')
@@ -155,6 +200,8 @@ export async function extractExpenseInvoice(
       source: 'rules',
       warning:
         'El PDF no contiene texto seleccionable. Podrás usar OCR cuando se añada un proveedor.',
+      sizeBytes,
+      pageCount: extracted.pageCount,
     }
   }
 
@@ -164,6 +211,8 @@ export async function extractExpenseInvoice(
       suggestion: rules,
       source: 'rules',
       warning: 'La IA no está configurada; revisa los datos extraídos antes de aplicarlos.',
+      sizeBytes,
+      pageCount: extracted.pageCount,
     }
   }
 
@@ -183,12 +232,16 @@ export async function extractExpenseInvoice(
       warning: extracted.truncated
         ? 'El texto del PDF estaba truncado; revisa todos los datos.'
         : null,
+      sizeBytes,
+      pageCount: extracted.pageCount,
     }
   } catch {
     return {
       suggestion: rules,
       source: 'rules',
       warning: 'La IA no está disponible; revisa los datos extraídos antes de aplicarlos.',
+      sizeBytes,
+      pageCount: extracted.pageCount,
     }
   }
 }

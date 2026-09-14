@@ -13,6 +13,7 @@ const { state } = vi.hoisted(() => ({
       uploaded_by: 'user-1',
     } as Record<string, unknown> | null,
     downloadError: null as string | null,
+    requiresConfirmation: false,
   },
 }))
 
@@ -43,21 +44,31 @@ vi.mock('@/lib/storage', () => ({
   }),
 }))
 vi.mock('@/lib/finance/invoice-extraction', () => ({
-  extractExpenseInvoice: vi.fn(async () => ({
-    suggestion: {
-      vendor: 'Agencia',
-      description: null,
-      expense_date: '2026-08-27',
-      due_date: null,
-      subtotal: 100,
-      tax_rate: 21,
-      vendor_nif: 'B12345678',
-      invoice_reference: 'F-1',
-      confidence: 0.9,
-    },
-    source: 'ai',
-    warning: null,
-  })),
+  extractExpenseInvoice: vi.fn(async () =>
+    state.requiresConfirmation
+      ? {
+          requiresConfirmation: true,
+          source: 'rules',
+          warning: 'Documento grande',
+          sizeBytes: 9_000_000,
+          pageCount: 14,
+        }
+      : {
+          suggestion: {
+            vendor: 'Agencia',
+            description: null,
+            expense_date: '2026-08-27',
+            due_date: null,
+            subtotal: 100,
+            tax_rate: 21,
+            vendor_nif: 'B12345678',
+            invoice_reference: 'F-1',
+            confidence: 0.9,
+          },
+          source: 'ai',
+          warning: null,
+        },
+  ),
 }))
 
 import { NextRequest } from 'next/server'
@@ -83,6 +94,7 @@ describe('POST /api/expenses/extract-invoice', () => {
       uploaded_by: 'user-1',
     }
     state.downloadError = null
+    state.requiresConfirmation = false
   })
 
   it('requires an authenticated administrator', async () => {
@@ -118,6 +130,18 @@ describe('POST /api/expenses/extract-invoice', () => {
       uploaded_by: 'user-1',
     }
     expect((await POST(request({ attachment_id: ID }))).status).toBe(200)
+  })
+
+  it('returns a confirmation response before an expensive extraction', async () => {
+    state.requiresConfirmation = true
+
+    const response = await POST(request({ attachment_id: ID }))
+
+    expect(response.status).toBe(409)
+    expect(await response.json()).toMatchObject({
+      requires_confirmation: true,
+      page_count: 14,
+    })
   })
 
   it('hides an orphan attachment uploaded by another member', async () => {

@@ -135,6 +135,8 @@ export const ServerSchema = PublicSchema.extend({
   // Drive backup root folders (top-level; client subfolders are auto-created inside).
   GOOGLE_DRIVE_INVOICES_FOLDER_ID: z.string().optional().default(''),
   GOOGLE_DRIVE_PROPOSALS_FOLDER_ID: z.string().optional().default(''),
+  // Dedicated root folder for on-demand backups of internal documents.
+  GOOGLE_DRIVE_INTERNAL_DOCS_FOLDER_ID: z.string().optional().default(''),
   // Shared Google Calendar ID for lead meetings (e.g. "doscientos.es_xxx@group.calendar.google.com").
   GOOGLE_CALENDAR_ID: z.string().optional().default(''),
   // File Browser (internal backup server)

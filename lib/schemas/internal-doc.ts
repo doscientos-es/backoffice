@@ -29,6 +29,24 @@ export const InternalDocVisibilitySchema = z.enum(INTERNAL_DOC_VISIBILITIES)
 
 export const InternalDocIdInput = uuidIdInput
 
+/** Save the current binary version to the configured Google Drive folder. */
+export const InternalDocDriveBackupInput = InternalDocIdInput
+
+const InternalDocEmailFields = z.object({
+  id: z.string().uuid(),
+  recipientName: z.string().trim().max(120).optional(),
+  subject: requiredText(200, 'El asunto es obligatorio'),
+  message: z.string().trim().max(1000).optional(),
+})
+
+/** Data needed to render the document email without sending it. */
+export const PreviewInternalDocEmailInput = InternalDocEmailFields
+
+/** Data needed to email the current document binary as an attachment. */
+export const SendInternalDocEmailInput = InternalDocEmailFields.extend({
+  to: z.string().trim().email('Introduce un email válido'),
+})
+
 /** Max upload size enforced by the upload route (50 MB). */
 export const INTERNAL_DOC_MAX_SIZE_BYTES = 50 * 1024 * 1024
 

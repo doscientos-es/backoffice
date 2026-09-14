@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { extractExpenseInvoiceWithRules } from './invoice-extraction'
+import {
+  extractExpenseInvoice,
+  extractExpenseInvoiceWithRules,
+  INVOICE_OCR_LIMITS,
+} from './invoice-extraction'
 
 describe('extractExpenseInvoiceWithRules', () => {
   it('extracts common Spanish invoice fields without AI', () => {
@@ -28,5 +32,20 @@ describe('extractExpenseInvoiceWithRules', () => {
     expect(result.vendor).toBeNull()
     expect(result.subtotal).toBeNull()
     expect(result.expense_date).toBeNull()
+  })
+})
+
+describe('extractExpenseInvoice review gate', () => {
+  it('asks before sending a large image to the AI provider', async () => {
+    const result = await extractExpenseInvoice(
+      new ArrayBuffer(INVOICE_OCR_LIMITS.automaticBytes + 1),
+      'image/jpeg',
+    )
+
+    expect(result).toMatchObject({
+      requiresConfirmation: true,
+      sizeBytes: INVOICE_OCR_LIMITS.automaticBytes + 1,
+      pageCount: null,
+    })
   })
 })

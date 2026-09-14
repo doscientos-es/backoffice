@@ -1,6 +1,7 @@
 export { EmailLayout, type EmailLayoutProps } from './email-layout'
 export { EmailLogo, type EmailLogoProps } from './email-logo'
 export { InvoiceEmail, type InvoiceEmailProps } from './invoice-email'
+export { InternalDocumentEmail, type InternalDocumentEmailProps } from './internal-document-email'
 export { LeadConfirmationEmail, type LeadConfirmationEmailProps } from './lead-confirmation-email'
 export { NewLeadEmail, type NewLeadEmailProps } from './new-lead-email'
 export { PaymentReceiptEmail, type PaymentReceiptEmailProps } from './payment-receipt-email'

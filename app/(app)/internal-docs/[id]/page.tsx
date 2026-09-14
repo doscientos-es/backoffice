@@ -1,3 +1,4 @@
+import { DocPreview } from '@doscientos/ui'
 import { Download } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -8,9 +9,9 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DangerZone } from '@/components/ui/danger-zone'
-import { DocPreview } from '@doscientos/ui'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { requireUser } from '@/lib/auth'
+import { isGoogleEnabled, serverEnv } from '@/lib/env'
 import { getInternalDocPreviewUrl } from '@/lib/internal-documents/preview'
 import { loadOptionalInternalDocData } from '@/lib/internal-documents/supplementary-data'
 import { scopedLogger } from '@/lib/logger'
@@ -19,6 +20,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { formatDate } from '@/lib/utils'
 
 import { deleteInternalDoc, reindexInternalDoc } from '../actions'
+import { InternalDocActions } from './internal-doc-actions'
 import { InternalDocEditDialog } from './internal-doc-edit-dialog'
 import { type InternalDocEvent, InternalDocHistory } from './internal-doc-history'
 
@@ -94,7 +96,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       .maybeSingle()
 
     if (error) {
-      log.warn({ documentId: id, errorCode: error.code }, 'could not load internal document metadata')
+      log.warn(
+        { documentId: id, errorCode: error.code },
+        'could not load internal document metadata',
+      )
     }
     return { title: data?.name ? `${data.name as string} · doscientos` : 'Documento · doscientos' }
   } catch (error) {
@@ -118,7 +123,7 @@ export default async function InternalDocDetailPage({
   const { data: doc } = await supabase
     .from('internal_documents')
     .select(
-      'id, name, description, category, tags, mime_type, size_bytes, storage_path, version, visibility, effective_date, expires_at, created_at, uploaded_by, deleted_at, team_members:uploaded_by(name)',
+      'id, name, description, category, tags, mime_type, size_bytes, storage_path, version, visibility, effective_date, expires_at, created_at, uploaded_by, deleted_at, drive_backup_version, drive_backup_url, team_members:uploaded_by(name)',
     )
     .eq('id', id)
     .is('deleted_at', null)
@@ -210,6 +215,18 @@ export default async function InternalDocDetailPage({
                   {extraction ? 'Volver a preparar' : 'Preparar para consultas'}
                 </SubmitButton>
               </form>
+            )}
+            {canEdit && (
+              <InternalDocActions
+                id={id}
+                name={doc.name as string}
+                version={Number(doc.version) || 1}
+                driveBackupVersion={(doc.drive_backup_version as number | null) ?? null}
+                driveBackupUrl={(doc.drive_backup_url as string | null) ?? null}
+                driveConfigured={Boolean(
+                  isGoogleEnabled() && serverEnv().GOOGLE_DRIVE_INTERNAL_DOCS_FOLDER_ID,
+                )}
+              />
             )}
             <Button asChild size="sm">
               <Link

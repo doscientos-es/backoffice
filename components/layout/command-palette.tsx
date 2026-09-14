@@ -1,4 +1,5 @@
 'use client'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@doscientos/ui'
 import {
   Check,
   CheckSquare,
@@ -6,6 +7,8 @@ import {
   Copy,
   Eye,
   EyeOff,
+  Bell,
+  CircleAlert,
   Folder as FolderKanban,
   Inbox,
   Key as KeyRound,
@@ -13,6 +16,8 @@ import {
   Lock,
   Plus,
   Receipt,
+  TriangleAlert,
+  WalletCards,
   Users,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -33,14 +38,10 @@ import {
   CommandSeparator,
   CommandShortcut,
 } from '@/components/ui/command'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@doscientos/ui'
+import type { MemberRole } from '@/lib/auth'
+import { visibleCommandActions, type CommandAction } from '@/lib/navigation/command-actions'
 import { NAVIGATION_GROUPS } from '@/lib/navigation/navigation'
+import { visibleNavigationGroups } from '@/lib/navigation/navigation'
 import {
   CREATE_SHORTCUTS,
   mergeRecentItems,
@@ -68,10 +69,14 @@ const TYPE_LABEL: Record<SearchResultItem['type'], string> = {
 }
 
 const NAVIGATION_KEYS = new Map(NAV_SHORTCUTS.map(({ href, key }) => [href, key]))
-const ALL_NAV = NAVIGATION_GROUPS.flatMap((group) => group.items).map((item) => ({
-  ...item,
-  key: NAVIGATION_KEYS.get(item.href),
-}))
+const ACTION_ICON: Record<CommandAction['key'], React.ComponentType<{ className?: string }>> = {
+  priorities: CircleAlert,
+  'unassigned-leads': Inbox,
+  'pending-reminders': Bell,
+  'urgent-tasks': TriangleAlert,
+  'pending-invoices': WalletCards,
+  'overdue-invoices': Receipt,
+}
 
 function loadRecents(): RecentItem[] {
   if (typeof window === 'undefined') return []
@@ -151,7 +156,7 @@ function VaultResultItem({
   )
 }
 
-export function CommandPalette() {
+export function CommandPalette({ role }: { role: MemberRole }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -340,6 +345,10 @@ export function CommandPalette() {
 
   const hasResults = results.length > 0
   const isSearching = query.trim().length > 0
+  const quickActions = visibleCommandActions(role)
+  const allNav = visibleNavigationGroups(role)
+    .flatMap((group) => group.items)
+    .map((item) => ({ ...item, key: NAVIGATION_KEYS.get(item.href) }))
 
   return (
     <>
@@ -420,7 +429,28 @@ export function CommandPalette() {
             )
           })}
 
-          {/* Estado vacío: recientes + navegación + acciones */}
+          <CommandGroup heading="Acciones rápidas">
+            {quickActions.map((action) => {
+              const Icon = ACTION_ICON[action.key]
+              return (
+                <CommandItem
+                  key={action.key}
+                  value={`${action.label} ${action.description} ${action.keywords}`}
+                  onSelect={() => go(action.href)}
+                >
+                  <Icon className="text-primary size-4 shrink-0" />
+                  <span className="flex min-w-0 flex-col">
+                    <span className="truncate">{action.label}</span>
+                    <span className="text-muted-foreground truncate text-xs">
+                      {action.description}
+                    </span>
+                  </span>
+                </CommandItem>
+              )
+            })}
+          </CommandGroup>
+
+          {/* Estado vacío: recientes + navegación + creación */}
           {!isSearching ? (
             <>
               {recents.length > 0 ? (
@@ -447,7 +477,7 @@ export function CommandPalette() {
               ) : null}
 
               <CommandGroup heading="Ir a…">
-                {ALL_NAV.map((l) => {
+                {allNav.map((l) => {
                   const Icon = l.icon
                   return (
                     <CommandItem key={l.href} value={`ir a ${l.label}`} onSelect={() => go(l.href)}>

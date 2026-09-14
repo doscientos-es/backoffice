@@ -1,9 +1,9 @@
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@doscientos/ui";
 import { TriangleAlert as AlertTriangle, ExternalLink } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
-
 import {
   type InvoiceDisplayItem,
   InvoiceItemsSummary,
@@ -12,7 +12,6 @@ import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { CopyPortalLink } from "@/components/portal/copy-portal-link";
 import { PortalAccessControls } from "@/components/portal/portal-access-controls";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@doscientos/ui";
 import {
   Card,
   CardAction,
@@ -24,6 +23,7 @@ import {
 import { CopyButton } from "@/components/ui/copy-button";
 import { requireUser } from "@/lib/auth";
 import { buildVatBreakdown } from "@/lib/finance";
+import type { InvoicePaymentFollowUp } from "@/lib/invoices/payment-follow-ups";
 import { findInvoiceDeliveries } from "@/lib/invoices/queries";
 import { PAYMENT_METHOD_LABELS, type PaymentMethodType } from "@/lib/schemas/invoice";
 import { createServerClient } from "@/lib/supabase/server";
@@ -36,6 +36,7 @@ import { verifactuInvoiceConfigFromEnv } from "@/lib/verifactu/config";
 
 import { updateInvoicePortalAccess } from "../actions";
 import { InvoiceActions } from "./invoice-actions";
+import { InvoiceAutomationPanel } from "./invoice-automation-panel";
 import { InvoiceStatus } from "./invoice-status";
 import { RefreshClientSnapshotButton } from "./refresh-client-snapshot-button";
 
@@ -82,7 +83,7 @@ function verifactuWarnings(value: unknown): Array<{ code: string | null; message
 
 export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await requireUser();
+  const user = await requireUser();
   const supabase = await createServerClient();
 
   const { data: invoice } = await supabase
@@ -118,6 +119,15 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
     .order("work_date", { ascending: true });
 
   const deliveries = await findInvoiceDeliveries(id);
+
+  const { data: paymentFollowUp } = await supabase
+    .from("invoice_automations")
+    .select(
+      "id, invoice_id, kind, status, run_at, recipient, subject, message, attempt_count, sent_at, cancelled_at, last_error",
+    )
+    .eq("invoice_id", id)
+    .eq("kind", "payment_follow_up")
+    .maybeSingle();
 
   const { data: latestFiscalRecord } = await supabase
     .from("verifactu_ledger")
@@ -329,6 +339,12 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             recipientFiscalReady={recipientFiscalReady}
           />
         }
+      />
+
+      <InvoiceAutomationPanel
+        invoiceId={id}
+        automation={paymentFollowUp as unknown as InvoicePaymentFollowUp | null}
+        canEdit={user.role !== "viewer"}
       />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
