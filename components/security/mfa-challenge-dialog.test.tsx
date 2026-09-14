@@ -8,9 +8,12 @@ const { mfa } = vi.hoisted(() => ({
   },
 }))
 
+const { trustCurrentMfaDevice } = vi.hoisted(() => ({ trustCurrentMfaDevice: vi.fn() }))
+
 vi.mock('@/lib/supabase/browser', () => ({
   getBrowserClient: () => ({ auth: { mfa } }),
 }))
+vi.mock('@/lib/security/mfa-actions', () => ({ trustCurrentMfaDevice }))
 
 import { MfaChallengeDialog } from './mfa-challenge-dialog'
 
@@ -21,6 +24,7 @@ describe('MfaChallengeDialog', () => {
       error: null,
     })
     mfa.challengeAndVerify.mockReset().mockResolvedValue({ error: null })
+    trustCurrentMfaDevice.mockReset().mockResolvedValue({ ok: true })
   })
 
   it('submits a normalized six-digit code from the shared OTP input', async () => {
@@ -37,6 +41,7 @@ describe('MfaChallengeDialog', () => {
         factorId: 'factor-1',
         code: '123456',
       })
+      expect(trustCurrentMfaDevice).toHaveBeenCalledOnce()
       expect(onVerified).toHaveBeenCalledOnce()
     })
   })

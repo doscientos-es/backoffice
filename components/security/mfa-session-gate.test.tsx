@@ -1,9 +1,10 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mfa, navigation } = vi.hoisted(() => ({
+const { mfa, navigation, hasCurrentMfaAccess } = vi.hoisted(() => ({
   mfa: { getAuthenticatorAssuranceLevel: vi.fn() },
   navigation: { pathname: '/settings/diagnostics', refresh: vi.fn() },
+  hasCurrentMfaAccess: vi.fn(),
 }))
 
 vi.mock('next/navigation', () => ({
@@ -14,6 +15,7 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/lib/supabase/browser', () => ({
   getBrowserClient: () => ({ auth: { mfa } }),
 }))
+vi.mock('@/lib/security/mfa-actions', () => ({ hasCurrentMfaAccess }))
 
 vi.mock('./mfa-challenge-dialog', () => ({
   MfaChallengeDialog: ({ open, onVerified }: { open: boolean; onVerified: () => void }) => (
@@ -33,6 +35,7 @@ describe('MfaSessionGate', () => {
       data: { currentLevel: 'aal1' },
       error: null,
     })
+    hasCurrentMfaAccess.mockReset().mockResolvedValue(false)
   })
 
   it('keeps an administrator on the requested route and opens the MFA dialog', async () => {
@@ -56,5 +59,13 @@ describe('MfaSessionGate', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Verificar' }))
     expect(navigation.refresh).toHaveBeenCalledOnce()
     await waitFor(() => expect(screen.getByTestId('mfa-dialog').dataset.open).toBe('false'))
+  })
+
+  it('keeps a trusted browser open when the fresh Supabase session is at aal1', async () => {
+    hasCurrentMfaAccess.mockResolvedValue(true)
+    render(<MfaSessionGate memberRole="admin" mfaVerified={false} />)
+
+    await waitFor(() => expect(hasCurrentMfaAccess).toHaveBeenCalledOnce())
+    expect(screen.getByTestId('mfa-dialog').dataset.open).toBe('false')
   })
 })

@@ -12,7 +12,7 @@ import { ShortcutsDialog } from '@/components/layout/shortcuts-dialog'
 import { Sidebar } from '@/components/layout/sidebar'
 import { PwaInstallPrompt } from '@/components/pwa-install-prompt'
 import { MfaSessionGate } from '@/components/security/mfa-session-gate'
-import { hasAal2Session, requireUser } from '@/lib/auth'
+import { hasMfaAccess, requireUser } from '@/lib/auth'
 
 export default async function AppLayout({
   children,
@@ -22,7 +22,8 @@ export default async function AppLayout({
   modal: React.ReactNode
 }) {
   const user = await requireUser()
-  const mfaVerified = user.role === 'owner' || user.role === 'admin' ? await hasAal2Session() : true
+  const mfaVerified =
+    user.role === 'owner' || user.role === 'admin' ? await hasMfaAccess(user.id) : true
 
   return (
     <div className="app-shell bg-background flex h-screen overflow-hidden">

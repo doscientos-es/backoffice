@@ -1,9 +1,12 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { CurrentUser } from '@/lib/auth'
 
-import { UserMenu } from './user-menu'
+const { clearTrustedMfaDevice, signOut } = vi.hoisted(() => ({
+  clearTrustedMfaDevice: vi.fn(),
+  signOut: vi.fn(),
+}))
 
 vi.mock('next/link', () => ({
   default: ({ children, href, ...props }: React.ComponentProps<'a'>) => (
@@ -16,9 +19,12 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: vi.fn(), refresh: vi.fn() }),
 }))
 vi.mock('@/lib/supabase/browser', () => ({
-  getBrowserClient: () => ({ auth: { signOut: vi.fn().mockResolvedValue({ error: null }) } }),
+  getBrowserClient: () => ({ auth: { signOut } }),
 }))
+vi.mock('@/lib/security/mfa-actions', () => ({ clearTrustedMfaDevice }))
 vi.mock('@/lib/utils', () => ({ memberAvatarUrl: () => null }))
+
+import { UserMenu } from './user-menu'
 
 const user: CurrentUser = {
   id: 'member-1',
@@ -35,6 +41,11 @@ const user: CurrentUser = {
 }
 
 describe('UserMenu', () => {
+  beforeEach(() => {
+    clearTrustedMfaDevice.mockReset().mockResolvedValue(undefined)
+    signOut.mockReset().mockResolvedValue({ error: null })
+  })
+
   it('renders a borderless circular trigger with only the avatar fallback', () => {
     render(<UserMenu user={user} />)
 
@@ -58,5 +69,17 @@ describe('UserMenu', () => {
     expect(profile?.getAttribute('href')).toBe('/settings/profile')
     expect(security?.getAttribute('href')).toBe('/settings/security')
     expect(team?.getAttribute('href')).toBe('/settings/team')
+  })
+
+  it('revokes browser MFA trust before signing out', async () => {
+    render(<UserMenu user={user} />)
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Menú de usuario' }), {
+      button: 0,
+      ctrlKey: false,
+    })
+    fireEvent.click(await screen.findByText('Cerrar sesión'))
+
+    await waitFor(() => expect(clearTrustedMfaDevice).toHaveBeenCalledOnce())
+    expect(signOut).toHaveBeenCalledOnce()
   })
 })

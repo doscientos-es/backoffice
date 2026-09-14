@@ -28,10 +28,14 @@ export function MfaSessionGate({ memberRole, mfaVerified }: Props) {
 
     let active = true
     void (async () => {
-      const { data, error } = await getBrowserClient().auth.mfa.getAuthenticatorAssuranceLevel()
-      const verified = !error && data?.currentLevel === 'aal2'
-      const hasAccess = verified || (await hasCurrentMfaAccess())
-      if (active) setVerifiedPath(hasAccess ? pathname : null)
+      try {
+        const { data, error } = await getBrowserClient().auth.mfa.getAuthenticatorAssuranceLevel()
+        const verified = !error && data?.currentLevel === 'aal2'
+        const hasAccess = verified || (await hasCurrentMfaAccess())
+        if (active) setVerifiedPath(hasAccess ? pathname : null)
+      } catch {
+        if (active) setVerifiedPath(null)
+      }
     })()
 
     return () => {

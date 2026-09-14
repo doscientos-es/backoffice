@@ -10,9 +10,12 @@ const { mfa } = vi.hoisted(() => ({
   },
 }))
 
+const { trustCurrentMfaDevice } = vi.hoisted(() => ({ trustCurrentMfaDevice: vi.fn() }))
+
 vi.mock('@/lib/supabase/browser', () => ({
   getBrowserClient: () => ({ auth: { mfa } }),
 }))
+vi.mock('@/lib/security/mfa-actions', () => ({ trustCurrentMfaDevice }))
 
 import { MfaTotpCard } from './mfa-totp-card'
 
@@ -28,6 +31,7 @@ describe('MfaTotpCard', () => {
       data: { currentLevel: 'aal1', nextLevel: 'aal1' },
       error: null,
     })
+    trustCurrentMfaDevice.mockReset().mockResolvedValue({ ok: true })
   })
 
   it('explains that MFA is required for administrators and starts enrollment', async () => {
@@ -88,5 +92,18 @@ describe('MfaTotpCard', () => {
     render(<MfaTotpCard required />)
 
     expect(await screen.findByRole('button', { name: /verificar acceso/i })).toBeTruthy()
+  })
+
+  it('trusts the browser after a successful TOTP verification', async () => {
+    render(<MfaTotpCard required />)
+    await screen.findByRole('button', { name: /configurar mfa/i })
+    fireEvent.click(screen.getByRole('button', { name: /configurar mfa/i }))
+    await screen.findByRole('img', { name: /código qr/i })
+    fireEvent.change(screen.getByRole('textbox', { name: /código de verificación/i }), {
+      target: { value: '123456' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /verificar y activar/i }))
+
+    await waitFor(() => expect(trustCurrentMfaDevice).toHaveBeenCalledOnce())
   })
 })
