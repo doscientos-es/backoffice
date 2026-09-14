@@ -39,7 +39,7 @@ export type OverdueInvoiceRow = {
 }
 
 export type RevenuePoint = {
-  month: string // localized short month label, e.g. "ene"
+  month: string // period label, e.g. "15 jun" or "11–17 jun"
   current: number
   previous: number
 }
@@ -52,13 +52,18 @@ export type RevenueBreakdownPoint = {
 
 export type RevenueBreakdown = {
   points: RevenueBreakdownPoint[]
-  series: Array<{ key: string; label: string }>
+  series: Array<{ key: string; label: string; href?: string }>
 }
 
-export type RevenueChartData = {
+export type RevenueMetricData = {
   totals: RevenuePoint[]
   byProject: RevenueBreakdown
   byLead: RevenueBreakdown
+}
+
+export type RevenueChartData = {
+  billed: RevenueMetricData
+  collected: RevenueMetricData
 }
 
 // ---------------------------------------------------------------------------

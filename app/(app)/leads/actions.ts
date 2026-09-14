@@ -46,6 +46,7 @@ import {
   LogEmailInput,
   LogNoteInput,
   LogWhatsAppInput,
+  LeadStatus,
   type MomTestSignal,
   ScheduleLeadMeetingInput,
   SendEmailToLeadInput,
@@ -331,7 +332,7 @@ export const bulkUpdateLeadStatus = defineAction({
   name: 'leads.bulkUpdateStatus',
   schema: z.object({
     ids: z.array(z.string().uuid()).min(1).max(100),
-    status: UpdateLeadStatusInput.shape.status,
+    status: LeadStatus,
   }),
   roles: ['owner', 'admin', 'member'],
   revalidate: ['/leads', '/inicio'],

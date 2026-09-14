@@ -21,7 +21,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { isPortalUnlocked } from '@/lib/portal/access'
 import { PROJECT_STATUS, TASK_STATUS } from '@/lib/status'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { formatDate } from '@/lib/utils'
+import { formatDate, formatEUR } from '@/lib/utils'
 
 import { unlockProjectPortal } from './actions'
 import { ProjectRequestDialog } from './request-form'
