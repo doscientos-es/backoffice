@@ -14,6 +14,7 @@ import {
   OtpInput,
 } from "@doscientos/ui";
 import { Field, FieldLabel } from "@/components/ui/field";
+import { trustCurrentMfaDevice } from "@/lib/security/mfa-actions";
 import { getBrowserClient } from "@/lib/supabase/browser";
 
 type Props = {
@@ -65,6 +66,11 @@ export function MfaChallengeDialog({
     setLoading(false);
     if (verifyError) {
       setError("El código no es válido. Comprueba la hora de tu dispositivo e inténtalo de nuevo.");
+      return;
+    }
+    const trust = await trustCurrentMfaDevice();
+    if (!trust.ok) {
+      setError(trust.error);
       return;
     }
     onVerified();

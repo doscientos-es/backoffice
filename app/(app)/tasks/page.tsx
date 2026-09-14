@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import { ListControls } from '@/components/layout/list-controls'
-import { ListPage } from '@/components/layout/list-page'
 import { PageHeader } from '@/components/layout/page-header'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { requireUser } from '@/lib/auth'
@@ -15,6 +14,7 @@ import { parsePage, parseSortParam, parseStringParam } from '@/lib/utils/search-
 
 import { TaskCreateDialog } from './task-create-dialog'
 import { TaskRowActions } from './task-row-actions'
+import { TasksList } from './tasks-list'
 import { type KanbanTask, TasksKanban } from './tasks-kanban'
 import { TasksViewToggle } from './view-toggle'
 
@@ -190,7 +190,7 @@ export default async function TasksPage({
   }))
 
   return (
-    <ListPage
+    <TasksList
       title="Tareas"
       description="Organiza el trabajo del equipo y relaciónalo opcionalmente con proyectos, leads o clientes."
       empty={

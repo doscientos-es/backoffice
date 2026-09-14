@@ -39,19 +39,19 @@ export type ListAlign = 'left' | 'right'
 export type ListHeader =
   | string
   | {
-      label: string
-      /** Activa la ordenación cliente (requiere `sortValues` en las filas). */
-      sortable?: boolean
-      /**
-       * Clave de columna DB para ordenación en el servidor.
-       * Al hacer clic actualiza los URL params `sort` + `dir` y resetea `page`.
-       * Tiene preferencia sobre `sortable`.
-       */
-      sortKey?: string
-      align?: ListAlign
-      /** Ancho mínimo CSS para la columna (ej. "8rem"). Evita wrapping en celdas cortas. */
-      minWidth?: string
-    }
+    label: string
+    /** Activa la ordenación cliente (requiere `sortValues` en las filas). */
+    sortable?: boolean
+    /**
+     * Clave de columna DB para ordenación en el servidor.
+     * Al hacer clic actualiza los URL params `sort` + `dir` y resetea `page`.
+     * Tiene preferencia sobre `sortable`.
+     */
+    sortKey?: string
+    align?: ListAlign
+    /** Ancho mínimo CSS para la columna (ej. "8rem"). Evita wrapping en celdas cortas. */
+    minWidth?: string
+  }
 
 export type ListRow = {
   id: string
@@ -102,6 +102,8 @@ export type ListPageProps = {
   addLabel?: string
   /** Nombre del fichero CSV sin extensión. Si se provee, muestra botón Exportar. */
   exportFilename?: string
+  /** Acciones seguras para ejecutar sobre las filas seleccionadas de esta página. */
+  bulkActions?: BulkAction[]
 }
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -172,6 +174,7 @@ export function ListPage({
   addHref,
   addLabel,
   exportFilename,
+  bulkActions = [],
 }: ListPageProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -184,6 +187,9 @@ export function ListPage({
 
   // Client-side sort state (TanStack, for sortable-without-sortKey columns)
   const [sorting, setSorting] = useState<SortingState>([])
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [runningBulkAction, setRunningBulkAction] = useState<string | null>(null)
+  const [bulkError, setBulkError] = useState<string | null>(null)
 
   const prefetchRow = useCallback(
     (href?: string) => {
@@ -281,6 +287,32 @@ export function ListPage({
     getRowId: (row) => row.id,
   })
 
+  const visibleIds = table.getRowModel().rows.map((row) => row.original.id)
+  const selectedVisibleCount = visibleIds.filter((id) => selectedIds.includes(id)).length
+  const allVisibleSelected = visibleIds.length > 0 && selectedVisibleCount === visibleIds.length
+
+  function toggleVisibleSelection(checked: boolean) {
+    setBulkError(null)
+    setSelectedIds((current) => {
+      if (checked) return [...new Set([...current, ...visibleIds])]
+      return current.filter((id) => !visibleIds.includes(id))
+    })
+  }
+
+  async function runBulkAction(action: BulkAction) {
+    if (selectedIds.length === 0 || runningBulkAction) return
+    setRunningBulkAction(action.label)
+    setBulkError(null)
+    try {
+      await action.onAction(selectedIds)
+      setSelectedIds([])
+    } catch (error) {
+      setBulkError(error instanceof Error ? error.message : 'No se pudo completar la acción')
+    } finally {
+      setRunningBulkAction(null)
+    }
+  }
+
   const hasControls = !!searchKey || (filters && filters.length > 0) || !!pagination
   const hasRowActions = rows.some((r) => r.rowActions != null)
 
@@ -317,6 +349,31 @@ export function ListPage({
                 exportFilename ? () => exportToCSV(headers, rows, exportFilename) : undefined
               }
             />
+          ) : null}
+
+          {bulkActions.length > 0 && selectedIds.length > 0 ? (
+            <div className="border-border bg-primary/[0.04] flex flex-wrap items-center gap-2 border-b px-4 py-2.5">
+              <span className="text-sm font-medium">{selectedIds.length} seleccionadas</span>
+              {bulkActions.map((action) => {
+                const Icon = action.icon
+                return (
+                  <Button
+                    key={action.label}
+                    size="sm"
+                    variant={action.variant ?? 'outline'}
+                    disabled={runningBulkAction !== null}
+                    onClick={() => void runBulkAction(action)}
+                  >
+                    {Icon ? <Icon className="mr-1.5 size-3.5" /> : null}
+                    {runningBulkAction === action.label ? 'Aplicando…' : action.label}
+                  </Button>
+                )
+              })}
+              <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])}>
+                Cancelar
+              </Button>
+              {bulkError ? <span className="text-destructive text-xs">{bulkError}</span> : null}
+            </div>
           ) : null}
 
           {!hasControls && exportFilename ? (
@@ -362,6 +419,16 @@ export function ListPage({
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-border bg-muted/30 border-b">
+                      {bulkActions.length > 0 ? (
+                        <th className="w-px px-3 py-3">
+                          <input
+                            type="checkbox"
+                            checked={allVisibleSelected}
+                            onChange={(event) => toggleVisibleSelection(event.target.checked)}
+                            aria-label="Seleccionar esta página"
+                          />
+                        </th>
+                      ) : null}
                       {table.getFlatHeaders().map((header, colIdx) => {
                         const right = alignAt(colIdx) === 'right'
                         return (
@@ -407,6 +474,23 @@ export function ListPage({
                             isClickable && 'cursor-pointer',
                           )}
                         >
+                          {bulkActions.length > 0 ? (
+                            <td className="px-3 py-3 align-middle">
+                              <input
+                                type="checkbox"
+                                checked={selectedIds.includes(row.id)}
+                                onChange={(event) => {
+                                  setBulkError(null)
+                                  setSelectedIds((current) =>
+                                    event.target.checked
+                                      ? [...new Set([...current, row.id])]
+                                      : current.filter((id) => id !== row.id),
+                                  )
+                                }}
+                                aria-label={`Seleccionar ${row.id}`}
+                              />
+                            </td>
+                          ) : null}
                           {tableRow.getVisibleCells().map((cell, colIdx) => {
                             const isFirst = colIdx === 0
                             const right = alignAt(colIdx) === 'right'
@@ -456,7 +540,10 @@ export function ListPage({
                     })}
                     {addHref && (
                       <tr>
-                        <td colSpan={table.getFlatHeaders().length} className="px-2 py-1.5">
+                        <td
+                          colSpan={table.getFlatHeaders().length + (bulkActions.length > 0 ? 1 : 0)}
+                          className="px-2 py-1.5"
+                        >
                           <Link
                             href={addHref}
                             className="border-border text-muted-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-primary flex w-full items-center gap-2 rounded-md border border-dashed px-3 py-2 text-xs transition-colors"

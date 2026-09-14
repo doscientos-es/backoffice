@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@doscientos/ui";
 import type { CurrentUser, MemberRole } from "@/lib/auth";
+import { clearTrustedMfaDevice } from "@/lib/security/mfa-actions";
 import { getBrowserClient } from "@/lib/supabase/browser";
 import { memberAvatarUrl } from "@/lib/utils";
 
@@ -61,6 +62,12 @@ export function UserMenu({ user }: { user: CurrentUser }) {
 
   async function signOut() {
     setSignOutError(null);
+    try {
+      await clearTrustedMfaDevice();
+    } catch {
+      setSignOutError("No se pudo cerrar la sesión de forma segura. Inténtalo de nuevo.");
+      return;
+    }
     const supabase = getBrowserClient();
     const { error } = await supabase.auth.signOut();
     if (error) {

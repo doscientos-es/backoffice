@@ -4,6 +4,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 import type { MemberRole } from '@/lib/auth'
+import { hasCurrentMfaAccess } from '@/lib/security/mfa-actions'
 import { getBrowserClient } from '@/lib/supabase/browser'
 
 import { MfaChallengeDialog } from './mfa-challenge-dialog'
@@ -26,12 +27,12 @@ export function MfaSessionGate({ memberRole, mfaVerified }: Props) {
     }
 
     let active = true
-    void getBrowserClient()
-      .auth.mfa.getAuthenticatorAssuranceLevel()
-      .then(({ data, error }) => {
-        if (!active) return
-        setVerifiedPath(!error && data?.currentLevel === 'aal2' ? pathname : null)
-      })
+    void (async () => {
+      const { data, error } = await getBrowserClient().auth.mfa.getAuthenticatorAssuranceLevel()
+      const verified = !error && data?.currentLevel === 'aal2'
+      const hasAccess = verified || (await hasCurrentMfaAccess())
+      if (active) setVerifiedPath(hasAccess ? pathname : null)
+    })()
 
     return () => {
       active = false

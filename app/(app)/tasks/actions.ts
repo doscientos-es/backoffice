@@ -178,6 +178,22 @@ export const updateTaskStatus = defineAction({
   },
 })
 
+/** Completes selected tasks from the list view in one idempotent operation. */
+export const bulkCompleteTasks = defineAction({
+  name: 'tasks.bulkComplete',
+  schema: z.object({ ids: z.array(z.string().uuid()).min(1).max(100) }),
+  revalidate: ['/tasks', '/inicio'],
+  handler: async ({ ids }) => {
+    const supabase = await createServerClient()
+    const { error } = await supabase
+      .from('tasks')
+      .update({ status: 'done', completed_at: new Date().toISOString() })
+      .in('id', ids)
+      .is('deleted_at', null)
+    if (error) throw new Error(error.message)
+  },
+})
+
 // ---------------- MOVE TASK (Kanban reorder) ----------------
 
 export async function moveTask(

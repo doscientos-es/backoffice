@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 
 import { scopedLogger } from '@/lib/logger'
+import { hasTrustedMfaDevice } from '@/lib/security/trusted-mfa-device'
 import { createServerClient } from '@/lib/supabase/server'
 
 const log = scopedLogger('auth')
@@ -107,7 +108,7 @@ export async function requireUser(opts?: RequireUserOptions): Promise<CurrentUse
 export async function requireRole(roles: MemberRole[]): Promise<CurrentUser> {
   const u = await requireUser()
   if (!roles.includes(u.role)) redirect('/inicio?error=forbidden')
-  if (u.role === 'owner' || u.role === 'admin') await requireAal2()
+  if (u.role === 'owner' || u.role === 'admin') await requireAal2(u.id)
   return u
 }
 
@@ -122,22 +123,16 @@ export async function requirePageRole(roles: MemberRole[]): Promise<CurrentUser>
 }
 
 /**
- * Require a Supabase MFA-upgraded session for administrative access. The
- * security settings page deliberately uses requireUser(), so an admin at aal1
- * can still enroll TOTP instead of being locked out.
+ * Require MFA access for administrative work. A current Supabase AAL2 session
+ * always qualifies; a browser trusted after an AAL2 challenge qualifies for a
+ * limited period. The security settings page uses requireUser(), so an admin
+ * at aal1 can still enroll TOTP instead of being locked out.
  */
-export async function requireAal2(): Promise<void> {
-  const supabase = await createServerClient()
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-  const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel(
-    session?.access_token,
-  )
-  if (error || data?.currentLevel !== 'aal2') redirect('/settings/security')
+export async function requireAal2(userId: string): Promise<void> {
+  if (!(await hasMfaAccess(userId))) redirect('/settings/security')
 }
 
-/** Returns whether the current session has completed its MFA challenge. */
+/** Returns whether the current Supabase session has completed its MFA challenge. */
 export async function hasAal2Session(): Promise<boolean> {
   const supabase = await createServerClient()
   const {
@@ -147,6 +142,11 @@ export async function hasAal2Session(): Promise<boolean> {
     session?.access_token,
   )
   return !error && data?.currentLevel === 'aal2'
+}
+
+/** Returns whether the session or the current browser's trusted MFA grant allows admin work. */
+export async function hasMfaAccess(userId: string): Promise<boolean> {
+  return (await hasAal2Session()) || hasTrustedMfaDevice(userId)
 }
 
 /**

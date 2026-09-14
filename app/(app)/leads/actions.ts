@@ -309,6 +309,23 @@ export const updateLeadStatus = defineAction({
   },
 });
 
+/** Assigns several leads to the current member from the list view. */
+export const bulkAssignLeadsToMe = defineAction({
+  name: "leads.bulkAssignToMe",
+  schema: z.object({ ids: z.array(z.string().uuid()).min(1).max(100) }),
+  roles: ["owner", "admin", "member"],
+  revalidate: ["/leads", "/inicio"],
+  handler: async ({ ids }, { user }) => {
+    const supabase = await createServerClient();
+    const { error } = await supabase
+      .from("leads")
+      .update({ assigned_to: user.id, updated_by: user.id })
+      .in("id", ids)
+      .is("deleted_at", null);
+    if (error) throw new Error(error.message);
+  },
+});
+
 /**
  * Removes a closed lead from the recovery queue without reclassifying its
  * commercial outcome. The original closure reason and date remain on the lead

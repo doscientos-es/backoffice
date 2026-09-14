@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, UserRound } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 
@@ -14,6 +14,7 @@ import type { MemberOption } from '@/lib/members/queries'
 import { LEAD_STATUS } from '@/lib/status'
 import { relativeTime } from '@/lib/utils'
 
+import { bulkAssignLeadsToMe } from './actions'
 import { LeadFastActions } from './lead-fast-actions'
 import { LeadQuickView } from './lead-quick-view'
 import type { KanbanLead } from './leads-kanban'
@@ -118,6 +119,16 @@ export function LeadsList({
       <ListPage
         {...props}
         rows={rows}
+        bulkActions={[
+          {
+            label: 'Asignarme',
+            icon: UserRound,
+            onAction: async (ids) => {
+              const result = await bulkAssignLeadsToMe({ ids })
+              if (!result.ok) throw new Error(result.error)
+            },
+          },
+        ]}
         onRowClick={(row) => setSelectedLead(row.data as KanbanLead)}
       />
       <LeadQuickView

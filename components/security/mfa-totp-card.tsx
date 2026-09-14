@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldLabel } from '@/components/ui/field'
 import { OtpInput } from '@doscientos/ui'
+import { trustCurrentMfaDevice } from '@/lib/security/mfa-actions'
 import { getBrowserClient } from '@/lib/supabase/browser'
 
 type Props = { required: boolean }
@@ -68,6 +69,12 @@ export function MfaTotpCard({ required }: Props) {
     })
     if (error) {
       setError('El código no es válido. Comprueba la hora de tu dispositivo e inténtalo de nuevo.')
+      setLoading(false)
+      return
+    }
+    const trust = await trustCurrentMfaDevice()
+    if (!trust.ok) {
+      setError(trust.error)
       setLoading(false)
       return
     }
@@ -157,7 +164,7 @@ export function MfaTotpCard({ required }: Props) {
           </form>
         ) : verified ? (
           <p className="text-muted-foreground text-sm">
-            Tu próxima sesión requerirá un código además de tu acceso habitual.
+            Este navegador quedará recordado durante 12 horas tras verificar el código.
           </p>
         ) : (
           <Button type="button" className="w-fit" onClick={startEnrollment} disabled={loading}>
