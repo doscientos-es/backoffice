@@ -16,9 +16,10 @@ import { hasRegisteredPasskey } from '@/lib/security/webauthn'
 import { getGreeting, parseDashboardRange } from '@/lib/utils/date'
 
 import { AvisosWidget } from './_components/avisos-widget'
-import { ActionCenterWidget } from './action-center-widget'
 import { EnablePushBanner } from './_components/enable-push-banner'
 import { KpiGrid } from './_components/kpi-grid'
+import { getMyDayScope } from './_components/my-day-scope'
+import { MyDayScopeSelector } from './_components/my-day-scope-selector'
 import { MyDayWidget } from './_components/my-day-widget'
 import { RangeSelector } from './_components/range-selector'
 import { RevenueWidget } from './_components/revenue-widget'
@@ -29,6 +30,7 @@ import {
   RangeSelectorSkeleton,
   RevenueWidgetSkeleton,
 } from './_components/widget-skeletons'
+import { ActionCenterWidget } from './action-center-widget'
 
 export const metadata: Metadata = { title: 'Inicio · doscientos' }
 export const dynamic = 'force-dynamic'
@@ -39,7 +41,10 @@ type PageProps = {
 
 export default async function InicioPage({ searchParams }: PageProps) {
   const [user, params] = await Promise.all([requireUser(), searchParams])
-  const passkeyConfigured = await hasRegisteredPasskey(user.id)
+  const [passkeyConfigured, myDayScope] = await Promise.all([
+    hasRegisteredPasskey(user.id),
+    getMyDayScope({ user, member: params.member }),
+  ])
   const range = parseDashboardRange(params.range)
   const greeting = getGreeting()
   const firstName = user.name.split(' ')[0]
@@ -86,10 +91,11 @@ export default async function InicioPage({ searchParams }: PageProps) {
               Tareas, conversaciones y avisos que no conviene dejar pasar.
             </p>
           </div>
+          {myDayScope.canViewTeam ? <MyDayScopeSelector scope={myDayScope} /> : null}
         </div>
 
         <SectionBoundary pending={<MyDayWidgetSkeleton />} label="No se pudo cargar tu día">
-          <MyDayWidget member={params.member} />
+          <MyDayWidget userId={user.id} scope={myDayScope} />
         </SectionBoundary>
         <SectionBoundary
           pending={<AvisosWidgetSkeleton />}
@@ -102,14 +108,10 @@ export default async function InicioPage({ searchParams }: PageProps) {
         </SectionBoundary>
       </section>
 
-      <section
-        className="flex flex-col gap-5"
-        aria-labelledby="inicio-negocio"
-      >
+      <section className="flex flex-col gap-5" aria-labelledby="inicio-negocio">
         <div className="relative flex flex-col gap-5">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <header>
-
               <h2 id="inicio-negocio" className="mt-1 text-xl font-semibold tracking-tight">
                 La salud del negocio
               </h2>

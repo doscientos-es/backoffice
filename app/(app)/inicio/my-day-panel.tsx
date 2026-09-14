@@ -9,7 +9,6 @@ import { useOptimisticRemoval } from '@/lib/hooks/use-optimistic-removal'
 import { MyDayColumn } from './_components/my-day-column'
 import { getMyDayLeadsCopy, isTeamScope } from './_components/my-day-copy'
 import { MyDayLeadItem, MyDayTaskItem } from './_components/my-day-items'
-import { MyDayScopeSelector } from './_components/my-day-scope-selector'
 import type { MyDayPanelProps } from './_components/my-day-types'
 
 export type { MyDayPanelProps } from './_components/my-day-types'
@@ -26,11 +25,6 @@ export function MyDayPanel({ tasks, myLeads, unassignedLeads, scope }: MyDayPane
 
   return (
     <div className="flex flex-col gap-3">
-      {scope.canViewTeam ? (
-        <div className="flex justify-end">
-          <MyDayScopeSelector scope={scope} />
-        </div>
-      ) : null}
       <div className="grid gap-4 lg:grid-cols-3">
         <MyDayColumn
           icon={<ListTodo className="size-4 text-blue-500" />}

@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 import type { RevenueChartData } from '@/lib/dashboard/types'
 
-import { RevenueChart } from './revenue-chart'
+import { filterZeroRevenueTooltipEntries, RevenueChart } from './revenue-chart'
 
 vi.mock('recharts', () => ({
   Bar: ({ dataKey, stackId }: { dataKey: string; stackId?: string }) => (
@@ -31,6 +31,16 @@ const data: RevenueChartData = {
 }
 
 describe('RevenueChart', () => {
+  it('removes zero-value series from breakdown tooltips', () => {
+    expect(
+      filterZeroRevenueTooltipEntries([
+        { dataKey: 'series_0', value: 300 },
+        { dataKey: 'series_1', value: 0 },
+        { dataKey: 'series_2', value: '0' },
+      ]),
+    ).toEqual([{ dataKey: 'series_0', value: 300 }])
+  })
+
   it('switches from the yearly comparison to stacked project bars', () => {
     render(<RevenueChart data={data} />)
 
@@ -39,7 +49,9 @@ describe('RevenueChart', () => {
 
     fireEvent.click(screen.getByRole('tab', { name: 'Por proyecto' }))
 
-    expect(screen.getByRole('tab', { name: 'Por proyecto' }).getAttribute('aria-selected')).toBe('true')
+    expect(screen.getByRole('tab', { name: 'Por proyecto' }).getAttribute('aria-selected')).toBe(
+      'true',
+    )
     expect(screen.getByTestId('bar-series_0').getAttribute('data-stack')).toBe('revenue')
     expect(screen.queryByTestId('bar-current')).toBeNull()
   })

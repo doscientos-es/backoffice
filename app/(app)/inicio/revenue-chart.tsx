@@ -27,6 +27,55 @@ const OTHERS_COLOR = 'var(--muted-foreground)'
 
 type RevenueView = 'total' | 'project' | 'lead'
 
+type RevenueTooltipEntry = {
+  dataKey?: string | number
+  value?: number | string | null
+  color?: string
+}
+
+export function filterZeroRevenueTooltipEntries(entries: RevenueTooltipEntry[]) {
+  return entries.filter((entry) => Number(entry.value) > 0)
+}
+
+function BreakdownTooltip({
+  active,
+  payload,
+  label,
+  seriesLabels,
+}: {
+  active?: boolean
+  payload?: RevenueTooltipEntry[]
+  label?: string | number
+  seriesLabels: Map<string, string>
+}) {
+  if (!active || !payload) return null
+  const visibleEntries = filterZeroRevenueTooltipEntries(payload)
+  if (visibleEntries.length === 0) return null
+
+  return (
+    <div className="border-border bg-background rounded-lg border p-2 text-xs shadow-sm">
+      <p className="mb-1 font-medium">{label}</p>
+      <ul className="flex flex-col gap-1">
+        {visibleEntries.map((entry) => {
+          const key = String(entry.dataKey)
+          return (
+            <li key={key} className="flex items-center justify-between gap-4">
+              <span className="flex min-w-0 items-center gap-1.5">
+                <span
+                  className="size-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: entry.color ?? 'var(--muted-foreground)' }}
+                />
+                <span className="truncate">{seriesLabels.get(key) ?? key}</span>
+              </span>
+              <span className="shrink-0 font-medium">{formatEUR(Number(entry.value))}</span>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
 const VIEW_OPTIONS: Array<{ value: RevenueView; label: string }> = [
   { value: 'total', label: 'Total' },
   { value: 'project', label: 'Por proyecto' },
@@ -49,7 +98,10 @@ export function RevenueChart({ data }: { data: RevenueChartData }) {
     <div className="flex flex-col gap-3">
       <div className="h-56 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={breakdown?.points ?? data.totals} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+          <BarChart
+            data={breakdown?.points ?? data.totals}
+            margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+          >
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
             <XAxis
               dataKey="month"
@@ -74,9 +126,12 @@ export function RevenueChart({ data }: { data: RevenueChartData }) {
                 borderRadius: 8,
                 fontSize: 12,
               }}
+              content={breakdown ? <BreakdownTooltip seriesLabels={seriesLabels} /> : undefined}
               formatter={(value: number, name) => [
                 formatEUR(value),
-                breakdown ? (seriesLabels.get(String(name)) ?? String(name)) : (SERIES_LABEL[String(name)] ?? String(name)),
+                breakdown
+                  ? (seriesLabels.get(String(name)) ?? String(name))
+                  : (SERIES_LABEL[String(name)] ?? String(name)),
               ]}
             />
             <Legend
@@ -85,7 +140,9 @@ export function RevenueChart({ data }: { data: RevenueChartData }) {
               iconSize={8}
               wrapperStyle={{ fontSize: 11, color: 'var(--muted-foreground)' }}
               formatter={(value) =>
-                breakdown ? (seriesLabels.get(String(value)) ?? String(value)) : (SERIES_LABEL[String(value)] ?? String(value))
+                breakdown
+                  ? (seriesLabels.get(String(value)) ?? String(value))
+                  : (SERIES_LABEL[String(value)] ?? String(value))
               }
             />
             {breakdown ? (
@@ -94,7 +151,11 @@ export function RevenueChart({ data }: { data: RevenueChartData }) {
                   key={series.key}
                   dataKey={series.key}
                   stackId="revenue"
-                  fill={series.key === 'others' ? OTHERS_COLOR : BREAKDOWN_PALETTE[index % BREAKDOWN_PALETTE.length]}
+                  fill={
+                    series.key === 'others'
+                      ? OTHERS_COLOR
+                      : BREAKDOWN_PALETTE[index % BREAKDOWN_PALETTE.length]
+                  }
                   maxBarSize={28}
                 />
               ))
@@ -107,13 +168,22 @@ export function RevenueChart({ data }: { data: RevenueChartData }) {
                   radius={[4, 4, 0, 0]}
                   maxBarSize={20}
                 />
-                <Bar dataKey="current" fill="var(--primary)" radius={[4, 4, 0, 0]} maxBarSize={20} />
+                <Bar
+                  dataKey="current"
+                  fill="var(--primary)"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={20}
+                />
               </>
             )}
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <div className="inline-flex w-fit items-center rounded-lg border bg-card p-0.5 text-xs" role="tablist" aria-label="Desglose de ingresos">
+      <div
+        className="bg-card inline-flex w-fit items-center rounded-lg border p-0.5 text-xs"
+        role="tablist"
+        aria-label="Desglose de ingresos"
+      >
         {VIEW_OPTIONS.map((option) => {
           const active = option.value === view
           return (
@@ -125,8 +195,8 @@ export function RevenueChart({ data }: { data: RevenueChartData }) {
               onClick={() => setView(option.value)}
               className={
                 active
-                  ? 'rounded-md bg-foreground px-2.5 py-1 font-medium text-background'
-                  : 'rounded-md px-2.5 py-1 font-medium text-muted-foreground hover:text-foreground'
+                  ? 'bg-foreground text-background rounded-md px-2.5 py-1 font-medium'
+                  : 'text-muted-foreground hover:text-foreground rounded-md px-2.5 py-1 font-medium'
               }
             >
               {option.label}
