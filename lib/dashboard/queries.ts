@@ -464,7 +464,7 @@ export async function getActionCenter({
       .limit(6),
     supabase
       .from('proposals')
-      .select('id, title, number, sent_at')
+      .select('id, title, number, sent_at, clients(name), leads(name, company)')
       .in('status', ['sent', 'viewed'])
       .is('responded_at', null)
       .not('sent_at', 'is', null)
@@ -508,7 +508,7 @@ export async function getActionCenter({
       id: proposal.id as string,
       kind: 'proposal' as const,
       title: (proposal.title as string) || (proposal.number as string) || 'Propuesta',
-      detail: 'Propuesta enviada hace más de 72 horas sin respuesta.',
+      detail: `${formatProposalRecipient(proposal)} · Propuesta enviada hace más de 72 horas sin respuesta.`,
       href: `/proposals/${proposal.id}`,
       actionLabel: 'Revisar seguimiento',
       severity: 'high' as const,
@@ -529,6 +529,16 @@ export async function getActionCenter({
   const severityOrder = { urgent: 0, high: 1, normal: 2 } as const
   items.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity])
   return { items: items.slice(0, 12), total: items.length }
+}
+
+function formatProposalRecipient(proposal: {
+  leads?: { name?: string | null; company?: string | null } | null
+  clients?: { name?: string | null } | null
+}): string {
+  const lead = proposal.leads
+  if (lead?.name) return `Lead: ${lead.name}${lead.company ? ` · ${lead.company}` : ''}`
+  if (proposal.clients?.name) return `Cliente: ${proposal.clients.name}`
+  return 'Destinatario no indicado'
 }
 
 /**

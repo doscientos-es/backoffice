@@ -103,23 +103,20 @@ export default async function InicioPage({ searchParams }: PageProps) {
       </section>
 
       <section
-        className="border-border bg-muted/30 relative overflow-hidden rounded-2xl border p-4 sm:p-5 md:p-6"
+        className="flex flex-col gap-5"
         aria-labelledby="inicio-negocio"
       >
-        <div className="bg-primary/8 pointer-events-none absolute -top-24 -right-20 size-64 rounded-full blur-3xl" />
         <div className="relative flex flex-col gap-5">
           <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <p className="text-primary text-xs font-semibold tracking-[0.16em] uppercase">
-                Visión general
-              </p>
+            <header>
+
               <h2 id="inicio-negocio" className="mt-1 text-xl font-semibold tracking-tight">
                 La salud del negocio
               </h2>
               <p className="text-muted-foreground mt-1 text-sm">
                 Una lectura clara de la actividad comercial y financiera.
               </p>
-            </div>
+            </header>
             <SectionBoundary
               pending={<RangeSelectorSkeleton />}
               label="No se pudo cargar el selector"
