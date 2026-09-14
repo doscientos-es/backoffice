@@ -494,6 +494,7 @@ describe("logLeadCall", () => {
       mom_test_decision_power_or_budget: true,
       mom_test_accessible: false,
       mom_test_accessible_source: "manual",
+      mom_test_comparing_other_companies: false,
     };
 
     const result = await logLeadCall({

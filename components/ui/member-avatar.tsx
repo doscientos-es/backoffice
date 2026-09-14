@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { MemberProfilePopover, type ProfiledMember } from '@/components/ui/member-profile-popover'

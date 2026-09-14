@@ -18,6 +18,8 @@ import { getCertificateHealth, getVerifactuOperationalHealth } from './health'
 const NOW = new Date('2026-08-22T12:00:00.000Z')
 
 beforeEach(() => {
+  vi.useFakeTimers()
+  vi.setSystemTime(NOW)
   vi.clearAllMocks()
   createServerClient.mockResolvedValue({ from })
   serverEnv.mockReturnValue({ VERIFACTU_CERT_EXPIRES_AT: '2026-09-10T12:00:00.000Z' })
@@ -27,6 +29,8 @@ beforeEach(() => {
     expiresAt: '2026-08-29T10:00:00.000Z',
   })
 })
+
+afterEach(() => vi.useRealTimers())
 
 describe('getCertificateHealth', () => {
   it('warns during the 30 days before certificate expiry', () => {

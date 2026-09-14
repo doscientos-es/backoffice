@@ -54,6 +54,7 @@ const ROLE_VARIANT: Record<MemberRole, "default" | "info" | "neutral"> = {
 
 export function UserMenu({ user }: { user: CurrentUser }) {
   const router = useRouter();
+  const [isOpen, setIsOpen] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const canManageTeam = user.role === "owner" || user.role === "admin";
   const avatarSrc = memberAvatarUrl(user, 64);
@@ -71,12 +72,13 @@ export function UserMenu({ user }: { user: CurrentUser }) {
   }
 
   return (
-    <DropdownMenuTrigger>
+    <DropdownMenuTrigger isOpen={isOpen} onOpenChange={setIsOpen}>
       <Button
         variant="ghost"
         size="icon"
         className="rounded-full border-0 bg-transparent p-0 shadow-none"
         aria-label="Menú de usuario"
+        onPointerDown={() => setIsOpen(true)}
       >
         <Avatar>
           {avatarSrc ? (

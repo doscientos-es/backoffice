@@ -42,6 +42,7 @@ export function ProposalMoreActions({
 }) {
   const router = useRouter();
   const [rejectOpen, setRejectOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [duplicating, startDuplicate] = useTransition();
   const [rejecting, startReject] = useTransition();
   const { run: onDelete, pending: deleting } = useUndoableDelete({
@@ -73,13 +74,14 @@ export function ProposalMoreActions({
 
   return (
     <>
-      <DropdownMenuTrigger>
+      <DropdownMenuTrigger isOpen={isOpen} onOpenChange={setIsOpen}>
         <Button
           variant="ghost"
           size="icon-sm"
           disabled={duplicating || rejecting || deleting}
           aria-label="Más acciones de la propuesta"
           title="Más acciones"
+          onPointerDown={() => setIsOpen(true)}
         >
           <MoreHorizontal aria-hidden />
         </Button>
