@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 
+import { isCallSessionStatus } from '@/lib/leads/call-session'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 import { MobileCallSession } from './mobile-call-session'
@@ -24,7 +25,7 @@ export default async function MobileCallPage({ params }: { params: Promise<{ tok
     .maybeSingle()
   const lead = Array.isArray(session?.leads) ? session.leads[0] : session?.leads
   const phone = lead?.phone
-  if (!phone || !session) notFound()
+  if (!phone || !session || !isCallSessionStatus(session.status)) notFound()
 
-  return <MobileCallSession token={token} phone={phone as string} status={session.status as string} />
+  return <MobileCallSession token={token} phone={phone as string} status={session.status} />
 }

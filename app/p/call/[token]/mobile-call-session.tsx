@@ -4,9 +4,9 @@ import { CheckCircle2, Phone, PhoneOff } from 'lucide-react'
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
+import type { CallSessionStatus } from '@/lib/leads/call-session'
 
 type Completion = { durationMinutes: number; defaultOutcome: 'connected' | 'no_answer' }
-type CallSessionStatus = 'started' | 'dialing' | 'awaiting_log' | 'logged' | 'abandoned'
 type Action = 'dial' | 'finish'
 type ActionResponse = { error?: string } & Partial<Completion>
 
