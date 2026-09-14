@@ -1,9 +1,5 @@
 'use client'
 
-import { Plus } from 'lucide-react'
-import { type ReactNode, useRef, useState } from 'react'
-
-import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -12,12 +8,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@doscientos/ui'
+import { Plus } from 'lucide-react'
+import { type ReactNode, useRef, useState } from 'react'
+
+import { Button } from '@/components/ui/button'
 import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
 import { SubmitButton } from '@/components/ui/submit-button'
 import type { TaskPriorityType, TaskStatusType } from '@/lib/schemas/task'
 
 import { createTask } from './actions'
-import { TaskFormFields } from './task-form-fields'
+import { getDefaultTaskDueDate, TaskFormFields } from './task-form-fields'
 
 interface Props {
   /** Pre-fills `project_id`. Renders as a hidden input so parent stays fixed. */
@@ -141,6 +141,7 @@ export function TaskCreateDialog({
               defaults={{
                 status: 'todo',
                 priority: 'medium',
+                due_date: getDefaultTaskDueDate(),
                 member_ids: currentUserId ? [currentUserId] : [],
                 project_id: projectId,
               }}

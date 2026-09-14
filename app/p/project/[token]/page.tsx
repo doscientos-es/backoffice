@@ -5,9 +5,11 @@ import {
   CircleDot,
   Clock3,
   ExternalLink,
+  FileText,
   Globe,
   Inbox,
   MessageSquareText,
+  Receipt,
   Sparkles,
 } from 'lucide-react'
 import type { Metadata } from 'next'
@@ -77,7 +79,13 @@ export default async function ProjectPortalPage({
     }
   }
 
-  const [{ data: tasks }, { data: requests }, { data: webProjects }] = await Promise.all([
+  const [
+    { data: tasks },
+    { data: requests },
+    { data: webProjects },
+    { data: proposals },
+    { data: invoices },
+  ] = await Promise.all([
     admin
       .from('tasks')
       .select('id, title, client_title, client_summary, status, due_date, completed_at')
@@ -99,6 +107,24 @@ export default async function ProjectPortalPage({
       .eq('is_client_visible', true)
       .is('deleted_at', null)
       .order('name'),
+    admin
+      .from('proposals')
+      .select('id, number, title, total, status, portal_token, is_client_visible')
+      .eq('project_id', project.id as string)
+      .eq('is_client_visible', true)
+      .not('portal_token', 'is', null)
+      .not('status', 'in', '(draft,cancelled)')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false }),
+    admin
+      .from('invoices')
+      .select('id, full_number, total, status, portal_token, is_client_visible')
+      .eq('project_id', project.id as string)
+      .eq('is_client_visible', true)
+      .not('portal_token', 'is', null)
+      .not('status', 'in', '(draft,cancelled)')
+      .is('deleted_at', null)
+      .order('issue_date', { ascending: false }),
   ])
 
   const visibleTasks = (tasks ?? []).filter((task) => task.status !== 'cancelled')
@@ -119,6 +145,8 @@ export default async function ProjectPortalPage({
       return false
     }
   })
+  const publicProposals = proposals ?? []
+  const publicInvoices = invoices ?? []
 
   return (
     <div className="flex flex-col gap-5 px-4 py-5 sm:gap-6 sm:px-6 sm:py-9">
@@ -223,6 +251,58 @@ export default async function ProjectPortalPage({
               </li>
             ))}
           </ul>
+        </section>
+      ) : null}
+
+      {publicProposals.length > 0 || publicInvoices.length > 0 ? (
+        <section aria-labelledby="documents-title" className="py-2">
+          <div className="flex items-center gap-2.5">
+            <FileText className="size-5 text-violet-700 dark:text-violet-300" aria-hidden="true" />
+            <h2 id="documents-title" className="text-xl font-semibold">
+              Documentos compartidos
+            </h2>
+          </div>
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            Consulta propuestas y facturas relacionadas con este proyecto.
+          </p>
+          <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
+            {publicProposals.map((proposal) => (
+              <a
+                key={proposal.id as string}
+                href={`/p/proposal/${proposal.portal_token as string}`}
+                className="group flex items-center justify-between gap-3 rounded-xl border border-zinc-200/80 bg-zinc-50/60 p-3.5 transition-all hover:-translate-y-0.5 hover:border-violet-300 hover:bg-white hover:shadow-sm motion-reduce:transform-none dark:border-white/[0.08] dark:bg-white/[0.025] dark:hover:border-violet-400/30 dark:hover:bg-white/[0.045]"
+              >
+                <span className="flex min-w-0 items-center gap-2.5">
+                  <FileText className="size-4 shrink-0 text-violet-600" aria-hidden="true" />
+                  <span className="truncate text-sm font-medium">
+                    {(proposal.number as string | null) ??
+                      (proposal.title as string | null) ??
+                      'Propuesta'}
+                  </span>
+                </span>
+                <span className="shrink-0 text-sm font-medium tabular-nums">
+                  {formatEUR(Number(proposal.total ?? 0))}
+                </span>
+              </a>
+            ))}
+            {publicInvoices.map((invoice) => (
+              <a
+                key={invoice.id as string}
+                href={`/p/invoice/${invoice.portal_token as string}`}
+                className="group flex items-center justify-between gap-3 rounded-xl border border-zinc-200/80 bg-zinc-50/60 p-3.5 transition-all hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-white hover:shadow-sm motion-reduce:transform-none dark:border-white/[0.08] dark:bg-white/[0.025] dark:hover:border-emerald-400/30 dark:hover:bg-white/[0.045]"
+              >
+                <span className="flex min-w-0 items-center gap-2.5">
+                  <Receipt className="size-4 shrink-0 text-emerald-600" aria-hidden="true" />
+                  <span className="truncate text-sm font-medium">
+                    {(invoice.full_number as string | null) ?? 'Factura'}
+                  </span>
+                </span>
+                <span className="shrink-0 text-sm font-medium tabular-nums">
+                  {formatEUR(Number(invoice.total ?? 0))}
+                </span>
+              </a>
+            ))}
+          </div>
         </section>
       ) : null}
 

@@ -41,6 +41,16 @@ export type TaskFormDefaults = {
   is_client_visible?: boolean
 }
 
+/** Returns tomorrow in the browser's local YYYY-MM-DD format for quick tasks. */
+export function getDefaultTaskDueDate(now = new Date()): string {
+  const tomorrow = new Date(now)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  const year = tomorrow.getFullYear()
+  const month = String(tomorrow.getMonth() + 1).padStart(2, '0')
+  const day = String(tomorrow.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 interface Props {
   defaults?: TaskFormDefaults
   /** Avoids `id` collisions when create and edit forms coexist on the page. */

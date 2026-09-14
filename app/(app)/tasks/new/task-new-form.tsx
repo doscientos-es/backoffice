@@ -7,7 +7,7 @@ import { SubmitButton } from '@/components/ui/submit-button'
 import type { TaskPriorityType, TaskStatusType } from '@/lib/schemas/task'
 
 import { createTask } from '../actions'
-import { TaskFormFields } from '../task-form-fields'
+import { getDefaultTaskDueDate, TaskFormFields } from '../task-form-fields'
 
 interface Props {
   projects: Array<{ id: string; name: string }>
@@ -67,6 +67,7 @@ export function TaskNewForm({ projects, leads, clients, members, defaults, curre
           project_id: defaults.project_id ?? '',
           lead_id: defaults.lead_id ?? '',
           client_id: defaults.client_id ?? '',
+          due_date: getDefaultTaskDueDate(),
           member_ids: currentUserId ? [currentUserId] : [],
         }}
       />
