@@ -250,7 +250,7 @@ export async function getAvisos(): Promise<AvisosData> {
   return { reminders, overdueInvoices, certExpiresAt }
 }
 
-type RevenueReference = { id: string; name: string }
+type RevenueReference = { id: string; name: string; href?: string }
 
 export type RevenueInvoiceRow = {
   issue_date: string
@@ -262,6 +262,43 @@ export type RevenueInvoiceRow = {
     | null
 }
 
+export type RevenuePaymentRow = {
+  confirmed_at: string
+  amount: number | string | null
+  invoices:
+    | {
+        projects: RevenueReference | RevenueReference[] | null
+        clients:
+          | (RevenueReference & {
+              lead_id: string | null
+              leads: RevenueReference | RevenueReference[] | null
+            })
+          | Array<
+              RevenueReference & {
+                lead_id: string | null
+                leads: RevenueReference | RevenueReference[] | null
+              }
+            >
+          | null
+      }
+    | Array<{
+        projects: RevenueReference | RevenueReference[] | null
+        clients:
+          | (RevenueReference & {
+              lead_id: string | null
+              leads: RevenueReference | RevenueReference[] | null
+            })
+          | Array<
+              RevenueReference & {
+                lead_id: string | null
+                leads: RevenueReference | RevenueReference[] | null
+              }
+            >
+          | null
+      }>
+    | null
+}
+
 type RevenueDimension = 'project' | 'lead'
 
 const REVENUE_BREAKDOWN_LIMIT = 6
@@ -270,59 +307,116 @@ function singleReference<T>(value: T | T[] | null): T | null {
   return Array.isArray(value) ? (value[0] ?? null) : value
 }
 
-function revenueEntity(row: RevenueInvoiceRow, dimension: RevenueDimension): RevenueReference {
+type RevenueEntry = {
+  date: string
+  amount: number | string | null
+  projects: RevenueReference | RevenueReference[] | null
+  clients: RevenueInvoiceRow['clients']
+}
+
+function revenueEntity(row: RevenueEntry, dimension: RevenueDimension): RevenueReference {
   if (dimension === 'project') {
-    return singleReference(row.projects) ?? { id: 'unattributed', name: 'Sin proyecto' }
+    const project = singleReference(row.projects)
+    return project
+      ? { ...project, href: `/projects/${project.id}` }
+      : { id: 'unattributed', name: 'Sin proyecto' }
   }
 
   const client = singleReference(row.clients)
-  return singleReference(client?.leads ?? null) ?? { id: 'unattributed', name: 'Sin lead' }
+  const lead = singleReference(client?.leads ?? null)
+  return lead ? { ...lead, href: `/leads/${lead.id}` } : { id: 'unattributed', name: 'Sin lead' }
 }
 
-type RevenueMonthSlot = { key: string; label: string }
+type RevenueGranularity = 'day' | 'week' | 'month'
 
-function monthSlotsBetween(from: Date, to: Date): RevenueMonthSlot[] {
-  const slots: RevenueMonthSlot[] = []
-  const cursor = new Date(from.getFullYear(), from.getMonth(), 1)
-  const end = new Date(to.getFullYear(), to.getMonth(), 1)
+type RevenueSlot = { key: string; label: string; from: Date; to: Date }
+
+function dateKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+    date.getDate(),
+  ).padStart(2, '0')}`
+}
+
+function dateFromValue(value: string): Date {
+  const datePart = value.slice(0, 10)
+  return new Date(`${datePart}T00:00:00`)
+}
+
+function shortDateEs(date: Date): string {
+  return new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short' })
+    .format(date)
+    .replace(/\./g, '')
+}
+
+function granularityForRange(range: DashboardRange): RevenueGranularity {
+  if (range === '7d') return 'day'
+  if (range === 'ytd') return 'month'
+  return 'week'
+}
+
+function slotsBetween(from: Date, to: Date, granularity: RevenueGranularity): RevenueSlot[] {
+  const slots: RevenueSlot[] = []
+  const cursor = new Date(from.getFullYear(), from.getMonth(), from.getDate())
+  const end = new Date(to.getFullYear(), to.getMonth(), to.getDate())
 
   while (cursor <= end) {
-    slots.push({
-      key: `${cursor.getFullYear()}-${cursor.getMonth()}`,
-      label: shortMonthEs(cursor.getMonth()),
-    })
-    cursor.setMonth(cursor.getMonth() + 1)
+    const slotFrom = new Date(cursor)
+    const slotTo = new Date(cursor)
+    if (granularity === 'day') slotTo.setDate(slotTo.getDate())
+    if (granularity === 'week') slotTo.setDate(slotTo.getDate() + 6)
+    if (granularity === 'month') {
+      slotFrom.setDate(1)
+      slotTo.setMonth(slotTo.getMonth() + 1, 0)
+    }
+    if (slotTo > end) slotTo.setTime(end.getTime())
+
+    const label =
+      granularity === 'month'
+        ? shortMonthEs(slotFrom.getMonth())
+        : granularity === 'week'
+          ? `${shortDateEs(slotFrom)}–${shortDateEs(slotTo)}`
+          : shortDateEs(slotFrom)
+    slots.push({ key: dateKey(slotFrom), label, from: slotFrom, to: slotTo })
+
+    if (granularity === 'month') cursor.setMonth(cursor.getMonth() + 1, 1)
+    else cursor.setDate(cursor.getDate() + (granularity === 'week' ? 7 : 1))
   }
 
   return slots
 }
 
-function slotIndexForDate(date: string, slots: RevenueMonthSlot[]): number {
-  const parsed = new Date(date)
-  const key = `${parsed.getFullYear()}-${parsed.getMonth()}`
-  return slots.findIndex((slot) => slot.key === key)
+function monthSlotsBetween(from: Date, to: Date): RevenueSlot[] {
+  return slotsBetween(from, to, 'month')
 }
 
-function sumRevenueBySlot(rows: RevenueInvoiceRow[], slots: RevenueMonthSlot[]): number[] {
+function slotIndexForDate(date: string, slots: RevenueSlot[]): number {
+  const parsed = dateFromValue(date)
+  return slots.findIndex((slot) => parsed >= slot.from && parsed <= slot.to)
+}
+
+function sumRevenueBySlot(rows: RevenueEntry[], slots: RevenueSlot[]): number[] {
   const totals = slots.map(() => 0)
   for (const row of rows) {
-    const slotIndex = slotIndexForDate(row.issue_date, slots)
+    const slotIndex = slotIndexForDate(row.date, slots)
     const slotTotal = slotIndex >= 0 ? totals[slotIndex] : undefined
-    if (slotTotal !== undefined) totals[slotIndex] = slotTotal + Number(row.total ?? 0)
+    if (slotTotal !== undefined) totals[slotIndex] = slotTotal + Number(row.amount ?? 0)
   }
   return totals
 }
 
 /** Groups current-period invoices into the six largest entities plus an "Otros" bucket. */
 function buildRevenueBreakdownForSlots(
-  rows: RevenueInvoiceRow[],
-  monthSlots: RevenueMonthSlot[],
+  rows: RevenueEntry[],
+  monthSlots: RevenueSlot[],
   dimension: RevenueDimension,
 ): RevenueBreakdown {
-  const amountsByEntity = new Map<string, { label: string; amounts: Map<string, number>; total: number }>()
+  const amountsByEntity = new Map<
+    string,
+    { label: string; href?: string; amounts: Map<string, number>; total: number }
+  >()
 
   for (const row of rows) {
-    const slotIndex = slotIndexForDate(row.issue_date, monthSlots)
+    const slotIndex = slotIndexForDate(row.date, monthSlots)
     const slot = slotIndex >= 0 ? monthSlots[slotIndex] : undefined
     if (!slot) continue
     const month = slot.key
@@ -330,10 +424,11 @@ function buildRevenueBreakdownForSlots(
     const entityKey = `${dimension}:${entity.id}`
     const bucket = amountsByEntity.get(entityKey) ?? {
       label: entity.name,
+      href: entity.href,
       amounts: new Map<string, number>(),
       total: 0,
     }
-    const amount = Number(row.total ?? 0)
+    const amount = Number(row.amount ?? 0)
     bucket.amounts.set(month, (bucket.amounts.get(month) ?? 0) + amount)
     bucket.total += amount
     amountsByEntity.set(entityKey, bucket)
@@ -342,7 +437,11 @@ function buildRevenueBreakdownForSlots(
   const ranked = Array.from(amountsByEntity.entries()).sort(([, a], [, b]) => b.total - a.total)
   const visible = ranked.slice(0, REVENUE_BREAKDOWN_LIMIT)
   const hidden = ranked.slice(REVENUE_BREAKDOWN_LIMIT)
-  const series = visible.map(([, bucket], index) => ({ key: `series_${index}`, label: bucket.label }))
+  const series = visible.map(([entityKey, bucket]) => ({
+    key: `series_${entityKey}`,
+    label: bucket.label,
+    href: bucket.href,
+  }))
   if (hidden.length > 0) series.push({ key: 'others', label: 'Otros' })
 
   return {
@@ -351,7 +450,7 @@ function buildRevenueBreakdownForSlots(
       const point: Record<string, string | number> = { month: slot.label, total: 0 }
       visible.forEach(([, bucket], index) => {
         const amount = bucket.amounts.get(slot.key) ?? 0
-        point[`series_${index}`] = amount
+        point[`series_${visible[index]?.[0] ?? index}`] = amount
         point.total = Number(point.total) + amount
       })
       if (hidden.length > 0) {
@@ -372,48 +471,101 @@ export function buildRevenueBreakdown(
   dimension: RevenueDimension,
 ): RevenueBreakdown {
   const from = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1)
-  return buildRevenueBreakdownForSlots(rows, monthSlotsBetween(from, now), dimension)
+  return buildRevenueBreakdownForSlots(
+    rows.map((row) => ({ date: row.issue_date, amount: row.total, ...row })),
+    monthSlotsBetween(from, now),
+    dimension,
+  )
 }
 
 export async function getRevenueSeries(range: DashboardRange = '30d'): Promise<RevenueChartData> {
   const supabase = await createServerClient()
   const now = new Date()
   const dateRange = resolveDateRange(range, now)
-  const currentSlots = monthSlotsBetween(dateRange.current.from, dateRange.current.to)
-  const previousSlots = monthSlotsBetween(dateRange.previous.from, dateRange.previous.to)
+  const granularity = granularityForRange(range)
+  const currentSlots = slotsBetween(dateRange.current.from, dateRange.current.to, granularity)
+  const previousSlots = slotsBetween(dateRange.previous.from, dateRange.previous.to, granularity)
   const previousTo = new Date(dateRange.previous.to)
   previousTo.setDate(previousTo.getDate() - 1)
 
-  const [currentRes, previousRes] = await Promise.all([
+  const invoiceSelect = 'issue_date, total, projects(id, name), clients(lead_id, leads(id, name))'
+  const paymentSelect =
+    'confirmed_at, amount, invoices(projects(id, name), clients(lead_id, leads(id, name)))'
+  const [currentRes, previousRes, currentPaymentsRes, previousPaymentsRes] = await Promise.all([
     supabase
       .from('invoices')
-      .select('issue_date, total, projects(id, name), clients(lead_id, leads(id, name))')
+      .select(invoiceSelect)
       .gte('issue_date', toIsoDate(dateRange.current.from))
       .lte('issue_date', toIsoDate(dateRange.current.to))
-      .neq('status', 'draft')
+      .in('status', ['issued', 'paid', 'overdue'])
       .is('deleted_at', null),
     supabase
       .from('invoices')
-      .select('issue_date, total, projects(id, name), clients(lead_id, leads(id, name))')
+      .select(invoiceSelect)
       .gte('issue_date', toIsoDate(dateRange.previous.from))
       .lte('issue_date', toIsoDate(previousTo))
-      .neq('status', 'draft')
+      .in('status', ['issued', 'paid', 'overdue'])
       .is('deleted_at', null),
+    supabase
+      .from('invoice_payments')
+      .select(paymentSelect)
+      .eq('status', 'confirmed')
+      .gte('confirmed_at', dateRange.current.from.toISOString())
+      .lte('confirmed_at', dateRange.current.to.toISOString()),
+    supabase
+      .from('invoice_payments')
+      .select(paymentSelect)
+      .eq('status', 'confirmed')
+      .gte('confirmed_at', dateRange.previous.from.toISOString())
+      .lte('confirmed_at', dateRange.previous.to.toISOString()),
   ])
 
-  const currentRows = (currentRes.data ?? []) as unknown as RevenueInvoiceRow[]
-  const previousRows = (previousRes.data ?? []) as unknown as RevenueInvoiceRow[]
-  const currentTotals = sumRevenueBySlot(currentRows, currentSlots)
-  const previousTotals = sumRevenueBySlot(previousRows, previousSlots)
+  const currentRows = (currentRes.data ?? []).map((row) => {
+    const invoice = row as unknown as RevenueInvoiceRow
+    return { date: invoice.issue_date, amount: invoice.total, ...invoice }
+  })
+  const previousRows = (previousRes.data ?? []).map((row) => {
+    const invoice = row as unknown as RevenueInvoiceRow
+    return { date: invoice.issue_date, amount: invoice.total, ...invoice }
+  })
+  const currentPaymentRows = (currentPaymentsRes.data ?? []).map((row) => {
+    const payment = row as unknown as RevenuePaymentRow
+    const invoice = singleReference(payment.invoices)
+    return {
+      date: payment.confirmed_at,
+      amount: payment.amount,
+      projects: invoice?.projects ?? null,
+      clients: invoice?.clients ?? null,
+    }
+  })
+  const previousPaymentRows = (previousPaymentsRes.data ?? []).map((row) => {
+    const payment = row as unknown as RevenuePaymentRow
+    const invoice = singleReference(payment.invoices)
+    return {
+      date: payment.confirmed_at,
+      amount: payment.amount,
+      projects: invoice?.projects ?? null,
+      clients: invoice?.clients ?? null,
+    }
+  })
+
+  const buildMetric = (current: RevenueEntry[], previous: RevenueEntry[]) => {
+    const currentTotals = sumRevenueBySlot(current, currentSlots)
+    const previousTotals = sumRevenueBySlot(previous, previousSlots)
+    return {
+      totals: currentSlots.map((slot, index) => ({
+        month: slot.label,
+        current: Math.round((currentTotals[index] ?? 0) * 100) / 100,
+        previous: Math.round((previousTotals[index] ?? 0) * 100) / 100,
+      })),
+      byProject: buildRevenueBreakdownForSlots(current, currentSlots, 'project'),
+      byLead: buildRevenueBreakdownForSlots(current, currentSlots, 'lead'),
+    }
+  }
 
   return {
-    totals: currentSlots.map((slot, index) => ({
-      month: slot.label,
-      current: Math.round((currentTotals[index] ?? 0) * 100) / 100,
-      previous: Math.round((previousTotals[index] ?? 0) * 100) / 100,
-    })),
-    byProject: buildRevenueBreakdownForSlots(currentRows, currentSlots, 'project'),
-    byLead: buildRevenueBreakdownForSlots(currentRows, currentSlots, 'lead'),
+    billed: buildMetric(currentRows, previousRows),
+    collected: buildMetric(currentPaymentRows, previousPaymentRows),
   }
 }
 
