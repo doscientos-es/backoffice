@@ -18,15 +18,23 @@ vi.mock('recharts', () => ({
   YAxis: () => null,
 }))
 
-const data: RevenueChartData = {
+const billed = {
   totals: [{ month: 'jun', current: 300, previous: 100 }],
   byProject: {
-    points: [{ month: 'jun', total: 300, series_0: 300 }],
-    series: [{ key: 'series_0', label: 'Web corporativa' }],
+    points: [{ month: 'jun', total: 300, series_web: 300 }],
+    series: [{ key: 'series_web', label: 'Web corporativa', href: '/projects/web' }],
   },
   byLead: {
-    points: [{ month: 'jun', total: 300, series_0: 300 }],
-    series: [{ key: 'series_0', label: 'Marta López' }],
+    points: [{ month: 'jun', total: 300, series_marta: 300 }],
+    series: [{ key: 'series_marta', label: 'Marta López', href: '/leads/marta' }],
+  },
+}
+
+const data: RevenueChartData = {
+  billed,
+  collected: {
+    ...billed,
+    totals: [{ month: 'jun', current: 150, previous: 50 }],
   },
 }
 
@@ -52,7 +60,17 @@ describe('RevenueChart', () => {
     expect(screen.getByRole('tab', { name: 'Por proyecto' }).getAttribute('aria-selected')).toBe(
       'true',
     )
-    expect(screen.getByTestId('bar-series_0').getAttribute('data-stack')).toBe('revenue')
+    expect(screen.getByTestId('bar-series_project:web').getAttribute('data-stack')).toBe('revenue')
     expect(screen.queryByTestId('bar-current')).toBeNull()
+  })
+
+  it('switches between billed and collected metrics', () => {
+    render(<RevenueChart data={data} />)
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Cobros recibidos' }))
+
+    expect(screen.getByRole('tab', { name: 'Cobros recibidos' }).getAttribute('aria-selected')).toBe(
+      'true',
+    )
   })
 })

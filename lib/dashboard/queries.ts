@@ -437,11 +437,13 @@ function buildRevenueBreakdownForSlots(
   const ranked = Array.from(amountsByEntity.entries()).sort(([, a], [, b]) => b.total - a.total)
   const visible = ranked.slice(0, REVENUE_BREAKDOWN_LIMIT)
   const hidden = ranked.slice(REVENUE_BREAKDOWN_LIMIT)
-  const series = visible.map(([entityKey, bucket]) => ({
+  const series: Array<{ key: string; label: string; href?: string }> = visible.map(
+    ([entityKey, bucket]) => ({
     key: `series_${entityKey}`,
     label: bucket.label,
     href: bucket.href,
-  }))
+    }),
+  )
   if (hidden.length > 0) series.push({ key: 'others', label: 'Otros' })
 
   return {
