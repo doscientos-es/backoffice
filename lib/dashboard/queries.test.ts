@@ -7,7 +7,8 @@ const db: {
   tasks: unknown[]
   myLeads: unknown[]
   unassigned: unknown[]
-} = { tasks: [], myLeads: [], unassigned: [] }
+  proposals: unknown[]
+} = { tasks: [], myLeads: [], unassigned: [], proposals: [] }
 const filters: Array<{ table: string; column: string; value: unknown }> = []
 const invoiceDateFilters: Array<{ operator: 'gte' | 'lte'; column: string; value: unknown }> = []
 
@@ -55,6 +56,7 @@ vi.mock('@/lib/supabase/server', () => ({
         limit: async () => {
           if (isCountQuery) return { data: null, count: 0, error: null }
           if (table === 'tasks') return { data: db.tasks, error: null }
+          if (table === 'proposals') return { data: db.proposals, error: null }
           if (assignedToMode === 'unassigned') return { data: db.unassigned, error: null }
           return { data: db.myLeads, error: null }
         },
@@ -66,9 +68,11 @@ vi.mock('@/lib/supabase/server', () => ({
             ? { data: null, count: 0, error: null }
             : table === 'tasks'
               ? { data: db.tasks, error: null }
-              : assignedToMode === 'unassigned'
-                ? { data: db.unassigned, error: null }
-                : { data: db.myLeads, error: null }
+              : table === 'proposals'
+                ? { data: db.proposals, error: null }
+                : assignedToMode === 'unassigned'
+                  ? { data: db.unassigned, error: null }
+                  : { data: db.myLeads, error: null }
           Promise.resolve(result).then(resolve)
         },
         update: () => chain,
@@ -87,6 +91,7 @@ describe('getMyDay', () => {
     db.tasks = []
     db.myLeads = []
     db.unassigned = []
+    db.proposals = []
     filters.length = 0
     vi.resetModules()
   })
@@ -283,5 +288,59 @@ describe('getDashboardKpis', () => {
       { operator: 'gte', column: 'issue_date', value: '2026-05-01' },
       { operator: 'lte', column: 'issue_date', value: '2026-05-08' },
     ])
+  })
+})
+
+describe('getActionCenter', () => {
+  beforeEach(() => {
+    db.tasks = []
+    db.myLeads = []
+    db.unassigned = []
+    db.proposals = []
+    vi.resetModules()
+  })
+
+  afterEach(() => {
+    vi.resetModules()
+  })
+
+  it('adds lead context to proposal follow-up items', async () => {
+    db.proposals = [
+      {
+        id: 'p1',
+        title: 'Web corporativa',
+        number: 'P-001',
+        sent_at: '2026-06-01T08:00:00Z',
+        leads: { name: 'Ana Fernández', company: 'Tech SL' },
+        clients: null,
+      },
+    ]
+
+    const { getActionCenter } = await import('@/lib/dashboard/queries')
+    const result = await getActionCenter({ memberId: 'user-1', showFinance: false })
+
+    expect(result.items[0]).toMatchObject({
+      title: 'Web corporativa',
+      detail:
+        'Lead: Ana Fernández · Tech SL · Propuesta enviada hace más de 72 horas sin respuesta.',
+    })
+  })
+
+  it('falls back to client context when the proposal has no lead', async () => {
+    db.proposals = [
+      {
+        id: 'p2',
+        title: 'Web corporativa',
+        number: 'P-002',
+        sent_at: '2026-06-01T08:00:00Z',
+        leads: null,
+        clients: { name: 'Cliente Demo' },
+      },
+    ]
+
+    const { getActionCenter } = await import('@/lib/dashboard/queries')
+    const result = await getActionCenter({ memberId: 'user-1', showFinance: false })
+
+    expect(result.items[0]?.detail).toContain('Cliente: Cliente Demo')
   })
 })

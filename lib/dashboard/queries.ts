@@ -60,7 +60,7 @@ function toActionLead(row: Record<string, unknown>, sinceField: string): ActionL
   }
 }
 
-type NameRef = { name: string } | { name: string }[] | null
+type NameRef = { name: string } | { name: string }[] | null | undefined
 
 /** Embedded to-one relations can come back as an object or a single-item array. */
 function refName(ref: NameRef): string | null {
@@ -72,6 +72,7 @@ type LeadRef =
   | { name: string; company: string | null }
   | { name: string; company: string | null }[]
   | null
+  | undefined
 
 function leadRefName(ref: LeadRef): string | null {
   if (!ref) return null
@@ -531,13 +532,11 @@ export async function getActionCenter({
   return { items: items.slice(0, 12), total: items.length }
 }
 
-function formatProposalRecipient(proposal: {
-  leads?: { name?: string | null; company?: string | null } | null
-  clients?: { name?: string | null } | null
-}): string {
-  const lead = proposal.leads
-  if (lead?.name) return `Lead: ${lead.name}${lead.company ? ` · ${lead.company}` : ''}`
-  if (proposal.clients?.name) return `Cliente: ${proposal.clients.name}`
+function formatProposalRecipient(proposal: { leads?: LeadRef; clients?: NameRef }): string {
+  const lead = leadRefName(proposal.leads)
+  if (lead) return `Lead: ${lead}`
+  const client = refName(proposal.clients)
+  if (client) return `Cliente: ${client}`
   return 'Destinatario no indicado'
 }
 
