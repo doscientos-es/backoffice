@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Markdown } from '@/components/ui/markdown'
 import type { PaymentPlanItem, ScopeModule } from '@/lib/proposals/scope'
@@ -26,6 +28,7 @@ type Props = {
   acceptanceCriteria: string | null
   notes: string | null
   team: TeamMember[]
+  sidebar?: ReactNode
 }
 
 /** Read-only, scannable proposal view; actions intentionally live outside it. */
@@ -40,6 +43,7 @@ export function ProposalOverview({
   acceptanceCriteria,
   notes,
   team,
+  sidebar,
 }: Props) {
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(20rem,0.8fr)]">
@@ -121,25 +125,30 @@ export function ProposalOverview({
         ) : null}
       </div>
 
-      <Card className="h-fit">
-        <CardHeader>
-          <CardTitle>Equipo del proyecto</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {team.length > 0 ? (
-            <ul className="flex flex-col gap-3 text-sm">
-              {team.map((member) => (
-                <li key={member.id}>
-                  <p className="font-medium">{member.name}</p>
-                  <p className="text-muted-foreground">{member.job_title ?? 'Equipo Doscientos'}</p>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-muted-foreground text-sm">Aún no hay personas asignadas.</p>
-          )}
-        </CardContent>
-      </Card>
+      <div className="flex min-w-0 flex-col gap-6">
+        <Card className="h-fit">
+          <CardHeader>
+            <CardTitle>Equipo del proyecto</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {team.length > 0 ? (
+              <ul className="flex flex-col gap-3 text-sm">
+                {team.map((member) => (
+                  <li key={member.id}>
+                    <p className="font-medium">{member.name}</p>
+                    <p className="text-muted-foreground">
+                      {member.job_title ?? 'Equipo Doscientos'}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-muted-foreground text-sm">Aún no hay personas asignadas.</p>
+            )}
+          </CardContent>
+        </Card>
+        {sidebar}
+      </div>
     </div>
   )
 }

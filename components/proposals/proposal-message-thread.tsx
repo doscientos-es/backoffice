@@ -22,11 +22,15 @@ export function ProposalMessageThread({
   submit,
   disabled = false,
   sticky = true,
+  embedded = false,
+  showHeader = true,
 }: {
   messages: ProposalMessage[]
   submit: (body: string) => Promise<Result>
   disabled?: boolean
   sticky?: boolean
+  embedded?: boolean
+  showHeader?: boolean
 }) {
   const router = useRouter()
   const [body, setBody] = useState('')
@@ -48,13 +52,21 @@ export function ProposalMessageThread({
 
   return (
     <aside
-      className={`rounded-xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-800 ${sticky ? 'lg:sticky lg:top-6' : ''}`}
+      className={
+        embedded
+          ? 'p-4'
+          : `rounded-xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-800 ${sticky ? 'lg:sticky lg:top-6' : ''}`
+      }
     >
-      <div className="flex items-center gap-2">
-        <MessageCircle className="size-4 text-[#2A4227] dark:text-[#9CC196]" />
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Consultas</h2>
-      </div>
-      <p className="mt-2 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+      {showHeader ? (
+        <div className="flex items-center gap-2">
+          <MessageCircle className="size-4 text-[#2A4227] dark:text-[#9CC196]" />
+          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Consultas</h2>
+        </div>
+      ) : null}
+      <p
+        className={`${showHeader ? 'mt-2' : ''} text-xs leading-relaxed text-zinc-500 dark:text-zinc-400`}
+      >
         ¿Tienes alguna duda o quieres proponer un cambio? Escríbenos aquí.
       </p>
       <div className="mt-4 max-h-72 space-y-3 overflow-y-auto pr-1">

@@ -56,6 +56,118 @@ import { ShareLinks } from './share-links'
 
 type Surface = 'portal' | 'deck'
 
+type ProposalViewRow = {
+  id: string
+  viewer_type: 'team' | 'client'
+  viewed_at: string
+  surface: Surface
+  team_members: { name: string } | null
+}
+
+function ProposalSidebar({
+  proposalId,
+  leadId,
+  clientId,
+  aiEnabled,
+  messages,
+  views,
+}: {
+  proposalId: string
+  leadId: string | null
+  clientId: string | null
+  aiEnabled: boolean
+  messages: ProposalMessage[]
+  views: ProposalViewRow[]
+}) {
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Consultas del cliente</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <ProposalMessageThread
+            messages={messages}
+            submit={replyToProposalMessage.bind(null, proposalId)}
+            sticky={false}
+            embedded
+            showHeader={false}
+          />
+        </CardContent>
+      </Card>
+
+      {aiEnabled ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Próximo paso comercial</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ProposalFollowUpAssistant
+              proposalId={proposalId}
+              leadId={leadId}
+              clientId={clientId}
+            />
+          </CardContent>
+        </Card>
+      ) : null}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Aperturas recientes</CardTitle>
+        </CardHeader>
+        <CardContent className="px-0">
+          {views.length === 0 ? (
+            <p className="text-muted-foreground px-6 py-4 text-sm">Aún no se ha abierto.</p>
+          ) : (
+            <ul className="divide-border divide-y text-sm">
+              {views.map((view) => (
+                <li
+                  key={view.id}
+                  className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    <Badge variant={view.viewer_type === 'client' ? 'info' : 'neutral'}>
+                      {view.viewer_type === 'client' ? 'Cliente' : 'Equipo'}
+                    </Badge>
+                    <Badge variant="outline">
+                      {view.surface === 'deck' ? (
+                        <>
+                          <Presentation aria-hidden /> Presentación
+                        </>
+                      ) : (
+                        <>
+                          <FileText aria-hidden /> Propuesta
+                        </>
+                      )}
+                    </Badge>
+                    <span className="text-muted-foreground truncate">
+                      {view.viewer_type === 'team'
+                        ? (view.team_members?.name ?? 'Miembro')
+                        : 'Apertura externa'}
+                    </span>
+                  </div>
+                  <time
+                    dateTime={view.viewed_at}
+                    className="text-muted-foreground shrink-0 text-xs tabular-nums"
+                  >
+                    {new Date(view.viewed_at).toLocaleString('es-ES', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </time>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+    </>
+  )
+}
+
 export const dynamic = 'force-dynamic'
 
 export default async function ProposalDetailPage({
@@ -221,21 +333,21 @@ export default async function ProposalDetailPage({
   const needsFiscal = !client || !hasCompleteFiscalData(client)
   const fiscalPrefill = client
     ? {
-      name: client.name ?? '',
-      nif: client.nif ?? '',
-      billing_address: client.billing_address_street ?? '',
-      contact_person: client.contact_person ?? '',
-      email: client.email ?? '',
-      phone: client.phone ?? '',
-    }
+        name: client.name ?? '',
+        nif: client.nif ?? '',
+        billing_address: client.billing_address_street ?? '',
+        contact_person: client.contact_person ?? '',
+        email: client.email ?? '',
+        phone: client.phone ?? '',
+      }
     : {
-      name: lead?.company ?? lead?.name ?? '',
-      nif: '',
-      billing_address: '',
-      contact_person: lead?.name ?? '',
-      email: lead?.email ?? '',
-      phone: lead?.phone ?? '',
-    }
+        name: lead?.company ?? lead?.name ?? '',
+        nif: '',
+        billing_address: '',
+        contact_person: lead?.name ?? '',
+        email: lead?.email ?? '',
+        phone: lead?.phone ?? '',
+      }
   const locked = status === 'accepted' || status === 'rejected'
   const editing = !locked && (mode === 'edit' || ai_draft === '1')
   const configuredPaymentPlan = parsePaymentPlan(proposal.payment_plan)
@@ -261,13 +373,7 @@ export default async function ProposalDetailPage({
     billing_cycle: it.billing_cycle ?? 'none',
   }))
 
-  const viewRows = (views ?? []) as unknown as Array<{
-    id: string
-    viewer_type: 'team' | 'client'
-    viewed_at: string
-    surface: Surface
-    team_members: { name: string } | null
-  }>
+  const viewRows = (views ?? []) as unknown as ProposalViewRow[]
 
   const token = proposal.portal_token as string | null
   const portalViewedAt = (lastPortalView?.viewed_at as string | null) ?? null
@@ -302,7 +408,7 @@ export default async function ProposalDetailPage({
                     client ? `Cliente: ${client.name}` : lead ? `Lead: ${lead.name}` : null,
                     `Estado: ${PROPOSAL_STATUS[status]?.label ?? status}`,
                     Number(proposal.total ?? 0) > 0 &&
-                    `Total: ${formatEUR(Number(proposal.total))}`,
+                      `Total: ${formatEUR(Number(proposal.total))}`,
                   ]
                     .filter(Boolean)
                     .join(' · '),
@@ -415,6 +521,16 @@ export default async function ProposalDetailPage({
           acceptanceCriteria={(proposal.acceptance_criteria as string | null) ?? null}
           notes={(proposal.notes as string | null) ?? null}
           team={visibleTeam}
+          sidebar={
+            <ProposalSidebar
+              proposalId={id}
+              leadId={lead?.id ?? null}
+              clientId={client?.id ?? null}
+              aiEnabled={isAIEnabled() && ['sent', 'viewed'].includes(status)}
+              messages={(messages ?? []) as unknown as ProposalMessage[]}
+              views={viewRows}
+            />
+          }
         />
       )}
 
@@ -443,20 +559,6 @@ export default async function ProposalDetailPage({
       ) : null}
 
       {!editing ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Consultas del cliente</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ProposalMessageThread
-              messages={(messages ?? []) as unknown as ProposalMessage[]}
-              submit={replyToProposalMessage.bind(null, id)}
-            />
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {!editing ? (
         <SectionBoundary label="No se pudo cargar la documentación técnica">
           <Card>
             <CardHeader>
@@ -480,21 +582,6 @@ export default async function ProposalDetailPage({
             </CardContent>
           </Card>
         </SectionBoundary>
-      ) : null}
-
-      {!editing && isAIEnabled() && ['sent', 'viewed'].includes(status) ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Próximo paso comercial</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ProposalFollowUpAssistant
-              proposalId={id}
-              leadId={lead?.id ?? null}
-              clientId={client?.id ?? null}
-            />
-          </CardContent>
-        </Card>
       ) : null}
 
       {!editing ? (
@@ -576,7 +663,9 @@ export default async function ProposalDetailPage({
                       {`${latestAcceptance.signer_name as string}${latestAcceptance.signer_role ? ` · ${latestAcceptance.signer_role as string}` : ''}`}
                     </DetailRow>
                     <DetailRow label="Huella del documento">
-                      <span className="font-mono text-xs">{latestAcceptance.document_hash as string}</span>
+                      <span className="font-mono text-xs">
+                        {latestAcceptance.document_hash as string}
+                      </span>
                     </DetailRow>
                   </>
                 ) : null}
@@ -585,57 +674,6 @@ export default async function ProposalDetailPage({
           </Card>
         </div>
       ) : null}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Aperturas recientes</CardTitle>
-        </CardHeader>
-        <CardContent className="px-0">
-          {viewRows.length === 0 ? (
-            <p className="text-muted-foreground px-6 py-4 text-sm">Aún no se ha abierto.</p>
-          ) : (
-            <ul className="divide-border divide-y text-sm">
-              {viewRows.map((v) => (
-                <li key={v.id} className="flex items-center justify-between gap-3 px-6 py-2.5">
-                  <div className="flex items-center gap-2">
-                    <Badge variant={v.viewer_type === 'client' ? 'info' : 'neutral'}>
-                      {v.viewer_type === 'client' ? 'Cliente' : 'Equipo'}
-                    </Badge>
-                    <Badge variant="outline">
-                      {v.surface === 'deck' ? (
-                        <>
-                          <Presentation aria-hidden /> Presentación
-                        </>
-                      ) : (
-                        <>
-                          <FileText aria-hidden /> Propuesta
-                        </>
-                      )}
-                    </Badge>
-                    <span className="text-muted-foreground">
-                      {v.viewer_type === 'team'
-                        ? (v.team_members?.name ?? 'Miembro')
-                        : 'Apertura externa'}
-                    </span>
-                  </div>
-                  <time
-                    dateTime={v.viewed_at}
-                    className="text-muted-foreground text-xs tabular-nums"
-                  >
-                    {new Date(v.viewed_at).toLocaleString('es-ES', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </time>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
 
       {depositPayments && depositPayments.length > 0 && (
         <Card>
@@ -700,7 +738,6 @@ export default async function ProposalDetailPage({
           </CardContent>
         </Card>
       )}
-
     </div>
   )
 }
