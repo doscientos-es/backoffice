@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import {
   Bar,
   BarChart,
@@ -91,7 +91,10 @@ function RevenueTooltip({
               : currentTotal
           const percentage = denominator > 0 ? Math.round((value / denominator) * 100) : 0
           const labelContent = seriesLinks.has(key) ? (
-            <Link className="truncate underline-offset-2 hover:underline" href={seriesLinks.get(key) ?? '#'}>
+            <Link
+              className="truncate underline-offset-2 hover:underline"
+              href={seriesLinks.get(key) ?? '#'}
+            >
               {seriesLabels.get(key) ?? key}
             </Link>
           ) : (

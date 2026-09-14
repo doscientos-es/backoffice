@@ -9,13 +9,22 @@ describe('buildRevenueBreakdown', () => {
     const breakdown = buildRevenueBreakdown(
       [
         {
-          issue_date: '2026-05-10', total: 100, projects: { id: 'web', name: 'Web' }, clients: null,
+          issue_date: '2026-05-10',
+          total: 100,
+          projects: { id: 'web', name: 'Web' },
+          clients: null,
         },
         {
-          issue_date: '2026-05-12', total: 50, projects: null, clients: null,
+          issue_date: '2026-05-12',
+          total: 50,
+          projects: null,
+          clients: null,
         },
         {
-          issue_date: '2026-06-02', total: 200, projects: { id: 'web', name: 'Web' }, clients: null,
+          issue_date: '2026-06-02',
+          total: 200,
+          projects: { id: 'web', name: 'Web' },
+          clients: null,
         },
       ],
       2,

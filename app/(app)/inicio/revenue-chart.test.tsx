@@ -60,7 +60,7 @@ describe('RevenueChart', () => {
     expect(screen.getByRole('tab', { name: 'Por proyecto' }).getAttribute('aria-selected')).toBe(
       'true',
     )
-    expect(screen.getByTestId('bar-series_project:web').getAttribute('data-stack')).toBe('revenue')
+    expect(screen.getByTestId('bar-series_web').getAttribute('data-stack')).toBe('revenue')
     expect(screen.queryByTestId('bar-current')).toBeNull()
   })
 
@@ -69,8 +69,8 @@ describe('RevenueChart', () => {
 
     fireEvent.click(screen.getByRole('tab', { name: 'Cobros recibidos' }))
 
-    expect(screen.getByRole('tab', { name: 'Cobros recibidos' }).getAttribute('aria-selected')).toBe(
-      'true',
-    )
+    expect(
+      screen.getByRole('tab', { name: 'Cobros recibidos' }).getAttribute('aria-selected'),
+    ).toBe('true')
   })
 })

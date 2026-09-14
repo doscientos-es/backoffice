@@ -118,9 +118,9 @@ vi.mock('@/lib/supabase/server', () => ({
                   ? { data: resolveInvoices(), error: null }
                   : table === 'invoice_payments'
                     ? { data: resolvePayments(), error: null }
-                  : assignedToMode === 'unassigned'
-                    ? { data: db.unassigned, error: null }
-                    : { data: db.myLeads, error: null }
+                    : assignedToMode === 'unassigned'
+                      ? { data: db.unassigned, error: null }
+                      : { data: db.myLeads, error: null }
           Promise.resolve(result).then(resolve)
         },
         update: () => chain,

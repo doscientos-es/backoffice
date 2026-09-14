@@ -257,8 +257,16 @@ export type RevenueInvoiceRow = {
   total: number | string | null
   projects: RevenueReference | RevenueReference[] | null
   clients:
-    | (RevenueReference & { lead_id: string | null; leads: RevenueReference | RevenueReference[] | null })
-    | Array<RevenueReference & { lead_id: string | null; leads: RevenueReference | RevenueReference[] | null }>
+    | (RevenueReference & {
+        lead_id: string | null
+        leads: RevenueReference | RevenueReference[] | null
+      })
+    | Array<
+        RevenueReference & {
+          lead_id: string | null
+          leads: RevenueReference | RevenueReference[] | null
+        }
+      >
     | null
 }
 
@@ -439,9 +447,9 @@ function buildRevenueBreakdownForSlots(
   const hidden = ranked.slice(REVENUE_BREAKDOWN_LIMIT)
   const series: Array<{ key: string; label: string; href?: string }> = visible.map(
     ([entityKey, bucket]) => ({
-    key: `series_${entityKey}`,
-    label: bucket.label,
-    href: bucket.href,
+      key: `series_${entityKey}`,
+      label: bucket.label,
+      href: bucket.href,
     }),
   )
   if (hidden.length > 0) series.push({ key: 'others', label: 'Otros' })
@@ -456,7 +464,10 @@ function buildRevenueBreakdownForSlots(
         point.total = Number(point.total) + amount
       })
       if (hidden.length > 0) {
-        const amount = hidden.reduce((sum, [, bucket]) => sum + (bucket.amounts.get(slot.key) ?? 0), 0)
+        const amount = hidden.reduce(
+          (sum, [, bucket]) => sum + (bucket.amounts.get(slot.key) ?? 0),
+          0,
+        )
         point.others = amount
         point.total = Number(point.total) + amount
       }
