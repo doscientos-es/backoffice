@@ -133,6 +133,12 @@ const CallDate = z
 
 export const StartLeadCallInput = z.object({
   leadId: z.string().uuid(),
+  source: z.enum(['desktop', 'qr', 'mobile']).default('desktop'),
+})
+
+export const CallSessionInput = z.object({
+  leadId: z.string().uuid(),
+  sessionId: z.string().uuid(),
 })
 
 export const LogCallInput = z
@@ -140,6 +146,7 @@ export const LogCallInput = z
     leadId: z.string().uuid(),
     notes: optionalText(8000),
     transcript: optionalText(50000),
+    callSessionId: z.string().uuid().optional(),
     durationMinutes: z.coerce.number().int().min(0).max(600).optional(),
     outcome: z.enum(CALL_OUTCOMES).optional(),
     /** The calendar date when the actual call happened, not when it was logged. */

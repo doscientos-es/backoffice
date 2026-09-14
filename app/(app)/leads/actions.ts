@@ -19,6 +19,7 @@ import { resolveSubject } from "@/lib/google/client";
 import { listLeadGmailMessages, resolveGmailSyncMailboxes } from "@/lib/google/gmail";
 import { pushMetaQualifiedLeadStage } from "@/lib/integrations/meta-capi";
 import { isAutomaticallyAccessible, summarizeCallOutcomes } from "@/lib/leads/call-qualification";
+import { CALL_SESSION_TTL_HOURS, completeCallSession } from "@/lib/leads/call-session";
 import {
   CALL_AUTO_FOLLOW_UP,
   CALL_REMINDER_DELAY_MS,
@@ -39,6 +40,7 @@ import { dispatchNotifications } from "@/lib/notifications/dispatch";
 import {
   AssignLeadOwnerInput,
   CheckMeetingSlotInput,
+  CallSessionInput,
   ConvertLeadInput,
   CreateLeadInput,
   DeleteLeadInteractionInput,
@@ -723,7 +725,7 @@ const CALL_OUTCOME_LABEL: Record<string, string> = {
 };
 
 /** Creates a durable, self-expiring reminder when the rep starts a call. */
-export const startLeadCall = defineAction<typeof StartLeadCallInput, { id: string }>({
+export const startLeadCall = defineAction<typeof StartLeadCallInput, { id: string; mobileToken: string }>({
   name: "leads.startCall",
   schema: StartLeadCallInput,
   revalidate: (_payload, input) => [`/leads/${input.leadId}`],
@@ -737,7 +739,22 @@ export const startLeadCall = defineAction<typeof StartLeadCallInput, { id: strin
       .single();
     if (leadError || !lead) throw new Error(leadError?.message ?? "Lead no encontrado");
 
-    const { data, error } = await supabase
+    const { data: session, error: sessionError } = await supabase
+      .from("lead_call_sessions")
+      .insert({
+        lead_id: input.leadId,
+        initiated_by: user.id,
+        source: input.source,
+        dialed_at: input.source === "mobile" ? new Date().toISOString() : null,
+        status: input.source === "mobile" ? "dialing" : "started",
+        expires_at: new Date(Date.now() + CALL_SESSION_TTL_HOURS * 60 * 60 * 1000).toISOString(),
+      })
+      .select("id, mobile_token")
+      .single();
+    if (sessionError || !session)
+      throw new Error(sessionError?.message ?? "No se pudo iniciar el seguimiento de llamada");
+
+    const { data: reminder, error } = await supabase
       .from("tasks")
       .insert({
         kind: "reminder",
@@ -752,8 +769,105 @@ export const startLeadCall = defineAction<typeof StartLeadCallInput, { id: strin
       })
       .select("id")
       .single();
-    if (error || !data) throw new Error(error?.message ?? "No se pudo programar el aviso");
-    return { id: data.id as string };
+    if (error || !reminder) throw new Error(error?.message ?? "No se pudo programar el aviso");
+    return { id: session.id as string, mobileToken: session.mobile_token as string };
+  },
+});
+
+type CallSessionStatus = "started" | "dialing" | "awaiting_log" | "logged" | "abandoned";
+
+export const getLeadCallSession = defineAction<
+  typeof CallSessionInput,
+  { status: CallSessionStatus; durationMinutes: number | null; defaultOutcome: "connected" | "no_answer" | null }
+>({
+  name: "leads.getCallSession",
+  schema: CallSessionInput,
+  handler: async ({ leadId, sessionId }) => {
+    const supabase = await createServerClient();
+    const { data, error } = await supabase
+      .from("lead_call_sessions")
+      .select("status, duration_seconds, started_at, dialed_at, finished_at, expires_at")
+      .eq("id", sessionId)
+      .eq("lead_id", leadId)
+      .gt("expires_at", new Date().toISOString())
+      .maybeSingle();
+    if (error || !data) throw new Error(error?.message ?? "Sesión de llamada no encontrada o caducada");
+
+    const isFinished = data.status === "awaiting_log" || data.status === "logged";
+    const completion =
+      isFinished && data.finished_at
+        ? completeCallSession(data.started_at as string, (data.dialed_at as string | null) ?? null, data.finished_at as string)
+        : null;
+    return {
+      status: data.status as CallSessionStatus,
+      durationMinutes: completion?.durationMinutes ?? null,
+      defaultOutcome: completion?.defaultOutcome ?? null,
+    };
+  },
+});
+
+export const markLeadCallDialed = defineAction<typeof CallSessionInput, void>({
+  name: "leads.markCallDialed",
+  schema: CallSessionInput,
+  revalidate: (_payload, input) => [`/leads/${input.leadId}/call/${input.sessionId}`],
+  handler: async ({ leadId, sessionId }) => {
+    const supabase = await createServerClient();
+    const { data: updated, error } = await supabase
+      .from("lead_call_sessions")
+      .update({ dialed_at: new Date().toISOString(), status: "dialing" })
+      .eq("id", sessionId)
+      .eq("lead_id", leadId)
+      .is("dialed_at", null)
+      .in("status", ["started", "dialing"])
+      .select("id")
+      .maybeSingle();
+    if (error || !updated) throw new Error("La sesión de llamada cambió desde otro dispositivo");
+  },
+});
+
+export const finishLeadCall = defineAction<
+  typeof CallSessionInput,
+  { durationMinutes: number; defaultOutcome: "connected" | "no_answer" }
+>({
+  name: "leads.finishCall",
+  schema: CallSessionInput,
+  revalidate: (_payload, input) => [`/leads/${input.leadId}`, `/leads/${input.leadId}/call/${input.sessionId}`],
+  handler: async ({ leadId, sessionId }) => {
+    const supabase = await createServerClient();
+    const { data: session, error: sessionError } = await supabase
+      .from("lead_call_sessions")
+      .select("started_at, dialed_at, status")
+      .eq("id", sessionId)
+      .eq("lead_id", leadId)
+      .maybeSingle();
+    if (sessionError || !session) throw new Error(sessionError?.message ?? "Sesión de llamada no encontrada");
+    if (!["started", "dialing"].includes(session.status as string))
+      throw new Error("La sesión de llamada ya está cerrada");
+
+    const finishedAt = new Date().toISOString();
+    const completion = completeCallSession(
+      session.started_at as string,
+      (session.dialed_at as string | null) ?? null,
+      finishedAt,
+    );
+    const { data: updated, error } = await supabase
+      .from("lead_call_sessions")
+      .update({
+        status: "awaiting_log",
+        finished_at: finishedAt,
+        duration_seconds: completion.durationSeconds,
+      })
+      .eq("id", sessionId)
+      .eq("lead_id", leadId)
+      .in("status", ["started", "dialing"])
+      .select("id")
+      .maybeSingle();
+    if (error || !updated) throw new Error("La sesión de llamada cambió desde otro dispositivo");
+
+    return {
+      durationMinutes: completion.durationMinutes,
+      defaultOutcome: completion.defaultOutcome,
+    };
   },
 });
 
@@ -829,7 +943,7 @@ export const logLeadCall = defineAction<
   schema: LogCallInput,
   revalidate: (_payload, input) => [`/leads/${input.leadId}`],
   handler: async (data, { user }) => {
-    const { leadId, notes, transcript, durationMinutes, outcome, callDate } = data;
+    const { leadId, notes, transcript, callSessionId, durationMinutes, outcome, callDate } = data;
 
     const supabase = await createServerClient();
     const { error } = await supabase.from("lead_interactions").insert({
@@ -843,9 +957,20 @@ export const logLeadCall = defineAction<
         duration_minutes: durationMinutes ?? null,
         outcome: outcome ?? null,
         call_date: callDate,
+        call_session_id: callSessionId ?? null,
       },
     });
     if (error) throw new Error(error.message);
+
+    if (callSessionId) {
+      const { error: sessionError } = await supabase
+        .from("lead_call_sessions")
+        .update({ status: "logged" })
+        .eq("id", callSessionId)
+        .eq("lead_id", leadId)
+        .eq("status", "awaiting_log");
+      if (sessionError) log.warn({ err: sessionError, callSessionId }, "call_session_log_link_failed");
+    }
 
     // A missed call is an attempt, not a real first contact. A real conversation
     // advances new leads to "contacted" without overwriting later pipeline stages.

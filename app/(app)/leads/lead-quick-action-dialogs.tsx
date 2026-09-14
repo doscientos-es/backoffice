@@ -609,6 +609,8 @@ export function QCallDialog({
   aiEnabled,
   openInitially = false,
   defaultDurationMinutes = null,
+  defaultOutcome = 'connected',
+  callSessionId,
 }: {
   leadId: string
   leadName: string
@@ -618,6 +620,8 @@ export function QCallDialog({
   aiEnabled?: boolean
   openInitially?: boolean
   defaultDurationMinutes?: number | null
+  defaultOutcome?: CallOutcome
+  callSessionId?: string
 }) {
   const [open, setOpen] = useState(false)
   const [digestOpen, setDigestOpen] = useState(false)
@@ -646,8 +650,10 @@ export function QCallDialog({
   }, [openInitially])
 
   useEffect(() => {
-    if (open) setDuration(defaultDurationMinutes?.toString() ?? '')
-  }, [defaultDurationMinutes, open])
+    if (!open) return
+    setDuration(defaultDurationMinutes?.toString() ?? '')
+    setOutcome(defaultOutcome)
+  }, [defaultDurationMinutes, defaultOutcome, open])
 
   async function handleImportNotes() {
     setImporting(true)
@@ -677,6 +683,7 @@ export function QCallDialog({
       leadId,
       notes: notes || undefined,
       transcript: transcript || undefined,
+      callSessionId,
       durationMinutes: duration ? Number(duration) : undefined,
       outcome,
       callDate,
@@ -693,6 +700,7 @@ export function QCallDialog({
     setNotes('')
     setTranscript('')
     setDuration(defaultDurationMinutes?.toString() ?? '')
+    setOutcome(defaultOutcome)
     setCallDate(todayIsoLocal())
     setFollowUpEnabled(false)
     setDigestKey((key) => key + 1)

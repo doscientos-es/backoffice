@@ -35,6 +35,8 @@ type Props = {
   openCallInitially?: boolean
   openScheduleInitially?: boolean
   defaultDurationMinutes?: number | null
+  defaultCallOutcome?: 'connected' | 'no_answer'
+  callSessionId?: string
   claimable?: boolean
   aiEnabled?: boolean
   googleEnabled?: boolean
@@ -54,6 +56,8 @@ export function LeadQuickActions({
   openCallInitially,
   openScheduleInitially,
   defaultDurationMinutes,
+  defaultCallOutcome,
+  callSessionId,
   claimable,
   aiEnabled,
   googleEnabled,
@@ -80,6 +84,8 @@ export function LeadQuickActions({
           aiEnabled={aiEnabled}
           openInitially={openCallInitially}
           defaultDurationMinutes={defaultDurationMinutes}
+          defaultOutcome={defaultCallOutcome}
+          callSessionId={callSessionId}
         />
         <QWhatsAppDialog
           leadId={leadId}

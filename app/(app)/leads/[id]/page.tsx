@@ -74,7 +74,13 @@ export default async function LeadDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams?: Promise<{ feedback?: string; tab?: string }>
+  searchParams?: Promise<{
+    feedback?: string
+    tab?: string
+    callSessionId?: string
+    duration?: string
+    outcome?: string
+  }>
 }) {
   const { id } = await params
   const query = await searchParams
@@ -155,6 +161,18 @@ export default async function LeadDetailPage({
     attachments,
   })
   const defaultDurationMinutes = suggestedCallDurationMinutes(interactions)
+  const sessionDuration = Number(query?.duration)
+  const callSessionDuration =
+    Number.isInteger(sessionDuration) && sessionDuration >= 0 && sessionDuration <= 600
+      ? sessionDuration
+      : null
+  const callSessionOutcome =
+    query?.outcome === 'connected' || query?.outcome === 'no_answer' ? query.outcome : undefined
+  const callSessionId =
+    query?.callSessionId &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(query.callSessionId)
+      ? query.callSessionId
+      : undefined
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -242,149 +260,149 @@ export default async function LeadDetailPage({
         <div className="order-2 flex min-w-0 flex-col gap-6 lg:order-1">
           {tab === 'resumen' ? (
             <>
-        <Card>
-          <CardHeader className="border-border/70 bg-muted/10 border-b">
-            <CardTitle className="text-base">Contexto del lead</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-5">
-            <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2">
-              <DetailGrid>
-                <DetailRow label="Nombre">{lead.name as string}</DetailRow>
-                {alias && <DetailRow label="Alias">{alias}</DetailRow>}
-                <DetailRow label="Estado">
-                  <StatusBadge meta={LEAD_STATUS} value={lead.status as string} />
-                </DetailRow>
-                {(lead.status === 'lost' || lead.status === 'not_interested') &&
-                  lead.lost_reason && (
-                    <DetailRow label={lead.status === 'lost' ? 'Motivo de pérdida' : 'Motivo'}>
-                      <span className="text-destructive font-medium">
-                        {lead.lost_reason as string}
-                      </span>
-                    </DetailRow>
-                  )}
-                {lead.email && <DetailRow label="Email">{lead.email}</DetailRow>}
-                {lead.phone && (
-                  <DetailRow label="Teléfono">
-                    <PhoneQuickActions
-                      phone={lead.phone as string}
-                      leadId={lead.id as string}
-                      leadName={displayName}
-                      leadEmail={(lead.email as string | null) ?? null}
-                      firstContactedAt={(lead.first_contacted_at as string | null) ?? null}
-                      senderName={user.name}
-                      aiEnabled={aiEnabled}
-                    />
-                  </DetailRow>
-                )}
-                {lead.company && <DetailRow label="Empresa">{lead.company}</DetailRow>}
-                <DetailRow label="Responsable">
-                  <MemberLabel member={lead.assignee} />
-                </DetailRow>
-              </DetailGrid>
-
-              <DetailGrid>
-                {lead.source && <DetailRow label="Origen">{lead.source}</DetailRow>}
-                {lead.score != null && (
-                  <DetailRow label="Score">{`${Number(lead.score)}/100`}</DetailRow>
-                )}
-                {lead.estimated_value != null && (
-                  <DetailRow label="Valor estimado">
-                    {formatEUR(Number(lead.estimated_value))}
-                  </DetailRow>
-                )}
-                <DetailRow label="Creado">{formatDate(lead.created_at as string)}</DetailRow>
-                {lead.company_size && <DetailRow label="Tamaño">{lead.company_size}</DetailRow>}
-                {lead.urgency && <DetailRow label="Urgencia">{lead.urgency}</DetailRow>}
-                {lead.solution_type && <DetailRow label="Solución">{lead.solution_type}</DetailRow>}
-                {campaignName && <DetailRow label="Campaña Meta">{campaignName}</DetailRow>}
-                {metaAdId && metaAdName && (
-                  <DetailRow label="Anuncio Meta">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {adsManagerUrl ? (
-                        <a
-                          href={adsManagerUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-primary inline-flex items-center gap-1 hover:underline"
-                          title={`ID de anuncio: ${metaAdId}`}
-                        >
-                          {metaAdName}
-                          <ExternalLink className="size-3.5" />
-                        </a>
-                      ) : (
-                        <span title={`ID de anuncio: ${metaAdId}`}>{metaAdName}</span>
+              <Card>
+                <CardHeader className="border-border/70 bg-muted/10 border-b">
+                  <CardTitle className="text-base">Contexto del lead</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-5">
+                  <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2">
+                    <DetailGrid>
+                      <DetailRow label="Nombre">{lead.name as string}</DetailRow>
+                      {alias && <DetailRow label="Alias">{alias}</DetailRow>}
+                      <DetailRow label="Estado">
+                        <StatusBadge meta={LEAD_STATUS} value={lead.status as string} />
+                      </DetailRow>
+                      {(lead.status === 'lost' || lead.status === 'not_interested') &&
+                        lead.lost_reason && (
+                          <DetailRow label={lead.status === 'lost' ? 'Motivo de pérdida' : 'Motivo'}>
+                            <span className="text-destructive font-medium">
+                              {lead.lost_reason as string}
+                            </span>
+                          </DetailRow>
+                        )}
+                      {lead.email && <DetailRow label="Email">{lead.email}</DetailRow>}
+                      {lead.phone && (
+                        <DetailRow label="Teléfono">
+                          <PhoneQuickActions
+                            phone={lead.phone as string}
+                            leadId={lead.id as string}
+                            leadName={displayName}
+                            leadEmail={(lead.email as string | null) ?? null}
+                            firstContactedAt={(lead.first_contacted_at as string | null) ?? null}
+                            senderName={user.name}
+                            aiEnabled={aiEnabled}
+                          />
+                        </DetailRow>
                       )}
-                      <AdPreviewDialog
-                        adId={metaAdId}
-                        adName={metaAdName}
-                        campaignName={campaignName ?? 'Sin campaña'}
-                        adsManagerUrl={adsManagerUrl}
-                      />
-                    </div>
-                  </DetailRow>
-                )}
-                {requiresCyaProspectSoftwareCommission(campaignName) && (
-                  <DetailRow label="Comisión">
-                    <span className="text-warning font-medium">CYA · 20 % de lo ganado</span>
-                  </DetailRow>
-                )}
-                {lead.conversion_step && (
-                  <DetailRow label="Conversión">
-                    {CONVERSION_STEP_LABEL[lead.conversion_step as string] ?? lead.conversion_step}
-                  </DetailRow>
-                )}
-                {lead.landing_path && <DetailRow label="Landing">{lead.landing_path}</DetailRow>}
-                {lead.landing_ref && <DetailRow label="Ref">{lead.landing_ref}</DetailRow>}
-                {[lead.calculator_cost, lead.calculator_hours].some(hasValue) && (
-                  <DetailRow label="Calculadora">
-                    {[lead.calculator_cost, lead.calculator_hours].filter(hasValue).join(' · ')}
-                  </DetailRow>
-                )}
-              </DetailGrid>
-            </div>
+                      {lead.company && <DetailRow label="Empresa">{lead.company}</DetailRow>}
+                      <DetailRow label="Responsable">
+                        <MemberLabel member={lead.assignee} />
+                      </DetailRow>
+                    </DetailGrid>
 
-            {(lead.landing_subject || firstTouch || lastTouch || lead.notes) && (
-              <div className="border-border mt-5 grid gap-4 border-t pt-4 sm:grid-cols-2">
-                {lead.landing_subject || firstTouch || lastTouch ? (
-                  <div className="text-muted-foreground space-y-1 text-xs">
-                    {lead.landing_subject ? (
-                      <p>
-                        <span className="text-foreground font-medium">Asunto:</span>{' '}
-                        {lead.landing_subject}
-                      </p>
-                    ) : null}
-                    {firstTouch ? (
-                      <p>
-                        <span className="text-foreground font-medium">First touch:</span>{' '}
-                        {firstTouch}
-                      </p>
-                    ) : null}
-                    {lastTouch ? (
-                      <p>
-                        <span className="text-foreground font-medium">Last touch:</span> {lastTouch}
-                      </p>
-                    ) : null}
+                    <DetailGrid>
+                      {lead.source && <DetailRow label="Origen">{lead.source}</DetailRow>}
+                      {lead.score != null && (
+                        <DetailRow label="Score">{`${Number(lead.score)}/100`}</DetailRow>
+                      )}
+                      {lead.estimated_value != null && (
+                        <DetailRow label="Valor estimado">
+                          {formatEUR(Number(lead.estimated_value))}
+                        </DetailRow>
+                      )}
+                      <DetailRow label="Creado">{formatDate(lead.created_at as string)}</DetailRow>
+                      {lead.company_size && <DetailRow label="Tamaño">{lead.company_size}</DetailRow>}
+                      {lead.urgency && <DetailRow label="Urgencia">{lead.urgency}</DetailRow>}
+                      {lead.solution_type && <DetailRow label="Solución">{lead.solution_type}</DetailRow>}
+                      {campaignName && <DetailRow label="Campaña Meta">{campaignName}</DetailRow>}
+                      {metaAdId && metaAdName && (
+                        <DetailRow label="Anuncio Meta">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {adsManagerUrl ? (
+                              <a
+                                href={adsManagerUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-primary inline-flex items-center gap-1 hover:underline"
+                                title={`ID de anuncio: ${metaAdId}`}
+                              >
+                                {metaAdName}
+                                <ExternalLink className="size-3.5" />
+                              </a>
+                            ) : (
+                              <span title={`ID de anuncio: ${metaAdId}`}>{metaAdName}</span>
+                            )}
+                            <AdPreviewDialog
+                              adId={metaAdId}
+                              adName={metaAdName}
+                              campaignName={campaignName ?? 'Sin campaña'}
+                              adsManagerUrl={adsManagerUrl}
+                            />
+                          </div>
+                        </DetailRow>
+                      )}
+                      {requiresCyaProspectSoftwareCommission(campaignName) && (
+                        <DetailRow label="Comisión">
+                          <span className="text-warning font-medium">CYA · 20 % de lo ganado</span>
+                        </DetailRow>
+                      )}
+                      {lead.conversion_step && (
+                        <DetailRow label="Conversión">
+                          {CONVERSION_STEP_LABEL[lead.conversion_step as string] ?? lead.conversion_step}
+                        </DetailRow>
+                      )}
+                      {lead.landing_path && <DetailRow label="Landing">{lead.landing_path}</DetailRow>}
+                      {lead.landing_ref && <DetailRow label="Ref">{lead.landing_ref}</DetailRow>}
+                      {[lead.calculator_cost, lead.calculator_hours].some(hasValue) && (
+                        <DetailRow label="Calculadora">
+                          {[lead.calculator_cost, lead.calculator_hours].filter(hasValue).join(' · ')}
+                        </DetailRow>
+                      )}
+                    </DetailGrid>
                   </div>
-                ) : (
-                  <span />
-                )}
-                {lead.notes ? (
-                  <div>
-                    <div className="flex items-center justify-between gap-2">
-                      <h3 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                        Notas
-                      </h3>
-                      <LeadNotesDialog notes={lead.notes as string} />
+
+                  {(lead.landing_subject || firstTouch || lastTouch || lead.notes) && (
+                    <div className="border-border mt-5 grid gap-4 border-t pt-4 sm:grid-cols-2">
+                      {lead.landing_subject || firstTouch || lastTouch ? (
+                        <div className="text-muted-foreground space-y-1 text-xs">
+                          {lead.landing_subject ? (
+                            <p>
+                              <span className="text-foreground font-medium">Asunto:</span>{' '}
+                              {lead.landing_subject}
+                            </p>
+                          ) : null}
+                          {firstTouch ? (
+                            <p>
+                              <span className="text-foreground font-medium">First touch:</span>{' '}
+                              {firstTouch}
+                            </p>
+                          ) : null}
+                          {lastTouch ? (
+                            <p>
+                              <span className="text-foreground font-medium">Last touch:</span> {lastTouch}
+                            </p>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <span />
+                      )}
+                      {lead.notes ? (
+                        <div>
+                          <div className="flex items-center justify-between gap-2">
+                            <h3 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                              Notas
+                            </h3>
+                            <LeadNotesDialog notes={lead.notes as string} />
+                          </div>
+                          <p className="mt-1 line-clamp-4 text-sm leading-6 whitespace-pre-wrap">
+                            {lead.notes as string}
+                          </p>
+                        </div>
+                      ) : null}
                     </div>
-                    <p className="mt-1 line-clamp-4 text-sm leading-6 whitespace-pre-wrap">
-                      {lead.notes as string}
-                    </p>
-                  </div>
-                ) : null}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  )}
+                </CardContent>
+              </Card>
 
               <LeadRelatedLinks
                 leadId={id}
@@ -529,7 +547,9 @@ export default async function LeadDetailPage({
                 canEdit={canEdit}
                 openCallInitially={query?.feedback === 'call'}
                 openScheduleInitially={query?.feedback === 'schedule'}
-                defaultDurationMinutes={defaultDurationMinutes}
+                defaultDurationMinutes={callSessionDuration ?? defaultDurationMinutes}
+                defaultCallOutcome={callSessionOutcome}
+                callSessionId={callSessionId}
                 aiEnabled={aiEnabled}
                 scheduleMembers={members}
               />
