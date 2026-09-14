@@ -79,23 +79,10 @@ function ProposalSidebar({
   messages: ProposalMessage[]
   views: ProposalViewRow[]
 }) {
+  const needsReply = messages.at(-1)?.author_type === 'client'
+
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>Consultas del cliente</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <ProposalMessageThread
-            messages={messages}
-            submit={replyToProposalMessage.bind(null, proposalId)}
-            sticky={false}
-            embedded
-            showHeader={false}
-          />
-        </CardContent>
-      </Card>
-
       {aiEnabled ? (
         <Card>
           <CardHeader>
@@ -162,6 +149,24 @@ function ProposalSidebar({
               ))}
             </ul>
           )}
+        </CardContent>
+      </Card>
+
+      <Card className={needsReply ? 'border-primary/40 shadow-sm' : undefined}>
+        <CardHeader>
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle>Consultas del cliente</CardTitle>
+            {needsReply ? <Badge variant="warning">Pendiente</Badge> : null}
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <ProposalMessageThread
+            messages={messages}
+            submit={replyToProposalMessage.bind(null, proposalId)}
+            sticky={false}
+            embedded
+            showHeader={false}
+          />
         </CardContent>
       </Card>
     </>
@@ -521,6 +526,213 @@ export default async function ProposalDetailPage({
           acceptanceCriteria={(proposal.acceptance_criteria as string | null) ?? null}
           notes={(proposal.notes as string | null) ?? null}
           team={visibleTeam}
+          mainContent={
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Compartir con el cliente</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-4">
+                  {token ? (
+                    <>
+                      <ShareLinks
+                        token={token}
+                        portalViewedAt={portalViewedAt}
+                        deckViewedAt={deckViewedAt}
+                        isDraft={status === 'draft'}
+                      />
+                      <PortalAccessControls
+                        id={id}
+                        initialVisible={(proposal.is_client_visible as boolean | null) ?? true}
+                        hasPassword={Boolean(proposal.portal_password_hash)}
+                        action={updateProposalPortalAccess}
+                      />
+                    </>
+                  ) : null}
+                  {locked ? (
+                    <p className="text-muted-foreground text-xs">
+                      La propuesta ya ha sido respondida.
+                    </p>
+                  ) : (
+                    <SendPreviewButton
+                      id={id}
+                      defaultEmail={recipientEmail}
+                      alreadySent={Boolean(proposal.sent_at)}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+
+              {status === 'accepted' ? (
+                <ProposalPaymentPlan
+                  proposalId={id}
+                  initialPlan={paymentPlan}
+                  initialVersion={Number(proposal.version)}
+                  total={Number(proposal.total ?? 0)}
+                  canEdit={user.role !== 'viewer'}
+                  invoices={((paymentPlanInvoices ?? []) as Array<Record<string, unknown>>).flatMap(
+                    (invoice) => {
+                      const planItemId = invoice.proposal_payment_plan_item_id as string | null
+                      if (!planItemId) return []
+                      return [
+                        {
+                          id: invoice.id as string,
+                          planItemId,
+                          number: (invoice.full_number as string | null) ?? 'Borrador',
+                          status: invoice.status as string,
+                        },
+                      ]
+                    },
+                  )}
+                />
+              ) : null}
+
+              <SectionBoundary label="No se pudo cargar la documentación técnica">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Documentación técnica</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ProposalSpecs
+                      proposalId={id}
+                      specs={((specs ?? []) as unknown as ProposalSpec[]).map((s) => ({
+                        id: s.id,
+                        title: s.title,
+                        body_markdown: s.body_markdown,
+                        is_client_visible: s.is_client_visible,
+                        portal_token: s.portal_token,
+                        updated_at: s.updated_at,
+                        version: s.version,
+                      }))}
+                      aiEnabled={isAIEnabled()}
+                      locked={locked}
+                    />
+                  </CardContent>
+                </Card>
+              </SectionBoundary>
+
+              {depositPayments && depositPayments.length > 0 ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Señal / Pagos de reserva</CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-0">
+                    <ul className="divide-border divide-y text-sm">
+                      {depositPayments.map((p) => {
+                        const pStatus = p.status as string
+                        const icon =
+                          pStatus === 'confirmed' ? (
+                            <CheckCircle2 className="size-4 text-emerald-600" />
+                          ) : pStatus === 'failed' ? (
+                            <XCircle className="size-4 text-red-500" />
+                          ) : (
+                            <Clock className="size-4 text-amber-500" />
+                          )
+                        return (
+                          <li
+                            key={p.id as string}
+                            className="flex items-center justify-between gap-3 px-6 py-3"
+                          >
+                            <div className="flex items-center gap-2">
+                              {icon}
+                              <span className="font-medium tabular-nums">
+                                {formatEUR(Number(p.amount))}
+                              </span>
+                              <Badge
+                                variant={
+                                  pStatus === 'confirmed'
+                                    ? 'success'
+                                    : pStatus === 'failed'
+                                      ? 'danger'
+                                      : 'warning'
+                                }
+                              >
+                                {pStatus === 'confirmed'
+                                  ? 'Confirmado'
+                                  : pStatus === 'failed'
+                                    ? 'Fallido'
+                                    : 'Pendiente'}
+                              </Badge>
+                              {p.confirmed_at && (
+                                <span className="text-muted-foreground text-xs">
+                                  {formatDate(p.confirmed_at as string)}
+                                </span>
+                              )}
+                            </div>
+                            {p.invoice_id && (
+                              <Link
+                                href={`/invoices/${p.invoice_id}`}
+                                className="text-primary text-xs hover:underline"
+                              >
+                                Ver factura →
+                              </Link>
+                            )}
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </CardContent>
+                </Card>
+              ) : null}
+            </>
+          }
+          sidebarTop={
+            <Card className="min-w-0">
+              <CardHeader>
+                <CardTitle>Información</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <DetailGrid>
+                  <DetailRow label="Estado">
+                    <StatusBadge meta={PROPOSAL_STATUS} value={status} />
+                  </DetailRow>
+                  <DetailRow label={client ? 'Cliente' : 'Lead'}>
+                    {client ? (
+                      <Link href={`/clients/${client.id}`} className="hover:underline">
+                        {client.name}
+                      </Link>
+                    ) : lead ? (
+                      <Link href={`/leads/${lead.id}`} className="hover:underline">
+                        {lead.company ? `${lead.name} · ${lead.company}` : lead.name}
+                      </Link>
+                    ) : (
+                      '—'
+                    )}
+                  </DetailRow>
+                  <DetailRow label="Proyecto">
+                    <LinkProjectButton
+                      proposalId={id}
+                      currentProject={project}
+                      availableProjects={
+                        (availableProjects ?? []) as { id: string; name: string }[]
+                      }
+                    />
+                  </DetailRow>
+                  <DetailRow label="Enviada">
+                    {formatDate(proposal.sent_at as string | null)}
+                  </DetailRow>
+                  <DetailRow label="Vista">
+                    {formatDate(proposal.viewed_at as string | null)}
+                  </DetailRow>
+                  <DetailRow label="Respondida">
+                    {formatDate(proposal.responded_at as string | null)}
+                  </DetailRow>
+                  {status === 'accepted' && latestAcceptance ? (
+                    <>
+                      <DetailRow label="Firmada por">
+                        {`${latestAcceptance.signer_name as string}${latestAcceptance.signer_role ? ` · ${latestAcceptance.signer_role as string}` : ''}`}
+                      </DetailRow>
+                      <DetailRow label="Huella del documento">
+                        <span className="font-mono text-xs">
+                          {latestAcceptance.document_hash as string}
+                        </span>
+                      </DetailRow>
+                    </>
+                  ) : null}
+                </DetailGrid>
+              </CardContent>
+            </Card>
+          }
           sidebar={
             <ProposalSidebar
               proposalId={id}
@@ -532,211 +744,6 @@ export default async function ProposalDetailPage({
             />
           }
         />
-      )}
-
-      {status === 'accepted' ? (
-        <ProposalPaymentPlan
-          proposalId={id}
-          initialPlan={paymentPlan}
-          initialVersion={Number(proposal.version)}
-          total={Number(proposal.total ?? 0)}
-          canEdit={user.role !== 'viewer'}
-          invoices={((paymentPlanInvoices ?? []) as Array<Record<string, unknown>>).flatMap(
-            (invoice) => {
-              const planItemId = invoice.proposal_payment_plan_item_id as string | null
-              if (!planItemId) return []
-              return [
-                {
-                  id: invoice.id as string,
-                  planItemId,
-                  number: (invoice.full_number as string | null) ?? 'Borrador',
-                  status: invoice.status as string,
-                },
-              ]
-            },
-          )}
-        />
-      ) : null}
-
-      {!editing ? (
-        <SectionBoundary label="No se pudo cargar la documentación técnica">
-          <Card>
-            <CardHeader>
-              <CardTitle>Documentación técnica</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ProposalSpecs
-                proposalId={id}
-                specs={((specs ?? []) as unknown as ProposalSpec[]).map((s) => ({
-                  id: s.id,
-                  title: s.title,
-                  body_markdown: s.body_markdown,
-                  is_client_visible: s.is_client_visible,
-                  portal_token: s.portal_token,
-                  updated_at: s.updated_at,
-                  version: s.version,
-                }))}
-                aiEnabled={isAIEnabled()}
-                locked={locked}
-              />
-            </CardContent>
-          </Card>
-        </SectionBoundary>
-      ) : null}
-
-      {!editing ? (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-          <Card className="min-w-0">
-            <CardHeader>
-              <CardTitle>Compartir con el cliente</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-              {token ? (
-                <>
-                  <ShareLinks
-                    token={token}
-                    portalViewedAt={portalViewedAt}
-                    deckViewedAt={deckViewedAt}
-                    isDraft={status === 'draft'}
-                  />
-                  <PortalAccessControls
-                    id={id}
-                    initialVisible={(proposal.is_client_visible as boolean | null) ?? true}
-                    hasPassword={Boolean(proposal.portal_password_hash)}
-                    action={updateProposalPortalAccess}
-                  />
-                </>
-              ) : null}
-              {locked ? (
-                <p className="text-muted-foreground text-xs">La propuesta ya ha sido respondida.</p>
-              ) : (
-                <SendPreviewButton
-                  id={id}
-                  defaultEmail={recipientEmail}
-                  alreadySent={Boolean(proposal.sent_at)}
-                />
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="min-w-0">
-            <CardHeader>
-              <CardTitle>Información</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <DetailGrid>
-                <DetailRow label="Estado">
-                  <StatusBadge meta={PROPOSAL_STATUS} value={status} />
-                </DetailRow>
-                <DetailRow label={client ? 'Cliente' : 'Lead'}>
-                  {client ? (
-                    <Link href={`/clients/${client.id}`} className="hover:underline">
-                      {client.name}
-                    </Link>
-                  ) : lead ? (
-                    <Link href={`/leads/${lead.id}`} className="hover:underline">
-                      {lead.company ? `${lead.name} · ${lead.company}` : lead.name}
-                    </Link>
-                  ) : (
-                    '—'
-                  )}
-                </DetailRow>
-                <DetailRow label="Proyecto">
-                  <LinkProjectButton
-                    proposalId={id}
-                    currentProject={project}
-                    availableProjects={(availableProjects ?? []) as { id: string; name: string }[]}
-                  />
-                </DetailRow>
-                <DetailRow label="Enviada">
-                  {formatDate(proposal.sent_at as string | null)}
-                </DetailRow>
-                <DetailRow label="Vista">
-                  {formatDate(proposal.viewed_at as string | null)}
-                </DetailRow>
-                <DetailRow label="Respondida">
-                  {formatDate(proposal.responded_at as string | null)}
-                </DetailRow>
-                {status === 'accepted' && latestAcceptance ? (
-                  <>
-                    <DetailRow label="Firmada por">
-                      {`${latestAcceptance.signer_name as string}${latestAcceptance.signer_role ? ` · ${latestAcceptance.signer_role as string}` : ''}`}
-                    </DetailRow>
-                    <DetailRow label="Huella del documento">
-                      <span className="font-mono text-xs">
-                        {latestAcceptance.document_hash as string}
-                      </span>
-                    </DetailRow>
-                  </>
-                ) : null}
-              </DetailGrid>
-            </CardContent>
-          </Card>
-        </div>
-      ) : null}
-
-      {depositPayments && depositPayments.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Señal / Pagos de reserva</CardTitle>
-          </CardHeader>
-          <CardContent className="px-0">
-            <ul className="divide-border divide-y text-sm">
-              {depositPayments.map((p) => {
-                const pStatus = p.status as string
-                const icon =
-                  pStatus === 'confirmed' ? (
-                    <CheckCircle2 className="size-4 text-emerald-600" />
-                  ) : pStatus === 'failed' ? (
-                    <XCircle className="size-4 text-red-500" />
-                  ) : (
-                    <Clock className="size-4 text-amber-500" />
-                  )
-                return (
-                  <li
-                    key={p.id as string}
-                    className="flex items-center justify-between gap-3 px-6 py-3"
-                  >
-                    <div className="flex items-center gap-2">
-                      {icon}
-                      <span className="font-medium tabular-nums">
-                        {formatEUR(Number(p.amount))}
-                      </span>
-                      <Badge
-                        variant={
-                          pStatus === 'confirmed'
-                            ? 'success'
-                            : pStatus === 'failed'
-                              ? 'danger'
-                              : 'warning'
-                        }
-                      >
-                        {pStatus === 'confirmed'
-                          ? 'Confirmado'
-                          : pStatus === 'failed'
-                            ? 'Fallido'
-                            : 'Pendiente'}
-                      </Badge>
-                      {p.confirmed_at && (
-                        <span className="text-muted-foreground text-xs">
-                          {formatDate(p.confirmed_at as string)}
-                        </span>
-                      )}
-                    </div>
-                    {p.invoice_id && (
-                      <Link
-                        href={`/invoices/${p.invoice_id}`}
-                        className="text-primary text-xs hover:underline"
-                      >
-                        Ver factura →
-                      </Link>
-                    )}
-                  </li>
-                )
-              })}
-            </ul>
-          </CardContent>
-        </Card>
       )}
     </div>
   )

@@ -1,5 +1,7 @@
+import Link from 'next/link'
 import type { ReactNode } from 'react'
 
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Markdown } from '@/components/ui/markdown'
 import type { PaymentPlanItem, ScopeModule } from '@/lib/proposals/scope'
@@ -28,6 +30,8 @@ type Props = {
   acceptanceCriteria: string | null
   notes: string | null
   team: TeamMember[]
+  mainContent?: ReactNode
+  sidebarTop?: ReactNode
   sidebar?: ReactNode
 }
 
@@ -43,6 +47,8 @@ export function ProposalOverview({
   acceptanceCriteria,
   notes,
   team,
+  mainContent,
+  sidebarTop,
   sidebar,
 }: Props) {
   return (
@@ -80,14 +86,22 @@ export function ProposalOverview({
         </Card>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between gap-3">
             <CardTitle>Partidas</CardTitle>
+            {scopeModules.length > 0 ? (
+              <Button variant="ghost" size="xs" asChild>
+                <Link href="#proposal-scope">Ver módulos</Link>
+              </Button>
+            ) : null}
           </CardHeader>
           <CardContent className="px-0">
             <ul className="divide-border divide-y text-sm">
               {items.map((item) => (
-                <li key={item.id} className="flex items-start justify-between gap-4 px-6 py-3">
-                  <div>
+                <li
+                  key={item.id}
+                  className="hover:bg-muted/30 flex items-start justify-between gap-4 px-6 py-3 transition-colors"
+                >
+                  <div className="min-w-0">
                     <p className="font-medium">{item.description}</p>
                     <p className="text-muted-foreground mt-1 text-xs">
                       {item.quantity} × {formatEUR(item.unit_price)} · IVA {item.vat_rate} %
@@ -104,7 +118,7 @@ export function ProposalOverview({
         </Card>
 
         {scopeModules.length > 0 || deliverables || acceptanceCriteria || notes ? (
-          <Card>
+          <Card id="proposal-scope">
             <CardHeader>
               <CardTitle>Alcance</CardTitle>
             </CardHeader>
@@ -123,9 +137,11 @@ export function ProposalOverview({
             </CardContent>
           </Card>
         ) : null}
+        {mainContent}
       </div>
 
       <div className="flex min-w-0 flex-col gap-6">
+        {sidebarTop}
         <Card className="h-fit">
           <CardHeader>
             <CardTitle>Equipo del proyecto</CardTitle>
