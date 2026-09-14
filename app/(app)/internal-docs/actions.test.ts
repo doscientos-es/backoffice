@@ -112,6 +112,9 @@ describe('internal document delivery actions', () => {
       expect.objectContaining({
         to: 'ana@example.com',
         subject: 'Política de privacidad',
+        fromName: 'Backoffice doscientos',
+        fromAlias: 'backoffice',
+        replyTo: 'backoffice@doscientos.es',
         attachments: [expect.objectContaining({ filename: 'Política de privacidad.pdf' })],
       }),
     )

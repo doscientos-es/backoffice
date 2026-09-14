@@ -143,9 +143,9 @@ export const sendInternalDocEmail = defineAction<
     }
 
     const result = await sendEmail({
-      fromName: user.name,
-      fromAlias: user.emailAlias ?? 'hola',
-      replyTo: user.contactEmail ?? user.email,
+      fromName: 'Backoffice doscientos',
+      fromAlias: 'backoffice',
+      replyTo: 'backoffice@doscientos.es',
       to,
       subject,
       html: await documentEmailHtml({ documentName: doc.name, recipientName, message }),
