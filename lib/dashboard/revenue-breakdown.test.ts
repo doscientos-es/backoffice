@@ -25,8 +25,8 @@ describe('buildRevenueBreakdown', () => {
 
     expect(breakdown.series.map((series) => series.label)).toEqual(['Web', 'Sin proyecto'])
     expect(breakdown.points).toEqual([
-      { month: 'may', total: 150, series_0: 100, series_1: 50 },
-      { month: 'jun', total: 200, series_0: 200, series_1: 0 },
+      { month: 'may', total: 150, 'series_project:web': 100, 'series_project:unattributed': 50 },
+      { month: 'jun', total: 200, 'series_project:web': 200, 'series_project:unattributed': 0 },
     ])
   })
 

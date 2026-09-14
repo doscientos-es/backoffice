@@ -9,9 +9,11 @@ const db: {
   unassigned: unknown[]
   proposals: unknown[]
   invoices: unknown[]
-} = { tasks: [], myLeads: [], unassigned: [], proposals: [], invoices: [] }
+  payments: unknown[]
+} = { tasks: [], myLeads: [], unassigned: [], proposals: [], invoices: [], payments: [] }
 const filters: Array<{ table: string; column: string; value: unknown }> = []
 const invoiceDateFilters: Array<{ operator: 'gte' | 'lte'; column: string; value: unknown }> = []
+const paymentDateFilters: Array<{ operator: 'gte' | 'lte'; column: string; value: unknown }> = []
 
 // ---------------------------------------------------------------------------
 // Supabase server mock
@@ -26,6 +28,8 @@ vi.mock('@/lib/supabase/server', () => ({
       let isCountQuery = false
       let invoiceFrom: string | null = null
       let invoiceTo: string | null = null
+      let paymentFrom: string | null = null
+      let paymentTo: string | null = null
 
       const resolveInvoices = () =>
         db.invoices.filter((row) => {
@@ -34,6 +38,16 @@ vi.mock('@/lib/supabase/server', () => ({
             typeof issueDate === 'string' &&
             (!invoiceFrom || issueDate >= invoiceFrom) &&
             (!invoiceTo || issueDate <= invoiceTo)
+          )
+        })
+
+      const resolvePayments = () =>
+        db.payments.filter((row) => {
+          const confirmedAt = (row as { confirmed_at?: string }).confirmed_at
+          return (
+            typeof confirmedAt === 'string' &&
+            (!paymentFrom || confirmedAt >= paymentFrom) &&
+            (!paymentTo || confirmedAt <= paymentTo)
           )
         })
 
@@ -61,12 +75,20 @@ vi.mock('@/lib/supabase/server', () => ({
             invoiceDateFilters.push({ operator: 'gte', column, value })
             if (column === 'issue_date') invoiceFrom = String(value)
           }
+          if (table === 'invoice_payments') {
+            paymentDateFilters.push({ operator: 'gte', column, value })
+            if (column === 'confirmed_at') paymentFrom = String(value)
+          }
           return chain
         },
         lte: (column: string, value: unknown) => {
           if (table === 'invoices') {
             invoiceDateFilters.push({ operator: 'lte', column, value })
             if (column === 'issue_date') invoiceTo = String(value)
+          }
+          if (table === 'invoice_payments') {
+            paymentDateFilters.push({ operator: 'lte', column, value })
+            if (column === 'confirmed_at') paymentTo = String(value)
           }
           return chain
         },
@@ -78,6 +100,7 @@ vi.mock('@/lib/supabase/server', () => ({
           if (table === 'tasks') return { data: db.tasks, error: null }
           if (table === 'proposals') return { data: db.proposals, error: null }
           if (table === 'invoices') return { data: resolveInvoices(), error: null }
+          if (table === 'invoice_payments') return { data: resolvePayments(), error: null }
           if (assignedToMode === 'unassigned') return { data: db.unassigned, error: null }
           return { data: db.myLeads, error: null }
         },
@@ -93,6 +116,8 @@ vi.mock('@/lib/supabase/server', () => ({
                 ? { data: db.proposals, error: null }
                 : table === 'invoices'
                   ? { data: resolveInvoices(), error: null }
+                  : table === 'invoice_payments'
+                    ? { data: resolvePayments(), error: null }
                   : assignedToMode === 'unassigned'
                     ? { data: db.unassigned, error: null }
                     : { data: db.myLeads, error: null }
@@ -116,6 +141,7 @@ describe('getMyDay', () => {
     db.unassigned = []
     db.proposals = []
     db.invoices = []
+    db.payments = []
     filters.length = 0
     vi.resetModules()
   })
@@ -292,6 +318,7 @@ describe('getMyDay', () => {
 describe('getDashboardKpis', () => {
   beforeEach(() => {
     invoiceDateFilters.length = 0
+    paymentDateFilters.length = 0
     vi.resetModules()
   })
 
@@ -318,7 +345,9 @@ describe('getDashboardKpis', () => {
 describe('getRevenueSeries', () => {
   beforeEach(() => {
     invoiceDateFilters.length = 0
+    paymentDateFilters.length = 0
     db.invoices = []
+    db.payments = []
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-06-15T12:00:00Z'))
     vi.resetModules()
@@ -350,9 +379,33 @@ describe('getRevenueSeries', () => {
     const { getRevenueSeries } = await import('@/lib/dashboard/queries')
     const result = await getRevenueSeries('30d')
 
-    expect(result.totals).toEqual([
-      { month: 'may', current: 0, previous: 0 },
-      { month: 'jun', current: 300, previous: 100 },
+    expect(result.billed.totals.map(({ current, previous }) => [current, previous])).toEqual([
+      [0, 0],
+      [0, 0],
+      [300, 100],
+      [0, 0],
+      [0, 0],
+    ])
+  })
+
+  it('uses confirmed payment timestamps for the collected metric', async () => {
+    db.payments = [
+      {
+        confirmed_at: '2026-06-12T10:00:00.000Z',
+        amount: 125,
+        invoices: { projects: null, clients: null },
+      },
+    ]
+
+    const { getRevenueSeries } = await import('@/lib/dashboard/queries')
+    const result = await getRevenueSeries('7d')
+
+    expect(result.collected.totals.reduce((sum, point) => sum + point.current, 0)).toBe(125)
+    expect(paymentDateFilters).toEqual([
+      { operator: 'gte', column: 'confirmed_at', value: '2026-06-08T12:00:00.000Z' },
+      { operator: 'lte', column: 'confirmed_at', value: '2026-06-15T12:00:00.000Z' },
+      { operator: 'gte', column: 'confirmed_at', value: '2026-06-01T12:00:00.000Z' },
+      { operator: 'lte', column: 'confirmed_at', value: '2026-06-08T12:00:00.000Z' },
     ])
   })
 })
