@@ -1,9 +1,5 @@
 'use client'
 
-import { CheckCheck, LoaderCircle as Loader2, Send } from 'lucide-react'
-import { type FormEvent, useState, useTransition } from 'react'
-
-import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -12,8 +8,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@doscientos/ui'
-import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { CheckCheck, LoaderCircle as Loader2, Send } from 'lucide-react'
+import { type FormEvent, useState, useTransition } from 'react'
+
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
+import { Button } from '@/components/ui/button'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'

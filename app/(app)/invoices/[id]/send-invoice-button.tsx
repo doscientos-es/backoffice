@@ -1,12 +1,5 @@
 'use client'
 
-import { LoaderCircle as Loader2, Mail } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { type FormEvent, useState } from 'react'
-
-import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
-import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -15,6 +8,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@doscientos/ui'
+import { LoaderCircle as Loader2, Mail } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { type FormEvent, useState } from 'react'
+
+import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
 import { IconButton } from '@/components/ui/icon-button'
 import { Input } from '@/components/ui/input'

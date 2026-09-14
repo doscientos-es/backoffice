@@ -15,8 +15,22 @@ vi.mock('@/components/ui/button', () => ({
   ),
 }))
 vi.mock('@/components/ui/checkbox', () => ({
-  Checkbox: ({ isDisabled: _isDisabled, isSelected, onChange, ...props }: { isDisabled?: boolean; isSelected: boolean; onChange: (value: boolean) => void }) => (
-    <input {...props} type="checkbox" checked={isSelected} onChange={(event) => onChange(event.target.checked)} />
+  Checkbox: ({
+    isDisabled: _isDisabled,
+    isSelected,
+    onChange,
+    ...props
+  }: {
+    isDisabled?: boolean
+    isSelected: boolean
+    onChange: (value: boolean) => void
+  }) => (
+    <input
+      {...props}
+      type="checkbox"
+      checked={isSelected}
+      onChange={(event) => onChange(event.target.checked)}
+    />
   ),
 }))
 vi.mock('@/components/ui/dialog', () => ({
@@ -38,13 +52,25 @@ vi.mock('@/components/ui/form-feedback', () => ({
   }),
 }))
 vi.mock('@/components/ui/icon-button', () => ({
-  IconButton: ({ children, label, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) => (
-    <button {...props} aria-label={label}>{children}</button>
+  IconButton: ({
+    children,
+    label,
+    ...props
+  }: React.ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) => (
+    <button {...props} aria-label={label}>
+      {children}
+    </button>
   ),
 }))
-vi.mock('@/components/ui/input', () => ({ Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} /> }))
-vi.mock('@/components/ui/label', () => ({ Label: ({ children }: { children: React.ReactNode }) => <span>{children}</span> }))
-vi.mock('@/components/ui/textarea', () => ({ Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...props} /> }))
+vi.mock('@/components/ui/input', () => ({
+  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
+}))
+vi.mock('@/components/ui/label', () => ({
+  Label: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+}))
+vi.mock('@/components/ui/textarea', () => ({
+  Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...props} />,
+}))
 
 import { SendInvoiceButton } from './send-invoice-button'
 
@@ -84,7 +110,9 @@ describe('SendInvoiceButton', () => {
     const url = new URL(vi.mocked(window.open).mock.calls[0]?.[0] as string)
     expect(url.hostname).toBe('wa.me')
     expect(url.pathname).toBe('/34600123456')
-    expect(url.searchParams.get('text')).toContain('Hola María, te comparto la factura F-2026-0042.')
+    expect(url.searchParams.get('text')).toContain(
+      'Hola María, te comparto la factura F-2026-0042.',
+    )
     expect(url.searchParams.get('text')).toContain(
       'https://backoffice.example.test/p/invoice/token',
     )

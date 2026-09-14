@@ -850,8 +850,9 @@ export async function previewProposalEmail(input: unknown): Promise<ProposalEmai
     parsed.data.message,
   )
   if (!rendered.ok) return rendered
-  const client = proposal.clients as ProposalEmailData['clients']
-  const lead = proposal.leads as ProposalEmailData['leads']
+  const proposalEmailData = proposal as unknown as ProposalEmailData
+  const client = proposalEmailData.clients
+  const lead = proposalEmailData.leads
   return {
     ok: true,
     subject: rendered.subject,
