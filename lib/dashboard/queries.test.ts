@@ -8,7 +8,8 @@ const db: {
   myLeads: unknown[]
   unassigned: unknown[]
   proposals: unknown[]
-} = { tasks: [], myLeads: [], unassigned: [], proposals: [] }
+  invoices: unknown[]
+} = { tasks: [], myLeads: [], unassigned: [], proposals: [], invoices: [] }
 const filters: Array<{ table: string; column: string; value: unknown }> = []
 const invoiceDateFilters: Array<{ operator: 'gte' | 'lte'; column: string; value: unknown }> = []
 
@@ -23,6 +24,18 @@ vi.mock('@/lib/supabase/server', () => ({
     from: (table: string) => {
       let assignedToMode: 'owned' | 'unassigned' | null = null
       let isCountQuery = false
+      let invoiceFrom: string | null = null
+      let invoiceTo: string | null = null
+
+      const resolveInvoices = () =>
+        db.invoices.filter((row) => {
+          const issueDate = (row as { issue_date?: string }).issue_date
+          return (
+            typeof issueDate === 'string' &&
+            (!invoiceFrom || issueDate >= invoiceFrom) &&
+            (!invoiceTo || issueDate <= invoiceTo)
+          )
+        })
 
       const chain: Record<string, unknown> = {
         select: (_cols: unknown, opts?: { count?: string; head?: boolean }) => {
@@ -44,19 +57,27 @@ vi.mock('@/lib/supabase/server', () => ({
         },
         in: () => chain,
         gte: (column: string, value: unknown) => {
-          if (table === 'invoices') invoiceDateFilters.push({ operator: 'gte', column, value })
+          if (table === 'invoices') {
+            invoiceDateFilters.push({ operator: 'gte', column, value })
+            if (column === 'issue_date') invoiceFrom = String(value)
+          }
           return chain
         },
         lte: (column: string, value: unknown) => {
-          if (table === 'invoices') invoiceDateFilters.push({ operator: 'lte', column, value })
+          if (table === 'invoices') {
+            invoiceDateFilters.push({ operator: 'lte', column, value })
+            if (column === 'issue_date') invoiceTo = String(value)
+          }
           return chain
         },
+        neq: () => chain,
         lt: () => chain,
         order: () => chain,
         limit: async () => {
           if (isCountQuery) return { data: null, count: 0, error: null }
           if (table === 'tasks') return { data: db.tasks, error: null }
           if (table === 'proposals') return { data: db.proposals, error: null }
+          if (table === 'invoices') return { data: resolveInvoices(), error: null }
           if (assignedToMode === 'unassigned') return { data: db.unassigned, error: null }
           return { data: db.myLeads, error: null }
         },
@@ -70,9 +91,11 @@ vi.mock('@/lib/supabase/server', () => ({
               ? { data: db.tasks, error: null }
               : table === 'proposals'
                 ? { data: db.proposals, error: null }
-                : assignedToMode === 'unassigned'
-                  ? { data: db.unassigned, error: null }
-                  : { data: db.myLeads, error: null }
+                : table === 'invoices'
+                  ? { data: resolveInvoices(), error: null }
+                  : assignedToMode === 'unassigned'
+                    ? { data: db.unassigned, error: null }
+                    : { data: db.myLeads, error: null }
           Promise.resolve(result).then(resolve)
         },
         update: () => chain,
@@ -92,6 +115,7 @@ describe('getMyDay', () => {
     db.myLeads = []
     db.unassigned = []
     db.proposals = []
+    db.invoices = []
     filters.length = 0
     vi.resetModules()
   })
@@ -287,6 +311,48 @@ describe('getDashboardKpis', () => {
       { operator: 'lte', column: 'issue_date', value: '2026-05-15' },
       { operator: 'gte', column: 'issue_date', value: '2026-05-01' },
       { operator: 'lte', column: 'issue_date', value: '2026-05-08' },
+    ])
+  })
+})
+
+describe('getRevenueSeries', () => {
+  beforeEach(() => {
+    invoiceDateFilters.length = 0
+    db.invoices = []
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-06-15T12:00:00Z'))
+    vi.resetModules()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.resetModules()
+  })
+
+  it('uses the selected dashboard range for both revenue queries', async () => {
+    const { getRevenueSeries } = await import('@/lib/dashboard/queries')
+    await getRevenueSeries('30d')
+
+    expect(invoiceDateFilters).toEqual([
+      { operator: 'gte', column: 'issue_date', value: '2026-05-16' },
+      { operator: 'lte', column: 'issue_date', value: '2026-06-15' },
+      { operator: 'gte', column: 'issue_date', value: '2026-04-16' },
+      { operator: 'lte', column: 'issue_date', value: '2026-05-15' },
+    ])
+  })
+
+  it('keeps current and previous amounts in the same visible slots', async () => {
+    db.invoices = [
+      { issue_date: '2026-06-01', total: 300, projects: null, clients: null },
+      { issue_date: '2026-05-01', total: 100, projects: null, clients: null },
+    ]
+
+    const { getRevenueSeries } = await import('@/lib/dashboard/queries')
+    const result = await getRevenueSeries('30d')
+
+    expect(result.totals).toEqual([
+      { month: 'may', current: 0, previous: 0 },
+      { month: 'jun', current: 300, previous: 100 },
     ])
   })
 })

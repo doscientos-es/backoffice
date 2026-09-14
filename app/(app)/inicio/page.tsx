@@ -154,7 +154,7 @@ export default async function InicioPage({ searchParams }: PageProps) {
                 pending={<RevenueWidgetSkeleton />}
                 label="No se pudieron cargar los ingresos"
               >
-                <RevenueWidget />
+                <RevenueWidget range={range} />
               </SectionBoundary>
             </>
           ) : null}

@@ -130,7 +130,7 @@ export function InvoiceIssuanceProgressDialog({
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && !busy && onClose()}>
-      <DialogContent className="gap-5 sm:max-w-lg" showCloseButton={!busy}>
+      <DialogContent className="gap-5 sm:max-w-md" showCloseButton={!busy}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {phase === 'accepted' ? <FileCheck2 className="size-5 text-emerald-600" /> : null}

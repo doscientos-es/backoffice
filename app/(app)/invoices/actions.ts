@@ -813,6 +813,8 @@ type RenderedInvoiceEmail = {
   html: string;
   portalUrl: string;
   clientEmail: string | null;
+  clientName: string | null;
+  invoiceNumber: string;
 };
 
 /** Renders the exact invoice email so it can be previewed or delivered. */
@@ -839,6 +841,8 @@ async function renderInvoiceEmail(
     html,
     portalUrl,
     clientEmail: invoice.client?.email ?? null,
+    clientName: invoice.client?.name ?? null,
+    invoiceNumber,
   };
 }
 
@@ -880,6 +884,8 @@ export const previewInvoiceEmail = defineAction<
     html: string;
     clientEmail: string | null;
     clientPhone: string | null;
+    clientName: string | null;
+    invoiceNumber: string;
     portalUrl: string;
   }
 >({
@@ -888,15 +894,18 @@ export const previewInvoiceEmail = defineAction<
   handler: async (input) => {
     const invoice = await findInvoiceForEmail(input.id);
     if (!invoice) throw new Error("Factura no encontrada");
-    const { subject, html, clientEmail, portalUrl } = await renderInvoiceEmail(
+    const { subject, html, clientEmail, clientName, invoiceNumber, portalUrl } =
+      await renderInvoiceEmail(
       invoice,
       input.message,
-    );
+      );
     return {
       subject,
       html,
       clientEmail,
       clientPhone: invoice.client?.phone ?? null,
+      clientName,
+      invoiceNumber,
       portalUrl,
     };
   },

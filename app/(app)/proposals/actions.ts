@@ -751,7 +751,15 @@ type SendPreviewResult =
   | { ok: false; error: string }
 
 type ProposalEmailPreviewResult =
-  | { ok: true; subject: string; html: string }
+  | {
+      ok: true
+      subject: string
+      html: string
+      clientName: string
+      clientPhone: string | null
+      proposalNumber: string
+      portalUrl: string
+    }
   | { ok: false; error: string }
 
 type ProposalEmailData = {
@@ -761,8 +769,8 @@ type ProposalEmailData = {
   total: number
   valid_until: string | null
   portal_token: string | null
-  clients: { name: string; email: string | null } | null
-  leads: { name: string; email: string | null } | null
+  clients: { name: string; email: string | null; phone: string | null } | null
+  leads: { name: string; email: string | null; phone: string | null } | null
 }
 
 async function renderProposalPreview(
@@ -829,7 +837,7 @@ export async function previewProposalEmail(input: unknown): Promise<ProposalEmai
   const { data: proposal, error } = await supabase
     .from('proposals')
     .select(
-      'id, number, title, total, portal_token, valid_until, clients(name, email), leads(name, email)',
+      'id, number, title, total, portal_token, valid_until, clients(name, email, phone), leads(name, email, phone)',
     )
     .eq('id', parsed.data.id)
     .is('deleted_at', null)
@@ -842,7 +850,17 @@ export async function previewProposalEmail(input: unknown): Promise<ProposalEmai
     parsed.data.message,
   )
   if (!rendered.ok) return rendered
-  return { ok: true, subject: rendered.subject, html: rendered.html }
+  const client = proposal.clients as ProposalEmailData['clients']
+  const lead = proposal.leads as ProposalEmailData['leads']
+  return {
+    ok: true,
+    subject: rendered.subject,
+    html: rendered.html,
+    clientName: client?.name ?? lead?.name ?? 'cliente',
+    clientPhone: client?.phone ?? lead?.phone ?? null,
+    proposalNumber: rendered.proposalNumber,
+    portalUrl: rendered.portalUrl,
+  }
 }
 
 /**
@@ -863,7 +881,7 @@ export async function sendPreviewLink(input: unknown): Promise<SendPreviewResult
   const { data: proposal, error: readError } = await supabase
     .from('proposals')
     .select(
-      'id, number, title, total, status, portal_token, valid_until, sent_at, lead_id, client_id, clients(name, email), leads(name, email)',
+      'id, number, title, total, status, portal_token, valid_until, sent_at, lead_id, client_id, clients(name, email, phone), leads(name, email, phone)',
     )
     .eq('id', id)
     .is('deleted_at', null)

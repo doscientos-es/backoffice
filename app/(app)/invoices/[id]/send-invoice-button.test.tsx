@@ -56,6 +56,8 @@ describe('SendInvoiceButton', () => {
       html: '<p>Factura</p>',
       clientEmail: 'cliente@example.test',
       clientPhone: '+34 600 123 456',
+      clientName: 'María López',
+      invoiceNumber: 'F-2026-0042',
       portalUrl: 'https://backoffice.example.test/p/invoice/token',
     })
     actions.logInvoiceWhatsappShare.mockResolvedValue({ ok: true })
@@ -82,7 +84,10 @@ describe('SendInvoiceButton', () => {
     const url = new URL(vi.mocked(window.open).mock.calls[0]?.[0] as string)
     expect(url.hostname).toBe('wa.me')
     expect(url.pathname).toBe('/34600123456')
-    expect(url.searchParams.get('text')).toContain('https://backoffice.example.test/p/invoice/token')
+    expect(url.searchParams.get('text')).toContain('Hola María, te comparto la factura F-2026-0042.')
+    expect(url.searchParams.get('text')).toContain(
+      'https://backoffice.example.test/p/invoice/token',
+    )
   })
 
   it('sends the PDF attached by default', async () => {

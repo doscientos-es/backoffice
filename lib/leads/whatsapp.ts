@@ -2,6 +2,11 @@ import { buildBookingUrl } from '@/lib/recovery/utils'
 
 export type WhatsAppLead = { id: string; name: string; email: string | null }
 
+function firstName(name: string | null | undefined): string {
+  const trimmed = name?.trim()
+  return trimmed ? (trimmed.split(/\s+/)[0] ?? trimmed) : 'cliente'
+}
+
 export function buildLeadWhatsAppMessage(
   lead: WhatsAppLead,
   senderName: string,
@@ -23,4 +28,28 @@ export function buildWhatsAppUrl(phone: string, message: string): string {
   const digits = phone.replace(/\D/g, '')
   const internationalPhone = digits.length === 9 ? `34${digits}` : digits
   return `https://wa.me/${internationalPhone}?text=${encodeURIComponent(message)}`
+}
+
+export function buildInvoiceWhatsAppMessage(
+  clientName: string | null | undefined,
+  invoiceNumber: string,
+  portalUrl: string,
+): string {
+  return [
+    `Hola ${firstName(clientName)}, te comparto la factura ${invoiceNumber}.`,
+    `Puedes consultarla y descargarla desde aquí:\n${portalUrl}`,
+    'Si tienes cualquier duda, escríbeme.',
+  ].join('\n\n')
+}
+
+export function buildProposalWhatsAppMessage(
+  recipientName: string | null | undefined,
+  proposalNumber: string,
+  portalUrl: string,
+): string {
+  return [
+    `Hola ${firstName(recipientName)}, te comparto la propuesta ${proposalNumber}.`,
+    `Puedes revisarla con calma desde este enlace:\n${portalUrl}`,
+    'Si te parece, comentamos cualquier duda.',
+  ].join('\n\n')
 }

@@ -13,9 +13,11 @@ import {
   DialogTitle,
 } from '@doscientos/ui'
 import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { buildProposalWhatsAppMessage, buildWhatsAppUrl } from '@/lib/leads/whatsapp'
 
 import { markProposalAsSent, previewProposalEmail, sendPreviewLink } from '../actions'
 
@@ -33,6 +35,10 @@ export function SendPreviewButton({ id, defaultEmail, alreadySent }: Props) {
   const [open, setOpen] = useState(false)
   const [to, setTo] = useState(defaultEmail ?? '')
   const [message, setMessage] = useState('')
+  const [phone, setPhone] = useState('')
+  const [clientName, setClientName] = useState('cliente')
+  const [proposalNumber, setProposalNumber] = useState('—')
+  const [portalUrl, setPortalUrl] = useState<string | null>(null)
   const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null)
   const [previewMessage, setPreviewMessage] = useState('')
   const [loadingPreview, setLoadingPreview] = useState(false)
@@ -51,6 +57,10 @@ export function SendPreviewButton({ id, defaultEmail, alreadySent }: Props) {
     if (res.ok) {
       setPreview({ subject: res.subject, html: res.html })
       setPreviewMessage(message)
+      setPhone((current) => current || res.clientPhone || '')
+      setClientName(res.clientName)
+      setProposalNumber(res.proposalNumber)
+      setPortalUrl(res.portalUrl)
     } else {
       feedback.setError(res.error)
     }
@@ -94,6 +104,15 @@ export function SendPreviewButton({ id, defaultEmail, alreadySent }: Props) {
       feedback.setSuccess(res.mocked ? 'Email simulado (modo dev)' : 'Email enviado')
       setOpen(false)
     })
+  }
+
+  const handleWhatsapp = () => {
+    if (!phone.trim() || !portalUrl) return
+    const note = message.trim()
+    const text = note
+      ? `${note}\n\n${portalUrl}`
+      : buildProposalWhatsAppMessage(clientName, proposalNumber, portalUrl)
+    window.open(buildWhatsAppUrl(phone, text), '_blank', 'noopener,noreferrer')
   }
 
   return (
@@ -173,6 +192,30 @@ export function SendPreviewButton({ id, defaultEmail, alreadySent }: Props) {
                 {loadingPreview ? <Loader2 className="animate-spin" aria-hidden /> : null}
                 Actualizar vista previa
               </Button>
+              <div className="border-border flex flex-col gap-1.5 border-t pt-4">
+                <Label htmlFor="proposal-whatsapp-phone">Teléfono para WhatsApp</Label>
+                <Input
+                  id="proposal-whatsapp-phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+34600000000"
+                  autoComplete="tel"
+                  disabled={pending}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleWhatsapp}
+                  disabled={!phone.trim() || !portalUrl || pending}
+                >
+                  <WhatsAppIcon className="mr-2" />
+                  Compartir por WhatsApp
+                </Button>
+                <p className="text-muted-foreground text-xs">
+                  Se abre WhatsApp con un mensaje preparado y el enlace de la propuesta.
+                </p>
+              </div>
             </div>
             <div className="border-border bg-muted/30 overflow-hidden rounded-lg border">
               <div className="bg-background border-b px-4 py-3">

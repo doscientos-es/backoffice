@@ -4,17 +4,19 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from '@/components/ui/empty-state'
 import { getRevenueSeries } from '@/lib/dashboard/queries'
+import type { DashboardRange } from '@/lib/dashboard/types'
+import { describeRange } from '@/lib/utils/date'
 
 import { RevenueChart } from '../revenue-chart'
 
-export async function RevenueWidget() {
-  const data = await getRevenueSeries(6)
+export async function RevenueWidget({ range }: { range: DashboardRange }) {
+  const data = await getRevenueSeries(range)
   const hasData = data.totals.some((p) => p.current > 0 || p.previous > 0)
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Ingresos · últimos 6 meses</CardTitle>
+        <CardTitle>Ingresos · {describeRange(range)}</CardTitle>
       </CardHeader>
       <CardContent>
         {hasData ? (

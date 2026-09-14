@@ -3,13 +3,14 @@ import { EXPENSE_CATEGORY_LABELS, type ExpenseCategory, profitMargin } from '@/l
 import { ACTIVE_LEAD_STATUSES } from '@/lib/leads/pipeline'
 import { notDeleted } from '@/lib/supabase/filters'
 import { createServerClient } from '@/lib/supabase/server'
-import { shortMonthEs, toIsoDate } from '@/lib/utils/date'
+import { resolveDateRange, shortMonthEs, toIsoDate } from '@/lib/utils/date'
 
 import type {
   AccountsReceivable,
   ActionLeadRow,
   AvisosData,
   CompanyGoals,
+  DashboardRange,
   DashboardKpis,
   DateRange,
   GoalMetric,
@@ -278,22 +279,53 @@ function revenueEntity(row: RevenueInvoiceRow, dimension: RevenueDimension): Rev
   return singleReference(client?.leads ?? null) ?? { id: 'unattributed', name: 'Sin lead' }
 }
 
+type RevenueMonthSlot = { key: string; label: string }
+
+function monthSlotsBetween(from: Date, to: Date): RevenueMonthSlot[] {
+  const slots: RevenueMonthSlot[] = []
+  const cursor = new Date(from.getFullYear(), from.getMonth(), 1)
+  const end = new Date(to.getFullYear(), to.getMonth(), 1)
+
+  while (cursor <= end) {
+    slots.push({
+      key: `${cursor.getFullYear()}-${cursor.getMonth()}`,
+      label: shortMonthEs(cursor.getMonth()),
+    })
+    cursor.setMonth(cursor.getMonth() + 1)
+  }
+
+  return slots
+}
+
+function slotIndexForDate(date: string, slots: RevenueMonthSlot[]): number {
+  const parsed = new Date(date)
+  const key = `${parsed.getFullYear()}-${parsed.getMonth()}`
+  return slots.findIndex((slot) => slot.key === key)
+}
+
+function sumRevenueBySlot(rows: RevenueInvoiceRow[], slots: RevenueMonthSlot[]): number[] {
+  const totals = slots.map(() => 0)
+  for (const row of rows) {
+    const slotIndex = slotIndexForDate(row.issue_date, slots)
+    const slotTotal = slotIndex >= 0 ? totals[slotIndex] : undefined
+    if (slotTotal !== undefined) totals[slotIndex] = slotTotal + Number(row.total ?? 0)
+  }
+  return totals
+}
+
 /** Groups current-period invoices into the six largest entities plus an "Otros" bucket. */
-export function buildRevenueBreakdown(
+function buildRevenueBreakdownForSlots(
   rows: RevenueInvoiceRow[],
-  months: number,
-  now: Date,
+  monthSlots: RevenueMonthSlot[],
   dimension: RevenueDimension,
 ): RevenueBreakdown {
-  const monthSlots = Array.from({ length: months }, (_, index) => {
-    const date = new Date(now.getFullYear(), now.getMonth() - (months - 1 - index), 1)
-    return { key: `${date.getMonth()}`, label: shortMonthEs(date.getMonth()) }
-  })
   const amountsByEntity = new Map<string, { label: string; amounts: Map<string, number>; total: number }>()
 
   for (const row of rows) {
-    const month = `${new Date(row.issue_date).getMonth()}`
-    if (!monthSlots.some((slot) => slot.key === month)) continue
+    const slotIndex = slotIndexForDate(row.issue_date, monthSlots)
+    const slot = slotIndex >= 0 ? monthSlots[slotIndex] : undefined
+    if (!slot) continue
+    const month = slot.key
     const entity = revenueEntity(row, dimension)
     const entityKey = `${dimension}:${entity.id}`
     const bucket = amountsByEntity.get(entityKey) ?? {
@@ -332,55 +364,56 @@ export function buildRevenueBreakdown(
   }
 }
 
-export async function getRevenueSeries(months = 6): Promise<RevenueChartData> {
+/** Backwards-compatible helper for callers that need a six-month breakdown. */
+export function buildRevenueBreakdown(
+  rows: RevenueInvoiceRow[],
+  months: number,
+  now: Date,
+  dimension: RevenueDimension,
+): RevenueBreakdown {
+  const from = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1)
+  return buildRevenueBreakdownForSlots(rows, monthSlotsBetween(from, now), dimension)
+}
+
+export async function getRevenueSeries(range: DashboardRange = '30d'): Promise<RevenueChartData> {
   const supabase = await createServerClient()
   const now = new Date()
-  const startCurrent = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1)
-  const startPrevious = new Date(now.getFullYear() - 1, now.getMonth() - (months - 1), 1)
-  const endPrevious = new Date(now.getFullYear() - 1, now.getMonth() + 1, 0)
+  const dateRange = resolveDateRange(range, now)
+  const currentSlots = monthSlotsBetween(dateRange.current.from, dateRange.current.to)
+  const previousSlots = monthSlotsBetween(dateRange.previous.from, dateRange.previous.to)
+  const previousTo = new Date(dateRange.previous.to)
+  previousTo.setDate(previousTo.getDate() - 1)
 
   const [currentRes, previousRes] = await Promise.all([
     supabase
       .from('invoices')
       .select('issue_date, total, projects(id, name), clients(lead_id, leads(id, name))')
-      .gte('issue_date', toIsoDate(startCurrent))
+      .gte('issue_date', toIsoDate(dateRange.current.from))
+      .lte('issue_date', toIsoDate(dateRange.current.to))
       .neq('status', 'draft')
       .is('deleted_at', null),
     supabase
       .from('invoices')
       .select('issue_date, total, projects(id, name), clients(lead_id, leads(id, name))')
-      .gte('issue_date', toIsoDate(startPrevious))
-      .lte('issue_date', toIsoDate(endPrevious))
+      .gte('issue_date', toIsoDate(dateRange.previous.from))
+      .lte('issue_date', toIsoDate(previousTo))
       .neq('status', 'draft')
       .is('deleted_at', null),
   ])
 
   const currentRows = (currentRes.data ?? []) as unknown as RevenueInvoiceRow[]
   const previousRows = (previousRes.data ?? []) as unknown as RevenueInvoiceRow[]
-  const byMonth = new Map<string, { current: number; previous: number }>()
-  for (let i = months - 1; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    byMonth.set(`${d.getMonth()}`, { current: 0, previous: 0 })
-  }
-  for (const row of currentRows) {
-    const d = new Date(row.issue_date)
-    const slot = byMonth.get(`${d.getMonth()}`)
-    if (slot) slot.current += Number(row.total ?? 0)
-  }
-  for (const row of previousRows) {
-    const d = new Date(row.issue_date)
-    const slot = byMonth.get(`${d.getMonth()}`)
-    if (slot) slot.previous += Number(row.total ?? 0)
-  }
+  const currentTotals = sumRevenueBySlot(currentRows, currentSlots)
+  const previousTotals = sumRevenueBySlot(previousRows, previousSlots)
 
   return {
-    totals: Array.from(byMonth.entries()).map(([key, { current, previous }]) => ({
-      month: shortMonthEs(Number(key)),
-      current: Math.round(current * 100) / 100,
-      previous: Math.round(previous * 100) / 100,
+    totals: currentSlots.map((slot, index) => ({
+      month: slot.label,
+      current: Math.round((currentTotals[index] ?? 0) * 100) / 100,
+      previous: Math.round((previousTotals[index] ?? 0) * 100) / 100,
     })),
-    byProject: buildRevenueBreakdown(currentRows, months, now, 'project'),
-    byLead: buildRevenueBreakdown(currentRows, months, now, 'lead'),
+    byProject: buildRevenueBreakdownForSlots(currentRows, currentSlots, 'project'),
+    byLead: buildRevenueBreakdownForSlots(currentRows, currentSlots, 'lead'),
   }
 }
 

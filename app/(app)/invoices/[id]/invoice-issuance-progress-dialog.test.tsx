@@ -21,6 +21,10 @@ describe('InvoiceIssuanceProgressDialog', () => {
     expect(screen.getByText('Registro fiscal inmutable')).toBeDefined()
     expect(screen.getByText('QR fiscal sincronizado con el RegistroAlta')).toBeDefined()
     expect(screen.getByText('CSV AEAT · CSV-123')).toBeDefined()
+
+    const dialog = screen.getByRole('dialog')
+    expect(dialog.className).toContain('sm:max-w-md')
+    expect(dialog.className).not.toContain('sm:max-w-lg')
   })
 
   it('explains when durable delivery remains queued', () => {

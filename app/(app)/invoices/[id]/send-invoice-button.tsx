@@ -20,6 +20,7 @@ import { IconButton } from '@/components/ui/icon-button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { buildInvoiceWhatsAppMessage, buildWhatsAppUrl } from '@/lib/leads/whatsapp'
 import { formatDate } from '@/lib/utils'
 
 import { logInvoiceWhatsappShare, previewInvoiceEmail, sendInvoiceEmail } from '../actions'
@@ -62,6 +63,8 @@ export function SendInvoiceButton({
   const open = controlledOpen ?? uncontrolledOpen
   const [to, setTo] = useState(defaultEmail ?? '')
   const [phone, setPhone] = useState(defaultPhone ?? '')
+  const [clientName, setClientName] = useState<string | null>(null)
+  const [invoiceNumber, setInvoiceNumber] = useState('—')
   const [message, setMessage] = useState('')
   const [attachPdf, setAttachPdf] = useState(true)
   const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null)
@@ -80,6 +83,8 @@ export function SendInvoiceButton({
     if (res.ok) {
       setPreview({ subject: res.subject, html: res.html })
       setPortalUrl(res.portalUrl)
+      setClientName(res.clientName)
+      setInvoiceNumber(res.invoiceNumber)
       setPreviewMessage(message)
       if (!to.trim() && res.clientEmail) setTo(res.clientEmail)
       if (!phone.trim() && res.clientPhone) setPhone(res.clientPhone)
@@ -130,12 +135,10 @@ export function SendInvoiceButton({
       return
     }
     const note = message.trim()
-    const text = note ? `${note}\n\n${portalUrl}` : `Aquí tienes tu factura: ${portalUrl}`
-    window.open(
-      `https://wa.me/${digits}?text=${encodeURIComponent(text)}`,
-      '_blank',
-      'noopener,noreferrer',
-    )
+    const text = note
+      ? `${note}\n\n${portalUrl}`
+      : buildInvoiceWhatsAppMessage(clientName, invoiceNumber, portalUrl)
+    window.open(buildWhatsAppUrl(digits, text), '_blank', 'noopener,noreferrer')
     setSharingWhatsapp(true)
     const result = await logInvoiceWhatsappShare({ id: invoiceId, phone: phone.trim() })
     setSharingWhatsapp(false)
