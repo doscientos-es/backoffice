@@ -1,4 +1,4 @@
-import { BellRing, FileText as FileWarning, ShieldAlert } from 'lucide-react'
+import { BellRing, CalendarClock, FileText as FileWarning, ShieldAlert } from 'lucide-react'
 import Link from 'next/link'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,6 +11,7 @@ export type AvisosPanelProps = AvisosData & { showFinance?: boolean }
 
 export function AvisosPanel({
   overdueInvoices,
+  reminders,
   certExpiresAt,
   showFinance = true,
 }: AvisosPanelProps) {
@@ -18,7 +19,7 @@ export function AvisosPanel({
   const visibleCertExpiry = showFinance ? certExpiresAt : null
 
   // Sin avisos: no renderizar nada.
-  const empty = visibleOverdue.length === 0 && !visibleCertExpiry
+  const empty = reminders.length === 0 && visibleOverdue.length === 0 && !visibleCertExpiry
 
   if (empty) {
     return null
@@ -65,6 +66,26 @@ export function AvisosPanel({
                   <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
                     {formatEUR(inv.total)} · venció{' '}
                     {relativeTime(inv.due_date ?? new Date().toISOString())}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Section>
+        ) : null}
+
+        {reminders.length > 0 ? (
+          <Section
+            icon={<CalendarClock className="size-4 text-blue-500" />}
+            title={`Recordatorios próximos (${reminders.length})`}
+          >
+            <ul className="space-y-1.5">
+              {reminders.map((reminder) => (
+                <li key={reminder.id} className="flex items-center justify-between gap-2">
+                  <Link href={`/tasks/${reminder.id}`} className="truncate text-sm hover:underline">
+                    {reminder.title}
+                  </Link>
+                  <span className="text-muted-foreground shrink-0 text-xs">
+                    {relativeTime(reminder.remind_at)}
                   </span>
                 </li>
               ))}

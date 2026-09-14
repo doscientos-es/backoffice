@@ -74,6 +74,22 @@ export type AvisosData = {
   certExpiresAt: string | null
 }
 
+export type ActionCenterItem = {
+  id: string
+  kind: 'task' | 'lead' | 'proposal' | 'invoice'
+  title: string
+  detail: string
+  href: string
+  actionLabel: string
+  severity: 'urgent' | 'high' | 'normal'
+  occurredAt: string | null
+}
+
+export type ActionCenterData = {
+  items: ActionCenterItem[]
+  total: number
+}
+
 /**
  * "Tu día" — the personal, action-oriented layer of the dashboard. Surfaces
  * what the logged-in member should act on today: their open tasks, the leads

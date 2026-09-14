@@ -13,6 +13,8 @@ import type {
   DashboardKpis,
   DateRange,
   GoalMetric,
+  ActionCenterData,
+  ActionCenterItem,
   MonthFinanceSummary,
   MyDayData,
   MyTaskRow,
@@ -315,7 +317,8 @@ export async function getAccountsReceivable(): Promise<AccountsReceivable> {
     ),
     notDeleted(supabase.from('invoices').select('total', { count: 'exact' }))
       .eq('status', 'paid')
-      .gte('issue_date', monthStart),
+      .gte('paid_at', `${monthStart}T00:00:00.000Z`)
+      .not('paid_at', 'is', null),
   ])
 
   const issuedTotal = (issuedRes.data ?? []).reduce((a, r) => a + Number(r.total ?? 0), 0)
@@ -330,6 +333,114 @@ export async function getAccountsReceivable(): Promise<AccountsReceivable> {
     paidMonthTotal,
     paidMonthCount: paidMonthRes.count ?? 0,
   }
+}
+
+/**
+ * Small, action-oriented queue for Inicio. These are deliberately explicit
+ * signals, not hidden automations: every item explains why it is present and
+ * links directly to the record where it can be resolved.
+ */
+export async function getActionCenter({
+  memberId,
+  showFinance,
+}: {
+  memberId: string
+  showFinance: boolean
+}): Promise<ActionCenterData> {
+  const supabase = await createServerClient()
+  const now = new Date()
+  const today = toIsoDate(now)
+  const leadCutoff = new Date(now.getTime() - 4 * 3_600_000).toISOString()
+  const proposalCutoff = new Date(now.getTime() - 72 * 3_600_000).toISOString()
+
+  const [tasksRes, leadsRes, proposalsRes, invoicesRes] = await Promise.all([
+    supabase
+      .from('tasks')
+      .select('id, title, due_date')
+      .eq('kind', 'task')
+      .eq('assignee_id', memberId)
+      .in('status', [...OPEN_TASK_STATUSES])
+      .lte('due_date', today)
+      .is('deleted_at', null)
+      .order('due_date', { ascending: true })
+      .limit(6),
+    supabase
+      .from('leads')
+      .select('id, name, company, created_at')
+      .eq('assigned_to', memberId)
+      .in('status', [...ACTIVE_LEAD_STATUSES])
+      .is('first_contacted_at', null)
+      .lt('created_at', leadCutoff)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: true })
+      .limit(6),
+    supabase
+      .from('proposals')
+      .select('id, title, number, sent_at')
+      .in('status', ['sent', 'viewed'])
+      .is('responded_at', null)
+      .not('sent_at', 'is', null)
+      .lt('sent_at', proposalCutoff)
+      .is('deleted_at', null)
+      .order('sent_at', { ascending: true })
+      .limit(6),
+    showFinance
+      ? supabase
+          .from('invoices')
+          .select('id, full_number, total, due_date, client_name')
+          .eq('status', 'overdue')
+          .is('deleted_at', null)
+          .order('due_date', { ascending: true })
+          .limit(6)
+      : Promise.resolve({ data: [] }),
+  ])
+
+  const items: ActionCenterItem[] = [
+    ...(tasksRes.data ?? []).map((task) => ({
+      id: task.id as string,
+      kind: 'task' as const,
+      title: task.title as string,
+      detail: `Tarea vencida desde ${task.due_date ?? 'hoy'}.`,
+      href: `/tasks/${task.id}`,
+      actionLabel: 'Abrir tarea',
+      severity: 'urgent' as const,
+      occurredAt: (task.due_date as string | null) ?? null,
+    })),
+    ...(leadsRes.data ?? []).map((lead) => ({
+      id: lead.id as string,
+      kind: 'lead' as const,
+      title: lead.name as string,
+      detail: `Lead sin primer contacto después de 4 horas${lead.company ? ` · ${lead.company}` : ''}.`,
+      href: `/leads/${lead.id}`,
+      actionLabel: 'Contactar',
+      severity: 'high' as const,
+      occurredAt: (lead.created_at as string | null) ?? null,
+    })),
+    ...(proposalsRes.data ?? []).map((proposal) => ({
+      id: proposal.id as string,
+      kind: 'proposal' as const,
+      title: (proposal.title as string) || (proposal.number as string) || 'Propuesta',
+      detail: 'Propuesta enviada hace más de 72 horas sin respuesta.',
+      href: `/proposals/${proposal.id}`,
+      actionLabel: 'Revisar seguimiento',
+      severity: 'high' as const,
+      occurredAt: (proposal.sent_at as string | null) ?? null,
+    })),
+    ...(invoicesRes.data ?? []).map((invoice) => ({
+      id: invoice.id as string,
+      kind: 'invoice' as const,
+      title: (invoice.full_number as string) || 'Factura vencida',
+      detail: `Pendiente de cobro${invoice.client_name ? ` · ${invoice.client_name}` : ''}.`,
+      href: `/invoices/${invoice.id}`,
+      actionLabel: 'Gestionar cobro',
+      severity: 'urgent' as const,
+      occurredAt: (invoice.due_date as string | null) ?? null,
+    })),
+  ]
+
+  const severityOrder = { urgent: 0, high: 1, normal: 2 } as const
+  items.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity])
+  return { items: items.slice(0, 12), total: items.length }
 }
 
 /**

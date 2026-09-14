@@ -16,6 +16,7 @@ import { hasRegisteredPasskey } from '@/lib/security/webauthn'
 import { getGreeting, parseDashboardRange } from '@/lib/utils/date'
 
 import { AvisosWidget } from './_components/avisos-widget'
+import { ActionCenterWidget } from './action-center-widget'
 import { EnablePushBanner } from './_components/enable-push-banner'
 import { KpiGrid } from './_components/kpi-grid'
 import { MyDayWidget } from './_components/my-day-widget'
@@ -95,6 +96,9 @@ export default async function InicioPage({ searchParams }: PageProps) {
           label="No se pudieron cargar los avisos"
         >
           <AvisosWidget showFinance={showFinance} />
+        </SectionBoundary>
+        <SectionBoundary pending={null} label="No se pudieron cargar las acciones">
+          <ActionCenterWidget />
         </SectionBoundary>
       </section>
 
