@@ -38,7 +38,7 @@ describe('MobileCallSession', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Abrir teléfono' }))
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('La llamada se actualizó desde otro dispositivo')
+    expect((await screen.findByRole('alert')).textContent).toContain('La llamada se actualizó desde otro dispositivo')
     expect(assignMock).not.toHaveBeenCalled()
   })
 
