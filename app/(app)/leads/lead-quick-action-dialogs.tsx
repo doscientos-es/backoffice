@@ -11,6 +11,7 @@ import {
   Notebook as NotebookPen,
   Phone,
   Send,
+  Sparkles,
   Video,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -59,6 +60,8 @@ import { logLeadCall, logLeadEmail, logLeadNote, scheduleLeadMeeting } from './a
 import { CallDateField } from './call-date-field'
 import { CallDigestDialog } from './call-digest-dialog'
 import { WhatsAppComposer } from './whatsapp-composer'
+
+const CALL_NOTES_MAX_LENGTH = 8_000
 
 // ─── QMeetDialog ──────────────────────────────────────────────────────────────
 
@@ -642,6 +645,8 @@ export function QCallDialog({
   const [importUrl, setImportUrl] = useState('')
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
+  const [summarizingNotes, setSummarizingNotes] = useState(false)
+  const [summaryError, setSummaryError] = useState<string | null>(null)
   const feedback = useFormFeedback()
   const router = useRouter()
 
@@ -678,6 +683,14 @@ export function QCallDialog({
 
   async function onSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
+    if (notes.length > CALL_NOTES_MAX_LENGTH) {
+      feedback.setError(
+        aiEnabled
+          ? 'Las notas superan 8.000 caracteres. Revísalas o utiliza «Resumir con IA».'
+          : 'Las notas superan el límite de 8.000 caracteres. Reduce su extensión para guardarlas.',
+      )
+      return
+    }
     feedback.setPending()
     const res = await logLeadCall({
       leadId,
@@ -714,6 +727,26 @@ export function QCallDialog({
       setDigestOpen(true)
     } else if (res.noAnswerStreak === 3) {
       setWhatsappOpen(true)
+    }
+  }
+
+  async function handleSummarizeNotes() {
+    if (!aiEnabled || notes.length <= CALL_NOTES_MAX_LENGTH) return
+    setSummarizingNotes(true)
+    setSummaryError(null)
+    try {
+      const res = await fetch('/api/crm/ai/summarize-call-notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: notes }),
+      })
+      const json = (await res.json()) as { text?: string; error?: string }
+      if (!res.ok || !json.text) throw new Error(json.error ?? 'No se pudo resumir las notas.')
+      setNotes(json.text)
+    } catch (err) {
+      setSummaryError(err instanceof Error ? err.message : 'No se pudo resumir las notas.')
+    } finally {
+      setSummarizingNotes(false)
     }
   }
 
@@ -815,9 +848,36 @@ export function QCallDialog({
                 id={`qa-call-notes-${leadId}`}
                 rows={5}
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                onChange={(e) => {
+                  setNotes(e.target.value)
+                  setSummaryError(null)
+                }}
                 placeholder="Puntos clave, próximos pasos…"
               />
+              <div className="text-muted-foreground flex items-center justify-between gap-2 text-xs">
+                <span className={notes.length > CALL_NOTES_MAX_LENGTH ? 'text-destructive' : undefined}>
+                  {notes.length.toLocaleString('es-ES')} / {CALL_NOTES_MAX_LENGTH.toLocaleString('es-ES')}
+                </span>
+                {notes.length > CALL_NOTES_MAX_LENGTH && aiEnabled ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 gap-1.5 text-xs"
+                    onClick={handleSummarizeNotes}
+                    disabled={summarizingNotes}
+                  >
+                    {summarizingNotes ? <Loader2 className="size-3 animate-spin" /> : <Sparkles className="size-3" />}
+                    {summarizingNotes ? 'Resumiendo…' : 'Resumir con IA'}
+                  </Button>
+                ) : null}
+              </div>
+              {notes.length > CALL_NOTES_MAX_LENGTH ? (
+                <p className="text-destructive text-xs" role="alert">
+                  Las notas superan el límite de 8.000 caracteres. {aiEnabled ? 'Puedes resumirlas con IA antes de guardar.' : 'Reduce su extensión para poder guardarlas.'}
+                </p>
+              ) : null}
+              {summaryError ? <p className="text-destructive text-xs" role="alert">{summaryError}</p> : null}
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor={`qa-call-transcript-${leadId}`} className="text-xs font-medium">

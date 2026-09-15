@@ -64,6 +64,18 @@ describe('RevenueChart', () => {
     expect(screen.queryByTestId('bar-current')).toBeNull()
   })
 
+  it('restores total bars after viewing a breakdown', () => {
+    render(<RevenueChart data={data} />)
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Por lead' }))
+    expect(screen.queryByTestId('bar-current')).toBeNull()
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Total' }))
+
+    expect(screen.getByTestId('bar-current')).toBeTruthy()
+    expect(screen.getByTestId('bar-previous')).toBeTruthy()
+  })
+
   it('switches between billed and collected metrics', () => {
     render(<RevenueChart data={data} />)
 

@@ -29,12 +29,18 @@ const SERIES_LABEL: Record<string, string> = {
 }
 
 const BREAKDOWN_PALETTE = [
-  'var(--success)',
-  'var(--info)',
-  'var(--warning)',
-  'var(--accent)',
-  'var(--danger)',
-  'var(--primary)',
+  '#2563eb',
+  '#0f766e',
+  '#c2410c',
+  '#7c3aed',
+  '#be185d',
+  '#15803d',
+  '#b45309',
+  '#0369a1',
+  '#4338ca',
+  '#a21caf',
+  '#047857',
+  '#b91c1c',
 ]
 const OTHERS_COLOR = 'var(--muted-foreground)'
 
@@ -175,6 +181,7 @@ export function RevenueChart({ data }: { data: RevenueChartData }) {
       <div className="h-56 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
+            key={`${metric}-${view}`}
             data={breakdown?.points ?? metricData.totals}
             margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
           >
@@ -238,12 +245,14 @@ export function RevenueChart({ data }: { data: RevenueChartData }) {
                   dataKey="previous"
                   fill="var(--muted-foreground)"
                   fillOpacity={0.35}
+                  minPointSize={2}
                   radius={[4, 4, 0, 0]}
                   maxBarSize={20}
                 />
                 <Bar
                   dataKey="current"
                   fill="var(--primary)"
+                  minPointSize={2}
                   radius={[4, 4, 0, 0]}
                   maxBarSize={20}
                 />

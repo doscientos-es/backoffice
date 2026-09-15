@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from '@/components/ui/empty-state'
 import { getRevenueSeries } from '@/lib/dashboard/queries'
 import type { DashboardRange } from '@/lib/dashboard/types'
-import { describeRange } from '@/lib/utils/date'
 
 import { RevenueChart } from '../revenue-chart'
 
@@ -18,7 +17,7 @@ export async function RevenueWidget({ range }: { range: DashboardRange }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Facturación y cobros · {describeRange(range)}</CardTitle>
+        <CardTitle>Facturación y cobros</CardTitle>
       </CardHeader>
       <CardContent>
         {hasData ? (
