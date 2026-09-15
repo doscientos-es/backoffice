@@ -11,8 +11,8 @@ const { capturedListPageProps, getVerifactuOperationalHealth, listInvoices, requ
   }),
 )
 
-vi.mock('@/components/layout/list-page', () => ({
-  ListPage: (props: unknown) => {
+vi.mock('./invoices-list', () => ({
+  InvoicesList: (props: unknown) => {
     capturedListPageProps.current = props
     return null
   },
