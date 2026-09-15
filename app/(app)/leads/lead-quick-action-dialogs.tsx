@@ -5,6 +5,14 @@
 // con opción de agendar follow-up. Todas refrescan el router tras éxito.
 
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@doscientos/ui'
+import {
   FileText,
   LoaderCircle as Loader2,
   Mail,
@@ -18,18 +26,9 @@ import { useRouter } from 'next/navigation'
 import { type ReactNode, type SubmitEvent, useEffect, useState } from 'react'
 
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
-
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@doscientos/ui'
 import { EntityCombobox } from '@/components/ui/entity-combobox'
 import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
 import { Input } from '@/components/ui/input'
@@ -88,7 +87,7 @@ export function QuickActionTile({
         'border-border/80 bg-card/60 justify-start gap-2 font-medium [&>span]:min-w-0',
         'hover:border-foreground/25 hover:bg-muted/60 transition-colors',
         tone === 'whatsapp' &&
-        'border-emerald-500/25 hover:border-emerald-500/50 hover:bg-emerald-500/10',
+          'border-emerald-500/25 hover:border-emerald-500/50 hover:bg-emerald-500/10',
       )}
       {...props}
     >
@@ -504,7 +503,10 @@ export function QMeetNowDialog({
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <QuickActionTile icon={<Video className="size-3.5 text-green-500" />} label="Meet ahora" />
+          <QuickActionTile
+            icon={<Video className="size-3.5 text-green-500" />}
+            label="Meet ahora"
+          />
         </DialogTrigger>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
@@ -754,7 +756,10 @@ export function QCallDialog({
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <QuickActionTile icon={<Phone className="text-muted-foreground size-3.5" />} label="Registrar llamada" />
+          <QuickActionTile
+            icon={<Phone className="text-muted-foreground size-3.5" />}
+            label="Registrar llamada"
+          />
         </DialogTrigger>
         <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-md">
           <DialogHeader className="shrink-0">
@@ -855,8 +860,11 @@ export function QCallDialog({
                 placeholder="Puntos clave, próximos pasos…"
               />
               <div className="text-muted-foreground flex items-center justify-between gap-2 text-xs">
-                <span className={notes.length > CALL_NOTES_MAX_LENGTH ? 'text-destructive' : undefined}>
-                  {notes.length.toLocaleString('es-ES')} / {CALL_NOTES_MAX_LENGTH.toLocaleString('es-ES')}
+                <span
+                  className={notes.length > CALL_NOTES_MAX_LENGTH ? 'text-destructive' : undefined}
+                >
+                  {notes.length.toLocaleString('es-ES')} /{' '}
+                  {CALL_NOTES_MAX_LENGTH.toLocaleString('es-ES')}
                 </span>
                 {notes.length > CALL_NOTES_MAX_LENGTH && aiEnabled ? (
                   <Button
@@ -867,17 +875,28 @@ export function QCallDialog({
                     onClick={handleSummarizeNotes}
                     disabled={summarizingNotes}
                   >
-                    {summarizingNotes ? <Loader2 className="size-3 animate-spin" /> : <Sparkles className="size-3" />}
+                    {summarizingNotes ? (
+                      <Loader2 className="size-3 animate-spin" />
+                    ) : (
+                      <Sparkles className="size-3" />
+                    )}
                     {summarizingNotes ? 'Resumiendo…' : 'Resumir con IA'}
                   </Button>
                 ) : null}
               </div>
               {notes.length > CALL_NOTES_MAX_LENGTH ? (
                 <p className="text-destructive text-xs" role="alert">
-                  Las notas superan el límite de 8.000 caracteres. {aiEnabled ? 'Puedes resumirlas con IA antes de guardar.' : 'Reduce su extensión para poder guardarlas.'}
+                  Las notas superan el límite de 8.000 caracteres.{' '}
+                  {aiEnabled
+                    ? 'Puedes resumirlas con IA antes de guardar.'
+                    : 'Reduce su extensión para poder guardarlas.'}
                 </p>
               ) : null}
-              {summaryError ? <p className="text-destructive text-xs" role="alert">{summaryError}</p> : null}
+              {summaryError ? (
+                <p className="text-destructive text-xs" role="alert">
+                  {summaryError}
+                </p>
+              ) : null}
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor={`qa-call-transcript-${leadId}`} className="text-xs font-medium">
@@ -1028,7 +1047,10 @@ export function QEmailDialog({ leadId, leadEmail }: { leadId: string; leadEmail:
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <QuickActionTile icon={<Mail className="text-muted-foreground size-3.5" />} label="Registrar email" />
+        <QuickActionTile
+          icon={<Mail className="text-muted-foreground size-3.5" />}
+          label="Registrar email"
+        />
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
@@ -1106,7 +1128,10 @@ export function QNoteDialog({ leadId }: { leadId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <QuickActionTile icon={<NotebookPen className="text-muted-foreground size-3.5" />} label="Añadir nota" />
+        <QuickActionTile
+          icon={<NotebookPen className="text-muted-foreground size-3.5" />}
+          label="Añadir nota"
+        />
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
@@ -1150,7 +1175,10 @@ export function QSendEmailDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <QuickActionTile icon={<Send className="text-muted-foreground size-3.5" />} label="Enviar email" />
+        <QuickActionTile
+          icon={<Send className="text-muted-foreground size-3.5" />}
+          label="Enviar email"
+        />
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>

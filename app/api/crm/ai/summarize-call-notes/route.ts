@@ -39,7 +39,9 @@ function fitWithinLimit(text: string): string {
 
   const candidate = normalized.slice(0, MAX_OUTPUT_LENGTH)
   const lastSentence = Math.max(candidate.lastIndexOf('. '), candidate.lastIndexOf('\n'))
-  return candidate.slice(0, lastSentence > MAX_OUTPUT_LENGTH * 0.75 ? lastSentence + 1 : MAX_OUTPUT_LENGTH).trimEnd()
+  return candidate
+    .slice(0, lastSentence > MAX_OUTPUT_LENGTH * 0.75 ? lastSentence + 1 : MAX_OUTPUT_LENGTH)
+    .trimEnd()
 }
 
 export async function POST(req: NextRequest) {
@@ -65,7 +67,10 @@ export async function POST(req: NextRequest) {
   try {
     body = BodySchema.parse(await req.json())
   } catch {
-    return NextResponse.json({ error: 'text requerido (máximo 50.000 caracteres)' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'text requerido (máximo 50.000 caracteres)' },
+      { status: 400 },
+    )
   }
 
   try {
@@ -78,10 +83,16 @@ export async function POST(req: NextRequest) {
     const summary = fitWithinLimit(text)
     if (!summary) throw new Error('La IA no devolvió un resumen.')
 
-    log.info({ inputLength: body.text.length, outputLength: summary.length, userId: user.id }, 'ai_call_notes_summary_ok')
+    log.info(
+      { inputLength: body.text.length, outputLength: summary.length, userId: user.id },
+      'ai_call_notes_summary_ok',
+    )
     return NextResponse.json({ ok: true, text: summary })
   } catch (err) {
-    log.error({ err: err instanceof Error ? err.message : err, userId: user.id }, 'ai_call_notes_summary_failed')
+    log.error(
+      { err: err instanceof Error ? err.message : err, userId: user.id },
+      'ai_call_notes_summary_failed',
+    )
     return NextResponse.json({ error: 'AI service unavailable' }, { status: 502 })
   }
 }
