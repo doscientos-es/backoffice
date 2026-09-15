@@ -29,12 +29,13 @@ export function buildSignatureHtml(
   const lines: string[] = []
   lines.push(`<strong style="color:#111">${opts.name}</strong>`)
   if (opts.jobTitle) lines.push(`<span style="color:#555">${opts.jobTitle}</span>`)
-  lines.push('<strong style="color:#2A4227">doscientos.es</strong>')
+  lines.push(
+    '<a href="https://doscientos.es" style="color:#2A4227"><strong>doscientos.es</strong></a>',
+  )
   if (opts.contactEmail)
     lines.push(
       `<a href="mailto:${opts.contactEmail}" style="color:inherit">${opts.contactEmail}</a>`,
     )
-  lines.push('<a href="https://doscientos.es" style="color:inherit">https://doscientos.es</a>')
   if (opts.phone) lines.push(`<a href="tel:${opts.phone}" style="color:inherit">${opts.phone}</a>`)
 
   const text = lines.join('<br/>')
