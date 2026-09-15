@@ -283,7 +283,7 @@ function parseMetaBudgetToEstimatedValue(fields: MetaLeadField[]): number | null
 /** Converts a Graph API leadgen response into our generic LeadIntake shape. */
 export function mapMetaLeadgenToIntake(
   res: MetaLeadgenResponse,
-  webhookCtx?: { pageId?: string; createdTime?: number },
+  webhookCtx?: { pageId?: string; createdTime?: number; adId?: string },
 ): LeadIntake {
   const fullName =
     findField(res.field_data, FIELD_ALIASES.fullName) ||
@@ -302,6 +302,7 @@ export function mapMetaLeadgenToIntake(
   const inferredUrgencyFromValue =
     formAnswers.find((a) => isUrgencyLikeValue(a.value))?.value ?? null
   const urgency = explicitUrgency || qualification.urgency || inferredUrgencyFromValue
+  const adId = res.ad_id ?? webhookCtx?.adId ?? null
 
   return {
     name: fullName,
@@ -325,7 +326,7 @@ export function mapMetaLeadgenToIntake(
       source: 'facebook',
       medium: 'paid_social',
       campaign: res.campaign_id ?? null,
-      content: res.ad_id ?? null,
+      content: adId,
       term: res.adset_id ?? null,
     },
     context: { referrer: res.platform ?? 'facebook' },

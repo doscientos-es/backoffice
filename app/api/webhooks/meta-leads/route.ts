@@ -95,6 +95,7 @@ export async function POST(request: NextRequest) {
         const intake = mapMetaLeadgenToIntake(graphRes, {
           pageId: change.value.page_id,
           createdTime: change.value.created_time,
+          adId: change.value.ad_id,
         })
         const result = await ingestLead(intake)
         if (result.ok) {

@@ -85,6 +85,13 @@ describe('mapMetaLeadgenToIntake', () => {
     expect(out.utm?.term).toBe('adset_1')
   })
 
+  it('falls back to the webhook ad id when Graph does not return one', () => {
+    const { ad_id: _adId, ...withoutAdId } = base
+    const out = mapMetaLeadgenToIntake(withoutAdId, { adId: 'ad_from_webhook' })
+
+    expect(out.utm?.content).toBe('ad_from_webhook')
+  })
+
   it('falls back to first_name + last_name when full_name missing', () => {
     const out = mapMetaLeadgenToIntake({
       ...base,
