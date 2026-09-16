@@ -1,4 +1,4 @@
-import { createCipheriv, createHmac } from 'node:crypto'
+import { createCipheriv, createHmac, timingSafeEqual } from 'node:crypto'
 
 import { serverEnv } from '@/lib/env'
 
@@ -34,7 +34,12 @@ export function getRedsysUrl(): string {
 }
 
 function redsysSecretKey(): Buffer {
-  const configuredSecret = serverEnv().REDSYS_SECRET_KEY.trim()
+  const env = serverEnv()
+  if (process.env.NODE_ENV === 'production' && env.REDSYS_ENVIRONMENT !== 'prod') {
+    throw new Error('Redsys debe usar REDSYS_ENVIRONMENT=prod en producción')
+  }
+
+  const configuredSecret = env.REDSYS_SECRET_KEY.trim()
   if (!configuredSecret) {
     throw new Error('Redsys no está configurado: falta REDSYS_SECRET_KEY')
   }
@@ -118,7 +123,11 @@ export function verifyRedsysSignature(merchantParameters: string, signature: str
 
   // Redsys sends URL-safe base64 in notifications; normalize both before comparing.
   const normalize = (s: string) => s.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
-  return normalize(expected.toString('base64')) === normalize(signature)
+  const expectedBytes = Buffer.from(normalize(expected.toString('base64')), 'base64')
+  const receivedBytes = Buffer.from(normalize(signature), 'base64')
+  return (
+    expectedBytes.length === receivedBytes.length && timingSafeEqual(expectedBytes, receivedBytes)
+  )
 }
 
 export function parseRedsysResponse(merchantParameters: string) {

@@ -1,22 +1,33 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { Children, isValidElement } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
 import type { RevenueChartData } from '@/lib/dashboard/types'
 
 import { filterZeroRevenueTooltipEntries, RevenueChart } from './revenue-chart'
 
-vi.mock('recharts', () => ({
-  Bar: ({ dataKey, stackId }: { dataKey: string; stackId?: string }) => (
+vi.mock('recharts', () => {
+  const MockBar = ({ dataKey, stackId }: { dataKey: string; stackId?: string }) => (
     <div data-testid={`bar-${dataKey}`} data-stack={stackId} />
-  ),
-  BarChart: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  CartesianGrid: () => null,
-  Legend: () => null,
-  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Tooltip: () => null,
-  XAxis: () => null,
-  YAxis: () => null,
-}))
+  )
+
+  return {
+    Bar: MockBar,
+    BarChart: ({ children }: { children: React.ReactNode }) => (
+      <div>
+        {Children.toArray(children).filter(
+          (child) => isValidElement(child) && child.type === MockBar,
+        )}
+      </div>
+    ),
+    CartesianGrid: () => null,
+    Legend: () => null,
+    ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    Tooltip: () => null,
+    XAxis: () => null,
+    YAxis: () => null,
+  }
+})
 
 const billed = {
   totals: [{ month: 'jun', current: 300, previous: 100 }],

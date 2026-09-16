@@ -176,6 +176,27 @@ export function RevenueChart({ data }: { data: RevenueChartData }) {
   const previousTotal = metricData.totals.reduce((sum, point) => sum + point.previous, 0)
   const metricLabel = METRIC_OPTIONS.find((option) => option.value === metric)?.label ?? 'Ingresos'
   const chartData = breakdown?.points ?? metricData.totals
+  const totalBars = [
+    <Bar
+      key="previous"
+      dataKey="previous"
+      fill="var(--muted-foreground)"
+      fillOpacity={0.35}
+      minPointSize={2}
+      isAnimationActive={false}
+      radius={[4, 4, 0, 0]}
+      maxBarSize={20}
+    />,
+    <Bar
+      key="current"
+      dataKey="current"
+      fill="var(--primary)"
+      minPointSize={2}
+      isAnimationActive={false}
+      radius={[4, 4, 0, 0]}
+      maxBarSize={20}
+    />,
+  ]
 
   return (
     <div className="flex flex-col gap-3">
@@ -241,25 +262,7 @@ export function RevenueChart({ data }: { data: RevenueChartData }) {
                 />
               ))
             ) : (
-              <>
-                <Bar
-                  dataKey="previous"
-                  fill="var(--muted-foreground)"
-                  fillOpacity={0.35}
-                  minPointSize={2}
-                  isAnimationActive={false}
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={20}
-                />
-                <Bar
-                  dataKey="current"
-                  fill="var(--primary)"
-                  minPointSize={2}
-                  isAnimationActive={false}
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={20}
-                />
-              </>
+              totalBars
             )}
           </BarChart>
         </ResponsiveContainer>
