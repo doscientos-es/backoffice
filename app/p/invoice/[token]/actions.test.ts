@@ -29,6 +29,7 @@ import { initiatePayment } from './actions'
 describe('initiatePayment', () => {
   beforeEach(() => {
     assertRedsysConfigured.mockReset()
+    createAdminClient.mockReset()
     insertPayment.mockReset()
     createRedsysPayment.mockReset()
     insertPayment.mockReturnValue({
