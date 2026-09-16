@@ -128,6 +128,16 @@ describe('proxy – public paths (always pass through)', () => {
     expect(res.status).not.toBe(307)
     expect(res.headers.get('location')).toBeNull()
   })
+
+  it.each(['/login-evil', '/api/publicity/status', '/api/webhooks-not-public'])(
+    'does not treat %s as a public route',
+    async (path) => {
+      const res = await proxy(req(path))
+
+      expect(res.status).toBe(307)
+      expect(res.headers.get('location')).toContain('/login')
+    },
+  )
 })
 
 describe('proxy – public portal routes', () => {

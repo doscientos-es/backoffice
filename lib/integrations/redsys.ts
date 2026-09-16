@@ -33,6 +33,25 @@ export function getRedsysUrl(): string {
   return REDSYS_URLS[env.REDSYS_ENVIRONMENT]
 }
 
+function redsysSecretKey(): Buffer {
+  const configuredSecret = serverEnv().REDSYS_SECRET_KEY.trim()
+  if (!configuredSecret) {
+    throw new Error('Redsys no está configurado: falta REDSYS_SECRET_KEY')
+  }
+
+  const decodedKey = Buffer.from(configuredSecret, 'base64')
+  if (decodedKey.length !== 24) {
+    throw new Error('Redsys no está configurado: REDSYS_SECRET_KEY no es válida')
+  }
+
+  return decodedKey
+}
+
+/** Fails fast before creating payment state when Redsys is unavailable. */
+export function assertRedsysConfigured(): void {
+  redsysSecretKey()
+}
+
 /**
  * Derives the per-order signing key, as required by the HMAC_SHA256_V1 scheme:
  * 3DES (des-ede3-cbc, zero IV, no padding) of the order number, using the
@@ -40,8 +59,7 @@ export function getRedsysUrl(): string {
  * to a multiple of the 8-byte DES block before encryption.
  */
 function deriveOrderKey(order: string): Buffer {
-  const env = serverEnv()
-  const decodedKey = Buffer.from(env.REDSYS_SECRET_KEY, 'base64')
+  const decodedKey = redsysSecretKey()
   const iv = Buffer.alloc(8, 0)
   const cipher = createCipheriv('des-ede3-cbc', decodedKey, iv)
   cipher.setAutoPadding(false)
@@ -85,7 +103,12 @@ export function createRedsysPayment(params: RedsysParams) {
  * Validates a Redsys notification signature.
  */
 export function verifyRedsysSignature(merchantParameters: string, signature: string): boolean {
-  const params = JSON.parse(Buffer.from(merchantParameters, 'base64').toString('utf-8'))
+  let params: { Ds_Order?: string; Ds_Merchant_Order?: string }
+  try {
+    params = JSON.parse(Buffer.from(merchantParameters, 'base64').toString('utf-8'))
+  } catch {
+    return false
+  }
   const order = params.Ds_Order || params.Ds_Merchant_Order
 
   if (!order) return false

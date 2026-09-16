@@ -253,8 +253,11 @@ export async function getAvisos(): Promise<AvisosData> {
 type RevenueReference = { id: string; name: string; href?: string }
 
 export type RevenueInvoiceRow = {
+  id?: string
   issue_date: string
   total: number | string | null
+  status?: string | null
+  paid_at?: string | null
   projects: RevenueReference | RevenueReference[] | null
   clients:
     | (RevenueReference & {
@@ -271,6 +274,7 @@ export type RevenueInvoiceRow = {
 }
 
 export type RevenuePaymentRow = {
+  invoice_id?: string | null
   confirmed_at: string
   amount: number | string | null
   invoices:
@@ -501,10 +505,19 @@ export async function getRevenueSeries(range: DashboardRange = '30d'): Promise<R
   const previousTo = new Date(dateRange.previous.to)
   previousTo.setDate(previousTo.getDate() - 1)
 
-  const invoiceSelect = 'issue_date, total, projects(id, name), clients(lead_id, leads(id, name))'
+  const invoiceSelect =
+    'id, issue_date, total, status, paid_at, projects(id, name), clients(lead_id, leads(id, name))'
   const paymentSelect =
-    'confirmed_at, amount, invoices(projects(id, name), clients(lead_id, leads(id, name)))'
-  const [currentRes, previousRes, currentPaymentsRes, previousPaymentsRes] = await Promise.all([
+    'invoice_id, confirmed_at, amount, invoices(projects(id, name), clients(lead_id, leads(id, name)))'
+  const [
+    currentRes,
+    previousRes,
+    currentPaymentsRes,
+    previousPaymentsRes,
+    currentPaidRes,
+    previousPaidRes,
+    confirmedInvoiceIdsRes,
+  ] = await Promise.all([
     supabase
       .from('invoices')
       .select(invoiceSelect)
@@ -531,6 +544,27 @@ export async function getRevenueSeries(range: DashboardRange = '30d'): Promise<R
       .eq('status', 'confirmed')
       .gte('confirmed_at', dateRange.previous.from.toISOString())
       .lte('confirmed_at', dateRange.previous.to.toISOString()),
+    supabase
+      .from('invoices')
+      .select(invoiceSelect)
+      .eq('status', 'paid')
+      .not('paid_at', 'is', null)
+      .gte('paid_at', dateRange.current.from.toISOString())
+      .lte('paid_at', dateRange.current.to.toISOString())
+      .is('deleted_at', null),
+    supabase
+      .from('invoices')
+      .select(invoiceSelect)
+      .eq('status', 'paid')
+      .not('paid_at', 'is', null)
+      .gte('paid_at', dateRange.previous.from.toISOString())
+      .lte('paid_at', previousTo.toISOString())
+      .is('deleted_at', null),
+    supabase
+      .from('invoice_payments')
+      .select('invoice_id')
+      .eq('status', 'confirmed')
+      .not('invoice_id', 'is', null),
   ])
 
   const currentRows = (currentRes.data ?? []).map((row) => {
@@ -547,6 +581,7 @@ export async function getRevenueSeries(range: DashboardRange = '30d'): Promise<R
     return {
       date: payment.confirmed_at,
       amount: payment.amount,
+      invoice_id: payment.invoice_id ?? null,
       projects: invoice?.projects ?? null,
       clients: invoice?.clients ?? null,
     }
@@ -557,10 +592,40 @@ export async function getRevenueSeries(range: DashboardRange = '30d'): Promise<R
     return {
       date: payment.confirmed_at,
       amount: payment.amount,
+      invoice_id: payment.invoice_id ?? null,
       projects: invoice?.projects ?? null,
       clients: invoice?.clients ?? null,
     }
   })
+
+  // Older invoices could be marked as paid directly, without creating the
+  // corresponding invoice_payments row. Keep those collections visible while
+  // avoiding double counting invoices that already have a confirmed payment.
+  const confirmedInvoiceIds = new Set(
+    (confirmedInvoiceIdsRes.data ?? [])
+      .map((row) => row.invoice_id)
+      .filter((invoiceId): invoiceId is string => typeof invoiceId === 'string'),
+  )
+  const legacyPaidEntries = (rows: unknown[]): RevenueEntry[] =>
+    rows.flatMap((row) => {
+      const invoice = row as unknown as RevenueInvoiceRow
+      if (
+        invoice.status !== 'paid' ||
+        !invoice.id ||
+        !invoice.paid_at ||
+        confirmedInvoiceIds.has(invoice.id)
+      ) {
+        return []
+      }
+      return [
+        {
+          date: invoice.paid_at,
+          amount: invoice.total,
+          projects: invoice.projects,
+          clients: invoice.clients,
+        },
+      ]
+    })
 
   const buildMetric = (current: RevenueEntry[], previous: RevenueEntry[]) => {
     const currentTotals = sumRevenueBySlot(current, currentSlots)
@@ -578,7 +643,10 @@ export async function getRevenueSeries(range: DashboardRange = '30d'): Promise<R
 
   return {
     billed: buildMetric(currentRows, previousRows),
-    collected: buildMetric(currentPaymentRows, previousPaymentRows),
+    collected: buildMetric(
+      [...currentPaymentRows, ...legacyPaidEntries(currentPaidRes.data ?? [])],
+      [...previousPaymentRows, ...legacyPaidEntries(previousPaidRes.data ?? [])],
+    ),
   }
 }
 

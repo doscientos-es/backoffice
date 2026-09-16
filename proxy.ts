@@ -21,6 +21,10 @@ const PUBLIC_PATHS = [
   '/api/integrations',
 ]
 
+function isPublicPath(pathname: string): boolean {
+  return PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`))
+}
+
 function clientIp(request: NextRequest): string {
   const fwd = request.headers.get('x-forwarded-for')
   if (fwd) return fwd.split(',')[0]?.trim() ?? 'unknown'
@@ -44,7 +48,7 @@ export async function proxy(request: NextRequest) {
       })
     }
   }
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) return NextResponse.next()
+  if (isPublicPath(pathname)) return NextResponse.next()
   if (pathname.startsWith('/_next') || pathname.startsWith('/favicon')) return NextResponse.next()
 
   let response = NextResponse.next({ request })

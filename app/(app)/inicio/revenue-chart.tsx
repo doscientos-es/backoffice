@@ -175,6 +175,7 @@ export function RevenueChart({ data }: { data: RevenueChartData }) {
   const currentTotal = metricData.totals.reduce((sum, point) => sum + point.current, 0)
   const previousTotal = metricData.totals.reduce((sum, point) => sum + point.previous, 0)
   const metricLabel = METRIC_OPTIONS.find((option) => option.value === metric)?.label ?? 'Ingresos'
+  const chartData = breakdown?.points ?? metricData.totals
 
   return (
     <div className="flex flex-col gap-3">
@@ -182,7 +183,7 @@ export function RevenueChart({ data }: { data: RevenueChartData }) {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             key={`${metric}-${view}`}
-            data={breakdown?.points ?? metricData.totals}
+            data={chartData}
             margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
@@ -246,6 +247,7 @@ export function RevenueChart({ data }: { data: RevenueChartData }) {
                   fill="var(--muted-foreground)"
                   fillOpacity={0.35}
                   minPointSize={2}
+                  isAnimationActive={false}
                   radius={[4, 4, 0, 0]}
                   maxBarSize={20}
                 />
@@ -253,6 +255,7 @@ export function RevenueChart({ data }: { data: RevenueChartData }) {
                   dataKey="current"
                   fill="var(--primary)"
                   minPointSize={2}
+                  isAnimationActive={false}
                   radius={[4, 4, 0, 0]}
                   maxBarSize={20}
                 />

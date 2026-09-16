@@ -1,10 +1,27 @@
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/lib/env', () => ({
-  serverEnv: () => ({ REDSYS_SECRET_KEY: 'sq7HjrUOBfKmC576ILgskD5srU870gJ7' }),
+const { env } = vi.hoisted(() => ({
+  env: { REDSYS_SECRET_KEY: Buffer.alloc(24, 42).toString('base64') },
 }))
 
-import { createRedsysPayment, verifyRedsysSignature } from './redsys'
+vi.mock('@/lib/env', () => ({
+  serverEnv: () => env,
+}))
+
+import { assertRedsysConfigured, createRedsysPayment, verifyRedsysSignature } from './redsys'
+
+describe('Redsys configuration', () => {
+  it('requires an explicitly configured 24-byte Base64 merchant key', () => {
+    env.REDSYS_SECRET_KEY = ''
+    expect(() => assertRedsysConfigured()).toThrow('falta REDSYS_SECRET_KEY')
+
+    env.REDSYS_SECRET_KEY = Buffer.alloc(23, 42).toString('base64')
+    expect(() => assertRedsysConfigured()).toThrow('no es válida')
+
+    env.REDSYS_SECRET_KEY = Buffer.alloc(24, 42).toString('base64')
+    expect(() => assertRedsysConfigured()).not.toThrow()
+  })
+})
 
 describe('createRedsysPayment', () => {
   it('keeps Base64 padding in the parameters and SHA-256 signature', () => {
@@ -28,5 +45,9 @@ describe('createRedsysPayment', () => {
       params,
     )
     expect(verifyRedsysSignature(payment.Ds_MerchantParameters, payment.Ds_Signature)).toBe(true)
+  })
+
+  it('rejects malformed notification payloads without throwing', () => {
+    expect(verifyRedsysSignature('not-json', 'signature')).toBe(false)
   })
 })

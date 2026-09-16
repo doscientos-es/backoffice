@@ -2,7 +2,11 @@
 
 import { externalAppUrl } from '@/lib/email/app-url'
 import { publicEnv, serverEnv } from '@/lib/env'
-import { createRedsysPayment, getRedsysUrl } from '@/lib/integrations/redsys'
+import {
+  assertRedsysConfigured,
+  createRedsysPayment,
+  getRedsysUrl,
+} from '@/lib/integrations/redsys'
 import { unlockPortalResource } from '@/lib/portal/access'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -30,6 +34,12 @@ export type PaymentInitResult =
  * outstanding balance of this invoice; installments are separate invoices.
  */
 export async function initiatePayment(invoiceId: string, token: string): Promise<PaymentInitResult> {
+  try {
+    assertRedsysConfigured()
+  } catch {
+    return { ok: false, error: 'El pago electrónico no está disponible temporalmente' }
+  }
+
   const admin = createAdminClient()
   const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
 

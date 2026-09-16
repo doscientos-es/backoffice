@@ -28,16 +28,22 @@ vi.mock('@/lib/supabase/server', () => ({
       let isCountQuery = false
       let invoiceFrom: string | null = null
       let invoiceTo: string | null = null
+      let paidFrom: string | null = null
+      let paidTo: string | null = null
       let paymentFrom: string | null = null
       let paymentTo: string | null = null
 
       const resolveInvoices = () =>
         db.invoices.filter((row) => {
           const issueDate = (row as { issue_date?: string }).issue_date
+          const paidAt = (row as { paid_at?: string }).paid_at
+          const date = invoiceFrom || invoiceTo ? issueDate : paidAt
           return (
-            typeof issueDate === 'string' &&
-            (!invoiceFrom || issueDate >= invoiceFrom) &&
-            (!invoiceTo || issueDate <= invoiceTo)
+            typeof date === 'string' &&
+            (!invoiceFrom || date >= invoiceFrom) &&
+            (!invoiceTo || date <= invoiceTo) &&
+            (!paidFrom || date >= paidFrom) &&
+            (!paidTo || date <= paidTo)
           )
         })
 
@@ -74,6 +80,7 @@ vi.mock('@/lib/supabase/server', () => ({
           if (table === 'invoices') {
             invoiceDateFilters.push({ operator: 'gte', column, value })
             if (column === 'issue_date') invoiceFrom = String(value)
+            if (column === 'paid_at') paidFrom = String(value)
           }
           if (table === 'invoice_payments') {
             paymentDateFilters.push({ operator: 'gte', column, value })
@@ -85,6 +92,7 @@ vi.mock('@/lib/supabase/server', () => ({
           if (table === 'invoices') {
             invoiceDateFilters.push({ operator: 'lte', column, value })
             if (column === 'issue_date') invoiceTo = String(value)
+            if (column === 'paid_at') paidTo = String(value)
           }
           if (table === 'invoice_payments') {
             paymentDateFilters.push({ operator: 'lte', column, value })
@@ -362,7 +370,7 @@ describe('getRevenueSeries', () => {
     const { getRevenueSeries } = await import('@/lib/dashboard/queries')
     await getRevenueSeries('30d')
 
-    expect(invoiceDateFilters).toEqual([
+    expect(invoiceDateFilters.filter(({ column }) => column === 'issue_date')).toEqual([
       { operator: 'gte', column: 'issue_date', value: '2026-05-16' },
       { operator: 'lte', column: 'issue_date', value: '2026-06-15' },
       { operator: 'gte', column: 'issue_date', value: '2026-04-16' },
@@ -407,6 +415,25 @@ describe('getRevenueSeries', () => {
       { operator: 'gte', column: 'confirmed_at', value: '2026-06-01T12:00:00.000Z' },
       { operator: 'lte', column: 'confirmed_at', value: '2026-06-08T12:00:00.000Z' },
     ])
+  })
+
+  it('includes paid invoices without a payment row in the collected metric', async () => {
+    db.invoices = [
+      {
+        id: 'palumba-invoice',
+        issue_date: '2026-06-01',
+        total: 1948.1,
+        status: 'paid',
+        paid_at: '2026-06-12T10:00:00.000Z',
+        projects: null,
+        clients: null,
+      },
+    ]
+
+    const { getRevenueSeries } = await import('@/lib/dashboard/queries')
+    const result = await getRevenueSeries('7d')
+
+    expect(result.collected.totals.reduce((sum, point) => sum + point.current, 0)).toBe(1948.1)
   })
 })
 

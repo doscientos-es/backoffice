@@ -158,7 +158,9 @@ export const ServerSchema = PublicSchema.extend({
   REDSYS_MERCHANT_CODE: z.string().default('370475436'),
   REDSYS_TERMINAL: z.string().default('001'),
   REDSYS_CURRENCY: z.string().default('978'), // EUR
-  REDSYS_SECRET_KEY: z.string().default('sq7HjrUOBfKmC576ILgskD5srU870gJ7'), // TEST KEY
+  // Empty means that Redsys payments are disabled. Never ship a merchant key
+  // as a source-code default, even for the test environment.
+  REDSYS_SECRET_KEY: z.string().optional().default(''),
   REDSYS_ENVIRONMENT: z.enum(['test', 'prod']).default('test'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   // Shared secret for cron/internal endpoints (n8n, Vercel Cron, etc.).

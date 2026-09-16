@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { createAdminClient, createRedsysPayment, insertPayment } = vi.hoisted(() => ({
-  createAdminClient: vi.fn(),
-  createRedsysPayment: vi.fn(),
-  insertPayment: vi.fn(),
-}))
+const { assertRedsysConfigured, createAdminClient, createRedsysPayment, insertPayment } =
+  vi.hoisted(() => ({
+    assertRedsysConfigured: vi.fn(),
+    createAdminClient: vi.fn(),
+    createRedsysPayment: vi.fn(),
+    insertPayment: vi.fn(),
+  }))
 
 vi.mock('@/lib/email/app-url', () => ({ externalAppUrl: () => 'https://app.example.test' }))
 vi.mock('@/lib/env', () => ({
@@ -16,6 +18,7 @@ vi.mock('@/lib/env', () => ({
   }),
 }))
 vi.mock('@/lib/integrations/redsys', () => ({
+  assertRedsysConfigured,
   createRedsysPayment,
   getRedsysUrl: () => 'https://redsys.example.test',
 }))
@@ -25,6 +28,7 @@ import { initiatePayment } from './actions'
 
 describe('initiatePayment', () => {
   beforeEach(() => {
+    assertRedsysConfigured.mockReset()
     insertPayment.mockReset()
     createRedsysPayment.mockReset()
     insertPayment.mockReturnValue({
@@ -66,5 +70,17 @@ describe('initiatePayment', () => {
     expect(createRedsysPayment).toHaveBeenCalledWith(
       expect.objectContaining({ Ds_Merchant_Amount: '10000' }),
     )
+  })
+
+  it('does not create a pending payment when Redsys is unavailable', async () => {
+    assertRedsysConfigured.mockImplementationOnce(() => {
+      throw new Error('missing Redsys configuration')
+    })
+
+    await expect(initiatePayment('invoice-1', 'portal-token')).resolves.toEqual({
+      ok: false,
+      error: 'El pago electrónico no está disponible temporalmente',
+    })
+    expect(createAdminClient).not.toHaveBeenCalled()
   })
 })
