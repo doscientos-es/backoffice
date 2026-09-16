@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { cache } from 'react'
 
 import { scopedLogger } from '@/lib/logger'
 import { hasTrustedMfaDevice } from '@/lib/security/trusted-mfa-device'
@@ -31,7 +32,10 @@ export type AuthResult = { ok: true; user: CurrentUser } | { ok: false; reason: 
  * Returns a discriminated result so callers can distinguish between
  * "no session" and "session but unauthorized" — never silent nulls.
  */
-export async function getCurrentUser(): Promise<AuthResult> {
+// React.cache deduplicates the session/member lookup across the layout and the
+// page rendered in the same request. This is especially important in the app
+// shell, where both call requireUser independently.
+export const getCurrentUser = cache(async (): Promise<AuthResult> => {
   const supabase = await createServerClient()
   const {
     data: { user },
@@ -74,7 +78,7 @@ export async function getCurrentUser(): Promise<AuthResult> {
       contactEmail: (member.contact_email as string | null) ?? null,
     },
   }
-}
+})
 
 export interface RequireUserOptions {
   /**

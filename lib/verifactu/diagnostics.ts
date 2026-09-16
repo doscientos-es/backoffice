@@ -2,7 +2,7 @@ import { verifactuDiagnosticConfigFromEnv } from './config'
 
 const DIAGNOSTIC_RECIPIENT = {
   nif: 'B88873393',
-  name: 'DOSCIENTOS DESARROLLO TECNOLOGICO, S.L.',
+  name: 'Doscientos Estudio S.L.',
 } as const
 
 type DiagnosticCheck = { key: string; ok: boolean; detail: string }

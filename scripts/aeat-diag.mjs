@@ -22,7 +22,7 @@ const input = {
   total: 363,
   previousHash: '20CE2F74E7373738F80A4EB75E18AD6B279D3FC30EE7A7B3000878A9A738D143',
   generatedAt: new Date(),
-  emisorName: 'DOSCIENTOS DESARROLLO TECNOLOGICO, S.L.',
+  emisorName: 'Doscientos Estudio S.L.',
   clientNif: 'B23990294',
   clientName: 'OPTIENERGIA CONSULTING SL',
   descriptionOperacion: '2 PAGO DESARROLLO CRM A MEDIDA',

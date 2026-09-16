@@ -1,7 +1,7 @@
 # doscientos CRM — Especificacion Tecnica Completa
 
 > Version: 2.0 - Mayo 2026
-> Empresa: DOSCIENTOS DESARROLLO TECNOLOGICO, S.L. - Barcelona
+> Empresa: Doscientos Estudio S.L. - Barcelona
 > Subdominio: app.doscientos.es | Repo: doscientos/internal-backoffice
 > Este documento es la fuente de verdad para la generacion asistida por IA del proyecto.
 
@@ -1138,7 +1138,7 @@ Segun el articulo 6 del Real Decreto 1619/2012, una factura valida en Espana deb
 
 ```typescript
 const EMISOR = {
-  razon_social: 'DOSCIENTOS DESARROLLO TECNOLOGICO, S.L.',
+  razon_social: 'Doscientos Estudio S.L.',
   nif: '', // rellenar antes de produccion
   domicilio: '', // rellenar antes de produccion
   ciudad: 'Barcelona',
@@ -1161,7 +1161,7 @@ CREATE TABLE settings (
 
 ### 7.3 IRPF
 
-DOSCIENTOS DESARROLLO TECNOLOGICO, S.L. es una Sociedad Limitada.
+Doscientos Estudio S.L. es una Sociedad Limitada.
 Las SL NO aplican retencion de IRPF en sus facturas.
 El sistema NO debe incluir campo de IRPF en las facturas.
 Documentado aqui para evitar confusion al implementar.
@@ -1187,7 +1187,7 @@ El Real Decreto 1007/2023 y la Orden HAC/1177/2024 obligan a todas las empresas
 con domicilio fiscal en Espana a usar un Sistema Informatico de Facturacion (SIF)
 que garantice la integridad, inalterabilidad y trazabilidad de los registros de facturacion.
 
-Plazo para DOSCIENTOS DESARROLLO TECNOLOGICO, S.L. (sujeto al IS): 1 enero 2027.
+Plazo para Doscientos Estudio S.L. (sujeto al IS): 1 enero 2027.
 El servicio de la AEAT esta en produccion desde el 23 de abril de 2025 y acepta
 envios voluntarios desde esa fecha. Se recomienda activarlo en cuanto el CRM este listo.
 

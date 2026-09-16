@@ -74,7 +74,7 @@ describe('runVerifactuAeatTestDiagnostic', () => {
         nif: 'B12345670',
         emisorName: 'Issuer Test S.L.',
         clientNif: 'B88873393',
-        clientName: 'DOSCIENTOS DESARROLLO TECNOLOGICO, S.L.',
+        clientName: 'Doscientos Estudio S.L.',
       }),
     )
     expect(insert).toHaveBeenCalledWith(

@@ -77,8 +77,7 @@ export default async function LegalPage() {
           <h3 className="mb-2 text-base font-semibold">1. Identificación del productor del SIF</h3>
           <ul className="mb-4 list-none space-y-1 pl-0">
             <li>
-              <span className="text-muted-foreground">Denominación social:</span> Doscientos Estudio
-              S.L.
+              <span className="text-muted-foreground">Denominación social:</span> Doscientos Estudio S.L.
             </li>
             <li>
               <span className="text-muted-foreground">Sitio web:</span>{' '}

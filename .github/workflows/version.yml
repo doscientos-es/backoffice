@@ -1,0 +1,42 @@
+name: Bump backoffice patch version
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: bump-backoffice-version
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    # The generated commit must not start another bump.
+    if: github.actor != 'github-actions[bot]'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Bump patch version
+        run: npm version patch --no-git-tag-version --ignore-scripts
+
+      - name: Commit and push version
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json
+          git commit -m "chore(release): v$VERSION [skip ci]"
+          git push origin HEAD:main

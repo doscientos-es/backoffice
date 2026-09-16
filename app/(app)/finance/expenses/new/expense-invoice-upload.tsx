@@ -36,6 +36,8 @@ interface Props {
 
 type Phase = 'idle' | 'uploading' | 'extracting' | 'done'
 
+const EXTRACTION_TIMEOUT_MS = 45_000
+
 async function readJson<T>(response: Response): Promise<T> {
   const contentType = response.headers.get('content-type') ?? ''
   if (!contentType.includes('application/json')) {
@@ -70,52 +72,72 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange 
   async function extractAttachment(attachmentId: string, confirmLarge = false) {
     setPhase('extracting')
     setScanOpen(true)
-    const extractRes = await fetch('/api/expenses/extract-invoice', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ attachment_id: attachmentId, confirm_large: confirmLarge }),
-    })
-    const extractJson = await readJson<{
-      suggestion?: ExpenseInvoiceSuggestion
-      source?: 'ai' | 'rules'
-      warning?: string | null
-      error?: string
-      requires_confirmation?: boolean
-      reason?: string
-      size_bytes?: number
-      page_count?: number | null
-    }>(extractRes)
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), EXTRACTION_TIMEOUT_MS)
 
-    if (extractRes.status === 409 && extractJson.requires_confirmation) {
-      setScanOpen(false)
-      setLargeFileReview({
-        reason: extractJson.reason ?? 'Este documento puede tener un coste de análisis elevado.',
-        sizeBytes: extractJson.size_bytes ?? 0,
-        pageCount: extractJson.page_count ?? null,
+    try {
+      const extractRes = await fetch('/api/expenses/extract-invoice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ attachment_id: attachmentId, confirm_large: confirmLarge }),
+        signal: controller.signal,
       })
-      setPhase('done')
-      return
-    }
+      const extractJson = await readJson<{
+        suggestion?: ExpenseInvoiceSuggestion
+        source?: 'ai' | 'rules'
+        warning?: string | null
+        error?: string
+        requires_confirmation?: boolean
+        reason?: string
+        size_bytes?: number
+        page_count?: number | null
+      }>(extractRes)
 
-    if (extractRes.ok && extractJson.suggestion) {
-      const extractionMeta: InvoiceExtractionMeta = {
-        source: extractJson.source ?? 'rules',
-        warning: extractJson.warning ?? null,
+      if (extractRes.status === 409 && extractJson.requires_confirmation) {
+        setScanOpen(false)
+        setLargeFileReview({
+          reason: extractJson.reason ?? 'Este documento puede tener un coste de análisis elevado.',
+          sizeBytes: extractJson.size_bytes ?? 0,
+          pageCount: extractJson.page_count ?? null,
+        })
+        return
       }
-      setMeta(extractionMeta)
-      setSuggestion(extractJson.suggestion)
-      setScanOpen(true)
-    } else {
+
+      if (extractRes.ok && extractJson.suggestion) {
+        const extractionMeta: InvoiceExtractionMeta = {
+          source: extractJson.source ?? 'rules',
+          warning: extractJson.warning ?? null,
+        }
+        setMeta(extractionMeta)
+        setSuggestion(extractJson.suggestion)
+        setScanOpen(true)
+      } else {
+        setScanOpen(false)
+        setExtractFailed(true)
+        if (extractJson.error) setError(extractJson.error)
+      }
+    } catch (err) {
       setScanOpen(false)
       setExtractFailed(true)
+      setError(
+        err instanceof Error && err.name === 'AbortError'
+          ? 'El análisis está tardando demasiado. La factura queda adjunta y puedes rellenar el gasto a mano.'
+          : err instanceof Error
+            ? err.message
+            : 'No se pudo analizar la factura. La factura queda adjunta y puedes rellenar el gasto a mano.',
+      )
+    } finally {
+      clearTimeout(timeoutId)
+      setPhase('done')
     }
-    setPhase('done')
   }
 
   async function handleFile(file: File) {
     setError(null)
     setMeta(null)
     setExtractFailed(false)
+    setSuggestion(null)
+    setLargeFileReview(null)
     setPhase('uploading')
     onPendingChange(true)
     try {
@@ -134,6 +156,7 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange 
       await extractAttachment(uploadJson.id)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error de red')
+      setScanOpen(false)
       setFileName(null)
       setAttachmentId(null)
       onAttached(null)
@@ -236,11 +259,13 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange 
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Sparkles className="text-primary size-5" /> Factura analizada
+              <Sparkles className="text-primary size-5" />
+              {suggestion ? 'Factura analizada' : 'Analizando factura'}
             </DialogTitle>
             <DialogDescription>
-              He encontrado datos que puedo importar al nuevo gasto. Revisa el resultado antes de
-              aceptarlo.
+              {suggestion
+                ? 'He encontrado datos que puedo importar al nuevo gasto. Revisa el resultado antes de aceptarlo.'
+                : 'Estoy leyendo proveedor, fecha e importes.'}
             </DialogDescription>
           </DialogHeader>
           {!suggestion ? (

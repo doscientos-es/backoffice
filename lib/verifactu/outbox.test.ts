@@ -203,7 +203,7 @@ describe('syncInvoiceQrFromLedger', () => {
           total: 121,
           previousHash: null,
           generatedAt: '2026-08-23T10:00:00.000Z',
-          emisorName: 'Doscientos SL',
+          emisorName: 'Doscientos Estudio S.L.',
           clientNif: '12345678Z',
           clientName: 'Cliente SL',
           descriptionOperacion: 'Servicios',

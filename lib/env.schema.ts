@@ -81,7 +81,7 @@ export const ServerSchema = PublicSchema.extend({
   VERIFACTU_SOFTWARE_VERSION: z.string().default('1.0.0'),
   VERIFACTU_INSTALLATION_NUMBER: z.string().default('00000001'),
   // The SIF producer is not necessarily the taxpayer issuing an invoice.
-  VERIFACTU_PRODUCER_NAME: z.string().default('Doscientos Desarrollo Tecnológico, S.L.'),
+  VERIFACTU_PRODUCER_NAME: z.string().default('Doscientos Estudio S.L.'),
   VERIFACTU_PRODUCER_NIF: z.string().optional().default(''),
   // Generic lead-intake webhook (landing forms and future integrations)
   LEAD_INTAKE_TOKEN: z.string().optional().default(''),
