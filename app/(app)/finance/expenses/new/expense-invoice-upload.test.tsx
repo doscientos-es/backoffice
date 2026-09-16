@@ -59,7 +59,7 @@ describe('ExpenseInvoiceUpload', () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2))
     expect(screen.queryByRole('dialog')).toBeNull()
     expect(screen.getByText('Servicio de extracción no disponible')).toBeDefined()
-    expect(screen.getByText(/La factura queda adjunta/)).toBeDefined()
+    expect(screen.getByText(/PDF quedará adjunto/)).toBeDefined()
     expect(onAttached).toHaveBeenLastCalledWith({ id: 'attachment-1', name: 'factura.pdf' })
     expect(onPendingChange).toHaveBeenLastCalledWith(false)
   })
