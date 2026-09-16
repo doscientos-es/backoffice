@@ -8,12 +8,22 @@ const { mfa } = vi.hoisted(() => ({
   },
 }))
 
-const { trustCurrentMfaDevice } = vi.hoisted(() => ({ trustCurrentMfaDevice: vi.fn() }))
+const { trustCurrentMfaDevice, trustCurrentMfaDeviceAfterPasskey } = vi.hoisted(() => ({
+  trustCurrentMfaDevice: vi.fn(),
+  trustCurrentMfaDeviceAfterPasskey: vi.fn(),
+}))
+const { verifyWithPasskey } = vi.hoisted(() => ({ verifyWithPasskey: vi.fn() }))
 
 vi.mock('@/lib/supabase/browser', () => ({
   getBrowserClient: () => ({ auth: { mfa } }),
 }))
-vi.mock('@/lib/security/mfa-actions', () => ({ trustCurrentMfaDevice }))
+vi.mock('@/lib/security/mfa-actions', () => ({
+  trustCurrentMfaDevice,
+  trustCurrentMfaDeviceAfterPasskey,
+}))
+vi.mock('./use-passkey-verification', () => ({
+  usePasskeyVerification: () => ({ challenge: null, verifyWithPasskey }),
+}))
 
 import { MfaChallengeDialog } from './mfa-challenge-dialog'
 
@@ -25,6 +35,8 @@ describe('MfaChallengeDialog', () => {
     })
     mfa.challengeAndVerify.mockReset().mockResolvedValue({ error: null })
     trustCurrentMfaDevice.mockReset().mockResolvedValue({ ok: true })
+    trustCurrentMfaDeviceAfterPasskey.mockReset().mockResolvedValue({ ok: true })
+    verifyWithPasskey.mockReset().mockResolvedValue({ ok: true })
   })
 
   it('submits a normalized six-digit code from the shared OTP input', async () => {
@@ -42,6 +54,30 @@ describe('MfaChallengeDialog', () => {
         code: '123456',
       })
       expect(trustCurrentMfaDevice).toHaveBeenCalledOnce()
+      expect(onVerified).toHaveBeenCalledOnce()
+    })
+  })
+
+  it('allows verifying the session with the configured device biometric', async () => {
+    const onVerified = vi.fn()
+    mfa.listFactors.mockResolvedValue({ data: { totp: [] }, error: null })
+    render(
+      <MfaChallengeDialog
+        open
+        onOpenChange={vi.fn()}
+        onVerified={onVerified}
+        passkeyScope={{ intent: 'admin.mfa', resource: 'current-session' }}
+      />,
+    )
+
+    fireEvent.click(await screen.findByRole('button', { name: /usar biometría/i }))
+
+    await waitFor(() => {
+      expect(verifyWithPasskey).toHaveBeenCalledWith({
+        intent: 'admin.mfa',
+        resource: 'current-session',
+      })
+      expect(trustCurrentMfaDeviceAfterPasskey).toHaveBeenCalledOnce()
       expect(onVerified).toHaveBeenCalledOnce()
     })
   })

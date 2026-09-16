@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 
 import type { MemberRole } from '@/lib/auth'
 import { hasCurrentMfaAccess } from '@/lib/security/mfa-actions'
+import { userVerificationScope } from '@/lib/security/user-verification-scope'
 import { getBrowserClient } from '@/lib/supabase/browser'
 
 import { MfaChallengeDialog } from './mfa-challenge-dialog'
@@ -53,6 +54,7 @@ export function MfaSessionGate({ memberRole, mfaVerified }: Props) {
       }}
       dismissible={false}
       setupHref="/settings/security"
+      passkeyScope={userVerificationScope('admin.mfa', 'current-session')}
     />
   )
 }

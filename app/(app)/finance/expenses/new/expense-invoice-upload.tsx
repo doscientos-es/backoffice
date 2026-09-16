@@ -32,6 +32,7 @@ interface Props {
   onExtracted: (suggestion: ExpenseInvoiceSuggestion, meta: InvoiceExtractionMeta) => void
   /** Lets the parent block submit while an upload/extraction is in flight. */
   onPendingChange: (pending: boolean) => void
+  onReviewChange: (reviewed: boolean) => void
 }
 
 type Phase = 'idle' | 'uploading' | 'extracting' | 'done'
@@ -55,7 +56,7 @@ async function readJson<T>(response: Response): Promise<T> {
  * attachment (linked to the expense on create) and asks the server to extract
  * its data so the form can be pre-filled.
  */
-export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange }: Props) {
+export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange, onReviewChange }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [phase, setPhase] = useState<Phase>('idle')
   const [attachmentId, setAttachmentId] = useState<string | null>(null)
@@ -110,6 +111,7 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange 
         }
         setMeta(extractionMeta)
         setSuggestion(extractJson.suggestion)
+        onReviewChange(false)
         setScanOpen(true)
       } else {
         setScanOpen(false)
@@ -137,6 +139,7 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange 
     setMeta(null)
     setExtractFailed(false)
     setSuggestion(null)
+    onReviewChange(false)
     setLargeFileReview(null)
     setPhase('uploading')
     onPendingChange(true)
@@ -174,6 +177,7 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange 
     setExtractFailed(false)
     setError(null)
     setSuggestion(null)
+    onReviewChange(false)
     setLargeFileReview(null)
     setScanOpen(false)
     setPhase('idle')
@@ -241,6 +245,20 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange 
               : 'Datos aplicados con reglas locales. Revísalos antes de crear el gasto.'}
           </p>
         ) : null}
+        {suggestion || extractFailed ? (
+          <label className="border-border bg-background flex cursor-pointer items-start gap-2 rounded-md border p-3 text-sm">
+            <input
+              type="checkbox"
+              className="mt-0.5 size-4 accent-primary"
+              onChange={(event) => onReviewChange(event.target.checked)}
+            />
+            <span>
+              {suggestion
+                ? 'He revisado los datos rellenados y el formulario completo antes de crear el gasto.'
+                : 'He revisado el formulario completo y la factura adjunta antes de crear el gasto.'}
+            </span>
+          </label>
+        ) : null}
         {meta?.warning ? (
           <p className="text-sm text-amber-700 dark:text-amber-300">{meta.warning}</p>
         ) : null}
@@ -302,6 +320,21 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange 
                   <span>{suggestion.subtotal} €</span>
                 </div>
               )}
+              {suggestion.tax_rate !== null && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">IVA</span>
+                  <span>{suggestion.tax_rate} %</span>
+                </div>
+              )}
+              {suggestion.due_date && (
+                <div className="flex justify-between"><span className="text-muted-foreground">Vencimiento</span><span>{suggestion.due_date}</span></div>
+              )}
+              {suggestion.vendor_nif && (
+                <div className="flex justify-between"><span className="text-muted-foreground">NIF</span><span>{suggestion.vendor_nif}</span></div>
+              )}
+              <div className="text-muted-foreground border-border mt-2 border-t pt-2 text-xs">
+                Confianza de lectura: {Math.round(suggestion.confidence * 100)} %. Comprueba también categoría, pago, proyecto y moneda.
+              </div>
             </div>
           )}
           {suggestion ? (

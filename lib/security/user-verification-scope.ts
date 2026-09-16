@@ -3,6 +3,7 @@
  * client-safe: UI code needs the same types to request a verification.
  */
 export const USER_VERIFICATION_INTENTS = [
+  'admin.mfa',
   'vault.unlock',
   'invoice.status.update',
   'invoice.payment.revert',

@@ -41,6 +41,7 @@ describe('ExpenseInvoiceUpload', () => {
     const onAttached = vi.fn()
     const onExtracted = vi.fn()
     const onPendingChange = vi.fn()
+    const onReviewChange = vi.fn()
     fetchMock
       .mockResolvedValueOnce(jsonResponse({ id: 'attachment-1' }))
       .mockRejectedValueOnce(new Error('Servicio de extracción no disponible'))
@@ -50,6 +51,7 @@ describe('ExpenseInvoiceUpload', () => {
         onAttached={onAttached}
         onExtracted={onExtracted}
         onPendingChange={onPendingChange}
+        onReviewChange={onReviewChange}
       />,
     )
 
