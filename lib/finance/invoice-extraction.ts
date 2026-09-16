@@ -16,6 +16,7 @@ export const ExpenseInvoiceSuggestionSchema = z.object({
   due_date: InvoiceDate,
   subtotal: z.number().min(0).nullable().default(null),
   tax_rate: z.number().min(0).max(100).nullable().default(null),
+  total: z.number().min(0).nullable().default(null),
   vendor_nif: z.string().max(20).nullable().default(null),
   invoice_reference: z.string().max(80).nullable().default(null),
   confidence: z.number().min(0).max(1).default(0),
@@ -46,7 +47,7 @@ export const INVOICE_OCR_LIMITS = {
 
 const SYSTEM_PROMPT = `Extrae datos de una factura recibida española para crear un gasto.
 Devuelve solo datos que aparezcan inequívocamente en el texto. Las fechas deben usar YYYY-MM-DD.
-subtotal es la base imponible y tax_rate el único porcentaje de IVA aplicable. Si hay varios tipos de IVA,
+subtotal es la base imponible, total el total de la factura y tax_rate el único porcentaje de IVA aplicable. Si hay varios tipos de IVA,
 retenciones o no puedes determinar un valor, devuelve null para subtotal y tax_rate. No infieras proveedor,
 fechas, importes o NIF. No marques una factura como pagada.`
 
@@ -100,6 +101,7 @@ export function extractExpenseInvoiceWithRules(text: string): ExpenseInvoiceSugg
     due_date: findDate(text, ['vencimiento', String.raw`fecha\s+de\s+pago`]),
     subtotal: findAmount(text, [String.raw`base\s+imponible`, 'subtotal', 'base']),
     tax_rate: taxRate ? toNumber(taxRate) : null,
+    total: findAmount(text, [String.raw`total\s+a\s+pagar`, 'total', String.raw`importe\s+total`]),
     vendor_nif: nif,
     invoice_reference: invoiceNumber,
     confidence: 0.35,
@@ -117,6 +119,7 @@ function mergeSuggestion(
     due_date: ai.due_date ?? rules.due_date,
     subtotal: ai.subtotal ?? rules.subtotal,
     tax_rate: ai.tax_rate ?? rules.tax_rate,
+    total: ai.total ?? rules.total,
     vendor_nif: ai.vendor_nif ?? rules.vendor_nif,
     invoice_reference: ai.invoice_reference ?? rules.invoice_reference,
     confidence: ai.confidence,

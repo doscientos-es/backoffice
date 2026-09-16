@@ -326,6 +326,12 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange,
                   <span>{suggestion.tax_rate} %</span>
                 </div>
               )}
+              {suggestion.total !== null && (
+                <div className="flex justify-between font-medium">
+                  <span className="text-muted-foreground">Total factura</span>
+                  <span>{suggestion.total} €</span>
+                </div>
+              )}
               {suggestion.due_date && (
                 <div className="flex justify-between"><span className="text-muted-foreground">Vencimiento</span><span>{suggestion.due_date}</span></div>
               )}
@@ -335,6 +341,12 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange,
               <div className="text-muted-foreground border-border mt-2 border-t pt-2 text-xs">
                 Confianza de lectura: {Math.round(suggestion.confidence * 100)} %. Comprueba también categoría, pago, proyecto y moneda.
               </div>
+              {suggestion.subtotal !== null && suggestion.tax_rate !== null && suggestion.total !== null &&
+              Math.abs(suggestion.subtotal * (1 + suggestion.tax_rate / 100) - suggestion.total) > 0.02 ? (
+                <p className="text-sm text-amber-700 dark:text-amber-300">
+                  La base, el IVA y el total no cuadran exactamente. Revisa los importes antes de importar.
+                </p>
+              ) : null}
             </div>
           )}
           {suggestion ? (

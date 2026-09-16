@@ -30,6 +30,7 @@ export function LoginForm() {
   const [captchaRequired, setCaptchaRequired] = useState(false)
   const [showEmailForm, setShowEmailForm] = useState(false)
   const hcaptchaRef = useRef<HCaptcha>(null)
+  const googleLoginStartedRef = useRef(false)
 
   // Stale auth cookies (e.g. session without a team_members row) would loop
   // the user back here forever. Clear them so the next login is clean.
@@ -87,6 +88,11 @@ export function LoginForm() {
   // code and honours ?next. signInWithOAuth performs the redirect itself, so we
   // keep googleLoading=true until the browser leaves the page.
   async function onGoogle() {
+    // The state update below is asynchronous. Guard synchronously as well so
+    // a double click cannot start two PKCE flows and overwrite the verifier
+    // cookie before the first callback reaches the server.
+    if (googleLoginStartedRef.current) return
+    googleLoginStartedRef.current = true
     setFormError(null)
     setGoogleLoading(true)
     const supabase = getBrowserClient()
@@ -96,6 +102,7 @@ export function LoginForm() {
       options: { redirectTo, queryParams: { prompt: 'select_account' } },
     })
     if (oauthError) {
+      googleLoginStartedRef.current = false
       setGoogleLoading(false)
       setFormError(friendlyError(oauthError.message))
     }

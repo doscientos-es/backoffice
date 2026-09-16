@@ -21,13 +21,13 @@ const { searchParams } = vi.hoisted(() => ({
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
+const { signOut, signInWithOAuth } = vi.hoisted(() => ({
+  signOut: vi.fn().mockResolvedValue({}),
+  signInWithOAuth: vi.fn().mockResolvedValue({ error: null }),
+}))
+
 vi.mock('@/lib/supabase/browser', () => ({
-  getBrowserClient: () => ({
-    auth: {
-      signOut: vi.fn().mockResolvedValue({}),
-      signInWithOAuth: vi.fn().mockResolvedValue({ error: null }),
-    },
-  }),
+  getBrowserClient: () => ({ auth: { signOut, signInWithOAuth } }),
 }))
 
 vi.mock('next/navigation', () => ({
@@ -86,6 +86,8 @@ beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true }) }))
   searchParams.next = null
   searchParams.error = null
+  signOut.mockClear()
+  signInWithOAuth.mockReset().mockResolvedValue({ error: null })
 })
 
 describe('LoginForm – rendering', () => {
@@ -224,5 +226,21 @@ describe('LoginForm – submit flow', () => {
     await waitFor(() =>
       expect(screen.getByRole('alert').textContent).toMatch(/completa el captcha/i),
     )
+  })
+})
+
+describe('LoginForm – Google OAuth flow', () => {
+  it('starts only one PKCE flow when Google is clicked twice quickly', async () => {
+    setup()
+    const googleButton = screen.getByRole('button', { name: /continuar con google/i })
+
+    fireEvent.click(googleButton)
+    fireEvent.click(googleButton)
+
+    await waitFor(() => expect(signInWithOAuth).toHaveBeenCalledOnce())
+    expect(signInWithOAuth).toHaveBeenCalledWith({
+      provider: 'google',
+      options: expect.objectContaining({ queryParams: { prompt: 'select_account' } }),
+    })
   })
 })
