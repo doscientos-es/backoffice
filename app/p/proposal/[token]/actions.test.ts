@@ -3,11 +3,13 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_MAINTENANCE_OFFER } from "@/lib/proposals/maintenance";
 
 const {
+  assertRedsysConfigured,
   createProposalDraftInvoices,
   createRedsysPayment,
   isPortalUnlocked,
   sendProposalAcceptedEmail,
 } = vi.hoisted(() => ({
+  assertRedsysConfigured: vi.fn(),
   createProposalDraftInvoices: vi.fn(async () => ({ ids: [], created: 0 })),
   createRedsysPayment: vi.fn(() => ({
     Ds_SignatureVersion: "HMAC_SHA256_V1",
@@ -35,6 +37,7 @@ vi.mock("@/lib/env", () => ({
 vi.mock("@/lib/invoices/proposal-drafts", () => ({ createProposalDraftInvoices }));
 vi.mock("@/lib/integrations/send-proposal-accepted-email", () => ({ sendProposalAcceptedEmail }));
 vi.mock("@/lib/integrations/redsys", () => ({
+  assertRedsysConfigured,
   createRedsysPayment,
   getRedsysUrl: () => "https://redsys.example.test",
 }));
@@ -161,6 +164,7 @@ describe("portal proposal actions", () => {
     state.lastUpdateId = null;
     state.lastRpc = null;
     createProposalDraftInvoices.mockClear();
+    assertRedsysConfigured.mockReset();
     createRedsysPayment.mockClear();
     isPortalUnlocked.mockReset();
     isPortalUnlocked.mockResolvedValue(true);
@@ -378,5 +382,19 @@ describe("portal proposal actions", () => {
       initiateProposalPayment("494d62cb-fd56-4650-b131-9e3a927a20ad", VALID_TOKEN),
     ).resolves.toEqual({ ok: false, error: "Ya existe un pago de señal pendiente o confirmado" });
     expect(createRedsysPayment).not.toHaveBeenCalled();
+  });
+
+  it("does not create a deposit when Redsys is unavailable", async () => {
+    assertRedsysConfigured.mockImplementationOnce(() => {
+      throw new Error("missing Redsys configuration");
+    });
+
+    await expect(
+      initiateProposalPayment("494d62cb-fd56-4650-b131-9e3a927a20ad", VALID_TOKEN),
+    ).resolves.toEqual({
+      ok: false,
+      error: "El pago electrónico no está disponible temporalmente",
+    });
+    expect(state.lastRpc).toBeNull();
   });
 });

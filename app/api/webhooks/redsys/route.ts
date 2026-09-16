@@ -4,6 +4,7 @@ import { renderEmail } from '@/lib/email/render'
 import { sendEmail } from '@/lib/email/resend'
 import { publicEnv } from '@/lib/env'
 import {
+  assertRedsysConfigured,
   isRedsysSuccess,
   parseRedsysResponse,
   verifyRedsysSignature,
@@ -18,6 +19,13 @@ const log = scopedLogger('api.webhooks.redsys')
 
 export async function POST(req: Request) {
   try {
+    try {
+      assertRedsysConfigured()
+    } catch {
+      log.error('redsys_not_configured')
+      return new Response('Payment gateway unavailable', { status: 503 })
+    }
+
     const formData = await req.formData()
     const merchantParameters = formData.get('Ds_MerchantParameters') as string
     const signature = formData.get('Ds_Signature') as string
@@ -29,7 +37,10 @@ export async function POST(req: Request) {
 
     const isValid = verifyRedsysSignature(merchantParameters, signature)
     if (!isValid) {
-      log.error({ signature, merchantParameters }, 'invalid_signature')
+      log.error(
+        { merchantParametersLength: merchantParameters.length, signatureLength: signature.length },
+        'invalid_signature',
+      )
       return new Response('Invalid signature', { status: 403 })
     }
 

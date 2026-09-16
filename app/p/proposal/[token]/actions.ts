@@ -15,7 +15,11 @@ import {
 import { externalAppUrl } from "@/lib/email/app-url";
 import { publicEnv, serverEnv } from "@/lib/env";
 import { backupProposalToDrive } from "@/lib/google/backup";
-import { createRedsysPayment, getRedsysUrl } from "@/lib/integrations/redsys";
+import {
+  assertRedsysConfigured,
+  createRedsysPayment,
+  getRedsysUrl,
+} from "@/lib/integrations/redsys";
 import { sendProposalAcceptedEmail } from "@/lib/integrations/send-proposal-accepted-email";
 import { createProposalDraftInvoices } from "@/lib/invoices/proposal-drafts";
 import { scopedLogger } from "@/lib/logger";
@@ -455,6 +459,11 @@ export async function initiateProposalPayment(
   const parsedToken = ProposalPortalToken.safeParse(token);
   if (!parsedProposalId.success || !parsedToken.success) {
     return { ok: false, error: "Propuesta no disponible para pago" };
+  }
+  try {
+    assertRedsysConfigured();
+  } catch {
+    return { ok: false, error: "El pago electrónico no está disponible temporalmente" };
   }
   const admin = createAdminClient();
   const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL);

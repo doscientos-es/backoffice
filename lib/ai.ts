@@ -24,11 +24,10 @@ const log = scopedLogger('ai')
  * IDs de modelo Gemini, servidos vía Vertex AI.
  */
 export const AI_MODELS = {
-  default: 'gemini-2.5-flash',
-  summarizer: 'gemini-2.5-flash-lite',
-  drafter: 'gemini-2.5-flash-lite',
+  default: 'gemini-3.1-flash-lite',
+  summarizer: 'gemini-3.1-flash-lite',
+  drafter: 'gemini-3.1-flash-lite',
 } as const
-
 /** Timeout máximo por llamada — 30s. */
 export const AI_TIMEOUT_MS = 30_000
 
