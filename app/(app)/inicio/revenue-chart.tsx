@@ -57,7 +57,7 @@ export function filterZeroRevenueTooltipEntries(entries: RevenueTooltipEntry[]) 
   return entries.filter((entry) => Number(entry.value) > 0)
 }
 
-function RevenueTooltip({
+export function RevenueTooltip({
   active,
   payload,
   label,
@@ -125,7 +125,7 @@ function RevenueTooltip({
       <div className="border-border text-muted-foreground mt-2 border-t pt-2">
         {breakdown ? (
           <span>
-            Total {metricLabel.toLowerCase()} en el periodo: {formatEUR(currentTotal)}
+            Total {metricLabel.toLowerCase()} en {String(label)}: {formatEUR(pointTotal)}
           </span>
         ) : (
           <span>

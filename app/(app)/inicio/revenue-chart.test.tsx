@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 import type { RevenueChartData } from '@/lib/dashboard/types'
 
-import { filterZeroRevenueTooltipEntries, RevenueChart } from './revenue-chart'
+import { filterZeroRevenueTooltipEntries, RevenueChart, RevenueTooltip } from './revenue-chart'
 
 vi.mock('recharts', () => {
   const MockBar = ({ dataKey, stackId }: { dataKey: string; stackId?: string }) => (
@@ -58,6 +58,34 @@ describe('RevenueChart', () => {
         { dataKey: 'series_2', value: '0' },
       ]),
     ).toEqual([{ dataKey: 'series_0', value: 300 }])
+  })
+
+  it('shows the total of the hovered breakdown column', () => {
+    render(
+      <RevenueTooltip
+        active
+        label="7 sept–13 sept"
+        payload={[
+          { dataKey: 'series_1', value: 724.79 },
+          { dataKey: 'series_2', value: 387.2 },
+          { dataKey: 'others', value: 121 },
+        ]}
+        seriesLabels={
+          new Map([
+            ['series_1', 'Presentación estratégica comercial'],
+            ['series_2', 'Servicios de Dron para Medios Digitales'],
+            ['others', 'Otros'],
+          ])
+        }
+        seriesLinks={new Map()}
+        breakdown
+        metricLabel="Facturación emitida"
+        currentTotal={6677.99}
+        previousTotal={0}
+      />,
+    )
+
+    expect(screen.getByText(/Total facturación emitida/).textContent).toContain('1232,99')
   })
 
   it('switches from the yearly comparison to stacked project bars', () => {
