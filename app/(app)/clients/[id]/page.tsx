@@ -66,6 +66,11 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         actions={
           user.role !== 'viewer' ? (
             <div className="flex items-center gap-2">
+              <Button asChild size="sm" variant="outline">
+                <Link href={`/document-templates/generate?client_id=${client.id as string}`}>
+                  Crear documento
+                </Link>
+              </Button>
               <CopySummaryButton
                 lines={[
                   [
@@ -151,7 +156,9 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
             {originLead ? (
               <DetailRow label="Lead de origen">
                 <Link href={`/leads/${originLead.id}`} className="hover:underline">
-                  {originLead.company ? `${originLead.name} · ${originLead.company}` : originLead.name}
+                  {originLead.company
+                    ? `${originLead.name} · ${originLead.company}`
+                    : originLead.name}
                 </Link>
               </DetailRow>
             ) : null}

@@ -1,3 +1,4 @@
+import { DocPreview } from '@doscientos/ui'
 import { Download } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -6,10 +7,11 @@ import { DetailGrid, DetailRow } from '@/components/layout/detail-grid'
 import { PageHeader } from '@/components/layout/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { DocPreview } from '@doscientos/ui'
 import { getStorage } from '@/lib/storage'
 import { createServerClient } from '@/lib/supabase/server'
 import { formatDate } from '@/lib/utils'
+
+import { SendDocumentDialog } from '../send-document-dialog'
 
 export const dynamic = 'force-dynamic'
 
@@ -51,12 +53,19 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
         title={doc.name as string}
         breadcrumbs={[{ label: 'Documentos', href: '/documents' }, { label: doc.name as string }]}
         actions={
-          <Button asChild size="sm">
-            <Link href={`/api/documents/${id}/download`} target="_blank" rel="noopener noreferrer">
-              <Download className="size-3.5" />
-              Descargar
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <SendDocumentDialog id={id} name={doc.name as string} />
+            <Button asChild size="sm">
+              <Link
+                href={`/api/documents/${id}/download`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Download className="size-3.5" />
+                Descargar
+              </Link>
+            </Button>
+          </div>
         }
       />
 

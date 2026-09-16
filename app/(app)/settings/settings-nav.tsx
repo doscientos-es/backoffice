@@ -6,6 +6,7 @@ import {
   Building2,
   ChevronDown,
   Database as DatabaseBackup,
+  FileText,
   Mail,
   Shield,
   Target,
@@ -46,6 +47,12 @@ const GROUPS: readonly Group[] = [
       { href: '/settings/company', label: 'Empresa', icon: Building2, requiresAdmin: true },
       { href: '/settings/team', label: 'Equipo', icon: Users, requiresAdmin: true },
       { href: '/settings/goals', label: 'Objetivos', icon: Target, requiresAdmin: true },
+      {
+        href: '/settings/document-templates',
+        label: 'Plantillas',
+        icon: FileText,
+        requiresAdmin: true,
+      },
     ],
   },
   {

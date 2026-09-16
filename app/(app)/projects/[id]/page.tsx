@@ -143,6 +143,11 @@ export default async function ProjectDetailPage({
         ]}
         actions={
           <div className="flex items-center gap-2">
+            {canEdit ? (
+              <Button asChild size="sm" variant="outline">
+                <Link href={`/document-templates/generate?project_id=${id}`}>Crear documento</Link>
+              </Button>
+            ) : null}
             <CopySummaryButton
               lines={(() => {
                 const parts: string[] = []
