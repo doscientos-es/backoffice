@@ -96,3 +96,21 @@ describe('ExpenseFormFields — optional fields survive collapse', () => {
     expect(screen.getByRole('button', { name: /Más detalles/i }).textContent).toContain('▾')
   })
 })
+
+describe('ExpenseFormFields — totals preview', () => {
+  it('updates subtotal, VAT and total when the amounts change', () => {
+    renderInForm(<ExpenseFormFields defaults={{ subtotal: 100, tax_rate: 21 }} />)
+
+    const summary = screen.getByRole('status', { name: 'Resumen de importes' })
+    expect(summary.textContent).toContain('100,00')
+    expect(summary.textContent).toContain('21,00')
+    expect(summary.textContent).toContain('121,00')
+
+    fireEvent.change(screen.getByDisplayValue('100'), { target: { value: '250' } })
+    fireEvent.change(screen.getByDisplayValue('21'), { target: { value: '10' } })
+
+    expect(summary.textContent).toContain('250,00')
+    expect(summary.textContent).toContain('25,00')
+    expect(summary.textContent).toContain('275,00')
+  })
+})

@@ -19,9 +19,9 @@ export type InvoicePaymentFollowUp = {
 
 const DELAY_DAYS = 4;
 
-function followUpDate(invoiceDate: string | null): string | null {
-  if (!invoiceDate) return null;
-  const date = new Date(`${invoiceDate}T09:00:00.000Z`);
+function followUpDate(sentAt: string | null): string | null {
+  if (!sentAt) return null;
+  const date = new Date(sentAt);
   if (Number.isNaN(date.getTime())) return null;
   date.setUTCDate(date.getUTCDate() + DELAY_DAYS);
   return date.toISOString();
@@ -31,19 +31,32 @@ export async function scheduleInvoicePaymentFollowUp(
   supabase: DbClient,
   invoiceId: string,
   createdBy: string,
+  sentAt?: string,
 ): Promise<InvoicePaymentFollowUp | null> {
   const { data: invoice, error } = await supabase
     .from("invoices")
-    .select("id, status, full_number, total, issue_date, due_date, clients(email)")
+    .select("id, status, full_number, total, clients(email)")
     .eq("id", invoiceId)
     .is("deleted_at", null)
     .maybeSingle();
   if (error) throw new Error(error.message);
-  if (invoice?.status !== "issued") return null;
+  if (!invoice || !["issued", "overdue"].includes(invoice.status as string)) return null;
 
   const client = (invoice as unknown as { clients: { email: string | null } | null }).clients;
   const recipient = client?.email?.trim() ?? "";
-  const runAt = followUpDate((invoice.due_date as string | null) ?? invoice.issue_date);
+  let deliveryAt = sentAt ?? null;
+  if (!deliveryAt) {
+    const { data: latestDelivery, error: deliveryError } = await supabase
+      .from("invoice_deliveries")
+      .select("created_at")
+      .eq("invoice_id", invoiceId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (deliveryError) throw new Error(deliveryError.message);
+    deliveryAt = (latestDelivery?.created_at as string | null) ?? null;
+  }
+  const runAt = followUpDate(deliveryAt);
   if (!recipient || !runAt) return null;
 
   const number = (invoice.full_number as string | null) ?? "sin número";

@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { isValidElement, type ReactNode } from 'react'
+import { isValidElement, type ReactElement, type ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
 const { capturedListPageProps, getVerifactuOperationalHealth, listInvoices, requireUser } = vi.hoisted(
@@ -77,5 +77,38 @@ describe('InvoicesPage', () => {
     const props = capturedListPageProps.current as { rows: Array<{ cells: ReactNode[] }> }
     expect(props.rows).toHaveLength(1)
     expect(findEventHandlers(props.rows[0]?.cells ?? [])).toEqual([])
+  })
+
+  it('does not render the synthetic AEAT diagnostic card in the summary', async () => {
+    requireUser.mockResolvedValue({ id: 'user-1' })
+    listInvoices.mockResolvedValue({
+      data: [],
+      count: 0,
+      stats: {
+        pendingTotal: 0,
+        pendingCount: 0,
+        overdueTotal: 0,
+        overdueCount: 0,
+        paidMonthTotal: 0,
+        verifactuKoCount: 0,
+      },
+      error: null,
+    })
+    getVerifactuOperationalHealth.mockResolvedValue({
+      queueAvailable: true,
+      pending: 0,
+      retrying: 0,
+      blocked: 0,
+      diagnostic: { status: 'passed', ranAt: null },
+      certificate: { status: 'ok', expiresAt: null, daysRemaining: null },
+    })
+
+    await InvoicesPage({ searchParams: Promise.resolve({}) })
+
+    const props = capturedListPageProps.current as { summary: ReactElement }
+    const summaryMarkup = renderToStaticMarkup(props.summary)
+    expect(summaryMarkup).not.toContain('Diagnóstico AEAT')
+    expect(summaryMarkup).not.toContain('Suite sintética obligatoria')
+    expect(summaryMarkup).not.toContain('Vigente')
   })
 })

@@ -154,13 +154,6 @@ export const updateInvoiceStatus = defineAction<
       }
       if (status === 'issued') {
         void backupInvoiceToDrive(id, user.email)
-        after(async () => {
-          try {
-            await scheduleInvoicePaymentFollowUp(await createServerClient(), id, user.id)
-          } catch (error) {
-            log.warn({ err: error, invoiceId: id }, 'invoice_payment_follow_up_schedule_failed')
-          }
-        })
       }
       return { fiscalDeliveryStatus: delivery.status, fiscalDeliveryCsv: delivery.csv }
     }
@@ -980,6 +973,14 @@ export const sendInvoiceEmail = defineAction<
       mocked: result.mocked,
       sentBy: user.id,
     })
+    const sentAt = new Date().toISOString()
+    after(async () => {
+      try {
+        await scheduleInvoicePaymentFollowUp(await createServerClient(), id, user.id, sentAt)
+      } catch (error) {
+        log.warn({ err: error, invoiceId: id }, 'invoice_payment_follow_up_schedule_failed')
+      }
+    })
 
     return { portalUrl, mocked: result.mocked, attachedPdf: Boolean(attachment) }
   },
@@ -1011,6 +1012,14 @@ export const logInvoiceWhatsappShare = defineAction<
       channel: 'whatsapp',
       recipient: phone,
       sentBy: user.id,
+    })
+    const sentAt = new Date().toISOString()
+    after(async () => {
+      try {
+        await scheduleInvoicePaymentFollowUp(await createServerClient(), id, user.id, sentAt)
+      } catch (error) {
+        log.warn({ err: error, invoiceId: id }, 'invoice_payment_follow_up_schedule_failed')
+      }
     })
 
     const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)

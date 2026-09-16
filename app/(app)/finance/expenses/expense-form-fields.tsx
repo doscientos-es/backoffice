@@ -17,7 +17,9 @@ import {
   EXPENSE_RECURRENCES,
   EXPENSE_STATUS_LABELS,
   EXPENSE_STATUSES,
+  computeExpenseTotals,
 } from '@/lib/finance'
+import { formatEUR } from '@/lib/utils'
 
 export type VendorSuggestion = {
   vendor: string
@@ -80,6 +82,13 @@ export function ExpenseFormFields({
   const [category, setCategory] = useState(d.category ?? EXPENSE_FORM_DEFAULTS.category)
   const [projectId, setProjectId] = useState(d.project_id ?? '')
   const [autofilled, setAutofilled] = useState(false)
+  const [subtotal, setSubtotal] = useState(
+    () => Number(d.subtotal ?? EXPENSE_FORM_DEFAULTS.subtotal) || 0,
+  )
+  const [taxRate, setTaxRate] = useState(
+    () => Number(d.tax_rate ?? EXPENSE_FORM_DEFAULTS.tax_rate) || 0,
+  )
+  const totals = computeExpenseTotals(subtotal, taxRate)
 
   // Lookup of known vendors (case-insensitive) and the list of distinct NIFs
   // for the native <datalist> autocomplete.
@@ -196,6 +205,7 @@ export function ExpenseFormFields({
             required
             inputMode="decimal"
             defaultValue={(d.subtotal ?? EXPENSE_FORM_DEFAULTS.subtotal).toString()}
+            onChange={(e) => setSubtotal(Number(e.target.value) || 0)}
           />
         </FormRow>
         <FormRow label="Pagado desde" htmlFor={`${idPrefix}-payment_source`} required>
@@ -280,8 +290,29 @@ export function ExpenseFormFields({
             max="100"
             inputMode="decimal"
             defaultValue={(d.tax_rate ?? EXPENSE_FORM_DEFAULTS.tax_rate).toString()}
+            onChange={(e) => setTaxRate(Number(e.target.value) || 0)}
           />
         </FormRow>
+      </div>
+
+      <div
+        role="status"
+        aria-label="Resumen de importes"
+        aria-live="polite"
+        className="bg-muted/30 border-border rounded-md border px-3 py-2.5"
+      >
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">Subtotal</span>
+          <span>{formatEUR(totals.subtotal)}</span>
+        </div>
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">IVA ({taxRate} %)</span>
+          <span>{formatEUR(totals.taxAmount)}</span>
+        </div>
+        <div className="border-border mt-2 flex items-center justify-between border-t pt-2 font-semibold">
+          <span>Total</span>
+          <span>{formatEUR(totals.total)}</span>
+        </div>
       </div>
 
       {/* ── Optional details ── */}

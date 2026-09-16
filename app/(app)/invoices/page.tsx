@@ -1,5 +1,4 @@
 import {
-  Activity,
   TriangleAlert as AlertTriangle,
   CircleCheck as CheckCircle2,
   Clock,
@@ -123,7 +122,7 @@ export default async function InvoicesPage({
             <h2 id="aeat-health-title" className="text-xs font-semibold">
               Salud operativa AEAT
             </h2>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-5">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
               <StatCard
                 label="Cola pendiente"
                 value={aeatHealth.queueAvailable ? aeatHealth.pending : "—"}
@@ -149,15 +148,6 @@ export default async function InvoicesPage({
                 icon={AlertTriangle}
                 hint="Rechazo o error definitivo"
                 href="/invoices?verifactu=rejected"
-              />
-              <StatCard
-                label="Diagnóstico AEAT"
-                value={aeatHealth.diagnostic.status === "passed" ? "Vigente" : "Revisar"}
-                density="inline"
-                tone={aeatHealth.diagnostic.status === "passed" ? "success" : "danger"}
-                icon={Activity}
-                hint="Suite sintética obligatoria"
-                href="/settings/diagnostics"
               />
               <StatCard
                 label="Certificado"
