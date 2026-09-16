@@ -247,23 +247,21 @@ export function RevenueChart({ data }: { data: RevenueChartData }) {
                   : (SERIES_LABEL[String(value)] ?? String(value))
               }
             />
-            {breakdown ? (
-              breakdown.series.map((series) => (
-                <Bar
-                  key={series.key}
-                  dataKey={series.key}
-                  stackId="revenue"
-                  fill={
-                    series.key === 'others'
-                      ? OTHERS_COLOR
-                      : BREAKDOWN_PALETTE[stablePaletteIndex(series.key)]
-                  }
-                  maxBarSize={28}
-                />
-              ))
-            ) : (
-              totalBars
-            )}
+            {breakdown
+              ? breakdown.series.map((series) => (
+                  <Bar
+                    key={series.key}
+                    dataKey={series.key}
+                    stackId="revenue"
+                    fill={
+                      series.key === 'others'
+                        ? OTHERS_COLOR
+                        : BREAKDOWN_PALETTE[stablePaletteIndex(series.key)]
+                    }
+                    maxBarSize={28}
+                  />
+                ))
+              : totalBars}
           </BarChart>
         </ResponsiveContainer>
       </div>
