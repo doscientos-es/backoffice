@@ -25,7 +25,7 @@ export function TemplateUploadForm() {
       })
       const result = (await response.json()) as { error?: string; fields?: UploadedField[] }
       if (!response.ok) throw new Error(result.error ?? 'No se pudo subir la plantilla')
-      setMessage('Plantilla subida correctamente. Los campos se han detectado automáticamente.')
+      setMessage('PDF subido correctamente. Los campos se han detectado automáticamente.')
       setFields(result.fields ?? [])
       ref.current?.reset()
       window.location.reload()

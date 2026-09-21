@@ -53,3 +53,15 @@ export function buildProposalWhatsAppMessage(
     'Si te parece, comentamos cualquier duda.',
   ].join('\n\n')
 }
+
+export function buildProjectWhatsAppMessage(
+  clientName: string | null | undefined,
+  projectName: string,
+  portalUrl: string,
+): string {
+  return [
+    `Hola ${firstName(clientName)}, ya hemos empezado con ${projectName}.`,
+    `Puedes seguir el proyecto desde el portal del cliente:\n${portalUrl}`,
+    'Si necesitas cualquier cosa, escríbeme por aquí.',
+  ].join('\n\n')
+}

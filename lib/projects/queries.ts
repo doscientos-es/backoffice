@@ -23,7 +23,9 @@ export async function listProjects(params: ProjectListParams): Promise<ProjectLi
   const from = (page - 1) * PROJECT_LIST_PAGE_SIZE
   const to = from + PROJECT_LIST_PAGE_SIZE - 1
   const { data: leadClient } = params.leadId
-    ? await notDeleted(supabase.from('clients').select('id').eq('lead_id', params.leadId)).maybeSingle()
+    ? await notDeleted(
+        supabase.from('clients').select('id').eq('lead_id', params.leadId),
+      ).maybeSingle()
     : { data: null }
 
   if (params.leadId && !leadClient) return { data: [], count: 0 }
@@ -156,7 +158,7 @@ export async function getProjectWorkspace(
   const supabase = await createServerClient()
   const { data: project, error } = await supabase
     .from('projects')
-    .select('*, clients(id, name, email, lead_id)')
+    .select('*, clients(id, name, email, phone, lead_id)')
     .eq('id', id)
     .is('deleted_at', null)
     .maybeSingle()
@@ -166,7 +168,13 @@ export async function getProjectWorkspace(
 
   const client = (
     project as unknown as {
-      clients: { id: string; name: string; email: string | null; lead_id: string | null } | null
+      clients: {
+        id: string
+        name: string
+        email: string | null
+        phone: string | null
+        lead_id: string | null
+      } | null
     }
   ).clients
   const clientsResult = options.includeClients

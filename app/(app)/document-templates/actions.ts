@@ -43,7 +43,7 @@ export const generateDocument = defineAction<
       .is('deleted_at', null)
       .maybeSingle()
     if (templateError || !template || !template.is_active)
-      throw new Error('Plantilla no disponible')
+      throw new Error('Documento genérico no disponible')
 
     const fields = (
       Array.isArray(template.fields) ? template.fields : []
@@ -59,7 +59,7 @@ export const generateDocument = defineAction<
       'documents',
       template.storage_path as string,
     )
-    if (downloadError || !original) throw new Error('No se pudo leer la plantilla')
+    if (downloadError || !original) throw new Error('No se pudo leer el documento genérico')
 
     const pdf = await fillPdfTemplate({ bytes: original, fields, values })
     const attachmentId = crypto.randomUUID()

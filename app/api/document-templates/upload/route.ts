@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     !file.name.toLowerCase().endsWith('.pdf')
   ) {
     return NextResponse.json(
-      { error: 'La plantilla debe ser un PDF de máximo 10 MB' },
+      { error: 'El archivo debe ser un PDF de máximo 10 MB' },
       { status: 400 },
     )
   }
@@ -63,13 +63,13 @@ export async function POST(request: NextRequest) {
     fields = await inspectPdfTemplate(bytes)
   } catch {
     return NextResponse.json(
-      { error: 'No se pudo leer el PDF. Usa un PDF con campos rellenables.' },
+      { error: 'No se pudo leer el PDF. Usa un PDF con campos de formulario.' },
       { status: 400 },
     )
   }
   if (fields.length === 0) {
     return NextResponse.json(
-      { error: 'El PDF no tiene campos rellenables. Añade campos AcroForm a la plantilla.' },
+      { error: 'El PDF no tiene campos de formulario. Añade campos AcroForm al documento.' },
       { status: 400 },
     )
   }
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
   if (error || !data) {
     await storage.remove('documents', [storagePath])
     return NextResponse.json(
-      { error: error?.message ?? 'No se pudo guardar la plantilla' },
+      { error: error?.message ?? 'No se pudo guardar el PDF' },
       { status: 500 },
     )
   }

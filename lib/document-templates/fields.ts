@@ -113,9 +113,13 @@ export function getPathValue(source: string, context: DocumentGenerationContext)
   return result == null ? '' : String(result)
 }
 
-function leadFallbackForClientPath(path: string[], lead: Record<string, unknown> | null) {
+function leadFallbackForClientPath(
+  path: string[],
+  lead: Record<string, unknown> | null,
+): Record<string, unknown> | null {
   if (!lead) return null
   const [field] = path
+  if (!field) return null
   if (field === 'name') return { name: lead.company ?? lead.name }
   if (field === 'contact_person') return { contact_person: lead.name }
   return { [field]: lead[field] }

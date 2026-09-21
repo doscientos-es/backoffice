@@ -4,8 +4,6 @@ import { notFound } from 'next/navigation'
 import { RemindersSection } from '@/app/(app)/inicio/_components/reminders-section'
 import { DetailGrid, DetailRow } from '@/components/layout/detail-grid'
 import { PageHeader } from '@/components/layout/page-header'
-import { CopyPortalLink } from '@/components/portal/copy-portal-link'
-import { PortalAccessControls } from '@/components/portal/portal-access-controls'
 import { AttachmentSection } from '@/components/ui/attachment-section'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -20,7 +18,6 @@ import { formatDate, formatEUR } from '@/lib/utils'
 
 import { ScheduleReminderDialog } from '../../reminders/schedule-reminder-dialog'
 import { TaskCreateDialog } from '../../tasks/task-create-dialog'
-import { updateProjectPortalAccess } from '../actions'
 import { GitHubModeBadge } from '../github-mode-badge'
 import type { GitHubSyncMode } from '../github-sync-section'
 import { AiKickoffPanel } from './ai-kickoff-panel'
@@ -30,6 +27,7 @@ import { DeleteProjectButton } from './delete-project-button'
 import { LinkProposalButton } from './link-proposal-button'
 import { MonthlyInvoiceSection } from './monthly-invoice-section'
 import { ProjectEditDialog } from './project-edit-dialog'
+import { ProjectPortalSection } from './project-portal-section'
 import { ProjectTasksViewToggle } from './project-tasks-view-toggle'
 import { type KanbanTask, TasksKanban } from './tasks/tasks-kanban'
 import { type WorkLogRow, WorkLogSection } from './work-log-section'
@@ -257,25 +255,18 @@ export default async function ProjectDetailPage({
       </Card>
 
       {(project.portal_token as string | null) ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Portal del cliente</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-4 lg:grid-cols-2">
-            <CopyPortalLink
-              path={`/p/project/${project.portal_token as string}`}
-              label="Enlace de seguimiento"
-            />
-            {canEdit ? (
-              <PortalAccessControls
-                id={project.id as string}
-                initialVisible={Boolean(project.is_client_visible)}
-                hasPassword={Boolean(project.portal_password_hash)}
-                action={updateProjectPortalAccess}
-              />
-            ) : null}
-          </CardContent>
-        </Card>
+        <ProjectPortalSection
+          projectId={project.id as string}
+          projectName={project.name as string}
+          portalToken={project.portal_token as string}
+          visible={Boolean(project.is_client_visible)}
+          hasPassword={Boolean(project.portal_password_hash)}
+          inviteSentAt={(project.portal_invite_sent_at as string | null) ?? null}
+          clientEmail={(client?.email as string | null) ?? null}
+          clientPhone={(client?.phone as string | null) ?? null}
+          canEdit={canEdit}
+          canPublish={user.role === 'owner' || user.role === 'admin'}
+        />
       ) : null}
 
       <Card>

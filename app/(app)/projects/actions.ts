@@ -225,7 +225,7 @@ export async function publishProjectPortal(input: unknown) {
   if (!project.portal_token)
     return { ok: false as const, error: 'El proyecto no tiene enlace público' }
   if (!project.clients?.email) return { ok: false as const, error: 'El cliente no tiene email' }
-  if (project.portal_invite_sent_at && !parsed.data.resend) {
+  if (project.portal_invite_sent_at && !parsed.data.resend && project.is_client_visible) {
     return { ok: true as const, sentAt: project.portal_invite_sent_at, alreadySent: true }
   }
 
@@ -285,5 +285,137 @@ export async function publishProjectPortal(input: unknown) {
       .eq('id', project.id)
       .eq('portal_invite_sent_at', claimedAt)
     return { ok: false as const, error: 'No se pudo enviar el email. El portal no se publicó.' }
+  }
+}
+
+const ProjectPortalEmailInput = z.object({
+  id: z.string().uuid(),
+  to: z.string().trim().email('El email no es válido').optional(),
+  message: z.string().trim().max(1000, 'El mensaje es demasiado largo').optional(),
+})
+
+type ProjectPortalEmailData = {
+  id: string
+  name: string
+  portal_token: string | null
+  is_client_visible: boolean
+  clients: { name: string; email: string | null; phone: string | null } | null
+}
+
+async function findProjectPortalEmailData(id: string): Promise<ProjectPortalEmailData | null> {
+  const supabase = await createServerClient()
+  const { data, error } = await supabase
+    .from('projects')
+    .select('id, name, portal_token, is_client_visible, clients(name, email, phone)')
+    .eq('id', id)
+    .is('deleted_at', null)
+    .maybeSingle()
+
+  if (error || !data) return null
+  return data as unknown as ProjectPortalEmailData
+}
+
+async function renderProjectPortalEmail(
+  project: ProjectPortalEmailData,
+  message: string | undefined,
+) {
+  if (!project.portal_token)
+    return { ok: false as const, error: 'El proyecto no tiene enlace público' }
+
+  const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
+  const portalUrl = `${appUrl}/p/project/${project.portal_token}`
+  const html = await renderEmail(
+    ProjectKickoffEmail({
+      clientName: project.clients?.name ?? 'Hola',
+      projectName: project.name,
+      portalUrl,
+      appUrl,
+      message,
+    }),
+  )
+
+  return {
+    ok: true as const,
+    subject: `Arrancamos con ${project.name}`,
+    html,
+    portalUrl,
+    clientEmail: project.clients?.email ?? null,
+    clientPhone: project.clients?.phone ?? null,
+    clientName: project.clients?.name ?? 'cliente',
+  }
+}
+
+/** Renders the project kick-off email so the team can review it before re-sending. */
+export async function previewProjectPortalEmail(input: unknown) {
+  await requireRole(['owner', 'admin', 'member'])
+  const parsed = ProjectPortalEmailInput.safeParse(input)
+  if (!parsed.success) {
+    return { ok: false as const, error: parsed.error.errors[0]?.message ?? 'Datos no válidos' }
+  }
+
+  const project = await findProjectPortalEmailData(parsed.data.id)
+  if (!project) return { ok: false as const, error: 'Proyecto no encontrado' }
+  const rendered = await renderProjectPortalEmail(project, parsed.data.message)
+  if (!rendered.ok) return rendered
+
+  return {
+    ok: true as const,
+    subject: rendered.subject,
+    html: rendered.html,
+    clientEmail: rendered.clientEmail,
+    clientPhone: rendered.clientPhone,
+    clientName: rendered.clientName,
+    projectName: project.name,
+    portalUrl: rendered.portalUrl,
+  }
+}
+
+/** Sends the already-published project portal link by email. */
+export async function sendProjectPortalEmail(input: unknown) {
+  const user = await requireRole(['owner', 'admin', 'member'])
+  const parsed = ProjectPortalEmailInput.safeParse(input)
+  if (!parsed.success) {
+    return { ok: false as const, error: parsed.error.errors[0]?.message ?? 'Datos no válidos' }
+  }
+
+  const project = await findProjectPortalEmailData(parsed.data.id)
+  if (!project) return { ok: false as const, error: 'Proyecto no encontrado' }
+  if (!project.is_client_visible)
+    return { ok: false as const, error: 'Activa primero el portal del cliente' }
+
+  const recipient = parsed.data.to ?? project.clients?.email ?? null
+  if (!recipient) return { ok: false as const, error: 'El cliente no tiene email registrado' }
+
+  const rendered = await renderProjectPortalEmail(project, parsed.data.message)
+  if (!rendered.ok) return rendered
+
+  try {
+    const sent = await sendEmail({
+      fromName: user.name,
+      fromAlias: user.emailAlias ?? 'hola',
+      to: recipient,
+      replyTo: user.contactEmail ?? user.email,
+      subject: rendered.subject,
+      html: rendered.html,
+      tags: { project_id: project.id, kind: 'project_kickoff' },
+    })
+
+    const sentAt = new Date().toISOString()
+    const supabase = await createServerClient()
+    await supabase
+      .from('projects')
+      .update({
+        portal_invite_sent_at: sentAt,
+        portal_invite_recipient: recipient,
+        portal_invite_resend_id: sent.id,
+      })
+      .eq('id', project.id)
+    revalidatePath(`/projects/${project.id}`)
+    return { ok: true as const, portalUrl: rendered.portalUrl, mocked: sent.mocked }
+  } catch (error) {
+    return {
+      ok: false as const,
+      error: error instanceof Error ? error.message : 'No se pudo enviar el email',
+    }
   }
 }

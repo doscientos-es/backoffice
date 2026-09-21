@@ -33,14 +33,12 @@ export default async function DocumentTemplatesPage() {
           <CardTitle>Subir PDF rellenable</CardTitle>
         </CardHeader>
         <CardContent>
-          <>
-            <p className="text-muted-foreground mb-4 text-sm">
-              El PDF debe tener campos de formulario AcroForm. Los campos con nombres conocidos se
-              rellenarán automáticamente con los datos de la empresa y del lead; los demás quedarán
-              editables en el PDF generado.
-            </p>
-            <TemplateUploadForm />
-          </>
+          <p className="text-muted-foreground mb-4 text-sm">
+            El PDF debe tener campos de formulario AcroForm. Los campos con nombres conocidos se
+            rellenarán automáticamente con los datos de la empresa y del lead; los demás quedarán
+            editables en el PDF generado.
+          </p>
+          <TemplateUploadForm />
         </CardContent>
       </Card>
       <Card>
