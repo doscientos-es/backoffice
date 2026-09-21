@@ -13,11 +13,11 @@ vi.mock('@ai-sdk/google-vertex', () => ({
 vi.mock('./env', () => ({ isAIEnabled: () => true }))
 vi.mock('./logger', () => ({ scopedLogger: () => ({ info: vi.fn() }) }))
 
-import { runAIObject } from './ai'
+import { runAIChat, runAIObject } from './ai'
 
 const schema = z.object({ title: z.string() })
 const input = {
-  model: 'test-model',
+  model: 'gemini-3.1-flash-lite',
   system: 'Devuelve un objeto JSON.',
   user: 'Prepara un borrador.',
   schema,
@@ -60,5 +60,25 @@ describe('runAIObject', () => {
     await expect(runAIObject(input)).rejects.toThrow(
       'La IA devolvió un resultado con un formato no válido. Inténtalo de nuevo.',
     )
+  })
+
+  it('uses Gemini 3 thinking settings instead of legacy sampling options', async () => {
+    generateText.mockResolvedValue({ text: 'Resumen válido', usage: undefined })
+
+    await expect(
+      runAIChat({
+        model: 'gemini-3.1-flash-lite',
+        system: 'Resume.',
+        user: 'Notas.',
+        temperature: 0,
+        maxOutputTokens: 100,
+      }),
+    ).resolves.toBe('Resumen válido')
+
+    const options = generateText.mock.calls[0]?.[0]
+    expect(options.temperature).toBeUndefined()
+    expect(options.providerOptions).toEqual({
+      vertex: { thinkingConfig: { thinkingLevel: 'minimal' } },
+    })
   })
 })

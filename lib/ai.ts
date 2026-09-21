@@ -11,7 +11,13 @@ import { createVertex } from '@ai-sdk/google-vertex'
  *      · Vercel/prod → Service Account vía GOOGLE_SA_CLIENT_EMAIL + GOOGLE_SA_PRIVATE_KEY_BASE64
  *        (no hay ADC ni metadata server en serverless, hay que pasar las credenciales).
  */
-import { generateText, type LanguageModel, type LanguageModelUsage, type ModelMessage, Output } from 'ai'
+import {
+  generateText,
+  type LanguageModel,
+  type LanguageModelUsage,
+  type ModelMessage,
+  Output,
+} from 'ai'
 import type { z } from 'zod'
 
 import { isAIEnabled } from './env'
@@ -30,6 +36,27 @@ export const AI_MODELS = {
 } as const
 /** Timeout máximo por llamada — 30s. */
 export const AI_TIMEOUT_MS = 30_000
+
+function generationOptions(
+  modelName: string,
+  temperature: number | undefined,
+  maxOutputTokens: number | undefined,
+) {
+  const isGemini3 = /^gemini-3[.-]/.test(modelName)
+
+  return {
+    // Gemini 3 manages sampling internally. Google recommends omitting
+    // temperature/topP/topK rather than forcing the old deterministic values.
+    ...(isGemini3 ? {} : { temperature: temperature ?? 0.3 }),
+    ...(maxOutputTokens ? { maxOutputTokens } : {}),
+    abortSignal: AbortSignal.timeout(AI_TIMEOUT_MS),
+    providerOptions: {
+      vertex: {
+        thinkingConfig: isGemini3 ? { thinkingLevel: 'minimal' as const } : { thinkingBudget: 0 },
+      },
+    },
+  }
+}
 
 /**
  * Opciones de autenticación para Vertex.
@@ -136,12 +163,7 @@ export async function runAIChat(input: RunAIChatInput): Promise<string> {
       model,
       system: input.system,
       prompt: input.user,
-      temperature: input.temperature ?? 0.3,
-      ...(input.maxOutputTokens ? { maxOutputTokens: input.maxOutputTokens } : {}),
-      abortSignal: AbortSignal.timeout(AI_TIMEOUT_MS),
-      providerOptions: {
-        vertex: { thinkingConfig: { thinkingBudget: 0 } },
-      },
+      ...generationOptions(input.model, input.temperature, input.maxOutputTokens),
     })
 
     logUsage(input.model, usage, Date.now() - startedAt)
@@ -192,15 +214,7 @@ export async function runAIObject<S extends z.ZodType>(
       output: Output.object({ schema: input.schema }),
       system,
       prompt: input.user,
-      temperature: input.temperature ?? 0.3,
-      ...(input.maxOutputTokens ? { maxOutputTokens: input.maxOutputTokens } : {}),
-      abortSignal: AbortSignal.timeout(AI_TIMEOUT_MS),
-      // Gemini 2.5 Flash tiene thinking habilitado por defecto. Con Output.object()
-      // el thinking budget debe ser 0: si el modelo genera solo tokens de razonamiento
-      // sin output estructurado el SDK lanza "No output generated."
-      providerOptions: {
-        vertex: { thinkingConfig: { thinkingBudget: 0 } },
-      },
+      ...generationOptions(input.model, input.temperature, input.maxOutputTokens),
     })
 
     logUsage(input.model, usage, Date.now() - startedAt)

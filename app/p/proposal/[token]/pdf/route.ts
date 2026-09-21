@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 
 import { getCurrentUser } from '@/lib/auth'
 import { externalAppUrl } from '@/lib/email/app-url'
+import { computeLineSubtotal, computeProposalTotals, type BillingCycle } from '@/lib/finance'
 import { publicEnv } from '@/lib/env'
 import { isPortalUnlocked } from '@/lib/portal/access'
 import { parseKeyPoints } from '@/lib/proposals/key-points'
@@ -10,6 +11,7 @@ import {
   parseMaintenanceOffer,
   selectedMaintenancePlan,
 } from '@/lib/proposals/maintenance'
+import { ensureCalendarYearProration, recurringPaymentTerms } from '@/lib/proposals/recurring'
 import {
   DEFAULT_PROPOSAL_LEGAL_TERMS,
   effectiveProposalTerms,
@@ -89,7 +91,20 @@ export async function GET(
           (documentSource.terms as string | null) ?? null,
           (documentSource.legal_terms as string | null) ?? null,
         )
-  const signedItems = Array.isArray(signedProposal?.items) ? signedProposal.items : (items ?? [])
+  const rawItems = Array.isArray(signedProposal?.items) ? signedProposal.items : (items ?? [])
+  const signedItems = signedProposal
+    ? rawItems
+    : ensureCalendarYearProration(
+        rawItems as Array<{
+          id?: string
+          description: string
+          quantity: number
+          unit_price: number
+          vat_rate: number
+          billing_cycle: BillingCycle | null
+        }>,
+        (proposal.created_at as string | null) ?? null,
+      )
   const client = (proposal as unknown as { clients: { name: string } | null }).clients
   const lead = (
     proposal as unknown as { leads: { name: string | null; company: string | null } | null }
@@ -105,7 +120,10 @@ export async function GET(
       quantity: Number(item.quantity ?? 0),
       unitPrice: Number(item.unit_price ?? 0),
       vatRate: Number(item.vat_rate ?? 0),
-      subtotal: Number(item.subtotal ?? 0),
+      subtotal: computeLineSubtotal({
+        quantity: Number(item.quantity ?? 0),
+        unit_price: Number(item.unit_price ?? 0),
+      }),
       billingCycle: (item.billing_cycle as string | null) ?? null,
     }),
   )
@@ -121,6 +139,31 @@ export async function GET(
       billingCycle: item.billing_cycle,
     })
   }
+  const calculatedTotals = computeProposalTotals(
+    pdfItems.map((item) => ({
+      quantity: item.quantity,
+      unit_price: item.unitPrice,
+      vat_rate: item.vatRate,
+      billing_cycle: (item.billingCycle as BillingCycle | null) ?? 'none',
+    })),
+  )
+  const automaticPaymentTerms = recurringPaymentTerms(
+    pdfItems.map((item) => ({
+      description: item.description,
+      quantity: item.quantity,
+      unit_price: item.unitPrice,
+      vat_rate: item.vatRate,
+      billing_cycle: (item.billingCycle as BillingCycle | null) ?? null,
+    })),
+    (proposal.created_at as string | null) ?? null,
+  )
+  const pdfSubtotal = signedProposal
+    ? Number(documentSource.subtotal ?? 0)
+    : calculatedTotals.oneTime.subtotal
+  const pdfTaxAmount = signedProposal
+    ? Number(documentSource.tax_amount ?? 0)
+    : calculatedTotals.oneTime.taxAmount
+  const pdfTotal = signedProposal ? Number(documentSource.total ?? 0) : calculatedTotals.oneTime.total
   const pdf = await renderProposalPdf({
     number: (documentSource.number as string | null) ?? null,
     title: documentSource.title as string,
@@ -134,13 +177,13 @@ export async function GET(
     deliverables: (documentSource.deliverables as string | null) ?? null,
     acceptanceCriteria: (documentSource.acceptance_criteria as string | null) ?? null,
     paymentSchedule: (documentSource.payment_schedule as PaymentSchedule | null) ?? 'half_half',
-    paymentTerms: (documentSource.payment_terms as string | null) ?? null,
+    paymentTerms: (documentSource.payment_terms as string | null) ?? automaticPaymentTerms,
     changeManagementTerms: (documentSource.change_management_terms as string | null) ?? null,
     legalTerms,
     notes: (documentSource.notes as string | null) ?? null,
-    subtotal: Number(documentSource.subtotal ?? 0),
-    taxAmount: Number(documentSource.tax_amount ?? 0),
-    total: Number(documentSource.total ?? 0),
+    subtotal: pdfSubtotal,
+    taxAmount: pdfTaxAmount,
+    total: pdfTotal,
     items: pdfItems,
     maintenanceOffer,
     maintenanceSelectedPlanId,

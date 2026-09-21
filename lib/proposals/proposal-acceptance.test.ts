@@ -15,6 +15,8 @@ describe('proposal acceptance terms', () => {
     expect(terms).toContain('evidencia de aceptación')
     expect(terms).toContain('Fuerza mayor')
     expect(terms).toContain('Comunicaciones, cesión y separabilidad')
+    expect(terms).toContain('Servicios recurrentes, facturación anual y actualización')
+    expect(terms).toContain('variación interanual positiva del IPC general')
   })
 
   it('keeps particular terms before the standard terms', () => {

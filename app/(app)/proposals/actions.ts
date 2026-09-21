@@ -29,7 +29,11 @@ import {
 } from '@/lib/proposals/items'
 import { parseMaintenanceOffer, selectedMaintenancePlan } from '@/lib/proposals/maintenance'
 import { DEFAULT_PROPOSAL_LEGAL_TERMS } from '@/lib/proposals/proposal-acceptance'
-import { recurringAmount } from '@/lib/proposals/recurring'
+import {
+  ensureCalendarYearProration,
+  recurringAmount,
+  recurringPaymentTerms,
+} from '@/lib/proposals/recurring'
 import { parsePaymentPlan } from '@/lib/proposals/scope'
 import { formatProposalValidationIssues } from '@/lib/proposals/validation'
 import { UpdatePortalAccessInput } from '@/lib/schemas/portal'
@@ -146,7 +150,9 @@ async function insertDraftProposal(
   userId: string,
   data: import('@/lib/schemas/proposal').CreateProposalInputType,
 ): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
-  const totals = buildProposalTotalsPatch(data.items)
+  const items = ensureCalendarYearProration(data.items, new Date())
+  const totals = buildProposalTotalsPatch(items)
+  const automaticPaymentTerms = recurringPaymentTerms(items, new Date())
 
   const { data: proposal, error } = await supabase
     .from('proposals')
@@ -162,6 +168,7 @@ async function insertDraftProposal(
       valid_until: data.valid_until ?? null,
       notes: data.notes ?? null,
       legal_terms: DEFAULT_PROPOSAL_LEGAL_TERMS,
+      ...(automaticPaymentTerms ? { payment_schedule: 'custom', payment_terms: automaticPaymentTerms } : {}),
       created_by: userId,
     })
     .select('id')
@@ -174,7 +181,7 @@ async function insertDraftProposal(
 
   const { error: itemsError } = await supabase
     .from('proposal_items')
-    .insert(buildProposalItemRows(data.items, proposal.id))
+    .insert(buildProposalItemRows(items, proposal.id))
   if (itemsError) {
     log.error({ err: itemsError, proposalId: proposal.id }, 'create_proposal_items_failed')
     return { ok: false, error: itemsError.message }
@@ -364,6 +371,10 @@ export async function duplicateProposal(
     .order('position')
   if (itemsErr) return { ok: false, error: itemsErr.message }
 
+  const duplicatedItems = ensureCalendarYearProration(items ?? [], new Date())
+  const duplicatedTotals = buildProposalTotalsPatch(duplicatedItems)
+  const automaticPaymentTerms = recurringPaymentTerms(duplicatedItems, new Date())
+
   const { data: created, error: insertError } = await supabase
     .from('proposals')
     .insert({
@@ -373,9 +384,7 @@ export async function duplicateProposal(
       title: `Copia de ${source.title as string}`,
       status: 'draft',
       currency: (source.currency as string) ?? 'EUR',
-      subtotal: source.subtotal,
-      tax_amount: source.tax_amount,
-      total: source.total,
+      ...duplicatedTotals,
       valid_until: null,
       notes: source.notes,
       context_markdown: source.context_markdown,
@@ -386,8 +395,8 @@ export async function duplicateProposal(
       scope_modules: source.scope_modules,
       deliverables: source.deliverables,
       acceptance_criteria: source.acceptance_criteria,
-      payment_schedule: source.payment_schedule,
-      payment_terms: source.payment_terms,
+      payment_schedule: automaticPaymentTerms ? 'custom' : source.payment_schedule,
+      payment_terms: source.payment_terms ?? automaticPaymentTerms,
       change_management_terms: source.change_management_terms,
       created_by: user.id,
     })
@@ -398,9 +407,9 @@ export async function duplicateProposal(
     return { ok: false, error: insertError?.message ?? 'No se pudo duplicar la propuesta' }
   }
 
-  if ((items ?? []).length > 0) {
+  if (duplicatedItems.length > 0) {
     const { error: copyErr } = await supabase.from('proposal_items').insert(
-      (items ?? []).map((it, idx) => ({
+      duplicatedItems.map((it, idx) => ({
         proposal_id: created.id,
         position: idx,
         description: it.description,
@@ -453,7 +462,7 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
 
   const { data: current, error: readError } = await supabase
     .from('proposals')
-    .select('status')
+    .select('status, created_at, payment_schedule, payment_terms')
     .eq('id', id)
     .is('deleted_at', null)
     .maybeSingle()
@@ -461,6 +470,10 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
   if (!isProposalEditable(current.status)) {
     return { ok: false, error: 'La propuesta ya ha sido respondida y no se puede editar' }
   }
+
+  const persistedItems = items
+    ? ensureCalendarYearProration(items, current.created_at as string | null)
+    : undefined
 
   const patch: Record<string, unknown> = {}
   if (rest.title !== undefined) patch.title = rest.title
@@ -496,12 +509,30 @@ export async function updateProposal(input: unknown): Promise<UpdateResult> {
       : null
   }
 
-  if (items) {
+  if (
+    persistedItems &&
+    rest.payment_terms === undefined &&
+    current.payment_schedule === 'half_half' &&
+    typeof current.payment_terms === 'string' &&
+    current.payment_terms.includes('50 %')
+  ) {
+    const automaticPaymentTerms = recurringPaymentTerms(
+      persistedItems,
+      current.created_at as string | null,
+    )
+    if (automaticPaymentTerms) {
+      patch.payment_schedule = 'custom'
+      patch.payment_plan = []
+      patch.payment_terms = automaticPaymentTerms
+    }
+  }
+
+  if (persistedItems) {
     const { data, error: rpcError } = await supabase.rpc('update_proposal_items_versioned', {
       p_proposal_id: id,
       p_expected_version: expected_version,
       p_patch: patch,
-      p_items: items,
+      p_items: persistedItems,
     })
     if (rpcError) {
       if (rpcError.message === 'VERSION_CONFLICT') {

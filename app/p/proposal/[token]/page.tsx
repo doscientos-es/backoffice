@@ -19,7 +19,12 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Markdown } from '@/components/ui/markdown'
 import { formatAddress } from '@/lib/address'
 import { getCurrentUser } from '@/lib/auth'
-import { BILLING_CYCLE_LABELS, type BillingCycle, computeProposalTotals } from '@/lib/finance'
+import {
+  BILLING_CYCLE_LABELS,
+  type BillingCycle,
+  computeLineSubtotal,
+  computeProposalTotals,
+} from '@/lib/finance'
 import { scopedLogger } from '@/lib/logger'
 import { isPortalUnlocked } from '@/lib/portal/access'
 import { parseKeyPoints } from '@/lib/proposals/key-points'
@@ -29,6 +34,7 @@ import {
   selectedMaintenancePlan,
 } from '@/lib/proposals/maintenance'
 import { effectiveProposalTerms } from '@/lib/proposals/proposal-acceptance'
+import { ensureCalendarYearProration, recurringPaymentTerms } from '@/lib/proposals/recurring'
 import {
   PAYMENT_SCHEDULE_LABELS,
   type PaymentSchedule,
@@ -278,34 +284,45 @@ export default async function PortalProposalPage({
   // back-office for prospects that never went through onboarding.
   const clientBillingAddress = client
     ? formatAddress({
-        street: client.billing_address_street,
-        zip: client.billing_address_zip,
-        city: client.billing_address_city,
-        province: client.billing_address_province,
-        country: client.billing_address_country,
-      })
+      street: client.billing_address_street,
+      zip: client.billing_address_zip,
+      city: client.billing_address_city,
+      province: client.billing_address_province,
+      country: client.billing_address_country,
+    })
     : ''
   const needsFiscal = !client?.nif?.trim() || !clientBillingAddress || !client.name?.trim()
   const fiscalPrefill = client
     ? {
-        name: client.name ?? '',
-        nif: client.nif ?? '',
-        billing_address: clientBillingAddress,
-        contact_person: client.contact_person ?? '',
-        email: client.email ?? '',
-        phone: client.phone ?? '',
-      }
+      name: client.name ?? '',
+      nif: client.nif ?? '',
+      billing_address: clientBillingAddress,
+      contact_person: client.contact_person ?? '',
+      email: client.email ?? '',
+      phone: client.phone ?? '',
+    }
     : {
-        name: lead?.company ?? lead?.name ?? '',
-        nif: '',
-        billing_address: '',
-        contact_person: lead?.name ?? '',
-        email: lead?.email ?? '',
-        phone: lead?.phone ?? '',
-      }
+      name: lead?.company ?? lead?.name ?? '',
+      nif: '',
+      billing_address: '',
+      contact_person: lead?.name ?? '',
+      email: lead?.email ?? '',
+      phone: lead?.phone ?? '',
+    }
   const recipientName = client?.name ?? lead?.company ?? lead?.name ?? '—'
   const proposalNumber = (proposal.number as string | null) ?? 'Borrador'
-  const baseItems = (items ?? []) as unknown as ProposalItem[]
+  const rawItems = (items ?? []) as unknown as ProposalItem[]
+  const baseItems =
+    proposal.status === 'accepted'
+      ? rawItems
+      : (ensureCalendarYearProration(
+        rawItems,
+        (proposal.created_at as string | null) ?? null,
+      ) as ProposalItem[])
+  const displayBaseItems = baseItems.map((item) => ({
+    ...item,
+    subtotal: computeLineSubtotal(item),
+  }))
   const safeSpecs = (specs ?? []) as unknown as Array<{
     id: string
     title: string
@@ -322,7 +339,9 @@ export default async function PortalProposalPage({
   const deliverables = ((proposal.deliverables as string | null) ?? '').trim()
   const acceptanceCriteria = ((proposal.acceptance_criteria as string | null) ?? '').trim()
   const paymentSchedule = (proposal.payment_schedule as PaymentSchedule | null) ?? 'half_half'
-  const paymentTerms = (proposal.payment_terms as string | null) ?? null
+  const paymentTerms =
+    (proposal.payment_terms as string | null) ??
+    recurringPaymentTerms(baseItems, (proposal.created_at as string | null) ?? null)
   const changeManagementTerms = (proposal.change_management_terms as string | null) ?? null
   const maintenanceOffer = parseMaintenanceOffer(proposal.maintenance_options)
   const maintenancePlan = selectedMaintenancePlan(
@@ -330,8 +349,11 @@ export default async function PortalProposalPage({
     (proposal.maintenance_selected_plan_id as string | null) ?? null,
   )
   const safeItems = maintenancePlan
-    ? [...baseItems, maintenancePlanAsLineItem(maintenancePlan, maintenanceOffer.billing_cycle)]
-    : baseItems
+    ? [
+      ...displayBaseItems,
+      maintenancePlanAsLineItem(maintenancePlan, maintenanceOffer.billing_cycle),
+    ]
+    : displayBaseItems
 
   // Recompute totals on the fly so we can show separate buckets for one-time
   // and recurring lines. The stored `proposals.total` reflects the one-time

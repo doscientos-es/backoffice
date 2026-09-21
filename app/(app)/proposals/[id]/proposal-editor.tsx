@@ -41,6 +41,7 @@ import {
   type MaintenanceOffer,
   selectedMaintenancePlan,
 } from '@/lib/proposals/maintenance'
+import { ensureCalendarYearProration, recurringPaymentTerms } from '@/lib/proposals/recurring'
 import {
   DEFAULT_CHANGE_MANAGEMENT_TERMS,
   PAYMENT_SCHEDULE_LABELS,
@@ -88,6 +89,7 @@ export type ProposalEditorProps = {
   teamMembers: ProposalTeamMember[]
   initialTeamMemberIds: string[]
   initialItems: EditableItem[]
+  initialCreatedAt?: string | null
   initialAttachments: AttachmentItem[]
   /** Optimistic-concurrency token captured with the record. */
   initialVersion: number
@@ -131,6 +133,7 @@ export function ProposalEditor({
   teamMembers,
   initialTeamMemberIds,
   initialItems,
+  initialCreatedAt,
   initialAttachments,
   initialVersion,
   locked,
@@ -157,16 +160,39 @@ export function ProposalEditor({
   const [scopeModules, setScopeModules] = useState(initialScopeModules)
   const [deliverables, setDeliverables] = useState(initialDeliverables ?? '')
   const [acceptanceCriteria, setAcceptanceCriteria] = useState(initialAcceptanceCriteria ?? '')
+  const initialBillingItems = ensureCalendarYearProration(initialItems, initialCreatedAt)
+  const initialRecurringTerms = recurringPaymentTerms(initialBillingItems, initialCreatedAt)
+  const initialSchedule = initialPaymentSchedule ?? 'half_half'
+  const hasDefaultPaymentTerms =
+    !initialPaymentTerms ||
+    (initialSchedule !== 'custom' &&
+      initialPaymentTerms === PAYMENT_SCHEDULE_TEMPLATES[initialSchedule])
+  const useAutomaticRecurringTerms = Boolean(initialRecurringTerms && hasDefaultPaymentTerms)
+  const hasRecurringItems = initialBillingItems.some(
+    (item) => item.billing_cycle && item.billing_cycle !== 'none',
+  )
   const [paymentSchedule, setPaymentSchedule] = useState<PaymentSchedule>(
-    initialPaymentSchedule ?? 'half_half',
+    hasRecurringItems && initialPaymentSchedule === 'half_half'
+      ? 'custom'
+      : (initialPaymentSchedule ?? 'half_half'),
   )
   const [paymentPlan, setPaymentPlan] = useState<PaymentPlanItem[]>(
-    initialPaymentPlan.length > 0
-      ? initialPaymentPlan
-      : paymentPlanForSchedule(initialPaymentSchedule ?? 'half_half'),
+    hasRecurringItems
+      ? []
+      : initialPaymentPlan.length > 0
+        ? initialPaymentPlan
+        : paymentPlanForSchedule(initialPaymentSchedule ?? 'half_half'),
   )
   const [paymentTerms, setPaymentTerms] = useState(
-    initialPaymentTerms ?? PAYMENT_SCHEDULE_TEMPLATES.half_half,
+    (useAutomaticRecurringTerms ? initialRecurringTerms : initialPaymentTerms) ??
+    PAYMENT_SCHEDULE_TEMPLATES.half_half,
+  )
+  const [paymentTermsCustomized, setPaymentTermsCustomized] = useState(
+    Boolean(
+      initialPaymentTerms &&
+      !useAutomaticRecurringTerms &&
+      !initialPaymentTerms.includes('Las cuotas recurrentes se facturarán'),
+    ),
   )
   const [changeManagementTerms, setChangeManagementTerms] = useState(
     initialChangeManagementTerms ?? DEFAULT_CHANGE_MANAGEMENT_TERMS,
@@ -182,10 +208,21 @@ export function ProposalEditor({
   const [activeStep, setActiveStep] = useState(0)
   const stepTabRefs = useRef<Array<HTMLButtonElement | null>>([])
   const [items, setItems] = useState<EditableItem[]>(
-    initialItems.length > 0
-      ? initialItems.map((it) => ({ ...it, id: it.id || crypto.randomUUID() }))
+    initialBillingItems.length > 0
+      ? initialBillingItems.map((it) => ({ ...it, id: it.id || crypto.randomUUID() }))
       : [{ ...EMPTY_LINE_ITEM, id: crypto.randomUUID() } as EditableItem],
   )
+
+  function handleItemsChange(nextItems: LineItem[]) {
+    const next = ensureCalendarYearProration(nextItems, initialCreatedAt) as EditableItem[]
+    setItems(next)
+    if (!paymentTermsCustomized) {
+      setPaymentTerms(
+        recurringPaymentTerms(next, initialCreatedAt) ??
+        PAYMENT_SCHEDULE_TEMPLATES[paymentSchedule === 'custom' ? 'half_half' : paymentSchedule],
+      )
+    }
+  }
 
   const payload = useMemo(() => {
     const { problems, solutions } = unzipPairs(pairs)
@@ -709,7 +746,7 @@ export function ProposalEditor({
                   <div className="border-border min-w-0 overflow-hidden rounded-lg border">
                     <LineItemsTable
                       items={items}
-                      onChange={setItems}
+                      onChange={handleItemsChange}
                       locked={locked}
                       showBillingCycle
                     />
@@ -741,7 +778,10 @@ export function ProposalEditor({
                       </Select>
                       <Textarea
                         value={paymentTerms}
-                        onChange={(event) => setPaymentTerms(event.target.value)}
+                        onChange={(event) => {
+                          setPaymentTermsCustomized(true)
+                          setPaymentTerms(event.target.value)
+                        }}
                         disabled={locked}
                         rows={4}
                         placeholder="Condiciones de pago"
