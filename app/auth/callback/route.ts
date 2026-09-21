@@ -63,6 +63,14 @@ export async function GET(request: NextRequest) {
   // Google profile picture. Falls back to GitHub avatar via memberAvatarUrl()
   // when avatar_url is null.
   const user = data?.user
+  if (user?.email) {
+    const admin = createAdminClient()
+    await admin
+      .from('client_portal_access')
+      .update({ user_id: user.id, updated_at: new Date().toISOString() })
+      .eq('email', user.email.toLowerCase())
+      .is('user_id', null)
+  }
   if (user?.app_metadata?.provider === 'google') {
     const googleAvatar =
       (user.user_metadata?.avatar_url as string | undefined) ??

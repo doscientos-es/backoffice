@@ -49,7 +49,7 @@ describe('proposal maintenance offer', () => {
     ).toBe('essential')
   })
 
-  it('turns the selected plan into a monthly proposal line', () => {
+  it('turns the selected plan into a recurring proposal line', () => {
     const plan = selectedMaintenancePlan(DEFAULT_MAINTENANCE_OFFER, 'growth')
     expect(plan?.name).toBe('Crecimiento')
     expect(maintenancePlanAsLineItem(plan!)).toMatchObject({
@@ -58,6 +58,7 @@ describe('proposal maintenance offer', () => {
       vat_rate: 21,
       billing_cycle: 'monthly',
     })
+    expect(maintenancePlanAsLineItem(plan!, 'yearly').billing_cycle).toBe('yearly')
   })
 
   it('does not fabricate a selection for an unknown or omitted plan', () => {

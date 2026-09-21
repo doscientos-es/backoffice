@@ -861,7 +861,7 @@ export function ProposalEditor({
                         <p className="text-muted-foreground text-xs">Mantenimiento</p>
                         <p className="mt-1 text-lg font-semibold">
                           {selectedMaintenance
-                            ? `${selectedMaintenance.name} · ${formatEUR(selectedMaintenance.monthly_price)}/mes`
+                            ? `${selectedMaintenance.name} · ${formatEUR(selectedMaintenance.monthly_price)} / ${maintenanceOptions.billing_cycle === 'monthly' ? 'mes' : maintenanceOptions.billing_cycle === 'quarterly' ? 'trimestre' : 'año'}`
                             : 'Pendiente de elegir'}
                         </p>
                       </div>
@@ -898,7 +898,7 @@ export function ProposalEditor({
                   <span className="text-muted-foreground">Mantenimiento</span>
                   <span className="text-right font-medium">
                     {selectedMaintenance
-                      ? `${formatEUR(selectedMaintenance.monthly_price)}/mes`
+                      ? `${formatEUR(selectedMaintenance.monthly_price)} / ${maintenanceOptions.billing_cycle === 'monthly' ? 'mes' : maintenanceOptions.billing_cycle === 'quarterly' ? 'trimestre' : 'año'}`
                       : 'Pendiente'}
                   </span>
                 </div>

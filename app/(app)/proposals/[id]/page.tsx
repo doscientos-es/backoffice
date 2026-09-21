@@ -27,7 +27,8 @@ import { requireUser } from '@/lib/auth'
 import { hasCompleteFiscalData } from '@/lib/crm/conversion'
 import { isAIEnabled } from '@/lib/env'
 import { parseKeyPoints, toEditableKeyPoints } from '@/lib/proposals/key-points'
-import { parseMaintenanceOffer } from '@/lib/proposals/maintenance'
+import { parseMaintenanceOffer, selectedMaintenancePlan } from '@/lib/proposals/maintenance'
+import { recurringAmount } from '@/lib/proposals/recurring'
 import {
   type PaymentSchedule,
   parsePaymentPlan,
@@ -40,6 +41,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { formatDate, formatEUR } from '@/lib/utils'
 
 import { updateProposalPortalAccess } from '../actions'
+import { CreateSubscriptionFromProposalButton } from './create-subscription-from-proposal-button'
 import { ProposalMoreActions } from './delete-proposal-button'
 import { GenerateInvoiceButton } from './generate-invoice-button'
 import { LinkProjectButton } from './link-project-button'
@@ -393,6 +395,20 @@ export default async function ProposalDetailPage({
       job_title: string | null
     }>
   ).filter((member) => selectedTeamIds.includes(member.id))
+  const maintenanceOffer = parseMaintenanceOffer(proposal.maintenance_options)
+  const selectedMaintenance = selectedMaintenancePlan(
+    maintenanceOffer,
+    (proposal.maintenance_selected_plan_id as string | null) ?? null,
+  )
+  const { data: maintenanceSubscription } =
+    status === 'accepted' && selectedMaintenance && proposal.client_id
+      ? await supabase
+          .from('subscriptions')
+          .select('id')
+          .eq('proposal_id', id)
+          .is('deleted_at', null)
+          .maybeSingle()
+      : { data: null }
 
   return (
     <div className="flex flex-col gap-6">
@@ -564,14 +580,33 @@ export default async function ProposalDetailPage({
               </Card>
 
               {status === 'accepted' ? (
-                <ProposalPaymentPlan
-                  proposalId={id}
-                  initialPlan={paymentPlan}
-                  initialVersion={Number(proposal.version)}
-                  total={Number(proposal.total ?? 0)}
-                  canEdit={user.role !== 'viewer'}
-                  invoices={((paymentPlanInvoices ?? []) as Array<Record<string, unknown>>).flatMap(
-                    (invoice) => {
+                <>
+                  {selectedMaintenance && !maintenanceSubscription ? (
+                    <CreateSubscriptionFromProposalButton
+                      proposalId={id}
+                      planName={selectedMaintenance.name}
+                      cycleLabel={
+                        maintenanceOffer.billing_cycle === 'monthly'
+                          ? 'mes'
+                          : maintenanceOffer.billing_cycle === 'quarterly'
+                            ? 'trimestre'
+                            : 'año'
+                      }
+                      amount={recurringAmount(
+                        selectedMaintenance.monthly_price,
+                        maintenanceOffer.billing_cycle,
+                      )}
+                    />
+                  ) : null}
+                  <ProposalPaymentPlan
+                    proposalId={id}
+                    initialPlan={paymentPlan}
+                    initialVersion={Number(proposal.version)}
+                    total={Number(proposal.total ?? 0)}
+                    canEdit={user.role !== 'viewer'}
+                    invoices={(
+                      (paymentPlanInvoices ?? []) as Array<Record<string, unknown>>
+                    ).flatMap((invoice) => {
                       const planItemId = invoice.proposal_payment_plan_item_id as string | null
                       if (!planItemId) return []
                       return [
@@ -582,9 +617,9 @@ export default async function ProposalDetailPage({
                           status: invoice.status as string,
                         },
                       ]
-                    },
-                  )}
-                />
+                    })}
+                  />
+                </>
               ) : null}
 
               <SectionBoundary label="No se pudo cargar la documentación técnica">

@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button'
 import { SectionBoundary } from '@/components/ui/error-boundary'
 import { requirePageRole } from '@/lib/auth'
 import { financeRangeToDates, parseFinanceRange } from '@/lib/finance/range'
+import { getCommandCenterMetrics } from '@/lib/finance/command-center'
 
 import { FinanceDetails } from './_components/finance-details'
 import { FinanceKpis } from './_components/finance-kpis'
 import { FinanceOverviewChart } from './_components/finance-overview-chart'
 import { FinanceRangeSelector } from './_components/finance-range-selector'
 import { ChartSkeleton, DetailsSkeleton, KpisSkeleton } from './_components/finance-skeletons'
+import { CommandCenter } from './_components/command-center'
 
 export const metadata: Metadata = { title: 'Finanzas · doscientos' }
 export const dynamic = 'force-dynamic'
@@ -23,6 +25,7 @@ export default async function FinancePage({ searchParams }: { searchParams: Sear
   const sp = await searchParams
   const range = parseFinanceRange(sp.range)
   const { since, until, label: rangeLabel } = financeRangeToDates(range)
+  const commandMetrics = await getCommandCenterMetrics(since, until)
 
   return (
     <div className="flex flex-col gap-6">
@@ -48,6 +51,8 @@ export default async function FinancePage({ searchParams }: { searchParams: Sear
       />
 
       <FinanceRangeSelector current={range} />
+
+      <CommandCenter metrics={commandMetrics} />
 
       <SectionBoundary
         key={`kpis-${since}-${until}`}

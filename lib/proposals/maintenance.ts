@@ -25,6 +25,8 @@ export const maintenancePlanInput = z.object({
     .default([]),
 })
 
+const maintenanceBillingCycleInput = z.enum(['monthly', 'quarterly', 'yearly'])
+
 export const maintenanceOfferInput = z
   .object({
     enabled: z.boolean().default(true),
@@ -32,6 +34,7 @@ export const maintenanceOfferInput = z
     intro: z.string().trim().min(1).max(800),
     plans: z.array(maintenancePlanInput).min(1).max(MAINTENANCE_LIMITS.maxPlans),
     recommended_plan_id: z.string().min(1).max(64).optional(),
+    billing_cycle: maintenanceBillingCycleInput.default('monthly'),
   })
   .superRefine((offer, ctx) => {
     if (
@@ -56,6 +59,7 @@ export const DEFAULT_MAINTENANCE_OFFER: MaintenanceOffer = {
   intro:
     'Tu web al día, sin sorpresas. Seguridad, soporte y mejoras con un alcance claro para que elijas cuánto quieres que nos impliquemos.',
   recommended_plan_id: 'growth',
+  billing_cycle: 'monthly',
   plans: [
     {
       id: 'essential',
@@ -146,7 +150,10 @@ export function selectedMaintenancePlan(
   return offer.plans.find((plan) => plan.id === selectedPlanId) ?? null
 }
 
-export function maintenancePlanAsLineItem(plan: MaintenancePlan) {
+export function maintenancePlanAsLineItem(
+  plan: MaintenancePlan,
+  billingCycle: BillingCycle = 'monthly',
+) {
   return {
     id: `maintenance-${plan.id}`,
     description: `Mantenimiento web · ${plan.name}`,
@@ -154,6 +161,6 @@ export function maintenancePlanAsLineItem(plan: MaintenancePlan) {
     unit_price: plan.monthly_price,
     vat_rate: plan.vat_rate,
     subtotal: plan.monthly_price,
-    billing_cycle: 'monthly' as BillingCycle,
+    billing_cycle: billingCycle,
   }
 }

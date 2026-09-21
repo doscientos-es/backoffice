@@ -5,7 +5,9 @@ import { useEffect, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { BILLING_CYCLE_LABELS } from '@/lib/finance'
 import {
   MAINTENANCE_LIMITS,
   type MaintenanceOffer,
@@ -162,6 +164,30 @@ export function MaintenanceOfferEditor({
                 aria-label="Introducción de mantenimiento"
                 className="bg-background min-h-20 resize-y text-sm"
               />
+            </div>
+            <div className="text-muted-foreground flex flex-col gap-1.5 text-xs font-medium lg:col-span-2">
+              <span>Cadencia de facturación</span>
+              <Select
+                value={offer.billing_cycle}
+                onChange={(event) =>
+                  onChange({
+                    ...offer,
+                    billing_cycle: event.target.value as MaintenanceOffer['billing_cycle'],
+                  })
+                }
+                disabled={locked}
+                aria-label="Cadencia de facturación del mantenimiento"
+                className="bg-background"
+              >
+                {(['monthly', 'quarterly', 'yearly'] as const).map((cycle) => (
+                  <option key={cycle} value={cycle}>
+                    {BILLING_CYCLE_LABELS[cycle]}
+                  </option>
+                ))}
+              </Select>
+              <span className="text-muted-foreground text-[11px] font-normal">
+                La facturación anual se ancla al 1 de enero y prorratea el primer periodo.
+              </span>
             </div>
           </div>
           <div className="flex flex-col gap-4">

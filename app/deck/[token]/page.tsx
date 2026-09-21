@@ -198,12 +198,15 @@ export default async function DeckPage({ params }: { params: Promise<{ token: st
     client_logo_url: client?.logo_url ?? null,
   }
 
+  const maintenanceOffer = parseMaintenanceOffer(proposal.maintenance_options)
   const maintenancePlan = selectedMaintenancePlan(
-    parseMaintenanceOffer(proposal.maintenance_options),
+    maintenanceOffer,
     (proposal.maintenance_selected_plan_id as string | null) ?? null,
   )
   const deckItems = (items ?? []) as unknown as DeckProposalItem[]
-  if (maintenancePlan) deckItems.push(maintenancePlanAsLineItem(maintenancePlan))
+  if (maintenancePlan) {
+    deckItems.push(maintenancePlanAsLineItem(maintenancePlan, maintenanceOffer.billing_cycle))
+  }
   const teamById = new Map(
     ((team ?? []) as unknown as DeckTeamMember[]).map((member) => [member.id, member]),
   )

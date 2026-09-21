@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Markdown } from '@/components/ui/markdown'
+import { BILLING_CYCLE_LABELS, type BillingCycle } from '@/lib/finance'
 import type { PaymentPlanItem, ScopeModule } from '@/lib/proposals/scope'
 import { formatDate, formatEUR } from '@/lib/utils'
 
@@ -106,7 +107,7 @@ export function ProposalOverview({
                     <p className="text-muted-foreground mt-1 text-xs">
                       {item.quantity} × {formatEUR(item.unit_price)} · IVA {item.vat_rate} %
                       {item.billing_cycle && item.billing_cycle !== 'none'
-                        ? ` · ${item.billing_cycle}`
+                        ? ` · ${BILLING_CYCLE_LABELS[item.billing_cycle as BillingCycle] ?? item.billing_cycle}`
                         : ''}
                     </p>
                   </div>
