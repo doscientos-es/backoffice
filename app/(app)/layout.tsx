@@ -26,7 +26,7 @@ export default async function AppLayout({
     user.role === 'owner' || user.role === 'admin' ? await hasMfaAccess(user.id) : true
 
   return (
-    <div className="app-shell bg-background flex h-screen overflow-hidden">
+    <div className="app-shell bg-background flex h-dvh overflow-hidden">
       <Sidebar user={user} />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header className="app-mobile-header border-border h-14 shrink-0 items-center gap-2 border-b px-3">
@@ -40,7 +40,7 @@ export default async function AppLayout({
           </Link>
           <CommandPaletteTrigger variant="icon" className="ml-auto" />
         </header>
-        <main className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">{children}</main>
+        <main className="min-h-0 flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">{children}</main>
       </div>
       {modal}
       <NavProgress />

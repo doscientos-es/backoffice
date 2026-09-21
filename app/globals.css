@@ -236,6 +236,14 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* The authenticated shell owns vertical scrolling through its main region.
+   Prevent the document from becoming a second scroll container once page data
+   expands after loading, which would also move the sidebar. */
+html:has(.app-shell),
+body:has(.app-shell) {
+  overflow: hidden;
+}
+
 /* Keep standard dialogs compact before Tailwind's `sm` breakpoint. The task quick
  * view remains full-width because it is a dedicated working surface. */
 @media (max-width: 39.999rem) {
