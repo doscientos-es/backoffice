@@ -31,17 +31,27 @@ export const AddWorkLogInput = z
   .object({
     project_id: z.string().uuid(),
     work_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha no válida'),
-    start_time: TimeString,
-    end_time: TimeString,
+    start_time: TimeString.optional(),
+    end_time: TimeString.optional(),
+    hours: z.number().positive().max(24).optional(),
     note: z.string().max(500).optional(),
   })
   .superRefine((v, ctx) => {
-    if (computeHoursFromRange(v.start_time, v.end_time) === null) {
+    const hasStart = !!v.start_time
+    const hasEnd = !!v.end_time
+    if (hasStart !== hasEnd) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['end_time'],
-        message: 'La hora de fin debe ser posterior a la de inicio.',
+        message: 'Indica inicio y fin, o introduce directamente las horas.',
       })
+      return
+    }
+    if (!v.hours && !hasStart) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['hours'], message: 'Indica las horas trabajadas.' })
+    }
+    if (hasStart && computeHoursFromRange(v.start_time!, v.end_time!) === null) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['end_time'], message: 'La hora de fin debe ser posterior a la de inicio.' })
     }
   })
 export type AddWorkLogInputType = z.infer<typeof AddWorkLogInput>

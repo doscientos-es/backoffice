@@ -1,11 +1,11 @@
 'use client'
 
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@doscientos/ui'
 import { Bell, CheckSquare, Presentation, Video } from 'lucide-react'
 import { useEffect, useState, useTransition } from 'react'
 
 import { scheduleLeadMeeting } from '@/app/(app)/leads/actions'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@doscientos/ui'
 import { EntityCombobox } from '@/components/ui/entity-combobox'
 import { EntityMultiCombobox } from '@/components/ui/entity-multi-combobox'
 import { createCalendarEvent } from '@/lib/calendar/actions'
@@ -255,7 +255,7 @@ export function CalendarCreateDialog({
                   : kind === 'event'
                     ? 'Nombre de la charla o evento…'
                     : kind === 'google_meeting' && selectedContact
-                      ? `Reunión con ${selectedContact.name}`
+                      ? `Consultoría ${selectedContact.name} - Doscientos`
                       : 'Asunto de la reunión…'
             }
             value={title}
@@ -445,7 +445,7 @@ export function CalendarCreateDialog({
                 onChange={(id) => {
                   setSelectedLeadId(id)
                   const contact = leads.find((l) => l.id === id)
-                  if (contact && !title) setTitle(`Reunión con ${contact.name}`)
+                  if (contact && !title) setTitle(`Consultoría ${contact.name} - Doscientos`)
                 }}
                 placeholder="Buscar contacto…"
               />

@@ -152,17 +152,18 @@ function QuickAddHours({ projectId }: { projectId: string }) {
   const [date, setDate] = useState(todayISO)
   const [start, setStart] = useState('')
   const [end, setEnd] = useState('')
+  const [directHours, setDirectHours] = useState('')
   const [note, setNote] = useState('')
   const [adding, startAdd] = useTransition()
 
-  const duration = start && end ? computeHoursFromRange(start, end) : null
+  const duration = start && end ? computeHoursFromRange(start, end) : Number(directHours) || null
 
   function onAdd() {
-    if (!start || !end) {
-      sileo.error({ title: 'Indica hora de inicio y fin.' })
+    if (!duration || duration <= 0) {
+      sileo.error({ title: 'Indica las horas o un rango de inicio y fin.' })
       return
     }
-    if (duration === null) {
+    if (start && end && duration === null) {
       sileo.error({ title: 'La hora de fin debe ser posterior a la de inicio.' })
       return
     }
@@ -170,8 +171,9 @@ function QuickAddHours({ projectId }: { projectId: string }) {
       const res = await addWorkLog({
         project_id: projectId,
         work_date: date,
-        start_time: start,
-        end_time: end,
+        start_time: start || undefined,
+        end_time: end || undefined,
+        hours: start && end ? undefined : duration,
         note,
       })
       if (!res.ok) {
@@ -181,6 +183,7 @@ function QuickAddHours({ projectId }: { projectId: string }) {
       sileo.success({ title: 'Horas registradas.' })
       setStart('')
       setEnd('')
+      setDirectHours('')
       setNote('')
     })
   }
@@ -224,6 +227,17 @@ function QuickAddHours({ projectId }: { projectId: string }) {
           </span>
         )}
       </div>
+      <Input
+        type="number"
+        min="0.25"
+        max="24"
+        step="0.25"
+        value={directHours}
+        onChange={(e) => { setDirectHours(e.target.value); if (e.target.value) { setStart(''); setEnd('') } }}
+        placeholder="Horas directas (p. ej. 2)"
+        className="h-8 text-xs tabular-nums"
+        aria-label="Horas directas"
+      />
       <div className="flex gap-2">
         <Input
           value={note}
@@ -233,7 +247,7 @@ function QuickAddHours({ projectId }: { projectId: string }) {
           className="h-8 flex-1 text-xs"
           aria-label="Nota"
         />
-        <Button size="sm" onClick={onAdd} disabled={adding || !start || !end}>
+        <Button size="sm" onClick={onAdd} disabled={adding || !duration}>
           Añadir
         </Button>
       </div>

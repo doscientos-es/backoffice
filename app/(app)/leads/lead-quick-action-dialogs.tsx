@@ -276,7 +276,7 @@ export function QMeetDialog({
 }) {
   const [open, setOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
-  const [title, setTitle] = useState(`Reunión con ${leadName}`)
+  const [title, setTitle] = useState(`Consultoría ${leadName} - Doscientos`)
   const [start, setStart] = useState(defaultMeetingStart)
   const [duration, setDuration] = useState<MeetingDuration>(DEFAULT_MEETING_DURATION)
   const [description, setDescription] = useState('')
@@ -481,7 +481,7 @@ export function QMeetNowDialog({
     const attendeeEmails = [...(leadEmail ? [leadEmail] : []), ...members.emails(meetMembers)]
     const res = await scheduleLeadMeeting({
       leadId,
-      title: `Reunión con ${leadName}`,
+      title: `Consultoría ${leadName} - Doscientos`,
       description: description.trim() || undefined,
       start: now.toISOString(),
       end: endTime.toISOString(),

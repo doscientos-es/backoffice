@@ -108,6 +108,7 @@ export function WorkLogSection({
   const [date, setDate] = useState(today)
   const [startTime, setStartTime] = useState('')
   const [endTime, setEndTime] = useState('')
+  const [directHours, setDirectHours] = useState('')
   const [note, setNote] = useState('')
   const [adding, startAdd] = useTransition()
 
@@ -130,7 +131,7 @@ export function WorkLogSection({
   const accruedAmount = isHourly ? totalHours * rate : null
   const effectiveRate = totalHours > 0 ? invoicedTotal / totalHours : null
 
-  const addDuration = startTime && endTime ? computeHoursFromRange(startTime, endTime) : null
+  const addDuration = startTime && endTime ? computeHoursFromRange(startTime, endTime) : Number(directHours) || null
   const editDuration = editStart && editEnd ? computeHoursFromRange(editStart, editEnd) : null
 
   function onCopy() {
@@ -154,16 +155,17 @@ export function WorkLogSection({
   }
 
   function onAdd() {
-    if (addDuration === null) {
-      sileo.error({ title: 'La hora de fin debe ser posterior a la de inicio.' })
+    if (addDuration === null || addDuration <= 0) {
+      sileo.error({ title: 'Indica las horas trabajadas o un rango válido.' })
       return
     }
     startAdd(async () => {
       const res = await addWorkLog({
         project_id: projectId,
         work_date: date,
-        start_time: startTime,
-        end_time: endTime,
+        start_time: startTime || undefined,
+        end_time: endTime || undefined,
+        hours: startTime && endTime ? undefined : addDuration,
         note,
       })
       if (!res.ok) {
@@ -172,6 +174,7 @@ export function WorkLogSection({
       }
       setStartTime('')
       setEndTime('')
+      setDirectHours('')
       setNote('')
     })
   }
@@ -266,6 +269,18 @@ export function WorkLogSection({
                 aria-label="Hora de fin"
               />
             </div>
+            <span className="text-muted-foreground pb-2 text-xs">o</span>
+            <Input
+              type="number"
+              min="0.25"
+              max="24"
+              step="0.25"
+              value={directHours}
+              onChange={(e) => { setDirectHours(e.target.value); if (e.target.value) { setStartTime(''); setEndTime('') } }}
+              placeholder="Horas"
+              className="w-24 tabular-nums"
+              aria-label="Horas trabajadas"
+            />
             <span className="text-muted-foreground pb-2 text-sm tabular-nums">
               {addDuration !== null ? formatHours(addDuration) : '—'}
             </span>

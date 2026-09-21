@@ -21,16 +21,16 @@ export const addWorkLog = defineAction({
   roles: ['owner', 'admin', 'member'],
   revalidate: (_payload, input) => [`/projects/${input.project_id}`],
   handler: async (input, { user }) => {
-    const hours = computeHoursFromRange(input.start_time, input.end_time)
-    if (hours === null) throw new Error('Rango horario no válido')
+    const hours = input.hours ?? computeHoursFromRange(input.start_time!, input.end_time!)
+    if (hours === null || hours <= 0) throw new Error('Horas no válidas')
 
     const supabase = await createServerClient()
     const { error } = await supabase.from('work_logs').insert({
       project_id: input.project_id,
       member_id: user.id,
       work_date: input.work_date,
-      start_time: input.start_time,
-      end_time: input.end_time,
+      start_time: input.start_time || null,
+      end_time: input.end_time || null,
       hours,
       note: input.note?.trim() || null,
     })

@@ -34,7 +34,7 @@ export async function getProjectPortfolio(): Promise<PortfolioRow[]> {
         .select('id, name, status, client_id, clients(id, name)')
         .order('name'),
     ),
-    notDeleted(supabase.from('work_logs').select('project_id, hours')),
+    notDeleted(supabase.from('work_logs').select('project_id, member_id, hours, team_members:member_id(internal_hourly_cost)')),
     notDeleted(
       supabase
         .from('invoices')
@@ -52,16 +52,22 @@ export async function getProjectPortfolio(): Promise<PortfolioRow[]> {
     supabase.from('settings').select('internal_hourly_cost').eq('id', 1).maybeSingle(),
   ])
 
-  const hourlyCost = Number(
+  const defaultHourlyCost = Number(
     (settingsRow as { internal_hourly_cost?: number | string | null } | null)
       ?.internal_hourly_cost ?? 0,
   )
 
   // Build lookup maps for O(n) aggregation
   const hoursMap = new Map<string, number>()
+  const laborCostMap = new Map<string, number>()
   for (const wl of workLogs ?? []) {
     const pid = wl.project_id as string
-    hoursMap.set(pid, (hoursMap.get(pid) ?? 0) + Number(wl.hours ?? 0))
+    const hours = Number(wl.hours ?? 0)
+    const member = wl.team_members as { internal_hourly_cost?: number | string | null } | { internal_hourly_cost?: number | string | null }[] | null
+    const memberCost = Array.isArray(member) ? member[0]?.internal_hourly_cost : member?.internal_hourly_cost
+    const cost = Number(memberCost ?? defaultHourlyCost)
+    hoursMap.set(pid, (hoursMap.get(pid) ?? 0) + hours)
+    laborCostMap.set(pid, (laborCostMap.get(pid) ?? 0) + hours * cost)
   }
 
   const revenueMap = new Map<string, number>()
@@ -86,10 +92,12 @@ export async function getProjectPortfolio(): Promise<PortfolioRow[]> {
       | null
     const client = Array.isArray(rawClient) ? (rawClient[0] ?? null) : rawClient
 
+    const hours = hoursMap.get(pid) ?? 0
+    const weightedHourlyCost = hours > 0 ? (laborCostMap.get(pid) ?? 0) / hours : defaultHourlyCost
     const profitability = computeProjectProfitability({
       revenue: revenueMap.get(pid) ?? 0,
-      hours: hoursMap.get(pid) ?? 0,
-      hourlyCost,
+      hours,
+      hourlyCost: weightedHourlyCost,
       expenses: expensesMap.get(pid) ?? 0,
     })
 
