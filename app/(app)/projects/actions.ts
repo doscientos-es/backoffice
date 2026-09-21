@@ -239,7 +239,11 @@ export async function publishProjectPortal(input: unknown) {
       portal_invite_resend_id: null,
     })
     .eq('id', project.id)
-  if (!parsed.data.resend) claim = claim.is('portal_invite_sent_at', null)
+  if (!parsed.data.resend) {
+    claim = project.portal_invite_sent_at
+      ? claim.eq('portal_invite_sent_at', project.portal_invite_sent_at)
+      : claim.is('portal_invite_sent_at', null)
+  }
   const { data: claimed, error: claimError } = await claim.select('id').maybeSingle()
   if (claimError || !claimed) {
     return { ok: false as const, error: 'El portal ya está siendo publicado' }
