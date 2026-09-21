@@ -112,6 +112,19 @@ export async function cancelInvoicePaymentFollowUp(
   if (error) throw new Error(error.message);
 }
 
+/** Removes the payment reminder once the invoice has been fully paid. */
+export async function deleteInvoicePaymentFollowUp(
+  supabase: DbClient,
+  invoiceId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("invoice_automations")
+    .delete()
+    .eq("invoice_id", invoiceId)
+    .eq("kind", "payment_follow_up");
+  if (error) throw new Error(error.message);
+}
+
 export async function rescheduleInvoicePaymentFollowUp(
   supabase: DbClient,
   invoiceId: string,

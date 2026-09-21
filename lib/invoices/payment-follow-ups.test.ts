@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { scheduleInvoicePaymentFollowUp } from "./payment-follow-ups";
+import {
+  deleteInvoicePaymentFollowUp,
+  scheduleInvoicePaymentFollowUp,
+} from "./payment-follow-ups";
 
 const INVOICE_ID = "11111111-1111-1111-1111-111111111111";
 
@@ -11,11 +14,25 @@ function makeBuilder(result: unknown) {
     is: vi.fn(() => builder),
     order: vi.fn(() => builder),
     limit: vi.fn(() => builder),
+    delete: vi.fn(() => builder),
     maybeSingle: vi.fn(async () => result),
     upsert: vi.fn(async () => ({ error: null })),
   };
   return builder;
 }
+
+describe("deleteInvoicePaymentFollowUp", () => {
+  it("deletes the reminder regardless of its current delivery status", async () => {
+    const automationBuilder = makeBuilder({ error: null });
+    const supabase = { from: vi.fn(() => automationBuilder) };
+
+    await deleteInvoicePaymentFollowUp(supabase as never, INVOICE_ID);
+
+    expect(automationBuilder.delete).toHaveBeenCalledOnce();
+    expect(automationBuilder.eq).toHaveBeenNthCalledWith(1, "invoice_id", INVOICE_ID);
+    expect(automationBuilder.eq).toHaveBeenNthCalledWith(2, "kind", "payment_follow_up");
+  });
+});
 
 describe("scheduleInvoicePaymentFollowUp", () => {
   it("anchors the reminder to the actual client delivery, not the draft dates", async () => {

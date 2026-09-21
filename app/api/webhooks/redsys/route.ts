@@ -10,6 +10,7 @@ import {
   verifyRedsysSignature,
 } from '@/lib/integrations/redsys'
 import { createDepositInvoice } from '@/lib/invoices/create-deposit-invoice'
+import { deleteInvoicePaymentFollowUp } from '@/lib/invoices/payment-follow-ups'
 import { scopedLogger } from '@/lib/logger'
 import { dispatchNotifications } from '@/lib/notifications/dispatch'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -130,12 +131,22 @@ export async function POST(req: Request) {
         } else {
           const isFullyPaid = totalPaid >= Number(invoice.total) - 0.01
 
-          if (invoice.status !== 'paid' && isFullyPaid) {
-            await supabase
-              .from('invoices')
-              .update({ status: 'paid', paid_at: new Date().toISOString(), payment_method: 'card' })
-              .eq('id', invoice.id)
-            log.info({ invoiceId: invoice.id, totalPaid }, 'invoice_marked_as_paid')
+          if (isFullyPaid) {
+            if (invoice.status !== 'paid') {
+              await supabase
+                .from('invoices')
+                .update({ status: 'paid', paid_at: new Date().toISOString(), payment_method: 'card' })
+                .eq('id', invoice.id)
+              log.info({ invoiceId: invoice.id, totalPaid }, 'invoice_marked_as_paid')
+            }
+            try {
+              await deleteInvoicePaymentFollowUp(supabase, invoice.id as string)
+            } catch (error) {
+              log.warn(
+                { err: error, invoiceId: invoice.id },
+                'invoice_payment_follow_up_delete_failed',
+              )
+            }
           }
 
           // Notify the team

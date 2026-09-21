@@ -18,7 +18,7 @@ import { computeLineTotals } from '@/lib/finance'
 import { backupInvoiceToDrive } from '@/lib/google/backup'
 import { pushMetaConversion } from '@/lib/integrations/meta-capi'
 import {
-  cancelInvoicePaymentFollowUp,
+  deleteInvoicePaymentFollowUp,
   scheduleInvoicePaymentFollowUp,
 } from '@/lib/invoices/payment-follow-ups'
 import {
@@ -172,9 +172,9 @@ export const updateInvoiceStatus = defineAction<
     if (status === 'paid') {
       after(async () => {
         try {
-          await cancelInvoicePaymentFollowUp(await createServerClient(), id)
+          await deleteInvoicePaymentFollowUp(await createServerClient(), id)
         } catch (error) {
-          log.warn({ err: error, invoiceId: id }, 'invoice_payment_follow_up_cancel_failed')
+          log.warn({ err: error, invoiceId: id }, 'invoice_payment_follow_up_delete_failed')
         }
       })
       after(async () => {
@@ -271,9 +271,9 @@ export const recordInvoicePayment = defineAction<
     if (fullyPaid) {
       after(async () => {
         try {
-          await cancelInvoicePaymentFollowUp(await createServerClient(), input.id)
+          await deleteInvoicePaymentFollowUp(await createServerClient(), input.id)
         } catch (error) {
-          log.warn({ err: error, invoiceId: input.id }, 'invoice_payment_follow_up_cancel_failed')
+          log.warn({ err: error, invoiceId: input.id }, 'invoice_payment_follow_up_delete_failed')
         }
       })
     }
