@@ -274,7 +274,7 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange,
         ) : null}
       </div>
       <Dialog open={scanOpen} onOpenChange={setScanOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="text-primary size-5" />
@@ -342,7 +342,7 @@ export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange,
                 Confianza de lectura: {Math.round(suggestion.confidence * 100)} %. Comprueba también categoría, pago, proyecto y moneda.
               </div>
               {suggestion.subtotal !== null && suggestion.tax_rate !== null && suggestion.total !== null &&
-              Math.abs(suggestion.subtotal * (1 + suggestion.tax_rate / 100) - suggestion.total) > 0.02 ? (
+                Math.abs(suggestion.subtotal * (1 + suggestion.tax_rate / 100) - suggestion.total) > 0.02 ? (
                 <p className="text-sm text-amber-700 dark:text-amber-300">
                   La base, el IVA y el total no cuadran exactamente. Revisa los importes antes de importar.
                 </p>
