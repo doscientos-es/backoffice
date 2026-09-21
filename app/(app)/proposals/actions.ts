@@ -237,18 +237,34 @@ export async function createSubscriptionFromProposal(
       project_id: proposal.project_id ?? null,
       name: `Mantenimiento web · ${plan.name}`,
       description: plan.summary,
-      status: 'active',
+      // The maintenance contract is prepared when the proposal is accepted,
+      // but billing starts only after the project is finished and the team
+      // activates the subscription manually.
+      status: 'paused',
       billing_cycle: offer.billing_cycle,
       amount: recurringAmount(plan.monthly_price, offer.billing_cycle),
       vat_rate: plan.vat_rate,
       start_date: startDate,
       next_invoice_date: startDate,
-      notes: `Creada desde ${proposal.number ?? proposal.title}. La cuota se actualizará anualmente conforme al IPC indicado en los términos de la propuesta.`,
+      notes: `Creada desde ${proposal.number ?? proposal.title}. Pendiente de activar al finalizar el proyecto. La cuota se actualizará anualmente conforme al IPC indicado en los términos de la propuesta.`,
       created_by: user.id,
     })
     .select('id')
     .single()
   if (insertError || !subscription) {
+    if (insertError?.code === '23505') {
+      const { data: duplicate } = await supabase
+        .from('subscriptions')
+        .select('id')
+        .eq('proposal_id', parsed.data.id)
+        .is('deleted_at', null)
+        .maybeSingle()
+      if (duplicate) {
+        revalidatePath(`/proposals/${parsed.data.id}`)
+        revalidatePath('/subscriptions')
+        return { ok: true, id: duplicate.id as string }
+      }
+    }
     log.error(
       { err: insertError, proposalId: parsed.data.id },
       'proposal_subscription_create_failed',

@@ -191,6 +191,7 @@ describe('updateProposal', () => {
         enabled: true,
         heading: 'Mantenimiento web',
         intro: 'Soporte técnico continuo.',
+        billing_cycle: 'monthly',
         plans: [
           {
             id: 'essential',

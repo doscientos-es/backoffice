@@ -41,14 +41,14 @@ export function CreateSubscriptionFromProposalButton({
   return (
     <div className="border-primary/20 bg-primary/5 flex flex-col gap-3 rounded-lg border p-4">
       <div>
-        <p className="text-sm font-medium">Crear suscripción de mantenimiento</p>
+        <p className="text-sm font-medium">Preparar suscripción de mantenimiento</p>
         <p className="text-muted-foreground mt-1 text-xs">
-          {planName} · {formatEUR(amount)} / {cycleLabel}. Se vinculará a esta propuesta y no se
-          duplicará.
+          {planName} · {formatEUR(amount)} / {cycleLabel}. Se creará pausada y no empezará a
+          facturar hasta activarla al finalizar el proyecto.
         </p>
       </div>
       <Button type="button" size="sm" onClick={handleCreate} disabled={pending} className="w-fit">
-        {pending ? 'Creando…' : 'Crear suscripción'}
+        {pending ? 'Preparando…' : 'Preparar suscripción'}
       </Button>
       {error ? (
         <Alert variant="destructive">

@@ -205,13 +205,21 @@ export default async function SubscriptionsPage({
       pagination={{ page, pageSize: PAGE_SIZE, total: count ?? 0 }}
       exportFilename="suscripciones"
       actions={
-        <Link
-          href="/subscriptions/new"
-          className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium shadow-xs"
-        >
-          <Plus className="size-4" />
-          Nueva suscripción
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/subscriptions/from-proposal"
+            className="border-border hover:bg-muted inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium"
+          >
+            Crear desde propuesta
+          </Link>
+          <Link
+            href="/subscriptions/new"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium shadow-xs"
+          >
+            <Plus className="size-4" />
+            Nueva suscripción
+          </Link>
+        </div>
       }
       addHref="/subscriptions/new"
       addLabel="Nueva suscripción"

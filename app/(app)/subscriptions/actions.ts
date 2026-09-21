@@ -67,12 +67,31 @@ export const updateSubscription = defineAction({
   revalidate: (_, input) => ['/subscriptions', `/subscriptions/${input.id}`],
   async handler({ id, expected_version, ...rest }) {
     const supabase = await createServerClient()
+    const { data: current, error: currentError } = await supabase
+      .from('subscriptions')
+      .select('status, next_invoice_date')
+      .eq('id', id)
+      .eq('version', expected_version)
+      .maybeSingle()
+    if (currentError) throw new Error(currentError.message)
+    if (!current) throw new VersionConflictError()
+
+    const today = new Date().toISOString().slice(0, 10)
+    const nextInvoiceDate =
+      rest.status === 'active' &&
+      current.status !== 'active' &&
+      current.next_invoice_date &&
+      current.next_invoice_date < today
+        ? today
+        : undefined
+
     const { data, error } = await supabase
       .from('subscriptions')
       .update({
         ...rest,
         project_id: rest.project_id || null,
         end_date: rest.end_date || null,
+        ...(nextInvoiceDate ? { next_invoice_date: nextInvoiceDate } : {}),
       })
       .eq('id', id)
       .eq('version', expected_version)
