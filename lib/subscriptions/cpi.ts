@@ -1,5 +1,4 @@
-const INE_CPI_SERIES_URL =
-  'https://servicios.ine.es/wstempus/js/ES/DATOS_SERIE/IPC290750?nult=1'
+const INE_CPI_SERIES_URL = 'https://servicios.ine.es/wstempus/js/ES/DATOS_SERIE/IPC290750?nult=1'
 
 type IneObservation = {
   Valor?: unknown
@@ -13,7 +12,11 @@ type IneSeries = {
 export function parseLatestCpiRate(payload: unknown): number | null {
   const series = (Array.isArray(payload) ? payload[0] : payload) as IneSeries | undefined
   const observation = series?.Data?.find((item) => typeof item.Valor === 'number')
-  if (!observation || typeof observation.Valor !== 'number' || !Number.isFinite(observation.Valor)) {
+  if (
+    !observation ||
+    typeof observation.Valor !== 'number' ||
+    !Number.isFinite(observation.Valor)
+  ) {
     return null
   }
   return observation.Valor

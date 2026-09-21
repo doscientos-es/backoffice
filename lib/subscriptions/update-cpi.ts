@@ -13,7 +13,9 @@ export type SubscriptionCpiUpdateResult = {
  * Applies the annual CPI revision during January. The database function owns
  * the idempotency guarantee, so retries and concurrent cron calls are safe.
  */
-export async function updateSubscriptionsByCpi(date = new Date()): Promise<SubscriptionCpiUpdateResult> {
+export async function updateSubscriptionsByCpi(
+  date = new Date(),
+): Promise<SubscriptionCpiUpdateResult> {
   const { year, month } = madridCalendar(date)
   if (month !== 1) {
     return { status: 'skipped', adjustmentYear: year, rate: null, subscriptionsUpdated: 0 }
