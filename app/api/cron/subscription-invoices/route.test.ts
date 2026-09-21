@@ -23,6 +23,7 @@ function request(token?: string): Request {
 
 describe('GET /api/cron/subscription-invoices', () => {
   beforeEach(() => {
+    vi.clearAllMocks()
     serverEnv.mockReturnValue({ CRON_SECRET: 'cron-secret' })
     updateSubscriptionsByCpi.mockResolvedValue({
       status: 'skipped',
