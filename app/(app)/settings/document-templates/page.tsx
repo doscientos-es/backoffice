@@ -24,21 +24,28 @@ export default async function DocumentTemplatesPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Plantillas de documentos"
-        description="Sube PDFs rellenables y úsalos desde cualquier cliente o proyecto, sin editar texto en el backoffice."
+        title="Documentos genéricos"
+        description="Sube PDFs rellenables reutilizables y genéralos desde un lead, cliente o proyecto."
         icon={<FileText className="size-5" />}
       />
       <Card>
         <CardHeader>
-          <CardTitle>Subir plantilla PDF</CardTitle>
+          <CardTitle>Subir PDF rellenable</CardTitle>
         </CardHeader>
         <CardContent>
-          <TemplateUploadForm />
+          <>
+            <p className="text-muted-foreground mb-4 text-sm">
+              El PDF debe tener campos de formulario AcroForm. Los campos con nombres conocidos se
+              rellenarán automáticamente con los datos de la empresa y del lead; los demás quedarán
+              editables en el PDF generado.
+            </p>
+            <TemplateUploadForm />
+          </>
         </CardContent>
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>Plantillas disponibles</CardTitle>
+          <CardTitle>Documentos disponibles</CardTitle>
         </CardHeader>
         <CardContent>
           {error ? <p className="text-destructive text-sm">{error.message}</p> : null}

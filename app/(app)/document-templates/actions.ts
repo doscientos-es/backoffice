@@ -11,6 +11,7 @@ import { createServerClient } from '@/lib/supabase/server'
 
 const GenerateDocumentInput = z.object({
   templateId: z.string().uuid(),
+  leadId: z.string().uuid().nullable().optional(),
   clientId: z.string().uuid().nullable().optional(),
   projectId: z.string().uuid().nullable().optional(),
   values: z.record(z.union([z.string(), z.boolean()])).default({}),
@@ -29,10 +30,11 @@ export const generateDocument = defineAction<
   roles: ['owner', 'admin', 'member'],
   revalidate: (_payload, input) => [
     '/settings/document-templates',
+    ...(input.leadId ? [`/leads/${input.leadId}`] : []),
     ...(input.clientId ? [`/clients/${input.clientId}`] : []),
     ...(input.projectId ? [`/projects/${input.projectId}`] : []),
   ],
-  handler: async ({ templateId, clientId, projectId, values }, { user }) => {
+  handler: async ({ templateId, leadId, clientId, projectId, values }, { user }) => {
     const supabase = await createServerClient()
     const { data: template, error: templateError } = await supabase
       .from('document_templates')
@@ -62,7 +64,7 @@ export const generateDocument = defineAction<
     const pdf = await fillPdfTemplate({ bytes: original, fields, values })
     const attachmentId = crypto.randomUUID()
     const filename = `${safeFilename(String(template.name))}-${attachmentId}.pdf`
-    const storagePath = `generated/${clientId ?? projectId ?? 'misc'}/${attachmentId}/${filename}`
+    const storagePath = `generated/${clientId ?? projectId ?? leadId ?? 'misc'}/${attachmentId}/${filename}`
     const storage = getStorage()
     const pdfBytes = pdf.buffer.slice(pdf.byteOffset, pdf.byteOffset + pdf.byteLength) as ArrayBuffer
     const { error: uploadError } = await storage.upload('documents', storagePath, pdfBytes, {
@@ -78,6 +80,7 @@ export const generateDocument = defineAction<
       storage_path: storagePath,
       client_id: clientId ?? null,
       project_id: projectId ?? null,
+      lead_id: leadId ?? null,
       uploaded_by: user.id,
     })
     if (attachmentError) {

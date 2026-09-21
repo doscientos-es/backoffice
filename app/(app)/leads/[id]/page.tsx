@@ -212,26 +212,33 @@ export default async function LeadDetailPage({
               urlPath={`/leads/${lead.id as string}`}
             />
             {canEdit ? (
-              <LeadEditDialog
-                members={members}
-                lead={{
-                  id: lead.id as string,
-                  name: lead.name as string,
-                  alias: (lead.alias as string | null) ?? null,
-                  company: (lead.company as string | null) ?? null,
-                  email: (lead.email as string | null) ?? null,
-                  phone: (lead.phone as string | null) ?? null,
-                  source: (lead.source as string | null) ?? null,
-                  notes: (lead.notes as string | null) ?? null,
-                  estimated_value:
-                    lead.estimated_value != null ? Number(lead.estimated_value) : null,
-                  company_size: (lead.company_size as string | null) ?? null,
-                  solution_type: (lead.solution_type as string | null) ?? null,
-                  urgency: (lead.urgency as string | null) ?? null,
-                  assigned_to: (lead.assigned_to as string | null) ?? null,
-                  version: Number(lead.version),
-                }}
-              />
+              <div className="flex items-center gap-2">
+                <Button asChild size="sm" variant="outline">
+                  <Link href={`/document-templates/generate?lead_id=${lead.id as string}`}>
+                    Crear documento
+                  </Link>
+                </Button>
+                <LeadEditDialog
+                  members={members}
+                  lead={{
+                    id: lead.id as string,
+                    name: lead.name as string,
+                    alias: (lead.alias as string | null) ?? null,
+                    company: (lead.company as string | null) ?? null,
+                    email: (lead.email as string | null) ?? null,
+                    phone: (lead.phone as string | null) ?? null,
+                    source: (lead.source as string | null) ?? null,
+                    notes: (lead.notes as string | null) ?? null,
+                    estimated_value:
+                      lead.estimated_value != null ? Number(lead.estimated_value) : null,
+                    company_size: (lead.company_size as string | null) ?? null,
+                    solution_type: (lead.solution_type as string | null) ?? null,
+                    urgency: (lead.urgency as string | null) ?? null,
+                    assigned_to: (lead.assigned_to as string | null) ?? null,
+                    version: Number(lead.version),
+                  }}
+                />
+              </div>
             ) : null}
             {linkedClientId ? (
               <Button asChild variant="outline" size="sm">

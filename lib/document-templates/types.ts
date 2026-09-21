@@ -25,6 +25,7 @@ export type DocumentTemplate = {
 }
 
 export type DocumentGenerationContext = {
+  lead: Record<string, unknown> | null
   client: Record<string, unknown> | null
   project: Record<string, unknown> | null
   company: Record<string, unknown> | null

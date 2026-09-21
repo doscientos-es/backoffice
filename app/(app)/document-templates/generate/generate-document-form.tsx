@@ -17,6 +17,7 @@ import { generateDocument } from '../actions'
 type Props = {
   templates: DocumentTemplate[]
   context: DocumentGenerationContext
+  leadId: string | null
   clientId: string | null
   projectId: string | null
 }
@@ -25,7 +26,7 @@ function fieldValue(field: DocumentTemplateField, context: DocumentGenerationCon
   return field.source ? getPathValue(field.source, context) : ''
 }
 
-export function GenerateDocumentForm({ templates, context, clientId, projectId }: Props) {
+export function GenerateDocumentForm({ templates, context, leadId, clientId, projectId }: Props) {
   const router = useRouter()
   const [templateId, setTemplateId] = useState(templates[0]?.id ?? '')
   const [values, setValues] = useState<Record<string, string>>(() =>
@@ -56,7 +57,7 @@ export function GenerateDocumentForm({ templates, context, clientId, projectId }
     if (!template) return
     setPending(true)
     setError(null)
-    const result = await generateDocument({ templateId, clientId, projectId, values })
+    const result = await generateDocument({ templateId, leadId, clientId, projectId, values })
     if (result.ok) router.push(`/documents/${result.attachmentId}`)
     else setError(result.error)
     setPending(false)
@@ -65,7 +66,7 @@ export function GenerateDocumentForm({ templates, context, clientId, projectId }
   if (!templates.length)
     return (
       <p className="text-muted-foreground text-sm">
-        No hay plantillas activas. Pide a un administrador que suba la primera.
+        No hay documentos genéricos activos. Pide a un administrador que suba el primer PDF.
       </p>
     )
 
@@ -75,7 +76,7 @@ export function GenerateDocumentForm({ templates, context, clientId, projectId }
   return (
     <form onSubmit={submit} className="flex flex-col gap-6">
       <label className="grid gap-1.5 text-sm font-medium">
-        Plantilla
+        Documento genérico
         <select
           className="border-input bg-background h-9 rounded-md border px-3 text-sm"
           value={templateId}
@@ -132,7 +133,7 @@ export function GenerateDocumentForm({ templates, context, clientId, projectId }
           Los datos internos se bloquearán en el PDF; los del cliente quedarán editables.
         </p>
         <Button type="submit" disabled={pending}>
-          {pending ? 'Generando…' : 'Generar PDF'}
+          {pending ? 'Generando…' : 'Generar documento'}
         </Button>
       </div>
     </form>

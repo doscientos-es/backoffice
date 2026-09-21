@@ -62,7 +62,7 @@ export function TemplateUploadForm() {
       />
       <div className="flex items-center gap-3 sm:col-span-2">
         <Button type="submit" disabled={pending}>
-          {pending ? 'Subiendo…' : 'Subir plantilla'}
+          {pending ? 'Subiendo…' : 'Subir PDF'}
         </Button>
         {message ? <p className="text-muted-foreground text-sm">{message}</p> : null}
       </div>

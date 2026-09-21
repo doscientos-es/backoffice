@@ -26,6 +26,12 @@ const SOURCE_ALIASES: Record<string, string> = {
   client_phone: 'client.phone',
   client_contact: 'client.contact_person',
   client_contact_person: 'client.contact_person',
+  lead_name: 'lead.name',
+  lead_company: 'lead.company',
+  lead_email: 'lead.email',
+  lead_phone: 'lead.phone',
+  lead_contact: 'lead.name',
+  lead_contact_person: 'lead.name',
   client_address: 'client.billing_address',
   client_address_street: 'client.billing_address_street',
   client_address_zip: 'client.billing_address_zip',
@@ -33,6 +39,11 @@ const SOURCE_ALIASES: Record<string, string> = {
   client_address_province: 'client.billing_address_province',
   client_address_country: 'client.billing_address_country',
   company_address: 'company.company_address',
+  company_address_street: 'company.company_address_street',
+  company_address_zip: 'company.company_address_zip',
+  company_address_city: 'company.company_address_city',
+  company_address_province: 'company.company_address_province',
+  company_address_country: 'company.company_address_country',
   project_name: 'project.name',
   proyecto_nombre: 'project.name',
   document_date: 'document.date',
@@ -79,7 +90,10 @@ export function fieldDefinition(field: PDFField): DocumentTemplateField {
 export function getPathValue(source: string, context: DocumentGenerationContext): string {
   if (source === 'document.date') return new Intl.DateTimeFormat('es-ES').format(new Date())
   const [group, ...path] = source.split('.')
-  const value = context[group as keyof DocumentGenerationContext]
+  const value =
+    group === 'client' && !context.client
+      ? leadFallbackForClientPath(path, context.lead)
+      : context[group as keyof DocumentGenerationContext]
   if (!value) return ''
   if (source.endsWith('.billing_address')) {
     const parts = [
@@ -97,6 +111,14 @@ export function getPathValue(source: string, context: DocumentGenerationContext)
     value,
   )
   return result == null ? '' : String(result)
+}
+
+function leadFallbackForClientPath(path: string[], lead: Record<string, unknown> | null) {
+  if (!lead) return null
+  const [field] = path
+  if (field === 'name') return { name: lead.company ?? lead.name }
+  if (field === 'contact_person') return { contact_person: lead.name }
+  return { [field]: lead[field] }
 }
 
 export function initialValues(

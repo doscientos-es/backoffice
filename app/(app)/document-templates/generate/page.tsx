@@ -22,32 +22,40 @@ function row(value: unknown): Record<string, unknown> | null {
 export default async function GenerateDocumentPage({
   searchParams,
 }: {
-  searchParams: Promise<{ client_id?: string; project_id?: string }>
+  searchParams: Promise<{ client_id?: string; project_id?: string; lead_id?: string }>
 }) {
   await requireUser()
-  const { client_id: clientId, project_id: projectId } = await searchParams
-  if (!clientId && !projectId) notFound()
+  const { client_id: clientId, project_id: projectId, lead_id: leadId } = await searchParams
+  if (!clientId && !projectId && !leadId) notFound()
 
   const supabase = await createServerClient()
-  const [{ data: client }, { data: project }, { data: company }, { data: templateRows }] =
+  const [{ data: client }, { data: project }, { data: lead }, { data: company }, { data: templateRows }] =
     await Promise.all([
       clientId
         ? supabase
-            .from('clients')
-            .select(
-              'id, name, nif, email, phone, contact_person, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country',
-            )
-            .eq('id', clientId)
-            .is('deleted_at', null)
-            .maybeSingle()
+          .from('clients')
+          .select(
+            'id, name, nif, email, phone, contact_person, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country',
+          )
+          .eq('id', clientId)
+          .is('deleted_at', null)
+          .maybeSingle()
         : Promise.resolve({ data: null }),
       projectId
         ? supabase
-            .from('projects')
-            .select('id, name, client_id')
-            .eq('id', projectId)
-            .is('deleted_at', null)
-            .maybeSingle()
+          .from('projects')
+          .select('id, name, client_id')
+          .eq('id', projectId)
+          .is('deleted_at', null)
+          .maybeSingle()
+        : Promise.resolve({ data: null }),
+      leadId
+        ? supabase
+          .from('leads')
+          .select('id, name, company, email, phone')
+          .eq('id', leadId)
+          .is('deleted_at', null)
+          .maybeSingle()
         : Promise.resolve({ data: null }),
       supabase
         .from('settings')
@@ -65,23 +73,36 @@ export default async function GenerateDocumentPage({
         .eq('is_active', true)
         .order('name'),
     ])
-  if (!client && !project) notFound()
+  if (!client && !project && !lead) notFound()
 
   const resolvedClient =
     client ??
     (project?.client_id
       ? (
-          await supabase
-            .from('clients')
-            .select(
-              'id, name, nif, email, phone, contact_person, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country',
-            )
-            .eq('id', project.client_id)
-            .is('deleted_at', null)
-            .maybeSingle()
-        ).data
+        await supabase
+          .from('clients')
+          .select(
+            'id, name, nif, email, phone, contact_person, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country',
+          )
+          .eq('id', project.client_id)
+          .is('deleted_at', null)
+          .maybeSingle()
+      ).data
+      : null) ??
+    (leadId
+      ? (
+        await supabase
+          .from('clients')
+          .select(
+            'id, name, nif, email, phone, contact_person, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country',
+          )
+          .eq('lead_id', leadId)
+          .is('deleted_at', null)
+          .maybeSingle()
+      ).data
       : null)
   const context: DocumentGenerationContext = {
+    lead: row(lead),
     client: row(resolvedClient),
     project: row(project),
     company: row(company),
@@ -91,16 +112,18 @@ export default async function GenerateDocumentPage({
     size_bytes: Number(template.size_bytes ?? 0),
     fields: (Array.isArray(template.fields) ? template.fields : []) as DocumentTemplateField[],
   }))
-  const subject = context.client?.name ?? context.project?.name ?? 'documento'
+  const subject = context.client?.name ?? context.lead?.name ?? context.project?.name ?? 'documento'
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Crear documento"
-        description={`Genera un PDF rellenable para ${String(subject)}.`}
+        description={`Genera un documento PDF reutilizable para ${String(subject)}.`}
         back={
           <BackLink
-            href={clientId ? `/clients/${clientId}` : `/projects/${projectId}`}
+            href={
+              clientId ? `/clients/${clientId}` : projectId ? `/projects/${projectId}` : `/leads/${leadId}`
+            }
             label="Volver"
           />
         }
@@ -110,7 +133,13 @@ export default async function GenerateDocumentPage({
           <GenerateDocumentForm
             templates={templates}
             context={context}
-            clientId={clientId ?? (project?.client_id as string | null) ?? null}
+            leadId={leadId ?? null}
+            clientId={
+              clientId ??
+              (resolvedClient?.id as string | undefined) ??
+              (project?.client_id as string | undefined) ??
+              null
+            }
             projectId={projectId ?? null}
           />
         </CardContent>
