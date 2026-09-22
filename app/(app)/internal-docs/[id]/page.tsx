@@ -85,6 +85,20 @@ function extractionFeedback(extraction: ExtractionStatus | null) {
   }
 }
 
+function isInternalDocDriveConfigured() {
+  if (!isGoogleEnabled()) return false
+
+  try {
+    return Boolean(serverEnv().GOOGLE_DRIVE_INTERNAL_DOCS_FOLDER_ID)
+  } catch (error) {
+    log.warn(
+      { errorType: error instanceof Error ? error.name : typeof error },
+      'could not read Google Drive configuration for internal documents',
+    )
+    return false
+  }
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   try {
@@ -223,9 +237,7 @@ export default async function InternalDocDetailPage({
                 version={Number(doc.version) || 1}
                 driveBackupVersion={(doc.drive_backup_version as number | null) ?? null}
                 driveBackupUrl={(doc.drive_backup_url as string | null) ?? null}
-                driveConfigured={Boolean(
-                  isGoogleEnabled() && serverEnv().GOOGLE_DRIVE_INTERNAL_DOCS_FOLDER_ID,
-                )}
+                driveConfigured={isInternalDocDriveConfigured()}
               />
             )}
             <Button asChild size="sm">

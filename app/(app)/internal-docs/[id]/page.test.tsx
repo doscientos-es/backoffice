@@ -30,6 +30,9 @@ const mocks = vi.hoisted(() => ({
   extractionResult: { data: null as unknown, error: null as { code?: string } | null },
   extractionRejects: false,
   getInternalDocPreviewUrl: vi.fn(),
+  isGoogleEnabled: vi.fn(() => false),
+  serverEnv: vi.fn(),
+  user: { role: 'viewer' as string },
   log: { error: vi.fn(), warn: vi.fn() },
 }))
 
@@ -43,7 +46,11 @@ vi.mock('next/navigation', () => ({
     throw new Error('not found')
   }),
 }))
-vi.mock('@/lib/auth', () => ({ requireUser: vi.fn(async () => ({ role: 'viewer' })) }))
+vi.mock('@/lib/auth', () => ({ requireUser: vi.fn(async () => mocks.user) }))
+vi.mock('@/lib/env', () => ({
+  isGoogleEnabled: mocks.isGoogleEnabled,
+  serverEnv: mocks.serverEnv,
+}))
 vi.mock('@/lib/logger', () => ({ scopedLogger: () => mocks.log }))
 vi.mock('@/lib/internal-documents/preview', () => ({
   getInternalDocPreviewUrl: mocks.getInternalDocPreviewUrl,
@@ -120,6 +127,9 @@ vi.mock('./internal-doc-edit-dialog', () => ({
 vi.mock('./internal-doc-history', () => ({
   InternalDocHistory: () => <p>Sin actividad registrada todavía.</p>,
 }))
+vi.mock('./internal-doc-actions', () => ({
+  InternalDocActions: () => <button type="button">Acciones</button>,
+}))
 vi.mock('../actions', () => ({ deleteInternalDoc: vi.fn(), reindexInternalDoc: vi.fn() }))
 
 import InternalDocDetailPage from './page'
@@ -131,6 +141,9 @@ describe('InternalDocDetailPage', () => {
     mocks.extractionResult = { data: null, error: null }
     mocks.extractionRejects = false
     mocks.getInternalDocPreviewUrl.mockResolvedValue(null)
+    mocks.isGoogleEnabled.mockReturnValue(false)
+    mocks.serverEnv.mockReset()
+    mocks.user.role = 'viewer'
   })
 
   it('renders the document when preview and optional data fail', async () => {
@@ -148,6 +161,23 @@ describe('InternalDocDetailPage', () => {
     expect(mocks.log.warn).toHaveBeenCalledWith(
       { documentId: 'doc-1', source: 'events', errorCode: 'PGRST205' },
       'could not load optional internal document data',
+    )
+  })
+
+  it('does not fail when Google environment parsing fails for an editor', async () => {
+    mocks.user.role = 'admin'
+    mocks.isGoogleEnabled.mockReturnValue(true)
+    mocks.serverEnv.mockImplementation(() => {
+      throw new Error('invalid optional environment value')
+    })
+
+    render(await InternalDocDetailPage({ params: Promise.resolve({ id: 'doc-1' }) }))
+
+    expect(screen.getByRole('heading', { name: 'Documento de prueba' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Acciones' })).toBeTruthy()
+    expect(mocks.log.warn).toHaveBeenCalledWith(
+      { errorType: 'Error' },
+      'could not read Google Drive configuration for internal documents',
     )
   })
 })
