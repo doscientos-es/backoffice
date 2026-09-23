@@ -28,7 +28,17 @@ function normalizeOrigin(value: string): string {
 }
 
 function allowedOrigins(): string[] {
-  return serverEnv().LANDING_ALLOWED_ORIGINS.split(',').map(normalizeOrigin).filter(Boolean)
+  // Keep the public landing domains accepted even if a stale Vercel value
+  // overrides the documented default. Without this, the browser preflight
+  // succeeds with 204 but omits Access-Control-Allow-Origin and the landing
+  // reports the misleading "Verifica tu internet" message.
+  return [
+    ...serverEnv().LANDING_ALLOWED_ORIGINS.split(','),
+    'https://doscientos.es',
+    'https://www.doscientos.es',
+    'https://200.es',
+    'https://www.200.es',
+  ].map(normalizeOrigin).filter(Boolean)
 }
 
 function isAllowedOrigin(origin: string | null): boolean {

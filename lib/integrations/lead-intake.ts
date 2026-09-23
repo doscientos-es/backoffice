@@ -32,6 +32,7 @@ const contextSchema = z.object({
   metaFbc: z.string().optional().nullable(),
   metaFbp: z.string().optional().nullable(),
   metaFbclid: z.string().optional().nullable(),
+  googleClickId: z.string().optional().nullable(),
   conversionStep: z.string().optional().nullable(),
   referrer: z.string().optional().nullable(),
   ip: z.string().optional().nullable(),
