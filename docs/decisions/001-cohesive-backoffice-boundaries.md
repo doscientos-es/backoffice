@@ -65,3 +65,17 @@ cifrado nunca llega a filtros, logs, props de diagnóstico ni tests.
   obligatorio.
 - Las revisiones deben rechazar nuevas actions o páginas que reintroduzcan responsabilidades ya
   extraídas.
+
+## Estado a septiembre 2026
+
+Estas fronteras ya tienen ejemplos en producción. No reabrirlas como si fueran solo intención:
+
+- `convert_lead_to_client` y `generate_subscription_invoice` son RPC de escritura con el mínimo
+  input de intención.
+- `accept_proposal_with_evidence` fija la aceptación. Proyecto y borradores de factura siguen
+  fuera de esa transacción, a propósito, y deben seguir siendo idempotentes hasta que exista una
+  RPC que los una.
+- `lib/dashboard/queries.ts` es el read model de inicio. Las páginas no deben volver a componer
+  esas consultas.
+- La outbox de Verifactu es la única entrega durable. El resto de integraciones se invocan después
+  de persistir y no deshacen el estado interno.

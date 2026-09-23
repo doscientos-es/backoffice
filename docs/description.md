@@ -1,9 +1,15 @@
 # doscientos CRM — Especificacion Tecnica Completa
 
-> Version: 2.0 - Mayo 2026
+> Version: 2.0 - Mayo 2026. Plan original de implementación.
 > Empresa: Doscientos Estudio S.L. - Barcelona
 > Subdominio: app.doscientos.es | Repo: doscientos/internal-backoffice
-> Este documento es la fuente de verdad para la generacion asistida por IA del proyecto.
+>
+> **No es la fuente de verdad del producto actual.** Describe el plan de mayo de 2026.
+> El estado implementado, los huecos y lo que no se construye están en
+> [`docs/ESTADO.md`](./ESTADO.md). Las decisiones de producto viven en
+> [`docs/DECISIONS.md`](./DECISIONS.md) y los límites de código en
+> [`docs/decisions/001-cohesive-backoffice-boundaries.md`](./decisions/001-cohesive-backoffice-boundaries.md).
+> Verifactu se documenta en [`docs/VERIFACTU.md`](./VERIFACTU.md), no aquí.
 
 ---
 
@@ -2991,8 +2997,9 @@ jobs:
 
 ## 33. Implementation Steps
 
-Orden sugerido para hacer el proyecto del tirón. Cada step es un bloque coherente de
-funcionalidad que puede desplegarse y usarse en producción de forma independiente.
+Plan de mayo de 2026. Los steps 1–7 y la facturación recurrente están implementados y
+superados; el detalle de lo que existe hoy está en [`docs/ESTADO.md`](./ESTADO.md).
+Esta sección se conserva como historial del orden de construcción, no como backlog.
 
 ---
 
@@ -3041,7 +3048,8 @@ funcionalidad que puede desplegarse y usarse en producción de forma independien
 - Portal público `/p/invoice/[token]`, CSS @media print, descarga PDF
 - View `invoices_with_status` (computed_status='overdue' en runtime, sin cron)
 - Panel "Avisos": sección de facturas vencidas con CTA
-- Tabla subscriptions (schema preparado, sin generación automática hasta Phase 2)
+- Tabla subscriptions. La generación automática diaria quedó implementada después
+  (`GET /api/cron/subscription-invoices` + RPC `generate_subscription_invoice`).
 - Idempotency key en `POST /api/crm/invoices` (header `Idempotency-Key`)
 
 ### Step 5 — Verifactu / SIF
@@ -3102,4 +3110,4 @@ funcionalidad que puede desplegarse y usarse en producción de forma independien
 _Equipo: Pol (Frontend y Design) - Gerard (Backend y DevOps)_
 _Stack: Next.js 16.2 (Turbopack) + React 19.2 + Supabase + shadcn/ui + Tailwind 4 + Resend + OpenAI + Vercel + Pino (stdout)_
 _Referencia fiscal: Real Decreto 1619/2012 (facturacion) + RD 1007/2023 + Orden HAC/1177/2024 (Verifactu/SIF)_
-_Última revisión: mayo 2026 — spec completa lista para implementación del tirón_
+_Plan original: mayo 2026. Estado real del producto: septiembre 2026, ver `docs/ESTADO.md`._

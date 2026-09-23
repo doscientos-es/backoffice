@@ -6,6 +6,8 @@ Incluye explícitamente lo que **no se construirá** y por qué, para evitar que
 Las decisiones de arquitectura que deben guiar implementaciones y agentes están en
 [`docs/decisions/`](./decisions/), empezando por el
 [`ADR-001`](./decisions/001-cohesive-backoffice-boundaries.md).
+Lo que ya está construido, y lo que sigue abierto dentro de ese alcance, está en
+[`ESTADO.md`](./ESTADO.md).
 
 ---
 
@@ -72,3 +74,6 @@ Las decisiones de arquitectura que deben guiar implementaciones y agentes están
 2. **Build vs Buy**: Antes de construir cualquier módulo de infraestructura (auth, cifrado, chat, BI), evaluar primero si existe una herramienta SaaS que resuelva el 80% del caso con coste cero de mantenimiento.
 3. **Navegación command-first**: El `CommandPalette` es el mecanismo de navegación principal para usuarios power. El sidebar es el fallback visual. No extender el sidebar indefinidamente; agrupar y simplificar.
 4. **No saturar el backoffice de Social**: El Social Hub es para operaciones, no para replicar las apps nativas de las redes sociales.
+5. **El ciclo comercial ya no es un hueco de producto.** Lead → cliente es una RPC. La aceptación de una propuesta deja evidencia y, en pasos separados e idempotentes, proyecto y borradores de factura. La facturación recurrente también existe. No volver a tratarlos como fase 2.
+6. **Inicio ya es la cola de trabajo.** Tu día, avisos y centro de acciones cubren tarea vencida, lead sin contacto y propuesta sin respuesta. No añadir otro dashboard paralelo; ampliar esa cola si falta una señal.
+7. **La outbox no es un bus general.** Solo Verifactu tiene entrega durable. Email, Meta y calendario siguen siendo best-effort después de persistir el estado interno, como fija el ADR-001.
