@@ -395,6 +395,7 @@ export function ListControls({
                 aria-hidden
               />
               <Input
+                type="search"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder={searchPlaceholder}
@@ -634,6 +635,7 @@ export function ListControls({
               aria-hidden
             />
             <Input
+              type="search"
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder={searchPlaceholder}
@@ -644,7 +646,7 @@ export function ListControls({
                   : "h-8 pl-10!",
               )}
             />
-            {isPanel && q ? (
+            {q ? (
               <button
                 type="button"
                 onClick={() => setQ("")}
