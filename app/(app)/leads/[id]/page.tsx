@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation'
 import { DetailGrid, DetailRow } from '@/components/layout/detail-grid'
 import { PageHeader } from '@/components/layout/page-header'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CopySummaryButton } from '@/components/ui/copy-summary-button'
 import { SectionBoundary } from '@/components/ui/error-boundary'
 import { MemberLabel } from '@/components/ui/member-avatar'
@@ -566,14 +566,15 @@ export default async function LeadDetailPage({
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Calificación</CardTitle>
-                  <p className="text-muted-foreground mt-1 text-xs font-normal">
-                    Señales del Mom Test.
-                  </p>
+                  <CardAction>
+                    <div id="mom-test-score" />
+                  </CardAction>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <MomTestChecklist
                     leadId={lead.id as string}
                     canEdit={canEdit}
+                    scoreSlotId="mom-test-score"
                     initialValues={{
                       real_problem: (lead.mom_test_real_problem as boolean | null) ?? null,
                       aware_problem: (lead.mom_test_aware_problem as boolean | null) ?? null,

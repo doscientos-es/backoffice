@@ -19,12 +19,13 @@ import { updateLeadMomTestSignal } from '../actions'
 import type { MomTestValues } from './mom-test-checklist'
 
 const SIGNALS = [
-  { key: 'real_problem', label: 'Problema real' },
-  { key: 'aware_problem', label: 'Es consciente' },
-  { key: 'tried_solutions', label: 'Ha probado soluciones' },
-  { key: 'decision_power_or_budget', label: 'Decide o tiene presupuesto' },
-  { key: 'accessible', label: 'Es accesible' },
-  { key: 'comparing_other_companies', label: 'Comparando con otras empresas' },
+  { key: 'real_problem', label: 'Problema real', positiveWhen: true },
+  { key: 'aware_problem', label: 'Es consciente', positiveWhen: true },
+  { key: 'tried_solutions', label: 'Ha probado soluciones', positiveWhen: true },
+  { key: 'decision_power_or_budget', label: 'Decide o tiene presupuesto', positiveWhen: true },
+  { key: 'accessible', label: 'Es accesible', positiveWhen: true },
+  // Comparar con otras empresas es una señal negativa: el check suma cuando la respuesta es no.
+  { key: 'comparing_other_companies', label: 'Comparando con otras empresas', positiveWhen: false },
 ] as const
 
 const EMPTY_VALUES: MomTestValues = {
@@ -88,6 +89,7 @@ export function MomTestQuickDialog({
           {SIGNALS.map((signal) => {
             const value = values[signal.key]
             const pending = pendingSignals.has(signal.key)
+            const yesIsPositive = signal.positiveWhen === true
             return (
               <li key={signal.key} className="flex items-center justify-between gap-3">
                 <span className="text-sm">{signal.label}</span>
@@ -95,9 +97,9 @@ export function MomTestQuickDialog({
                   <Button
                     type="button"
                     size="sm"
-                    variant="outline"
+                    variant={value === true && !yesIsPositive ? 'destructive' : 'outline'}
                     disabled={pending}
-                    className={cn(value === true && POSITIVE_SIGNAL_CLASS)}
+                    className={cn(value === true && yesIsPositive && POSITIVE_SIGNAL_CLASS)}
                     aria-pressed={value === true}
                     onClick={() => setSignal(signal.key, value === true ? null : true)}
                   >
@@ -107,8 +109,9 @@ export function MomTestQuickDialog({
                   <Button
                     type="button"
                     size="sm"
-                    variant={value === false ? 'destructive' : 'outline'}
+                    variant={value === false && yesIsPositive ? 'destructive' : 'outline'}
                     disabled={pending}
+                    className={cn(value === false && !yesIsPositive && POSITIVE_SIGNAL_CLASS)}
                     aria-pressed={value === false}
                     onClick={() => setSignal(signal.key, value === false ? null : false)}
                   >
