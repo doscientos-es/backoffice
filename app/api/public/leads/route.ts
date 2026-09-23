@@ -36,8 +36,6 @@ function allowedOrigins(): string[] {
     ...serverEnv().LANDING_ALLOWED_ORIGINS.split(','),
     'https://doscientos.es',
     'https://www.doscientos.es',
-    'https://200.es',
-    'https://www.200.es',
   ].map(normalizeOrigin).filter(Boolean)
 }
 
