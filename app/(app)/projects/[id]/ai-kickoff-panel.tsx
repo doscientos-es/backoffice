@@ -11,6 +11,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
+import { readJsonResponse } from '@/lib/utils/http'
 
 import { createTask } from '../../tasks/actions'
 import { addChecklistItem } from '../checklist-actions'
@@ -40,7 +41,10 @@ export function AiKickoffPanel({ projectId }: { projectId: string }) {
       const response = await fetch(`/api/projects/${projectId}/generate-kickoff`, {
         method: 'POST',
       })
-      const json = await response.json()
+      const json = await readJsonResponse<any>(
+        response,
+        'No se pudo preparar el plan.',
+      )
       if (!response.ok) throw new Error(json.error ?? 'No se pudo preparar el plan.')
       const result = json as Plan
       setPlan(result)

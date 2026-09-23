@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
+import { readJsonResponse } from '@/lib/utils/http'
 
 type Props = {
   projectId: string
@@ -49,7 +50,10 @@ export function ClientUpdatePanel({ projectId, aiEnabled }: Props) {
       const res = await fetch(`/api/projects/${projectId}/generate-client-update`, {
         method: 'POST',
       })
-      const json = await res.json()
+      const json = await readJsonResponse<any>(
+        res,
+        'No se pudo preparar la actualización.',
+      )
       if (!res.ok) throw new Error(json.error ?? 'Error al generar el update.')
       setUpdate(json.update as ProjectUpdate)
     } catch (err) {

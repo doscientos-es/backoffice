@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
+import { readJsonResponse } from '@/lib/utils/http'
 
 import { createTask } from '../../tasks/actions'
 
@@ -44,7 +45,10 @@ export function ProposalFollowUpAssistant({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ proposal_id: proposalId }),
       })
-      const json = await response.json()
+      const json = await readJsonResponse<any>(
+        response,
+        'No se pudo preparar la recomendación.',
+      )
       if (!response.ok) throw new Error(json.error ?? 'No se pudo preparar el seguimiento.')
       setData(json as Recommendation)
     } catch (reason) {

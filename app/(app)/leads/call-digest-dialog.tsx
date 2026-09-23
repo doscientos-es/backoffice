@@ -217,11 +217,25 @@ function CallCopilot({ leadId, open }: { leadId: string; open: boolean }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ lead_id: leadId }),
         })
-        const json = await response.json()
+        const raw = await response.text()
+        let json: Partial<CopilotResult> & { error?: string }
+        try {
+          json = JSON.parse(raw) as Partial<CopilotResult> & { error?: string }
+        } catch {
+          throw new Error(
+            response.ok
+              ? 'El copiloto devolvió una respuesta no válida.'
+              : 'No se pudo generar el copiloto de la llamada. Inténtalo de nuevo.',
+          )
+        }
         if (!response.ok) throw new Error(json.error ?? 'No se pudo analizar la llamada.')
         if (cancelled) return
-        setData(json)
-        setSelected((json.tasks as SuggestedTask[]).map((task) => task.title))
+        if (!json.summary || !Array.isArray(json.tasks)) {
+          throw new Error('El copiloto devolvió un resultado incompleto.')
+        }
+        const result = json as CopilotResult
+        setData(result)
+        setSelected(result.tasks.map((task) => task.title))
       } catch (reason) {
         if (!cancelled) setError(reason instanceof Error ? reason.message : 'Error desconocido.')
       } finally {

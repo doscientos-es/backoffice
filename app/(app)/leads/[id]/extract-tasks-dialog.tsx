@@ -17,6 +17,7 @@ import {
 } from '@doscientos/ui'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
+import { readJsonResponse } from '@/lib/utils/http'
 
 type SuggestedTask = {
   title: string
@@ -75,7 +76,7 @@ export function ExtractTasksDialog({ leadId, trigger, createTaskAction }: Extrac
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ lead_id: leadId }),
     })
-      .then((r) => r.json())
+      .then((r) => readJsonResponse<any>(r, 'No se pudieron extraer las tareas.'))
       .then((json) => {
         if (!json.ok) throw new Error(json.error ?? 'Error al extraer tareas.')
         const all = json.tasks as SuggestedTask[]

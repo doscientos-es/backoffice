@@ -23,6 +23,7 @@ import { Textarea } from '@/components/ui/textarea'
 import type { LeadInteraction, LeadListItem } from '@/lib/leads/types'
 import type { CallOutcome } from '@/lib/schemas/lead'
 import { relativeTime } from '@/lib/utils'
+import { readJsonResponse } from '@/lib/utils/http'
 import { todayIsoLocal } from '@/lib/utils/date'
 
 import type { MomTestValues } from './[id]/mom-test-checklist'
@@ -535,7 +536,10 @@ function MemoryHoverCard({ lead, aiEnabled }: { lead: FastLead; aiEnabled: boole
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lead_id: lead.id }),
       })
-      const json = await res.json()
+      const json = await readJsonResponse<any>(
+        res,
+        'No se pudo resumir la llamada.',
+      )
       if (!res.ok) throw new Error(json.error ?? 'Error al generar el resumen.')
       router.refresh()
     } catch (err) {

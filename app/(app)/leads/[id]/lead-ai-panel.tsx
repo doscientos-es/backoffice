@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
+import { readJsonResponse } from '@/lib/utils/http'
 
 import {
   type ScheduleMember,
@@ -128,7 +129,7 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData, briefing, members 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lead_id: leadId }),
       })
-      const json = await res.json()
+      const json = await readJsonResponse<any>(res, 'No se pudo generar el resumen.')
       if (!res.ok) throw new Error(json.error ?? 'Error al generar el resumen.')
       setData({
         ai_summary: json.summary,
@@ -156,7 +157,10 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData, briefing, members 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lead_id: leadId }),
       })
-      const json = await res.json()
+      const json = await readJsonResponse<any>(
+        res,
+        'No se pudo preparar la recomendación.',
+      )
       if (!res.ok) throw new Error(json.error ?? 'No se pudo preparar la recomendación.')
       setRecommendation(json as NextBestAction)
     } catch (err) {
