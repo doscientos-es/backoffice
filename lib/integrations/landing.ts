@@ -33,9 +33,12 @@ export const LandingLeadInput = z.object({
   visitor_id: optionalText(120),
   internal_traffic: z.boolean().optional(),
   marketing_consent: z.boolean().optional(),
-  meta_fbc: optionalText(300),
-  meta_fbp: optionalText(300),
-  meta_fbclid: optionalText(500),
+  // The landing sends null when no Meta consent/identifier exists. These are
+  // optional marketing enrichments and must not reject an otherwise valid
+  // Google/organic lead.
+  meta_fbc: optionalText(300).nullable(),
+  meta_fbp: optionalText(300).nullable(),
+  meta_fbclid: optionalText(500).nullable(),
   conversion_step: optionalText(120),
   landing_path: optionalText(500),
   landing_ref: optionalText(200),
