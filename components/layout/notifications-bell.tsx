@@ -72,6 +72,7 @@ const EVENT_META: Record<string, { icon: ComponentType<{ className?: string }>; 
   invoice_requested: { icon: CircleDollarSign, tint: "text-amber-500" },
   proposal_accepted: { icon: FileCheck, tint: "text-emerald-500" },
   proposal_rejected: { icon: FileX, tint: "text-destructive" },
+  proposal_viewed: { icon: Eye, tint: "text-violet-500" },
   proposal_deck_completed: { icon: Eye, tint: "text-violet-500" },
 };
 
@@ -93,6 +94,7 @@ const BROWSER_NOTIF_TITLE: Record<string, string> = {
   invoice_requested: "🧾 Solicitud de facturación",
   proposal_accepted: "✅ Propuesta aceptada",
   proposal_rejected: "❌ Propuesta rechazada",
+  proposal_viewed: "👀 Presupuesto abierto",
   proposal_deck_completed: "👀 Propuesta visualizada",
 };
 

@@ -19,6 +19,7 @@ export type NotificationEvent =
   | 'proposal_accepted'
   | 'proposal_rejected'
   | 'proposal_question'
+  | 'proposal_viewed'
   | 'proposal_deck_completed'
 
 const TITLES: Record<NotificationEvent, string> = {
@@ -39,6 +40,7 @@ const TITLES: Record<NotificationEvent, string> = {
   proposal_accepted: '✅ Propuesta aceptada',
   proposal_rejected: '❌ Propuesta rechazada',
   proposal_question: '💬 Consulta sobre propuesta',
+  proposal_viewed: '👀 Presupuesto abierto',
   proposal_deck_completed: '👀 Propuesta visualizada',
 }
 

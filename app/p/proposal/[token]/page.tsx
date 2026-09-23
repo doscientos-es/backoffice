@@ -28,6 +28,7 @@ import {
 import { scopedLogger } from '@/lib/logger'
 import { isPortalUnlocked } from '@/lib/portal/access'
 import { parseKeyPoints } from '@/lib/proposals/key-points'
+import { recordClientProposalView } from '@/lib/proposals/record-client-view'
 import {
   maintenancePlanAsLineItem,
   parseMaintenanceOffer,
@@ -233,6 +234,19 @@ export default async function PortalProposalPage({
         ip,
         user_agent: userAgent,
       })
+      if (!isTeam) {
+        await recordClientProposalView(
+          {
+            id: proposal.id as string,
+            number: (proposal.number as string | null) ?? null,
+            title: (proposal.title as string | null) ?? null,
+            lead_id: (proposal.lead_id as string | null) ?? null,
+            client_id: (proposal.client_id as string | null) ?? null,
+            created_by: (proposal.created_by as string | null) ?? null,
+          },
+          'portal',
+        )
+      }
     } catch (err) {
       log.warn({ err, proposalId: proposal.id }, 'proposal_view_insert_failed')
     }

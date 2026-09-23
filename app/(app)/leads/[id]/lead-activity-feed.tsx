@@ -384,7 +384,7 @@ function CompactInteractionRow({ event }: { event: InteractionEvent }) {
     <li className="py-1.5">
       <div className="text-muted-foreground/80 flex items-center gap-2 text-xs">
         <span className="tabular-nums">{relativeTime(event.date)}</span>
-        <span className="truncate">{event.label}</span>
+        <span className="truncate">{event.interaction.subject ?? event.label}</span>
         {event.interaction.performer ? (
           <MemberLabel
             member={event.interaction.performer}

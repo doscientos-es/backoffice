@@ -11,6 +11,7 @@ import {
   parseMaintenanceOffer,
   selectedMaintenancePlan,
 } from '@/lib/proposals/maintenance'
+import { recordClientProposalView } from '@/lib/proposals/record-client-view'
 import { type PaymentSchedule, parseScopeModules, type ScopeModule } from '@/lib/proposals/scope'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -131,10 +132,10 @@ export default async function DeckPage({ params }: { params: Promise<{ token: st
   const { data: team } =
     selectedMemberIds.length > 0
       ? await admin
-          .from('team_members')
-          .select('id, name, job_title, avatar_url')
-          .in('id', selectedMemberIds)
-          .is('deleted_at', null)
+        .from('team_members')
+        .select('id, name, job_title, avatar_url')
+        .in('id', selectedMemberIds)
+        .is('deleted_at', null)
       : { data: [] }
 
   // Bump status from 'sent' to 'viewed' on the first external (client) open
@@ -162,6 +163,19 @@ export default async function DeckPage({ params }: { params: Promise<{ token: st
         ip,
         user_agent: userAgent,
       })
+      if (!isTeam) {
+        await recordClientProposalView(
+          {
+            id: proposal.id as string,
+            number: (proposal.number as string | null) ?? null,
+            title: (proposal.title as string | null) ?? null,
+            lead_id: (proposal.lead_id as string | null) ?? null,
+            client_id: (proposal.client_id as string | null) ?? null,
+            created_by: (proposal.created_by as string | null) ?? null,
+          },
+          'deck',
+        )
+      }
     } catch (err) {
       log.warn({ err, proposalId: proposal.id }, 'deck_view_insert_failed')
     }
